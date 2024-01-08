@@ -1,6 +1,6 @@
 import React from "react";
-import { CgWorkAlt } from "react-icons/cg";
-import { FaReact } from "react-icons/fa";
+import { FaPython } from "react-icons/fa";
+import { BsShieldLock } from "react-icons/bs";
 import { LuGraduationCap } from "react-icons/lu";
 import corpcommentImg from "@/public/corpcomment.png";
 import rmtdevImg from "@/public/rmtdev.png";
@@ -35,28 +35,28 @@ export const links = [
 
 export const experiencesData = [
   {
-    title: "Graduated bootcamp",
-    location: "Miami, FL",
+    title: "Graduated University of California, Santa ",
+    location: "Santa Cruz, CA",
     description:
-      "I graduated after 6 months of studying. I immediately found a job as a front-end developer.",
+      "I graduated while being a regular participant of the Slug Security (Cybersecurity) club.",
     icon: React.createElement(LuGraduationCap),
-    date: "2019",
+    date: "June 2023",
   },
   {
-    title: "Front-End Developer",
-    location: "Orlando, FL",
+    title: "Software Developer Intern",
+    location: "San Jose, CA",
     description:
-      "I worked as a front-end developer for 2 years in 1 job and 1 year in another job. I also upskilled to the full stack.",
-    icon: React.createElement(CgWorkAlt),
-    date: "2019 - 2021",
+      "Using Python frameworks like Django and Pandas, implementing validation mechanisms to reduce bugs, and conducting testing to optimize performance.",
+    icon: React.createElement(FaPython),
+    date: "Spetember 2023 - Present",
   },
   {
-    title: "Full-Stack Developer",
-    location: "Houston, TX",
+    title: "Cybersecurity Analyst Intern",
+    location: "Fremont, CA",
     description:
-      "I'm now a full-stack developer working as a freelancer. My stack includes React, Next.js, TypeScript, Tailwind, Prisma and MongoDB. I'm open to full-time opportunities.",
-    icon: React.createElement(FaReact),
-    date: "2021 - present",
+      "Conducted fit-gap analyses, adhered to industry best practices for secure infrastructure, and created reports on vulnerabilities with recommended remediation strategies",
+    icon: React.createElement(BsShieldLock),
+    date: "December 2023 - present",
   },
 ] as const;
 
@@ -85,8 +85,10 @@ export const projectsData = [
 ] as const;
 
 export const skillsData = [
+  "Python",
+  "MongoDB",
+  "PostgreSQL",
   "HTML",
-  "CSS",
   "JavaScript",
   "TypeScript",
   "React",
@@ -95,13 +97,6 @@ export const skillsData = [
   "Git",
   "Tailwind",
   "Prisma",
-  "MongoDB",
-  "Redux",
-  "GraphQL",
-  "Apollo",
-  "Express",
-  "PostgreSQL",
-  "Python",
   "Django",
   "Framer Motion",
 ] as const;
