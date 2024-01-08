@@ -3,8 +3,11 @@ import { FaPython } from "react-icons/fa";
 import { BsShieldLock } from "react-icons/bs";
 import { LuGraduationCap } from "react-icons/lu";
 import djangoImg from "@/public/django.png";
-import rmtdevImg from "@/public/rmtdev.png";
-import wordanalyticsImg from "@/public/wordanalytics.png";
+import serverImg from "@/public/Servers.png";
+import dirsearchImg from "@/public/dirsearch.png";
+import portscanImg from "@/public/portscan.png";
+import htbImg from "@/public/htb.png"
+import thmImg from "@/public/thm.png"
 
 export const links = [
   {
@@ -64,27 +67,62 @@ export const projectsData = [
   {
     title: "Django Portfolio + CMS",
     description:
-      "I worked as a full-stack developer on this startup project for 2 years. Users can give public feedback to companies.",
-    tags: ["React", "Next.js", "MongoDB", "Tailwind", "Prisma"],
+      "Build a full-fledged portfolio using Django integrated with Postgres db and created the required models for controlled CMS integration.",
+    tags: ["Django", "PostgreDB", "Docker", "HTML", "Python"],
     imageUrl: djangoImg,
   },
   {
-    title: "rmtDev",
+    title: "Home-Lab",
     description:
-      "Job board for remote developer jobs. I was the front-end developer. It has features like filtering, sorting and pagination.",
-    tags: ["React", "TypeScript", "Next.js", "Tailwind", "Redux"],
-    imageUrl: rmtdevImg,
+      "Set up a robust home-lab environment that fosters continuous learning and independence from tech conglomerates.",
+    tags: ["Virtualization", "Linux/Unix", "Active Directory", "RAID", "DevSecOps"],
+    imageUrl: serverImg,
   },
   {
-    title: "Word Analytics",
+    title: "Web-app Directory Search Tool",
     description:
-      "A public web app for quick analytics on text. It shows word count, character count and social media post limits.",
-    tags: ["React", "Next.js", "SQL", "Tailwind", "Framer"],
-    imageUrl: wordanalyticsImg,
+      "A multi-threaded web app pen-testing tool that allows the user to scan the exposed subdirectories of a website.",
+    tags: ["Python", "Multi-threading", "Web-apps", "Web Security", "Pentesting"],
+    imageUrl: dirsearchImg,
+  },
+  {
+    title: "Server Port Scanning Tool",
+    description:
+      "A simple concurrent port scanner written in Python that scans a target's ports within a specified range concurrently.",
+    tags: ["Python", "Networking", "Concurrent Programming", "Port Scanning", "Security"],
+    imageUrl: portscanImg,
+  },
+  {
+    title: "Hack The Box (HTB) Enthusiast",
+    description:
+      "Ranked in the top 1000 on Hack The Box (HTB), I actively tackle various challenges and machines, honing my skills.",
+    tags: ["HackTheBox", "Ethical Hacking", "Penetration Testing", "Cybersecurity"],
+    imageUrl: htbImg,
+  },
+  {
+    title: "TryHackMe (THM) Enthusiast",
+    description:
+      "Active participant on TryHackMe (THM), engaging in a variety of cybersecurity challenges to enhance my skills in ethical hacking, and more.",
+    tags: ["TryHackMe", "Ethical Hacking", "Network Security", "Cybersecurity"],
+    imageUrl: thmImg,
   },
 ] as const;
 
 export const skillsData = [
+  "Cloud Security",
+  "Incident Response",
+  "Network Security",
+  "Penetration Testing",
+  "SIEM",
+  "Vulnerability Assessment",
+  "AWS",
+  "Linux/Unix",
+  "Security Policies",
+  "Docker",
+  "MITRE ATT&CK",
+  "NIST",
+  "PostgreSQL",
+  "Snort", 
   "Python",
   "MongoDB",
   "PostgreSQL",
