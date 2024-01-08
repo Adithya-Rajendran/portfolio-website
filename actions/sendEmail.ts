@@ -1,9 +1,9 @@
 "use server";
 
-import React from "react";
 import nodemailer from "nodemailer";
 import { validateString, getErrorMessage, validateEmail } from "@/lib/utils";
-import ContactFormEmail from "@/email/contact-form-email";
+
+require('dotenv').config();
 
 const emailCredentials = {
   user: process.env.EMAIL_USER,
@@ -13,7 +13,8 @@ const emailCredentials = {
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
-  secure: true,
+  secure: false,
+  requireTLS: true,
   auth: {
     user: emailCredentials.user,
     pass: emailCredentials.pass,
@@ -39,13 +40,10 @@ export const sendEmail = async (formData: FormData) => {
   let data;
   try {
     data = await transporter.sendMail({
-      from: '"Contact Form" <${emailCredentials.user}>',
+      from: `"Contact Form" <${emailCredentials.user}>`,
       to: "adithyaraj@gmail.com, work@adithya-rajendran.com",
       subject: "Contact Form for My Website",
-      html: React.createElement(ContactFormEmail, {
-        message: message,
-        senderEmail: senderEmail,
-      }).toString(),
+      text: `Message: ${message}\nSender Email: ${senderEmail}`,
     });
   } catch (error: unknown) {
     return {
