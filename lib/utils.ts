@@ -9,6 +9,15 @@ export const validateString = (
   return true;
 };
 
+export const validateEmail = (value: unknown, maxLength: number): value is string => {
+  if (!validateString(value, maxLength)) {
+    return false;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(value as string);
+};
+
 export const getErrorMessage = (error: unknown): string => {
   let message: string;
 
