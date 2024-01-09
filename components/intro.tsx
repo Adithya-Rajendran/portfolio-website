@@ -66,7 +66,7 @@ export default function Intro() {
         <span className="font-bold">Hello, I'm Adithya Rajendran.</span> I'm a{" "}
         <span className="font-bold">recent-graduate</span> with a{" "}
         <span className="font-bold">Bachelors in Computer Science</span>. I enjoy
-        building and hacking <span className="italic">sites & apps</span>. My focus is{" "}
+        building and securing <span className="italic">sites & apps</span>. My focus is{" "}
         <span className="underline">Python and Next.js</span>.
       </motion.h1>
 

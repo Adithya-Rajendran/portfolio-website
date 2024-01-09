@@ -19,20 +19,21 @@ export default function About() {
     >
       <SectionHeading>About me</SectionHeading>
       <p className="mb-3">
-        After graduating with a degree in{" "}
-        <span className="font-medium">Computer Science</span>, I continued to pursue my
-        passion for cybersecurity and programming. I completed industry-standard certifications namely,{" "}
+        After graduating from the{" "}
+        <span className="font-medium">University of California, Santa Cruz</span>, I continued my
+        passion for cybersecurity and programming. I obtained industry-standard certifications namely,{" "}
         <span className="font-medium">CompTIA Security+</span>.{" "} and {" "}
         <span className="font-medium">AWS Solutions Architect</span>.{" "}
-        I am currenty pursuing the OffSec Certified Professional (OSCP).
+        I'm actively working towards obtaining the OffSec Certified Professional (OSCP) certification.{" "}
         <span className="italic">My favorite part of computing</span> is the
         problem-solving aspect. I <span className="underline">love</span> the
-        feeling of figuring out a solution to a problem. I am currently looking for a{" "}
-        <span className="font-medium">full-time position</span>.
+        feeling of figuring out a solution to a problem. Currently, I am seeking a{" "}
+        <span className="font-medium">full-time opportunity</span>{" "}
+        and I invite you to review my projects and experience to see how my passion for technology and problem-solving can contribute to your team.
       </p>
 
       <p>
-        <span className="italic">When I'm not coding</span>, I enjoy playing
+        <span className="italic">Aside from coding</span>, I enjoy playing
         video games, watching movies, and tinkering in my home-lab. I also enjoy{" "}
         <span className="font-medium">learning new things</span>. I am currently
         learning about{" "}

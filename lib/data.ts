@@ -96,14 +96,14 @@ export const projectsData = [
     title: "Hack The Box (HTB) Enthusiast",
     description:
       "Ranked in the top 1000 on Hack The Box (HTB), I actively tackle various challenges and machines, honing my skills.",
-    tags: ["HackTheBox", "Ethical Hacking", "Penetration Testing", "Cybersecurity"],
+    tags: ["Penetration Testing", "Burp Suite", "Privilege Escalation", "hashcat", "Metasploit", "ldapdomaindump"],
     imageUrl: htbImg,
   },
   {
     title: "TryHackMe (THM) Enthusiast",
     description:
-      "Active participant on TryHackMe (THM), engaging in a variety of cybersecurity challenges to enhance my skills in ethical hacking, and more.",
-    tags: ["TryHackMe", "Ethical Hacking", "Network Security", "Cybersecurity"],
+      "Active participant on TryHackMe (THM), engaging in a variety of cybersecurity challenges to enhance my capabilities.",
+    tags: ["Bloodhound", "dirbuster", "Active Directory", "nmap", "ffuf", "Network Security"],
     imageUrl: thmImg,
   },
 ] as const;
