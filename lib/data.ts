@@ -38,7 +38,8 @@ export const links = [
 
 export const experiencesData = [
   {
-    title: "Graduated University of California, Santa ",
+    title: "Graduated University of California, Santa Cruz",
+    org: "University",
     location: "Santa Cruz, CA",
     description:
       "I graduated while being a regular participant of the Slug Security (Cybersecurity) club.",
@@ -47,6 +48,7 @@ export const experiencesData = [
   },
   {
     title: "Software Developer Intern",
+    org: "RND4IMPACT Inc.",
     location: "San Jose, CA",
     description:
       "Using Python frameworks like Django and Pandas, implementing validation mechanisms to reduce bugs, and conducting testing to optimize performance.",
@@ -55,6 +57,7 @@ export const experiencesData = [
   },
   {
     title: "Cybersecurity Analyst Intern",
+    org: "Technical Consulting & Research, Inc.",
     location: "Fremont, CA",
     description:
       "Conducted fit-gap analyses, adhered to industry best practices for secure infrastructure, and created reports on vulnerabilities with recommended remediation strategies",
