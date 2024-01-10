@@ -3,7 +3,7 @@ import { FaPython } from "react-icons/fa";
 import { BsShieldLock } from "react-icons/bs";
 import { LuGraduationCap } from "react-icons/lu";
 import djangoImg from "@/public/django.png";
-import serverImg from "@/public/Servers.png";
+import serverImg from "@/public/homelab.png";
 import dirsearchImg from "@/public/dirsearch.png";
 import portscanImg from "@/public/portscan.png";
 import htbImg from "@/public/htb.png"
