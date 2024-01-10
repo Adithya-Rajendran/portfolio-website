@@ -3,8 +3,6 @@
 import nodemailer from "nodemailer";
 import { validateString, getErrorMessage, validateEmail } from "@/lib/utils";
 
-require('dotenv').config();
-
 const emailCredentials = {
   user: process.env.EMAIL_USER,
   pass: process.env.EMAIL_PASS,
