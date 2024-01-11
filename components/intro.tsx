@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import heroImg from "@/public/Hero.jpg"
+import heroImg from "@/public/Hero.webp"
 import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";

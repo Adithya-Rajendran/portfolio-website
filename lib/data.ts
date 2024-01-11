@@ -2,12 +2,12 @@ import React from "react";
 import { FaPython } from "react-icons/fa";
 import { BsShieldLock } from "react-icons/bs";
 import { LuGraduationCap } from "react-icons/lu";
-import djangoImg from "@/public/django.png";
-import serverImg from "@/public/homelab.png";
-import dirsearchImg from "@/public/dirsearch.png";
-import portscanImg from "@/public/portscan.png";
-import htbImg from "@/public/htb.png"
-import thmImg from "@/public/thm.png"
+import djangoImg from "@/public/django.webp";
+import serverImg from "@/public/homelab.webp";
+import dirsearchImg from "@/public/dirsearch.webp";
+import portscanImg from "@/public/portscan.webp";
+import htbImg from "@/public/htb.webp"
+import thmImg from "@/public/thm.webp"
 
 export const links = [
   {
