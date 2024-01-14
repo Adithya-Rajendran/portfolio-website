@@ -5,8 +5,8 @@ export default function Latest() {
     return (
         <section className="container mx-auto px-6">
           <h2 className="text-2xl font-bold mb-4">Latest Posts</h2>
-          <div className="flex overflow-x-scroll gap-6 pb-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-80">
+          <div className="flex flex-col sm:flex-row overflow-x-scroll gap-6 pb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full sm:w-80">
               <img
                 alt="Blog post thumbnail"
                 className="w-full h-48 object-cover"
@@ -29,7 +29,7 @@ export default function Latest() {
                 </Link>
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-80">
+            <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full sm:w-80">
               <img
                 alt="Blog post thumbnail"
                 className="w-full h-48 object-cover"
@@ -52,7 +52,7 @@ export default function Latest() {
                 </Link>
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-80">
+            <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full sm:w-80">
               <img
                 alt="Blog post thumbnail"
                 className="w-full h-48 object-cover"
