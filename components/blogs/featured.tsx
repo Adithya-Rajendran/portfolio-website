@@ -19,8 +19,8 @@ export default function Featured() {
             width="700"
             />
             <div className="p-6">
-            <h3 className="text-2xl font-bold mb-2">Blog Post Title</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">This is a short excerpt from the blog post...</p>
+            <h3 className="text-2xl font-bold mb-2">Blog Post Page</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">This page is stil a work in progress...</p>
             <Link
                 className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
                 href="#"
