@@ -44,7 +44,7 @@ export const experiencesData = [
     description:
       "I graduated while being a regular participant of the Slug Security (Cybersecurity) club.",
     icon: React.createElement(LuGraduationCap),
-    date: "June 2023",
+    date: "2023",
   },
   {
     title: "Software Developer Intern",
