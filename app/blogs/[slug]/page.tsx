@@ -1,15 +1,12 @@
 import { getPostContent } from "@/context/markdown-posts";
-import Markdown from "markdown-to-jsx";
+import { MDXRemote } from "next-mdx-remote/rsc";
 
-export default async function BlogsPage(props: any) {
+export default async function RemoteMdxPage(props: any) {
     const slug = props.params.slug;
-    const content = await getPostContent(slug);
+    const markdown = await getPostContent(slug);
     return (
-        <div>
-            <h1 className="text-2xl font-bold mb-4">this is a post: {slug}</h1>
-            <article className="prose lg:prose-xl dark:prose-invert">
-                <Markdown>{content}</Markdown>
-            </article>
-        </div>
+        <article className="prose prose-purple mx-auto lg:prose-xl dark:prose-invert">
+            <MDXRemote source={markdown} />
+        </article>
     );
 }
