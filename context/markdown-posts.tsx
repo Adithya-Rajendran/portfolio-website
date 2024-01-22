@@ -2,13 +2,15 @@
 
 import fs from "fs/promises";
 import path from "path";
+import { PostType } from "@/lib/types";
+import matter from "gray-matter";
 
 const postsFolder = path.join(process.cwd(), "posts");
 
 async function getPosts() {
     try {
         const files = await fs.readdir(postsFolder);
-        const markdownPosts = files.filter((file) => file.endsWith(".mdx"));
+        const markdownPosts = files.filter((file) => file.endsWith(".md"));
         return markdownPosts;
     } catch (error) {
         console.error("Error reading posts folder:", error);
@@ -31,16 +33,21 @@ export async function getSlugs() {
 
 export async function getPostContent(slug: string) {
     try {
-        const filePath = path.join(postsFolder, `${slug}.mdx`);
-        const content = await fs.readFile(filePath, "utf-8");
-        return content;
+        const filePath = path.join(postsFolder, `${slug}.md`);
+        const fileContent = await fs.readFile(filePath, "utf-8");
+        const { data, content } = matter(fileContent);
+
+        const post: PostType = {
+            slug,
+            title: data.title,
+            desc: data.desc,
+            date: data.date,
+            content,
+        };
+
+        return post;
     } catch (error: any) {
-        if (error.code === "ENOENT") {
-            // File not found error, treat as invalid slug
-            return "404 Not Found";
-        } else {
-            console.error(`Error reading content for slug '${slug}':`, error);
-            throw error;
-        }
+        console.error(`Error reading content for slug '${slug}':`, error);
+        throw error;
     }
 }
