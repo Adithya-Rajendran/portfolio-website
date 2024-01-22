@@ -1,7 +1,10 @@
+"use server";
+
 import { getPostContent, getSlugs } from "@/context/markdown-posts";
 import { notFound } from "next/navigation";
 import { serialize } from "next-mdx-remote/serialize";
-import { MDXRemote } from "next-mdx-remote/rsc";
+import { metadata } from "@/app/layout";
+import RenderMD from "@/components/blogs/render-md";
 
 export default async function RemoteMdxPage({
     params,
@@ -17,10 +20,10 @@ export default async function RemoteMdxPage({
     if (!slugs.includes(slug)) {
         return notFound();
     }
+    const source = await serialize(markdown, { parseFrontmatter: true });
 
-    return (
-        <article className="prose prose-purple mx-auto lg:prose-xl dark:prose-invert">
-            <MDXRemote source={markdown.content} />
-        </article>
-    );
+    metadata.title = String(source.frontmatter.title);
+    metadata.description = String(source.frontmatter.description);
+
+    return <RenderMD {...source} />;
 }

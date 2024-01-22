@@ -8,7 +8,7 @@ const postsFolder = path.join(process.cwd(), "posts");
 async function getPosts() {
     try {
         const files = await fs.readdir(postsFolder);
-        const markdownPosts = files.filter((file) => file.endsWith(".md"));
+        const markdownPosts = files.filter((file) => file.endsWith(".mdx"));
         return markdownPosts;
     } catch (error) {
         console.error("Error reading posts folder:", error);
@@ -31,7 +31,7 @@ export async function getSlugs() {
 
 export async function getPostContent(slug: string) {
     try {
-        const filePath = path.join(postsFolder, `${slug}.md`);
+        const filePath = path.join(postsFolder, `${slug}.mdx`);
         const content = await fs.readFile(filePath, "utf-8");
         return content;
     } catch (error: any) {
