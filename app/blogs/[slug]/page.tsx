@@ -11,11 +11,12 @@ export default async function RemoteMdxPage({
 }) {
     const slug = params.slug;
     const slugs = await getSlugs();
-    const post = await getPostContent(slug);
 
     if (!slugs.includes(slug)) {
         return notFound();
     }
+
+    const post = await getPostContent(slug);
 
     return <Markdown>{post.content}</Markdown>;
 }
