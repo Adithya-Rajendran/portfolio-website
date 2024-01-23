@@ -2,7 +2,8 @@
 
 import { getPostContent, getSlugs } from "@/context/markdown-posts";
 import { notFound } from "next/navigation";
-import Markdown from "react-markdown";
+import ReactMarkdown from "react-markdown";
+import { components } from "@/components/blogs/md-components";
 
 export default async function RemoteMdxPage({
     params,
@@ -10,6 +11,7 @@ export default async function RemoteMdxPage({
     params: { slug: string };
 }) {
     const slug = params.slug;
+
     const slugs = await getSlugs();
 
     if (!slugs.includes(slug)) {
@@ -18,5 +20,5 @@ export default async function RemoteMdxPage({
 
     const post = await getPostContent(slug);
 
-    return <Markdown>{post.content}</Markdown>;
+    return <ReactMarkdown children={post.content} components={components} />;
 }
