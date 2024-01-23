@@ -22,7 +22,7 @@
     "clsx": "^2.1.0",
     "eslint": "8.56.0",
     "eslint-config-next": "14.0.4",
-    "framer-motion": "^10.17.9",
+    "framer-motion": "^10.18.0",
     "gray-matter": "^4.0.3",
     "next": "^14.0.4",
     "nodemailer": "^6.9.8",
