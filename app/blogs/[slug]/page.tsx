@@ -20,5 +20,7 @@ export default async function RemoteMdxPage({
 
     const post = await getPostContent(slug);
 
-    return <ReactMarkdown children={post.content} components={components} />;
+    return (
+        <ReactMarkdown components={components}>{post.content}</ReactMarkdown>
+    );
 }
