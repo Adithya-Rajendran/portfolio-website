@@ -11,7 +11,7 @@ import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export let metadata = {
+export const metadata = {
     title: "Adithya | Personal Portfolio",
     description:
         "Adithya is an enthuastic person who is higly skilled in the fields of cybersecurity and software development",
