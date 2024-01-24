@@ -1,10 +1,10 @@
-"use server";
-
 import { getPostContent, getSlugs } from "@/context/markdown-posts";
 import ReactMarkdown from "react-markdown";
 import { components } from "@/components/blogs/md-components";
 import { Metadata } from "next";
 import { PostType } from "@/lib/types";
+
+export const dynamicParams = false; // true | false,
 
 export default async function RemoteMdxPage({ params }: any) {
     const { post } = await getPostData(params.slug);
@@ -18,14 +18,11 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
     return metadata;
 }
 
-export const getStaticPaths = async () => {
+export const generateStaticParams = async () => {
     const slugs = await getSlugs();
-    const paths = slugs.map((slug) => ({ params: { slug: slug } }));
+    const paths = slugs.map((slug) => ({ slug: slug }));
 
-    return {
-        paths,
-        fallback: false,
-    };
+    return paths;
 };
 
 async function getPostData(slug: string) {
