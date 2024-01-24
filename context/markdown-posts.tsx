@@ -1,20 +1,36 @@
 "use server";
 
-import fs from "fs/promises";
 import path from "path";
 import { PostType } from "@/lib/types";
 import matter from "gray-matter";
 
-const postsFolder = path.join(process.cwd(), "posts");
+const repoOwner = process.env.GITHUB_NAME;
+const repoName = process.env.GITHUB_REPO;
+const folderPath = process.env.GITHUB_PATH;
+const accessToken = process.env.GITHUB_TOKEN;
 
-async function getPosts() {
-    try {
-        const files = await fs.readdir(postsFolder);
-        const markdownPosts = files.filter((file) => file.endsWith(".md"));
-        return markdownPosts;
-    } catch (error) {
-        console.error("Error reading posts folder:", error);
-        throw error;
+async function getPosts(): Promise<string[]> {
+    // Fetch list of files in the folder from GitHub API
+    const response = await fetch(
+        `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPath}`,
+        {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            next: {
+                revalidate: 3600,
+            },
+        }
+    );
+
+    if (response.ok) {
+        const data = await response.json();
+        // Extract file names from the response
+        const fileNames = data.map((file: any) => file.name);
+        return fileNames;
+    } else {
+        console.error("Error fetching folder content:", response.statusText);
+        return [];
     }
 }
 
@@ -22,7 +38,7 @@ export async function getSlugs() {
     try {
         const markdownPosts = await getPosts();
         const slugs = markdownPosts.map(
-            (fileName) => path.parse(fileName).name
+            (fileName: string) => path.parse(fileName).name
         );
         return slugs;
     } catch (error) {
@@ -33,30 +49,57 @@ export async function getSlugs() {
 
 export async function getPostContent(slug: string) {
     try {
-        const filePath = path.join(postsFolder, `${slug}.md`);
-        const fileContent = await fs.readFile(filePath, "utf-8");
-        const { data, content } = matter(fileContent);
-
-        const currentDate = new Date().getTime();
-
-        let updatedContent = content;
-
-        //If post date is later than the current date we set the content to Coming Soon
-        if (data.date && new Date(data.date).getTime() > currentDate) {
-            const formattedDate = `${new Date(data.date).toLocaleDateString()}`;
-            updatedContent = `# Coming soon on ${formattedDate}`;
+        if (!folderPath) {
+            const errorMessage =
+                "Invalid folder path. Please provide a valid folder path.";
+            console.error(errorMessage);
+            throw new Error(errorMessage);
         }
+        const filePath = path.join(folderPath, `${slug}.md`);
 
-        const post: PostType = {
-            slug,
-            title: data.title,
-            desc: data.desc,
-            date: data.date,
-            image: data.image,
-            content: updatedContent,
-        };
+        const response = await fetch(
+            `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                next: {
+                    revalidate: 3600,
+                },
+            }
+        );
+        if (response.ok) {
+            const fdata = await response.json();
+            const markdownContent = atob(fdata.content); // Decode Base64 content
+            const { data, content } = matter(markdownContent);
 
-        return post;
+            const currentDate = new Date().getTime();
+
+            let updatedContent = content;
+
+            //If post date is later than the current date we set the content to Coming Soon
+            if (data.date && new Date(data.date).getTime() > currentDate) {
+                const formattedDate = `${new Date(
+                    data.date
+                ).toLocaleDateString()}`;
+                updatedContent = `# Coming soon on ${formattedDate}`;
+            }
+
+            const post: PostType = {
+                slug,
+                title: data.title,
+                desc: data.desc,
+                date: data.date,
+                image: data.image,
+                content: updatedContent,
+            };
+
+            return post;
+        } else {
+            const error = `Error fetching markdown content: ${response.statusText}`;
+            console.error(error);
+            throw error;
+        }
     } catch (error: any) {
         console.error(`Error reading content for slug '${slug}':`, error);
         throw error;
