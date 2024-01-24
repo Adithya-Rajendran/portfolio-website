@@ -1,3 +1,9 @@
+export const metadata = {
+    title: "Adithya | Personal Blog",
+    description:
+        "Join me on my learning journey in cybersecurity, software development, homelabs, and technology. Read along as I share insights, challenges, and discoveries, turning each lesson into a stepping stone towards expertise.",
+};
+
 export default function BlogsLayout({
     children,
 }: {
