@@ -5,6 +5,7 @@ export interface PostType {
     title: string;
     desc: string;
     date: string;
+    image: string;
     content: string;
 }
 
