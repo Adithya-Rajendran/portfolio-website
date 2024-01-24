@@ -1,91 +1,50 @@
 import Link from "next/link";
 
-export default function Latest() {
+import { getAllPosts } from "@/context/markdown-posts";
+import Image from "next/image";
+
+export default async function Latest() {
+    const sortedPosts = await getAllPosts();
+
+    const currentDate = new Date().getTime();
+
+    // Filter posts that are less than or equal to the current date or have undefined dates
+    const availablePosts = sortedPosts.filter((post) => {
+        return !post.date || new Date(post.date).getTime() <= currentDate;
+    });
+
     return (
         <section className="container mx-auto px-6">
             <h2 className="text-2xl font-bold mb-4">Latest Posts</h2>
             <div className="flex flex-col sm:flex-row overflow-x-scroll gap-6 pb-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full sm:w-80">
-                    <img
-                        alt="Blog post thumbnail"
-                        className="w-full h-48 object-cover"
-                        height="200"
-                        src="/placeholder.svg"
-                        style={{
-                            aspectRatio: "350/200",
-                            objectFit: "cover",
-                        }}
-                        width="350"
-                    />
-                    <div className="p-6">
-                        <h3 className="text-xl font-bold mb-2">
-                            Blog Post Title
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">
-                            January 13, 2024
-                        </p>
-                        <Link
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                            href="#"
-                        >
-                            Read More
-                        </Link>
+                {availablePosts.map((post) => (
+                    <div
+                        key={post.slug}
+                        className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full sm:w-80"
+                    >
+                        <Image
+                            src={post.image}
+                            alt={post.title}
+                            width="350"
+                            height="200"
+                            loading="lazy"
+                        />
+                        <div className="p-6">
+                            <h3 className="text-xl font-bold mb-2">
+                                {post.title}
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                {post.date}
+                            </p>
+                            <Link
+                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                                href={`blogs/${post.slug}`}
+                            >
+                                Read More
+                            </Link>
+                        </div>
                     </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full sm:w-80">
-                    <img
-                        alt="Blog post thumbnail"
-                        className="w-full h-48 object-cover"
-                        height="200"
-                        src="/placeholder.svg"
-                        style={{
-                            aspectRatio: "350/200",
-                            objectFit: "cover",
-                        }}
-                        width="350"
-                    />
-                    <div className="p-6">
-                        <h3 className="text-xl font-bold mb-2">
-                            Blog Post Title
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">
-                            January 13, 2024
-                        </p>
-                        <Link
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                            href="#"
-                        >
-                            Read More
-                        </Link>
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full sm:w-80">
-                    <img
-                        alt="Blog post thumbnail"
-                        className="w-full h-48 object-cover"
-                        height="200"
-                        src="/placeholder.svg"
-                        style={{
-                            aspectRatio: "350/200",
-                            objectFit: "cover",
-                        }}
-                        width="350"
-                    />
-                    <div className="p-6">
-                        <h3 className="text-xl font-bold mb-2">
-                            Blog Post Title
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">
-                            January 13, 2024
-                        </p>
-                        <Link
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                            href="#"
-                        >
-                            Read More
-                        </Link>
-                    </div>
-                </div>
+                ))}
             </div>
         </section>
     );
