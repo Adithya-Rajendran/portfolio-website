@@ -37,17 +37,47 @@ export async function getPostContent(slug: string) {
         const fileContent = await fs.readFile(filePath, "utf-8");
         const { data, content } = matter(fileContent);
 
+        const currentDate = new Date().getTime();
+
+        let updatedContent = content;
+
+        //If post date is later than the current date we set the content to Coming Soon
+        if (data.date && new Date(data.date).getTime() > currentDate) {
+            const formattedDate = `${new Date(data.date).toLocaleDateString()}`;
+            updatedContent = `# Coming soon on ${formattedDate}`;
+        }
+
         const post: PostType = {
             slug,
             title: data.title,
             desc: data.desc,
             date: data.date,
-            content,
+            image: data.image,
+            content: updatedContent,
         };
 
         return post;
     } catch (error: any) {
         console.error(`Error reading content for slug '${slug}':`, error);
         throw error;
+    }
+}
+
+export async function getAllPosts(sorted = true) {
+    const slugsmd = await getSlugs();
+    const allPostsPromises = slugsmd.map((slug) => getPostContent(slug));
+    const allPosts = await Promise.all(allPostsPromises);
+
+    if (sorted) {
+        // Sort posts by date in descending order (most recent first)
+        const sortedPosts = allPosts.sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateB - dateA;
+        });
+
+        return sortedPosts;
+    } else {
+        return allPosts;
     }
 }
