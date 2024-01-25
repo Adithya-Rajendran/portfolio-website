@@ -79,6 +79,7 @@ interface ImageProps extends HTMLAttributes<HTMLImageElement> {
 }
 
 function ImageComponent({ src, alt, width, height, ...props }: ImageProps) {
+    //width 10000 so it takes up the size of the container
     return <Image src={src} alt={alt} width="10000" height="0" {...props} />;
 }
 
@@ -121,12 +122,13 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
 
     return !inline && match ? (
         <SyntaxHighlighter
-            children={String(children).replace(/\n$/, "")}
             style={atomDark}
             language={match[1]}
             PreTag="div"
             {...props}
-        />
+        >
+            {String(children).replace(/\n$/, "")}
+        </SyntaxHighlighter>
     ) : (
         <span
             className={`text-red-300 bg-gray-700 dark:bg-black rounded-md px-1.5 ${className}`}
