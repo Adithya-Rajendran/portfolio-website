@@ -1,8 +1,9 @@
 import React, { ReactNode, FunctionComponent, HTMLAttributes } from "react";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atomDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { Components } from "react-markdown";
 import Image from "next/image";
 import Link from "next/link";
-import autoprefixer from "autoprefixer";
 
 interface HeadingProps extends HTMLAttributes<HTMLHeadingElement> {
     children: ReactNode;
@@ -87,20 +88,66 @@ interface LinkProps extends HTMLAttributes<HTMLAnchorElement> {
 }
 
 function LinkComponent({ href, children, ...props }: LinkProps) {
-    return (
-        <a href={href} className="text-blue-500 hover:underline" {...props}>
+    // Check if the link is an internal link (starts with "/")
+    const isInternalLink = href && href.startsWith("/");
+
+    if (isInternalLink) {
+        // Use next/link for internal links
+        return (
+            <Link href={href}>
+                <a className="text-blue-500 hover:underline" {...props}>
+                    {children}
+                </a>
+            </Link>
+        );
+    } else {
+        // Use a regular anchor tag for external links
+        return (
+            <a
+                href={href}
+                className="text-blue-500 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+            >
+                {children}
+            </a>
+        );
+    }
+}
+
+function CodeBlock({ node, inline, className, children, ...props }: any) {
+    const match = /language-(\w+)/.exec(className || "");
+
+    return !inline && match ? (
+        <SyntaxHighlighter
+            children={String(children).replace(/\n$/, "")}
+            style={atomDark}
+            language={match[1]}
+            PreTag="div"
+            {...props}
+        />
+    ) : (
+        <span
+            className={`text-red-300 bg-gray-700 dark:bg-black rounded-md px-1.5 ${className}`}
+            {...props}
+        >
             {children}
-        </a>
+        </span>
     );
 }
 
 export const components: Components = {
     h1: Heading.H1 as any,
     h2: Heading.H2 as any,
+    h3: Heading.H3 as any,
+    h4: Heading.H4 as any,
+    h5: Heading.H5 as any,
     p: Para as any,
     li: ListItem as any,
     ul: UnorderedList as any,
     ol: OrderedList as any,
     img: ImageComponent as any,
     a: LinkComponent as any,
+    code: CodeBlock as any,
 };
