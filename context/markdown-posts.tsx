@@ -88,7 +88,7 @@ export async function getPostContent(slug: string) {
             const post: PostType = {
                 slug,
                 title: data.title,
-                desc: data.desc,
+                desc: data.description,
                 date: data.date,
                 image: data.image,
                 content: updatedContent,
