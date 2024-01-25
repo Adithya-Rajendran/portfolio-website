@@ -4,7 +4,7 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: "https",
-                hostname: "blog.logrocket.com",
+                hostname: "i.imgur.com",
             },
         ],
     },
