@@ -17,9 +17,7 @@ async function getPosts(): Promise<string[]> {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
-            next: {
-                revalidate: 3600,
-            },
+            cache: "no-store",
         }
     );
 
