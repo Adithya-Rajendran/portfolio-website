@@ -49,7 +49,11 @@ export default function Contact() {
                     const { error } = await sendEmail(formData);
 
                     if (error) {
-                        toast({ description: error, variant: "destructive" });
+                        toast({
+                            description:
+                                "Error sending the message! Please try again.",
+                            variant: "destructive",
+                        });
                         return;
                     }
 
