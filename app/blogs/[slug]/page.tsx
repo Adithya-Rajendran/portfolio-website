@@ -6,6 +6,7 @@ import { components } from "@/components/blogs/md-components";
 import { Metadata } from "next";
 import { PostType } from "@/lib/types";
 import { notFound } from "next/navigation";
+import { Separator } from "@/components/ui/separator";
 
 async function validSlug(slug: string): Promise<boolean> {
     const allSlugs = await getSlugs();
@@ -20,7 +21,16 @@ export default async function RemoteMdxPage({ params }: any) {
     const { post } = await getPostData(params.slug);
     const { content } = post;
 
-    return <ReactMarkdown components={components}>{content}</ReactMarkdown>;
+    return (
+        <>
+            <section className="flex flex-col items-center px-4">
+                <h1 className="text-6xl font-bold">{post.title}</h1>
+                <p className="text-gray-500 p-2">{post.date}</p>
+                <Separator className="dark:bg-gray-500" />
+            </section>
+            <ReactMarkdown components={components}>{content}</ReactMarkdown>
+        </>
+    );
 }
 
 export async function generateMetadata({ params }: any): Promise<Metadata> {

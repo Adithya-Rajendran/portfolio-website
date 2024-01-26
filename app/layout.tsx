@@ -5,7 +5,7 @@ import ActiveSectionContextProvider from "@/context/active-section-context";
 import Footer from "@/components/footer";
 import ThemeSwitch from "@/components/theme-switch";
 import ThemeContextProvider from "@/context/theme-context";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -36,7 +36,7 @@ export default function RootLayout({
                         {children}
                         <Footer />
 
-                        <Toaster position="top-right" />
+                        <Toaster />
                         <ThemeSwitch />
                     </ActiveSectionContextProvider>
                 </ThemeContextProvider>
