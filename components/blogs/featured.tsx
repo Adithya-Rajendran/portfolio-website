@@ -1,12 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
-import { PostType } from "@/lib/types";
+import { getAllPosts } from "@/context/markdown-posts";
 
-export default function Featured({
-    featuredPosts,
-}: {
-    featuredPosts: PostType[];
-}) {
+export default async function Featured() {
+    const allPosts = await getAllPosts();
+    const featured = ["ffuf", "nmap", "test"];
+    const featuredPosts = allPosts.filter((post) =>
+        featured.includes(post.slug)
+    );
+
     return (
         <section className="container mx-auto px-6 mb-12">
             <h2 className="text-2xl font-bold mb-4">Featured Posts</h2>
