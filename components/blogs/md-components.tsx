@@ -32,7 +32,7 @@ function Para({
     ...props
 }: { children: ReactNode } & HTMLAttributes<HTMLParagraphElement>) {
     return (
-        <p className="my-4 text-base" {...props}>
+        <p className="my-1 text-base" {...props}>
             {children}
         </p>
     );
