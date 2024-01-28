@@ -1,10 +1,12 @@
-import About from "@/components/portfolio/about";
-import Contact from "@/components/portfolio/contact";
-import Experience from "@/components/portfolio/experience";
+import dynamic from "next/dynamic";
+
 import Intro from "@/components/portfolio/intro";
-import Projects from "@/components/portfolio/projects";
 import SectionDivider from "@/components/section-divider";
-import Skills from "@/components/portfolio/skills";
+import About from "@/components/portfolio/about";
+const Projects = dynamic(() => import("@/components/portfolio/projects"));
+const Skills = dynamic(() => import("@/components/portfolio/skills"));
+const Experience = dynamic(() => import("@/components/portfolio/experience"));
+const Contact = dynamic(() => import("@/components/portfolio/contact"));
 
 export default function Home() {
     return (
