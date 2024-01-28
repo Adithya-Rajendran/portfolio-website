@@ -1,13 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getAllPosts } from "@/context/markdown-posts";
+import { getPostContent } from "@/context/markdown-posts";
+import { PostType } from "@/lib/types";
 
 export default async function Featured() {
-    const allPosts = await getAllPosts();
-    const featured = ["ffuf", "nmap", "test"];
-    const featuredPosts = allPosts.filter((post) =>
-        featured.includes(post.slug)
-    );
+    const featured = ["homelab", "nmap", "test"];
+    const allPostsPromises = featured.map((slug) => getPostContent(slug));
+    const featuredPostsUnfiltered = await Promise.all(allPostsPromises);
+    const featuredPosts = featuredPostsUnfiltered.filter(
+        (post) => post !== undefined
+    ) as PostType[];
 
     return (
         <section className="container mx-auto px-6 mb-12">

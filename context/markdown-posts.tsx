@@ -55,7 +55,6 @@ export async function getPostContent(
             throw new Error(errorMessage);
         }
 
-        // Construct the file path using the provided slug
         const filePath = path.join(folderPath, `${slug}.md`);
 
         // Fetch markdown content from GitHub
@@ -71,7 +70,6 @@ export async function getPostContent(
             }
         );
 
-        // Handle response errors
         if (!response.ok) {
             if (response.status === 404) {
                 const errorMessage = "Requested resource is not found.";

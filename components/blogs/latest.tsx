@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { getAllPosts } from "@/context/markdown-posts";
+import { getSlugs, getPostContent } from "@/context/markdown-posts";
 import Image from "next/image";
+import { PostType } from "@/lib/types";
 import {
     Carousel,
     CarouselContent,
@@ -10,7 +11,23 @@ import {
 } from "@/components/ui/carousel";
 
 export default async function Latest() {
-    const sortedPosts = await getAllPosts();
+    const slugs = await getSlugs();
+
+    if (!slugs) {
+        return;
+    }
+
+    const allPostsPromises = slugs.map((slug) => getPostContent(slug));
+    const allPostsUnfiltered = await Promise.all(allPostsPromises);
+    const allPosts = allPostsUnfiltered.filter(
+        (post) => post !== undefined
+    ) as PostType[];
+
+    const sortedPosts = allPosts.sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+    });
 
     const currentDate = new Date(); // cannot consolidate or it will try to convert PST dates into PST
     const currentDatePST = new Date(

@@ -47,10 +47,10 @@ export async function generateMetadata({
     };
 }
 
-export const generateStaticParams = async () => {
+export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
     const slugs = await getSlugs();
     if (!slugs) {
-        return;
+        return [];
     }
     const paths = slugs.map((slug) => ({ slug: slug }));
 
