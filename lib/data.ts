@@ -1,13 +1,19 @@
 import React from "react";
+
+import { ProjectType } from "./types";
+import { ExperienceType } from "./types";
+
 import { FaPython } from "react-icons/fa";
 import { BsShieldLock } from "react-icons/bs";
 import { LuGraduationCap } from "react-icons/lu";
+
 import djangoImg from "@/public/django.webp";
 import serverImg from "@/public/homelab.webp";
 import dirsearchImg from "@/public/dirsearch.webp";
 import portscanImg from "@/public/portscan.webp";
 import htbImg from "@/public/htb.webp";
 import thmImg from "@/public/thm.webp";
+import nextImg from "@/public/nextjs-website.png";
 
 export const links = [
     {
@@ -40,7 +46,7 @@ export const links = [
     },
 ] as const;
 
-export const experiencesData = [
+export const experiencesData: readonly ExperienceType[] = [
     {
         title: "Graduated University of California, Santa Cruz",
         org: "University",
@@ -70,11 +76,24 @@ export const experiencesData = [
     },
 ] as const;
 
-export const projectsData = [
+export const projectsData: readonly ProjectType[] = [
+    {
+        title: "NextJS Portfolio + Blog Website",
+        description:
+            "This website that you are viewing! I was unsatisfied with how the previous portfolio website looked and felt so I wanted to remake the website. Using common technologies like Tailwind CSS, Typescript, Framer Motion, and React Markdown to ensure a smooth user experience.",
+        tags: ["NextJS", "Typescript", "APIs", "Javascript", "Caching"],
+        imageUrl: nextImg,
+    },
+    {
+        title: "",
+        description: "",
+        tags: [""],
+        imageUrl: "",
+    },
     {
         title: "Django Portfolio + CMS",
         description:
-            "Build a full-fledged portfolio using Django integrated with Postgres db and created the required models for controlled CMS integration.",
+            "Build a full-fledged portfolio using Django integrated with Postgres DB and created the required models for controlled CMS integration.",
         tags: ["Django", "PostgreDB", "Docker", "HTML", "Python"],
         imageUrl: djangoImg,
     },
@@ -139,7 +158,7 @@ export const projectsData = [
             "Bloodhound",
             "dirbuster",
             "Active Directory",
-            "nmap",
+            "Nmap",
             "ffuf",
             "Network Security",
         ],
@@ -147,7 +166,7 @@ export const projectsData = [
     },
 ] as const;
 
-export const skillsData = [
+export const skillsData: readonly string[] = [
     "Cloud Security",
     "Incident Response",
     "Network Security",
@@ -155,6 +174,7 @@ export const skillsData = [
     "SIEM",
     "Vulnerability Assessment",
     "AWS",
+    "Active Directory",
     "Linux/Unix",
     "Security Policies",
     "Docker",
@@ -170,7 +190,6 @@ export const skillsData = [
     "TypeScript",
     "React",
     "Next.js",
-    "Node.js",
     "Git",
     "Tailwind",
     "Prisma",
