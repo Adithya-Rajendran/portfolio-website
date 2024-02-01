@@ -91,7 +91,6 @@ async function ImageComponent({
         image = await getImageData(src);
     }
 
-    // Render the Image component with the processed image data or placeholder content
     return image ? (
         <Image
             src={image}
@@ -112,32 +111,17 @@ interface LinkProps extends HTMLAttributes<HTMLAnchorElement> {
 }
 
 function LinkComponent({ href, children, ...props }: LinkProps) {
-    // Check if the link is an internal link (starts with "/")
-    const isInternalLink = href && href.startsWith("/");
-
-    if (isInternalLink) {
-        // Use next/link for internal links
-        return (
-            <Link href={href}>
-                <a className="text-blue-500 hover:underline" {...props}>
-                    {children}
-                </a>
-            </Link>
-        );
-    } else {
-        // Use a regular anchor tag for external links
-        return (
-            <a
-                href={href}
-                className="text-blue-500 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-                {...props}
-            >
-                {children}
-            </a>
-        );
-    }
+    return (
+        <a
+            href={href}
+            className="text-blue-500 hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+            {...props}
+        >
+            {children}
+        </a>
+    );
 }
 
 function CodeBlock({ node, inline, className, children, ...props }: any) {
