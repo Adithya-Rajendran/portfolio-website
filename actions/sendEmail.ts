@@ -2,6 +2,8 @@
 
 import nodemailer from "nodemailer";
 import { validateString, getErrorMessage, validateEmail } from "@/lib/utils";
+import ContactFormEmail from "@/email/contact-form-email";
+import { render } from "@react-email/components";
 
 const emailCredentials = {
     user: process.env.EMAIL_USER,
@@ -37,11 +39,12 @@ export const sendEmail = async (formData: FormData) => {
 
     let data;
     try {
-        data = await transporter.sendMail({
+        data = transporter.sendMail({
             from: `"Contact Form" <${emailCredentials.user}>`,
             to: "adithyaraj@gmail.com, work@adithya-rajendran.com",
             subject: "Contact Form for My Website",
             text: `Message: ${message}\nSender Email: ${senderEmail}`,
+            html: render(ContactFormEmail({ message, senderEmail })),
         });
     } catch (error: unknown) {
         return {
