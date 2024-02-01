@@ -16,10 +16,9 @@ export async function getSlugs(): Promise<string[] | undefined> {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
-                cache: "no-store",
-                // next: {
-                //     revalidate: 3600,
-                // },
+                next: {
+                    revalidate: 3600,
+                },
             }
         );
 
@@ -64,10 +63,9 @@ export async function getPostContent(
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
-                cache: "no-store",
-                // next: {
-                //     revalidate: 3600,
-                // },
+                next: {
+                    revalidate: 3600,
+                },
             }
         );
 
