@@ -1,7 +1,6 @@
 import path from "path";
 import { PostType } from "@/lib/types";
 import matter from "gray-matter";
-import mime from "mime-types";
 
 const repoOwner = process.env.GITHUB_NAME;
 const repoName = process.env.GITHUB_REPO;
