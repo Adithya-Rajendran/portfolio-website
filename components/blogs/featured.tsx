@@ -4,7 +4,7 @@ import { getPostContent } from "@/context/markdown-posts";
 import { PostType } from "@/lib/types";
 
 export default async function Featured() {
-    const featured = ["homelab", "nmap", "test"];
+    const featured = ["homelab", "htb-poison-writeup", "active-directory-lab"];
     const allPostsPromises = featured.map((slug) => getPostContent(slug));
     const featuredPostsUnfiltered = await Promise.all(allPostsPromises);
     const featuredPosts = featuredPostsUnfiltered.filter(

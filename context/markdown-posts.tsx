@@ -1,6 +1,7 @@
 import path from "path";
 import { PostType } from "@/lib/types";
 import matter from "gray-matter";
+import mime from "mime-types";
 
 const repoOwner = process.env.GITHUB_NAME;
 const repoName = process.env.GITHUB_REPO;
@@ -15,9 +16,10 @@ export async function getSlugs(): Promise<string[] | undefined> {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
-                next: {
-                    revalidate: 3600,
-                },
+                cache: "no-store",
+                // next: {
+                //     revalidate: 3600,
+                // },
             }
         );
 
@@ -26,11 +28,9 @@ export async function getSlugs(): Promise<string[] | undefined> {
         }
 
         const data = await response.json();
-        const fileNames = data.map((file: any) => file.name);
-
-        const slugs = fileNames.map(
-            (fileName: string) => path.parse(fileName).name
-        );
+        const slugs = data
+            .filter((file: any) => file.type !== "dir")
+            .map((file: any) => path.parse(file.name).name);
 
         return slugs;
     } catch (error) {
@@ -64,9 +64,10 @@ export async function getPostContent(
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
-                next: {
-                    revalidate: 3600,
-                },
+                cache: "no-store",
+                // next: {
+                //     revalidate: 3600,
+                // },
             }
         );
 
@@ -105,6 +106,38 @@ export async function getPostContent(
         return post;
     } catch (error) {
         console.error("Error fetching data from GitHub:", error);
+        return;
+    }
+}
+
+export async function getImageData(src: string): Promise<string | undefined> {
+    try {
+        const response = await fetch(
+            `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPath}/${src}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                cache: "no-store",
+                // next: {
+                //     revalidate: 3600,
+                // },
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+        }
+
+        const imageData = await response.json();
+
+        if (!imageData.content) {
+            throw new Error("Image content not found in response");
+        }
+
+        return imageData.content;
+    } catch (error) {
+        console.error("Error getting image data:", error);
         return;
     }
 }

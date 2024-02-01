@@ -4,6 +4,7 @@ import { atomDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { Components } from "react-markdown";
 import Image from "next/image";
 import Link from "next/link";
+import { getImageData } from "@/context/markdown-posts";
 
 interface HeadingProps extends HTMLAttributes<HTMLHeadingElement> {
     children: ReactNode;
@@ -78,9 +79,27 @@ interface ImageProps extends HTMLAttributes<HTMLImageElement> {
     height: number;
 }
 
-function ImageComponent({ src, alt, width, height, ...props }: ImageProps) {
-    //width 10000 so it takes up the size of the container
-    return <Image src={src} alt={alt} width="10000" height="0" {...props} />;
+async function ImageComponent({
+    src,
+    alt,
+    width,
+    height,
+    ...props
+}: ImageProps) {
+    const processedImageData = await getImageData(src);
+
+    // Render the Image component with the processed image data or placeholder content
+    return processedImageData ? (
+        <Image
+            src={`data:image/png;base64,${processedImageData}`}
+            alt={alt}
+            width="1000"
+            height="500"
+            {...props}
+        />
+    ) : (
+        <div>No image available</div>
+    );
 }
 
 interface LinkProps extends HTMLAttributes<HTMLAnchorElement> {
