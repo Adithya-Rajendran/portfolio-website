@@ -99,58 +99,13 @@ export async function getPostContent(
             title: data.title,
             desc: data.description,
             date: data.date,
-            image: data.image.startsWith("images/")
-                ? await getImageData(data.image)
-                : data.image,
+            image: data.image,
             content: updatedContent,
         };
 
         return post;
     } catch (error) {
         console.error("Error fetching data from GitHub:", error);
-        return;
-    }
-}
-
-export async function getImageData(src: string): Promise<string | undefined> {
-    try {
-        const response = await fetch(
-            `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPath}/${src}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-                next: {
-                    revalidate: 86400, //1 day
-                },
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch image: ${response.statusText}`);
-        }
-
-        const imageData = await response.json();
-
-        if (!imageData.content) {
-            throw new Error("Image content not found in response");
-        }
-
-        const fileName = imageData.name;
-
-        const lastDotIndex = fileName.lastIndexOf(".");
-        const extension =
-            lastDotIndex !== -1 ? fileName.substring(lastDotIndex + 1) : "";
-
-        const allowedExtensions = ["png", "jpg", "jpeg", "gif"];
-
-        if (!allowedExtensions.includes(extension.toLowerCase())) {
-            throw new Error("Unsupported file extension");
-        }
-
-        return `data:image/${extension};base64, ${imageData.content}`;
-    } catch (error) {
-        console.error("Error getting image data:", error);
         return;
     }
 }

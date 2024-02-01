@@ -3,8 +3,6 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { Components } from "react-markdown";
 import Image from "next/image";
-import Link from "next/link";
-import { getImageData } from "@/context/markdown-posts";
 
 interface HeadingProps extends HTMLAttributes<HTMLHeadingElement> {
     children: ReactNode;
@@ -86,22 +84,15 @@ async function ImageComponent({
     height,
     ...props
 }: ImageProps) {
-    let image: string | undefined = src;
-    if (src.startsWith("images/")) {
-        image = await getImageData(src);
-    }
-
-    return image ? (
+    return (
         <Image
-            src={image}
+            src={src}
             alt={alt}
             width="1000"
             height="500"
             loading="lazy"
             {...props}
         />
-    ) : (
-        <div>No image available</div>
     );
 }
 
