@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getSlugs, getPostContent } from "@/context/markdown-posts";
+import { getSlugs, getPostContent } from "@/components/blogs/markdown-posts";
 import Image from "next/image";
 import { PostType } from "@/lib/types";
 import {

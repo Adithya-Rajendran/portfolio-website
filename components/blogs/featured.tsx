@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getPostContent } from "@/context/markdown-posts";
+import { getPostContent } from "@/components/blogs/markdown-posts";
 import { PostType } from "@/lib/types";
 
 export default async function Featured() {

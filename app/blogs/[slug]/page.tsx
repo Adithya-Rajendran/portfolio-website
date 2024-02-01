@@ -1,6 +1,6 @@
 "use server";
 
-import { getPostContent, getSlugs } from "@/context/markdown-posts";
+import { getPostContent, getSlugs } from "@/components/blogs/markdown-posts";
 import ReactMarkdown from "react-markdown";
 import { components } from "@/components/blogs/md-components";
 import { Metadata } from "next";
