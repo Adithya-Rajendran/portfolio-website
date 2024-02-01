@@ -86,15 +86,19 @@ async function ImageComponent({
     height,
     ...props
 }: ImageProps) {
-    const processedImageData = await getImageData(src);
+    let image: string | undefined = src;
+    if (src.startsWith("images/")) {
+        image = await getImageData(src);
+    }
 
     // Render the Image component with the processed image data or placeholder content
-    return processedImageData ? (
+    return image ? (
         <Image
-            src={`data:image/png;base64,${processedImageData}`}
+            src={image}
             alt={alt}
             width="1000"
             height="500"
+            loading="lazy"
             {...props}
         />
     ) : (

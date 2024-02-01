@@ -99,7 +99,9 @@ export async function getPostContent(
             title: data.title,
             desc: data.description,
             date: data.date,
-            image: data.image,
+            image: data.image.startsWith("images/")
+                ? await getImageData(data.image)
+                : data.image,
             content: updatedContent,
         };
 
@@ -118,10 +120,9 @@ export async function getImageData(src: string): Promise<string | undefined> {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
-                cache: "no-store",
-                // next: {
-                //     revalidate: 3600,
-                // },
+                next: {
+                    revalidate: 86400, //1 day
+                },
             }
         );
 
@@ -135,7 +136,19 @@ export async function getImageData(src: string): Promise<string | undefined> {
             throw new Error("Image content not found in response");
         }
 
-        return imageData.content;
+        const fileName = imageData.name;
+
+        const lastDotIndex = fileName.lastIndexOf(".");
+        const extension =
+            lastDotIndex !== -1 ? fileName.substring(lastDotIndex + 1) : "";
+
+        const allowedExtensions = ["png", "jpg", "jpeg", "gif"];
+
+        if (!allowedExtensions.includes(extension.toLowerCase())) {
+            throw new Error("Unsupported file extension");
+        }
+
+        return `data:image/${extension};base64, ${imageData.content}`;
     } catch (error) {
         console.error("Error getting image data:", error);
         return;
