@@ -14,6 +14,7 @@ import portscanImg from "@/public/portscan.webp";
 import htbImg from "@/public/htb.webp";
 import thmImg from "@/public/thm.webp";
 import nextImg from "@/public/nextjs-website.png";
+import adImg from "@/public/ADNetworkOverview.png";
 
 export const links = [
     {
@@ -85,10 +86,18 @@ export const projectsData: readonly ProjectType[] = [
         imageUrl: nextImg,
     },
     {
-        title: "",
-        description: "",
-        tags: [""],
-        imageUrl: "",
+        title: "Active Directory Lab",
+        description:
+            "Set up an Active Directory network, with a Domain Controller, and two clients all connected to a Wazuh server for alerts. Then I connected my linux machine to this network and performed and documented the common AD attacks. I talk more about this on my blogs.",
+        tags: [
+            "Active Directory",
+            "Automation",
+            "SIEM",
+            "Pentesting",
+            "Wazuh",
+            "Pfsense",
+        ],
+        imageUrl: adImg,
     },
     {
         title: "Django Portfolio + CMS",
