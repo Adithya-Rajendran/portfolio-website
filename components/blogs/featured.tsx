@@ -24,12 +24,14 @@ export default async function Featured() {
                             alt={`Blog post thumbnail for ${post.title}`}
                             className="w-full h-auto object-cover"
                             height="400"
+                            width="700"
                             src={post.image}
+                            loading="eager"
+                            priority={true}
                             style={{
                                 aspectRatio: "700/400",
-                                objectFit: "none",
+                                objectFit: "cover",
                             }}
-                            width="700"
                         />
                         <div className="p-6">
                             <h3 className="text-2xl font-bold mb-2">
@@ -59,12 +61,13 @@ export default async function Featured() {
                                 alt={`Blog post thumbnail for ${post.title}`}
                                 className="w-full h-auto object-cover"
                                 height="300"
+                                width="700"
                                 src={post.image}
+                                loading="eager"
                                 style={{
                                     aspectRatio: "700/300",
                                     objectFit: "cover",
                                 }}
-                                width="700"
                             />
                             <div className="p-6">
                                 <h3 className="text-2xl font-bold mb-2">
