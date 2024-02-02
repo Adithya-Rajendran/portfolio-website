@@ -134,7 +134,7 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
         </SyntaxHighlighter>
     ) : (
         <span
-            className={`text-red-300 bg-gray-700 dark:bg-black rounded-md px-1.5 ${className}`}
+            className={` text-amber-200 dark:text-amber-600 bg-black rounded-md px-1.5 ${className}`}
             {...props}
         >
             {children}
