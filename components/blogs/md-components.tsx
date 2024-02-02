@@ -90,7 +90,10 @@ async function ImageComponent({
             alt={alt}
             width="1000"
             height="500"
-            loading="lazy"
+            style={{
+                objectFit: "scale-down",
+            }}
+            loading="eager"
             {...props}
         />
     );
@@ -123,6 +126,8 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
             style={atomDark}
             language={match[1]}
             PreTag="div"
+            wrapLines={true}
+            wrapLongLines={true}
             {...props}
         >
             {String(children).replace(/\n$/, "")}
