@@ -26,8 +26,9 @@ export default function VisitBlogs() {
             <SectionHeading>Visit my Blogs</SectionHeading>
 
             <p className="text-gray-700 -mt-6 dark:text-white/80 pb-10">
-                Check out my blog where I talk about topics I have learned about
-                and the projects I have undertaken.
+                Join me on my learning adventure as a tech enthusiast! Explore
+                my blog to discover the fascinating topics I've been delving
+                into and the projects I'm passionately tackling.
             </p>
             <Button className=" bg-amber-600 dark:bg-amber-600" asChild>
                 <Link href="/blogs">Visit my Blogs</Link>
