@@ -8,7 +8,7 @@ import { HiDownload } from "react-icons/hi";
 import { FaGithubSquare } from "react-icons/fa";
 import { useSectionInView } from "@/lib/hooks";
 import { useActiveSectionContext } from "@/context/active-section-context";
-import heroImg from "@/public/hero.png";
+import heroImg from "@/public/hero.webp";
 
 export default function Intro() {
     const { ref } = useSectionInView("Home", 0.5);

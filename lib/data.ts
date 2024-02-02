@@ -13,8 +13,8 @@ import dirsearchImg from "@/public/dirsearch.webp";
 import portscanImg from "@/public/portscan.webp";
 import htbImg from "@/public/htb.webp";
 import thmImg from "@/public/thm.webp";
-import nextImg from "@/public/nextjs-website.png";
-import adImg from "@/public/ADNetworkOverview.png";
+import nextImg from "@/public/nextjs-website.webp";
+import adImg from "@/public/ADNetworkOverview.webp";
 
 export const links = [
     {
