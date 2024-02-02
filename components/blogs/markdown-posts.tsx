@@ -82,20 +82,30 @@ export async function getPostContent(
         const fileData = await response.json();
         const markdownContent = atob(fileData.content); // Decode Base64 content
         const { data, content } = matter(markdownContent);
+        const scheduledDate = new Date(`${data.date}T00:00:00.000-08:00`);
+        const formattedDate = scheduledDate.toLocaleDateString("en-US", {
+            timeZone: "America/Los_Angeles",
+        });
 
         // Hide content from posts that are scheduled to be released later.
-        const currentDate = new Date().getTime();
+        const currentDatePST = new Date(
+            new Date().toLocaleString("en-US", {
+                timeZone: "America/Los_Angeles",
+            })
+        );
+
         let updatedContent = content;
-        if (data.date && new Date(data.date).getTime() > currentDate) {
-            const formattedDate = `${new Date(data.date).toLocaleDateString()}`;
-            updatedContent = `# Coming soon on ${formattedDate}`;
+        if (data.date) {
+            if (scheduledDate > currentDatePST) {
+                updatedContent = `# Coming soon on ${formattedDate}`;
+            }
         }
 
         const post: PostType = {
             slug: slug,
             title: data.title,
             desc: data.description,
-            date: data.date,
+            date: formattedDate,
             image: data.image,
             content: updatedContent,
         };

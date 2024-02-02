@@ -36,9 +36,7 @@ export default async function Latest() {
 
     // Filter posts that are less than or equal to the current date or have undefined dates
     const availablePosts = sortedPosts.filter((post) => {
-        const postDateObj = post.date
-            ? new Date(`${post.date}T00:00:00.000-08:00`)
-            : null;
+        const postDateObj = post.date ? new Date(post.date) : null;
         return !postDateObj || postDateObj <= currentDatePST;
     });
 
