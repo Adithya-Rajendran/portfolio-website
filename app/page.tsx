@@ -7,6 +7,7 @@ const Projects = dynamic(() => import("@/components/portfolio/projects"));
 const Skills = dynamic(() => import("@/components/portfolio/skills"));
 const Experience = dynamic(() => import("@/components/portfolio/experience"));
 const Contact = dynamic(() => import("@/components/portfolio/contact"));
+const VisitBlogs = dynamic(() => import("@/components/portfolio/visit-blog"));
 
 export default function Home() {
     return (
@@ -18,6 +19,7 @@ export default function Home() {
             <Skills />
             <Experience />
             <Contact />
+            <VisitBlogs />
         </main>
     );
 }
