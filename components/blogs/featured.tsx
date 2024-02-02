@@ -27,7 +27,7 @@ export default async function Featured() {
                             src={post.image}
                             style={{
                                 aspectRatio: "700/400",
-                                objectFit: "cover",
+                                objectFit: "none",
                             }}
                             width="700"
                         />
@@ -70,7 +70,7 @@ export default async function Featured() {
                                 <h3 className="text-2xl font-bold mb-2">
                                     {post.title}
                                 </h3>
-                                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                                <p className="text-gray-600 h-12 overflow-hidden dark:text-gray-400 mb-4">
                                     {post.desc}
                                 </p>
                                 <Link

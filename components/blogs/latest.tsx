@@ -50,13 +50,16 @@ export default async function Latest() {
                     {availablePosts.map((post) => (
                         <CarouselItem
                             key={post.slug}
-                            className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full lg:basis-1/4 md:basis-1/3 sm:w-80"
+                            className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full xl:basis-1/4 lg:basis-1/3 md:basis-1/2 sm:w-80"
                         >
                             <Image
                                 src={post.image}
                                 alt={post.title}
                                 width="350"
                                 height="200"
+                                style={{
+                                    objectFit: "scale-down",
+                                }}
                                 loading="lazy"
                                 className="h-64"
                             />
