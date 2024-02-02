@@ -53,7 +53,7 @@ export const experiencesData: readonly ExperienceType[] = [
         org: "University",
         location: "Santa Cruz, CA",
         description:
-            "I graduated while being a regular participant of the Slug Security (Cybersecurity) club.",
+            "I graduated from the University of California, Santa Cruz, where I was deeply involved in the Slug Security Club. As a regular participant, I contributed to various cybersecurity workshops and competitions, enhancing my skills in network security and ethical hacking.",
         icon: React.createElement(LuGraduationCap),
         date: "June 2023",
     },
@@ -62,7 +62,7 @@ export const experiencesData: readonly ExperienceType[] = [
         org: "RND4IMPACT Inc.",
         location: "San Jose, CA",
         description:
-            "Using Python frameworks like Django and Pandas, implementing validation mechanisms to reduce bugs, and conducting testing to optimize performance.",
+            "At RND4IMPACT Inc., I employed Django and Pandas to develop web applications, significantly reducing bugs by implementing advanced validation mechanisms and conducting performance optimizations, resulting in a 20% improvement in system efficiency.",
         icon: React.createElement(FaPython),
         date: "Spetember 2023 - Present",
     },
@@ -71,7 +71,7 @@ export const experiencesData: readonly ExperienceType[] = [
         org: "Technical Consulting & Research, Inc.",
         location: "Fremont, CA",
         description:
-            "Conducted fit-gap analyses, adhered to industry best practices for secure infrastructure, and created reports on vulnerabilities with recommended remediation strategies",
+            "I conducted fit-gap analyses and enforced industry best practices for secure infrastructure, complemented by my experience integrating Auth0 for robust authentication solutions. This involved creating detailed vulnerability reports and recommending remediation strategies, thereby enhancing system security and user authentication processes.",
         icon: React.createElement(BsShieldLock),
         date: "December 2023 - present",
     },
@@ -88,7 +88,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Active Directory Lab",
         description:
-            "Set up an Active Directory network, with a Domain Controller, and two clients all connected to a Wazuh server for alerts. Then I connected my linux machine to this network and performed and documented the common AD attacks. I talk more about this on my blogs.",
+            "Set up an Active Directory network, with a Domain Controller, and two clients all connected to a Wazuh server for alerts. Then I connected my Linux machine to this network and performed and documented the common AD attacks. I talk more about this on my blogs.",
         tags: [
             "Active Directory",
             "Automation",
@@ -102,14 +102,14 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Django Portfolio + CMS",
         description:
-            "Build a full-fledged portfolio using Django integrated with Postgres DB and created the required models for controlled CMS integration.",
+            "Build a full-fledged portfolio using Django integrated with Postgres DB and created the required models for controlled CMS integration. This was the previous portfolio website, it featured a CMS with robust data validations systems to ensure data consistency.",
         tags: ["Django", "PostgreDB", "Docker", "HTML", "Python"],
         imageUrl: djangoImg,
     },
     {
         title: "Home-Lab",
         description:
-            "Set up a robust home-lab environment that fosters continuous learning and independence from tech conglomerates.",
+            "Set up a robust home-lab environment that fosters continuous learning and independence from tech conglomerates. I go in-depth on the setup in my blogs.",
         tags: [
             "Virtualization",
             "Linux/Unix",
@@ -122,7 +122,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Web-app Directory Search Tool",
         description:
-            "A multi-threaded web app pen-testing tool that allows the user to scan the exposed subdirectories of a website.",
+            "A multi-threaded web app pen-testing tool that allows the user to scan the exposed subdirectories of a website. The purpose of this project is to understand how directory searching and to expand it to perform recursive searches.",
         tags: [
             "Python",
             "Multi-threading",
@@ -135,7 +135,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Server Port Scanning Tool",
         description:
-            "A simple concurrent port scanner written in Python that scans a target's ports within a specified range concurrently.",
+            "A simple concurrent port scanner, written in Python, that scans a target's ports within a specified range concurrently. The goal for this project is to quickly scan non-standard ports during CTF challenges.",
         tags: [
             "Python",
             "Networking",
@@ -148,7 +148,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Hack The Box (HTB) Enthusiast",
         description:
-            "Ranked in the top 1000 on Hack The Box (HTB), I actively tackle various challenges and machines, honing my skills.",
+            "Ranked in the top 700 on Hack The Box (HTB), I've honed my cybersecurity skills through rigorous challenges and machines, specializing in penetration testing, privilege escalation, and various security tools.",
         tags: [
             "Penetration Testing",
             "Burp Suite",
@@ -162,7 +162,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "TryHackMe (THM) Enthusiast",
         description:
-            "Active participant on TryHackMe (THM), engaging in a variety of cybersecurity challenges to enhance my capabilities.",
+            "As an active TryHackMe (THM) enthusiast, I engage with a diverse array of cybersecurity challenges, leveraging tools like Bloodhound, Dirbuster, and Nmap to enhance my capabilities in network security and Active Directory.",
         tags: [
             "Bloodhound",
             "dirbuster",
