@@ -17,16 +17,20 @@ export default async function RemoteMdxPage({
     if (!post) {
         return notFound();
     }
-    const { content } = post;
 
     return (
         <>
             <section className="flex flex-col items-center px-4">
-                <h1 className="text-6xl font-bold">{post.title}</h1>
+                <h1 className="text-6xl font-bold text-center">{post.title}</h1>
                 <p className="text-gray-500 p-2">{post.date}</p>
+                <p className="dark:text-cyan-300 text-cyan-900 text-justify">
+                    {post.desc}
+                </p>
                 <Separator className="dark:bg-gray-500" />
             </section>
-            <ReactMarkdown components={components}>{content}</ReactMarkdown>
+            <ReactMarkdown components={components}>
+                {post.content}
+            </ReactMarkdown>
         </>
     );
 }
