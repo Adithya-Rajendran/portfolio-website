@@ -5,12 +5,8 @@ import { motion } from "framer-motion";
 import { links } from "@/lib/data";
 import Link from "next/link";
 import clsx from "clsx";
-import { useActiveSectionContext } from "@/context/active-section-context";
 
 export default function Header() {
-    const { activeSection, setActiveSection, setTimeOfLastClick } =
-        useActiveSectionContext();
-
     return (
         <header className="z-[999] relative">
             <motion.div
@@ -30,17 +26,9 @@ export default function Header() {
                         >
                             <Link
                                 className={clsx(
-                                    "flex w-full items-center justify-center px-3 py-3 hover:text-gray-950 transition dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 hover:rounded-full dark:hover:bg-gray-800",
-                                    {
-                                        "text-gray-950 dark:text-gray-200":
-                                            activeSection === link.name,
-                                    }
+                                    "flex w-full items-center justify-center px-3 py-3 hover:text-gray-950 transition dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 hover:rounded-full dark:hover:bg-gray-800"
                                 )}
                                 href={link.hash}
-                                onClick={() => {
-                                    setActiveSection(link.name);
-                                    setTimeOfLastClick(Date.now());
-                                }}
                             >
                                 {link.name}
                             </Link>
