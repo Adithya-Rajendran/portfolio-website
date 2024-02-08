@@ -56,7 +56,7 @@ export const links = [
 export const certData: readonly CertificateType[] = [
     {
         title: "AWS Certified Solutions Architect",
-        org: "Amazon Web Services (AWS)",
+        org: "AWS",
         startDate: "September 2023",
         endDate: "September 2026",
         badge: AWSImg,
