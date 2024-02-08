@@ -208,25 +208,17 @@ export const projectsData: readonly ProjectType[] = [
     },
 ] as const;
 
-export const skillsData: readonly string[] = [
-    "Wazuh",
-    "SIEM",
-    "Snort",
-    "Burp Suite",
-    "Metasploit",
-    "Nmap",
+export const devopskillsData: readonly string[] = [
     "AWS",
-    "Okta Auth0",
     "XCP-NG",
-    "OPNSense",
     "Linux/Unix",
     "Docker",
     "Kubernetes",
-    "Firewalls",
     "Active Directory",
-    "MITRE ATT&CK",
-    "NIST",
     "Git",
+] as const;
+
+export const devSkillsData: readonly string[] = [
     "TypeScript",
     "React",
     "Next.js",
@@ -239,4 +231,18 @@ export const skillsData: readonly string[] = [
     "Django",
     "DynamoDB",
     "PostgreSQL",
+];
+
+export const cyberSkillsData: readonly string[] = [
+    "Wazuh",
+    "SIEM",
+    "Snort",
+    "Burp Suite",
+    "Metasploit",
+    "Nmap",
+    "Okta Auth0",
+    "OPNSense",
+    "Firewalls",
+    "MITRE ATT&CK",
+    "NIST",
 ] as const;
