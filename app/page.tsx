@@ -8,6 +8,7 @@ const Skills = dynamic(() => import("@/components/portfolio/skills"));
 const Experience = dynamic(() => import("@/components/portfolio/experience"));
 const Contact = dynamic(() => import("@/components/portfolio/contact"));
 const VisitBlogs = dynamic(() => import("@/components/portfolio/visit-blog"));
+import Certifications from "@/components/portfolio/certifications";
 
 export default function Home() {
     return (
@@ -17,6 +18,7 @@ export default function Home() {
             <About />
             <Projects />
             <Skills />
+            <Certifications />
             <Experience />
             <Contact />
             <VisitBlogs />

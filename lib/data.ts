@@ -1,7 +1,6 @@
 import React from "react";
 
-import { ProjectType } from "./types";
-import { ExperienceType } from "./types";
+import { ProjectType, ExperienceType, CertificateType } from "./types";
 
 import { FaPython } from "react-icons/fa";
 import { BsShieldLock } from "react-icons/bs";
@@ -15,6 +14,9 @@ import htbImg from "@/public/htb.webp";
 import thmImg from "@/public/thm.webp";
 import nextImg from "@/public/nextjs-website.webp";
 import adImg from "@/public/ADNetworkOverview.webp";
+import AWSImg from "@/public/AWS.webp";
+import SecImg from "@/public/CompTIA_Security.webp";
+import MTAImg from "@/public/MTA-Security-Fundamentals-2018.webp";
 
 export const links = [
     {
@@ -34,6 +36,10 @@ export const links = [
         hash: "/#skills",
     },
     {
+        name: "Certs",
+        hash: "/#certs",
+    },
+    {
         name: "Experience",
         hash: "/#experience",
     },
@@ -46,6 +52,33 @@ export const links = [
         hash: "/blogs",
     },
 ] as const;
+
+export const certData: readonly CertificateType[] = [
+    {
+        title: "AWS Certified Solutions Architect",
+        org: "Amazon Web Services (AWS)",
+        startDate: "September 2023",
+        endDate: "September 2026",
+        badge: AWSImg,
+        verify: "https://www.credly.com/badges/80207866-2bf2-41a0-8c92-991295e79063/",
+    },
+    {
+        title: "CompTIA Security+",
+        org: "CompTIA",
+        startDate: "August 2022",
+        endDate: "August 2025",
+        badge: SecImg,
+        verify: "https://www.credly.com/badges/d856db28-ca1f-4189-a1a0-ff50766f5568",
+    },
+    {
+        title: "MTA: Security Fundamentals",
+        org: "Microsoft",
+        startDate: "May 2018",
+        endDate: "",
+        badge: MTAImg,
+        verify: "https://www.credly.com/badges/b0889cff-2fbc-46c0-b16e-f631fefb024b",
+    },
+];
 
 export const experiencesData: readonly ExperienceType[] = [
     {

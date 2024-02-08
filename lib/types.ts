@@ -26,4 +26,13 @@ export interface ProjectType {
     imageUrl: StaticImageData | string;
 }
 
+export interface CertificateType {
+    title: string;
+    org: string;
+    startDate: string;
+    endDate: string | undefined;
+    badge: StaticImageData | string;
+    verify: string;
+}
+
 export type SectionName = (typeof links)[number]["name"];
