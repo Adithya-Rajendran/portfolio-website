@@ -8,13 +8,79 @@ import ThemeContextProvider from "@/context/theme-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { devSkillsData, devopskillsData, cyberSkillsData } from "@/lib/data";
+import type { Metadata } from "next";
+import type { Viewport } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
+export const metadata: Metadata = {
     title: "Adithya | Personal Portfolio",
     description:
         "Adithya is an enthuastic person who is higly skilled in the fields of cybersecurity and software development",
+    keywords: [
+        "Adithya",
+        "Adithya Rajendran",
+        "Rajendran",
+        "Cybersecurity Analyst",
+        "Software Developer",
+        "CompTIA Security+",
+        "AWS Certified Solutions Architect",
+        "Cloud Engineer",
+        "Full Stack Developer",
+        "Network Security",
+        "Web Development",
+        "Python Programmer",
+        "Cybersecurity Certifications",
+        "Project Management",
+        "Data Analysis",
+        "Cloud Computing",
+        "AWS Certified",
+        "React Developer",
+        "Open Source Contributor",
+        "Information Security",
+        "Penetration Testing",
+        "DevOps Engineer",
+        "Machine Learning Enthusiast",
+        "Blockchain Technology",
+        "Agile Methodology",
+        ...devSkillsData,
+        ...devopskillsData,
+        ...cyberSkillsData,
+    ],
+    robots: {
+        index: true,
+        follow: true,
+    },
+    category: "technology",
+    icons: {
+        icon: "/favicon.ico",
+    },
+    metadataBase: new URL("https://adithya-rajendran.com/"),
+    openGraph: {
+        title: "Adithya | Personal Portfolio",
+        description:
+            "A portfolio website showcasing Adithya's skills and achievements",
+        url: "https://adithya-rajendran.com/",
+        siteName: "Adithya's Portfolio",
+        images: [
+            {
+                url: "https://i.imgur.com/wygHEG3.png",
+                width: 994,
+                height: 548,
+                alt: "Home page",
+            },
+        ],
+        locale: "en_US",
+        type: "website",
+    },
+};
+
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
 };
 
 export default function RootLayout({
