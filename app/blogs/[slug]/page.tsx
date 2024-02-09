@@ -48,6 +48,10 @@ export async function generateMetadata({
     return {
         title: post.title,
         description: post.desc,
+        robots: {
+            index: true,
+            follow: false,
+        },
     };
 }
 
