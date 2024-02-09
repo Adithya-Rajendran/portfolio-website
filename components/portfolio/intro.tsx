@@ -60,6 +60,7 @@ export default function Intro() {
                     href="https://www.linkedin.com/in/adithya-rajendran/"
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label="LinkedIn"
                 >
                     <BsLinkedin />
                 </a>
@@ -69,6 +70,7 @@ export default function Intro() {
                     href="https://github.com/Adithya-Rajendran"
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label="GitHub"
                 >
                     <FaGithubSquare />
                 </a>
