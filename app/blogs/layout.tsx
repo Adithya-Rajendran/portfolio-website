@@ -1,5 +1,5 @@
 export const metadata = {
-    title: "Adithya | Personal Blog",
+    title: "Personal Blogs Homepage",
     description:
         "Join me on my learning journey in cybersecurity, software development, homelabs, and technology. Read along as I share insights, challenges, and discoveries, turning each lesson into a stepping stone towards expertise.",
 };

@@ -1,26 +1,45 @@
-# My personal portfolio
+# My Personal Portfolio
 
-This is my portfolio that was created using Next.js, Framer-motion, Tailwind CSS. It is hosted on Vercel.
+## Overview
 
-I am currently working on expanding it with a blogs page. Stay tuned :)
+This portfolio showcases my projects and skills in web development, particularly using Typescript, Next.js, Framer-motion, and Tailwind CSS. Hosted on Vercel, it reflects my journey and achievements in software development and showcases my skills and achievements.
 
-# Run
+## Features and Technologies
 
-## Install dependencies
+-   **Next.js**: Chosen for SSR and SSG capabilities, enhancing SEO and performance.
+-   **Framer-motion**: Used for smooth, sophisticated animations.
+-   **Tailwind CSS**: Provides a utility-first approach for custom, responsive designs.
+
+## Getting Started
+
+### Prerequisites
+
+-   Node.js (v18.x or later recommended)
+
+### Installation
 
 ```bash
 npm install
 ```
 
-## Development
+Running the Project
 
-```bash
-npm run dev
-```
+    Development: `npm run dev`
+    Production:
 
-## Production
+    ```bash
+    npm run build
+    npm run start
+    ```
 
-```bash
-npm run build
-npm run start
-```
+# Contribution
+
+Contributions are welcome! Please submit any issues or pull requests through GitHub.
+
+# Credits
+
+Inspired by a ByteGrad tutorial on TypeScript and NextJS. Further details and acknowledgments can be found [here](https://youtu.be/sUKptmUVIBM?si=ygmF29AB9rJ99pOW).
+
+# Contact
+
+Feel free to send feedback through the contact form on my website or directly via [LinkedIn](https://www.linkedin.com/in/adithya-rajendran/).
