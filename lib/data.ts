@@ -82,11 +82,14 @@ export const certData: readonly CertificateType[] = [
 
 export const experiencesData: readonly ExperienceType[] = [
     {
-        title: "Graduated University of California, Santa Cruz",
-        org: "University",
+        title: "Bachelor of Science, Computer Science",
+        org: "University of California,",
         location: "Santa Cruz, CA",
-        description:
-            "I graduated from the University of California, Santa Cruz, where I was deeply involved in the Slug Security Club. As a regular participant, I contributed to various cybersecurity workshops and competitions, enhancing my skills in network security and ethical hacking.",
+        description: [
+            "I graduated from the University of California, Santa Cruz, where I was deeply involved in the Slug Security Club.",
+            "As a regular participant, I participated in various cybersecurity workshops and competitions, enhancing my skills in network security and ethical hacking.",
+            "Relevant Coursework: Computer Systems and C, Cryptography, Advanced Computer Networking, Principle of System Design, Artificial intelligence, Natural Language Processing",
+        ],
         icon: React.createElement(LuGraduationCap),
         date: "June 2023",
     },
@@ -94,8 +97,12 @@ export const experiencesData: readonly ExperienceType[] = [
         title: "Software Developer Intern",
         org: "RND4IMPACT Inc.",
         location: "San Jose, CA",
-        description:
-            "At RND4IMPACT Inc., I employed Django and Pandas to develop web applications, significantly reducing bugs by implementing advanced validation mechanisms and conducting performance optimizations, resulting in a 20% improvement in system efficiency.",
+        description: [
+            "In my role as a Software Development Intern, I led the design and implementation of web applications using Django, significantly enhancing system functionality and user experience.",
+            "Implemented dynamic loading for TypeScript components, which boosted First Contentful Paint (FCP) by 2.4 seconds.",
+            "Conducted thorough performance optimization, achieving a 15% improvement and a 75% cache hit rate through custom caching rules, which notably reduced load times.",
+            "Also established rigorous code review and testing protocols, reducing bugs by 20% and ensuring high-quality code standards.",
+        ],
         icon: React.createElement(FaPython),
         date: "Spetember 2023 - Present",
     },
@@ -103,8 +110,13 @@ export const experiencesData: readonly ExperienceType[] = [
         title: "Cybersecurity Analyst Intern",
         org: "Technical Consulting & Research, Inc.",
         location: "Fremont, CA",
-        description:
-            "I conducted fit-gap analyses and enforced industry best practices for secure infrastructure, complemented by my experience integrating Auth0 for robust authentication solutions. This involved creating detailed vulnerability reports and recommending remediation strategies, thereby enhancing system security and user authentication processes.",
+        description: [
+            "As a Cybersecurity Analyst Intern, I addressed over six compliance issues through fit-gap analysis, enhancing cloud provider regulatory adherence.",
+            "Utilized the MITRE ATT&CK framework to refine threat modeling, achieving a 15% reduction in system vulnerabilities.",
+            "Orchestrated secure authentication and authorization solutions using Okta’s Auth0, significantly enhancing user access control, and delivered detailed security reports, elevating stakeholder awareness of cybersecurity measures.",
+            "Additionally, improved team productivity by leveraging advanced Microsoft Office Suite features for data analysis and presentation.",
+            'Presented at the IGNITE and SBDC conferences on "Navigating AI Risks for Small Businesses"',
+        ],
         icon: React.createElement(BsShieldLock),
         date: "December 2023 - present",
     },
@@ -114,14 +126,14 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "NextJS Portfolio + Blog Website",
         description:
-            "This website that you are viewing! I was unsatisfied with how the previous portfolio website looked and felt so I wanted to remake the website. Using common technologies like Tailwind CSS, Typescript, Framer Motion, and React Markdown to ensure a smooth user experience.",
+            "This website that you are viewing! Redesigned my personal portfolio to elevate the user experience, utilizing Next.js for improved SEO and Tailwind CSS for a modern aesthetic. Integrated Framer Motion for fluid animations and React Markdown for seamless blog content management.",
         tags: ["NextJS", "Typescript", "APIs", "Javascript", "Caching"],
         imageUrl: nextImg,
     },
     {
         title: "Active Directory Lab",
         description:
-            "Set up an Active Directory network, with a Domain Controller, and two clients all connected to a Wazuh server for alerts. Then I connected my Linux machine to this network and performed and documented the common AD attacks. I talk more about this on my blogs.",
+            "Constructed a simulated network using Active Directory, complete with automated SIEM alerts via Wazuh, to demonstrate and document common security threats and defense mechanisms.",
         tags: [
             "Active Directory",
             "Automation",
@@ -135,14 +147,14 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Django Portfolio + CMS",
         description:
-            "Build a full-fledged portfolio using Django integrated with Postgres DB and created the required models for controlled CMS integration. This was the previous portfolio website, it featured a CMS with robust data validations systems to ensure data consistency.",
+            "Developed a portfolio site with an integrated Content Management System (CMS) using Django, featuring robust data validation and Postgres for reliable data storage, enhancing content management efficiency.",
         tags: ["Django", "PostgreDB", "Docker", "HTML", "Python"],
         imageUrl: djangoImg,
     },
     {
         title: "Home-Lab",
         description:
-            "Set up a robust home-lab environment that fosters continuous learning and independence from tech conglomerates. I go in-depth on the setup in my blogs.",
+            "Established a comprehensive home-lab setup, fostering independent learning and practical understanding of Virtualization, Linux/Unix environments, and DevSecOps best practices.",
         tags: [
             "Virtualization",
             "Linux/Unix",
@@ -155,7 +167,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Web-app Directory Search Tool",
         description:
-            "A multi-threaded web app pen-testing tool that allows the user to scan the exposed subdirectories of a website. The purpose of this project is to understand how directory searching and to expand it to perform recursive searches.",
+            "Created a multi-threaded directory search tool for web applications, enhancing penetration testing capabilities with recursive search functions and security testing.",
         tags: [
             "Python",
             "Multi-threading",
@@ -168,7 +180,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Server Port Scanning Tool",
         description:
-            "A simple concurrent port scanner, written in Python, that scans a target's ports within a specified range concurrently. The goal for this project is to quickly scan non-standard ports during CTF challenges.",
+            "Developed a concurrent port scanner in Python to expedite the scanning of server ports, improving efficiency in identifying vulnerabilities during security assessments.",
         tags: [
             "Python",
             "Networking",
@@ -181,7 +193,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "Hack The Box (HTB) Enthusiast",
         description:
-            "Ranked in the top 700 on Hack The Box (HTB), I've honed my cybersecurity skills through rigorous challenges and machines, specializing in penetration testing, privilege escalation, and various security tools.",
+            "Achieved a top 700 rank on HTB, showcasing expertise in penetration testing and security practices through complex challenges, specializing in areas such as privilege escalation and security tool utilization.",
         tags: [
             "Penetration Testing",
             "Burp Suite",
@@ -195,7 +207,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "TryHackMe (THM) Enthusiast",
         description:
-            "As an active TryHackMe (THM) enthusiast, I engage with a diverse array of cybersecurity challenges, leveraging tools like Bloodhound, Dirbuster, and Nmap to enhance my capabilities in network security and Active Directory.",
+            "Engaged in a wide range of cybersecurity challenges on THM, enhancing skills in network security and Active Directory exploitation using tools like Bloodhound and Dirbuster, demonstrating versatility in security methodologies.",
         tags: [
             "Bloodhound",
             "dirbuster",

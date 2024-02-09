@@ -31,7 +31,7 @@ export default function Skills() {
         >
             <SectionHeading>My skills</SectionHeading>
             <h3 className="text-xl font-medium capitalize my-4 text-center text-violet-700 dark:text-violet-400">
-                Development Skills
+                Coding Skills
             </h3>
             <ul className="flex flex-wrap justify-center gap-2 text-lg text-gray-800">
                 {devSkillsData.map((skill, index) => (

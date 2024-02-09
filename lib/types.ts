@@ -14,7 +14,7 @@ export interface ExperienceType {
     title: string;
     org: string;
     location: string;
-    description: string;
+    description: string[];
     icon: React.ReactElement;
     date: string;
 }

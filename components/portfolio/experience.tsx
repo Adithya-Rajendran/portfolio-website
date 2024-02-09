@@ -14,6 +14,15 @@ import { useTheme } from "@/context/theme-context";
 export default function Experience() {
     const { ref, inView } = useSectionInView("Experience", 0.3);
     const { theme } = useTheme();
+
+    const [isVisible, setIsVisible] = React.useState(false);
+
+    React.useEffect(() => {
+        if (inView) {
+            setIsVisible(true);
+        }
+    }, [inView]);
+
     return (
         <section
             id="experience"
@@ -25,7 +34,7 @@ export default function Experience() {
                 {experiencesData.map((item) => (
                     <VerticalTimelineElement
                         key={item.title}
-                        visible={inView}
+                        visible={isVisible}
                         contentStyle={{
                             background:
                                 theme === "light"
@@ -57,9 +66,14 @@ export default function Experience() {
                         </h3>
                         <p className="font-normal !mt-0">{item.org}</p>
                         <p className="font-normal mt-0">{item.location}</p>
-                        <p className="!mt-1 !font-normal text-gray-700 dark:text-white/75">
-                            {item.description}
-                        </p>
+                        {item.description.map((desc, index) => (
+                            <p
+                                key={index}
+                                className="!mt-1 !font-normal text-gray-700 dark:text-white/75"
+                            >
+                                {`• ${desc}`}
+                            </p>
+                        ))}
                     </VerticalTimelineElement>
                 ))}
             </VerticalTimeline>
