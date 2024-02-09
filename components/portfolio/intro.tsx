@@ -26,12 +26,15 @@ export default function Intro() {
             </div>
 
             <h1 className="mb-10 mt-4 px-4 text-2xl font-medium !leading-[1.5] sm:text-4xl">
-                <span className="font-bold">Hello, I'm Adithya Rajendran.</span>{" "}
-                I'm a <span className="font-bold">recent-graduate</span> with a{" "}
-                <span className="font-bold">Bachelors in Computer Science</span>
-                . I enjoy building and securing{" "}
-                <span className="italic">sites & apps</span>. My focus is{" "}
-                <span className="underline">Python and Next.js</span>.
+                <span className="font-bold">Hi, I'm Adithya Rajendran.</span> A{" "}
+                <span className="font-bold">Computer Science graduate</span>{" "}
+                passionate about{" "}
+                <span className="italic">
+                    developing and securing web applications
+                </span>
+                . Proficient with{" "}
+                <span className="underline">Python and TypeScript</span>, I aim
+                to innovate and enhance cybersecurity in digital solutions.
             </h1>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium">

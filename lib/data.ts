@@ -228,6 +228,8 @@ export const devopskillsData: readonly string[] = [
     "Kubernetes",
     "Active Directory",
     "Git",
+    "Jenkins",
+    "Github Actions",
 ] as const;
 
 export const devSkillsData: readonly string[] = [
