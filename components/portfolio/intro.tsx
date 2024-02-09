@@ -1,3 +1,5 @@
+"use server";
+
 import Image from "next/image";
 import Link from "next/link";
 import { BsArrowRight, BsLinkedin } from "react-icons/bs";
@@ -5,7 +7,7 @@ import { HiDownload } from "react-icons/hi";
 import { FaGithubSquare } from "react-icons/fa";
 import heroImg from "@/public/hero.webp";
 
-export default function Intro() {
+export default async function Intro() {
     return (
         <section
             id="home"
