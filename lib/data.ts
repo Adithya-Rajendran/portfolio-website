@@ -129,6 +129,10 @@ export const projectsData: readonly ProjectType[] = [
             "This website that you are viewing! Redesigned my personal portfolio to elevate the user experience, utilizing Next.js for improved SEO and Tailwind CSS for a modern aesthetic. Integrated Framer Motion for fluid animations and React Markdown for seamless blog content management.",
         tags: ["NextJS", "Typescript", "APIs", "Javascript", "Caching"],
         imageUrl: nextImg,
+        link: {
+            title: "Source Code",
+            link: "https://github.com/Adithya-Rajendran/portfolio-website",
+        },
     },
     {
         title: "Active Directory Lab",
@@ -143,6 +147,10 @@ export const projectsData: readonly ProjectType[] = [
             "Pfsense",
         ],
         imageUrl: adImg,
+        link: {
+            title: "Blog post",
+            link: "https://adithya-rajendran.com/blogs/active-directory-lab",
+        },
     },
     {
         title: "Django Portfolio + CMS",
@@ -150,6 +158,10 @@ export const projectsData: readonly ProjectType[] = [
             "Developed a portfolio site with an integrated Content Management System (CMS) using Django, featuring robust data validation and Postgres for reliable data storage, enhancing content management efficiency.",
         tags: ["Django", "PostgreDB", "Docker", "HTML", "Python"],
         imageUrl: djangoImg,
+        link: {
+            title: "Source Code",
+            link: "https://github.com/Adithya-Rajendran/portfolioWebsite",
+        },
     },
     {
         title: "Home-Lab",
@@ -176,6 +188,10 @@ export const projectsData: readonly ProjectType[] = [
             "Pentesting",
         ],
         imageUrl: dirsearchImg,
+        link: {
+            title: "Source Code",
+            link: "https://github.com/Adithya-Rajendran/dirsearch",
+        },
     },
     {
         title: "Server Port Scanning Tool",
@@ -189,6 +205,10 @@ export const projectsData: readonly ProjectType[] = [
             "Security",
         ],
         imageUrl: portscanImg,
+        link: {
+            title: "Source Code",
+            link: "https://github.com/Adithya-Rajendran/portscanner",
+        },
     },
     {
         title: "Hack The Box (HTB) Enthusiast",
@@ -203,6 +223,10 @@ export const projectsData: readonly ProjectType[] = [
             "ldapdomaindump",
         ],
         imageUrl: htbImg,
+        link: {
+            title: "HackTheBox Profile",
+            link: "https://app.hackthebox.com/profile/514798",
+        },
     },
     {
         title: "TryHackMe (THM) Enthusiast",
@@ -217,6 +241,10 @@ export const projectsData: readonly ProjectType[] = [
             "Network Security",
         ],
         imageUrl: thmImg,
+        link: {
+            title: "TryHackMe Profile",
+            link: "https://tryhackme.com/p/Cagmas",
+        },
     },
 ] as const;
 

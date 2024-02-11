@@ -24,6 +24,10 @@ export interface ProjectType {
     description: string;
     tags: string[];
     imageUrl: StaticImageData | string;
+    link?: {
+        title: string;
+        link: string;
+    };
 }
 
 export interface CertificateType {

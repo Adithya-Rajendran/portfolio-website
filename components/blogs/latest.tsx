@@ -69,7 +69,7 @@ export default async function Latest() {
                                     {post.date}
                                 </p>
                                 <Link
-                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                                    className="text-blue-700 hover:underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
                                     href={`blogs/${post.slug}`}
                                     aria-label={`Read more about ${post.title}`}
                                     title={`Read more about ${post.title}`}

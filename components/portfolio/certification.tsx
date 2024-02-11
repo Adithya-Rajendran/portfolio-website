@@ -38,7 +38,7 @@ export default function Certification(cert: CertificateType) {
                     )}
 
                     <a
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                        className="text-blue-700 hover:underline hover:text-xl hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
                         href={cert.verify}
                         target="_blank"
                         rel="noopener noreferrer"
