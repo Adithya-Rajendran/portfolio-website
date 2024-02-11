@@ -12,6 +12,7 @@ export default function Project({
     description,
     tags,
     imageUrl,
+    link,
 }: ProjectProps) {
     const ref = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
@@ -36,6 +37,18 @@ export default function Project({
                     <p className="my-2 leading-relaxed text-gray-700 dark:text-white/70">
                         {description}
                     </p>
+                    {link ? (
+                        <a
+                            className="text-blue-700 hover:underline hover:text-xl hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 mb-2"
+                            href={link.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {link.title}
+                        </a>
+                    ) : (
+                        <></>
+                    )}
                     <ul
                         className="flex flex-wrap mt-4 gap-2 sm:mt-auto"
                         aria-label="Related Skills"
