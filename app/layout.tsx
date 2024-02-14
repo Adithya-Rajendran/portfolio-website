@@ -15,9 +15,9 @@ import type { Viewport } from "next";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Adithya | Personal Portfolio",
+    title: "Adithya Rajendran | Personal Portfolio",
     description:
-        "Adithya is an enthuastic person who is higly skilled in the fields of cybersecurity and software development",
+        "Adithya Rajendran is an enthuastic person who is higly skilled in the fields of cybersecurity and software development",
     keywords: [
         "Adithya",
         "Adithya Rajendran",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     },
     metadataBase: new URL("https://adithya-rajendran.com/"),
     openGraph: {
-        title: "Adithya | Personal Portfolio",
+        title: "Adithya Rajendran | Personal Portfolio",
         description:
             "A portfolio website showcasing Adithya's skills and achievements",
         url: "https://adithya-rajendran.com/",
@@ -73,6 +73,16 @@ export const metadata: Metadata = {
         ],
         locale: "en_US",
         type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Adithya Rajendran | Personal Portfolio",
+        description:
+            "A portfolio website showcasing Adithya Rajendran's skills and achievement",
+        images: {
+            url: "https://i.imgur.com/wygHEG3.png",
+            alt: "Home page",
+        },
     },
 };
 
