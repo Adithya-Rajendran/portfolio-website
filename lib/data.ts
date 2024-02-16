@@ -115,7 +115,7 @@ export const experiencesData: readonly ExperienceType[] = [
             "Utilized the MITRE ATT&CK framework to refine threat modeling, achieving a 15% reduction in system vulnerabilities.",
             "Orchestrated secure authentication and authorization solutions using Okta’s Auth0, significantly enhancing user access control, and delivered detailed security reports, elevating stakeholder awareness of cybersecurity measures.",
             "Additionally, improved team productivity by leveraging advanced Microsoft Office Suite features for data analysis and presentation.",
-            'Presented at the IGNITE and SBDC conferences on "Navigating AI Risks for Small Businesses"',
+            'Presented at the IGNITE and Bucknell University conferences on "Navigating AI Risks for Small Businesses."',
         ],
         icon: React.createElement(BsShieldLock),
         date: "December 2023 - present",
