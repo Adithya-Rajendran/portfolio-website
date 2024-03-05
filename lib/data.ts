@@ -231,7 +231,7 @@ export const projectsData: readonly ProjectType[] = [
     {
         title: "TryHackMe (THM) Enthusiast",
         description:
-            "Engaged in a wide range of cybersecurity challenges on THM, enhancing skills in network security and Active Directory exploitation using tools like Bloodhound and Dirbuster, demonstrating versatility in security methodologies.",
+            "Ranked in the top 5% of the Tryhackme Platform. Engaged in a wide range of cybersecurity challenges on THM, enhancing skills in network security and Active Directory exploitation using tools like Bloodhound and Dirbuster, demonstrating versatility in security methodologies.",
         tags: [
             "Bloodhound",
             "dirbuster",
