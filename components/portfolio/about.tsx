@@ -38,7 +38,7 @@ export default function About() {
 
             <p>
                 <span className="italic">Beyond coding</span>, my leisure
-                activities include playing video games, watching documentaries,
+                activities include watching documentaries,
                 and experimenting with new technologies in my home lab. I'm
                 always on the lookout for{" "}
                 <span className="font-medium">new skills to master</span>.
