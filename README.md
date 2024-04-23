@@ -34,7 +34,7 @@ Running the Project
 
 # Contribution
 
-Contributions are welcome! Please submit any issues or pull requests through GitHub.
+Contributions are welcome! Please submit any issues or pull requests through GitHub. Thank you.
 
 # Credits
 
