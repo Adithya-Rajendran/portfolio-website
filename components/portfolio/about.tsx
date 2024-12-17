@@ -22,30 +22,24 @@ export default function About() {
                 <span className="font-medium">
                     University of California, Santa Cruz
                 </span>
-                , my journey in cybersecurity and software development deepened.
-                I've earned{" "}
-                <span className="font-medium">CompTIA Security+</span> and{" "}
-                <span className="font-medium">AWS Solutions Architect</span>{" "}
-                certifications, and I'm on my path to the OSCP. What drives me
-                is the{" "}
-                <span className="italic">joy of solving complex problems</span>
-                —there's nothing like the thrill of a breakthrough. Currently, I
-                am seeking{" "}
-                <span className="font-medium">full-time opportunities</span> in
-                the software development or cybersecurity space, I'm eager to
-                bring my passion and expertise to your team.
+                , I’ve been advancing my career in cloud engineering and cybersecurity. 
+                In my current role as a{" "}
+                <span className="font-medium">Cloud Field Engineer</span>, I focus on deploying 
+                scalable infrastructure solutions using technologies like{" "}
+                <span className="font-medium">Kubernetes</span>,{" "}
+                <span className="font-medium">OpenStack</span>, and{" "}
+                <span className="font-medium">Ubuntu</span>. My work involves optimizing 
+                performance, automating deployments, and ensuring robust cloud environments.
             </p>
 
             <p>
-                <span className="italic">Beyond coding</span>, my leisure
-                activities include watching documentaries,
-                and experimenting with new technologies in my home lab. I'm
-                always on the lookout for{" "}
-                <span className="font-medium">new skills to master</span>.
-                Lately, I've been diving into{" "}
-                <span className="font-medium">ethical hacking</span> and{" "}
-                <span className="font-medium">network security</span>, expanding
-                my understanding and capabilities in cybersecurity.
+                <span className="italic">Beyond engineering</span>, I enjoy watching documentaries 
+                and experimenting with new technologies in my home lab. I’m always eager to{" "}
+                <span className="font-medium">master new skills</span>, currently diving deeper 
+                into areas like{" "}
+                <span className="font-medium">cloud automation</span> and{" "}
+                <span className="font-medium">network security</span>, which continually 
+                fuel my passion for solving complex challenges.
             </p>
         </motion.section>
     );

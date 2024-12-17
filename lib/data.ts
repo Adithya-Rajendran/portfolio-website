@@ -104,12 +104,12 @@ export const experiencesData: readonly ExperienceType[] = [
             "Also established rigorous code review and testing protocols, reducing bugs by 20% and ensuring high-quality code standards.",
         ],
         icon: React.createElement(FaPython),
-        date: "Spetember 2023 - Present",
+        date: "Spetember 2023 - April 2024",
     },
     {
         title: "Cybersecurity Analyst Intern",
         org: "Technical Consulting & Research, Inc.",
-        location: "Fremont, CA",
+        location: "Fremont, CA (Remote)",
         description: [
             "As a Cybersecurity Analyst Intern, I addressed over six compliance issues through fit-gap analysis, enhancing cloud provider regulatory adherence.",
             "Utilized the MITRE ATT&CK framework to refine threat modeling, achieving a 15% reduction in system vulnerabilities.",
@@ -118,7 +118,20 @@ export const experiencesData: readonly ExperienceType[] = [
             'Presented at the IGNITE and Bucknell University conferences on "Navigating AI Risks for Small Businesses."',
         ],
         icon: React.createElement(BsShieldLock),
-        date: "December 2023 - present",
+        date: "December 2023 - May 2024",
+    },
+    {
+        title: "Cloud Field Engineer",
+        org: "Canonical",
+        location: "Fremont, CA (Remote)",
+        description: [
+            "In my role as a Cloud Field Engineer, I collaborated with clients to deploy and optimize cloud infrastructure solutions, leveraging technologies like OpenStack, Kubernetes, and Ubuntu-based systems.",
+            "Delivered tailored consulting to enhance scalability and performance, aligning infrastructure with enterprise needs.",
+            "Automated deployment processes using Juju and MAAS (Metal as a Service), streamlining cloud operations and reducing manual workloads.",
+            "Facilitated technical troubleshooting and system integration, ensuring reliability and efficiency for customer environments."
+        ],
+        icon: React.createElement(BsShieldLock),
+        date: "May 2024 - Present",
     },
 ] as const;
 
