@@ -82,29 +82,17 @@ export const certData: readonly CertificateType[] = [
 
 export const experiencesData: readonly ExperienceType[] = [
     {
-        title: "Bachelor of Science, Computer Science",
-        org: "University of California,",
-        location: "Santa Cruz, CA",
+        title: "Cloud Field Engineer",
+        org: "Canonical",
+        location: "Fremont, CA (Remote)",
         description: [
-            "I graduated from the University of California, Santa Cruz, where I was deeply involved in the Slug Security Club.",
-            "As a regular participant, I participated in various cybersecurity workshops and competitions, enhancing my skills in network security and ethical hacking.",
-            "Relevant Coursework: Computer Systems and C, Cryptography, Advanced Computer Networking, Principle of System Design, Artificial intelligence, Natural Language Processing",
+            "In my role as a Cloud Field Engineer, I collaborated with clients to deploy and optimize cloud infrastructure solutions, leveraging technologies like OpenStack, Kubernetes, and Ubuntu-based systems.",
+            "Delivered tailored consulting to enhance scalability and performance, aligning infrastructure with enterprise needs.",
+            "Automated deployment processes using Juju and MAAS (Metal as a Service), streamlining cloud operations and reducing manual workloads.",
+            "Facilitated technical troubleshooting and system integration, ensuring reliability and efficiency for customer environments."
         ],
-        icon: React.createElement(LuGraduationCap),
-        date: "June 2023",
-    },
-    {
-        title: "Software Developer Intern",
-        org: "RND4IMPACT Inc.",
-        location: "San Jose, CA",
-        description: [
-            "In my role as a Software Development Intern, I led the design and implementation of web applications using Django, significantly enhancing system functionality and user experience.",
-            "Implemented dynamic loading for TypeScript components, which boosted First Contentful Paint (FCP) by 2.4 seconds.",
-            "Conducted thorough performance optimization, achieving a 15% improvement and a 75% cache hit rate through custom caching rules, which notably reduced load times.",
-            "Also established rigorous code review and testing protocols, reducing bugs by 20% and ensuring high-quality code standards.",
-        ],
-        icon: React.createElement(FaPython),
-        date: "Spetember 2023 - April 2024",
+        icon: React.createElement(BsShieldLock),
+        date: "May 2024 - Present",
     },
     {
         title: "Cybersecurity Analyst Intern",
@@ -121,17 +109,29 @@ export const experiencesData: readonly ExperienceType[] = [
         date: "December 2023 - May 2024",
     },
     {
-        title: "Cloud Field Engineer",
-        org: "Canonical",
-        location: "Fremont, CA (Remote)",
+        title: "Software Developer Intern",
+        org: "RND4IMPACT Inc.",
+        location: "San Jose, CA",
         description: [
-            "In my role as a Cloud Field Engineer, I collaborated with clients to deploy and optimize cloud infrastructure solutions, leveraging technologies like OpenStack, Kubernetes, and Ubuntu-based systems.",
-            "Delivered tailored consulting to enhance scalability and performance, aligning infrastructure with enterprise needs.",
-            "Automated deployment processes using Juju and MAAS (Metal as a Service), streamlining cloud operations and reducing manual workloads.",
-            "Facilitated technical troubleshooting and system integration, ensuring reliability and efficiency for customer environments."
+            "In my role as a Software Development Intern, I led the design and implementation of web applications using Django, significantly enhancing system functionality and user experience.",
+            "Implemented dynamic loading for TypeScript components, which boosted First Contentful Paint (FCP) by 2.4 seconds.",
+            "Conducted thorough performance optimization, achieving a 15% improvement and a 75% cache hit rate through custom caching rules, which notably reduced load times.",
+            "Also established rigorous code review and testing protocols, reducing bugs by 20% and ensuring high-quality code standards.",
         ],
-        icon: React.createElement(BsShieldLock),
-        date: "May 2024 - Present",
+        icon: React.createElement(FaPython),
+        date: "Spetember 2023 - April 2024",
+    },
+    {
+        title: "Bachelor of Science, Computer Science",
+        org: "University of California,",
+        location: "Santa Cruz, CA",
+        description: [
+            "I graduated from the University of California, Santa Cruz, where I was deeply involved in the Slug Security Club.",
+            "As a regular participant, I participated in various cybersecurity workshops and competitions, enhancing my skills in network security and ethical hacking.",
+            "Relevant Coursework: Computer Systems and C, Cryptography, Advanced Computer Networking, Principle of System Design, Artificial intelligence, Natural Language Processing",
+        ],
+        icon: React.createElement(LuGraduationCap),
+        date: "June 2023",
     },
 ] as const;
 

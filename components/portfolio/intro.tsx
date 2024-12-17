@@ -29,15 +29,12 @@ export default function Intro() {
 
             <h1 className="mb-10 mt-4 px-4 text-2xl font-medium !leading-[1.5] sm:text-4xl">
                 <span className="font-bold">Hi, I'm Adithya Rajendran.</span> A{" "}
-                <span className="font-bold">Computer Science graduate</span>{" "}
-                passionate about{" "}
-                <span className="italic">
-                    developing and securing web applications
-                </span>
-                . Proficient with{" "}
-                <span className="underline">Python and TypeScript</span>, I aim
-                to innovate and enhance cybersecurity in digital solutions.
+                <span className="font-bold">Cloud Field Engineer</span> at Canonical, with a passion for{" "}
+                <span className="italic">building scalable cloud infrastructure</span> and delivering{" "}
+                <span className="italic">secure, high-performance solutions</span>. I aim to{" "}
+                <span className="font-bold">innovate</span> and drive efficiency across modern computing ecosystems.
             </h1>
+
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium">
                 <Link
