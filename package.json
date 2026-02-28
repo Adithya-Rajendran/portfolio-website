@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint app/ components/ lib/ context/ actions/ email/"
   },
   "dependencies": {
     "@next/bundle-analyzer": "^16.1.6",
