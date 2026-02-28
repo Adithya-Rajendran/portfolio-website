@@ -1,16 +1,14 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import nextConfig from "eslint-config-next";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const eslintConfig = [
-    ...nextConfig({ dir: __dirname }),
+const eslintConfig = defineConfig([
+    ...nextVitals,
+    globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
     {
         rules: {
             "react/no-unescaped-entities": 0,
         },
     },
-];
+]);
 
 export default eslintConfig;
