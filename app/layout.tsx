@@ -63,10 +63,10 @@ export const metadata: Metadata = {
         siteName: "Adithya's Portfolio",
         images: [
             {
-                url: "https://i.imgur.com/wygHEG3.png",
-                width: 994,
-                height: 548,
-                alt: "Home page",
+                url: "/og-image.jpg",
+                width: 1200,
+                height: 630,
+                alt: "Adithya Rajendran - Cloud Field Engineer & Cybersecurity Portfolio",
             },
         ],
         locale: "en_US",
@@ -78,8 +78,8 @@ export const metadata: Metadata = {
         description:
             "A portfolio website showcasing Adithya Rajendran's skills and achievement",
         images: {
-            url: "https://i.imgur.com/wygHEG3.png",
-            alt: "Home page",
+            url: "/og-image.jpg",
+            alt: "Adithya Rajendran - Cloud Field Engineer & Cybersecurity Portfolio",
         },
     },
 };
