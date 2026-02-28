@@ -18,7 +18,7 @@ export default async function Featured() {
                 {featuredPosts.slice(0, 1).map((post) => (
                     <div
                         key={post.slug}
-                        className="md:col-span-2 bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow"
+                        className="md:col-span-2 bg-white dark:bg-white/[0.03] rounded-lg overflow-hidden shadow dark:border dark:border-white/8"
                     >
                         <Image
                             alt={`Blog post thumbnail for ${post.title}`}
@@ -37,11 +37,11 @@ export default async function Featured() {
                             <h3 className="text-2xl font-bold mb-2">
                                 {post.title}
                             </h3>
-                            <p className="text-gray-600 h-12 overflow-hidden dark:text-gray-400 mb-4">
+                            <p className="text-slate-600 h-12 overflow-hidden dark:text-slate-400 mb-4">
                                 {post.desc}
                             </p>
                             <Link
-                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                                className="text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
                                 href={`blogs/${post.slug}`}
                                 aria-label={`Read more about ${post.title}`}
                                 title={`Read more about ${post.title}`}
@@ -55,7 +55,7 @@ export default async function Featured() {
                     {featuredPosts.slice(-2).map((post, index) => (
                         <div
                             key={post.slug}
-                            className={`bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow ${
+                            className={`bg-white dark:bg-white/[0.03] rounded-lg overflow-hidden shadow dark:border dark:border-white/8 ${
                                 index === 0 ? "mb-6" : ""
                             }`}
                         >
@@ -75,11 +75,11 @@ export default async function Featured() {
                                 <h3 className="text-2xl font-bold mb-2">
                                     {post.title}
                                 </h3>
-                                <p className="text-gray-600 h-12 overflow-hidden dark:text-gray-400 mb-4">
+                                <p className="text-slate-600 h-12 overflow-hidden dark:text-slate-400 mb-4">
                                     {post.desc}
                                 </p>
                                 <Link
-                                    className="text-blue-700 hover:underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                                    className="text-emerald-700 hover:underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
                                     href={`blogs/${post.slug}`}
                                     aria-label={`Read more about ${post.title}`}
                                     title={`Read more about ${post.title}`}

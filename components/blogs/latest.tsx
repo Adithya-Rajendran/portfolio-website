@@ -48,7 +48,7 @@ export default async function Latest() {
                     {availablePosts.map((post) => (
                         <CarouselItem
                             key={post.slug}
-                            className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow flex-shrink-0 w-full xl:basis-1/4 lg:basis-1/3 md:basis-1/2 sm:w-80"
+                            className="bg-white dark:bg-white/[0.03] dark:border dark:border-white/8 rounded-lg overflow-hidden shadow flex-shrink-0 w-full xl:basis-1/4 lg:basis-1/3 md:basis-1/2 sm:w-80"
                         >
                             <Image
                                 src={post.image}
@@ -65,11 +65,11 @@ export default async function Latest() {
                                 <h3 className="text-xl font-bold mb-2">
                                     {post.title}
                                 </h3>
-                                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                <p className="text-slate-500 dark:text-slate-500 mb-4">
                                     {post.date}
                                 </p>
                                 <Link
-                                    className="text-blue-700 hover:underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                                    className="text-emerald-700 hover:underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
                                     href={`blogs/${post.slug}`}
                                     aria-label={`Read more about ${post.title}`}
                                     title={`Read more about ${post.title}`}
