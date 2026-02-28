@@ -25,12 +25,12 @@ export default function VisitBlogs() {
         >
             <SectionHeading>Visit my Blogs</SectionHeading>
 
-            <p className="text-gray-700 -mt-6 dark:text-white/80 pb-10">
+            <p className="text-slate-600 -mt-6 dark:text-slate-400 pb-10">
                 Join me on my learning adventure as a tech enthusiast! Explore
                 my blog to discover the fascinating topics I've been delving
                 into and the projects I'm passionately tackling.
             </p>
-            <Button className=" bg-amber-600 dark:bg-amber-600" asChild>
+            <Button asChild>
                 <Link href="/blogs">Visit my Blogs</Link>
             </Button>
         </motion.section>

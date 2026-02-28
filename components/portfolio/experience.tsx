@@ -38,18 +38,21 @@ export default function Experience() {
                         contentStyle={{
                             background:
                                 theme === "light"
-                                    ? "#f3f4f6"
-                                    : "rgba(255, 255, 255, 0.05)",
+                                    ? "#f8fafc"
+                                    : "rgba(255, 255, 255, 0.03)",
                             boxShadow: "none",
-                            border: "1px solid rgba(0, 0, 0, 0.05)",
+                            border:
+                                theme === "light"
+                                    ? "1px solid #e2e8f0"
+                                    : "1px solid rgba(255, 255, 255, 0.08)",
                             textAlign: "left",
                             padding: "1.3rem 2rem",
                         }}
                         contentArrowStyle={{
                             borderRight:
                                 theme === "light"
-                                    ? "0.4rem solid #9ca3af"
-                                    : "0.4rem solid rgba(255, 255, 255, 0.5)",
+                                    ? "0.4rem solid #94a3b8"
+                                    : "0.4rem solid rgba(52, 211, 153, 0.4)",
                         }}
                         date={item.date}
                         icon={item.icon}
@@ -57,8 +60,12 @@ export default function Experience() {
                             background:
                                 theme === "light"
                                     ? "white"
-                                    : "rgba(255, 255, 255, 0.15)",
+                                    : "rgba(255, 255, 255, 0.05)",
                             fontSize: "1.5rem",
+                            color:
+                                theme === "light"
+                                    ? "#0f172a"
+                                    : "#34d399",
                         }}
                     >
                         <h3 className="font-semibold capitalize">
@@ -69,7 +76,7 @@ export default function Experience() {
                         {item.description.map((desc, index) => (
                             <p
                                 key={index}
-                                className="!mt-1 !font-normal text-gray-700 dark:text-white/75"
+                                className="!mt-1 !font-normal text-slate-600 dark:text-slate-400"
                             >
                                 {`• ${desc}`}
                             </p>
