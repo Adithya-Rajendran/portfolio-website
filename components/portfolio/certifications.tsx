@@ -1,12 +1,10 @@
 "use client";
 
 import React from "react";
-import dynamic from "next/dynamic";
 import { certData } from "@/lib/data";
 import { useSectionInView } from "@/lib/hooks";
 import SectionHeading from "../section-heading";
-
-const Certification = dynamic(() => import("./certification"));
+import Certification from "./certification";
 
 export default function Certifications() {
     const { ref } = useSectionInView("Certs", 0.5);

@@ -19,15 +19,15 @@ export default function Project({
         target: ref,
         offset: ["0 1", "1.33 1"],
     });
-    const scaleProgess = useTransform(scrollYProgress, [0, 1], [0.8, 1]);
-    const opacityProgess = useTransform(scrollYProgress, [0, 1], [0.6, 1]);
+    const scaleProgress = useTransform(scrollYProgress, [0, 1], [0.8, 1]);
+    const opacityProgress = useTransform(scrollYProgress, [0, 1], [0.6, 1]);
 
     return (
         <motion.div
             ref={ref}
             style={{
-                scale: scaleProgess,
-                opacity: opacityProgess,
+                scale: scaleProgress,
+                opacity: opacityProgress,
             }}
             className="group mb-3 sm:mb-8 last:mb-0"
         >
@@ -39,16 +39,14 @@ export default function Project({
                     </p>
                     {link ? (
                         <a
-                            className="text-blue-700 hover:underline hover:text-xl hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 mb-2"
+                            className="text-blue-700 hover:underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 mb-2 transition-colors"
                             href={link.link}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
                             {link.title}
                         </a>
-                    ) : (
-                        <></>
-                    )}
+                    ) : null}
                     <ul
                         className="flex flex-wrap mt-4 gap-2 sm:mt-auto"
                         aria-label="Related Skills"
@@ -66,7 +64,7 @@ export default function Project({
 
                 <Image
                     src={imageUrl}
-                    alt="Project I worked on"
+                    alt={`Screenshot of ${title}`}
                     quality={95}
                     loading="lazy"
                     className="absolute hidden sm:block top-8 -right-40 w-[28.25rem] rounded-t-lg shadow-2xl

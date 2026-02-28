@@ -1,12 +1,10 @@
 "use client";
 
 import React from "react";
-import dynamic from "next/dynamic";
 import { projectsData } from "@/lib/data";
 import { useSectionInView } from "@/lib/hooks";
 import SectionHeading from "../section-heading";
-
-const Project = dynamic(() => import("./project"));
+import Project from "./project";
 
 export default function Projects() {
     const { ref } = useSectionInView("Projects", 0.5);

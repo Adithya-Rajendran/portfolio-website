@@ -21,35 +21,31 @@ import MTAImg from "@/public/MTA-Security-Fundamentals-2018.webp";
 export const links = [
     {
         name: "Home",
-        hash: "/#home",
+        hash: "/",
     },
     {
         name: "About",
-        hash: "/#about",
+        hash: "/portfolio#about",
     },
     {
         name: "Skills",
-        hash: "/#skills",
+        hash: "/portfolio#skills",
     },
     {
         name: "Certs",
-        hash: "/#certs",
+        hash: "/portfolio#certs",
     },
     {
         name: "Experience",
-        hash: "/#experience",
+        hash: "/portfolio#experience",
     },
     {
         name: "Projects",
-        hash: "/#projects",
+        hash: "/portfolio#projects",
     },
     {
         name: "Contact",
-        hash: "/#contact",
-    },
-    {
-        name: "Blogs",
-        hash: "/blogs",
+        hash: "/portfolio#contact",
     },
 ] as const;
 

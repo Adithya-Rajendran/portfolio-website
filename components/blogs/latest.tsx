@@ -13,8 +13,8 @@ import {
 export default async function Latest() {
     const slugs = await getSlugs();
 
-    if (!slugs) {
-        return;
+    if (!slugs || slugs.length === 0) {
+        return null;
     }
 
     const allPostsPromises = slugs.map((slug) => getPostContent(slug));
