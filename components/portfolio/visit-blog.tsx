@@ -25,7 +25,7 @@ export default function VisitBlogs() {
         >
             <SectionHeading>Visit my Blogs</SectionHeading>
 
-            <p className="text-slate-600 -mt-6 dark:text-slate-400 pb-10">
+            <p className="text-slate-500 -mt-6 dark:text-slate-400 pb-10">
                 Join me on my learning adventure as a tech enthusiast! Explore
                 my blog to discover the fascinating topics I've been delving
                 into and the projects I'm passionately tackling.

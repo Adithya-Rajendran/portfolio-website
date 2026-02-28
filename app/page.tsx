@@ -37,9 +37,9 @@ export default function Home() {
                             fill
                             quality={90}
                             priority
-                            className="rounded-full object-cover border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10"
+                            className="rounded-full object-cover border-2 border-emerald-400 shadow-lg shadow-emerald-300/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
                         />
-                        <div className="absolute inset-0 rounded-full ring-2 ring-emerald-400/20 ring-offset-2 ring-offset-slate-100 dark:ring-offset-[#0a0f1a]" />
+                        <div className="absolute inset-0 rounded-full ring-2 ring-emerald-300 ring-offset-2 ring-offset-[#f0fdf4] dark:ring-emerald-400/20 dark:ring-offset-[#0a0f1a]" />
                     </div>
                 </motion.div>
 
@@ -59,7 +59,7 @@ export default function Home() {
                     transition={{ duration: 0.5, delay: 0.2 }}
                     className="text-5xl sm:text-7xl font-bold mb-6 tracking-tight"
                 >
-                    <span className="bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-emerald-400 dark:via-cyan-300 dark:to-emerald-400 bg-clip-text text-transparent animate-gradient-text">
+                    <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-700 dark:from-emerald-400 dark:via-cyan-300 dark:to-emerald-400 bg-clip-text text-transparent animate-gradient-text">
                         Adithya Rajendran
                     </span>
                 </motion.h1>
@@ -143,14 +143,14 @@ export default function Home() {
             >
                 <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-center">
                     I am a Cloud Field Engineer at{" "}
-                    <span className="font-semibold text-slate-900 dark:text-emerald-400">Canonical</span>,
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">Canonical</span>,
                     specializing in deploying and optimizing cloud infrastructure with{" "}
-                    <span className="font-semibold text-slate-900 dark:text-cyan-400">OpenStack</span>,{" "}
-                    <span className="font-semibold text-slate-900 dark:text-cyan-400">Kubernetes</span>, and{" "}
-                    <span className="font-semibold text-slate-900 dark:text-cyan-400">Ubuntu</span> systems.
+                    <span className="font-semibold text-teal-700 dark:text-cyan-400">OpenStack</span>,{" "}
+                    <span className="font-semibold text-teal-700 dark:text-cyan-400">Kubernetes</span>, and{" "}
+                    <span className="font-semibold text-teal-700 dark:text-cyan-400">Ubuntu</span> systems.
                     With a deep passion for cybersecurity, I hold certifications including{" "}
-                    <span className="font-semibold text-slate-900 dark:text-violet-400">AWS Solutions Architect</span> and{" "}
-                    <span className="font-semibold text-slate-900 dark:text-violet-400">CompTIA Security+</span>.
+                    <span className="font-semibold text-violet-700 dark:text-violet-400">AWS Solutions Architect</span> and{" "}
+                    <span className="font-semibold text-violet-700 dark:text-violet-400">CompTIA Security+</span>.
                 </p>
             </motion.section>
 
@@ -218,7 +218,7 @@ export default function Home() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.4, delay: i * 0.1 }}
-                            className="group flex flex-col items-center gap-4 rounded-xl border border-slate-200 bg-white p-6 transition-all hover:shadow-lg hover:border-emerald-300 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-emerald-500/30 dark:hover:shadow-emerald-500/5"
+                            className="group flex flex-col items-center gap-4 rounded-xl border border-emerald-200 bg-white p-6 transition-all hover:shadow-lg hover:shadow-emerald-100 hover:border-emerald-400 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-emerald-500/30 dark:hover:shadow-emerald-500/5"
                         >
                             <div className="relative w-20 h-20">
                                 <Image
@@ -229,7 +229,7 @@ export default function Home() {
                                 />
                             </div>
                             <div className="text-center">
-                                <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                                <h3 className="font-semibold text-sm text-emerald-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                                     {cert.title}
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
@@ -252,7 +252,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <Link
                         href="/portfolio"
-                        className="group relative rounded-xl border border-slate-200 bg-white p-8 sm:p-10 transition-all duration-300 hover:shadow-lg hover:border-emerald-300 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-emerald-500/30 dark:hover:shadow-emerald-500/5"
+                        className="group relative rounded-xl border border-emerald-200 bg-white p-8 sm:p-10 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-100 hover:border-emerald-400 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-emerald-500/30 dark:hover:shadow-emerald-500/5"
                     >
                         <div className="relative">
                             <div className="mb-6 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
@@ -274,10 +274,10 @@ export default function Home() {
 
                     <Link
                         href="/blogs"
-                        className="group relative rounded-xl border border-slate-200 bg-white p-8 sm:p-10 transition-all duration-300 hover:shadow-lg hover:border-cyan-300 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-cyan-500/30 dark:hover:shadow-cyan-500/5"
+                        className="group relative rounded-xl border border-teal-200 bg-white p-8 sm:p-10 transition-all duration-300 hover:shadow-lg hover:shadow-teal-100 hover:border-teal-400 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-cyan-500/30 dark:hover:shadow-cyan-500/5"
                     >
                         <div className="relative">
-                            <div className="mb-6 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20">
+                            <div className="mb-6 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-teal-50 text-teal-600 border border-teal-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20">
                                 <FaPenNib className="text-xl" />
                             </div>
                             <h2 className="text-2xl font-bold mb-3 text-slate-900 dark:text-slate-100">
@@ -287,7 +287,7 @@ export default function Home() {
                                 Insights and write-ups on cybersecurity, homelabs,
                                 and technology explorations.
                             </p>
-                            <span className="inline-flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-medium group-hover:gap-3 transition-all">
+                            <span className="inline-flex items-center gap-2 text-teal-600 dark:text-cyan-400 font-medium group-hover:gap-3 transition-all">
                                 Read
                                 <BsArrowRight className="transition-transform group-hover:translate-x-1" />
                             </span>
@@ -317,7 +317,7 @@ function SkillCard({
     iconBorder: string;
 }) {
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/8 dark:bg-white/[0.03]">
+        <div className="rounded-xl border border-emerald-200 bg-white p-6 hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:border-white/8 dark:bg-white/[0.03] dark:hover:shadow-none">
             <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${bgColor} ${accentColor} border ${iconBorder} mb-4`}>
                 {icon}
             </div>

@@ -48,7 +48,7 @@ export default async function Latest() {
                     {availablePosts.map((post) => (
                         <CarouselItem
                             key={post.slug}
-                            className="bg-white dark:bg-white/[0.03] dark:border dark:border-white/8 rounded-lg overflow-hidden shadow flex-shrink-0 w-full xl:basis-1/4 lg:basis-1/3 md:basis-1/2 sm:w-80"
+                            className="bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow flex-shrink-0 w-full xl:basis-1/4 lg:basis-1/3 md:basis-1/2 sm:w-80 dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none"
                         >
                             <Image
                                 src={post.image}

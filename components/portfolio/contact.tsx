@@ -32,7 +32,7 @@ export default function Contact() {
         >
             <SectionHeading>Contact me</SectionHeading>
 
-            <p className="text-slate-600 -mt-6 dark:text-slate-400">
+            <p className="text-slate-500 -mt-6 dark:text-slate-400">
                 Please contact me directly at{" "}
                 <a
                     className="underline text-emerald-700 dark:text-emerald-400"
@@ -61,7 +61,7 @@ export default function Contact() {
                 }}
             >
                 <input
-                    className="h-14 px-4 rounded-lg borderBlack bg-white dark:bg-white/5 dark:text-slate-200 dark:border-white/10 dark:focus:border-emerald-500/50 transition-all dark:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="h-14 px-4 rounded-lg bg-white border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200/50 transition-all outline-none dark:bg-white/5 dark:text-slate-200 dark:border-white/10 dark:focus:border-emerald-500/50 dark:focus:ring-emerald-500/20"
                     name="senderEmail"
                     type="email"
                     required
@@ -69,7 +69,7 @@ export default function Contact() {
                     placeholder="Your email"
                 />
                 <textarea
-                    className="h-52 my-3 rounded-lg borderBlack p-4 bg-white dark:bg-white/5 dark:text-slate-200 dark:border-white/10 dark:focus:border-emerald-500/50 transition-all dark:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="h-52 my-3 rounded-lg p-4 bg-white border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200/50 transition-all outline-none dark:bg-white/5 dark:text-slate-200 dark:border-white/10 dark:focus:border-emerald-500/50 dark:focus:ring-emerald-500/20"
                     name="message"
                     placeholder="Your message"
                     required

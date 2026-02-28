@@ -31,7 +31,7 @@ export default function Project({
             }}
             className="group mb-3 sm:mb-8 last:mb-0"
         >
-            <section className="bg-slate-50 max-w-[42rem] border border-slate-200 rounded-lg overflow-hidden sm:pr-8 relative hover:bg-slate-100 transition sm:group-even:pl-8 dark:text-slate-200 dark:bg-white/[0.03] dark:border-white/8 dark:hover:bg-white/[0.06]">
+            <section className="bg-white max-w-[42rem] border border-emerald-200 rounded-lg overflow-hidden sm:pr-8 relative hover:bg-emerald-50/50 hover:border-emerald-300 transition sm:group-even:pl-8 dark:text-slate-200 dark:bg-white/[0.03] dark:border-white/8 dark:hover:bg-white/[0.06]">
                 <div className="pt-4 pb-7 px-5 sm:pl-10 sm:pr-2 sm:pt-10 sm:max-w-[50%] flex flex-col h-full sm:group-even:ml-[18rem]">
                     <h3 className="text-2xl font-semibold">{title}</h3>
                     <p className="my-2 leading-relaxed text-slate-600 dark:text-slate-400">
@@ -53,7 +53,7 @@ export default function Project({
                     >
                         {tags.map((tag, index) => (
                             <li
-                                className="bg-slate-800 dark:bg-emerald-500/10 px-3 py-1 text-[0.7rem] uppercase tracking-wider text-white dark:text-emerald-400 rounded-full border border-transparent dark:border-emerald-500/20"
+                                className="bg-emerald-700 px-3 py-1 text-[0.7rem] uppercase tracking-wider text-white rounded-full border border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
                                 key={index}
                             >
                                 {tag}

@@ -10,15 +10,15 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 default:
-                    "bg-slate-900 text-slate-50 hover:bg-slate-800 dark:bg-emerald-600 dark:text-white dark:hover:bg-emerald-500",
+                    "bg-emerald-700 text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500",
                 destructive:
                     "bg-red-500 text-slate-50 hover:bg-red-500/90 dark:bg-red-900 dark:text-slate-50 dark:hover:bg-red-900/90",
                 outline:
-                    "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:hover:text-slate-50",
+                    "border border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50 hover:border-emerald-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-slate-50",
                 secondary:
-                    "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10",
-                ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-slate-50",
-                link: "text-slate-900 underline-offset-4 hover:underline dark:text-emerald-400",
+                    "bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10",
+                ghost: "hover:bg-emerald-50 hover:text-emerald-900 dark:hover:bg-white/5 dark:hover:text-slate-50",
+                link: "text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-400",
             },
             size: {
                 default: "h-10 px-4 py-2",

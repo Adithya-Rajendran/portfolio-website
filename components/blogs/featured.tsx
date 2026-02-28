@@ -18,7 +18,7 @@ export default async function Featured() {
                 {featuredPosts.slice(0, 1).map((post) => (
                     <div
                         key={post.slug}
-                        className="md:col-span-2 bg-white dark:bg-white/[0.03] rounded-lg overflow-hidden shadow dark:border dark:border-white/8"
+                        className="md:col-span-2 bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none"
                     >
                         <Image
                             alt={`Blog post thumbnail for ${post.title}`}
@@ -55,7 +55,7 @@ export default async function Featured() {
                     {featuredPosts.slice(-2).map((post, index) => (
                         <div
                             key={post.slug}
-                            className={`bg-white dark:bg-white/[0.03] rounded-lg overflow-hidden shadow dark:border dark:border-white/8 ${
+                            className={`bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none ${
                                 index === 0 ? "mb-6" : ""
                             }`}
                         >

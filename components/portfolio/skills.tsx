@@ -36,7 +36,7 @@ export default function Skills() {
             <ul className="flex flex-wrap justify-center gap-2 text-lg text-slate-700">
                 {devSkillsData.map((skill, index) => (
                     <motion.li
-                        className="bg-white borderBlack rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 dark:border-emerald-500/10"
+                        className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 dark:border-emerald-500/10"
                         key={index}
                         variants={fadeInAnimationVariants}
                         initial="initial"
@@ -56,7 +56,7 @@ export default function Skills() {
             <ul className="flex flex-wrap justify-center gap-2 text-lg text-slate-700">
                 {cyberSkillsData.map((skill, index) => (
                     <motion.li
-                        className="bg-white borderBlack rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 dark:border-cyan-500/10"
+                        className="bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 dark:border-cyan-500/10"
                         key={index}
                         variants={fadeInAnimationVariants}
                         initial="initial"
@@ -76,7 +76,7 @@ export default function Skills() {
             <ul className="flex flex-wrap justify-center gap-2 text-lg text-slate-700">
                 {devopskillsData.map((skill, index) => (
                     <motion.li
-                        className="bg-white borderBlack rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 dark:border-violet-500/10"
+                        className="bg-violet-50 border border-violet-200 text-violet-800 rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 dark:border-violet-500/10"
                         key={index}
                         variants={fadeInAnimationVariants}
                         initial="initial"
