@@ -1,6 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-background-light: #f9fafb;
+    --color-background-dark: #111827;
+}
 
 html {
     --line-color: #e5e7eb;

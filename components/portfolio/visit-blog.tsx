@@ -1,7 +1,7 @@
 "use client";
 
 import SectionHeading from "../section-heading";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 

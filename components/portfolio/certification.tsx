@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { CertificateType } from "@/lib/types";
 import Image from "next/image";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "motion/react";
 
 export default function Certification(cert: CertificateType) {
     const ref = useRef<HTMLDivElement>(null);
