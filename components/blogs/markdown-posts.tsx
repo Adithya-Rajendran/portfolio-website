@@ -7,7 +7,18 @@ const repoName = process.env.GITHUB_REPO;
 const folderPath = process.env.GITHUB_PATH;
 const accessToken = process.env.GITHUB_TOKEN;
 
-export async function getSlugs(): Promise<string[] | undefined> {
+function isConfigured(): boolean {
+    return Boolean(repoOwner && repoName && folderPath && accessToken);
+}
+
+export async function getSlugs(): Promise<string[]> {
+    if (!isConfigured()) {
+        console.warn(
+            "Blog: GitHub env variables not set (GITHUB_NAME, GITHUB_REPO, GITHUB_PATH, GITHUB_TOKEN). Returning empty slugs."
+        );
+        return [];
+    }
+
     try {
         const response = await fetch(
             `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPath}`,
@@ -16,13 +27,14 @@ export async function getSlugs(): Promise<string[] | undefined> {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 next: {
-                    revalidate: 3600,
+                    revalidate: 900,
                 },
             }
         );
 
         if (!response.ok) {
-            throw new Error("Failed to fetch files from GitHub");
+            console.error(`GitHub API error: ${response.status} ${response.statusText}`);
+            return [];
         }
 
         const data = await response.json();
@@ -33,29 +45,25 @@ export async function getSlugs(): Promise<string[] | undefined> {
         return slugs;
     } catch (error) {
         console.error("Error fetching files from GitHub:", error);
-        return;
+        return [];
     }
 }
 
 export async function getPostContent(
     slug: string
 ): Promise<PostType | undefined> {
+    if (!isConfigured()) {
+        return undefined;
+    }
+
+    if (!slug) {
+        console.error("Slug not provided in the request body.");
+        return undefined;
+    }
+
     try {
-        if (!slug) {
-            const errorMessage = "Slug not provided in the request body.";
-            console.error(errorMessage);
-            throw new Error(errorMessage);
-        }
+        const filePath = path.join(folderPath!, `${slug}.md`);
 
-        if (!folderPath) {
-            const errorMessage = "Please set GITHUB_PATH env variable.";
-            console.error(errorMessage);
-            throw new Error(errorMessage);
-        }
-
-        const filePath = path.join(folderPath, `${slug}.md`);
-
-        // Fetch markdown content from GitHub
         const response = await fetch(
             `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`,
             {
@@ -63,24 +71,24 @@ export async function getPostContent(
                     Authorization: `Bearer ${accessToken}`,
                 },
                 next: {
-                    revalidate: 3600,
+                    revalidate: 900,
                 },
             }
         );
 
         if (!response.ok) {
             if (response.status === 404) {
-                const errorMessage = "Requested resource is not found.";
-                console.error(errorMessage);
-                throw new Error(errorMessage);
+                console.error(`Blog post not found: ${slug}`);
+            } else {
+                console.error(
+                    `Error fetching markdown content: ${response.status} ${response.statusText}`
+                );
             }
-            const error = `Error fetching markdown content: ${response.statusText}`;
-            console.error(error);
-            throw new Error(error);
+            return undefined;
         }
 
         const fileData = await response.json();
-        const markdownContent = atob(fileData.content); // Decode Base64 content
+        const markdownContent = Buffer.from(fileData.content, "base64").toString("utf-8");
         const { data, content } = matter(markdownContent);
         const scheduledDate = new Date(`${data.date}T00:00:00.000-08:00`);
         const formattedDate = scheduledDate.toLocaleDateString("en-US", {
@@ -113,6 +121,6 @@ export async function getPostContent(
         return post;
     } catch (error) {
         console.error("Error fetching data from GitHub:", error);
-        return;
+        return undefined;
     }
 }

@@ -8,7 +8,7 @@ import Link from "next/link";
 export default function VisitBlogs() {
     return (
         <motion.section
-            id="Visit Blogs"
+            id="visit-blogs"
             className="mb-20 sm:mb-28 w-[min(100%,38rem)] text-center"
             initial={{
                 opacity: 0,
