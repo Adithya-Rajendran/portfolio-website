@@ -36,6 +36,7 @@ export default function ThemeContextProvider({
         const localTheme = window.localStorage.getItem("theme") as Theme | null;
 
         if (localTheme) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTheme(localTheme);
 
             if (localTheme === "dark") {
