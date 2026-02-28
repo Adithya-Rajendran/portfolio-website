@@ -9,15 +9,17 @@ import Certifications from "@/components/portfolio/certifications";
 
 export default function Portfolio() {
     return (
-        <main className="flex flex-col items-center px-4">
-            <Intro />
-            <SectionDivider />
-            <About />
-            <Skills />
-            <Certifications />
-            <Experience />
-            <Projects />
-            <Contact />
-        </main>
+        <>
+            <main className="flex flex-col items-center px-4">
+                <Intro />
+                <SectionDivider />
+                <About />
+                <Skills />
+                <Certifications />
+                <Experience />
+                <Projects />
+                <Contact />
+            </main>
+        </>
     );
 }

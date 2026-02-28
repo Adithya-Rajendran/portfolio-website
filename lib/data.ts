@@ -47,10 +47,6 @@ export const links = [
         name: "Contact",
         hash: "/portfolio#contact",
     },
-    {
-        name: "Blogs",
-        hash: "/blogs",
-    },
 ] as const;
 
 export const certData: readonly CertificateType[] = [

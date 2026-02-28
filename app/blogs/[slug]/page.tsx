@@ -1,4 +1,3 @@
-"use server";
 
 import { getPostContent, getSlugs } from "@/components/blogs/markdown-posts";
 import ReactMarkdown from "react-markdown";

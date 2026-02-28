@@ -40,7 +40,7 @@ export const sendEmail = async (formData: FormData) => {
     let data;
     try {
         const emailHtml = await render(ContactFormEmail({ message, senderEmail }));
-        data = transporter.sendMail({
+        data = await transporter.sendMail({
             from: `"Contact Form" <${emailCredentials.user}>`,
             to: "adithyaraj@gmail.com, work@adithya-rajendran.com",
             subject: "Contact Form for My Website",

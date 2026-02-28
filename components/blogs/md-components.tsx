@@ -16,13 +16,13 @@ const Heading: Record<string, FunctionComponent<HeadingProps>> = {
         <h2 className="text-3xl font-bold">{children}</h2>
     ),
     H3: ({ children }: HeadingProps) => (
-        <h2 className="text-2xl font-bold">{children}</h2>
+        <h3 className="text-2xl font-bold">{children}</h3>
     ),
     H4: ({ children }: HeadingProps) => (
-        <h2 className="text-xl font-bold">{children}</h2>
+        <h4 className="text-xl font-bold">{children}</h4>
     ),
     H5: ({ children }: HeadingProps) => (
-        <h2 className="text-l font-bold">{children}</h2>
+        <h5 className="text-l font-bold">{children}</h5>
     ),
 };
 
