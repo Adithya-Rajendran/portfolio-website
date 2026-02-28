@@ -39,12 +39,13 @@ export const sendEmail = async (formData: FormData) => {
 
     let data;
     try {
+        const emailHtml = await render(ContactFormEmail({ message, senderEmail }));
         data = transporter.sendMail({
             from: `"Contact Form" <${emailCredentials.user}>`,
             to: "adithyaraj@gmail.com, work@adithya-rajendran.com",
             subject: "Contact Form for My Website",
             text: `Message: ${message}\nSender Email: ${senderEmail}`,
-            html: render(ContactFormEmail({ message, senderEmail })),
+            html: emailHtml,
         });
     } catch (error: unknown) {
         return {
