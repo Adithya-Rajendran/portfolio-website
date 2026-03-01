@@ -35,7 +35,7 @@ export default function Home() {
                             src={heroImg}
                             alt="Adithya Rajendran"
                             fill
-                            quality={90}
+                            quality={95}
                             priority
                             className="rounded-full object-cover border-2 border-emerald-400 shadow-lg shadow-emerald-300/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
                         />
