@@ -3,6 +3,7 @@ export function PersonJsonLd() {
         "@context": "https://schema.org",
         "@type": "Person",
         name: "Adithya Rajendran",
+        alternateName: "Adithya",
         url: "https://adithya-rajendran.com",
         image: "https://adithya-rajendran.com/og-image.jpg",
         jobTitle: "Cloud Field Engineer",

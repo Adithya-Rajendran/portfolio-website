@@ -13,8 +13,7 @@ export const client = createClient({
     projectId: projectId || "",
     dataset,
     apiVersion,
-    // Disable CDN so revalidation fetches hit the origin API with fresh data
-    useCdn: false,
+    useCdn: true,
 });
 
 const isSanityConfigured = Boolean(projectId);

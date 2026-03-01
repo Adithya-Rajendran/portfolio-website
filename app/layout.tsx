@@ -15,7 +15,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: {
-        default: "Adithya Rajendran | Cloud Engineer & Cybersecurity Professional",
+        default:
+            "Adithya Rajendran | Cloud Engineer & Cybersecurity Professional",
         template: "%s | Adithya Rajendran",
     },
     description:
@@ -61,19 +62,19 @@ export const metadata: Metadata = {
     icons: {
         icon: [
             {
-                url: '/icon-light-32x32.png',
-                media: '(prefers-color-scheme: light)',
+                url: "/icon-light-32x32.png",
+                media: "(prefers-color-scheme: light)",
             },
             {
-                url: '/icon-dark-32x32.png',
-                media: '(prefers-color-scheme: dark)',
+                url: "/icon-dark-32x32.png",
+                media: "(prefers-color-scheme: dark)",
             },
             {
-                url: '/icon.svg',
-                type: 'image/svg+xml',
+                url: "/icon.svg",
+                type: "image/svg+xml",
             },
         ],
-        apple: '/apple-icon.png',
+        apple: "/apple-icon.png",
     },
     metadataBase: new URL("https://adithya-rajendran.com/"),
     openGraph: {
@@ -102,6 +103,9 @@ export const metadata: Metadata = {
             url: "/og-image.jpg",
             alt: "Adithya Rajendran - Cloud Field Engineer & Cybersecurity Portfolio",
         },
+    },
+    verification: {
+        google: "xIlpCrEaBsk8WOUIhIE_UCZMGY91iSuumdsOIoB8I6k",
     },
 };
 
