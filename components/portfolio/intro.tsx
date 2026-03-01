@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import Link from "next/link";
 import { BsArrowRight, BsLinkedin } from "react-icons/bs";
@@ -28,12 +27,18 @@ export default function Intro() {
 
             <h1 className="mb-10 mt-4 px-4 text-2xl font-medium !leading-[1.5] sm:text-4xl">
                 <span className="font-bold">Hi, I'm Adithya Rajendran.</span> A{" "}
-                <span className="font-bold">Cloud Field Engineer</span> at Canonical, with a passion for{" "}
-                <span className="italic">building scalable cloud infrastructure</span> and delivering{" "}
-                <span className="italic">secure, high-performance solutions</span>. I aim to{" "}
-                <span className="font-bold">innovate</span> and drive efficiency across modern computing ecosystems.
+                <span className="font-bold">Cloud Field Engineer</span> at
+                Canonical, with a passion for{" "}
+                <span className="italic">
+                    building scalable cloud infrastructure
+                </span>{" "}
+                and delivering{" "}
+                <span className="italic">
+                    secure, high-performance solutions
+                </span>
+                . I aim to <span className="font-bold">innovate</span> and drive
+                efficiency across modern computing ecosystems.
             </h1>
-
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium">
                 <Link
@@ -46,7 +51,7 @@ export default function Intro() {
 
                 <a
                     className="group bg-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 active:scale-105 transition cursor-pointer border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/8"
-                    href="/CV.pdf"
+                    href="/resume.pdf"
                     download
                 >
                     Download CV{" "}

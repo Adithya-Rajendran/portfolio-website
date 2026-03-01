@@ -6,7 +6,6 @@ import ThemeContextProvider from "@/context/theme-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import { devSkillsData, devopskillsData, cyberSkillsData } from "@/lib/data";
 import { PersonJsonLd, WebSiteJsonLd } from "@/components/json-ld";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
@@ -25,34 +24,17 @@ export const metadata: Metadata = {
         canonical: "https://adithya-rajendran.com",
     },
     keywords: [
-        "Adithya",
         "Adithya Rajendran",
-        "Rajendran",
-        "Cybersecurity Analyst",
-        "Software Developer",
+        "Cloud Field Engineer",
+        "Canonical",
+        "AWS Solutions Architect",
         "CompTIA Security+",
-        "AWS Certified Solutions Architect",
-        "Cloud Engineer",
-        "Full Stack Developer",
-        "Network Security",
-        "Web Development",
-        "Python Programmer",
-        "Cybersecurity Certifications",
-        "Project Management",
-        "Data Analysis",
-        "Cloud Computing",
-        "AWS Certified",
-        "React Developer",
-        "Open Source Contributor",
-        "Information Security",
-        "Penetration Testing",
-        "DevOps Engineer",
-        "Machine Learning Enthusiast",
-        "Blockchain Technology",
-        "Agile Methodology",
-        ...devSkillsData,
-        ...devopskillsData,
-        ...cyberSkillsData,
+        "Cybersecurity",
+        "OpenStack",
+        "Kubernetes",
+        "DevOps",
+        "Cloud Engineering",
+        "Portfolio",
     ],
     robots: {
         index: true,

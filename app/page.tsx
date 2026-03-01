@@ -118,7 +118,7 @@ export default function Home() {
                     className="flex items-center gap-4 mt-8"
                 >
                     <a
-                        href="https://linkedin.com/in/adithya-rajendran"
+                        href="https://www.linkedin.com/in/adithya-rajendran"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
