@@ -7,7 +7,14 @@ export default async function Featured() {
     const featuredPosts = await getFeaturedPosts();
 
     if (!featuredPosts || featuredPosts.length === 0) {
-        return null;
+        return (
+            <section className="container mx-auto px-6 mb-12">
+                <h2 className="text-2xl font-bold mb-4">Featured Posts</h2>
+                <p className="text-slate-500 dark:text-slate-400">
+                    No featured posts yet. Mark a post as featured in the Sanity Studio.
+                </p>
+            </section>
+        );
     }
 
     return (

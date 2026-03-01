@@ -14,7 +14,14 @@ export default async function Latest() {
     const allPosts = await getAllPosts();
 
     if (!allPosts || allPosts.length === 0) {
-        return null;
+        return (
+            <section className="container mx-auto px-6">
+                <h2 className="text-2xl font-bold mb-4">Latest Posts</h2>
+                <p className="text-slate-500 dark:text-slate-400">
+                    No posts published yet. Create your first post in the Sanity Studio.
+                </p>
+            </section>
+        );
     }
 
     return (
