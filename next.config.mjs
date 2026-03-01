@@ -6,6 +6,19 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    async headers() {
+        return [
+            {
+                source: "/resume.pdf",
+                headers: [
+                    {
+                        key: "Content-Disposition",
+                        value: 'attachment; filename="resume.pdf"',
+                    },
+                ],
+            },
+        ];
+    },
     images: {
         qualities: [75, 95],
         remotePatterns: [
