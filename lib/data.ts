@@ -115,7 +115,7 @@ export const experiencesData: readonly ExperienceType[] = [
             "Also established rigorous code review and testing protocols, reducing bugs by 20% and ensuring high-quality code standards.",
         ],
         icon: React.createElement(FaPython),
-        date: "Spetember 2023 - April 2024",
+        date: "September 2023 - April 2024",
     },
     {
         title: "Bachelor of Science, Computer Science",
