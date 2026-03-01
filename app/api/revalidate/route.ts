@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
             }
 
             // Purge all caches tagged with "post"
-            revalidateTag("post");
+            revalidateTag("post", { expire: 0 });
 
             return NextResponse.json({
                 revalidated: true,
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        revalidateTag("post");
+        revalidateTag("post", { expire: 0 });
 
         return NextResponse.json({
             revalidated: true,
