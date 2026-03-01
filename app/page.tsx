@@ -34,11 +34,11 @@ export default function Home() {
                         <Image
                             src={heroImg}
                             alt="Adithya Rajendran"
-                            fill
-                            sizes="112px"
+                            width={112}
+                            height={112}
                             quality={95}
                             priority
-                            className="rounded-full object-cover border-2 border-emerald-400 shadow-lg shadow-emerald-300/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
+                            className="rounded-full object-cover w-28 h-28 border-2 border-emerald-400 shadow-lg shadow-emerald-300/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
                         />
                         <div className="absolute inset-0 rounded-full ring-2 ring-emerald-300 ring-offset-2 ring-offset-[#f0fdf4] dark:ring-emerald-400/20 dark:ring-offset-[#0a0f1a]" />
                     </div>
