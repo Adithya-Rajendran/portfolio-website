@@ -44,7 +44,7 @@ export default function Home() {
                     </div>
                 </motion.div>
 
-                <motion.div
+                {/* <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
@@ -52,7 +52,7 @@ export default function Home() {
                     <Badge variant="cyber" className="mb-6 text-sm px-4 py-1">
                         Available for opportunities
                     </Badge>
-                </motion.div>
+                </motion.div> */}
 
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
