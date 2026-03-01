@@ -3,7 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { BsArrowRight, BsGithub, BsLinkedin, BsShieldLock } from "react-icons/bs";
+import {
+    BsArrowRight,
+    BsGithub,
+    BsLinkedin,
+    BsShieldLock,
+} from "react-icons/bs";
 import { FaBriefcase, FaPenNib, FaCode, FaServer } from "react-icons/fa";
 import { HiDownload } from "react-icons/hi";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +49,7 @@ export default function Home() {
                     </div>
                 </motion.div>
 
-                {/* <motion.div
+                {/*<motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
@@ -52,7 +57,7 @@ export default function Home() {
                     <Badge variant="cyber" className="mb-6 text-sm px-4 py-1">
                         Available for opportunities
                     </Badge>
-                </motion.div> */}
+                </motion.div>*/}
 
                 <motion.h1
                     initial={{ opacity: 0, y: 20 }}
@@ -87,16 +92,22 @@ export default function Home() {
                         </Link>
                     </Button>
 
-                    <Button asChild variant="outline" size="lg" className="gap-2">
-                        <Link href="/blogs">
-                            Read Blog
-                        </Link>
+                    <Button
+                        asChild
+                        variant="outline"
+                        size="lg"
+                        className="gap-2"
+                    >
+                        <Link href="/blogs">Read Blog</Link>
                     </Button>
 
-                    <Button asChild variant="outline" size="lg" className="gap-2">
-                        <Link href="/portfolio#contact">
-                            Contact Me
-                        </Link>
+                    <Button
+                        asChild
+                        variant="outline"
+                        size="lg"
+                        className="gap-2"
+                    >
+                        <Link href="/portfolio#contact">Contact Me</Link>
                     </Button>
                 </motion.div>
 
@@ -143,15 +154,24 @@ export default function Home() {
                 className="max-w-[52rem] w-full py-20"
             >
                 <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-center">
-                    I am a Cloud Field Engineer at{" "}
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">Canonical</span>,
-                    specializing in deploying and optimizing cloud infrastructure with{" "}
-                    <span className="font-semibold text-teal-700 dark:text-cyan-400">OpenStack</span>,{" "}
-                    <span className="font-semibold text-teal-700 dark:text-cyan-400">Kubernetes</span>, and{" "}
-                    <span className="font-semibold text-teal-700 dark:text-cyan-400">Ubuntu</span> systems.
-                    With a deep passion for cybersecurity, I hold certifications including{" "}
-                    <span className="font-semibold text-violet-700 dark:text-violet-400">AWS Solutions Architect</span> and{" "}
-                    <span className="font-semibold text-violet-700 dark:text-violet-400">CompTIA Security+</span>.
+                    Hi, I'm Adithya. I am a Cloud Field Engineer at{" "}
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                        Canonical
+                    </span>
+                    , specializing in deploying and optimizing cloud
+                    infrastructure with{" "}
+                    <span className="font-semibold text-teal-700 dark:text-cyan-400">
+                        OpenStack
+                    </span>
+                    ,{" "}
+                    <span className="font-semibold text-teal-700 dark:text-cyan-400">
+                        Kubernetes
+                    </span>
+                    , and{" "}
+                    <span className="font-semibold text-teal-700 dark:text-cyan-400">
+                        Ubuntu
+                    </span>{" "}
+                    systems.
                 </p>
             </motion.section>
 
@@ -264,8 +284,8 @@ export default function Home() {
                                 Portfolio
                             </h2>
                             <p className="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                                Experience, projects, certifications, and skills in
-                                cloud engineering and cybersecurity.
+                                Experience, projects, certifications, and skills
+                                in cloud engineering and cybersecurity.
                             </p>
                             <span className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium group-hover:gap-3 transition-all">
                                 Explore
@@ -286,8 +306,8 @@ export default function Home() {
                                 Blogs
                             </h2>
                             <p className="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                                Insights and write-ups on cybersecurity, homelabs,
-                                and technology explorations.
+                                Insights and write-ups on cybersecurity,
+                                homelabs, and technology explorations.
                             </p>
                             <span className="inline-flex items-center gap-2 text-teal-600 dark:text-cyan-400 font-medium group-hover:gap-3 transition-all">
                                 Read
@@ -320,7 +340,9 @@ function SkillCard({
 }) {
     return (
         <div className="rounded-xl border border-emerald-200 bg-white p-6 hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:border-white/8 dark:bg-white/[0.03] dark:hover:shadow-none">
-            <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${bgColor} ${accentColor} border ${iconBorder} mb-4`}>
+            <div
+                className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${bgColor} ${accentColor} border ${iconBorder} mb-4`}
+            >
                 {icon}
             </div>
             <h3 className={`font-semibold mb-4 ${accentColor}`}>{title}</h3>
