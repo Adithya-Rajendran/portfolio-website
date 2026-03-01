@@ -6,7 +6,7 @@ import ThemeContextProvider from "@/context/theme-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import { PersonJsonLd, WebSiteJsonLd } from "@/components/json-ld";
+import { PersonJsonLd, WebSiteJsonLd, ProfilePageJsonLd } from "@/components/json-ld";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 
@@ -111,6 +111,7 @@ export default function RootLayout({
             <head>
                 <PersonJsonLd />
                 <WebSiteJsonLd />
+                <ProfilePageJsonLd />
             </head>
             <body
                 className={`${inter.className} bg-[#f0fdf4] text-slate-900 relative pt-28 sm:pt-36 dark:bg-[#0a0f1a] dark:text-slate-200`}

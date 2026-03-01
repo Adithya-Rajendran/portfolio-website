@@ -32,20 +32,10 @@ html.dark {
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Cyber glow utilities */
-.glow-cyber {
-    box-shadow: 0 0 20px rgba(52, 211, 153, 0.15), 0 0 60px rgba(52, 211, 153, 0.05);
-}
-
 .glow-border {
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-.dark .glow-border {
-    border: 1px solid rgba(52, 211, 153, 0.2);
-}
-
-/* Light mode glow */
 .glow-cyber {
     box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12), 0 0 40px rgba(16, 185, 129, 0.04);
 }
@@ -56,8 +46,15 @@ html.dark {
 
 /* Animated gradient text for hero */
 @keyframes gradient-shift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
 }
 
 .animate-gradient-text {
@@ -68,13 +65,13 @@ html.dark {
 /* Subtle grid background pattern */
 .bg-grid-pattern {
     background-image: linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
-                       linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+        linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
     background-size: 60px 60px;
 }
 
 .dark .bg-grid-pattern {
     background-image: linear-gradient(rgba(52, 211, 153, 0.03) 1px, transparent 1px),
-                       linear-gradient(90deg, rgba(52, 211, 153, 0.03) 1px, transparent 1px);
+        linear-gradient(90deg, rgba(52, 211, 153, 0.03) 1px, transparent 1px);
 }
 
 /* Scanline overlay effect */
@@ -83,11 +80,9 @@ html.dark {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(52, 211, 153, 0.01) 2px,
-        rgba(52, 211, 153, 0.01) 4px
-    );
+    background: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(52, 211, 153, 0.01) 2px,
+            rgba(52, 211, 153, 0.01) 4px);
 }
