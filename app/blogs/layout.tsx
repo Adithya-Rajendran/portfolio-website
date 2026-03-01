@@ -2,9 +2,12 @@ import Link from "next/link";
 import { BsArrowLeft } from "react-icons/bs";
 
 export const metadata = {
-    title: "Personal Blogs Homepage",
+    title: "Cybersecurity & Cloud Engineering Blog",
     description:
-        "Join me on my learning journey in cybersecurity, software development, homelabs, and technology. Read along as I share insights, challenges, and discoveries, turning each lesson into a stepping stone towards expertise.",
+        "Technical blog by Adithya Rajendran covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.",
+    alternates: {
+        canonical: "https://adithya-rajendran.com/blogs",
+    },
 };
 
 export default function BlogsLayout({

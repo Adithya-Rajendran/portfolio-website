@@ -7,15 +7,22 @@ import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { devSkillsData, devopskillsData, cyberSkillsData } from "@/lib/data";
+import { PersonJsonLd, WebSiteJsonLd } from "@/components/json-ld";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Adithya Rajendran | Personal Portfolio",
+    title: {
+        default: "Adithya Rajendran | Cloud Engineer & Cybersecurity Professional",
+        template: "%s | Adithya Rajendran",
+    },
     description:
-        "Adithya Rajendran is an enthuastic person who is higly skilled in the fields of cybersecurity and software development",
+        "Adithya Rajendran is a Cloud Field Engineer at Canonical and cybersecurity professional. AWS Certified Solutions Architect & CompTIA Security+ certified. Specializing in OpenStack, Kubernetes, and cloud infrastructure.",
+    alternates: {
+        canonical: "https://adithya-rajendran.com",
+    },
     keywords: [
         "Adithya",
         "Adithya Rajendran",
@@ -70,9 +77,9 @@ export const metadata: Metadata = {
     },
     metadataBase: new URL("https://adithya-rajendran.com/"),
     openGraph: {
-        title: "Adithya Rajendran | Personal Portfolio",
+        title: "Adithya Rajendran | Cloud Engineer & Cybersecurity Professional",
         description:
-            "A portfolio website showcasing Adithya's skills and achievements",
+            "Cloud Field Engineer at Canonical. AWS Certified Solutions Architect & CompTIA Security+ certified. Portfolio, projects, and cybersecurity blog.",
         url: "https://adithya-rajendran.com/",
         siteName: "Adithya's Portfolio",
         images: [
@@ -88,9 +95,9 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "Adithya Rajendran | Personal Portfolio",
+        title: "Adithya Rajendran | Cloud Engineer & Cybersecurity Professional",
         description:
-            "A portfolio website showcasing Adithya Rajendran's skills and achievement",
+            "Cloud Field Engineer at Canonical. AWS Certified Solutions Architect & CompTIA Security+ certified. Portfolio and cybersecurity blog.",
         images: {
             url: "/og-image.jpg",
             alt: "Adithya Rajendran - Cloud Field Engineer & Cybersecurity Portfolio",
@@ -115,6 +122,10 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" className="!scroll-smooth">
+            <head>
+                <PersonJsonLd />
+                <WebSiteJsonLd />
+            </head>
             <body
                 className={`${inter.className} bg-[#f0fdf4] text-slate-900 relative pt-28 sm:pt-36 dark:bg-[#0a0f1a] dark:text-slate-200`}
             >

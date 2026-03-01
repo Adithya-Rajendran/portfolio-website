@@ -1,6 +1,7 @@
 import { getPostBySlug, getAllSlugs } from "@/lib/sanity-client";
 import { PortableText } from "@portabletext/react";
 import { portableTextComponents } from "@/components/blogs/portable-text-components";
+import { BlogPostJsonLd } from "@/components/json-ld";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
@@ -18,6 +19,12 @@ export default async function BlogPostPage({
 
     return (
         <>
+            <BlogPostJsonLd
+                title={post.title}
+                description={post.description}
+                date={post.date}
+                slug={post.slug}
+            />
             <section className="flex flex-col items-center px-4">
                 <h1 className="text-6xl font-bold text-center">{post.title}</h1>
                 <p className="text-gray-500 p-2">{post.date}</p>
@@ -51,9 +58,19 @@ export async function generateMetadata({
     return {
         title: post.title,
         description: post.description,
+        alternates: {
+            canonical: `https://adithya-rajendran.com/blogs/${slug}`,
+        },
+        openGraph: {
+            title: post.title,
+            description: post.description,
+            type: "article",
+            publishedTime: post.date,
+            authors: ["Adithya Rajendran"],
+        },
         robots: {
             index: true,
-            follow: false,
+            follow: true,
         },
     };
 }

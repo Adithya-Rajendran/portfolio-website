@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
         rules: {
             userAgent: "*",
             allow: "/",
-            disallow: "/admin/",
+            disallow: "/studio/",
         },
         sitemap: "https://adithya-rajendran.com/sitemap.xml",
     };
