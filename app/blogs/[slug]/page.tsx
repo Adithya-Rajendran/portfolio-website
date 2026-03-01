@@ -75,6 +75,8 @@ export async function generateMetadata({
     };
 }
 
+export const dynamicParams = true;
+
 export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
     const slugs = await getAllSlugs();
     if (!slugs) {
