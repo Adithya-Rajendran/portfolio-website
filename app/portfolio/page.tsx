@@ -6,6 +6,16 @@ import Skills from "@/components/portfolio/skills";
 import Experience from "@/components/portfolio/experience";
 import Contact from "@/components/portfolio/contact";
 import Certifications from "@/components/portfolio/certifications";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Portfolio",
+    description:
+        "Adithya Rajendran's portfolio - Cloud Field Engineer at Canonical with experience in OpenStack, Kubernetes, AWS, and cybersecurity. View projects, certifications, and work experience.",
+    alternates: {
+        canonical: "https://adithya-rajendran.com/portfolio",
+    },
+};
 
 export default function Portfolio() {
     return (
