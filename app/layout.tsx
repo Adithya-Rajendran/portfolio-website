@@ -52,7 +52,21 @@ export const metadata: Metadata = {
     },
     category: "technology",
     icons: {
-        icon: "/favicon.ico",
+        icon: [
+            {
+                url: '/icon-light-32x32.png',
+                media: '(prefers-color-scheme: light)',
+            },
+            {
+                url: '/icon-dark-32x32.png',
+                media: '(prefers-color-scheme: dark)',
+            },
+            {
+                url: '/icon.svg',
+                type: 'image/svg+xml',
+            },
+        ],
+        apple: '/apple-icon.png',
     },
     metadataBase: new URL("https://adithya-rajendran.com/"),
     openGraph: {
