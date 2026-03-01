@@ -105,3 +105,57 @@ export function BlogPostJsonLd({
         />
     );
 }
+
+export function ProfilePageJsonLd() {
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        dateCreated: "2024-01-01",
+        dateModified: new Date().toISOString().split("T")[0],
+        mainEntity: {
+            "@type": "Person",
+            name: "Adithya Rajendran",
+            alternateName: "Adithya",
+            url: "https://adithya-rajendran.com",
+            image: "https://adithya-rajendran.com/og-image.jpg",
+            jobTitle: "Cloud Field Engineer",
+            worksFor: {
+                "@type": "Organization",
+                name: "Canonical",
+                url: "https://canonical.com",
+            },
+            alumniOf: {
+                "@type": "CollegeOrUniversity",
+                name: "University of California, Santa Cruz",
+            },
+            sameAs: [
+                "https://www.linkedin.com/in/adithya-rajendran",
+                "https://github.com/Adithya-Rajendran",
+                "https://www.credly.com/users/adithya-rajendran",
+                "https://app.hackthebox.com/profile/514798",
+                "https://tryhackme.com/p/Cagmas",
+            ],
+            hasCredential: [
+                {
+                    "@type": "EducationalOccupationalCredential",
+                    name: "AWS Certified Solutions Architect",
+                    credentialCategory: "certification",
+                    recognizedBy: { "@type": "Organization", name: "Amazon Web Services" },
+                },
+                {
+                    "@type": "EducationalOccupationalCredential",
+                    name: "CompTIA Security+",
+                    credentialCategory: "certification",
+                    recognizedBy: { "@type": "Organization", name: "CompTIA" },
+                },
+            ],
+        },
+    };
+
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+    );
+}
