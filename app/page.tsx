@@ -35,6 +35,7 @@ export default function Home() {
                             src={heroImg}
                             alt="Adithya Rajendran"
                             fill
+                            sizes="112px"
                             quality={95}
                             priority
                             className="rounded-full object-cover border-2 border-emerald-400 shadow-lg shadow-emerald-300/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
@@ -225,6 +226,7 @@ export default function Home() {
                                     src={cert.badge}
                                     alt={cert.title}
                                     fill
+                                    sizes="80px"
                                     className="object-contain"
                                 />
                             </div>
