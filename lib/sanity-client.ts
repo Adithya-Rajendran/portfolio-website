@@ -13,10 +13,22 @@ export const client = createClient({
     projectId: projectId || "",
     dataset,
     apiVersion,
-    useCdn: true,
+    // Disable CDN so revalidation fetches hit the origin API with fresh data
+    useCdn: false,
 });
 
 const isSanityConfigured = Boolean(projectId);
+
+// Reusable GROQ projections
+const postProjection = `{
+    title,
+    "slug": slug.current,
+    description,
+    date,
+    featured,
+    image,
+    body
+}`;
 
 // Fetch all published posts, sorted by date descending
 export async function getAllPosts(): Promise<SanityPostType[]> {
@@ -24,16 +36,9 @@ export async function getAllPosts(): Promise<SanityPostType[]> {
     try {
         const today = new Date().toISOString().split("T")[0];
         const posts = await client.fetch(
-            `*[_type == "post" && date <= $today] | order(date desc) {
-                title,
-                "slug": slug.current,
-                description,
-                date,
-                featured,
-                image,
-                body
-            }`,
-            { today }
+            `*[_type == "post" && date <= $today] | order(date desc) ${postProjection}`,
+            { today },
+            { next: { tags: ["post"] } },
         );
         return posts || [];
     } catch (error) {
@@ -48,16 +53,9 @@ export async function getFeaturedPosts(): Promise<SanityPostType[]> {
     try {
         const today = new Date().toISOString().split("T")[0];
         const posts = await client.fetch(
-            `*[_type == "post" && featured == true && date <= $today] | order(date desc) {
-                title,
-                "slug": slug.current,
-                description,
-                date,
-                featured,
-                image,
-                body
-            }`,
-            { today }
+            `*[_type == "post" && featured == true && date <= $today] | order(date desc) ${postProjection}`,
+            { today },
+            { next: { tags: ["post"] } },
         );
         return posts || [];
     } catch (error) {
@@ -68,21 +66,14 @@ export async function getFeaturedPosts(): Promise<SanityPostType[]> {
 
 // Fetch a single post by slug
 export async function getPostBySlug(
-    slug: string
+    slug: string,
 ): Promise<SanityPostType | null> {
     if (!isSanityConfigured) return null;
     try {
         const post = await client.fetch(
-            `*[_type == "post" && slug.current == $slug][0] {
-                title,
-                "slug": slug.current,
-                description,
-                date,
-                featured,
-                image,
-                body
-            }`,
-            { slug }
+            `*[_type == "post" && slug.current == $slug][0] ${postProjection}`,
+            { slug },
+            { next: { tags: ["post"] } },
         );
         return post || null;
     } catch (error) {
@@ -98,7 +89,8 @@ export async function getAllSlugs(): Promise<string[]> {
         const today = new Date().toISOString().split("T")[0];
         const slugs = await client.fetch(
             `*[_type == "post" && date <= $today].slug.current`,
-            { today }
+            { today },
+            { next: { tags: ["post"] } },
         );
         return slugs || [];
     } catch (error) {
