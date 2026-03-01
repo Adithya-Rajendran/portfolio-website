@@ -17,6 +17,10 @@ const nextConfig = {
                 protocol: "https",
                 hostname: "labs.hackthebox.com",
             },
+            {
+                protocol: "https",
+                hostname: "cdn.sanity.io",
+            },
         ],
     },
 };

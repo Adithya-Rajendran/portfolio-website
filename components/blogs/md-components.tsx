@@ -108,7 +108,7 @@ function LinkComponent({ href, children, ...props }: LinkProps) {
     return (
         <a
             href={href}
-            className="text-blue-500 hover:underline"
+            className="text-emerald-600 hover:underline dark:text-emerald-400 dark:hover:text-emerald-300"
             target="_blank"
             rel="noopener noreferrer"
             {...props}
@@ -134,7 +134,7 @@ function CodeBlock({ node, inline, className, children, ...props }: any) {
         </SyntaxHighlighter>
     ) : (
         <span
-            className={` text-amber-200 dark:text-amber-600 bg-black rounded-md px-1.5 ${className}`}
+            className={` text-emerald-300 dark:text-emerald-400 bg-slate-900 dark:bg-slate-800 rounded-md px-1.5 ${className}`}
             {...props}
         >
             {children}

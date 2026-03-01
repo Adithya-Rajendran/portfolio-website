@@ -1,18 +1,17 @@
-
-import { getPostContent, getSlugs } from "@/components/blogs/markdown-posts";
-import ReactMarkdown from "react-markdown";
-import { components } from "@/components/blogs/md-components";
+import { getPostBySlug, getAllSlugs } from "@/lib/sanity-client";
+import { PortableText } from "@portabletext/react";
+import { portableTextComponents } from "@/components/blogs/portable-text-components";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 
-export default async function RemoteMdxPage({
+export default async function BlogPostPage({
     params,
 }: {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 }) {
-    const { slug } = params;
-    const post = await getPostContent(slug);
+    const { slug } = await params;
+    const post = await getPostBySlug(slug);
     if (!post) {
         return notFound();
     }
@@ -23,13 +22,18 @@ export default async function RemoteMdxPage({
                 <h1 className="text-6xl font-bold text-center">{post.title}</h1>
                 <p className="text-gray-500 p-2">{post.date}</p>
                 <p className="dark:text-cyan-300 text-cyan-900 text-justify">
-                    {post.desc}
+                    {post.description}
                 </p>
                 <Separator className="dark:bg-gray-500" />
             </section>
-            <ReactMarkdown components={components}>
-                {post.content}
-            </ReactMarkdown>
+            {post.body && (
+                <div className="prose-container px-4 sm:px-8 py-4 max-w-4xl mx-auto">
+                    <PortableText
+                        value={post.body}
+                        components={portableTextComponents}
+                    />
+                </div>
+            )}
         </>
     );
 }
@@ -37,16 +41,16 @@ export default async function RemoteMdxPage({
 export async function generateMetadata({
     params,
 }: {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 }): Promise<Metadata | undefined> {
-    const { slug } = params;
-    const post = await getPostContent(slug);
+    const { slug } = await params;
+    const post = await getPostBySlug(slug);
     if (!post) {
         return;
     }
     return {
         title: post.title,
-        description: post.desc,
+        description: post.description,
         robots: {
             index: true,
             follow: false,
@@ -55,11 +59,9 @@ export async function generateMetadata({
 }
 
 export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
-    const slugs = await getSlugs();
+    const slugs = await getAllSlugs();
     if (!slugs) {
         return [];
     }
-    const paths = slugs.map((slug) => ({ slug: slug }));
-
-    return paths;
+    return slugs.map((slug) => ({ slug }));
 };

@@ -21,7 +21,7 @@ export default function Intro() {
                         height="192"
                         quality={95}
                         priority={true}
-                        className="h-24 w-24 rounded-full object-cover border-[0.35rem] border-white shadow-xl"
+                        className="h-24 w-24 rounded-full object-cover border-[0.35rem] border-emerald-300 shadow-xl shadow-emerald-200/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
                     />
                 </div>
             </div>
@@ -38,14 +38,14 @@ export default function Intro() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium">
                 <Link
                     href="/portfolio#contact"
-                    className="group bg-gray-900 text-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 hover:bg-gray-950 active:scale-105 transition"
+                    className="group bg-emerald-700 text-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 hover:bg-emerald-800 active:scale-105 transition dark:bg-emerald-600 dark:hover:bg-emerald-500"
                 >
                     Contact me here{" "}
                     <BsArrowRight className="opacity-70 group-hover:translate-x-1 transition" />
                 </Link>
 
                 <a
-                    className="group bg-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 active:scale-105 transition cursor-pointer borderBlack dark:bg-white/10"
+                    className="group bg-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 active:scale-105 transition cursor-pointer border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/8"
                     href="/CV.pdf"
                     download
                 >
@@ -54,7 +54,7 @@ export default function Intro() {
                 </a>
 
                 <a
-                    className="bg-white p-4 text-gray-700 hover:text-gray-950 flex items-center gap-2 rounded-full focus:scale-[1.15] hover:scale-[1.15] active:scale-105 transition cursor-pointer borderBlack dark:bg-white/10 dark:text-white/60"
+                    className="bg-white p-4 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 flex items-center gap-2 rounded-full focus:scale-[1.15] hover:scale-[1.15] active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
                     href="https://www.linkedin.com/in/adithya-rajendran/"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -64,7 +64,7 @@ export default function Intro() {
                 </a>
 
                 <a
-                    className="bg-white p-4 text-gray-700 flex items-center gap-2 text-[1.35rem] rounded-full focus:scale-[1.15] hover:scale-[1.15] hover:text-gray-950 active:scale-105 transition cursor-pointer borderBlack dark:bg-white/10 dark:text-white/60"
+                    className="bg-white p-4 text-emerald-700 flex items-center gap-2 text-[1.35rem] rounded-full focus:scale-[1.15] hover:scale-[1.15] hover:text-emerald-800 hover:bg-emerald-50 active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
                     href="https://github.com/Adithya-Rajendran"
                     target="_blank"
                     rel="noopener noreferrer"

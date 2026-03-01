@@ -2,20 +2,92 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-@theme {
-    --color-background-light: #f9fafb;
-    --color-background-dark: #111827;
+@theme inline {
+    --font-sans: 'Inter', 'Inter Fallback';
+    --color-background-light: #f0fdf4;
+    --color-background-dark: #0a0f1a;
+    --color-cyber: #34d399;
+    --color-cyber-dim: #059669;
+    --color-cyan-accent: #22d3ee;
+    --color-violet-accent: #a78bfa;
+    --color-surface-light: rgba(255, 255, 255, 0.04);
+    --color-surface-medium: rgba(255, 255, 255, 0.07);
+    --color-border-subtle: rgba(255, 255, 255, 0.08);
 }
 
 html {
-    --line-color: #e5e7eb;
+    --line-color: #cbd5e1;
 }
 
 html.dark {
-    --line-color: rgba(255, 255, 255, 0.2);
+    --line-color: rgba(52, 211, 153, 0.15);
 }
 
 .borderBlack {
     border-width: 1px;
     border-color: rgb(0 0 0 / 0.1);
+}
+
+.dark .borderBlack {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Cyber glow utilities */
+.glow-cyber {
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.15), 0 0 60px rgba(52, 211, 153, 0.05);
+}
+
+.glow-border {
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark .glow-border {
+    border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+/* Light mode glow */
+.glow-cyber {
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12), 0 0 40px rgba(16, 185, 129, 0.04);
+}
+
+.dark .glow-cyber {
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.15), 0 0 60px rgba(52, 211, 153, 0.05);
+}
+
+/* Animated gradient text for hero */
+@keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-text {
+    background-size: 200% auto;
+    animation: gradient-shift 4s ease-in-out infinite;
+}
+
+/* Subtle grid background pattern */
+.bg-grid-pattern {
+    background-image: linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+                       linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+    background-size: 60px 60px;
+}
+
+.dark .bg-grid-pattern {
+    background-image: linear-gradient(rgba(52, 211, 153, 0.03) 1px, transparent 1px),
+                       linear-gradient(90deg, rgba(52, 211, 153, 0.03) 1px, transparent 1px);
+}
+
+/* Scanline overlay effect */
+.scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(52, 211, 153, 0.01) 2px,
+        rgba(52, 211, 153, 0.01) 4px
+    );
 }
