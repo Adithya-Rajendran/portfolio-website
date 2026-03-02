@@ -7,13 +7,19 @@ import Experience from "@/components/portfolio/experience";
 import Contact from "@/components/portfolio/contact";
 import Certifications from "@/components/portfolio/certifications";
 import type { Metadata } from "next";
+import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
     title: "Portfolio",
     description:
         "Adithya Rajendran's portfolio - Cloud Field Engineer at Canonical with experience in OpenStack, Kubernetes, AWS, and cybersecurity. View projects, certifications, and work experience.",
     alternates: {
-        canonical: "https://adithya-rajendran.com/portfolio",
+        canonical: `${siteConfig.url}/portfolio`,
+    },
+    openGraph: {
+        title: `Portfolio | ${siteConfig.author}`,
+        description: "Cloud Field Engineer at Canonical with experience in OpenStack, Kubernetes, AWS, and cybersecurity. View projects, certifications, and work experience.",
+        url: `${siteConfig.url}/portfolio`,
     },
 };
 

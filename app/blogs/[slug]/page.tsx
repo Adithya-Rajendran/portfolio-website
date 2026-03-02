@@ -5,6 +5,7 @@ import { BlogPostJsonLd } from "@/components/json-ld";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { siteConfig } from "@/lib/config";
 
 export default async function BlogPostPage({
     params,
@@ -59,14 +60,23 @@ export async function generateMetadata({
         title: post.title,
         description: post.description,
         alternates: {
-            canonical: `https://adithya-rajendran.com/blogs/${slug}`,
+            canonical: `${siteConfig.url}/blogs/${slug}`,
         },
         openGraph: {
             title: post.title,
             description: post.description,
             type: "article",
             publishedTime: post.date,
-            authors: ["Adithya Rajendran"],
+            authors: [siteConfig.author],
+            url: `${siteConfig.url}/blogs/${slug}`,
+            images: [
+                {
+                    url: "/og-image.jpg",
+                    width: 1200,
+                    height: 630,
+                    alt: post.title,
+                },
+            ],
         },
         robots: {
             index: true,

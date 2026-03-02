@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { BsArrowLeft } from "react-icons/bs";
+import { siteConfig } from "@/lib/config";
 
 export const metadata = {
     title: "Cybersecurity & Cloud Engineering Blog",
     description:
         "Technical blog by Adithya Rajendran covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.",
     alternates: {
-        canonical: "https://adithya-rajendran.com/blogs",
+        canonical: `${siteConfig.url}/blogs`,
+    },
+    openGraph: {
+        title: `Cybersecurity & Cloud Engineering Blog | ${siteConfig.author}`,
+        description: "Technical blog covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.",
+        url: `${siteConfig.url}/blogs`,
     },
 };
 
