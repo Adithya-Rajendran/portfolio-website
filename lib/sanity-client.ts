@@ -10,13 +10,13 @@ if (!projectId) {
 }
 
 export const client = createClient({
-    projectId: projectId || "",
+    projectId: projectId || "fallback", // Ensure we have a string even if env var is missing during build
     dataset,
     apiVersion,
     useCdn: true,
 });
 
-const isSanityConfigured = Boolean(projectId);
+const isSanityConfigured = Boolean(projectId && projectId !== "fallback");
 
 // Reusable GROQ projections
 const postProjection = `{
@@ -81,7 +81,29 @@ export async function getPostBySlug(
     }
 }
 
-// Fetch all slugs for static generation
+// Fetch all slugs and their last modified dates for sitemap generation
+export async function getAllSlugsWithDates(): Promise<
+    { slug: string; updatedAt: string }[]
+> {
+    if (!isSanityConfigured) return [];
+    try {
+        const today = new Date().toISOString().split("T")[0];
+        const posts = await client.fetch(
+            `*[_type == "post" && date <= $today] {
+                "slug": slug.current,
+                "updatedAt": _updatedAt
+            }`,
+            { today },
+            { next: { tags: ["post"] } },
+        );
+        return posts || [];
+    } catch (error) {
+        console.error("[Sanity] Error fetching slugs and dates:", error);
+        return [];
+    }
+}
+
+// Fetch all slugs for static path generation
 export async function getAllSlugs(): Promise<string[]> {
     if (!isSanityConfigured) return [];
     try {
@@ -89,7 +111,7 @@ export async function getAllSlugs(): Promise<string[]> {
         const slugs = await client.fetch(
             `*[_type == "post" && date <= $today].slug.current`,
             { today },
-            { next: { tags: ["post"] } },
+            { next: { tags: ["post"] } }
         );
         return slugs || [];
     } catch (error) {

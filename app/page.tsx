@@ -138,7 +138,7 @@ export default function Home() {
                     </a>
                     <a
                         href="/resume.pdf"
-                        download
+                        download="Adithya_Rajendran_Resume.pdf"
                         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
                     >
                         <HiDownload className="text-base" />

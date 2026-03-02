@@ -1,10 +1,10 @@
-import { getAllSlugs } from "@/lib/sanity-client";
+import { getAllSlugsWithDates } from "@/lib/sanity-client";
 import { MetadataRoute } from "next";
 
 const BASE_URL = "https://adithya-rajendran.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const slugs = await getAllSlugs();
+    const postData = await getAllSlugsWithDates();
 
     const staticPages: MetadataRoute.Sitemap = [
         {
@@ -27,9 +27,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
     ];
 
-    const blogPages: MetadataRoute.Sitemap = (slugs || []).map((slug) => ({
-        url: `${BASE_URL}/blogs/${slug}`,
-        lastModified: new Date(),
+    const blogPages: MetadataRoute.Sitemap = (postData || []).map((post) => ({
+        url: `${BASE_URL}/blogs/${post.slug}`,
+        lastModified: new Date(post.updatedAt),
         changeFrequency: "weekly" as const,
         priority: 0.6,
     }));

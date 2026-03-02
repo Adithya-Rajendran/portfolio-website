@@ -1,11 +1,13 @@
+import { siteConfig } from "@/lib/config";
+
 export function PersonJsonLd() {
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "Person",
         name: "Adithya Rajendran",
         alternateName: "Adithya",
-        url: "https://adithya-rajendran.com",
-        image: "https://adithya-rajendran.com/og-image.jpg",
+        url: siteConfig.url,
+        image: `${siteConfig.url}/og-image.jpg`,
         jobTitle: "Cloud Field Engineer",
         worksFor: {
             "@type": "Organization",
@@ -15,13 +17,7 @@ export function PersonJsonLd() {
             "@type": "CollegeOrUniversity",
             name: "University of California, Santa Cruz",
         },
-        sameAs: [
-            "https://www.linkedin.com/in/adithya-rajendran",
-            "https://github.com/Adithya-Rajendran",
-            "https://www.credly.com/users/adithya-rajendran",
-            "https://app.hackthebox.com/profile/514798",
-            "https://tryhackme.com/p/Cagmas",
-        ],
+        sameAs: siteConfig.socials,
         knowsAbout: [
             "Cloud Engineering",
             "Cybersecurity",
@@ -49,7 +45,7 @@ export function WebSiteJsonLd() {
         "@context": "https://schema.org",
         "@type": "WebSite",
         name: "Adithya Rajendran - Portfolio & Blog",
-        url: "https://adithya-rajendran.com",
+        url: siteConfig.url,
         description:
             "Personal portfolio and cybersecurity blog by Adithya Rajendran, Cloud Field Engineer at Canonical.",
         author: {
@@ -83,10 +79,11 @@ export function BlogPostJsonLd({
         headline: title,
         description,
         datePublished: date,
+        image: `${siteConfig.url}/og-image.jpg`,
         author: {
             "@type": "Person",
             name: "Adithya Rajendran",
-            url: "https://adithya-rajendran.com",
+            url: siteConfig.url,
         },
         publisher: {
             "@type": "Person",
@@ -94,7 +91,7 @@ export function BlogPostJsonLd({
         },
         mainEntityOfPage: {
             "@type": "WebPage",
-            "@id": `https://adithya-rajendran.com/blogs/${slug}`,
+            "@id": `${siteConfig.url}/blogs/${slug}`,
         },
     };
 
@@ -116,8 +113,8 @@ export function ProfilePageJsonLd() {
             "@type": "Person",
             name: "Adithya Rajendran",
             alternateName: "Adithya",
-            url: "https://adithya-rajendran.com",
-            image: "https://adithya-rajendran.com/og-image.jpg",
+            url: siteConfig.url,
+            image: `${siteConfig.url}/og-image.jpg`,
             jobTitle: "Cloud Field Engineer",
             worksFor: {
                 "@type": "Organization",
@@ -128,13 +125,7 @@ export function ProfilePageJsonLd() {
                 "@type": "CollegeOrUniversity",
                 name: "University of California, Santa Cruz",
             },
-            sameAs: [
-                "https://www.linkedin.com/in/adithya-rajendran",
-                "https://github.com/Adithya-Rajendran",
-                "https://www.credly.com/users/adithya-rajendran",
-                "https://app.hackthebox.com/profile/514798",
-                "https://tryhackme.com/p/Cagmas",
-            ],
+            sameAs: siteConfig.socials,
             hasCredential: [
                 {
                     "@type": "EducationalOccupationalCredential",

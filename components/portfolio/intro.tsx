@@ -52,7 +52,7 @@ export default function Intro() {
                 <a
                     className="group bg-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 active:scale-105 transition cursor-pointer border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/8"
                     href="/resume.pdf"
-                    download
+                    download="Adithya_Rajendran_Resume.pdf"
                 >
                     Download CV{" "}
                     <HiDownload className="opacity-60 group-hover:translate-y-1 transition" />
