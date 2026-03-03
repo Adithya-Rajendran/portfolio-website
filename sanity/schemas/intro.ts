@@ -50,6 +50,48 @@ export default defineType({
                 accept: ".pdf",
             },
         }),
+        defineField({
+            name: "subtitle",
+            title: "Homepage Subtitle",
+            description: "e.g. Cloud Field Engineer / Cybersecurity Enthusiast / Builder",
+            type: "string",
+        }),
+        defineField({
+            name: "homeBio",
+            title: "Homepage Bio",
+            type: "array",
+            of: [
+                {
+                    type: "block",
+                    styles: [
+                        { title: "Normal", value: "normal" },
+                    ],
+                    marks: {
+                        decorators: [
+                            { title: "Bold", value: "strong" },
+                            { title: "Italic", value: "em" },
+                            { title: "Highlight (Emerald)", value: "highlightEmerald" },
+                            { title: "Highlight (Teal)", value: "highlightTeal" },
+                            { title: "Highlight (Orange)", value: "highlightOrange" },
+                        ],
+                        annotations: [
+                            {
+                                title: "URL",
+                                name: "link",
+                                type: "object",
+                                fields: [
+                                    {
+                                        title: "URL",
+                                        name: "href",
+                                        type: "url",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            ],
+        }),
     ],
     preview: {
         prepare() {

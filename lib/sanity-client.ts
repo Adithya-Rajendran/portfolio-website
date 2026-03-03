@@ -160,7 +160,7 @@ export async function getIntro(): Promise<SanityIntroType | null> {
     if (!isSanityConfigured) return null;
     try {
         const intro = await client.fetch(
-            `*[_type == "intro"][0]{ _id, body, "resumeUrl": resume.asset->url }`,
+            `*[_type == "intro"][0]{ _id, body, "resumeUrl": resume.asset->url, subtitle, homeBio }`,
             {},
             portfolioCacheOptions,
         );

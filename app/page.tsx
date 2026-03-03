@@ -13,6 +13,8 @@ export default async function Home() {
             skillCategories={skillCategories}
             certifications={certifications}
             resumeUrl={intro?.resumeUrl}
+            subtitle={intro?.subtitle}
+            homeBio={intro?.homeBio}
         />
     );
 }

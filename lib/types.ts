@@ -93,4 +93,6 @@ export interface SanityIntroType {
     _id: string;
     body: PortableTextBlock[];
     resumeUrl?: string;
+    subtitle?: string;
+    homeBio?: PortableTextBlock[];
 }
