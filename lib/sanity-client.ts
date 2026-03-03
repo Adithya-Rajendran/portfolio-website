@@ -25,6 +25,9 @@ export const client = createClient({
 
 const isSanityConfigured = Boolean(projectId && projectId !== "fallback");
 
+// Blog posts revalidate every hour as a fallback alongside tag-based on-demand revalidation.
+const postCacheOptions = { next: { tags: ["post"], revalidate: 3600 } };
+
 // Reusable GROQ projections
 const postProjection = `{
     title,
@@ -44,7 +47,7 @@ export async function getAllPosts(): Promise<SanityPostType[]> {
         const posts = await client.fetch(
             `*[_type == "post" && date <= $today] | order(date desc) ${postProjection}`,
             { today },
-            { next: { tags: ["post"] } },
+            postCacheOptions,
         );
         return posts || [];
     } catch (error) {
@@ -61,7 +64,7 @@ export async function getFeaturedPosts(): Promise<SanityPostType[]> {
         const posts = await client.fetch(
             `*[_type == "post" && featured == true && date <= $today] | order(date desc) ${postProjection}`,
             { today },
-            { next: { tags: ["post"] } },
+            postCacheOptions,
         );
         return posts || [];
     } catch (error) {
@@ -79,7 +82,7 @@ export async function getPostBySlug(
         const post = await client.fetch(
             `*[_type == "post" && slug.current == $slug][0] ${postProjection}`,
             { slug },
-            { next: { tags: ["post"] } },
+            postCacheOptions,
         );
         return post || null;
     } catch (error) {
@@ -101,7 +104,7 @@ export async function getAllSlugsWithDates(): Promise<
                 "updatedAt": _updatedAt
             }`,
             { today },
-            { next: { tags: ["post"] } },
+            postCacheOptions,
         );
         return posts || [];
     } catch (error) {
@@ -118,7 +121,7 @@ export async function getAllSlugs(): Promise<string[]> {
         const slugs = await client.fetch(
             `*[_type == "post" && date <= $today].slug.current`,
             { today },
-            { next: { tags: ["post"] } }
+            postCacheOptions
         );
         return slugs || [];
     } catch (error) {
@@ -129,7 +132,9 @@ export async function getAllSlugs(): Promise<string[]> {
 
 // ---- Portfolio data fetchers ----
 
-const portfolioCacheOptions = { next: { tags: ["portfolio"] } };
+// Time-based revalidation as a fallback safety net alongside tag-based on-demand revalidation.
+// Portfolio data changes rarely, so 24 hours is a good baseline.
+const portfolioCacheOptions = { next: { tags: ["portfolio"], revalidate: 86400 } };
 
 // Fetch the singleton About document
 export async function getAbout(): Promise<SanityAboutType | null> {
