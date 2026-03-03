@@ -9,6 +9,7 @@ import Certifications from "@/components/portfolio/certifications";
 import type { Metadata } from "next";
 import { siteConfig } from "@/lib/config";
 import {
+    getIntro,
     getAbout,
     getAllExperiences,
     getAllProjects,
@@ -31,8 +32,9 @@ export const metadata: Metadata = {
 };
 
 export default async function Portfolio() {
-    const [about, experiences, projects, certifications, skillCategories] =
+    const [intro, about, experiences, projects, certifications, skillCategories] =
         await Promise.all([
+            getIntro(),
             getAbout(),
             getAllExperiences(),
             getAllProjects(),
@@ -43,7 +45,7 @@ export default async function Portfolio() {
     return (
         <>
             <main className="flex flex-col items-center px-4">
-                <Intro />
+                <Intro body={intro?.body ?? null} resumeUrl={intro?.resumeUrl} />
                 <SectionDivider />
                 <About body={about?.body ?? null} />
                 <Skills skillCategories={skillCategories} />
@@ -55,3 +57,4 @@ export default async function Portfolio() {
         </>
     );
 }
+

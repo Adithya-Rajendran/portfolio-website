@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
             return new NextResponse(null, { status: 404 });
         }
 
-        const portfolioTypes = ["experience", "project", "certification", "skillCategory", "about"];
+        const portfolioTypes = ["experience", "project", "certification", "skillCategory", "about", "intro"];
         const docType = body?._type;
 
         if (docType === "post") {

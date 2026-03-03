@@ -1,5 +1,5 @@
 import { getPostBySlug, getAllSlugs } from "@/lib/sanity-client";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteConfig } from "@/lib/config";
 import BlogPostContent from "@/components/blogs/blog-post-content";

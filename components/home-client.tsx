@@ -51,9 +51,10 @@ const variantStyles: Record<
 interface HomeClientProps {
     skillCategories: SanitySkillCategoryType[];
     certifications: SanityCertificationType[];
+    resumeUrl?: string | null;
 }
 
-export default function HomeClient({ skillCategories, certifications }: HomeClientProps) {
+export default function HomeClient({ skillCategories, certifications, resumeUrl }: HomeClientProps) {
     return (
         <main className="flex flex-col items-center px-4">
             {/* Hero Section */}
@@ -158,7 +159,7 @@ export default function HomeClient({ skillCategories, certifications }: HomeClie
                         <BsGithub className="text-xl" />
                     </a>
                     <a
-                        href="/resume.pdf"
+                        href={resumeUrl || "/resume.pdf"}
                         download="Adithya_Rajendran_Resume.pdf"
                         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
                     >
