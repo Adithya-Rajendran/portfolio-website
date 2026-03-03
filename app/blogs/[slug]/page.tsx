@@ -1,5 +1,3 @@
-"use cache";
-
 import { cacheLife } from "next/cache";
 import { getPostBySlug, getAllSlugs } from "@/lib/sanity-client";
 import { PortableText } from "@portabletext/react";
@@ -10,16 +8,28 @@ import { notFound } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { siteConfig } from "@/lib/config";
 
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
 export default async function BlogPostPage({
     params,
 }: {
     params: Promise<{ slug: string }>;
 }) {
-    cacheLife("hours");
+    "use cache";
+
     const { slug } = await params;
     const post = await getPostBySlug(slug);
     if (!post) {
         return notFound();
+    }
+
+    // Posts less than 7 days old revalidate every hour (active editing window).
+    // Older posts revalidate weekly (stable content).
+    const ageMs = Date.now() - new Date(post.date).getTime();
+    if (ageMs < SEVEN_DAYS_MS) {
+        cacheLife({ revalidate: 3600 });   // 1 hour
+    } else {
+        cacheLife({ revalidate: 604800 }); // 1 week
     }
 
     return (

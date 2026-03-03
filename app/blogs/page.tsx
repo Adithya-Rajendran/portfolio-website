@@ -6,7 +6,7 @@ import Latest from "@/components/blogs/latest";
 import { getFeaturedPosts, getAllPosts } from "@/lib/sanity-client";
 
 export default async function Blogs() {
-    cacheLife("hours");
+    cacheLife({ revalidate: 900 }); // 15 minutes -- keeps the post list fresh
 
     const [featuredPosts, allPosts] = await Promise.all([
         getFeaturedPosts(),
