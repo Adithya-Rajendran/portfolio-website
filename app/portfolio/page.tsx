@@ -1,5 +1,3 @@
-"use cache";
-
 import { cacheLife } from "next/cache";
 import Intro from "@/components/portfolio/intro";
 import SectionDivider from "@/components/section-divider";
@@ -34,6 +32,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Portfolio() {
+    "use cache";
     cacheLife("days");
 
     const [about, experiences, projects, certifications, skillCategories] =
