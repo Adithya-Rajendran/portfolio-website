@@ -14,14 +14,14 @@ const nextConfig = {
                     { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
                 ],
             },
+        ];
+    },
+    async redirects() {
+        return [
             {
                 source: "/resume.pdf",
-                headers: [
-                    {
-                        key: "Content-Disposition",
-                        value: 'attachment; filename="resume.pdf"',
-                    },
-                ],
+                destination: "/resume",
+                permanent: true,
             },
         ];
     },

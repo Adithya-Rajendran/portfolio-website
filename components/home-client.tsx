@@ -95,12 +95,11 @@ const homeBioComponents: PortableTextComponents = {
 interface HomeClientProps {
     skillCategories: SanitySkillCategoryType[];
     certifications: SanityCertificationType[];
-    resumeUrl?: string | null;
     subtitle?: string | null;
     homeBio?: PortableTextBlock[] | null;
 }
 
-export default function HomeClient({ skillCategories, certifications, resumeUrl, subtitle, homeBio }: HomeClientProps) {
+export default function HomeClient({ skillCategories, certifications, subtitle, homeBio }: HomeClientProps) {
     return (
         <main className="flex flex-col items-center px-4">
             {/* Hero Section */}
@@ -205,8 +204,7 @@ export default function HomeClient({ skillCategories, certifications, resumeUrl,
                         <BsGithub className="text-xl" />
                     </a>
                     <a
-                        href={resumeUrl || "/resume.pdf"}
-                        download="Adithya_Rajendran_Resume.pdf"
+                        href="/resume"
                         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
                     >
                         <HiDownload className="text-base" />
