@@ -3,6 +3,7 @@
 
 import { Resend } from "resend";
 import { z } from "zod";
+import dns from "dns/promises";
 import { getErrorMessage, sanitizeHtml } from "@/lib/utils";
 import ContactFormEmail from "@/email/contact-form-email";
 import { Ratelimit } from "@upstash/ratelimit";
@@ -18,7 +19,7 @@ const redis = new Redis({
 
 const ratelimit = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(1, "1 h"),
+    limiter: Ratelimit.slidingWindow(3, "1 h"),
 });
 
 const emailSchema = z.object({
@@ -28,16 +29,19 @@ const emailSchema = z.object({
     message: z.string().min(1, "Message cannot be empty").max(1000),
 });
 
-export const sendEmail = async (formData: FormData) => {
-    const headersList = await headers();
-    const ip = headersList.get("x-forwarded-for") ?? "127.0.0.1";
+async function hasValidMxRecords(email: string): Promise<boolean> {
+    const domain = email.split("@")[1];
+    if (!domain) return false;
 
-    const { success } = await ratelimit.limit(ip);
-
-    if (!success) {
-        return { error: "You can only send one email per hour. Please try again later." };
+    try {
+        const records = await dns.resolveMx(domain);
+        return records.length > 0;
+    } catch {
+        return false;
     }
+}
 
+export const sendEmail = async (formData: FormData) => {
     const rawData = {
         senderEmail: formData.get("senderEmail"),
         message: formData.get("message"),
@@ -50,6 +54,31 @@ export const sendEmail = async (formData: FormData) => {
     }
 
     const { senderEmail, message } = validatedData.data;
+
+    const headersList = await headers();
+    const ip = headersList.get("x-forwarded-for") ?? "127.0.0.1";
+
+    const invalidAttemptsKey = `invalid_domain_${ip}`;
+    const invalidAttempts = await redis.get<number>(invalidAttemptsKey) || 0;
+
+    if (invalidAttempts >= 5) {
+        return { error: "You have been temporarily blocked for submitting too many invalid emails. Please try again later." };
+    }
+
+    const validDomain = await hasValidMxRecords(senderEmail);
+    if (!validDomain) {
+        const newAttempts = await redis.incr(invalidAttemptsKey);
+        if (newAttempts === 1) {
+            await redis.expire(invalidAttemptsKey, 60 * 60 * 24); // 24 hours
+        }
+        return { error: "The email domain does not appear to exist. Please check your email address." };
+    }
+
+    const { success } = await ratelimit.limit(ip);
+
+    if (!success) {
+        return { error: "You have exceeded the maximum number of emails at this given time. Please try again later." };
+    }
 
     try {
         const data = await resend.emails.send({
