@@ -160,7 +160,7 @@ export default function Home() {
                     <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                         Canonical
                     </span>
-                    , specializing in deploying and optimizing cloud
+                    , specializing in deploying, optimizing, and securing cloud
                     infrastructure with{" "}
                     <span className="font-semibold text-teal-700 dark:text-cyan-400">
                         OpenStack
@@ -169,9 +169,13 @@ export default function Home() {
                     <span className="font-semibold text-teal-700 dark:text-cyan-400">
                         Kubernetes
                     </span>
+                    ,{" "}
+                    <span className="font-semibold text-teal-700 dark:text-cyan-400">
+                        Ceph
+                    </span>
                     , and{" "}
                     <span className="font-semibold text-teal-700 dark:text-cyan-400">
-                        Ubuntu
+                        Linux
                     </span>{" "}
                     systems.
                 </p>

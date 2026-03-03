@@ -85,7 +85,7 @@ export const experiencesData: readonly ExperienceType[] = [
             "In my role as a Cloud Field Engineer, I collaborated with clients to deploy and optimize cloud infrastructure solutions, leveraging technologies like OpenStack, Kubernetes, and Ubuntu-based systems.",
             "Delivered tailored consulting to enhance scalability and performance, aligning infrastructure with enterprise needs.",
             "Automated deployment processes using Juju and MAAS (Metal as a Service), streamlining cloud operations and reducing manual workloads.",
-            "Facilitated technical troubleshooting and system integration, ensuring reliability and efficiency for customer environments."
+            "Facilitated technical troubleshooting and system integration, ensuring reliability and efficiency for customer environments.",
         ],
         icon: React.createElement(BsShieldLock),
         date: "May 2024 - Present",
@@ -133,46 +133,6 @@ export const experiencesData: readonly ExperienceType[] = [
 
 export const projectsData: readonly ProjectType[] = [
     {
-        title: "NextJS Portfolio + Blog Website",
-        description:
-            "This website that you are viewing! Redesigned my personal portfolio to elevate the user experience, utilizing Next.js for improved SEO and Tailwind CSS for a modern aesthetic. Integrated Framer Motion for fluid animations and React Markdown for seamless blog content management.",
-        tags: ["NextJS", "Typescript", "APIs", "Javascript", "Caching"],
-        imageUrl: nextImg,
-        link: {
-            title: "Source Code",
-            link: "https://github.com/Adithya-Rajendran/portfolio-website",
-        },
-    },
-    {
-        title: "Active Directory Lab",
-        description:
-            "Constructed a simulated network using Active Directory, complete with automated SIEM alerts via Wazuh, to demonstrate and document common security threats and defense mechanisms.",
-        tags: [
-            "Active Directory",
-            "Automation",
-            "SIEM",
-            "Pentesting",
-            "Wazuh",
-            "Pfsense",
-        ],
-        imageUrl: adImg,
-        link: {
-            title: "Blog post",
-            link: "https://adithya-rajendran.com/blogs/active-directory-lab",
-        },
-    },
-    {
-        title: "Django Portfolio + CMS",
-        description:
-            "Developed a portfolio site with an integrated Content Management System (CMS) using Django, featuring robust data validation and Postgres for reliable data storage, enhancing content management efficiency.",
-        tags: ["Django", "PostgreDB", "Docker", "HTML", "Python"],
-        imageUrl: djangoImg,
-        link: {
-            title: "Source Code",
-            link: "https://github.com/Adithya-Rajendran/portfolioWebsite",
-        },
-    },
-    {
         title: "Home-Lab",
         description:
             "Established a comprehensive home-lab setup, fostering independent learning and practical understanding of Virtualization, Linux/Unix environments, and DevSecOps best practices.",
@@ -184,6 +144,17 @@ export const projectsData: readonly ProjectType[] = [
             "DevSecOps",
         ],
         imageUrl: serverImg,
+    },
+    {
+        title: "NextJS Portfolio + Blog Website",
+        description:
+            "This website that you are viewing! Redesigned my personal portfolio to elevate the user experience, utilizing Next.js for improved SEO and Tailwind CSS for a modern aesthetic. Integrated Framer Motion for fluid animations and React Markdown for seamless blog content management.",
+        tags: ["NextJS", "Typescript", "APIs", "Javascript", "Caching"],
+        imageUrl: nextImg,
+        link: {
+            title: "Source Code",
+            link: "https://github.com/Adithya-Rajendran/portfolio-website",
+        },
     },
     {
         title: "Web-app Directory Search Tool",
@@ -253,6 +224,17 @@ export const projectsData: readonly ProjectType[] = [
         link: {
             title: "TryHackMe Profile",
             link: "https://tryhackme.com/p/Cagmas",
+        },
+    },
+    {
+        title: "Django Portfolio + CMS",
+        description:
+            "Developed a portfolio site with an integrated Content Management System (CMS) using Django, featuring robust data validation and Postgres for reliable data storage, enhancing content management efficiency.",
+        tags: ["Django", "PostgreDB", "Docker", "HTML", "Python"],
+        imageUrl: djangoImg,
+        link: {
+            title: "Source Code",
+            link: "https://github.com/Adithya-Rajendran/portfolioWebsite",
         },
     },
 ] as const;

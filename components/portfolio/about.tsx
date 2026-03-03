@@ -22,44 +22,54 @@ export default function About() {
                 <span className="font-medium text-emerald-700 dark:text-emerald-400">
                     University of California, Santa Cruz
                 </span>
-                , I've been advancing my career in cloud engineering and cybersecurity. 
-                In my current role as a{" "}
-                <span className="font-medium text-emerald-700 dark:text-emerald-400">Cloud Field Engineer</span>, I focus on deploying 
-                scalable infrastructure solutions using technologies like{" "}
-                <span className="font-medium text-teal-700 dark:text-cyan-400">Kubernetes</span>,{" "}
-                <span className="font-medium text-teal-700 dark:text-cyan-400">OpenStack</span>, and{" "}
-                <span className="font-medium text-teal-700 dark:text-cyan-400">Ubuntu</span>. My work involves optimizing 
-                performance, automating deployments, and ensuring robust cloud environments.
+                , I've been advancing my career in cloud engineering and
+                cybersecurity. In my current role as a{" "}
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                    Cloud Field Engineer
+                </span>
+                at{" "}
+                <span className="font-medium text-orange-700 dark:text-orange-500">
+                    Canonical
+                </span>
+                , I focus on deploying scalable infrastructure solutions using
+                technologies like{" "}
+                <span className="font-medium text-teal-700 dark:text-cyan-400">
+                    Kubernetes
+                </span>
+                ,{" "}
+                <span className="font-medium text-teal-700 dark:text-cyan-400">
+                    OpenStack
+                </span>
+                ,{" "}
+                <span className="font-medium text-teal-700 dark:text-cyan-400">
+                    Ceph
+                </span>
+                , and{" "}
+                <span className="font-medium text-teal-700 dark:text-cyan-400">
+                    Ubuntu
+                </span>
+                . My work involves optimizing performance, automating
+                deployments, applying any security hardening, and ensuring
+                stable cloud environments.
             </p>
 
             <p className="text-slate-600 dark:text-slate-300">
-                <span className="italic">Beyond engineering</span>, I enjoy watching documentaries 
-                and experimenting with new technologies in my home lab. I'm always eager to{" "}
-                <span className="font-medium text-emerald-700 dark:text-emerald-400">master new skills</span>, currently diving deeper 
-                into areas like{" "}
-                <span className="font-medium text-teal-700 dark:text-cyan-400">cloud automation</span> and{" "}
-                <span className="font-medium text-teal-700 dark:text-cyan-400">network security</span>, which continually 
-                fuel my passion for solving complex challenges.
-            </p>
-
-            <p className="text-slate-700 dark:text-slate-300">
-                <span className="italic">Beyond engineering</span>, I enjoy watching documentaries 
-                and experimenting with new technologies in my home lab. I'm always eager to{" "}
-                <span className="font-medium text-slate-900 dark:text-emerald-400">master new skills</span>, currently diving deeper 
-                into areas like{" "}
-                <span className="font-medium text-slate-900 dark:text-cyan-400">cloud automation</span> and{" "}
-                <span className="font-medium text-slate-900 dark:text-cyan-400">network security</span>, which continually 
-                fuel my passion for solving complex challenges.
-            </p>
-
-            <p>
-                <span className="italic">Beyond engineering</span>, I enjoy watching documentaries 
-                and experimenting with new technologies in my home lab. I’m always eager to{" "}
-                <span className="font-medium">master new skills</span>, currently diving deeper 
-                into areas like{" "}
-                <span className="font-medium">cloud automation</span> and{" "}
-                <span className="font-medium">network security</span>, which continually 
-                fuel my passion for solving complex challenges.
+                <span className="italic">Beyond engineering</span>, I enjoy
+                watching documentaries and experimenting with new technologies
+                in my home lab. I'm always eager to{" "}
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                    master new skills
+                </span>
+                , currently diving deeper into areas like{" "}
+                <span className="font-medium text-teal-700 dark:text-cyan-400">
+                    compliance rules
+                </span>{" "}
+                and{" "}
+                <span className="font-medium text-teal-700 dark:text-cyan-400">
+                    AI/ML security
+                </span>
+                , which continually fuel my passion for solving complex
+                challenges.
             </p>
         </motion.section>
     );
