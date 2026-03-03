@@ -29,6 +29,15 @@ const structure = (S: StructureBuilder) =>
                     S.list()
                         .title("Portfolio")
                         .items([
+                            // Intro singleton
+                            S.listItem()
+                                .title("Intro")
+                                .child(
+                                    S.document()
+                                        .schemaType("intro")
+                                        .documentId("intro"),
+                                ),
+
                             // About singleton
                             S.listItem()
                                 .title("About")
