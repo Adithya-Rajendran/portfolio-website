@@ -27,9 +27,8 @@ export const sendEmail = async (formData: FormData) => {
     const { senderEmail, message } = validatedData.data;
 
     try {
-        // Resend natively supports React Email components via the 'react' property
         const data = await resend.emails.send({
-            from: "Contact Form <onboarding@resend.dev>", // Note: Update this once you verify your custom domain in Resend
+            from: "Contact Form <onboarding@resend.dev>",
             to: process.env.CONTACT_FORM_TO_EMAIL as string,
             subject: "Contact Form for My Website",
             replyTo: sanitizeHtml(senderEmail as string),
