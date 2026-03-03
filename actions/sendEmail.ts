@@ -1,58 +1,101 @@
+// actions/sendEmail.ts
 "use server";
 
-import nodemailer from "nodemailer";
-import { validateString, getErrorMessage, validateEmail } from "@/lib/utils";
+import { Resend } from "resend";
+import { z } from "zod";
+import dns from "dns/promises";
+import { getErrorMessage, sanitizeHtml } from "@/lib/utils";
 import ContactFormEmail from "@/email/contact-form-email";
-import { render } from "@react-email/components";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { headers } from "next/headers";
 
-const emailCredentials = {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    auth: {
-        user: emailCredentials.user,
-        pass: emailCredentials.pass,
-    },
+const redis = new Redis({
+    url: process.env.KV_REST_API_URL!,
+    token: process.env.KV_REST_API_TOKEN!,
 });
 
-export const sendEmail = async (formData: FormData) => {
-    const senderEmail = formData.get("senderEmail");
-    const message = formData.get("message");
+const ratelimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(3, "1 h"),
+});
 
-    // simple server-side validation
-    if (!validateEmail(senderEmail, 500)) {
-        return {
-            error: "Invalid sender email",
-        };
-    }
-    if (!validateString(message, 5000)) {
-        return {
-            error: "Invalid message",
-        };
-    }
+const emailSchema = z.object({
+    senderEmail: z.string()
+        .email("Invalid sender email")
+        .regex(/^[\w.+@-]+$/, "Email contains invalid characters"),
+    message: z.string().min(1, "Message cannot be empty").max(1000),
+});
 
-    let data;
+async function hasValidMxRecords(email: string): Promise<boolean> {
+    const domain = email.split("@")[1];
+    if (!domain) return false;
+
     try {
-        data = transporter.sendMail({
-            from: `"Contact Form" <${emailCredentials.user}>`,
-            to: "adithyaraj@gmail.com, work@adithya-rajendran.com",
+        const records = await dns.resolveMx(domain);
+        return records.length > 0;
+    } catch {
+        return false;
+    }
+}
+
+export const sendEmail = async (formData: FormData) => {
+    const rawData = {
+        senderEmail: formData.get("senderEmail"),
+        message: formData.get("message"),
+    };
+
+    const validatedData = emailSchema.safeParse(rawData);
+
+    if (!validatedData.success) {
+        return { error: validatedData.error.issues[0].message };
+    }
+
+    const { senderEmail, message } = validatedData.data;
+
+    const headersList = await headers();
+    const ip = headersList.get("x-forwarded-for") ?? "127.0.0.1";
+
+    const invalidAttemptsKey = `invalid_domain_${ip}`;
+    const invalidAttempts = await redis.get<number>(invalidAttemptsKey) || 0;
+
+    if (invalidAttempts >= 5) {
+        return { error: "You have been temporarily blocked for submitting too many invalid emails. Please try again later." };
+    }
+
+    const validDomain = await hasValidMxRecords(senderEmail);
+    if (!validDomain) {
+        const newAttempts = await redis.incr(invalidAttemptsKey);
+        if (newAttempts === 1) {
+            await redis.expire(invalidAttemptsKey, 60 * 60 * 24); // 24 hours
+        }
+        return { error: "The email domain does not appear to exist. Please check your email address." };
+    }
+
+    const { success } = await ratelimit.limit(ip);
+
+    if (!success) {
+        return { error: "You have exceeded the maximum number of emails at this given time. Please try again later." };
+    }
+
+    try {
+        const data = await resend.emails.send({
+            from: "Contact Form <contact-form@email.adithya-rajendran.com>",
+            to: process.env.CONTACT_FORM_TO_EMAIL as string,
             subject: "Contact Form for My Website",
-            text: `Message: ${message}\nSender Email: ${senderEmail}`,
-            html: render(ContactFormEmail({ message, senderEmail })),
+            replyTo: sanitizeHtml(senderEmail as string),
+            react: ContactFormEmail({
+                message: sanitizeHtml(message as string),
+                senderEmail: sanitizeHtml(senderEmail as string)
+            }),
         });
+
+        return { data };
     } catch (error: unknown) {
         return {
             error: getErrorMessage(error),
         };
     }
-
-    return {
-        data,
-    };
 };

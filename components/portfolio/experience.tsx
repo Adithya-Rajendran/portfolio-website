@@ -1,17 +1,23 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import SectionHeading from "../section-heading";
 import {
     VerticalTimeline,
     VerticalTimelineElement,
 } from "react-vertical-timeline-component";
 import "react-vertical-timeline-component/style.min.css";
-import { experiencesData } from "@/lib/data";
 import { useSectionInView } from "@/lib/hooks";
 import { useTheme } from "@/context/theme-context";
+import { urlForImage } from "@/lib/sanity-image";
+import type { Experience as TExperience } from "@/sanity.types";
 
-export default function Experience() {
+interface ExperienceProps {
+    experiences: TExperience[];
+}
+
+export default function Experience({ experiences }: ExperienceProps) {
     const { ref, inView } = useSectionInView("Experience", 0.3);
     const { theme } = useTheme();
 
@@ -31,45 +37,65 @@ export default function Experience() {
         >
             <SectionHeading>My experience</SectionHeading>
             <VerticalTimeline lineColor="">
-                {experiencesData.map((item) => (
+                {experiences.map((item) => (
                     <VerticalTimelineElement
-                        key={item.title}
+                        key={item._id}
                         visible={isVisible}
                         contentStyle={{
                             background:
                                 theme === "light"
-                                    ? "#f3f4f6"
-                                    : "rgba(255, 255, 255, 0.05)",
+                                    ? "#ffffff"
+                                    : "rgba(255, 255, 255, 0.03)",
                             boxShadow: "none",
-                            border: "1px solid rgba(0, 0, 0, 0.05)",
+                            border:
+                                theme === "light"
+                                    ? "1px solid #a7f3d0"
+                                    : "1px solid rgba(255, 255, 255, 0.08)",
                             textAlign: "left",
                             padding: "1.3rem 2rem",
                         }}
                         contentArrowStyle={{
                             borderRight:
                                 theme === "light"
-                                    ? "0.4rem solid #9ca3af"
-                                    : "0.4rem solid rgba(255, 255, 255, 0.5)",
+                                    ? "0.4rem solid #6ee7b7"
+                                    : "0.4rem solid rgba(52, 211, 153, 0.4)",
                         }}
                         date={item.date}
-                        icon={item.icon}
+                        icon={
+                            item.icon ? (
+                                <Image
+                                    src={urlForImage(item.icon).width(60).height(60).url()}
+                                    alt={item.icon.alt || item.title || ""}
+                                    width={30}
+                                    height={30}
+                                    className="object-contain"
+                                />
+                            ) : undefined
+                        }
                         iconStyle={{
                             background:
                                 theme === "light"
-                                    ? "white"
-                                    : "rgba(255, 255, 255, 0.15)",
+                                    ? "#ecfdf5"
+                                    : "rgba(255, 255, 255, 0.05)",
                             fontSize: "1.5rem",
+                            color:
+                                theme === "light"
+                                    ? "#047857"
+                                    : "#34d399",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                         }}
                     >
                         <h3 className="font-semibold capitalize">
-                            {item.title}
+                            {item.title || ""}
                         </h3>
-                        <p className="font-normal !mt-0">{item.org}</p>
-                        <p className="font-normal mt-0">{item.location}</p>
-                        {item.description.map((desc, index) => (
+                        <p className="font-normal !mt-0">{item.org || ""}</p>
+                        <p className="font-normal mt-0">{item.location || ""}</p>
+                        {(item.description || []).map((desc, index) => (
                             <p
                                 key={index}
-                                className="!mt-1 !font-normal text-gray-700 dark:text-white/75"
+                                className="!mt-1 !font-normal text-slate-600 dark:text-slate-400"
                             >
                                 {`• ${desc}`}
                             </p>

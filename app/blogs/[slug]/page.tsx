@@ -1,66 +1,68 @@
-"use server";
-
-import { getPostContent, getSlugs } from "@/components/blogs/markdown-posts";
-import ReactMarkdown from "react-markdown";
-import { components } from "@/components/blogs/md-components";
-import { Metadata } from "next";
+import { getPostBySlug, getAllSlugs } from "@/lib/sanity-client";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Separator } from "@/components/ui/separator";
+import { siteConfig } from "@/lib/config";
+import BlogPostContent from "@/components/blogs/blog-post-content";
 
-export default async function RemoteMdxPage({
+export default async function BlogPostPage({
     params,
 }: {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 }) {
-    const { slug } = params;
-    const post = await getPostContent(slug);
+    const { slug } = await params;
+    const post = await getPostBySlug(slug);
     if (!post) {
         return notFound();
     }
 
-    return (
-        <>
-            <section className="flex flex-col items-center px-4">
-                <h1 className="text-6xl font-bold text-center">{post.title}</h1>
-                <p className="text-gray-500 p-2">{post.date}</p>
-                <p className="dark:text-cyan-300 text-cyan-900 text-justify">
-                    {post.desc}
-                </p>
-                <Separator className="dark:bg-gray-500" />
-            </section>
-            <ReactMarkdown components={components}>
-                {post.content}
-            </ReactMarkdown>
-        </>
-    );
+    return <BlogPostContent post={post as any} />;
 }
 
 export async function generateMetadata({
     params,
 }: {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 }): Promise<Metadata | undefined> {
-    const { slug } = params;
-    const post = await getPostContent(slug);
+    const { slug } = await params;
+    const post = await getPostBySlug(slug);
     if (!post) {
         return;
     }
     return {
         title: post.title,
-        description: post.desc,
+        description: post.description,
+        alternates: {
+            canonical: `${siteConfig.url}/blogs/${slug}`,
+        },
+        openGraph: {
+            title: post.title,
+            description: post.description,
+            type: "article",
+            publishedTime: post.date,
+            authors: [siteConfig.author],
+            url: `${siteConfig.url}/blogs/${slug}`,
+            images: [
+                {
+                    url: "/og-image.jpg",
+                    width: 1200,
+                    height: 630,
+                    alt: post.title,
+                },
+            ],
+        },
         robots: {
             index: true,
-            follow: false,
+            follow: true,
         },
     };
 }
 
+export const dynamicParams = true;
+
 export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
-    const slugs = await getSlugs();
+    const slugs = await getAllSlugs();
     if (!slugs) {
         return [];
     }
-    const paths = slugs.map((slug) => ({ slug: slug }));
-
-    return paths;
+    return slugs.map((slug) => ({ slug }));
 };

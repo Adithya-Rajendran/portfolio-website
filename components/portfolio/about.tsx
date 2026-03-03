@@ -1,10 +1,58 @@
 "use client";
 
 import SectionHeading from "../section-heading";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { useSectionInView } from "@/lib/hooks";
+import { PortableText, type PortableTextBlock, type PortableTextComponents } from "@portabletext/react";
 
-export default function About() {
+const portableTextComponents: PortableTextComponents = {
+    block: {
+        normal: ({ children }) => (
+            <p className="mb-3 text-slate-600 dark:text-slate-300">
+                {children}
+            </p>
+        ),
+    },
+    marks: {
+        strong: ({ children }) => (
+            <span className="font-semibold">{children}</span>
+        ),
+        em: ({ children }) => (
+            <span className="italic">{children}</span>
+        ),
+        highlightEmerald: ({ children }) => (
+            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                {children}
+            </span>
+        ),
+        highlightTeal: ({ children }) => (
+            <span className="font-medium text-teal-700 dark:text-cyan-400">
+                {children}
+            </span>
+        ),
+        highlightOrange: ({ children }) => (
+            <span className="font-medium text-orange-700 dark:text-orange-500">
+                {children}
+            </span>
+        ),
+        link: ({ children, value }) => (
+            <a
+                href={value?.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-700 hover:underline dark:text-emerald-400"
+            >
+                {children}
+            </a>
+        ),
+    },
+};
+
+interface AboutProps {
+    body: PortableTextBlock[] | null;
+}
+
+export default function About({ body }: AboutProps) {
     const { ref } = useSectionInView("About");
 
     return (
@@ -17,36 +65,13 @@ export default function About() {
             id="about"
         >
             <SectionHeading>About me</SectionHeading>
-            <p className="mb-3">
-                After earning my degree from{" "}
-                <span className="font-medium">
-                    University of California, Santa Cruz
-                </span>
-                , my journey in cybersecurity and software development deepened.
-                I've earned{" "}
-                <span className="font-medium">CompTIA Security+</span> and{" "}
-                <span className="font-medium">AWS Solutions Architect</span>{" "}
-                certifications, and I'm on my path to the OSCP. What drives me
-                is the{" "}
-                <span className="italic">joy of solving complex problems</span>
-                —there's nothing like the thrill of a breakthrough. Currently, I
-                am seeking{" "}
-                <span className="font-medium">full-time opportunities</span> in
-                the software development or cybersecurity space, I'm eager to
-                bring my passion and expertise to your team.
-            </p>
-
-            <p>
-                <span className="italic">Beyond coding</span>, my leisure
-                activities include watching documentaries,
-                and experimenting with new technologies in my home lab. I'm
-                always on the lookout for{" "}
-                <span className="font-medium">new skills to master</span>.
-                Lately, I've been diving into{" "}
-                <span className="font-medium">ethical hacking</span> and{" "}
-                <span className="font-medium">network security</span>, expanding
-                my understanding and capabilities in cybersecurity.
-            </p>
+            {body ? (
+                <PortableText value={body} components={portableTextComponents} />
+            ) : (
+                <p className="text-slate-500 dark:text-slate-400">
+                    About content coming soon.
+                </p>
+            )}
         </motion.section>
     );
 }

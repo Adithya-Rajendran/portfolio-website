@@ -1,25 +1,19 @@
-import Intro from "@/components/portfolio/intro";
-import SectionDivider from "@/components/section-divider";
-import About from "@/components/portfolio/about";
-import Projects from "@/components/portfolio/projects";
-import Skills from "@/components/portfolio/skills";
-import Experience from "@/components/portfolio/experience";
-import Contact from "@/components/portfolio/contact";
-import VisitBlogs from "@/components/portfolio/visit-blog";
-import Certifications from "@/components/portfolio/certifications";
+import HomeClient from "@/components/home-client";
+import { getAllSkillCategories, getAllCertifications, getIntro } from "@/lib/sanity-client";
 
-export default function Home() {
+export default async function Home() {
+    const [skillCategories, certifications, intro] = await Promise.all([
+        getAllSkillCategories(),
+        getAllCertifications(),
+        getIntro(),
+    ]);
+
     return (
-        <main className="flex flex-col items-center px-4">
-            <Intro />
-            <SectionDivider />
-            <About />
-            <Skills />
-            <Certifications />
-            <Experience />
-            <Projects />
-            <Contact />
-            <VisitBlogs />
-        </main>
+        <HomeClient
+            skillCategories={skillCategories as any}
+            certifications={certifications as any}
+            subtitle={intro?.subtitle}
+            homeBio={intro?.homeBio as any}
+        />
     );
 }
