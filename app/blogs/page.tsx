@@ -1,11 +1,17 @@
 import Featured from "@/components/blogs/featured";
 import Latest from "@/components/blogs/latest";
+import { getFeaturedPosts, getAllPosts } from "@/lib/sanity-client";
 
-export default function Blogs() {
+export default async function Blogs() {
+    const [featuredPosts, allPosts] = await Promise.all([
+        getFeaturedPosts(),
+        getAllPosts(),
+    ]);
+
     return (
         <main className="flex-1 py-6">
-            <Featured />
-            <Latest />
+            <Featured posts={featuredPosts} />
+            <Latest posts={allPosts} />
         </main>
     );
 }

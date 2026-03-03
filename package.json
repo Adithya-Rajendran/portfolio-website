@@ -9,7 +9,6 @@
     "lint": "eslint app/ components/ lib/ context/ actions/ email/"
   },
   "dependencies": {
-    "@next/bundle-analyzer": "^16.1.6",
     "@portabletext/react": "^6.0.2",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
@@ -31,7 +30,6 @@
     "embla-carousel-react": "^8.6.0",
     "eslint": "^9.39.3",
     "eslint-config-next": "^16.1.6",
-    "gray-matter": "^4.0.3",
     "lucide-react": "^0.575.0",
     "motion": "^12.34.3",
     "next": "^16.1.6",
@@ -40,22 +38,17 @@
     "postcss": "^8.5.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^10.0.3",
-    "react-markdown": "^10.1.0",
-    "react-syntax-highlighter": "^16.1.1",
     "react-vertical-timeline-component": "^4.0.0",
     "sanity": "^5.12.0",
     "sharp": "^0.34.5",
-    "styled-components": "^6.3.11",
     "tailwind-merge": "^2.2.1",
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9"
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.14",
-    "@types/react-syntax-highlighter": "^15.5.11",
     "@types/react-vertical-timeline-component": "^3.3.6"
   }
 }

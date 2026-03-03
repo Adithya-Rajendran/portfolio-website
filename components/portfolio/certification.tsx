@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef } from "react";
-import { CertificateType } from "@/lib/types";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
+import { urlForImage } from "@/lib/sanity-image";
+import type { SanityCertificationType } from "@/lib/types";
 
-export default function Certification(cert: CertificateType) {
+export default function Certification(cert: SanityCertificationType) {
     const ref = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
         target: ref,
@@ -16,7 +17,7 @@ export default function Certification(cert: CertificateType) {
 
     return (
         <motion.div
-            key={cert.title}
+            key={cert._id}
             ref={ref}
             style={{
                 scale: scaleProgress,
@@ -35,7 +36,7 @@ export default function Certification(cert: CertificateType) {
 
                     <a
                         className="text-emerald-700 hover:underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
-                        href={cert.verify}
+                        href={cert.verifyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -45,11 +46,11 @@ export default function Certification(cert: CertificateType) {
 
                 <div className="hidden sm:block flex-shrink-0 pt-5">
                     <Image
-                        src={cert.badge}
-                        alt={`${cert.title} certification badge`}
-                        quality={95}
-                        loading="lazy"
+                        src={urlForImage(cert.badge).width(256).height(256).quality(95).url()}
+                        alt={cert.badge.alt || `${cert.title} certification badge`}
+                        width={128}
                         height={128}
+                        loading="lazy"
                         className="top-8 -right-40 rounded-lg shadow-2xl transition group-hover:scale-[1.20]"
                     />
                 </div>

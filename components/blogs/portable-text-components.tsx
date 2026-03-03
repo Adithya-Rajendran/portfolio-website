@@ -1,6 +1,4 @@
 import Image from "next/image";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { urlForImage } from "@/lib/sanity-image";
 import type { PortableTextComponents } from "@portabletext/react";
 
@@ -33,7 +31,6 @@ export const portableTextComponents: PortableTextComponents = {
             );
         },
         code: ({ value }) => {
-            const language = value.language || "text";
             return (
                 <div className="my-4">
                     {value.filename && (
@@ -41,22 +38,13 @@ export const portableTextComponents: PortableTextComponents = {
                             {value.filename}
                         </div>
                     )}
-                    <SyntaxHighlighter
-                        style={atomDark}
-                        language={language}
-                        PreTag="div"
-                        wrapLines={true}
-                        wrapLongLines={true}
-                        customStyle={{
-                            marginTop: value.filename ? 0 : undefined,
-                            borderTopLeftRadius: value.filename ? 0 : undefined,
-                            borderTopRightRadius: value.filename
-                                ? 0
-                                : undefined,
-                        }}
+                    <pre
+                        className={`bg-slate-900 text-slate-100 text-sm p-4 overflow-x-auto ${
+                            value.filename ? "rounded-b-md" : "rounded-md"
+                        }`}
                     >
-                        {value.code}
-                    </SyntaxHighlighter>
+                        <code>{value.code}</code>
+                    </pre>
                 </div>
             );
         },

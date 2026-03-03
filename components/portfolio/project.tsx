@@ -1,19 +1,19 @@
 "use client";
 
 import { useRef } from "react";
-import { projectsData } from "@/lib/data";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
-
-type ProjectProps = (typeof projectsData)[number];
+import { urlForImage } from "@/lib/sanity-image";
+import type { SanityProjectType } from "@/lib/types";
 
 export default function Project({
     title,
     description,
     tags,
-    imageUrl,
-    link,
-}: ProjectProps) {
+    image,
+    linkTitle,
+    linkUrl,
+}: SanityProjectType) {
     const ref = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
         target: ref,
@@ -37,14 +37,14 @@ export default function Project({
                     <p className="my-2 leading-relaxed text-slate-600 dark:text-slate-400">
                         {description}
                     </p>
-                    {link ? (
+                    {linkTitle && linkUrl ? (
                         <a
                             className="text-emerald-700 hover:underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 mb-2 transition-colors"
-                            href={link.link}
+                            href={linkUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            {link.title}
+                            {linkTitle}
                         </a>
                     ) : null}
                     <ul
@@ -63,9 +63,10 @@ export default function Project({
                 </div>
 
                 <Image
-                    src={imageUrl}
-                    alt={`Screenshot of ${title}`}
-                    quality={95}
+                    src={urlForImage(image).width(900).quality(95).url()}
+                    alt={image.alt || `Screenshot of ${title}`}
+                    width={452}
+                    height={300}
                     loading="lazy"
                     className="absolute hidden sm:block top-8 -right-40 w-[28.25rem] rounded-t-lg shadow-2xl
         transition 

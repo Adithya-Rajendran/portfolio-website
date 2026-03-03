@@ -8,6 +8,13 @@ import Contact from "@/components/portfolio/contact";
 import Certifications from "@/components/portfolio/certifications";
 import type { Metadata } from "next";
 import { siteConfig } from "@/lib/config";
+import {
+    getAbout,
+    getAllExperiences,
+    getAllProjects,
+    getAllCertifications,
+    getAllSkillCategories,
+} from "@/lib/sanity-client";
 
 export const metadata: Metadata = {
     title: "Portfolio",
@@ -23,17 +30,26 @@ export const metadata: Metadata = {
     },
 };
 
-export default function Portfolio() {
+export default async function Portfolio() {
+    const [about, experiences, projects, certifications, skillCategories] =
+        await Promise.all([
+            getAbout(),
+            getAllExperiences(),
+            getAllProjects(),
+            getAllCertifications(),
+            getAllSkillCategories(),
+        ]);
+
     return (
         <>
             <main className="flex flex-col items-center px-4">
                 <Intro />
                 <SectionDivider />
-                <About />
-                <Skills />
-                <Certifications />
-                <Experience />
-                <Projects />
+                <About body={about?.body ?? null} />
+                <Skills skillCategories={skillCategories} />
+                <Certifications certifications={certifications} />
+                <Experience experiences={experiences} />
+                <Projects projects={projects} />
                 <Contact />
             </main>
         </>

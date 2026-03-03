@@ -1,10 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getFeaturedPosts } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
+import type { SanityPostType } from "@/lib/types";
 
-export default async function Featured() {
-    const featuredPosts = await getFeaturedPosts();
+interface FeaturedProps {
+    posts: SanityPostType[];
+}
+
+export default function Featured({ posts: featuredPosts }: FeaturedProps) {
 
     if (!featuredPosts || featuredPosts.length === 0) {
         return (

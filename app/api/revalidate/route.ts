@@ -21,17 +21,28 @@ export async function POST(req: NextRequest) {
             return new NextResponse(null, { status: 404 });
         }
 
-        if (body?._type !== "post") {
-            return new NextResponse(null, { status: 404 });
+        const portfolioTypes = ["experience", "project", "certification", "skillCategory", "about"];
+        const docType = body?._type;
+
+        if (docType === "post") {
+            revalidateTag("post", "hours");
+            return NextResponse.json({
+                revalidated: true,
+                message: `Revalidated tag "post"${body?.slug?.current ? ` (triggered by: ${body.slug.current})` : ""}`,
+                now: Date.now(),
+            });
         }
 
-        revalidateTag("post", { expire: 0 });
+        if (docType && portfolioTypes.includes(docType)) {
+            revalidateTag("portfolio", "days");
+            return NextResponse.json({
+                revalidated: true,
+                message: `Revalidated tag "portfolio" (triggered by: ${docType})`,
+                now: Date.now(),
+            });
+        }
 
-        return NextResponse.json({
-            revalidated: true,
-            message: `Revalidated tag "post"${body?.slug?.current ? ` (triggered by: ${body.slug.current})` : ""}`,
-            now: Date.now(),
-        });
+        return new NextResponse(null, { status: 404 });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("[Revalidate] Error:", message);

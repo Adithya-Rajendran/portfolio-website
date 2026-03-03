@@ -1,17 +1,23 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import SectionHeading from "../section-heading";
 import {
     VerticalTimeline,
     VerticalTimelineElement,
 } from "react-vertical-timeline-component";
 import "react-vertical-timeline-component/style.min.css";
-import { experiencesData } from "@/lib/data";
 import { useSectionInView } from "@/lib/hooks";
 import { useTheme } from "@/context/theme-context";
+import { urlForImage } from "@/lib/sanity-image";
+import type { SanityExperienceType } from "@/lib/types";
 
-export default function Experience() {
+interface ExperienceProps {
+    experiences: SanityExperienceType[];
+}
+
+export default function Experience({ experiences }: ExperienceProps) {
     const { ref, inView } = useSectionInView("Experience", 0.3);
     const { theme } = useTheme();
 
@@ -31,9 +37,9 @@ export default function Experience() {
         >
             <SectionHeading>My experience</SectionHeading>
             <VerticalTimeline lineColor="">
-                {experiencesData.map((item) => (
+                {experiences.map((item) => (
                     <VerticalTimelineElement
-                        key={item.title}
+                        key={item._id}
                         visible={isVisible}
                         contentStyle={{
                             background:
@@ -55,7 +61,17 @@ export default function Experience() {
                                     : "0.4rem solid rgba(52, 211, 153, 0.4)",
                         }}
                         date={item.date}
-                        icon={item.icon}
+                        icon={
+                            item.icon ? (
+                                <Image
+                                    src={urlForImage(item.icon).width(60).height(60).url()}
+                                    alt={item.icon.alt || item.title}
+                                    width={30}
+                                    height={30}
+                                    className="object-contain"
+                                />
+                            ) : undefined
+                        }
                         iconStyle={{
                             background:
                                 theme === "light"
@@ -66,6 +82,9 @@ export default function Experience() {
                                 theme === "light"
                                     ? "#047857"
                                     : "#34d399",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                         }}
                     >
                         <h3 className="font-semibold capitalize">
