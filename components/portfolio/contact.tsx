@@ -43,8 +43,7 @@ export default function Contact() {
 
                     if (error) {
                         toast({
-                            description:
-                                "Error sending the message! Please try again.",
+                            description: typeof error === "string" ? error : "Error sending the message! Please try again.",
                             variant: "destructive",
                         });
                         return;
