@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         const docType = body?._type;
 
         if (docType === "post") {
-            revalidateTag("post", { expire: 0 });
+            revalidateTag("post", "hours");
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated tag "post"${body?.slug?.current ? ` (triggered by: ${body.slug.current})` : ""}`,
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (docType && portfolioTypes.includes(docType)) {
-            revalidateTag("portfolio", { expire: 0 });
+            revalidateTag("portfolio", "days");
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated tag "portfolio" (triggered by: ${docType})`,

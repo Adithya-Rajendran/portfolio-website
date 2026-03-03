@@ -1,3 +1,6 @@
+"use cache";
+
+import { cacheLife } from "next/cache";
 import Intro from "@/components/portfolio/intro";
 import SectionDivider from "@/components/section-divider";
 import About from "@/components/portfolio/about";
@@ -31,6 +34,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Portfolio() {
+    cacheLife("days");
+
     const [about, experiences, projects, certifications, skillCategories] =
         await Promise.all([
             getAbout(),

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getAllPosts } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
+import type { SanityPostType } from "@/lib/types";
 import {
     Carousel,
     CarouselContent,
@@ -10,8 +10,11 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel";
 
-export default async function Latest() {
-    const allPosts = await getAllPosts();
+interface LatestProps {
+    posts: SanityPostType[];
+}
+
+export default function Latest({ posts: allPosts }: LatestProps) {
 
     if (!allPosts || allPosts.length === 0) {
         return (

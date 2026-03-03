@@ -1,3 +1,6 @@
+"use cache";
+
+import { cacheLife } from "next/cache";
 import { getPostBySlug, getAllSlugs } from "@/lib/sanity-client";
 import { PortableText } from "@portabletext/react";
 import { portableTextComponents } from "@/components/blogs/portable-text-components";
@@ -12,6 +15,7 @@ export default async function BlogPostPage({
 }: {
     params: Promise<{ slug: string }>;
 }) {
+    cacheLife("hours");
     const { slug } = await params;
     const post = await getPostBySlug(slug);
     if (!post) {
