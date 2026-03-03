@@ -76,18 +76,7 @@ export default function Intro({ body }: IntroProps) {
                     <PortableText value={body} components={portableTextComponents} />
                 ) : (
                     <>
-                        <span className="font-bold">Hi, I'm Adithya Rajendran.</span> A{" "}
-                        <span className="font-bold">Cloud Field Engineer</span> at
-                        Canonical, with a passion for{" "}
-                        <span className="italic">
-                            building scalable cloud infrastructure
-                        </span>{" "}
-                        and delivering{" "}
-                        <span className="italic">
-                            secure, high-performance solutions
-                        </span>
-                        . I aim to <span className="font-bold">innovate</span> and drive
-                        efficiency across modern computing ecosystems.
+                        <span className="font-bold">Hi, I'm Adithya Rajendran.</span>
                     </>
                 )}
             </h1>
