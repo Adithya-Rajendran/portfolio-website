@@ -1,28 +1,14 @@
-import { cacheLife } from "next/cache";
 import { PortableText } from "@portabletext/react";
 import { portableTextComponents } from "@/components/blogs/portable-text-components";
 import { BlogPostJsonLd } from "@/components/json-ld";
 import { Separator } from "@/components/ui/separator";
 import type { SanityPostType } from "@/lib/types";
 
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-
-export default async function BlogPostContent({
+export default function BlogPostContent({
     post,
 }: {
     post: SanityPostType;
 }) {
-    "use cache";
-
-    // Posts less than 7 days old revalidate every hour (active editing window).
-    // Older posts revalidate weekly (stable content).
-    const ageMs = Date.now() - new Date(post.date).getTime();
-    if (ageMs < SEVEN_DAYS_MS) {
-        cacheLife({ revalidate: 3600 }); // 1 hour
-    } else {
-        cacheLife({ revalidate: 604800 }); // 1 week
-    }
-
     return (
         <>
             <BlogPostJsonLd
