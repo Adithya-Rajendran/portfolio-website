@@ -4,10 +4,10 @@ import React from "react";
 import { useSectionInView } from "@/lib/hooks";
 import SectionHeading from "../section-heading";
 import Certification from "./certification";
-import type { SanityCertificationType } from "@/lib/types";
+import type { Certification as TCertification } from "@/sanity.types";
 
 interface CertificationsProps {
-    certifications: SanityCertificationType[];
+    certifications: TCertification[];
 }
 
 export default function Certifications({ certifications }: CertificationsProps) {

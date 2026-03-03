@@ -11,10 +11,10 @@ import "react-vertical-timeline-component/style.min.css";
 import { useSectionInView } from "@/lib/hooks";
 import { useTheme } from "@/context/theme-context";
 import { urlForImage } from "@/lib/sanity-image";
-import type { SanityExperienceType } from "@/lib/types";
+import type { Experience as TExperience } from "@/sanity.types";
 
 interface ExperienceProps {
-    experiences: SanityExperienceType[];
+    experiences: TExperience[];
 }
 
 export default function Experience({ experiences }: ExperienceProps) {
@@ -65,7 +65,7 @@ export default function Experience({ experiences }: ExperienceProps) {
                             item.icon ? (
                                 <Image
                                     src={urlForImage(item.icon).width(60).height(60).url()}
-                                    alt={item.icon.alt || item.title}
+                                    alt={item.icon.alt || item.title || ""}
                                     width={30}
                                     height={30}
                                     className="object-contain"
@@ -88,11 +88,11 @@ export default function Experience({ experiences }: ExperienceProps) {
                         }}
                     >
                         <h3 className="font-semibold capitalize">
-                            {item.title}
+                            {item.title || ""}
                         </h3>
-                        <p className="font-normal !mt-0">{item.org}</p>
-                        <p className="font-normal mt-0">{item.location}</p>
-                        {item.description.map((desc, index) => (
+                        <p className="font-normal !mt-0">{item.org || ""}</p>
+                        <p className="font-normal mt-0">{item.location || ""}</p>
+                        {(item.description || []).map((desc, index) => (
                             <p
                                 key={index}
                                 className="!mt-1 !font-normal text-slate-600 dark:text-slate-400"

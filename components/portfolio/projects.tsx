@@ -4,10 +4,10 @@ import React from "react";
 import { useSectionInView } from "@/lib/hooks";
 import SectionHeading from "../section-heading";
 import Project from "./project";
-import type { SanityProjectType } from "@/lib/types";
+import type { Project as TProject } from "@/sanity.types";
 
 interface ProjectsProps {
-    projects: SanityProjectType[];
+    projects: TProject[];
 }
 
 export default function Projects({ projects }: ProjectsProps) {

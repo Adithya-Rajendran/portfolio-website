@@ -10,8 +10,8 @@ export default async function Blogs() {
 
     return (
         <main className="flex-1 py-6">
-            <Featured posts={featuredPosts} />
-            <Latest posts={allPosts} />
+            <Featured posts={featuredPosts as any} />
+            <Latest posts={allPosts as any} />
         </main>
     );
 }
