@@ -13,7 +13,6 @@ import portscanImg from "@/public/portscan.webp";
 import htbImg from "@/public/htb.webp";
 import thmImg from "@/public/thm.webp";
 import nextImg from "@/public/nextjs-website.webp";
-import adImg from "@/public/ADNetworkOverview.webp";
 import AWSImg from "@/public/AWS.webp";
 import SecImg from "@/public/CompTIA_Security.webp";
 import MTAImg from "@/public/MTA-Security-Fundamentals-2018.webp";
@@ -78,27 +77,35 @@ export const certData: readonly CertificateType[] = [
 
 export const experiencesData: readonly ExperienceType[] = [
     {
-        title: "Cloud Field Engineer",
-        org: "Canonical",
-        location: "Fremont, CA (Remote)",
+        title: "Field Software Engineer I",
+        org: "Canonical (Ubuntu)",
+        location: "Fremont, CA",
         description: [
-            "In my role as a Cloud Field Engineer, I collaborated with clients to deploy and optimize cloud infrastructure solutions, leveraging technologies like OpenStack, Kubernetes, and Ubuntu-based systems.",
-            "Delivered tailored consulting to enhance scalability and performance, aligning infrastructure with enterprise needs.",
-            "Automated deployment processes using Juju and MAAS (Metal as a Service), streamlining cloud operations and reducing manual workloads.",
-            "Facilitated technical troubleshooting and system integration, ensuring reliability and efficiency for customer environments.",
+            "Architected and led the deployment of large-scale private cloud solutions (OpenStack, Kubernetes, Ceph).",
+            "Created automations using Python, Terraform, and Bash, reducing errors and manual effort.",
+            "Partnered with core engineering and support teams to architect custom solutions for unique customer scenarios, enhancing system performance and reducing support escalations.",
+            "Authored custom CIS and DISA-STIG tailoring files to assist in meeting compliance requirements like CMMC and HIPAA, as well as strengthen the overall security posture.",
+            "Troubleshot issues across the entire suite, from the kernel to the networking and switches, all the way to applications running on the OS, providing patches to bugs where necessary.",
+            "Documented root cause analyses and solutions in the knowledge base, improving time-to-resolution.",
+            "Partnered with the sales team in the pre-sales process, leading solution-oriented discovery calls, delivering customized demonstrations, and advising clients on alternative strategies to better address their business goals.",
+            "Assisted with drafting Statement of Work documents while ensuring alignment between sales, support, and engineering teams, effectively providing a solid outline of the engagement.",
+            "Collaborated with product management and engineering teams by providing critical field feedback on customer use-cases and technical challenges, influencing the product roadmap.",
         ],
         icon: React.createElement(BsShieldLock),
         date: "May 2024 - Present",
     },
     {
         title: "Cybersecurity Analyst Intern",
-        org: "Technical Consulting & Research, Inc.",
-        location: "Fremont, CA (Remote)",
+        org: "Technical Consulting & Research, Inc. (TCR)",
+        location: "Fremont, CA",
         description: [
-            "As a Cybersecurity Analyst Intern, I addressed over six compliance issues through fit-gap analysis, enhancing cloud provider regulatory adherence.",
-            "Utilized the MITRE ATT&CK framework to refine threat modeling, achieving a 15% reduction in system vulnerabilities.",
-            "Orchestrated secure authentication and authorization solutions using Okta’s Auth0, significantly enhancing user access control, and delivered detailed security reports, elevating stakeholder awareness of cybersecurity measures.",
-            "Additionally, improved team productivity by leveraging advanced Microsoft Office Suite features for data analysis and presentation.",
+            "Addressed 4+ cloud provider compliance issues via fit-gap analysis, improving regulatory adherence.",
+            "Leveraged the MITRE ATT&CK framework to refine threat modeling processes, achieving a notable 15% reduction in system vulnerabilities and bolstering security defenses.",
+            "Applied security best practices such as the principle of least privilege and network segmentation.",
+            "Developed automation scripts in Python, reducing the need to direct human work hours by 1-2 hrs. per week.",
+            "Built demo applications in JavaScript showing the effects and operation of compliance requirements.",
+            "Orchestrated secure authentication and authorization with Okta's Auth0, enhancing user access control.",
+            "Delivered detailed security reports and visualizations, significantly raising non-technical stakeholder awareness.",
             'Presented at the IGNITE and Bucknell University conferences on "Navigating AI Risks for Small Businesses."',
         ],
         icon: React.createElement(BsShieldLock),
@@ -119,7 +126,7 @@ export const experiencesData: readonly ExperienceType[] = [
     },
     {
         title: "Bachelor of Science, Computer Science",
-        org: "University of California,",
+        org: "University of California",
         location: "Santa Cruz, CA",
         description: [
             "I graduated from the University of California, Santa Cruz, where I was deeply involved in the Slug Security Club.",

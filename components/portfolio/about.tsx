@@ -26,7 +26,7 @@ export default function About() {
                 cybersecurity. In my current role as a{" "}
                 <span className="font-medium text-emerald-700 dark:text-emerald-400">
                     Cloud Field Engineer
-                </span>
+                </span>{" "}
                 at{" "}
                 <span className="font-medium text-orange-700 dark:text-orange-500">
                     Canonical
@@ -64,7 +64,7 @@ export default function About() {
                 <span className="font-medium text-teal-700 dark:text-cyan-400">
                     compliance rules
                 </span>{" "}
-                and{" "}
+                like CIS, STIG, and{" "}
                 <span className="font-medium text-teal-700 dark:text-cyan-400">
                     AI/ML security
                 </span>
