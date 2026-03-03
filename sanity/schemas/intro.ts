@@ -42,6 +42,14 @@ export default defineType({
             ],
             validation: (Rule) => Rule.required(),
         }),
+        defineField({
+            name: "resume",
+            title: "Resume PDF",
+            type: "file",
+            options: {
+                accept: ".pdf",
+            },
+        }),
     ],
     preview: {
         prepare() {

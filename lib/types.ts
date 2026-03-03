@@ -92,4 +92,5 @@ export interface SanityAboutType {
 export interface SanityIntroType {
     _id: string;
     body: PortableTextBlock[];
+    resumeUrl?: string;
 }

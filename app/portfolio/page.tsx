@@ -45,7 +45,7 @@ export default async function Portfolio() {
     return (
         <>
             <main className="flex flex-col items-center px-4">
-                <Intro body={intro?.body ?? null} />
+                <Intro body={intro?.body ?? null} resumeUrl={intro?.resumeUrl} />
                 <SectionDivider />
                 <About body={about?.body ?? null} />
                 <Skills skillCategories={skillCategories} />
