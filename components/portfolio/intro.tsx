@@ -4,8 +4,54 @@ import { BsArrowRight, BsLinkedin } from "react-icons/bs";
 import { HiDownload } from "react-icons/hi";
 import { FaGithubSquare } from "react-icons/fa";
 import heroImg from "@/public/hero.webp";
+import { PortableText, type PortableTextBlock, type PortableTextComponents } from "@portabletext/react";
 
-export default function Intro() {
+const portableTextComponents: PortableTextComponents = {
+    block: {
+        normal: ({ children }) => (
+            <span>{children}</span>
+        ),
+    },
+    marks: {
+        strong: ({ children }) => (
+            <span className="font-bold">{children}</span>
+        ),
+        em: ({ children }) => (
+            <span className="italic">{children}</span>
+        ),
+        highlightEmerald: ({ children }) => (
+            <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                {children}
+            </span>
+        ),
+        highlightTeal: ({ children }) => (
+            <span className="font-bold text-teal-700 dark:text-cyan-400">
+                {children}
+            </span>
+        ),
+        highlightOrange: ({ children }) => (
+            <span className="font-bold text-orange-700 dark:text-orange-500">
+                {children}
+            </span>
+        ),
+        link: ({ children, value }) => (
+            <a
+                href={value?.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-700 hover:underline dark:text-emerald-400"
+            >
+                {children}
+            </a>
+        ),
+    },
+};
+
+interface IntroProps {
+    body?: PortableTextBlock[] | null;
+}
+
+export default function Intro({ body }: IntroProps) {
     return (
         <section
             id="home"
@@ -26,18 +72,24 @@ export default function Intro() {
             </div>
 
             <h1 className="mb-10 mt-4 px-4 text-2xl font-medium !leading-[1.5] sm:text-4xl">
-                <span className="font-bold">Hi, I'm Adithya Rajendran.</span> A{" "}
-                <span className="font-bold">Cloud Field Engineer</span> at
-                Canonical, with a passion for{" "}
-                <span className="italic">
-                    building scalable cloud infrastructure
-                </span>{" "}
-                and delivering{" "}
-                <span className="italic">
-                    secure, high-performance solutions
-                </span>
-                . I aim to <span className="font-bold">innovate</span> and drive
-                efficiency across modern computing ecosystems.
+                {body ? (
+                    <PortableText value={body} components={portableTextComponents} />
+                ) : (
+                    <>
+                        <span className="font-bold">Hi, I'm Adithya Rajendran.</span> A{" "}
+                        <span className="font-bold">Cloud Field Engineer</span> at
+                        Canonical, with a passion for{" "}
+                        <span className="italic">
+                            building scalable cloud infrastructure
+                        </span>{" "}
+                        and delivering{" "}
+                        <span className="italic">
+                            secure, high-performance solutions
+                        </span>
+                        . I aim to <span className="font-bold">innovate</span> and drive
+                        efficiency across modern computing ecosystems.
+                    </>
+                )}
             </h1>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium">
@@ -81,3 +133,4 @@ export default function Intro() {
         </section>
     );
 }
+

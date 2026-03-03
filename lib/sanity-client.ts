@@ -6,6 +6,7 @@ import type {
     SanityCertificationType,
     SanitySkillCategoryType,
     SanityAboutType,
+    SanityIntroType,
 } from "./types";
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
@@ -150,6 +151,22 @@ export async function getAbout(): Promise<SanityAboutType | null> {
         return about || null;
     } catch (error) {
         console.error("[Sanity] Error fetching about:", error);
+        return null;
+    }
+}
+
+// Fetch the singleton Intro document
+export async function getIntro(): Promise<SanityIntroType | null> {
+    if (!isSanityConfigured) return null;
+    try {
+        const intro = await client.fetch(
+            `*[_type == "intro"][0]{ _id, body }`,
+            {},
+            portfolioCacheOptions,
+        );
+        return intro || null;
+    } catch (error) {
+        console.error("[Sanity] Error fetching intro:", error);
         return null;
     }
 }
