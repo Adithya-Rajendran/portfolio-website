@@ -1,59 +1,48 @@
 "use server";
 
-import nodemailer from "nodemailer";
-import { validateString, getErrorMessage, validateEmail } from "@/lib/utils";
+import { Resend } from "resend";
+import { z } from "zod";
+import { getErrorMessage, sanitizeHtml } from "@/lib/utils";
 import ContactFormEmail from "@/email/contact-form-email";
-import { render } from "@react-email/components";
 
-const emailCredentials = {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    auth: {
-        user: emailCredentials.user,
-        pass: emailCredentials.pass,
-    },
+const emailSchema = z.object({
+    senderEmail: z.email("Invalid sender email"),
+    message: z.string().min(1, "Message cannot be empty").max(1000),
 });
 
 export const sendEmail = async (formData: FormData) => {
-    const senderEmail = formData.get("senderEmail");
-    const message = formData.get("message");
+    const rawData = {
+        senderEmail: formData.get("senderEmail"),
+        message: formData.get("message"),
+    };
 
-    // simple server-side validation
-    if (!validateEmail(senderEmail, 500)) {
-        return {
-            error: "Invalid sender email",
-        };
-    }
-    if (!validateString(message, 5000)) {
-        return {
-            error: "Invalid message",
-        };
+    const validatedData = emailSchema.safeParse(rawData);
+
+    if (!validatedData.success) {
+        return { error: validatedData.error.issues[0].message };
     }
 
-    let data;
+    const { senderEmail, message } = validatedData.data;
+
     try {
-        const emailHtml = await render(ContactFormEmail({ message, senderEmail }));
-        data = await transporter.sendMail({
-            from: `"Contact Form" <${emailCredentials.user}>`,
-            to: "adithyaraj@gmail.com, work@adithya-rajendran.com",
+        // Resend natively supports React Email components via the 'react' property
+        const data = await resend.emails.send({
+            from: "Contact Form <onboarding@resend.dev>", // Note: Update this once you verify your custom domain in Resend
+            to: process.env.CONTACT_FORM_TO_EMAIL as string,
             subject: "Contact Form for My Website",
-            text: `Message: ${message}\nSender Email: ${senderEmail}`,
-            html: emailHtml,
+            replyTo: sanitizeHtml(senderEmail as string),
+            react: ContactFormEmail({
+                message: sanitizeHtml(message as string),
+                senderEmail: sanitizeHtml(senderEmail as string)
+            }),
         });
+
+        return { data };
     } catch (error: unknown) {
         return {
             error: getErrorMessage(error),
         };
     }
-
-    return {
-        data,
-    };
 };
