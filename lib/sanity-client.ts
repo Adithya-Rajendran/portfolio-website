@@ -74,30 +74,17 @@ export async function getFeaturedPosts(): Promise<SanityPostType[]> {
 }
 
 // Fetch a single post by slug.
-// Uses conditional revalidation: recent posts (< 7 days) revalidate hourly,
-// older posts revalidate weekly. The date is fetched first with a lightweight
-// query, then the full post is cached with the appropriate revalidation window.
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+// Revalidates weekly as a fallback; the Sanity webhook provides instant invalidation on edits.
+const postSlugCacheOptions = { next: { tags: ["post"], revalidate: 604800 } }; // 1 week
 export async function getPostBySlug(
     slug: string,
 ): Promise<SanityPostType | null> {
     if (!isSanityConfigured) return null;
     try {
-        // Lightweight date lookup to determine cache duration
-        const meta = await client.fetch(
-            `*[_type == "post" && slug.current == $slug][0]{ date }`,
-            { slug },
-            { next: { tags: ["post"], revalidate: 3600 } },
-        );
-        if (!meta?.date) return null;
-
-        const ageMs = Date.now() - new Date(meta.date).getTime();
-        const revalidate = ageMs < SEVEN_DAYS_MS ? 3600 : 604800;
-
         const post = await client.fetch(
             `*[_type == "post" && slug.current == $slug][0] ${postProjection}`,
             { slug },
-            { next: { tags: ["post"], revalidate } },
+            postSlugCacheOptions,
         );
         return post || null;
     } catch (error) {
