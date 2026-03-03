@@ -15,7 +15,7 @@ export default async function BlogPostPage({
         return notFound();
     }
 
-    return <BlogPostContent post={post} />;
+    return <BlogPostContent post={post as any} />;
 }
 
 export async function generateMetadata({

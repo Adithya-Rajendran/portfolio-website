@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
 import { urlForImage } from "@/lib/sanity-image";
-import type { SanityProjectType } from "@/lib/types";
+import type { Project as TProject } from "@/sanity.types";
 
 export default function Project({
     title,
@@ -13,7 +13,7 @@ export default function Project({
     image,
     linkTitle,
     linkUrl,
-}: SanityProjectType) {
+}: TProject) {
     const ref = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
         target: ref,
@@ -33,9 +33,9 @@ export default function Project({
         >
             <section className="bg-white max-w-[42rem] border border-emerald-200 rounded-lg overflow-hidden sm:pr-8 relative hover:bg-emerald-50/50 hover:border-emerald-300 transition sm:group-even:pl-8 dark:text-slate-200 dark:bg-white/[0.03] dark:border-white/8 dark:hover:bg-white/[0.06]">
                 <div className="pt-4 pb-7 px-5 sm:pl-10 sm:pr-2 sm:pt-10 sm:max-w-[50%] flex flex-col h-full sm:group-even:ml-[18rem]">
-                    <h3 className="text-2xl font-semibold">{title}</h3>
+                    <h3 className="text-2xl font-semibold">{title || ""}</h3>
                     <p className="my-2 leading-relaxed text-slate-600 dark:text-slate-400">
-                        {description}
+                        {description || ""}
                     </p>
                     {linkTitle && linkUrl ? (
                         <a
@@ -51,7 +51,7 @@ export default function Project({
                         className="flex flex-wrap mt-4 gap-2 sm:mt-auto"
                         aria-label="Related Skills"
                     >
-                        {tags.map((tag, index) => (
+                        {(tags || []).map((tag, index) => (
                             <li
                                 className="bg-emerald-700 px-3 py-1 text-[0.7rem] uppercase tracking-wider text-white rounded-full border border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
                                 key={index}
@@ -63,8 +63,8 @@ export default function Project({
                 </div>
 
                 <Image
-                    src={urlForImage(image).width(900).quality(95).url()}
-                    alt={image.alt || `Screenshot of ${title}`}
+                    src={image ? urlForImage(image).width(900).quality(95).url() : ""}
+                    alt={image?.alt || `Screenshot of ${title}`}
                     width={452}
                     height={300}
                     loading="lazy"

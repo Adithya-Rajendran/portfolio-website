@@ -4,7 +4,7 @@ import React from "react";
 import SectionHeading from "../section-heading";
 import { useSectionInView } from "@/lib/hooks";
 import { motion } from "motion/react";
-import type { SanitySkillCategoryType } from "@/lib/types";
+import type { SkillCategory } from "@/sanity.types";
 
 const fadeInAnimationVariants = {
     initial: {
@@ -21,7 +21,7 @@ const fadeInAnimationVariants = {
 };
 
 const colorMap: Record<
-    SanitySkillCategoryType["colorVariant"],
+    "emerald" | "cyan" | "violet",
     {
         heading: string;
         bg: string;
@@ -54,7 +54,7 @@ const colorMap: Record<
 };
 
 interface SkillsProps {
-    skillCategories: SanitySkillCategoryType[];
+    skillCategories: SkillCategory[];
 }
 
 export default function Skills({ skillCategories }: SkillsProps) {
@@ -68,7 +68,7 @@ export default function Skills({ skillCategories }: SkillsProps) {
         >
             <SectionHeading>My skills</SectionHeading>
             {skillCategories.map((category) => {
-                const colors = colorMap[category.colorVariant] || colorMap.emerald;
+                const colors = colorMap[category.colorVariant as "emerald" | "cyan" | "violet"] || colorMap.emerald;
                 return (
                     <React.Fragment key={category._id}>
                         <h3
@@ -77,7 +77,7 @@ export default function Skills({ skillCategories }: SkillsProps) {
                             {category.title}
                         </h3>
                         <ul className="flex flex-wrap justify-center gap-2 text-lg text-slate-700">
-                            {category.skills.map((skill, index) => (
+                            {(category.skills || []).map((skill, index) => (
                                 <motion.li
                                     className={`${colors.bg} ${colors.border} ${colors.text} rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 ${colors.darkBorder}`}
                                     key={index}

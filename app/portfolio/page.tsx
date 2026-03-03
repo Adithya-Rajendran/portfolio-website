@@ -45,13 +45,13 @@ export default async function Portfolio() {
     return (
         <>
             <main className="flex flex-col items-center px-4">
-                <Intro body={intro?.body ?? null} resumeUrl={intro?.resumeUrl} />
+                <Intro body={intro?.body as any ?? null} resumeUrl={intro?.resume?.asset?._ref || undefined} />
                 <SectionDivider />
-                <About body={about?.body ?? null} />
+                <About body={about?.body as any ?? null} />
                 <Skills skillCategories={skillCategories} />
-                <Certifications certifications={certifications} />
-                <Experience experiences={experiences} />
-                <Projects projects={projects} />
+                <Certifications certifications={certifications as any} />
+                <Experience experiences={experiences as any} />
+                <Projects projects={projects as any} />
                 <Contact />
             </main>
         </>

@@ -10,11 +10,11 @@ export default async function Home() {
 
     return (
         <HomeClient
-            skillCategories={skillCategories}
-            certifications={certifications}
-            resumeUrl={intro?.resumeUrl}
+            skillCategories={skillCategories as any}
+            certifications={certifications as any}
+            resumeUrl={intro?.resume?.asset?._ref || undefined}
             subtitle={intro?.subtitle}
-            homeBio={intro?.homeBio}
+            homeBio={intro?.homeBio as any}
         />
     );
 }

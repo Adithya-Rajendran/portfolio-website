@@ -1,13 +1,13 @@
 import { createClient } from "next-sanity";
 import type {
-    SanityPostType,
-    SanityExperienceType,
-    SanityProjectType,
-    SanityCertificationType,
-    SanitySkillCategoryType,
-    SanityAboutType,
-    SanityIntroType,
-} from "./types";
+    Post,
+    Experience,
+    Project,
+    Certification,
+    SkillCategory,
+    About,
+    Intro,
+} from "../sanity.types";
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
@@ -41,7 +41,7 @@ const postProjection = `{
 }`;
 
 // Fetch all published posts, sorted by date descending
-export async function getAllPosts(): Promise<SanityPostType[]> {
+export async function getAllPosts(): Promise<Post[]> {
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
@@ -58,7 +58,7 @@ export async function getAllPosts(): Promise<SanityPostType[]> {
 }
 
 // Fetch featured posts only
-export async function getFeaturedPosts(): Promise<SanityPostType[]> {
+export async function getFeaturedPosts(): Promise<Post[]> {
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
@@ -79,7 +79,7 @@ export async function getFeaturedPosts(): Promise<SanityPostType[]> {
 const postSlugCacheOptions = { next: { tags: ["post"], revalidate: 604800 } }; // 1 week
 export async function getPostBySlug(
     slug: string,
-): Promise<SanityPostType | null> {
+): Promise<Post | null> {
     if (!isSanityConfigured) return null;
     try {
         const post = await client.fetch(
@@ -140,7 +140,7 @@ export async function getAllSlugs(): Promise<string[]> {
 const portfolioCacheOptions = { next: { tags: ["portfolio"], revalidate: 86400 } };
 
 // Fetch the singleton About document
-export async function getAbout(): Promise<SanityAboutType | null> {
+export async function getAbout(): Promise<About | null> {
     if (!isSanityConfigured) return null;
     try {
         const about = await client.fetch(
@@ -156,7 +156,7 @@ export async function getAbout(): Promise<SanityAboutType | null> {
 }
 
 // Fetch the singleton Intro document
-export async function getIntro(): Promise<SanityIntroType | null> {
+export async function getIntro(): Promise<Intro | null> {
     if (!isSanityConfigured) return null;
     try {
         const intro = await client.fetch(
@@ -172,7 +172,7 @@ export async function getIntro(): Promise<SanityIntroType | null> {
 }
 
 // Fetch all experiences sorted by order
-export async function getAllExperiences(): Promise<SanityExperienceType[]> {
+export async function getAllExperiences(): Promise<Experience[]> {
     if (!isSanityConfigured) return [];
     try {
         const experiences = await client.fetch(
@@ -190,7 +190,7 @@ export async function getAllExperiences(): Promise<SanityExperienceType[]> {
 }
 
 // Fetch all projects sorted by order
-export async function getAllProjects(): Promise<SanityProjectType[]> {
+export async function getAllProjects(): Promise<Project[]> {
     if (!isSanityConfigured) return [];
     try {
         const projects = await client.fetch(
@@ -208,7 +208,7 @@ export async function getAllProjects(): Promise<SanityProjectType[]> {
 }
 
 // Fetch all certifications sorted by order
-export async function getAllCertifications(): Promise<SanityCertificationType[]> {
+export async function getAllCertifications(): Promise<Certification[]> {
     if (!isSanityConfigured) return [];
     try {
         const certifications = await client.fetch(
@@ -226,7 +226,7 @@ export async function getAllCertifications(): Promise<SanityCertificationType[]>
 }
 
 // Fetch all skill categories sorted by order
-export async function getAllSkillCategories(): Promise<SanitySkillCategoryType[]> {
+export async function getAllSkillCategories(): Promise<SkillCategory[]> {
     if (!isSanityConfigured) return [];
     try {
         const categories = await client.fetch(
