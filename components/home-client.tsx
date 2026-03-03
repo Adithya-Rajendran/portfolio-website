@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { urlForImage } from "@/lib/sanity-image";
 import type { SanitySkillCategoryType, SanityCertificationType } from "@/lib/types";
+import { PortableText, type PortableTextBlock, type PortableTextComponents } from "@portabletext/react";
 
 import heroImg from "@/public/hero.webp";
 
@@ -48,13 +49,58 @@ const variantStyles: Record<
     },
 };
 
+const homeBioComponents: PortableTextComponents = {
+    block: {
+        normal: ({ children }) => (
+            <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-center">
+                {children}
+            </p>
+        ),
+    },
+    marks: {
+        strong: ({ children }) => (
+            <span className="font-semibold">{children}</span>
+        ),
+        em: ({ children }) => (
+            <span className="italic">{children}</span>
+        ),
+        highlightEmerald: ({ children }) => (
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                {children}
+            </span>
+        ),
+        highlightTeal: ({ children }) => (
+            <span className="font-semibold text-teal-700 dark:text-cyan-400">
+                {children}
+            </span>
+        ),
+        highlightOrange: ({ children }) => (
+            <span className="font-semibold text-orange-700 dark:text-orange-500">
+                {children}
+            </span>
+        ),
+        link: ({ children, value }) => (
+            <a
+                href={value?.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-700 hover:underline dark:text-emerald-400"
+            >
+                {children}
+            </a>
+        ),
+    },
+};
+
 interface HomeClientProps {
     skillCategories: SanitySkillCategoryType[];
     certifications: SanityCertificationType[];
     resumeUrl?: string | null;
+    subtitle?: string | null;
+    homeBio?: PortableTextBlock[] | null;
 }
 
-export default function HomeClient({ skillCategories, certifications, resumeUrl }: HomeClientProps) {
+export default function HomeClient({ skillCategories, certifications, resumeUrl, subtitle, homeBio }: HomeClientProps) {
     return (
         <main className="flex flex-col items-center px-4">
             {/* Hero Section */}
@@ -99,7 +145,7 @@ export default function HomeClient({ skillCategories, certifications, resumeUrl 
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-[36rem] mx-auto mb-10 leading-relaxed"
                 >
-                    Cloud Field Engineer / Cybersecurity Enthusiast / Builder
+                    {subtitle || "Cloud Field Engineer / Cybersecurity Enthusiast / Builder"}
                 </motion.p>
 
                 <motion.div
@@ -177,30 +223,13 @@ export default function HomeClient({ skillCategories, certifications, resumeUrl 
                 transition={{ duration: 0.6 }}
                 className="max-w-[52rem] w-full py-20"
             >
-                <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-center">
-                    Hi, I'm Adithya. I am a Cloud Field Engineer at{" "}
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                        Canonical
-                    </span>
-                    , specializing in deploying, optimizing, and securing cloud
-                    infrastructure with{" "}
-                    <span className="font-semibold text-teal-700 dark:text-cyan-400">
-                        OpenStack
-                    </span>
-                    ,{" "}
-                    <span className="font-semibold text-teal-700 dark:text-cyan-400">
-                        Kubernetes
-                    </span>
-                    ,{" "}
-                    <span className="font-semibold text-teal-700 dark:text-cyan-400">
-                        Ceph
-                    </span>
-                    , and{" "}
-                    <span className="font-semibold text-teal-700 dark:text-cyan-400">
-                        Linux
-                    </span>{" "}
-                    systems.
-                </p>
+                {homeBio ? (
+                    <PortableText value={homeBio} components={homeBioComponents} />
+                ) : (
+                    <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-center">
+                        Hi, I'm Adithya. I am a Cloud Field Engineer.
+                    </p>
+                )}
             </motion.section>
 
             {/* Skills Preview */}
