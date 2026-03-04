@@ -10,7 +10,9 @@ interface CertificationsProps {
     certifications: TCertification[];
 }
 
-export default function Certifications({ certifications }: CertificationsProps) {
+export default function Certifications({
+    certifications,
+}: CertificationsProps) {
     const { ref } = useSectionInView("Certs", 0.5);
 
     return (

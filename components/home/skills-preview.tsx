@@ -25,8 +25,12 @@ export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {skillCategories.map((category) => {
-                    const styles = variantStyles[category.colorVariant] || variantStyles.emerald;
-                    const icon = variantIcons[category.colorVariant] || variantIcons.emerald;
+                    const styles =
+                        variantStyles[category.colorVariant] ||
+                        variantStyles.emerald;
+                    const icon =
+                        variantIcons[category.colorVariant] ||
+                        variantIcons.emerald;
                     return (
                         <SkillCard
                             key={category._id}

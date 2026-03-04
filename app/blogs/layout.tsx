@@ -11,7 +11,8 @@ export const metadata = {
     },
     openGraph: {
         title: `Cybersecurity & Cloud Engineering Blog | ${siteConfig.author}`,
-        description: "Technical blog covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.",
+        description:
+            "Technical blog covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.",
         url: `${siteConfig.url}/blogs`,
     },
 };

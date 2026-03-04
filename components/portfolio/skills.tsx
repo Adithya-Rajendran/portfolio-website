@@ -68,7 +68,10 @@ export default function Skills({ skillCategories }: SkillsProps) {
         >
             <SectionHeading>My skills</SectionHeading>
             {skillCategories.map((category) => {
-                const colors = colorMap[category.colorVariant as "emerald" | "cyan" | "violet"] || colorMap.emerald;
+                const colors =
+                    colorMap[
+                        category.colorVariant as "emerald" | "cyan" | "violet"
+                    ] || colorMap.emerald;
                 return (
                     <React.Fragment key={category._id}>
                         <h3

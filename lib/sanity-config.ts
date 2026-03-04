@@ -15,4 +15,6 @@ export const client = createClient({
     useCdn: true,
 });
 
-export const isSanityConfigured = Boolean(projectId && projectId !== "fallback");
+export const isSanityConfigured = Boolean(
+    projectId && projectId !== "fallback",
+);

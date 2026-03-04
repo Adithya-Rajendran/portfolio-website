@@ -135,7 +135,10 @@ export async function ProfilePageJsonLd() {
                     "@type": "EducationalOccupationalCredential",
                     name: "AWS Certified Solutions Architect",
                     credentialCategory: "certification",
-                    recognizedBy: { "@type": "Organization", name: "Amazon Web Services" },
+                    recognizedBy: {
+                        "@type": "Organization",
+                        name: "Amazon Web Services",
+                    },
                 },
                 {
                     "@type": "EducationalOccupationalCredential",

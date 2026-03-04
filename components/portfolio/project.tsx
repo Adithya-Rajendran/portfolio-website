@@ -63,13 +63,17 @@ export default function Project({
                 </div>
 
                 <Image
-                    src={image ? urlForImage(image).width(900).quality(95).url() : ""}
+                    src={
+                        image
+                            ? urlForImage(image).width(900).quality(95).url()
+                            : ""
+                    }
                     alt={image?.alt || `Screenshot of ${title}`}
                     width={452}
                     height={300}
                     loading="lazy"
                     className="absolute hidden sm:block top-8 -right-40 w-[28.25rem] rounded-t-lg shadow-2xl
-        transition 
+        transition
         group-hover:scale-[1.04]
         group-hover:-translate-x-3
         group-hover:translate-y-3

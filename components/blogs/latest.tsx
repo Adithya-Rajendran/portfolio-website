@@ -15,13 +15,13 @@ interface LatestProps {
 }
 
 export default function Latest({ posts: allPosts }: LatestProps) {
-
     if (!allPosts || allPosts.length === 0) {
         return (
             <section className="container mx-auto px-6">
                 <h2 className="text-2xl font-bold mb-4">Latest Posts</h2>
                 <p className="text-slate-500 dark:text-slate-400">
-                    No posts published yet. Create your first post in the Sanity Studio.
+                    No posts published yet. Create your first post in the Sanity
+                    Studio.
                 </p>
             </section>
         );
@@ -35,11 +35,11 @@ export default function Latest({ posts: allPosts }: LatestProps) {
                     {allPosts.map((post) => {
                         const imageUrl = post.image
                             ? urlForImage(post.image)
-                                .width(350)
-                                .height(200)
-                                .fit("crop")
-                                .auto("format")
-                                .url()
+                                  .width(350)
+                                  .height(200)
+                                  .fit("crop")
+                                  .auto("format")
+                                  .url()
                             : null;
                         return (
                             <CarouselItem
@@ -74,7 +74,8 @@ export default function Latest({ posts: allPosts }: LatestProps) {
                                         aria-label={`Read more about ${post.title || ""}`}
                                         title={`Read more about ${post.title || ""}`}
                                     >
-                                        {"Explore: "}{post.title || ""}
+                                        {"Explore: "}
+                                        {post.title || ""}
                                     </Link>
                                 </div>
                             </CarouselItem>

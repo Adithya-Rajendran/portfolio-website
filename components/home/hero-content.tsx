@@ -3,11 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
-import {
-    BsArrowRight,
-    BsGithub,
-    BsLinkedin,
-} from "react-icons/bs";
+import { BsArrowRight, BsGithub, BsLinkedin } from "react-icons/bs";
 import { HiDownload } from "react-icons/hi";
 import { Button } from "@/components/ui/button";
 
@@ -60,7 +56,8 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-[36rem] mx-auto mb-10 leading-relaxed"
             >
-                {subtitle || "Cloud Field Engineer / Cybersecurity Enthusiast / Builder"}
+                {subtitle ||
+                    "Cloud Field Engineer / Cybersecurity Enthusiast / Builder"}
             </motion.p>
 
             <motion.div
@@ -76,21 +73,11 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                     </Link>
                 </Button>
 
-                <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="gap-2"
-                >
+                <Button asChild variant="outline" size="lg" className="gap-2">
                     <Link href="/blogs">Read Blog</Link>
                 </Button>
 
-                <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="gap-2"
-                >
+                <Button asChild variant="outline" size="lg" className="gap-2">
                     <Link href="/portfolio#contact">Contact Me</Link>
                 </Button>
             </motion.div>

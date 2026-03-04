@@ -27,8 +27,8 @@ export default function NavCards() {
                             Portfolio
                         </h2>
                         <p className="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                            Experience, projects, certifications, and skills
-                            in cloud engineering and cybersecurity.
+                            Experience, projects, certifications, and skills in
+                            cloud engineering and cybersecurity.
                         </p>
                         <span className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium group-hover:gap-3 transition-all">
                             Explore
@@ -49,8 +49,8 @@ export default function NavCards() {
                             Blogs
                         </h2>
                         <p className="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                            Insights and write-ups on cybersecurity,
-                            homelabs, and technology explorations.
+                            Insights and write-ups on cybersecurity, homelabs,
+                            and technology explorations.
                         </p>
                         <span className="inline-flex items-center gap-2 text-teal-600 dark:text-cyan-400 font-medium group-hover:gap-3 transition-all">
                             Read

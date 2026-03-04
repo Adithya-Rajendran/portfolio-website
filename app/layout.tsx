@@ -7,7 +7,11 @@ import ThemeContextProvider from "@/context/theme-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import { PersonJsonLd, WebSiteJsonLd, ProfilePageJsonLd } from "@/components/json-ld";
+import {
+    PersonJsonLd,
+    WebSiteJsonLd,
+    ProfilePageJsonLd,
+} from "@/components/json-ld";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { siteConfig } from "@/lib/config";
@@ -105,7 +109,11 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className="!scroll-smooth">
+        <html
+            lang="en"
+            className="!scroll-smooth dark"
+            suppressHydrationWarning
+        >
             <head>
                 <PersonJsonLd />
                 <WebSiteJsonLd />

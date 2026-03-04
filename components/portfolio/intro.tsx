@@ -4,21 +4,19 @@ import { BsArrowRight, BsLinkedin } from "react-icons/bs";
 import { HiDownload } from "react-icons/hi";
 import { FaGithubSquare } from "react-icons/fa";
 import heroImg from "@/public/hero.webp";
-import { PortableText, type PortableTextBlock, type PortableTextComponents } from "@portabletext/react";
+import {
+    PortableText,
+    type PortableTextBlock,
+    type PortableTextComponents,
+} from "@portabletext/react";
 
 const portableTextComponents: PortableTextComponents = {
     block: {
-        normal: ({ children }) => (
-            <span>{children}</span>
-        ),
+        normal: ({ children }) => <span>{children}</span>,
     },
     marks: {
-        strong: ({ children }) => (
-            <span className="font-bold">{children}</span>
-        ),
-        em: ({ children }) => (
-            <span className="italic">{children}</span>
-        ),
+        strong: ({ children }) => <span className="font-bold">{children}</span>,
+        em: ({ children }) => <span className="italic">{children}</span>,
         highlightEmerald: ({ children }) => (
             <span className="font-bold text-emerald-700 dark:text-emerald-400">
                 {children}
@@ -73,10 +71,15 @@ export default function Intro({ body }: IntroProps) {
 
             <h1 className="mb-10 mt-4 px-4 text-2xl font-medium !leading-[1.5] sm:text-4xl">
                 {body ? (
-                    <PortableText value={body} components={portableTextComponents} />
+                    <PortableText
+                        value={body}
+                        components={portableTextComponents}
+                    />
                 ) : (
                     <>
-                        <span className="font-bold">Hi, I'm Adithya Rajendran.</span>
+                        <span className="font-bold">
+                            Hi, I'm Adithya Rajendran.
+                        </span>
                     </>
                 )}
             </h1>
@@ -97,28 +100,28 @@ export default function Intro({ body }: IntroProps) {
                     Download CV{" "}
                     <HiDownload className="opacity-60 group-hover:translate-y-1 transition" />
                 </a>
+                <div className="flex items-center gap-2">
+                    <a
+                        className="bg-white p-4 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 flex items-center gap-2 rounded-full focus:scale-[1.15] hover:scale-[1.15] active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
+                        href="https://www.linkedin.com/in/adithya-rajendran/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="LinkedIn"
+                    >
+                        <BsLinkedin />
+                    </a>
 
-                <a
-                    className="bg-white p-4 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 flex items-center gap-2 rounded-full focus:scale-[1.15] hover:scale-[1.15] active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
-                    href="https://www.linkedin.com/in/adithya-rajendran/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="LinkedIn"
-                >
-                    <BsLinkedin />
-                </a>
-
-                <a
-                    className="bg-white p-4 text-emerald-700 flex items-center gap-2 text-[1.35rem] rounded-full focus:scale-[1.15] hover:scale-[1.15] hover:text-emerald-800 hover:bg-emerald-50 active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
-                    href="https://github.com/Adithya-Rajendran"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="GitHub"
-                >
-                    <FaGithubSquare />
-                </a>
+                    <a
+                        className="bg-white p-4 text-emerald-700 text-[1.35rem] rounded-full focus:scale-[1.15] hover:scale-[1.15] hover:text-emerald-800 hover:bg-emerald-50 active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
+                        href="https://github.com/Adithya-Rajendran"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="GitHub"
+                    >
+                        <FaGithubSquare />
+                    </a>
+                </div>
             </div>
         </section>
     );
 }
-

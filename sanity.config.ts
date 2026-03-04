@@ -91,11 +91,7 @@ export default defineConfig({
     title: "Portfolio & Blog",
     projectId,
     dataset,
-    plugins: [
-        structureTool({ structure }),
-        visionTool(),
-        codeInput(),
-    ],
+    plugins: [structureTool({ structure }), visionTool(), codeInput()],
     schema: {
         types: schemaTypes,
     },
