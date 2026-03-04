@@ -23,7 +23,7 @@ const ratelimit = new Ratelimit({
 });
 
 const emailSchema = z.object({
-    senderEmail: z.string()
+    senderEmail: z
         .email("Invalid sender email")
         .regex(/^[\w.+@-]+$/, "Email contains invalid characters"),
     message: z.string().min(1, "Message cannot be empty").max(1000),
@@ -59,10 +59,12 @@ export const sendEmail = async (formData: FormData) => {
     const ip = headersList.get("x-forwarded-for") ?? "127.0.0.1";
 
     const invalidAttemptsKey = `invalid_domain_${ip}`;
-    const invalidAttempts = await redis.get<number>(invalidAttemptsKey) || 0;
+    const invalidAttempts = (await redis.get<number>(invalidAttemptsKey)) || 0;
 
     if (invalidAttempts >= 5) {
-        return { error: "You have been temporarily blocked for submitting too many invalid emails. Please try again later." };
+        return {
+            error: "You have been temporarily blocked for submitting too many invalid emails. Please try again later.",
+        };
     }
 
     const validDomain = await hasValidMxRecords(senderEmail);
@@ -71,13 +73,17 @@ export const sendEmail = async (formData: FormData) => {
         if (newAttempts === 1) {
             await redis.expire(invalidAttemptsKey, 60 * 60 * 24); // 24 hours
         }
-        return { error: "The email domain does not appear to exist. Please check your email address." };
+        return {
+            error: "The email domain does not appear to exist. Please check your email address.",
+        };
     }
 
     const { success } = await ratelimit.limit(ip);
 
     if (!success) {
-        return { error: "You have exceeded the maximum number of emails at this given time. Please try again later." };
+        return {
+            error: "You have exceeded the maximum number of emails at this given time. Please try again later.",
+        };
     }
 
     try {
@@ -88,7 +94,7 @@ export const sendEmail = async (formData: FormData) => {
             replyTo: sanitizeHtml(senderEmail as string),
             react: ContactFormEmail({
                 message: sanitizeHtml(message as string),
-                senderEmail: sanitizeHtml(senderEmail as string)
+                senderEmail: sanitizeHtml(senderEmail as string),
             }),
         });
 

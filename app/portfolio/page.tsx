@@ -26,28 +26,35 @@ export const metadata: Metadata = {
     },
     openGraph: {
         title: `Portfolio | ${siteConfig.author}`,
-        description: "Cloud Field Engineer at Canonical with experience in OpenStack, Kubernetes, AWS, and cybersecurity. View projects, certifications, and work experience.",
+        description:
+            "Cloud Field Engineer at Canonical with experience in OpenStack, Kubernetes, AWS, and cybersecurity. View projects, certifications, and work experience.",
         url: `${siteConfig.url}/portfolio`,
     },
 };
 
 export default async function Portfolio() {
-    const [intro, about, experiences, projects, certifications, skillCategories] =
-        await Promise.all([
-            getIntro(),
-            getAbout(),
-            getAllExperiences(),
-            getAllProjects(),
-            getAllCertifications(),
-            getAllSkillCategories(),
-        ]);
+    const [
+        intro,
+        about,
+        experiences,
+        projects,
+        certifications,
+        skillCategories,
+    ] = await Promise.all([
+        getIntro(),
+        getAbout(),
+        getAllExperiences(),
+        getAllProjects(),
+        getAllCertifications(),
+        getAllSkillCategories(),
+    ]);
 
     return (
         <>
             <main className="flex flex-col items-center px-4">
-                <Intro body={intro?.body as any ?? null} />
+                <Intro body={(intro?.body as any) ?? null} />
                 <SectionDivider />
-                <About body={about?.body as any ?? null} />
+                <About body={(about?.body as any) ?? null} />
                 <Skills skillCategories={skillCategories} />
                 <Certifications certifications={certifications as any} />
                 <Experience experiences={experiences as any} />
@@ -57,4 +64,3 @@ export default async function Portfolio() {
         </>
     );
 }
-

@@ -27,7 +27,9 @@ export default function Certification(cert: TCertification) {
         >
             <section className="bg-white max-w-[42rem] border border-emerald-200 rounded-lg overflow-hidden sm:pr-8 relative hover:bg-emerald-50/50 hover:border-emerald-300 transition dark:text-slate-200 dark:bg-white/[0.03] dark:border-white/8 dark:hover:bg-white/[0.06] flex justify-between">
                 <div className="pt-4 pb-7 px-5 sm:pl-10 sm:pr-2 sm:pt-10 sm:max-w-[75%] flex flex-col h-full">
-                    <h3 className="text-2xl font-semibold">{cert.title || ""}</h3>
+                    <h3 className="text-2xl font-semibold">
+                        {cert.title || ""}
+                    </h3>
                     <p className="my-2 leading-relaxed text-slate-600 dark:text-slate-400">
                         {cert.endDate
                             ? `${cert.org} | ${cert.startDate} - ${cert.endDate}`
@@ -46,8 +48,19 @@ export default function Certification(cert: TCertification) {
 
                 <div className="hidden sm:block flex-shrink-0 pt-5">
                     <Image
-                        src={cert.badge ? urlForImage(cert.badge).width(256).height(256).quality(95).url() : ""}
-                        alt={cert.badge?.alt || `${cert.title || ""} certification badge`}
+                        src={
+                            cert.badge
+                                ? urlForImage(cert.badge)
+                                      .width(256)
+                                      .height(256)
+                                      .quality(95)
+                                      .url()
+                                : ""
+                        }
+                        alt={
+                            cert.badge?.alt ||
+                            `${cert.title || ""} certification badge`
+                        }
                         width={128}
                         height={128}
                         loading="lazy"

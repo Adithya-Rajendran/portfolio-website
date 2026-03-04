@@ -8,13 +8,13 @@ interface FeaturedProps {
 }
 
 export default function Featured({ posts: featuredPosts }: FeaturedProps) {
-
     if (!featuredPosts || featuredPosts.length === 0) {
         return (
             <section className="container mx-auto px-6 mb-12">
                 <h2 className="text-2xl font-bold mb-4">Featured Posts</h2>
                 <p className="text-slate-500 dark:text-slate-400">
-                    No featured posts yet. Mark a post as featured in the Sanity Studio.
+                    No featured posts yet. Mark a post as featured in the Sanity
+                    Studio.
                 </p>
             </section>
         );
@@ -27,11 +27,11 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                 {featuredPosts.slice(0, 1).map((post, index) => {
                     const imageUrl = post.image
                         ? urlForImage(post.image)
-                            .width(700)
-                            .height(400)
-                            .fit("crop")
-                            .auto("format")
-                            .url()
+                              .width(700)
+                              .height(400)
+                              .fit("crop")
+                              .auto("format")
+                              .url()
                         : null;
                     return (
                         <div
@@ -69,7 +69,8 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                                     aria-label={`Read more about ${post.title || ""}`}
                                     title={`Read more about ${post.title || ""}`}
                                 >
-                                    {"Explore: "}{post.title || ""}
+                                    {"Explore: "}
+                                    {post.title || ""}
                                 </Link>
                             </div>
                         </div>
@@ -79,17 +80,18 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                     {featuredPosts.slice(1, 3).map((post, index) => {
                         const imageUrl = post.image
                             ? urlForImage(post.image)
-                                .width(700)
-                                .height(300)
-                                .fit("crop")
-                                .auto("format")
-                                .url()
+                                  .width(700)
+                                  .height(300)
+                                  .fit("crop")
+                                  .auto("format")
+                                  .url()
                             : null;
                         return (
                             <div
                                 key={post.slug?.current || index}
-                                className={`bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none ${index === 0 ? "mb-6" : ""
-                                    }`}
+                                className={`bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none ${
+                                    index === 0 ? "mb-6" : ""
+                                }`}
                             >
                                 {imageUrl && (
                                     <Image
@@ -121,7 +123,8 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                                         aria-label={`Read more about ${post.title || ""}`}
                                         title={`Read more about ${post.title || ""}`}
                                     >
-                                        {"Explore: "}{post.title || ""}
+                                        {"Explore: "}
+                                        {post.title || ""}
                                     </Link>
                                 </div>
                             </div>

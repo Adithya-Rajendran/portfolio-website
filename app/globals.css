@@ -3,7 +3,7 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-    --font-sans: 'Inter', 'Inter Fallback';
+    --font-sans: "Inter", "Inter Fallback";
     --color-background-light: #f0fdf4;
     --color-background-dark: #0a0f1a;
     --color-cyber: #34d399;
@@ -37,11 +37,15 @@ html.dark {
 }
 
 .glow-cyber {
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12), 0 0 40px rgba(16, 185, 129, 0.04);
+    box-shadow:
+        0 4px 14px rgba(16, 185, 129, 0.12),
+        0 0 40px rgba(16, 185, 129, 0.04);
 }
 
 .dark .glow-cyber {
-    box-shadow: 0 0 20px rgba(52, 211, 153, 0.15), 0 0 60px rgba(52, 211, 153, 0.05);
+    box-shadow:
+        0 0 20px rgba(52, 211, 153, 0.15),
+        0 0 60px rgba(52, 211, 153, 0.05);
 }
 
 /* ── Hero entrance animations (CSS-only, GPU-composited) ── */
@@ -98,7 +102,6 @@ html.dark {
 /* ── Animated gradient text (GPU-composited via will-change) ── */
 
 @keyframes gradient-shift {
-
     0%,
     100% {
         background-position: 0% 50%;
@@ -117,25 +120,29 @@ html.dark {
 
 /* Subtle grid background pattern */
 .bg-grid-pattern {
-    background-image: linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+    background-image:
+        linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
         linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
     background-size: 60px 60px;
 }
 
 .dark .bg-grid-pattern {
-    background-image: linear-gradient(rgba(52, 211, 153, 0.03) 1px, transparent 1px),
+    background-image:
+        linear-gradient(rgba(52, 211, 153, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(52, 211, 153, 0.03) 1px, transparent 1px);
 }
 
 /* Scanline overlay effect */
 .scanlines::after {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: repeating-linear-gradient(0deg,
-            transparent,
-            transparent 2px,
-            rgba(52, 211, 153, 0.01) 2px,
-            rgba(52, 211, 153, 0.01) 4px);
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(52, 211, 153, 0.01) 2px,
+        rgba(52, 211, 153, 0.01) 4px
+    );
 }

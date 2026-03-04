@@ -62,9 +62,7 @@ export async function getFeaturedPosts(): Promise<Post[]> {
 }
 
 // Fetch a single post by slug.
-export async function getPostBySlug(
-    slug: string,
-): Promise<Post | null> {
+export async function getPostBySlug(slug: string): Promise<Post | null> {
     "use cache";
     cacheLife("max");
     cacheTag("post");

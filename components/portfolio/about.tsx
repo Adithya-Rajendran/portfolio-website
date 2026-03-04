@@ -3,7 +3,11 @@
 import SectionHeading from "../section-heading";
 import { motion } from "motion/react";
 import { useSectionInView } from "@/lib/hooks";
-import { PortableText, type PortableTextBlock, type PortableTextComponents } from "@portabletext/react";
+import {
+    PortableText,
+    type PortableTextBlock,
+    type PortableTextComponents,
+} from "@portabletext/react";
 
 const portableTextComponents: PortableTextComponents = {
     block: {
@@ -17,9 +21,7 @@ const portableTextComponents: PortableTextComponents = {
         strong: ({ children }) => (
             <span className="font-semibold">{children}</span>
         ),
-        em: ({ children }) => (
-            <span className="italic">{children}</span>
-        ),
+        em: ({ children }) => <span className="italic">{children}</span>,
         highlightEmerald: ({ children }) => (
             <span className="font-medium text-emerald-700 dark:text-emerald-400">
                 {children}
@@ -66,7 +68,10 @@ export default function About({ body }: AboutProps) {
         >
             <SectionHeading>About me</SectionHeading>
             {body ? (
-                <PortableText value={body} components={portableTextComponents} />
+                <PortableText
+                    value={body}
+                    components={portableTextComponents}
+                />
             ) : (
                 <p className="text-slate-500 dark:text-slate-400">
                     About content coming soon.

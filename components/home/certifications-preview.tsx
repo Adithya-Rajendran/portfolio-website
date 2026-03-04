@@ -9,7 +9,9 @@ interface CertificationsPreviewProps {
     certifications: SanityCertificationType[];
 }
 
-export default function CertificationsPreview({ certifications }: CertificationsPreviewProps) {
+export default function CertificationsPreview({
+    certifications,
+}: CertificationsPreviewProps) {
     if (certifications.length === 0) return null;
 
     return (
@@ -38,7 +40,10 @@ export default function CertificationsPreview({ certifications }: Certifications
                     >
                         <div className="relative w-20 h-20">
                             <Image
-                                src={urlForImage(cert.badge).width(160).height(160).url()}
+                                src={urlForImage(cert.badge)
+                                    .width(160)
+                                    .height(160)
+                                    .url()}
                                 alt={cert.badge.alt || cert.title}
                                 fill
                                 sizes="80px"

@@ -11,7 +11,12 @@ export const variantIcons: Record<string, React.ReactElement> = {
 
 export const variantStyles: Record<
     string,
-    { accentColor: string; bgColor: string; iconBorder: string; badgeVariant: "cyber" | "cyan" | "violet" }
+    {
+        accentColor: string;
+        bgColor: string;
+        iconBorder: string;
+        badgeVariant: "cyber" | "cyan" | "violet";
+    }
 > = {
     emerald: {
         accentColor: "text-emerald-600 dark:text-emerald-400",
@@ -38,19 +43,29 @@ export const homeBioComponents: PortableTextComponents = {
         normal: ({ children }) =>
             React.createElement(
                 "p",
-                { className: "text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-center" },
+                {
+                    className:
+                        "text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-center",
+                },
                 children,
             ),
     },
     marks: {
         strong: ({ children }) =>
-            React.createElement("span", { className: "font-semibold" }, children),
+            React.createElement(
+                "span",
+                { className: "font-semibold" },
+                children,
+            ),
         em: ({ children }) =>
             React.createElement("span", { className: "italic" }, children),
         highlightEmerald: ({ children }) =>
             React.createElement(
                 "span",
-                { className: "font-semibold text-emerald-700 dark:text-emerald-400" },
+                {
+                    className:
+                        "font-semibold text-emerald-700 dark:text-emerald-400",
+                },
                 children,
             ),
         highlightTeal: ({ children }) =>
@@ -62,7 +77,10 @@ export const homeBioComponents: PortableTextComponents = {
         highlightOrange: ({ children }) =>
             React.createElement(
                 "span",
-                { className: "font-semibold text-orange-700 dark:text-orange-500" },
+                {
+                    className:
+                        "font-semibold text-orange-700 dark:text-orange-500",
+                },
                 children,
             ),
         link: ({ children, value }) =>
@@ -72,7 +90,8 @@ export const homeBioComponents: PortableTextComponents = {
                     href: value?.href,
                     target: "_blank",
                     rel: "noopener noreferrer",
-                    className: "text-emerald-700 hover:underline dark:text-emerald-400",
+                    className:
+                        "text-emerald-700 hover:underline dark:text-emerald-400",
                 },
                 children,
             ),

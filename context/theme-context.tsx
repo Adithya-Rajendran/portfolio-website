@@ -19,7 +19,11 @@ export default function ThemeContextProvider({
     children: React.ReactNode;
 }) {
     return (
-        <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem>
+        <NextThemesProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={false}
+        >
             <ThemeBridge>{children}</ThemeBridge>
         </NextThemesProvider>
     );

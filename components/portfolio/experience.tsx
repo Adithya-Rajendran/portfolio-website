@@ -64,7 +64,10 @@ export default function Experience({ experiences }: ExperienceProps) {
                         icon={
                             item.icon ? (
                                 <Image
-                                    src={urlForImage(item.icon).width(60).height(60).url()}
+                                    src={urlForImage(item.icon)
+                                        .width(60)
+                                        .height(60)
+                                        .url()}
                                     alt={item.icon.alt || item.title || ""}
                                     width={30}
                                     height={30}
@@ -78,10 +81,7 @@ export default function Experience({ experiences }: ExperienceProps) {
                                     ? "#ecfdf5"
                                     : "rgba(255, 255, 255, 0.05)",
                             fontSize: "1.5rem",
-                            color:
-                                theme === "light"
-                                    ? "#047857"
-                                    : "#34d399",
+                            color: theme === "light" ? "#047857" : "#34d399",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -91,7 +91,9 @@ export default function Experience({ experiences }: ExperienceProps) {
                             {item.title || ""}
                         </h3>
                         <p className="font-normal !mt-0">{item.org || ""}</p>
-                        <p className="font-normal mt-0">{item.location || ""}</p>
+                        <p className="font-normal mt-0">
+                            {item.location || ""}
+                        </p>
                         {(item.description || []).map((desc, index) => (
                             <p
                                 key={index}

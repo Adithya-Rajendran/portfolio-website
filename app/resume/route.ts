@@ -7,7 +7,9 @@ export async function GET() {
 
     if (resumeUrl) {
         // Appending ?dl=<filename> to Sanity CDN URLs triggers a file download
-        return NextResponse.redirect(`${resumeUrl}?dl=Adithya_Rajendran_Resume.pdf`);
+        return NextResponse.redirect(
+            `${resumeUrl}?dl=Adithya_Rajendran_Resume.pdf`,
+        );
     }
 
     return new NextResponse("Resume not found", { status: 404 });

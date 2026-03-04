@@ -1,11 +1,17 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { getAllSkillCategories, getAllCertifications, getIntro } from "@/lib/sanity-client";
+import {
+    getAllSkillCategories,
+    getAllCertifications,
+    getIntro,
+} from "@/lib/sanity-client";
 import HeroContent from "@/components/home/hero-content";
 import BioSection from "@/components/home/bio-section";
 
 const SkillsPreview = dynamic(() => import("@/components/home/skills-preview"));
-const CertificationsPreview = dynamic(() => import("@/components/home/certifications-preview"));
+const CertificationsPreview = dynamic(
+    () => import("@/components/home/certifications-preview"),
+);
 const NavCards = dynamic(() => import("@/components/home/nav-cards"));
 
 export default async function Home() {

@@ -59,9 +59,7 @@ export const portableTextComponents: PortableTextComponents = {
         h4: ({ children }) => (
             <h4 className="text-xl font-bold mt-4 mb-2">{children}</h4>
         ),
-        normal: ({ children }) => (
-            <p className="my-1 text-base">{children}</p>
-        ),
+        normal: ({ children }) => <p className="my-1 text-base">{children}</p>,
         blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-emerald-500 pl-4 my-4 italic text-slate-600 dark:text-slate-400">
                 {children}
