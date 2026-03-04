@@ -1,4 +1,5 @@
-import { createClient } from "next-sanity";
+import { client, isSanityConfigured } from "./sanity-config";
+import { cacheLife, cacheTag } from "next/cache";
 import type {
     Post,
     Experience,
@@ -9,25 +10,7 @@ import type {
     Intro,
 } from "../sanity.types";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
-const apiVersion = "2024-01-01";
-
-if (!projectId) {
-    console.warn("[Sanity] Missing NEXT_PUBLIC_SANITY_PROJECT_ID env var");
-}
-
-export const client = createClient({
-    projectId: projectId || "fallback", // Ensure we have a string even if env var is missing during build
-    dataset,
-    apiVersion,
-    useCdn: true,
-});
-
-const isSanityConfigured = Boolean(projectId && projectId !== "fallback");
-
-// Blog posts revalidate every hour as a fallback alongside tag-based on-demand revalidation.
-const postCacheOptions = { next: { tags: ["post"], revalidate: 3600 } };
+export { client } from "./sanity-config";
 
 // Reusable GROQ projections
 const postProjection = `{
@@ -42,13 +25,15 @@ const postProjection = `{
 
 // Fetch all published posts, sorted by date descending
 export async function getAllPosts(): Promise<Post[]> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("post");
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
         const posts = await client.fetch(
             `*[_type == "post" && date <= $today] | order(date desc) ${postProjection}`,
             { today },
-            postCacheOptions,
         );
         return posts || [];
     } catch (error) {
@@ -59,13 +44,15 @@ export async function getAllPosts(): Promise<Post[]> {
 
 // Fetch featured posts only
 export async function getFeaturedPosts(): Promise<Post[]> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("post");
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
         const posts = await client.fetch(
             `*[_type == "post" && featured == true && date <= $today] | order(date desc) ${postProjection}`,
             { today },
-            postCacheOptions,
         );
         return posts || [];
     } catch (error) {
@@ -75,17 +62,17 @@ export async function getFeaturedPosts(): Promise<Post[]> {
 }
 
 // Fetch a single post by slug.
-// Revalidates weekly as a fallback; the Sanity webhook provides instant invalidation on edits.
-const postSlugCacheOptions = { next: { tags: ["post"], revalidate: 604800 } }; // 1 week
 export async function getPostBySlug(
     slug: string,
 ): Promise<Post | null> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("post");
     if (!isSanityConfigured) return null;
     try {
         const post = await client.fetch(
             `*[_type == "post" && slug.current == $slug][0] ${postProjection}`,
             { slug },
-            postSlugCacheOptions,
         );
         return post || null;
     } catch (error) {
@@ -98,6 +85,9 @@ export async function getPostBySlug(
 export async function getAllSlugsWithDates(): Promise<
     { slug: string; updatedAt: string }[]
 > {
+    "use cache";
+    cacheLife("max");
+    cacheTag("post");
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
@@ -107,7 +97,6 @@ export async function getAllSlugsWithDates(): Promise<
                 "updatedAt": _updatedAt
             }`,
             { today },
-            postCacheOptions,
         );
         return posts || [];
     } catch (error) {
@@ -118,13 +107,15 @@ export async function getAllSlugsWithDates(): Promise<
 
 // Fetch all slugs for static path generation
 export async function getAllSlugs(): Promise<string[]> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("post");
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
         const slugs = await client.fetch(
             `*[_type == "post" && date <= $today].slug.current`,
             { today },
-            postCacheOptions
         );
         return slugs || [];
     } catch (error) {
@@ -135,18 +126,16 @@ export async function getAllSlugs(): Promise<string[]> {
 
 // ---- Portfolio data fetchers ----
 
-// Time-based revalidation as a fallback safety net alongside tag-based on-demand revalidation.
-// Portfolio data changes rarely, so 24 hours is a good baseline.
-const portfolioCacheOptions = { next: { tags: ["portfolio"], revalidate: 86400 } };
-
 // Fetch the singleton About document
 export async function getAbout(): Promise<About | null> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("portfolio");
     if (!isSanityConfigured) return null;
     try {
         const about = await client.fetch(
             `*[_type == "about"][0]{ _id, body }`,
             {},
-            portfolioCacheOptions,
         );
         return about || null;
     } catch (error) {
@@ -157,12 +146,14 @@ export async function getAbout(): Promise<About | null> {
 
 // Fetch the singleton Intro document
 export async function getIntro(): Promise<Intro | null> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("portfolio");
     if (!isSanityConfigured) return null;
     try {
         const intro = await client.fetch(
             `*[_type == "intro"][0]{ _id, body, "resumeUrl": resume.asset->url, subtitle, homeBio }`,
             {},
-            portfolioCacheOptions,
         );
         return intro || null;
     } catch (error) {
@@ -173,6 +164,9 @@ export async function getIntro(): Promise<Intro | null> {
 
 // Fetch all experiences sorted by order
 export async function getAllExperiences(): Promise<Experience[]> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("portfolio");
     if (!isSanityConfigured) return [];
     try {
         const experiences = await client.fetch(
@@ -180,7 +174,6 @@ export async function getAllExperiences(): Promise<Experience[]> {
                 _id, title, org, location, description, icon, date, order
             }`,
             {},
-            portfolioCacheOptions,
         );
         return experiences || [];
     } catch (error) {
@@ -191,6 +184,9 @@ export async function getAllExperiences(): Promise<Experience[]> {
 
 // Fetch all projects sorted by order
 export async function getAllProjects(): Promise<Project[]> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("portfolio");
     if (!isSanityConfigured) return [];
     try {
         const projects = await client.fetch(
@@ -198,7 +194,6 @@ export async function getAllProjects(): Promise<Project[]> {
                 _id, title, description, tags, image, linkTitle, linkUrl, order
             }`,
             {},
-            portfolioCacheOptions,
         );
         return projects || [];
     } catch (error) {
@@ -209,6 +204,9 @@ export async function getAllProjects(): Promise<Project[]> {
 
 // Fetch all certifications sorted by order
 export async function getAllCertifications(): Promise<Certification[]> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("portfolio");
     if (!isSanityConfigured) return [];
     try {
         const certifications = await client.fetch(
@@ -216,7 +214,6 @@ export async function getAllCertifications(): Promise<Certification[]> {
                 _id, title, org, startDate, endDate, badge, verifyUrl, order
             }`,
             {},
-            portfolioCacheOptions,
         );
         return certifications || [];
     } catch (error) {
@@ -227,6 +224,9 @@ export async function getAllCertifications(): Promise<Certification[]> {
 
 // Fetch all skill categories sorted by order
 export async function getAllSkillCategories(): Promise<SkillCategory[]> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("portfolio");
     if (!isSanityConfigured) return [];
     try {
         const categories = await client.fetch(
@@ -234,7 +234,6 @@ export async function getAllSkillCategories(): Promise<SkillCategory[]> {
                 _id, title, "slug": slug.current, skills, colorVariant, order
             }`,
             {},
-            portfolioCacheOptions,
         );
         return categories || [];
     } catch (error) {

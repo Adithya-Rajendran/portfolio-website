@@ -1,6 +1,7 @@
 import { revalidateTag } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { parseBody } from "next-sanity/webhook";
+import { warmBlogCache } from "@/actions/warmCache";
 
 // Secret shared between Sanity webhook and this API route
 const revalidateSecret = process.env.SANITY_REVALIDATE_SECRET;
@@ -25,16 +26,21 @@ export async function POST(req: NextRequest) {
         const docType = body?._type;
 
         if (docType === "post") {
-            revalidateTag("post", "hours");
+            revalidateTag("post", { expire: 0 });
+
+            const { warmed, failed } = await warmBlogCache();
+
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated tag "post"${body?.slug?.current ? ` (triggered by: ${body.slug.current})` : ""}`,
+                warmed: warmed.length,
+                failed: failed.length,
                 now: Date.now(),
             });
         }
 
         if (docType && portfolioTypes.includes(docType)) {
-            revalidateTag("portfolio", "days");
+            revalidateTag("portfolio", { expire: 0 });
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated tag "portfolio" (triggered by: ${docType})`,

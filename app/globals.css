@@ -44,7 +44,59 @@ html.dark {
     box-shadow: 0 0 20px rgba(52, 211, 153, 0.15), 0 0 60px rgba(52, 211, 153, 0.05);
 }
 
-/* Animated gradient text for hero */
+/* ── Hero entrance animations (CSS-only, GPU-composited) ── */
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scale-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fade-in {
+    opacity: 0;
+    animation: fade-in 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+    opacity: 0;
+    animation: slide-up 0.5s ease-out forwards;
+}
+
+.animate-scale-fade-in {
+    opacity: 0;
+    animation: scale-fade-in 0.5s ease-out forwards;
+}
+
+/* ── Animated gradient text (GPU-composited via will-change) ── */
+
 @keyframes gradient-shift {
 
     0%,
@@ -60,6 +112,7 @@ html.dark {
 .animate-gradient-text {
     background-size: 200% auto;
     animation: gradient-shift 4s ease-in-out infinite;
+    will-change: background-position;
 }
 
 /* Subtle grid background pattern */
