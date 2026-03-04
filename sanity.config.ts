@@ -7,8 +7,8 @@ import { codeInput } from "@sanity/code-input";
 import { schemaTypes } from "./sanity/schemas";
 import type { StructureBuilder } from "sanity/structure";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+const projectId = process.env.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID!;
+const dataset = process.env.NEXT_PUBLIC_STORE_SANITY_DATASET || "production";
 
 const structure = (S: StructureBuilder) =>
     S.list()
