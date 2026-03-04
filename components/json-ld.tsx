@@ -1,4 +1,5 @@
 import { siteConfig } from "@/lib/config";
+import { cacheLife } from "next/cache";
 
 export function PersonJsonLd() {
     const jsonLd = {
@@ -103,7 +104,10 @@ export function BlogPostJsonLd({
     );
 }
 
-export function ProfilePageJsonLd() {
+export async function ProfilePageJsonLd() {
+    "use cache";
+    cacheLife("max");
+
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "ProfilePage",

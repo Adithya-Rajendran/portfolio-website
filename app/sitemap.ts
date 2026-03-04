@@ -1,9 +1,12 @@
 import { getAllSlugsWithDates } from "@/lib/sanity-client";
+import { cacheLife } from "next/cache";
 import { MetadataRoute } from "next";
 
 const BASE_URL = "https://adithya-rajendran.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    "use cache";
+    cacheLife("hours");
     const postData = await getAllSlugsWithDates();
 
     const staticPages: MetadataRoute.Sitemap = [

@@ -1,4 +1,4 @@
-import { getPostBySlug, getAllSlugs } from "@/lib/sanity-client";
+import { getPostBySlug } from "@/lib/sanity-client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteConfig } from "@/lib/config";
@@ -56,13 +56,3 @@ export async function generateMetadata({
         },
     };
 }
-
-export const dynamicParams = true;
-
-export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
-    const slugs = await getAllSlugs();
-    if (!slugs) {
-        return [];
-    }
-    return slugs.map((slug) => ({ slug }));
-};
