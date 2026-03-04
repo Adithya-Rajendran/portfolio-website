@@ -1,11 +1,11 @@
 import { createClient } from "next-sanity";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+const projectId = process.env.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID;
+const dataset = process.env.NEXT_PUBLIC_STORE_SANITY_DATASET || "production";
 const apiVersion = "2024-01-01";
 
 if (!projectId) {
-    console.warn("[Sanity] Missing NEXT_PUBLIC_SANITY_PROJECT_ID env var");
+    console.warn("[Sanity] Missing NEXT_PUBLIC_STORE_SANITY_PROJECT_ID env var");
 }
 
 export const client = createClient({
@@ -13,6 +13,7 @@ export const client = createClient({
     dataset,
     apiVersion,
     useCdn: true,
+    token: process.env.STORE_SANITY_API_READ_TOKEN,
 });
 
 export const isSanityConfigured = Boolean(
