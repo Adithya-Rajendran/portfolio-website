@@ -1,30 +1,35 @@
 import { getAllSlugsWithDates } from "@/lib/sanity-client";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { MetadataRoute } from "next";
 
 const BASE_URL = "https://adithya-rajendran.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "use cache";
-    cacheLife("hours");
+    cacheLife("max");
+    cacheTag("post");
     const postData = await getAllSlugsWithDates();
+
+    const buildDate = process.env.NEXT_PUBLIC_BUILD_DATE
+        ? new Date(process.env.NEXT_PUBLIC_BUILD_DATE)
+        : undefined;
 
     const staticPages: MetadataRoute.Sitemap = [
         {
             url: BASE_URL,
-            lastModified: new Date(),
+            lastModified: buildDate,
             changeFrequency: "monthly",
             priority: 1,
         },
         {
             url: `${BASE_URL}/portfolio`,
-            lastModified: new Date(),
+            lastModified: buildDate,
             changeFrequency: "monthly",
             priority: 0.9,
         },
         {
             url: `${BASE_URL}/blogs`,
-            lastModified: new Date(),
+            lastModified: buildDate,
             changeFrequency: "weekly",
             priority: 0.8,
         },

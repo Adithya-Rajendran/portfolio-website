@@ -26,7 +26,7 @@ const postProjection = `{
 // Fetch all published posts, sorted by date descending
 export async function getAllPosts(): Promise<Post[]> {
     "use cache";
-    cacheLife("hours");
+    cacheLife("max");
     cacheTag("post");
     if (!isSanityConfigured) return [];
     try {
@@ -45,7 +45,7 @@ export async function getAllPosts(): Promise<Post[]> {
 // Fetch featured posts only
 export async function getFeaturedPosts(): Promise<Post[]> {
     "use cache";
-    cacheLife("hours");
+    cacheLife("max");
     cacheTag("post");
     if (!isSanityConfigured) return [];
     try {
@@ -66,7 +66,7 @@ export async function getPostBySlug(
     slug: string,
 ): Promise<Post | null> {
     "use cache";
-    cacheLife("weeks");
+    cacheLife("max");
     cacheTag("post");
     if (!isSanityConfigured) return null;
     try {
@@ -86,7 +86,7 @@ export async function getAllSlugsWithDates(): Promise<
     { slug: string; updatedAt: string }[]
 > {
     "use cache";
-    cacheLife("hours");
+    cacheLife("max");
     cacheTag("post");
     if (!isSanityConfigured) return [];
     try {
@@ -108,7 +108,7 @@ export async function getAllSlugsWithDates(): Promise<
 // Fetch all slugs for static path generation
 export async function getAllSlugs(): Promise<string[]> {
     "use cache";
-    cacheLife("hours");
+    cacheLife("max");
     cacheTag("post");
     if (!isSanityConfigured) return [];
     try {
@@ -129,7 +129,7 @@ export async function getAllSlugs(): Promise<string[]> {
 // Fetch the singleton About document
 export async function getAbout(): Promise<About | null> {
     "use cache";
-    cacheLife("days");
+    cacheLife("max");
     cacheTag("portfolio");
     if (!isSanityConfigured) return null;
     try {
@@ -147,7 +147,7 @@ export async function getAbout(): Promise<About | null> {
 // Fetch the singleton Intro document
 export async function getIntro(): Promise<Intro | null> {
     "use cache";
-    cacheLife("days");
+    cacheLife("max");
     cacheTag("portfolio");
     if (!isSanityConfigured) return null;
     try {
@@ -165,7 +165,7 @@ export async function getIntro(): Promise<Intro | null> {
 // Fetch all experiences sorted by order
 export async function getAllExperiences(): Promise<Experience[]> {
     "use cache";
-    cacheLife("days");
+    cacheLife("max");
     cacheTag("portfolio");
     if (!isSanityConfigured) return [];
     try {
@@ -185,7 +185,7 @@ export async function getAllExperiences(): Promise<Experience[]> {
 // Fetch all projects sorted by order
 export async function getAllProjects(): Promise<Project[]> {
     "use cache";
-    cacheLife("days");
+    cacheLife("max");
     cacheTag("portfolio");
     if (!isSanityConfigured) return [];
     try {
@@ -205,7 +205,7 @@ export async function getAllProjects(): Promise<Project[]> {
 // Fetch all certifications sorted by order
 export async function getAllCertifications(): Promise<Certification[]> {
     "use cache";
-    cacheLife("days");
+    cacheLife("max");
     cacheTag("portfolio");
     if (!isSanityConfigured) return [];
     try {
@@ -225,7 +225,7 @@ export async function getAllCertifications(): Promise<Certification[]> {
 // Fetch all skill categories sorted by order
 export async function getAllSkillCategories(): Promise<SkillCategory[]> {
     "use cache";
-    cacheLife("days");
+    cacheLife("max");
     cacheTag("portfolio");
     if (!isSanityConfigured) return [];
     try {
