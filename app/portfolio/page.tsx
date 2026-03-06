@@ -1,11 +1,7 @@
+import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import Intro from "@/components/portfolio/intro";
 import SectionDivider from "@/components/section-divider";
-import About from "@/components/portfolio/about";
-import Projects from "@/components/portfolio/projects";
-import Skills from "@/components/portfolio/skills";
-import Experience from "@/components/portfolio/experience";
-import Contact from "@/components/portfolio/contact";
-import Certifications from "@/components/portfolio/certifications";
 import type { Metadata } from "next";
 import { siteConfig } from "@/lib/config";
 import {
@@ -16,6 +12,15 @@ import {
     getAllCertifications,
     getAllSkillCategories,
 } from "@/lib/sanity-client";
+
+const About = dynamic(() => import("@/components/portfolio/about"));
+const Skills = dynamic(() => import("@/components/portfolio/skills"));
+const Certifications = dynamic(
+    () => import("@/components/portfolio/certifications"),
+);
+const Experience = dynamic(() => import("@/components/portfolio/experience"));
+const Projects = dynamic(() => import("@/components/portfolio/projects"));
+const Contact = dynamic(() => import("@/components/portfolio/contact"));
 
 export const metadata: Metadata = {
     title: "Portfolio",
@@ -54,12 +59,30 @@ export default async function Portfolio() {
             <main className="flex flex-col items-center px-4">
                 <Intro body={(intro?.body as any) ?? null} />
                 <SectionDivider />
-                <About body={(about?.body as any) ?? null} />
-                <Skills skillCategories={skillCategories} />
-                <Certifications certifications={certifications as any} />
-                <Experience experiences={experiences as any} />
-                <Projects projects={projects as any} />
-                <Contact />
+
+                <Suspense>
+                    <About body={(about?.body as any) ?? null} />
+                </Suspense>
+
+                <Suspense>
+                    <Skills skillCategories={skillCategories} />
+                </Suspense>
+
+                <Suspense>
+                    <Certifications certifications={certifications as any} />
+                </Suspense>
+
+                <Suspense>
+                    <Experience experiences={experiences as any} />
+                </Suspense>
+
+                <Suspense>
+                    <Projects projects={projects as any} />
+                </Suspense>
+
+                <Suspense>
+                    <Contact />
+                </Suspense>
             </main>
         </>
     );
