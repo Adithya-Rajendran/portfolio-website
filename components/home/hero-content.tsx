@@ -1,8 +1,5 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "motion/react";
 import { BsArrowRight, BsGithub, BsLinkedin } from "react-icons/bs";
 import { HiDownload } from "react-icons/hi";
 import { Button } from "@/components/ui/button";
@@ -18,12 +15,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
         <section className="flex flex-col items-center justify-center min-h-[85vh] text-center relative w-full">
             <div className="absolute inset-0 -z-10 bg-grid-pattern opacity-50 dark:opacity-100" />
 
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                className="mb-8"
-            >
+            <div className="mb-8 animate-scale-fade-in">
                 <div className="relative w-28 h-28 mx-auto">
                     <Image
                         src={heroImg}
@@ -37,35 +29,20 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                     />
                     <div className="absolute inset-0 rounded-full ring-2 ring-emerald-300 ring-offset-2 ring-offset-[#f0fdf4] dark:ring-emerald-400/20 dark:ring-offset-[#0a0f1a]" />
                 </div>
-            </motion.div>
+            </div>
 
-            <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-5xl sm:text-7xl font-bold mb-6 tracking-tight"
-            >
+            <h1 className="text-5xl sm:text-7xl font-bold mb-6 tracking-tight animate-slide-up [animation-delay:200ms]">
                 <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-700 dark:from-emerald-400 dark:via-cyan-300 dark:to-emerald-400 bg-clip-text text-transparent animate-gradient-text">
                     Adithya Rajendran
                 </span>
-            </motion.h1>
+            </h1>
 
-            <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-[36rem] mx-auto mb-10 leading-relaxed"
-            >
+            <p className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-[36rem] mx-auto mb-10 leading-relaxed animate-slide-up [animation-delay:300ms]">
                 {subtitle ||
                     "Cloud Field Engineer / Cybersecurity Enthusiast / Builder"}
-            </motion.p>
+            </p>
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="flex flex-wrap items-center justify-center gap-3"
-            >
+            <div className="flex flex-wrap items-center justify-center gap-3 animate-slide-up [animation-delay:400ms]">
                 <Button asChild size="lg" className="gap-2">
                     <Link href="/portfolio">
                         View Portfolio
@@ -80,14 +57,9 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                 <Button asChild variant="outline" size="lg" className="gap-2">
                     <Link href="/portfolio#contact">Contact Me</Link>
                 </Button>
-            </motion.div>
+            </div>
 
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-                className="flex items-center gap-4 mt-8"
-            >
+            <div className="flex items-center gap-4 mt-8 animate-fade-in [animation-delay:600ms]">
                 <a
                     href="https://www.linkedin.com/in/adithya-rajendran"
                     target="_blank"
@@ -113,7 +85,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                     <HiDownload className="text-base" />
                     Resume
                 </a>
-            </motion.div>
+            </div>
         </section>
     );
 }

@@ -6,8 +6,8 @@ import {
     getIntro,
 } from "@/lib/sanity-client";
 import HeroContent from "@/components/home/hero-content";
-import BioSection from "@/components/home/bio-section";
 
+const BioSection = dynamic(() => import("@/components/home/bio-section"));
 const SkillsPreview = dynamic(() => import("@/components/home/skills-preview"));
 const CertificationsPreview = dynamic(
     () => import("@/components/home/certifications-preview"),
@@ -25,7 +25,9 @@ export default async function Home() {
         <main className="flex flex-col items-center px-4">
             <HeroContent subtitle={intro?.subtitle} />
 
-            <BioSection homeBio={intro?.homeBio as any} />
+            <Suspense>
+                <BioSection homeBio={intro?.homeBio as any} />
+            </Suspense>
 
             <Suspense>
                 <SkillsPreview skillCategories={skillCategories as any} />
