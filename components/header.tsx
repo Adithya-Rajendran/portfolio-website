@@ -13,20 +13,18 @@ export default function Header() {
 
     return (
         <header className="z-[999] relative">
-            <motion.div
-                className="fixed top-0 left-1/2 h-[4.5rem] w-full rounded-none border border-emerald-200/60 bg-white/80 shadow-lg shadow-emerald-100/30 backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] sm:w-[42rem] sm:rounded-full dark:bg-slate-900/80 dark:border-white/8 dark:shadow-emerald-500/5"
-                initial={{ y: -100, x: "-50%", opacity: 0 }}
-                animate={{ y: 0, x: "-50%", opacity: 1 }}
-            ></motion.div>
+            {/* Use CSS animation for initial slide-down to reduce JS blocking */}
+            <div
+                className="fixed top-0 left-1/2 -translate-x-1/2 h-[4.5rem] w-full rounded-none border border-emerald-200/60 bg-white/80 shadow-lg shadow-emerald-100/30 backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] sm:w-[42rem] sm:rounded-full dark:bg-slate-900/80 dark:border-white/8 dark:shadow-emerald-500/5 animate-slide-down"
+                style={{ contain: "layout" }}
+            />
 
             <nav className="flex fixed top-[0.15rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0">
                 <ul className="flex w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-500 sm:w-[initial] sm:flex-nowrap sm:gap-5">
                     {links.map((link) => (
-                        <motion.li
-                            className="h-3/4 flex items-center justify-center relative"
+                        <li
+                            className="h-3/4 flex items-center justify-center relative animate-slide-down"
                             key={link.hash}
-                            initial={{ y: -100, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
                         >
                             <Link
                                 className={clsx(
@@ -53,10 +51,10 @@ export default function Header() {
                                             stiffness: 380,
                                             damping: 30,
                                         }}
-                                    ></motion.span>
+                                    />
                                 )}
                             </Link>
-                        </motion.li>
+                        </li>
                     ))}
                 </ul>
             </nav>

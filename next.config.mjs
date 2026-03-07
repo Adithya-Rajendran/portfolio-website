@@ -25,6 +25,21 @@ const nextConfig = {
                         key: "Permissions-Policy",
                         value: "camera=(), microphone=(), geolocation=()",
                     },
+                    // Performance: DNS prefetch and preconnect for external resources
+                    {
+                        key: "Link",
+                        value: "<https://cdn.sanity.io>; rel=preconnect, <https://cdn.sanity.io>; rel=dns-prefetch, <https://fonts.gstatic.com>; rel=preconnect; crossorigin",
+                    },
+                ],
+            },
+            // Cache static assets aggressively
+            {
+                source: "/(.*)\\.(ico|png|jpg|jpeg|gif|webp|svg|woff|woff2)",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=31536000, immutable",
+                    },
                 ],
             },
         ];
@@ -40,6 +55,8 @@ const nextConfig = {
     },
     images: {
         qualities: [75, 95],
+        formats: ["image/avif", "image/webp"],
+        minimumCacheTTL: 31536000,
         remotePatterns: [
             {
                 protocol: "https",

@@ -60,10 +60,13 @@ export default function Intro({ body }: IntroProps) {
                     <Image
                         src={heroImg}
                         alt="My portrait"
-                        width="192"
-                        height="192"
+                        width={96}
+                        height={96}
                         quality={95}
-                        priority={true}
+                        priority
+                        fetchPriority="high"
+                        loading="eager"
+                        sizes="96px"
                         className="h-24 w-24 rounded-full object-cover border-[0.35rem] border-emerald-300 shadow-xl shadow-emerald-200/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
                     />
                 </div>
