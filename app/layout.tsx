@@ -1,17 +1,12 @@
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import Footer from "@/components/footer";
+import ThemeSwitch from "@/components/theme-switch";
 import ThemeContextProvider from "@/context/theme-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-
-// Lazy load non-critical UI components
-const ThemeSwitch = dynamic(() => import("@/components/theme-switch"), {
-    ssr: false,
-});
 import {
     PersonJsonLd,
     WebSiteJsonLd,
