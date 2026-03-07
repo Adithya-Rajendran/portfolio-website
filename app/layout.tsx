@@ -1,12 +1,17 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import Footer from "@/components/footer";
-import ThemeSwitch from "@/components/theme-switch";
 import ThemeContextProvider from "@/context/theme-context";
 import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+
+// Lazy load non-critical UI components
+const ThemeSwitch = dynamic(() => import("@/components/theme-switch"), {
+    ssr: false,
+});
 import {
     PersonJsonLd,
     WebSiteJsonLd,
@@ -115,6 +120,21 @@ export default function RootLayout({
             suppressHydrationWarning
         >
             <head>
+                {/* Preload critical resources for LCP */}
+                <link
+                    rel="preload"
+                    href="/hero.webp"
+                    as="image"
+                    type="image/webp"
+                    fetchPriority="high"
+                />
+                {/* DNS prefetch for external resources */}
+                <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+                <link
+                    rel="preconnect"
+                    href="https://cdn.sanity.io"
+                    crossOrigin="anonymous"
+                />
                 <PersonJsonLd />
                 <WebSiteJsonLd />
                 <ProfilePageJsonLd />
@@ -122,8 +142,16 @@ export default function RootLayout({
             <body
                 className={`${inter.className} bg-[#f0fdf4] text-slate-900 relative pt-28 sm:pt-36 dark:bg-[#0a0f1a] dark:text-slate-200`}
             >
-                <div className="bg-emerald-200/40 absolute top-[-6rem] -z-10 right-[11rem] h-[31.25rem] w-[31.25rem] rounded-full blur-[10rem] sm:w-[68.75rem] dark:bg-emerald-900/20"></div>
-                <div className="bg-teal-100/50 absolute top-[-1rem] -z-10 left-[-35rem] h-[31.25rem] w-[50rem] rounded-full blur-[10rem] sm:w-[68.75rem] md:left-[-33rem] lg:left-[-28rem] xl:left-[-15rem] 2xl:left-[-5rem] dark:bg-cyan-900/15"></div>
+                <div
+                    className="bg-emerald-200/40 absolute top-[-6rem] -z-10 right-[11rem] h-[31.25rem] w-[31.25rem] rounded-full blur-[10rem] sm:w-[68.75rem] dark:bg-emerald-900/20"
+                    style={{ contain: "paint", willChange: "auto" }}
+                    aria-hidden="true"
+                />
+                <div
+                    className="bg-teal-100/50 absolute top-[-1rem] -z-10 left-[-35rem] h-[31.25rem] w-[50rem] rounded-full blur-[10rem] sm:w-[68.75rem] md:left-[-33rem] lg:left-[-28rem] xl:left-[-15rem] 2xl:left-[-5rem] dark:bg-cyan-900/15"
+                    style={{ contain: "paint", willChange: "auto" }}
+                    aria-hidden="true"
+                />
 
                 <Suspense>
                     <ThemeContextProvider>
