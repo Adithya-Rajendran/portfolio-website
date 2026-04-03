@@ -12,10 +12,11 @@ interface TableOfContentsProps {
     headings: TocHeading[];
 }
 
-// Min viewport: 1920px gives us comfortable space
-// Content (768px) centered leaves ~576px margin on each side
-// ToC (280px) + padding (48px) = 328px needed per side
-const MIN_VIEWPORT = 1920;
+// Content is max-w-3xl (768px) centered
+// ToC is w-52 (208px) + right padding (32px) + gap from content (32px)
+// Min viewport = 768 + (208 + 32 + 32) * 2 = 768 + 544 = 1312px
+// Using 1400px to have comfortable spacing
+const MIN_VIEWPORT = 1400;
 
 export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [activeId, setActiveId] = useState<string>("");
@@ -58,8 +59,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     if (headings.length === 0 || !hasRoom) return null;
 
     return (
-        <aside className="fixed top-24 right-8 max-h-[calc(100vh-8rem)] overflow-y-auto z-30 w-64">
-            <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-5 shadow-lg">
+        <aside className="fixed top-24 right-6 max-h-[calc(100vh-8rem)] overflow-y-auto z-30 w-52">
+            <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-4 shadow-lg">
                     <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
                         On this page
                     </p>
