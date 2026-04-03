@@ -14,25 +14,27 @@ interface LatestProps {
     posts: TPost[];
 }
 
+function formatDate(dateStr?: string): string {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+    });
+}
+
 export default function Latest({ posts: allPosts }: LatestProps) {
     if (!allPosts || allPosts.length === 0) {
-        return (
-            <section className="container mx-auto px-6">
-                <h2 className="text-2xl font-bold mb-4">Latest Posts</h2>
-                <p className="text-slate-500 dark:text-slate-400">
-                    No posts published yet. Create your first post in the Sanity
-                    Studio.
-                </p>
-            </section>
-        );
+        return null;
     }
 
     const items = allPosts.map((post) => {
         const slug = (post.slug as unknown as string) || "";
         const imageUrl = post.image
             ? urlForImage(post.image)
-                  .width(350)
-                  .height(200)
+                  .width(400)
+                  .height(240)
                   .fit("crop")
                   .auto("format")
                   .url()
@@ -46,26 +48,32 @@ export default function Latest({ posts: allPosts }: LatestProps) {
                     href={`/blogs/${slug}`}
                     aria-label={`Read more about ${post.title || ""}`}
                     title={`Read more about ${post.title || ""}`}
-                    className="block bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none h-full"
+                    className="group block rounded-xl overflow-hidden border border-white/8 bg-white/[0.03] transition-all duration-300 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 h-full"
                 >
                     {imageUrl && (
-                        <Image
-                            src={imageUrl}
-                            alt={post.image?.alt || post.title || ""}
-                            width={350}
-                            height={200}
-                            style={{ objectFit: "scale-down" }}
-                            loading="lazy"
-                            className="h-64"
-                        />
+                        <div className="relative aspect-[5/3] overflow-hidden">
+                            <Image
+                                src={imageUrl}
+                                alt={post.image?.alt || post.title || ""}
+                                width={400}
+                                height={240}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                                loading="lazy"
+                            />
+                        </div>
                     )}
-                    <div className="p-6">
-                        <h3 className="text-xl font-bold mb-2">
+                    <div className="p-5">
+                        <h3 className="text-base font-semibold mb-1.5 text-slate-100 group-hover:text-emerald-400 transition-colors leading-snug line-clamp-2">
                             {post.title || ""}
                         </h3>
-                        <p className="text-slate-500 dark:text-slate-500">
-                            {post.date || ""}
-                        </p>
+                        {post.description && (
+                            <p className="text-sm text-slate-400 mb-3 line-clamp-2">
+                                {post.description}
+                            </p>
+                        )}
+                        <span className="text-xs text-slate-500">
+                            {formatDate(post.date)}
+                        </span>
                     </div>
                 </Link>
             </CarouselItem>
@@ -73,8 +81,10 @@ export default function Latest({ posts: allPosts }: LatestProps) {
     });
 
     return (
-        <section className="container mx-auto px-6">
-            <h2 className="text-2xl font-bold mb-4">Latest Posts</h2>
+        <section className="container mx-auto px-6 mb-16">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-6">
+                Latest Posts
+            </h2>
             <Carousel>
                 <CarouselContent className="flex flex-col sm:flex-row gap-6 pb-6">
                     {items}
