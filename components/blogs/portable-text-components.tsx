@@ -9,7 +9,7 @@ import { slugify, extractText } from "./utils";
  * produced by shiki on the server.
  */
 export function createPortableTextComponents(
-    highlightedCode: Map<string, string>
+    highlightedCode: Record<string, string>
 ): PortableTextComponents {
     return {
         types: {
@@ -43,7 +43,7 @@ export function createPortableTextComponents(
                 );
             },
             code: ({ value }) => {
-                const highlightedHtml = highlightedCode.get(value._key);
+                const highlightedHtml = highlightedCode[value._key];
                 const hasHighlight = !!highlightedHtml;
 
                 return (

@@ -6,21 +6,60 @@ import { z } from "zod";
 import dns from "dns/promises";
 import { getErrorMessage, sanitizeHtml } from "@/lib/utils";
 import ContactFormEmail from "@/email/contact-form-email";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { headers } from "next/headers";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const redis = new Redis({
-    url: process.env.KV_REST_API_URL!,
-    token: process.env.KV_REST_API_TOKEN!,
-});
+/**
+ * Simple in-memory rate limiter. Survives across requests within a single
+ * serverless invocation. On Vercel, each function instance keeps its own
+ * map — on cold starts the map resets, but for a portfolio contact form
+ * this provides sufficient protection without external dependencies.
+ */
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
-const ratelimit = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(3, "1 h"),
-});
+function isRateLimited(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+
+    if (!entry || now > entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+        return false;
+    }
+
+    entry.count++;
+    return entry.count > RATE_LIMIT_MAX;
+}
+
+/** Track invalid domain attempts (also in-memory) */
+const invalidDomainMap = new Map<string, { count: number; resetAt: number }>();
+const INVALID_DOMAIN_MAX = 5;
+const INVALID_DOMAIN_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function trackInvalidDomain(ip: string): boolean {
+    const now = Date.now();
+    const entry = invalidDomainMap.get(ip);
+
+    if (!entry || now > entry.resetAt) {
+        invalidDomainMap.set(ip, {
+            count: 1,
+            resetAt: now + INVALID_DOMAIN_WINDOW_MS,
+        });
+        return false;
+    }
+
+    entry.count++;
+    return entry.count > INVALID_DOMAIN_MAX;
+}
+
+function isBlockedForInvalidDomains(ip: string): boolean {
+    const now = Date.now();
+    const entry = invalidDomainMap.get(ip);
+    if (!entry || now > entry.resetAt) return false;
+    return entry.count >= INVALID_DOMAIN_MAX;
+}
 
 const emailSchema = z.object({
     senderEmail: z
@@ -58,10 +97,7 @@ export const sendEmail = async (formData: FormData) => {
     const headersList = await headers();
     const ip = headersList.get("x-forwarded-for") ?? "127.0.0.1";
 
-    const invalidAttemptsKey = `invalid_domain_${ip}`;
-    const invalidAttempts = (await redis.get<number>(invalidAttemptsKey)) || 0;
-
-    if (invalidAttempts >= 5) {
+    if (isBlockedForInvalidDomains(ip)) {
         return {
             error: "You have been temporarily blocked for submitting too many invalid emails. Please try again later.",
         };
@@ -69,18 +105,13 @@ export const sendEmail = async (formData: FormData) => {
 
     const validDomain = await hasValidMxRecords(senderEmail);
     if (!validDomain) {
-        const newAttempts = await redis.incr(invalidAttemptsKey);
-        if (newAttempts === 1) {
-            await redis.expire(invalidAttemptsKey, 60 * 60 * 24); // 24 hours
-        }
+        trackInvalidDomain(ip);
         return {
             error: "The email domain does not appear to exist. Please check your email address.",
         };
     }
 
-    const { success } = await ratelimit.limit(ip);
-
-    if (!success) {
+    if (isRateLimited(ip)) {
         return {
             error: "You have exceeded the maximum number of emails at this given time. Please try again later.",
         };

@@ -1,4 +1,5 @@
 import { createHighlighter, type Highlighter } from "shiki";
+import { cacheLife, cacheTag } from "next/cache";
 
 export interface HighlightedBlock {
     key: string;
@@ -47,13 +48,22 @@ function getHighlighter(): Promise<Highlighter> {
 
 /**
  * Pre-highlights all code blocks from a Sanity Portable Text body
- * using the singleton shiki highlighter. Runs on the server at render time.
+ * using the singleton shiki highlighter.
+ *
+ * Cached via Next.js "use cache" — the highlighted HTML is stored in
+ * Vercel's edge cache and revalidated via the "post" tag when content
+ * changes in Sanity.  Returns a plain Record (not Map) so the result
+ * is serialisable by the cache layer.
  */
 export async function highlightCodeBlocks(
     body: any[]
-): Promise<Map<string, string>> {
+): Promise<Record<string, string>> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("post");
+
     const codeBlocks = body.filter((block) => block._type === "code");
-    const highlighted = new Map<string, string>();
+    const highlighted: Record<string, string> = {};
 
     const highlighter = await getHighlighter();
 
@@ -68,7 +78,7 @@ export async function highlightCodeBlocks(
                     lang,
                     theme: "github-dark-dimmed",
                 });
-                highlighted.set(key, html);
+                highlighted[key] = html;
             } catch {
                 // Fallback: if language isn't supported, render as plain text
                 try {
@@ -76,13 +86,11 @@ export async function highlightCodeBlocks(
                         lang: "text",
                         theme: "github-dark-dimmed",
                     });
-                    highlighted.set(key, html);
+                    highlighted[key] = html;
                 } catch {
                     // Final fallback: raw code
-                    highlighted.set(
-                        key,
-                        `<pre><code>${escapeHtml(code)}</code></pre>`
-                    );
+                    highlighted[key] =
+                        `<pre><code>${escapeHtml(code)}</code></pre>`;
                 }
             }
         })
