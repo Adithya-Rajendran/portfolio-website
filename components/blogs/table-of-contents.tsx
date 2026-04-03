@@ -21,10 +21,25 @@ const MIN_VIEWPORT = 1400;
 export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [activeId, setActiveId] = useState<string>("");
     const [hasRoom, setHasRoom] = useState(false);
+    const [tocWidth, setTocWidth] = useState(208); // w-52 default
     const observerRef = useRef<IntersectionObserver | null>(null);
 
     useEffect(() => {
-        const checkRoom = () => setHasRoom(window.innerWidth >= MIN_VIEWPORT);
+        const checkRoom = () => {
+            const width = window.innerWidth;
+            setHasRoom(width >= MIN_VIEWPORT);
+            
+            // Calculate available gutter space and scale ToC width
+            // Content is 768px centered, so gutter = (width - 768) / 2
+            // Reserve 24px padding on right edge, 32px gap from content
+            const gutterWidth = (width - 768) / 2;
+            const available = gutterWidth - 24 - 32; // right padding - gap
+            
+            // Min 208px (w-52), max 400px, grow based on available space
+            const newWidth = Math.max(208, Math.min(available - 16, 400));
+            setTocWidth(newWidth);
+        };
+        
         checkRoom();
         window.addEventListener("resize", checkRoom);
         return () => window.removeEventListener("resize", checkRoom);
