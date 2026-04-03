@@ -36,7 +36,7 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                     return (
                         <Link
                             key={post.slug?.current || index}
-                            href={`blogs/${post.slug?.current || ""}`}
+                            href={`/blogs/${post.slug?.current || ""}`}
                             aria-label={`Read more about ${post.title || ""}`}
                             title={`Read more about ${post.title || ""}`}
                             className="md:col-span-2 bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none block"
@@ -87,7 +87,7 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                         return (
                             <Link
                                 key={post.slug?.current || index}
-                                href={`blogs/${post.slug?.current || ""}`}
+                                href={`/blogs/${post.slug?.current || ""}`}
                                 aria-label={`Read more about ${post.title || ""}`}
                                 title={`Read more about ${post.title || ""}`}
                                 className={`block bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none ${
