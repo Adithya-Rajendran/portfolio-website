@@ -119,7 +119,7 @@ export default function BlogPostContent({ post }: { post: Post }) {
                     </div>
                 )}
 
-                {/* Floating ToC — fixed in right gutter */}
+                {/* Floating ToC — fixed in right gutter, renders outside content flow */}
                 <TableOfContents headings={headings} />
             </article>
         </>

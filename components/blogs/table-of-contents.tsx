@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface TocHeading {
     id: string;
@@ -17,6 +17,10 @@ interface TableOfContentsProps {
     headings: TocHeading[];
 }
 
+// Content is max-w-3xl (768px) centered. ToC needs ~200px in the right
+// gutter to be usable → min viewport ≈ 768 + 200*2 + padding ≈ 1200.
+const MIN_VIEWPORT = 1200;
+
 function groupHeadings(headings: TocHeading[]): TocSection[] {
     const sections: TocSection[] = [];
     let current: TocSection | null = null;
@@ -28,6 +32,7 @@ function groupHeadings(headings: TocHeading[]): TocSection[] {
         } else if (current) {
             current.children.push(h);
         } else {
+            // h3/h4 before any h2 — treat as top-level section
             sections.push({ heading: h, children: [] });
         }
     }
@@ -36,30 +41,24 @@ function groupHeadings(headings: TocHeading[]): TocSection[] {
 }
 
 export default function TableOfContents({ headings }: TableOfContentsProps) {
-    const [activeId, setActiveId] = useState<string>(() =>
-        headings.length > 0 ? headings[0].id : ""
-    );
+    const [activeId, setActiveId] = useState<string>("");
+    const [hasRoom, setHasRoom] = useState(false);
+    const [tocWidth, setTocWidth] = useState(224);
     const [scrollProgress, setScrollProgress] = useState(0);
-    const [expandedSections, setExpandedSections] = useState<Set<string>>(
-        new Set()
-    );
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
     const observerRef = useRef<IntersectionObserver | null>(null);
     const indicatorRef = useRef<HTMLDivElement>(null);
     const navRef = useRef<HTMLElement>(null);
 
-    const sections = useMemo(() => groupHeadings(headings), [headings]);
+    const sections = groupHeadings(headings);
 
     // Auto-expand section containing active heading
     useEffect(() => {
         if (!activeId) return;
         for (const section of sections) {
             const childIds = section.children.map((c) => c.id);
-            if (
-                section.heading.id === activeId ||
-                childIds.includes(activeId)
-            ) {
+            if (section.heading.id === activeId || childIds.includes(activeId)) {
                 setExpandedSections((prev) => {
-                    if (prev.has(section.heading.id)) return prev;
                     const next = new Set(prev);
                     next.add(section.heading.id);
                     return next;
@@ -67,29 +66,36 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                 break;
             }
         }
-    }, [activeId, sections]);
+    }, [activeId]);
 
-    // Scroll progress — throttled via rAF
+    // Viewport check + dynamic width scaling
     useEffect(() => {
-        let rafId = 0;
+        const checkRoom = () => {
+            const vw = window.innerWidth;
+            setHasRoom(vw >= MIN_VIEWPORT);
+
+            // Content is max-w-3xl (768px) centered.
+            // Gutter = (vw - 768) / 2. Reserve 24px right edge + 32px gap.
+            const gutter = (vw - 768) / 2;
+            const available = gutter - 24 - 32;
+            // Clamp between 200px and 480px — use most of the gutter
+            setTocWidth(Math.max(200, Math.min(available, 480)));
+        };
+        checkRoom();
+        window.addEventListener("resize", checkRoom);
+        return () => window.removeEventListener("resize", checkRoom);
+    }, []);
+
+    // Scroll progress
+    useEffect(() => {
         const updateProgress = () => {
             const scrollTop = window.scrollY;
-            const docHeight =
-                document.documentElement.scrollHeight - window.innerHeight;
-            setScrollProgress(
-                docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0
-            );
-        };
-        const onScroll = () => {
-            cancelAnimationFrame(rafId);
-            rafId = requestAnimationFrame(updateProgress);
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            setScrollProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
         };
         updateProgress();
-        window.addEventListener("scroll", onScroll, { passive: true });
-        return () => {
-            window.removeEventListener("scroll", onScroll);
-            cancelAnimationFrame(rafId);
-        };
+        window.addEventListener("scroll", updateProgress, { passive: true });
+        return () => window.removeEventListener("scroll", updateProgress);
     }, []);
 
     // IntersectionObserver for active heading
@@ -122,26 +128,21 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         return () => observerRef.current?.disconnect();
     }, [headings]);
 
-    // Animate indicator position — also reacts to section expand/collapse
+    // Animate indicator position
     useEffect(() => {
         if (!activeId || !indicatorRef.current || !navRef.current) return;
+        const activeLink = navRef.current.querySelector(
+            `a[data-heading-id="${activeId}"]`
+        ) as HTMLElement | null;
+        if (!activeLink) return;
 
-        const timer = setTimeout(() => {
-            const activeLink = navRef.current?.querySelector(
-                `a[data-heading-id="${activeId}"]`
-            ) as HTMLElement | null;
-            if (!activeLink || !navRef.current || !indicatorRef.current) return;
+        const navRect = navRef.current.getBoundingClientRect();
+        const linkRect = activeLink.getBoundingClientRect();
 
-            const navRect = navRef.current.getBoundingClientRect();
-            const linkRect = activeLink.getBoundingClientRect();
-
-            indicatorRef.current.style.top = `${linkRect.top - navRect.top}px`;
-            indicatorRef.current.style.height = `${linkRect.height}px`;
-            indicatorRef.current.style.opacity = "1";
-        }, 50);
-
-        return () => clearTimeout(timer);
-    }, [activeId, expandedSections]);
+        indicatorRef.current.style.top = `${linkRect.top - navRect.top}px`;
+        indicatorRef.current.style.height = `${linkRect.height}px`;
+        indicatorRef.current.style.opacity = "1";
+    }, [activeId]);
 
     const toggleSection = useCallback((sectionId: string) => {
         setExpandedSections((prev) => {
@@ -166,107 +167,113 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         []
     );
 
-    if (headings.length === 0) return null;
+    if (headings.length === 0 || !hasRoom) return null;
 
     return (
-        <aside className="hidden xl:block fixed top-24 right-8 w-64 max-h-[calc(100vh-8rem)] overflow-y-auto z-30">
-                {/* Progress bar */}
-                <div className="h-0.5 bg-slate-100 dark:bg-slate-800 rounded-full mb-4 overflow-hidden">
+        <aside
+            className="fixed top-24 right-6 max-h-[calc(100vh-8rem)] overflow-y-auto z-30 transition-[width] duration-200"
+            style={{ width: `${tocWidth}px` }}
+        >
+            <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-lg overflow-hidden">
+                {/* Scroll progress bar */}
+                <div className="h-1 bg-slate-100 dark:bg-slate-800">
                     <div
                         className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-[width] duration-150 ease-out"
                         style={{ width: `${scrollProgress * 100}%` }}
                     />
                 </div>
 
-                <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
-                    On this page
-                </p>
+                <div className="p-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
+                        On this page
+                    </p>
 
-                <nav ref={navRef} className="relative">
-                    {/* Sliding indicator bar */}
-                    <div
-                        ref={indicatorRef}
-                        className="absolute left-0 w-0.5 rounded-full bg-emerald-500 transition-all duration-300 ease-out opacity-0"
-                    />
+                    <nav ref={navRef} className="relative">
+                        {/* Sliding indicator bar */}
+                        <div
+                            ref={indicatorRef}
+                            className="absolute left-0 w-0.5 rounded-full bg-emerald-500 transition-all duration-300 ease-out opacity-0"
+                        />
 
-                    <ul className="space-y-0.5 border-l border-slate-200/60 dark:border-slate-700/40">
-                        {sections.map((section) => {
-                            const isExpanded = expandedSections.has(
-                                section.heading.id
-                            );
-                            const hasChildren = section.children.length > 0;
+                        <ul className="space-y-0.5">
+                            {sections.map((section) => {
+                                const isExpanded = expandedSections.has(
+                                    section.heading.id
+                                );
+                                const hasChildren = section.children.length > 0;
 
-                            return (
-                                <li key={section.heading.id}>
-                                    <div className="flex items-center">
-                                        {hasChildren && (
-                                            <button
-                                                onClick={() =>
-                                                    toggleSection(
+                                return (
+                                    <li key={section.heading.id}>
+                                        <div className="flex items-center">
+                                            {hasChildren && (
+                                                <button
+                                                    onClick={() =>
+                                                        toggleSection(
+                                                            section.heading.id
+                                                        )
+                                                    }
+                                                    className="flex-shrink-0 w-4 h-4 mr-1 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                                    aria-label={
+                                                        isExpanded
+                                                            ? "Collapse section"
+                                                            : "Expand section"
+                                                    }
+                                                >
+                                                    <svg
+                                                        className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                        strokeWidth={2}
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            d="M9 5l7 7-7 7"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            )}
+                                            <a
+                                                href={`#${section.heading.id}`}
+                                                data-heading-id={
+                                                    section.heading.id
+                                                }
+                                                onClick={(e) =>
+                                                    scrollToHeading(
+                                                        e,
                                                         section.heading.id
                                                     )
                                                 }
-                                                className="flex-shrink-0 w-4 h-4 mr-1 ml-2 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                                                aria-label={
-                                                    isExpanded
-                                                        ? "Collapse section"
-                                                        : "Expand section"
-                                                }
-                                            >
-                                                <svg
-                                                    className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                    strokeWidth={2}
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        d="M9 5l7 7-7 7"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        )}
-                                        <a
-                                            href={`#${section.heading.id}`}
-                                            data-heading-id={
-                                                section.heading.id
-                                            }
-                                            onClick={(e) =>
-                                                scrollToHeading(
-                                                    e,
+                                                className={[
+                                                    "block py-1.5 text-sm leading-snug transition-all duration-200 rounded",
+                                                    !hasChildren ? "pl-5" : "",
+                                                    activeId ===
                                                     section.heading.id
-                                                )
-                                            }
-                                            className={[
-                                                "block py-1.5 text-sm leading-snug transition-all duration-200",
-                                                !hasChildren ? "pl-6" : "",
-                                                activeId ===
-                                                section.heading.id
-                                                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200",
-                                            ]
-                                                .filter(Boolean)
-                                                .join(" ")}
-                                        >
-                                            {section.heading.text}
-                                        </a>
-                                    </div>
+                                                        ? "text-emerald-600 dark:text-emerald-400 font-medium translate-x-0.5"
+                                                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200",
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(" ")}
+                                            >
+                                                {section.heading.text}
+                                            </a>
+                                        </div>
 
-                                    {/* Collapsible children */}
-                                    {hasChildren && (
-                                        <div
-                                            className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
-                                            style={{
-                                                gridTemplateRows: isExpanded
-                                                    ? "1fr"
-                                                    : "0fr",
-                                                opacity: isExpanded ? 1 : 0,
-                                            }}
-                                        >
-                                            <div className="overflow-hidden">
-                                                <ul className="ml-6 border-l border-slate-200/40 dark:border-slate-700/30 pl-3 space-y-0.5">
+                                        {/* Collapsible children */}
+                                        {hasChildren && (
+                                            <div
+                                                className="overflow-hidden transition-all duration-300 ease-out"
+                                                style={{
+                                                    maxHeight: isExpanded
+                                                        ? `${section.children.length * 40}px`
+                                                        : "0px",
+                                                    opacity: isExpanded
+                                                        ? 1
+                                                        : 0,
+                                                }}
+                                            >
+                                                <ul className="ml-5 border-l border-slate-200 dark:border-slate-700/50 pl-2 space-y-0.5">
                                                     {section.children.map(
                                                         (child) => (
                                                             <li
@@ -286,14 +293,14 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                                         )
                                                                     }
                                                                     className={[
-                                                                        "block py-1 text-xs leading-snug transition-all duration-200",
+                                                                        "block py-1 text-xs leading-snug transition-all duration-200 rounded",
                                                                         child.level ===
                                                                             4
                                                                             ? "pl-3"
                                                                             : "",
                                                                         activeId ===
                                                                         child.id
-                                                                            ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                                                            ? "text-emerald-600 dark:text-emerald-400 font-medium translate-x-0.5"
                                                                             : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
                                                                     ]
                                                                         .filter(
@@ -312,13 +319,14 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                     )}
                                                 </ul>
                                             </div>
-                                        </div>
-                                    )}
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </nav>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
         </aside>
     );
 }
