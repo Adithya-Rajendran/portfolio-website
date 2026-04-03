@@ -12,12 +12,10 @@ interface TableOfContentsProps {
     headings: TocHeading[];
 }
 
-// Content column max-width (max-w-3xl = 768px) + ToC width (max-w-xs = 320px)
-// + spacing on both sides. We hide the ToC if the gutter isn't wide enough.
-const CONTENT_WIDTH = 768;
-const TOC_WIDTH = 280;
-const GUTTER_PADDING = 48; // 24px each side
-const MIN_VIEWPORT = CONTENT_WIDTH + TOC_WIDTH + GUTTER_PADDING * 2;
+// Min viewport: 1920px gives us comfortable space
+// Content (768px) centered leaves ~576px margin on each side
+// ToC (280px) + padding (48px) = 328px needed per side
+const MIN_VIEWPORT = 1920;
 
 export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [activeId, setActiveId] = useState<string>("");
@@ -60,8 +58,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     if (headings.length === 0 || !hasRoom) return null;
 
     return (
-        <aside className="fixed top-24 max-h-[calc(100vh-8rem)] overflow-y-auto z-30"
-            style={{ right: `max(24px, calc((100vw - ${CONTENT_WIDTH}px) / 2 - ${TOC_WIDTH}px - 16px))`, width: TOC_WIDTH }}>
+        <aside className="fixed top-24 right-8 max-h-[calc(100vh-8rem)] overflow-y-auto z-30 w-64">
             <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-5 shadow-lg">
                     <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
                         On this page
