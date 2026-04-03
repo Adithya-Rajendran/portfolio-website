@@ -78,8 +78,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
             // Gutter = (vw - 768) / 2. Reserve 24px right edge + 32px gap.
             const gutter = (vw - 768) / 2;
             const available = gutter - 24 - 32;
-            // Clamp between 192px and 320px
-            setTocWidth(Math.max(192, Math.min(available, 320)));
+            // Clamp between 200px and 480px — use most of the gutter
+            setTocWidth(Math.max(200, Math.min(available, 480)));
         };
         checkRoom();
         window.addEventListener("resize", checkRoom);
