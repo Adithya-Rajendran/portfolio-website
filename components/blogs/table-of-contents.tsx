@@ -46,9 +46,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     if (headings.length === 0) return null;
 
     return (
-        <aside className="hidden xl:block w-64 shrink-0">
-            <div className="sticky top-24">
-                <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white dark:bg-white/[0.03] p-5 glow-cyber">
+        <aside className="hidden xl:block fixed right-6 2xl:right-12 top-24 w-60 max-h-[calc(100vh-8rem)] overflow-y-auto z-30">
+            <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-5 shadow-lg">
                     <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
                         On this page
                     </p>
@@ -81,7 +80,6 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                             ))}
                         </ul>
                     </nav>
-                </div>
             </div>
         </aside>
     );

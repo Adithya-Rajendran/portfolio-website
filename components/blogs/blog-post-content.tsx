@@ -109,29 +109,18 @@ export default function BlogPostContent({ post }: { post: Post }) {
                     </div>
                 </header>
 
-                {/* Content + ToC */}
+                {/* Content */}
                 {post.body && (
-                    <div className="w-full px-4 sm:px-6 lg:px-8 pb-20">
-                        {/*
-                            The outer div is full-width so the ToC can float into
-                            the gutter space. We use a centered flex row:
-                            - The article column is capped at max-w-3xl and centered
-                            - The ToC sits to the right, sticky, only visible on xl+
-                        */}
-                        <div className="flex justify-center gap-10 xl:gap-14">
-                            {/* Article body */}
-                            <div className="w-full max-w-3xl min-w-0">
-                                <PortableText
-                                    value={post.body}
-                                    components={portableTextComponents}
-                                />
-                            </div>
-
-                            {/* Floating ToC — right side */}
-                            <TableOfContents headings={headings} />
-                        </div>
+                    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+                        <PortableText
+                            value={post.body}
+                            components={portableTextComponents}
+                        />
                     </div>
                 )}
+
+                {/* Floating ToC — fixed in right gutter, renders outside content flow */}
+                <TableOfContents headings={headings} />
             </article>
         </>
     );
