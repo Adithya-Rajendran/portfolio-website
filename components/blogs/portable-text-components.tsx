@@ -1,23 +1,7 @@
 import Image from "next/image";
 import { urlForImage } from "@/lib/sanity-image";
 import type { PortableTextComponents } from "@portabletext/react";
-
-function slugify(text: string): string {
-    return text
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, "")
-        .trim()
-        .replace(/\s+/g, "-");
-}
-
-function extractText(children: React.ReactNode): string {
-    if (typeof children === "string") return children;
-    if (Array.isArray(children)) return children.map(extractText).join("");
-    if (children && typeof children === "object" && "props" in children) {
-        return extractText((children as any).props.children);
-    }
-    return "";
-}
+import { slugify, extractText } from "./utils";
 
 /**
  * Factory function that creates portable text components.
@@ -194,6 +178,7 @@ export function createPortableTextComponents(
             bullet: ({ children }) => (
                 <li className="ml-2 leading-relaxed">{children}</li>
             ),
+            // number uses the same styling as bullet
             number: ({ children }) => (
                 <li className="ml-2 leading-relaxed">{children}</li>
             ),

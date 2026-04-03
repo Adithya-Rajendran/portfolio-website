@@ -5,19 +5,12 @@ import type { Post } from "@/sanity.types";
 import { CalendarDays, Clock } from "lucide-react";
 import TableOfContents, { type TocHeading } from "@/components/blogs/table-of-contents";
 import { highlightCodeBlocks } from "@/lib/highlight-code";
+import { slugify, formatDate } from "@/components/blogs/utils";
 
 function estimateReadingTime(text: string): number {
     const wordsPerMinute = 200;
     const words = text.split(/\s+/).length;
     return Math.max(1, Math.ceil(words / wordsPerMinute));
-}
-
-function slugify(text: string): string {
-    return text
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, "")
-        .trim()
-        .replace(/\s+/g, "-");
 }
 
 export default async function BlogPostContent({ post }: { post: Post }) {
@@ -80,13 +73,7 @@ export default async function BlogPostContent({ post }: { post: Post }) {
                             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                                 <CalendarDays className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                 <time dateTime={post.date || ""}>
-                                    {post.date
-                                        ? new Date(post.date).toLocaleDateString("en-US", {
-                                              year: "numeric",
-                                              month: "long",
-                                              day: "numeric",
-                                          })
-                                        : ""}
+                                    {formatDate(post.date)}
                                 </time>
                             </div>
                             <div className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600" />
