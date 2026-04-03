@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { urlForImage } from "@/lib/sanity-image";
 import type { PortableTextComponents } from "@portabletext/react";
+import hljs from "highlight.js";
+import "highlight.js/styles/atom-one-dark.css";
 
 export const portableTextComponents: PortableTextComponents = {
     types: {
@@ -31,19 +33,34 @@ export const portableTextComponents: PortableTextComponents = {
             );
         },
         code: ({ value }) => {
+            let highlightedCode = value.code;
+            try {
+                const language = value.language || "javascript";
+                highlightedCode = hljs.highlight(value.code, {
+                    language,
+                    ignoreIllegals: true,
+                }).html;
+            } catch (error) {
+                // Fallback to plain code if highlighting fails
+                highlightedCode = value.code;
+            }
+
             return (
-                <div className="my-4">
+                <div className="my-6">
                     {value.filename && (
-                        <div className="bg-slate-800 text-slate-400 text-xs px-4 py-2 rounded-t-md border-b border-slate-700">
+                        <div className="bg-slate-800 text-slate-400 text-xs px-4 py-2 rounded-t-md border-b border-slate-700 font-mono">
                             {value.filename}
                         </div>
                     )}
                     <pre
                         className={`bg-slate-900 text-slate-100 text-sm p-4 overflow-x-auto ${
                             value.filename ? "rounded-b-md" : "rounded-md"
-                        }`}
+                        } border border-slate-700`}
                     >
-                        <code>{value.code}</code>
+                        <code
+                            dangerouslySetInnerHTML={{ __html: highlightedCode }}
+                            className={`language-${value.language || "javascript"}`}
+                        />
                     </pre>
                 </div>
             );
@@ -51,33 +68,45 @@ export const portableTextComponents: PortableTextComponents = {
     },
     block: {
         h2: ({ children }) => (
-            <h2 className="text-3xl font-bold mt-8 mb-4">{children}</h2>
+            <h2 className="text-4xl font-bold mt-12 mb-6 text-balance text-slate-900 dark:text-white">
+                {children}
+            </h2>
         ),
         h3: ({ children }) => (
-            <h3 className="text-2xl font-bold mt-6 mb-3">{children}</h3>
+            <h3 className="text-3xl font-bold mt-10 mb-4 text-balance text-slate-900 dark:text-white">
+                {children}
+            </h3>
         ),
         h4: ({ children }) => (
-            <h4 className="text-xl font-bold mt-4 mb-2">{children}</h4>
+            <h4 className="text-2xl font-bold mt-8 mb-3 text-slate-900 dark:text-white">
+                {children}
+            </h4>
         ),
-        normal: ({ children }) => <p className="my-1 text-base">{children}</p>,
+        normal: ({ children }) => (
+            <p className="my-5 text-base leading-relaxed text-slate-700 dark:text-slate-300">
+                {children}
+            </p>
+        ),
         blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-emerald-500 pl-4 my-4 italic text-slate-600 dark:text-slate-400">
+            <blockquote className="border-l-4 border-emerald-500 pl-6 my-6 italic text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 py-4 rounded-r-lg">
                 {children}
             </blockquote>
         ),
     },
     marks: {
         strong: ({ children }) => (
-            <strong className="font-bold">{children}</strong>
-        ),
-        em: ({ children }) => <em className="italic">{children}</em>,
-        code: ({ children }) => (
-            <span className="text-emerald-300 dark:text-emerald-400 bg-slate-900 dark:bg-slate-800 rounded-md px-1.5">
+            <strong className="font-bold text-slate-900 dark:text-white">
                 {children}
-            </span>
+            </strong>
         ),
-        underline: ({ children }) => <u>{children}</u>,
-        "strike-through": ({ children }) => <s>{children}</s>,
+        em: ({ children }) => <em className="italic text-slate-700 dark:text-slate-300">{children}</em>,
+        code: ({ children }) => (
+            <code className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 rounded-md px-2 py-1 font-mono text-sm border border-emerald-200 dark:border-emerald-900">
+                {children}
+            </code>
+        ),
+        underline: ({ children }) => <u className="underline decoration-2">{children}</u>,
+        "strike-through": ({ children }) => <s className="line-through text-slate-500">{children}</s>,
         link: ({ children, value }) => {
             const href = value?.href || "";
             const isExternal =
@@ -85,7 +114,7 @@ export const portableTextComponents: PortableTextComponents = {
             return (
                 <a
                     href={href}
-                    className="text-emerald-600 hover:underline dark:text-emerald-400 dark:hover:text-emerald-300"
+                    className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 underline decoration-1 underline-offset-2 transition-colors"
                     {...(isExternal
                         ? { target: "_blank", rel: "noopener noreferrer" }
                         : {})}
@@ -97,18 +126,22 @@ export const portableTextComponents: PortableTextComponents = {
     },
     list: {
         bullet: ({ children }) => (
-            <ul className="list-disc my-4 ml-4">{children}</ul>
+            <ul className="list-disc my-6 ml-6 space-y-3 text-slate-700 dark:text-slate-300">
+                {children}
+            </ul>
         ),
         number: ({ children }) => (
-            <ol className="list-decimal my-4 ml-4">{children}</ol>
+            <ol className="list-decimal my-6 ml-6 space-y-3 text-slate-700 dark:text-slate-300">
+                {children}
+            </ol>
         ),
     },
     listItem: {
         bullet: ({ children }) => (
-            <li className="list-disc ml-4">{children}</li>
+            <li className="ml-2 leading-relaxed">{children}</li>
         ),
         number: ({ children }) => (
-            <li className="list-decimal ml-4">{children}</li>
+            <li className="ml-2 leading-relaxed">{children}</li>
         ),
     },
 };
