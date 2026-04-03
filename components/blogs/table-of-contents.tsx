@@ -17,10 +17,6 @@ interface TableOfContentsProps {
     headings: TocHeading[];
 }
 
-// Content is max-w-3xl (768px) centered. ToC needs ~200px in the right
-// gutter to be usable → min viewport ≈ 768 + 200*2 + padding ≈ 1200.
-const MIN_VIEWPORT = 1200;
-
 function groupHeadings(headings: TocHeading[]): TocSection[] {
     const sections: TocSection[] = [];
     let current: TocSection | null = null;
@@ -43,8 +39,6 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [activeId, setActiveId] = useState<string>(() =>
         headings.length > 0 ? headings[0].id : ""
     );
-    const [hasRoom, setHasRoom] = useState(false);
-    const [tocWidth, setTocWidth] = useState(224);
     const [scrollProgress, setScrollProgress] = useState(0);
     const [expandedSections, setExpandedSections] = useState<Set<string>>(
         new Set()
@@ -74,24 +68,6 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
             }
         }
     }, [activeId, sections]);
-
-    // Viewport check + dynamic width scaling
-    useEffect(() => {
-        const checkRoom = () => {
-            const vw = window.innerWidth;
-            setHasRoom(vw >= MIN_VIEWPORT);
-
-            // Content is max-w-3xl (768px) centered.
-            // Gutter = (vw - 768) / 2. Reserve 24px right edge + 32px gap.
-            const gutter = (vw - 768) / 2;
-            const available = gutter - 24 - 32;
-            // Clamp between 200px and 480px — use most of the gutter
-            setTocWidth(Math.max(200, Math.min(available, 480)));
-        };
-        checkRoom();
-        window.addEventListener("resize", checkRoom);
-        return () => window.removeEventListener("resize", checkRoom);
-    }, []);
 
     // Scroll progress — throttled via rAF
     useEffect(() => {
@@ -150,7 +126,6 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     useEffect(() => {
         if (!activeId || !indicatorRef.current || !navRef.current) return;
 
-        // Small delay to let expand/collapse animation settle
         const timer = setTimeout(() => {
             const activeLink = navRef.current?.querySelector(
                 `a[data-heading-id="${activeId}"]`
@@ -191,171 +166,160 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         []
     );
 
-    if (headings.length === 0 || !hasRoom) return null;
+    if (headings.length === 0) return null;
 
     return (
-        <aside
-            className="fixed top-24 right-6 max-h-[calc(100vh-8rem)] overflow-y-auto z-30 transition-[width] duration-200"
-            style={{ width: `${tocWidth}px` }}
-        >
-            <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-lg overflow-hidden">
-                {/* Scroll progress bar */}
-                <div className="h-1 bg-slate-100 dark:bg-slate-800">
+        <aside className="hidden xl:block w-64 shrink-0">
+            <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+                {/* Progress bar */}
+                <div className="h-0.5 bg-slate-100 dark:bg-slate-800 rounded-full mb-4 overflow-hidden">
                     <div
                         className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-[width] duration-150 ease-out"
                         style={{ width: `${scrollProgress * 100}%` }}
                     />
                 </div>
 
-                <div className="p-4">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
-                        On this page
-                    </p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
+                    On this page
+                </p>
 
-                    <nav ref={navRef} className="relative">
-                        {/* Sliding indicator bar */}
-                        <div
-                            ref={indicatorRef}
-                            className="absolute left-0 w-0.5 rounded-full bg-emerald-500 transition-all duration-300 ease-out opacity-0"
-                        />
+                <nav ref={navRef} className="relative">
+                    {/* Sliding indicator bar */}
+                    <div
+                        ref={indicatorRef}
+                        className="absolute left-0 w-0.5 rounded-full bg-emerald-500 transition-all duration-300 ease-out opacity-0"
+                    />
 
-                        <ul className="space-y-0.5">
-                            {sections.map((section) => {
-                                const isExpanded = expandedSections.has(
-                                    section.heading.id
-                                );
-                                const hasChildren =
-                                    section.children.length > 0;
+                    <ul className="space-y-0.5 border-l border-slate-200/60 dark:border-slate-700/40">
+                        {sections.map((section) => {
+                            const isExpanded = expandedSections.has(
+                                section.heading.id
+                            );
+                            const hasChildren = section.children.length > 0;
 
-                                return (
-                                    <li key={section.heading.id}>
-                                        <div className="flex items-center">
-                                            {hasChildren && (
-                                                <button
-                                                    onClick={() =>
-                                                        toggleSection(
-                                                            section.heading.id
-                                                        )
-                                                    }
-                                                    className="flex-shrink-0 w-4 h-4 mr-1 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                                                    aria-label={
-                                                        isExpanded
-                                                            ? "Collapse section"
-                                                            : "Expand section"
-                                                    }
-                                                >
-                                                    <svg
-                                                        className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                        strokeWidth={2}
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            d="M9 5l7 7-7 7"
-                                                        />
-                                                    </svg>
-                                                </button>
-                                            )}
-                                            <a
-                                                href={`#${section.heading.id}`}
-                                                data-heading-id={
-                                                    section.heading.id
-                                                }
-                                                onClick={(e) =>
-                                                    scrollToHeading(
-                                                        e,
+                            return (
+                                <li key={section.heading.id}>
+                                    <div className="flex items-center">
+                                        {hasChildren && (
+                                            <button
+                                                onClick={() =>
+                                                    toggleSection(
                                                         section.heading.id
                                                     )
                                                 }
-                                                className={[
-                                                    "block py-1.5 text-sm leading-snug transition-all duration-200 rounded",
-                                                    !hasChildren ? "pl-5" : "",
-                                                    activeId ===
+                                                className="flex-shrink-0 w-4 h-4 mr-1 ml-2 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                                aria-label={
+                                                    isExpanded
+                                                        ? "Collapse section"
+                                                        : "Expand section"
+                                                }
+                                            >
+                                                <svg
+                                                    className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                    strokeWidth={2}
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M9 5l7 7-7 7"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        )}
+                                        <a
+                                            href={`#${section.heading.id}`}
+                                            data-heading-id={
+                                                section.heading.id
+                                            }
+                                            onClick={(e) =>
+                                                scrollToHeading(
+                                                    e,
                                                     section.heading.id
-                                                        ? "text-emerald-600 dark:text-emerald-400 font-medium translate-x-0.5"
-                                                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200",
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(" ")}
-                                            >
-                                                {section.heading.text}
-                                            </a>
-                                        </div>
+                                                )
+                                            }
+                                            className={[
+                                                "block py-1.5 text-sm leading-snug transition-all duration-200",
+                                                !hasChildren ? "pl-6" : "",
+                                                activeId ===
+                                                section.heading.id
+                                                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200",
+                                            ]
+                                                .filter(Boolean)
+                                                .join(" ")}
+                                        >
+                                            {section.heading.text}
+                                        </a>
+                                    </div>
 
-                                        {/* Collapsible children */}
-                                        {hasChildren && (
-                                            <div
-                                                className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
-                                                style={{
-                                                    gridTemplateRows:
-                                                        isExpanded
-                                                            ? "1fr"
-                                                            : "0fr",
-                                                    opacity: isExpanded
-                                                        ? 1
-                                                        : 0,
-                                                }}
-                                            >
-                                                <div className="overflow-hidden">
-                                                    <ul className="ml-5 border-l border-slate-200 dark:border-slate-700/50 pl-2 space-y-0.5">
-                                                        {section.children.map(
-                                                            (child) => (
-                                                                <li
-                                                                    key={
+                                    {/* Collapsible children */}
+                                    {hasChildren && (
+                                        <div
+                                            className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                                            style={{
+                                                gridTemplateRows: isExpanded
+                                                    ? "1fr"
+                                                    : "0fr",
+                                                opacity: isExpanded ? 1 : 0,
+                                            }}
+                                        >
+                                            <div className="overflow-hidden">
+                                                <ul className="ml-6 border-l border-slate-200/40 dark:border-slate-700/30 pl-3 space-y-0.5">
+                                                    {section.children.map(
+                                                        (child) => (
+                                                            <li
+                                                                key={child.id}
+                                                            >
+                                                                <a
+                                                                    href={`#${child.id}`}
+                                                                    data-heading-id={
                                                                         child.id
                                                                     }
+                                                                    onClick={(
+                                                                        e
+                                                                    ) =>
+                                                                        scrollToHeading(
+                                                                            e,
+                                                                            child.id
+                                                                        )
+                                                                    }
+                                                                    className={[
+                                                                        "block py-1 text-xs leading-snug transition-all duration-200",
+                                                                        child.level ===
+                                                                            4
+                                                                            ? "pl-3"
+                                                                            : "",
+                                                                        activeId ===
+                                                                        child.id
+                                                                            ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                                                            : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
+                                                                    ]
+                                                                        .filter(
+                                                                            Boolean
+                                                                        )
+                                                                        .join(
+                                                                            " "
+                                                                        )}
                                                                 >
-                                                                    <a
-                                                                        href={`#${child.id}`}
-                                                                        data-heading-id={
-                                                                            child.id
-                                                                        }
-                                                                        onClick={(
-                                                                            e
-                                                                        ) =>
-                                                                            scrollToHeading(
-                                                                                e,
-                                                                                child.id
-                                                                            )
-                                                                        }
-                                                                        className={[
-                                                                            "block py-1 text-xs leading-snug transition-all duration-200 rounded",
-                                                                            child.level ===
-                                                                                4
-                                                                                ? "pl-3"
-                                                                                : "",
-                                                                            activeId ===
-                                                                            child.id
-                                                                                ? "text-emerald-600 dark:text-emerald-400 font-medium translate-x-0.5"
-                                                                                : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
-                                                                        ]
-                                                                            .filter(
-                                                                                Boolean
-                                                                            )
-                                                                            .join(
-                                                                                " "
-                                                                            )}
-                                                                    >
-                                                                        {
-                                                                            child.text
-                                                                        }
-                                                                    </a>
-                                                                </li>
-                                                            )
-                                                        )}
-                                                    </ul>
-                                                </div>
+                                                                    {
+                                                                        child.text
+                                                                    }
+                                                                </a>
+                                                            </li>
+                                                        )
+                                                    )}
+                                                </ul>
                                             </div>
-                                        )}
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </nav>
-                </div>
+                                        </div>
+                                    )}
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </nav>
             </div>
         </aside>
     );

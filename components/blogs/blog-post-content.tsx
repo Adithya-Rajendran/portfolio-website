@@ -109,18 +109,23 @@ export default function BlogPostContent({ post }: { post: Post }) {
                     </div>
                 </header>
 
-                {/* Content */}
+                {/* Content + ToC layout */}
                 {post.body && (
-                    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-                        <PortableText
-                            value={post.body}
-                            components={portableTextComponents}
-                        />
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+                        <div className="flex justify-center gap-8 xl:gap-12">
+                            {/* Main content */}
+                            <div className="max-w-3xl w-full min-w-0">
+                                <PortableText
+                                    value={post.body}
+                                    components={portableTextComponents}
+                                />
+                            </div>
+
+                            {/* ToC sidebar — in-flow, sticky */}
+                            <TableOfContents headings={headings} />
+                        </div>
                     </div>
                 )}
-
-                {/* Floating ToC — fixed in right gutter, renders outside content flow */}
-                <TableOfContents headings={headings} />
             </article>
         </>
     );
