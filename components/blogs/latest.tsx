@@ -53,6 +53,7 @@ export default function Latest({ posts: allPosts }: LatestProps) {
                                                 height={240}
                                                 className={cardClasses.imageHover}
                                                 loading="lazy"
+                                                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                             />
                                         </div>
                                     )}

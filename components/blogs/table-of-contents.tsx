@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion, useScroll } from "motion/react";
 
 export interface TocHeading {
     id: string;
@@ -43,7 +44,7 @@ function groupHeadings(headings: TocHeading[]): TocSection[] {
 export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [activeId, setActiveId] = useState<string>("");
     const [hasRoom, setHasRoom] = useState(false);
-    const [scrollProgress, setScrollProgress] = useState(0);
+    const { scrollYProgress } = useScroll();
     const [manualToggles, setManualToggles] = useState<Set<string>>(new Set());
     const observerRef = useRef<IntersectionObserver | null>(null);
     const indicatorRef = useRef<HTMLDivElement>(null);
@@ -76,17 +77,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         return () => window.removeEventListener("resize", checkRoom);
     }, []);
 
-    // Scroll progress
-    useEffect(() => {
-        const updateProgress = () => {
-            const scrollTop = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            setScrollProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
-        };
-        updateProgress();
-        window.addEventListener("scroll", updateProgress, { passive: true });
-        return () => window.removeEventListener("scroll", updateProgress);
-    }, []);
+    // Scroll progress is now handled hardware-accelerated by motion/react useScroll
 
     // IntersectionObserver for active heading
     useEffect(() => {
@@ -165,10 +156,10 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         >
           <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
             {/* Scroll progress — thin accent line */}
-            <div className="h-px bg-slate-200 dark:bg-slate-700/50 mb-5">
-                <div
-                    className="h-full bg-emerald-500 transition-[width] duration-150 ease-out"
-                    style={{ width: `${scrollProgress * 100}%` }}
+            <div className="h-px bg-slate-200 dark:bg-slate-700/50 mb-5 relative overflow-hidden">
+                <motion.div
+                    className="absolute inset-y-0 left-0 bg-emerald-500 origin-left"
+                    style={{ width: "100%", scaleX: scrollYProgress }}
                 />
             </div>
 
