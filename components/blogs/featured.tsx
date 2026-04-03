@@ -6,6 +6,7 @@ import { formatDate, cardClasses } from "./utils";
 
 interface FeaturedProps {
     posts: TPost[];
+    showHero?: boolean;
 }
 
 function getPostMeta(post: TPost) {
@@ -29,23 +30,24 @@ function PostImageAlt(post: TPost) {
     return post.image?.alt || `Blog post thumbnail for ${post.title || ""}`;
 }
 
-export default function Featured({ posts: featuredPosts }: FeaturedProps) {
+export default function Featured({ posts: featuredPosts, showHero = true }: FeaturedProps) {
     return (
         <section className="container mx-auto px-6 mb-16">
-            {/* Blog hero / intro */}
-            <div className="pt-8 pb-12 text-center">
-                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-                    <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-700 dark:from-emerald-400 dark:via-cyan-300 dark:to-emerald-400 bg-clip-text text-transparent">
-                        Adithya's Blogs
-                    </span>
-                </h1>
-                <p className="text-lg text-slate-500 dark:text-slate-400 max-w-[36rem] mx-auto leading-relaxed">
-                    Technical deep-dives into cloud infrastructure,
-                    cybersecurity, and homelab experiments.
-                    <br />
-                    All opinions are my own and do not reflect the views of my employer or anyone else.
-                </p>
-            </div>
+            {showHero && (
+                <div className="pt-8 pb-12 text-center">
+                    <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
+                        <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-700 dark:from-emerald-400 dark:via-cyan-300 dark:to-emerald-400 bg-clip-text text-transparent">
+                            Adithya&apos;s Blogs
+                        </span>
+                    </h1>
+                    <p className="text-lg text-slate-500 dark:text-slate-400 max-w-[36rem] mx-auto leading-relaxed">
+                        Technical deep-dives into cloud infrastructure,
+                        cybersecurity, and homelab experiments.
+                        <br />
+                        All opinions are my own and do not reflect the views of my employer or anyone else.
+                    </p>
+                </div>
+            )}
 
             {/* Featured posts */}
             {featuredPosts && featuredPosts.length > 0 && (

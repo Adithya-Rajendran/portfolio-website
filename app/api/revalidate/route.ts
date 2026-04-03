@@ -35,13 +35,15 @@ export async function POST(req: NextRequest) {
         if (docType === "post") {
             revalidateTag("post", { expire: 0 });
 
-            const { warmed, failed } = await warmBlogCache();
+            const result = await warmBlogCache();
 
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated tag "post"${body?.slug?.current ? ` (triggered by: ${body.slug.current})` : ""}`,
-                warmed: warmed.length,
-                failed: failed.length,
+                pagesWarmed: result.pages.warmed.length,
+                pagesFailed: result.pages.failed.length,
+                imagesWarmed: result.images.warmed,
+                imagesFailed: result.images.failed,
                 now: Date.now(),
             });
         }
