@@ -109,18 +109,18 @@ export default function BlogPostContent({ post }: { post: Post }) {
                     </div>
                 </header>
 
-                {/* Content + ToC */}
+                {/* Content */}
                 {post.body && (
-                    <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+                    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                         <PortableText
                             value={post.body}
                             components={portableTextComponents}
                         />
-
-                        {/* ToC anchored to the right edge of content, positioned in the gutter */}
-                        <TableOfContents headings={headings} />
                     </div>
                 )}
+
+                {/* Floating ToC — fixed in right gutter */}
+                <TableOfContents headings={headings} />
             </article>
         </>
     );

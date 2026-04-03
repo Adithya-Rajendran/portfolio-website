@@ -169,8 +169,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     if (headings.length === 0) return null;
 
     return (
-        <aside className="hidden xl:block absolute top-0 left-full ml-8 w-64">
-            <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+        <aside className="hidden xl:block fixed top-24 right-8 w-64 max-h-[calc(100vh-8rem)] overflow-y-auto z-30">
                 {/* Progress bar */}
                 <div className="h-0.5 bg-slate-100 dark:bg-slate-800 rounded-full mb-4 overflow-hidden">
                     <div
@@ -320,7 +319,6 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                         })}
                     </ul>
                 </nav>
-            </div>
         </aside>
     );
 }
