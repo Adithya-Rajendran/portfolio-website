@@ -34,9 +34,12 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                               .url()
                         : null;
                     return (
-                        <div
+                        <Link
                             key={post.slug?.current || index}
-                            className="md:col-span-2 bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none"
+                            href={`blogs/${post.slug?.current || ""}`}
+                            aria-label={`Read more about ${post.title || ""}`}
+                            title={`Read more about ${post.title || ""}`}
+                            className="md:col-span-2 bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none block"
                         >
                             {imageUrl && (
                                 <Image
@@ -63,17 +66,12 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                                 <p className="text-slate-600 h-12 overflow-hidden dark:text-slate-400 mb-4">
                                     {post.description || ""}
                                 </p>
-                                <Link
-                                    className="text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                                    href={`blogs/${post.slug?.current || ""}`}
-                                    aria-label={`Read more about ${post.title || ""}`}
-                                    title={`Read more about ${post.title || ""}`}
-                                >
+                                <span className="text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">
                                     {"Explore: "}
                                     {post.title || ""}
-                                </Link>
+                                </span>
                             </div>
-                        </div>
+                        </Link>
                     );
                 })}
                 <div className="md:col-span-1">
@@ -87,9 +85,12 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                                   .url()
                             : null;
                         return (
-                            <div
+                            <Link
                                 key={post.slug?.current || index}
-                                className={`bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none ${
+                                href={`blogs/${post.slug?.current || ""}`}
+                                aria-label={`Read more about ${post.title || ""}`}
+                                title={`Read more about ${post.title || ""}`}
+                                className={`block bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none ${
                                     index === 0 ? "mb-6" : ""
                                 }`}
                             >
@@ -117,17 +118,12 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                                     <p className="text-slate-600 h-12 overflow-hidden dark:text-slate-400 mb-4">
                                         {post.description || ""}
                                     </p>
-                                    <Link
-                                        className="text-emerald-700 hover:underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                                        href={`blogs/${post.slug?.current || ""}`}
-                                        aria-label={`Read more about ${post.title || ""}`}
-                                        title={`Read more about ${post.title || ""}`}
-                                    >
+                                    <span className="text-emerald-700 hover:underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">
                                         {"Explore: "}
                                         {post.title || ""}
-                                    </Link>
+                                    </span>
                                 </div>
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>
