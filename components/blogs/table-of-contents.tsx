@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface TocHeading {
     id: string;
@@ -45,28 +45,29 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [hasRoom, setHasRoom] = useState(false);
     const [tocWidth, setTocWidth] = useState(224);
     const [scrollProgress, setScrollProgress] = useState(0);
-    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+    const [manualToggles, setManualToggles] = useState<Set<string>>(new Set());
     const observerRef = useRef<IntersectionObserver | null>(null);
     const indicatorRef = useRef<HTMLDivElement>(null);
     const navRef = useRef<HTMLElement>(null);
 
-    const sections = groupHeadings(headings);
+    const sections = useMemo(() => groupHeadings(headings), [headings]);
 
-    // Auto-expand section containing active heading
-    useEffect(() => {
-        if (!activeId) return;
+    // Derive which section is auto-expanded from activeId (no effect needed)
+    const activeSectionId = useMemo(() => {
+        if (!activeId) return "";
         for (const section of sections) {
-            const childIds = section.children.map((c) => c.id);
-            if (section.heading.id === activeId || childIds.includes(activeId)) {
-                setExpandedSections((prev) => {
-                    const next = new Set(prev);
-                    next.add(section.heading.id);
-                    return next;
-                });
-                break;
-            }
+            if (section.heading.id === activeId) return section.heading.id;
+            if (section.children.some((c) => c.id === activeId)) return section.heading.id;
         }
-    }, [activeId]);
+        return "";
+    }, [activeId, sections]);
+
+    // Merge auto-expanded + manually toggled sections
+    const expandedSections = useMemo(() => {
+        const merged = new Set(manualToggles);
+        if (activeSectionId) merged.add(activeSectionId);
+        return merged;
+    }, [manualToggles, activeSectionId]);
 
     // Viewport check + dynamic width scaling
     useEffect(() => {
@@ -145,7 +146,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     }, [activeId]);
 
     const toggleSection = useCallback((sectionId: string) => {
-        setExpandedSections((prev) => {
+        setManualToggles((prev) => {
             const next = new Set(prev);
             if (next.has(sectionId)) {
                 next.delete(sectionId);
