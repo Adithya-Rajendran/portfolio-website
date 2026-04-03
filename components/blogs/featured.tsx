@@ -25,6 +25,7 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
             <h2 className="text-2xl font-bold mb-4">Featured Posts</h2>
             <div className="grid gap-6 md:grid-cols-3 sm:grid-cols-1">
                 {featuredPosts.slice(0, 1).map((post, index) => {
+                    const slug = (post.slug as unknown as string) || "";
                     const imageUrl = post.image
                         ? urlForImage(post.image)
                               .width(700)
@@ -34,9 +35,12 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                               .url()
                         : null;
                     return (
-                        <div
-                            key={post.slug?.current || index}
-                            className="md:col-span-2 bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none"
+                        <Link
+                            key={slug || index}
+                            href={`/blogs/${slug}`}
+                            aria-label={`Read more about ${post.title || ""}`}
+                            title={`Read more about ${post.title || ""}`}
+                            className="md:col-span-2 bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none block"
                         >
                             {imageUrl && (
                                 <Image
@@ -60,24 +64,16 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                                 <h3 className="text-2xl font-bold mb-2">
                                     {post.title || ""}
                                 </h3>
-                                <p className="text-slate-600 h-12 overflow-hidden dark:text-slate-400 mb-4">
+                                <p className="text-slate-600 overflow-hidden dark:text-slate-400">
                                     {post.description || ""}
                                 </p>
-                                <Link
-                                    className="text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                                    href={`blogs/${post.slug?.current || ""}`}
-                                    aria-label={`Read more about ${post.title || ""}`}
-                                    title={`Read more about ${post.title || ""}`}
-                                >
-                                    {"Explore: "}
-                                    {post.title || ""}
-                                </Link>
                             </div>
-                        </div>
+                        </Link>
                     );
                 })}
                 <div className="md:col-span-1">
                     {featuredPosts.slice(1, 3).map((post, index) => {
+                        const slug = (post.slug as unknown as string) || "";
                         const imageUrl = post.image
                             ? urlForImage(post.image)
                                   .width(700)
@@ -87,9 +83,12 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                                   .url()
                             : null;
                         return (
-                            <div
-                                key={post.slug?.current || index}
-                                className={`bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none ${
+                            <Link
+                                key={slug || index}
+                                href={`/blogs/${slug}`}
+                                aria-label={`Read more about ${post.title || ""}`}
+                                title={`Read more about ${post.title || ""}`}
+                                className={`block bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none ${
                                     index === 0 ? "mb-6" : ""
                                 }`}
                             >
@@ -114,20 +113,11 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                                     <h3 className="text-2xl font-bold mb-2">
                                         {post.title || ""}
                                     </h3>
-                                    <p className="text-slate-600 h-12 overflow-hidden dark:text-slate-400 mb-4">
+                                    <p className="text-slate-600 overflow-hidden dark:text-slate-400">
                                         {post.description || ""}
                                     </p>
-                                    <Link
-                                        className="text-emerald-700 hover:underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                                        href={`blogs/${post.slug?.current || ""}`}
-                                        aria-label={`Read more about ${post.title || ""}`}
-                                        title={`Read more about ${post.title || ""}`}
-                                    >
-                                        {"Explore: "}
-                                        {post.title || ""}
-                                    </Link>
                                 </div>
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>
