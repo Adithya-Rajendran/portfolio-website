@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Featured from "@/components/blogs/featured";
 import Latest from "@/components/blogs/latest";
-import { getFeaturedPosts, getAllPosts } from "@/lib/sanity-client";
+import { getAllPosts } from "@/lib/sanity-client";
 
 /** Static hero — renders instantly with zero data dependencies */
 function BlogHero() {
@@ -54,16 +54,19 @@ function LatestSkeleton() {
     );
 }
 
-/** Async component — fetches featured posts data */
-async function FeaturedPosts() {
-    const featuredPosts = await getFeaturedPosts();
-    return <Featured posts={featuredPosts as any} showHero={false} />;
-}
-
-/** Async component — fetches all posts data */
-async function LatestPosts() {
+/**
+ * Single async component — fetches all posts once and splits into
+ * featured + latest, halving Sanity API calls (from 2 → 1).
+ */
+async function BlogPosts() {
     const allPosts = await getAllPosts();
-    return <Latest posts={allPosts as any} />;
+    const featuredPosts = (allPosts || []).filter((p: any) => p.featured);
+    return (
+        <>
+            <Featured posts={featuredPosts as any} showHero={false} />
+            <Latest posts={allPosts as any} />
+        </>
+    );
 }
 
 export default function Blogs() {
@@ -72,14 +75,9 @@ export default function Blogs() {
             {/* Hero renders instantly — no data deps */}
             <BlogHero />
 
-            {/* Featured streams in with a skeleton fallback */}
-            <Suspense fallback={<FeaturedSkeleton />}>
-                <FeaturedPosts />
-            </Suspense>
-
-            {/* Latest streams in with a skeleton fallback */}
-            <Suspense fallback={<LatestSkeleton />}>
-                <LatestPosts />
+            {/* Both sections stream together from a single Sanity call */}
+            <Suspense fallback={<><FeaturedSkeleton /><LatestSkeleton /></>}>
+                <BlogPosts />
             </Suspense>
         </main>
     );

@@ -13,6 +13,7 @@ export const client = createClient({
     dataset,
     apiVersion,
     useCdn: true,
+    perspective: "published",
     token: process.env.STORE_SANITY_API_READ_TOKEN,
 });
 

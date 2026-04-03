@@ -48,13 +48,27 @@ export function extractHeadings(post: Post): TocHeading[] {
         : [];
 }
 
+/** Minimal metadata the hero needs — no body required */
+interface BlogPostHeroProps {
+    post: {
+        title?: string | null;
+        slug?: string | { current?: string } | null;
+        description?: string | null;
+        date?: string | null;
+    };
+    readingTime?: number;
+}
+
 /**
- * Blog post hero — renders instantly from post metadata.
+ * Blog post hero — renders instantly from lightweight post metadata.
  * No async work needed; this is the first thing the reader sees.
+ * Reading time is optional — it streams in with the body when available.
  */
-export function BlogPostHero({ post }: { post: Post }) {
-    const bodyText = extractBodyText(post);
-    const readingTime = estimateReadingTime(bodyText);
+export function BlogPostHero({ post, readingTime }: BlogPostHeroProps) {
+    const slug =
+        typeof post.slug === "string"
+            ? post.slug
+            : post.slug?.current || "";
 
     return (
         <>
@@ -62,7 +76,7 @@ export function BlogPostHero({ post }: { post: Post }) {
                 title={post.title || ""}
                 description={post.description || ""}
                 date={post.date || ""}
-                slug={post.slug?.current || ""}
+                slug={slug}
             />
             <header className="relative py-12 sm:py-16 lg:py-20 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/50 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent" />
@@ -74,14 +88,18 @@ export function BlogPostHero({ post }: { post: Post }) {
                         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                             <CalendarDays className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             <time dateTime={post.date || ""}>
-                                {formatDate(post.date)}
+                                {formatDate(post.date ?? undefined)}
                             </time>
                         </div>
-                        <div className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600" />
-                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                            <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                            <span>{readingTime} min read</span>
-                        </div>
+                        {readingTime != null && (
+                            <>
+                                <div className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600" />
+                                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                                    <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                    <span>{readingTime} min read</span>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* Title */}

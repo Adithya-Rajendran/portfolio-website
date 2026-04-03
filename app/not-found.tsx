@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BsArrowRight } from "react-icons/bs";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
@@ -19,7 +19,7 @@ export default function NotFound() {
             <Button asChild size="lg" className="group gap-2">
                 <Link href="/">
                     Go back home
-                    <BsArrowRight className="transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </Link>
             </Button>
         </main>

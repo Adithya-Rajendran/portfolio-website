@@ -1,5 +1,5 @@
 import React from "react";
-import { FaPaperPlane } from "react-icons/fa";
+import { Send } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 
@@ -13,7 +13,7 @@ export default function SubmitBtn() {
             ) : (
                 <>
                     Submit{" "}
-                    <FaPaperPlane className="text-xs opacity-70 transition-all group-hover:translate-x-1 group-hover:-translate-y-1" />{" "}
+                    <Send className="w-3 h-3 opacity-70 transition-all group-hover:translate-x-1 group-hover:-translate-y-1" />{" "}
                 </>
             )}
         </Button>

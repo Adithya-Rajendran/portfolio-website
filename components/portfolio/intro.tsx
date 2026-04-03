@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BsArrowRight, BsLinkedin } from "react-icons/bs";
-import { HiDownload } from "react-icons/hi";
-import { FaGithubSquare } from "react-icons/fa";
+import { ArrowRight, Linkedin, Download, Github } from "lucide-react";
 import heroImg from "@/public/hero.webp";
 import {
     PortableText,
@@ -93,7 +91,7 @@ export default function Intro({ body }: IntroProps) {
                     className="group bg-emerald-700 text-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 hover:bg-emerald-800 active:scale-105 transition dark:bg-emerald-600 dark:hover:bg-emerald-500"
                 >
                     Contact me here{" "}
-                    <BsArrowRight className="opacity-70 group-hover:translate-x-1 transition" />
+                    <ArrowRight className="w-4 h-4 opacity-70 group-hover:translate-x-1 transition" />
                 </Link>
 
                 <a
@@ -101,7 +99,7 @@ export default function Intro({ body }: IntroProps) {
                     href="/resume"
                 >
                     Download CV{" "}
-                    <HiDownload className="opacity-60 group-hover:translate-y-1 transition" />
+                    <Download className="w-4 h-4 opacity-60 group-hover:translate-y-1 transition" />
                 </a>
                 <div className="flex items-center gap-2">
                     <a
@@ -111,17 +109,17 @@ export default function Intro({ body }: IntroProps) {
                         rel="noopener noreferrer"
                         aria-label="LinkedIn"
                     >
-                        <BsLinkedin />
+                        <Linkedin className="w-4 h-4" />
                     </a>
 
                     <a
-                        className="bg-white p-4 text-emerald-700 text-[1.35rem] rounded-full focus:scale-[1.15] hover:scale-[1.15] hover:text-emerald-800 hover:bg-emerald-50 active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
+                        className="bg-white p-4 text-emerald-700 rounded-full focus:scale-[1.15] hover:scale-[1.15] hover:text-emerald-800 hover:bg-emerald-50 active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
                         href="https://github.com/Adithya-Rajendran"
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label="GitHub"
                     >
-                        <FaGithubSquare />
+                        <Github className="w-5 h-5" />
                     </a>
                 </div>
             </div>

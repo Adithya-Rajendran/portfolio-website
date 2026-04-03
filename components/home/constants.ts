@@ -1,12 +1,11 @@
-import { FaCode, FaServer } from "react-icons/fa";
-import { BsShieldLock } from "react-icons/bs";
+import { Code, ShieldCheck, Server } from "lucide-react";
 import React from "react";
 import type { PortableTextComponents } from "@portabletext/react";
 
 export const variantIcons: Record<string, React.ReactElement> = {
-    emerald: React.createElement(FaCode, { className: "text-xl" }),
-    cyan: React.createElement(BsShieldLock, { className: "text-xl" }),
-    violet: React.createElement(FaServer, { className: "text-xl" }),
+    emerald: React.createElement(Code, { className: "w-5 h-5" }),
+    cyan: React.createElement(ShieldCheck, { className: "w-5 h-5" }),
+    violet: React.createElement(Server, { className: "w-5 h-5" }),
 };
 
 export const variantStyles: Record<

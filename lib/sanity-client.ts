@@ -79,6 +79,35 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     }
 }
 
+// Lightweight metadata-only fetch — no body payload.
+// Used by the blog hero so the title/date/description render before the
+// full post body (+ shiki highlighting) finishes loading.
+const metaProjection = `{
+    title,
+    "slug": slug.current,
+    description,
+    date
+}`;
+
+export async function getPostMeta(
+    slug: string,
+): Promise<Pick<Post, "title" | "slug" | "description" | "date"> | null> {
+    "use cache";
+    cacheLife("max");
+    cacheTag("post");
+    if (!isSanityConfigured) return null;
+    try {
+        const meta = await client.fetch(
+            `*[_type == "post" && slug.current == $slug][0] ${metaProjection}`,
+            { slug },
+        );
+        return meta || null;
+    } catch (error) {
+        console.error("[Sanity] Error fetching post meta:", error);
+        return null;
+    }
+}
+
 // Fetch all slugs and their last modified dates for sitemap generation
 export async function getAllSlugsWithDates(): Promise<
     { slug: string; updatedAt: string }[]

@@ -2,7 +2,7 @@
 
 import { useTheme } from "@/context/theme-context";
 import React from "react";
-import { BsMoon, BsSun } from "react-icons/bs";
+import { Moon, Sun } from "lucide-react";
 
 export default function ThemeSwitch() {
     const { theme, toggleTheme } = useTheme();
@@ -14,9 +14,9 @@ export default function ThemeSwitch() {
             aria-label="Toggle Theme"
         >
             {theme === "light" ? (
-                <BsSun aria-hidden="true" />
+                <Sun className="w-4 h-4" aria-hidden="true" />
             ) : (
-                <BsMoon aria-hidden="true" />
+                <Moon className="w-4 h-4" aria-hidden="true" />
             )}
         </button>
     );

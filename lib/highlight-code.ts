@@ -1,4 +1,4 @@
-import { codeToHtml } from "shiki";
+import { createHighlighter, type Highlighter } from "shiki";
 
 export interface HighlightedBlock {
     key: string;
@@ -7,14 +7,55 @@ export interface HighlightedBlock {
 }
 
 /**
+ * Singleton shiki highlighter — initialises the WASM engine + grammars once
+ * and reuses the instance across all subsequent requests.  This avoids a
+ * ~500ms–2s cold-start penalty on every blog page render.
+ */
+let highlighterPromise: Promise<Highlighter> | null = null;
+
+function getHighlighter(): Promise<Highlighter> {
+    if (!highlighterPromise) {
+        highlighterPromise = createHighlighter({
+            themes: ["github-dark-dimmed"],
+            langs: [
+                "javascript",
+                "typescript",
+                "bash",
+                "python",
+                "yaml",
+                "docker",
+                "json",
+                "html",
+                "css",
+                "text",
+                "go",
+                "rust",
+                "hcl",
+                "toml",
+                "ini",
+                "sql",
+                "markdown",
+                "tsx",
+                "jsx",
+                "c",
+                "cpp",
+            ],
+        });
+    }
+    return highlighterPromise;
+}
+
+/**
  * Pre-highlights all code blocks from a Sanity Portable Text body
- * using shiki. Runs on the server at render time.
+ * using the singleton shiki highlighter. Runs on the server at render time.
  */
 export async function highlightCodeBlocks(
     body: any[]
 ): Promise<Map<string, string>> {
     const codeBlocks = body.filter((block) => block._type === "code");
     const highlighted = new Map<string, string>();
+
+    const highlighter = await getHighlighter();
 
     await Promise.all(
         codeBlocks.map(async (block) => {
@@ -23,7 +64,7 @@ export async function highlightCodeBlocks(
             const key = block._key;
 
             try {
-                const html = await codeToHtml(code, {
+                const html = highlighter.codeToHtml(code, {
                     lang,
                     theme: "github-dark-dimmed",
                 });
@@ -31,7 +72,7 @@ export async function highlightCodeBlocks(
             } catch {
                 // Fallback: if language isn't supported, render as plain text
                 try {
-                    const html = await codeToHtml(code, {
+                    const html = highlighter.codeToHtml(code, {
                         lang: "text",
                         theme: "github-dark-dimmed",
                     });

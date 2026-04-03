@@ -115,21 +115,6 @@ export default function RootLayout({
             suppressHydrationWarning
         >
             <head>
-                {/* Preload critical resources for LCP */}
-                <link
-                    rel="preload"
-                    href="/hero.webp"
-                    as="image"
-                    type="image/webp"
-                    fetchPriority="high"
-                />
-                {/* DNS prefetch for external resources */}
-                <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-                <link
-                    rel="preconnect"
-                    href="https://cdn.sanity.io"
-                    crossOrigin="anonymous"
-                />
                 <PersonJsonLd />
                 <WebSiteJsonLd />
                 <ProfilePageJsonLd />

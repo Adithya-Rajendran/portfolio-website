@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BsArrowLeft } from "react-icons/bs";
+import { ArrowLeft } from "lucide-react";
 
 export default function BlogNav() {
     const pathname = usePathname();
@@ -14,7 +14,7 @@ export default function BlogNav() {
                 href={isPostPage ? "/blogs" : "/"}
                 className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-800 transition dark:text-slate-400 dark:hover:text-emerald-400"
             >
-                <BsArrowLeft />
+                <ArrowLeft className="w-4 h-4" />
                 {isPostPage ? "Blog" : "Home"}
             </Link>
         </nav>

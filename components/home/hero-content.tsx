@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { BsArrowRight, BsGithub, BsLinkedin } from "react-icons/bs";
-import { HiDownload } from "react-icons/hi";
+import { ArrowRight, Github, Linkedin, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import heroImg from "@/public/hero.webp";
@@ -48,7 +47,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                 <Button asChild size="lg" className="gap-2">
                     <Link href="/blogs">
                         Read Blogs
-                        <BsArrowRight className="transition-transform group-hover:translate-x-1" />
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                 </Button>
 
@@ -69,7 +68,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                     className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
                     aria-label="LinkedIn profile"
                 >
-                    <BsLinkedin className="text-xl" />
+                    <Linkedin className="w-5 h-5" />
                 </a>
                 <a
                     href="https://github.com/Adithya-Rajendran"
@@ -78,13 +77,13 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                     className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
                     aria-label="GitHub profile"
                 >
-                    <BsGithub className="text-xl" />
+                    <Github className="w-5 h-5" />
                 </a>
                 <a
                     href="/resume"
                     className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
                 >
-                    <HiDownload className="text-base" />
+                    <Download className="w-4 h-4" />
                     Resume
                 </a>
             </div>

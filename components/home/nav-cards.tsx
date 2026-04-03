@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { BsArrowRight } from "react-icons/bs";
-import { FaBriefcase, FaPenNib } from "react-icons/fa";
+import { ArrowRight, Briefcase, PenLine } from "lucide-react";
 
 export default function NavCards() {
     return (
@@ -21,7 +20,7 @@ export default function NavCards() {
                 >
                     <div className="relative">
                         <div className="mb-6 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
-                            <FaBriefcase className="text-xl" />
+                            <Briefcase className="w-5 h-5" />
                         </div>
                         <h2 className="text-2xl font-bold mb-3 text-slate-900 dark:text-slate-100">
                             Portfolio
@@ -32,7 +31,7 @@ export default function NavCards() {
                         </p>
                         <span className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium group-hover:gap-3 transition-all">
                             Explore
-                            <BsArrowRight className="transition-transform group-hover:translate-x-1" />
+                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                         </span>
                     </div>
                 </Link>
@@ -43,7 +42,7 @@ export default function NavCards() {
                 >
                     <div className="relative">
                         <div className="mb-6 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-teal-50 text-teal-600 border border-teal-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20">
-                            <FaPenNib className="text-xl" />
+                            <PenLine className="w-5 h-5" />
                         </div>
                         <h2 className="text-2xl font-bold mb-3 text-slate-900 dark:text-slate-100">
                             Blogs
@@ -54,7 +53,7 @@ export default function NavCards() {
                         </p>
                         <span className="inline-flex items-center gap-2 text-teal-600 dark:text-cyan-400 font-medium group-hover:gap-3 transition-all">
                             Read
-                            <BsArrowRight className="transition-transform group-hover:translate-x-1" />
+                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                         </span>
                     </div>
                 </Link>
