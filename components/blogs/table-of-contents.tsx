@@ -12,15 +12,29 @@ interface TableOfContentsProps {
     headings: TocHeading[];
 }
 
+// Content column max-width (max-w-3xl = 768px) + ToC width (max-w-xs = 320px)
+// + spacing on both sides. We hide the ToC if the gutter isn't wide enough.
+const CONTENT_WIDTH = 768;
+const TOC_WIDTH = 280;
+const GUTTER_PADDING = 48; // 24px each side
+const MIN_VIEWPORT = CONTENT_WIDTH + TOC_WIDTH + GUTTER_PADDING * 2;
+
 export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [activeId, setActiveId] = useState<string>("");
+    const [hasRoom, setHasRoom] = useState(false);
     const observerRef = useRef<IntersectionObserver | null>(null);
+
+    useEffect(() => {
+        const checkRoom = () => setHasRoom(window.innerWidth >= MIN_VIEWPORT);
+        checkRoom();
+        window.addEventListener("resize", checkRoom);
+        return () => window.removeEventListener("resize", checkRoom);
+    }, []);
 
     useEffect(() => {
         if (headings.length === 0) return;
 
         const callback: IntersectionObserverCallback = (entries) => {
-            // Find the topmost visible heading
             const visible = entries
                 .filter((e) => e.isIntersecting)
                 .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
@@ -43,11 +57,12 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         return () => observerRef.current?.disconnect();
     }, [headings]);
 
-    if (headings.length === 0) return null;
+    if (headings.length === 0 || !hasRoom) return null;
 
     return (
-        <aside className="hidden xl:block fixed right-6 2xl:right-12 top-24 max-h-[calc(100vh-8rem)] overflow-y-auto z-30">
-            <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-5 shadow-lg max-w-xs">
+        <aside className="fixed top-24 max-h-[calc(100vh-8rem)] overflow-y-auto z-30"
+            style={{ right: `max(24px, calc((100vw - ${CONTENT_WIDTH}px) / 2 - ${TOC_WIDTH}px - 16px))`, width: TOC_WIDTH }}>
+            <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm p-5 shadow-lg">
                     <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-4">
                         On this page
                     </p>
@@ -80,7 +95,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                             ))}
                         </ul>
                     </nav>
-            </div>
+        </div>
         </aside>
     );
 }
