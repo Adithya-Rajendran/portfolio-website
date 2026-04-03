@@ -27,59 +27,57 @@ export default function Latest({ posts: allPosts }: LatestProps) {
         );
     }
 
+    const items = allPosts.map((post) => {
+        const slug = (post.slug as unknown as string) || "";
+        const imageUrl = post.image
+            ? urlForImage(post.image)
+                  .width(350)
+                  .height(200)
+                  .fit("crop")
+                  .auto("format")
+                  .url()
+            : null;
+        return (
+            <CarouselItem
+                key={slug || post._id}
+                className="flex-shrink-0 w-full xl:basis-1/4 lg:basis-1/3 md:basis-1/2 sm:w-80"
+            >
+                <Link
+                    href={`/blogs/${slug}`}
+                    aria-label={`Read more about ${post.title || ""}`}
+                    title={`Read more about ${post.title || ""}`}
+                    className="block bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none h-full"
+                >
+                    {imageUrl && (
+                        <Image
+                            src={imageUrl}
+                            alt={post.image?.alt || post.title || ""}
+                            width={350}
+                            height={200}
+                            style={{ objectFit: "scale-down" }}
+                            loading="lazy"
+                            className="h-64"
+                        />
+                    )}
+                    <div className="p-6">
+                        <h3 className="text-xl font-bold mb-2">
+                            {post.title || ""}
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-500">
+                            {post.date || ""}
+                        </p>
+                    </div>
+                </Link>
+            </CarouselItem>
+        );
+    });
+
     return (
         <section className="container mx-auto px-6">
             <h2 className="text-2xl font-bold mb-4">Latest Posts</h2>
             <Carousel>
                 <CarouselContent className="flex flex-col sm:flex-row gap-6 pb-6">
-                    {allPosts.map((post) => {
-                        const slug = (post.slug as unknown as string) || "";
-                        const imageUrl = post.image
-                            ? urlForImage(post.image)
-                                  .width(350)
-                                  .height(200)
-                                  .fit("crop")
-                                  .auto("format")
-                                  .url()
-                            : null;
-                        return (
-                            <CarouselItem
-                                key={slug || post._id}
-                                className="flex-shrink-0 w-full xl:basis-1/4 lg:basis-1/3 md:basis-1/2 sm:w-80"
-                            >
-                                <Link
-                                    href={`/blogs/${slug}`}
-                                    aria-label={`Read more about ${post.title || ""}`}
-                                    title={`Read more about ${post.title || ""}`}
-                                    className="block bg-white border border-emerald-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md hover:shadow-emerald-100 transition-shadow dark:bg-white/[0.03] dark:border-white/8 dark:hover:shadow-none h-full"
-                                >
-                                    {imageUrl && (
-                                        <Image
-                                            src={imageUrl}
-                                            alt={
-                                                post.image?.alt || post.title || ""
-                                            }
-                                            width={350}
-                                            height={200}
-                                            style={{
-                                                objectFit: "scale-down",
-                                            }}
-                                            loading="lazy"
-                                            className="h-64"
-                                        />
-                                    )}
-                                    <div className="p-6">
-                                        <h3 className="text-xl font-bold mb-2">
-                                            {post.title || ""}
-                                        </h3>
-                                        <p className="text-slate-500 dark:text-slate-500">
-                                            {post.date || ""}
-                                        </p>
-                                    </div>
-                                </Link>
-                            </CarouselItem>
-                        );
-                    })}
+                    {items}
                 </CarouselContent>
                 <CarouselPrevious />
                 <CarouselNext />
