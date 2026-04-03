@@ -2,6 +2,23 @@ import Image from "next/image";
 import { urlForImage } from "@/lib/sanity-image";
 import type { PortableTextComponents } from "@portabletext/react";
 
+function slugify(text: string): string {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-");
+}
+
+function extractText(children: React.ReactNode): string {
+    if (typeof children === "string") return children;
+    if (Array.isArray(children)) return children.map(extractText).join("");
+    if (children && typeof children === "object" && "props" in children) {
+        return extractText((children as any).props.children);
+    }
+    return "";
+}
+
 export const portableTextComponents: PortableTextComponents = {
     types: {
         image: ({ value }) => {
@@ -60,22 +77,31 @@ export const portableTextComponents: PortableTextComponents = {
         },
     },
     block: {
-        h2: ({ children }) => (
-            <h2 className="text-3xl sm:text-4xl font-bold mt-16 mb-6 text-balance text-slate-900 dark:text-white relative">
-                <span className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-300 rounded-full hidden sm:block" />
-                {children}
-            </h2>
-        ),
-        h3: ({ children }) => (
-            <h3 className="text-2xl sm:text-3xl font-bold mt-12 mb-4 text-balance text-slate-900 dark:text-white">
-                {children}
-            </h3>
-        ),
-        h4: ({ children }) => (
-            <h4 className="text-xl sm:text-2xl font-semibold mt-10 mb-3 text-slate-900 dark:text-white">
-                {children}
-            </h4>
-        ),
+        h2: ({ children }) => {
+            const id = slugify(extractText(children));
+            return (
+                <h2 id={id} className="text-3xl sm:text-4xl font-bold mt-16 mb-6 text-balance text-slate-900 dark:text-white relative scroll-mt-24">
+                    <span className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-300 rounded-full hidden sm:block" />
+                    {children}
+                </h2>
+            );
+        },
+        h3: ({ children }) => {
+            const id = slugify(extractText(children));
+            return (
+                <h3 id={id} className="text-2xl sm:text-3xl font-bold mt-12 mb-4 text-balance text-slate-900 dark:text-white scroll-mt-24">
+                    {children}
+                </h3>
+            );
+        },
+        h4: ({ children }) => {
+            const id = slugify(extractText(children));
+            return (
+                <h4 id={id} className="text-xl sm:text-2xl font-semibold mt-10 mb-3 text-slate-900 dark:text-white scroll-mt-24">
+                    {children}
+                </h4>
+            );
+        },
         normal: ({ children }) => (
             <p className="my-5 text-base leading-relaxed text-slate-700 dark:text-slate-300">
                 {children}
