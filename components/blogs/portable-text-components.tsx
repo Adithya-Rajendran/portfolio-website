@@ -1,8 +1,6 @@
 import Image from "next/image";
 import { urlForImage } from "@/lib/sanity-image";
 import type { PortableTextComponents } from "@portabletext/react";
-import hljs from "highlight.js";
-import "highlight.js/styles/atom-one-dark.css";
 
 export const portableTextComponents: PortableTextComponents = {
     types: {
@@ -33,34 +31,18 @@ export const portableTextComponents: PortableTextComponents = {
             );
         },
         code: ({ value }) => {
-            let highlightedCode = value.code;
-            try {
-                const language = value.language || "javascript";
-                highlightedCode = hljs.highlight(value.code, {
-                    language,
-                    ignoreIllegals: true,
-                }).html;
-            } catch (error) {
-                // Fallback to plain code if highlighting fails
-                highlightedCode = value.code;
-            }
-
             return (
                 <div className="my-6">
-                    {value.filename && (
-                        <div className="bg-slate-800 text-slate-400 text-xs px-4 py-2 rounded-t-md border-b border-slate-700 font-mono">
-                            {value.filename}
-                        </div>
-                    )}
-                    <pre
-                        className={`bg-slate-900 text-slate-100 text-sm p-4 overflow-x-auto ${
-                            value.filename ? "rounded-b-md" : "rounded-md"
-                        } border border-slate-700`}
-                    >
-                        <code
-                            dangerouslySetInnerHTML={{ __html: highlightedCode }}
-                            className={`language-${value.language || "javascript"}`}
-                        />
+                    <div className="bg-slate-800 text-slate-400 text-xs px-4 py-2 rounded-t-md border-b border-slate-700 font-mono flex items-center justify-between">
+                        <span>{value.filename || "Code"}</span>
+                        {value.language && (
+                            <span className="text-emerald-400 uppercase text-[10px] font-semibold tracking-wider">
+                                {value.language}
+                            </span>
+                        )}
+                    </div>
+                    <pre className="bg-slate-900 text-slate-100 text-sm p-4 overflow-x-auto rounded-b-md border border-t-0 border-slate-700">
+                        <code className="font-mono">{value.code}</code>
                     </pre>
                 </div>
             );
