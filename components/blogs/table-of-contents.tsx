@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface TocHeading {
     id: string;
@@ -32,7 +32,6 @@ function groupHeadings(headings: TocHeading[]): TocSection[] {
         } else if (current) {
             current.children.push(h);
         } else {
-            // h3/h4 before any h2 — treat as top-level section
             sections.push({ heading: h, children: [] });
         }
     }
@@ -41,24 +40,32 @@ function groupHeadings(headings: TocHeading[]): TocSection[] {
 }
 
 export default function TableOfContents({ headings }: TableOfContentsProps) {
-    const [activeId, setActiveId] = useState<string>("");
+    const [activeId, setActiveId] = useState<string>(() =>
+        headings.length > 0 ? headings[0].id : ""
+    );
     const [hasRoom, setHasRoom] = useState(false);
     const [tocWidth, setTocWidth] = useState(224);
     const [scrollProgress, setScrollProgress] = useState(0);
-    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(
+        new Set()
+    );
     const observerRef = useRef<IntersectionObserver | null>(null);
     const indicatorRef = useRef<HTMLDivElement>(null);
     const navRef = useRef<HTMLElement>(null);
 
-    const sections = groupHeadings(headings);
+    const sections = useMemo(() => groupHeadings(headings), [headings]);
 
     // Auto-expand section containing active heading
     useEffect(() => {
         if (!activeId) return;
         for (const section of sections) {
             const childIds = section.children.map((c) => c.id);
-            if (section.heading.id === activeId || childIds.includes(activeId)) {
+            if (
+                section.heading.id === activeId ||
+                childIds.includes(activeId)
+            ) {
                 setExpandedSections((prev) => {
+                    if (prev.has(section.heading.id)) return prev;
                     const next = new Set(prev);
                     next.add(section.heading.id);
                     return next;
@@ -66,7 +73,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                 break;
             }
         }
-    }, [activeId]);
+    }, [activeId, sections]);
 
     // Viewport check + dynamic width scaling
     useEffect(() => {
@@ -86,16 +93,27 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         return () => window.removeEventListener("resize", checkRoom);
     }, []);
 
-    // Scroll progress
+    // Scroll progress — throttled via rAF
     useEffect(() => {
+        let rafId = 0;
         const updateProgress = () => {
             const scrollTop = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            setScrollProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
+            const docHeight =
+                document.documentElement.scrollHeight - window.innerHeight;
+            setScrollProgress(
+                docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0
+            );
+        };
+        const onScroll = () => {
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(updateProgress);
         };
         updateProgress();
-        window.addEventListener("scroll", updateProgress, { passive: true });
-        return () => window.removeEventListener("scroll", updateProgress);
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+            cancelAnimationFrame(rafId);
+        };
     }, []);
 
     // IntersectionObserver for active heading
@@ -128,21 +146,27 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         return () => observerRef.current?.disconnect();
     }, [headings]);
 
-    // Animate indicator position
+    // Animate indicator position — also reacts to section expand/collapse
     useEffect(() => {
         if (!activeId || !indicatorRef.current || !navRef.current) return;
-        const activeLink = navRef.current.querySelector(
-            `a[data-heading-id="${activeId}"]`
-        ) as HTMLElement | null;
-        if (!activeLink) return;
 
-        const navRect = navRef.current.getBoundingClientRect();
-        const linkRect = activeLink.getBoundingClientRect();
+        // Small delay to let expand/collapse animation settle
+        const timer = setTimeout(() => {
+            const activeLink = navRef.current?.querySelector(
+                `a[data-heading-id="${activeId}"]`
+            ) as HTMLElement | null;
+            if (!activeLink || !navRef.current || !indicatorRef.current) return;
 
-        indicatorRef.current.style.top = `${linkRect.top - navRect.top}px`;
-        indicatorRef.current.style.height = `${linkRect.height}px`;
-        indicatorRef.current.style.opacity = "1";
-    }, [activeId]);
+            const navRect = navRef.current.getBoundingClientRect();
+            const linkRect = activeLink.getBoundingClientRect();
+
+            indicatorRef.current.style.top = `${linkRect.top - navRect.top}px`;
+            indicatorRef.current.style.height = `${linkRect.height}px`;
+            indicatorRef.current.style.opacity = "1";
+        }, 50);
+
+        return () => clearTimeout(timer);
+    }, [activeId, expandedSections]);
 
     const toggleSection = useCallback((sectionId: string) => {
         setExpandedSections((prev) => {
@@ -200,7 +224,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                 const isExpanded = expandedSections.has(
                                     section.heading.id
                                 );
-                                const hasChildren = section.children.length > 0;
+                                const hasChildren =
+                                    section.children.length > 0;
 
                                 return (
                                     <li key={section.heading.id}>
@@ -263,61 +288,66 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                         {/* Collapsible children */}
                                         {hasChildren && (
                                             <div
-                                                className="overflow-hidden transition-all duration-300 ease-out"
+                                                className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
                                                 style={{
-                                                    maxHeight: isExpanded
-                                                        ? `${section.children.length * 40}px`
-                                                        : "0px",
+                                                    gridTemplateRows:
+                                                        isExpanded
+                                                            ? "1fr"
+                                                            : "0fr",
                                                     opacity: isExpanded
                                                         ? 1
                                                         : 0,
                                                 }}
                                             >
-                                                <ul className="ml-5 border-l border-slate-200 dark:border-slate-700/50 pl-2 space-y-0.5">
-                                                    {section.children.map(
-                                                        (child) => (
-                                                            <li
-                                                                key={child.id}
-                                                            >
-                                                                <a
-                                                                    href={`#${child.id}`}
-                                                                    data-heading-id={
+                                                <div className="overflow-hidden">
+                                                    <ul className="ml-5 border-l border-slate-200 dark:border-slate-700/50 pl-2 space-y-0.5">
+                                                        {section.children.map(
+                                                            (child) => (
+                                                                <li
+                                                                    key={
                                                                         child.id
                                                                     }
-                                                                    onClick={(
-                                                                        e
-                                                                    ) =>
-                                                                        scrollToHeading(
-                                                                            e,
-                                                                            child.id
-                                                                        )
-                                                                    }
-                                                                    className={[
-                                                                        "block py-1 text-xs leading-snug transition-all duration-200 rounded",
-                                                                        child.level ===
-                                                                            4
-                                                                            ? "pl-3"
-                                                                            : "",
-                                                                        activeId ===
-                                                                        child.id
-                                                                            ? "text-emerald-600 dark:text-emerald-400 font-medium translate-x-0.5"
-                                                                            : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
-                                                                    ]
-                                                                        .filter(
-                                                                            Boolean
-                                                                        )
-                                                                        .join(
-                                                                            " "
-                                                                        )}
                                                                 >
-                                                                    {
-                                                                        child.text
-                                                                    }
-                                                                </a>
-                                                            </li>
-                                                        )
-                                                    )}
-                                                </ul>
+                                                                    <a
+                                                                        href={`#${child.id}`}
+                                                                        data-heading-id={
+                                                                            child.id
+                                                                        }
+                                                                        onClick={(
+                                                                            e
+                                                                        ) =>
+                                                                            scrollToHeading(
+                                                                                e,
+                                                                                child.id
+                                                                            )
+                                                                        }
+                                                                        className={[
+                                                                            "block py-1 text-xs leading-snug transition-all duration-200 rounded",
+                                                                            child.level ===
+                                                                                4
+                                                                                ? "pl-3"
+                                                                                : "",
+                                                                            activeId ===
+                                                                            child.id
+                                                                                ? "text-emerald-600 dark:text-emerald-400 font-medium translate-x-0.5"
+                                                                                : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
+                                                                        ]
+                                                                            .filter(
+                                                                                Boolean
+                                                                            )
+                                                                            .join(
+                                                                                " "
+                                                                            )}
+                                                                    >
+                                                                        {
+                                                                            child.text
+                                                                        }
+                                                                    </a>
+                                                                </li>
+                                                            )
+                                                        )}
+                                                    </ul>
+                                                </div>
                                             </div>
                                         )}
                                     </li>
