@@ -46,14 +46,14 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
 
             <div className="flex flex-wrap items-center justify-center gap-3 animate-slide-up [animation-delay:400ms]">
                 <Button asChild size="lg" className="gap-2">
-                    <Link href="/portfolio">
-                        View Portfolio
+                    <Link href="/blogs">
+                        Read Blogs
                         <BsArrowRight className="transition-transform group-hover:translate-x-1" />
                     </Link>
                 </Button>
 
                 <Button asChild variant="outline" size="lg" className="gap-2">
-                    <Link href="/blogs">Read Blog</Link>
+                    <Link href="/portfolio">Portfolio</Link>
                 </Button>
 
                 <Button asChild variant="outline" size="lg" className="gap-2">

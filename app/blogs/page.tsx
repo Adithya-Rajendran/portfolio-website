@@ -9,7 +9,7 @@ export default async function Blogs() {
     ]);
 
     return (
-        <main className="flex-1 py-6">
+        <main className="flex-1 pt-16 pb-12">
             <Featured posts={featuredPosts as any} />
             <Latest posts={allPosts as any} />
         </main>

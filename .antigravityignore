@@ -1,0 +1,3 @@
+# Prevent Antigravity agents from accessing sensitive files
+.env
+.env.*
