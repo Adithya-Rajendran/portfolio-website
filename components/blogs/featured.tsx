@@ -75,6 +75,7 @@ export default function Featured({ posts: featuredPosts, showHero = true }: Feat
                                                 src={imageUrl}
                                                 loading="eager"
                                                 priority={true}
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 900px"
                                                 style={{ objectFit: "cover" }}
                                             />
                                             {/* Gradient overlay */}
@@ -123,6 +124,7 @@ export default function Featured({ posts: featuredPosts, showHero = true }: Feat
                                                     width={700}
                                                     src={imageUrl}
                                                     loading="eager"
+                                                    sizes="(max-width: 768px) 100vw, 33vw"
                                                     style={{ objectFit: "cover" }}
                                                 />
                                             </div>
