@@ -3,6 +3,7 @@ import { portableTextComponents } from "@/components/blogs/portable-text-compone
 import { BlogPostJsonLd } from "@/components/json-ld";
 import type { Post } from "@/sanity.types";
 import { CalendarDays, Clock } from "lucide-react";
+import TableOfContents, { type TocHeading } from "@/components/blogs/table-of-contents";
 
 function estimateReadingTime(text: string): number {
     const wordsPerMinute = 200;
@@ -10,9 +11,17 @@ function estimateReadingTime(text: string): number {
     return Math.max(1, Math.ceil(words / wordsPerMinute));
 }
 
+function slugify(text: string): string {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-");
+}
+
 export default function BlogPostContent({ post }: { post: Post }) {
     const bodyText = post.body
-        ? post.body
+        ? (post.body as any[])
               .filter((block: any) => block._type === "block")
               .map((block: any) =>
                   block.children
@@ -22,6 +31,26 @@ export default function BlogPostContent({ post }: { post: Post }) {
               .join(" ")
         : "";
     const readingTime = estimateReadingTime(bodyText);
+
+    const headings: TocHeading[] = post.body
+        ? (post.body as any[])
+              .filter(
+                  (block: any) =>
+                      block._type === "block" &&
+                      ["h2", "h3", "h4"].includes(block.style)
+              )
+              .map((block: any) => {
+                  const text = (block.children as any[])
+                      ?.map((child: any) => child.text || "")
+                      .join("") || "";
+                  return {
+                      id: slugify(text),
+                      text,
+                      level: parseInt(block.style.replace("h", ""), 10) as 2 | 3 | 4,
+                  };
+              })
+              .filter((h: TocHeading) => h.text.length > 0)
+        : [];
 
     return (
         <>
@@ -34,10 +63,9 @@ export default function BlogPostContent({ post }: { post: Post }) {
             <article className="w-full">
                 {/* Hero Section */}
                 <header className="relative py-16 sm:py-20 lg:py-24 overflow-hidden">
-                    {/* Background gradient */}
                     <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/50 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent" />
                     <div className="absolute inset-0 bg-grid-pattern opacity-50" />
-                    
+
                     <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                         {/* Meta info */}
                         <div className="flex items-center justify-center gap-6 mb-8">
@@ -67,11 +95,9 @@ export default function BlogPostContent({ post }: { post: Post }) {
 
                         {/* Description */}
                         {post.description && (
-                            <div className="max-w-3xl mx-auto">
-                                <p className="text-lg sm:text-xl text-center leading-relaxed text-slate-600 dark:text-slate-300 text-pretty">
-                                    {post.description}
-                                </p>
-                            </div>
+                            <p className="text-lg sm:text-xl text-center leading-relaxed text-slate-600 dark:text-slate-300 text-pretty">
+                                {post.description}
+                            </p>
                         )}
 
                         {/* Decorative divider */}
@@ -83,14 +109,26 @@ export default function BlogPostContent({ post }: { post: Post }) {
                     </div>
                 </header>
 
-                {/* Content */}
+                {/* Content + ToC */}
                 {post.body && (
-                    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-                        <div className="prose prose-slate dark:prose-invert prose-lg max-w-none">
-                            <PortableText
-                                value={post.body}
-                                components={portableTextComponents}
-                            />
+                    <div className="w-full px-4 sm:px-6 lg:px-8 pb-20">
+                        {/*
+                            The outer div is full-width so the ToC can float into
+                            the gutter space. We use a centered flex row:
+                            - The article column is capped at max-w-3xl and centered
+                            - The ToC sits to the right, sticky, only visible on xl+
+                        */}
+                        <div className="flex justify-center gap-10 xl:gap-14">
+                            {/* Article body */}
+                            <div className="w-full max-w-3xl min-w-0">
+                                <PortableText
+                                    value={post.body}
+                                    components={portableTextComponents}
+                                />
+                            </div>
+
+                            {/* Floating ToC — right side */}
+                            <TableOfContents headings={headings} />
                         </div>
                     </div>
                 )}
