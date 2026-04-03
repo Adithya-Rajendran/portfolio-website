@@ -17,7 +17,9 @@ interface TableOfContentsProps {
     headings: TocHeading[];
 }
 
-const MIN_VIEWPORT = 1400;
+// Content is max-w-3xl (768px) centered. ToC needs ~200px in the right
+// gutter to be usable → min viewport ≈ 768 + 200*2 + padding ≈ 1200.
+const MIN_VIEWPORT = 1200;
 
 function groupHeadings(headings: TocHeading[]): TocSection[] {
     const sections: TocSection[] = [];
@@ -41,6 +43,7 @@ function groupHeadings(headings: TocHeading[]): TocSection[] {
 export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [activeId, setActiveId] = useState<string>("");
     const [hasRoom, setHasRoom] = useState(false);
+    const [tocWidth, setTocWidth] = useState(224);
     const [scrollProgress, setScrollProgress] = useState(0);
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -65,9 +68,19 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         }
     }, [activeId]);
 
-    // Viewport check
+    // Viewport check + dynamic width scaling
     useEffect(() => {
-        const checkRoom = () => setHasRoom(window.innerWidth >= MIN_VIEWPORT);
+        const checkRoom = () => {
+            const vw = window.innerWidth;
+            setHasRoom(vw >= MIN_VIEWPORT);
+
+            // Content is max-w-3xl (768px) centered.
+            // Gutter = (vw - 768) / 2. Reserve 24px right edge + 32px gap.
+            const gutter = (vw - 768) / 2;
+            const available = gutter - 24 - 32;
+            // Clamp between 192px and 320px
+            setTocWidth(Math.max(192, Math.min(available, 320)));
+        };
         checkRoom();
         window.addEventListener("resize", checkRoom);
         return () => window.removeEventListener("resize", checkRoom);
@@ -157,7 +170,10 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     if (headings.length === 0 || !hasRoom) return null;
 
     return (
-        <aside className="fixed top-24 right-6 max-h-[calc(100vh-8rem)] overflow-y-auto z-30 w-56">
+        <aside
+            className="fixed top-24 right-6 max-h-[calc(100vh-8rem)] overflow-y-auto z-30 transition-[width] duration-200"
+            style={{ width: `${tocWidth}px` }}
+        >
             <div className="rounded-xl border border-slate-200 dark:border-white/8 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-lg overflow-hidden">
                 {/* Scroll progress bar */}
                 <div className="h-1 bg-slate-100 dark:bg-slate-800">
