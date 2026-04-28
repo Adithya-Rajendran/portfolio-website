@@ -47,7 +47,7 @@ function BodySkeleton() {
 async function HeroWithData({ slug }: { slug: string }) {
     const meta = await getPostMeta(slug);
     if (!meta) return notFound();
-    return <BlogPostHero post={meta as any} />;
+    return <BlogPostHero post={meta} />;
 }
 
 /**
@@ -57,7 +57,7 @@ async function HeroWithData({ slug }: { slug: string }) {
 async function BodyWithData({ slug }: { slug: string }) {
     const post = await getPostBySlug(slug);
     if (!post?.body) return null;
-    return <BlogPostBody post={post as any} />;
+    return <BlogPostBody post={post} />;
 }
 
 /**

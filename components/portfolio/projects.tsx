@@ -16,11 +16,13 @@ export default function Projects({ projects }: ProjectsProps) {
     return (
         <section ref={ref} id="projects" className="scroll-mt-28 mb-28">
             <SectionHeading>My projects</SectionHeading>
-            <div>
+            <ul>
                 {projects.map((project) => (
-                    <Project key={project._id} {...project} />
+                    <li key={project._id}>
+                        <Project {...project} />
+                    </li>
                 ))}
-            </div>
+            </ul>
         </section>
     );
 }

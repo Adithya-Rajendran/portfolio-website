@@ -10,7 +10,7 @@ interface FeaturedProps {
 }
 
 function getPostMeta(post: TPost) {
-    const slug = (post.slug as unknown as string) || "";
+    const slug = typeof post.slug === "string" ? post.slug : post.slug?.current ?? "";
     const title = post.title || "";
     return { slug, title };
 }

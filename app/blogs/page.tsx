@@ -60,11 +60,11 @@ function LatestSkeleton() {
  */
 async function BlogPosts() {
     const allPosts = await getAllPosts();
-    const featuredPosts = (allPosts || []).filter((p: any) => p.featured);
+    const featuredPosts = allPosts.filter((p) => p.featured);
     return (
         <>
-            <Featured posts={featuredPosts as any} showHero={false} />
-            <Latest posts={allPosts as any} />
+            <Featured posts={featuredPosts} showHero={false} />
+            <Latest posts={allPosts} />
         </>
     );
 }

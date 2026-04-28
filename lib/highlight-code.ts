@@ -1,5 +1,6 @@
 import { createHighlighter, type Highlighter } from "shiki";
 import { cacheLife, cacheTag } from "next/cache";
+import type { Post } from "@/sanity.types";
 
 export interface HighlightedBlock {
     key: string;
@@ -56,7 +57,7 @@ function getHighlighter(): Promise<Highlighter> {
  * is serialisable by the cache layer.
  */
 export async function highlightCodeBlocks(
-    body: any[]
+    body: NonNullable<Post["body"]>
 ): Promise<Record<string, string>> {
     "use cache";
     cacheLife("max");
