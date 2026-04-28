@@ -122,10 +122,10 @@ export const sendEmail = async (formData: FormData) => {
             from: "Contact Form <contact-form@email.adithya-rajendran.com>",
             to: process.env.CONTACT_FORM_TO_EMAIL as string,
             subject: "Contact Form for My Website",
-            replyTo: sanitizeHtml(senderEmail as string),
+            replyTo: senderEmail,
             react: ContactFormEmail({
-                message: sanitizeHtml(message as string),
-                senderEmail: sanitizeHtml(senderEmail as string),
+                message: sanitizeHtml(message),
+                senderEmail: sanitizeHtml(senderEmail),
             }),
         });
 

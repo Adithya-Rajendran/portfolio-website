@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
+import type { PortableTextBlock } from "@portabletext/react";
 import { getIntro, getAllSkillCategories, getAllCertifications } from "@/lib/sanity-client";
 import HeroContent from "@/components/home/hero-content";
 
@@ -19,19 +20,19 @@ async function HeroWithData() {
 /** Async wrapper — fetches intro data and renders the bio */
 async function BioWithData() {
     const intro = await getIntro();
-    return <BioSection homeBio={intro?.homeBio as any} />;
+    return <BioSection homeBio={(intro?.homeBio ?? null) as PortableTextBlock[] | null} />;
 }
 
 /** Async wrapper — fetches skill categories */
 async function SkillsWithData() {
     const skillCategories = await getAllSkillCategories();
-    return <SkillsPreview skillCategories={skillCategories as any} />;
+    return <SkillsPreview skillCategories={skillCategories} />;
 }
 
 /** Async wrapper — fetches certifications */
 async function CertsWithData() {
     const certifications = await getAllCertifications();
-    return <CertificationsPreview certifications={certifications as any} />;
+    return <CertificationsPreview certifications={certifications} />;
 }
 
 /** Skeleton matching BioSection dimensions to avoid CLS */

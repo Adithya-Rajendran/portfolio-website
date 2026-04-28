@@ -3,10 +3,10 @@
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { variantIcons, variantStyles } from "./constants";
-import type { SanitySkillCategoryType } from "@/lib/types";
+import type { SkillCategory } from "@/sanity.types";
 
 interface SkillsPreviewProps {
-    skillCategories: SanitySkillCategoryType[];
+    skillCategories: SkillCategory[];
 }
 
 export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
@@ -26,17 +26,17 @@ export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {skillCategories.map((category) => {
                     const styles =
-                        variantStyles[category.colorVariant] ||
+                        variantStyles[category.colorVariant ?? "emerald"] ||
                         variantStyles.emerald;
                     const icon =
-                        variantIcons[category.colorVariant] ||
+                        variantIcons[category.colorVariant ?? "emerald"] ||
                         variantIcons.emerald;
                     return (
                         <SkillCard
                             key={category._id}
                             icon={icon}
-                            title={category.title}
-                            skills={category.skills}
+                            title={category.title ?? ""}
+                            skills={category.skills ?? []}
                             variant={styles.badgeVariant}
                             accentColor={styles.accentColor}
                             bgColor={styles.bgColor}

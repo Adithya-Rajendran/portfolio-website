@@ -24,7 +24,7 @@ export default function Latest({ posts: allPosts }: LatestProps) {
             <Carousel>
                 <CarouselContent className="flex flex-col sm:flex-row gap-6 pb-6">
                     {allPosts.map((post) => {
-                        const slug = (post.slug as unknown as string) || "";
+                        const slug = typeof post.slug === "string" ? post.slug : post.slug?.current ?? "";
                         const imageUrl = post.image
                             ? urlForImage(post.image)
                                   .width(400)

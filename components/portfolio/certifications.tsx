@@ -18,11 +18,13 @@ export default function Certifications({
     return (
         <section ref={ref} id="certs" className="scroll-mt-28 mb-28">
             <SectionHeading>My Certification</SectionHeading>
-            <div>
+            <ul>
                 {certifications.map((cert) => (
-                    <Certification key={cert._id} {...cert} />
+                    <li key={cert._id}>
+                        <Certification {...cert} />
+                    </li>
                 ))}
-            </div>
+            </ul>
         </section>
     );
 }

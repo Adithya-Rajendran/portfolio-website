@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import Intro from "@/components/portfolio/intro";
 import SectionDivider from "@/components/section-divider";
 import type { Metadata } from "next";
+import type { PortableTextBlock } from "@portabletext/react";
 import { siteConfig } from "@/lib/config";
 import {
     getIntro,
@@ -40,12 +41,12 @@ export const metadata: Metadata = {
 /** Async wrapper — each section fetches its own data independently */
 async function IntroWithData() {
     const intro = await getIntro();
-    return <Intro body={(intro?.body as any) ?? null} />;
+    return <Intro body={(intro?.body ?? null) as PortableTextBlock[] | null} />;
 }
 
 async function AboutWithData() {
     const about = await getAbout();
-    return <About body={(about?.body as any) ?? null} />;
+    return <About body={(about?.body ?? null) as PortableTextBlock[] | null} />;
 }
 
 async function SkillsWithData() {
@@ -55,17 +56,17 @@ async function SkillsWithData() {
 
 async function CertsWithData() {
     const certifications = await getAllCertifications();
-    return <Certifications certifications={certifications as any} />;
+    return <Certifications certifications={certifications} />;
 }
 
 async function ExperienceWithData() {
     const experiences = await getAllExperiences();
-    return <Experience experiences={experiences as any} />;
+    return <Experience experiences={experiences} />;
 }
 
 async function ProjectsWithData() {
     const projects = await getAllProjects();
-    return <Projects projects={projects as any} />;
+    return <Projects projects={projects} />;
 }
 
 export default function Portfolio() {

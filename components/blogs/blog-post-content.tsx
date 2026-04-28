@@ -7,6 +7,12 @@ import TableOfContents, { type TocHeading } from "@/components/blogs/table-of-co
 import { highlightCodeBlocks } from "@/lib/highlight-code";
 import { slugify, formatDate } from "@/components/blogs/utils";
 
+type PostBodyBlock = Extract<NonNullable<Post["body"]>[number], { _type: "block" }>;
+
+function isBodyBlock(block: NonNullable<Post["body"]>[number]): block is PostBodyBlock {
+    return block._type === "block";
+}
+
 function estimateReadingTime(text: string): number {
     const wordsPerMinute = 200;
     const words = text.split(/\s+/).length;
@@ -15,11 +21,11 @@ function estimateReadingTime(text: string): number {
 
 function extractBodyText(post: Post): string {
     return post.body
-        ? (post.body as any[])
-              .filter((block: any) => block._type === "block")
-              .map((block: any) =>
+        ? post.body
+              .filter(isBodyBlock)
+              .map((block) =>
                   block.children
-                      ?.map((child: any) => child.text || "")
+                      ?.map((child) => child.text || "")
                       .join(" ")
               )
               .join(" ")
@@ -28,23 +34,24 @@ function extractBodyText(post: Post): string {
 
 export function extractHeadings(post: Post): TocHeading[] {
     return post.body
-        ? (post.body as any[])
+        ? post.body
               .filter(
-                  (block: any) =>
-                      block._type === "block" &&
-                      ["h2", "h3", "h4"].includes(block.style)
+                  (block): block is PostBodyBlock =>
+                      isBodyBlock(block) &&
+                      ["h2", "h3", "h4"].includes(block.style ?? "")
               )
-              .map((block: any) => {
-                  const text = (block.children as any[])
-                      ?.map((child: any) => child.text || "")
-                      .join("") || "";
+              .map((block) => {
+                  const text =
+                      block.children
+                          ?.map((child) => child.text || "")
+                          .join("") || "";
                   return {
                       id: slugify(text),
                       text,
-                      level: parseInt(block.style.replace("h", ""), 10) as 2 | 3 | 4,
+                      level: parseInt(block.style!.replace("h", ""), 10) as 2 | 3 | 4,
                   };
               })
-              .filter((h: TocHeading) => h.text.length > 0)
+              .filter((h) => h.text.length > 0)
         : [];
 }
 
@@ -136,7 +143,7 @@ export default async function BlogPostBody({ post }: { post: Post }) {
     const headings = extractHeadings(post);
 
     // This is the expensive async operation — shiki highlighting
-    const highlightedCode = await highlightCodeBlocks(post.body as any[]);
+    const highlightedCode = await highlightCodeBlocks(post.body);
     const portableTextComponents = createPortableTextComponents(highlightedCode);
 
     return (

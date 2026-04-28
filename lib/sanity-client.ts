@@ -10,6 +10,10 @@ import type {
     Intro,
 } from "../sanity.types";
 
+export type IntroData = Pick<Intro, "_id" | "body" | "subtitle" | "homeBio"> & {
+    resumeUrl?: string | null;
+};
+
 export { client } from "./sanity-config";
 
 // Reusable GROQ projections
@@ -172,7 +176,7 @@ export async function getAbout(): Promise<About | null> {
 }
 
 // Fetch the singleton Intro document
-export async function getIntro(): Promise<Intro | null> {
+export async function getIntro(): Promise<IntroData | null> {
     "use cache";
     cacheLife("max");
     cacheTag("portfolio");
