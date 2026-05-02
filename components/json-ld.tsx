@@ -1,10 +1,13 @@
 import { siteConfig } from "@/lib/config";
 import { cacheLife } from "next/cache";
 
-export function PersonJsonLd() {
-    const jsonLd = {
-        "@context": "https://schema.org",
+export async function SiteJsonLd() {
+    "use cache";
+    cacheLife("max");
+
+    const person = {
         "@type": "Person",
+        "@id": `${siteConfig.url}#person`,
         name: "Adithya Rajendran",
         alternateName: "Adithya",
         url: siteConfig.url,
@@ -13,6 +16,7 @@ export function PersonJsonLd() {
         worksFor: {
             "@type": "Organization",
             name: "Canonical",
+            url: "https://canonical.com",
         },
         alumniOf: {
             "@type": "CollegeOrUniversity",
@@ -29,36 +33,54 @@ export function PersonJsonLd() {
             "Penetration Testing",
             "Network Security",
         ],
+        hasCredential: [
+            {
+                "@type": "EducationalOccupationalCredential",
+                name: "AWS Certified Solutions Architect",
+                credentialCategory: "certification",
+                recognizedBy: {
+                    "@type": "Organization",
+                    name: "Amazon Web Services",
+                },
+            },
+            {
+                "@type": "EducationalOccupationalCredential",
+                name: "CompTIA Security+",
+                credentialCategory: "certification",
+                recognizedBy: { "@type": "Organization", name: "CompTIA" },
+            },
+        ],
         description:
             "Cloud Field Engineer at Canonical specializing in cloud infrastructure, cybersecurity, and DevOps. AWS Certified Solutions Architect and CompTIA Security+ certified.",
     };
 
-    return (
-        <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-    );
-}
-
-export function WebSiteJsonLd() {
-    const jsonLd = {
-        "@context": "https://schema.org",
+    const website = {
         "@type": "WebSite",
+        "@id": `${siteConfig.url}#website`,
         name: "Adithya Rajendran - Portfolio & Blog",
         url: siteConfig.url,
         description:
             "Personal portfolio and cybersecurity blog by Adithya Rajendran, Cloud Field Engineer at Canonical.",
-        author: {
-            "@type": "Person",
-            name: "Adithya Rajendran",
-        },
+        author: { "@id": `${siteConfig.url}#person` },
+    };
+
+    const profilePage = {
+        "@type": "ProfilePage",
+        "@id": `${siteConfig.url}#profile`,
+        dateCreated: "2024-01-01",
+        dateModified: new Date().toISOString().split("T")[0],
+        mainEntity: { "@id": `${siteConfig.url}#person` },
+    };
+
+    const graph = {
+        "@context": "https://schema.org",
+        "@graph": [person, website, profilePage],
     };
 
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
         />
     );
 }
@@ -93,60 +115,6 @@ export function BlogPostJsonLd({
         mainEntityOfPage: {
             "@type": "WebPage",
             "@id": `${siteConfig.url}/blogs/${slug}`,
-        },
-    };
-
-    return (
-        <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-    );
-}
-
-export async function ProfilePageJsonLd() {
-    "use cache";
-    cacheLife("max");
-
-    const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "ProfilePage",
-        dateCreated: "2024-01-01",
-        dateModified: new Date().toISOString().split("T")[0],
-        mainEntity: {
-            "@type": "Person",
-            name: "Adithya Rajendran",
-            alternateName: "Adithya",
-            url: siteConfig.url,
-            image: `${siteConfig.url}/og-image.jpg`,
-            jobTitle: "Cloud Field Engineer",
-            worksFor: {
-                "@type": "Organization",
-                name: "Canonical",
-                url: "https://canonical.com",
-            },
-            alumniOf: {
-                "@type": "CollegeOrUniversity",
-                name: "University of California, Santa Cruz",
-            },
-            sameAs: siteConfig.socials,
-            hasCredential: [
-                {
-                    "@type": "EducationalOccupationalCredential",
-                    name: "AWS Certified Solutions Architect",
-                    credentialCategory: "certification",
-                    recognizedBy: {
-                        "@type": "Organization",
-                        name: "Amazon Web Services",
-                    },
-                },
-                {
-                    "@type": "EducationalOccupationalCredential",
-                    name: "CompTIA Security+",
-                    credentialCategory: "certification",
-                    recognizedBy: { "@type": "Organization", name: "CompTIA" },
-                },
-            ],
         },
     };
 

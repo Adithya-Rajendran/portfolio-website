@@ -184,3 +184,20 @@ html.dark {
         transform: translateX(-50%) translateY(0) !important;
     }
 }
+
+/* ── React 19 View Transitions for cross-route navigation ──
+   Tunes the browser-default cross-fade so it feels snappy rather than
+   the 250ms default which reads as sluggish on a portfolio. */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 180ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+}

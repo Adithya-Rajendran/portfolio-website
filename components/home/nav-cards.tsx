@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { motion } from "motion/react";
 import { ArrowRight, Briefcase, PenLine } from "lucide-react";
 

@@ -3,7 +3,7 @@
 import SectionHeading from "../section-heading";
 import { motion } from "motion/react";
 import { Button } from "../ui/button";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 
 export default function VisitBlogs() {
     return (

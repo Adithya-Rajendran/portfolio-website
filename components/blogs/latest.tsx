@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import Image from "next/image";
 import { urlForImage } from "@/lib/sanity-image";
 import type { Post as TPost } from "@/sanity.types";
