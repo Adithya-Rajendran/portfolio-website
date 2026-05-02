@@ -41,20 +41,31 @@ function BodySkeleton() {
 }
 
 /**
- * Async hero — fetches lightweight metadata only (title, date, description).
- * This is a tiny Sanity payload with no body array, so it resolves very fast.
+ * Async hero — awaits the route params, then fetches lightweight metadata
+ * (title, date, description). Cache Components requires the params runtime
+ * API to be accessed inside a Suspense boundary, not at the page top.
  */
-async function HeroWithData({ slug }: { slug: string }) {
+async function HeroWithData({
+    paramsPromise,
+}: {
+    paramsPromise: Promise<{ slug: string }>;
+}) {
+    const { slug } = await paramsPromise;
     const meta = await getPostMeta(slug);
     if (!meta) return notFound();
     return <BlogPostHero post={meta} />;
 }
 
 /**
- * Async body — fetches the full post (including body) and runs shiki
+ * Async body — awaits params, then fetches the full post and runs shiki
  * highlighting. This is the expensive part that streams in after the hero.
  */
-async function BodyWithData({ slug }: { slug: string }) {
+async function BodyWithData({
+    paramsPromise,
+}: {
+    paramsPromise: Promise<{ slug: string }>;
+}) {
+    const { slug } = await paramsPromise;
     const post = await getPostBySlug(slug);
     if (!post?.body) return null;
     return <BlogPostBody post={post} />;
@@ -62,27 +73,25 @@ async function BodyWithData({ slug }: { slug: string }) {
 
 /**
  * Blog post page — synchronous shell that prerenders instantly via PPR.
- * The hero and body each have their own Suspense boundary with independent
- * async data fetching, so the title streams in first (fast meta query)
- * and the body follows (full post + shiki highlighting).
+ * The page itself does not await `params`; each Suspense boundary takes the
+ * params promise and awaits it inside, so the static shell can be generated
+ * without runtime data and the page streams from the boundaries.
  */
-export default async function BlogPostPage({
+export default function BlogPostPage({
     params,
 }: {
     params: Promise<{ slug: string }>;
 }) {
-    const { slug } = await params;
-
     return (
         <article className="w-full">
             {/* Hero streams in first — lightweight meta query */}
             <Suspense fallback={<HeroSkeleton />}>
-                <HeroWithData slug={slug} />
+                <HeroWithData paramsPromise={params} />
             </Suspense>
 
             {/* Body streams in after shiki highlighting completes */}
             <Suspense fallback={<BodySkeleton />}>
-                <BodyWithData slug={slug} />
+                <BodyWithData paramsPromise={params} />
             </Suspense>
         </article>
     );

@@ -106,41 +106,39 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <ViewTransitions>
-            <html
-                lang="en"
-                className="!scroll-smooth dark"
-                suppressHydrationWarning
+        <html
+            lang="en"
+            className="!scroll-smooth dark"
+            suppressHydrationWarning
+        >
+            <head>
+                <SiteJsonLd />
+            </head>
+            <body
+                className={`${inter.className} bg-[#f0fdf4] text-slate-900 relative pt-28 sm:pt-36 dark:bg-[#0a0f1a] dark:text-slate-200`}
             >
-                <head>
-                    <SiteJsonLd />
-                </head>
-                <body
-                    className={`${inter.className} bg-[#f0fdf4] text-slate-900 relative pt-28 sm:pt-36 dark:bg-[#0a0f1a] dark:text-slate-200`}
-                >
-                    <div
-                        className="bg-emerald-200/40 absolute top-[-6rem] -z-10 right-[11rem] h-[31.25rem] w-[31.25rem] rounded-full blur-[10rem] sm:w-[68.75rem] dark:bg-emerald-900/20"
-                        style={{ contain: "paint", willChange: "auto" }}
-                        aria-hidden="true"
-                    />
-                    <div
-                        className="bg-teal-100/50 absolute top-[-1rem] -z-10 left-[-35rem] h-[31.25rem] w-[50rem] rounded-full blur-[10rem] sm:w-[68.75rem] md:left-[-33rem] lg:left-[-28rem] xl:left-[-15rem] 2xl:left-[-5rem] dark:bg-cyan-900/15"
-                        style={{ contain: "paint", willChange: "auto" }}
-                        aria-hidden="true"
-                    />
+                <div
+                    className="bg-emerald-200/40 absolute top-[-6rem] -z-10 right-[11rem] h-[31.25rem] w-[31.25rem] rounded-full blur-[10rem] sm:w-[68.75rem] dark:bg-emerald-900/20"
+                    style={{ contain: "paint", willChange: "auto" }}
+                    aria-hidden="true"
+                />
+                <div
+                    className="bg-teal-100/50 absolute top-[-1rem] -z-10 left-[-35rem] h-[31.25rem] w-[50rem] rounded-full blur-[10rem] sm:w-[68.75rem] md:left-[-33rem] lg:left-[-28rem] xl:left-[-15rem] 2xl:left-[-5rem] dark:bg-cyan-900/15"
+                    style={{ contain: "paint", willChange: "auto" }}
+                    aria-hidden="true"
+                />
 
-                    <Suspense>
-                        <ThemeContextProvider>
-                            {children}
-                            <Footer />
-                            <Toaster />
-                            <ThemeSwitch />
-                        </ThemeContextProvider>
-                    </Suspense>
-                    <SpeedInsights />
-                    <Analytics />
-                </body>
-            </html>
-        </ViewTransitions>
+                <Suspense>
+                    <ThemeContextProvider>
+                        <ViewTransitions>{children}</ViewTransitions>
+                        <Footer />
+                        <Toaster />
+                        <ThemeSwitch />
+                    </ThemeContextProvider>
+                </Suspense>
+                <SpeedInsights />
+                <Analytics />
+            </body>
+        </html>
     );
 }
