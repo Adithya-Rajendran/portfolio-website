@@ -8,7 +8,15 @@ import { getErrorMessage, sanitizeHtml } from "@/lib/utils";
 import ContactFormEmail from "@/email/contact-form-email";
 import { headers } from "next/headers";
 
+if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not configured");
+}
+if (!process.env.CONTACT_FORM_TO_EMAIL?.includes("@")) {
+    throw new Error("CONTACT_FORM_TO_EMAIL is not configured");
+}
+
 const resend = new Resend(process.env.RESEND_API_KEY);
+const contactFormToEmail = process.env.CONTACT_FORM_TO_EMAIL;
 
 /**
  * Simple in-memory rate limiter. Survives across requests within a single
@@ -95,7 +103,11 @@ export const sendEmail = async (formData: FormData) => {
     const { senderEmail, message } = validatedData.data;
 
     const headersList = await headers();
-    const ip = headersList.get("x-forwarded-for") ?? "127.0.0.1";
+    // Vercel's proxy appends the real client IP to x-forwarded-for, so the
+    // last entry is the trusted one. Earlier entries can be spoofed by the
+    // client and must not be used for rate-limiting decisions.
+    const xff = headersList.get("x-forwarded-for") ?? "";
+    const ip = xff.split(",").pop()?.trim() || "127.0.0.1";
 
     if (isBlockedForInvalidDomains(ip)) {
         return {
@@ -120,7 +132,7 @@ export const sendEmail = async (formData: FormData) => {
     try {
         const data = await resend.emails.send({
             from: "Contact Form <contact-form@email.adithya-rajendran.com>",
-            to: process.env.CONTACT_FORM_TO_EMAIL as string,
+            to: contactFormToEmail,
             subject: "Contact Form for My Website",
             replyTo: senderEmail,
             react: ContactFormEmail({
