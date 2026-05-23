@@ -71,6 +71,7 @@ export default function Experience({ experiences }: ExperienceProps) {
                                     alt={item.icon.alt || item.title || ""}
                                     width={30}
                                     height={30}
+                                    sizes="30px"
                                     className="object-contain"
                                 />
                             ) : undefined
