@@ -3,6 +3,9 @@
 import { getAllSlugs, getAllPosts } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 import { siteConfig } from "@/lib/config";
+import type { Post } from "@/sanity.types";
+
+const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
 /**
  * Image size presets that match the sizes used in the blog components.
@@ -38,10 +41,16 @@ async function warmPages(
     const warmed: string[] = [];
     const failed: string[] = [];
 
+    // Defence-in-depth: only warm slugs that match the safe pattern.
+    // Sanity schemas validate slugs, but treating them as URL fragments
+    // without checking would let a misconfigured doc trigger fetches against
+    // arbitrary site paths.
+    const safeSlugs = slugs.filter((slug) => SAFE_SLUG.test(slug));
+
     // Also warm the blog listing page itself
     const urls = [
         `${siteConfig.url}/blogs`,
-        ...slugs.map((slug) => `${siteConfig.url}/blogs/${slug}`),
+        ...safeSlugs.map((slug) => `${siteConfig.url}/blogs/${slug}`),
     ];
 
     const batchSize = 5;
@@ -70,7 +79,7 @@ async function warmPages(
 
 /** Pre-fetch Sanity CDN image URLs so they're warm for real visitors */
 async function warmImages(
-    posts: any[],
+    posts: Post[],
 ): Promise<{ warmed: number; failed: number }> {
     if (!posts || posts.length === 0) return { warmed: 0, failed: 0 };
 
