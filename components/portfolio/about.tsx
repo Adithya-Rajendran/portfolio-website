@@ -3,52 +3,10 @@
 import SectionHeading from "../section-heading";
 import { motion } from "motion/react";
 import { useSectionInView } from "@/lib/hooks";
-import {
-    PortableText,
-    type PortableTextBlock,
-    type PortableTextComponents,
-} from "@portabletext/react";
+import { PortableText, type PortableTextBlock } from "@portabletext/react";
+import { createPortableTextStyles } from "@/lib/portable-text";
 
-const portableTextComponents: PortableTextComponents = {
-    block: {
-        normal: ({ children }) => (
-            <p className="mb-3 text-slate-600 dark:text-slate-300">
-                {children}
-            </p>
-        ),
-    },
-    marks: {
-        strong: ({ children }) => (
-            <span className="font-semibold">{children}</span>
-        ),
-        em: ({ children }) => <span className="italic">{children}</span>,
-        highlightEmerald: ({ children }) => (
-            <span className="font-medium text-emerald-700 dark:text-emerald-400">
-                {children}
-            </span>
-        ),
-        highlightTeal: ({ children }) => (
-            <span className="font-medium text-teal-700 dark:text-cyan-400">
-                {children}
-            </span>
-        ),
-        highlightOrange: ({ children }) => (
-            <span className="font-medium text-orange-700 dark:text-orange-500">
-                {children}
-            </span>
-        ),
-        link: ({ children, value }) => (
-            <a
-                href={value?.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-700 hover:underline dark:text-emerald-400"
-            >
-                {children}
-            </a>
-        ),
-    },
-};
+const portableTextComponents = createPortableTextStyles("about");
 
 interface AboutProps {
     body: PortableTextBlock[] | null;

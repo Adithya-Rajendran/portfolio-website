@@ -2,46 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Linkedin, Download, Github } from "lucide-react";
 import heroImg from "@/public/hero.webp";
-import {
-    PortableText,
-    type PortableTextBlock,
-    type PortableTextComponents,
-} from "@portabletext/react";
+import { PortableText, type PortableTextBlock } from "@portabletext/react";
+import { createPortableTextStyles } from "@/lib/portable-text";
 
-const portableTextComponents: PortableTextComponents = {
-    block: {
-        normal: ({ children }) => <span>{children}</span>,
-    },
-    marks: {
-        strong: ({ children }) => <span className="font-bold">{children}</span>,
-        em: ({ children }) => <span className="italic">{children}</span>,
-        highlightEmerald: ({ children }) => (
-            <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                {children}
-            </span>
-        ),
-        highlightTeal: ({ children }) => (
-            <span className="font-bold text-teal-700 dark:text-cyan-400">
-                {children}
-            </span>
-        ),
-        highlightOrange: ({ children }) => (
-            <span className="font-bold text-orange-700 dark:text-orange-500">
-                {children}
-            </span>
-        ),
-        link: ({ children, value }) => (
-            <a
-                href={value?.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-700 hover:underline dark:text-emerald-400"
-            >
-                {children}
-            </a>
-        ),
-    },
-};
+const portableTextComponents = createPortableTextStyles("intro");
 
 interface IntroProps {
     body?: PortableTextBlock[] | null;

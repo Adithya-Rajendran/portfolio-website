@@ -2,7 +2,9 @@
 
 import { motion } from "motion/react";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
-import { homeBioComponents } from "./constants";
+import { createPortableTextStyles } from "@/lib/portable-text";
+
+const homeBioComponents = createPortableTextStyles("homeBio");
 
 interface BioSectionProps {
     homeBio?: PortableTextBlock[] | null;
