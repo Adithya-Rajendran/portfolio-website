@@ -5,89 +5,92 @@ import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import heroImg from "@/public/hero.webp";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
+import PageHero from "@/components/page-hero";
 
 const portableTextComponents = createPortableTextStyles("intro");
 
 interface IntroProps {
     body?: PortableTextBlock[] | null;
+    subtitle?: string | null;
 }
 
-export default function Intro({ body }: IntroProps) {
+export default function Intro({ body, subtitle }: IntroProps) {
     return (
-        <section
-            id="home"
-            className="mb-28 max-w-[50rem] text-center sm:mb-0 scroll-mt-[100rem]"
-        >
-            <div className="flex items-center justify-center">
-                <div className="relative">
+        <section id="home" className="scroll-mt-[100rem]">
+            <PageHero
+                eyebrow="Portfolio"
+                title={
+                    <>
+                        Adithya{" "}
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                            Rajendran
+                        </span>
+                    </>
+                }
+                tagline={subtitle ?? undefined}
+                description={
+                    body ? (
+                        <PortableText
+                            value={body}
+                            components={portableTextComponents}
+                        />
+                    ) : null
+                }
+                actions={
+                    <>
+                        <Link
+                            href="/portfolio#contact"
+                            className="group inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+                        >
+                            Contact me
+                            <ArrowRight className="w-4 h-4 opacity-80 transition group-hover:translate-x-0.5" />
+                        </Link>
+                        <a
+                            href="/resume"
+                            className="group inline-flex items-center gap-2 rounded-full border border-emerald-200/70 bg-white px-6 py-3 text-sm font-medium text-slate-800 transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                        >
+                            Download CV
+                            <Download className="w-4 h-4 opacity-70 transition group-hover:translate-y-0.5" />
+                        </a>
+                        <div className="flex items-center gap-2">
+                            <a
+                                href="https://www.linkedin.com/in/adithya-rajendran/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="LinkedIn"
+                                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-emerald-200/70 bg-white text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 dark:hover:text-emerald-400"
+                            >
+                                <FaLinkedin className="w-4 h-4" />
+                            </a>
+                            <a
+                                href="https://github.com/Adithya-Rajendran"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="GitHub"
+                                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-emerald-200/70 bg-white text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 dark:hover:text-emerald-400"
+                            >
+                                <FaGithub className="w-4 h-4" />
+                            </a>
+                        </div>
+                    </>
+                }
+            >
+                {/* Portrait sits between eyebrow and title */}
+                <div className="flex justify-center mb-8">
                     <Image
                         src={heroImg}
-                        alt="My portrait"
-                        width={96}
-                        height={96}
+                        alt="Portrait of Adithya Rajendran"
+                        width={104}
+                        height={104}
                         quality={95}
                         priority
                         fetchPriority="high"
                         loading="eager"
-                        sizes="96px"
-                        className="h-24 w-24 rounded-full object-cover border-[0.35rem] border-emerald-300 shadow-xl shadow-emerald-200/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
+                        sizes="104px"
+                        className="h-26 w-26 rounded-full object-cover ring-4 ring-emerald-300/40 dark:ring-emerald-500/30 shadow-xl shadow-emerald-200/30 dark:shadow-emerald-500/10"
                     />
                 </div>
-            </div>
-
-            <h1 className="mb-10 mt-4 px-4 text-2xl font-medium !leading-[1.5] sm:text-4xl">
-                {body ? (
-                    <PortableText
-                        value={body}
-                        components={portableTextComponents}
-                    />
-                ) : (
-                    <>
-                        <span className="font-bold">
-                            Hi, I'm Adithya Rajendran.
-                        </span>
-                    </>
-                )}
-            </h1>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium">
-                <Link
-                    href="/portfolio#contact"
-                    className="group bg-emerald-700 text-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 hover:bg-emerald-800 active:scale-105 transition dark:bg-emerald-600 dark:hover:bg-emerald-500"
-                >
-                    Contact me here{" "}
-                    <ArrowRight className="w-4 h-4 opacity-70 group-hover:translate-x-1 transition" />
-                </Link>
-
-                <a
-                    className="group bg-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 active:scale-105 transition cursor-pointer border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/8"
-                    href="/resume"
-                >
-                    Download CV{" "}
-                    <Download className="w-4 h-4 opacity-60 group-hover:translate-y-1 transition" />
-                </a>
-                <div className="flex items-center gap-2">
-                    <a
-                        className="bg-white p-4 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 flex items-center gap-2 rounded-full focus:scale-[1.15] hover:scale-[1.15] active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
-                        href="https://www.linkedin.com/in/adithya-rajendran/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="LinkedIn"
-                    >
-                        <FaLinkedin className="w-4 h-4" />
-                    </a>
-
-                    <a
-                        className="bg-white p-4 text-emerald-700 rounded-full focus:scale-[1.15] hover:scale-[1.15] hover:text-emerald-800 hover:bg-emerald-50 active:scale-105 transition cursor-pointer border border-emerald-200 dark:bg-white/5 dark:text-slate-400 dark:hover:text-emerald-400 dark:border-white/8"
-                        href="https://github.com/Adithya-Rajendran"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="GitHub"
-                    >
-                        <FaGithub className="w-5 h-5" />
-                    </a>
-                </div>
-            </div>
+            </PageHero>
         </section>
     );
 }

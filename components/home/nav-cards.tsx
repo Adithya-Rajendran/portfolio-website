@@ -1,18 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "motion/react";
 import { ArrowRight, Briefcase, PenLine } from "lucide-react";
+import RevealOnScroll from "@/components/reveal-on-scroll";
 
 export default function NavCards() {
     return (
-        <motion.section
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="w-full max-w-[64rem] pb-28"
-        >
+        <RevealOnScroll as="section" className="w-full max-w-[64rem] pb-28">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <Link
                     href="/portfolio"
@@ -58,6 +50,6 @@ export default function NavCards() {
                     </div>
                 </Link>
             </div>
-        </motion.section>
+        </RevealOnScroll>
     );
 }

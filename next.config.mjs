@@ -35,7 +35,7 @@ const nextConfig = {
                             "default-src 'self'",
                             "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
                             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-                            "img-src 'self' data: blob: https://cdn.sanity.io https://i.imgur.com https://labs.hackthebox.com",
+                            "img-src 'self' data: blob: https://cdn.sanity.io",
                             "font-src 'self' https://fonts.gstatic.com data:",
                             "connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://vitals.vercel-insights.com https://va.vercel-scripts.com",
                             "frame-src 'self'",
@@ -79,14 +79,6 @@ const nextConfig = {
         formats: ["image/avif", "image/webp"],
         minimumCacheTTL: 31536000,
         remotePatterns: [
-            {
-                protocol: "https",
-                hostname: "i.imgur.com",
-            },
-            {
-                protocol: "https",
-                hostname: "labs.hackthebox.com",
-            },
             {
                 protocol: "https",
                 hostname: "cdn.sanity.io",

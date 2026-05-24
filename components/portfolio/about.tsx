@@ -1,7 +1,6 @@
 "use client";
 
-import SectionHeading from "../section-heading";
-import { motion } from "motion/react";
+import SectionHeader from "@/components/section-header";
 import { useSectionInView } from "@/lib/hooks";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
@@ -16,25 +15,29 @@ export default function About({ body }: AboutProps) {
     const { ref } = useSectionInView("About");
 
     return (
-        <motion.section
+        <section
             ref={ref}
-            className="mb-28 max-w-[45rem] text-center leading-8 sm:mb-40 scroll-mt-28"
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.175 }}
             id="about"
+            className="scroll-mt-28 animate-slide-up"
+            style={{ animationDelay: "175ms" }}
         >
-            <SectionHeading>About me</SectionHeading>
-            {body ? (
-                <PortableText
-                    value={body}
-                    components={portableTextComponents}
-                />
-            ) : (
-                <p className="text-slate-500 dark:text-slate-400">
-                    About content coming soon.
-                </p>
-            )}
-        </motion.section>
+            <SectionHeader
+                eyebrow="About"
+                title="A bit about me"
+                align="center"
+            />
+            <div className="mx-auto max-w-2xl text-center text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                {body ? (
+                    <PortableText
+                        value={body}
+                        components={portableTextComponents}
+                    />
+                ) : (
+                    <p className="text-slate-500 dark:text-slate-400">
+                        About content coming soon.
+                    </p>
+                )}
+            </div>
+        </section>
     );
 }

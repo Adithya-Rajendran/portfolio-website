@@ -35,12 +35,3 @@ export function extractText(children: React.ReactNode): string {
     }
     return "";
 }
-
-/** Shared Tailwind class strings for consistent card styling */
-export const cardClasses = {
-    base: "group relative rounded-xl overflow-hidden border border-white/8 bg-white/[0.03] transition-all duration-300 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 block",
-    imageHover:
-        "w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]",
-    sectionLabel:
-        "text-sm font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-6",
-} as const;

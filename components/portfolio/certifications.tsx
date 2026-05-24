@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useSectionInView } from "@/lib/hooks";
-import SectionHeading from "../section-heading";
+import SectionHeader from "@/components/section-header";
 import Certification from "./certification";
 import type { Certification as TCertification } from "@/sanity.types";
 
@@ -16,9 +16,13 @@ export default function Certifications({
     const { ref } = useSectionInView("Certs", 0.5);
 
     return (
-        <section ref={ref} id="certs" className="scroll-mt-28 mb-28">
-            <SectionHeading>My Certification</SectionHeading>
-            <ul>
+        <section ref={ref} id="certs" className="scroll-mt-28">
+            <SectionHeader
+                eyebrow="Certifications"
+                title="Continuously certified"
+                description="Industry credentials that map to the work I do every day."
+            />
+            <ul className="grid gap-4 sm:gap-5 sm:grid-cols-2">
                 {certifications.map((cert) => (
                     <li key={cert._id}>
                         <Certification {...cert} />

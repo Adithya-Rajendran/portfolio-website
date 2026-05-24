@@ -1,43 +1,50 @@
 "use client";
 
 import React from "react";
-import SectionHeading from "../section-heading";
-import { motion } from "motion/react";
+import SectionHeader from "@/components/section-header";
 import { useSectionInView } from "@/lib/hooks";
+import { useInView } from "react-intersection-observer";
 import { sendEmail } from "@/actions/sendEmail";
 import SubmitBtn from "../submit-btn";
 import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
 
 export default function Contact() {
-    const { ref } = useSectionInView("Contact");
+    const { ref: sectionRef } = useSectionInView("Contact");
+    const { ref: visibilityRef, inView } = useInView({
+        threshold: 0.15,
+        triggerOnce: true,
+    });
+    const setRefs = React.useCallback(
+        (node: HTMLElement | null) => {
+            sectionRef(node);
+            visibilityRef(node);
+        },
+        [sectionRef, visibilityRef],
+    );
     const { toast } = useToast();
 
-    return (
-        <motion.section
-            id="contact"
-            ref={ref}
-            className="mb-20 sm:mb-28 w-[min(100%,38rem)] text-center"
-            initial={{
-                opacity: 0,
-            }}
-            whileInView={{
-                opacity: 1,
-            }}
-            transition={{
-                duration: 1,
-            }}
-            viewport={{
-                once: true,
-            }}
-        >
-            <SectionHeading>Contact me</SectionHeading>
+    const inputClasses =
+        "w-full h-12 px-4 rounded-lg bg-white text-slate-900 border border-emerald-200/70 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition outline-none dark:bg-white/[0.03] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500 dark:focus:border-emerald-500/60";
 
-            <p className="text-slate-500 -mt-6 dark:text-slate-400">
-                Please contact me through this form.
-            </p>
+    return (
+        <section
+            id="contact"
+            ref={setRefs}
+            className={cn(
+                "scroll-mt-28 transition-opacity duration-1000",
+                inView ? "opacity-100" : "opacity-0",
+            )}
+        >
+            <SectionHeader
+                eyebrow="Contact"
+                title="Let's talk"
+                description="Whether it's a project, an opportunity, or just to say hi."
+                align="center"
+            />
 
             <form
-                className="mt-10 flex flex-col dark:text-black"
+                className="mx-auto max-w-xl flex flex-col gap-3"
                 action={async (formData) => {
                     const { error } = await sendEmail(formData);
 
@@ -60,26 +67,28 @@ export default function Contact() {
                 </label>
                 <input
                     id="contact-sender-email"
-                    className="h-14 px-4 rounded-lg bg-white border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200/50 transition-all outline-none dark:bg-white/5 dark:text-slate-200 dark:border-white/10 dark:focus:border-emerald-500/50 dark:focus:ring-emerald-500/20"
+                    className={inputClasses}
                     name="senderEmail"
                     type="email"
                     required
                     maxLength={500}
-                    placeholder="Your email"
+                    placeholder="you@example.com"
                 />
                 <label htmlFor="contact-message" className="sr-only">
                     Your message
                 </label>
                 <textarea
                     id="contact-message"
-                    className="h-52 my-3 rounded-lg p-4 bg-white border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200/50 transition-all outline-none dark:bg-white/5 dark:text-slate-200 dark:border-white/10 dark:focus:border-emerald-500/50 dark:focus:ring-emerald-500/20"
+                    className={cn(inputClasses, "h-44 py-3 resize-none")}
                     name="message"
-                    placeholder="Your message"
+                    placeholder="What's on your mind?"
                     required
                     maxLength={5000}
                 />
-                <SubmitBtn />
+                <div className="mt-2 flex justify-center">
+                    <SubmitBtn />
+                </div>
             </form>
-        </motion.section>
+        </section>
     );
 }

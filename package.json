@@ -10,7 +10,6 @@
     },
     "dependencies": {
         "@portabletext/react": "^6.2.0",
-        "@radix-ui/react-separator": "^1.1.8",
         "@radix-ui/react-slot": "^1.2.4",
         "@radix-ui/react-toast": "^1.2.15",
         "@react-email/components": "^1.0.12",
@@ -18,7 +17,6 @@
         "@sanity/image-url": "^2.0.3",
         "@sanity/vision": "^5.26.0",
         "@tailwindcss/postcss": "^4.3.0",
-        "@tailwindcss/typography": "^0.5.19",
         "@types/node": "^25.9.1",
         "@types/react": "^19.2.15",
         "@types/react-dom": "^19.2.3",
@@ -26,7 +24,6 @@
         "@vercel/speed-insights": "^2.0.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
-        "embla-carousel-react": "^8.6.0",
         "eslint": "^9.39.4",
         "eslint-config-next": "^16.2.6",
         "lucide-react": "^1.16.0",
@@ -39,7 +36,6 @@
         "react-dom": "^19.2.6",
         "react-icons": "^5.5.0",
         "react-intersection-observer": "^10.0.3",
-        "react-vertical-timeline-component": "^4.0.0",
         "resend": "^6.12.3",
         "sanity": "^5.26.0",
         "sharp": "^0.34.5",
@@ -48,9 +44,6 @@
         "tailwindcss": "^4.3.0",
         "typescript": "~6.0.3",
         "zod": "^4.4.3"
-    },
-    "devDependencies": {
-        "@types/react-vertical-timeline-component": "^3.3.6"
     },
     "pnpm": {
         "overrides": {

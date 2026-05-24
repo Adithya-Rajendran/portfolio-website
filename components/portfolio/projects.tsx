@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useSectionInView } from "@/lib/hooks";
-import SectionHeading from "../section-heading";
+import SectionHeader from "@/components/section-header";
 import Project from "./project";
 import type { Project as TProject } from "@/sanity.types";
 
@@ -14,11 +14,15 @@ export default function Projects({ projects }: ProjectsProps) {
     const { ref } = useSectionInView("Projects", 0.5);
 
     return (
-        <section ref={ref} id="projects" className="scroll-mt-28 mb-28">
-            <SectionHeading>My projects</SectionHeading>
-            <ul>
+        <section ref={ref} id="projects" className="scroll-mt-28">
+            <SectionHeader
+                eyebrow="Projects"
+                title="Things I've built"
+                description="A selection of side projects, experiments, and tools."
+            />
+            <ul className="grid gap-5 sm:gap-6 md:grid-cols-2">
                 {projects.map((project) => (
-                    <li key={project._id}>
+                    <li key={project._id} className="flex">
                         <Project {...project} />
                     </li>
                 ))}

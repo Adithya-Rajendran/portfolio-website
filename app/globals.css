@@ -50,15 +50,17 @@ html.dark {
 
 /* ── Hero entrance animations (CSS-only, GPU-composited) ── */
 
-/* Reduce motion for accessibility - instant appearance instead of animations */
+/* Universal reduced-motion respect: applies to every element and lets
+   component code use plain `transition-*` / `animate-*` utilities without
+   needing to wrap each one in a `motion-safe:` variant. */
 @media (prefers-reduced-motion: reduce) {
-    .animate-fade-in,
-    .animate-slide-up,
-    .animate-scale-fade-in,
-    .animate-gradient-text {
-        animation: none !important;
-        opacity: 1 !important;
-        transform: none !important;
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 
@@ -174,13 +176,4 @@ html.dark {
 
 .animate-slide-down {
     animation: slide-down 0.4s ease-out forwards;
-}
-
-/* Disable header animation for reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-    .animate-slide-down {
-        animation: none !important;
-        opacity: 1 !important;
-        transform: translateX(-50%) translateY(0) !important;
-    }
 }

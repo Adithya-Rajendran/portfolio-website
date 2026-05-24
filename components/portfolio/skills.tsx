@@ -1,104 +1,76 @@
 "use client";
 
 import React from "react";
-import SectionHeading from "../section-heading";
+import SectionHeader from "@/components/section-header";
 import { useSectionInView } from "@/lib/hooks";
-import { motion } from "motion/react";
+import { useInView } from "react-intersection-observer";
+import { cn } from "@/lib/utils";
 import type { SkillCategory } from "@/sanity.types";
-
-const fadeInAnimationVariants = {
-    initial: {
-        opacity: 0,
-        y: 100,
-    },
-    animate: (index: number) => ({
-        opacity: 1,
-        y: 0,
-        transition: {
-            delay: 0.05 * index,
-        },
-    }),
-};
-
-const colorMap: Record<
-    "emerald" | "cyan" | "violet",
-    {
-        heading: string;
-        bg: string;
-        border: string;
-        text: string;
-        darkBorder: string;
-    }
-> = {
-    emerald: {
-        heading: "text-emerald-600 dark:text-emerald-400",
-        bg: "bg-emerald-50",
-        border: "border-emerald-200",
-        text: "text-emerald-800",
-        darkBorder: "dark:border-emerald-500/10",
-    },
-    cyan: {
-        heading: "text-cyan-600 dark:text-cyan-400",
-        bg: "bg-cyan-50",
-        border: "border-cyan-200",
-        text: "text-cyan-800",
-        darkBorder: "dark:border-cyan-500/10",
-    },
-    violet: {
-        heading: "text-violet-600 dark:text-violet-400",
-        bg: "bg-violet-50",
-        border: "border-violet-200",
-        text: "text-violet-800",
-        darkBorder: "dark:border-violet-500/10",
-    },
-};
 
 interface SkillsProps {
     skillCategories: SkillCategory[];
 }
 
 export default function Skills({ skillCategories }: SkillsProps) {
-    const { ref } = useSectionInView("Skills");
+    const { ref: sectionRef } = useSectionInView("Skills");
+    const { ref: visibilityRef, inView } = useInView({
+        threshold: 0.15,
+        triggerOnce: true,
+    });
+    const setRefs = React.useCallback(
+        (node: HTMLElement | null) => {
+            sectionRef(node);
+            visibilityRef(node);
+        },
+        [sectionRef, visibilityRef],
+    );
+
+    // Running stagger index across every chip in every category.
+    let chipIndex = 0;
 
     return (
-        <section
-            id="skills"
-            ref={ref}
-            className="mb-28 max-w-[53rem] scroll-mt-28 text-center sm:mb-40"
-        >
-            <SectionHeading>My skills</SectionHeading>
-            {skillCategories.map((category) => {
-                const colors =
-                    colorMap[
-                        category.colorVariant as "emerald" | "cyan" | "violet"
-                    ] || colorMap.emerald;
-                return (
-                    <React.Fragment key={category._id}>
-                        <h3
-                            className={`text-xl font-medium capitalize my-4 text-center ${colors.heading}`}
-                        >
+        <section id="skills" ref={setRefs} className="scroll-mt-28">
+            <SectionHeader
+                eyebrow="Skills"
+                title="Tools I work with"
+                description="Day-to-day across cloud, security, and infrastructure."
+            />
+
+            <div className="space-y-10">
+                {skillCategories.map((category) => (
+                    <div key={category._id}>
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-4">
                             {category.title}
                         </h3>
-                        <ul className="flex flex-wrap justify-center gap-2 text-lg text-slate-700">
-                            {(category.skills || []).map((skill, index) => (
-                                <motion.li
-                                    className={`${colors.bg} ${colors.border} ${colors.text} rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 ${colors.darkBorder}`}
-                                    key={index}
-                                    variants={fadeInAnimationVariants}
-                                    initial="initial"
-                                    whileInView="animate"
-                                    viewport={{
-                                        once: true,
-                                    }}
-                                    custom={index}
-                                >
-                                    {skill}
-                                </motion.li>
-                            ))}
+                        <ul className="flex flex-wrap gap-2">
+                            {(category.skills || []).map((skill, index) => {
+                                const delayMs = chipIndex++ * 35;
+                                return (
+                                    <li
+                                        key={index}
+                                        style={{
+                                            transitionDelay: inView
+                                                ? `${delayMs}ms`
+                                                : "0ms",
+                                        }}
+                                        className={cn(
+                                            "rounded-full px-4 py-2 text-sm",
+                                            "border border-emerald-200/70 bg-white text-slate-700",
+                                            "dark:border-white/8 dark:bg-white/[0.03] dark:text-slate-300",
+                                            "transition-all duration-500 ease-out",
+                                            inView
+                                                ? "opacity-100 translate-y-0"
+                                                : "opacity-0 translate-y-4",
+                                        )}
+                                    >
+                                        {skill}
+                                    </li>
+                                );
+                            })}
                         </ul>
-                    </React.Fragment>
-                );
-            })}
+                    </div>
+                ))}
+            </div>
         </section>
     );
 }

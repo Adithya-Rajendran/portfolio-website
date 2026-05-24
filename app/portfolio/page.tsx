@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import Intro from "@/components/portfolio/intro";
-import SectionDivider from "@/components/section-divider";
+import { PageShell } from "@/components/page-shell";
 import type { Metadata } from "next";
 import type { PortableTextBlock } from "@portabletext/react";
 import { siteConfig } from "@/lib/config";
@@ -38,10 +38,14 @@ export const metadata: Metadata = {
     },
 };
 
-/** Async wrapper — each section fetches its own data independently */
 async function IntroWithData() {
     const intro = await getIntro();
-    return <Intro body={(intro?.body ?? null) as PortableTextBlock[] | null} />;
+    return (
+        <Intro
+            body={(intro?.body ?? null) as PortableTextBlock[] | null}
+            subtitle={intro?.subtitle ?? null}
+        />
+    );
 }
 
 async function AboutWithData() {
@@ -71,26 +75,22 @@ async function ProjectsWithData() {
 
 export default function Portfolio() {
     return (
-        <>
-            <main className="flex flex-col items-center px-4">
-                {/* Preload hero image — also used on portfolio page */}
-                <link rel="preload" href="/hero.webp" as="image" type="image/webp" fetchPriority="high" />
+        <main className="pb-24 sm:pb-32">
+            <link
+                rel="preload"
+                href="/hero.webp"
+                as="image"
+                type="image/webp"
+                fetchPriority="high"
+            />
 
-                <Suspense>
-                    <IntroWithData />
-                </Suspense>
-                <SectionDivider />
+            <Suspense>
+                <IntroWithData />
+            </Suspense>
 
+            <PageShell>
                 <Suspense>
                     <AboutWithData />
-                </Suspense>
-
-                <Suspense>
-                    <SkillsWithData />
-                </Suspense>
-
-                <Suspense>
-                    <CertsWithData />
                 </Suspense>
 
                 <Suspense>
@@ -102,9 +102,17 @@ export default function Portfolio() {
                 </Suspense>
 
                 <Suspense>
+                    <SkillsWithData />
+                </Suspense>
+
+                <Suspense>
+                    <CertsWithData />
+                </Suspense>
+
+                <Suspense>
                     <Contact />
                 </Suspense>
-            </main>
-        </>
+            </PageShell>
+        </main>
     );
 }

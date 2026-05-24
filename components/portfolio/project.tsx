@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "motion/react";
+import { Card } from "@/components/ui/card";
 import { urlForImage } from "@/lib/sanity-image";
 import type { Project as TProject } from "@/sanity.types";
 
@@ -19,74 +20,69 @@ export default function Project({
         target: ref,
         offset: ["0 1", "1.33 1"],
     });
-    const scaleProgress = useTransform(scrollYProgress, [0, 1], [0.8, 1]);
-    const opacityProgress = useTransform(scrollYProgress, [0, 1], [0.6, 1]);
+    const scaleProgress = useTransform(scrollYProgress, [0, 1], [0.92, 1]);
+    const opacityProgress = useTransform(scrollYProgress, [0, 1], [0.5, 1]);
+
+    const imageUrl = image
+        ? urlForImage(image).width(900).quality(95).url()
+        : null;
 
     return (
         <motion.div
             ref={ref}
-            style={{
-                scale: scaleProgress,
-                opacity: opacityProgress,
-            }}
-            className="group mb-3 sm:mb-8 last:mb-0"
+            style={{ scale: scaleProgress, opacity: opacityProgress }}
+            className="w-full"
         >
-            <section className="bg-white max-w-[42rem] border border-emerald-200 rounded-lg overflow-hidden sm:pr-8 relative hover:bg-emerald-50/50 hover:border-emerald-300 transition sm:group-even:pl-8 dark:text-slate-200 dark:bg-white/[0.03] dark:border-white/8 dark:hover:bg-white/[0.06]">
-                <div className="pt-4 pb-7 px-5 sm:pl-10 sm:pr-2 sm:pt-10 sm:max-w-[50%] flex flex-col h-full sm:group-even:ml-[18rem]">
-                    <h3 className="text-2xl font-semibold">{title || ""}</h3>
-                    <p className="my-2 leading-relaxed text-slate-600 dark:text-slate-400">
-                        {description || ""}
-                    </p>
-                    {linkTitle && linkUrl ? (
+            <Card flush className="h-full flex flex-col overflow-hidden">
+                {imageUrl && (
+                    <div className="relative aspect-[16/10] overflow-hidden bg-emerald-50/30 dark:bg-white/[0.02]">
+                        <Image
+                            src={imageUrl}
+                            alt={image?.alt || `Screenshot of ${title || ""}`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+                            loading="lazy"
+                            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                        />
+                    </div>
+                )}
+                <div className="flex flex-col flex-1 p-6 sm:p-7">
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                        {title || ""}
+                    </h3>
+                    {description && (
+                        <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400">
+                            {description}
+                        </p>
+                    )}
+                    {linkTitle && linkUrl && (
                         <a
-                            className="text-emerald-700 hover:underline hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 mb-2 transition-colors"
                             href={linkUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            className="mt-3 inline-flex w-fit text-sm font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            {linkTitle}
+                            {linkTitle} →
                         </a>
-                    ) : null}
-                    <ul
-                        className="flex flex-wrap mt-4 gap-2 sm:mt-auto"
-                        aria-label="Related Skills"
-                    >
-                        {(tags || []).map((tag, index) => (
-                            <li
-                                className="bg-emerald-700 px-3 py-1 text-[0.7rem] uppercase tracking-wider text-white rounded-full border border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
-                                key={index}
-                            >
-                                {tag}
-                            </li>
-                        ))}
-                    </ul>
+                    )}
+                    {tags && tags.length > 0 && (
+                        <ul
+                            className="flex flex-wrap mt-5 gap-1.5 sm:mt-auto sm:pt-5"
+                            aria-label="Related skills"
+                        >
+                            {tags.map((tag, index) => (
+                                <li
+                                    key={index}
+                                    className="rounded-full border border-emerald-200/70 bg-emerald-50/60 px-2.5 py-0.5 text-[0.7rem] font-medium uppercase tracking-wider text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                >
+                                    {tag}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
-
-                <Image
-                    src={
-                        image
-                            ? urlForImage(image).width(900).quality(95).url()
-                            : ""
-                    }
-                    alt={image?.alt || `Screenshot of ${title}`}
-                    width={452}
-                    height={300}
-                    sizes="(max-width: 640px) 0px, 452px"
-                    loading="lazy"
-                    className="absolute hidden sm:block top-8 -right-40 w-[28.25rem] rounded-t-lg shadow-2xl
-        transition
-        group-hover:scale-[1.04]
-        group-hover:-translate-x-3
-        group-hover:translate-y-3
-        group-hover:-rotate-2
-
-        group-even:group-hover:translate-x-3
-        group-even:group-hover:translate-y-3
-        group-even:group-hover:rotate-2
-
-        group-even:right-[initial] group-even:-left-40"
-                />
-            </section>
+            </Card>
         </motion.div>
     );
 }
