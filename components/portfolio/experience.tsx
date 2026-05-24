@@ -8,6 +8,7 @@ import {
     VerticalTimelineElement,
 } from "react-vertical-timeline-component";
 import "react-vertical-timeline-component/style.min.css";
+import { useInView } from "react-intersection-observer";
 import { useSectionInView } from "@/lib/hooks";
 import { useTheme } from "@/context/theme-context";
 import { urlForImage } from "@/lib/sanity-image";
@@ -18,21 +19,29 @@ interface ExperienceProps {
 }
 
 export default function Experience({ experiences }: ExperienceProps) {
-    const { ref, inView } = useSectionInView("Experience", 0.3);
+    const { ref: sectionRef } = useSectionInView("Experience", 0.3);
     const { theme } = useTheme();
 
-    const [isVisible, setIsVisible] = React.useState(false);
+    // Separate observer with triggerOnce so `isVisible` latches true on first
+    // entry and stays true — VerticalTimelineElement's `visible` prop drives a
+    // one-shot animation and we don't want it to re-fire on scroll.
+    const { ref: visibilityRef, inView: isVisible } = useInView({
+        threshold: 0.3,
+        triggerOnce: true,
+    });
 
-    React.useEffect(() => {
-        if (inView) {
-            setIsVisible(true);
-        }
-    }, [inView]);
+    const setRefs = React.useCallback(
+        (node: HTMLElement | null) => {
+            sectionRef(node);
+            visibilityRef(node);
+        },
+        [sectionRef, visibilityRef],
+    );
 
     return (
         <section
             id="experience"
-            ref={ref}
+            ref={setRefs}
             className="scroll-mt-28 mb-28 sm:mb-40"
         >
             <SectionHeading>My experience</SectionHeading>
