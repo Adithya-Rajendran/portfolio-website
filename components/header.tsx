@@ -12,63 +12,68 @@ export default function Header() {
         useActiveSectionContext();
 
     return (
-        <header className="z-[999] relative">
+        <header className="fixed top-0 sm:top-5 inset-x-0 z-[999] flex justify-center pointer-events-none">
             <motion.div
-                className="os-nav fixed top-0 left-1/2 h-[4.5rem] w-full rounded-none sm:top-5 sm:h-[3.5rem] sm:w-[46rem] sm:rounded-full"
-                initial={{ y: -100, x: "-50%", opacity: 0 }}
-                animate={{ y: 0, x: "-50%", opacity: 1 }}
+                className="relative pointer-events-auto w-full h-[4.5rem] sm:w-[46rem] sm:h-[3.5rem]"
+                initial={{ y: -100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            ></motion.div>
-
-            <nav
-                aria-label="Main navigation"
-                className="flex fixed top-[0.15rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.55rem] sm:h-[initial] sm:py-0"
             >
-                <ul className="flex w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.875rem] font-medium text-slate-600 sm:w-[initial] sm:flex-nowrap sm:gap-3 dark:text-slate-300">
-                    {links.map((link) => (
-                        <motion.li
-                            className="h-3/4 flex items-center justify-center relative"
-                            key={link.hash}
-                            initial={{ y: -100, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                        >
-                            <Link
-                                className={clsx(
-                                    "flex w-full items-center justify-center px-3.5 py-2 hover:text-accent transition-colors",
-                                    {
-                                        "text-accent":
-                                            activeSection === link.name,
-                                    },
-                                )}
-                                href={link.hash}
-                                aria-current={
-                                    activeSection === link.name
-                                        ? "page"
-                                        : undefined
-                                }
-                                onClick={() => {
-                                    setActiveSection(link.name);
-                                    setTimeOfLastClick(Date.now());
-                                }}
-                            >
-                                {link.name}
+                {/* Background pill — fills the same box as the nav */}
+                <div
+                    aria-hidden
+                    className="os-nav absolute inset-0 rounded-none sm:rounded-full"
+                />
 
-                                {link.name === activeSection && (
-                                    <motion.span
-                                        className="bg-accent-soft border border-accent-soft rounded-full absolute inset-0 -z-10"
-                                        layoutId="activeSection"
-                                        transition={{
-                                            type: "spring",
-                                            stiffness: 380,
-                                            damping: 30,
-                                        }}
-                                    ></motion.span>
-                                )}
-                            </Link>
-                        </motion.li>
-                    ))}
-                </ul>
-            </nav>
+                {/* Nav links — flex-centered within the same box */}
+                <nav
+                    aria-label="Main navigation"
+                    className="relative h-full flex items-center justify-center px-2 sm:px-4"
+                >
+                    <ul className="flex w-full flex-wrap items-center justify-center gap-y-1 text-[0.875rem] font-medium text-slate-600 sm:flex-nowrap sm:gap-1 dark:text-slate-300">
+                        {links.map((link) => (
+                            <li
+                                className="relative"
+                                key={link.hash}
+                            >
+                                <Link
+                                    className={clsx(
+                                        "inline-flex items-center justify-center px-3.5 h-9 rounded-full hover:text-accent transition-colors",
+                                        {
+                                            "text-accent":
+                                                activeSection === link.name,
+                                        },
+                                    )}
+                                    href={link.hash}
+                                    aria-current={
+                                        activeSection === link.name
+                                            ? "page"
+                                            : undefined
+                                    }
+                                    onClick={() => {
+                                        setActiveSection(link.name);
+                                        setTimeOfLastClick(Date.now());
+                                    }}
+                                >
+                                    {link.name}
+
+                                    {link.name === activeSection && (
+                                        <motion.span
+                                            className="bg-accent-soft border border-accent-soft rounded-full absolute inset-0 -z-10"
+                                            layoutId="activeSection"
+                                            transition={{
+                                                type: "spring",
+                                                stiffness: 380,
+                                                damping: 30,
+                                            }}
+                                        />
+                                    )}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+            </motion.div>
         </header>
     );
 }

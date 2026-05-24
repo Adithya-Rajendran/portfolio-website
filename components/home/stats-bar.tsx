@@ -1,41 +1,83 @@
 import RevealOnScroll from "@/components/reveal-on-scroll";
 import { IconPill } from "@/components/ui/icon-pill";
 import { Award, Briefcase, GraduationCap, Rocket } from "lucide-react";
+import type { Experience } from "@/sanity.types";
 
 interface StatsBarProps {
+    /** Experiences from Sanity — used to derive "years in cloud" */
+    experiences?: Experience[];
+    /** Count of certifications from Sanity */
     certCount?: number;
+    /** Count of projects from Sanity */
     projectCount?: number;
+    /** Count of published blog posts from Sanity */
     postCount?: number;
 }
 
+const FALLBACK = "TBC";
+
 /**
- * Four stat rows grouped into a single One UI-style card. On wide
- * viewports the rows lay out in a 4-col grid with vertical dividers;
- * on narrow viewports they stack as 2x2 with horizontal dividers.
+ * Pulls the earliest 4-digit year out of a list of experience `date`
+ * fields. Date is free-form text in Sanity (e.g. "Aug 2021 – Present"),
+ * so we just scan for the smallest year token across all entries.
+ */
+function earliestYearFrom(experiences: Experience[] = []): number | null {
+    let earliest: number | null = null;
+    for (const exp of experiences) {
+        if (!exp.date) continue;
+        const matches = exp.date.match(/\b(19\d{2}|20\d{2})\b/g);
+        if (!matches) continue;
+        for (const m of matches) {
+            const year = parseInt(m, 10);
+            if (!earliest || year < earliest) earliest = year;
+        }
+    }
+    return earliest;
+}
+
+function formatCount(n?: number): string {
+    return n && n > 0 ? `${n}` : FALLBACK;
+}
+
+/**
+ * Four stat rows grouped into a single One UI-style card. Values come
+ * directly from Sanity content — when a category is empty we show
+ * "TBC" rather than a fake fallback number.
  */
 export default function StatsBar({
+    experiences,
     certCount,
     projectCount,
     postCount,
 }: StatsBarProps) {
+    const earliestYear = earliestYearFrom(experiences);
+    const yearsValue = earliestYear
+        ? `${Math.max(1, new Date().getFullYear() - earliestYear)}+`
+        : FALLBACK;
+
     const stats = [
-        { Icon: Briefcase, color: "c1" as const, value: "3+", label: "Years in cloud" },
+        {
+            Icon: Briefcase,
+            color: "c1" as const,
+            value: yearsValue,
+            label: "Years in cloud",
+        },
         {
             Icon: Award,
             color: "c2" as const,
-            value: certCount && certCount > 0 ? `${certCount}` : "5+",
+            value: formatCount(certCount),
             label: "Certifications",
         },
         {
             Icon: Rocket,
             color: "c3" as const,
-            value: projectCount && projectCount > 0 ? `${projectCount}` : "10+",
+            value: formatCount(projectCount),
             label: "Projects shipped",
         },
         {
             Icon: GraduationCap,
             color: "c1" as const,
-            value: postCount && postCount > 0 ? `${postCount}` : "Dozens",
+            value: formatCount(postCount),
             label: "Articles & write-ups",
         },
     ];

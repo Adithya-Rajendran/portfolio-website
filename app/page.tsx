@@ -7,6 +7,7 @@ import {
     getAllCertifications,
     getAllProjects,
     getAllPosts,
+    getAllExperiences,
 } from "@/lib/sanity-client";
 import HeroContent from "@/components/home/hero-content";
 
@@ -25,13 +26,15 @@ async function HeroWithData() {
 }
 
 async function StatsWithData() {
-    const [certifications, projects, posts] = await Promise.all([
+    const [certifications, projects, posts, experiences] = await Promise.all([
         getAllCertifications(),
         getAllProjects(),
         getAllPosts(),
+        getAllExperiences(),
     ]);
     return (
         <StatsBar
+            experiences={experiences}
             certCount={certifications.length}
             projectCount={projects.length}
             postCount={posts.length}
