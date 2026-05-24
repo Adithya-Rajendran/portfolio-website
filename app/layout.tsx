@@ -120,15 +120,18 @@ export default function RootLayout({
                 <ProfilePageJsonLd />
             </head>
             <body
-                className={`${inter.className} bg-[#f0fdf4] text-slate-900 relative pt-28 sm:pt-36 dark:bg-[#0a0f1a] dark:text-slate-200`}
+                className={`${inter.className} bg-[#f0fdf4] text-slate-900 relative pt-28 sm:pt-32 dark:bg-[#0a0f1a] dark:text-slate-200 antialiased`}
             >
+                {/* Single soft accent in the top-right. The previous two
+                    overlapping blobs felt busy; a single quiet glow keeps
+                    the emerald identity without competing with content. */}
                 <div
-                    className="bg-emerald-200/40 absolute top-[-6rem] -z-10 right-[11rem] h-[31.25rem] w-[31.25rem] rounded-full blur-[10rem] sm:w-[68.75rem] dark:bg-emerald-900/20"
+                    className="pointer-events-none fixed top-[-12rem] right-[-12rem] -z-10 h-[40rem] w-[40rem] rounded-full blur-[8rem] bg-emerald-200/30 dark:bg-emerald-500/10"
                     style={{ contain: "paint", willChange: "auto" }}
                     aria-hidden="true"
                 />
                 <div
-                    className="bg-teal-100/50 absolute top-[-1rem] -z-10 left-[-35rem] h-[31.25rem] w-[50rem] rounded-full blur-[10rem] sm:w-[68.75rem] md:left-[-33rem] lg:left-[-28rem] xl:left-[-15rem] 2xl:left-[-5rem] dark:bg-cyan-900/15"
+                    className="pointer-events-none fixed bottom-[-16rem] left-[-12rem] -z-10 h-[36rem] w-[36rem] rounded-full blur-[8rem] bg-teal-100/30 dark:bg-cyan-500/[0.04]"
                     style={{ contain: "paint", willChange: "auto" }}
                     aria-hidden="true"
                 />
