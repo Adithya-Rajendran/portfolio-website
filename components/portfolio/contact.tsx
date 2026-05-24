@@ -30,7 +30,7 @@ export default function Contact() {
             ref={setRefs}
             className={cn(
                 "mb-20 sm:mb-28 w-[min(100%,38rem)] text-center",
-                "motion-safe:transition-opacity motion-safe:duration-1000",
+                "transition-opacity duration-1000",
                 inView ? "opacity-100" : "opacity-0",
             )}
         >

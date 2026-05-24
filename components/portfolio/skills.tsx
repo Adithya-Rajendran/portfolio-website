@@ -94,7 +94,7 @@ export default function Skills({ skillCategories }: SkillsProps) {
                                         }}
                                         className={cn(
                                             `${colors.bg} ${colors.border} ${colors.text} rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 ${colors.darkBorder}`,
-                                            "motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-out",
+                                            "transition-all duration-500 ease-out",
                                             inView
                                                 ? "opacity-100 translate-y-0"
                                                 : "opacity-0 translate-y-8",

@@ -53,7 +53,7 @@ export default function Experience({ experiences }: ExperienceProps) {
                             key={item._id}
                             className={cn(
                                 "relative pl-12 sm:pl-0 mb-10 last:mb-0",
-                                "motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-out",
+                                "transition-all duration-500 ease-out",
                                 isVisible
                                     ? "opacity-100 translate-y-0"
                                     : "opacity-0 translate-y-6",

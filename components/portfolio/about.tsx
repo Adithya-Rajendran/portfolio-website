@@ -19,7 +19,7 @@ export default function About({ body }: AboutProps) {
             ref={ref}
             id="about"
             style={{ animationDelay: "175ms" }}
-            className="mb-28 max-w-[45rem] text-center leading-8 sm:mb-40 scroll-mt-28 motion-safe:animate-slide-up motion-safe:opacity-0"
+            className="mb-28 max-w-[45rem] text-center leading-8 sm:mb-40 scroll-mt-28 animate-slide-up"
         >
             <SectionHeading>About me</SectionHeading>
             {body ? (

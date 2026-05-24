@@ -33,7 +33,7 @@ export default function RevealOnScroll({
         <Tag
             ref={ref}
             className={cn(
-                "motion-safe:transition-[opacity,transform] motion-safe:duration-700 motion-safe:ease-out",
+                "transition-all duration-700 ease-out",
                 inView
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-8",
