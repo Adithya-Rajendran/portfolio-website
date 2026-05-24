@@ -45,7 +45,7 @@
         "sanity": "^5.26.0",
         "sharp": "^0.34.5",
         "shiki": "^4.1.0",
-        "tailwind-merge": "^2.2.1",
+        "tailwind-merge": "^3.6.0",
         "tailwindcss": "^4.3.0",
         "typescript": "~5.9",
         "zod": "^4.4.3"
