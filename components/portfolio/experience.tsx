@@ -3,15 +3,10 @@
 import React from "react";
 import Image from "next/image";
 import SectionHeading from "../section-heading";
-import {
-    VerticalTimeline,
-    VerticalTimelineElement,
-} from "react-vertical-timeline-component";
-import "react-vertical-timeline-component/style.min.css";
 import { useInView } from "react-intersection-observer";
 import { useSectionInView } from "@/lib/hooks";
-import { useTheme } from "@/context/theme-context";
 import { urlForImage } from "@/lib/sanity-image";
+import { cn } from "@/lib/utils";
 import type { Experience as TExperience } from "@/sanity.types";
 
 interface ExperienceProps {
@@ -20,13 +15,11 @@ interface ExperienceProps {
 
 export default function Experience({ experiences }: ExperienceProps) {
     const { ref: sectionRef } = useSectionInView("Experience", 0.3);
-    const { theme } = useTheme();
 
-    // Separate observer with triggerOnce so `isVisible` latches true on first
-    // entry and stays true — VerticalTimelineElement's `visible` prop drives a
-    // one-shot animation and we don't want it to re-fire on scroll.
+    // Latch on first scroll-in: drives a one-shot staggered fade for each
+    // entry. triggerOnce keeps isVisible true after the section leaves view.
     const { ref: visibilityRef, inView: isVisible } = useInView({
-        threshold: 0.3,
+        threshold: 0.15,
         triggerOnce: true,
     });
 
@@ -45,76 +38,90 @@ export default function Experience({ experiences }: ExperienceProps) {
             className="scroll-mt-28 mb-28 sm:mb-40"
         >
             <SectionHeading>My experience</SectionHeading>
-            <VerticalTimeline lineColor="">
-                {experiences.map((item) => (
-                    <VerticalTimelineElement
-                        key={item._id}
-                        visible={isVisible}
-                        contentStyle={{
-                            background:
-                                theme === "light"
-                                    ? "#ffffff"
-                                    : "rgba(255, 255, 255, 0.03)",
-                            boxShadow: "none",
-                            border:
-                                theme === "light"
-                                    ? "1px solid #a7f3d0"
-                                    : "1px solid rgba(255, 255, 255, 0.08)",
-                            textAlign: "left",
-                            padding: "1.3rem 2rem",
-                        }}
-                        contentArrowStyle={{
-                            borderRight:
-                                theme === "light"
-                                    ? "0.4rem solid #6ee7b7"
-                                    : "0.4rem solid rgba(52, 211, 153, 0.4)",
-                        }}
-                        date={item.date}
-                        icon={
-                            item.icon ? (
-                                <Image
-                                    src={urlForImage(item.icon)
-                                        .width(60)
-                                        .height(60)
-                                        .url()}
-                                    alt={item.icon.alt || item.title || ""}
-                                    width={30}
-                                    height={30}
-                                    sizes="30px"
-                                    className="object-contain"
-                                />
-                            ) : undefined
-                        }
-                        iconStyle={{
-                            background:
-                                theme === "light"
-                                    ? "#ecfdf5"
-                                    : "rgba(255, 255, 255, 0.05)",
-                            fontSize: "1.5rem",
-                            color: theme === "light" ? "#047857" : "#34d399",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <h3 className="font-semibold capitalize">
-                            {item.title || ""}
-                        </h3>
-                        <p className="font-normal !mt-0">{item.org || ""}</p>
-                        <p className="font-normal mt-0">
-                            {item.location || ""}
-                        </p>
-                        {(item.description || []).map((desc, index) => (
-                            <p
-                                key={index}
-                                className="!mt-1 !font-normal text-slate-600 dark:text-slate-400"
+
+            <ol className="relative mx-auto max-w-5xl">
+                {/* Vertical spine — left-aligned on mobile, centered on desktop */}
+                <div
+                    aria-hidden="true"
+                    className="absolute top-0 bottom-0 w-0.5 left-4 sm:left-1/2 sm:-translate-x-px bg-emerald-200 dark:bg-emerald-500/20"
+                />
+
+                {experiences.map((item, i) => {
+                    const isLeft = i % 2 === 0;
+                    return (
+                        <li
+                            key={item._id}
+                            className={cn(
+                                "relative pl-12 sm:pl-0 mb-10 last:mb-0",
+                                "motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-out",
+                                isVisible
+                                    ? "opacity-100 translate-y-0"
+                                    : "opacity-0 translate-y-6",
+                            )}
+                            style={{
+                                transitionDelay: isVisible
+                                    ? `${Math.min(i * 90, 600)}ms`
+                                    : "0ms",
+                            }}
+                        >
+                            {/* Icon circle on the spine */}
+                            <div className="absolute z-10 top-0 left-0 sm:left-1/2 sm:-translate-x-1/2 w-8 h-8 rounded-full bg-emerald-50 dark:bg-white/5 border-2 border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
+                                {item.icon ? (
+                                    <Image
+                                        src={urlForImage(item.icon)
+                                            .width(60)
+                                            .height(60)
+                                            .url()}
+                                        alt={item.icon.alt || item.title || ""}
+                                        width={20}
+                                        height={20}
+                                        sizes="20px"
+                                        className="object-contain"
+                                    />
+                                ) : null}
+                            </div>
+
+                            {/* Card — full width on mobile (right of spine);
+                                desktop alternates sides */}
+                            <article
+                                className={cn(
+                                    "rounded-lg border p-5 bg-white dark:bg-white/[0.03] border-emerald-200 dark:border-white/10",
+                                    "sm:w-[calc(50%-2.5rem)]",
+                                    isLeft
+                                        ? "sm:ml-0 sm:mr-auto sm:text-right"
+                                        : "sm:ml-auto sm:mr-0 sm:text-left",
+                                )}
                             >
-                                {`• ${desc}`}
-                            </p>
-                        ))}
-                    </VerticalTimelineElement>
-                ))}
-            </VerticalTimeline>
+                                {item.date && (
+                                    <p className="text-xs uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2">
+                                        {item.date}
+                                    </p>
+                                )}
+                                <h3 className="font-semibold capitalize text-slate-900 dark:text-slate-100">
+                                    {item.title || ""}
+                                </h3>
+                                {item.org && (
+                                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                                        {item.org}
+                                    </p>
+                                )}
+                                {item.location && (
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                                        {item.location}
+                                    </p>
+                                )}
+                                {item.description && item.description.length > 0 && (
+                                    <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                                        {item.description.map((desc, idx) => (
+                                            <li key={idx}>{`• ${desc}`}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </article>
+                        </li>
+                    );
+                })}
+            </ol>
         </section>
     );
 }

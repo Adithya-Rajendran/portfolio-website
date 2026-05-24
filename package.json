@@ -37,7 +37,6 @@
         "react-dom": "^19.2.6",
         "react-icons": "^5.5.0",
         "react-intersection-observer": "^10.0.3",
-        "react-vertical-timeline-component": "^4.0.0",
         "resend": "^6.12.3",
         "sanity": "^5.26.0",
         "sharp": "^0.34.5",
@@ -46,9 +45,6 @@
         "tailwindcss": "^4.3.0",
         "typescript": "~6.0.3",
         "zod": "^4.4.3"
-    },
-    "devDependencies": {
-        "@types/react-vertical-timeline-component": "^3.3.6"
     },
     "pnpm": {
         "overrides": {
