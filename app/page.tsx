@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
+import { cacheLife } from "next/cache";
 import type { PortableTextBlock } from "@portabletext/react";
 import {
     getIntro,
@@ -10,6 +11,7 @@ import {
     getAllExperiences,
 } from "@/lib/sanity-client";
 import HeroContent from "@/components/home/hero-content";
+import { computeYearsValue } from "@/components/home/stats-bar";
 
 const StatsBar = dynamic(() => import("@/components/home/stats-bar"));
 const ToolsMarquee = dynamic(() => import("@/components/home/tools-marquee"));
@@ -26,15 +28,18 @@ async function HeroWithData() {
 }
 
 async function StatsWithData() {
+    "use cache";
+    cacheLife("days");
     const [certifications, projects, posts, experiences] = await Promise.all([
         getAllCertifications(),
         getAllProjects(),
         getAllPosts(),
         getAllExperiences(),
     ]);
+    const yearsValue = computeYearsValue(experiences);
     return (
         <StatsBar
-            experiences={experiences}
+            yearsValue={yearsValue}
             certCount={certifications.length}
             projectCount={projects.length}
             postCount={posts.length}

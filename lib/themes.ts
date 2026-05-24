@@ -11,7 +11,7 @@
 
 export type ThemeId = "glass" | "aurora" | "sunset" | "plum";
 
-export const DEFAULT_THEME: ThemeId = "glass";
+export const DEFAULT_THEME: ThemeId = "aurora";
 
 export interface Theme {
     id: ThemeId;
@@ -23,16 +23,16 @@ export interface Theme {
 
 export const themes: Theme[] = [
     {
-        id: "glass",
-        label: "Surface Glass",
-        description: "Cool indigo, violet, and sky.",
-        swatch: ["#6366f1", "#a78bfa", "#38bdf8"],
-    },
-    {
         id: "aurora",
         label: "Aurora",
         description: "Emerald, teal, and cyan.",
         swatch: ["#10b981", "#14b8a6", "#22d3ee"],
+    },
+    {
+        id: "glass",
+        label: "Surface Glass",
+        description: "Cool indigo, violet, and sky.",
+        swatch: ["#6366f1", "#a78bfa", "#38bdf8"],
     },
     {
         id: "sunset",

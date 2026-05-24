@@ -4,8 +4,8 @@ import { Award, Briefcase, GraduationCap, Rocket } from "lucide-react";
 import type { Experience } from "@/sanity.types";
 
 interface StatsBarProps {
-    /** Experiences from Sanity — used to derive "years in cloud" */
-    experiences?: Experience[];
+    /** Pre-computed years-in-cloud string (e.g. "4+" or "TBC") */
+    yearsValue: string;
     /** Count of certifications from Sanity */
     certCount?: number;
     /** Count of projects from Sanity */
@@ -35,6 +35,17 @@ function earliestYearFrom(experiences: Experience[] = []): number | null {
     return earliest;
 }
 
+/**
+ * Compute the "Years in cloud" stat from Sanity experiences. Must be
+ * called from a "use cache" boundary in the server parent — Next.js
+ * 16's Cache Components forbid `new Date()` in unscoped prerender.
+ */
+export function computeYearsValue(experiences: Experience[] = []): string {
+    const earliestYear = earliestYearFrom(experiences);
+    if (!earliestYear) return FALLBACK;
+    return `${Math.max(1, new Date().getFullYear() - earliestYear)}+`;
+}
+
 function formatCount(n?: number): string {
     return n && n > 0 ? `${n}` : FALLBACK;
 }
@@ -45,16 +56,11 @@ function formatCount(n?: number): string {
  * "TBC" rather than a fake fallback number.
  */
 export default function StatsBar({
-    experiences,
+    yearsValue,
     certCount,
     projectCount,
     postCount,
 }: StatsBarProps) {
-    const earliestYear = earliestYearFrom(experiences);
-    const yearsValue = earliestYear
-        ? `${Math.max(1, new Date().getFullYear() - earliestYear)}+`
-        : FALLBACK;
-
     const stats = [
         {
             Icon: Briefcase,

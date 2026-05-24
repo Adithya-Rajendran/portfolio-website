@@ -27,7 +27,24 @@
    Dark-mode overrides live in the .dark[data-theme="x"] block below.
    ───────────────────────────────────────────────────────────────────── */
 
+/* Default + Aurora: emerald / teal / cyan */
 :root,
+[data-theme="aurora"] {
+    --c1: 5 150 105;          /* emerald-600 */
+    --c2: 13 148 136;         /* teal-600 */
+    --c3: 8 145 178;          /* cyan-600 */
+    --mesh-a: 16 185 129;     /* emerald-500 */
+    --mesh-b: 34 211 238;     /* cyan-400 */
+}
+
+.dark,
+.dark[data-theme="aurora"] {
+    --c1: 52 211 153;         /* emerald-400 */
+    --c2: 45 212 191;         /* teal-400 */
+    --c3: 34 211 238;         /* cyan-400 */
+}
+
+/* Surface Glass: indigo / violet / sky */
 [data-theme="glass"] {
     --c1: 79 70 229;          /* indigo-600 */
     --c2: 124 58 237;         /* violet-600 */
@@ -36,25 +53,10 @@
     --mesh-b: 56 189 248;
 }
 
-.dark,
 .dark[data-theme="glass"] {
     --c1: 129 140 248;        /* indigo-400 */
     --c2: 167 139 250;        /* violet-400 */
     --c3: 56 189 248;         /* sky-400 */
-}
-
-[data-theme="aurora"] {
-    --c1: 5 150 105;
-    --c2: 13 148 136;
-    --c3: 8 145 178;
-    --mesh-a: 16 185 129;
-    --mesh-b: 34 211 238;
-}
-
-.dark[data-theme="aurora"] {
-    --c1: 52 211 153;
-    --c2: 45 212 191;
-    --c3: 34 211 238;
 }
 
 [data-theme="sunset"] {
