@@ -22,7 +22,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                 title={
                     <>
                         Adithya{" "}
-                        <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-sky-500 dark:from-indigo-300 dark:via-violet-300 dark:to-sky-300 bg-clip-text text-transparent">
+                        <span className="text-accent-gradient">
                             Rajendran
                         </span>
                     </>
@@ -40,7 +40,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                     <>
                         <Link
                             href="/portfolio#contact"
-                            className="group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 dark:from-indigo-500 dark:to-violet-500"
+                            className="group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-white shadow-accent bg-accent-gradient hover:brightness-110 transition-all focus:outline-none focus-visible:ring-2 ring-accent"
                         >
                             Contact me
                             <ArrowRight className="w-4 h-4 opacity-80 transition group-hover:translate-x-0.5" />
@@ -75,12 +75,11 @@ export default function Intro({ body, subtitle }: IntroProps) {
                     </>
                 }
             >
-                {/* Portrait sits between eyebrow and title */}
                 <div className="flex justify-center mb-8">
                     <div className="relative">
                         <div
                             aria-hidden="true"
-                            className="absolute -inset-1.5 rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-sky-400 opacity-70 blur-md"
+                            className="absolute -inset-1.5 rounded-full bg-accent-halo opacity-70 blur-md"
                         />
                         <Image
                             src={heroImg}

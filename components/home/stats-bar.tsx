@@ -7,22 +7,13 @@ interface StatsBarProps {
     postCount?: number;
 }
 
-/**
- * Single horizontal glass strip showing at-a-glance metrics. Numbers
- * come from CMS counts where available with sensible fallbacks so the
- * bar never looks empty.
- */
 export default function StatsBar({
     certCount,
     projectCount,
     postCount,
 }: StatsBarProps) {
     const stats = [
-        {
-            icon: Briefcase,
-            value: "3+",
-            label: "Years in cloud",
-        },
+        { icon: Briefcase, value: "3+", label: "Years in cloud" },
         {
             icon: Award,
             value: certCount && certCount > 0 ? `${certCount}` : "5+",
@@ -52,7 +43,7 @@ export default function StatsBar({
                             key={label}
                             className="flex items-center gap-4 px-5 py-5 sm:py-6"
                         >
-                            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-200/40 flex items-center justify-center text-indigo-600 dark:from-indigo-400/15 dark:to-violet-400/15 dark:border-indigo-400/20 dark:text-indigo-300">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-soft border border-accent-soft flex items-center justify-center text-accent">
                                 <Icon className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">

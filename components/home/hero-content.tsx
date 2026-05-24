@@ -10,13 +10,6 @@ interface HeroContentProps {
     subtitle?: string | null;
 }
 
-/**
- * Home hero — asymmetric grid:
- *   left:  identity + headline + CTAs + socials
- *   right: floating glass profile card with status pill
- *
- * On mobile, the profile card stacks above the identity copy.
- */
 export default function HeroContent({ subtitle }: HeroContentProps) {
     return (
         <section className="relative w-full pt-6 pb-20 sm:pt-12 sm:pb-28">
@@ -24,7 +17,6 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                 <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
                     {/* ── Identity / headline / CTAs ── */}
                     <div className="text-center lg:text-left">
-                        {/* Status pill */}
                         <div className="inline-flex items-center gap-2 rounded-full glass px-3.5 py-1.5 text-xs font-medium text-slate-700 animate-fade-in dark:text-slate-200">
                             <span className="relative flex h-2 w-2">
                                 <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
@@ -38,7 +30,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                                 Hi, I&apos;m{" "}
                             </span>
                             <br className="hidden sm:block" />
-                            <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-sky-500 dark:from-indigo-300 dark:via-violet-300 dark:to-sky-300 bg-clip-text text-transparent animate-gradient-text">
+                            <span className="text-accent-gradient animate-gradient-text">
                                 Adithya Rajendran
                             </span>
                         </h1>
@@ -62,9 +54,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                                 size="lg"
                                 className="gap-2"
                             >
-                                <Link href="/blogs">
-                                    Read the Blog
-                                </Link>
+                                <Link href="/blogs">Read the Blog</Link>
                             </Button>
                         </div>
 
@@ -73,7 +63,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                                 href="https://www.linkedin.com/in/adithya-rajendran"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 transition-colors"
+                                className="text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
                                 aria-label="LinkedIn profile"
                             >
                                 <FaLinkedin className="w-5 h-5" />
@@ -82,7 +72,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                                 href="https://github.com/Adithya-Rajendran"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 transition-colors"
+                                className="text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
                                 aria-label="GitHub profile"
                             >
                                 <FaGithub className="w-5 h-5" />
@@ -93,7 +83,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                             />
                             <a
                                 href="/resume"
-                                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 transition-colors"
+                                className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
                             >
                                 <Download className="w-4 h-4" />
                                 Resume
@@ -103,16 +93,14 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
 
                     {/* ── Floating glass profile card ── */}
                     <div className="relative mx-auto w-full max-w-sm lg:max-w-none animate-scale-fade-in [animation-delay:180ms]">
-                        {/* Decorative gradient halo behind the card */}
                         <div
                             aria-hidden="true"
-                            className="absolute -inset-6 -z-10 bg-gradient-to-br from-indigo-400/20 via-violet-400/20 to-sky-400/20 blur-3xl rounded-full"
+                            className="absolute -inset-6 -z-10 bg-accent-halo opacity-30 blur-3xl rounded-full"
                         />
 
                         <div className="glass-strong relative rounded-3xl p-6 sm:p-7">
-                            {/* Top tag row */}
                             <div className="flex items-center justify-between mb-6">
-                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300">
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
                                     <Sparkles className="w-3.5 h-3.5" />
                                     Profile
                                 </span>
@@ -122,11 +110,10 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                             </div>
 
                             <div className="flex items-center gap-5">
-                                {/* Avatar */}
                                 <div className="relative shrink-0">
                                     <div
                                         aria-hidden="true"
-                                        className="absolute -inset-1 rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-sky-400 opacity-80 blur-sm"
+                                        className="absolute -inset-1 rounded-full bg-accent-halo opacity-80 blur-sm"
                                     />
                                     <Image
                                         src={heroImg}

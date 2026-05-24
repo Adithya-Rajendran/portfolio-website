@@ -17,7 +17,7 @@ export default function Certification(cert: TCertification) {
         >
             <div className="flex items-start gap-5">
                 {cert.badge && (
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl overflow-hidden bg-indigo-50/40 dark:bg-indigo-500/5 border border-indigo-200/40 dark:border-white/10">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl overflow-hidden bg-accent-soft border border-accent-soft">
                         <Image
                             src={urlForImage(cert.badge)
                                 .width(160)
@@ -36,7 +36,7 @@ export default function Certification(cert: TCertification) {
                     </div>
                 )}
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white group-hover:text-accent transition-colors">
                         {cert.title || ""}
                     </h3>
                     {cert.org && (

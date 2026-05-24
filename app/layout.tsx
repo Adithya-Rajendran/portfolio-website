@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import "./globals.css";
 import { Inter, Space_Grotesk } from "next/font/google";
 import Footer from "@/components/footer";
-import ThemeSwitch from "@/components/theme-switch";
+import ThemeSelector from "@/components/theme-selector";
 import ThemeContextProvider from "@/context/theme-context";
+import { DEFAULT_THEME } from "@/lib/themes";
 import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
@@ -125,6 +126,13 @@ export default function RootLayout({
             suppressHydrationWarning
         >
             <head>
+                {/* Read persisted accent theme from localStorage and apply
+                    it to <html> before React hydrates to prevent FOUC. */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=['glass','aurora','sunset','plum'];document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
+                    }}
+                />
                 <PersonJsonLd />
                 <WebSiteJsonLd />
                 <ProfilePageJsonLd />
@@ -146,7 +154,7 @@ export default function RootLayout({
                         {children}
                         <Footer />
                         <Toaster />
-                        <ThemeSwitch />
+                        <ThemeSelector />
                     </ThemeContextProvider>
                 </Suspense>
                 <SpeedInsights />

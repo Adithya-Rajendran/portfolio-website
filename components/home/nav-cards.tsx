@@ -10,10 +10,10 @@ const cards = [
             "Experience, projects, certifications, and skills in cloud engineering and cybersecurity.",
         cta: "Explore work",
         Icon: Briefcase,
-        gradient: "from-indigo-500/15 via-indigo-500/5 to-transparent",
-        iconBg:
-            "bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-400/20",
-        accent: "text-indigo-600 dark:text-indigo-300",
+        // c1 = primary theme color
+        wash: "bg-c1-wash",
+        iconBg: "bg-c1-soft border-c1-soft text-accent",
+        accent: "text-accent",
     },
     {
         href: "/blogs",
@@ -22,10 +22,10 @@ const cards = [
             "Field notes on cybersecurity, homelabs, infrastructure, and the occasional rabbit hole.",
         cta: "Read writing",
         Icon: PenLine,
-        gradient: "from-violet-500/15 via-violet-500/5 to-transparent",
-        iconBg:
-            "bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-400/20",
-        accent: "text-violet-600 dark:text-violet-300",
+        // c2 = secondary
+        wash: "bg-c2-wash",
+        iconBg: "bg-c2-soft border-c2-soft text-c2",
+        accent: "text-c2",
     },
     {
         href: "/portfolio#contact",
@@ -34,10 +34,10 @@ const cards = [
             "Have a project in mind, an open role, or just want to compare notes? Drop me a line.",
         cta: "Start a chat",
         Icon: MailCheck,
-        gradient: "from-sky-500/15 via-sky-500/5 to-transparent",
-        iconBg:
-            "bg-sky-50 text-sky-600 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-400/20",
-        accent: "text-sky-600 dark:text-sky-300",
+        // c3 = tertiary
+        wash: "bg-c3-wash",
+        iconBg: "bg-c3-soft border-c3-soft text-c3",
+        accent: "text-c3",
     },
 ];
 
@@ -55,7 +55,7 @@ export default function NavCards() {
                         description,
                         cta,
                         Icon,
-                        gradient,
+                        wash,
                         iconBg,
                         accent,
                     }) => (
@@ -66,7 +66,7 @@ export default function NavCards() {
                         >
                             <div
                                 aria-hidden="true"
-                                className={`pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full blur-3xl bg-gradient-to-br ${gradient}`}
+                                className={`pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full blur-3xl ${wash}`}
                             />
 
                             <div className="relative flex flex-col h-full">

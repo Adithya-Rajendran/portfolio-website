@@ -6,7 +6,7 @@ export default function NotFound() {
     return (
         <main className="flex flex-col items-center justify-center px-4 min-h-[70vh] text-center w-full">
             <h1 className="font-display text-5xl sm:text-7xl font-bold mb-6 tracking-tight">
-                <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-sky-500 dark:from-indigo-300 dark:via-violet-300 dark:to-sky-300 bg-clip-text text-transparent animate-gradient-text">
+                <span className="text-accent-gradient animate-gradient-text">
                     404
                 </span>
             </h1>

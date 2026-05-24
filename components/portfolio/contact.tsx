@@ -25,7 +25,7 @@ export default function Contact() {
     const { toast } = useToast();
 
     const inputClasses =
-        "w-full h-12 px-4 rounded-xl bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500 dark:focus:border-indigo-400/60";
+        "w-full h-12 px-4 rounded-xl bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500";
 
     return (
         <section

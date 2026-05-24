@@ -15,10 +15,9 @@ export default function BioSection({ homeBio }: BioSectionProps) {
             className="w-full max-w-3xl mx-auto px-4"
         >
             <div className="glass rounded-2xl px-7 py-10 sm:px-10 sm:py-12 relative overflow-hidden">
-                {/* Quote glyph */}
                 <span
                     aria-hidden="true"
-                    className="absolute -top-6 -left-2 font-display text-[10rem] leading-none text-indigo-500/10 dark:text-indigo-300/10 select-none"
+                    className="absolute -top-6 -left-2 font-display text-[10rem] leading-none text-accent opacity-10 select-none"
                 >
                     &ldquo;
                 </span>

@@ -8,11 +8,6 @@ interface SkillsPreviewProps {
     skillCategories: SkillCategory[];
 }
 
-/**
- * Bento-style asymmetric grid: first card spans two columns on desktop
- * for visual rhythm. Each card is a glass surface with a soft gradient
- * wash matching its color variant.
- */
 export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
     if (skillCategories.length === 0) return null;
 
@@ -43,11 +38,10 @@ export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
                             title={category.title ?? ""}
                             skills={category.skills ?? []}
                             variant={styles.badgeVariant}
-                            accentColor={styles.accentColor}
+                            textColor={styles.textColor}
                             bgColor={styles.bgColor}
-                            iconBorder={styles.iconBorder}
-                            gradientFrom={styles.gradientFrom}
-                            gradientTo={styles.gradientTo}
+                            borderColor={styles.borderColor}
+                            wash={styles.wash}
                             wide={idx === 0}
                         />
                     );
@@ -62,22 +56,20 @@ function SkillCard({
     title,
     skills,
     variant,
-    accentColor,
+    textColor,
     bgColor,
-    iconBorder,
-    gradientFrom,
-    gradientTo,
+    borderColor,
+    wash,
     wide,
 }: {
     icon: React.ReactNode;
     title: string;
     skills: string[];
-    variant: "indigo" | "sky" | "violet";
-    accentColor: string;
+    variant: "c1" | "c2" | "c3";
+    textColor: string;
     bgColor: string;
-    iconBorder: string;
-    gradientFrom: string;
-    gradientTo: string;
+    borderColor: string;
+    wash: string;
     wide?: boolean;
 }) {
     return (
@@ -86,21 +78,18 @@ function SkillCard({
                 wide ? "md:col-span-2 md:row-span-1" : ""
             }`}
         >
-            {/* Soft color wash in the corner */}
             <div
                 aria-hidden="true"
-                className={`pointer-events-none absolute -top-12 -right-12 w-44 h-44 rounded-full blur-2xl bg-gradient-to-br ${gradientFrom} ${gradientTo}`}
+                className={`pointer-events-none absolute -top-12 -right-12 w-44 h-44 rounded-full blur-2xl ${wash}`}
             />
 
             <div className="relative">
                 <div
-                    className={`inline-flex items-center justify-center w-11 h-11 rounded-xl ${bgColor} ${accentColor} border ${iconBorder} mb-5`}
+                    className={`inline-flex items-center justify-center w-11 h-11 rounded-xl ${bgColor} ${textColor} border ${borderColor} mb-5`}
                 >
                     {icon}
                 </div>
-                <h3
-                    className={`font-display text-lg font-semibold mb-4 text-slate-900 dark:text-white`}
-                >
+                <h3 className="font-display text-lg font-semibold mb-4 text-slate-900 dark:text-white">
                     {title}
                 </h3>
                 <div className="flex flex-wrap gap-1.5">

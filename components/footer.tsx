@@ -35,17 +35,15 @@ const socialLinks = [
 export default function Footer() {
     return (
         <footer className="relative mt-28 sm:mt-36">
-            {/* Glass surface across the bottom */}
             <div className="glass border-t border-x-0 border-b-0 rounded-none">
                 <div className="mx-auto max-w-6xl px-6 sm:px-8 py-14 sm:py-16">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-10">
-                        {/* Brand column */}
                         <div className="col-span-2 sm:col-span-2">
                             <Link
                                 href="/"
                                 className="inline-flex items-center gap-2 font-display text-xl font-semibold tracking-tight"
                             >
-                                <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                                <span className="text-accent-gradient">
                                     Adithya
                                 </span>
                                 <span className="text-slate-700 dark:text-slate-200">
@@ -58,12 +56,11 @@ export default function Footer() {
                                 writer.
                             </p>
                             <div className="mt-5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-500">
-                                <MapPin className="w-3.5 h-3.5 text-indigo-500/80 dark:text-indigo-400/80" />
+                                <MapPin className="w-3.5 h-3.5 text-accent opacity-80" />
                                 <span>Remote · United States</span>
                             </div>
                         </div>
 
-                        {/* Sitemap column */}
                         <div>
                             <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500 mb-4">
                                 Sitemap
@@ -73,7 +70,7 @@ export default function Footer() {
                                     <li key={link.href}>
                                         <Link
                                             href={link.href}
-                                            className="text-sm text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 transition-colors"
+                                            className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                                         >
                                             {link.label}
                                         </Link>
@@ -82,7 +79,6 @@ export default function Footer() {
                             </ul>
                         </div>
 
-                        {/* Portfolio column */}
                         <div>
                             <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500 mb-4">
                                 Portfolio
@@ -92,7 +88,7 @@ export default function Footer() {
                                     <li key={link.href}>
                                         <Link
                                             href={link.href}
-                                            className="text-sm text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 transition-colors"
+                                            className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                                         >
                                             {link.label}
                                         </Link>
@@ -102,7 +98,6 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    {/* Bottom divider row */}
                     <div className="mt-12 pt-6 border-t border-slate-200/60 dark:border-white/8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <small className="text-xs text-slate-500 dark:text-slate-500">
                             © {new Date().getFullYear()} Adithya Rajendran. All
@@ -117,7 +112,7 @@ export default function Footer() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={`${label} profile`}
-                                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200/70 bg-white/60 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 dark:hover:border-indigo-400/40 dark:hover:text-indigo-300 transition-colors backdrop-blur-md"
+                                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200/70 bg-white/60 text-slate-500 hover:border-accent-soft hover:text-accent dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 transition-colors backdrop-blur-md"
                                 >
                                     <Icon className="w-4 h-4" />
                                 </a>

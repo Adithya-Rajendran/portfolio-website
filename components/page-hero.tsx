@@ -12,10 +12,7 @@ interface PageHeroProps {
 }
 
 /**
- * Top-of-page hero shared by /portfolio and /blogs. Generous vertical
- * space, restrained color, large display-font headline. `children` slot
- * sits between the eyebrow and title for hero-specific extras like the
- * portrait or social links.
+ * Top-of-page hero shared by /portfolio and /blogs.
  */
 export default function PageHero({
     eyebrow,
@@ -35,7 +32,7 @@ export default function PageHero({
         >
             <div className="mx-auto max-w-3xl">
                 {eyebrow && (
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-300 mb-6">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent mb-6">
                         {eyebrow}
                     </p>
                 )}
@@ -44,7 +41,7 @@ export default function PageHero({
                     {title}
                 </h1>
                 {tagline && (
-                    <p className="mt-4 text-lg sm:text-xl font-medium text-balance bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-300 dark:to-violet-300 bg-clip-text text-transparent">
+                    <p className="mt-4 text-lg sm:text-xl font-medium text-balance text-accent-gradient">
                         {tagline}
                     </p>
                 )}

@@ -34,8 +34,9 @@ const variants: Record<
 
 /**
  * Highlight marks named after the original "emerald/teal/orange" palette
- * remain in CMS content. They now resolve to the indigo / violet / sky
- * accents of the Surface Glass theme so existing posts keep working.
+ * remain in CMS content. They now resolve to the three theme positions
+ * (c1/c2/c3) so existing posts adapt to whichever accent theme the
+ * visitor has selected.
  */
 export function createPortableTextStyles(
     variant: Variant,
@@ -57,32 +58,22 @@ export function createPortableTextStyles(
             ),
             em: ({ children }) => <span className="italic">{children}</span>,
             highlightEmerald: ({ children }) => (
-                <span
-                    className={`${v.highlight} text-indigo-600 dark:text-indigo-300`}
-                >
+                <span className={`${v.highlight} text-accent`}>
                     {children}
                 </span>
             ),
             highlightTeal: ({ children }) => (
-                <span
-                    className={`${v.highlight} text-sky-600 dark:text-sky-300`}
-                >
-                    {children}
-                </span>
+                <span className={`${v.highlight} text-c2`}>{children}</span>
             ),
             highlightOrange: ({ children }) => (
-                <span
-                    className={`${v.highlight} text-violet-600 dark:text-violet-300`}
-                >
-                    {children}
-                </span>
+                <span className={`${v.highlight} text-c3`}>{children}</span>
             ),
             link: ({ children, value }) => (
                 <a
                     href={value?.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-600 hover:underline dark:text-indigo-300"
+                    className="text-accent hover:underline"
                 >
                     {children}
                 </a>

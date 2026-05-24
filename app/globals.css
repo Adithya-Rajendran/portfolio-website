@@ -6,7 +6,7 @@
     --font-sans: "Inter", "Inter Fallback";
     --font-display: "Space Grotesk", "Space Grotesk Fallback", "Inter", sans-serif;
 
-    /* Surface Glass palette — cool zinc base with indigo/violet accent */
+    /* Surface Glass palette — cool zinc base */
     --color-background-light: #f5f7fb;
     --color-background-dark: #07091a;
 
@@ -14,22 +14,251 @@
     --color-surface-medium: rgba(255, 255, 255, 0.08);
     --color-surface-strong: rgba(255, 255, 255, 0.12);
     --color-border-subtle: rgba(255, 255, 255, 0.1);
-
-    --color-indigo-glow: #818cf8;
-    --color-violet-glow: #a78bfa;
-    --color-sky-glow: #38bdf8;
-}
-
-html {
-    --line-color: rgba(99, 102, 241, 0.12);
-}
-
-html.dark {
-    --line-color: rgba(129, 140, 248, 0.12);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Glassmorphism utilities — the visual signature of this theme
+   THEME TOKENS — each [data-theme] block defines its accent palette as
+   RGB triplets so they compose with alpha (`rgb(var(--c1) / 0.1)`).
+   Dark-mode overrides live in the .dark[data-theme="x"] block below.
+   ───────────────────────────────────────────────────────────────────── */
+
+/* Default + Surface Glass: indigo / violet / sky */
+:root,
+[data-theme="glass"] {
+    --c1: 79 70 229;          /* indigo-600 */
+    --c2: 124 58 237;         /* violet-600 */
+    --c3: 2 132 199;          /* sky-600 */
+    --mesh-a: 99 102 241;     /* indigo-500 */
+    --mesh-b: 56 189 248;     /* sky-400 */
+}
+
+.dark,
+.dark[data-theme="glass"] {
+    --c1: 129 140 248;        /* indigo-400 */
+    --c2: 167 139 250;        /* violet-400 */
+    --c3: 56 189 248;         /* sky-400 */
+}
+
+/* Aurora: emerald / teal / cyan */
+[data-theme="aurora"] {
+    --c1: 5 150 105;          /* emerald-600 */
+    --c2: 13 148 136;         /* teal-600 */
+    --c3: 8 145 178;          /* cyan-600 */
+    --mesh-a: 16 185 129;     /* emerald-500 */
+    --mesh-b: 34 211 238;     /* cyan-400 */
+}
+
+.dark[data-theme="aurora"] {
+    --c1: 52 211 153;         /* emerald-400 */
+    --c2: 45 212 191;         /* teal-400 */
+    --c3: 34 211 238;         /* cyan-400 */
+}
+
+/* Sunset: orange / rose / amber */
+[data-theme="sunset"] {
+    --c1: 234 88 12;          /* orange-600 */
+    --c2: 225 29 72;          /* rose-600 */
+    --c3: 217 119 6;          /* amber-600 */
+    --mesh-a: 251 146 60;     /* orange-400 */
+    --mesh-b: 251 113 133;    /* rose-400 */
+}
+
+.dark[data-theme="sunset"] {
+    --c1: 251 146 60;         /* orange-400 */
+    --c2: 251 113 133;        /* rose-400 */
+    --c3: 251 191 36;         /* amber-400 */
+}
+
+/* Plum: fuchsia / violet / pink */
+[data-theme="plum"] {
+    --c1: 192 38 211;         /* fuchsia-600 */
+    --c2: 124 58 237;         /* violet-600 */
+    --c3: 219 39 119;         /* pink-600 */
+    --mesh-a: 217 70 239;     /* fuchsia-500 */
+    --mesh-b: 244 114 182;    /* pink-400 */
+}
+
+.dark[data-theme="plum"] {
+    --c1: 232 121 249;        /* fuchsia-400 */
+    --c2: 167 139 250;        /* violet-400 */
+    --c3: 244 114 182;        /* pink-400 */
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   ACCENT UTILITY CLASSES — semantic names that resolve via theme tokens.
+   `text-accent`, `bg-accent-soft`, `border-accent-soft`, etc. are the
+   primary-color utilities. `text-c2`, `bg-c3-soft`, etc. are for the
+   three-category contexts (nav cards, skill variants).
+   ───────────────────────────────────────────────────────────────────── */
+
+.text-accent {
+    color: rgb(var(--c1));
+}
+.hover\:text-accent:hover {
+    color: rgb(var(--c1));
+}
+.group:hover .group-hover\:text-accent {
+    color: rgb(var(--c1));
+}
+
+.bg-accent {
+    background-color: rgb(var(--c1));
+}
+.bg-accent-soft {
+    background-color: rgb(var(--c1) / 0.08);
+}
+.dark .bg-accent-soft {
+    background-color: rgb(var(--c1) / 0.15);
+}
+.hover\:bg-accent-soft:hover {
+    background-color: rgb(var(--c1) / 0.08);
+}
+.dark .hover\:bg-accent-soft:hover {
+    background-color: rgb(var(--c1) / 0.15);
+}
+
+.border-accent {
+    border-color: rgb(var(--c1));
+}
+.border-accent-soft {
+    border-color: rgb(var(--c1) / 0.22);
+}
+.dark .border-accent-soft {
+    border-color: rgb(var(--c1) / 0.28);
+}
+.hover\:border-accent-soft:hover {
+    border-color: rgb(var(--c1) / 0.4);
+}
+
+.ring-accent {
+    --tw-ring-color: rgb(var(--c1));
+}
+
+/* Gradient bg — primary buttons, eyebrow lines, etc. */
+.bg-accent-gradient {
+    background-image: linear-gradient(
+        to right,
+        rgb(var(--c1)),
+        rgb(var(--c2))
+    );
+}
+.bg-accent-gradient-soft {
+    background-image: linear-gradient(
+        to right,
+        rgb(var(--c1) / 0.15),
+        rgb(var(--c2) / 0.15)
+    );
+}
+
+.bg-accent-gradient-vertical {
+    background-image: linear-gradient(
+        to bottom,
+        rgb(var(--c1)),
+        rgb(var(--c2))
+    );
+}
+
+/* Three-stop gradient text — used for the hero name */
+.text-accent-gradient {
+    background-image: linear-gradient(
+        to right,
+        rgb(var(--c1)),
+        rgb(var(--c2)),
+        rgb(var(--c3))
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Soft halo behind avatars / cards */
+.bg-accent-halo {
+    background-image: linear-gradient(
+        to bottom right,
+        rgb(var(--c1) / 0.7),
+        rgb(var(--c2) / 0.7),
+        rgb(var(--c3) / 0.6)
+    );
+}
+
+/* Shadow that picks up the theme color */
+.shadow-accent {
+    box-shadow: 0 4px 14px rgb(var(--c1) / 0.25);
+}
+.hover\:shadow-accent:hover {
+    box-shadow: 0 12px 32px rgb(var(--c1) / 0.4);
+}
+
+/* Categorical c2 / c3 utilities for three-color contexts */
+.text-c2 {
+    color: rgb(var(--c2));
+}
+.text-c3 {
+    color: rgb(var(--c3));
+}
+.bg-c1-soft {
+    background-color: rgb(var(--c1) / 0.08);
+}
+.dark .bg-c1-soft {
+    background-color: rgb(var(--c1) / 0.15);
+}
+.bg-c2-soft {
+    background-color: rgb(var(--c2) / 0.08);
+}
+.dark .bg-c2-soft {
+    background-color: rgb(var(--c2) / 0.15);
+}
+.bg-c3-soft {
+    background-color: rgb(var(--c3) / 0.08);
+}
+.dark .bg-c3-soft {
+    background-color: rgb(var(--c3) / 0.15);
+}
+.border-c1-soft {
+    border-color: rgb(var(--c1) / 0.22);
+}
+.dark .border-c1-soft {
+    border-color: rgb(var(--c1) / 0.28);
+}
+.border-c2-soft {
+    border-color: rgb(var(--c2) / 0.22);
+}
+.dark .border-c2-soft {
+    border-color: rgb(var(--c2) / 0.28);
+}
+.border-c3-soft {
+    border-color: rgb(var(--c3) / 0.22);
+}
+.dark .border-c3-soft {
+    border-color: rgb(var(--c3) / 0.28);
+}
+
+/* Soft gradient washes for card corners */
+.bg-c1-wash {
+    background-image: linear-gradient(
+        to bottom right,
+        rgb(var(--c1) / 0.18),
+        rgb(var(--c1) / 0)
+    );
+}
+.bg-c2-wash {
+    background-image: linear-gradient(
+        to bottom right,
+        rgb(var(--c2) / 0.18),
+        rgb(var(--c2) / 0)
+    );
+}
+.bg-c3-wash {
+    background-image: linear-gradient(
+        to bottom right,
+        rgb(var(--c3) / 0.18),
+        rgb(var(--c3) / 0)
+    );
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Glassmorphism utilities
    ───────────────────────────────────────────────────────────────────── */
 
 .glass {
@@ -86,7 +315,7 @@ html.dark {
         0 12px 32px -8px rgba(0, 0, 0, 0.6);
 }
 
-/* Subtle outer glow used for hover states on interactive glass surfaces */
+/* Theme-aware glow on hover for interactive glass surfaces */
 .glow-hover {
     transition:
         box-shadow 0.3s ease,
@@ -95,23 +324,23 @@ html.dark {
 }
 
 .glow-hover:hover {
-    border-color: rgba(99, 102, 241, 0.3);
+    border-color: rgb(var(--c1) / 0.3);
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 0 0 1px rgba(99, 102, 241, 0.08),
-        0 20px 48px -12px rgba(99, 102, 241, 0.18);
+        0 0 0 1px rgb(var(--c1) / 0.08),
+        0 20px 48px -12px rgb(var(--c1) / 0.18);
 }
 
 .dark .glow-hover:hover {
-    border-color: rgba(129, 140, 248, 0.3);
+    border-color: rgb(var(--c1) / 0.3);
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.08) inset,
-        0 0 0 1px rgba(129, 140, 248, 0.1),
-        0 20px 48px -12px rgba(129, 140, 248, 0.25);
+        0 0 0 1px rgb(var(--c1) / 0.1),
+        0 20px 48px -12px rgb(var(--c1) / 0.25);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Animated gradient mesh — the ambient background "weather" of the site
+   Animated gradient mesh background — orbs use theme mesh tokens
    ───────────────────────────────────────────────────────────────────── */
 
 .mesh-bg {
@@ -130,6 +359,7 @@ html.dark {
     filter: blur(96px);
     opacity: 0.55;
     will-change: transform;
+    transition: background 0.6s ease;
 }
 
 .mesh-bg::before {
@@ -139,8 +369,8 @@ html.dark {
     height: 50rem;
     background: radial-gradient(
         circle at center,
-        rgba(99, 102, 241, 0.5),
-        rgba(99, 102, 241, 0) 60%
+        rgb(var(--mesh-a) / 0.5),
+        rgb(var(--mesh-a) / 0) 60%
     );
     animation: drift-a 30s ease-in-out infinite alternate;
 }
@@ -152,8 +382,8 @@ html.dark {
     height: 45rem;
     background: radial-gradient(
         circle at center,
-        rgba(56, 189, 248, 0.35),
-        rgba(56, 189, 248, 0) 60%
+        rgb(var(--mesh-b) / 0.35),
+        rgb(var(--mesh-b) / 0) 60%
     );
     animation: drift-b 36s ease-in-out infinite alternate;
 }
@@ -161,8 +391,8 @@ html.dark {
 .dark .mesh-bg::before {
     background: radial-gradient(
         circle at center,
-        rgba(99, 102, 241, 0.35),
-        rgba(99, 102, 241, 0) 60%
+        rgb(var(--mesh-a) / 0.35),
+        rgb(var(--mesh-a) / 0) 60%
     );
     opacity: 0.7;
 }
@@ -170,8 +400,8 @@ html.dark {
 .dark .mesh-bg::after {
     background: radial-gradient(
         circle at center,
-        rgba(167, 139, 250, 0.28),
-        rgba(167, 139, 250, 0) 60%
+        rgb(var(--mesh-b) / 0.28),
+        rgb(var(--mesh-b) / 0) 60%
     );
     opacity: 0.6;
 }
@@ -194,7 +424,7 @@ html.dark {
     }
 }
 
-/* Subtle dot-grid texture overlay on the page */
+/* Subtle dot-grid texture overlay */
 .dot-grid {
     background-image: radial-gradient(
         circle at 1px 1px,
@@ -273,7 +503,6 @@ html.dark {
     animation: scale-fade-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Animated indigo→violet gradient text */
 @keyframes gradient-shift {
     0%,
     100% {
@@ -285,12 +514,10 @@ html.dark {
 }
 
 .animate-gradient-text {
-    background-size: 200% auto;
     animation: gradient-shift 6s ease-in-out infinite;
     will-change: background-position;
 }
 
-/* Pulsing status dot for "available" pills */
 @keyframes pulse-dot {
     0%,
     100% {
@@ -305,7 +532,6 @@ html.dark {
     animation: pulse-dot 2.4s ease-in-out infinite;
 }
 
-/* Header slide-down */
 @keyframes slide-down {
     from {
         opacity: 0;
@@ -321,7 +547,6 @@ html.dark {
     animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Horizontal marquee for the tools strip */
 @keyframes marquee {
     from {
         transform: translateX(0);
@@ -336,7 +561,6 @@ html.dark {
     will-change: transform;
 }
 
-/* Display font helper — applied to large headings */
 .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.02em;

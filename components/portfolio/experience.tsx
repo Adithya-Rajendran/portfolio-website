@@ -38,10 +38,9 @@ export default function Experience({ experiences }: ExperienceProps) {
             />
 
             <ol className="relative">
-                {/* Vertical spine — gradient line that fades at both ends */}
                 <div
                     aria-hidden="true"
-                    className="absolute top-3 bottom-3 w-px left-[19px] bg-gradient-to-b from-transparent via-indigo-300/60 to-transparent dark:via-indigo-400/30"
+                    className="absolute top-3 bottom-3 w-px left-[19px] bg-accent-gradient-vertical opacity-30"
                 />
 
                 {experiences.map((item, i) => (
@@ -60,11 +59,10 @@ export default function Experience({ experiences }: ExperienceProps) {
                                 : "0ms",
                         }}
                     >
-                        {/* Icon dot on the spine, with halo */}
                         <div className="absolute top-0 left-0 z-10">
                             <div
                                 aria-hidden="true"
-                                className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/30 to-violet-500/30 blur-md"
+                                className="absolute inset-0 rounded-full bg-accent-halo opacity-30 blur-md"
                             />
                             <div className="glass relative w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
                                 {item.icon ? (
@@ -82,7 +80,7 @@ export default function Experience({ experiences }: ExperienceProps) {
                                 ) : (
                                     <span
                                         aria-hidden="true"
-                                        className="w-2 h-2 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500"
+                                        className="w-2 h-2 rounded-full bg-accent-gradient"
                                     />
                                 )}
                             </div>
@@ -90,7 +88,7 @@ export default function Experience({ experiences }: ExperienceProps) {
 
                         <article className="glass rounded-2xl p-5 sm:p-6">
                             {item.date && (
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300 mb-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent mb-2">
                                     {item.date}
                                 </p>
                             )}
@@ -105,7 +103,7 @@ export default function Experience({ experiences }: ExperienceProps) {
                                 </p>
                             )}
                             {item.description && item.description.length > 0 && (
-                                <ul className="mt-3 space-y-1.5 text-sm sm:text-base text-slate-600 dark:text-slate-300 list-disc pl-5 marker:text-indigo-400/60">
+                                <ul className="mt-3 space-y-1.5 text-sm sm:text-base text-slate-600 dark:text-slate-300 list-disc pl-5 marker:text-accent">
                                     {item.description.map((desc, idx) => (
                                         <li
                                             key={idx}

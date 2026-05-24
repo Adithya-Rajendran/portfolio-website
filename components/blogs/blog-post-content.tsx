@@ -83,7 +83,7 @@ export function BlogPostHero({ post, readingTime }: BlogPostHeroProps) {
                     {/* Meta info */}
                     <div className="flex items-center justify-center gap-4 sm:gap-6 mb-6">
                         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                            <CalendarDays className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                            <CalendarDays className="w-4 h-4 text-accent" />
                             <time dateTime={post.date || ""}>
                                 {formatDate(post.date ?? undefined)}
                             </time>
@@ -92,7 +92,7 @@ export function BlogPostHero({ post, readingTime }: BlogPostHeroProps) {
                             <>
                                 <div className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600" />
                                 <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                                    <Clock className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                                    <Clock className="w-4 h-4 text-accent" />
                                     <span>{readingTime} min read</span>
                                 </div>
                             </>
@@ -111,11 +111,11 @@ export function BlogPostHero({ post, readingTime }: BlogPostHeroProps) {
                         </p>
                     )}
 
-                    {/* Decorative divider */}
+                    {/* Decorative divider — picks up the theme accent */}
                     <div className="flex items-center justify-center mt-10">
-                        <div className="h-px w-16 bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent" />
-                        <div className="mx-3 w-1.5 h-1.5 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500" />
-                        <div className="h-px w-16 bg-gradient-to-l from-transparent via-violet-400/50 to-transparent" />
+                        <div className="h-px w-16 bg-gradient-to-r from-transparent via-accent to-transparent opacity-40" />
+                        <div className="mx-3 w-1.5 h-1.5 rounded-full bg-accent-gradient" />
+                        <div className="h-px w-16 bg-gradient-to-l from-transparent via-accent to-transparent opacity-40" />
                     </div>
                 </div>
             </header>

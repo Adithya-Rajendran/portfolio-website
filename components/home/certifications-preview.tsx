@@ -49,7 +49,7 @@ export default function CertificationsPreview({
                             </div>
                         )}
                         <div className="min-w-0">
-                            <h3 className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors line-clamp-2">
+                            <h3 className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-accent transition-colors line-clamp-2">
                                 {cert.title ?? ""}
                             </h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">

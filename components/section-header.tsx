@@ -9,11 +9,9 @@ interface SectionHeaderProps {
 }
 
 /**
- * Unified section header used at the top of every major section on
- * /portfolio and /blogs. Three visual layers:
- *   - tiny uppercase indigo eyebrow (optional)
- *   - large display-font semibold tracking-tight title
- *   - secondary slate description (optional)
+ * Unified section header — small accent eyebrow + display title +
+ * optional description. The accent line and eyebrow color both pull
+ * from the active theme.
  */
 export default function SectionHeader({
     eyebrow,
@@ -37,8 +35,8 @@ export default function SectionHeader({
                         align === "center" && "justify-center",
                     )}
                 >
-                    <span className="inline-block w-6 h-px bg-gradient-to-r from-indigo-500 to-violet-500" />
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-300">
+                    <span className="inline-block w-6 h-px bg-accent-gradient" />
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">
                         {eyebrow}
                     </p>
                 </div>

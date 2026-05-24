@@ -34,10 +34,9 @@ export default function Header() {
                         >
                             <Link
                                 className={clsx(
-                                    "flex w-full items-center justify-center px-3 py-2 hover:text-indigo-600 transition-colors dark:hover:text-indigo-300",
+                                    "flex w-full items-center justify-center px-3 py-2 hover:text-accent transition-colors",
                                     {
-                                        "text-indigo-700 dark:text-white":
-                                            activeSection === link.name,
+                                        "text-accent": activeSection === link.name,
                                     },
                                 )}
                                 href={link.hash}
@@ -55,7 +54,7 @@ export default function Header() {
 
                                 {link.name === activeSection && (
                                     <motion.span
-                                        className="bg-gradient-to-r from-indigo-500/15 to-violet-500/15 ring-1 ring-indigo-400/30 rounded-full absolute inset-0 -z-10 dark:from-indigo-400/15 dark:to-violet-400/15 dark:ring-indigo-300/30"
+                                        className="bg-accent-gradient-soft border-accent-soft border rounded-full absolute inset-0 -z-10"
                                         layoutId="activeSection"
                                         transition={{
                                             type: "spring",

@@ -9,42 +9,39 @@ export const variantIcons: Record<string, React.ReactElement> = {
 
 /**
  * Sanity content uses three colorVariant keys (emerald/cyan/violet)
- * from the original palette. They now map onto the indigo/sky/violet
- * accents of the Surface Glass theme so existing content keeps working.
+ * inherited from the original palette. They now map onto the three
+ * theme accent positions (c1/c2/c3) so existing content adapts to
+ * whichever accent theme the visitor has selected.
  */
 export const variantStyles: Record<
     string,
     {
-        accentColor: string;
+        textColor: string;
         bgColor: string;
-        iconBorder: string;
-        badgeVariant: "indigo" | "sky" | "violet";
-        gradientFrom: string;
-        gradientTo: string;
+        borderColor: string;
+        wash: string;
+        badgeVariant: "c1" | "c2" | "c3";
     }
 > = {
     emerald: {
-        accentColor: "text-indigo-600 dark:text-indigo-300",
-        bgColor: "bg-indigo-50 dark:bg-indigo-500/10",
-        iconBorder: "border-indigo-200 dark:border-indigo-400/20",
-        badgeVariant: "indigo",
-        gradientFrom: "from-indigo-500/15",
-        gradientTo: "to-indigo-500/0",
+        textColor: "text-accent",
+        bgColor: "bg-c1-soft",
+        borderColor: "border-c1-soft",
+        wash: "bg-c1-wash",
+        badgeVariant: "c1",
     },
     cyan: {
-        accentColor: "text-sky-600 dark:text-sky-300",
-        bgColor: "bg-sky-50 dark:bg-sky-500/10",
-        iconBorder: "border-sky-200 dark:border-sky-400/20",
-        badgeVariant: "sky",
-        gradientFrom: "from-sky-500/15",
-        gradientTo: "to-sky-500/0",
+        textColor: "text-c2",
+        bgColor: "bg-c2-soft",
+        borderColor: "border-c2-soft",
+        wash: "bg-c2-wash",
+        badgeVariant: "c2",
     },
     violet: {
-        accentColor: "text-violet-600 dark:text-violet-300",
-        bgColor: "bg-violet-50 dark:bg-violet-500/10",
-        iconBorder: "border-violet-200 dark:border-violet-400/20",
-        badgeVariant: "violet",
-        gradientFrom: "from-violet-500/15",
-        gradientTo: "to-violet-500/0",
+        textColor: "text-c3",
+        bgColor: "bg-c3-soft",
+        borderColor: "border-c3-soft",
+        wash: "bg-c3-wash",
+        badgeVariant: "c3",
     },
 };

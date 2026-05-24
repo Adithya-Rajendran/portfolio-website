@@ -4,9 +4,12 @@ import type { PortableTextComponents } from "@portabletext/react";
 import { slugify, extractText } from "./utils";
 
 /**
- * Factory function that creates portable text components.
- * Accepts a map of pre-highlighted code HTML (key → html)
- * produced by shiki on the server.
+ * Factory that creates portable text components for blog post bodies.
+ * Accepts a map of pre-highlighted code HTML (key → html) produced by
+ * shiki on the server.
+ *
+ * Accent-colored marks (h2 line, inline code, links) pull from the
+ * active theme via the `text-accent` / `bg-accent-soft` utilities.
  */
 export function createPortableTextComponents(
     highlightedCode: Record<string, string>,
@@ -48,7 +51,6 @@ export function createPortableTextComponents(
 
                 return (
                     <div className="my-8 rounded-xl overflow-hidden border border-slate-200/80 dark:border-white/10">
-                        {/* Header bar */}
                         <div className="bg-slate-100/80 dark:bg-white/[0.04] px-4 py-2.5 flex items-center justify-between border-b border-slate-200/80 dark:border-white/10">
                             <div className="flex items-center gap-2">
                                 <div className="flex gap-1.5">
@@ -69,7 +71,6 @@ export function createPortableTextComponents(
                             )}
                         </div>
 
-                        {/* Code body — either highlighted or plain */}
                         {hasHighlight ? (
                             <div
                                 className="shiki-wrapper text-sm overflow-x-auto [&_pre]:!bg-transparent [&_pre]:p-5 [&_pre]:m-0 [&_code]:font-mono [&_code]:leading-relaxed bg-[#161824]"
@@ -96,7 +97,7 @@ export function createPortableTextComponents(
                         id={id}
                         className="font-display text-2xl sm:text-3xl font-bold mt-14 mb-5 text-balance text-slate-900 dark:text-white relative scroll-mt-24"
                     >
-                        <span className="absolute -left-4 top-1 bottom-1 w-1 bg-gradient-to-b from-indigo-500 to-violet-500 rounded-full hidden sm:block" />
+                        <span className="absolute -left-4 top-1 bottom-1 w-1 bg-accent-gradient-vertical rounded-full hidden sm:block" />
                         {children}
                     </h2>
                 );
@@ -129,9 +130,9 @@ export function createPortableTextComponents(
                 </p>
             ),
             blockquote: ({ children }) => (
-                <blockquote className="relative my-10 pl-8 pr-6 py-6 border-l-4 border-indigo-500 bg-gradient-to-r from-indigo-50/80 to-transparent dark:from-indigo-950/30 dark:to-transparent rounded-r-xl">
+                <blockquote className="relative my-10 pl-8 pr-6 py-6 border-l-4 border-accent bg-accent-soft rounded-r-xl">
                     <svg
-                        className="absolute top-4 left-4 w-8 h-8 text-indigo-300/50 dark:text-indigo-400/30"
+                        className="absolute top-4 left-4 w-8 h-8 text-accent opacity-30"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                     >
@@ -155,7 +156,7 @@ export function createPortableTextComponents(
                 </em>
             ),
             code: ({ children }) => (
-                <code className="text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 rounded-md px-1.5 py-0.5 font-mono text-[0.875em] border border-indigo-200/60 dark:border-indigo-400/20">
+                <code className="text-accent bg-accent-soft rounded-md px-1.5 py-0.5 font-mono text-[0.875em] border border-accent-soft">
                     {children}
                 </code>
             ),
@@ -172,7 +173,7 @@ export function createPortableTextComponents(
                 return (
                     <a
                         href={href}
-                        className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200 underline decoration-1 underline-offset-2 transition-colors"
+                        className="text-accent hover:opacity-80 underline decoration-1 underline-offset-2 transition-opacity"
                         {...(isExternal
                             ? { target: "_blank", rel: "noopener noreferrer" }
                             : {})}
@@ -184,12 +185,12 @@ export function createPortableTextComponents(
         },
         list: {
             bullet: ({ children }) => (
-                <ul className="list-disc my-6 ml-6 space-y-3 text-slate-700 dark:text-slate-300 marker:text-indigo-400/60">
+                <ul className="list-disc my-6 ml-6 space-y-3 text-slate-700 dark:text-slate-300 marker:text-accent">
                     {children}
                 </ul>
             ),
             number: ({ children }) => (
-                <ol className="list-decimal my-6 ml-6 space-y-3 text-slate-700 dark:text-slate-300 marker:text-indigo-400/80">
+                <ol className="list-decimal my-6 ml-6 space-y-3 text-slate-700 dark:text-slate-300 marker:text-accent">
                     {children}
                 </ol>
             ),

@@ -35,7 +35,7 @@ export default function Project({
         >
             <Card flush className="h-full flex flex-col overflow-hidden">
                 {imageUrl && (
-                    <div className="relative aspect-[16/10] overflow-hidden bg-indigo-50/30 dark:bg-white/[0.02]">
+                    <div className="relative aspect-[16/10] overflow-hidden bg-accent-soft">
                         <Image
                             src={imageUrl}
                             alt={image?.alt || `Screenshot of ${title || ""}`}
@@ -44,7 +44,6 @@ export default function Project({
                             loading="lazy"
                             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                         />
-                        {/* Subtle gradient overlay along the bottom edge */}
                         <div
                             aria-hidden="true"
                             className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-transparent dark:from-[#0a0c1a]/60"
@@ -52,7 +51,7 @@ export default function Project({
                     </div>
                 )}
                 <div className="flex flex-col flex-1 p-6 sm:p-7">
-                    <h3 className="font-display text-xl font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                    <h3 className="font-display text-xl font-semibold text-slate-900 dark:text-white group-hover:text-accent transition-colors">
                         {title || ""}
                     </h3>
                     {description && (
@@ -65,7 +64,7 @@ export default function Project({
                             href={linkUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-3 inline-flex w-fit text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200 transition-colors"
+                            className="mt-3 inline-flex w-fit text-sm font-medium text-accent hover:opacity-80 transition-opacity"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {linkTitle} →
@@ -79,7 +78,7 @@ export default function Project({
                             {tags.map((tag, index) => (
                                 <li
                                     key={index}
-                                    className="rounded-full border border-indigo-200/60 bg-indigo-50/60 px-2.5 py-0.5 text-[0.7rem] font-medium uppercase tracking-wider text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-500/10 dark:text-indigo-300"
+                                    className="rounded-full border border-accent-soft bg-accent-soft px-2.5 py-0.5 text-[0.7rem] font-medium uppercase tracking-wider text-accent"
                                 >
                                     {tag}
                                 </li>

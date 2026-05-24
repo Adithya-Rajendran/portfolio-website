@@ -158,7 +158,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
             {/* Scroll progress — thin accent line */}
             <div className="h-px bg-slate-200 dark:bg-slate-700/50 mb-5 relative overflow-hidden">
                 <motion.div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-violet-500 origin-left"
+                    className="absolute inset-y-0 left-0 bg-accent-gradient origin-left"
                     style={{ width: "100%", scaleX: scrollYProgress }}
                 />
             </div>
@@ -171,7 +171,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                 {/* Sliding indicator bar */}
                 <div
                     ref={indicatorRef}
-                    className="absolute left-0 w-0.5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 transition-all duration-300 ease-out opacity-0"
+                    className="absolute left-0 w-0.5 rounded-full bg-accent-gradient-vertical transition-all duration-300 ease-out opacity-0"
                 />
 
                 <ul className="space-y-1">
@@ -230,7 +230,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                             !hasChildren ? "pl-5" : "",
                                             activeId ===
                                             section.heading.id
-                                                ? "text-indigo-600 dark:text-indigo-300 font-medium"
+                                                ? "text-accent font-medium"
                                                 : "text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200",
                                         ]
                                             .filter(Boolean)
@@ -280,7 +280,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                                     : "",
                                                                 activeId ===
                                                                 child.id
-                                                                    ? "text-indigo-600 dark:text-indigo-300 font-medium"
+                                                                    ? "text-accent font-medium"
                                                                     : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
                                                             ]
                                                                 .filter(

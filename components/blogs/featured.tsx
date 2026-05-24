@@ -108,12 +108,12 @@ function FeatureCard({
                 }`}
             >
                 {post.date && (
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300 mb-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent mb-2">
                         {formatDate(post.date)}
                     </p>
                 )}
                 <h3
-                    className={`font-display font-semibold leading-snug text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors ${
+                    className={`font-display font-semibold leading-snug text-slate-900 dark:text-white group-hover:text-accent transition-colors ${
                         isHero
                             ? "text-2xl sm:text-3xl tracking-tight"
                             : "text-base sm:text-lg"

@@ -12,10 +12,6 @@ interface SkillsProps {
     skillCategories: SkillCategory[];
 }
 
-/**
- * Portfolio /skills section — categories rendered as glass panels with
- * tag chips. Staggers each chip in once the section enters view.
- */
 export default function Skills({ skillCategories }: SkillsProps) {
     const { ref: sectionRef } = useSectionInView("Skills");
     const { ref: visibilityRef, inView } = useInView({
@@ -52,11 +48,11 @@ export default function Skills({ skillCategories }: SkillsProps) {
                         >
                             <div
                                 aria-hidden="true"
-                                className={`pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full blur-2xl bg-gradient-to-br ${styles.gradientFrom} ${styles.gradientTo}`}
+                                className={`pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full blur-2xl ${styles.wash}`}
                             />
                             <div className="relative">
                                 <h3
-                                    className={`text-xs font-semibold uppercase tracking-[0.18em] ${styles.accentColor} mb-5`}
+                                    className={`text-xs font-semibold uppercase tracking-[0.18em] ${styles.textColor} mb-5`}
                                 >
                                     {category.title}
                                 </h3>
