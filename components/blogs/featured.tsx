@@ -10,7 +10,9 @@ interface FeaturedProps {
 }
 
 function getSlug(post: TPost) {
-    return typeof post.slug === "string" ? post.slug : (post.slug?.current ?? "");
+    return typeof post.slug === "string"
+        ? post.slug
+        : (post.slug?.current ?? "");
 }
 
 function getImage(post: TPost, width: number, height: number) {
@@ -37,7 +39,11 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
                 {hero && <FeatureCard post={hero} variant="hero" />}
                 <div className="md:col-span-1 flex flex-col gap-5 sm:gap-6">
                     {sidePosts.map((post) => (
-                        <FeatureCard key={getSlug(post)} post={post} variant="side" />
+                        <FeatureCard
+                            key={getSlug(post)}
+                            post={post}
+                            variant="side"
+                        />
                     ))}
                 </div>
             </div>
@@ -55,7 +61,9 @@ function FeatureCard({
     const slug = getSlug(post);
     const title = post.title || "";
     const isHero = variant === "hero";
-    const imageUrl = isHero ? getImage(post, 900, 500) : getImage(post, 700, 400);
+    const imageUrl = isHero
+        ? getImage(post, 900, 500)
+        : getImage(post, 700, 400);
 
     return (
         <Card
@@ -63,7 +71,11 @@ function FeatureCard({
             aria-label={`Read more about ${title}`}
             title={`Read more about ${title}`}
             flush
-            className={isHero ? "md:col-span-2 flex flex-col" : "flex-1 flex flex-col"}
+            className={
+                isHero
+                    ? "md:col-span-2 flex flex-col"
+                    : "flex-1 flex flex-col"
+            }
         >
             {imageUrl && (
                 <div
@@ -84,6 +96,10 @@ function FeatureCard({
                         priority={isHero}
                         className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                     />
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"
+                    />
                 </div>
             )}
             <div
@@ -92,12 +108,12 @@ function FeatureCard({
                 }`}
             >
                 {post.date && (
-                    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300 mb-2">
                         {formatDate(post.date)}
                     </p>
                 )}
                 <h3
-                    className={`font-semibold leading-snug text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors ${
+                    className={`font-display font-semibold leading-snug text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors ${
                         isHero
                             ? "text-2xl sm:text-3xl tracking-tight"
                             : "text-base sm:text-lg"

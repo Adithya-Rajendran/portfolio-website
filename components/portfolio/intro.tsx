@@ -22,7 +22,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                 title={
                     <>
                         Adithya{" "}
-                        <span className="text-emerald-600 dark:text-emerald-400">
+                        <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-sky-500 dark:from-indigo-300 dark:via-violet-300 dark:to-sky-300 bg-clip-text text-transparent">
                             Rajendran
                         </span>
                     </>
@@ -40,14 +40,14 @@ export default function Intro({ body, subtitle }: IntroProps) {
                     <>
                         <Link
                             href="/portfolio#contact"
-                            className="group inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+                            className="group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 dark:from-indigo-500 dark:to-violet-500"
                         >
                             Contact me
                             <ArrowRight className="w-4 h-4 opacity-80 transition group-hover:translate-x-0.5" />
                         </Link>
                         <a
                             href="/resume"
-                            className="group inline-flex items-center gap-2 rounded-full border border-emerald-200/70 bg-white px-6 py-3 text-sm font-medium text-slate-800 transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                            className="group inline-flex items-center gap-2 rounded-full glass glow-hover px-6 py-3 text-sm font-medium text-slate-800 dark:text-slate-200"
                         >
                             Download CV
                             <Download className="w-4 h-4 opacity-70 transition group-hover:translate-y-0.5" />
@@ -58,7 +58,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label="LinkedIn"
-                                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-emerald-200/70 bg-white text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 dark:hover:text-emerald-400"
+                                className="glass glow-hover inline-flex items-center justify-center w-11 h-11 rounded-full text-slate-600 dark:text-slate-300"
                             >
                                 <FaLinkedin className="w-4 h-4" />
                             </a>
@@ -67,7 +67,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label="GitHub"
-                                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-emerald-200/70 bg-white text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 dark:hover:text-emerald-400"
+                                className="glass glow-hover inline-flex items-center justify-center w-11 h-11 rounded-full text-slate-600 dark:text-slate-300"
                             >
                                 <FaGithub className="w-4 h-4" />
                             </a>
@@ -77,18 +77,24 @@ export default function Intro({ body, subtitle }: IntroProps) {
             >
                 {/* Portrait sits between eyebrow and title */}
                 <div className="flex justify-center mb-8">
-                    <Image
-                        src={heroImg}
-                        alt="Portrait of Adithya Rajendran"
-                        width={104}
-                        height={104}
-                        quality={95}
-                        priority
-                        fetchPriority="high"
-                        loading="eager"
-                        sizes="104px"
-                        className="h-26 w-26 rounded-full object-cover ring-4 ring-emerald-300/40 dark:ring-emerald-500/30 shadow-xl shadow-emerald-200/30 dark:shadow-emerald-500/10"
-                    />
+                    <div className="relative">
+                        <div
+                            aria-hidden="true"
+                            className="absolute -inset-1.5 rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-sky-400 opacity-70 blur-md"
+                        />
+                        <Image
+                            src={heroImg}
+                            alt="Portrait of Adithya Rajendran"
+                            width={104}
+                            height={104}
+                            quality={95}
+                            priority
+                            fetchPriority="high"
+                            loading="eager"
+                            sizes="104px"
+                            className="relative h-26 w-26 rounded-full object-cover ring-2 ring-white dark:ring-[#0a0c1a]"
+                        />
+                    </div>
                 </div>
             </PageHero>
         </section>

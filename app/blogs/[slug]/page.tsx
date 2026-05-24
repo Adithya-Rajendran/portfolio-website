@@ -10,15 +10,13 @@ import { urlForImage } from "@/lib/sanity-image";
 /** Skeleton shown while the hero metadata loads (very brief) */
 function HeroSkeleton() {
     return (
-        <header className="relative py-12 sm:py-16 lg:py-20 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/50 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent" />
-            <div className="absolute inset-0 bg-grid-pattern opacity-50" />
+        <header className="relative py-14 sm:py-20 lg:py-24 overflow-hidden">
             <div className="relative max-w-3xl mx-auto px-6 sm:px-8 animate-pulse">
                 <div className="flex items-center justify-center gap-4 mb-6">
-                    <div className="h-4 w-32 bg-white/[0.06] rounded" />
+                    <div className="h-4 w-32 bg-slate-200/60 dark:bg-white/[0.06] rounded" />
                 </div>
-                <div className="h-10 sm:h-12 w-3/4 bg-white/[0.06] rounded mx-auto mb-6" />
-                <div className="h-5 w-2/3 bg-white/[0.04] rounded mx-auto" />
+                <div className="h-10 sm:h-12 w-3/4 bg-slate-200/60 dark:bg-white/[0.06] rounded mx-auto mb-6" />
+                <div className="h-5 w-2/3 bg-slate-200/60 dark:bg-white/[0.04] rounded mx-auto" />
             </div>
         </header>
     );
@@ -31,11 +29,11 @@ function BodySkeleton() {
             {[...Array(6)].map((_, i) => (
                 <div key={i} className="space-y-3">
                     {i % 3 === 0 && (
-                        <div className="h-6 w-48 bg-white/[0.06] rounded" />
+                        <div className="h-6 w-48 bg-slate-200/60 dark:bg-white/[0.06] rounded" />
                     )}
-                    <div className="h-4 w-full bg-white/[0.04] rounded" />
-                    <div className="h-4 w-5/6 bg-white/[0.04] rounded" />
-                    <div className="h-4 w-4/6 bg-white/[0.04] rounded" />
+                    <div className="h-4 w-full bg-slate-200/60 dark:bg-white/[0.04] rounded" />
+                    <div className="h-4 w-5/6 bg-slate-200/60 dark:bg-white/[0.04] rounded" />
+                    <div className="h-4 w-4/6 bg-slate-200/60 dark:bg-white/[0.04] rounded" />
                 </div>
             ))}
         </div>

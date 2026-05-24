@@ -43,7 +43,9 @@ export default function Latest({ posts: allPosts }: LatestProps) {
                                 <div className="relative aspect-[5/3] overflow-hidden">
                                     <Image
                                         src={imageUrl}
-                                        alt={post.image?.alt || post.title || ""}
+                                        alt={
+                                            post.image?.alt || post.title || ""
+                                        }
                                         fill
                                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                         loading="lazy"
@@ -53,11 +55,11 @@ export default function Latest({ posts: allPosts }: LatestProps) {
                             )}
                             <div className="flex flex-col flex-1 p-5 sm:p-6">
                                 {post.date && (
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300 mb-2">
                                         {formatDate(post.date)}
                                     </p>
                                 )}
-                                <h3 className="text-base sm:text-lg font-semibold leading-snug text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+                                <h3 className="font-display text-base sm:text-lg font-semibold leading-snug text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors line-clamp-2">
                                     {post.title || ""}
                                 </h3>
                                 {post.description && (

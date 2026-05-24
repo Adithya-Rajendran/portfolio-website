@@ -5,25 +5,27 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-    "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-emerald-400",
+    "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium ring-offset-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-indigo-400",
     {
         variants: {
             variant: {
                 default:
-                    "bg-emerald-700 text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500",
+                    "text-white shadow-lg shadow-indigo-500/25 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/40 dark:from-indigo-500 dark:to-violet-500 dark:hover:from-indigo-400 dark:hover:to-violet-400",
                 destructive:
                     "bg-red-500 text-slate-50 hover:bg-red-500/90 dark:bg-red-900 dark:text-slate-50 dark:hover:bg-red-900/90",
                 outline:
-                    "border border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50 hover:border-emerald-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-slate-50",
+                    "border border-slate-200 bg-white/70 backdrop-blur-md text-slate-800 hover:border-indigo-300 hover:bg-white hover:text-indigo-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08] dark:hover:border-indigo-400/40 dark:hover:text-white",
+                glass:
+                    "glass text-slate-800 hover:text-indigo-700 glow-hover dark:text-slate-100 dark:hover:text-white",
                 secondary:
-                    "bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10",
-                ghost: "hover:bg-emerald-50 hover:text-emerald-900 dark:hover:bg-white/5 dark:hover:text-slate-50",
-                link: "text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-400",
+                    "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:bg-white/[0.1]",
+                ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/[0.05] dark:hover:text-white",
+                link: "text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-400 rounded-md",
             },
             size: {
-                default: "h-10 px-4 py-2",
-                sm: "h-9 rounded-md px-3",
-                lg: "h-11 rounded-md px-8",
+                default: "h-10 px-5 py-2",
+                sm: "h-9 px-4",
+                lg: "h-12 px-7",
                 icon: "h-10 w-10",
             },
         },

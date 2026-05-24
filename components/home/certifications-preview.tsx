@@ -2,6 +2,7 @@ import Image from "next/image";
 import { urlForImage } from "@/lib/sanity-image";
 import type { Certification } from "@/sanity.types";
 import RevealOnScroll from "@/components/reveal-on-scroll";
+import SectionHeader from "@/components/section-header";
 
 interface CertificationsPreviewProps {
     certifications: Certification[];
@@ -13,21 +14,28 @@ export default function CertificationsPreview({
     if (certifications.length === 0) return null;
 
     return (
-        <RevealOnScroll as="section" className="w-full max-w-[64rem] pb-20">
-            <h2 className="text-2xl font-bold text-center mb-10 text-slate-900 dark:text-slate-100">
-                Certifications
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <RevealOnScroll
+            as="section"
+            className="w-full max-w-6xl mx-auto px-2 sm:px-6 pb-20"
+        >
+            <SectionHeader
+                eyebrow="Credentials"
+                title="Continuously certified"
+                description="Industry credentials that map directly onto the work I do every day."
+                align="center"
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {certifications.map((cert) => (
                     <a
                         key={cert._id}
                         href={cert.verifyUrl ?? "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex flex-col items-center gap-4 rounded-xl border border-emerald-200 bg-white p-6 transition-all hover:shadow-lg hover:shadow-emerald-100 hover:border-emerald-400 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-emerald-500/30 dark:hover:shadow-emerald-500/5"
+                        className="group glass glow-hover relative flex items-center gap-5 rounded-2xl p-5 sm:p-6"
                     >
                         {cert.badge && (
-                            <div className="relative w-20 h-20">
+                            <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
                                 <Image
                                     src={urlForImage(cert.badge)
                                         .width(160)
@@ -36,15 +44,15 @@ export default function CertificationsPreview({
                                     alt={cert.badge.alt || cert.title || ""}
                                     fill
                                     sizes="80px"
-                                    className="object-contain"
+                                    className="object-contain transition-transform duration-300 group-hover:scale-105"
                                 />
                             </div>
                         )}
-                        <div className="text-center">
-                            <h3 className="font-semibold text-sm text-emerald-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                        <div className="min-w-0">
+                            <h3 className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors line-clamp-2">
                                 {cert.title ?? ""}
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 {cert.org ?? ""}
                             </p>
                         </div>

@@ -4,55 +4,218 @@
 
 @theme inline {
     --font-sans: "Inter", "Inter Fallback";
-    --color-background-light: #f0fdf4;
-    --color-background-dark: #0a0f1a;
-    --color-cyber: #34d399;
-    --color-cyber-dim: #059669;
-    --color-cyan-accent: #22d3ee;
-    --color-violet-accent: #a78bfa;
-    --color-surface-light: rgba(255, 255, 255, 0.04);
-    --color-surface-medium: rgba(255, 255, 255, 0.07);
-    --color-border-subtle: rgba(255, 255, 255, 0.08);
+    --font-display: "Space Grotesk", "Space Grotesk Fallback", "Inter", sans-serif;
+
+    /* Surface Glass palette — cool zinc base with indigo/violet accent */
+    --color-background-light: #f5f7fb;
+    --color-background-dark: #07091a;
+
+    --color-surface-light: rgba(255, 255, 255, 0.6);
+    --color-surface-medium: rgba(255, 255, 255, 0.08);
+    --color-surface-strong: rgba(255, 255, 255, 0.12);
+    --color-border-subtle: rgba(255, 255, 255, 0.1);
+
+    --color-indigo-glow: #818cf8;
+    --color-violet-glow: #a78bfa;
+    --color-sky-glow: #38bdf8;
 }
 
 html {
-    --line-color: #cbd5e1;
+    --line-color: rgba(99, 102, 241, 0.12);
 }
 
 html.dark {
-    --line-color: rgba(52, 211, 153, 0.15);
+    --line-color: rgba(129, 140, 248, 0.12);
 }
 
-.borderBlack {
-    border-width: 1px;
-    border-color: rgb(0 0 0 / 0.1);
-}
+/* ─────────────────────────────────────────────────────────────────────
+   Glassmorphism utilities — the visual signature of this theme
+   ───────────────────────────────────────────────────────────────────── */
 
-.dark .borderBlack {
-    border-color: rgba(255, 255, 255, 0.08);
-}
-
-.glow-border {
-    border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.glow-cyber {
+.glass {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
     box-shadow:
-        0 4px 14px rgba(16, 185, 129, 0.12),
-        0 0 40px rgba(16, 185, 129, 0.04);
+        0 1px 0 rgba(255, 255, 255, 0.85) inset,
+        0 8px 32px -8px rgba(15, 23, 42, 0.08);
 }
 
-.dark .glow-cyber {
+.dark .glass {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
-        0 0 20px rgba(52, 211, 153, 0.15),
-        0 0 60px rgba(52, 211, 153, 0.05);
+        0 1px 0 rgba(255, 255, 255, 0.06) inset,
+        0 8px 32px -8px rgba(0, 0, 0, 0.6);
 }
 
-/* ── Hero entrance animations (CSS-only, GPU-composited) ── */
+.glass-strong {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 16px 48px -12px rgba(15, 23, 42, 0.12);
+}
 
-/* Universal reduced-motion respect: applies to every element and lets
-   component code use plain `transition-*` / `animate-*` utilities without
-   needing to wrap each one in a `motion-safe:` variant. */
+.dark .glass-strong {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.08) inset,
+        0 16px 48px -12px rgba(0, 0, 0, 0.7);
+}
+
+.glass-nav {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.85) inset,
+        0 12px 32px -12px rgba(15, 23, 42, 0.15);
+}
+
+.dark .glass-nav {
+    background: rgba(10, 12, 26, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.06) inset,
+        0 12px 32px -8px rgba(0, 0, 0, 0.6);
+}
+
+/* Subtle outer glow used for hover states on interactive glass surfaces */
+.glow-hover {
+    transition:
+        box-shadow 0.3s ease,
+        border-color 0.3s ease,
+        transform 0.3s ease;
+}
+
+.glow-hover:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 0 0 1px rgba(99, 102, 241, 0.08),
+        0 20px 48px -12px rgba(99, 102, 241, 0.18);
+}
+
+.dark .glow-hover:hover {
+    border-color: rgba(129, 140, 248, 0.3);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.08) inset,
+        0 0 0 1px rgba(129, 140, 248, 0.1),
+        0 20px 48px -12px rgba(129, 140, 248, 0.25);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Animated gradient mesh — the ambient background "weather" of the site
+   ───────────────────────────────────────────────────────────────────── */
+
+.mesh-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.mesh-bg::before,
+.mesh-bg::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(96px);
+    opacity: 0.55;
+    will-change: transform;
+}
+
+.mesh-bg::before {
+    top: -10%;
+    right: -10%;
+    width: 50rem;
+    height: 50rem;
+    background: radial-gradient(
+        circle at center,
+        rgba(99, 102, 241, 0.5),
+        rgba(99, 102, 241, 0) 60%
+    );
+    animation: drift-a 30s ease-in-out infinite alternate;
+}
+
+.mesh-bg::after {
+    bottom: -15%;
+    left: -10%;
+    width: 45rem;
+    height: 45rem;
+    background: radial-gradient(
+        circle at center,
+        rgba(56, 189, 248, 0.35),
+        rgba(56, 189, 248, 0) 60%
+    );
+    animation: drift-b 36s ease-in-out infinite alternate;
+}
+
+.dark .mesh-bg::before {
+    background: radial-gradient(
+        circle at center,
+        rgba(99, 102, 241, 0.35),
+        rgba(99, 102, 241, 0) 60%
+    );
+    opacity: 0.7;
+}
+
+.dark .mesh-bg::after {
+    background: radial-gradient(
+        circle at center,
+        rgba(167, 139, 250, 0.28),
+        rgba(167, 139, 250, 0) 60%
+    );
+    opacity: 0.6;
+}
+
+@keyframes drift-a {
+    from {
+        transform: translate(0, 0) scale(1);
+    }
+    to {
+        transform: translate(-4rem, 3rem) scale(1.1);
+    }
+}
+
+@keyframes drift-b {
+    from {
+        transform: translate(0, 0) scale(1);
+    }
+    to {
+        transform: translate(3rem, -4rem) scale(1.05);
+    }
+}
+
+/* Subtle dot-grid texture overlay on the page */
+.dot-grid {
+    background-image: radial-gradient(
+        circle at 1px 1px,
+        rgba(15, 23, 42, 0.06) 1px,
+        transparent 0
+    );
+    background-size: 24px 24px;
+}
+
+.dark .dot-grid {
+    background-image: radial-gradient(
+        circle at 1px 1px,
+        rgba(255, 255, 255, 0.05) 1px,
+        transparent 0
+    );
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Motion preferences + entrance animations
+   ───────────────────────────────────────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -68,7 +231,6 @@ html.dark {
     from {
         opacity: 0;
     }
-
     to {
         opacity: 1;
     }
@@ -79,7 +241,6 @@ html.dark {
         opacity: 0;
         transform: translateY(20px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -89,9 +250,8 @@ html.dark {
 @keyframes scale-fade-in {
     from {
         opacity: 0;
-        transform: scale(0.9);
+        transform: scale(0.92);
     }
-
     to {
         opacity: 1;
         transform: scale(1);
@@ -100,27 +260,25 @@ html.dark {
 
 .animate-fade-in {
     opacity: 0;
-    animation: fade-in 0.5s ease-out forwards;
+    animation: fade-in 0.6s ease-out forwards;
 }
 
 .animate-slide-up {
     opacity: 0;
-    animation: slide-up 0.5s ease-out forwards;
+    animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-scale-fade-in {
     opacity: 0;
-    animation: scale-fade-in 0.5s ease-out forwards;
+    animation: scale-fade-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Animated gradient text (GPU-composited via will-change) ── */
-
+/* Animated indigo→violet gradient text */
 @keyframes gradient-shift {
     0%,
     100% {
         background-position: 0% 50%;
     }
-
     50% {
         background-position: 100% 50%;
     }
@@ -128,46 +286,31 @@ html.dark {
 
 .animate-gradient-text {
     background-size: 200% auto;
-    animation: gradient-shift 4s ease-in-out infinite;
+    animation: gradient-shift 6s ease-in-out infinite;
     will-change: background-position;
 }
 
-/* Subtle grid background pattern */
-.bg-grid-pattern {
-    background-image:
-        linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
-    background-size: 60px 60px;
+/* Pulsing status dot for "available" pills */
+@keyframes pulse-dot {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+    }
 }
 
-.dark .bg-grid-pattern {
-    background-image:
-        linear-gradient(rgba(52, 211, 153, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(52, 211, 153, 0.03) 1px, transparent 1px);
+.pulse-dot {
+    animation: pulse-dot 2.4s ease-in-out infinite;
 }
 
-/* Scanline overlay effect */
-.scanlines::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(52, 211, 153, 0.01) 2px,
-        rgba(52, 211, 153, 0.01) 4px
-    );
-}
-
-/* Header slide-down animation (CSS-only for better FCP) */
+/* Header slide-down */
 @keyframes slide-down {
     from {
         opacity: 0;
         transform: translateX(-50%) translateY(-100%);
     }
-
     to {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
@@ -175,5 +318,26 @@ html.dark {
 }
 
 .animate-slide-down {
-    animation: slide-down 0.4s ease-out forwards;
+    animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Horizontal marquee for the tools strip */
+@keyframes marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-marquee {
+    animation: marquee 38s linear infinite;
+    will-change: transform;
+}
+
+/* Display font helper — applied to large headings */
+.font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
 }

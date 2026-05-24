@@ -11,12 +11,9 @@ interface SectionHeaderProps {
 /**
  * Unified section header used at the top of every major section on
  * /portfolio and /blogs. Three visual layers:
- *   - tiny uppercase emerald eyebrow (optional)
- *   - large semibold tracking-tight title
+ *   - tiny uppercase indigo eyebrow (optional)
+ *   - large display-font semibold tracking-tight title
  *   - secondary slate description (optional)
- *
- * Default left-aligned so it reads as the heading of a content block;
- * pass align="center" for centered marketing sections.
  */
 export default function SectionHeader({
     eyebrow,
@@ -34,17 +31,25 @@ export default function SectionHeader({
             )}
         >
             {eyebrow && (
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-4">
-                    {eyebrow}
-                </p>
+                <div
+                    className={cn(
+                        "flex items-center gap-2 mb-4",
+                        align === "center" && "justify-center",
+                    )}
+                >
+                    <span className="inline-block w-6 h-px bg-gradient-to-r from-indigo-500 to-violet-500" />
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-300">
+                        {eyebrow}
+                    </p>
+                </div>
             )}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 text-balance">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
                 {title}
             </h2>
             {description && (
                 <p
                     className={cn(
-                        "mt-4 text-base sm:text-lg text-slate-500 dark:text-slate-400 leading-relaxed text-pretty",
+                        "mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed text-pretty",
                         align === "center" ? "max-w-2xl mx-auto" : "max-w-3xl",
                     )}
                 >

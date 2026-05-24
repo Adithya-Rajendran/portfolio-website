@@ -26,17 +26,19 @@ export default function About({ body }: AboutProps) {
                 title="A bit about me"
                 align="center"
             />
-            <div className="mx-auto max-w-2xl text-center text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-                {body ? (
-                    <PortableText
-                        value={body}
-                        components={portableTextComponents}
-                    />
-                ) : (
-                    <p className="text-slate-500 dark:text-slate-400">
-                        About content coming soon.
-                    </p>
-                )}
+            <div className="mx-auto max-w-3xl">
+                <div className="glass rounded-2xl px-7 py-10 sm:px-10 sm:py-12 text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-300">
+                    {body ? (
+                        <PortableText
+                            value={body}
+                            components={portableTextComponents}
+                        />
+                    ) : (
+                        <p className="text-slate-500 dark:text-slate-400">
+                            About content coming soon.
+                        </p>
+                    )}
+                </div>
             </div>
         </section>
     );

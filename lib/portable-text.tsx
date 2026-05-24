@@ -20,17 +20,23 @@ const variants: Record<
         highlight: "font-bold",
     },
     about: {
-        block: "mb-3 text-slate-600 dark:text-slate-300",
+        block: "mb-3 text-slate-700 dark:text-slate-300",
         strong: "font-semibold",
         highlight: "font-medium",
     },
     homeBio: {
-        block: "text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-center",
+        block:
+            "text-lg leading-relaxed text-slate-700 dark:text-slate-300 text-center",
         strong: "font-semibold",
         highlight: "font-semibold",
     },
 };
 
+/**
+ * Highlight marks named after the original "emerald/teal/orange" palette
+ * remain in CMS content. They now resolve to the indigo / violet / sky
+ * accents of the Surface Glass theme so existing posts keep working.
+ */
 export function createPortableTextStyles(
     variant: Variant,
 ): PortableTextComponents {
@@ -52,21 +58,21 @@ export function createPortableTextStyles(
             em: ({ children }) => <span className="italic">{children}</span>,
             highlightEmerald: ({ children }) => (
                 <span
-                    className={`${v.highlight} text-emerald-700 dark:text-emerald-400`}
+                    className={`${v.highlight} text-indigo-600 dark:text-indigo-300`}
                 >
                     {children}
                 </span>
             ),
             highlightTeal: ({ children }) => (
                 <span
-                    className={`${v.highlight} text-teal-700 dark:text-cyan-400`}
+                    className={`${v.highlight} text-sky-600 dark:text-sky-300`}
                 >
                     {children}
                 </span>
             ),
             highlightOrange: ({ children }) => (
                 <span
-                    className={`${v.highlight} text-orange-700 dark:text-orange-500`}
+                    className={`${v.highlight} text-violet-600 dark:text-violet-300`}
                 >
                     {children}
                 </span>
@@ -76,7 +82,7 @@ export function createPortableTextStyles(
                     href={value?.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-700 hover:underline dark:text-emerald-400"
+                    className="text-indigo-600 hover:underline dark:text-indigo-300"
                 >
                     {children}
                 </a>

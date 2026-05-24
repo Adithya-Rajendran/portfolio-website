@@ -16,8 +16,6 @@ interface ExperienceProps {
 export default function Experience({ experiences }: ExperienceProps) {
     const { ref: sectionRef } = useSectionInView("Experience", 0.3);
 
-    // Latch a "visible" flag the first time the section enters the viewport
-    // so each item can stagger in without re-firing on subsequent scrolls.
     const { ref: visibilityRef, inView: isVisible } = useInView({
         threshold: 0.15,
         triggerOnce: true,
@@ -32,11 +30,7 @@ export default function Experience({ experiences }: ExperienceProps) {
     );
 
     return (
-        <section
-            id="experience"
-            ref={setRefs}
-            className="scroll-mt-28"
-        >
+        <section id="experience" ref={setRefs} className="scroll-mt-28">
             <SectionHeader
                 eyebrow="Experience"
                 title="Where I've worked"
@@ -44,17 +38,17 @@ export default function Experience({ experiences }: ExperienceProps) {
             />
 
             <ol className="relative">
-                {/* Vertical spine — sits behind the icon dots */}
+                {/* Vertical spine — gradient line that fades at both ends */}
                 <div
                     aria-hidden="true"
-                    className="absolute top-2 bottom-2 w-px left-[15px] bg-gradient-to-b from-transparent via-emerald-200 to-transparent dark:via-emerald-500/20"
+                    className="absolute top-3 bottom-3 w-px left-[19px] bg-gradient-to-b from-transparent via-indigo-300/60 to-transparent dark:via-indigo-400/30"
                 />
 
                 {experiences.map((item, i) => (
                     <li
                         key={item._id}
                         className={cn(
-                            "relative pl-12 pb-10 last:pb-0",
+                            "relative pl-16 pb-10 last:pb-0",
                             "transition-all duration-500 ease-out",
                             isVisible
                                 ? "opacity-100 translate-y-0"
@@ -66,35 +60,41 @@ export default function Experience({ experiences }: ExperienceProps) {
                                 : "0ms",
                         }}
                     >
-                        {/* Icon dot on the spine */}
-                        <div className="absolute z-10 top-0 left-0 w-8 h-8 rounded-full bg-white dark:bg-[#0a0f1a] border-2 border-emerald-300 dark:border-emerald-500/40 flex items-center justify-center overflow-hidden">
-                            {item.icon ? (
-                                <Image
-                                    src={urlForImage(item.icon)
-                                        .width(60)
-                                        .height(60)
-                                        .url()}
-                                    alt={item.icon.alt || item.title || ""}
-                                    width={20}
-                                    height={20}
-                                    sizes="20px"
-                                    className="object-contain"
-                                />
-                            ) : (
-                                <span
-                                    aria-hidden="true"
-                                    className="w-2 h-2 rounded-full bg-emerald-500"
-                                />
-                            )}
+                        {/* Icon dot on the spine, with halo */}
+                        <div className="absolute top-0 left-0 z-10">
+                            <div
+                                aria-hidden="true"
+                                className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/30 to-violet-500/30 blur-md"
+                            />
+                            <div className="glass relative w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+                                {item.icon ? (
+                                    <Image
+                                        src={urlForImage(item.icon)
+                                            .width(60)
+                                            .height(60)
+                                            .url()}
+                                        alt={item.icon.alt || item.title || ""}
+                                        width={22}
+                                        height={22}
+                                        sizes="22px"
+                                        className="object-contain"
+                                    />
+                                ) : (
+                                    <span
+                                        aria-hidden="true"
+                                        className="w-2 h-2 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500"
+                                    />
+                                )}
+                            </div>
                         </div>
 
-                        <article>
+                        <article className="glass rounded-2xl p-5 sm:p-6">
                             {item.date && (
-                                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-300 mb-2">
                                     {item.date}
                                 </p>
                             )}
-                            <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100">
+                            <h3 className="font-display text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">
                                 {item.title || ""}
                             </h3>
                             {(item.org || item.location) && (
@@ -105,9 +105,12 @@ export default function Experience({ experiences }: ExperienceProps) {
                                 </p>
                             )}
                             {item.description && item.description.length > 0 && (
-                                <ul className="mt-3 space-y-1.5 text-sm sm:text-base text-slate-600 dark:text-slate-400 list-disc pl-5 marker:text-emerald-500/60">
+                                <ul className="mt-3 space-y-1.5 text-sm sm:text-base text-slate-600 dark:text-slate-300 list-disc pl-5 marker:text-indigo-400/60">
                                     {item.description.map((desc, idx) => (
-                                        <li key={idx} className="leading-relaxed">
+                                        <li
+                                            key={idx}
+                                            className="leading-relaxed"
+                                        >
                                             {desc}
                                         </li>
                                     ))}
