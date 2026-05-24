@@ -4,7 +4,6 @@
 import { Resend } from "resend";
 import { z } from "zod";
 import dns from "dns/promises";
-import { getErrorMessage, sanitizeHtml } from "@/lib/utils";
 import ContactFormEmail from "@/email/contact-form-email";
 import { headers } from "next/headers";
 
@@ -28,8 +27,20 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
+// Opportunistic eviction: every ~50 lookups, sweep expired entries from
+// both rate-limit maps so a single long-lived serverless instance can't
+// accumulate unbounded keys.
+let lookupsSinceSweep = 0;
+function maybeSweep(now: number) {
+    if (++lookupsSinceSweep < 50) return;
+    lookupsSinceSweep = 0;
+    for (const [k, v] of rateLimitMap) if (now > v.resetAt) rateLimitMap.delete(k);
+    for (const [k, v] of invalidDomainMap) if (now > v.resetAt) invalidDomainMap.delete(k);
+}
+
 function isRateLimited(ip: string): boolean {
     const now = Date.now();
+    maybeSweep(now);
     const entry = rateLimitMap.get(ip);
 
     if (!entry || now > entry.resetAt) {
@@ -76,9 +87,17 @@ const emailSchema = z.object({
     message: z.string().min(1, "Message cannot be empty").max(1000),
 });
 
+// RFC 1035 caps a domain name at 253 characters. Validate length and a
+// conservative character set before issuing a DNS query so the resolver
+// isn't a free oracle for arbitrary attacker-supplied strings.
+const DOMAIN_PATTERN =
+    /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
+
 async function hasValidMxRecords(email: string): Promise<boolean> {
     const domain = email.split("@")[1];
-    if (!domain) return false;
+    if (!domain || domain.length > 253 || !DOMAIN_PATTERN.test(domain)) {
+        return false;
+    }
 
     try {
         const records = await dns.resolveMx(domain);
@@ -89,9 +108,11 @@ async function hasValidMxRecords(email: string): Promise<boolean> {
 }
 
 export const sendEmail = async (formData: FormData) => {
+    // FormData.get() can return File | string | null; coerce to string so
+    // a file upload field with the same name can't bypass the zod schema.
     const rawData = {
-        senderEmail: formData.get("senderEmail"),
-        message: formData.get("message"),
+        senderEmail: String(formData.get("senderEmail") ?? ""),
+        message: String(formData.get("message") ?? ""),
     };
 
     const validatedData = emailSchema.safeParse(rawData);
@@ -130,21 +151,25 @@ export const sendEmail = async (formData: FormData) => {
     }
 
     try {
+        // React Email renders {message} / {senderEmail} as text nodes, which
+        // React already HTML-escapes. Passing pre-escaped values double-encoded
+        // them, so the recipient saw literal "&lt;" instead of "<".
         const data = await resend.emails.send({
             from: "Contact Form <contact-form@email.adithya-rajendran.com>",
             to: contactFormToEmail,
             subject: "Contact Form for My Website",
             replyTo: senderEmail,
-            react: ContactFormEmail({
-                message: sanitizeHtml(message),
-                senderEmail: sanitizeHtml(senderEmail),
-            }),
+            react: ContactFormEmail({ message, senderEmail }),
         });
 
         return { data };
     } catch (error: unknown) {
+        // Log the real error server-side for debugging; return a generic
+        // message so we don't leak Resend internals (rate-limit details,
+        // API tokens in stack traces, etc.) to the client.
+        console.error("[sendEmail] Resend error:", error);
         return {
-            error: getErrorMessage(error),
+            error: "Failed to send the email. Please try again later.",
         };
     }
 };
