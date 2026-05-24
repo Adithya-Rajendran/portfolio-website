@@ -2,33 +2,37 @@
 
 import React from "react";
 import SectionHeading from "../section-heading";
-import { motion } from "motion/react";
 import { useSectionInView } from "@/lib/hooks";
+import { useInView } from "react-intersection-observer";
 import { sendEmail } from "@/actions/sendEmail";
 import SubmitBtn from "../submit-btn";
 import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
 
 export default function Contact() {
-    const { ref } = useSectionInView("Contact");
+    const { ref: sectionRef } = useSectionInView("Contact");
+    const { ref: visibilityRef, inView } = useInView({
+        threshold: 0.15,
+        triggerOnce: true,
+    });
+    const setRefs = React.useCallback(
+        (node: HTMLElement | null) => {
+            sectionRef(node);
+            visibilityRef(node);
+        },
+        [sectionRef, visibilityRef],
+    );
     const { toast } = useToast();
 
     return (
-        <motion.section
+        <section
             id="contact"
-            ref={ref}
-            className="mb-20 sm:mb-28 w-[min(100%,38rem)] text-center"
-            initial={{
-                opacity: 0,
-            }}
-            whileInView={{
-                opacity: 1,
-            }}
-            transition={{
-                duration: 1,
-            }}
-            viewport={{
-                once: true,
-            }}
+            ref={setRefs}
+            className={cn(
+                "mb-20 sm:mb-28 w-[min(100%,38rem)] text-center",
+                "motion-safe:transition-opacity motion-safe:duration-1000",
+                inView ? "opacity-100" : "opacity-0",
+            )}
         >
             <SectionHeading>Contact me</SectionHeading>
 
@@ -80,6 +84,6 @@ export default function Contact() {
                 />
                 <SubmitBtn />
             </form>
-        </motion.section>
+        </section>
     );
 }

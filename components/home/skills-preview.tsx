@@ -1,9 +1,7 @@
-"use client";
-
-import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { variantIcons, variantStyles } from "./constants";
 import type { SkillCategory } from "@/sanity.types";
+import RevealOnScroll from "@/components/reveal-on-scroll";
 
 interface SkillsPreviewProps {
     skillCategories: SkillCategory[];
@@ -13,13 +11,7 @@ export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
     if (skillCategories.length === 0) return null;
 
     return (
-        <motion.section
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="w-full max-w-[64rem] pb-20"
-        >
+        <RevealOnScroll as="section" className="w-full max-w-[64rem] pb-20">
             <h2 className="text-2xl font-bold text-center mb-10 text-slate-900 dark:text-slate-100">
                 Skills &amp; Expertise
             </h2>
@@ -45,7 +37,7 @@ export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
                     );
                 })}
             </div>
-        </motion.section>
+        </RevealOnScroll>
     );
 }
 

@@ -3,22 +3,9 @@
 import React from "react";
 import SectionHeading from "../section-heading";
 import { useSectionInView } from "@/lib/hooks";
-import { motion } from "motion/react";
+import { useInView } from "react-intersection-observer";
+import { cn } from "@/lib/utils";
 import type { SkillCategory } from "@/sanity.types";
-
-const fadeInAnimationVariants = {
-    initial: {
-        opacity: 0,
-        y: 100,
-    },
-    animate: (index: number) => ({
-        opacity: 1,
-        y: 0,
-        transition: {
-            delay: 0.05 * index,
-        },
-    }),
-};
 
 const colorMap: Record<
     "emerald" | "cyan" | "violet",
@@ -58,12 +45,27 @@ interface SkillsProps {
 }
 
 export default function Skills({ skillCategories }: SkillsProps) {
-    const { ref } = useSectionInView("Skills");
+    const { ref: sectionRef } = useSectionInView("Skills");
+    const { ref: visibilityRef, inView } = useInView({
+        threshold: 0.15,
+        triggerOnce: true,
+    });
+    const setRefs = React.useCallback(
+        (node: HTMLElement | null) => {
+            sectionRef(node);
+            visibilityRef(node);
+        },
+        [sectionRef, visibilityRef],
+    );
+
+    // Track a running index across all category chips so stagger continues
+    // smoothly between sections.
+    let chipIndex = 0;
 
     return (
         <section
             id="skills"
-            ref={ref}
+            ref={setRefs}
             className="mb-28 max-w-[53rem] scroll-mt-28 text-center sm:mb-40"
         >
             <SectionHeading>My skills</SectionHeading>
@@ -80,21 +82,28 @@ export default function Skills({ skillCategories }: SkillsProps) {
                             {category.title}
                         </h3>
                         <ul className="flex flex-wrap justify-center gap-2 text-lg text-slate-700">
-                            {(category.skills || []).map((skill, index) => (
-                                <motion.li
-                                    className={`${colors.bg} ${colors.border} ${colors.text} rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 ${colors.darkBorder}`}
-                                    key={index}
-                                    variants={fadeInAnimationVariants}
-                                    initial="initial"
-                                    whileInView="animate"
-                                    viewport={{
-                                        once: true,
-                                    }}
-                                    custom={index}
-                                >
-                                    {skill}
-                                </motion.li>
-                            ))}
+                            {(category.skills || []).map((skill, index) => {
+                                const delayMs = chipIndex++ * 50;
+                                return (
+                                    <li
+                                        key={index}
+                                        style={{
+                                            transitionDelay: inView
+                                                ? `${delayMs}ms`
+                                                : "0ms",
+                                        }}
+                                        className={cn(
+                                            `${colors.bg} ${colors.border} ${colors.text} rounded-xl px-5 py-3 dark:bg-white/5 dark:text-slate-300 ${colors.darkBorder}`,
+                                            "motion-safe:transition-[opacity,transform] motion-safe:duration-500 motion-safe:ease-out",
+                                            inView
+                                                ? "opacity-100 translate-y-0"
+                                                : "opacity-0 translate-y-8",
+                                        )}
+                                    >
+                                        {skill}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </React.Fragment>
                 );

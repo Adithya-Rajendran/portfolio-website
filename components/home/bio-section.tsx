@@ -1,8 +1,6 @@
-"use client";
-
-import { motion } from "motion/react";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
+import RevealOnScroll from "@/components/reveal-on-scroll";
 
 const homeBioComponents = createPortableTextStyles("homeBio");
 
@@ -12,13 +10,7 @@ interface BioSectionProps {
 
 export default function BioSection({ homeBio }: BioSectionProps) {
     return (
-        <motion.section
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="max-w-[52rem] w-full py-20"
-        >
+        <RevealOnScroll as="section" className="max-w-[52rem] w-full py-20">
             {homeBio ? (
                 <PortableText value={homeBio} components={homeBioComponents} />
             ) : (
@@ -26,6 +18,6 @@ export default function BioSection({ homeBio }: BioSectionProps) {
                     Hi, I&apos;m Adithya. I am a Cloud Field Engineer.
                 </p>
             )}
-        </motion.section>
+        </RevealOnScroll>
     );
 }

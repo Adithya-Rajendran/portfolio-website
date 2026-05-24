@@ -1,7 +1,6 @@
 "use client";
 
 import SectionHeading from "../section-heading";
-import { motion } from "motion/react";
 import { useSectionInView } from "@/lib/hooks";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
@@ -16,13 +15,11 @@ export default function About({ body }: AboutProps) {
     const { ref } = useSectionInView("About");
 
     return (
-        <motion.section
+        <section
             ref={ref}
-            className="mb-28 max-w-[45rem] text-center leading-8 sm:mb-40 scroll-mt-28"
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.175 }}
             id="about"
+            style={{ animationDelay: "175ms" }}
+            className="mb-28 max-w-[45rem] text-center leading-8 sm:mb-40 scroll-mt-28 motion-safe:animate-slide-up motion-safe:opacity-0"
         >
             <SectionHeading>About me</SectionHeading>
             {body ? (
@@ -35,6 +32,6 @@ export default function About({ body }: AboutProps) {
                     About content coming soon.
                 </p>
             )}
-        </motion.section>
+        </section>
     );
 }
