@@ -1,20 +1,23 @@
 import Image from "next/image";
+import { Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import SectionHeader from "@/components/section-header";
 import { urlForImage } from "@/lib/sanity-image";
 import type { Post as TPost } from "@/sanity.types";
-import { formatDate } from "./utils";
+import { formatDate, readingTimeFor } from "./utils";
 
 interface LatestProps {
     posts: TPost[];
+    /** Title shown above the grid. Defaults to "All posts". */
+    title?: string;
 }
 
-export default function Latest({ posts: allPosts }: LatestProps) {
+export default function Latest({ posts: allPosts, title = "All posts" }: LatestProps) {
     if (!allPosts || allPosts.length === 0) return null;
 
     return (
         <section>
-            <SectionHeader eyebrow="Archive" title="All posts" />
+            <SectionHeader eyebrow="Archive" title={title} />
 
             <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {allPosts.map((post) => {
@@ -30,6 +33,7 @@ export default function Latest({ posts: allPosts }: LatestProps) {
                               .auto("format")
                               .url()
                         : null;
+                    const readingTime = readingTimeFor(post);
                     return (
                         <Card
                             key={slug || post._id}
@@ -54,11 +58,21 @@ export default function Latest({ posts: allPosts }: LatestProps) {
                                 </div>
                             )}
                             <div className="flex flex-col flex-1 p-5 sm:p-6">
-                                {post.date && (
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent mb-2">
-                                        {formatDate(post.date)}
-                                    </p>
-                                )}
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent mb-2 flex items-center gap-2 flex-wrap">
+                                    {post.date && (
+                                        <span>{formatDate(post.date)}</span>
+                                    )}
+                                    {post.date && (
+                                        <span
+                                            aria-hidden
+                                            className="w-1 h-1 rounded-full bg-accent opacity-50"
+                                        />
+                                    )}
+                                    <span className="inline-flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {readingTime} min read
+                                    </span>
+                                </p>
                                 <h3 className="font-display text-base sm:text-lg font-semibold leading-snug text-slate-900 dark:text-white group-hover:text-accent transition-colors line-clamp-2">
                                     {post.title || ""}
                                 </h3>

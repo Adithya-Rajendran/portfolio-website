@@ -19,23 +19,6 @@ function isBodyBlock(
     return block._type === "block";
 }
 
-function estimateReadingTime(text: string): number {
-    const wordsPerMinute = 200;
-    const words = text.split(/\s+/).length;
-    return Math.max(1, Math.ceil(words / wordsPerMinute));
-}
-
-function extractBodyText(post: Post): string {
-    return post.body
-        ? post.body
-              .filter(isBodyBlock)
-              .map((block) =>
-                  block.children?.map((child) => child.text || "").join(" "),
-              )
-              .join(" ")
-        : "";
-}
-
 export function extractHeadings(post: Post): TocHeading[] {
     return post.body
         ? post.body
