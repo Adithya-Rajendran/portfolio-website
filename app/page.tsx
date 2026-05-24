@@ -58,11 +58,18 @@ async function CertsWithData() {
     return <CertificationsPreview certifications={certifications} />;
 }
 
-/** Skeleton matching BioSection dimensions to avoid CLS */
+function StatsSkeleton() {
+    return (
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 animate-pulse">
+            <div className="os-card rounded-3xl h-24" />
+        </div>
+    );
+}
+
 function BioSkeleton() {
     return (
         <div className="w-full max-w-3xl mx-auto px-4 animate-pulse">
-            <div className="glass rounded-2xl px-7 py-10 sm:px-10 sm:py-12 space-y-4">
+            <div className="os-card rounded-3xl px-7 py-10 sm:px-10 sm:py-12 space-y-4">
                 <div className="h-5 w-full bg-slate-200/60 dark:bg-white/[0.05] rounded" />
                 <div className="h-5 w-5/6 bg-slate-200/60 dark:bg-white/[0.05] rounded" />
                 <div className="h-5 w-4/6 bg-slate-200/60 dark:bg-white/[0.05] rounded" />
@@ -71,22 +78,14 @@ function BioSkeleton() {
     );
 }
 
-function StatsSkeleton() {
-    return (
-        <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 animate-pulse">
-            <div className="glass rounded-2xl h-24" />
-        </div>
-    );
-}
-
 function SkillsSkeleton() {
     return (
-        <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 pb-20 animate-pulse">
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-20 animate-pulse">
             <div className="h-8 w-48 bg-slate-200/60 dark:bg-white/[0.05] rounded mx-auto mb-10" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="md:col-span-2 rounded-2xl glass h-52" />
-                <div className="rounded-2xl glass h-52" />
-                <div className="rounded-2xl glass h-52" />
+                <div className="rounded-3xl os-card h-52" />
+                <div className="rounded-3xl os-card h-52" />
+                <div className="rounded-3xl os-card h-52" />
             </div>
         </div>
     );
@@ -94,20 +93,16 @@ function SkillsSkeleton() {
 
 function CertsSkeleton() {
     return (
-        <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 pb-20 animate-pulse">
+        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 pb-20 animate-pulse">
             <div className="h-8 w-40 bg-slate-200/60 dark:bg-white/[0.05] rounded mx-auto mb-10" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[1, 2, 3].map((i) => (
-                    <div key={i} className="rounded-2xl glass h-32" />
-                ))}
-            </div>
+            <div className="rounded-3xl os-card h-64" />
         </div>
     );
 }
 
 export default function Home() {
     return (
-        <main className="flex flex-col items-stretch">
+        <main className="flex flex-col items-stretch gap-16 sm:gap-20 pb-16">
             <link
                 rel="preload"
                 href="/hero.webp"
@@ -124,13 +119,11 @@ export default function Home() {
                 <StatsWithData />
             </Suspense>
 
-            <ToolsMarquee />
-
             <Suspense fallback={<BioSkeleton />}>
                 <BioWithData />
             </Suspense>
 
-            <div className="h-20" aria-hidden="true" />
+            <ToolsMarquee />
 
             <Suspense fallback={<SkillsSkeleton />}>
                 <SkillsWithData />

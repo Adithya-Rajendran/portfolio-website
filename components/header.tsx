@@ -14,7 +14,7 @@ export default function Header() {
     return (
         <header className="z-[999] relative">
             <motion.div
-                className="glass-nav fixed top-0 left-1/2 h-[4.5rem] w-full rounded-none sm:top-5 sm:h-[3.4rem] sm:w-[44rem] sm:rounded-full"
+                className="os-nav fixed top-0 left-1/2 h-[4.5rem] w-full rounded-none sm:top-5 sm:h-[3.5rem] sm:w-[46rem] sm:rounded-full"
                 initial={{ y: -100, x: "-50%", opacity: 0 }}
                 animate={{ y: 0, x: "-50%", opacity: 1 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -22,9 +22,9 @@ export default function Header() {
 
             <nav
                 aria-label="Main navigation"
-                className="flex fixed top-[0.15rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.45rem] sm:h-[initial] sm:py-0"
+                className="flex fixed top-[0.15rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.55rem] sm:h-[initial] sm:py-0"
             >
-                <ul className="flex w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.875rem] font-medium text-slate-600 sm:w-[initial] sm:flex-nowrap sm:gap-4 dark:text-slate-300">
+                <ul className="flex w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.875rem] font-medium text-slate-600 sm:w-[initial] sm:flex-nowrap sm:gap-3 dark:text-slate-300">
                     {links.map((link) => (
                         <motion.li
                             className="h-3/4 flex items-center justify-center relative"
@@ -34,9 +34,10 @@ export default function Header() {
                         >
                             <Link
                                 className={clsx(
-                                    "flex w-full items-center justify-center px-3 py-2 hover:text-accent transition-colors",
+                                    "flex w-full items-center justify-center px-3.5 py-2 hover:text-accent transition-colors",
                                     {
-                                        "text-accent": activeSection === link.name,
+                                        "text-accent":
+                                            activeSection === link.name,
                                     },
                                 )}
                                 href={link.hash}
@@ -54,7 +55,7 @@ export default function Header() {
 
                                 {link.name === activeSection && (
                                     <motion.span
-                                        className="bg-accent-gradient-soft border-accent-soft border rounded-full absolute inset-0 -z-10"
+                                        className="bg-accent-soft border border-accent-soft rounded-full absolute inset-0 -z-10"
                                         layoutId="activeSection"
                                         transition={{
                                             type: "spring",

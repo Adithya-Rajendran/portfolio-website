@@ -27,7 +27,7 @@ export default function About({ body }: AboutProps) {
                 align="center"
             />
             <div className="mx-auto max-w-3xl">
-                <div className="glass rounded-2xl px-7 py-10 sm:px-10 sm:py-12 text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-300">
+                <div className="os-card rounded-3xl px-7 py-10 sm:px-10 sm:py-12 text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-300">
                     {body ? (
                         <PortableText
                             value={body}

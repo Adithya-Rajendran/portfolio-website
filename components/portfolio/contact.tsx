@@ -25,7 +25,7 @@ export default function Contact() {
     const { toast } = useToast();
 
     const inputClasses =
-        "w-full h-12 px-4 rounded-xl bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500";
+        "w-full h-12 px-4 rounded-2xl bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500";
 
     return (
         <section
@@ -43,7 +43,7 @@ export default function Contact() {
                 align="center"
             />
 
-            <div className="glass mx-auto max-w-xl rounded-2xl p-6 sm:p-8">
+            <div className="os-card mx-auto max-w-xl rounded-3xl p-6 sm:p-8">
                 <form
                     className="flex flex-col gap-3"
                     action={async (formData) => {

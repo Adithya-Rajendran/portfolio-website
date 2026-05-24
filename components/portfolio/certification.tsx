@@ -17,11 +17,11 @@ export default function Certification(cert: TCertification) {
         >
             <div className="flex items-start gap-5">
                 {cert.badge && (
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl overflow-hidden bg-accent-soft border border-accent-soft">
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-slate-50/80 dark:bg-white/[0.04] flex items-center justify-center">
                         <Image
                             src={urlForImage(cert.badge)
-                                .width(160)
-                                .height(160)
+                                .width(140)
+                                .height(140)
                                 .quality(95)
                                 .url()}
                             alt={
@@ -29,7 +29,7 @@ export default function Certification(cert: TCertification) {
                                 `${cert.title || ""} certification badge`
                             }
                             fill
-                            sizes="80px"
+                            sizes="64px"
                             loading="lazy"
                             className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
                         />

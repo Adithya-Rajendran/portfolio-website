@@ -44,47 +44,39 @@ export default function Skills({ skillCategories }: SkillsProps) {
                     return (
                         <div
                             key={category._id}
-                            className="glass relative overflow-hidden rounded-2xl p-7"
+                            className="os-card rounded-3xl p-7"
                         >
-                            <div
-                                aria-hidden="true"
-                                className={`pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full blur-2xl ${styles.wash}`}
-                            />
-                            <div className="relative">
-                                <h3
-                                    className={`text-xs font-semibold uppercase tracking-[0.18em] ${styles.textColor} mb-5`}
-                                >
-                                    {category.title}
-                                </h3>
-                                <ul className="flex flex-wrap gap-2">
-                                    {(category.skills || []).map(
-                                        (skill, index) => {
-                                            const delayMs = chipIndex++ * 30;
-                                            return (
-                                                <li
-                                                    key={index}
-                                                    style={{
-                                                        transitionDelay: inView
-                                                            ? `${delayMs}ms`
-                                                            : "0ms",
-                                                    }}
-                                                    className={cn(
-                                                        "rounded-full px-3.5 py-1.5 text-sm font-medium",
-                                                        "bg-white/70 border border-slate-200/70 text-slate-700",
-                                                        "dark:bg-white/[0.04] dark:border-white/8 dark:text-slate-200",
-                                                        "transition-all duration-500 ease-out",
-                                                        inView
-                                                            ? "opacity-100 translate-y-0"
-                                                            : "opacity-0 translate-y-3",
-                                                    )}
-                                                >
-                                                    {skill}
-                                                </li>
-                                            );
-                                        },
-                                    )}
-                                </ul>
-                            </div>
+                            <h3
+                                className={`text-xs font-semibold uppercase tracking-[0.18em] ${styles.textColor} mb-5`}
+                            >
+                                {category.title}
+                            </h3>
+                            <ul className="flex flex-wrap gap-2">
+                                {(category.skills || []).map((skill, index) => {
+                                    const delayMs = chipIndex++ * 30;
+                                    return (
+                                        <li
+                                            key={index}
+                                            style={{
+                                                transitionDelay: inView
+                                                    ? `${delayMs}ms`
+                                                    : "0ms",
+                                            }}
+                                            className={cn(
+                                                "rounded-full px-3.5 py-1.5 text-sm font-medium",
+                                                "bg-white/70 border border-slate-200/70 text-slate-700",
+                                                "dark:bg-white/[0.04] dark:border-white/[0.08] dark:text-slate-200",
+                                                "transition-all duration-500 ease-out",
+                                                inView
+                                                    ? "opacity-100 translate-y-0"
+                                                    : "opacity-0 translate-y-3",
+                                            )}
+                                        >
+                                            {skill}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
                         </div>
                     );
                 })}

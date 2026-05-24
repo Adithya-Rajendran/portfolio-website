@@ -6,14 +6,19 @@
     --font-sans: "Inter", "Inter Fallback";
     --font-display: "Space Grotesk", "Space Grotesk Fallback", "Inter", sans-serif;
 
-    /* Surface Glass palette — cool zinc base */
-    --color-background-light: #f5f7fb;
-    --color-background-dark: #07091a;
+    /* One UI inspired neutral surfaces */
+    --color-background-light: #f4f5f8;
+    --color-background-dark: #050608;
 
-    --color-surface-light: rgba(255, 255, 255, 0.6);
+    --color-surface-light: rgba(255, 255, 255, 0.7);
     --color-surface-medium: rgba(255, 255, 255, 0.08);
     --color-surface-strong: rgba(255, 255, 255, 0.12);
-    --color-border-subtle: rgba(255, 255, 255, 0.1);
+    --color-border-subtle: rgba(255, 255, 255, 0.08);
+
+    /* One UI-style large radii */
+    --radius-card: 1.5rem;       /* 24px — primary cards */
+    --radius-card-lg: 1.75rem;   /* 28px — hero panels */
+    --radius-pill: 999px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -22,14 +27,13 @@
    Dark-mode overrides live in the .dark[data-theme="x"] block below.
    ───────────────────────────────────────────────────────────────────── */
 
-/* Default + Surface Glass: indigo / violet / sky */
 :root,
 [data-theme="glass"] {
     --c1: 79 70 229;          /* indigo-600 */
     --c2: 124 58 237;         /* violet-600 */
     --c3: 2 132 199;          /* sky-600 */
-    --mesh-a: 99 102 241;     /* indigo-500 */
-    --mesh-b: 56 189 248;     /* sky-400 */
+    --mesh-a: 99 102 241;
+    --mesh-b: 56 189 248;
 }
 
 .dark,
@@ -39,56 +43,50 @@
     --c3: 56 189 248;         /* sky-400 */
 }
 
-/* Aurora: emerald / teal / cyan */
 [data-theme="aurora"] {
-    --c1: 5 150 105;          /* emerald-600 */
-    --c2: 13 148 136;         /* teal-600 */
-    --c3: 8 145 178;          /* cyan-600 */
-    --mesh-a: 16 185 129;     /* emerald-500 */
-    --mesh-b: 34 211 238;     /* cyan-400 */
+    --c1: 5 150 105;
+    --c2: 13 148 136;
+    --c3: 8 145 178;
+    --mesh-a: 16 185 129;
+    --mesh-b: 34 211 238;
 }
 
 .dark[data-theme="aurora"] {
-    --c1: 52 211 153;         /* emerald-400 */
-    --c2: 45 212 191;         /* teal-400 */
-    --c3: 34 211 238;         /* cyan-400 */
+    --c1: 52 211 153;
+    --c2: 45 212 191;
+    --c3: 34 211 238;
 }
 
-/* Sunset: orange / rose / amber */
 [data-theme="sunset"] {
-    --c1: 234 88 12;          /* orange-600 */
-    --c2: 225 29 72;          /* rose-600 */
-    --c3: 217 119 6;          /* amber-600 */
-    --mesh-a: 251 146 60;     /* orange-400 */
-    --mesh-b: 251 113 133;    /* rose-400 */
+    --c1: 234 88 12;
+    --c2: 225 29 72;
+    --c3: 217 119 6;
+    --mesh-a: 251 146 60;
+    --mesh-b: 251 113 133;
 }
 
 .dark[data-theme="sunset"] {
-    --c1: 251 146 60;         /* orange-400 */
-    --c2: 251 113 133;        /* rose-400 */
-    --c3: 251 191 36;         /* amber-400 */
+    --c1: 251 146 60;
+    --c2: 251 113 133;
+    --c3: 251 191 36;
 }
 
-/* Plum: fuchsia / violet / pink */
 [data-theme="plum"] {
-    --c1: 192 38 211;         /* fuchsia-600 */
-    --c2: 124 58 237;         /* violet-600 */
-    --c3: 219 39 119;         /* pink-600 */
-    --mesh-a: 217 70 239;     /* fuchsia-500 */
-    --mesh-b: 244 114 182;    /* pink-400 */
+    --c1: 192 38 211;
+    --c2: 124 58 237;
+    --c3: 219 39 119;
+    --mesh-a: 217 70 239;
+    --mesh-b: 244 114 182;
 }
 
 .dark[data-theme="plum"] {
-    --c1: 232 121 249;        /* fuchsia-400 */
-    --c2: 167 139 250;        /* violet-400 */
-    --c3: 244 114 182;        /* pink-400 */
+    --c1: 232 121 249;
+    --c2: 167 139 250;
+    --c3: 244 114 182;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
    ACCENT UTILITY CLASSES — semantic names that resolve via theme tokens.
-   `text-accent`, `bg-accent-soft`, `border-accent-soft`, etc. are the
-   primary-color utilities. `text-c2`, `bg-c3-soft`, etc. are for the
-   three-category contexts (nav cards, skill variants).
    ───────────────────────────────────────────────────────────────────── */
 
 .text-accent {
@@ -134,7 +132,6 @@
     --tw-ring-color: rgb(var(--c1));
 }
 
-/* Gradient bg — primary buttons, eyebrow lines, etc. */
 .bg-accent-gradient {
     background-image: linear-gradient(
         to right,
@@ -149,7 +146,6 @@
         rgb(var(--c2) / 0.15)
     );
 }
-
 .bg-accent-gradient-vertical {
     background-image: linear-gradient(
         to bottom,
@@ -158,7 +154,6 @@
     );
 }
 
-/* Three-stop gradient text — used for the hero name */
 .text-accent-gradient {
     background-image: linear-gradient(
         to right,
@@ -172,7 +167,6 @@
     color: transparent;
 }
 
-/* Soft halo behind avatars / cards */
 .bg-accent-halo {
     background-image: linear-gradient(
         to bottom right,
@@ -182,7 +176,6 @@
     );
 }
 
-/* Shadow that picks up the theme color */
 .shadow-accent {
     box-shadow: 0 4px 14px rgb(var(--c1) / 0.25);
 }
@@ -198,22 +191,22 @@
     color: rgb(var(--c3));
 }
 .bg-c1-soft {
-    background-color: rgb(var(--c1) / 0.08);
+    background-color: rgb(var(--c1) / 0.1);
 }
 .dark .bg-c1-soft {
-    background-color: rgb(var(--c1) / 0.15);
+    background-color: rgb(var(--c1) / 0.18);
 }
 .bg-c2-soft {
-    background-color: rgb(var(--c2) / 0.08);
+    background-color: rgb(var(--c2) / 0.1);
 }
 .dark .bg-c2-soft {
-    background-color: rgb(var(--c2) / 0.15);
+    background-color: rgb(var(--c2) / 0.18);
 }
 .bg-c3-soft {
-    background-color: rgb(var(--c3) / 0.08);
+    background-color: rgb(var(--c3) / 0.1);
 }
 .dark .bg-c3-soft {
-    background-color: rgb(var(--c3) / 0.15);
+    background-color: rgb(var(--c3) / 0.18);
 }
 .border-c1-soft {
     border-color: rgb(var(--c1) / 0.22);
@@ -234,7 +227,6 @@
     border-color: rgb(var(--c3) / 0.28);
 }
 
-/* Soft gradient washes for card corners */
 .bg-c1-wash {
     background-image: linear-gradient(
         to bottom right,
@@ -258,89 +250,179 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Glassmorphism utilities
+   ONE UI-STYLE SURFACES — softer than the glass we had, more like the
+   elevated card surfaces on the One UI 8/9 home screen.
    ───────────────────────────────────────────────────────────────────── */
 
-.glass {
-    background: rgba(255, 255, 255, 0.62);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.85) inset,
-        0 8px 32px -8px rgba(15, 23, 42, 0.08);
-}
-
-.dark .glass {
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.06) inset,
-        0 8px 32px -8px rgba(0, 0, 0, 0.6);
-}
-
-.glass-strong {
+.os-card {
     background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 12px 36px -16px rgba(15, 23, 42, 0.1);
+}
+
+.dark .os-card {
+    background: rgba(20, 22, 32, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 1px 2px rgba(0, 0, 0, 0.3),
+        0 16px 40px -16px rgba(0, 0, 0, 0.6);
+}
+
+.os-card-flat {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+
+.dark .os-card-flat {
+    background: rgba(20, 22, 32, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Header / nav surface */
+.os-nav {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(15, 23, 42, 0.05);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 16px 48px -12px rgba(15, 23, 42, 0.12);
+        0 6px 24px -10px rgba(15, 23, 42, 0.12);
 }
 
-.dark .glass-strong {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.dark .os-nav {
+    background: rgba(15, 17, 26, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.08) inset,
-        0 16px 48px -12px rgba(0, 0, 0, 0.7);
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 6px 24px -8px rgba(0, 0, 0, 0.6);
 }
 
-.glass-nav {
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.85) inset,
-        0 12px 32px -12px rgba(15, 23, 42, 0.15);
-}
-
-.dark .glass-nav {
-    background: rgba(10, 12, 26, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.06) inset,
-        0 12px 32px -8px rgba(0, 0, 0, 0.6);
-}
-
-/* Theme-aware glow on hover for interactive glass surfaces */
-.glow-hover {
+/* Glow that lifts a card on hover — picks up the active accent */
+.os-hover {
     transition:
-        box-shadow 0.3s ease,
-        border-color 0.3s ease,
-        transform 0.3s ease;
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
 }
 
-.glow-hover:hover {
-    border-color: rgb(var(--c1) / 0.3);
+.os-hover:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--c1) / 0.25);
     box-shadow:
         0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 0 0 1px rgb(var(--c1) / 0.08),
-        0 20px 48px -12px rgb(var(--c1) / 0.18);
+        0 8px 24px -8px rgba(15, 23, 42, 0.12),
+        0 20px 48px -16px rgb(var(--c1) / 0.18);
 }
 
-.dark .glow-hover:hover {
-    border-color: rgb(var(--c1) / 0.3);
+.dark .os-hover:hover {
+    border-color: rgb(var(--c1) / 0.25);
     box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.08) inset,
-        0 0 0 1px rgb(var(--c1) / 0.1),
-        0 20px 48px -12px rgb(var(--c1) / 0.25);
+        0 1px 0 rgba(255, 255, 255, 0.06) inset,
+        0 8px 24px -8px rgba(0, 0, 0, 0.5),
+        0 20px 48px -16px rgb(var(--c1) / 0.25);
+}
+
+/* Settings-style row divider used inside grouped lists */
+.os-divider {
+    height: 1px;
+    background: rgba(15, 23, 42, 0.06);
+}
+.dark .os-divider {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Animated gradient mesh background — orbs use theme mesh tokens
+   Legacy aliases — older `.glass` usages still resolve to .os-card so
+   any third-party / WIP code keeps working.
+   ───────────────────────────────────────────────────────────────────── */
+
+.glass {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 12px 36px -16px rgba(15, 23, 42, 0.1);
+}
+
+.dark .glass {
+    background: rgba(20, 22, 32, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 16px 40px -16px rgba(0, 0, 0, 0.6);
+}
+
+.glass-strong {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.95) inset,
+        0 20px 48px -20px rgba(15, 23, 42, 0.14);
+}
+
+.dark .glass-strong {
+    background: rgba(24, 27, 38, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.06) inset,
+        0 20px 48px -20px rgba(0, 0, 0, 0.7);
+}
+
+.glass-nav {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 6px 24px -10px rgba(15, 23, 42, 0.12);
+}
+
+.dark .glass-nav {
+    background: rgba(15, 17, 26, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 6px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+.glow-hover {
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+.glow-hover:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--c1) / 0.25);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 20px 48px -16px rgb(var(--c1) / 0.18);
+}
+.dark .glow-hover:hover {
+    border-color: rgb(var(--c1) / 0.25);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.06) inset,
+        0 20px 48px -16px rgb(var(--c1) / 0.25);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Animated gradient mesh background — softer than before so cards
+   feel like they sit on a calm wallpaper, not a strobing one.
    ───────────────────────────────────────────────────────────────────── */
 
 .mesh-bg {
@@ -356,54 +438,54 @@
     content: "";
     position: absolute;
     border-radius: 50%;
-    filter: blur(96px);
-    opacity: 0.55;
+    filter: blur(140px);
+    opacity: 0.35;
     will-change: transform;
     transition: background 0.6s ease;
 }
 
 .mesh-bg::before {
-    top: -10%;
-    right: -10%;
+    top: -15%;
+    right: -15%;
+    width: 60rem;
+    height: 60rem;
+    background: radial-gradient(
+        circle at center,
+        rgb(var(--mesh-a) / 0.45),
+        rgb(var(--mesh-a) / 0) 65%
+    );
+    animation: drift-a 38s ease-in-out infinite alternate;
+}
+
+.mesh-bg::after {
+    bottom: -20%;
+    left: -15%;
     width: 50rem;
     height: 50rem;
     background: radial-gradient(
         circle at center,
-        rgb(var(--mesh-a) / 0.5),
-        rgb(var(--mesh-a) / 0) 60%
-    );
-    animation: drift-a 30s ease-in-out infinite alternate;
-}
-
-.mesh-bg::after {
-    bottom: -15%;
-    left: -10%;
-    width: 45rem;
-    height: 45rem;
-    background: radial-gradient(
-        circle at center,
         rgb(var(--mesh-b) / 0.35),
-        rgb(var(--mesh-b) / 0) 60%
+        rgb(var(--mesh-b) / 0) 65%
     );
-    animation: drift-b 36s ease-in-out infinite alternate;
+    animation: drift-b 44s ease-in-out infinite alternate;
 }
 
 .dark .mesh-bg::before {
     background: radial-gradient(
         circle at center,
-        rgb(var(--mesh-a) / 0.35),
-        rgb(var(--mesh-a) / 0) 60%
+        rgb(var(--mesh-a) / 0.28),
+        rgb(var(--mesh-a) / 0) 65%
     );
-    opacity: 0.7;
+    opacity: 0.5;
 }
 
 .dark .mesh-bg::after {
     background: radial-gradient(
         circle at center,
-        rgb(var(--mesh-b) / 0.28),
-        rgb(var(--mesh-b) / 0) 60%
+        rgb(var(--mesh-b) / 0.22),
+        rgb(var(--mesh-b) / 0) 65%
     );
-    opacity: 0.6;
+    opacity: 0.45;
 }
 
 @keyframes drift-a {
@@ -411,7 +493,7 @@
         transform: translate(0, 0) scale(1);
     }
     to {
-        transform: translate(-4rem, 3rem) scale(1.1);
+        transform: translate(-4rem, 3rem) scale(1.08);
     }
 }
 
@@ -420,7 +502,7 @@
         transform: translate(0, 0) scale(1);
     }
     to {
-        transform: translate(3rem, -4rem) scale(1.05);
+        transform: translate(3rem, -4rem) scale(1.04);
     }
 }
 
@@ -428,16 +510,16 @@
 .dot-grid {
     background-image: radial-gradient(
         circle at 1px 1px,
-        rgba(15, 23, 42, 0.06) 1px,
+        rgba(15, 23, 42, 0.04) 1px,
         transparent 0
     );
-    background-size: 24px 24px;
+    background-size: 28px 28px;
 }
 
 .dark .dot-grid {
     background-image: radial-gradient(
         circle at 1px 1px,
-        rgba(255, 255, 255, 0.05) 1px,
+        rgba(255, 255, 255, 0.035) 1px,
         transparent 0
     );
 }
@@ -480,7 +562,7 @@
 @keyframes scale-fade-in {
     from {
         opacity: 0;
-        transform: scale(0.92);
+        transform: scale(0.94);
     }
     to {
         opacity: 1;

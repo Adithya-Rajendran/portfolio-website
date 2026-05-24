@@ -33,37 +33,37 @@ const tools = [
 ];
 
 /**
- * Auto-scrolling horizontal marquee of tech logos. Duplicates the list
- * once so the CSS `translateX(-50%)` loop is seamless.
+ * Toolbelt strip — auto-scrolling marquee of tech logos, with edge fade
+ * masks so the loop is seamless. Lives between the bio and skills
+ * sections as a calm visual pause.
  */
 export default function ToolsMarquee() {
     return (
         <section
             aria-label="Tools and technologies"
-            className="relative w-full overflow-hidden py-12"
+            className="relative w-full overflow-hidden"
         >
-            {/* Edge fade masks */}
             <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#f5f7fb] to-transparent dark:from-[#07091a]"
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#f4f5f8] to-transparent dark:from-[#050608]"
             />
             <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#f5f7fb] to-transparent dark:from-[#07091a]"
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#f4f5f8] to-transparent dark:from-[#050608]"
             />
 
-            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-500 mb-8">
-                Tools of the trade
+            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-500 mb-6">
+                Toolbelt
             </p>
 
             <div className="flex w-max animate-marquee">
                 {[...tools, ...tools].map(({ Icon, label }, i) => (
                     <div
                         key={`${label}-${i}`}
-                        className="flex items-center gap-3 px-8 text-slate-500 dark:text-slate-400"
+                        className="flex items-center gap-2.5 px-6 text-slate-500 dark:text-slate-400"
                         title={label}
                     >
-                        <Icon className="w-7 h-7" aria-hidden="true" />
+                        <Icon className="w-6 h-6" aria-hidden />
                         <span className="text-sm font-medium">{label}</span>
                     </div>
                 ))}

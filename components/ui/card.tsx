@@ -5,18 +5,14 @@ interface CardProps extends React.HTMLAttributes<HTMLElement> {
     href?: string;
     target?: string;
     rel?: string;
-    /** Removes the default p-6; use when the card needs flush imagery. */
+    /** Removes the default padding; use when the card needs flush imagery. */
     flush?: boolean;
 }
 
 /**
- * Single source of truth for the bordered-surface card used by project
- * tiles, blog cards, certification cards, and any other "click here"
- * surface across the site.
- *
- * Polymorphic: renders a <Link> when `href` is set (internal), an <a>
- * for external links, otherwise an <article>. Frosted-glass surface
- * with an indigo glow on hover.
+ * Polymorphic clickable card — renders a <Link> when `href` is set
+ * (internal), an <a> for external links, otherwise an <article>.
+ * Uses the One UI-style elevated surface with a hover lift.
  */
 export function Card({
     href,
@@ -28,8 +24,7 @@ export function Card({
     ...rest
 }: CardProps) {
     const sharedClasses = cn(
-        "group relative block rounded-2xl overflow-hidden",
-        "glass glow-hover",
+        "group relative block os-card rounded-3xl os-hover overflow-hidden",
         !flush && "p-6 sm:p-7",
         className,
     );

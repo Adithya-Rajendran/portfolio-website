@@ -1,4 +1,5 @@
 import RevealOnScroll from "@/components/reveal-on-scroll";
+import { IconPill } from "@/components/ui/icon-pill";
 import { Award, Briefcase, GraduationCap, Rocket } from "lucide-react";
 
 interface StatsBarProps {
@@ -7,25 +8,33 @@ interface StatsBarProps {
     postCount?: number;
 }
 
+/**
+ * Four stat rows grouped into a single One UI-style card. On wide
+ * viewports the rows lay out in a 4-col grid with vertical dividers;
+ * on narrow viewports they stack as 2x2 with horizontal dividers.
+ */
 export default function StatsBar({
     certCount,
     projectCount,
     postCount,
 }: StatsBarProps) {
     const stats = [
-        { icon: Briefcase, value: "3+", label: "Years in cloud" },
+        { Icon: Briefcase, color: "c1" as const, value: "3+", label: "Years in cloud" },
         {
-            icon: Award,
+            Icon: Award,
+            color: "c2" as const,
             value: certCount && certCount > 0 ? `${certCount}` : "5+",
             label: "Certifications",
         },
         {
-            icon: Rocket,
+            Icon: Rocket,
+            color: "c3" as const,
             value: projectCount && projectCount > 0 ? `${projectCount}` : "10+",
             label: "Projects shipped",
         },
         {
-            icon: GraduationCap,
+            Icon: GraduationCap,
+            color: "c1" as const,
             value: postCount && postCount > 0 ? `${postCount}` : "Dozens",
             label: "Articles & write-ups",
         },
@@ -34,18 +43,16 @@ export default function StatsBar({
     return (
         <RevealOnScroll
             as="section"
-            className="w-full max-w-6xl mx-auto px-2 sm:px-6"
+            className="w-full max-w-6xl mx-auto px-4 sm:px-6"
         >
-            <div className="glass rounded-2xl p-1 sm:p-1.5">
-                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-200/60 dark:divide-white/8">
-                    {stats.map(({ icon: Icon, value, label }) => (
+            <div className="os-card rounded-3xl p-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-200/60 dark:divide-white/[0.06]">
+                    {stats.map(({ Icon, color, value, label }) => (
                         <div
                             key={label}
                             className="flex items-center gap-4 px-5 py-5 sm:py-6"
                         >
-                            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-soft border border-accent-soft flex items-center justify-center text-accent">
-                                <Icon className="w-4 h-4" />
-                            </div>
+                            <IconPill icon={Icon} color={color} />
                             <div className="min-w-0">
                                 <p className="font-display text-2xl font-semibold text-slate-900 dark:text-white leading-none">
                                     {value}

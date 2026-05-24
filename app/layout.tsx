@@ -109,8 +109,8 @@ export const viewport: Viewport = {
     initialScale: 1,
     maximumScale: 5,
     themeColor: [
-        { media: "(prefers-color-scheme: light)", color: "#f5f7fb" },
-        { media: "(prefers-color-scheme: dark)", color: "#07091a" },
+        { media: "(prefers-color-scheme: light)", color: "#f4f5f8" },
+        { media: "(prefers-color-scheme: dark)", color: "#050608" },
     ],
 };
 
@@ -138,7 +138,7 @@ export default function RootLayout({
                 <ProfilePageJsonLd />
             </head>
             <body
-                className={`${inter.className} bg-[#f5f7fb] text-slate-900 relative pt-28 sm:pt-32 dark:bg-[#07091a] dark:text-slate-100 antialiased overflow-x-hidden`}
+                className={`${inter.className} bg-[#f4f5f8] text-slate-900 relative pt-28 sm:pt-32 dark:bg-[#050608] dark:text-slate-100 antialiased overflow-x-hidden`}
             >
                 {/* Animated mesh background (orbs drift, blurred) */}
                 <div className="mesh-bg" aria-hidden="true" />
