@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Github, Linkedin, Download } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
+import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 
 import heroImg from "@/public/hero.webp";
@@ -68,7 +69,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                     className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
                     aria-label="LinkedIn profile"
                 >
-                    <Linkedin className="w-5 h-5" />
+                    <FaLinkedin className="w-5 h-5" />
                 </a>
                 <a
                     href="https://github.com/Adithya-Rajendran"
@@ -77,7 +78,7 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                     className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
                     aria-label="GitHub profile"
                 >
-                    <Github className="w-5 h-5" />
+                    <FaGithub className="w-5 h-5" />
                 </a>
                 <a
                     href="/resume"
