@@ -39,7 +39,7 @@ function ThemeBridge({ children }: { children: React.ReactNode }) {
     return (
         <ThemeContext.Provider
             value={{
-                theme: (theme as "light" | "dark") ?? "dark",
+                theme: theme === "light" ? "light" : "dark",
                 toggleTheme,
             }}
         >

@@ -22,24 +22,25 @@ This portfolio showcases my projects and skills in web development, built with m
 ### Prerequisites
 
 -   Node.js (v24.x or later recommended)
+-   pnpm (v10.x or later)
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Running the Project
 
 **Development:**
 ```bash
-npm run dev
+pnpm dev
 ```
 
 **Production:**
 ```bash
-npm run build
-npm start
+pnpm build
+pnpm start
 ```
 
 ## Contribution

@@ -55,7 +55,11 @@ export default function Contact() {
                     toast({ description: "Email sent successfully!" });
                 }}
             >
+                <label htmlFor="contact-sender-email" className="sr-only">
+                    Your email address
+                </label>
                 <input
+                    id="contact-sender-email"
                     className="h-14 px-4 rounded-lg bg-white border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200/50 transition-all outline-none dark:bg-white/5 dark:text-slate-200 dark:border-white/10 dark:focus:border-emerald-500/50 dark:focus:ring-emerald-500/20"
                     name="senderEmail"
                     type="email"
@@ -63,7 +67,11 @@ export default function Contact() {
                     maxLength={500}
                     placeholder="Your email"
                 />
+                <label htmlFor="contact-message" className="sr-only">
+                    Your message
+                </label>
                 <textarea
+                    id="contact-message"
                     className="h-52 my-3 rounded-lg p-4 bg-white border border-emerald-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200/50 transition-all outline-none dark:bg-white/5 dark:text-slate-200 dark:border-white/10 dark:focus:border-emerald-500/50 dark:focus:ring-emerald-500/20"
                     name="message"
                     placeholder="Your message"

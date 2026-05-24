@@ -31,7 +31,7 @@ const postProjection = `{
 export async function getAllPosts(): Promise<Post[]> {
     "use cache";
     cacheLife("max");
-    cacheTag("post");
+    cacheTag("post-list");
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
@@ -50,7 +50,7 @@ export async function getAllPosts(): Promise<Post[]> {
 export async function getFeaturedPosts(): Promise<Post[]> {
     "use cache";
     cacheLife("max");
-    cacheTag("post");
+    cacheTag("post-list");
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
@@ -69,7 +69,7 @@ export async function getFeaturedPosts(): Promise<Post[]> {
 export async function getPostBySlug(slug: string): Promise<Post | null> {
     "use cache";
     cacheLife("max");
-    cacheTag("post");
+    cacheTag(`post:${slug}`);
     if (!isSanityConfigured) return null;
     try {
         const post = await client.fetch(
@@ -90,15 +90,16 @@ const metaProjection = `{
     title,
     "slug": slug.current,
     description,
-    date
+    date,
+    image
 }`;
 
 export async function getPostMeta(
     slug: string,
-): Promise<Pick<Post, "title" | "slug" | "description" | "date"> | null> {
+): Promise<Pick<Post, "title" | "slug" | "description" | "date" | "image"> | null> {
     "use cache";
     cacheLife("max");
-    cacheTag("post");
+    cacheTag(`post:${slug}`);
     if (!isSanityConfigured) return null;
     try {
         const meta = await client.fetch(
@@ -118,7 +119,7 @@ export async function getAllSlugsWithDates(): Promise<
 > {
     "use cache";
     cacheLife("max");
-    cacheTag("post");
+    cacheTag("post-list");
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];
@@ -140,7 +141,7 @@ export async function getAllSlugsWithDates(): Promise<
 export async function getAllSlugs(): Promise<string[]> {
     "use cache";
     cacheLife("max");
-    cacheTag("post");
+    cacheTag("post-list");
     if (!isSanityConfigured) return [];
     try {
         const today = new Date().toISOString().split("T")[0];

@@ -71,6 +71,7 @@ export default function Project({
                     alt={image?.alt || `Screenshot of ${title}`}
                     width={452}
                     height={300}
+                    sizes="(max-width: 640px) 0px, 452px"
                     loading="lazy"
                     className="absolute hidden sm:block top-8 -right-40 w-[28.25rem] rounded-t-lg shadow-2xl
         transition

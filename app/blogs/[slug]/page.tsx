@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteConfig } from "@/lib/config";
 import BlogPostBody, { BlogPostHero } from "@/components/blogs/blog-post-content";
+import { BlogPostJsonLd } from "@/components/json-ld";
+import { urlForImage } from "@/lib/sanity-image";
 
 /** Skeleton shown while the hero metadata loads (very brief) */
 function HeroSkeleton() {
@@ -72,9 +74,20 @@ export default async function BlogPostPage({
     params: Promise<{ slug: string }>;
 }) {
     const { slug } = await params;
+    // Fetch meta synchronously at the page level so JSON-LD is in the SSR
+    // payload even if the hero Suspense boundary streams later.
+    const meta = await getPostMeta(slug);
+    if (!meta) notFound();
 
     return (
         <article className="w-full">
+            <BlogPostJsonLd
+                title={meta.title || ""}
+                description={meta.description || ""}
+                date={meta.date || ""}
+                slug={slug}
+            />
+
             {/* Hero streams in first — lightweight meta query */}
             <Suspense fallback={<HeroSkeleton />}>
                 <HeroWithData slug={slug} />
@@ -98,6 +111,14 @@ export async function generateMetadata({
     if (!post) {
         return;
     }
+    const ogImageUrl = post.image
+        ? urlForImage(post.image)
+              .width(1200)
+              .height(630)
+              .fit("crop")
+              .auto("format")
+              .url()
+        : `${siteConfig.url}/og-image.jpg`;
     return {
         title: post.title,
         description: post.description,
@@ -113,7 +134,7 @@ export async function generateMetadata({
             url: `${siteConfig.url}/blogs/${slug}`,
             images: [
                 {
-                    url: "/og-image.jpg",
+                    url: ogImageUrl,
                     width: 1200,
                     height: 630,
                     alt: post.title,

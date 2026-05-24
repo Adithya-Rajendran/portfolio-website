@@ -63,6 +63,7 @@ export default function Certification(cert: TCertification) {
                         }
                         width={128}
                         height={128}
+                        sizes="128px"
                         loading="lazy"
                         className="top-8 -right-40 rounded-lg shadow-2xl transition group-hover:scale-[1.20]"
                     />

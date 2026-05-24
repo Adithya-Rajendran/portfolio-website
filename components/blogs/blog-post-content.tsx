@@ -1,6 +1,5 @@
 import { PortableText } from "@portabletext/react";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
-import { BlogPostJsonLd } from "@/components/json-ld";
 import type { Post } from "@/sanity.types";
 import { CalendarDays, Clock } from "lucide-react";
 import TableOfContents, { type TocHeading } from "@/components/blogs/table-of-contents";
@@ -72,19 +71,8 @@ interface BlogPostHeroProps {
  * Reading time is optional — it streams in with the body when available.
  */
 export function BlogPostHero({ post, readingTime }: BlogPostHeroProps) {
-    const slug =
-        typeof post.slug === "string"
-            ? post.slug
-            : post.slug?.current || "";
-
     return (
         <>
-            <BlogPostJsonLd
-                title={post.title || ""}
-                description={post.description || ""}
-                date={post.date || ""}
-                slug={slug}
-            />
             <header className="relative py-12 sm:py-16 lg:py-20 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/50 via-transparent to-transparent dark:from-emerald-950/20 dark:via-transparent" />
                 <div className="absolute inset-0 bg-grid-pattern opacity-50" />

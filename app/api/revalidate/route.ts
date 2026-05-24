@@ -33,13 +33,24 @@ export async function POST(req: NextRequest) {
         const docType = body?._type;
 
         if (docType === "post") {
-            revalidateTag("post", { expire: 0 });
+            const changedSlug = body?.slug?.current;
+
+            // Listing queries (getAllPosts, getFeaturedPosts, slug indexes)
+            // are tagged "post-list" — always invalidate so the new/edited
+            // post appears in the index.
+            revalidateTag("post-list", { expire: 0 });
+
+            // Individual post queries are tagged "post:<slug>" — invalidate
+            // only the changed slug so other posts keep serving from cache.
+            if (changedSlug) {
+                revalidateTag(`post:${changedSlug}`, { expire: 0 });
+            }
 
             const result = await warmBlogCache();
 
             return NextResponse.json({
                 revalidated: true,
-                message: `Revalidated tag "post"${body?.slug?.current ? ` (triggered by: ${body.slug.current})` : ""}`,
+                message: `Revalidated post${changedSlug ? ` (${changedSlug})` : ""}`,
                 pagesWarmed: result.pages.warmed.length,
                 pagesFailed: result.pages.failed.length,
                 imagesWarmed: result.images.warmed,
