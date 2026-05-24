@@ -11,22 +11,30 @@ const portableTextComponents = createPortableTextStyles("intro");
 
 interface IntroProps {
     body?: PortableTextBlock[] | null;
+    subtitle?: string | null;
 }
 
-export default function Intro({ body }: IntroProps) {
+export default function Intro({ body, subtitle }: IntroProps) {
     return (
         <section id="home" className="scroll-mt-[100rem]">
             <PageHero
                 eyebrow="Portfolio"
                 title={
+                    <>
+                        Adithya{" "}
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                            Rajendran
+                        </span>
+                    </>
+                }
+                tagline={subtitle ?? undefined}
+                description={
                     body ? (
                         <PortableText
                             value={body}
                             components={portableTextComponents}
                         />
-                    ) : (
-                        <>Hi, I&apos;m Adithya Rajendran.</>
-                    )
+                    ) : null
                 }
                 actions={
                     <>
@@ -68,18 +76,18 @@ export default function Intro({ body }: IntroProps) {
                 }
             >
                 {/* Portrait sits between eyebrow and title */}
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center mb-8">
                     <Image
                         src={heroImg}
-                        alt="My portrait"
-                        width={112}
-                        height={112}
+                        alt="Portrait of Adithya Rajendran"
+                        width={104}
+                        height={104}
                         quality={95}
                         priority
                         fetchPriority="high"
                         loading="eager"
-                        sizes="112px"
-                        className="h-28 w-28 rounded-full object-cover ring-4 ring-emerald-300/50 dark:ring-emerald-500/30 shadow-xl shadow-emerald-200/30 dark:shadow-emerald-500/10"
+                        sizes="104px"
+                        className="h-26 w-26 rounded-full object-cover ring-4 ring-emerald-300/40 dark:ring-emerald-500/30 shadow-xl shadow-emerald-200/30 dark:shadow-emerald-500/10"
                     />
                 </div>
             </PageHero>

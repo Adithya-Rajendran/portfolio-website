@@ -40,7 +40,12 @@ export const metadata: Metadata = {
 
 async function IntroWithData() {
     const intro = await getIntro();
-    return <Intro body={(intro?.body ?? null) as PortableTextBlock[] | null} />;
+    return (
+        <Intro
+            body={(intro?.body ?? null) as PortableTextBlock[] | null}
+            subtitle={intro?.subtitle ?? null}
+        />
+    );
 }
 
 async function AboutWithData() {

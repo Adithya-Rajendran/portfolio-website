@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 interface PageHeroProps {
     eyebrow?: string;
     title: React.ReactNode;
+    /** Optional accent line below the title — e.g. a job tagline. */
+    tagline?: React.ReactNode;
     description?: React.ReactNode;
     actions?: React.ReactNode;
     children?: React.ReactNode;
@@ -20,6 +22,7 @@ interface PageHeroProps {
 export default function PageHero({
     eyebrow,
     title,
+    tagline,
     description,
     actions,
     children,
@@ -50,6 +53,11 @@ export default function PageHero({
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 text-balance leading-[1.1]">
                     {title}
                 </h1>
+                {tagline && (
+                    <p className="mt-4 text-lg sm:text-xl font-medium text-emerald-700 dark:text-emerald-400 text-balance">
+                        {tagline}
+                    </p>
+                )}
                 {description && (
                     <p className="mt-6 text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto text-pretty">
                         {description}
