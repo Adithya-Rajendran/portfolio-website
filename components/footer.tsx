@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Github, Linkedin } from "lucide-react";
+import { FaGithub, FaLinkedin } from "react-icons/fa6";
 
 export default function Footer() {
     return (
@@ -46,7 +46,7 @@ export default function Footer() {
                             className="text-slate-500 hover:text-emerald-400 transition-colors"
                             aria-label="LinkedIn profile"
                         >
-                            <Linkedin className="w-[1.125rem] h-[1.125rem]" />
+                            <FaLinkedin className="w-[1.125rem] h-[1.125rem]" />
                         </a>
                         <a
                             href="https://github.com/Adithya-Rajendran"
@@ -55,7 +55,7 @@ export default function Footer() {
                             className="text-slate-500 hover:text-emerald-400 transition-colors"
                             aria-label="GitHub profile"
                         >
-                            <Github className="w-[1.125rem] h-[1.125rem]" />
+                            <FaGithub className="w-[1.125rem] h-[1.125rem]" />
                         </a>
                     </div>
                 </div>

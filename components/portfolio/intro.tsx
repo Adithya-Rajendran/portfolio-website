@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Linkedin, Download, Github } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
+import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import heroImg from "@/public/hero.webp";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
@@ -73,7 +74,7 @@ export default function Intro({ body }: IntroProps) {
                         rel="noopener noreferrer"
                         aria-label="LinkedIn"
                     >
-                        <Linkedin className="w-4 h-4" />
+                        <FaLinkedin className="w-4 h-4" />
                     </a>
 
                     <a
@@ -83,7 +84,7 @@ export default function Intro({ body }: IntroProps) {
                         rel="noopener noreferrer"
                         aria-label="GitHub"
                     >
-                        <Github className="w-5 h-5" />
+                        <FaGithub className="w-5 h-5" />
                     </a>
                 </div>
             </div>
