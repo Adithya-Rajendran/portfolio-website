@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import Footer from "@/components/footer";
-import ThemeSwitch from "@/components/theme-switch";
+import ThemeSelector from "@/components/theme-selector";
 import ThemeContextProvider from "@/context/theme-context";
+import { DEFAULT_THEME } from "@/lib/themes";
 import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
@@ -16,7 +17,17 @@ import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { siteConfig } from "@/lib/config";
 
-const inter = Inter({ subsets: ["latin"], display: "swap" });
+const inter = Inter({
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-inter",
+});
+
+const spaceGrotesk = Space_Grotesk({
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-space-grotesk",
+});
 
 export const metadata: Metadata = {
     title: {
@@ -98,8 +109,8 @@ export const viewport: Viewport = {
     initialScale: 1,
     maximumScale: 5,
     themeColor: [
-        { media: "(prefers-color-scheme: light)", color: "#f0fdf4" },
-        { media: "(prefers-color-scheme: dark)", color: "#0a0f1a" },
+        { media: "(prefers-color-scheme: light)", color: "#f4f5f8" },
+        { media: "(prefers-color-scheme: dark)", color: "#050608" },
     ],
 };
 
@@ -111,28 +122,30 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className="!scroll-smooth dark"
+            className={`!scroll-smooth dark ${inter.variable} ${spaceGrotesk.variable}`}
             suppressHydrationWarning
         >
             <head>
+                {/* Read persisted accent theme from localStorage and apply
+                    it to <html> before React hydrates to prevent FOUC. */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=['glass','aurora','sunset','plum'];document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
+                    }}
+                />
                 <PersonJsonLd />
                 <WebSiteJsonLd />
                 <ProfilePageJsonLd />
             </head>
             <body
-                className={`${inter.className} bg-[#f0fdf4] text-slate-900 relative pt-28 sm:pt-32 dark:bg-[#0a0f1a] dark:text-slate-200 antialiased`}
+                className={`${inter.className} bg-[#f4f5f8] text-slate-900 relative pt-28 sm:pt-32 dark:bg-[#050608] dark:text-slate-100 antialiased overflow-x-hidden`}
             >
-                {/* Single soft accent in the top-right. The previous two
-                    overlapping blobs felt busy; a single quiet glow keeps
-                    the emerald identity without competing with content. */}
+                {/* Animated mesh background (orbs drift, blurred) */}
+                <div className="mesh-bg" aria-hidden="true" />
+
+                {/* Static dot grid texture overlay */}
                 <div
-                    className="pointer-events-none fixed top-[-12rem] right-[-12rem] -z-10 h-[40rem] w-[40rem] rounded-full blur-[8rem] bg-emerald-200/30 dark:bg-emerald-500/10"
-                    style={{ contain: "paint", willChange: "auto" }}
-                    aria-hidden="true"
-                />
-                <div
-                    className="pointer-events-none fixed bottom-[-16rem] left-[-12rem] -z-10 h-[36rem] w-[36rem] rounded-full blur-[8rem] bg-teal-100/30 dark:bg-cyan-500/[0.04]"
-                    style={{ contain: "paint", willChange: "auto" }}
+                    className="dot-grid pointer-events-none fixed inset-0 -z-10 opacity-60 dark:opacity-50"
                     aria-hidden="true"
                 />
 
@@ -141,7 +154,7 @@ export default function RootLayout({
                         {children}
                         <Footer />
                         <Toaster />
-                        <ThemeSwitch />
+                        <ThemeSelector />
                     </ThemeContextProvider>
                 </Suspense>
                 <SpeedInsights />

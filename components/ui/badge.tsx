@@ -4,19 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2",
+    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 ring-accent focus:ring-offset-2",
     {
         variants: {
             variant: {
                 default:
-                    "bg-emerald-700 text-white border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20",
+                    "bg-accent-soft text-accent border-accent-soft",
                 secondary:
-                    "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-white/5 dark:text-slate-300 dark:border-white/10",
-                cyber: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20",
-                cyan: "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20",
-                violet: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20",
+                    "bg-slate-50 text-slate-700 border-slate-200 dark:bg-white/[0.04] dark:text-slate-300 dark:border-white/10",
+                /** Primary category color (theme c1) */
+                c1: "bg-c1-soft text-accent border-c1-soft",
+                /** Secondary category color (theme c2) */
+                c2: "bg-c2-soft text-c2 border-c2-soft",
+                /** Tertiary category color (theme c3) */
+                c3: "bg-c3-soft text-c3 border-c3-soft",
+                glass:
+                    "bg-white/60 text-slate-700 border-white/60 backdrop-blur-md dark:bg-white/[0.05] dark:text-slate-300 dark:border-white/10",
                 outline:
-                    "text-emerald-700 border-emerald-200 dark:text-slate-200 dark:border-white/10",
+                    "text-slate-700 border-slate-200 dark:text-slate-200 dark:border-white/10",
             },
         },
         defaultVariants: {

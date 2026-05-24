@@ -25,7 +25,7 @@ export default function Contact() {
     const { toast } = useToast();
 
     const inputClasses =
-        "w-full h-12 px-4 rounded-lg bg-white text-slate-900 border border-emerald-200/70 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition outline-none dark:bg-white/[0.03] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500 dark:focus:border-emerald-500/60";
+        "w-full h-12 px-4 rounded-2xl bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500";
 
     return (
         <section
@@ -43,52 +43,54 @@ export default function Contact() {
                 align="center"
             />
 
-            <form
-                className="mx-auto max-w-xl flex flex-col gap-3"
-                action={async (formData) => {
-                    const { error } = await sendEmail(formData);
+            <div className="os-card mx-auto max-w-xl rounded-3xl p-6 sm:p-8">
+                <form
+                    className="flex flex-col gap-3"
+                    action={async (formData) => {
+                        const { error } = await sendEmail(formData);
 
-                    if (error) {
-                        toast({
-                            description:
-                                typeof error === "string"
-                                    ? error
-                                    : "Error sending the message! Please try again.",
-                            variant: "destructive",
-                        });
-                        return;
-                    }
+                        if (error) {
+                            toast({
+                                description:
+                                    typeof error === "string"
+                                        ? error
+                                        : "Error sending the message! Please try again.",
+                                variant: "destructive",
+                            });
+                            return;
+                        }
 
-                    toast({ description: "Email sent successfully!" });
-                }}
-            >
-                <label htmlFor="contact-sender-email" className="sr-only">
-                    Your email address
-                </label>
-                <input
-                    id="contact-sender-email"
-                    className={inputClasses}
-                    name="senderEmail"
-                    type="email"
-                    required
-                    maxLength={500}
-                    placeholder="you@example.com"
-                />
-                <label htmlFor="contact-message" className="sr-only">
-                    Your message
-                </label>
-                <textarea
-                    id="contact-message"
-                    className={cn(inputClasses, "h-44 py-3 resize-none")}
-                    name="message"
-                    placeholder="What's on your mind?"
-                    required
-                    maxLength={5000}
-                />
-                <div className="mt-2 flex justify-center">
-                    <SubmitBtn />
-                </div>
-            </form>
+                        toast({ description: "Email sent successfully!" });
+                    }}
+                >
+                    <label htmlFor="contact-sender-email" className="sr-only">
+                        Your email address
+                    </label>
+                    <input
+                        id="contact-sender-email"
+                        className={inputClasses}
+                        name="senderEmail"
+                        type="email"
+                        required
+                        maxLength={500}
+                        placeholder="you@example.com"
+                    />
+                    <label htmlFor="contact-message" className="sr-only">
+                        Your message
+                    </label>
+                    <textarea
+                        id="contact-message"
+                        className={cn(inputClasses, "h-44 py-3 resize-none")}
+                        name="message"
+                        placeholder="What's on your mind?"
+                        required
+                        maxLength={5000}
+                    />
+                    <div className="mt-2 flex justify-center">
+                        <SubmitBtn />
+                    </div>
+                </form>
+            </div>
         </section>
     );
 }

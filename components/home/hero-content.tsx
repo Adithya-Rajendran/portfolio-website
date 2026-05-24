@@ -1,9 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, Download } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
-
+import UnifiedHero, { AvailabilityPill } from "@/components/unified-hero";
 import heroImg from "@/public/hero.webp";
 
 interface HeroContentProps {
@@ -12,82 +11,82 @@ interface HeroContentProps {
 
 export default function HeroContent({ subtitle }: HeroContentProps) {
     return (
-        <section className="flex flex-col items-center justify-center min-h-[85vh] text-center relative w-full">
-            <div className="absolute inset-0 -z-10 bg-grid-pattern opacity-50 dark:opacity-100" />
-
-            <div className="mb-8 animate-scale-fade-in">
-                <div className="relative w-28 h-28 mx-auto">
-                    <Image
-                        src={heroImg}
-                        alt="Adithya Rajendran"
-                        width={112}
-                        height={112}
-                        quality={95}
-                        priority
-                        fetchPriority="high"
-                        sizes="112px"
-                        loading="eager"
-                        className="rounded-full object-cover w-28 h-28 border-2 border-emerald-400 shadow-lg shadow-emerald-300/30 dark:border-emerald-500/30 dark:shadow-emerald-500/10"
+        <UnifiedHero
+            avatar={heroImg}
+            avatarAlt="Adithya Rajendran"
+            statusPill={
+                <AvailabilityPill>
+                    Available for cloud & security work
+                </AvailabilityPill>
+            }
+            title={
+                <>
+                    <span className="text-slate-900 dark:text-white">
+                        Hi, I&apos;m{" "}
+                    </span>
+                    <span className="text-accent-gradient animate-gradient-text">
+                        Adithya Rajendran
+                    </span>
+                </>
+            }
+            subtitle="Cloud Field Engineer @ Canonical"
+            description={
+                <p>
+                    {subtitle ||
+                        "Building resilient infrastructure, breaking it apart for fun, and writing about cybersecurity, homelabs, and the systems behind every clean abstraction."}
+                </p>
+            }
+            actions={
+                <>
+                    <Button asChild size="lg" className="group gap-2">
+                        <Link href="/portfolio">
+                            View Portfolio
+                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                    </Button>
+                    <Button
+                        asChild
+                        variant="outline"
+                        size="lg"
+                        className="gap-2"
+                    >
+                        <Link href="/blogs">Read the Blog</Link>
+                    </Button>
+                </>
+            }
+            meta={
+                <div className="flex items-center justify-center gap-5">
+                    <a
+                        href="https://www.linkedin.com/in/adithya-rajendran"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                        aria-label="LinkedIn profile"
+                    >
+                        <FaLinkedin className="w-5 h-5" />
+                    </a>
+                    <a
+                        href="https://github.com/Adithya-Rajendran"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                        aria-label="GitHub profile"
+                    >
+                        <FaGithub className="w-5 h-5" />
+                    </a>
+                    <span
+                        aria-hidden
+                        className="w-px h-4 bg-slate-300 dark:bg-white/10"
                     />
-                    <div className="absolute inset-0 rounded-full ring-2 ring-emerald-300 ring-offset-2 ring-offset-[#f0fdf4] dark:ring-emerald-400/20 dark:ring-offset-[#0a0f1a]" />
+                    <a
+                        href="/resume"
+                        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                    >
+                        <Download className="w-4 h-4" />
+                        Resume
+                    </a>
                 </div>
-            </div>
-
-            <h1 className="text-5xl sm:text-7xl font-bold mb-6 tracking-tight animate-slide-up [animation-delay:200ms]">
-                <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-700 dark:from-emerald-400 dark:via-cyan-300 dark:to-emerald-400 bg-clip-text text-transparent animate-gradient-text">
-                    Adithya Rajendran
-                </span>
-            </h1>
-
-            <p className="text-lg sm:text-xl text-slate-500 dark:text-slate-400 max-w-[36rem] mx-auto mb-10 leading-relaxed animate-slide-up [animation-delay:300ms]">
-                {subtitle ||
-                    "Cloud Field Engineer / Cybersecurity Enthusiast / Builder"}
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-3 animate-slide-up [animation-delay:400ms]">
-                <Button asChild size="lg" className="gap-2">
-                    <Link href="/blogs">
-                        Read Blogs
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                </Button>
-
-                <Button asChild variant="outline" size="lg" className="gap-2">
-                    <Link href="/portfolio">Portfolio</Link>
-                </Button>
-
-                <Button asChild variant="outline" size="lg" className="gap-2">
-                    <Link href="/portfolio#contact">Contact Me</Link>
-                </Button>
-            </div>
-
-            <div className="flex items-center gap-4 mt-8 animate-fade-in [animation-delay:600ms]">
-                <a
-                    href="https://www.linkedin.com/in/adithya-rajendran"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
-                    aria-label="LinkedIn profile"
-                >
-                    <FaLinkedin className="w-5 h-5" />
-                </a>
-                <a
-                    href="https://github.com/Adithya-Rajendran"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
-                    aria-label="GitHub profile"
-                >
-                    <FaGithub className="w-5 h-5" />
-                </a>
-                <a
-                    href="/resume"
-                    className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors"
-                >
-                    <Download className="w-4 h-4" />
-                    Resume
-                </a>
-            </div>
-        </section>
+            }
+        />
     );
 }

@@ -1,54 +1,74 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, PenLine } from "lucide-react";
+import { ArrowRight, Briefcase, PenLine, MailCheck } from "lucide-react";
 import RevealOnScroll from "@/components/reveal-on-scroll";
+import { IconPill } from "@/components/ui/icon-pill";
+
+const cards = [
+    {
+        href: "/portfolio",
+        title: "Portfolio",
+        description:
+            "Experience, projects, certifications, and skills in cloud engineering and cybersecurity.",
+        cta: "Explore work",
+        Icon: Briefcase,
+        color: "c1" as const,
+    },
+    {
+        href: "/blogs",
+        title: "Blog",
+        description:
+            "Field notes on cybersecurity, homelabs, infrastructure, and the occasional rabbit hole.",
+        cta: "Read writing",
+        Icon: PenLine,
+        color: "c2" as const,
+    },
+    {
+        href: "/portfolio#contact",
+        title: "Get in touch",
+        description:
+            "Have a project in mind, an open role, or just want to compare notes? Drop me a line.",
+        cta: "Start a chat",
+        Icon: MailCheck,
+        color: "c3" as const,
+    },
+];
 
 export default function NavCards() {
     return (
-        <RevealOnScroll as="section" className="w-full max-w-[64rem] pb-28">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <Link
-                    href="/portfolio"
-                    className="group relative rounded-xl border border-emerald-200 bg-white p-8 sm:p-10 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-100 hover:border-emerald-400 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-emerald-500/30 dark:hover:shadow-emerald-500/5"
-                >
-                    <div className="relative">
-                        <div className="mb-6 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
-                            <Briefcase className="w-5 h-5" />
-                        </div>
-                        <h2 className="text-2xl font-bold mb-3 text-slate-900 dark:text-slate-100">
-                            Portfolio
-                        </h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                            Experience, projects, certifications, and skills in
-                            cloud engineering and cybersecurity.
-                        </p>
-                        <span className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium group-hover:gap-3 transition-all">
-                            Explore
-                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                        </span>
-                    </div>
-                </Link>
-
-                <Link
-                    href="/blogs"
-                    className="group relative rounded-xl border border-teal-200 bg-white p-8 sm:p-10 transition-all duration-300 hover:shadow-lg hover:shadow-teal-100 hover:border-teal-400 dark:border-white/8 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:hover:border-cyan-500/30 dark:hover:shadow-cyan-500/5"
-                >
-                    <div className="relative">
-                        <div className="mb-6 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-teal-50 text-teal-600 border border-teal-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20">
-                            <PenLine className="w-5 h-5" />
-                        </div>
-                        <h2 className="text-2xl font-bold mb-3 text-slate-900 dark:text-slate-100">
-                            Blogs
-                        </h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                            Insights and write-ups on cybersecurity, homelabs,
-                            and technology explorations.
-                        </p>
-                        <span className="inline-flex items-center gap-2 text-teal-600 dark:text-cyan-400 font-medium group-hover:gap-3 transition-all">
-                            Read
-                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                        </span>
-                    </div>
-                </Link>
+        <RevealOnScroll
+            as="section"
+            className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-28"
+        >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {cards.map(({ href, title, description, cta, Icon, color }) => {
+                    const accentClass =
+                        color === "c1"
+                            ? "text-accent"
+                            : color === "c2"
+                              ? "text-c2"
+                              : "text-c3";
+                    return (
+                        <Link
+                            key={href}
+                            href={href}
+                            className="group os-card os-hover rounded-3xl p-7 sm:p-8 flex flex-col"
+                        >
+                            <IconPill icon={Icon} color={color} size="lg" />
+                            <h2 className="mt-6 font-display text-2xl font-semibold text-slate-900 dark:text-white">
+                                {title}
+                            </h2>
+                            <p className="mt-2.5 text-slate-600 dark:text-slate-400 leading-relaxed text-sm sm:text-base flex-1">
+                                {description}
+                            </p>
+                            <span
+                                className={`mt-6 inline-flex items-center gap-2 ${accentClass} font-medium text-sm transition-all group-hover:gap-3`}
+                            >
+                                {cta}
+                                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                            </span>
+                        </Link>
+                    );
+                })}
             </div>
         </RevealOnScroll>
     );

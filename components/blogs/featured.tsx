@@ -1,16 +1,19 @@
 import Image from "next/image";
+import { Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import SectionHeader from "@/components/section-header";
 import { urlForImage } from "@/lib/sanity-image";
 import type { Post as TPost } from "@/sanity.types";
-import { formatDate } from "./utils";
+import { formatDate, readingTimeFor } from "./utils";
 
 interface FeaturedProps {
     posts: TPost[];
 }
 
 function getSlug(post: TPost) {
-    return typeof post.slug === "string" ? post.slug : (post.slug?.current ?? "");
+    return typeof post.slug === "string"
+        ? post.slug
+        : (post.slug?.current ?? "");
 }
 
 function getImage(post: TPost, width: number, height: number) {
@@ -23,24 +26,51 @@ function getImage(post: TPost, width: number, height: number) {
         .url();
 }
 
+/**
+ * Featured posts grid. Layout adapts to count:
+ *   - 1 post  → single full-width hero card
+ *   - 2 posts → 2-col equal grid
+ *   - 3+ posts → 1 hero + remaining in a 3-col grid (no posts are dropped)
+ */
 export default function Featured({ posts: featuredPosts }: FeaturedProps) {
     if (!featuredPosts || featuredPosts.length === 0) return null;
 
     const [hero, ...rest] = featuredPosts;
-    const sidePosts = rest.slice(0, 2);
 
     return (
         <section>
             <SectionHeader eyebrow="Featured" title="Reads I'm proud of" />
 
-            <div className="grid gap-5 sm:gap-6 md:grid-cols-3">
-                {hero && <FeatureCard post={hero} variant="hero" />}
-                <div className="md:col-span-1 flex flex-col gap-5 sm:gap-6">
-                    {sidePosts.map((post) => (
-                        <FeatureCard key={getSlug(post)} post={post} variant="side" />
+            {featuredPosts.length === 1 && hero && (
+                <FeatureCard post={hero} variant="hero" />
+            )}
+
+            {featuredPosts.length === 2 && (
+                <div className="grid gap-5 sm:gap-6 md:grid-cols-2">
+                    {featuredPosts.map((post) => (
+                        <FeatureCard
+                            key={getSlug(post)}
+                            post={post}
+                            variant="medium"
+                        />
                     ))}
                 </div>
-            </div>
+            )}
+
+            {featuredPosts.length >= 3 && (
+                <div className="flex flex-col gap-5 sm:gap-6">
+                    {hero && <FeatureCard post={hero} variant="hero" />}
+                    <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {rest.map((post) => (
+                            <FeatureCard
+                                key={getSlug(post)}
+                                post={post}
+                                variant="side"
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
         </section>
     );
 }
@@ -50,12 +80,38 @@ function FeatureCard({
     variant,
 }: {
     post: TPost;
-    variant: "hero" | "side";
+    variant: "hero" | "medium" | "side";
 }) {
     const slug = getSlug(post);
     const title = post.title || "";
     const isHero = variant === "hero";
-    const imageUrl = isHero ? getImage(post, 900, 500) : getImage(post, 700, 400);
+    const readingTime = readingTimeFor(post);
+
+    const imageWidth = isHero ? 1200 : variant === "medium" ? 800 : 600;
+    const imageHeight = isHero ? 600 : variant === "medium" ? 480 : 400;
+    const imageUrl = getImage(post, imageWidth, imageHeight);
+
+    const aspectClass = isHero
+        ? "aspect-[2/1] sm:aspect-[21/9]"
+        : variant === "medium"
+          ? "aspect-[16/10]"
+          : "aspect-[16/10]";
+
+    const padClass = isHero
+        ? "p-6 sm:p-8 md:p-10"
+        : variant === "medium"
+          ? "p-6 sm:p-7"
+          : "p-5 sm:p-6";
+
+    const titleClass = isHero
+        ? "text-2xl sm:text-3xl md:text-4xl tracking-tight"
+        : variant === "medium"
+          ? "text-xl sm:text-2xl tracking-tight"
+          : "text-base sm:text-lg";
+
+    const descClass = isHero
+        ? "text-base sm:text-lg line-clamp-3"
+        : "text-sm line-clamp-2";
 
     return (
         <Card
@@ -63,13 +119,11 @@ function FeatureCard({
             aria-label={`Read more about ${title}`}
             title={`Read more about ${title}`}
             flush
-            className={isHero ? "md:col-span-2 flex flex-col" : "flex-1 flex flex-col"}
+            className="flex flex-col"
         >
             {imageUrl && (
                 <div
-                    className={`relative overflow-hidden ${
-                        isHero ? "aspect-[16/9]" : "aspect-[16/10]"
-                    }`}
+                    className={`relative overflow-hidden ${aspectClass}`}
                 >
                     <Image
                         src={imageUrl}
@@ -77,39 +131,43 @@ function FeatureCard({
                         fill
                         sizes={
                             isHero
-                                ? "(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 900px"
-                                : "(max-width: 768px) 100vw, 33vw"
+                                ? "(max-width: 768px) 100vw, 1200px"
+                                : variant === "medium"
+                                  ? "(max-width: 768px) 100vw, 50vw"
+                                  : "(max-width: 768px) 100vw, 33vw"
                         }
                         loading="eager"
                         priority={isHero}
                         className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                     />
+                    <div
+                        aria-hidden
+                        className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"
+                    />
                 </div>
             )}
-            <div
-                className={`flex-1 flex flex-col ${
-                    isHero ? "p-6 sm:p-8" : "p-5 sm:p-6"
-                }`}
-            >
-                {post.date && (
-                    <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
-                        {formatDate(post.date)}
-                    </p>
-                )}
+            <div className={`flex-1 flex flex-col ${padClass}`}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent mb-2 flex items-center gap-2 flex-wrap">
+                    {post.date && <span>{formatDate(post.date)}</span>}
+                    {post.date && (
+                        <span
+                            aria-hidden
+                            className="w-1 h-1 rounded-full bg-accent opacity-50"
+                        />
+                    )}
+                    <span className="inline-flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {readingTime} min read
+                    </span>
+                </p>
                 <h3
-                    className={`font-semibold leading-snug text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors ${
-                        isHero
-                            ? "text-2xl sm:text-3xl tracking-tight"
-                            : "text-base sm:text-lg"
-                    }`}
+                    className={`font-display font-semibold leading-snug text-slate-900 dark:text-white group-hover:text-accent transition-colors ${titleClass}`}
                 >
                     {title}
                 </h3>
                 {post.description && (
                     <p
-                        className={`mt-2 text-slate-600 dark:text-slate-400 line-clamp-2 ${
-                            isHero ? "text-base sm:text-lg" : "text-sm"
-                        }`}
+                        className={`mt-2 text-slate-600 dark:text-slate-400 ${descClass}`}
                     >
                         {post.description}
                     </p>

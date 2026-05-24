@@ -5,6 +5,8 @@
  * portable-text-components.tsx.
  */
 
+import type { Post } from "@/sanity.types";
+
 /** Format a date string like "2026-03-06" → "March 6, 2026" */
 export function formatDate(dateStr?: string): string {
     if (!dateStr) return "";
@@ -13,6 +15,41 @@ export function formatDate(dateStr?: string): string {
         day: "numeric",
         year: "numeric",
     });
+}
+
+type PostBodyBlock = Extract<
+    NonNullable<Post["body"]>[number],
+    { _type: "block" }
+>;
+
+function isBodyBlock(
+    block: NonNullable<Post["body"]>[number],
+): block is PostBodyBlock {
+    return block._type === "block";
+}
+
+/** Flatten all text spans in a Sanity post body into a single string */
+export function extractBodyText(post: Pick<Post, "body">): string {
+    return post.body
+        ? post.body
+              .filter(isBodyBlock)
+              .map((block) =>
+                  block.children?.map((child) => child.text || "").join(" "),
+              )
+              .join(" ")
+        : "";
+}
+
+/** Words-per-minute estimate; min 1 minute. */
+export function estimateReadingTime(text: string): number {
+    const wordsPerMinute = 200;
+    const words = text.split(/\s+/).filter(Boolean).length;
+    return Math.max(1, Math.ceil(words / wordsPerMinute));
+}
+
+/** Convenience: reading time for a post (extracts text, then estimates). */
+export function readingTimeFor(post: Pick<Post, "body">): number {
+    return estimateReadingTime(extractBodyText(post));
 }
 
 /** Convert heading text to a URL-friendly slug */
