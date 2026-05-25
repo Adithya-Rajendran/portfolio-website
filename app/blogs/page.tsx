@@ -30,10 +30,7 @@ function LatestSkeleton() {
             <div className="h-4 w-28 bg-slate-200/60 dark:bg-white/[0.06] rounded mb-6" />
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((i) => (
-                    <div
-                        key={i}
-                        className="rounded-3xl os-card h-72"
-                    />
+                    <div key={i} className="rounded-3xl os-card h-72" />
                 ))}
             </div>
         </section>

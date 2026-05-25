@@ -6,4 +6,12 @@ import skillCategory from "./skillCategory";
 import about from "./about";
 import intro from "./intro";
 
-export const schemaTypes = [post, experience, project, certification, skillCategory, about, intro];
+export const schemaTypes = [
+    post,
+    experience,
+    project,
+    certification,
+    skillCategory,
+    about,
+    intro,
+];

@@ -4,7 +4,8 @@
 
 @theme inline {
     --font-sans: "Inter", "Inter Fallback";
-    --font-display: "Space Grotesk", "Space Grotesk Fallback", "Inter", sans-serif;
+    --font-display:
+        "Space Grotesk", "Space Grotesk Fallback", "Inter", sans-serif;
 
     /* One UI inspired neutral surfaces */
     --color-background-light: #f4f5f8;
@@ -16,8 +17,8 @@
     --color-border-subtle: rgba(255, 255, 255, 0.08);
 
     /* One UI-style large radii */
-    --radius-card: 1.5rem;       /* 24px — primary cards */
-    --radius-card-lg: 1.75rem;   /* 28px — hero panels */
+    --radius-card: 1.5rem; /* 24px — primary cards */
+    --radius-card-lg: 1.75rem; /* 28px — hero panels */
     --radius-pill: 999px;
 }
 
@@ -30,33 +31,33 @@
 /* Default + Aurora: emerald / teal / cyan */
 :root,
 [data-theme="aurora"] {
-    --c1: 5 150 105;          /* emerald-600 */
-    --c2: 13 148 136;         /* teal-600 */
-    --c3: 8 145 178;          /* cyan-600 */
-    --mesh-a: 16 185 129;     /* emerald-500 */
-    --mesh-b: 34 211 238;     /* cyan-400 */
+    --c1: 5 150 105; /* emerald-600 */
+    --c2: 13 148 136; /* teal-600 */
+    --c3: 8 145 178; /* cyan-600 */
+    --mesh-a: 16 185 129; /* emerald-500 */
+    --mesh-b: 34 211 238; /* cyan-400 */
 }
 
 .dark,
 .dark[data-theme="aurora"] {
-    --c1: 52 211 153;         /* emerald-400 */
-    --c2: 45 212 191;         /* teal-400 */
-    --c3: 34 211 238;         /* cyan-400 */
+    --c1: 52 211 153; /* emerald-400 */
+    --c2: 45 212 191; /* teal-400 */
+    --c3: 34 211 238; /* cyan-400 */
 }
 
 /* Surface Glass: indigo / violet / sky */
 [data-theme="glass"] {
-    --c1: 79 70 229;          /* indigo-600 */
-    --c2: 124 58 237;         /* violet-600 */
-    --c3: 2 132 199;          /* sky-600 */
+    --c1: 79 70 229; /* indigo-600 */
+    --c2: 124 58 237; /* violet-600 */
+    --c3: 2 132 199; /* sky-600 */
     --mesh-a: 99 102 241;
     --mesh-b: 56 189 248;
 }
 
 .dark[data-theme="glass"] {
-    --c1: 129 140 248;        /* indigo-400 */
-    --c2: 167 139 250;        /* violet-400 */
-    --c3: 56 189 248;         /* sky-400 */
+    --c1: 129 140 248; /* indigo-400 */
+    --c2: 167 139 250; /* violet-400 */
+    --c3: 56 189 248; /* sky-400 */
 }
 
 [data-theme="sunset"] {
@@ -135,11 +136,7 @@
 }
 
 .bg-accent-gradient {
-    background-image: linear-gradient(
-        to right,
-        rgb(var(--c1)),
-        rgb(var(--c2))
-    );
+    background-image: linear-gradient(to right, rgb(var(--c1)), rgb(var(--c2)));
 }
 .bg-accent-gradient-soft {
     background-image: linear-gradient(

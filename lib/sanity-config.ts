@@ -5,7 +5,9 @@ const dataset = process.env.NEXT_PUBLIC_STORE_SANITY_DATASET || "production";
 const apiVersion = "2024-01-01";
 
 if (!projectId) {
-    console.warn("[Sanity] Missing NEXT_PUBLIC_STORE_SANITY_PROJECT_ID env var");
+    console.warn(
+        "[Sanity] Missing NEXT_PUBLIC_STORE_SANITY_PROJECT_ID env var",
+    );
 }
 
 export const client = createClient({

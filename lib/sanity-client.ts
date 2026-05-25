@@ -46,25 +46,6 @@ export async function getAllPosts(): Promise<Post[]> {
     }
 }
 
-// Fetch featured posts only
-export async function getFeaturedPosts(): Promise<Post[]> {
-    "use cache";
-    cacheLife("max");
-    cacheTag("post-list");
-    if (!isSanityConfigured) return [];
-    try {
-        const today = new Date().toISOString().split("T")[0];
-        const posts = await client.fetch(
-            `*[_type == "post" && featured == true && date <= $today] | order(date desc) ${postProjection}`,
-            { today },
-        );
-        return posts || [];
-    } catch (error) {
-        console.error("[Sanity] Error fetching featured posts:", error);
-        return [];
-    }
-}
-
 // Fetch a single post by slug.
 export async function getPostBySlug(slug: string): Promise<Post | null> {
     "use cache";
@@ -96,7 +77,10 @@ const metaProjection = `{
 
 export async function getPostMeta(
     slug: string,
-): Promise<Pick<Post, "title" | "slug" | "description" | "date" | "image"> | null> {
+): Promise<Pick<
+    Post,
+    "title" | "slug" | "description" | "date" | "image"
+> | null> {
     "use cache";
     cacheLife("max");
     cacheTag(`post:${slug}`);

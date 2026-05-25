@@ -3,7 +3,9 @@ import { getPostBySlug, getPostMeta } from "@/lib/sanity-client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteConfig } from "@/lib/config";
-import BlogPostBody, { BlogPostHero } from "@/components/blogs/blog-post-content";
+import BlogPostBody, {
+    BlogPostHero,
+} from "@/components/blogs/blog-post-content";
 import { BlogPostJsonLd } from "@/components/json-ld";
 import { urlForImage } from "@/lib/sanity-image";
 

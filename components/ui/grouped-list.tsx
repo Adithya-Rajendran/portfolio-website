@@ -32,8 +32,10 @@ export function GroupedList({
     );
 }
 
-interface ListRowProps
-    extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
+interface ListRowProps extends Omit<
+    React.HTMLAttributes<HTMLElement>,
+    "title"
+> {
     href?: string;
     target?: string;
     rel?: string;

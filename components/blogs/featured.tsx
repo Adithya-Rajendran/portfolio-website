@@ -122,9 +122,7 @@ function FeatureCard({
             className="flex flex-col"
         >
             {imageUrl && (
-                <div
-                    className={`relative overflow-hidden ${aspectClass}`}
-                >
+                <div className={`relative overflow-hidden ${aspectClass}`}>
                     <Image
                         src={imageUrl}
                         alt={post.image?.alt || title}

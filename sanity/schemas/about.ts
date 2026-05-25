@@ -12,16 +12,23 @@ export default defineType({
             of: [
                 {
                     type: "block",
-                    styles: [
-                        { title: "Normal", value: "normal" },
-                    ],
+                    styles: [{ title: "Normal", value: "normal" }],
                     marks: {
                         decorators: [
                             { title: "Bold", value: "strong" },
                             { title: "Italic", value: "em" },
-                            { title: "Highlight (Emerald)", value: "highlightEmerald" },
-                            { title: "Highlight (Teal)", value: "highlightTeal" },
-                            { title: "Highlight (Orange)", value: "highlightOrange" },
+                            {
+                                title: "Highlight (Emerald)",
+                                value: "highlightEmerald",
+                            },
+                            {
+                                title: "Highlight (Teal)",
+                                value: "highlightTeal",
+                            },
+                            {
+                                title: "Highlight (Orange)",
+                                value: "highlightOrange",
+                            },
                         ],
                         annotations: [
                             {

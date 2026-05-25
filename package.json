@@ -6,7 +6,24 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "eslint app/ components/ lib/ context/ actions/ email/"
+        "lint": "eslint app/ components/ lib/ context/ actions/ email/ tests/",
+        "typecheck": "tsc --noEmit",
+        "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,yml,yaml,css}\"",
+        "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md,yml,yaml,css}\"",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "typegen": "sanity typegen generate",
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "*.{ts,tsx}": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{js,mjs,json,md,yml,yaml,css}": [
+            "prettier --write"
+        ]
     },
     "dependencies": {
         "@portabletext/react": "^6.2.0",
@@ -51,5 +68,12 @@
             "follow-redirects@<1.16.0": "^1.16.0",
             "postcss@<8.5.10": "^8.5.10"
         }
+    },
+    "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.7",
+        "husky": "^9.1.7",
+        "lint-staged": "^17.0.5",
+        "prettier": "^3.8.3",
+        "vitest": "^4.1.7"
     }
 }

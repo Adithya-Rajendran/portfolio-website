@@ -25,8 +25,7 @@ const variants: Record<
         highlight: "font-medium",
     },
     homeBio: {
-        block:
-            "text-lg leading-relaxed text-slate-700 dark:text-slate-300 text-center",
+        block: "text-lg leading-relaxed text-slate-700 dark:text-slate-300 text-center",
         strong: "font-semibold",
         highlight: "font-semibold",
     },
@@ -58,9 +57,7 @@ export function createPortableTextStyles(
             ),
             em: ({ children }) => <span className="italic">{children}</span>,
             highlightEmerald: ({ children }) => (
-                <span className={`${v.highlight} text-accent`}>
-                    {children}
-                </span>
+                <span className={`${v.highlight} text-accent`}>{children}</span>
             ),
             highlightTeal: ({ children }) => (
                 <span className={`${v.highlight} text-c2`}>{children}</span>

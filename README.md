@@ -8,21 +8,21 @@ This portfolio showcases my projects and skills in web development, built with m
 
 ## Features and Technologies
 
--   **Next.js**: Leverages the App Router, Server-Side Rendering (SSR), and Server Components for enhanced SEO and industry-leading performance.
--   **React & TypeScript**: Robust, scalable, and type-safe development environment.
--   **Tailwind CSS**: Utility-first CSS framework for custom, highly-responsive designs.
--   **Framer Motion**: Smooth, sophisticated animations and micro-interactions.
--   **Sanity CMS**: Headless architecture for seamless content management of blog posts.
--   **SEO Optimized**: Implements structured data (JSON-LD) and semantic HTML for optimal search engine visibility.
--   **Automated Testing**: Integrated GitHub Actions CI/CD workflows to ensure code quality before merges.
--   **Contact Handling**: Built-in messaging system using React Email and Nodemailer.
+- **Next.js**: Leverages the App Router, Server-Side Rendering (SSR), and Server Components for enhanced SEO and industry-leading performance.
+- **React & TypeScript**: Robust, scalable, and type-safe development environment.
+- **Tailwind CSS**: Utility-first CSS framework for custom, highly-responsive designs.
+- **Framer Motion**: Smooth, sophisticated animations and micro-interactions.
+- **Sanity CMS**: Headless architecture for seamless content management of blog posts.
+- **SEO Optimized**: Implements structured data (JSON-LD) and semantic HTML for optimal search engine visibility.
+- **Automated Testing**: Integrated GitHub Actions CI/CD workflows to ensure code quality before merges.
+- **Contact Handling**: Built-in messaging system using React Email and Nodemailer.
 
 ## Getting Started
 
 ### Prerequisites
 
--   Node.js (v24.x or later recommended)
--   pnpm (v10.x or later)
+- Node.js (v24.x or later recommended)
+- pnpm (v10.x or later)
 
 ### Installation
 
@@ -33,11 +33,13 @@ pnpm install
 ### Running the Project
 
 **Development:**
+
 ```bash
 pnpm dev
 ```
 
 **Production:**
+
 ```bash
 pnpm build
 pnpm start

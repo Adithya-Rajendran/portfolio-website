@@ -12,16 +12,23 @@ export default defineType({
             of: [
                 {
                     type: "block",
-                    styles: [
-                        { title: "Normal", value: "normal" },
-                    ],
+                    styles: [{ title: "Normal", value: "normal" }],
                     marks: {
                         decorators: [
                             { title: "Bold", value: "strong" },
                             { title: "Italic", value: "em" },
-                            { title: "Highlight (Emerald)", value: "highlightEmerald" },
-                            { title: "Highlight (Teal)", value: "highlightTeal" },
-                            { title: "Highlight (Orange)", value: "highlightOrange" },
+                            {
+                                title: "Highlight (Emerald)",
+                                value: "highlightEmerald",
+                            },
+                            {
+                                title: "Highlight (Teal)",
+                                value: "highlightTeal",
+                            },
+                            {
+                                title: "Highlight (Orange)",
+                                value: "highlightOrange",
+                            },
                         ],
                         annotations: [
                             {
@@ -53,7 +60,8 @@ export default defineType({
         defineField({
             name: "subtitle",
             title: "Homepage Subtitle",
-            description: "e.g. Cloud Field Engineer / Cybersecurity Enthusiast / Builder",
+            description:
+                "e.g. Cloud Field Engineer / Cybersecurity Enthusiast / Builder",
             type: "string",
         }),
         defineField({
@@ -63,16 +71,23 @@ export default defineType({
             of: [
                 {
                     type: "block",
-                    styles: [
-                        { title: "Normal", value: "normal" },
-                    ],
+                    styles: [{ title: "Normal", value: "normal" }],
                     marks: {
                         decorators: [
                             { title: "Bold", value: "strong" },
                             { title: "Italic", value: "em" },
-                            { title: "Highlight (Emerald)", value: "highlightEmerald" },
-                            { title: "Highlight (Teal)", value: "highlightTeal" },
-                            { title: "Highlight (Orange)", value: "highlightOrange" },
+                            {
+                                title: "Highlight (Emerald)",
+                                value: "highlightEmerald",
+                            },
+                            {
+                                title: "Highlight (Teal)",
+                                value: "highlightTeal",
+                            },
+                            {
+                                title: "Highlight (Orange)",
+                                value: "highlightOrange",
+                            },
                         ],
                         annotations: [
                             {

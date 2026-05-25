@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
         if (docType === "post") {
             const changedSlug = body?.slug?.current;
 
-            // Listing queries (getAllPosts, getFeaturedPosts, slug indexes)
-            // are tagged "post-list" — always invalidate so the new/edited
-            // post appears in the index.
+            // Listing queries (getAllPosts, slug indexes) are tagged
+            // "post-list" — always invalidate so the new/edited post
+            // appears in the index.
             revalidateTag("post-list", { expire: 0 });
 
             // Individual post queries are tagged "post:<slug>" — invalidate
