@@ -59,9 +59,9 @@ export default defineType({
         }),
         defineField({
             name: "subtitle",
-            title: "Homepage Subtitle",
+            title: "Hero Subtitle",
             description:
-                "e.g. Cloud Field Engineer / Cybersecurity Enthusiast / Builder",
+                "Gradient subtitle under the title on the homepage and portfolio hero. e.g. Cloud Field Engineer @ Canonical",
             type: "string",
         }),
         defineField({

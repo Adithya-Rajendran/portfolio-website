@@ -18,7 +18,7 @@ export default function HeroContent({ subtitle, available }: HeroContentProps) {
             statusPill={
                 available ? (
                     <AvailabilityPill>
-                        Available for cloud & security work
+                        Available for opportunities
                     </AvailabilityPill>
                 ) : undefined
             }
@@ -32,11 +32,12 @@ export default function HeroContent({ subtitle, available }: HeroContentProps) {
                     </span>
                 </>
             }
-            subtitle="Cloud Field Engineer @ Canonical"
+            subtitle={subtitle || "Cloud Field Engineer @ Canonical"}
             description={
                 <p>
-                    {subtitle ||
-                        "Building resilient infrastructure, breaking it apart for fun, and writing about cybersecurity, homelabs, and the systems behind every clean abstraction."}
+                    Building resilient infrastructure, breaking it apart for
+                    fun, and writing about cybersecurity, homelabs, and the
+                    systems behind every clean abstraction.
                 </p>
             }
             actions={
