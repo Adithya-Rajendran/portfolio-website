@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import "./globals.css";
 import { Inter, Space_Grotesk } from "next/font/google";
+import { BotIdClient } from "botid/client";
 import Footer from "@/components/footer";
 import ThemeSelector from "@/components/theme-selector";
 import ThemeContextProvider from "@/context/theme-context";
@@ -102,6 +103,13 @@ export default function RootLayout({
                     dangerouslySetInnerHTML={{
                         __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=['glass','aurora','sunset','plum'];document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
                     }}
+                />
+                {/* Vercel BotID — protects the contact form server action.
+                    The form on /portfolio submits via POST to the same
+                    page URL; this attaches the BotID challenge response
+                    so checkBotId() in actions/sendEmail.ts can verify. */}
+                <BotIdClient
+                    protect={[{ path: "/portfolio", method: "POST" }]}
                 />
                 <PersonJsonLd />
                 <WebSiteJsonLd />
