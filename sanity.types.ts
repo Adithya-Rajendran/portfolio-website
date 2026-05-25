@@ -50,6 +50,7 @@ export type Intro = {
         _type: "file";
     };
     subtitle?: string;
+    heroDescription?: string;
     available?: boolean;
     homeBio?: Array<{
         children?: Array<{

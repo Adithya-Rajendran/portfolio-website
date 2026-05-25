@@ -65,10 +65,18 @@ export default defineType({
             type: "string",
         }),
         defineField({
+            name: "heroDescription",
+            title: "Hero Description",
+            description:
+                "Paragraph shown below the title on the homepage hero.",
+            type: "text",
+            rows: 4,
+        }),
+        defineField({
             name: "available",
             title: "Available for Work",
             description:
-                'Show the "Available for cloud & security work" pill on the homepage hero.',
+                'Show the "Available for opportunities" pill on the homepage hero.',
             type: "boolean",
             initialValue: true,
         }),

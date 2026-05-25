@@ -253,6 +253,13 @@
                 },
                 "optional": true
             },
+            "heroDescription": {
+                "type": "objectAttribute",
+                "value": {
+                    "type": "string"
+                },
+                "optional": true
+            },
             "available": {
                 "type": "objectAttribute",
                 "value": {
