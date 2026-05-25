@@ -5,7 +5,6 @@ import Footer from "@/components/footer";
 import ThemeSelector from "@/components/theme-selector";
 import ThemeContextProvider from "@/context/theme-context";
 import { DEFAULT_THEME } from "@/lib/themes";
-import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import {
@@ -153,7 +152,6 @@ export default function RootLayout({
                     <ThemeContextProvider>
                         {children}
                         <Footer />
-                        <Toaster />
                         <ThemeSelector />
                     </ThemeContextProvider>
                 </Suspense>

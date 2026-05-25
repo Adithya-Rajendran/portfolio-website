@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import type { PortableTextBlock } from "@portabletext/react";
 import {
     getIntro,
@@ -35,7 +35,9 @@ async function HeroWithData() {
 
 async function StatsWithData() {
     "use cache";
-    cacheLife("days");
+    cacheLife("max");
+    cacheTag("portfolio");
+    cacheTag("post-list");
     const [certifications, projects, posts, experiences] = await Promise.all([
         getAllCertifications(),
         getAllProjects(),
@@ -117,14 +119,6 @@ function CertsSkeleton() {
 export default function Home() {
     return (
         <main className="flex flex-col items-stretch gap-16 sm:gap-20 pb-16">
-            <link
-                rel="preload"
-                href="/hero.webp"
-                as="image"
-                type="image/webp"
-                fetchPriority="high"
-            />
-
             <Suspense fallback={<HeroContent />}>
                 <HeroWithData />
             </Suspense>

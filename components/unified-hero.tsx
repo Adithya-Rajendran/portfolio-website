@@ -61,13 +61,13 @@ export default function UnifiedHero({
                         <Image
                             src={avatar}
                             alt={avatarAlt}
-                            width={120}
-                            height={120}
-                            quality={95}
+                            width={128}
+                            height={128}
+                            quality={75}
                             priority
                             fetchPriority="high"
                             loading="eager"
-                            sizes="120px"
+                            sizes="128px"
                             className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-full object-cover ring-4 ring-white dark:ring-[#050608] shadow-xl"
                         />
                     </div>
