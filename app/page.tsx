@@ -28,29 +28,52 @@ async function HeroWithData() {
     );
 }
 
-async function StatsWithData() {
+// Cache Components split: the counts are content-derived (cached at
+// max, busted only by the Sanity webhook) while the years value is
+// date-derived (cacheLife ~monthly so the rollover lands within ~30
+// days of Jan 1 even without a content edit). The outer StatsWithData
+// is intentionally uncached — it composes the two cache entries and
+// streams from a Suspense boundary in <Home/>.
+async function getCounts() {
     "use cache";
-    // The Sanity webhook (app/api/revalidate) busts both tags on every
-    // content change, which also refreshes the years-of-experience value
-    // since it's computed inside this cached function. As long as Sanity
-    // sees any edit (a new cert, a blog post, a project tweak), the year
-    // rolls over with it.
     cacheLife("max");
     cacheTag("portfolio");
     cacheTag("post-list");
-    const [certifications, projects, posts, experiences] = await Promise.all([
+    const [certifications, projects, posts] = await Promise.all([
         getAllCertifications(),
         getAllProjects(),
         getAllPosts(),
-        getAllExperiences(),
     ]);
-    const yearsValue = computeYearsValue(experiences);
+    return {
+        certCount: certifications.length,
+        projectCount: projects.length,
+        postCount: posts.length,
+    };
+}
+
+async function getYearsValue() {
+    "use cache";
+    cacheLife({
+        stale: 60 * 60 * 24, // 1 day SWR window
+        revalidate: 60 * 60 * 24 * 30, // ~monthly background refresh
+        expire: 60 * 60 * 24 * 365, // hard cap at 1 year
+    });
+    cacheTag("portfolio");
+    const experiences = await getAllExperiences();
+    return computeYearsValue(experiences);
+}
+
+async function StatsWithData() {
+    const [counts, yearsValue] = await Promise.all([
+        getCounts(),
+        getYearsValue(),
+    ]);
     return (
         <StatsBar
             yearsValue={yearsValue}
-            certCount={certifications.length}
-            projectCount={projects.length}
-            postCount={posts.length}
+            certCount={counts.certCount}
+            projectCount={counts.projectCount}
+            postCount={counts.postCount}
         />
     );
 }
