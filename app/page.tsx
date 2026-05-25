@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
 import { cacheLife, cacheTag } from "next/cache";
 import type { PortableTextBlock } from "@portabletext/react";
 import {
@@ -12,15 +11,11 @@ import {
 } from "@/lib/sanity-client";
 import HeroContent from "@/components/home/hero-content";
 import ToolsMarquee from "@/components/home/tools-marquee";
-import { computeYearsValue } from "@/components/home/stats-bar";
-
-const StatsBar = dynamic(() => import("@/components/home/stats-bar"));
-const BioSection = dynamic(() => import("@/components/home/bio-section"));
-const SkillsPreview = dynamic(() => import("@/components/home/skills-preview"));
-const CertificationsPreview = dynamic(
-    () => import("@/components/home/certifications-preview"),
-);
-const NavCards = dynamic(() => import("@/components/home/nav-cards"));
+import StatsBar, { computeYearsValue } from "@/components/home/stats-bar";
+import BioSection from "@/components/home/bio-section";
+import SkillsPreview from "@/components/home/skills-preview";
+import CertificationsPreview from "@/components/home/certifications-preview";
+import NavCards from "@/components/home/nav-cards";
 
 async function HeroWithData() {
     const intro = await getIntro();
@@ -35,7 +30,12 @@ async function HeroWithData() {
 
 async function StatsWithData() {
     "use cache";
-    cacheLife("days");
+    // The Sanity webhook (app/api/revalidate) busts both tags on every
+    // content change, which also refreshes the years-of-experience value
+    // since it's computed inside this cached function. As long as Sanity
+    // sees any edit (a new cert, a blog post, a project tweak), the year
+    // rolls over with it.
+    cacheLife("max");
     cacheTag("portfolio");
     cacheTag("post-list");
     const [certifications, projects, posts, experiences] = await Promise.all([
