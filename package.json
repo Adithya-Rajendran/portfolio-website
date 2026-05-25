@@ -6,7 +6,8 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "eslint app/ components/ lib/ context/ actions/ email/"
+        "lint": "eslint app/ components/ lib/ context/ actions/ email/",
+        "typegen": "sanity typegen generate"
     },
     "dependencies": {
         "@portabletext/react": "^6.2.0",
