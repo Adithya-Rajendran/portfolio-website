@@ -65,6 +65,14 @@ export default defineType({
             type: "string",
         }),
         defineField({
+            name: "available",
+            title: "Available for Work",
+            description:
+                'Show the "Available for cloud & security work" pill on the homepage hero.',
+            type: "boolean",
+            initialValue: true,
+        }),
+        defineField({
             name: "homeBio",
             title: "Homepage Bio",
             type: "array",

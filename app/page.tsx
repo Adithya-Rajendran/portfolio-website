@@ -24,7 +24,9 @@ const NavCards = dynamic(() => import("@/components/home/nav-cards"));
 
 async function HeroWithData() {
     const intro = await getIntro();
-    return <HeroContent subtitle={intro?.subtitle} />;
+    return (
+        <HeroContent subtitle={intro?.subtitle} available={intro?.available} />
+    );
 }
 
 async function StatsWithData() {

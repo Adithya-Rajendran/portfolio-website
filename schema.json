@@ -253,6 +253,13 @@
                 },
                 "optional": true
             },
+            "available": {
+                "type": "objectAttribute",
+                "value": {
+                    "type": "boolean"
+                },
+                "optional": true
+            },
             "homeBio": {
                 "type": "objectAttribute",
                 "value": {
