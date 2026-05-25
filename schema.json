@@ -253,6 +253,20 @@
                 },
                 "optional": true
             },
+            "heroDescription": {
+                "type": "objectAttribute",
+                "value": {
+                    "type": "string"
+                },
+                "optional": true
+            },
+            "available": {
+                "type": "objectAttribute",
+                "value": {
+                    "type": "boolean"
+                },
+                "optional": true
+            },
             "homeBio": {
                 "type": "objectAttribute",
                 "value": {

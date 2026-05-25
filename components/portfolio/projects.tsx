@@ -1,9 +1,6 @@
-"use client";
-
-import React from "react";
-import { useSectionInView } from "@/lib/hooks";
 import SectionHeader from "@/components/section-header";
 import Project from "./project";
+import SectionSpy from "./section-spy";
 import type { Project as TProject } from "@/sanity.types";
 
 interface ProjectsProps {
@@ -11,10 +8,13 @@ interface ProjectsProps {
 }
 
 export default function Projects({ projects }: ProjectsProps) {
-    const { ref } = useSectionInView("Projects", 0.5);
-
     return (
-        <section ref={ref} id="projects" className="scroll-mt-28">
+        <SectionSpy
+            section="Projects"
+            threshold={0.5}
+            id="projects"
+            className="scroll-mt-28"
+        >
             <SectionHeader
                 eyebrow="Projects"
                 title="Things I've built"
@@ -27,6 +27,6 @@ export default function Projects({ projects }: ProjectsProps) {
                     </li>
                 ))}
             </ul>
-        </section>
+        </SectionSpy>
     );
 }

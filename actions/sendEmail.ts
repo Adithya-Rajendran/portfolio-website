@@ -4,8 +4,10 @@
 import { Resend } from "resend";
 import { z } from "zod";
 import dns from "dns/promises";
-import ContactFormEmail from "@/email/contact-form-email";
 import { headers } from "next/headers";
+import { checkBotId } from "botid/server";
+import { checkRateLimit } from "@vercel/firewall";
+import ContactFormEmail from "@/email/contact-form-email";
 
 if (!process.env.RESEND_API_KEY) {
     throw new Error("RESEND_API_KEY is not configured");
@@ -16,71 +18,6 @@ if (!process.env.CONTACT_FORM_TO_EMAIL?.includes("@")) {
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const contactFormToEmail = process.env.CONTACT_FORM_TO_EMAIL;
-
-/**
- * Simple in-memory rate limiter. Survives across requests within a single
- * serverless invocation. On Vercel, each function instance keeps its own
- * map — on cold starts the map resets, but for a portfolio contact form
- * this provides sufficient protection without external dependencies.
- */
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 3;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-
-// Opportunistic eviction: every ~50 lookups, sweep expired entries from
-// both rate-limit maps so a single long-lived serverless instance can't
-// accumulate unbounded keys.
-let lookupsSinceSweep = 0;
-function maybeSweep(now: number) {
-    if (++lookupsSinceSweep < 50) return;
-    lookupsSinceSweep = 0;
-    for (const [k, v] of rateLimitMap)
-        if (now > v.resetAt) rateLimitMap.delete(k);
-    for (const [k, v] of invalidDomainMap)
-        if (now > v.resetAt) invalidDomainMap.delete(k);
-}
-
-function isRateLimited(ip: string): boolean {
-    const now = Date.now();
-    maybeSweep(now);
-    const entry = rateLimitMap.get(ip);
-
-    if (!entry || now > entry.resetAt) {
-        rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-        return false;
-    }
-
-    entry.count++;
-    return entry.count > RATE_LIMIT_MAX;
-}
-
-/** Track invalid domain attempts (also in-memory) */
-const invalidDomainMap = new Map<string, { count: number; resetAt: number }>();
-const INVALID_DOMAIN_MAX = 5;
-const INVALID_DOMAIN_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-function trackInvalidDomain(ip: string): boolean {
-    const now = Date.now();
-    const entry = invalidDomainMap.get(ip);
-
-    if (!entry || now > entry.resetAt) {
-        invalidDomainMap.set(ip, {
-            count: 1,
-            resetAt: now + INVALID_DOMAIN_WINDOW_MS,
-        });
-        return false;
-    }
-
-    entry.count++;
-    return entry.count > INVALID_DOMAIN_MAX;
-}
-
-function isBlockedForInvalidDomains(ip: string): boolean {
-    const now = Date.now();
-    const entry = invalidDomainMap.get(ip);
-    if (!entry || now > entry.resetAt) return false;
-    return entry.count >= INVALID_DOMAIN_MAX;
-}
 
 const emailSchema = z.object({
     senderEmail: z
@@ -109,7 +46,46 @@ async function hasValidMxRecords(email: string): Promise<boolean> {
     }
 }
 
+export type ContactFormState =
+    | { status: "idle" }
+    | { status: "success" }
+    | { status: "error"; message: string };
+
+export const INITIAL_CONTACT_FORM_STATE: ContactFormState = { status: "idle" };
+
+/**
+ * useActionState-compatible wrapper around sendEmail. The form in
+ * `components/portfolio/contact.tsx` uses this as its server action so
+ * React 19 wires up pending state and the result without manual glue.
+ */
+export async function sendEmailAction(
+    _prevState: ContactFormState,
+    formData: FormData,
+): Promise<ContactFormState> {
+    const result = await sendEmail(formData);
+    if (result.error) {
+        return {
+            status: "error",
+            message:
+                typeof result.error === "string"
+                    ? result.error
+                    : "Error sending the message! Please try again.",
+        };
+    }
+    return { status: "success" };
+}
+
 export const sendEmail = async (formData: FormData) => {
+    // Vercel BotID — invisible CAPTCHA. The client SDK in app/layout.tsx
+    // protects /portfolio POST; this verifies the challenge response on
+    // the server before doing any expensive work.
+    const { isBot } = await checkBotId();
+    if (isBot) {
+        return {
+            error: "Verification failed. Please refresh the page and try again.",
+        };
+    }
+
     // FormData.get() can return File | string | null; coerce to string so
     // a file upload field with the same name can't bypass the zod schema.
     const rawData = {
@@ -125,30 +101,32 @@ export const sendEmail = async (formData: FormData) => {
 
     const { senderEmail, message } = validatedData.data;
 
+    // Vercel WAF rate limit. The rule with ID "contact-form" must be
+    // configured in the Vercel dashboard (Firewall → Rate Limit) — the
+    // SDK only invokes the rule, it doesn't define it. Available on Pro
+    // and Enterprise plans; on Hobby the SDK returns `error: 'not-found'`
+    // with `rateLimited: false`, so the form still works but is
+    // unprotected at this layer.
     const headersList = await headers();
-    // Vercel's proxy appends the real client IP to x-forwarded-for, so the
-    // last entry is the trusted one. Earlier entries can be spoofed by the
-    // client and must not be used for rate-limiting decisions.
-    const xff = headersList.get("x-forwarded-for") ?? "";
-    const ip = xff.split(",").pop()?.trim() || "127.0.0.1";
-
-    if (isBlockedForInvalidDomains(ip)) {
+    const { rateLimited, error: rateLimitError } = await checkRateLimit(
+        "contact-form",
+        { headers: headersList },
+    );
+    if (rateLimitError === "not-found") {
+        console.warn(
+            '[sendEmail] WAF rule "contact-form" not configured in Vercel dashboard — rate limiting is disabled.',
+        );
+    }
+    if (rateLimited) {
         return {
-            error: "You have been temporarily blocked for submitting too many invalid emails. Please try again later.",
+            error: "You have exceeded the maximum number of emails at this given time. Please try again later.",
         };
     }
 
     const validDomain = await hasValidMxRecords(senderEmail);
     if (!validDomain) {
-        trackInvalidDomain(ip);
         return {
             error: "The email domain does not appear to exist. Please check your email address.",
-        };
-    }
-
-    if (isRateLimited(ip)) {
-        return {
-            error: "You have exceeded the maximum number of emails at this given time. Please try again later.",
         };
     }
 

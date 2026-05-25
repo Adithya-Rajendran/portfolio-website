@@ -1,9 +1,6 @@
-"use client";
-
-import React from "react";
-import { useSectionInView } from "@/lib/hooks";
 import SectionHeader from "@/components/section-header";
 import Certification from "./certification";
+import SectionSpy from "./section-spy";
 import type { Certification as TCertification } from "@/sanity.types";
 
 interface CertificationsProps {
@@ -13,10 +10,13 @@ interface CertificationsProps {
 export default function Certifications({
     certifications,
 }: CertificationsProps) {
-    const { ref } = useSectionInView("Certs", 0.5);
-
     return (
-        <section ref={ref} id="certs" className="scroll-mt-28">
+        <SectionSpy
+            section="Certs"
+            threshold={0.5}
+            id="certs"
+            className="scroll-mt-28"
+        >
             <SectionHeader
                 eyebrow="Certifications"
                 title="Continuously certified"
@@ -29,6 +29,6 @@ export default function Certifications({
                     </li>
                 ))}
             </ul>
-        </section>
+        </SectionSpy>
     );
 }

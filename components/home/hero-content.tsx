@@ -7,17 +7,25 @@ import heroImg from "@/public/hero.webp";
 
 interface HeroContentProps {
     subtitle?: string | null;
+    description?: string | null;
+    available?: boolean | null;
 }
 
-export default function HeroContent({ subtitle }: HeroContentProps) {
+export default function HeroContent({
+    subtitle,
+    description,
+    available,
+}: HeroContentProps) {
     return (
         <UnifiedHero
             avatar={heroImg}
             avatarAlt="Adithya Rajendran"
             statusPill={
-                <AvailabilityPill>
-                    Available for cloud & security work
-                </AvailabilityPill>
+                available ? (
+                    <AvailabilityPill>
+                        Available for opportunities
+                    </AvailabilityPill>
+                ) : undefined
             }
             title={
                 <>
@@ -29,10 +37,10 @@ export default function HeroContent({ subtitle }: HeroContentProps) {
                     </span>
                 </>
             }
-            subtitle="Cloud Field Engineer @ Canonical"
+            subtitle={subtitle || "Cloud Field Engineer @ Canonical"}
             description={
                 <p>
-                    {subtitle ||
+                    {description ||
                         "Building resilient infrastructure, breaking it apart for fun, and writing about cybersecurity, homelabs, and the systems behind every clean abstraction."}
                 </p>
             }

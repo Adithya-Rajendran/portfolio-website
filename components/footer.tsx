@@ -51,9 +51,8 @@ export default function Footer() {
                                 </span>
                             </Link>
                             <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
-                                Cloud Field Engineer at Canonical. Cybersecurity
-                                practitioner, infrastructure tinkerer, and
-                                writer.
+                                Cloud engineer. Cybersecurity practitioner,
+                                infrastructure tinkerer, and writer.
                             </p>
                             <div className="mt-5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-500">
                                 <MapPin className="w-3.5 h-3.5 text-accent opacity-80" />

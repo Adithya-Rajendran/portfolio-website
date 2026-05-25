@@ -1,10 +1,8 @@
-"use client";
-
 import { UserRound } from "lucide-react";
-import { useSectionInView } from "@/lib/hooks";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
 import { IconPill } from "@/components/ui/icon-pill";
+import SectionSpy from "./section-spy";
 
 const portableTextComponents = createPortableTextStyles("about");
 
@@ -18,11 +16,9 @@ interface AboutProps {
  * heading that competes with the fixed nav for visual weight.
  */
 export default function About({ body }: AboutProps) {
-    const { ref } = useSectionInView("About");
-
     return (
-        <section
-            ref={ref}
+        <SectionSpy
+            section="About"
             id="about"
             className="scroll-mt-28 animate-slide-up"
             style={{ animationDelay: "175ms" }}
@@ -55,6 +51,6 @@ export default function About({ body }: AboutProps) {
                     </div>
                 </div>
             </div>
-        </section>
+        </SectionSpy>
     );
 }

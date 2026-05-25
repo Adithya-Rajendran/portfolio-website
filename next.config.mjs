@@ -1,3 +1,5 @@
+import { withBotId } from "botid/next/config";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     cacheComponents: true,
@@ -75,7 +77,7 @@ const nextConfig = {
         ];
     },
     images: {
-        qualities: [75, 95],
+        qualities: [75],
         formats: ["image/avif", "image/webp"],
         minimumCacheTTL: 31536000,
         remotePatterns: [
@@ -87,4 +89,4 @@ const nextConfig = {
     },
 };
 
-export default nextConfig;
+export default withBotId(nextConfig);

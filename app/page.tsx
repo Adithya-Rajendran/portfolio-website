@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import type { PortableTextBlock } from "@portabletext/react";
 import {
     getIntro,
@@ -11,38 +10,70 @@ import {
     getAllExperiences,
 } from "@/lib/sanity-client";
 import HeroContent from "@/components/home/hero-content";
-import { computeYearsValue } from "@/components/home/stats-bar";
-
-const StatsBar = dynamic(() => import("@/components/home/stats-bar"));
-const ToolsMarquee = dynamic(() => import("@/components/home/tools-marquee"));
-const BioSection = dynamic(() => import("@/components/home/bio-section"));
-const SkillsPreview = dynamic(() => import("@/components/home/skills-preview"));
-const CertificationsPreview = dynamic(
-    () => import("@/components/home/certifications-preview"),
-);
-const NavCards = dynamic(() => import("@/components/home/nav-cards"));
+import ToolsMarquee from "@/components/home/tools-marquee";
+import StatsBar, { computeYearsValue } from "@/components/home/stats-bar";
+import BioSection from "@/components/home/bio-section";
+import SkillsPreview from "@/components/home/skills-preview";
+import CertificationsPreview from "@/components/home/certifications-preview";
+import NavCards from "@/components/home/nav-cards";
 
 async function HeroWithData() {
     const intro = await getIntro();
-    return <HeroContent subtitle={intro?.subtitle} />;
+    return (
+        <HeroContent
+            subtitle={intro?.subtitle}
+            description={intro?.heroDescription}
+            available={intro?.available}
+        />
+    );
 }
 
-async function StatsWithData() {
+// Cache Components split: the counts are content-derived (cached at
+// max, busted only by the Sanity webhook) while the years value is
+// date-derived (cacheLife ~monthly so the rollover lands within ~30
+// days of Jan 1 even without a content edit). The outer StatsWithData
+// is intentionally uncached — it composes the two cache entries and
+// streams from a Suspense boundary in <Home/>.
+async function getCounts() {
     "use cache";
-    cacheLife("days");
-    const [certifications, projects, posts, experiences] = await Promise.all([
+    cacheLife("max");
+    cacheTag("portfolio");
+    cacheTag("post-list");
+    const [certifications, projects, posts] = await Promise.all([
         getAllCertifications(),
         getAllProjects(),
         getAllPosts(),
-        getAllExperiences(),
     ]);
-    const yearsValue = computeYearsValue(experiences);
+    return {
+        certCount: certifications.length,
+        projectCount: projects.length,
+        postCount: posts.length,
+    };
+}
+
+async function getYearsValue() {
+    "use cache";
+    cacheLife({
+        stale: 60 * 60 * 24, // 1 day SWR window
+        revalidate: 60 * 60 * 24 * 30, // ~monthly background refresh
+        expire: 60 * 60 * 24 * 365, // hard cap at 1 year
+    });
+    cacheTag("portfolio");
+    const experiences = await getAllExperiences();
+    return computeYearsValue(experiences);
+}
+
+async function StatsWithData() {
+    const [counts, yearsValue] = await Promise.all([
+        getCounts(),
+        getYearsValue(),
+    ]);
     return (
         <StatsBar
             yearsValue={yearsValue}
-            certCount={certifications.length}
-            projectCount={projects.length}
-            postCount={posts.length}
+            certCount={counts.certCount}
+            projectCount={counts.projectCount}
+            postCount={counts.postCount}
         />
     );
 }
@@ -111,14 +142,6 @@ function CertsSkeleton() {
 export default function Home() {
     return (
         <main className="flex flex-col items-stretch gap-16 sm:gap-20 pb-16">
-            <link
-                rel="preload"
-                href="/hero.webp"
-                as="image"
-                type="image/webp"
-                fetchPriority="high"
-            />
-
             <Suspense fallback={<HeroContent />}>
                 <HeroWithData />
             </Suspense>

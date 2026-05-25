@@ -10,7 +10,10 @@ import type {
     Intro,
 } from "../sanity.types";
 
-export type IntroData = Pick<Intro, "_id" | "body" | "subtitle" | "homeBio"> & {
+export type IntroData = Pick<
+    Intro,
+    "_id" | "body" | "subtitle" | "heroDescription" | "homeBio" | "available"
+> & {
     resumeUrl?: string | null;
 };
 
@@ -168,7 +171,7 @@ export async function getIntro(): Promise<IntroData | null> {
     if (!isSanityConfigured) return null;
     try {
         const intro = await client.fetch(
-            `*[_type == "intro"][0]{ _id, body, "resumeUrl": resume.asset->url, subtitle, homeBio }`,
+            `*[_type == "intro"][0]{ _id, body, "resumeUrl": resume.asset->url, subtitle, heroDescription, homeBio, available }`,
             {},
         );
         return intro || null;

@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import "./globals.css";
 import { Inter, Space_Grotesk } from "next/font/google";
+import { BotIdClient } from "botid/client";
 import Footer from "@/components/footer";
 import ThemeSelector from "@/components/theme-selector";
 import ThemeContextProvider from "@/context/theme-context";
 import { DEFAULT_THEME } from "@/lib/themes";
-import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import {
@@ -56,37 +56,12 @@ export const metadata: Metadata = {
         follow: true,
     },
     category: "technology",
-    icons: {
-        icon: [
-            {
-                url: "/icon-light-32x32.png",
-                media: "(prefers-color-scheme: light)",
-            },
-            {
-                url: "/icon-dark-32x32.png",
-                media: "(prefers-color-scheme: dark)",
-            },
-            {
-                url: "/icon.svg",
-                type: "image/svg+xml",
-            },
-        ],
-        apple: "/apple-icon.png",
-    },
     metadataBase: new URL(siteConfig.url),
     openGraph: {
         title: siteConfig.title,
         description: siteConfig.description,
         url: siteConfig.url,
         siteName: "Adithya's Portfolio",
-        images: [
-            {
-                url: "/og-image.jpg",
-                width: 1200,
-                height: 630,
-                alt: `${siteConfig.author} - Cloud Field Engineer & Cybersecurity Portfolio`,
-            },
-        ],
         locale: "en_US",
         type: "website",
     },
@@ -94,10 +69,6 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: siteConfig.title,
         description: siteConfig.description,
-        images: {
-            url: "/og-image.jpg",
-            alt: `${siteConfig.author} - Cloud Field Engineer & Cybersecurity Portfolio`,
-        },
     },
     verification: {
         google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
@@ -133,6 +104,13 @@ export default function RootLayout({
                         __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=['glass','aurora','sunset','plum'];document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
                     }}
                 />
+                {/* Vercel BotID — protects the contact form server action.
+                    The form on /portfolio submits via POST to the same
+                    page URL; this attaches the BotID challenge response
+                    so checkBotId() in actions/sendEmail.ts can verify. */}
+                <BotIdClient
+                    protect={[{ path: "/portfolio", method: "POST" }]}
+                />
                 <PersonJsonLd />
                 <WebSiteJsonLd />
                 <ProfilePageJsonLd />
@@ -153,7 +131,6 @@ export default function RootLayout({
                     <ThemeContextProvider>
                         {children}
                         <Footer />
-                        <Toaster />
                         <ThemeSelector />
                     </ThemeContextProvider>
                 </Suspense>
