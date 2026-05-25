@@ -109,6 +109,35 @@ async function hasValidMxRecords(email: string): Promise<boolean> {
     }
 }
 
+export type ContactFormState =
+    | { status: "idle" }
+    | { status: "success" }
+    | { status: "error"; message: string };
+
+export const INITIAL_CONTACT_FORM_STATE: ContactFormState = { status: "idle" };
+
+/**
+ * useActionState-compatible wrapper around sendEmail. The form in
+ * `components/portfolio/contact.tsx` uses this as its server action so
+ * React 19 wires up pending state and the result without manual glue.
+ */
+export async function sendEmailAction(
+    _prevState: ContactFormState,
+    formData: FormData,
+): Promise<ContactFormState> {
+    const result = await sendEmail(formData);
+    if (result.error) {
+        return {
+            status: "error",
+            message:
+                typeof result.error === "string"
+                    ? result.error
+                    : "Error sending the message! Please try again.",
+        };
+    }
+    return { status: "success" };
+}
+
 export const sendEmail = async (formData: FormData) => {
     // FormData.get() can return File | string | null; coerce to string so
     // a file upload field with the same name can't bypass the zod schema.

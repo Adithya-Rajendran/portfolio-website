@@ -1,10 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useActionState, useEffect } from "react";
 import SectionHeader from "@/components/section-header";
 import { useSectionInView } from "@/lib/hooks";
 import { useInView } from "react-intersection-observer";
-import { sendEmail } from "@/actions/sendEmail";
+import {
+    sendEmailAction,
+    INITIAL_CONTACT_FORM_STATE,
+} from "@/actions/sendEmail";
 import SubmitBtn from "../submit-btn";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -22,7 +25,22 @@ export default function Contact() {
         },
         [sectionRef, visibilityRef],
     );
+    const [state, formAction] = useActionState(
+        sendEmailAction,
+        INITIAL_CONTACT_FORM_STATE,
+    );
     const { toast } = useToast();
+
+    useEffect(() => {
+        if (state.status === "success") {
+            toast({ description: "Email sent successfully!" });
+        } else if (state.status === "error") {
+            toast({
+                description: state.message,
+                variant: "destructive",
+            });
+        }
+    }, [state, toast]);
 
     const inputClasses =
         "w-full h-12 px-4 rounded-2xl bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500";
@@ -44,25 +62,7 @@ export default function Contact() {
             />
 
             <div className="os-card mx-auto max-w-xl rounded-3xl p-6 sm:p-8">
-                <form
-                    className="flex flex-col gap-3"
-                    action={async (formData) => {
-                        const { error } = await sendEmail(formData);
-
-                        if (error) {
-                            toast({
-                                description:
-                                    typeof error === "string"
-                                        ? error
-                                        : "Error sending the message! Please try again.",
-                                variant: "destructive",
-                            });
-                            return;
-                        }
-
-                        toast({ description: "Email sent successfully!" });
-                    }}
-                >
+                <form action={formAction} className="flex flex-col gap-3">
                     <label htmlFor="contact-sender-email" className="sr-only">
                         Your email address
                     </label>
