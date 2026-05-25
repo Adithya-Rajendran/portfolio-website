@@ -78,14 +78,6 @@ export const metadata: Metadata = {
         description: siteConfig.description,
         url: siteConfig.url,
         siteName: "Adithya's Portfolio",
-        images: [
-            {
-                url: "/og-image.jpg",
-                width: 1200,
-                height: 630,
-                alt: `${siteConfig.author} - Cloud Field Engineer & Cybersecurity Portfolio`,
-            },
-        ],
         locale: "en_US",
         type: "website",
     },
@@ -93,10 +85,6 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: siteConfig.title,
         description: siteConfig.description,
-        images: {
-            url: "/og-image.jpg",
-            alt: `${siteConfig.author} - Cloud Field Engineer & Cybersecurity Portfolio`,
-        },
     },
     verification: {
         google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,

@@ -8,7 +8,7 @@ export function PersonJsonLd() {
         name: "Adithya Rajendran",
         alternateName: "Adithya",
         url: siteConfig.url,
-        image: `${siteConfig.url}/og-image.jpg`,
+        image: `${siteConfig.url}/hero.webp`,
         jobTitle: "Cloud Field Engineer",
         worksFor: {
             "@type": "Organization",
@@ -80,7 +80,7 @@ export function BlogPostJsonLd({
         headline: title,
         description,
         datePublished: date,
-        image: `${siteConfig.url}/og-image.jpg`,
+        image: `${siteConfig.url}/blogs/${slug}/opengraph-image`,
         author: {
             "@type": "Person",
             name: "Adithya Rajendran",
@@ -118,7 +118,7 @@ export async function ProfilePageJsonLd() {
             name: "Adithya Rajendran",
             alternateName: "Adithya",
             url: siteConfig.url,
-            image: `${siteConfig.url}/og-image.jpg`,
+            image: `${siteConfig.url}/hero.webp`,
             jobTitle: "Cloud Field Engineer",
             worksFor: {
                 "@type": "Organization",
