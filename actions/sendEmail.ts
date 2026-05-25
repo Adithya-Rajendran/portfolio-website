@@ -102,16 +102,21 @@ export const sendEmail = async (formData: FormData) => {
     const { senderEmail, message } = validatedData.data;
 
     // Vercel WAF rate limit. The rule with ID "contact-form" must be
-    // configured in the Vercel dashboard (Firewall → Rate Limit). The
-    // SDK extracts the client IP from x-forwarded-for via the request
-    // headers and counts against the rule's bucket.
+    // configured in the Vercel dashboard (Firewall → Rate Limit) — the
+    // SDK only invokes the rule, it doesn't define it. Available on Pro
+    // and Enterprise plans; on Hobby the SDK returns `error: 'not-found'`
+    // with `rateLimited: false`, so the form still works but is
+    // unprotected at this layer.
     const headersList = await headers();
-    const synthRequest = new Request("http://localhost", {
-        headers: headersList,
-    });
-    const { rateLimited } = await checkRateLimit("contact-form", {
-        request: synthRequest,
-    });
+    const { rateLimited, error: rateLimitError } = await checkRateLimit(
+        "contact-form",
+        { headers: headersList },
+    );
+    if (rateLimitError === "not-found") {
+        console.warn(
+            '[sendEmail] WAF rule "contact-form" not configured in Vercel dashboard — rate limiting is disabled.',
+        );
+    }
     if (rateLimited) {
         return {
             error: "You have exceeded the maximum number of emails at this given time. Please try again later.",

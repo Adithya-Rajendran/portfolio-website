@@ -160,7 +160,7 @@ describe("sendEmail — Vercel WAF rate limit", () => {
         expect(resendSendMock).not.toHaveBeenCalled();
     });
 
-    it("calls checkRateLimit with the contact-form rule id", async () => {
+    it("calls checkRateLimit with the contact-form rule id and request headers", async () => {
         withIp("10.0.2.2");
         const sendEmail = await importSendEmail();
 
@@ -170,7 +170,9 @@ describe("sendEmail — Vercel WAF rate limit", () => {
 
         expect(checkRateLimitMock).toHaveBeenCalledWith(
             "contact-form",
-            expect.objectContaining({ request: expect.any(Request) }),
+            expect.objectContaining({
+                headers: expect.objectContaining({ get: expect.any(Function) }),
+            }),
         );
     });
 });
