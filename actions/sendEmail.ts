@@ -34,8 +34,10 @@ let lookupsSinceSweep = 0;
 function maybeSweep(now: number) {
     if (++lookupsSinceSweep < 50) return;
     lookupsSinceSweep = 0;
-    for (const [k, v] of rateLimitMap) if (now > v.resetAt) rateLimitMap.delete(k);
-    for (const [k, v] of invalidDomainMap) if (now > v.resetAt) invalidDomainMap.delete(k);
+    for (const [k, v] of rateLimitMap)
+        if (now > v.resetAt) rateLimitMap.delete(k);
+    for (const [k, v] of invalidDomainMap)
+        if (now > v.resetAt) invalidDomainMap.delete(k);
 }
 
 function isRateLimited(ip: string): boolean {

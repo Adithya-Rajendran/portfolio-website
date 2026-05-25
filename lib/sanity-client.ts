@@ -77,7 +77,10 @@ const metaProjection = `{
 
 export async function getPostMeta(
     slug: string,
-): Promise<Pick<Post, "title" | "slug" | "description" | "date" | "image"> | null> {
+): Promise<Pick<
+    Post,
+    "title" | "slug" | "description" | "date" | "image"
+> | null> {
     "use cache";
     cacheLife("max");
     cacheTag(`post:${slug}`);

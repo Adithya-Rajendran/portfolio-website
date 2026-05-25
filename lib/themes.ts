@@ -49,8 +49,5 @@ export const themes: Theme[] = [
 ];
 
 export function isThemeId(value: unknown): value is ThemeId {
-    return (
-        typeof value === "string" &&
-        themes.some((t) => t.id === value)
-    );
+    return typeof value === "string" && themes.some((t) => t.id === value);
 }

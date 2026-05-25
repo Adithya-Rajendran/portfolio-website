@@ -12,7 +12,10 @@ interface LatestProps {
     title?: string;
 }
 
-export default function Latest({ posts: allPosts, title = "All posts" }: LatestProps) {
+export default function Latest({
+    posts: allPosts,
+    title = "All posts",
+}: LatestProps) {
     if (!allPosts || allPosts.length === 0) return null;
 
     return (

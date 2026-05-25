@@ -57,7 +57,7 @@ function getHighlighter(): Promise<Highlighter> {
  * is serialisable by the cache layer.
  */
 export async function highlightCodeBlocks(
-    body: NonNullable<Post["body"]>
+    body: NonNullable<Post["body"]>,
 ): Promise<Record<string, string>> {
     "use cache";
     cacheLife("max");
@@ -94,7 +94,7 @@ export async function highlightCodeBlocks(
                         `<pre><code>${escapeHtml(code)}</code></pre>`;
                 }
             }
-        })
+        }),
     );
 
     return highlighted;

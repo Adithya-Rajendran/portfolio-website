@@ -32,10 +32,7 @@ export default function Header() {
                 >
                     <ul className="flex w-full flex-wrap items-center justify-center gap-y-1 text-[0.875rem] font-medium text-slate-600 sm:flex-nowrap sm:gap-1 dark:text-slate-300">
                         {links.map((link) => (
-                            <li
-                                className="relative"
-                                key={link.hash}
-                            >
+                            <li className="relative" key={link.hash}>
                                 <Link
                                     className={clsx(
                                         "inline-flex items-center justify-center px-3.5 h-9 rounded-full hover:text-accent transition-colors",

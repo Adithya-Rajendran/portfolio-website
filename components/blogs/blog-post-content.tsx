@@ -115,9 +115,8 @@ export default async function BlogPostBody({ post }: { post: Post }) {
     const headings = extractHeadings(post);
 
     const highlightedCode = await highlightCodeBlocks(post.body);
-    const portableTextComponents = createPortableTextComponents(
-        highlightedCode,
-    );
+    const portableTextComponents =
+        createPortableTextComponents(highlightedCode);
 
     return (
         <div className="relative mx-auto px-6 sm:px-8 pb-24 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,48rem)_16rem_1fr] xl:grid-cols-[1fr_minmax(0,48rem)_18rem_1fr] gap-0 max-w-[90rem]">

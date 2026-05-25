@@ -24,9 +24,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                 title={
                     <>
                         Adithya{" "}
-                        <span className="text-accent-gradient">
-                            Rajendran
-                        </span>
+                        <span className="text-accent-gradient">Rajendran</span>
                     </>
                 }
                 subtitle={subtitle ?? undefined}

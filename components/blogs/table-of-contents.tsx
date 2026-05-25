@@ -57,7 +57,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         if (!activeId) return "";
         for (const section of sections) {
             if (section.heading.id === activeId) return section.heading.id;
-            if (section.children.some((c) => c.id === activeId)) return section.heading.id;
+            if (section.children.some((c) => c.id === activeId))
+                return section.heading.id;
         }
         return "";
     }, [activeId, sections]);
@@ -88,7 +89,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                 .filter((e) => e.isIntersecting)
                 .sort(
                     (a, b) =>
-                        a.boundingClientRect.top - b.boundingClientRect.top
+                        a.boundingClientRect.top - b.boundingClientRect.top,
                 );
 
             if (visible.length > 0) {
@@ -113,7 +114,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     useEffect(() => {
         if (!activeId || !indicatorRef.current || !navRef.current) return;
         const activeLink = navRef.current.querySelector(
-            `a[data-heading-id="${activeId}"]`
+            `a[data-heading-id="${activeId}"]`,
         ) as HTMLElement | null;
         if (!activeLink) return;
 
@@ -137,175 +138,155 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         });
     }, []);
 
-    const scrollToHeading = useCallback(
-        (e: React.MouseEvent, id: string) => {
-            e.preventDefault();
-            document
-                .getElementById(id)
-                ?.scrollIntoView({ behavior: "smooth" });
-            setActiveId(id);
-        },
-        []
-    );
+    const scrollToHeading = useCallback((e: React.MouseEvent, id: string) => {
+        e.preventDefault();
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+        setActiveId(id);
+    }, []);
 
     if (headings.length === 0 || !hasRoom) return null;
 
     return (
-        <aside
-            className="hidden lg:block pl-8 xl:pl-10"
-        >
-          <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
-            {/* Scroll progress — thin accent line */}
-            <div className="h-px bg-slate-200 dark:bg-slate-700/50 mb-5 relative overflow-hidden">
-                <motion.div
-                    className="absolute inset-y-0 left-0 bg-accent-gradient origin-left"
-                    style={{ width: "100%", scaleX: scrollYProgress }}
-                />
-            </div>
+        <aside className="hidden lg:block pl-8 xl:pl-10">
+            <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+                {/* Scroll progress — thin accent line */}
+                <div className="h-px bg-slate-200 dark:bg-slate-700/50 mb-5 relative overflow-hidden">
+                    <motion.div
+                        className="absolute inset-y-0 left-0 bg-accent-gradient origin-left"
+                        style={{ width: "100%", scaleX: scrollYProgress }}
+                    />
+                </div>
 
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-5">
-                On this page
-            </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-5">
+                    On this page
+                </p>
 
-            <nav ref={navRef} className="relative">
-                {/* Sliding indicator bar */}
-                <div
-                    ref={indicatorRef}
-                    className="absolute left-0 w-0.5 rounded-full bg-accent-gradient-vertical transition-all duration-300 ease-out opacity-0"
-                />
+                <nav ref={navRef} className="relative">
+                    {/* Sliding indicator bar */}
+                    <div
+                        ref={indicatorRef}
+                        className="absolute left-0 w-0.5 rounded-full bg-accent-gradient-vertical transition-all duration-300 ease-out opacity-0"
+                    />
 
-                <ul className="space-y-1">
-                    {sections.map((section) => {
-                        const isExpanded = expandedSections.has(
-                            section.heading.id
-                        );
-                        const hasChildren = section.children.length > 0;
+                    <ul className="space-y-1">
+                        {sections.map((section) => {
+                            const isExpanded = expandedSections.has(
+                                section.heading.id,
+                            );
+                            const hasChildren = section.children.length > 0;
 
-                        return (
-                            <li key={section.heading.id}>
-                                <div className="flex items-center">
-                                    {hasChildren && (
-                                        <button
-                                            onClick={() =>
-                                                toggleSection(
-                                                    section.heading.id
-                                                )
-                                            }
-                                            className="flex-shrink-0 w-4 h-4 mr-1 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                                            aria-label={
-                                                isExpanded
-                                                    ? "Collapse section"
-                                                    : "Expand section"
-                                            }
-                                        >
-                                            <svg
-                                                className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                                strokeWidth={2}
+                            return (
+                                <li key={section.heading.id}>
+                                    <div className="flex items-center">
+                                        {hasChildren && (
+                                            <button
+                                                onClick={() =>
+                                                    toggleSection(
+                                                        section.heading.id,
+                                                    )
+                                                }
+                                                className="flex-shrink-0 w-4 h-4 mr-1 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                                aria-label={
+                                                    isExpanded
+                                                        ? "Collapse section"
+                                                        : "Expand section"
+                                                }
                                             >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    d="M9 5l7 7-7 7"
-                                                />
-                                            </svg>
-                                        </button>
-                                    )}
-                                    <a
-                                        href={`#${section.heading.id}`}
-                                        data-heading-id={
-                                            section.heading.id
-                                        }
-                                        onClick={(e) =>
-                                            scrollToHeading(
-                                                e,
-                                                section.heading.id
-                                            )
-                                        }
-                                        className={[
-                                            // Parent heading link
-                                            "block py-1.5 text-[13px] leading-snug transition-all duration-200",
-                                            !hasChildren ? "pl-5" : "",
-                                            activeId ===
-                                            section.heading.id
-                                                ? "text-accent font-medium"
-                                                : "text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200",
-                                        ]
-                                            .filter(Boolean)
-                                            .join(" ")}
-                                    >
-                                        {section.heading.text}
-                                    </a>
-                                </div>
-
-                                {/* Collapsible children */}
-                                {hasChildren && (
-                                    <div
-                                        className="overflow-hidden transition-all duration-300 ease-out"
-                                        style={{
-                                            maxHeight: isExpanded
-                                                ? `${section.children.length * 40}px`
-                                                : "0px",
-                                            opacity: isExpanded
-                                                ? 1
-                                                : 0,
-                                        }}
-                                    >
-                                        <ul className="ml-5 border-l border-slate-200 dark:border-slate-700/40 pl-2.5 space-y-0.5">
-                                            {section.children.map(
-                                                (child) => (
-                                                    <li
-                                                        key={child.id}
-                                                    >
-                                                        <a
-                                                            href={`#${child.id}`}
-                                                            data-heading-id={
-                                                                child.id
-                                                            }
-                                                            onClick={(
-                                                                e
-                                                            ) =>
-                                                                scrollToHeading(
-                                                                    e,
-                                                                    child.id
-                                                                )
-                                                            }
-                                                            className={[
-                                                                "block py-1 text-xs leading-snug transition-all duration-200",
-                                                                child.level ===
-                                                                    4
-                                                                    ? "pl-3"
-                                                                    : "",
-                                                                activeId ===
-                                                                child.id
-                                                                    ? "text-accent font-medium"
-                                                                    : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
-                                                            ]
-                                                                .filter(
-                                                                    Boolean
-                                                                )
-                                                                .join(
-                                                                    " "
-                                                                )}
-                                                        >
-                                                            {
-                                                                child.text
-                                                            }
-                                                        </a>
-                                                    </li>
+                                                <svg
+                                                    className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                    strokeWidth={2}
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M9 5l7 7-7 7"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        )}
+                                        <a
+                                            href={`#${section.heading.id}`}
+                                            data-heading-id={section.heading.id}
+                                            onClick={(e) =>
+                                                scrollToHeading(
+                                                    e,
+                                                    section.heading.id,
                                                 )
-                                            )}
-                                        </ul>
+                                            }
+                                            className={[
+                                                // Parent heading link
+                                                "block py-1.5 text-[13px] leading-snug transition-all duration-200",
+                                                !hasChildren ? "pl-5" : "",
+                                                activeId === section.heading.id
+                                                    ? "text-accent font-medium"
+                                                    : "text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200",
+                                            ]
+                                                .filter(Boolean)
+                                                .join(" ")}
+                                        >
+                                            {section.heading.text}
+                                        </a>
                                     </div>
-                                )}
-                            </li>
-                        );
-                    })}
-                </ul>
-            </nav>
-          </div>
+
+                                    {/* Collapsible children */}
+                                    {hasChildren && (
+                                        <div
+                                            className="overflow-hidden transition-all duration-300 ease-out"
+                                            style={{
+                                                maxHeight: isExpanded
+                                                    ? `${section.children.length * 40}px`
+                                                    : "0px",
+                                                opacity: isExpanded ? 1 : 0,
+                                            }}
+                                        >
+                                            <ul className="ml-5 border-l border-slate-200 dark:border-slate-700/40 pl-2.5 space-y-0.5">
+                                                {section.children.map(
+                                                    (child) => (
+                                                        <li key={child.id}>
+                                                            <a
+                                                                href={`#${child.id}`}
+                                                                data-heading-id={
+                                                                    child.id
+                                                                }
+                                                                onClick={(e) =>
+                                                                    scrollToHeading(
+                                                                        e,
+                                                                        child.id,
+                                                                    )
+                                                                }
+                                                                className={[
+                                                                    "block py-1 text-xs leading-snug transition-all duration-200",
+                                                                    child.level ===
+                                                                    4
+                                                                        ? "pl-3"
+                                                                        : "",
+                                                                    activeId ===
+                                                                    child.id
+                                                                        ? "text-accent font-medium"
+                                                                        : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
+                                                                ]
+                                                                    .filter(
+                                                                        Boolean,
+                                                                    )
+                                                                    .join(" ")}
+                                                            >
+                                                                {child.text}
+                                                            </a>
+                                                        </li>
+                                                    ),
+                                                )}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </nav>
+            </div>
         </aside>
     );
 }
