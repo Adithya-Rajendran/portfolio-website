@@ -1,0 +1,17 @@
+# Dependencies
+node_modules
+pnpm-lock.yaml
+
+# Build output
+.next
+out
+build
+coverage
+
+# Generated files
+sanity.types.ts
+schema.json
+next-env.d.ts
+
+# Vercel
+.vercel
