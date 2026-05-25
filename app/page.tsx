@@ -11,10 +11,10 @@ import {
     getAllExperiences,
 } from "@/lib/sanity-client";
 import HeroContent from "@/components/home/hero-content";
+import ToolsMarquee from "@/components/home/tools-marquee";
 import { computeYearsValue } from "@/components/home/stats-bar";
 
 const StatsBar = dynamic(() => import("@/components/home/stats-bar"));
-const ToolsMarquee = dynamic(() => import("@/components/home/tools-marquee"));
 const BioSection = dynamic(() => import("@/components/home/bio-section"));
 const SkillsPreview = dynamic(() => import("@/components/home/skills-preview"));
 const CertificationsPreview = dynamic(
@@ -35,7 +35,7 @@ async function HeroWithData() {
 
 async function StatsWithData() {
     "use cache";
-    cacheLife("max");
+    cacheLife("days");
     cacheTag("portfolio");
     cacheTag("post-list");
     const [certifications, projects, posts, experiences] = await Promise.all([
