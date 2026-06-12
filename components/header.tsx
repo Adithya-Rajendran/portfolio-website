@@ -30,7 +30,7 @@ export default function Header() {
                                 <li className="relative" key={link.hash}>
                                     <Link
                                         className={clsx(
-                                            "inline-flex items-center justify-center px-3.5 h-9 rounded-full transition-colors hover:text-accent",
+                                            "os-press inline-flex items-center justify-center px-3.5 h-9 rounded-full transition-colors hover:text-accent",
                                             isActive &&
                                                 "text-accent bg-accent-soft border border-accent-soft",
                                         )}

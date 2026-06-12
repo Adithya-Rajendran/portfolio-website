@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+
 import { Send } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ export default function SubmitBtn() {
     const { pending } = useFormStatus();
 
     return (
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending} className="group">
             {pending ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
             ) : (

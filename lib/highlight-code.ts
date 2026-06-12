@@ -1,5 +1,6 @@
 import { createHighlighter, type Highlighter } from "shiki";
 import { cacheLife, cacheTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Post } from "@/sanity.types";
 
 export interface HighlightedBlock {
@@ -52,7 +53,7 @@ function getHighlighter(): Promise<Highlighter> {
  * using the singleton shiki highlighter.
  *
  * Cached via Next.js "use cache" — the highlighted HTML is stored in
- * Vercel's edge cache and revalidated via the "post" tag when content
+ * Vercel's edge cache and revalidated via the "post-list" tag when content
  * changes in Sanity.  Returns a plain Record (not Map) so the result
  * is serialisable by the cache layer.
  */
@@ -61,7 +62,9 @@ export async function highlightCodeBlocks(
 ): Promise<Record<string, string>> {
     "use cache";
     cacheLife("max");
-    cacheTag("post");
+    // Any post publish refreshes highlights (the old "post" tag was never
+    // revalidated); entries are keyed by code content so refills are cheap.
+    cacheTag(CACHE_TAGS.postList);
 
     const codeBlocks = body.filter((block) => block._type === "code");
     const highlighted: Record<string, string> = {};

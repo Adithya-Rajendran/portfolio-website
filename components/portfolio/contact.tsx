@@ -1,30 +1,19 @@
 "use client";
 
-import React, { useActionState, useEffect } from "react";
+import { useActionState, useEffect } from "react";
 import SectionHeader from "@/components/section-header";
-import { useSectionInView } from "@/lib/hooks";
-import { useInView } from "react-intersection-observer";
+import { useSectionReveal } from "@/lib/hooks";
 import {
     sendEmailAction,
     INITIAL_CONTACT_FORM_STATE,
 } from "@/actions/sendEmail";
 import SubmitBtn from "../submit-btn";
 import { useToast } from "@/components/ui/use-toast";
+import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import { cn } from "@/lib/utils";
 
 export default function Contact() {
-    const { ref: sectionRef } = useSectionInView("Contact");
-    const { ref: visibilityRef, inView } = useInView({
-        threshold: 0.15,
-        triggerOnce: true,
-    });
-    const setRefs = React.useCallback(
-        (node: HTMLElement | null) => {
-            sectionRef(node);
-            visibilityRef(node);
-        },
-        [sectionRef, visibilityRef],
-    );
+    const { ref, inView } = useSectionReveal("Contact");
     const [state, formAction] = useActionState(
         sendEmailAction,
         INITIAL_CONTACT_FORM_STATE,
@@ -43,15 +32,15 @@ export default function Contact() {
     }, [state, toast]);
 
     const inputClasses =
-        "w-full h-12 px-4 rounded-2xl bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500";
+        "w-full h-12 px-4 rounded-row bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500";
 
     return (
         <section
             id="contact"
-            ref={setRefs}
+            ref={ref}
             className={cn(
-                "scroll-mt-28 transition-opacity duration-1000",
-                inView ? "opacity-100" : "opacity-0",
+                "scroll-mt-28 motion-safe:transition-opacity motion-safe:duration-1000",
+                !inView && "motion-safe:opacity-0",
             )}
         >
             <SectionHeader
@@ -61,7 +50,7 @@ export default function Contact() {
                 align="center"
             />
 
-            <div className="os-card mx-auto max-w-xl rounded-3xl p-6 sm:p-8">
+            <div className="os-card mx-auto max-w-xl p-6 sm:p-8">
                 <form action={formAction} className="flex flex-col gap-3">
                     <label htmlFor="contact-sender-email" className="sr-only">
                         Your email address
@@ -84,7 +73,7 @@ export default function Contact() {
                         name="message"
                         placeholder="What's on your mind?"
                         required
-                        maxLength={5000}
+                        maxLength={MESSAGE_MAX_LENGTH}
                     />
                     <div className="mt-2 flex justify-center">
                         <SubmitBtn />

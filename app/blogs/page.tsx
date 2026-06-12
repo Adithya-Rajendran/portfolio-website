@@ -8,16 +8,17 @@ import { PageShell } from "@/components/page-shell";
 import { IconPill } from "@/components/ui/icon-pill";
 import { Button } from "@/components/ui/button";
 import { getAllPosts } from "@/lib/sanity-client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function FeaturedSkeleton() {
     return (
         <section className="animate-pulse">
-            <div className="h-4 w-24 bg-slate-200/60 dark:bg-white/[0.06] rounded mb-6" />
+            <Skeleton className="h-4 w-24 rounded mb-6" />
             <div className="grid gap-5 md:grid-cols-3">
-                <div className="md:col-span-2 rounded-3xl os-card aspect-[16/9]" />
+                <div className="md:col-span-2 os-card aspect-[16/9]" />
                 <div className="md:col-span-1 flex flex-col gap-5">
-                    <div className="flex-1 rounded-3xl os-card min-h-[12rem]" />
-                    <div className="flex-1 rounded-3xl os-card min-h-[12rem]" />
+                    <div className="flex-1 os-card min-h-[12rem]" />
+                    <div className="flex-1 os-card min-h-[12rem]" />
                 </div>
             </div>
         </section>
@@ -27,10 +28,10 @@ function FeaturedSkeleton() {
 function LatestSkeleton() {
     return (
         <section className="animate-pulse">
-            <div className="h-4 w-28 bg-slate-200/60 dark:bg-white/[0.06] rounded mb-6" />
+            <Skeleton className="h-4 w-28 rounded mb-6" />
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="rounded-3xl os-card h-72" />
+                    <div key={i} className="os-card h-72" />
                 ))}
             </div>
         </section>
@@ -44,7 +45,7 @@ function LatestSkeleton() {
 function BlogsEmpty() {
     return (
         <section className="mx-auto max-w-2xl">
-            <div className="os-card rounded-3xl p-10 sm:p-14 text-center">
+            <div className="os-card p-10 sm:p-14 text-center">
                 <div className="flex justify-center">
                     <IconPill icon={PenLine} color="c1" size="lg" />
                 </div>

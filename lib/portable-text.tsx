@@ -32,10 +32,11 @@ const variants: Record<
 };
 
 /**
- * Highlight marks named after the original "emerald/teal/orange" palette
- * remain in CMS content. They now resolve to the three theme positions
- * (c1/c2/c3) so existing posts adapt to whichever accent theme the
- * visitor has selected.
+ * highlightEmerald/highlightTeal/highlightOrange are frozen Sanity mark
+ * names — a content contract with existing CMS documents, so they must
+ * not be renamed here. They map onto the three theme positions
+ * (c1 via text-accent, c2, c3) so existing posts adapt to whichever
+ * accent theme the visitor has selected.
  */
 export function createPortableTextStyles(
     variant: Variant,

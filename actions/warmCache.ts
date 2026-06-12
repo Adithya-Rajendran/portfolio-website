@@ -1,4 +1,6 @@
-"use server";
+// NOT a server action: the only caller is the server-side revalidate
+// webhook route. A "use server" directive here would expose warmBlogCache
+// as a public unauthenticated endpoint / traffic-amplification lever.
 
 import { getAllSlugs, getAllPosts } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
@@ -8,7 +10,7 @@ import type { Post } from "@/sanity.types";
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
 /**
- * Image size presets that match the sizes used in the blog components.
+ * IMAGE_PRESETS must match the blog components' rendered image sizes.
  * When the warm cache runs, it fetches these exact URLs from the Sanity
  * CDN so that real visitors get cache HITs on the first load.
  */
@@ -65,11 +67,11 @@ async function warmPages(
                 return url;
             }),
         );
-        for (const result of results) {
+        for (const [index, result] of results.entries()) {
             if (result.status === "fulfilled") {
                 warmed.push(result.value);
             } else {
-                failed.push(batch[results.indexOf(result)]);
+                failed.push(batch[index]);
             }
         }
     }

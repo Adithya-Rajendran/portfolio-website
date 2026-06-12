@@ -24,7 +24,7 @@ export function Card({
     ...rest
 }: CardProps) {
     const sharedClasses = cn(
-        "group relative block os-card rounded-3xl os-hover overflow-hidden",
+        "group relative block os-card os-hover overflow-hidden",
         !flush && "p-6 sm:p-7",
         className,
     );

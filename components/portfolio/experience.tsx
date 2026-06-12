@@ -1,10 +1,8 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
 import SectionHeader from "@/components/section-header";
-import { useInView } from "react-intersection-observer";
-import { useSectionInView } from "@/lib/hooks";
+import { useSectionReveal } from "@/lib/hooks";
 import { urlForImage } from "@/lib/sanity-image";
 import { cn } from "@/lib/utils";
 import type { Experience as TExperience } from "@/sanity.types";
@@ -18,23 +16,12 @@ interface ExperienceProps {
  * pattern matches the unified surface style used elsewhere on the page.
  */
 export default function Experience({ experiences }: ExperienceProps) {
-    const { ref: sectionRef } = useSectionInView("Experience", 0.3);
-
-    const { ref: visibilityRef, inView: isVisible } = useInView({
-        threshold: 0.15,
-        triggerOnce: true,
+    const { ref, inView: isVisible } = useSectionReveal("Experience", {
+        spyThreshold: 0.3,
     });
 
-    const setRefs = React.useCallback(
-        (node: HTMLElement | null) => {
-            sectionRef(node);
-            visibilityRef(node);
-        },
-        [sectionRef, visibilityRef],
-    );
-
     return (
-        <section id="experience" ref={setRefs} className="scroll-mt-28">
+        <section id="experience" ref={ref} className="scroll-mt-28">
             <SectionHeader
                 eyebrow="Experience"
                 title="Where I've worked"
@@ -52,10 +39,9 @@ export default function Experience({ experiences }: ExperienceProps) {
                         key={item._id}
                         className={cn(
                             "relative pl-16",
-                            "transition-all duration-500 ease-out",
-                            isVisible
-                                ? "opacity-100 translate-y-0"
-                                : "opacity-0 translate-y-4",
+                            "motion-safe:transition-all motion-safe:duration-500 motion-safe:ease-out",
+                            !isVisible &&
+                                "motion-safe:opacity-0 motion-safe:translate-y-4",
                         )}
                         style={{
                             transitionDelay: isVisible
@@ -91,7 +77,7 @@ export default function Experience({ experiences }: ExperienceProps) {
                             </div>
                         </div>
 
-                        <article className="os-card rounded-3xl p-5 sm:p-6">
+                        <article className="os-card p-5 sm:p-6">
                             {item.date && (
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent mb-2">
                                     {item.date}

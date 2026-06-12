@@ -11,7 +11,7 @@ interface BioSectionProps {
 export default function BioSection({ homeBio }: BioSectionProps) {
     return (
         <RevealOnScroll as="section" className="w-full max-w-3xl mx-auto px-4">
-            <div className="os-card rounded-3xl px-7 py-10 sm:px-10 sm:py-12">
+            <div className="os-card px-7 py-10 sm:px-10 sm:py-12">
                 {homeBio ? (
                     <PortableText
                         value={homeBio}

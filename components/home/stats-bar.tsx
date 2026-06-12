@@ -93,7 +93,7 @@ export default function StatsBar({
             as="section"
             className="w-full max-w-6xl mx-auto px-4 sm:px-6"
         >
-            <div className="os-card rounded-3xl p-2">
+            <div className="os-card p-2">
                 <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-200/60 dark:divide-white/[0.06]">
                     {stats.map(({ Icon, color, value, label }) => (
                         <div

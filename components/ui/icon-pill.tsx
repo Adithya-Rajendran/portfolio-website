@@ -25,10 +25,11 @@ const colorStyles = {
 } as const;
 
 /**
- * Circular colored squircle icon container in the Samsung One UI style.
- * Used wherever an icon sits next to a label (skill cards, nav cards,
- * stats rows, settings rows, etc.) — every accent-colored icon on the
- * site should be wrapped in one of these for visual consistency.
+ * Squircle icon tile in the Samsung One UI 8 style — a continuous-curve
+ * rounded square, not a circle. Used wherever an icon sits next to a
+ * label (skill cards, nav cards, stats rows, settings rows, etc.) —
+ * every accent-colored icon on the site should be wrapped in one of
+ * these for visual consistency.
  */
 export function IconPill({
     icon: Icon,
@@ -39,7 +40,7 @@ export function IconPill({
     return (
         <div
             className={cn(
-                "inline-flex items-center justify-center rounded-full border shrink-0",
+                "inline-flex items-center justify-center rounded-squircle border shrink-0",
                 sizeStyles[size],
                 colorStyles[color],
                 className,

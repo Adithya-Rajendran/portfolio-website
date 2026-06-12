@@ -7,9 +7,12 @@
     --font-display:
         "Space Grotesk", "Space Grotesk Fallback", "Inter", sans-serif;
 
-    /* One UI inspired neutral surfaces */
-    --color-background-light: #f4f5f8;
-    --color-background-dark: #050608;
+    /* One UI canvas — the only two page-background colors. Referenced as
+       bg-canvas / dark:bg-canvas-dark, gradient stops (from-canvas) and
+       rings (ring-canvas-dark). Keep in sync with THEME_COLORS in
+       lib/config.ts (viewport.themeColor cannot read CSS variables). */
+    --color-canvas: #f4f5f8;
+    --color-canvas-dark: #050608;
 
     --color-surface-light: rgba(255, 255, 255, 0.7);
     --color-surface-medium: rgba(255, 255, 255, 0.08);
@@ -18,8 +21,35 @@
 
     /* One UI-style large radii */
     --radius-card: 1.5rem; /* 24px — primary cards */
-    --radius-card-lg: 1.75rem; /* 28px — hero panels */
+    --radius-card-lg: 1.75rem; /* 28px — hero panels, sheets */
+    --radius-row: 1rem; /* 16px — inputs, list rows */
+    --radius-squircle: 31%; /* One UI 8 icon-tile squircle */
     --radius-pill: 999px;
+
+    /* One UI snackbar enter/exit (consumed via data-[state] variants) */
+    --animate-toast-in: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    --animate-toast-out: toast-out 0.18s ease-in forwards;
+
+    @keyframes toast-in {
+        from {
+            opacity: 0;
+            transform: translateY(0.75rem) scale(0.97);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes toast-out {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+            transform: translateY(0.5rem) scale(0.97);
+        }
+    }
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -34,6 +64,11 @@
     --c1: 5 150 105; /* emerald-600 */
     --c2: 13 148 136; /* teal-600 */
     --c3: 8 145 178; /* cyan-600 */
+    /* Text-safe accents — 700-series so small accent text clears AA in
+       light mode (the 600s sit at ~3.1:1). Fills/icons keep --c1/2/3. */
+    --c1-text: 4 120 87; /* emerald-700 */
+    --c2-text: 15 118 110; /* teal-700 */
+    --c3-text: 14 116 144; /* cyan-700 */
     --mesh-a: 16 185 129; /* emerald-500 */
     --mesh-b: 34 211 238; /* cyan-400 */
 }
@@ -45,11 +80,22 @@
     --c3: 34 211 238; /* cyan-400 */
 }
 
+/* Dark mode brightens the base accents past AA already — text tokens
+   simply follow whatever the active theme resolved --c1/2/3 to. */
+.dark {
+    --c1-text: var(--c1);
+    --c2-text: var(--c2);
+    --c3-text: var(--c3);
+}
+
 /* Surface Glass: indigo / violet / sky */
 [data-theme="glass"] {
     --c1: 79 70 229; /* indigo-600 */
     --c2: 124 58 237; /* violet-600 */
     --c3: 2 132 199; /* sky-600 */
+    --c1-text: 67 56 202; /* indigo-700 */
+    --c2-text: 109 40 217; /* violet-700 */
+    --c3-text: 3 105 161; /* sky-700 */
     --mesh-a: 99 102 241;
     --mesh-b: 56 189 248;
 }
@@ -64,6 +110,9 @@
     --c1: 234 88 12;
     --c2: 225 29 72;
     --c3: 217 119 6;
+    --c1-text: 194 65 12; /* orange-700 */
+    --c2-text: 190 18 60; /* rose-700 */
+    --c3-text: 180 83 9; /* amber-700 */
     --mesh-a: 251 146 60;
     --mesh-b: 251 113 133;
 }
@@ -78,6 +127,9 @@
     --c1: 192 38 211;
     --c2: 124 58 237;
     --c3: 219 39 119;
+    --c1-text: 162 28 175; /* fuchsia-700 */
+    --c2-text: 109 40 217; /* violet-700 */
+    --c3-text: 190 24 93; /* pink-700 */
     --mesh-a: 217 70 239;
     --mesh-b: 244 114 182;
 }
@@ -93,13 +145,13 @@
    ───────────────────────────────────────────────────────────────────── */
 
 .text-accent {
-    color: rgb(var(--c1));
+    color: rgb(var(--c1-text));
 }
 .hover\:text-accent:hover {
-    color: rgb(var(--c1));
+    color: rgb(var(--c1-text));
 }
 .group:hover .group-hover\:text-accent {
-    color: rgb(var(--c1));
+    color: rgb(var(--c1-text));
 }
 
 .bg-accent {
@@ -176,18 +228,18 @@
 }
 
 .shadow-accent {
-    box-shadow: 0 4px 14px rgb(var(--c1) / 0.25);
+    box-shadow: 0 2px 10px rgb(var(--c1) / 0.22);
 }
 .hover\:shadow-accent:hover {
-    box-shadow: 0 12px 32px rgb(var(--c1) / 0.4);
+    box-shadow: 0 6px 20px -4px rgb(var(--c1) / 0.32);
 }
 
 /* Categorical c2 / c3 utilities for three-color contexts */
 .text-c2 {
-    color: rgb(var(--c2));
+    color: rgb(var(--c2-text));
 }
 .text-c3 {
-    color: rgb(var(--c3));
+    color: rgb(var(--c3-text));
 }
 .bg-c1-soft {
     background-color: rgb(var(--c1) / 0.1);
@@ -249,64 +301,78 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   ONE UI-STYLE SURFACES — softer than the glass we had, more like the
-   elevated card surfaces on the One UI 8/9 home screen.
+   ONE UI 8.5 SURFACES — near-opaque, calm cards with flat soft shadows.
+   Blur is reserved for floating chrome (.os-nav, .os-card-raised); the
+   inset "lifted glass" highlight of earlier iterations is gone.
    ───────────────────────────────────────────────────────────────────── */
 
 .os-card {
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.05);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(15, 23, 42, 0.04);
     border-radius: var(--radius-card);
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
     box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 1px 2px rgba(15, 23, 42, 0.04),
-        0 12px 36px -16px rgba(15, 23, 42, 0.1);
+        0 1px 2px rgba(15, 23, 42, 0.03),
+        0 8px 24px -16px rgba(15, 23, 42, 0.08);
 }
 
 .dark .os-card {
-    background: rgba(20, 22, 32, 0.6);
+    background: rgba(23, 25, 34, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.04) inset,
-        0 1px 2px rgba(0, 0, 0, 0.3),
-        0 16px 40px -16px rgba(0, 0, 0, 0.6);
+        0 1px 2px rgba(0, 0, 0, 0.25),
+        0 12px 32px -20px rgba(0, 0, 0, 0.5);
 }
 
 .os-card-flat {
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(15, 23, 42, 0.05);
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(15, 23, 42, 0.04);
     border-radius: var(--radius-card);
-    backdrop-filter: blur(22px) saturate(140%);
-    -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
 
 .dark .os-card-flat {
-    background: rgba(20, 22, 32, 0.45);
+    background: rgba(23, 25, 34, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Floating elevated tier — popovers, bottom sheets, snackbars. The one
+   surface that keeps heavy frost, like the One UI 8.5 quick panel. */
+.os-card-raised {
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(24px) saturate(170%);
+    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    box-shadow:
+        0 2px 4px rgba(15, 23, 42, 0.04),
+        0 24px 48px -24px rgba(15, 23, 42, 0.18);
+}
+
+.dark .os-card-raised {
+    background: rgba(28, 30, 40, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        0 24px 48px -24px rgba(0, 0, 0, 0.7);
 }
 
 /* Header / nav surface */
 .os-nav {
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.05);
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(15, 23, 42, 0.04);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 6px 24px -10px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 6px 24px -12px rgba(15, 23, 42, 0.1);
 }
 
 .dark .os-nav {
-    background: rgba(15, 17, 26, 0.78);
+    background: rgba(15, 17, 26, 0.82);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.04) inset,
-        0 6px 24px -8px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 6px 24px -10px rgba(0, 0, 0, 0.55);
 }
 
-/* Glow that lifts a card on hover — picks up the active accent */
+/* Hover lift — calm One UI elevation change with a whisper of accent */
 .os-hover {
     transition:
         transform 0.25s ease,
@@ -316,19 +382,25 @@
 
 .os-hover:hover {
     transform: translateY(-2px);
-    border-color: rgb(var(--c1) / 0.25);
+    border-color: rgb(var(--c1) / 0.22);
     box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 8px 24px -8px rgba(15, 23, 42, 0.12),
-        0 20px 48px -16px rgb(var(--c1) / 0.18);
+        0 4px 12px -4px rgba(15, 23, 42, 0.08),
+        0 16px 32px -20px rgb(var(--c1) / 0.12);
 }
 
 .dark .os-hover:hover {
-    border-color: rgb(var(--c1) / 0.25);
+    border-color: rgb(var(--c1) / 0.22);
     box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.06) inset,
-        0 8px 24px -8px rgba(0, 0, 0, 0.5),
-        0 20px 48px -16px rgb(var(--c1) / 0.25);
+        0 4px 12px -4px rgba(0, 0, 0, 0.4),
+        0 16px 32px -20px rgb(var(--c1) / 0.18);
+}
+
+/* Everything tappable presses — One UI's signature touch feedback */
+.os-press {
+    transition: transform 0.15s ease;
+}
+.os-press:active {
+    transform: scale(0.97);
 }
 
 /* Settings-style row divider used inside grouped lists */
@@ -338,85 +410,6 @@
 }
 .dark .os-divider {
     background: rgba(255, 255, 255, 0.06);
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   Legacy aliases — older `.glass` usages still resolve to .os-card so
-   any third-party / WIP code keeps working.
-   ───────────────────────────────────────────────────────────────────── */
-
-.glass {
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.05);
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 12px 36px -16px rgba(15, 23, 42, 0.1);
-}
-
-.dark .glass {
-    background: rgba(20, 22, 32, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.04) inset,
-        0 16px 40px -16px rgba(0, 0, 0, 0.6);
-}
-
-.glass-strong {
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    backdrop-filter: blur(32px) saturate(180%);
-    -webkit-backdrop-filter: blur(32px) saturate(180%);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.95) inset,
-        0 20px 48px -20px rgba(15, 23, 42, 0.14);
-}
-
-.dark .glass-strong {
-    background: rgba(24, 27, 38, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.06) inset,
-        0 20px 48px -20px rgba(0, 0, 0, 0.7);
-}
-
-.glass-nav {
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.05);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 6px 24px -10px rgba(15, 23, 42, 0.12);
-}
-
-.dark .glass-nav {
-    background: rgba(15, 17, 26, 0.78);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.04) inset,
-        0 6px 24px -8px rgba(0, 0, 0, 0.6);
-}
-
-.glow-hover {
-    transition:
-        transform 0.25s ease,
-        box-shadow 0.25s ease,
-        border-color 0.25s ease;
-}
-.glow-hover:hover {
-    transform: translateY(-2px);
-    border-color: rgb(var(--c1) / 0.25);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.9) inset,
-        0 20px 48px -16px rgb(var(--c1) / 0.18);
-}
-.dark .glow-hover:hover {
-    border-color: rgb(var(--c1) / 0.25);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.06) inset,
-        0 20px 48px -16px rgb(var(--c1) / 0.25);
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -438,7 +431,7 @@
     position: absolute;
     border-radius: 50%;
     filter: blur(100px);
-    opacity: 0.35;
+    opacity: 0.28;
     will-change: transform;
     transition: background 0.6s ease;
 }
@@ -475,7 +468,7 @@
         rgb(var(--mesh-a) / 0.28),
         rgb(var(--mesh-a) / 0) 65%
     );
-    opacity: 0.5;
+    opacity: 0.42;
 }
 
 .dark .mesh-bg::after {
@@ -484,7 +477,7 @@
         rgb(var(--mesh-b) / 0.22),
         rgb(var(--mesh-b) / 0) 65%
     );
-    opacity: 0.45;
+    opacity: 0.38;
 }
 
 @keyframes drift-a {

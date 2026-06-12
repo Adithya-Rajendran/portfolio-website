@@ -1,24 +1,44 @@
 import { siteConfig } from "@/lib/config";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
-export function PersonJsonLd() {
-    const jsonLd = {
-        "@context": "https://schema.org",
+/**
+ * Escape "<" so attacker-influenced strings can never close the
+ * <script> tag and inject markup via dangerouslySetInnerHTML.
+ */
+function safeJsonLd(data: unknown): string {
+    return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+// siteConfig.role is "<jobTitle> @ <employer>" — derive both halves so
+// structured data stays in sync with the rest of the site.
+const [jobTitle, employer] = siteConfig.role.split(" @ ");
+
+/** Shared schema.org Person fields used by PersonJsonLd and ProfilePageJsonLd. */
+function buildPersonEntity() {
+    return {
         "@type": "Person",
-        name: "Adithya Rajendran",
+        name: siteConfig.author,
         alternateName: "Adithya",
         url: siteConfig.url,
         image: `${siteConfig.url}/hero.webp`,
-        jobTitle: "Cloud Field Engineer",
+        jobTitle,
         worksFor: {
             "@type": "Organization",
-            name: "Canonical",
+            name: employer,
         },
         alumniOf: {
             "@type": "CollegeOrUniversity",
             name: "University of California, Santa Cruz",
         },
         sameAs: siteConfig.socials,
+    };
+}
+
+export function PersonJsonLd() {
+    const jsonLd = {
+        "@context": "https://schema.org",
+        ...buildPersonEntity(),
         knowsAbout: [
             "Cloud Engineering",
             "Cybersecurity",
@@ -36,7 +56,7 @@ export function PersonJsonLd() {
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
     );
 }
@@ -58,7 +78,7 @@ export function WebSiteJsonLd() {
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
     );
 }
@@ -99,7 +119,7 @@ export function BlogPostJsonLd({
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
     );
 }
@@ -107,6 +127,8 @@ export function BlogPostJsonLd({
 export async function ProfilePageJsonLd() {
     "use cache";
     cacheLife("max");
+    // Portfolio publishes refresh dateModified via the webhook.
+    cacheTag(CACHE_TAGS.portfolio);
 
     const jsonLd = {
         "@context": "https://schema.org",
@@ -114,22 +136,12 @@ export async function ProfilePageJsonLd() {
         dateCreated: "2024-01-01",
         dateModified: new Date().toISOString().split("T")[0],
         mainEntity: {
-            "@type": "Person",
-            name: "Adithya Rajendran",
-            alternateName: "Adithya",
-            url: siteConfig.url,
-            image: `${siteConfig.url}/hero.webp`,
-            jobTitle: "Cloud Field Engineer",
+            ...buildPersonEntity(),
             worksFor: {
                 "@type": "Organization",
-                name: "Canonical",
+                name: employer,
                 url: "https://canonical.com",
             },
-            alumniOf: {
-                "@type": "CollegeOrUniversity",
-                name: "University of California, Santa Cruz",
-            },
-            sameAs: siteConfig.socials,
             hasCredential: [
                 {
                     "@type": "EducationalOccupationalCredential",
@@ -153,7 +165,7 @@ export async function ProfilePageJsonLd() {
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
     );
 }

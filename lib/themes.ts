@@ -1,12 +1,16 @@
 /**
  * Accent themes registered for the theme selector. Each theme corresponds
  * to a [data-theme="…"] block in app/globals.css that defines the
- * --c1 / --c2 / --c3 (accent) and --mesh-a / --mesh-b (background mesh)
- * RGB triplets.
+ * --c1 / --c2 / --c3 (accent), --c1/2/3-text (AA-safe light-mode text),
+ * and --mesh-a / --mesh-b (background mesh) RGB triplets.
  *
  * To add a theme:
  *   1. Add a new [data-theme="x"] block in globals.css with the tokens
+ *      (including the 700-series --c*-text triplets for light mode)
  *   2. Append a Theme entry here with a swatch for the selector preview
+ *
+ * The no-FOUC script in app/layout.tsx derives its valid-theme list from
+ * this array — no third copy to maintain.
  */
 
 export type ThemeId = "glass" | "aurora" | "sunset" | "plum";

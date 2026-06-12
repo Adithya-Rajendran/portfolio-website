@@ -18,7 +18,10 @@ interface RevealOnScrollProps {
  * Latches an element into "visible" state the first time it enters the
  * viewport, then never toggles back. Uses CSS transitions for the fade/
  * translate so the framer-motion runtime isn't required for simple
- * scroll-in animations. Respects prefers-reduced-motion via motion-safe:.
+ * scroll-in animations. The pre-reveal hidden state and transition are
+ * applied only under motion-safe:, so prefers-reduced-motion users see
+ * content immediately; the base state stays visible in case the
+ * IntersectionObserver never fires.
  */
 export default function RevealOnScroll({
     children,
@@ -27,16 +30,18 @@ export default function RevealOnScroll({
     threshold = 0.15,
     as: Tag = "div",
 }: RevealOnScrollProps) {
-    const { ref, inView } = useInView({ threshold, triggerOnce: true });
+    const { ref, inView } = useInView({
+        threshold,
+        triggerOnce: true,
+        fallbackInView: true,
+    });
 
     return (
         <Tag
             ref={ref}
             className={cn(
-                "transition-all duration-700 ease-out",
-                inView
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-8",
+                "motion-safe:transition-all motion-safe:duration-700 motion-safe:ease-out",
+                !inView && "motion-safe:opacity-0 motion-safe:translate-y-8",
                 className,
             )}
             style={{

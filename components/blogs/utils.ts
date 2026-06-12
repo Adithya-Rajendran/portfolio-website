@@ -6,6 +6,7 @@
  */
 
 import type { Post } from "@/sanity.types";
+import { urlForImage } from "@/lib/sanity-image";
 
 /** Format a date string like "2026-03-06" → "March 6, 2026" */
 export function formatDate(dateStr?: string): string {
@@ -15,6 +16,30 @@ export function formatDate(dateStr?: string): string {
         day: "numeric",
         year: "numeric",
     });
+}
+
+/** Resolve a post slug whether it's a plain string or a Sanity slug object */
+export function getPostSlug(post: {
+    slug?: string | { current?: string } | null;
+}): string {
+    return typeof post.slug === "string"
+        ? post.slug
+        : (post.slug?.current ?? "");
+}
+
+/** Cropped, format-negotiated card image URL for a post (null if no image) */
+export function getPostImageUrl(
+    post: Pick<Post, "image">,
+    width: number,
+    height: number,
+): string | null {
+    if (!post.image) return null;
+    return urlForImage(post.image)
+        .width(width)
+        .height(height)
+        .fit("crop")
+        .auto("format")
+        .url();
 }
 
 type PostBodyBlock = Extract<
@@ -61,14 +86,49 @@ export function slugify(text: string): string {
         .replace(/\s+/g, "-");
 }
 
-/** Extract raw text from React children (for heading slugification) */
-export function extractText(children: React.ReactNode): string {
-    if (typeof children === "string") return children;
-    if (Array.isArray(children)) return children.map(extractText).join("");
-    if (children && typeof children === "object" && "props" in children) {
-        const props = (children as { props?: { children?: React.ReactNode } })
-            .props;
-        return extractText(props?.children);
-    }
-    return "";
+export interface PostHeading {
+    id: string;
+    text: string;
+    level: 2 | 3 | 4;
+    /** Sanity block _key — links each heading back to its source block */
+    key: string;
+}
+
+/**
+ * Extract h2–h4 headings from a post body. The single source of truth for
+ * heading ids: the ToC links and the rendered heading anchors both consume
+ * these entries (via the _key → id map), so they agree by construction.
+ */
+export function extractHeadings(post: Pick<Post, "body">): PostHeading[] {
+    return post.body
+        ? post.body
+              .filter(
+                  (block): block is PostBodyBlock =>
+                      isBodyBlock(block) &&
+                      ["h2", "h3", "h4"].includes(block.style ?? ""),
+              )
+              .map((block) => {
+                  const text =
+                      block.children
+                          ?.map((child) => child.text || "")
+                          .join("") || "";
+                  return {
+                      id: slugify(text),
+                      text,
+                      level: parseInt(block.style!.replace("h", ""), 10) as
+                          | 2
+                          | 3
+                          | 4,
+                      key: block._key,
+                  };
+              })
+              .filter((h) => h.text.length > 0)
+        : [];
+}
+
+/** Map each heading block's _key to its precomputed anchor id */
+export function headingIdsByKey(
+    headings: PostHeading[],
+): Record<string, string> {
+    return Object.fromEntries(headings.map((h) => [h.key, h.id]));
 }

@@ -8,48 +8,22 @@ import BlogPostBody, {
 } from "@/components/blogs/blog-post-content";
 import { BlogPostJsonLd } from "@/components/json-ld";
 import { urlForImage } from "@/lib/sanity-image";
-
-/** Skeleton shown while the hero metadata loads (very brief) */
-function HeroSkeleton() {
-    return (
-        <header className="relative py-14 sm:py-20 lg:py-24 overflow-hidden">
-            <div className="relative max-w-3xl mx-auto px-6 sm:px-8 animate-pulse">
-                <div className="flex items-center justify-center gap-4 mb-6">
-                    <div className="h-4 w-32 bg-slate-200/60 dark:bg-white/[0.06] rounded" />
-                </div>
-                <div className="h-10 sm:h-12 w-3/4 bg-slate-200/60 dark:bg-white/[0.06] rounded mx-auto mb-6" />
-                <div className="h-5 w-2/3 bg-slate-200/60 dark:bg-white/[0.04] rounded mx-auto" />
-            </div>
-        </header>
-    );
-}
+import { Skeleton } from "@/components/ui/skeleton";
 
 /** Skeleton for the article body while shiki highlighting runs */
 function BodySkeleton() {
     return (
-        <div className="max-w-3xl mx-auto px-6 sm:px-8 pb-24 animate-pulse space-y-6">
+        <div className="max-w-3xl mx-auto px-6 sm:px-8 pb-24 space-y-6">
             {[...Array(6)].map((_, i) => (
                 <div key={i} className="space-y-3">
-                    {i % 3 === 0 && (
-                        <div className="h-6 w-48 bg-slate-200/60 dark:bg-white/[0.06] rounded" />
-                    )}
-                    <div className="h-4 w-full bg-slate-200/60 dark:bg-white/[0.04] rounded" />
-                    <div className="h-4 w-5/6 bg-slate-200/60 dark:bg-white/[0.04] rounded" />
-                    <div className="h-4 w-4/6 bg-slate-200/60 dark:bg-white/[0.04] rounded" />
+                    {i % 3 === 0 && <Skeleton className="h-6 w-48 rounded" />}
+                    <Skeleton className="h-4 w-full rounded" />
+                    <Skeleton className="h-4 w-5/6 rounded" />
+                    <Skeleton className="h-4 w-4/6 rounded" />
                 </div>
             ))}
         </div>
     );
-}
-
-/**
- * Async hero — fetches lightweight metadata only (title, date, description).
- * This is a tiny Sanity payload with no body array, so it resolves very fast.
- */
-async function HeroWithData({ slug }: { slug: string }) {
-    const meta = await getPostMeta(slug);
-    if (!meta) return notFound();
-    return <BlogPostHero post={meta} />;
 }
 
 /**
@@ -63,10 +37,9 @@ async function BodyWithData({ slug }: { slug: string }) {
 }
 
 /**
- * Blog post page — synchronous shell that prerenders instantly via PPR.
- * The hero and body each have their own Suspense boundary with independent
- * async data fetching, so the title streams in first (fast meta query)
- * and the body follows (full post + shiki highlighting).
+ * Blog post page — awaits the lightweight meta query up front (it gates
+ * notFound and JSON-LD anyway), renders the hero directly from it, and
+ * streams the body (full post + shiki highlighting) behind Suspense.
  */
 export default async function BlogPostPage({
     params,
@@ -75,7 +48,7 @@ export default async function BlogPostPage({
 }) {
     const { slug } = await params;
     // Fetch meta synchronously at the page level so JSON-LD is in the SSR
-    // payload even if the hero Suspense boundary streams later.
+    // payload; the hero renders from the same result.
     const meta = await getPostMeta(slug);
     if (!meta) notFound();
 
@@ -88,10 +61,7 @@ export default async function BlogPostPage({
                 slug={slug}
             />
 
-            {/* Hero streams in first — lightweight meta query */}
-            <Suspense fallback={<HeroSkeleton />}>
-                <HeroWithData slug={slug} />
-            </Suspense>
+            <BlogPostHero post={meta} />
 
             {/* Body streams in after shiki highlighting completes */}
             <Suspense fallback={<BodySkeleton />}>

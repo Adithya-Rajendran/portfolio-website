@@ -15,14 +15,16 @@ export default function Error({
     }, [error]);
 
     return (
-        <main className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-            <h2 className="font-display text-2xl font-semibold mb-4 text-slate-900 dark:text-white">
-                Something went wrong
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md">
-                An unexpected error occurred. Please try again.
-            </p>
-            <Button onClick={reset}>Try again</Button>
+        <main className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+            <div className="os-card w-full max-w-md px-7 py-10 sm:px-10 text-center">
+                <h2 className="font-display text-2xl font-semibold mb-4 text-slate-900 dark:text-white">
+                    Something went wrong
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 mb-8">
+                    An unexpected error occurred. Please try again.
+                </p>
+                <Button onClick={reset}>Try again</Button>
+            </div>
         </main>
     );
 }

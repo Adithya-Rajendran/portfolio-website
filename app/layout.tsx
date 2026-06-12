@@ -5,7 +5,8 @@ import { BotIdClient } from "botid/client";
 import Footer from "@/components/footer";
 import ThemeSelector from "@/components/theme-selector";
 import ThemeContextProvider from "@/context/theme-context";
-import { DEFAULT_THEME } from "@/lib/themes";
+import { Toaster } from "@/components/ui/toaster";
+import { DEFAULT_THEME, themes } from "@/lib/themes";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import {
@@ -15,7 +16,7 @@ import {
 } from "@/components/json-ld";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
-import { siteConfig } from "@/lib/config";
+import { siteConfig, THEME_COLORS } from "@/lib/config";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -80,8 +81,8 @@ export const viewport: Viewport = {
     initialScale: 1,
     maximumScale: 5,
     themeColor: [
-        { media: "(prefers-color-scheme: light)", color: "#f4f5f8" },
-        { media: "(prefers-color-scheme: dark)", color: "#050608" },
+        { media: "(prefers-color-scheme: light)", color: THEME_COLORS.light },
+        { media: "(prefers-color-scheme: dark)", color: THEME_COLORS.dark },
     ],
 };
 
@@ -101,7 +102,7 @@ export default function RootLayout({
                     it to <html> before React hydrates to prevent FOUC. */}
                 <script
                     dangerouslySetInnerHTML={{
-                        __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=['glass','aurora','sunset','plum'];document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
+                        __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=${JSON.stringify(themes.map((t) => t.id))};document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
                     }}
                 />
                 {/* Vercel BotID — protects the contact form server action.
@@ -116,7 +117,7 @@ export default function RootLayout({
                 <ProfilePageJsonLd />
             </head>
             <body
-                className={`${inter.className} bg-[#f4f5f8] text-slate-900 relative pt-28 sm:pt-32 dark:bg-[#050608] dark:text-slate-100 antialiased overflow-x-hidden`}
+                className={`${inter.className} bg-canvas text-slate-900 relative pt-28 sm:pt-32 dark:bg-canvas-dark dark:text-slate-100 antialiased overflow-x-hidden`}
             >
                 {/* Animated mesh background (orbs drift, blurred) */}
                 <div className="mesh-bg" aria-hidden="true" />
@@ -132,6 +133,7 @@ export default function RootLayout({
                         {children}
                         <Footer />
                         <ThemeSelector />
+                        <Toaster />
                     </ThemeContextProvider>
                 </Suspense>
                 <SpeedInsights />

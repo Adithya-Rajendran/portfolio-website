@@ -2,6 +2,7 @@ import { revalidateTag } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { parseBody } from "next-sanity/webhook";
 import { warmBlogCache } from "@/actions/warmCache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 // Secret shared between Sanity webhook and this API route
 const revalidateSecret = process.env.SANITY_REVALIDATE_SECRET;
@@ -38,12 +39,12 @@ export async function POST(req: NextRequest) {
             // Listing queries (getAllPosts, slug indexes) are tagged
             // "post-list" — always invalidate so the new/edited post
             // appears in the index.
-            revalidateTag("post-list", { expire: 0 });
+            revalidateTag(CACHE_TAGS.postList, { expire: 0 });
 
             // Individual post queries are tagged "post:<slug>" — invalidate
             // only the changed slug so other posts keep serving from cache.
             if (changedSlug) {
-                revalidateTag(`post:${changedSlug}`, { expire: 0 });
+                revalidateTag(CACHE_TAGS.post(changedSlug), { expire: 0 });
             }
 
             const result = await warmBlogCache();
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (docType && portfolioTypes.includes(docType)) {
-            revalidateTag("portfolio", { expire: 0 });
+            revalidateTag(CACHE_TAGS.portfolio, { expire: 0 });
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated tag "portfolio" (triggered by: ${docType})`,

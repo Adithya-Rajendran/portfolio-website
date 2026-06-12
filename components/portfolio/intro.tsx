@@ -6,8 +6,11 @@ import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
 import UnifiedHero from "@/components/unified-hero";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/lib/config";
 
 const portableTextComponents = createPortableTextStyles("intro");
+
+const [firstName, lastName] = siteConfig.author.split(" ");
 
 interface IntroProps {
     body?: PortableTextBlock[] | null;
@@ -15,16 +18,17 @@ interface IntroProps {
 }
 
 export default function Intro({ body, subtitle }: IntroProps) {
+    // scroll-mt-[100rem] forces this section to register as the top anchor for the scroll-spy.
     return (
         <section id="home" className="scroll-mt-[100rem]">
             <UnifiedHero
                 eyebrow="Portfolio"
                 avatar={heroImg}
-                avatarAlt="Portrait of Adithya Rajendran"
+                avatarAlt={`Portrait of ${siteConfig.author}`}
                 title={
                     <>
-                        Adithya{" "}
-                        <span className="text-accent-gradient">Rajendran</span>
+                        {firstName}{" "}
+                        <span className="text-accent-gradient">{lastName}</span>
                     </>
                 }
                 subtitle={subtitle ?? undefined}
@@ -60,7 +64,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                 meta={
                     <div className="flex items-center justify-center gap-3">
                         <a
-                            href="https://www.linkedin.com/in/adithya-rajendran/"
+                            href={siteConfig.profiles.linkedin}
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="LinkedIn"
@@ -69,7 +73,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                             <FaLinkedin className="w-4 h-4" />
                         </a>
                         <a
-                            href="https://github.com/Adithya-Rajendran"
+                            href={siteConfig.profiles.github}
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="GitHub"

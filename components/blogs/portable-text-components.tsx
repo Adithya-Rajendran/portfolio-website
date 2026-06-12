@@ -1,18 +1,20 @@
 import Image from "next/image";
 import { urlForImage } from "@/lib/sanity-image";
 import type { PortableTextComponents } from "@portabletext/react";
-import { slugify, extractText } from "./utils";
 
 /**
  * Factory that creates portable text components for blog post bodies.
  * Accepts a map of pre-highlighted code HTML (key → html) produced by
- * shiki on the server.
+ * shiki on the server, plus a block-_key → anchor-id map produced by
+ * extractHeadings so the rendered heading ids are byte-identical to the
+ * ToC links (single slugification path).
  *
  * Accent-colored marks (h2 line, inline code, links) pull from the
  * active theme via the `text-accent` / `bg-accent-soft` utilities.
  */
 export function createPortableTextComponents(
     highlightedCode: Record<string, string>,
+    headingIds: Record<string, string>,
 ): PortableTextComponents {
     return {
         types: {
@@ -25,7 +27,7 @@ export function createPortableTextComponents(
                     .url();
                 return (
                     <figure className="my-10">
-                        <div className="overflow-hidden rounded-2xl glass">
+                        <div className="overflow-hidden os-card-flat">
                             <Image
                                 src={imageUrl}
                                 alt={value.alt || "Blog post image"}
@@ -50,36 +52,27 @@ export function createPortableTextComponents(
                 const hasHighlight = !!highlightedHtml;
 
                 return (
-                    <div className="my-8 rounded-xl overflow-hidden border border-slate-200/80 dark:border-white/10">
-                        <div className="bg-slate-100/80 dark:bg-white/[0.04] px-4 py-2.5 flex items-center justify-between border-b border-slate-200/80 dark:border-white/10">
-                            <div className="flex items-center gap-2">
-                                <div className="flex gap-1.5">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-                                </div>
-                                {value.filename && (
-                                    <span className="ml-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                                        {value.filename}
-                                    </span>
-                                )}
-                            </div>
-                            {value.language && (
-                                <span className="text-[10px] font-medium tracking-wider uppercase text-slate-400 dark:text-slate-500">
-                                    {value.language}
+                    <div className="my-8 os-card-flat overflow-hidden">
+                        <div className="bg-slate-100/80 dark:bg-white/[0.04] px-4 py-2.5 flex items-center justify-between gap-3 border-b border-slate-200/80 dark:border-white/10">
+                            <span className="inline-flex items-center rounded-full bg-slate-200/80 dark:bg-white/[0.08] px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase text-slate-600 dark:text-slate-300">
+                                {value.language || "code"}
+                            </span>
+                            {value.filename && (
+                                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">
+                                    {value.filename}
                                 </span>
                             )}
                         </div>
 
                         {hasHighlight ? (
                             <div
-                                className="shiki-wrapper text-sm overflow-x-auto [&_pre]:!bg-transparent [&_pre]:p-5 [&_pre]:m-0 [&_code]:font-mono [&_code]:leading-relaxed bg-[#161824]"
+                                className="shiki-wrapper text-sm overflow-x-auto [&_pre]:!bg-transparent [&_pre]:p-5 [&_pre]:m-0 [&_code]:font-mono [&_code]:leading-relaxed bg-slate-900/95 dark:bg-[#11131c]"
                                 dangerouslySetInnerHTML={{
                                     __html: highlightedHtml,
                                 }}
                             />
                         ) : (
-                            <pre className="bg-[#161824] text-slate-200 text-sm p-5 overflow-x-auto">
+                            <pre className="bg-slate-900/95 dark:bg-[#11131c] text-slate-200 text-sm p-5 overflow-x-auto">
                                 <code className="font-mono leading-relaxed">
                                     {value.code}
                                 </code>
@@ -90,8 +83,11 @@ export function createPortableTextComponents(
             },
         },
         block: {
-            h2: ({ children }) => {
-                const id = slugify(extractText(children));
+            // Heading ids come from the precomputed _key → id map so they
+            // always match the ToC; headings the ToC skipped (empty text)
+            // simply render without an id.
+            h2: ({ children, value }) => {
+                const id = value._key ? headingIds[value._key] : undefined;
                 return (
                     <h2
                         id={id}
@@ -102,8 +98,8 @@ export function createPortableTextComponents(
                     </h2>
                 );
             },
-            h3: ({ children }) => {
-                const id = slugify(extractText(children));
+            h3: ({ children, value }) => {
+                const id = value._key ? headingIds[value._key] : undefined;
                 return (
                     <h3
                         id={id}
@@ -113,8 +109,8 @@ export function createPortableTextComponents(
                     </h3>
                 );
             },
-            h4: ({ children }) => {
-                const id = slugify(extractText(children));
+            h4: ({ children, value }) => {
+                const id = value._key ? headingIds[value._key] : undefined;
                 return (
                     <h4
                         id={id}
