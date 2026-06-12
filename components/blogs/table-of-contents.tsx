@@ -18,9 +18,9 @@ interface TableOfContentsProps {
     headings: TocHeading[];
 }
 
-// Content is max-w-3xl (768px) centered. ToC needs ~224px + margin in the
-// right gutter → min viewport ≈ 768 + 224 + margins ≈ 1080.
-const MIN_VIEWPORT = 1080;
+// Must match the CSS gate (`hidden lg:block`) so the JS and Tailwind
+// breakpoints agree — lg is 1024px.
+const MIN_VIEWPORT = 1024;
 
 function groupHeadings(headings: TocHeading[]): TocSection[] {
     const sections: TocSection[] = [];
@@ -231,18 +231,19 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                         </a>
                                     </div>
 
-                                    {/* Collapsible children */}
+                                    {/* Collapsible children — grid-rows
+                                        0fr/1fr animates to the content's
+                                        intrinsic height, so multi-line
+                                        entries never clip */}
                                     {hasChildren && (
                                         <div
-                                            className="overflow-hidden transition-all duration-300 ease-out"
-                                            style={{
-                                                maxHeight: isExpanded
-                                                    ? `${section.children.length * 40}px`
-                                                    : "0px",
-                                                opacity: isExpanded ? 1 : 0,
-                                            }}
+                                            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                                                isExpanded
+                                                    ? "grid-rows-[1fr] opacity-100"
+                                                    : "grid-rows-[0fr] opacity-0"
+                                            }`}
                                         >
-                                            <ul className="ml-5 border-l border-slate-200 dark:border-slate-700/40 pl-2.5 space-y-0.5">
+                                            <ul className="overflow-hidden min-h-0 ml-5 border-l border-slate-200 dark:border-slate-700/40 pl-2.5 space-y-0.5">
                                                 {section.children.map(
                                                     (child) => (
                                                         <li key={child.id}>

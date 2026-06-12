@@ -32,10 +32,28 @@ const tools = [
     { Icon: SiGrafana, label: "Grafana" },
 ];
 
+function ToolItems() {
+    return (
+        <>
+            {tools.map(({ Icon, label }) => (
+                <div
+                    key={label}
+                    className="flex items-center gap-2.5 px-6 text-slate-500 dark:text-slate-400"
+                >
+                    <Icon className="w-6 h-6" aria-hidden />
+                    <span className="text-sm font-medium">{label}</span>
+                </div>
+            ))}
+        </>
+    );
+}
+
 /**
  * Toolbelt strip — auto-scrolling marquee of tech logos, with edge fade
  * masks so the loop is seamless. Lives between the bio and skills
- * sections as a calm visual pause.
+ * sections as a calm visual pause. The second copy of the list only
+ * exists to make the loop seamless, so it is hidden from assistive
+ * tech; reduced-motion users get a static row instead.
  */
 export default function ToolsMarquee() {
     return (
@@ -45,28 +63,22 @@ export default function ToolsMarquee() {
         >
             <div
                 aria-hidden
-                className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#f4f5f8] to-transparent dark:from-[#050608]"
+                className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-canvas to-transparent dark:from-canvas-dark"
             />
             <div
                 aria-hidden
-                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#f4f5f8] to-transparent dark:from-[#050608]"
+                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-canvas to-transparent dark:from-canvas-dark"
             />
 
             <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-500 mb-6">
                 Toolbelt
             </p>
 
-            <div className="flex w-max animate-marquee">
-                {[...tools, ...tools].map(({ Icon, label }, i) => (
-                    <div
-                        key={`${label}-${i}`}
-                        className="flex items-center gap-2.5 px-6 text-slate-500 dark:text-slate-400"
-                        title={label}
-                    >
-                        <Icon className="w-6 h-6" aria-hidden />
-                        <span className="text-sm font-medium">{label}</span>
-                    </div>
-                ))}
+            <div className="flex w-max motion-safe:animate-[marquee_38s_linear_infinite] motion-safe:will-change-transform">
+                <ToolItems />
+                <div aria-hidden="true" className="flex">
+                    <ToolItems />
+                </div>
             </div>
         </section>
     );

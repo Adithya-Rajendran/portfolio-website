@@ -8,22 +8,30 @@ import { headers } from "next/headers";
 import { checkBotId } from "botid/server";
 import { checkRateLimit } from "@vercel/firewall";
 import ContactFormEmail from "@/email/contact-form-email";
+import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 
-if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is not configured");
+/**
+ * Email config is read lazily inside sendEmail() — module-level throws
+ * would crash `next build` (and the whole /portfolio page) in
+ * environments where email isn't configured.
+ */
+function getEmailConfig(): { apiKey: string; toEmail: string } | null {
+    const apiKey = process.env.RESEND_API_KEY;
+    const toEmail = process.env.CONTACT_FORM_TO_EMAIL;
+    if (!apiKey || !toEmail?.includes("@")) {
+        return null;
+    }
+    return { apiKey, toEmail };
 }
-if (!process.env.CONTACT_FORM_TO_EMAIL?.includes("@")) {
-    throw new Error("CONTACT_FORM_TO_EMAIL is not configured");
-}
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const contactFormToEmail = process.env.CONTACT_FORM_TO_EMAIL;
 
 const emailSchema = z.object({
     senderEmail: z
         .email("Invalid sender email")
         .regex(/^[\w.+@-]+$/, "Email contains invalid characters"),
-    message: z.string().min(1, "Message cannot be empty").max(1000),
+    message: z
+        .string()
+        .min(1, "Message cannot be empty")
+        .max(MESSAGE_MAX_LENGTH),
 });
 
 // RFC 1035 caps a domain name at 253 characters. Validate length and a
@@ -76,6 +84,16 @@ export async function sendEmailAction(
 }
 
 export const sendEmail = async (formData: FormData) => {
+    const config = getEmailConfig();
+    if (!config) {
+        console.error(
+            "[sendEmail] RESEND_API_KEY and/or CONTACT_FORM_TO_EMAIL is not configured.",
+        );
+        return {
+            error: "The contact form is not configured on this server. Please try again later.",
+        };
+    }
+
     // Vercel BotID — invisible CAPTCHA. The client SDK in app/layout.tsx
     // protects /portfolio POST; this verifies the challenge response on
     // the server before doing any expensive work.
@@ -131,12 +149,16 @@ export const sendEmail = async (formData: FormData) => {
     }
 
     try {
+        // Instantiated lazily so importing this module never requires the
+        // API key to be present.
+        const resend = new Resend(config.apiKey);
+
         // React Email renders {message} / {senderEmail} as text nodes, which
         // React already HTML-escapes. Passing pre-escaped values double-encoded
         // them, so the recipient saw literal "&lt;" instead of "<".
         const data = await resend.emails.send({
             from: "Contact Form <contact-form@email.adithya-rajendran.com>",
-            to: contactFormToEmail,
+            to: config.toEmail,
             subject: "Contact Form for My Website",
             replyTo: senderEmail,
             react: ContactFormEmail({ message, senderEmail }),

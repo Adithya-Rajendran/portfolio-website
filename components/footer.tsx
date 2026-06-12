@@ -1,8 +1,16 @@
-"use client";
-
 import Link from "next/link";
+import { cacheLife } from "next/cache";
 import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import { MapPin } from "lucide-react";
+import { siteConfig } from "@/lib/config";
+
+// Under cacheComponents, new Date() is illegal in an uncached prerender —
+// the copyright year gets its own daily-refreshed cache scope instead.
+async function getYear(): Promise<number> {
+    "use cache";
+    cacheLife({ stale: 86400, revalidate: 86400, expire: 31536000 });
+    return new Date().getFullYear();
+}
 
 const navLinks = [
     { href: "/", label: "Home" },
@@ -21,18 +29,20 @@ const portfolioLinks = [
 
 const socialLinks = [
     {
-        href: "https://www.linkedin.com/in/adithya-rajendran",
+        href: siteConfig.profiles.linkedin,
         label: "LinkedIn",
         Icon: FaLinkedin,
     },
     {
-        href: "https://github.com/Adithya-Rajendran",
+        href: siteConfig.profiles.github,
         label: "GitHub",
         Icon: FaGithub,
     },
 ];
 
-export default function Footer() {
+export default async function Footer() {
+    const year = await getYear();
+
     return (
         <footer className="relative mt-28 sm:mt-36">
             <div className="os-card border-t border-x-0 border-b-0 rounded-none">
@@ -99,8 +109,7 @@ export default function Footer() {
 
                     <div className="mt-12 pt-6 border-t border-slate-200/60 dark:border-white/8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <small className="text-xs text-slate-500 dark:text-slate-500">
-                            © {new Date().getFullYear()} Adithya Rajendran. All
-                            rights reserved.
+                            © {year} Adithya Rajendran. All rights reserved.
                         </small>
 
                         <div className="flex items-center gap-3">

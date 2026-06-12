@@ -1,4 +1,7 @@
 import type { ReactElement } from "react";
+import { ImageResponse } from "next/og";
+import { getIntro } from "@/lib/sanity-client";
+import { siteConfig } from "@/lib/config";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const OG_CONTENT_TYPE = "image/png" as const;
@@ -114,4 +117,35 @@ export function OgTemplate({
             </div>
         </div>
     );
+}
+
+interface IntroOgImageOptions {
+    eyebrow: string;
+    footerRight: string;
+}
+
+/**
+ * Factory for the intro-style OG routes (site root and /portfolio), which
+ * only differ in eyebrow and footer text. Each route file must still export
+ * its own alt/size/contentType — Next.js reads those per file — so only the
+ * default-export image function is shared.
+ */
+export function makeIntroOgImage({
+    eyebrow,
+    footerRight,
+}: IntroOgImageOptions): () => Promise<ImageResponse> {
+    return async function Image(): Promise<ImageResponse> {
+        const intro = await getIntro();
+        const subtitle = intro?.subtitle || siteConfig.role;
+
+        return new ImageResponse(
+            <OgTemplate
+                eyebrow={eyebrow}
+                title={siteConfig.author}
+                subtitle={subtitle}
+                footerRight={footerRight}
+            />,
+            { ...OG_SIZE },
+        );
+    };
 }

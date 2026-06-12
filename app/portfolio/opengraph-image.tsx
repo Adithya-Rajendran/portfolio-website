@@ -1,22 +1,13 @@
-import { ImageResponse } from "next/og";
-import { getIntro } from "@/lib/sanity-client";
-import { OgTemplate, OG_SIZE, OG_CONTENT_TYPE } from "@/lib/og-template";
+import { makeIntroOgImage, OG_SIZE, OG_CONTENT_TYPE } from "@/lib/og-template";
+import { siteConfig } from "@/lib/config";
 
 export const alt = "Adithya Rajendran — Portfolio";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
-export default async function Image() {
-    const intro = await getIntro();
-    const subtitle = intro?.subtitle || "Cloud Field Engineer @ Canonical";
+const domain = siteConfig.url.replace(/^https?:\/\//, "");
 
-    return new ImageResponse(
-        <OgTemplate
-            eyebrow="Portfolio"
-            title="Adithya Rajendran"
-            subtitle={subtitle}
-            footerRight="adithya-rajendran.com/portfolio"
-        />,
-        { ...size },
-    );
-}
+export default makeIntroOgImage({
+    eyebrow: "Portfolio",
+    footerRight: `${domain}/portfolio`,
+});

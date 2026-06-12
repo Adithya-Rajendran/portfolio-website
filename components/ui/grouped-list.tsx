@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { IconPill } from "./icon-pill";
@@ -8,9 +9,9 @@ interface GroupedListProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Samsung One UI-style grouped list. Renders children as rows in a
- * single rounded card with divider lines between them. Pair with
- * <ListRow> children.
+ * Samsung One UI-style grouped list — the canonical settings-group
+ * pattern. Renders children as rows in a single rounded card with
+ * divider lines between them. Pair with <ListRow> children.
  */
 export function GroupedList({
     label,
@@ -25,7 +26,7 @@ export function GroupedList({
                     {label}
                 </p>
             )}
-            <div className="os-card rounded-3xl overflow-hidden divide-y divide-slate-200/60 dark:divide-white/[0.06]">
+            <div className="os-card overflow-hidden divide-y divide-slate-200/60 dark:divide-white/[0.06]">
                 {children}
             </div>
         </div>
@@ -34,11 +35,13 @@ export function GroupedList({
 
 interface ListRowProps extends Omit<
     React.HTMLAttributes<HTMLElement>,
-    "title"
+    "title" | "onClick"
 > {
     href?: string;
     target?: string;
     rel?: string;
+    /** Renders the row as a <button> — mutually exclusive with href */
+    onClick?: React.MouseEventHandler<HTMLButtonElement>;
     icon?: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
     iconColor?: "c1" | "c2" | "c3" | "neutral";
     title: React.ReactNode;
@@ -53,6 +56,7 @@ export function ListRow({
     href,
     target,
     rel,
+    onClick,
     icon: Icon,
     iconColor = "c1",
     title,
@@ -63,6 +67,7 @@ export function ListRow({
     ...rest
 }: ListRowProps) {
     const showChevron = chevron ?? !!href;
+    const interactive = !!href || !!onClick;
 
     const content = (
         <>
@@ -92,30 +97,43 @@ export function ListRow({
     );
 
     const sharedClasses = cn(
-        "flex items-center gap-4 px-5 py-4 sm:px-6 transition-colors",
-        href &&
+        "flex items-center gap-4 px-5 py-4 sm:px-6 transition-colors w-full text-left",
+        interactive &&
             "hover:bg-slate-100/60 dark:hover:bg-white/[0.03] cursor-pointer",
         className,
     );
 
-    if (href && !target) {
+    if (href) {
+        const isExternal = /^https?:\/\//.test(href);
+        if (isExternal || target) {
+            return (
+                <a
+                    href={href}
+                    target={target}
+                    rel={rel}
+                    className={sharedClasses}
+                    {...rest}
+                >
+                    {content}
+                </a>
+            );
+        }
         return (
-            <a href={href} className={sharedClasses} {...rest}>
+            <Link href={href} className={sharedClasses} {...rest}>
                 {content}
-            </a>
+            </Link>
         );
     }
-    if (href) {
+    if (onClick) {
         return (
-            <a
-                href={href}
-                target={target}
-                rel={rel}
+            <button
+                type="button"
+                onClick={onClick}
                 className={sharedClasses}
                 {...rest}
             >
                 {content}
-            </a>
+            </button>
         );
     }
     return (

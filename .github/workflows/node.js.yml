@@ -8,6 +8,10 @@ on:
     pull_request:
         branches: ["main"]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
     lint:
         name: Lint, Type Check & Test
@@ -28,3 +32,28 @@ jobs:
             - run: pnpm run typecheck
             - run: pnpm run format:check
             - run: pnpm test
+
+    build:
+        # cacheComponents + reactCompiler surface cache/Suspense placement
+        # errors at build time only — lint/typecheck cannot catch them.
+        name: Build
+        runs-on: ubuntu-latest
+        env:
+            # "fallback" is the sentinel lib/sanity-config.ts treats as
+            # unconfigured: the Studio route can still prerender (valid
+            # project-id format) while every data fetcher short-circuits
+            # to empty content with zero network I/O during the build.
+            NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: fallback
+
+        steps:
+            - uses: actions/checkout@v6
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 10
+            - name: Use Node.js 24.x
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24.x
+                  cache: "pnpm"
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm run build

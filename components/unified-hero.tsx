@@ -56,7 +56,7 @@ export default function UnifiedHero({
                     <div className="relative mb-7 animate-scale-fade-in">
                         <div
                             aria-hidden
-                            className="absolute -inset-2 rounded-full bg-accent-halo opacity-60 blur-lg"
+                            className="absolute -inset-2 rounded-full bg-accent-halo opacity-40 blur-lg"
                         />
                         <Image
                             src={avatar}
@@ -68,7 +68,7 @@ export default function UnifiedHero({
                             fetchPriority="high"
                             loading="eager"
                             sizes="128px"
-                            className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-full object-cover ring-4 ring-white dark:ring-[#050608] shadow-xl"
+                            className="relative h-28 w-28 sm:h-32 sm:w-32 rounded-full object-cover ring-4 ring-white dark:ring-canvas-dark shadow-xl"
                         />
                     </div>
                 )}

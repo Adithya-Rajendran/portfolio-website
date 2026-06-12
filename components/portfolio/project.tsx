@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef } from "react";
 import Image from "next/image";
-import { motion, useScroll, useTransform } from "motion/react";
+import { useInView } from "react-intersection-observer";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { urlForImage } from "@/lib/sanity-image";
 import type { Project as TProject } from "@/sanity.types";
 
@@ -15,23 +15,24 @@ export default function Project({
     linkTitle,
     linkUrl,
 }: TProject) {
-    const ref = useRef<HTMLDivElement>(null);
-    const { scrollYProgress } = useScroll({
-        target: ref,
-        offset: ["0 1", "1.33 1"],
+    const { ref, inView } = useInView({
+        threshold: 0.15,
+        triggerOnce: true,
+        fallbackInView: true,
     });
-    const scaleProgress = useTransform(scrollYProgress, [0, 1], [0.94, 1]);
-    const opacityProgress = useTransform(scrollYProgress, [0, 1], [0.55, 1]);
 
     const imageUrl = image
         ? urlForImage(image).width(900).quality(95).url()
         : null;
 
     return (
-        <motion.div
+        <div
             ref={ref}
-            style={{ scale: scaleProgress, opacity: opacityProgress }}
-            className="w-full"
+            className={cn(
+                "w-full",
+                "motion-safe:transition-all motion-safe:duration-500 motion-safe:ease-out",
+                !inView && "motion-safe:opacity-0 motion-safe:translate-y-4",
+            )}
         >
             <Card flush className="h-full flex flex-col overflow-hidden">
                 {imageUrl && (
@@ -46,7 +47,7 @@ export default function Project({
                         />
                         <div
                             aria-hidden="true"
-                            className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-transparent dark:from-[#0a0c1a]/60"
+                            className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-transparent dark:from-canvas-dark/60"
                         />
                     </div>
                 )}
@@ -65,7 +66,6 @@ export default function Project({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-3 inline-flex w-fit text-sm font-medium text-accent hover:opacity-80 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
                         >
                             {linkTitle} →
                         </a>
@@ -87,6 +87,6 @@ export default function Project({
                     )}
                 </div>
             </Card>
-        </motion.div>
+        </div>
     );
 }

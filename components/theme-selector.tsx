@@ -20,6 +20,10 @@ export default function ThemeSelector() {
     useEffect(() => {
         if (!open) return;
 
+        // Move focus into the sheet; restore it to the trigger on close.
+        const trigger = buttonRef.current;
+        popoverRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+
         const onClick = (e: MouseEvent) => {
             const target = e.target as Node;
             if (
@@ -39,6 +43,7 @@ export default function ThemeSelector() {
         return () => {
             document.removeEventListener("mousedown", onClick);
             document.removeEventListener("keydown", onKey);
+            trigger?.focus();
         };
     }, [open]);
 
@@ -51,12 +56,14 @@ export default function ThemeSelector() {
 
     return (
         <div className="fixed bottom-5 right-5 z-50">
+            {/* Non-modal dialog: light-dismiss popover without a focus
+                trap, so aria-modal would misreport the page as inert. */}
             {open && (
                 <div
                     ref={popoverRef}
                     role="dialog"
                     aria-label="Theme settings"
-                    className="absolute bottom-[calc(100%+0.75rem)] right-0 w-80 glass-strong rounded-3xl p-5 animate-scale-fade-in"
+                    className="absolute bottom-[calc(100%+0.75rem)] right-0 w-80 os-card-raised rounded-card-lg p-5 animate-scale-fade-in"
                     style={{ animationDuration: "0.2s" }}
                 >
                     {/* Pill drag handle — pure ornament that signals
@@ -70,7 +77,7 @@ export default function ThemeSelector() {
                         Appearance
                     </p>
                     <div
-                        role="radiogroup"
+                        role="group"
                         aria-label="Appearance"
                         className="grid grid-cols-2 gap-2 p-1 bg-slate-100/70 dark:bg-white/[0.04] rounded-2xl mb-5"
                     >
@@ -96,7 +103,7 @@ export default function ThemeSelector() {
                         Accent
                     </p>
                     <ul
-                        role="radiogroup"
+                        role="group"
                         aria-label="Accent theme"
                         className="os-card-flat rounded-2xl overflow-hidden divide-y divide-slate-200/60 dark:divide-white/[0.06]"
                     >
@@ -106,8 +113,7 @@ export default function ThemeSelector() {
                                 <li key={t.id}>
                                     <button
                                         type="button"
-                                        role="radio"
-                                        aria-checked={active}
+                                        aria-pressed={active}
                                         onClick={() => pickAccent(t.id)}
                                         className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-100/60 dark:hover:bg-white/[0.03]"
                                     >
@@ -164,11 +170,10 @@ function AppearanceButton({
     return (
         <button
             type="button"
-            role="radio"
-            aria-checked={active}
+            aria-pressed={active}
             onClick={onClick}
             className={cn(
-                "flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all",
+                "flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all os-press",
                 active
                     ? "bg-white dark:bg-white/[0.1] text-accent shadow-sm"
                     : "bg-transparent text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white",
@@ -184,7 +189,7 @@ function Swatch({ colors }: { colors: [string, string, string] }) {
     return (
         <span
             aria-hidden
-            className="flex-shrink-0 w-10 h-10 rounded-full ring-1 ring-black/10 dark:ring-white/15 overflow-hidden"
+            className="flex-shrink-0 w-10 h-10 rounded-squircle ring-1 ring-black/10 dark:ring-white/15 overflow-hidden"
             style={{
                 background: `conic-gradient(from 220deg, ${colors[0]} 0deg 120deg, ${colors[1]} 120deg 240deg, ${colors[2]} 240deg 360deg)`,
             }}

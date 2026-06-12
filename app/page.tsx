@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import type { PortableTextBlock } from "@portabletext/react";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     getIntro,
     getAllSkillCategories,
@@ -37,8 +39,8 @@ async function HeroWithData() {
 async function getCounts() {
     "use cache";
     cacheLife("max");
-    cacheTag("portfolio");
-    cacheTag("post-list");
+    cacheTag(CACHE_TAGS.portfolio);
+    cacheTag(CACHE_TAGS.postList);
     const [certifications, projects, posts] = await Promise.all([
         getAllCertifications(),
         getAllProjects(),
@@ -58,7 +60,7 @@ async function getYearsValue() {
         revalidate: 60 * 60 * 24 * 30, // ~monthly background refresh
         expire: 60 * 60 * 24 * 365, // hard cap at 1 year
     });
-    cacheTag("portfolio");
+    cacheTag(CACHE_TAGS.portfolio);
     const experiences = await getAllExperiences();
     return computeYearsValue(experiences);
 }
@@ -99,19 +101,19 @@ async function CertsWithData() {
 
 function StatsSkeleton() {
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 animate-pulse">
-            <div className="os-card rounded-3xl h-24" />
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="os-card h-24 animate-pulse" />
         </div>
     );
 }
 
 function BioSkeleton() {
     return (
-        <div className="w-full max-w-3xl mx-auto px-4 animate-pulse">
-            <div className="os-card rounded-3xl px-7 py-10 sm:px-10 sm:py-12 space-y-4">
-                <div className="h-5 w-full bg-slate-200/60 dark:bg-white/[0.05] rounded" />
-                <div className="h-5 w-5/6 bg-slate-200/60 dark:bg-white/[0.05] rounded" />
-                <div className="h-5 w-4/6 bg-slate-200/60 dark:bg-white/[0.05] rounded" />
+        <div className="w-full max-w-3xl mx-auto px-4">
+            <div className="os-card px-7 py-10 sm:px-10 sm:py-12 space-y-4">
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-5/6" />
+                <Skeleton className="h-5 w-4/6" />
             </div>
         </div>
     );
@@ -119,12 +121,12 @@ function BioSkeleton() {
 
 function SkillsSkeleton() {
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-20 animate-pulse">
-            <div className="h-8 w-48 bg-slate-200/60 dark:bg-white/[0.05] rounded mx-auto mb-10" />
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+            <Skeleton className="h-8 w-48 mx-auto mb-10" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="rounded-3xl os-card h-52" />
-                <div className="rounded-3xl os-card h-52" />
-                <div className="rounded-3xl os-card h-52" />
+                <div className="os-card h-52 animate-pulse" />
+                <div className="os-card h-52 animate-pulse" />
+                <div className="os-card h-52 animate-pulse" />
             </div>
         </div>
     );
@@ -132,9 +134,9 @@ function SkillsSkeleton() {
 
 function CertsSkeleton() {
     return (
-        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 pb-20 animate-pulse">
-            <div className="h-8 w-40 bg-slate-200/60 dark:bg-white/[0.05] rounded mx-auto mb-10" />
-            <div className="rounded-3xl os-card h-64" />
+        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 pb-20">
+            <Skeleton className="h-8 w-40 mx-auto mb-10" />
+            <div className="os-card h-64 animate-pulse" />
         </div>
     );
 }
@@ -164,9 +166,7 @@ export default function Home() {
                 <CertsWithData />
             </Suspense>
 
-            <Suspense>
-                <NavCards />
-            </Suspense>
+            <NavCards />
         </main>
     );
 }

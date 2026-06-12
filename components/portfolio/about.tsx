@@ -2,6 +2,7 @@ import { UserRound } from "lucide-react";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
 import { IconPill } from "@/components/ui/icon-pill";
+import RevealOnScroll from "@/components/reveal-on-scroll";
 import SectionSpy from "./section-spy";
 
 const portableTextComponents = createPortableTextStyles("about");
@@ -17,14 +18,9 @@ interface AboutProps {
  */
 export default function About({ body }: AboutProps) {
     return (
-        <SectionSpy
-            section="About"
-            id="about"
-            className="scroll-mt-28 animate-slide-up"
-            style={{ animationDelay: "175ms" }}
-        >
-            <div className="mx-auto max-w-3xl">
-                <div className="os-card rounded-3xl p-7 sm:p-10">
+        <SectionSpy section="About" id="about" className="scroll-mt-28">
+            <RevealOnScroll delayMs={175} className="mx-auto max-w-3xl">
+                <div className="os-card p-7 sm:p-10">
                     <header className="flex items-center gap-4 mb-7 sm:mb-8">
                         <IconPill icon={UserRound} color="c1" size="md" />
                         <div>
@@ -50,7 +46,7 @@ export default function About({ body }: AboutProps) {
                         )}
                     </div>
                 </div>
-            </div>
+            </RevealOnScroll>
         </SectionSpy>
     );
 }

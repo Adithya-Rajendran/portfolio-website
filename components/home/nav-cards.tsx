@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Briefcase, PenLine, MailCheck } from "lucide-react";
 import RevealOnScroll from "@/components/reveal-on-scroll";
 import { IconPill } from "@/components/ui/icon-pill";
+import { accentText } from "@/lib/variant-styles";
 
 const cards = [
     {
@@ -40,35 +41,27 @@ export default function NavCards() {
             className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-28"
         >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {cards.map(({ href, title, description, cta, Icon, color }) => {
-                    const accentClass =
-                        color === "c1"
-                            ? "text-accent"
-                            : color === "c2"
-                              ? "text-c2"
-                              : "text-c3";
-                    return (
-                        <Link
-                            key={href}
-                            href={href}
-                            className="group os-card os-hover rounded-3xl p-7 sm:p-8 flex flex-col"
+                {cards.map(({ href, title, description, cta, Icon, color }) => (
+                    <Link
+                        key={href}
+                        href={href}
+                        className="group os-card os-hover os-press p-7 sm:p-8 flex flex-col"
+                    >
+                        <IconPill icon={Icon} color={color} size="lg" />
+                        <h2 className="mt-6 font-display text-2xl font-semibold text-slate-900 dark:text-white">
+                            {title}
+                        </h2>
+                        <p className="mt-2.5 text-slate-600 dark:text-slate-400 leading-relaxed text-sm sm:text-base flex-1">
+                            {description}
+                        </p>
+                        <span
+                            className={`mt-6 inline-flex items-center gap-2 ${accentText[color]} font-medium text-sm transition-all group-hover:gap-3`}
                         >
-                            <IconPill icon={Icon} color={color} size="lg" />
-                            <h2 className="mt-6 font-display text-2xl font-semibold text-slate-900 dark:text-white">
-                                {title}
-                            </h2>
-                            <p className="mt-2.5 text-slate-600 dark:text-slate-400 leading-relaxed text-sm sm:text-base flex-1">
-                                {description}
-                            </p>
-                            <span
-                                className={`mt-6 inline-flex items-center gap-2 ${accentClass} font-medium text-sm transition-all group-hover:gap-3`}
-                            >
-                                {cta}
-                                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                            </span>
-                        </Link>
-                    );
-                })}
+                            {cta}
+                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        </span>
+                    </Link>
+                ))}
             </div>
         </RevealOnScroll>
     );

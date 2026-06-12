@@ -1,13 +1,17 @@
 import { getAllSlugsWithDates } from "@/lib/sanity-client";
 import { cacheLife, cacheTag } from "next/cache";
 import { MetadataRoute } from "next";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { siteConfig } from "@/lib/config";
 
-const BASE_URL = "https://adithya-rajendran.com";
+const BASE_URL = siteConfig.url;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "use cache";
     cacheLife("max");
-    cacheTag("post");
+    // postList is the tag the publish webhook actually revalidates — the
+    // previous bare "post" tag was orphaned (never invalidated).
+    cacheTag(CACHE_TAGS.postList);
     const postData = await getAllSlugsWithDates();
 
     const buildDate = process.env.NEXT_PUBLIC_BUILD_DATE
