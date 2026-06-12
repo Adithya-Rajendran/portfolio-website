@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getPostBySlug, getPostMeta } from "@/lib/sanity-client";
+import { getAllSlugs, getPostBySlug, getPostMeta } from "@/lib/sanity-client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteConfig } from "@/lib/config";
@@ -37,6 +37,19 @@ async function BodyWithData({ slug }: { slug: string }) {
 }
 
 /**
+ * Prerender every published post at build time; unknown slugs still
+ * render on demand (dynamicParams default). Cache Components requires
+ * at least one param at build time, so when Sanity is unconfigured
+ * (CI's fallback sentinel) or has no posts we emit a placeholder slug
+ * that prerenders as the 404 page and is linked from nowhere.
+ */
+export async function generateStaticParams() {
+    const slugs = await getAllSlugs();
+    if (slugs.length === 0) return [{ slug: "placeholder" }];
+    return slugs.map((slug) => ({ slug }));
+}
+
+/**
  * Blog post page — awaits the lightweight meta query up front (it gates
  * notFound and JSON-LD anyway), renders the hero directly from it, and
  * streams the body (full post + shiki highlighting) behind Suspense.
@@ -53,7 +66,7 @@ export default async function BlogPostPage({
     if (!meta) notFound();
 
     return (
-        <article className="w-full">
+        <article id="main-content" tabIndex={-1} className="w-full">
             <BlogPostJsonLd
                 title={meta.title || ""}
                 description={meta.description || ""}

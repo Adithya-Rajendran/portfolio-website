@@ -8,9 +8,20 @@ export default function SubmitBtn() {
     const { pending } = useFormStatus();
 
     return (
-        <Button type="submit" disabled={pending} className="group">
+        <Button
+            type="submit"
+            disabled={pending}
+            aria-busy={pending}
+            className="group"
+        >
             {pending ? (
-                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+                <>
+                    <div
+                        aria-hidden
+                        className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"
+                    ></div>
+                    <span className="sr-only">Sending…</span>
+                </>
             ) : (
                 <>
                     Submit{" "}

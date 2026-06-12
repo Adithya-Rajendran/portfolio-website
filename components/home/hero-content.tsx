@@ -3,6 +3,7 @@ import { ArrowRight, Download } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import UnifiedHero, { AvailabilityPill } from "@/components/unified-hero";
+import { siteConfig } from "@/lib/config";
 import heroImg from "@/public/hero.webp";
 
 interface HeroContentProps {
@@ -19,7 +20,7 @@ export default function HeroContent({
     return (
         <UnifiedHero
             avatar={heroImg}
-            avatarAlt="Adithya Rajendran"
+            avatarAlt={siteConfig.author}
             statusPill={
                 available ? (
                     <AvailabilityPill>
@@ -33,7 +34,7 @@ export default function HeroContent({
                         Hi, I&apos;m{" "}
                     </span>
                     <span className="text-accent-gradient animate-gradient-text">
-                        Adithya Rajendran
+                        {siteConfig.author}
                     </span>
                 </>
             }
@@ -65,7 +66,7 @@ export default function HeroContent({
             meta={
                 <div className="flex items-center justify-center gap-5">
                     <a
-                        href="https://www.linkedin.com/in/adithya-rajendran"
+                        href={siteConfig.profiles.linkedin}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
@@ -74,7 +75,7 @@ export default function HeroContent({
                         <FaLinkedin className="w-5 h-5" />
                     </a>
                     <a
-                        href="https://github.com/Adithya-Rajendran"
+                        href={siteConfig.profiles.github}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"

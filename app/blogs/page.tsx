@@ -89,7 +89,7 @@ async function BlogPosts() {
 
 export default function Blogs() {
     return (
-        <main className="pb-24 sm:pb-32">
+        <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <UnifiedHero
                 eyebrow="Blog"
                 title="Notes from the field"

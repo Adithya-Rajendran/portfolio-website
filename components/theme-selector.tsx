@@ -115,7 +115,7 @@ export default function ThemeSelector() {
                                         type="button"
                                         aria-pressed={active}
                                         onClick={() => pickAccent(t.id)}
-                                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-100/60 dark:hover:bg-white/[0.03]"
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-100/60 dark:hover:bg-white/[0.03] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
                                     >
                                         <Swatch colors={t.swatch} />
                                         <span className="flex-1 min-w-0">

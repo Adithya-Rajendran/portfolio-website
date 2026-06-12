@@ -1,19 +1,19 @@
 import Image from "next/image";
 import { Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import type { Post as TPost } from "@/sanity.types";
+import type { PostListItem } from "@/lib/sanity-client";
 import {
     formatDate,
     getPostImageUrl,
     getPostSlug,
-    readingTimeFor,
+    readingTimeFromWordCount,
     POST_IMAGE_DIMENSIONS,
 } from "./utils";
 
 export type PostCardVariant = "hero" | "medium" | "side" | "list";
 
 interface PostCardProps {
-    post: TPost;
+    post: PostListItem;
     /**
      * hero   — full-width featured lead card
      * medium — half-width featured card (2-up grid)
@@ -104,7 +104,7 @@ export default function PostCard({ post, variant = "list" }: PostCardProps) {
     const v = variants[variant];
     const slug = getPostSlug(post);
     const title = post.title || "";
-    const readingTime = readingTimeFor(post);
+    const readingTime = readingTimeFromWordCount(post.wordCount);
     const imageUrl = getPostImageUrl(post, v.image.width, v.image.height);
 
     return (

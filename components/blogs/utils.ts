@@ -66,32 +66,15 @@ function isBodyBlock(
     return block._type === "block";
 }
 
-/** Flatten all text spans in a Sanity post body into a single string */
-export function extractBodyText(post: Pick<Post, "body">): string {
-    return post.body
-        ? post.body
-              .filter(isBodyBlock)
-              .map((block) =>
-                  block.children?.map((child) => child.text || "").join(" "),
-              )
-              .join(" ")
-        : "";
-}
-
-/** Words-per-minute estimate; min 1 minute. */
-export function estimateReadingTime(text: string): number {
+/** Words-per-minute reading estimate from a precomputed word count
+ *  (the list GROQ projection ships `wordCount` instead of the body). */
+export function readingTimeFromWordCount(wordCount?: number | null): number {
     const wordsPerMinute = 200;
-    const words = text.split(/\s+/).filter(Boolean).length;
-    return Math.max(1, Math.ceil(words / wordsPerMinute));
-}
-
-/** Convenience: reading time for a post (extracts text, then estimates). */
-export function readingTimeFor(post: Pick<Post, "body">): number {
-    return estimateReadingTime(extractBodyText(post));
+    return Math.max(1, Math.ceil((wordCount ?? 0) / wordsPerMinute));
 }
 
 /** Convert heading text to a URL-friendly slug */
-export function slugify(text: string): string {
+function slugify(text: string): string {
     return text
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, "")

@@ -27,8 +27,15 @@ const nextConfig = {
                         value: "camera=(), microphone=(), geolocation=()",
                     },
                     {
-                        // 'unsafe-inline' is required for Next's inline runtime
-                        // chunks and the JSON-LD <script> tags in json-ld.tsx.
+                        // 'unsafe-inline' in script-src is structurally
+                        // required: cacheComponents prerenders pages whose
+                        // React flight inline <script> chunks change on every
+                        // revalidation, so per-request nonces (which need
+                        // dynamic rendering) and static hashes are both off
+                        // the table. script-src-attr 'none' still blocks
+                        // inline event-handler attributes — the common
+                        // HTML-injection XSS vector. Fonts are self-hosted by
+                        // next/font (no Google Fonts hosts, no preconnects).
                         // Vercel Analytics / Speed Insights load from
                         // va.vercel-scripts.com and report to
                         // vitals.vercel-insights.com.
@@ -36,9 +43,10 @@ const nextConfig = {
                         value: [
                             "default-src 'self'",
                             "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
-                            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                            "script-src-attr 'none'",
+                            "style-src 'self' 'unsafe-inline'",
                             "img-src 'self' data: blob: https://cdn.sanity.io",
-                            "font-src 'self' https://fonts.gstatic.com data:",
+                            "font-src 'self' data:",
                             "connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://vitals.vercel-insights.com https://va.vercel-scripts.com",
                             "frame-src 'self'",
                             "frame-ancestors 'none'",
@@ -48,10 +56,12 @@ const nextConfig = {
                             "upgrade-insecure-requests",
                         ].join("; "),
                     },
-                    // Performance: DNS prefetch and preconnect for external resources
                     {
-                        key: "Link",
-                        value: "<https://cdn.sanity.io>; rel=preconnect, <https://cdn.sanity.io>; rel=dns-prefetch, <https://fonts.gstatic.com>; rel=preconnect; crossorigin",
+                        // Isolate the browsing-context group (tabnabbing /
+                        // XS-Leak hardening) while keeping the Sanity Studio
+                        // auth popup functional.
+                        key: "Cross-Origin-Opener-Policy",
+                        value: "same-origin-allow-popups",
                     },
                 ],
             },

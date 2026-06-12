@@ -41,7 +41,7 @@ export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
                                 {(category.skills ?? []).map((skill, i) => (
                                     <Badge
                                         key={i}
-                                        variant={styles.badgeVariant}
+                                        variant={styles.color}
                                         className="text-xs"
                                     >
                                         {skill}

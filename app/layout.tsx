@@ -119,6 +119,14 @@ export default function RootLayout({
             <body
                 className={`${inter.className} bg-canvas text-slate-900 relative pt-28 sm:pt-32 dark:bg-canvas-dark dark:text-slate-100 antialiased overflow-x-hidden`}
             >
+                {/* Bypass block for keyboard/switch users (WCAG 2.4.1) */}
+                <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[1000] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-white"
+                >
+                    Skip to content
+                </a>
+
                 {/* Animated mesh background (orbs drift, blurred) */}
                 <div className="mesh-bg" aria-hidden="true" />
 

@@ -143,7 +143,11 @@ function CertsSkeleton() {
 
 export default function Home() {
     return (
-        <main className="flex flex-col items-stretch gap-16 sm:gap-20 pb-16">
+        <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex flex-col items-stretch gap-16 sm:gap-20 pb-16"
+        >
             <Suspense fallback={<HeroContent />}>
                 <HeroWithData />
             </Suspense>

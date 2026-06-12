@@ -284,28 +284,6 @@
     border-color: rgb(var(--c3) / 0.28);
 }
 
-.bg-c1-wash {
-    background-image: linear-gradient(
-        to bottom right,
-        rgb(var(--c1) / 0.18),
-        rgb(var(--c1) / 0)
-    );
-}
-.bg-c2-wash {
-    background-image: linear-gradient(
-        to bottom right,
-        rgb(var(--c2) / 0.18),
-        rgb(var(--c2) / 0)
-    );
-}
-.bg-c3-wash {
-    background-image: linear-gradient(
-        to bottom right,
-        rgb(var(--c3) / 0.18),
-        rgb(var(--c3) / 0)
-    );
-}
-
 /* ─────────────────────────────────────────────────────────────────────
    ONE UI 8.5 SURFACES — near-opaque, calm cards with flat soft shadows.
    Blur is reserved for floating chrome (.os-nav, .os-card-raised); the

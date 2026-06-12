@@ -18,10 +18,16 @@ export type IntroData = Pick<
     resumeUrl?: string | null;
 };
 
-export { client } from "./sanity-config";
+/** List-shaped post: what the index cards/counters actually consume.
+ *  No body — reading time ships as a precomputed word count. */
+export type PostListItem = Pick<
+    Post,
+    "_id" | "title" | "description" | "date" | "featured" | "image"
+> & { slug: string; wordCount: number };
 
-// Reusable GROQ projections
+// Full post — only the single-post page needs the body.
 const postProjection = `{
+    _id,
     title,
     "slug": slug.current,
     description,
@@ -29,6 +35,19 @@ const postProjection = `{
     featured,
     image,
     body
+}`;
+
+// List projection — everything the cards need, body replaced by a
+// server-computed word count so list payloads stay small.
+const postListProjection = `{
+    _id,
+    title,
+    "slug": slug.current,
+    description,
+    date,
+    featured,
+    image,
+    "wordCount": length(string::split(pt::text(body), " "))
 }`;
 
 // Lightweight metadata-only projection — no body payload.
@@ -71,20 +90,21 @@ async function sanityFetch<T>(
     }
 }
 
-// Fetch all published posts, sorted by date descending
-export async function getAllPosts(): Promise<Post[]> {
-    return sanityFetch<Post[]>(
-        `*[_type == "post" && date <= $today] | order(date desc) ${postProjection}`,
+// Fetch all published posts (list shape, no bodies), newest first
+export async function getAllPosts(): Promise<PostListItem[]> {
+    return sanityFetch<PostListItem[]>(
+        `*[_type == "post" && date <= $today] | order(date desc) ${postListProjection}`,
         {},
         CACHE_TAGS.postList,
         [],
     );
 }
 
-// Fetch a single post by slug.
+// Fetch a single published post by slug. The date filter matches the
+// listing queries so future-dated posts are not reachable by URL early.
 export async function getPostBySlug(slug: string): Promise<Post | null> {
     return sanityFetch<Post | null>(
-        `*[_type == "post" && slug.current == $slug][0] ${postProjection}`,
+        `*[_type == "post" && slug.current == $slug && date <= $today][0] ${postProjection}`,
         { slug },
         CACHE_TAGS.post(slug),
         null,
@@ -101,7 +121,7 @@ export async function getPostMeta(
         Post,
         "title" | "slug" | "description" | "date" | "image"
     > | null>(
-        `*[_type == "post" && slug.current == $slug][0] ${metaProjection}`,
+        `*[_type == "post" && slug.current == $slug && date <= $today][0] ${metaProjection}`,
         { slug },
         CACHE_TAGS.post(slug),
         null,
