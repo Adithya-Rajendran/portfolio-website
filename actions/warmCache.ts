@@ -5,20 +5,17 @@
 import { getAllSlugs, getAllPosts } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 import { siteConfig } from "@/lib/config";
+import { POST_IMAGE_DIMENSIONS } from "@/components/blogs/utils";
 import type { Post } from "@/sanity.types";
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
 /**
- * IMAGE_PRESETS must match the blog components' rendered image sizes.
- * When the warm cache runs, it fetches these exact URLs from the Sanity
- * CDN so that real visitors get cache HITs on the first load.
+ * Derived from the PostCard variant table so the warmer always fetches
+ * the exact URLs the cards request and visitors get CDN cache HITs on
+ * first load.
  */
-const IMAGE_PRESETS = [
-    { width: 900, height: 500 }, // featured hero
-    { width: 700, height: 400 }, // featured sidebar
-    { width: 400, height: 240 }, // latest carousel
-] as const;
+const IMAGE_PRESETS = Object.values(POST_IMAGE_DIMENSIONS);
 
 interface WarmResult {
     pages: { warmed: string[]; failed: string[] };

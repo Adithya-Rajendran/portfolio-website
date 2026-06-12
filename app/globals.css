@@ -80,14 +80,6 @@
     --c3: 34 211 238; /* cyan-400 */
 }
 
-/* Dark mode brightens the base accents past AA already — text tokens
-   simply follow whatever the active theme resolved --c1/2/3 to. */
-.dark {
-    --c1-text: var(--c1);
-    --c2-text: var(--c2);
-    --c3-text: var(--c3);
-}
-
 /* Surface Glass: indigo / violet / sky */
 [data-theme="glass"] {
     --c1: 79 70 229; /* indigo-600 */
@@ -140,6 +132,17 @@
     --c3: 244 114 182;
 }
 
+/* Dark mode brightens the base accents past AA already — text tokens
+   simply follow whatever the active theme resolved --c1/2/3 to.
+   MUST come after every [data-theme] block above: those declare the
+   light-mode 700-series text tokens at equal specificity, so this rule
+   only wins for html.dark via source order. */
+.dark {
+    --c1-text: var(--c1);
+    --c2-text: var(--c2);
+    --c3-text: var(--c3);
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    ACCENT UTILITY CLASSES — semantic names that resolve via theme tokens.
    ───────────────────────────────────────────────────────────────────── */
@@ -171,6 +174,9 @@
 }
 
 .border-accent {
+    border-color: rgb(var(--c1));
+}
+.focus\:border-accent:focus {
     border-color: rgb(var(--c1));
 }
 .border-accent-soft {
@@ -304,112 +310,118 @@
    ONE UI 8.5 SURFACES — near-opaque, calm cards with flat soft shadows.
    Blur is reserved for floating chrome (.os-nav, .os-card-raised); the
    inset "lifted glass" highlight of earlier iterations is gone.
+
+   Declared in @layer components so Tailwind utilities (layer utilities,
+   which wins over components) can override individual properties —
+   e.g. `os-card-raised rounded-card-lg` or `os-card rounded-none`.
    ───────────────────────────────────────────────────────────────────── */
 
-.os-card {
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(15, 23, 42, 0.04);
-    border-radius: var(--radius-card);
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
-    box-shadow:
-        0 1px 2px rgba(15, 23, 42, 0.03),
-        0 8px 24px -16px rgba(15, 23, 42, 0.08);
-}
+@layer components {
+    .os-card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(15, 23, 42, 0.04);
+        border-radius: var(--radius-card);
+        backdrop-filter: blur(16px) saturate(150%);
+        -webkit-backdrop-filter: blur(16px) saturate(150%);
+        box-shadow:
+            0 1px 2px rgba(15, 23, 42, 0.03),
+            0 8px 24px -16px rgba(15, 23, 42, 0.08);
+    }
 
-.dark .os-card {
-    background: rgba(23, 25, 34, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.25),
-        0 12px 32px -20px rgba(0, 0, 0, 0.5);
-}
+    .dark .os-card {
+        background: rgba(23, 25, 34, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.25),
+            0 12px 32px -20px rgba(0, 0, 0, 0.5);
+    }
 
-.os-card-flat {
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(15, 23, 42, 0.04);
-    border-radius: var(--radius-card);
-}
+    .os-card-flat {
+        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(15, 23, 42, 0.04);
+        border-radius: var(--radius-card);
+    }
 
-.dark .os-card-flat {
-    background: rgba(23, 25, 34, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
+    .dark .os-card-flat {
+        background: rgba(23, 25, 34, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
 
-/* Floating elevated tier — popovers, bottom sheets, snackbars. The one
+    /* Floating elevated tier — popovers, bottom sheets, snackbars. The one
    surface that keeps heavy frost, like the One UI 8.5 quick panel. */
-.os-card-raised {
-    background: rgba(255, 255, 255, 0.97);
-    border: 1px solid rgba(15, 23, 42, 0.05);
-    border-radius: var(--radius-card);
-    backdrop-filter: blur(24px) saturate(170%);
-    -webkit-backdrop-filter: blur(24px) saturate(170%);
-    box-shadow:
-        0 2px 4px rgba(15, 23, 42, 0.04),
-        0 24px 48px -24px rgba(15, 23, 42, 0.18);
-}
+    .os-card-raised {
+        background: rgba(255, 255, 255, 0.97);
+        border: 1px solid rgba(15, 23, 42, 0.05);
+        border-radius: var(--radius-card);
+        backdrop-filter: blur(24px) saturate(170%);
+        -webkit-backdrop-filter: blur(24px) saturate(170%);
+        box-shadow:
+            0 2px 4px rgba(15, 23, 42, 0.04),
+            0 24px 48px -24px rgba(15, 23, 42, 0.18);
+    }
 
-.dark .os-card-raised {
-    background: rgba(28, 30, 40, 0.97);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.3),
-        0 24px 48px -24px rgba(0, 0, 0, 0.7);
-}
+    .dark .os-card-raised {
+        background: rgba(28, 30, 40, 0.97);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.3),
+            0 24px 48px -24px rgba(0, 0, 0, 0.7);
+    }
 
-/* Header / nav surface */
-.os-nav {
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid rgba(15, 23, 42, 0.04);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    box-shadow: 0 6px 24px -12px rgba(15, 23, 42, 0.1);
-}
+    /* Header / nav surface */
+    .os-nav {
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(15, 23, 42, 0.04);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        box-shadow: 0 6px 24px -12px rgba(15, 23, 42, 0.1);
+    }
 
-.dark .os-nav {
-    background: rgba(15, 17, 26, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 6px 24px -10px rgba(0, 0, 0, 0.55);
-}
+    .dark .os-nav {
+        background: rgba(15, 17, 26, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow: 0 6px 24px -10px rgba(0, 0, 0, 0.55);
+    }
 
-/* Hover lift — calm One UI elevation change with a whisper of accent */
-.os-hover {
-    transition:
-        transform 0.25s ease,
-        box-shadow 0.25s ease,
-        border-color 0.25s ease;
-}
+    /* Hover lift — calm One UI elevation change with a whisper of accent */
+    .os-hover {
+        transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease,
+            border-color 0.25s ease;
+    }
 
-.os-hover:hover {
-    transform: translateY(-2px);
-    border-color: rgb(var(--c1) / 0.22);
-    box-shadow:
-        0 4px 12px -4px rgba(15, 23, 42, 0.08),
-        0 16px 32px -20px rgb(var(--c1) / 0.12);
-}
+    .os-hover:hover {
+        transform: translateY(-2px);
+        border-color: rgb(var(--c1) / 0.22);
+        box-shadow:
+            0 4px 12px -4px rgba(15, 23, 42, 0.08),
+            0 16px 32px -20px rgb(var(--c1) / 0.12);
+    }
 
-.dark .os-hover:hover {
-    border-color: rgb(var(--c1) / 0.22);
-    box-shadow:
-        0 4px 12px -4px rgba(0, 0, 0, 0.4),
-        0 16px 32px -20px rgb(var(--c1) / 0.18);
-}
+    .dark .os-hover:hover {
+        border-color: rgb(var(--c1) / 0.22);
+        box-shadow:
+            0 4px 12px -4px rgba(0, 0, 0, 0.4),
+            0 16px 32px -20px rgb(var(--c1) / 0.18);
+    }
 
-/* Everything tappable presses — One UI's signature touch feedback */
-.os-press {
-    transition: transform 0.15s ease;
-}
-.os-press:active {
-    transform: scale(0.97);
-}
+    /* Everything tappable presses — One UI's signature touch feedback */
+    .os-press {
+        transition: transform 0.15s ease;
+    }
+    .os-press:active {
+        transform: scale(0.97);
+    }
 
-/* Settings-style row divider used inside grouped lists */
-.os-divider {
-    height: 1px;
-    background: rgba(15, 23, 42, 0.06);
-}
-.dark .os-divider {
-    background: rgba(255, 255, 255, 0.06);
+    /* Settings-style row divider used inside grouped lists */
+    .os-divider {
+        height: 1px;
+        background: rgba(15, 23, 42, 0.06);
+    }
+    .dark .os-divider {
+        background: rgba(255, 255, 255, 0.06);
+    }
 }
 
 /* ─────────────────────────────────────────────────────────────────────

@@ -27,6 +27,19 @@ export function getPostSlug(post: {
         : (post.slug?.current ?? "");
 }
 
+/**
+ * Card image dimensions per PostCard variant — the single source of
+ * truth shared by post-card.tsx (rendering) and actions/warmCache.ts
+ * (CDN pre-warming), so the warmer always primes the exact URLs the
+ * cards request.
+ */
+export const POST_IMAGE_DIMENSIONS = {
+    hero: { width: 1200, height: 600 },
+    medium: { width: 800, height: 480 },
+    side: { width: 600, height: 400 },
+    list: { width: 400, height: 240 },
+} as const;
+
 /** Cropped, format-negotiated card image URL for a post (null if no image) */
 export function getPostImageUrl(
     post: Pick<Post, "image">,

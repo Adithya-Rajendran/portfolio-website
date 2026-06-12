@@ -7,6 +7,7 @@ import {
     getPostImageUrl,
     getPostSlug,
     readingTimeFor,
+    POST_IMAGE_DIMENSIONS,
 } from "./utils";
 
 export type PostCardVariant = "hero" | "medium" | "side" | "list";
@@ -37,8 +38,7 @@ interface VariantConfig {
 const variants: Record<PostCardVariant, VariantConfig> = {
     hero: {
         image: {
-            width: 1200,
-            height: 600,
+            ...POST_IMAGE_DIMENSIONS.hero,
             sizes: "(max-width: 768px) 100vw, 1200px",
         },
         aspect: "aspect-[2/1] sm:aspect-[21/9]",
@@ -52,8 +52,7 @@ const variants: Record<PostCardVariant, VariantConfig> = {
     },
     medium: {
         image: {
-            width: 800,
-            height: 480,
+            ...POST_IMAGE_DIMENSIONS.medium,
             sizes: "(max-width: 768px) 100vw, 50vw",
         },
         aspect: "aspect-[16/10]",
@@ -67,8 +66,7 @@ const variants: Record<PostCardVariant, VariantConfig> = {
     },
     side: {
         image: {
-            width: 600,
-            height: 400,
+            ...POST_IMAGE_DIMENSIONS.side,
             sizes: "(max-width: 768px) 100vw, 33vw",
         },
         aspect: "aspect-[16/10]",
@@ -82,8 +80,7 @@ const variants: Record<PostCardVariant, VariantConfig> = {
     },
     list: {
         image: {
-            width: 400,
-            height: 240,
+            ...POST_IMAGE_DIMENSIONS.list,
             sizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
         },
         aspect: "aspect-[5/3]",

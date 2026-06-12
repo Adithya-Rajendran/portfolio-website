@@ -56,11 +56,12 @@ export default function ThemeSelector() {
 
     return (
         <div className="fixed bottom-5 right-5 z-50">
+            {/* Non-modal dialog: light-dismiss popover without a focus
+                trap, so aria-modal would misreport the page as inert. */}
             {open && (
                 <div
                     ref={popoverRef}
                     role="dialog"
-                    aria-modal="true"
                     aria-label="Theme settings"
                     className="absolute bottom-[calc(100%+0.75rem)] right-0 w-80 os-card-raised rounded-card-lg p-5 animate-scale-fade-in"
                     style={{ animationDuration: "0.2s" }}

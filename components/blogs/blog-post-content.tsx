@@ -8,6 +8,7 @@ import {
     extractHeadings,
     headingIdsByKey,
     formatDate,
+    getPostSlug,
 } from "@/components/blogs/utils";
 
 interface BlogPostHeroProps {
@@ -70,7 +71,10 @@ export default async function BlogPostBody({ post }: { post: Post }) {
     const headings = extractHeadings(post);
     const headingIds = headingIdsByKey(headings);
 
-    const highlightedCode = await highlightCodeBlocks(post.body);
+    const highlightedCode = await highlightCodeBlocks(
+        post.body,
+        getPostSlug(post),
+    );
     const portableTextComponents = createPortableTextComponents(
         highlightedCode,
         headingIds,

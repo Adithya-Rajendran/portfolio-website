@@ -39,9 +39,11 @@ jobs:
         name: Build
         runs-on: ubuntu-latest
         env:
-            # Placeholder so the Sanity Studio route can prerender; data
-            # fetchers fall back to empty content via isSanityConfigured.
-            NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: ci0placeholder
+            # "fallback" is the sentinel lib/sanity-config.ts treats as
+            # unconfigured: the Studio route can still prerender (valid
+            # project-id format) while every data fetcher short-circuits
+            # to empty content with zero network I/O during the build.
+            NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: fallback
 
         steps:
             - uses: actions/checkout@v6
