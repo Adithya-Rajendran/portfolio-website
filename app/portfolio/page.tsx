@@ -100,7 +100,7 @@ async function ProjectsWithData() {
 
 export default function Portfolio() {
     return (
-        <main className="pb-24 sm:pb-32">
+        <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <Suspense fallback={<HeroFallback />}>
                 <IntroWithData />
             </Suspense>

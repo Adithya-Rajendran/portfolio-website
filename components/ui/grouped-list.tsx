@@ -99,7 +99,9 @@ export function ListRow({
     const sharedClasses = cn(
         "flex items-center gap-4 px-5 py-4 sm:px-6 transition-colors w-full text-left",
         interactive &&
-            "hover:bg-slate-100/60 dark:hover:bg-white/[0.03] cursor-pointer",
+            // The negative outline offset keeps the focus ring visible
+            // inside the GroupedList card's overflow-hidden clipping.
+            "hover:bg-slate-100/60 dark:hover:bg-white/[0.03] cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))]",
         className,
     );
 

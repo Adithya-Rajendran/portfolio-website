@@ -64,14 +64,14 @@ export default async function Footer() {
                                 Cloud engineer. Cybersecurity practitioner,
                                 infrastructure tinkerer, and writer.
                             </p>
-                            <div className="mt-5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-500">
+                            <div className="mt-5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                 <MapPin className="w-3.5 h-3.5 text-accent opacity-80" />
                                 <span>Remote · United States</span>
                             </div>
                         </div>
 
                         <div>
-                            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500 mb-4">
+                            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-4">
                                 Sitemap
                             </h3>
                             <ul className="space-y-2.5">
@@ -89,7 +89,7 @@ export default async function Footer() {
                         </div>
 
                         <div>
-                            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500 mb-4">
+                            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-4">
                                 Portfolio
                             </h3>
                             <ul className="space-y-2.5">
@@ -108,8 +108,8 @@ export default async function Footer() {
                     </div>
 
                     <div className="mt-12 pt-6 border-t border-slate-200/60 dark:border-white/8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <small className="text-xs text-slate-500 dark:text-slate-500">
-                            © {year} Adithya Rajendran. All rights reserved.
+                        <small className="text-xs text-slate-500 dark:text-slate-400">
+                            © {year} {siteConfig.author}. All rights reserved.
                         </small>
 
                         <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export default async function Footer() {
                             ))}
                         </div>
 
-                        <p className="text-xs text-slate-500 dark:text-slate-600">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             Built with Next.js · TypeScript · Tailwind
                         </p>
                     </div>

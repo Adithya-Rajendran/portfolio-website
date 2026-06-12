@@ -1,12 +1,13 @@
-"use client";
-
 import Image from "next/image";
-import { useInView } from "react-intersection-observer";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import RevealOnScroll from "@/components/reveal-on-scroll";
 import { urlForImage } from "@/lib/sanity-image";
 import type { Project as TProject } from "@/sanity.types";
 
+/**
+ * Server component — the reveal is the shared RevealOnScroll client
+ * wrapper; the card markup itself ships no hydration JS.
+ */
 export default function Project({
     title,
     description,
@@ -15,25 +16,12 @@ export default function Project({
     linkTitle,
     linkUrl,
 }: TProject) {
-    const { ref, inView } = useInView({
-        threshold: 0.15,
-        triggerOnce: true,
-        fallbackInView: true,
-    });
-
     const imageUrl = image
         ? urlForImage(image).width(900).quality(95).url()
         : null;
 
     return (
-        <div
-            ref={ref}
-            className={cn(
-                "w-full",
-                "motion-safe:transition-all motion-safe:duration-500 motion-safe:ease-out",
-                !inView && "motion-safe:opacity-0 motion-safe:translate-y-4",
-            )}
-        >
+        <RevealOnScroll className="w-full">
             <Card flush className="h-full flex flex-col overflow-hidden">
                 {imageUrl && (
                     <div className="relative aspect-[16/10] overflow-hidden bg-accent-soft">
@@ -87,6 +75,6 @@ export default function Project({
                     )}
                 </div>
             </Card>
-        </div>
+        </RevealOnScroll>
     );
 }

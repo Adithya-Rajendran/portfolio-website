@@ -57,7 +57,13 @@ async function hasValidMxRecords(email: string): Promise<boolean> {
 export type ContactFormState =
     | { status: "idle" }
     | { status: "success" }
-    | { status: "error"; message: string };
+    | {
+          status: "error";
+          message: string;
+          /** Echo of the submitted fields so the form can repopulate —
+           *  React 19 resets uncontrolled inputs after the action runs. */
+          values: { senderEmail: string; message: string };
+      };
 
 export const INITIAL_CONTACT_FORM_STATE: ContactFormState = { status: "idle" };
 
@@ -78,6 +84,10 @@ export async function sendEmailAction(
                 typeof result.error === "string"
                     ? result.error
                     : "Error sending the message! Please try again.",
+            values: {
+                senderEmail: String(formData.get("senderEmail") ?? ""),
+                message: String(formData.get("message") ?? ""),
+            },
         };
     }
     return { status: "success" };

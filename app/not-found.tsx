@@ -5,11 +5,16 @@ import UnifiedHero from "@/components/unified-hero";
 
 export default function NotFound() {
     return (
-        <main className="flex flex-col items-center justify-center min-h-[70vh] w-full">
+        <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex flex-col items-center justify-center min-h-[70vh] w-full"
+        >
             <UnifiedHero
                 title={
                     <span className="text-accent-gradient animate-gradient-text">
                         404
+                        <span className="sr-only">: Page not found</span>
                     </span>
                 }
                 subtitle="Page Not Found"

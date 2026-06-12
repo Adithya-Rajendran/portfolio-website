@@ -71,8 +71,10 @@ export default async function BlogPostBody({ post }: { post: Post }) {
     const headings = extractHeadings(post);
     const headingIds = headingIdsByKey(headings);
 
+    // Pass only the code blocks: the "use cache" key serializes the
+    // arguments, so prose stays out of the cache key.
     const highlightedCode = await highlightCodeBlocks(
-        post.body,
+        post.body.filter((block) => block._type === "code"),
         getPostSlug(post),
     );
     const portableTextComponents = createPortableTextComponents(

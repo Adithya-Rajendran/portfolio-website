@@ -2,11 +2,13 @@
 // webhook route. A "use server" directive here would expose warmBlogCache
 // as a public unauthenticated endpoint / traffic-amplification lever.
 
-import { getAllSlugs, getAllPosts } from "@/lib/sanity-client";
-import { urlForImage } from "@/lib/sanity-image";
+import { getAllPosts, type PostListItem } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
-import { POST_IMAGE_DIMENSIONS } from "@/components/blogs/utils";
-import type { Post } from "@/sanity.types";
+import {
+    getPostImageUrl,
+    getPostSlug,
+    POST_IMAGE_DIMENSIONS,
+} from "@/components/blogs/utils";
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -23,7 +25,9 @@ interface WarmResult {
 }
 
 export async function warmBlogCache(): Promise<WarmResult> {
-    const [slugs, posts] = await Promise.all([getAllSlugs(), getAllPosts()]);
+    // One query: the list projection already carries slug + image.
+    const posts = await getAllPosts();
+    const slugs = posts.map(getPostSlug).filter(Boolean);
 
     const pages = await warmPages(slugs);
     const images = await warmImages(posts);
@@ -76,25 +80,24 @@ async function warmPages(
     return { warmed, failed };
 }
 
-/** Pre-fetch Sanity CDN image URLs so they're warm for real visitors */
+/** Pre-fetch Sanity CDN image URLs so they're warm for real visitors.
+ *  Note: this warms the Sanity CDN (the optimizer's upstream), not the
+ *  Vercel /_next/image cache itself — visitors' exact optimizer URLs
+ *  depend on device widths, so upstream warming is the stable layer. */
 async function warmImages(
-    posts: Post[],
+    posts: PostListItem[],
 ): Promise<{ warmed: number; failed: number }> {
     if (!posts || posts.length === 0) return { warmed: 0, failed: 0 };
 
-    // Collect all image URLs we need to warm
+    // Collect all image URLs we need to warm — built by the same helper
+    // the cards use, so the URLs match by construction.
     const imageUrls: string[] = [];
     for (const post of posts) {
         if (!post.image?.asset) continue;
         for (const preset of IMAGE_PRESETS) {
             try {
-                const url = urlForImage(post.image)
-                    .width(preset.width)
-                    .height(preset.height)
-                    .fit("crop")
-                    .auto("format")
-                    .url();
-                imageUrls.push(url);
+                const url = getPostImageUrl(post, preset.width, preset.height);
+                if (url) imageUrls.push(url);
             } catch {
                 // Skip if image URL generation fails
             }

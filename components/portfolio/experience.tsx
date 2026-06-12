@@ -1,10 +1,8 @@
-"use client";
-
 import Image from "next/image";
 import SectionHeader from "@/components/section-header";
-import { useSectionReveal } from "@/lib/hooks";
+import SectionSpy from "@/components/portfolio/section-spy";
+import RevealOnScroll from "@/components/reveal-on-scroll";
 import { urlForImage } from "@/lib/sanity-image";
-import { cn } from "@/lib/utils";
 import type { Experience as TExperience } from "@/sanity.types";
 
 interface ExperienceProps {
@@ -14,14 +12,19 @@ interface ExperienceProps {
 /**
  * Experience as a vertical timeline. Each item is its own card so the
  * pattern matches the unified surface style used elsewhere on the page.
+ *
+ * Server component — SectionSpy handles the nav highlight (0.3 threshold:
+ * the timeline is tall, 75% visibility never triggers on short viewports)
+ * and each item reveals through the shared RevealOnScroll wrapper.
  */
 export default function Experience({ experiences }: ExperienceProps) {
-    const { ref, inView: isVisible } = useSectionReveal("Experience", {
-        spyThreshold: 0.3,
-    });
-
     return (
-        <section id="experience" ref={ref} className="scroll-mt-28">
+        <SectionSpy
+            section="Experience"
+            threshold={0.3}
+            id="experience"
+            className="scroll-mt-28"
+        >
             <SectionHeader
                 eyebrow="Experience"
                 title="Where I've worked"
@@ -35,19 +38,11 @@ export default function Experience({ experiences }: ExperienceProps) {
                 />
 
                 {experiences.map((item, i) => (
-                    <li
+                    <RevealOnScroll
+                        as="li"
                         key={item._id}
-                        className={cn(
-                            "relative pl-16",
-                            "motion-safe:transition-all motion-safe:duration-500 motion-safe:ease-out",
-                            !isVisible &&
-                                "motion-safe:opacity-0 motion-safe:translate-y-4",
-                        )}
-                        style={{
-                            transitionDelay: isVisible
-                                ? `${Math.min(i * 90, 540)}ms`
-                                : "0ms",
-                        }}
+                        delayMs={Math.min(i * 90, 540)}
+                        className="relative pl-16"
                     >
                         {/* Squircle icon dot on the spine */}
                         <div className="absolute top-5 left-0 z-10">
@@ -107,9 +102,9 @@ export default function Experience({ experiences }: ExperienceProps) {
                                     </ul>
                                 )}
                         </article>
-                    </li>
+                    </RevealOnScroll>
                 ))}
             </ol>
-        </section>
+        </SectionSpy>
     );
 }

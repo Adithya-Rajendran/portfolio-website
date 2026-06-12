@@ -59,7 +59,9 @@ export default function ToolsMarquee() {
     return (
         <section
             aria-label="Tools and technologies"
-            className="relative w-full overflow-hidden"
+            // Hover/focus pauses the loop — WCAG 2.2.2 needs an on-page
+            // way to stop >5s auto-motion even without an OS preference.
+            className="group relative w-full overflow-hidden"
         >
             <div
                 aria-hidden
@@ -70,11 +72,11 @@ export default function ToolsMarquee() {
                 className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-canvas to-transparent dark:from-canvas-dark"
             />
 
-            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-500 mb-6">
+            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mb-6">
                 Toolbelt
             </p>
 
-            <div className="flex w-max motion-safe:animate-[marquee_38s_linear_infinite] motion-safe:will-change-transform">
+            <div className="flex w-max motion-safe:animate-[marquee_38s_linear_infinite] motion-safe:will-change-transform group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused]">
                 <ToolItems />
                 <div aria-hidden="true" className="flex">
                     <ToolItems />

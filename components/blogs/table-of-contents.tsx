@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion, useScroll } from "motion/react";
 
 export interface TocHeading {
     id: string;
@@ -44,10 +43,10 @@ function groupHeadings(headings: TocHeading[]): TocSection[] {
 export default function TableOfContents({ headings }: TableOfContentsProps) {
     const [activeId, setActiveId] = useState<string>("");
     const [hasRoom, setHasRoom] = useState(false);
-    const { scrollYProgress } = useScroll();
     const [manualToggles, setManualToggles] = useState<Set<string>>(new Set());
     const observerRef = useRef<IntersectionObserver | null>(null);
     const indicatorRef = useRef<HTMLDivElement>(null);
+    const progressRef = useRef<HTMLDivElement>(null);
     const navRef = useRef<HTMLElement>(null);
 
     const sections = useMemo(() => groupHeadings(headings), [headings]);
@@ -78,7 +77,33 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         return () => window.removeEventListener("resize", checkRoom);
     }, []);
 
-    // Scroll progress is now handled hardware-accelerated by motion/react useScroll
+    // Scroll progress — rAF-throttled transform write to a ref. Replaces
+    // the motion/react useScroll MotionValue, which was this component's
+    // (and the whole app's) only reason to ship the framer runtime.
+    useEffect(() => {
+        if (!hasRoom) return;
+        let raf = 0;
+        const update = () => {
+            raf = 0;
+            const doc = document.documentElement;
+            const max = doc.scrollHeight - window.innerHeight;
+            const progress = max > 0 ? Math.min(1, window.scrollY / max) : 0;
+            if (progressRef.current) {
+                progressRef.current.style.transform = `scaleX(${progress})`;
+            }
+        };
+        const onScroll = () => {
+            if (!raf) raf = requestAnimationFrame(update);
+        };
+        update();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+            window.removeEventListener("resize", onScroll);
+            if (raf) cancelAnimationFrame(raf);
+        };
+    }, [hasRoom]);
 
     // IntersectionObserver for active heading
     useEffect(() => {
@@ -138,9 +163,11 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         });
     }, []);
 
-    const scrollToHeading = useCallback((e: React.MouseEvent, id: string) => {
-        e.preventDefault();
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    // Native anchor navigation does the scrolling (html has !scroll-smooth
+    // and every heading has scroll-mt-24): the hash updates, sequential
+    // focus moves to the target, and the position is shareable. We only
+    // sync the indicator immediately instead of waiting for the observer.
+    const markActive = useCallback((id: string) => {
         setActiveId(id);
     }, []);
 
@@ -151,17 +178,23 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
             <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
                 {/* Scroll progress — thin accent line */}
                 <div className="h-px bg-slate-200 dark:bg-slate-700/50 mb-5 relative overflow-hidden">
-                    <motion.div
-                        className="absolute inset-y-0 left-0 bg-accent-gradient origin-left"
-                        style={{ width: "100%", scaleX: scrollYProgress }}
+                    <div
+                        ref={progressRef}
+                        aria-hidden
+                        className="absolute inset-y-0 left-0 w-full bg-accent-gradient origin-left"
+                        style={{ transform: "scaleX(0)" }}
                     />
                 </div>
 
-                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-5">
                     On this page
                 </p>
 
-                <nav ref={navRef} className="relative">
+                <nav
+                    ref={navRef}
+                    aria-label="Table of contents"
+                    className="relative"
+                >
                     {/* Sliding indicator bar */}
                     <div
                         ref={indicatorRef}
@@ -174,6 +207,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                 section.heading.id,
                             );
                             const hasChildren = section.children.length > 0;
+                            const childListId = `toc-${section.heading.id}`;
 
                             return (
                                 <li key={section.heading.id}>
@@ -185,7 +219,9 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                         section.heading.id,
                                                     )
                                                 }
-                                                className="flex-shrink-0 w-4 h-4 mr-1 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                                className="flex-shrink-0 w-4 h-4 mr-1 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                                                aria-expanded={isExpanded}
+                                                aria-controls={childListId}
                                                 aria-label={
                                                     isExpanded
                                                         ? "Collapse section"
@@ -210,11 +246,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                         <a
                                             href={`#${section.heading.id}`}
                                             data-heading-id={section.heading.id}
-                                            onClick={(e) =>
-                                                scrollToHeading(
-                                                    e,
-                                                    section.heading.id,
-                                                )
+                                            onClick={() =>
+                                                markActive(section.heading.id)
                                             }
                                             className={[
                                                 // Parent heading link
@@ -222,7 +255,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                 !hasChildren ? "pl-5" : "",
                                                 activeId === section.heading.id
                                                     ? "text-accent font-medium"
-                                                    : "text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200",
+                                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
                                             ]
                                                 .filter(Boolean)
                                                 .join(" ")}
@@ -234,16 +267,21 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                     {/* Collapsible children — grid-rows
                                         0fr/1fr animates to the content's
                                         intrinsic height, so multi-line
-                                        entries never clip */}
+                                        entries never clip. inert removes
+                                        the hidden links from tab order. */}
                                     {hasChildren && (
                                         <div
+                                            inert={!isExpanded}
                                             className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
                                                 isExpanded
                                                     ? "grid-rows-[1fr] opacity-100"
                                                     : "grid-rows-[0fr] opacity-0"
                                             }`}
                                         >
-                                            <ul className="overflow-hidden min-h-0 ml-5 border-l border-slate-200 dark:border-slate-700/40 pl-2.5 space-y-0.5">
+                                            <ul
+                                                id={childListId}
+                                                className="overflow-hidden min-h-0 ml-5 border-l border-slate-200 dark:border-slate-700/40 pl-2.5 space-y-0.5"
+                                            >
                                                 {section.children.map(
                                                     (child) => (
                                                         <li key={child.id}>
@@ -252,9 +290,8 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                                 data-heading-id={
                                                                     child.id
                                                                 }
-                                                                onClick={(e) =>
-                                                                    scrollToHeading(
-                                                                        e,
+                                                                onClick={() =>
+                                                                    markActive(
                                                                         child.id,
                                                                     )
                                                                 }
@@ -267,7 +304,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                                     activeId ===
                                                                     child.id
                                                                         ? "text-accent font-medium"
-                                                                        : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300",
+                                                                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
                                                                 ]
                                                                     .filter(
                                                                         Boolean,

@@ -23,16 +23,15 @@ export default function Contact() {
     useEffect(() => {
         if (state.status === "success") {
             toast({ description: "Email sent successfully!" });
-        } else if (state.status === "error") {
-            toast({
-                description: state.message,
-                variant: "destructive",
-            });
         }
+        // Errors render as a persistent inline alert below the form —
+        // a toast would auto-dismiss the only record of what went wrong.
     }, [state, toast]);
 
+    const hasError = state.status === "error";
+
     const inputClasses =
-        "w-full h-12 px-4 rounded-row bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-400 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-500";
+        "w-full h-12 px-4 rounded-row bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-500 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-400";
 
     return (
         <section
@@ -63,6 +62,13 @@ export default function Contact() {
                         required
                         maxLength={500}
                         placeholder="you@example.com"
+                        aria-invalid={hasError || undefined}
+                        aria-describedby={
+                            hasError ? "contact-error" : undefined
+                        }
+                        defaultValue={
+                            hasError ? state.values.senderEmail : undefined
+                        }
                     />
                     <label htmlFor="contact-message" className="sr-only">
                         Your message
@@ -74,7 +80,23 @@ export default function Contact() {
                         placeholder="What's on your mind?"
                         required
                         maxLength={MESSAGE_MAX_LENGTH}
+                        aria-invalid={hasError || undefined}
+                        aria-describedby={
+                            hasError ? "contact-error" : undefined
+                        }
+                        defaultValue={
+                            hasError ? state.values.message : undefined
+                        }
                     />
+                    {hasError && (
+                        <p
+                            id="contact-error"
+                            role="alert"
+                            className="text-sm text-rose-700 dark:text-rose-300"
+                        >
+                            {state.message}
+                        </p>
+                    )}
                     <div className="mt-2 flex justify-center">
                         <SubmitBtn />
                     </div>

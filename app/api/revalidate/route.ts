@@ -1,5 +1,5 @@
 import { revalidateTag } from "next/cache";
-import { type NextRequest, NextResponse } from "next/server";
+import { after, type NextRequest, NextResponse } from "next/server";
 import { parseBody } from "next-sanity/webhook";
 import { warmBlogCache } from "@/actions/warmCache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
@@ -47,15 +47,26 @@ export async function POST(req: NextRequest) {
                 revalidateTag(CACHE_TAGS.post(changedSlug), { expire: 0 });
             }
 
-            const result = await warmBlogCache();
+            // Warm after the response: warming scales with post count and
+            // would otherwise push the webhook toward Sanity's delivery
+            // timeout. after() keeps the function alive post-response.
+            after(async () => {
+                try {
+                    const result = await warmBlogCache();
+                    console.log(
+                        `[Revalidate] Warmed ${result.pages.warmed.length} pages ` +
+                            `(${result.pages.failed.length} failed), ` +
+                            `${result.images.warmed} images (${result.images.failed} failed)`,
+                    );
+                } catch (err) {
+                    console.error("[Revalidate] Cache warming failed:", err);
+                }
+            });
 
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated post${changedSlug ? ` (${changedSlug})` : ""}`,
-                pagesWarmed: result.pages.warmed.length,
-                pagesFailed: result.pages.failed.length,
-                imagesWarmed: result.images.warmed,
-                imagesFailed: result.images.failed,
+                warming: "scheduled",
                 now: Date.now(),
             });
         }

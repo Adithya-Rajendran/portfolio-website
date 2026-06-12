@@ -65,13 +65,13 @@ export function WebSiteJsonLd() {
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: "Adithya Rajendran - Portfolio & Blog",
+        name: `${siteConfig.author} - Portfolio & Blog`,
         url: siteConfig.url,
         description:
             "Personal portfolio and cybersecurity blog by Adithya Rajendran, Cloud Field Engineer at Canonical.",
         author: {
             "@type": "Person",
-            name: "Adithya Rajendran",
+            name: siteConfig.author,
         },
     };
 
@@ -103,12 +103,12 @@ export function BlogPostJsonLd({
         image: `${siteConfig.url}/blogs/${slug}/opengraph-image`,
         author: {
             "@type": "Person",
-            name: "Adithya Rajendran",
+            name: siteConfig.author,
             url: siteConfig.url,
         },
         publisher: {
             "@type": "Person",
-            name: "Adithya Rajendran",
+            name: siteConfig.author,
         },
         mainEntityOfPage: {
             "@type": "WebPage",

@@ -57,16 +57,23 @@ function getHighlighter(): Promise<Highlighter> {
  * post changes in Sanity (the old "post" tag was never revalidated).
  * Returns a plain Record (not Map) so the result is serialisable by
  * the cache layer.
+ *
+ * Takes only the code blocks (not the whole body) so the serialized
+ * cache key stays proportional to the code, not the prose.
  */
+export type CodeBlock = Extract<
+    NonNullable<Post["body"]>[number],
+    { _type: "code" }
+>;
+
 export async function highlightCodeBlocks(
-    body: NonNullable<Post["body"]>,
+    codeBlocks: CodeBlock[],
     slug: string,
 ): Promise<Record<string, string>> {
     "use cache";
     cacheLife("max");
     cacheTag(CACHE_TAGS.post(slug));
 
-    const codeBlocks = body.filter((block) => block._type === "code");
     const highlighted: Record<string, string> = {};
 
     const highlighter = await getHighlighter();

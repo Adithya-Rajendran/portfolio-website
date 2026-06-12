@@ -1,10 +1,10 @@
 import SectionHeader from "@/components/section-header";
 import PostCard from "@/components/blogs/post-card";
-import type { Post as TPost } from "@/sanity.types";
+import type { PostListItem } from "@/lib/sanity-client";
 import { getPostSlug } from "./utils";
 
 interface FeaturedProps {
-    posts: TPost[];
+    posts: PostListItem[];
 }
 
 /**
