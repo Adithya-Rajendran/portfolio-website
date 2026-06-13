@@ -108,13 +108,7 @@ export default function PostCard({ post, variant = "list" }: PostCardProps) {
     const imageUrl = getPostImageUrl(post, v.image.width, v.image.height);
 
     return (
-        <Card
-            href={`/blogs/${slug}`}
-            aria-label={`Read more about ${title}`}
-            title={`Read more about ${title}`}
-            flush
-            className="flex flex-col h-full"
-        >
+        <Card href={`/blogs/${slug}`} flush className="flex flex-col h-full">
             {imageUrl && (
                 <div className={`relative overflow-hidden ${v.aspect}`}>
                     <Image

@@ -45,7 +45,7 @@ export default function Certification(cert: TCertification) {
                         </p>
                     )}
                     {dateRange && (
-                        <p className="mt-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-500">
+                        <p className="mt-2 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             {dateRange}
                         </p>
                     )}
