@@ -66,21 +66,23 @@ export default async function BlogPostPage({
     if (!meta) notFound();
 
     return (
-        <article id="main-content" tabIndex={-1} className="w-full">
-            <BlogPostJsonLd
-                title={meta.title || ""}
-                description={meta.description || ""}
-                date={meta.date || ""}
-                slug={slug}
-            />
+        <main id="main-content" tabIndex={-1} className="w-full">
+            <article>
+                <BlogPostJsonLd
+                    title={meta.title || ""}
+                    description={meta.description || ""}
+                    date={meta.date || ""}
+                    slug={slug}
+                />
 
-            <BlogPostHero post={meta} />
+                <BlogPostHero post={meta} />
 
-            {/* Body streams in after shiki highlighting completes */}
-            <Suspense fallback={<BodySkeleton />}>
-                <BodyWithData slug={slug} />
-            </Suspense>
-        </article>
+                {/* Body streams in after shiki highlighting completes */}
+                <Suspense fallback={<BodySkeleton />}>
+                    <BodyWithData slug={slug} />
+                </Suspense>
+            </article>
+        </main>
     );
 }
 
