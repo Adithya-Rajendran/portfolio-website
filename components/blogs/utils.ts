@@ -112,9 +112,7 @@ export function extractHeadings(post: Pick<Post, "body">): PostHeading[] {
                       id: slugify(text),
                       text,
                       level: parseInt(block.style!.replace("h", ""), 10) as
-                          | 2
-                          | 3
-                          | 4,
+                          2 | 3 | 4,
                       key: block._key,
                   };
               })
