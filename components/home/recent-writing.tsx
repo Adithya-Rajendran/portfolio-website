@@ -18,7 +18,6 @@ export default function RecentWriting({ posts }: { posts: PostListItem[] }) {
         <TerminalSection
             command="ls posts/ --sort date"
             label="Recent writing"
-            storageId="writing"
             className="w-full max-w-6xl mx-auto px-6 sm:px-8"
         >
             <div className="border-t border-slate-400/25 dark:border-white/10">
@@ -53,13 +52,13 @@ export default function RecentWriting({ posts }: { posts: PostListItem[] }) {
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
                 <Link
                     href="/blogs"
-                    className="font-term text-sm font-bold text-accent hover:opacity-80 transition-opacity"
+                    className="font-term text-sm font-bold text-accent hover:opacity-80 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
                 >
                     [ ./blog --all ]
                 </Link>
                 <Link
                     href="/blogs/archive"
-                    className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                    className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
                 >
                     [ ./archive ]
                 </Link>

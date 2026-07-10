@@ -32,7 +32,6 @@ export default function Experience({ experiences }: ExperienceProps) {
                 command="cat experience.log"
                 path="~/portfolio"
                 label="Experience"
-                storageId="portfolio-experience"
                 promptClassName="mb-10"
             >
                 <ol className="relative space-y-5">

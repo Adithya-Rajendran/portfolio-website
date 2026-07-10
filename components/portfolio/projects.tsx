@@ -20,7 +20,6 @@ export default function Projects({ projects }: ProjectsProps) {
                 command="ls -l projects/"
                 path="~/portfolio"
                 label="Projects"
-                storageId="portfolio-projects"
                 promptClassName="mb-3"
             >
                 {/* `ls -l`'s first output line — decorative terminal flavor */}

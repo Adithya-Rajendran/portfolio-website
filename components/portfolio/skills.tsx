@@ -30,7 +30,6 @@ export default function Skills({ skillCategories }: SkillsProps) {
                 command="tree skills/"
                 path="~/portfolio"
                 label="Skills"
-                storageId="portfolio-skills"
                 promptClassName="mb-10"
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10">

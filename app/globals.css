@@ -754,6 +754,23 @@
    typing (a JS-driven state), so crawlers, no-JS visitors, and
    prefers-reduced-motion users always see everything immediately.
    ───────────────────────────────────────────────────────────────────── */
+/* Terminal typing show: pre-hydration mask + phase reveal. */
+/* Pre-hydration mask — the flash-free core. On a fresh armed load every
+   terminal section ships its full SSR markup, but the body and the typed
+   command are hidden from the very first paint until the section adopts
+   its own phase state (data-term-phase). Because nothing ever paints
+   visible and then hides, there is no flash. Gated on `data-term-arm`,
+   which the head script sets before paint ONLY when the show will play —
+   so no-JS, reduced-motion, and post-show loads never hide anything.
+   Placed before the phase rules; the `:not([data-term-phase])` guard
+   makes these mutually exclusive with the phase rules below. */
+html[data-term-arm="1"] .term-section:not([data-term-phase]) .term-body {
+    opacity: 0;
+    transform: translateY(0.4rem);
+}
+html[data-term-arm="1"] .term-section:not([data-term-phase]) .term-cmd {
+    visibility: hidden;
+}
 [data-term-phase="typing"] .term-body {
     opacity: 0;
     transform: translateY(0.5rem);
@@ -762,8 +779,8 @@
     opacity: 1;
     transform: translateY(0);
     transition:
-        opacity 0.5s ease,
-        transform 0.5s ease;
+        opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (prefers-reduced-motion: reduce) {
     [data-term-phase] .term-body {

@@ -17,7 +17,6 @@ export default function BioSection({ homeBio }: BioSectionProps) {
         <TerminalSection
             command="cat about.txt"
             label="About"
-            storageId="bio"
             className="w-full max-w-6xl mx-auto px-6 sm:px-8"
         >
             <div className="max-w-[44rem] border-l-2 border-[rgb(var(--c1)/0.5)] pl-6 text-[1.05rem] leading-[1.8] text-slate-700 dark:text-slate-300 [&_p]:text-left">

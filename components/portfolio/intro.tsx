@@ -11,7 +11,7 @@ import { siteConfig } from "@/lib/config";
 const portableTextComponents = createPortableTextStyles("intro");
 
 const bracketBtn =
-    "font-term text-sm font-bold rounded-row px-4 py-2.5 border transition-colors";
+    "font-term text-sm font-bold rounded-row px-4 py-2.5 border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]";
 
 /** Corner crop-marks for the portrait frame (mirrors the home hero). */
 function CornerBrackets() {
@@ -57,7 +57,6 @@ export default function Intro({ body, subtitle }: IntroProps) {
                 as="div"
                 command="cat resume.txt"
                 path="~/portfolio"
-                storageId="portfolio-hero"
                 className="relative w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
                 promptClassName="mb-8"
                 bodyClassName="grid items-center gap-10 lg:gap-16 lg:grid-cols-[minmax(0,1fr)_15rem]"

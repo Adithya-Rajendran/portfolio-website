@@ -22,7 +22,6 @@ export default function CertificationsPreview({
         <TerminalSection
             command="verify certifications --issuer all"
             label="Credentials"
-            storageId="certs"
             className="w-full max-w-6xl mx-auto px-6 sm:px-8 pb-4"
         >
             <div className="border-t border-slate-400/25 dark:border-white/10">

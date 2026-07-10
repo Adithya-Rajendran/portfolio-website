@@ -33,7 +33,6 @@ export default function Certifications({
                 command="verify certifications --issuer all"
                 path="~/portfolio"
                 label="Certifications"
-                storageId="portfolio-certs"
                 promptClassName="mb-10"
             >
                 <div className="border-t border-slate-400/25 dark:border-white/10">

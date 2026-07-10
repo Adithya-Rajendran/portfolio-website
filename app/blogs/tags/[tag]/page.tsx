@@ -53,7 +53,6 @@ async function TagPosts({ tag }: { tag: string }) {
             <TerminalSection
                 command={`grep -ri "${tag}" posts/`}
                 path="~/blogs"
-                storageId={`blogs-tag-${tag}`}
                 className="w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
                 promptClassName="mb-8"
             >

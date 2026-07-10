@@ -22,7 +22,6 @@ export default function SkillsPreview({
         <TerminalSection
             command="tree skills/ --dirs-first"
             label="Skills"
-            storageId="skills"
             className="w-full max-w-6xl mx-auto px-6 sm:px-8 pb-4"
         >
             <div className="grid gap-10 md:grid-cols-3">

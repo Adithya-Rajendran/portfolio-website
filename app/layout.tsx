@@ -114,6 +114,17 @@ export default function RootLayout({
                         __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=${JSON.stringify(themes.map((t) => t.id))};document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
                     }}
                 />
+                {/* Arm the terminal typing show before first paint. Once the
+                    show has played this session (`term-played`), or when the
+                    visitor prefers reduced motion, the attribute is never set,
+                    so terminal sections render fully visible with no flash. The
+                    hide-until-typed CSS keys off this attribute, so with JS
+                    disabled it is absent and all content stays visible. */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `(function(){try{if(sessionStorage.getItem('term-played')!=='1'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.dataset.termArm='1';}}catch(e){}})();`,
+                    }}
+                />
                 {/* Vercel BotID — protects the contact form and newsletter
                     server actions. Server actions POST to the page they're
                     invoked from, and the newsletter form lives in the

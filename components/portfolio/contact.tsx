@@ -38,7 +38,6 @@ export default function Contact() {
                 command="mail adithya"
                 path="~/portfolio"
                 label="Contact"
-                storageId="portfolio-contact"
                 promptClassName="mb-8"
             >
                 <p className="max-w-xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-pretty">

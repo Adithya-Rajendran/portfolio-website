@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { PromptLine } from "@/components/terminal/terminal-section";
+import TerminalSection, {
+    PromptLine,
+} from "@/components/terminal/terminal-section";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
 
 const destinations = [
@@ -28,16 +30,18 @@ const destinations = [
  */
 export default function NavCards() {
     return (
-        <section
-            aria-label="Explore"
-            className="w-full max-w-6xl mx-auto px-6 sm:px-8 pb-24 sm:pb-28"
+        <TerminalSection
+            path="~"
+            command="ls -d */"
+            label="Explore"
+            className="w-full max-w-6xl mx-auto px-6 sm:px-8 pb-10 sm:pb-12"
         >
             <div className="border-t border-slate-400/25 dark:border-white/10">
                 {destinations.map(({ href, command, note }) => (
                     <Link
                         key={href}
                         href={href}
-                        className="group flex flex-wrap sm:flex-nowrap items-baseline gap-x-6 gap-y-1 py-6 sm:py-7 border-b border-slate-400/25 dark:border-white/10"
+                        className="group flex flex-wrap sm:flex-nowrap items-baseline gap-x-6 gap-y-1 py-6 sm:py-7 border-b border-slate-400/25 dark:border-white/10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
                     >
                         <span className="font-term text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                             <span aria-hidden className="text-accent">
@@ -76,7 +80,7 @@ export default function NavCards() {
                         prefer feeds?{" "}
                         <a
                             href="/feed.xml"
-                            className="text-accent hover:opacity-80 transition-opacity"
+                            className="text-accent hover:opacity-80 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
                         >
                             rss ↗
                         </a>
@@ -84,7 +88,7 @@ export default function NavCards() {
                 </div>
             </div>
 
-            <PromptLine command="" cursor className="mt-14" />
-        </section>
+            <PromptLine command="" cursor className="mt-12" />
+        </TerminalSection>
     );
 }

@@ -24,7 +24,7 @@ const portableTextComponents = createPortableTextStyles("about");
 
 /** Bracket-command CTA — same anatomy as the home/portfolio heroes. */
 const bracketBtn =
-    "font-term text-sm font-bold rounded-row px-4 py-2.5 border transition-colors";
+    "font-term text-sm font-bold rounded-row px-4 py-2.5 border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]";
 
 export const metadata: Metadata = {
     title: "About",

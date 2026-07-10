@@ -108,7 +108,6 @@ export default function ArchivePage() {
             <TerminalSection
                 command="ls posts/ --group-by year"
                 path="~/blogs"
-                storageId="blogs-archive"
                 className="w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
                 promptClassName="mb-8"
             >
