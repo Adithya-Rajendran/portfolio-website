@@ -97,6 +97,14 @@ export default async function Footer() {
                                         </Link>
                                     </li>
                                 ))}
+                                <li>
+                                    <a
+                                        href="/feed.xml"
+                                        className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
+                                    >
+                                        RSS
+                                    </a>
+                                </li>
                             </ul>
                         </div>
 

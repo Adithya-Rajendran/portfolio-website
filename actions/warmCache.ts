@@ -53,6 +53,7 @@ async function warmPages(
     // Also warm the blog listing page itself
     const urls = [
         `${siteConfig.url}/blogs`,
+        `${siteConfig.url}/feed.xml`,
         ...safeSlugs.map((slug) => `${siteConfig.url}/blogs/${slug}`),
     ];
 

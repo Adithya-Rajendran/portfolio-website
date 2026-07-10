@@ -25,6 +25,11 @@ export type PostListItem = Pick<
     "_id" | "title" | "description" | "date" | "featured" | "image"
 > & { slug: string; wordCount: number };
 
+export type PostWithBody = Pick<
+    Post,
+    "_id" | "title" | "description" | "date" | "body"
+> & { slug: string };
+
 // Full post — only the single-post page needs the body.
 const postProjection = `{
     _id,
@@ -94,6 +99,32 @@ async function sanityFetch<T>(
 export async function getAllPosts(): Promise<PostListItem[]> {
     return sanityFetch<PostListItem[]>(
         `*[_type == "post" && date <= $today] | order(date desc) ${postListProjection}`,
+        {},
+        CACHE_TAGS.postList,
+        [],
+    );
+}
+
+// Newest posts including bodies — feeds the RSS renderer. Tagged with
+// the list tag: the webhook revalidates post-list on every post change,
+// so body edits refresh the feed without new webhook wiring.
+export async function getRecentPostsWithBody(
+    limit = 20,
+): Promise<PostWithBody[]> {
+    // GROQ slice bounds must be literal constants — `[0...$limit]` is a
+    // parse error the API rejects (and sanityFetch would swallow into a
+    // permanently empty feed). Clamp and interpolate instead; limit is
+    // an internal integer, never user input.
+    const bound = Math.min(100, Math.max(1, Math.trunc(limit) || 1));
+    return sanityFetch<PostWithBody[]>(
+        `*[_type == "post" && date <= $today] | order(date desc) [0...${bound}] {
+                _id,
+                title,
+                "slug": slug.current,
+                description,
+                date,
+                body
+            }`,
         {},
         CACHE_TAGS.postList,
         [],

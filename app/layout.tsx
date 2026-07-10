@@ -17,6 +17,7 @@ import {
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { siteConfig, THEME_COLORS } from "@/lib/config";
+import { FEED_PATH, FEED_TITLE } from "@/lib/feed";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -38,6 +39,9 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     alternates: {
         canonical: siteConfig.url,
+        types: {
+            "application/rss+xml": [{ url: FEED_PATH, title: FEED_TITLE }],
+        },
     },
     keywords: [
         "Adithya Rajendran",
