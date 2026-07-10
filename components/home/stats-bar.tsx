@@ -1,6 +1,3 @@
-import RevealOnScroll from "@/components/reveal-on-scroll";
-import { IconPill } from "@/components/ui/icon-pill";
-import { Award, Briefcase, GraduationCap, Rocket } from "lucide-react";
 import type { Experience } from "@/sanity.types";
 
 interface StatsBarProps {
@@ -51,9 +48,9 @@ function formatCount(n?: number): string {
 }
 
 /**
- * Four stat rows grouped into a single One UI-style card. Values come
- * directly from Sanity content — when a category is empty we show
- * "TBC" rather than a fake fallback number.
+ * tmux-style status bar: a full-width hairline strip of mono segments —
+ * accent value, lowercase label. Values come directly from Sanity;
+ * empty categories show "TBC" rather than a fake number.
  */
 export default function StatsBar({
     yearsValue,
@@ -62,57 +59,32 @@ export default function StatsBar({
     postCount,
 }: StatsBarProps) {
     const stats = [
-        {
-            Icon: Briefcase,
-            color: "c1" as const,
-            value: yearsValue,
-            label: "Years in cloud",
-        },
-        {
-            Icon: Award,
-            color: "c2" as const,
-            value: formatCount(certCount),
-            label: "Certifications",
-        },
-        {
-            Icon: Rocket,
-            color: "c3" as const,
-            value: formatCount(projectCount),
-            label: "Projects shipped",
-        },
-        {
-            Icon: GraduationCap,
-            color: "c1" as const,
-            value: formatCount(postCount),
-            label: "Articles & write-ups",
-        },
+        { value: yearsValue, label: "years in cloud" },
+        { value: formatCount(certCount), label: "certifications" },
+        { value: formatCount(projectCount), label: "projects shipped" },
+        { value: formatCount(postCount), label: "articles & write-ups" },
     ];
 
     return (
-        <RevealOnScroll
-            as="section"
-            className="w-full max-w-6xl mx-auto px-4 sm:px-6"
+        <section
+            aria-label="Stats"
+            className="w-full border-y border-slate-400/30 dark:border-white/10"
         >
-            <div className="os-card p-2">
-                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-200/60 dark:divide-white/[0.06]">
-                    {stats.map(({ Icon, color, value, label }) => (
-                        <div
-                            key={label}
-                            className="flex items-center gap-4 px-5 py-5 sm:py-6"
-                        >
-                            <IconPill icon={Icon} color={color} />
-                            <div className="min-w-0">
-                                <p className="font-display text-2xl font-semibold text-slate-900 dark:text-white leading-none">
-                                    {value}
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-                                    {label}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 py-4 grid grid-cols-2 gap-y-4 sm:flex sm:flex-wrap">
+                {stats.map(({ value, label }) => (
+                    <div
+                        key={label}
+                        className="flex items-baseline gap-2.5 sm:px-6 sm:first:pl-0 sm:border-l sm:first:border-l-0 sm:border-slate-400/30 dark:sm:border-white/10"
+                    >
+                        <span className="font-term text-xl sm:text-2xl font-bold text-accent">
+                            {value}
+                        </span>
+                        <span className="font-term text-xs sm:text-[0.85rem] text-slate-500 dark:text-slate-400">
+                            {label}
+                        </span>
+                    </div>
+                ))}
             </div>
-        </RevealOnScroll>
+        </section>
     );
 }

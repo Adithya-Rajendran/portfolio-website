@@ -38,9 +38,11 @@ function SubscribeButton({ size }: { size: "sm" | "default" }) {
 }
 
 /**
- * Newsletter signup island. Two variants:
+ * Newsletter signup island. Three variants:
  * - "footer": compact input+button row for the sitewide footer column.
  * - "inline": os-card CTA block for the end of posts and the blog index.
+ * - "bare": full-size form only — the parent supplies the surface and
+ *   copy (home's terminal newsletter block, which must stay opaque).
  *
  * The parent server components stay cacheable; all interactivity lives
  * here (useActionState against actions/subscribe.ts).
@@ -48,7 +50,7 @@ function SubscribeButton({ size }: { size: "sm" | "default" }) {
 export default function NewsletterSignupForm({
     variant,
 }: {
-    variant: "footer" | "inline";
+    variant: "footer" | "inline" | "bare";
 }) {
     const [state, formAction] = useActionState(
         subscribeAction,
@@ -112,7 +114,7 @@ export default function NewsletterSignupForm({
             </form>
         );
 
-    if (compact) {
+    if (compact || variant === "bare") {
         return <div aria-live="polite">{form}</div>;
     }
 

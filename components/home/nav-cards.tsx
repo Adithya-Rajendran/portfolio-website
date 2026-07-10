@@ -1,68 +1,90 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, PenLine, MailCheck } from "lucide-react";
-import RevealOnScroll from "@/components/reveal-on-scroll";
-import { IconPill } from "@/components/ui/icon-pill";
-import { accentText } from "@/lib/variant-styles";
+import { PromptLine } from "@/components/terminal/terminal-section";
+import NewsletterSignupForm from "@/components/newsletter/signup-form";
 
-const cards = [
+const destinations = [
     {
         href: "/portfolio",
-        title: "Portfolio",
-        description:
-            "Experience, projects, certifications, and skills in cloud engineering and cybersecurity.",
-        cta: "Explore work",
-        Icon: Briefcase,
-        color: "c1" as const,
+        command: "cd /portfolio",
+        note: "experience, projects, and the systems behind them",
     },
     {
         href: "/blogs",
-        title: "Blog",
-        description:
-            "Field notes on cybersecurity, homelabs, infrastructure, and the occasional rabbit hole.",
-        cta: "Read writing",
-        Icon: PenLine,
-        color: "c2" as const,
+        command: "cd /blog",
+        note: "deep-dives on self-hosted ai, kubernetes, and security",
     },
     {
         href: "/portfolio#contact",
-        title: "Get in touch",
-        description:
-            "Have a project in mind, an open role, or just want to compare notes? Drop me a line.",
-        cta: "Start a chat",
-        Icon: MailCheck,
-        color: "c3" as const,
+        command: "mail adithya",
+        note: "open roles, collaborations, or comparing notes",
     },
 ];
 
+/**
+ * The home page's closing block: navigation as commands, the newsletter
+ * as an embedded opaque panel (honest cadence copy, RSS beside the
+ * form — never glass under a subscribe form), and a parked prompt as
+ * the page's last line.
+ */
 export default function NavCards() {
     return (
-        <RevealOnScroll
-            as="section"
-            className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-28"
+        <section
+            aria-label="Explore"
+            className="w-full max-w-6xl mx-auto px-6 sm:px-8 pb-24 sm:pb-28"
         >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {cards.map(({ href, title, description, cta, Icon, color }) => (
+            <div className="border-t border-slate-400/25 dark:border-white/10">
+                {destinations.map(({ href, command, note }) => (
                     <Link
                         key={href}
                         href={href}
-                        className="group os-card os-hover os-press p-7 sm:p-8 flex flex-col"
+                        className="group flex flex-wrap sm:flex-nowrap items-baseline gap-x-6 gap-y-1 py-6 sm:py-7 border-b border-slate-400/25 dark:border-white/10"
                     >
-                        <IconPill icon={Icon} color={color} size="lg" />
-                        <h2 className="mt-6 font-display text-2xl font-semibold text-slate-900 dark:text-white">
-                            {title}
-                        </h2>
-                        <p className="mt-2.5 text-slate-600 dark:text-slate-400 leading-relaxed text-sm sm:text-base flex-1">
-                            {description}
-                        </p>
+                        <span className="font-term text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                            <span aria-hidden className="text-accent">
+                                ${" "}
+                            </span>
+                            {command}
+                        </span>
+                        <span className="w-full sm:w-auto sm:flex-1 font-term text-[0.8rem] text-slate-500 dark:text-slate-400">
+                            # {note}
+                        </span>
                         <span
-                            className={`mt-6 inline-flex items-center gap-2 ${accentText[color]} font-medium text-sm transition-all group-hover:gap-3`}
+                            aria-hidden
+                            className="hidden sm:block font-term text-xl text-accent transition-transform group-hover:translate-x-1"
                         >
-                            {cta}
-                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                            →
                         </span>
                     </Link>
                 ))}
             </div>
-        </RevealOnScroll>
+
+            {/* Newsletter — deliberately opaque (no glass under a form) */}
+            <div className="mt-14 rounded-card border border-slate-400/30 dark:border-white/10 bg-white dark:bg-[#0b0d10] p-7 sm:p-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-center">
+                <div>
+                    <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
+                        One deep dive, every two weeks.
+                    </h2>
+                    <p className="mt-3 max-w-xl text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400">
+                        Self-hosted AI infrastructure, homelab Kubernetes, and
+                        security compliance — written up properly. No ads, no
+                        sponsors, ever. Unsubscribe in one click.
+                    </p>
+                </div>
+                <div>
+                    <NewsletterSignupForm variant="bare" />
+                    <p className="mt-3 font-term text-[0.7rem] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                        prefer feeds?{" "}
+                        <a
+                            href="/feed.xml"
+                            className="text-accent hover:opacity-80 transition-opacity"
+                        >
+                            rss ↗
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <PromptLine command="" cursor className="mt-14" />
+        </section>
     );
 }

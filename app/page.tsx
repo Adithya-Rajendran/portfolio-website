@@ -15,6 +15,7 @@ import HeroContent from "@/components/home/hero-content";
 import ToolsMarquee from "@/components/home/tools-marquee";
 import StatsBar, { computeYearsValue } from "@/components/home/stats-bar";
 import BioSection from "@/components/home/bio-section";
+import RecentWriting from "@/components/home/recent-writing";
 import SkillsPreview from "@/components/home/skills-preview";
 import CertificationsPreview from "@/components/home/certifications-preview";
 import NavCards from "@/components/home/nav-cards";
@@ -80,6 +81,11 @@ async function StatsWithData() {
     );
 }
 
+async function WritingWithData() {
+    const posts = await getAllPosts();
+    return <RecentWriting posts={posts} />;
+}
+
 async function BioWithData() {
     const intro = await getIntro();
     return (
@@ -101,42 +107,34 @@ async function CertsWithData() {
 
 function StatsSkeleton() {
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="os-card h-24 animate-pulse" />
+        <div className="w-full border-y border-slate-400/20 dark:border-white/[0.08]">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 py-4">
+                <Skeleton className="h-8 w-full max-w-2xl" />
+            </div>
         </div>
     );
 }
 
-function BioSkeleton() {
+function RowsSkeleton({ rows = 3 }: { rows?: number }) {
     return (
-        <div className="w-full max-w-3xl mx-auto px-4">
-            <div className="os-card px-7 py-10 sm:px-10 sm:py-12 space-y-4">
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-5/6" />
-                <Skeleton className="h-5 w-4/6" />
-            </div>
+        <div className="w-full max-w-6xl mx-auto px-6 sm:px-8 animate-pulse space-y-4">
+            <Skeleton className="h-4 w-64" />
+            {Array.from({ length: rows }, (_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+            ))}
         </div>
     );
 }
 
 function SkillsSkeleton() {
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-20">
-            <Skeleton className="h-8 w-48 mx-auto mb-10" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="os-card h-52 animate-pulse" />
-                <div className="os-card h-52 animate-pulse" />
-                <div className="os-card h-52 animate-pulse" />
+        <div className="w-full max-w-6xl mx-auto px-6 sm:px-8 animate-pulse">
+            <Skeleton className="h-4 w-64 mb-8" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <Skeleton className="h-52 w-full" />
+                <Skeleton className="h-52 w-full" />
+                <Skeleton className="h-52 w-full" />
             </div>
-        </div>
-    );
-}
-
-function CertsSkeleton() {
-    return (
-        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 pb-20">
-            <Skeleton className="h-8 w-40 mx-auto mb-10" />
-            <div className="os-card h-64 animate-pulse" />
         </div>
     );
 }
@@ -156,7 +154,11 @@ export default function Home() {
                 <StatsWithData />
             </Suspense>
 
-            <Suspense fallback={<BioSkeleton />}>
+            <Suspense fallback={<RowsSkeleton rows={4} />}>
+                <WritingWithData />
+            </Suspense>
+
+            <Suspense fallback={<RowsSkeleton rows={2} />}>
                 <BioWithData />
             </Suspense>
 
@@ -166,7 +168,7 @@ export default function Home() {
                 <SkillsWithData />
             </Suspense>
 
-            <Suspense fallback={<CertsSkeleton />}>
+            <Suspense fallback={<RowsSkeleton rows={3} />}>
                 <CertsWithData />
             </Suspense>
 

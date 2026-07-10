@@ -137,7 +137,9 @@ export default function TerminalSection({
     }, [phase, inView, command, storageKey]);
 
     // "waiting" renders as data-term-phase="typing": the body stays
-    // hidden from arm-time until the prompt finishes typing.
+    // hidden from arm-time until the prompt finishes typing. The block
+    // cursor only exists while armed/typing — never in the static
+    // (SSR/no-JS/reduced-motion) render and never after "done".
     return (
         <Tag
             ref={ref}
@@ -155,7 +157,7 @@ export default function TerminalSection({
                 command={command}
                 path={path}
                 typedChars={chars}
-                cursor
+                cursor={phase === "waiting"}
                 className={promptClassName}
             />
             <div className={cn("term-body", bodyClassName)}>{children}</div>

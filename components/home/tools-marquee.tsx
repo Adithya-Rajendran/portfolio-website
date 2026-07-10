@@ -41,7 +41,9 @@ function ToolItems() {
                     className="flex items-center gap-2.5 px-6 text-slate-500 dark:text-slate-400"
                 >
                     <Icon className="w-6 h-6" aria-hidden />
-                    <span className="text-sm font-medium">{label}</span>
+                    <span className="font-term text-sm font-medium">
+                        {label}
+                    </span>
                 </div>
             ))}
         </>
@@ -61,7 +63,7 @@ export default function ToolsMarquee() {
             aria-label="Tools and technologies"
             // Hover/focus pauses the loop — WCAG 2.2.2 needs an on-page
             // way to stop >5s auto-motion even without an OS preference.
-            className="group relative w-full overflow-hidden"
+            className="group relative w-full overflow-hidden border-y border-slate-400/20 dark:border-white/[0.08] py-5"
         >
             <div
                 aria-hidden
@@ -72,8 +74,8 @@ export default function ToolsMarquee() {
                 className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-canvas to-transparent dark:from-canvas-dark"
             />
 
-            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mb-6">
-                Toolbelt
+            <p className="text-center font-term text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mb-5">
+                ~/toolbelt
             </p>
 
             <div className="flex w-max motion-safe:animate-[marquee_38s_linear_infinite] motion-safe:will-change-transform group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused]">

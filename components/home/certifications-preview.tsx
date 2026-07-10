@@ -1,75 +1,84 @@
 import Image from "next/image";
 import { urlForImage } from "@/lib/sanity-image";
 import type { Certification } from "@/sanity.types";
-import RevealOnScroll from "@/components/reveal-on-scroll";
-import SectionHeader from "@/components/section-header";
-import { GroupedList, ListRow } from "@/components/ui/grouped-list";
+import TerminalSection from "@/components/terminal/terminal-section";
 
-interface CertificationsPreviewProps {
-    certifications: Certification[];
-}
+const rowClasses =
+    "flex items-center gap-4 sm:gap-5 py-4 border-b border-slate-400/25 dark:border-white/10";
 
 /**
- * Certifications as a Samsung One UI-style grouped list — each cert is
- * a row inside one rounded card, separated by dividers. Badge image
- * doubles as a leading icon. Rows without a verify URL render as
- * static (non-interactive) entries.
+ * `$ verify certifications` — credentials as a verification log: an
+ * emerald `[ ok ]` marker, badge art, name, issuer, and the verify
+ * link when one exists. Rows without a verify URL render statically.
  */
 export default function CertificationsPreview({
     certifications,
-}: CertificationsPreviewProps) {
+}: {
+    certifications: Certification[];
+}) {
     if (certifications.length === 0) return null;
 
     return (
-        <RevealOnScroll
-            as="section"
-            className="w-full max-w-3xl mx-auto px-4 sm:px-6 pb-20"
+        <TerminalSection
+            command="verify certifications --issuer all"
+            label="Credentials"
+            storageId="certs"
+            className="w-full max-w-6xl mx-auto px-6 sm:px-8 pb-4"
         >
-            <SectionHeader
-                eyebrow="Credentials"
-                title="Continuously certified"
-                description="Industry credentials that map directly onto the work I do every day."
-                align="center"
-            />
-
-            <GroupedList>
+            <div className="border-t border-slate-400/25 dark:border-white/10">
                 {certifications.map((cert) => {
                     const badge = cert.badge;
-                    const BadgeIcon = badge
-                        ? function CertBadgeIcon() {
-                              return (
-                                  <Image
-                                      src={urlForImage(badge)
-                                          .width(140)
-                                          .height(140)
-                                          .url()}
-                                      alt={badge.alt || cert.title || ""}
-                                      width={56}
-                                      height={56}
-                                      sizes="56px"
-                                      className="h-full w-full object-contain p-1"
-                                  />
-                              );
-                          }
-                        : undefined;
-                    return (
-                        <ListRow
+                    const content = (
+                        <>
+                            <span className="font-term text-[0.8rem] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                [ ok ]
+                            </span>
+                            {badge && (
+                                <Image
+                                    src={urlForImage(badge)
+                                        .width(88)
+                                        .height(88)
+                                        .fit("max")
+                                        .auto("format")
+                                        .url()}
+                                    alt=""
+                                    width={40}
+                                    height={40}
+                                    sizes="40px"
+                                    className="w-10 h-10 shrink-0 object-contain"
+                                />
+                            )}
+                            <span className="flex-1 min-w-0 font-term text-sm sm:text-[0.95rem] font-bold text-slate-900 dark:text-white leading-snug">
+                                {cert.title}
+                            </span>
+                            <span className="hidden sm:inline font-term text-[0.8rem] text-slate-500 dark:text-slate-400">
+                                {cert.org}
+                            </span>
+                            {cert.verifyUrl && (
+                                <span className="font-term text-[0.8rem] font-bold text-accent whitespace-nowrap">
+                                    verify ↗
+                                </span>
+                            )}
+                        </>
+                    );
+
+                    return cert.verifyUrl ? (
+                        <a
                             key={cert._id}
-                            href={cert.verifyUrl ?? undefined}
-                            target={cert.verifyUrl ? "_blank" : undefined}
-                            rel={
-                                cert.verifyUrl
-                                    ? "noopener noreferrer"
-                                    : undefined
-                            }
-                            icon={BadgeIcon}
-                            iconColor="neutral"
-                            title={cert.title ?? ""}
-                            subtitle={cert.org ?? ""}
-                        />
+                            href={cert.verifyUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${rowClasses} hover:bg-slate-100/50 dark:hover:bg-white/[0.03] transition-colors`}
+                        >
+                            {content}
+                        </a>
+                    ) : (
+                        <div key={cert._id} className={rowClasses}>
+                            {content}
+                        </div>
                     );
                 })}
-            </GroupedList>
-        </RevealOnScroll>
+            </div>
+        </TerminalSection>
     );
 }

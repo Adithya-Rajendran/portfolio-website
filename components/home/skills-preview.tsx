@@ -1,57 +1,60 @@
-import { Badge } from "@/components/ui/badge";
-import { IconPill } from "@/components/ui/icon-pill";
-import { styleForVariant } from "@/lib/variant-styles";
+import TerminalSection from "@/components/terminal/terminal-section";
 import type { SkillCategory } from "@/sanity.types";
-import RevealOnScroll from "@/components/reveal-on-scroll";
-import SectionHeader from "@/components/section-header";
 
-interface SkillsPreviewProps {
-    skillCategories: SkillCategory[];
+/** "Cybersecurity" -> "cybersecurity/", "What I use" -> "what-i-use/" */
+function dirName(title: string): string {
+    return `${title.toLowerCase().trim().replace(/\s+/g, "-")}/`;
 }
 
-export default function SkillsPreview({ skillCategories }: SkillsPreviewProps) {
+/**
+ * `$ tree skills/` — each Sanity skill category renders as a directory
+ * listing with ├─/└─ branch glyphs (decorative; the category name is
+ * the real heading).
+ */
+export default function SkillsPreview({
+    skillCategories,
+}: {
+    skillCategories: SkillCategory[];
+}) {
     if (skillCategories.length === 0) return null;
 
     return (
-        <RevealOnScroll
-            as="section"
-            className="w-full max-w-6xl mx-auto px-4 sm:px-6 pb-20"
+        <TerminalSection
+            command="tree skills/ --dirs-first"
+            label="Skills"
+            storageId="skills"
+            className="w-full max-w-6xl mx-auto px-6 sm:px-8 pb-4"
         >
-            <SectionHeader
-                eyebrow="What I work with"
-                title="Skills & expertise"
-                description="A working knowledge that spans cloud platforms, the security perimeter around them, and the systems that make them run."
-                align="center"
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid gap-10 md:grid-cols-3">
                 {skillCategories.map((category) => {
-                    const styles = styleForVariant(category.colorVariant);
+                    const skills = category.skills ?? [];
                     return (
-                        <div key={category._id} className="os-card p-6 sm:p-7">
-                            <IconPill
-                                icon={styles.icon}
-                                color={styles.color}
-                                size="md"
-                            />
-                            <h3 className="mt-5 font-display text-lg font-semibold text-slate-900 dark:text-white">
-                                {category.title ?? ""}
+                        <div key={category._id}>
+                            <h3 className="font-term text-base font-bold text-accent mb-3">
+                                {dirName(category.title ?? "")}
                             </h3>
-                            <div className="mt-4 flex flex-wrap gap-1.5">
-                                {(category.skills ?? []).map((skill, i) => (
-                                    <Badge
-                                        key={i}
-                                        variant={styles.color}
-                                        className="text-xs"
+                            <ul>
+                                {skills.map((skill, i) => (
+                                    <li
+                                        key={skill}
+                                        className="font-term text-[0.9rem] leading-8 text-slate-700 dark:text-slate-300"
                                     >
+                                        <span
+                                            aria-hidden
+                                            className="text-slate-400/90 dark:text-slate-500/70"
+                                        >
+                                            {i === skills.length - 1
+                                                ? "└─"
+                                                : "├─"}
+                                        </span>{" "}
                                         {skill}
-                                    </Badge>
+                                    </li>
                                 ))}
-                            </div>
+                            </ul>
                         </div>
                     );
                 })}
             </div>
-        </RevealOnScroll>
+        </TerminalSection>
     );
 }
