@@ -6,6 +6,11 @@
     --font-sans: "Inter", "Inter Fallback";
     --font-display:
         "Space Grotesk", "Space Grotesk Fallback", "Inter", sans-serif;
+    /* Terminal chrome face — prompts, labels, dates, status bars. Loaded
+       via next/font in app/layout.tsx; never used for body prose. */
+    --font-term:
+        "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace,
+        "SFMono-Regular", monospace;
 
     /* One UI canvas — the only two page-background colors. Referenced as
        bg-canvas / dark:bg-canvas-dark, gradient stops (from-canvas) and
@@ -740,4 +745,51 @@
 }
 .dark .shiki-wrapper .line.line-highlight {
     background: rgb(var(--c1) / 0.12);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   TERMINAL CHROME — typed-prompt sections (components/terminal/).
+   The prompt line is decorative (aria-hidden); each section carries a
+   real sr-only heading. Content hides ONLY while its prompt is actively
+   typing (a JS-driven state), so crawlers, no-JS visitors, and
+   prefers-reduced-motion users always see everything immediately.
+   ───────────────────────────────────────────────────────────────────── */
+[data-term-phase="typing"] .term-body {
+    opacity: 0;
+    transform: translateY(0.5rem);
+}
+[data-term-phase="done"] .term-body {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+    [data-term-phase] .term-body {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
+
+/* Block cursor parked at the end of a prompt line */
+.term-cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    margin-left: 0.15em;
+    vertical-align: text-bottom;
+    background: rgb(var(--c1));
+    animation: term-blink 1.1s steps(2, start) infinite;
+}
+@keyframes term-blink {
+    50% {
+        opacity: 0;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .term-cursor {
+        animation: none;
+    }
 }

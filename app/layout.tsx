@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import "./globals.css";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { BotIdClient } from "botid/client";
 import Footer from "@/components/footer";
 import GlassFilters from "@/components/glass-filters";
@@ -26,6 +26,14 @@ const spaceGrotesk = Space_Grotesk({
     subsets: ["latin"],
     display: "swap",
     variable: "--font-space-grotesk",
+});
+
+// Terminal chrome face (prompts, labels, dates) — OFL-licensed, self-hosted
+// by next/font. Body copy stays Inter: mono is chrome, never prose.
+const jetbrainsMono = JetBrains_Mono({
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -95,7 +103,7 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className={`!scroll-smooth dark ${inter.variable} ${spaceGrotesk.variable}`}
+            className={`!scroll-smooth dark ${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
             suppressHydrationWarning
         >
             <head>
