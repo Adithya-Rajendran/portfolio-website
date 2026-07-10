@@ -1,6 +1,7 @@
 import { client, isSanityConfigured } from "./sanity-config";
 import { cacheLife, cacheTag } from "next/cache";
 import { CACHE_TAGS } from "./cache-tags";
+import { fixturesEnabled, resolveFixtureQuery } from "./fixtures";
 import type {
     Post,
     Experience,
@@ -87,7 +88,16 @@ async function sanityFetch<T>(
     "use cache";
     cacheLife("max");
     cacheTag(tag);
-    if (!isSanityConfigured) return fallback;
+    if (!isSanityConfigured) {
+        // Dev-only: serve realistic sample content when explicitly asked
+        // (SANITY_USE_FIXTURES=1). Unreachable whenever Sanity is
+        // configured, so production can never serve fixtures.
+        if (fixturesEnabled()) {
+            const fixture = resolveFixtureQuery<T>(query, params);
+            if (fixture !== null) return fixture;
+        }
+        return fallback;
+    }
     try {
         const today = new Date().toISOString().split("T")[0];
         const result = await client.fetch<T>(query, { today, ...params });
