@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { TAG_PATTERN } from "@/lib/tags";
 
 export default defineType({
     name: "post",
@@ -52,7 +53,6 @@ export default defineType({
             validation: (Rule) =>
                 Rule.unique().custom((tags?: string[]) => {
                     if (!tags) return true;
-                    const TAG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
                     const invalid = tags.filter((t) => !TAG_PATTERN.test(t));
                     return invalid.length === 0
                         ? true

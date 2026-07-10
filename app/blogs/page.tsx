@@ -12,7 +12,7 @@ import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags } from "@/lib/tags";
-import { getPostSlug } from "@/components/blogs/utils";
+import { getPostSlug, POST_GRID_CLASSES } from "@/components/blogs/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
 import { BlogJsonLd } from "@/components/json-ld";
@@ -36,7 +36,7 @@ function LatestSkeleton() {
     return (
         <section className="animate-pulse">
             <Skeleton className="h-4 w-28 rounded mb-6" />
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className={POST_GRID_CLASSES}>
                 {[1, 2, 3].map((i) => (
                     <div key={i} className="os-card h-72" />
                 ))}
@@ -96,13 +96,14 @@ async function BlogPosts() {
                         }
                     />
 
-                    {/* Same grid classes components/blogs/latest.tsx uses —
-                        kept in sync here since this island caps the index
-                        page's grid at 12 posts up front via "Show more".
-                        Latest itself is left untouched: it still renders an
-                        unbounded grid for the tag pages that reuse it. */}
+                    {/* Shared POST_GRID_CLASSES (components/blogs/utils.ts) —
+                        same grid components/blogs/latest.tsx uses — since
+                        this island caps the index page's grid at 12 posts up
+                        front via "Show more". Latest itself is left
+                        untouched: it still renders an unbounded grid for the
+                        tag pages that reuse it. */}
                     <ShowMorePosts
-                        gridClassName="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                        gridClassName={POST_GRID_CLASSES}
                         items={restPosts.map((post) => (
                             <PostCard
                                 key={getPostSlug(post) || post._id}

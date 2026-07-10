@@ -4,18 +4,18 @@ Public Website: [https://adithya-rajendran.com](https://adithya-rajendran.com)
 
 ## Overview
 
-This portfolio showcases my projects and skills in web development, built with modern web technologies including Next.js (App Router), React, TypeScript, Tailwind CSS, and Framer Motion. Hosted on Vercel, it reflects my journey and achievements in software development, functioning both as a professional portfolio and a technical blog.
+This portfolio showcases my projects and skills in web development, built with modern web technologies including Next.js (App Router), React, TypeScript, and Tailwind CSS. Hosted on Vercel, it reflects my journey and achievements in software development, functioning both as a professional portfolio and a technical blog.
 
 ## Features and Technologies
 
 - **Next.js**: Leverages the App Router, Server-Side Rendering (SSR), and Server Components for enhanced SEO and industry-leading performance.
 - **React & TypeScript**: Robust, scalable, and type-safe development environment.
-- **Tailwind CSS**: Utility-first CSS framework for custom, highly-responsive designs.
-- **Framer Motion**: Smooth, sophisticated animations and micro-interactions.
-- **Sanity CMS**: Headless architecture for seamless content management of blog posts.
+- **Tailwind CSS**: Utility-first CSS framework for custom, highly-responsive designs, with CSS-driven scroll-reveal animations.
+- **Sanity CMS**: Headless architecture for seamless content management of blog posts and portfolio content.
 - **SEO Optimized**: Implements structured data (JSON-LD) and semantic HTML for optimal search engine visibility.
+- **Blog**: Tag-based archive, full-text search, and an RSS feed, alongside an email newsletter.
 - **Automated Testing**: Integrated GitHub Actions CI/CD workflows to ensure code quality before merges.
-- **Contact Handling**: Built-in messaging system using React Email and Nodemailer.
+- **Contact Handling**: Built-in messaging system using Resend (with a react-email template), protected by Vercel BotID and WAF rate limiting, with Zod validation and MX record checks.
 
 ## Getting Started
 

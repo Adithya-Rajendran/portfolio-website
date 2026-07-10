@@ -30,6 +30,16 @@ jobs:
             - run: pnpm install --frozen-lockfile
             - run: pnpm run lint
             - run: pnpm run typecheck
+            - name: Check Sanity typegen is current
+              env:
+                  # "fallback" is the sentinel lib/sanity-config.ts treats as
+                  # unconfigured: extract/typegen run offline against the
+                  # schema definitions with zero network I/O.
+                  NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: fallback
+              run: |
+                  pnpm exec sanity schema extract
+                  pnpm typegen
+                  git diff --exit-code schema.json sanity.types.ts
             - run: pnpm run format:check
             - run: pnpm test
 

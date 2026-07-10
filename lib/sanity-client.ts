@@ -130,10 +130,21 @@ async function sanityFetch<T>(
     }
 }
 
+/**
+ * The single definition of "published" — this predicate gates the blog
+ * index, feed, sitemap, tag/archive pages, generateStaticParams, AND the
+ * single-post fetches, so they can never disagree about visibility.
+ * `extra` is inserted before the date gate so the slug-scoped variants
+ * stay byte-identical to the historical query strings (sanityFetch cache
+ * keys derive from the literal query text).
+ */
+const publishedPost = (extra = "") =>
+    `_type == "post"${extra} && date <= $today`;
+
 // Fetch all published posts (list shape, no bodies), newest first
 export async function getAllPosts(): Promise<PostListItem[]> {
     return sanityFetch<PostListItem[]>(
-        `*[_type == "post" && date <= $today] | order(date desc) ${postListProjection}`,
+        `*[${publishedPost()}] | order(date desc) ${postListProjection}`,
         {},
         CACHE_TAGS.postList,
         [],
@@ -152,7 +163,7 @@ export async function getRecentPostsWithBody(
     // an internal integer, never user input.
     const bound = Math.min(100, Math.max(1, Math.trunc(limit) || 1));
     return sanityFetch<PostWithBody[]>(
-        `*[_type == "post" && date <= $today] | order(date desc) [0...${bound}] {
+        `*[${publishedPost()}] | order(date desc) [0...${bound}] {
                 _id,
                 title,
                 "slug": slug.current,
@@ -170,7 +181,7 @@ export async function getRecentPostsWithBody(
 // listing queries so future-dated posts are not reachable by URL early.
 export async function getPostBySlug(slug: string): Promise<Post | null> {
     return sanityFetch<Post | null>(
-        `*[_type == "post" && slug.current == $slug && date <= $today][0] ${postProjection}`,
+        `*[${publishedPost(" && slug.current == $slug")}][0] ${postProjection}`,
         { slug },
         CACHE_TAGS.post(slug),
         null,
@@ -184,7 +195,7 @@ export type PostMeta = Pick<
 
 export async function getPostMeta(slug: string): Promise<PostMeta | null> {
     return sanityFetch<PostMeta | null>(
-        `*[_type == "post" && slug.current == $slug && date <= $today][0] ${metaProjection}`,
+        `*[${publishedPost(" && slug.current == $slug")}][0] ${metaProjection}`,
         { slug },
         CACHE_TAGS.post(slug),
         null,
@@ -196,7 +207,7 @@ export async function getAllSlugsWithDates(): Promise<
     { slug: string; updatedAt: string }[]
 > {
     return sanityFetch<{ slug: string; updatedAt: string }[]>(
-        `*[_type == "post" && date <= $today] {
+        `*[${publishedPost()}] {
                 "slug": slug.current,
                 "updatedAt": _updatedAt
             }`,
@@ -209,7 +220,7 @@ export async function getAllSlugsWithDates(): Promise<
 // Fetch all slugs for static path generation
 export async function getAllSlugs(): Promise<string[]> {
     return sanityFetch<string[]>(
-        `*[_type == "post" && date <= $today].slug.current`,
+        `*[${publishedPost()}].slug.current`,
         {},
         CACHE_TAGS.postList,
         [],

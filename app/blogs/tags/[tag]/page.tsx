@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
+import { POST_GRID_CLASSES } from "@/components/blogs/utils";
 
 function TagPageSkeleton() {
     return (
@@ -26,7 +27,7 @@ function TagPageSkeleton() {
                         <Skeleton key={i} className="h-9 w-20 rounded-full" />
                     ))}
                 </div>
-                <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className={POST_GRID_CLASSES}>
                     {[1, 2, 3].map((i) => (
                         <div key={i} className="os-card h-72" />
                     ))}

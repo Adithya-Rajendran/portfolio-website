@@ -1,7 +1,7 @@
 import SectionHeader from "@/components/section-header";
 import PostCard from "@/components/blogs/post-card";
 import type { PostListItem } from "@/lib/sanity-client";
-import { getPostSlug } from "./utils";
+import { getPostSlug, POST_GRID_CLASSES } from "./utils";
 
 interface FeaturedProps {
     posts: PostListItem[];
@@ -41,7 +41,7 @@ export default function Featured({ posts: featuredPosts }: FeaturedProps) {
             {featuredPosts.length >= 3 && (
                 <div className="flex flex-col gap-5 sm:gap-6">
                     {hero && <PostCard post={hero} variant="hero" />}
-                    <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className={POST_GRID_CLASSES}>
                         {rest.map((post) => (
                             <PostCard
                                 key={getPostSlug(post)}

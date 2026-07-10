@@ -1,10 +1,9 @@
 import BlogNav from "@/components/blogs/blog-nav";
-import { siteConfig } from "@/lib/config";
+import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
 
 export const metadata = {
     title: "Cybersecurity & Cloud Engineering Blog",
-    description:
-        "Technical blog by Adithya Rajendran covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.",
+    description: BLOG_DESCRIPTION,
     alternates: {
         canonical: `${siteConfig.url}/blogs`,
     },

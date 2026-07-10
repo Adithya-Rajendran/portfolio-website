@@ -10,7 +10,10 @@
     /* One UI canvas — the only two page-background colors. Referenced as
        bg-canvas / dark:bg-canvas-dark, gradient stops (from-canvas) and
        rings (ring-canvas-dark). Keep in sync with THEME_COLORS in
-       lib/config.ts (viewport.themeColor cannot read CSS variables). */
+       lib/config.ts (viewport.themeColor cannot read CSS variables).
+       Mirrored as literals in lib/config.ts THEME_COLORS
+       (viewport.themeColor + OG images can't read CSS vars) — change
+       both together. */
     --color-canvas: #f4f5f8;
     --color-canvas-dark: #050608;
 

@@ -9,6 +9,7 @@ import {
     getPostSlug,
     POST_IMAGE_DIMENSIONS,
 } from "@/components/blogs/utils";
+import { collectTags } from "@/lib/tags";
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -25,19 +26,24 @@ interface WarmResult {
 }
 
 export async function warmBlogCache(): Promise<WarmResult> {
-    // One query: the list projection already carries slug + image.
+    // One query: the list projection already carries slug + image + tags.
     const posts = await getAllPosts();
     const slugs = posts.map(getPostSlug).filter(Boolean);
+    // collectTags already TAG_PATTERN-filters, so every tag here is
+    // URL-safe by construction — no extra SAFE_SLUG-style gate needed.
+    const tags = collectTags(posts).map(({ tag }) => tag);
 
-    const pages = await warmPages(slugs);
+    const pages = await warmPages(slugs, tags);
     const images = await warmImages(posts);
 
     return { pages, images };
 }
 
-/** Warm Vercel edge cache by fetching every blog page + the listing page */
+/** Warm Vercel edge cache by fetching every blog page + the listing,
+ *  archive, and tag pages */
 async function warmPages(
     slugs: string[],
+    tags: string[],
 ): Promise<{ warmed: string[]; failed: string[] }> {
     if (!slugs || slugs.length === 0) return { warmed: [], failed: [] };
 
@@ -50,10 +56,12 @@ async function warmPages(
     // arbitrary site paths.
     const safeSlugs = slugs.filter((slug) => SAFE_SLUG.test(slug));
 
-    // Also warm the blog listing page itself
+    // Also warm the blog listing, archive, and tag pages
     const urls = [
         `${siteConfig.url}/blogs`,
+        `${siteConfig.url}/blogs/archive`,
         `${siteConfig.url}/feed.xml`,
+        ...tags.map((tag) => `${siteConfig.url}/blogs/tags/${tag}`),
         ...safeSlugs.map((slug) => `${siteConfig.url}/blogs/${slug}`),
     ];
 

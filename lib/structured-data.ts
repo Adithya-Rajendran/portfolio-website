@@ -9,7 +9,7 @@
  * site keeps rendering correct structured data before content is ever
  * entered in the studio.
  */
-import { siteConfig, socialProfiles } from "@/lib/config";
+import { BLOG_DESCRIPTION, siteConfig, socialProfiles } from "@/lib/config";
 import type { IntroData } from "@/lib/sanity-client";
 import type { Certification } from "@/sanity.types";
 
@@ -191,11 +191,6 @@ export function buildBlogPosting(input: BlogPostingInput) {
             : {}),
     };
 }
-
-/** Mirrors the metadata description in app/blogs/layout.tsx — keep both
- *  in sync if either copy changes. */
-const BLOG_DESCRIPTION =
-    "Technical blog by Adithya Rajendran covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.";
 
 /** Blog index structured data. Includes its own "@context" since
  *  BlogJsonLd renders it directly (no other fields get spread in). */

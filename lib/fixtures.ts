@@ -254,6 +254,12 @@ const slugOf = (post: Post) =>
  * markers of the query strings in lib/sanity-client.ts — crude, but this
  * path only exists behind the double guard above and returning null just
  * falls through to the normal empty fallback.
+ *
+ * COUPLING WARNING: the branches below are ORDER-SENSITIVE substring
+ * checks against lib/sanity-client.ts's query text. When a post query
+ * changes there, update the matching marker here — an unmatched post
+ * query logs a warning (below) instead of failing, so watch the dev
+ * console after query edits.
  */
 export function resolveFixtureQuery<T>(
     query: string,
@@ -319,5 +325,11 @@ export function resolveFixtureQuery<T>(
         })) as unknown as T;
     }
 
+    // A post query no branch recognized — the markers above have drifted
+    // from lib/sanity-client.ts. Loud in dev instead of silently empty.
+    console.warn(
+        "[fixtures] no fixture matched post query:",
+        query.replace(/\s+/g, " ").slice(0, 100),
+    );
     return null;
 }

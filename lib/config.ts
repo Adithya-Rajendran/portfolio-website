@@ -11,6 +11,12 @@ export const THEME_COLORS = {
     dark: "#050608",
 } as const;
 
+/** Blog index copy — the single home for this text. Consumed by
+ *  lib/structured-data.ts (buildBlog) and app/blogs/layout.tsx metadata;
+ *  keep byte-identical across both. */
+export const BLOG_DESCRIPTION =
+    "Technical blog by Adithya Rajendran covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.";
+
 export const siteConfig = {
     url: "https://adithya-rajendran.com",
     title: "Adithya Rajendran | Field Engineer & Cybersecurity Professional",

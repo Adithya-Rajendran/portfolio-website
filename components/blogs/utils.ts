@@ -8,6 +8,12 @@
 import type { Post } from "@/sanity.types";
 import { urlForImage } from "@/lib/sanity-image";
 
+/** Shared post-card grid layout — the single source of truth for
+ *  components/blogs/latest.tsx, app/blogs/page.tsx (ShowMorePosts and its
+ *  loading skeleton), and app/blogs/tags/[tag]/page.tsx's skeleton. */
+export const POST_GRID_CLASSES =
+    "grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3";
+
 /** Format a date string like "2026-03-06" → "March 6, 2026" */
 export function formatDate(dateStr?: string): string {
     if (!dateStr) return "";
