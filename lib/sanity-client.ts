@@ -232,7 +232,7 @@ export async function getAllSlugs(): Promise<string[]> {
 // Fetch the singleton About document
 export async function getAbout(): Promise<About | null> {
     return sanityFetch<About | null>(
-        `*[_type == "about"][0]{ _id, body }`,
+        `*[_type == "about"][0]{ _id, body, positioning, portrait, location }`,
         {},
         CACHE_TAGS.portfolio,
         null,

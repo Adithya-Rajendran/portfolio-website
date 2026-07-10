@@ -92,11 +92,22 @@ async function AboutContent() {
     ]);
 
     const roleLine = intro?.role || intro?.subtitle || siteConfig.role;
-    const positioning = intro?.heroDescription;
+    const positioning = about?.positioning || intro?.heroDescription;
     const focus = intro?.knowsAbout?.length
         ? intro.knowsAbout
         : siteConfig.knowsAbout;
     const affiliation = intro?.affiliation?.name;
+    const location = about?.location || siteConfig.location;
+    const portraitSrc = about?.portrait?.asset
+        ? urlForImage(about.portrait)
+              .width(720)
+              .height(720)
+              .fit("crop")
+              .auto("format")
+              .url()
+        : "/hero.webp";
+    const portraitAlt =
+        about?.portrait?.alt || `Portrait of ${siteConfig.author}`;
 
     return (
         <div className="mx-auto max-w-6xl px-6 sm:px-8">
@@ -165,8 +176,8 @@ async function AboutContent() {
                     />
                     <div className="relative overflow-hidden rounded-[2rem] os-card-flat p-2">
                         <Image
-                            src="/hero.webp"
-                            alt={`Portrait of ${siteConfig.author}`}
+                            src={portraitSrc}
+                            alt={portraitAlt}
                             width={480}
                             height={480}
                             priority
@@ -210,7 +221,7 @@ async function AboutContent() {
                                 aria-hidden
                                 className="w-3.5 h-3.5 text-accent opacity-80"
                             />
-                            Remote · United States
+                            {location}
                         </div>
                     </div>
 

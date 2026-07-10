@@ -25,6 +25,9 @@ export const siteConfig = {
     author: "Adithya Rajendran",
     /** Default role line shown in OG images and structured data. */
     role: "Cloud Field Engineer @ Canonical",
+    /** Fallback location line (footer + /about rail) when the Sanity
+     *  about singleton doesn't provide one. */
+    location: "Remote · United States",
     /** Named profiles consumed by the footer, hero, and intro CTAs.
      *  x/youtube are slots — leave "" until the accounts exist and the
      *  footer icon + sameAs entry appear automatically when filled. */

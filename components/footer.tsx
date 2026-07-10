@@ -78,7 +78,7 @@ export default async function Footer() {
                             </p>
                             <div className="mt-5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                 <MapPin className="w-3.5 h-3.5 text-accent opacity-80" />
-                                <span>Remote · United States</span>
+                                <span>{siteConfig.location}</span>
                             </div>
 
                             <div className="mt-7 max-w-xs">

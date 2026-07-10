@@ -22,6 +22,14 @@ const structure = (S: StructureBuilder) =>
 
             S.divider(),
 
+            // About page singleton — first-class section, not buried in
+            // the Portfolio group (it powers /about, not /portfolio).
+            S.listItem()
+                .title("About Page")
+                .child(S.document().schemaType("about").documentId("about")),
+
+            S.divider(),
+
             // Portfolio section
             S.listItem()
                 .title("Portfolio")
@@ -36,15 +44,6 @@ const structure = (S: StructureBuilder) =>
                                     S.document()
                                         .schemaType("intro")
                                         .documentId("intro"),
-                                ),
-
-                            // About singleton
-                            S.listItem()
-                                .title("About")
-                                .child(
-                                    S.document()
-                                        .schemaType("about")
-                                        .documentId("about"),
                                 ),
 
                             S.listItem()

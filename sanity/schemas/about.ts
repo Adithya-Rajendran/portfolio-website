@@ -6,6 +6,40 @@ export default defineType({
     type: "document",
     fields: [
         defineField({
+            name: "positioning",
+            title: "Positioning Statement",
+            type: "text",
+            rows: 3,
+            description:
+                "One-or-two sentence hero statement shown under the name " +
+                "on /about. Falls back to the Intro's hero description " +
+                "when empty.",
+        }),
+        defineField({
+            name: "portrait",
+            title: "Portrait",
+            type: "image",
+            options: { hotspot: true },
+            description:
+                "Portrait shown in the /about hero. Falls back to the " +
+                "bundled hero image when empty.",
+            fields: [
+                defineField({
+                    name: "alt",
+                    title: "Alt Text",
+                    type: "string",
+                }),
+            ],
+        }),
+        defineField({
+            name: "location",
+            title: "Location",
+            type: "string",
+            description:
+                'Short location line, e.g. "Remote · United States". ' +
+                "Shown in the /about facts rail.",
+        }),
+        defineField({
             name: "body",
             title: "About Content",
             type: "array",

@@ -86,12 +86,29 @@ export type Intro = {
     }>;
 };
 
+export type SanityImageAssetReference = {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+};
+
 export type About = {
     _id: string;
     _type: "about";
     _createdAt: string;
     _updatedAt: string;
     _rev: string;
+    positioning?: string;
+    portrait?: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt?: string;
+        _type: "image";
+    };
+    location?: string;
     body?: Array<{
         children?: Array<{
             marks?: Array<string>;
@@ -112,6 +129,22 @@ export type About = {
     }>;
 };
 
+export type SanityImageCrop = {
+    _type: "sanity.imageCrop";
+    top?: number;
+    bottom?: number;
+    left?: number;
+    right?: number;
+};
+
+export type SanityImageHotspot = {
+    _type: "sanity.imageHotspot";
+    x?: number;
+    y?: number;
+    height?: number;
+    width?: number;
+};
+
 export type SkillCategory = {
     _id: string;
     _type: "skillCategory";
@@ -129,13 +162,6 @@ export type Slug = {
     _type: "slug";
     current?: string;
     source?: string;
-};
-
-export type SanityImageAssetReference = {
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
 };
 
 export type Certification = {
@@ -158,22 +184,6 @@ export type Certification = {
     };
     verifyUrl?: string;
     order?: number;
-};
-
-export type SanityImageCrop = {
-    _type: "sanity.imageCrop";
-    top?: number;
-    bottom?: number;
-    left?: number;
-    right?: number;
-};
-
-export type SanityImageHotspot = {
-    _type: "sanity.imageHotspot";
-    x?: number;
-    y?: number;
-    height?: number;
-    width?: number;
 };
 
 export type Project = {
@@ -383,13 +393,13 @@ export type Geopoint = {
 export type AllSanitySchemaTypes =
     | SanityFileAssetReference
     | Intro
-    | About
-    | SkillCategory
-    | Slug
     | SanityImageAssetReference
-    | Certification
+    | About
     | SanityImageCrop
     | SanityImageHotspot
+    | SkillCategory
+    | Slug
+    | Certification
     | Project
     | Experience
     | Post
