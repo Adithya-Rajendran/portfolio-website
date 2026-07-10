@@ -41,6 +41,25 @@ export default defineType({
             initialValue: false,
         }),
         defineField({
+            name: "tags",
+            title: "Tags",
+            type: "array",
+            of: [{ type: "string" }],
+            options: { layout: "tags" },
+            description:
+                "Lowercase, hyphen-separated (e.g. kubernetes, ai-infra). " +
+                "The tag value doubles as its URL segment: /blogs/tags/<tag>.",
+            validation: (Rule) =>
+                Rule.unique().custom((tags?: string[]) => {
+                    if (!tags) return true;
+                    const TAG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+                    const invalid = tags.filter((t) => !TAG_PATTERN.test(t));
+                    return invalid.length === 0
+                        ? true
+                        : `Invalid tag(s): ${invalid.join(", ")} — use lowercase letters, digits, and hyphens only`;
+                }),
+        }),
+        defineField({
             name: "image",
             title: "Cover Image",
             type: "image",

@@ -22,7 +22,7 @@ export type IntroData = Pick<
  *  No body — reading time ships as a precomputed word count. */
 export type PostListItem = Pick<
     Post,
-    "_id" | "title" | "description" | "date" | "featured" | "image"
+    "_id" | "title" | "description" | "date" | "featured" | "image" | "tags"
 > & { slug: string; wordCount: number };
 
 export type PostWithBody = Pick<
@@ -38,6 +38,7 @@ const postProjection = `{
     description,
     date,
     featured,
+    tags,
     image,
     body
 }`;
@@ -51,6 +52,7 @@ const postListProjection = `{
     description,
     date,
     featured,
+    tags,
     image,
     "wordCount": length(string::split(pt::text(body), " "))
 }`;
@@ -63,6 +65,7 @@ const metaProjection = `{
     "slug": slug.current,
     description,
     date,
+    tags,
     image
 }`;
 
@@ -146,11 +149,11 @@ export async function getPostMeta(
     slug: string,
 ): Promise<Pick<
     Post,
-    "title" | "slug" | "description" | "date" | "image"
+    "title" | "slug" | "description" | "date" | "tags" | "image"
 > | null> {
     return sanityFetch<Pick<
         Post,
-        "title" | "slug" | "description" | "date" | "image"
+        "title" | "slug" | "description" | "date" | "tags" | "image"
     > | null>(
         `*[_type == "post" && slug.current == $slug && date <= $today][0] ${metaProjection}`,
         { slug },
