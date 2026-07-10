@@ -14,7 +14,16 @@ import type {
 
 export type IntroData = Pick<
     Intro,
-    "_id" | "body" | "subtitle" | "heroDescription" | "homeBio" | "available"
+    | "_id"
+    | "body"
+    | "subtitle"
+    | "heroDescription"
+    | "homeBio"
+    | "available"
+    | "role"
+    | "affiliation"
+    | "knowsAbout"
+    | "education"
 > & {
     resumeUrl?: string | null;
 };
@@ -70,13 +79,17 @@ const postListProjection = `{
 // Lightweight metadata-only projection — no body payload.
 // Used by the blog hero so the title/date/description render before the
 // full post body (+ shiki highlighting) finishes loading.
+// _updatedAt + wordCount feed BlogPosting structured data
+// (dateModified/wordCount) — still body-free.
 const metaProjection = `{
     title,
     "slug": slug.current,
     description,
     date,
     tags,
-    image
+    image,
+    _updatedAt,
+    "wordCount": length(string::split(pt::text(body), " "))
 }`;
 
 /**
@@ -164,16 +177,13 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     );
 }
 
-export async function getPostMeta(
-    slug: string,
-): Promise<Pick<
+export type PostMeta = Pick<
     Post,
-    "title" | "slug" | "description" | "date" | "tags" | "image"
-> | null> {
-    return sanityFetch<Pick<
-        Post,
-        "title" | "slug" | "description" | "date" | "tags" | "image"
-    > | null>(
+    "title" | "slug" | "description" | "date" | "tags" | "image" | "_updatedAt"
+> & { wordCount?: number };
+
+export async function getPostMeta(slug: string): Promise<PostMeta | null> {
+    return sanityFetch<PostMeta | null>(
         `*[_type == "post" && slug.current == $slug && date <= $today][0] ${metaProjection}`,
         { slug },
         CACHE_TAGS.post(slug),
@@ -221,7 +231,7 @@ export async function getAbout(): Promise<About | null> {
 // Fetch the singleton Intro document
 export async function getIntro(): Promise<IntroData | null> {
     return sanityFetch<IntroData | null>(
-        `*[_type == "intro"][0]{ _id, body, "resumeUrl": resume.asset->url, subtitle, heroDescription, homeBio, available }`,
+        `*[_type == "intro"][0]{ _id, body, "resumeUrl": resume.asset->url, subtitle, heroDescription, homeBio, available, role, affiliation, knowsAbout, education }`,
         {},
         CACHE_TAGS.portfolio,
         null,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cacheLife } from "next/cache";
-import { FaGithub, FaLinkedin } from "react-icons/fa6";
+import { FaGithub, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { MapPin } from "lucide-react";
 import { siteConfig } from "@/lib/config";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
@@ -40,7 +40,17 @@ const socialLinks = [
         label: "GitHub",
         Icon: FaGithub,
     },
-];
+    {
+        href: siteConfig.profiles.x,
+        label: "X",
+        Icon: FaXTwitter,
+    },
+    {
+        href: siteConfig.profiles.youtube,
+        label: "YouTube",
+        Icon: FaYoutube,
+    },
+].filter((link) => link.href !== "");
 
 export default async function Footer() {
     const year = await getYear();

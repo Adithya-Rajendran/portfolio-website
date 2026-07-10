@@ -1,6 +1,14 @@
 import { siteConfig } from "@/lib/config";
 import { cacheLife, cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { getAllCertifications, getIntro } from "@/lib/sanity-client";
+import {
+    buildBlog,
+    buildBlogPosting,
+    buildPersonEntity,
+    buildProfilePage,
+    type BlogPostingInput,
+} from "@/lib/structured-data";
 
 /**
  * Escape "<" so attacker-influenced strings can never close the
@@ -10,45 +18,17 @@ function safeJsonLd(data: unknown): string {
     return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-// siteConfig.role is "<jobTitle> @ <employer>" — derive both halves so
-// structured data stays in sync with the rest of the site.
-const [jobTitle, employer] = siteConfig.role.split(" @ ");
+export async function PersonJsonLd() {
+    "use cache";
+    cacheLife("max");
+    // Portfolio publishes (intro edits) refresh this via the webhook.
+    cacheTag(CACHE_TAGS.portfolio);
 
-/** Shared schema.org Person fields used by PersonJsonLd and ProfilePageJsonLd. */
-function buildPersonEntity() {
-    return {
-        "@type": "Person",
-        name: siteConfig.author,
-        alternateName: "Adithya",
-        url: siteConfig.url,
-        image: `${siteConfig.url}/hero.webp`,
-        jobTitle,
-        worksFor: {
-            "@type": "Organization",
-            name: employer,
-        },
-        alumniOf: {
-            "@type": "CollegeOrUniversity",
-            name: "University of California, Santa Cruz",
-        },
-        sameAs: siteConfig.socials,
-    };
-}
+    const intro = await getIntro();
 
-export function PersonJsonLd() {
     const jsonLd = {
         "@context": "https://schema.org",
-        ...buildPersonEntity(),
-        knowsAbout: [
-            "Cloud Engineering",
-            "Cybersecurity",
-            "OpenStack",
-            "Kubernetes",
-            "AWS",
-            "DevOps",
-            "Penetration Testing",
-            "Network Security",
-        ],
+        ...buildPersonEntity({ intro }),
         description:
             "Cloud Field Engineer at Canonical specializing in cloud infrastructure, cybersecurity, and DevOps. AWS Certified Solutions Architect and CompTIA Security+ certified.",
     };
@@ -88,33 +68,34 @@ export function BlogPostJsonLd({
     description,
     date,
     slug,
-}: {
-    title: string;
-    description: string;
-    date: string;
-    slug: string;
-}) {
+    updatedAt,
+    tags,
+    wordCount,
+}: BlogPostingInput) {
     const jsonLd = {
         "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        headline: title,
-        description,
-        datePublished: date,
-        image: `${siteConfig.url}/blogs/${slug}/opengraph-image`,
-        author: {
-            "@type": "Person",
-            name: siteConfig.author,
-            url: siteConfig.url,
-        },
-        publisher: {
-            "@type": "Person",
-            name: siteConfig.author,
-        },
-        mainEntityOfPage: {
-            "@type": "WebPage",
-            "@id": `${siteConfig.url}/blogs/${slug}`,
-        },
+        ...buildBlogPosting({
+            title,
+            description,
+            date,
+            slug,
+            updatedAt,
+            tags,
+            wordCount,
+        }),
     };
+
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
+        />
+    );
+}
+
+/** Blog index (/blogs) structured data. */
+export function BlogJsonLd() {
+    const jsonLd = buildBlog();
 
     return (
         <script
@@ -130,36 +111,18 @@ export async function ProfilePageJsonLd() {
     // Portfolio publishes refresh dateModified via the webhook.
     cacheTag(CACHE_TAGS.portfolio);
 
+    const [intro, certifications] = await Promise.all([
+        getIntro(),
+        getAllCertifications(),
+    ]);
+
     const jsonLd = {
         "@context": "https://schema.org",
-        "@type": "ProfilePage",
-        dateCreated: "2024-01-01",
-        dateModified: new Date().toISOString().split("T")[0],
-        mainEntity: {
-            ...buildPersonEntity(),
-            worksFor: {
-                "@type": "Organization",
-                name: employer,
-                url: "https://canonical.com",
-            },
-            hasCredential: [
-                {
-                    "@type": "EducationalOccupationalCredential",
-                    name: "AWS Certified Solutions Architect",
-                    credentialCategory: "certification",
-                    recognizedBy: {
-                        "@type": "Organization",
-                        name: "Amazon Web Services",
-                    },
-                },
-                {
-                    "@type": "EducationalOccupationalCredential",
-                    name: "CompTIA Security+",
-                    credentialCategory: "certification",
-                    recognizedBy: { "@type": "Organization", name: "CompTIA" },
-                },
-            ],
-        },
+        ...buildProfilePage({
+            intro,
+            certifications,
+            dateModified: new Date().toISOString().split("T")[0],
+        }),
     };
 
     return (

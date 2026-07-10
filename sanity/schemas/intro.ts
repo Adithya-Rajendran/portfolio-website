@@ -73,6 +73,76 @@ export default defineType({
             rows: 4,
         }),
         defineField({
+            name: "role",
+            title: "Identity Line (structured data)",
+            description:
+                'Machine-readable identity, "<title> @ <organization>" ' +
+                '(e.g. "MS Student @ Example University"). Feeds the Person ' +
+                "schema; the hardcoded site config is the fallback when empty.",
+            type: "string",
+        }),
+        defineField({
+            name: "affiliation",
+            title: "Primary Affiliation (structured data)",
+            description:
+                "Feeds Person structured data: worksFor for an employer, " +
+                "member/alumniOf for a school.",
+            type: "object",
+            fields: [
+                defineField({
+                    name: "name",
+                    title: "Organization",
+                    type: "string",
+                }),
+                defineField({ name: "url", title: "URL", type: "url" }),
+                defineField({
+                    name: "kind",
+                    title: "Kind",
+                    type: "string",
+                    options: {
+                        list: [
+                            { title: "Employer", value: "work" },
+                            { title: "School", value: "school" },
+                        ],
+                        layout: "radio",
+                    },
+                }),
+            ],
+        }),
+        defineField({
+            name: "knowsAbout",
+            title: "Knows About (structured data)",
+            description:
+                "Topics for the Person schema — search-identity signal. " +
+                "Falls back to the built-in list when empty.",
+            type: "array",
+            of: [{ type: "string" }],
+            options: { layout: "tags" },
+        }),
+        defineField({
+            name: "education",
+            title: "Education (structured data)",
+            description: "Institutions for the Person schema's alumniOf.",
+            type: "array",
+            of: [
+                {
+                    type: "object",
+                    fields: [
+                        defineField({
+                            name: "name",
+                            title: "Institution",
+                            type: "string",
+                        }),
+                        defineField({
+                            name: "url",
+                            title: "URL",
+                            type: "url",
+                        }),
+                    ],
+                },
+            ],
+        }),
+        defineField({
             name: "available",
             title: "Available for Work",
             description:

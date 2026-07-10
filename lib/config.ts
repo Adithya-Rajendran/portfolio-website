@@ -19,16 +19,37 @@ export const siteConfig = {
     author: "Adithya Rajendran",
     /** Default role line shown in OG images and structured data. */
     role: "Cloud Field Engineer @ Canonical",
-    /** Named profiles consumed by the footer, hero, and intro CTAs. */
+    /** Named profiles consumed by the footer, hero, and intro CTAs.
+     *  x/youtube are slots — leave "" until the accounts exist and the
+     *  footer icon + sameAs entry appear automatically when filled. */
     profiles: {
         linkedin: "https://www.linkedin.com/in/adithya-rajendran",
         github: "https://github.com/Adithya-Rajendran",
+        x: "",
+        youtube: "",
     },
-    socials: [
-        "https://www.linkedin.com/in/adithya-rajendran",
-        "https://github.com/Adithya-Rajendran",
-        "https://www.credly.com/users/adithya-rajendran",
-        "https://app.hackthebox.com/profile/514798",
-        "https://tryhackme.com/p/Cagmas",
+    /** Fallback identity facts for structured data when the Sanity intro
+     *  singleton doesn't provide them (also covers CI fallback builds). */
+    alumniOf: "University of California, Santa Cruz",
+    knowsAbout: [
+        "Cloud Engineering",
+        "Cybersecurity",
+        "OpenStack",
+        "Kubernetes",
+        "AWS",
+        "DevOps",
+        "Penetration Testing",
+        "Network Security",
     ],
 };
+
+/** Every public profile for schema.org sameAs — filled slots only. */
+export const socialProfiles: string[] = [
+    siteConfig.profiles.linkedin,
+    siteConfig.profiles.github,
+    "https://www.credly.com/users/adithya-rajendran",
+    "https://app.hackthebox.com/profile/514798",
+    "https://tryhackme.com/p/Cagmas",
+    siteConfig.profiles.x,
+    siteConfig.profiles.youtube,
+].filter(Boolean);

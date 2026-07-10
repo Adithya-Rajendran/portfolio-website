@@ -74,6 +74,9 @@ export default async function BlogPostPage({
                     description={meta.description || ""}
                     date={meta.date || ""}
                     slug={slug}
+                    updatedAt={meta._updatedAt}
+                    tags={meta.tags ?? undefined}
+                    wordCount={meta.wordCount}
                 />
 
                 <BlogPostHero post={meta} />
@@ -114,6 +117,7 @@ export async function generateMetadata({
     return {
         title: post.title,
         description: post.description,
+        ...(post.tags && post.tags.length > 0 && { keywords: post.tags }),
         alternates: {
             canonical: `${siteConfig.url}/blogs/${slug}`,
         },

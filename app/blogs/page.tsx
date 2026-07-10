@@ -15,6 +15,7 @@ import { collectTags } from "@/lib/tags";
 import { getPostSlug } from "@/components/blogs/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
+import { BlogJsonLd } from "@/components/json-ld";
 
 function FeaturedSkeleton() {
     return (
@@ -128,6 +129,8 @@ async function BlogPosts() {
 export default function Blogs() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
+            <BlogJsonLd />
+
             <UnifiedHero
                 eyebrow="Blog"
                 title="Notes from the field"

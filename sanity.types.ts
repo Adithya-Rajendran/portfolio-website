@@ -53,6 +53,18 @@ export type Intro = {
     };
     subtitle?: string;
     heroDescription?: string;
+    role?: string;
+    affiliation?: {
+        name?: string;
+        url?: string;
+        kind?: "work" | "school";
+    };
+    knowsAbout?: Array<string>;
+    education?: Array<{
+        name?: string;
+        url?: string;
+        _key: string;
+    }>;
     available?: boolean;
     homeBio?: Array<{
         children?: Array<{
