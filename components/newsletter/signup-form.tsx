@@ -40,7 +40,8 @@ function SubscribeButton({ size }: { size: "sm" | "default" }) {
 /**
  * Newsletter signup island. Three variants:
  * - "footer": compact input+button row for the sitewide footer column.
- * - "inline": os-card CTA block for the end of posts and the blog index.
+ * - "inline": opaque bordered CTA panel for the end of posts and the
+ *   blog index, with an RSS pointer under the form.
  * - "bare": full-size form only — the parent supplies the surface and
  *   copy (home's terminal newsletter block, which must stay opaque).
  *
@@ -118,8 +119,13 @@ export default function NewsletterSignupForm({
         return <div aria-live="polite">{form}</div>;
     }
 
+    // Deliberately opaque (matches home's newsletter panel) — never
+    // glass under a subscribe form.
     return (
-        <section aria-label="Newsletter signup" className="os-card p-6 sm:p-8">
+        <section
+            aria-label="Newsletter signup"
+            className="rounded-card border border-slate-400/30 dark:border-white/10 bg-white dark:bg-[#0b0d10] p-6 sm:p-8"
+        >
             <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
                 Get the next deep-dive in your inbox
             </h2>
@@ -128,6 +134,15 @@ export default function NewsletterSignupForm({
                 every two weeks. Free — no spam, unsubscribe anytime.
             </p>
             <div aria-live="polite">{form}</div>
+            <p className="mt-3 font-term text-[0.7rem] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                prefer feeds?{" "}
+                <a
+                    href="/feed.xml"
+                    className="text-accent hover:opacity-80 transition-opacity"
+                >
+                    rss ↗
+                </a>
+            </p>
         </section>
     );
 }

@@ -9,7 +9,6 @@ import { highlightCodeBlocks } from "@/lib/highlight-code";
 import {
     extractHeadings,
     headingIdsByKey,
-    formatDate,
     getPostSlug,
 } from "@/components/blogs/utils";
 import { TAG_PATTERN } from "@/lib/tags";
@@ -37,12 +36,18 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
     return (
         <header className="relative py-14 sm:py-20 lg:py-24 overflow-hidden">
             <div className="relative max-w-3xl mx-auto px-6 sm:px-8">
-                {/* Meta info */}
+                {/* Meta info — chrome goes mono: ISO date, byline, tags */}
                 <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-6">
-                    <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                        <CalendarDays className="w-4 h-4 text-accent" />
-                        <time dateTime={post.date || ""}>
-                            {formatDate(post.date ?? undefined)}
+                    <div className="flex items-center gap-2 font-term text-[0.8rem] text-slate-500 dark:text-slate-400">
+                        <CalendarDays
+                            aria-hidden
+                            className="w-4 h-4 text-accent"
+                        />
+                        <time
+                            className="tabular-nums"
+                            dateTime={post.date || ""}
+                        >
+                            {post.date}
                         </time>
                         <span aria-hidden>·</span>
                         {/* Byline links to the standalone identity page */}
@@ -55,14 +60,16 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
                     </div>
 
                     {tags.length > 0 && (
-                        <div className="flex flex-wrap items-center justify-center gap-2">
+                        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
                             {tags.map((tag) => (
                                 <Link
                                     key={tag}
                                     href={`/blogs/tags/${tag}`}
-                                    className="rounded-pill border border-accent-soft bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent hover:border-accent transition-colors"
+                                    className="font-term text-[0.8rem] whitespace-nowrap text-slate-500 dark:text-slate-400 hover:text-accent transition-colors"
                                 >
+                                    <span aria-hidden>[ </span>
                                     {tag}
+                                    <span aria-hidden> ]</span>
                                 </Link>
                             ))}
                         </div>

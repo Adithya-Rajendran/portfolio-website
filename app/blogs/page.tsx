@@ -1,47 +1,35 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { PenLine } from "lucide-react";
-import Featured from "@/components/blogs/featured";
-import PostCard from "@/components/blogs/post-card";
+import PostRow, { POST_ROW_LIST_CLASSES } from "@/components/blogs/post-row";
 import ShowMorePosts from "@/components/blogs/show-more-posts";
 import TagChips from "@/components/blogs/tag-chips";
-import SectionHeader from "@/components/section-header";
-import UnifiedHero from "@/components/unified-hero";
+import TerminalSection from "@/components/terminal/terminal-section";
 import { PageShell } from "@/components/page-shell";
 import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags } from "@/lib/tags";
-import { getPostSlug, POST_GRID_CLASSES } from "@/components/blogs/utils";
+import { getPostSlug } from "@/components/blogs/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
 import { BlogJsonLd } from "@/components/json-ld";
 
-function FeaturedSkeleton() {
+/** Loading silhouette matching the tag row + listing rows. */
+function PostRowsSkeleton() {
     return (
-        <section className="animate-pulse">
-            <Skeleton className="h-4 w-24 rounded mb-6" />
-            <div className="grid gap-5 md:grid-cols-3">
-                <div className="md:col-span-2 os-card aspect-[16/9]" />
-                <div className="md:col-span-1 flex flex-col gap-5">
-                    <div className="flex-1 os-card min-h-[12rem]" />
-                    <div className="flex-1 os-card min-h-[12rem]" />
-                </div>
-            </div>
-        </section>
-    );
-}
-
-function LatestSkeleton() {
-    return (
-        <section className="animate-pulse">
-            <Skeleton className="h-4 w-28 rounded mb-6" />
-            <div className={POST_GRID_CLASSES}>
-                {[1, 2, 3].map((i) => (
-                    <div key={i} className="os-card h-72" />
+        <div className="animate-pulse">
+            <div className="flex flex-wrap gap-4 mb-10">
+                {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-5 w-24" />
                 ))}
             </div>
-        </section>
+            <div className="space-y-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                ))}
+            </div>
+        </div>
     );
 }
 
@@ -75,55 +63,32 @@ async function BlogPosts() {
         return <BlogsEmpty />;
     }
 
-    const featuredPosts = allPosts.filter((p) => p.featured);
-    const restPosts = allPosts.filter((p) => !p.featured);
     const tags = collectTags(allPosts);
 
     return (
-        <>
-            {tags.length > 0 && <TagChips tags={tags} />}
+        <section aria-label="All posts">
+            {tags.length > 0 && <TagChips tags={tags} className="mb-10" />}
 
-            <Featured posts={featuredPosts} />
+            {/* One `ls` listing, newest first — featured posts keep their
+                place in time and carry a mono `★ featured` chip instead of
+                a separate card hero. ShowMorePosts caps the initial render
+                and reveals more per click without refetching. */}
+            <ShowMorePosts
+                listClassName={POST_ROW_LIST_CLASSES}
+                items={allPosts.map((post) => (
+                    <PostRow key={getPostSlug(post) || post._id} post={post} />
+                ))}
+            />
 
-            {restPosts.length > 0 && (
-                <section>
-                    <SectionHeader
-                        eyebrow="Archive"
-                        title={
-                            featuredPosts.length > 0
-                                ? "More posts"
-                                : "All posts"
-                        }
-                    />
-
-                    {/* Shared POST_GRID_CLASSES (components/blogs/utils.ts) —
-                        same grid components/blogs/latest.tsx uses — since
-                        this island caps the index page's grid at 12 posts up
-                        front via "Show more". Latest itself is left
-                        untouched: it still renders an unbounded grid for the
-                        tag pages that reuse it. */}
-                    <ShowMorePosts
-                        gridClassName={POST_GRID_CLASSES}
-                        items={restPosts.map((post) => (
-                            <PostCard
-                                key={getPostSlug(post) || post._id}
-                                post={post}
-                                variant="list"
-                            />
-                        ))}
-                    />
-
-                    <div className="mt-8 text-center">
-                        <Link
-                            href="/blogs/archive"
-                            className="text-sm font-medium text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
-                        >
-                            Browse the full archive →
-                        </Link>
-                    </div>
-                </section>
-            )}
-        </>
+            <div className="mt-8">
+                <Link
+                    href="/blogs/archive"
+                    className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                >
+                    [ ./archive --group-by year ]
+                </Link>
+            </div>
+        </section>
     );
 }
 
@@ -132,21 +97,39 @@ export default function Blogs() {
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <BlogJsonLd />
 
-            <UnifiedHero
-                eyebrow="Blog"
-                title="Notes from the field"
-                description="Technical deep-dives into cloud infrastructure, cybersecurity, and homelab experiments. All opinions are my own."
-            />
+            <TerminalSection
+                command="ls posts/ --sort date"
+                path="~/blogs"
+                storageId="blogs-index"
+                className="w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
+                promptClassName="mb-8"
+            >
+                <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
+                    The Blog
+                </h1>
+                <p className="mt-4 max-w-2xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300 text-pretty">
+                    Technical deep-dives into cloud infrastructure,
+                    cybersecurity, and homelab experiments. All opinions are my
+                    own.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+                    <a
+                        href="/feed.xml"
+                        className="font-term text-sm font-bold text-accent hover:opacity-80 transition-opacity"
+                    >
+                        [ rss ]
+                    </a>
+                    <Link
+                        href="/blogs/archive"
+                        className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                    >
+                        [ ./archive ]
+                    </Link>
+                </div>
+            </TerminalSection>
 
-            <PageShell>
-                <Suspense
-                    fallback={
-                        <>
-                            <FeaturedSkeleton />
-                            <LatestSkeleton />
-                        </>
-                    }
-                >
+            <PageShell className="mt-14 sm:mt-16">
+                <Suspense fallback={<PostRowsSkeleton />}>
                     <BlogPosts />
                 </Suspense>
 

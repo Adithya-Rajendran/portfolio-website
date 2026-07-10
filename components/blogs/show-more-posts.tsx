@@ -1,51 +1,50 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 
 interface ShowMorePostsProps {
-    /** Pre-rendered card nodes (server components) — this island only
+    /** Pre-rendered row nodes (server components) — this island only
      *  controls how many are visible, it never fetches or re-renders them. */
     items: React.ReactNode[];
     /** How many items are visible initially, and revealed per click. */
     initial?: number;
-    /** Grid classes for the wrapping <div>, matching the caller's layout. */
-    gridClassName: string;
+    /** Classes for the wrapping <div>, matching the caller's list layout. */
+    listClassName: string;
 }
 
 /**
- * Client-side "show more" pagination island for a grid of already
- * server-rendered post cards. No data fetching happens here — cards
+ * Client-side "show more" pagination island for a list of already
+ * server-rendered post rows. No data fetching happens here — rows
  * arrive as fully-formed React nodes and this component just slices the
  * array, so the server payload is unaffected by how much is revealed.
  */
 export default function ShowMorePosts({
     items,
     initial = 12,
-    gridClassName,
+    listClassName,
 }: ShowMorePostsProps) {
     const [visible, setVisible] = useState(initial);
-    const gridRef = useRef<HTMLDivElement>(null);
+    const listRef = useRef<HTMLDivElement>(null);
     // Set when a click is about to unmount the button (last reveal) so
-    // focus can be handed to the grid instead of dropping to <body>.
-    const focusGridRef = useRef(false);
+    // focus can be handed to the list instead of dropping to <body>.
+    const focusListRef = useRef(false);
 
     const shown = items.slice(0, visible);
     const hasMore = visible < items.length;
 
     useEffect(() => {
-        if (!hasMore && focusGridRef.current) {
-            focusGridRef.current = false;
-            gridRef.current?.focus();
+        if (!hasMore && focusListRef.current) {
+            focusListRef.current = false;
+            listRef.current?.focus();
         }
     }, [hasMore]);
 
     return (
         <>
             <div
-                ref={gridRef}
+                ref={listRef}
                 tabIndex={-1}
-                className={`${gridClassName} focus:outline-none`}
+                className={`${listClassName} focus:outline-none`}
             >
                 {shown}
             </div>
@@ -56,18 +55,19 @@ export default function ShowMorePosts({
 
             {hasMore && (
                 <div className="mt-8 sm:mt-10 flex justify-center">
-                    <Button
+                    <button
                         type="button"
-                        variant="outline"
+                        className="font-term text-sm font-bold rounded-row px-4 py-2.5 border border-accent-soft text-accent hover:bg-accent-soft transition-colors"
                         onClick={() => {
                             if (visible + initial >= items.length) {
-                                focusGridRef.current = true;
+                                focusListRef.current = true;
                             }
                             setVisible((v) => v + initial);
                         }}
                     >
-                        Show more
-                    </Button>
+                        [ more --count{" "}
+                        {Math.min(initial, items.length - visible)} ]
+                    </button>
                 </div>
             )}
         </>

@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import UnifiedHero from "@/components/unified-hero";
+import TerminalSection from "@/components/terminal/terminal-section";
 import { PageShell } from "@/components/page-shell";
 import Latest from "@/components/blogs/latest";
 import TagChips from "@/components/blogs/tag-chips";
@@ -11,25 +10,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
-import { POST_GRID_CLASSES } from "@/components/blogs/utils";
 
 function TagPageSkeleton() {
     return (
-        <div className="pb-24 sm:pb-32">
-            <div className="mx-auto max-w-3xl px-4 pt-8 pb-16 sm:pt-12 sm:pb-20 text-center animate-pulse">
-                <Skeleton className="h-3 w-16 rounded mx-auto mb-5" />
-                <Skeleton className="h-11 w-56 rounded mx-auto mb-5" />
-                <Skeleton className="h-4 w-72 rounded mx-auto" />
+        <div className="pb-24 sm:pb-32 animate-pulse">
+            <div className="mx-auto max-w-6xl px-6 sm:px-8 pt-2 sm:pt-6">
+                <Skeleton className="h-4 w-72 mb-10" />
+                <Skeleton className="h-10 w-56 mb-5" />
+                <Skeleton className="h-4 w-64" />
             </div>
-            <div className="mx-auto max-w-6xl px-6 sm:px-8 animate-pulse">
-                <div className="flex flex-wrap gap-2 mb-12">
+            <div className="mx-auto max-w-6xl px-6 sm:px-8 mt-14 sm:mt-16">
+                <div className="flex flex-wrap gap-4 mb-12">
                     {[1, 2, 3, 4].map((i) => (
-                        <Skeleton key={i} className="h-9 w-20 rounded-full" />
+                        <Skeleton key={i} className="h-5 w-24" />
                     ))}
                 </div>
-                <div className={POST_GRID_CLASSES}>
+                <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="os-card h-72" />
+                        <Skeleton key={i} className="h-20 w-full" />
                     ))}
                 </div>
             </div>
@@ -40,7 +38,7 @@ function TagPageSkeleton() {
 /**
  * Data section — fetches posts, filters by tag, and 404s when the tag
  * has no matches. Lives inside <Suspense> per cacheComponents (data
- * access can't happen in the static shell), so the hero and grid both
+ * access can't happen in the static shell), so the hero and rows both
  * render from this one fetch.
  */
 async function TagPosts({ tag }: { tag: string }) {
@@ -52,13 +50,23 @@ async function TagPosts({ tag }: { tag: string }) {
 
     return (
         <>
-            <UnifiedHero
-                eyebrow="Tag"
-                title={tag}
-                description={`${posts.length} post${posts.length === 1 ? "" : "s"} tagged ${tag}`}
-            />
+            <TerminalSection
+                command={`grep -ri "${tag}" posts/`}
+                path="~/blogs"
+                storageId={`blogs-tag-${tag}`}
+                className="w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
+                promptClassName="mb-8"
+            >
+                <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
+                    {tag}
+                </h1>
+                <p className="mt-4 font-term text-sm text-slate-500 dark:text-slate-400">
+                    # {posts.length} post{posts.length === 1 ? "" : "s"} tagged{" "}
+                    {tag}
+                </p>
+            </TerminalSection>
 
-            <PageShell>
+            <PageShell className="mt-14 sm:mt-16 pb-24 sm:pb-32">
                 <TagChips tags={allTags} active={tag} />
 
                 <Latest
@@ -70,10 +78,10 @@ async function TagPosts({ tag }: { tag: string }) {
                 <div>
                     <Link
                         href="/blogs"
-                        className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:opacity-80 transition-opacity"
+                        aria-label="Back to all posts"
+                        className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
                     >
-                        <ArrowLeft aria-hidden className="w-4 h-4" />
-                        Back to all posts
+                        [ cd ~/blogs ]
                     </Link>
                 </div>
             </PageShell>

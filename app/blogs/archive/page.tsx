@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft, Archive as ArchiveIcon } from "lucide-react";
-import UnifiedHero from "@/components/unified-hero";
+import { Archive as ArchiveIcon } from "lucide-react";
+import TerminalSection from "@/components/terminal/terminal-section";
 import { PageShell } from "@/components/page-shell";
 import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
@@ -32,15 +32,19 @@ export const metadata: Metadata = {
     },
 };
 
-/** Loading silhouette: tag row + a handful of compact row placeholders. */
+/** Loading silhouette: tag row + search input + compact row placeholders. */
 function ArchiveSkeleton() {
     return (
         <div className="animate-pulse">
-            <Skeleton className="h-6 w-64 rounded-pill mb-8" />
+            <div className="flex flex-wrap gap-4 mb-8">
+                {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-5 w-24" />
+                ))}
+            </div>
             <Skeleton className="h-12 w-full rounded-row mb-8" />
-            <div className="flex flex-col gap-3">
+            <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="os-card-flat h-[4.5rem]" />
+                    <Skeleton key={i} className="h-14 w-full" />
                 ))}
             </div>
         </div>
@@ -101,27 +105,36 @@ async function ArchiveContent() {
 export default function ArchivePage() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
-            <UnifiedHero
-                eyebrow="Archive"
-                title="Every post"
-                description="Search by title, description, or tag, or browse everything I've written, grouped by year."
-            />
-
-            <PageShell>
-                <div>
+            <TerminalSection
+                command="ls posts/ --group-by year"
+                path="~/blogs"
+                storageId="blogs-archive"
+                className="w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
+                promptClassName="mb-8"
+            >
+                <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
+                    Every post
+                </h1>
+                <p className="mt-4 max-w-2xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300 text-pretty">
+                    Search by title, description, or tag, or browse everything
+                    I&apos;ve written, grouped by year.
+                </p>
+                <div className="mt-6">
                     <Link
                         href="/blogs"
-                        className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:opacity-80 transition-opacity"
+                        aria-label="Back to all posts"
+                        className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
                     >
-                        <ArrowLeft className="w-4 h-4" aria-hidden />
-                        Back to all posts
+                        [ cd ~/blogs ]
                     </Link>
+                </div>
+            </TerminalSection>
 
-                    <div className="mt-8">
-                        <Suspense fallback={<ArchiveSkeleton />}>
-                            <ArchiveContent />
-                        </Suspense>
-                    </div>
+            <PageShell className="mt-14 sm:mt-16">
+                <div>
+                    <Suspense fallback={<ArchiveSkeleton />}>
+                        <ArchiveContent />
+                    </Suspense>
                 </div>
             </PageShell>
         </main>

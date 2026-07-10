@@ -186,7 +186,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                     />
                 </div>
 
-                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-5">
+                <p className="font-term text-[0.7rem] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-5">
                     On this page
                 </p>
 

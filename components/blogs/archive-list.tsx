@@ -5,7 +5,6 @@ import Link from "next/link";
 import { groupPostsByYear } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 import { inputClasses } from "@/components/ui/input-classes";
-import { formatDate } from "./utils";
 
 interface ArchivePostItem {
     slug: string;
@@ -34,7 +33,9 @@ function matchesQuery(post: ArchivePostItem, query: string): boolean {
  * Client-side searchable archive: a single text input filters the full
  * post list (title + description + tags, simple substring match) and the
  * results re-group by year on every keystroke. All posts ship to the
- * client up front — there is no server round trip for search.
+ * client up front — there is no server round trip for search. Rows are
+ * dek-less compact `ls` lines: mono ISO date, display-face title, mono
+ * reading time and bracket tags, hairline separators.
  */
 export default function ArchiveList({ posts }: ArchiveListProps) {
     const [query, setQuery] = useState("");
@@ -51,7 +52,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
         <section>
             <label
                 htmlFor={inputId}
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                className="block font-term text-sm text-slate-700 dark:text-slate-300 mb-2"
             >
                 Search posts
             </label>
@@ -66,13 +67,13 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
 
             <p
                 aria-live="polite"
-                className="mt-4 text-sm text-slate-500 dark:text-slate-400"
+                className="mt-4 font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400"
             >
                 {filtered.length} of {posts.length} posts
             </p>
 
             {filtered.length === 0 ? (
-                <div className="mt-8 os-card-flat p-10 text-center text-slate-600 dark:text-slate-400">
+                <div className="mt-8 rounded-card border border-slate-400/25 dark:border-white/10 p-10 text-center text-slate-600 dark:text-slate-400">
                     No posts match &ldquo;{query}&rdquo;. Try a different
                     search.
                 </div>
@@ -80,61 +81,59 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                 <div className="mt-8 flex flex-col gap-10 sm:gap-12">
                     {groups.map((group) => (
                         <div key={group.year}>
-                            <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-200/70 dark:border-white/10">
-                                <h2 className="font-display text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white">
-                                    {group.year}
+                            <div className="flex items-baseline gap-3 mb-2 pb-2 border-b border-slate-400/25 dark:border-white/10">
+                                <h2 className="font-term text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                                    {group.year}/
                                 </h2>
-                                <span className="inline-flex items-center justify-center rounded-pill bg-accent-soft text-accent text-xs font-semibold px-2.5 py-0.5 min-w-6">
-                                    {group.posts.length}
+                                <span className="font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400">
+                                    # {group.posts.length}{" "}
+                                    {group.posts.length === 1
+                                        ? "post"
+                                        : "posts"}
                                 </span>
                             </div>
 
-                            <ul className="flex flex-col gap-3">
+                            <ul>
                                 {group.posts.map((post) => (
-                                    <li key={post.slug}>
-                                        <div className="os-card-flat p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                            <div className="min-w-0">
-                                                <Link
-                                                    href={`/blogs/${post.slug}`}
-                                                    className="font-display font-semibold text-base sm:text-lg text-slate-900 dark:text-white hover:text-accent transition-colors"
-                                                >
-                                                    {post.title}
-                                                </Link>
-                                                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    {post.date && (
-                                                        <span>
-                                                            {formatDate(
-                                                                post.date,
-                                                            )}
-                                                        </span>
-                                                    )}
-                                                    {post.date && (
-                                                        <span
-                                                            aria-hidden
-                                                            className="w-1 h-1 rounded-full bg-accent opacity-50"
-                                                        />
-                                                    )}
-                                                    <span>
-                                                        {post.readingMinutes}{" "}
-                                                        min
-                                                    </span>
-                                                </p>
-                                            </div>
+                                    <li
+                                        key={post.slug}
+                                        className="grid gap-y-1 gap-x-8 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] items-baseline py-4 border-b border-slate-400/25 dark:border-white/10"
+                                    >
+                                        <span className="font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400">
+                                            {post.date}
+                                        </span>
+                                        <span className="min-w-0">
+                                            <Link
+                                                href={`/blogs/${post.slug}`}
+                                                className="font-display font-semibold text-base sm:text-lg text-slate-900 dark:text-white hover:text-accent transition-colors"
+                                            >
+                                                {post.title}
+                                            </Link>
+                                            <span className="ml-3 font-term text-[0.75rem] tabular-nums text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                                {post.readingMinutes} min
+                                            </span>
+                                        </span>
 
-                                            {post.tags.length > 0 && (
-                                                <div className="flex flex-wrap gap-2 sm:shrink-0 sm:justify-end">
-                                                    {post.tags.map((tag) => (
-                                                        <Link
-                                                            key={tag}
-                                                            href={`/blogs/tags/${tag}`}
-                                                            className="rounded-pill border border-accent-soft bg-accent-soft px-2.5 py-1 text-[11px] font-medium text-accent hover:border-accent transition-colors"
-                                                        >
-                                                            {tag}
-                                                        </Link>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
+                                        {post.tags.length > 0 && (
+                                            <span className="flex flex-wrap gap-x-3 gap-y-1 sm:justify-end">
+                                                {post.tags.map((tag) => (
+                                                    <Link
+                                                        key={tag}
+                                                        href={`/blogs/tags/${tag}`}
+                                                        className="font-term text-[0.75rem] whitespace-nowrap text-slate-500 dark:text-slate-400 hover:text-accent transition-colors"
+                                                    >
+                                                        <span aria-hidden>
+                                                            [{" "}
+                                                        </span>
+                                                        {tag}
+                                                        <span aria-hidden>
+                                                            {" "}
+                                                            ]
+                                                        </span>
+                                                    </Link>
+                                                ))}
+                                            </span>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
