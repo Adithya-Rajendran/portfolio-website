@@ -9,6 +9,7 @@ import BlogPostBody, {
 import { BlogPostJsonLd } from "@/components/json-ld";
 import { urlForImage } from "@/lib/sanity-image";
 import { Skeleton } from "@/components/ui/skeleton";
+import NewsletterSignupForm from "@/components/newsletter/signup-form";
 
 /** Skeleton for the article body while shiki highlighting runs */
 function BodySkeleton() {
@@ -81,6 +82,12 @@ export default async function BlogPostPage({
                 <Suspense fallback={<BodySkeleton />}>
                     <BodyWithData slug={slug} />
                 </Suspense>
+
+                {/* Static shell — renders immediately, never waits on the
+                    body stream above */}
+                <div className="mx-auto max-w-3xl px-6 sm:px-8 pb-20">
+                    <NewsletterSignupForm variant="inline" />
+                </div>
             </article>
         </main>
     );

@@ -5,10 +5,11 @@ import Featured from "@/components/blogs/featured";
 import Latest from "@/components/blogs/latest";
 import UnifiedHero from "@/components/unified-hero";
 import { PageShell } from "@/components/page-shell";
-import { IconPill } from "@/components/ui/icon-pill";
+import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
 import { getAllPosts } from "@/lib/sanity-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import NewsletterSignupForm from "@/components/newsletter/signup-form";
 
 function FeaturedSkeleton() {
     return (
@@ -45,23 +46,18 @@ function LatestSkeleton() {
 function BlogsEmpty() {
     return (
         <section className="mx-auto max-w-2xl">
-            <div className="os-card p-10 sm:p-14 text-center">
-                <div className="flex justify-center">
-                    <IconPill icon={PenLine} color="c1" size="lg" />
-                </div>
-                <h2 className="mt-6 font-display text-2xl sm:text-3xl font-semibold text-slate-900 dark:text-white tracking-tight">
-                    Writing in progress
-                </h2>
-                <p className="mt-3 text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                    New deep-dives on cloud infrastructure, cybersecurity, and
-                    homelab experiments are on the way. Check back soon.
-                </p>
-                <div className="mt-7 flex justify-center">
+            <StatusCard
+                icon={PenLine}
+                heading="Writing in progress"
+                actions={
                     <Button asChild variant="outline" size="sm">
                         <Link href="/portfolio">Explore the portfolio</Link>
                     </Button>
-                </div>
-            </div>
+                }
+            >
+                New deep-dives on cloud infrastructure, cybersecurity, and
+                homelab experiments are on the way. Check back soon.
+            </StatusCard>
         </section>
     );
 }
@@ -107,6 +103,8 @@ export default function Blogs() {
                 >
                     <BlogPosts />
                 </Suspense>
+
+                <NewsletterSignupForm variant="inline" />
             </PageShell>
         </main>
     );

@@ -10,6 +10,7 @@ import {
 import SubmitBtn from "../submit-btn";
 import { useToast } from "@/components/ui/use-toast";
 import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
+import { inputClasses } from "@/components/ui/input-classes";
 import { cn } from "@/lib/utils";
 
 export default function Contact() {
@@ -29,9 +30,6 @@ export default function Contact() {
     }, [state, toast]);
 
     const hasError = state.status === "error";
-
-    const inputClasses =
-        "w-full h-12 px-4 rounded-row bg-white/70 text-slate-900 border border-slate-200/70 placeholder:text-slate-500 focus:border-accent focus:ring-2 ring-accent transition outline-none backdrop-blur-md dark:bg-white/[0.04] dark:text-slate-100 dark:border-white/10 dark:placeholder:text-slate-400";
 
     return (
         <section
@@ -56,7 +54,7 @@ export default function Contact() {
                     </label>
                     <input
                         id="contact-sender-email"
-                        className={inputClasses}
+                        className={cn(inputClasses, "h-12")}
                         name="senderEmail"
                         type="email"
                         required

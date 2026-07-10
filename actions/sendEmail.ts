@@ -3,12 +3,15 @@
 
 import { Resend } from "resend";
 import { z } from "zod";
-import dns from "dns/promises";
 import { headers } from "next/headers";
 import { checkBotId } from "botid/server";
 import { checkRateLimit } from "@vercel/firewall";
 import ContactFormEmail from "@/email/contact-form-email";
 import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
+import {
+    EMAIL_CHARSET_PATTERN,
+    hasValidMxRecords,
+} from "@/lib/email-validation";
 
 /**
  * Email config is read lazily inside sendEmail() — module-level throws
@@ -27,32 +30,12 @@ function getEmailConfig(): { apiKey: string; toEmail: string } | null {
 const emailSchema = z.object({
     senderEmail: z
         .email("Invalid sender email")
-        .regex(/^[\w.+@-]+$/, "Email contains invalid characters"),
+        .regex(EMAIL_CHARSET_PATTERN, "Email contains invalid characters"),
     message: z
         .string()
         .min(1, "Message cannot be empty")
         .max(MESSAGE_MAX_LENGTH),
 });
-
-// RFC 1035 caps a domain name at 253 characters. Validate length and a
-// conservative character set before issuing a DNS query so the resolver
-// isn't a free oracle for arbitrary attacker-supplied strings.
-const DOMAIN_PATTERN =
-    /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
-
-async function hasValidMxRecords(email: string): Promise<boolean> {
-    const domain = email.split("@")[1];
-    if (!domain || domain.length > 253 || !DOMAIN_PATTERN.test(domain)) {
-        return false;
-    }
-
-    try {
-        const records = await dns.resolveMx(domain);
-        return records.length > 0;
-    } catch {
-        return false;
-    }
-}
 
 export type ContactFormState =
     | { status: "idle" }

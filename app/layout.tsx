@@ -105,13 +105,13 @@ export default function RootLayout({
                         __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=${JSON.stringify(themes.map((t) => t.id))};document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
                     }}
                 />
-                {/* Vercel BotID — protects the contact form server action.
-                    The form on /portfolio submits via POST to the same
-                    page URL; this attaches the BotID challenge response
-                    so checkBotId() in actions/sendEmail.ts can verify. */}
-                <BotIdClient
-                    protect={[{ path: "/portfolio", method: "POST" }]}
-                />
+                {/* Vercel BotID — protects the contact form and newsletter
+                    server actions. Server actions POST to the page they're
+                    invoked from, and the newsletter form lives in the
+                    sitewide footer, so every page path needs the challenge
+                    header ("*" compiles to a regex wildcard in the BotID
+                    client). checkBotId() in the actions verifies it. */}
+                <BotIdClient protect={[{ path: "/*", method: "POST" }]} />
                 <PersonJsonLd />
                 <WebSiteJsonLd />
                 <ProfilePageJsonLd />

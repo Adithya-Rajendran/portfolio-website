@@ -3,6 +3,7 @@ import { cacheLife } from "next/cache";
 import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import { MapPin } from "lucide-react";
 import { siteConfig } from "@/lib/config";
+import NewsletterSignupForm from "@/components/newsletter/signup-form";
 
 // Under cacheComponents, new Date() is illegal in an uncached prerender —
 // the copyright year gets its own daily-refreshed cache scope instead.
@@ -67,6 +68,17 @@ export default async function Footer() {
                             <div className="mt-5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                 <MapPin className="w-3.5 h-3.5 text-accent opacity-80" />
                                 <span>Remote · United States</span>
+                            </div>
+
+                            <div className="mt-7 max-w-xs">
+                                <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-3">
+                                    Newsletter
+                                </h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                                    Biweekly deep-dives, straight to your inbox.
+                                    Free, no spam.
+                                </p>
+                                <NewsletterSignupForm variant="footer" />
                             </div>
                         </div>
 
