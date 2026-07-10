@@ -37,25 +37,32 @@ export const metadata: Metadata = {
     },
 };
 
-/** Hero silhouette shown while the intro content streams in. */
+/** Hero silhouette: prompt line, heading block, portrait column. */
 function HeroFallback() {
     return (
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-6 pt-32 pb-16">
-            <Skeleton className="h-24 w-24 rounded-full" />
-            <Skeleton className="h-10 w-72 max-w-full" />
-            <Skeleton className="h-5 w-96 max-w-full" />
+        <div className="mx-auto w-full max-w-6xl px-6 sm:px-8 pt-2 sm:pt-6">
+            <Skeleton className="mb-8 h-5 w-72 max-w-full" />
+            <div className="grid items-center gap-10 lg:gap-16 lg:grid-cols-[minmax(0,1fr)_15rem]">
+                <div>
+                    <Skeleton className="h-11 w-64 max-w-full" />
+                    <Skeleton className="mt-4 h-5 w-96 max-w-full" />
+                    <Skeleton className="mt-5 h-20 w-full max-w-xl" />
+                </div>
+                <Skeleton className="mx-auto hidden aspect-square w-full max-w-[15rem] lg:block" />
+            </div>
         </div>
     );
 }
 
-/** Section silhouette: header bar plus two card-shaped blocks. */
+/** Section silhouette: prompt line plus log-style rows. */
 function SectionFallback() {
     return (
         <div>
-            <Skeleton className="mb-12 h-8 w-56" />
-            <div className="grid gap-5 md:grid-cols-2">
-                <Skeleton className="h-40 rounded-3xl" />
-                <Skeleton className="h-40 rounded-3xl" />
+            <Skeleton className="mb-10 h-5 w-64" />
+            <div className="space-y-4">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
             </div>
         </div>
     );
@@ -98,7 +105,7 @@ export default function Portfolio() {
                 <IntroWithData />
             </Suspense>
 
-            <PageShell>
+            <PageShell className="mt-16 sm:mt-24">
                 {/* The About prose moved to the standalone /about page —
                     the portfolio is the work/credentials deep view. */}
                 <Suspense fallback={<SectionFallback />}>
