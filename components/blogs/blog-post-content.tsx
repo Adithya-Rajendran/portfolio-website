@@ -1,4 +1,5 @@
 import { PortableText } from "@portabletext/react";
+import Link from "next/link";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
 import type { Post } from "@/sanity.types";
 import { CalendarDays } from "lucide-react";
@@ -10,6 +11,7 @@ import {
     formatDate,
     getPostSlug,
 } from "@/components/blogs/utils";
+import { TAG_PATTERN } from "@/lib/tags";
 
 interface BlogPostHeroProps {
     post: {
@@ -17,6 +19,7 @@ interface BlogPostHeroProps {
         slug?: string | { current?: string } | null;
         description?: string | null;
         date?: string | null;
+        tags?: string[] | null;
     };
 }
 
@@ -24,17 +27,36 @@ interface BlogPostHeroProps {
  * Blog post hero — renders instantly from lightweight post metadata.
  */
 export function BlogPostHero({ post }: BlogPostHeroProps) {
+    // Same gate every other tag surface applies (collectTags, tag pages):
+    // schema-invalid tags authored outside the Studio would otherwise
+    // render as pills linking to guaranteed 404s.
+    const tags = (post.tags ?? []).filter((tag) => TAG_PATTERN.test(tag));
+
     return (
         <header className="relative py-14 sm:py-20 lg:py-24 overflow-hidden">
             <div className="relative max-w-3xl mx-auto px-6 sm:px-8">
                 {/* Meta info */}
-                <div className="flex items-center justify-center gap-4 sm:gap-6 mb-6">
+                <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-6">
                     <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                         <CalendarDays className="w-4 h-4 text-accent" />
                         <time dateTime={post.date || ""}>
                             {formatDate(post.date ?? undefined)}
                         </time>
                     </div>
+
+                    {tags.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                            {tags.map((tag) => (
+                                <Link
+                                    key={tag}
+                                    href={`/blogs/tags/${tag}`}
+                                    className="rounded-pill border border-accent-soft bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent hover:border-accent transition-colors"
+                                >
+                                    {tag}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Title */}

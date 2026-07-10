@@ -2,12 +2,17 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { PenLine } from "lucide-react";
 import Featured from "@/components/blogs/featured";
-import Latest from "@/components/blogs/latest";
+import PostCard from "@/components/blogs/post-card";
+import ShowMorePosts from "@/components/blogs/show-more-posts";
+import TagChips from "@/components/blogs/tag-chips";
+import SectionHeader from "@/components/section-header";
 import UnifiedHero from "@/components/unified-hero";
 import { PageShell } from "@/components/page-shell";
 import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
 import { getAllPosts } from "@/lib/sanity-client";
+import { collectTags } from "@/lib/tags";
+import { getPostSlug } from "@/components/blogs/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
 
@@ -71,14 +76,51 @@ async function BlogPosts() {
 
     const featuredPosts = allPosts.filter((p) => p.featured);
     const restPosts = allPosts.filter((p) => !p.featured);
+    const tags = collectTags(allPosts);
 
     return (
         <>
+            {tags.length > 0 && <TagChips tags={tags} />}
+
             <Featured posts={featuredPosts} />
-            <Latest
-                posts={restPosts}
-                title={featuredPosts.length > 0 ? "More posts" : "All posts"}
-            />
+
+            {restPosts.length > 0 && (
+                <section>
+                    <SectionHeader
+                        eyebrow="Archive"
+                        title={
+                            featuredPosts.length > 0
+                                ? "More posts"
+                                : "All posts"
+                        }
+                    />
+
+                    {/* Same grid classes components/blogs/latest.tsx uses —
+                        kept in sync here since this island caps the index
+                        page's grid at 12 posts up front via "Show more".
+                        Latest itself is left untouched: it still renders an
+                        unbounded grid for the tag pages that reuse it. */}
+                    <ShowMorePosts
+                        gridClassName="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                        items={restPosts.map((post) => (
+                            <PostCard
+                                key={getPostSlug(post) || post._id}
+                                post={post}
+                                variant="list"
+                            />
+                        ))}
+                    />
+
+                    <div className="mt-8 text-center">
+                        <Link
+                            href="/blogs/archive"
+                            className="text-sm font-medium text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                        >
+                            Browse the full archive →
+                        </Link>
+                    </div>
+                </section>
+            )}
         </>
     );
 }

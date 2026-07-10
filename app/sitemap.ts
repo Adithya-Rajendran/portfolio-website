@@ -1,8 +1,9 @@
-import { getAllSlugsWithDates } from "@/lib/sanity-client";
+import { getAllPosts, getAllSlugsWithDates } from "@/lib/sanity-client";
 import { cacheLife, cacheTag } from "next/cache";
 import { MetadataRoute } from "next";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { siteConfig } from "@/lib/config";
+import { collectTags } from "@/lib/tags";
 
 const BASE_URL = siteConfig.url;
 
@@ -13,6 +14,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // previous bare "post" tag was orphaned (never invalidated).
     cacheTag(CACHE_TAGS.postList);
     const postData = await getAllSlugsWithDates();
+    // A second cached query (sanityFetch keys on the query string), but
+    // it shares the post-list tag so both entries revalidate together on
+    // every post publish. The duplication beats widening the slug
+    // projection that every other consumer pays for.
+    const tags = collectTags(await getAllPosts());
 
     const buildDate = process.env.NEXT_PUBLIC_BUILD_DATE
         ? new Date(process.env.NEXT_PUBLIC_BUILD_DATE)
@@ -37,6 +43,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             changeFrequency: "weekly",
             priority: 0.8,
         },
+        {
+            url: `${BASE_URL}/blogs/archive`,
+            lastModified: buildDate,
+            changeFrequency: "weekly",
+            priority: 0.5,
+        },
     ];
 
     const blogPages: MetadataRoute.Sitemap = (postData || []).map((post) => ({
@@ -46,5 +58,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
     }));
 
-    return [...staticPages, ...blogPages];
+    const tagPages: MetadataRoute.Sitemap = tags.map(({ tag }) => ({
+        url: `${BASE_URL}/blogs/tags/${tag}`,
+        lastModified: buildDate,
+        changeFrequency: "weekly" as const,
+        priority: 0.5,
+    }));
+
+    return [...staticPages, ...blogPages, ...tagPages];
 }

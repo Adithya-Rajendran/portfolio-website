@@ -7,17 +7,21 @@ interface LatestProps {
     posts: PostListItem[];
     /** Title shown above the grid. Defaults to "All posts". */
     title?: string;
+    /** Eyebrow above the title. Overridable so pages with their own
+     *  hero eyebrow (tag pages) don't stack mismatched labels. */
+    eyebrow?: string;
 }
 
 export default function Latest({
     posts: allPosts,
     title = "All posts",
+    eyebrow = "Archive",
 }: LatestProps) {
     if (!allPosts || allPosts.length === 0) return null;
 
     return (
         <section>
-            <SectionHeader eyebrow="Archive" title={title} />
+            <SectionHeader eyebrow={eyebrow} title={title} />
 
             <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {allPosts.map((post) => (

@@ -17,6 +17,7 @@ const navLinks = [
     { href: "/", label: "Home" },
     { href: "/portfolio", label: "Portfolio" },
     { href: "/blogs", label: "Blog" },
+    { href: "/blogs/archive", label: "Archive" },
     { href: "/portfolio#contact", label: "Contact" },
 ];
 
