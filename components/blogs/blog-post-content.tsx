@@ -4,6 +4,7 @@ import { createPortableTextComponents } from "@/components/blogs/portable-text-c
 import type { Post } from "@/sanity.types";
 import { CalendarDays } from "lucide-react";
 import TableOfContents from "@/components/blogs/table-of-contents";
+import MobileToc from "@/components/blogs/mobile-toc";
 import { highlightCodeBlocks } from "@/lib/highlight-code";
 import {
     extractHeadings,
@@ -105,19 +106,25 @@ export default async function BlogPostBody({ post }: { post: Post }) {
     );
 
     return (
-        <div className="relative mx-auto px-6 sm:px-8 pb-24 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,48rem)_16rem_1fr] xl:grid-cols-[1fr_minmax(0,48rem)_18rem_1fr] gap-0 max-w-[90rem]">
-            <div className="hidden lg:block" />
+        <>
+            <MobileToc headings={headings} />
 
-            <div className="min-w-0">
-                <PortableText
-                    value={post.body}
-                    components={portableTextComponents}
-                />
+            {/* Prose column capped at 42.5rem ≈ 75 characters/line — the
+                readability comfort band for 17px body text. */}
+            <div className="relative mx-auto px-6 sm:px-8 pb-24 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,42.5rem)_16rem_1fr] xl:grid-cols-[1fr_minmax(0,42.5rem)_17rem_1fr] gap-0 max-w-[90rem]">
+                <div className="hidden lg:block" />
+
+                <div className="min-w-0">
+                    <PortableText
+                        value={post.body}
+                        components={portableTextComponents}
+                    />
+                </div>
+
+                <TableOfContents headings={headings} />
+
+                <div className="hidden lg:block" />
             </div>
-
-            <TableOfContents headings={headings} />
-
-            <div className="hidden lg:block" />
-        </div>
+        </>
     );
 }

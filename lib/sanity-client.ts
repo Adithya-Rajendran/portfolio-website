@@ -31,7 +31,9 @@ export type PostWithBody = Pick<
     "_id" | "title" | "description" | "date" | "body"
 > & { slug: string };
 
-// Full post — only the single-post page needs the body.
+// Full post — only the single-post page needs the body. Body images get
+// the asset's LQIP + intrinsic dimensions joined in (blur-up placeholder
+// and CLS-free sizing in the renderer).
 const postProjection = `{
     _id,
     title,
@@ -41,7 +43,14 @@ const postProjection = `{
     featured,
     tags,
     image,
-    body
+    body[]{
+        ...,
+        _type == "image" => {
+            ...,
+            "lqip": asset->metadata.lqip,
+            "dimensions": asset->metadata.dimensions{ width, height }
+        }
+    }
 }`;
 
 // List projection — everything the cards need, body replaced by a

@@ -96,28 +96,37 @@ export interface PostHeading {
  * these entries (via the _key → id map), so they agree by construction.
  */
 export function extractHeadings(post: Pick<Post, "body">): PostHeading[] {
+    if (!post.body) return [];
+
+    // Duplicate ids break anchor navigation (getElementById resolves to
+    // the first match), so every emitted id must be unique — including
+    // against suffixed ids ("Intro", "Intro", "Intro 2" must not both
+    // yield "intro-2"). Track the final ids, not just the bases.
+    const used = new Set<string>();
+
     return post.body
-        ? post.body
-              .filter(
-                  (block): block is PostBodyBlock =>
-                      isBodyBlock(block) &&
-                      ["h2", "h3", "h4"].includes(block.style ?? ""),
-              )
-              .map((block) => {
-                  const text =
-                      block.children
-                          ?.map((child) => child.text || "")
-                          .join("") || "";
-                  return {
-                      id: slugify(text),
-                      text,
-                      level: parseInt(block.style!.replace("h", ""), 10) as
-                          2 | 3 | 4,
-                      key: block._key,
-                  };
-              })
-              .filter((h) => h.text.length > 0)
-        : [];
+        .filter(
+            (block): block is PostBodyBlock =>
+                isBodyBlock(block) &&
+                ["h2", "h3", "h4"].includes(block.style ?? ""),
+        )
+        .map((block) => {
+            const text =
+                block.children?.map((child) => child.text || "").join("") || "";
+            const base = slugify(text);
+            let id = base;
+            for (let n = 2; used.has(id); n++) {
+                id = `${base}-${n}`;
+            }
+            used.add(id);
+            return {
+                id,
+                text,
+                level: parseInt(block.style!.replace("h", ""), 10) as 2 | 3 | 4,
+                key: block._key,
+            };
+        })
+        .filter((h) => h.text.length > 0);
 }
 
 /** Map each heading block's _key to its precomputed anchor id */

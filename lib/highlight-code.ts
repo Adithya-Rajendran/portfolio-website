@@ -1,4 +1,8 @@
-import { createHighlighter, type Highlighter } from "shiki";
+import {
+    createHighlighter,
+    type Highlighter,
+    type ShikiTransformer,
+} from "shiki";
 import { cacheLife, cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Post } from "@/sanity.types";
@@ -16,10 +20,20 @@ export interface HighlightedBlock {
  */
 let highlighterPromise: Promise<Highlighter> | null = null;
 
+/**
+ * Dual themes: tokens are emitted with --shiki-light/--shiki-dark CSS
+ * variables (defaultColor: false) and globals.css switches on `.dark`,
+ * so code blocks follow the site appearance instead of being dark-only.
+ */
+const SHIKI_THEMES = {
+    light: "github-light",
+    dark: "github-dark-dimmed",
+} as const;
+
 function getHighlighter(): Promise<Highlighter> {
     if (!highlighterPromise) {
         highlighterPromise = createHighlighter({
-            themes: ["github-dark-dimmed"],
+            themes: ["github-dark-dimmed", "github-light"],
             langs: [
                 "javascript",
                 "typescript",
@@ -66,9 +80,31 @@ export type CodeBlock = Extract<
     { _type: "code" }
 >;
 
+/**
+ * Bump when the emitted markup contract changes (themes, classes, CSS
+ * expectations). The version participates in the cache key, so entries
+ * rendered by an older pipeline are orphaned instead of being served
+ * into styles they were never written for — the data cache persists
+ * across deployments, so a code change alone does not invalidate them.
+ * v2: dual-theme CSS variables (defaultColor: false) + line-highlight.
+ */
+const HIGHLIGHT_MARKUP_VERSION = 2;
+
 export async function highlightCodeBlocks(
     codeBlocks: CodeBlock[],
     slug: string,
+): Promise<Record<string, string>> {
+    return highlightCodeBlocksVersioned(
+        codeBlocks,
+        slug,
+        HIGHLIGHT_MARKUP_VERSION,
+    );
+}
+
+async function highlightCodeBlocksVersioned(
+    codeBlocks: CodeBlock[],
+    slug: string,
+    _markupVersion: number,
 ): Promise<Record<string, string>> {
     "use cache";
     cacheLife("max");
@@ -84,20 +120,41 @@ export async function highlightCodeBlocks(
             const lang = mapLanguage(block.language || "text");
             const key = block._key;
 
+            // Editors store 1-based line numbers; the schema field was
+            // previously ignored by this renderer.
+            const highlightedLines = new Set(block.highlightedLines ?? []);
+            const transformers: ShikiTransformer[] =
+                highlightedLines.size > 0
+                    ? [
+                          {
+                              line(node, line) {
+                                  if (!highlightedLines.has(line)) return;
+                                  const existing = node.properties.class;
+                                  node.properties.class = existing
+                                      ? `${existing} line-highlight`
+                                      : "line-highlight";
+                              },
+                          },
+                      ]
+                    : [];
+            const options = {
+                themes: SHIKI_THEMES,
+                defaultColor: false as const,
+                transformers,
+            };
+
             try {
-                const html = highlighter.codeToHtml(code, {
+                highlighted[key] = highlighter.codeToHtml(code, {
                     lang,
-                    theme: "github-dark-dimmed",
+                    ...options,
                 });
-                highlighted[key] = html;
             } catch {
                 // Fallback: if language isn't supported, render as plain text
                 try {
-                    const html = highlighter.codeToHtml(code, {
+                    highlighted[key] = highlighter.codeToHtml(code, {
                         lang: "text",
-                        theme: "github-dark-dimmed",
+                        ...options,
                     });
-                    highlighted[key] = html;
                 } catch {
                     // Final fallback: raw code
                     highlighted[key] =

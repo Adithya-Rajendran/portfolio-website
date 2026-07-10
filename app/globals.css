@@ -714,3 +714,27 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
 }
+
+/* ---- Code blocks: dual-theme shiki + line highlighting ----
+   Shiki emits every token with --shiki-light/--shiki-dark variables
+   (defaultColor: false in lib/highlight-code.ts); these rules pick the
+   palette that matches the site appearance. */
+.shiki-wrapper .shiki,
+.shiki-wrapper .shiki span {
+    color: var(--shiki-light);
+}
+.dark .shiki-wrapper .shiki,
+.dark .shiki-wrapper .shiki span {
+    color: var(--shiki-dark);
+}
+
+/* Lines flagged via the Sanity code editor's highlightedLines field */
+.shiki-wrapper .line.line-highlight {
+    display: inline-block;
+    width: 100%;
+    background: rgb(var(--c1) / 0.08);
+    box-shadow: inset 3px 0 0 rgb(var(--c1));
+}
+.dark .shiki-wrapper .line.line-highlight {
+    background: rgb(var(--c1) / 0.12);
+}

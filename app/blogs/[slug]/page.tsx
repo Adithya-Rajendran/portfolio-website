@@ -14,7 +14,7 @@ import NewsletterSignupForm from "@/components/newsletter/signup-form";
 /** Skeleton for the article body while shiki highlighting runs */
 function BodySkeleton() {
     return (
-        <div className="max-w-3xl mx-auto px-6 sm:px-8 pb-24 space-y-6">
+        <div className="max-w-[42.5rem] mx-auto px-6 sm:px-8 pb-24 space-y-6">
             {[...Array(6)].map((_, i) => (
                 <div key={i} className="space-y-3">
                     {i % 3 === 0 && <Skeleton className="h-6 w-48 rounded" />}
@@ -84,8 +84,8 @@ export default async function BlogPostPage({
                 </Suspense>
 
                 {/* Static shell — renders immediately, never waits on the
-                    body stream above */}
-                <div className="mx-auto max-w-3xl px-6 sm:px-8 pb-20">
+                    body stream above. Width tracks the prose column. */}
+                <div className="mx-auto max-w-[45.5rem] px-6 sm:px-8 pb-20">
                     <NewsletterSignupForm variant="inline" />
                 </div>
             </article>
