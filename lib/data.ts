@@ -5,7 +5,7 @@ export const links = [
     },
     {
         name: "About",
-        hash: "/portfolio#about",
+        hash: "/about",
     },
     {
         name: "Experience",

@@ -9,11 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { DEFAULT_THEME, themes } from "@/lib/themes";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import {
-    PersonJsonLd,
-    WebSiteJsonLd,
-    ProfilePageJsonLd,
-} from "@/components/json-ld";
+import { PersonJsonLd, WebSiteJsonLd } from "@/components/json-ld";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { siteConfig, THEME_COLORS } from "@/lib/config";
@@ -116,9 +112,10 @@ export default function RootLayout({
                     header ("*" compiles to a regex wildcard in the BotID
                     client). checkBotId() in the actions verifies it. */}
                 <BotIdClient protect={[{ path: "/*", method: "POST" }]} />
+                {/* ProfilePageJsonLd lives on /about — its semantically
+                    correct home — rather than sitewide. */}
                 <PersonJsonLd />
                 <WebSiteJsonLd />
-                <ProfilePageJsonLd />
             </head>
             <body
                 className={`${inter.className} bg-canvas text-slate-900 relative pt-28 sm:pt-32 dark:bg-canvas-dark dark:text-slate-100 antialiased overflow-x-hidden`}

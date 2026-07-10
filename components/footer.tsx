@@ -22,7 +22,7 @@ const navLinks = [
 ];
 
 const portfolioLinks = [
-    { href: "/portfolio#about", label: "About" },
+    { href: "/about", label: "About" },
     { href: "/portfolio#experience", label: "Experience" },
     { href: "/portfolio#projects", label: "Projects" },
     { href: "/portfolio#skills", label: "Skills" },

@@ -8,14 +8,12 @@ import type { PortableTextBlock } from "@portabletext/react";
 import { siteConfig } from "@/lib/config";
 import {
     getIntro,
-    getAbout,
     getAllSkillCategories,
     getAllCertifications,
     getAllExperiences,
     getAllProjects,
 } from "@/lib/sanity-client";
 
-const About = dynamic(() => import("@/components/portfolio/about"));
 const Skills = dynamic(() => import("@/components/portfolio/skills"));
 const Certifications = dynamic(
     () => import("@/components/portfolio/certifications"),
@@ -73,11 +71,6 @@ async function IntroWithData() {
     );
 }
 
-async function AboutWithData() {
-    const about = await getAbout();
-    return <About body={(about?.body ?? null) as PortableTextBlock[] | null} />;
-}
-
 async function SkillsWithData() {
     const skillCategories = await getAllSkillCategories();
     return <Skills skillCategories={skillCategories} />;
@@ -106,10 +99,8 @@ export default function Portfolio() {
             </Suspense>
 
             <PageShell>
-                <Suspense fallback={<SectionFallback />}>
-                    <AboutWithData />
-                </Suspense>
-
+                {/* The About prose moved to the standalone /about page —
+                    the portfolio is the work/credentials deep view. */}
                 <Suspense fallback={<SectionFallback />}>
                     <ExperienceWithData />
                 </Suspense>

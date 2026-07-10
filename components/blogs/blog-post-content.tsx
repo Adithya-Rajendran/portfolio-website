@@ -13,6 +13,7 @@ import {
     getPostSlug,
 } from "@/components/blogs/utils";
 import { TAG_PATTERN } from "@/lib/tags";
+import { siteConfig } from "@/lib/config";
 
 interface BlogPostHeroProps {
     post: {
@@ -43,6 +44,14 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
                         <time dateTime={post.date || ""}>
                             {formatDate(post.date ?? undefined)}
                         </time>
+                        <span aria-hidden>·</span>
+                        {/* Byline links to the standalone identity page */}
+                        <Link
+                            href="/about"
+                            className="hover:text-accent transition-colors"
+                        >
+                            by {siteConfig.author}
+                        </Link>
                     </div>
 
                     {tags.length > 0 && (
