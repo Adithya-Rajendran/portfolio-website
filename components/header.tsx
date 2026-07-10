@@ -23,7 +23,7 @@ export default function Header() {
                     aria-label="Main navigation"
                     className="relative h-full flex items-center justify-center px-2 sm:px-4"
                 >
-                    <ul className="flex w-full flex-wrap items-center justify-center gap-y-1 text-[0.875rem] font-medium text-slate-600 sm:flex-nowrap sm:gap-1 dark:text-slate-300">
+                    <ul className="flex w-full flex-wrap items-center justify-center gap-y-1 font-term text-[0.8rem] font-medium lowercase text-slate-600 sm:flex-nowrap sm:gap-1 dark:text-slate-300">
                         {links.map((link) => {
                             const isActive = activeSection === link.name;
                             return (

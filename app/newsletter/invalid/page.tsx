@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MailWarning } from "lucide-react";
 import { StatusCard } from "@/components/status-card";
+import { PromptLine } from "@/components/terminal/terminal-section";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
 
 export const metadata: Metadata = {
@@ -18,6 +19,11 @@ export default function NewsletterInvalid() {
             className="pb-24 sm:pb-32 px-6 sm:px-8"
         >
             <section className="mx-auto max-w-2xl mt-10 sm:mt-16">
+                <PromptLine
+                    command="subscribe --confirm"
+                    path="~/newsletter"
+                    className="mb-6"
+                />
                 <StatusCard
                     icon={MailWarning}
                     color="c3"

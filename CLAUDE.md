@@ -78,6 +78,10 @@ only live in comments or commit messages.
 - Never `rm -rf .next` while a dev server is running — with
   `cacheComponents` enabled this can leave the running server referencing
   build artifacts that no longer exist and crash it.
+- Turbopack's persistent dev cache (`.next/dev/cache`) can serve a stale
+  compile of `app/globals.css` across dev-server restarts — if a CSS edit
+  "doesn't apply", make any real content change to the file (or clean
+  `.next` with the server stopped) to force a recompile.
 
 ## External service contract
 

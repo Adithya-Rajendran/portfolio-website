@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { StatusCard } from "@/components/status-card";
-import { Button } from "@/components/ui/button";
+import { PromptLine } from "@/components/terminal/terminal-section";
 
 export const metadata: Metadata = {
     title: "Subscription confirmed",
@@ -19,14 +19,22 @@ export default function NewsletterConfirmed() {
             className="pb-24 sm:pb-32 px-6 sm:px-8"
         >
             <section className="mx-auto max-w-2xl mt-10 sm:mt-16">
+                <PromptLine
+                    command="subscribe --confirm"
+                    path="~/newsletter"
+                    className="mb-6"
+                />
                 <StatusCard
                     icon={MailCheck}
                     heading="You're subscribed"
                     headingAs="h1"
                     actions={
-                        <Button asChild variant="outline" size="sm">
-                            <Link href="/blogs">Read the blog</Link>
-                        </Button>
+                        <Link
+                            href="/blogs"
+                            className="font-term text-sm font-bold text-accent hover:opacity-80 transition-opacity"
+                        >
+                            [ ./blog ]
+                        </Link>
                     }
                 >
                     Thanks for confirming. New deep-dives on infrastructure,

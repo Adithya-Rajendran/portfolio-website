@@ -76,13 +76,13 @@ export default async function Footer() {
                                 Cloud engineer. Cybersecurity practitioner,
                                 infrastructure tinkerer, and writer.
                             </p>
-                            <div className="mt-5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                            <div className="mt-5 flex items-center gap-2 font-term text-xs text-slate-500 dark:text-slate-400">
                                 <MapPin className="w-3.5 h-3.5 text-accent opacity-80" />
                                 <span>{siteConfig.location}</span>
                             </div>
 
                             <div className="mt-7 max-w-xs">
-                                <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-3">
+                                <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-3">
                                     Newsletter
                                 </h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
@@ -90,11 +90,20 @@ export default async function Footer() {
                                     Free, no spam.
                                 </p>
                                 <NewsletterSignupForm variant="footer" />
+                                <p className="mt-3 font-term text-[0.7rem] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                                    prefer feeds?{" "}
+                                    <a
+                                        href="/feed.xml"
+                                        className="text-accent hover:opacity-80 transition-opacity"
+                                    >
+                                        rss ↗
+                                    </a>
+                                </p>
                             </div>
                         </div>
 
                         <div>
-                            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-4">
+                            <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-4">
                                 Sitemap
                             </h3>
                             <ul className="space-y-2.5">
@@ -120,7 +129,7 @@ export default async function Footer() {
                         </div>
 
                         <div>
-                            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-4">
+                            <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-4">
                                 Portfolio
                             </h3>
                             <ul className="space-y-2.5">
@@ -139,7 +148,7 @@ export default async function Footer() {
                     </div>
 
                     <div className="mt-12 pt-6 border-t border-slate-200/60 dark:border-white/8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <small className="text-xs text-slate-500 dark:text-slate-400">
+                        <small className="font-term text-[0.7rem] text-slate-500 dark:text-slate-400">
                             © {year} {siteConfig.author}. All rights reserved.
                         </small>
 
@@ -158,8 +167,8 @@ export default async function Footer() {
                             ))}
                         </div>
 
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Built with Next.js · TypeScript · Tailwind
+                        <p className="font-term text-[0.7rem] text-slate-500 dark:text-slate-400">
+                            built with next.js · typescript · tailwind
                         </p>
                     </div>
                 </div>

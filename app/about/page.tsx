@@ -6,15 +6,13 @@ import {
     ArrowUpRight,
     BadgeCheck,
     Box,
-    FileText,
     MapPin,
-    Send,
     ShieldCheck,
 } from "lucide-react";
 import { FaGithub, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
-import { Button } from "@/components/ui/button";
+import { PromptLine } from "@/components/terminal/terminal-section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfilePageJsonLd } from "@/components/json-ld";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
@@ -23,6 +21,10 @@ import { getAbout, getAllCertifications, getIntro } from "@/lib/sanity-client";
 import { siteConfig, socialProfiles } from "@/lib/config";
 
 const portableTextComponents = createPortableTextStyles("about");
+
+/** Bracket-command CTA — same anatomy as the home/portfolio heroes. */
+const bracketBtn =
+    "font-term text-sm font-bold rounded-row px-4 py-2.5 border transition-colors";
 
 export const metadata: Metadata = {
     title: "About",
@@ -114,9 +116,11 @@ async function AboutContent() {
             {/* ---- Hero: name + positioning left, portrait right ---- */}
             <section className="grid items-center gap-10 lg:gap-16 lg:grid-cols-[1fr_minmax(0,22rem)] pt-6 sm:pt-12 pb-16 sm:pb-20">
                 <div>
-                    <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-accent mb-4">
-                        About
-                    </p>
+                    <PromptLine
+                        command="cat about.txt --full"
+                        path="~/about"
+                        className="mb-4"
+                    />
                     <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
                         {siteConfig.author}
                     </h1>
@@ -129,24 +133,18 @@ async function AboutContent() {
                         </p>
                     )}
                     <div className="mt-8 flex flex-wrap items-center gap-3">
-                        <Button asChild>
-                            <Link href="/portfolio#contact">
-                                Contact me
-                                <Send
-                                    aria-hidden
-                                    className="ml-1 w-3.5 h-3.5 opacity-80"
-                                />
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline">
-                            <a href="/resume">
-                                Resume
-                                <FileText
-                                    aria-hidden
-                                    className="ml-1 w-3.5 h-3.5 opacity-80"
-                                />
-                            </a>
-                        </Button>
+                        <Link
+                            href="/portfolio#contact"
+                            className={`${bracketBtn} border-accent bg-accent-soft text-accent hover:bg-accent hover:text-white dark:hover:text-slate-900`}
+                        >
+                            [ mail adithya ]
+                        </Link>
+                        <a
+                            href="/resume"
+                            className={`${bracketBtn} border-accent-soft text-accent hover:bg-accent-soft`}
+                        >
+                            [ ./resume ]
+                        </a>
                         <div className="flex items-center gap-2 sm:ml-2">
                             {socialProfiles.map((url) => {
                                 const { label, Icon } = profileMeta(url);
@@ -210,13 +208,13 @@ async function AboutContent() {
 
                 <aside className="lg:sticky lg:top-28 self-start space-y-6">
                     <div className="os-card p-6">
-                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-3">
+                        <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-3">
                             Currently
                         </h3>
                         <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 font-medium">
                             {affiliation ? `${roleLine}` : roleLine}
                         </p>
-                        <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="mt-4 flex items-center gap-2 font-term text-xs text-slate-500 dark:text-slate-400">
                             <MapPin
                                 aria-hidden
                                 className="w-3.5 h-3.5 text-accent opacity-80"
@@ -226,7 +224,7 @@ async function AboutContent() {
                     </div>
 
                     <div className="os-card p-6">
-                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 mb-3">
+                        <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-3">
                             Focus
                         </h3>
                         <div className="flex flex-wrap gap-1.5">
@@ -278,7 +276,7 @@ async function AboutContent() {
                                         <p className="font-display font-semibold text-slate-900 dark:text-white leading-snug">
                                             {cert.title}
                                         </p>
-                                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                        <p className="mt-1 font-term text-xs text-slate-500 dark:text-slate-400">
                                             {cert.org}
                                         </p>
                                         {cert.verifyUrl && (
@@ -286,9 +284,9 @@ async function AboutContent() {
                                                 href={cert.verifyUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:opacity-80 transition-opacity"
+                                                className="mt-2 inline-flex items-center gap-1 font-term text-xs font-medium text-accent hover:opacity-80 transition-opacity"
                                             >
-                                                Verify
+                                                verify
                                                 <ArrowUpRight
                                                     aria-hidden
                                                     className="w-3 h-3"
