@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -6,40 +5,13 @@ import TerminalSection from "@/components/terminal/terminal-section";
 import { PageShell } from "@/components/page-shell";
 import Latest from "@/components/blogs/latest";
 import TagChips from "@/components/blogs/tag-chips";
-import { Skeleton } from "@/components/ui/skeleton";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
 
-function TagPageSkeleton() {
-    return (
-        <div className="pb-24 sm:pb-32 animate-pulse">
-            <div className="mx-auto max-w-6xl px-6 sm:px-8 pt-2 sm:pt-6">
-                <Skeleton className="h-4 w-72 mb-10" />
-                <Skeleton className="h-10 w-56 mb-5" />
-                <Skeleton className="h-4 w-64" />
-            </div>
-            <div className="mx-auto max-w-6xl px-6 sm:px-8 mt-14 sm:mt-16">
-                <div className="flex flex-wrap gap-4 mb-12">
-                    {[1, 2, 3, 4].map((i) => (
-                        <Skeleton key={i} className="h-5 w-24" />
-                    ))}
-                </div>
-                <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-20 w-full" />
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
 /**
  * Data section — fetches posts, filters by tag, and 404s when the tag
- * has no matches. Lives inside <Suspense> per cacheComponents (data
- * access can't happen in the static shell), so the hero and rows both
- * render from this one fetch.
+ * has no matches. The hero and rows both render from this one fetch.
  */
 async function TagPosts({ tag }: { tag: string }) {
     const allPosts = await getAllPosts();
@@ -103,9 +75,8 @@ export async function generateStaticParams() {
 }
 
 /**
- * Tag archive page — validates the route param synchronously (no data
- * access, so it stays outside Suspense) before handing off to the async
- * data section for the actual post lookup.
+ * Tag archive page — validates the route param before handing off to the
+ * async data section for the actual post lookup.
  */
 export default async function TagPage({
     params,
@@ -120,9 +91,7 @@ export default async function TagPage({
 
     return (
         <main id="main-content" tabIndex={-1} className="w-full">
-            <Suspense fallback={<TagPageSkeleton />}>
-                <TagPosts tag={tag} />
-            </Suspense>
+            <TagPosts tag={tag} />
         </main>
     );
 }

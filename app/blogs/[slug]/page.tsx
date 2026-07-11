@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { getAllSlugs, getPostBySlug, getPostMeta } from "@/lib/sanity-client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -8,28 +7,11 @@ import BlogPostBody, {
 } from "@/components/blogs/blog-post-content";
 import { BlogPostJsonLd } from "@/components/json-ld";
 import { urlForImage } from "@/lib/sanity-image";
-import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
-
-/** Skeleton for the article body while shiki highlighting runs */
-function BodySkeleton() {
-    return (
-        <div className="max-w-[42.5rem] mx-auto px-6 sm:px-8 pb-24 space-y-6">
-            {[...Array(6)].map((_, i) => (
-                <div key={i} className="space-y-3">
-                    {i % 3 === 0 && <Skeleton className="h-6 w-48 rounded" />}
-                    <Skeleton className="h-4 w-full rounded" />
-                    <Skeleton className="h-4 w-5/6 rounded" />
-                    <Skeleton className="h-4 w-4/6 rounded" />
-                </div>
-            ))}
-        </div>
-    );
-}
 
 /**
  * Async body — fetches the full post (including body) and runs shiki
- * highlighting. This is the expensive part that streams in after the hero.
+ * highlighting.
  */
 async function BodyWithData({ slug }: { slug: string }) {
     const post = await getPostBySlug(slug);
@@ -53,7 +35,7 @@ export async function generateStaticParams() {
 /**
  * Blog post page — awaits the lightweight meta query up front (it gates
  * notFound and JSON-LD anyway), renders the hero directly from it, and
- * streams the body (full post + shiki highlighting) behind Suspense.
+ * awaits the body (full post + shiki highlighting) inline.
  */
 export default async function BlogPostPage({
     params,
@@ -81,13 +63,9 @@ export default async function BlogPostPage({
 
                 <BlogPostHero post={meta} />
 
-                {/* Body streams in after shiki highlighting completes */}
-                <Suspense fallback={<BodySkeleton />}>
-                    <BodyWithData slug={slug} />
-                </Suspense>
+                <BodyWithData slug={slug} />
 
-                {/* Static shell — renders immediately, never waits on the
-                    body stream above. Width tracks the prose column. */}
+                {/* Width tracks the prose column. */}
                 <div className="mx-auto max-w-[45.5rem] px-6 sm:px-8 pb-20">
                     <NewsletterSignupForm variant="inline" />
                 </div>

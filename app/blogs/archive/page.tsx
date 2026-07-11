@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Archive as ArchiveIcon } from "lucide-react";
@@ -6,7 +5,6 @@ import TerminalSection from "@/components/terminal/terminal-section";
 import { PageShell } from "@/components/page-shell";
 import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import TagChips from "@/components/blogs/tag-chips";
 import ArchiveList from "@/components/blogs/archive-list";
 import {
@@ -31,25 +29,6 @@ export const metadata: Metadata = {
         url: `${siteConfig.url}/blogs/archive`,
     },
 };
-
-/** Loading silhouette: tag row + search input + compact row placeholders. */
-function ArchiveSkeleton() {
-    return (
-        <div className="animate-pulse">
-            <div className="flex flex-wrap gap-4 mb-8">
-                {[1, 2, 3, 4].map((i) => (
-                    <Skeleton key={i} className="h-5 w-24" />
-                ))}
-            </div>
-            <Skeleton className="h-12 w-full rounded-row mb-8" />
-            <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                    <Skeleton key={i} className="h-14 w-full" />
-                ))}
-            </div>
-        </div>
-    );
-}
 
 /**
  * Empty state — renders when no posts exist (pre-launch, dev without
@@ -102,7 +81,7 @@ async function ArchiveContent() {
     );
 }
 
-export default function ArchivePage() {
+export default async function ArchivePage() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <TerminalSection
@@ -131,9 +110,7 @@ export default function ArchivePage() {
 
             <PageShell className="mt-14 sm:mt-16">
                 <div>
-                    <Suspense fallback={<ArchiveSkeleton />}>
-                        <ArchiveContent />
-                    </Suspense>
+                    <ArchiveContent />
                 </div>
             </PageShell>
         </main>
