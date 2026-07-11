@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { FaGithub, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
-import { MapPin } from "lucide-react";
 import { siteConfig } from "@/lib/config";
-import NewsletterSignupForm from "@/components/newsletter/signup-form";
 
 // Under cacheComponents, new Date() is illegal in an uncached prerender —
 // the copyright year gets its own daily-refreshed cache scope instead.
@@ -17,16 +15,8 @@ const navLinks = [
     { href: "/", label: "Home" },
     { href: "/portfolio", label: "Portfolio" },
     { href: "/blogs", label: "Blog" },
-    { href: "/blogs/archive", label: "Archive" },
-    { href: "/portfolio#contact", label: "Contact" },
-];
-
-const portfolioLinks = [
     { href: "/about", label: "About" },
-    { href: "/portfolio#experience", label: "Experience" },
-    { href: "/portfolio#projects", label: "Projects" },
-    { href: "/portfolio#skills", label: "Skills" },
-    { href: "/portfolio#certs", label: "Certifications" },
+    { href: "/portfolio#contact", label: "Contact" },
 ];
 
 const socialLinks = [
@@ -56,122 +46,64 @@ export default async function Footer() {
     const year = await getYear();
 
     return (
-        <footer className="relative mt-28 sm:mt-36">
-            <div className="os-card border-t border-x-0 border-b-0 rounded-none">
-                <div className="mx-auto max-w-6xl px-6 sm:px-8 py-14 sm:py-16">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-10">
-                        <div className="col-span-2 sm:col-span-2">
-                            <Link
-                                href="/"
-                                className="inline-flex items-center gap-2 font-display text-xl font-semibold tracking-tight"
-                            >
-                                <span className="text-accent-gradient">
-                                    Adithya
-                                </span>
-                                <span className="text-slate-700 dark:text-slate-200">
-                                    Rajendran
-                                </span>
-                            </Link>
-                            <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 max-w-xs leading-relaxed">
-                                Cloud engineer. Cybersecurity practitioner,
-                                infrastructure tinkerer, and writer.
-                            </p>
-                            <div className="mt-5 flex items-center gap-2 font-term text-xs text-slate-600 dark:text-slate-400">
-                                <MapPin className="w-3.5 h-3.5 text-accent opacity-80" />
-                                <span>{siteConfig.location}</span>
-                            </div>
+        <footer className="relative mt-12 border-t border-slate-200/70 bg-white/45 dark:border-white/[0.07] dark:bg-white/[0.02] sm:mt-16">
+            <div className="mx-auto grid w-full max-w-7xl gap-8 px-6 py-9 sm:px-8 sm:py-10 lg:grid-cols-[minmax(14rem,1fr)_auto] lg:items-center">
+                <div>
+                    <Link
+                        href="/"
+                        className="inline-flex items-center font-display text-lg font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
+                    >
+                        <span className="text-slate-900 dark:text-white">
+                            Adithya Rajendran
+                        </span>
+                        <span className="text-accent">.</span>
+                    </Link>
+                    <p className="mt-1.5 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                        A personal site for projects, notes, and whatever I am
+                        curious about next.
+                    </p>
+                </div>
 
-                            <div className="mt-7 max-w-xs">
-                                <h2 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-3">
-                                    Newsletter
-                                </h2>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
-                                    Biweekly deep-dives, straight to your inbox.
-                                    Free, no spam.
-                                </p>
-                                <NewsletterSignupForm variant="footer" />
-                                <p className="mt-3 font-term text-[0.7rem] uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400">
-                                    prefer feeds?{" "}
-                                    <a
-                                        href="/feed.xml"
-                                        className="text-accent hover:opacity-80 transition-opacity"
+                <div className="grid gap-5 sm:justify-items-end">
+                    <nav aria-label="Footer navigation">
+                        <ul className="flex flex-wrap gap-x-5 gap-y-2 font-term text-xs font-medium text-slate-600 dark:text-slate-300">
+                            {navLinks.map((link) => (
+                                <li key={link.href}>
+                                    <Link
+                                        href={link.href}
+                                        className="transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
                                     >
-                                        rss ↗
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-
-                        <nav aria-label="Footer" className="contents">
-                            <div>
-                                <h2 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-4">
-                                    Sitemap
-                                </h2>
-                                <ul className="space-y-2.5">
-                                    {navLinks.map((link) => (
-                                        <li key={link.href}>
-                                            <Link
-                                                href={link.href}
-                                                className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                                            >
-                                                {link.label}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                    <li>
-                                        <a
-                                            href="/feed.xml"
-                                            className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                                        >
-                                            RSS
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h2 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-4">
-                                    Portfolio
-                                </h2>
-                                <ul className="space-y-2.5">
-                                    {portfolioLinks.map((link) => (
-                                        <li key={link.href}>
-                                            <Link
-                                                href={link.href}
-                                                className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                                            >
-                                                {link.label}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </nav>
-                    </div>
-
-                    <div className="mt-12 pt-6 border-t border-slate-200/60 dark:border-white/8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <small className="font-term text-[0.7rem] text-slate-600 dark:text-slate-400">
-                            © {year} {siteConfig.author}. All rights reserved.
-                        </small>
-
-                        <div className="flex items-center gap-3">
-                            {socialLinks.map(({ href, label, Icon }) => (
-                                <a
-                                    key={href}
-                                    href={href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label={`${label} profile`}
-                                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200/70 bg-white/60 text-slate-600 hover:border-accent-soft hover:text-accent dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 transition-colors backdrop-blur-md"
-                                >
-                                    <Icon className="w-4 h-4" />
-                                </a>
+                                        {link.label}
+                                    </Link>
+                                </li>
                             ))}
-                        </div>
+                            <li>
+                                <a
+                                    href="/feed.xml"
+                                    className="transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
+                                >
+                                    RSS ↗
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
 
-                        <p className="font-term text-[0.7rem] text-slate-600 dark:text-slate-400">
-                            built with next.js · typescript · tailwind
-                        </p>
+                    <div className="flex items-center gap-2.5">
+                        {socialLinks.map(({ href, label, Icon }) => (
+                            <a
+                                key={href}
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`${label} profile`}
+                                className="os-press inline-flex size-9 items-center justify-center rounded-full border border-slate-200/70 bg-white/55 text-slate-600 transition-colors hover:border-accent-soft hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400"
+                            >
+                                <Icon className="size-3.5" aria-hidden />
+                            </a>
+                        ))}
+                        <small className="ml-1 font-term text-[0.65rem] text-slate-500 dark:text-slate-500">
+                            © {year} {siteConfig.author}
+                        </small>
                     </div>
                 </div>
             </div>

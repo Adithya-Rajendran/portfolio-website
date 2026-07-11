@@ -1,11 +1,11 @@
 import { PortableText } from "@portabletext/react";
 import Link from "next/link";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
-import type { Post } from "@/sanity.types";
+import type { PostWithBody } from "@/lib/sanity-client";
 import { CalendarDays } from "lucide-react";
 import TableOfContents from "@/components/blogs/table-of-contents";
 import MobileToc from "@/components/blogs/mobile-toc";
-import { highlightCodeBlocks } from "@/lib/highlight-code";
+import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
 import {
     extractHeadings,
     headingIdsByKey,
@@ -19,7 +19,7 @@ interface BlogPostHeroProps {
         title?: string | null;
         slug?: string | { current?: string } | null;
         description?: string | null;
-        date?: string | null;
+        publishedAt?: string | null;
         tags?: string[] | null;
     };
 }
@@ -45,9 +45,19 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
                         />
                         <time
                             className="tabular-nums"
-                            dateTime={post.date || ""}
+                            dateTime={post.publishedAt || ""}
                         >
-                            {post.date}
+                            {post.publishedAt
+                                ? new Date(post.publishedAt).toLocaleDateString(
+                                      "en-US",
+                                      {
+                                          month: "long",
+                                          day: "numeric",
+                                          year: "numeric",
+                                          timeZone: "UTC",
+                                      },
+                                  )
+                                : ""}
                         </time>
                         <span aria-hidden>·</span>
                         {/* Byline links to the standalone identity page */}
@@ -67,9 +77,7 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
                                     href={`/blogs/tags/${tag}`}
                                     className="font-term text-[0.8rem] whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-accent transition-colors"
                                 >
-                                    <span aria-hidden>[ </span>
-                                    {tag}
-                                    <span aria-hidden> ]</span>
+                                    # {tag}
                                 </Link>
                             ))}
                         </div>
@@ -102,7 +110,7 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
 /**
  * Blog post body — async because it runs shiki syntax highlighting.
  */
-export default async function BlogPostBody({ post }: { post: Post }) {
+export default async function BlogPostBody({ post }: { post: PostWithBody }) {
     if (!post.body) return null;
 
     // One source of truth for heading ids: the ToC entries and the heading
@@ -112,8 +120,12 @@ export default async function BlogPostBody({ post }: { post: Post }) {
 
     // Pass only the code blocks: the "use cache" key serializes the
     // arguments, so prose stays out of the cache key.
+    const codeBlocks = post.body.filter(
+        (block): block is typeof block & CodeBlock =>
+            block._type === "code" && typeof block._key === "string",
+    );
     const highlightedCode = await highlightCodeBlocks(
-        post.body.filter((block) => block._type === "code"),
+        codeBlocks,
         getPostSlug(post),
     );
     const portableTextComponents = createPortableTextComponents(

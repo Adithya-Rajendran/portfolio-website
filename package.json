@@ -13,7 +13,7 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
-        "typegen": "sanity typegen generate",
+        "typegen": "sanity schema extract --enforce-required-fields --workspace portfolio-blog && sanity typegen generate",
         "prepare": "husky"
     },
     "lint-staged": {
@@ -30,6 +30,7 @@
         "@portabletext/to-html": "^5.0.2",
         "@radix-ui/react-slot": "^1.3.0",
         "@radix-ui/react-toast": "^1.2.18",
+        "@sanity/client": "^7.23.0",
         "@sanity/code-input": "^7.2.5",
         "@sanity/image-url": "^2.1.1",
         "@sanity/vision": "^6.3.0",

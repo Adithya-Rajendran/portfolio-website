@@ -29,22 +29,19 @@ only live in comments or commit messages.
 ## Caching contract
 
 - Every Sanity read must go through `sanityFetch` in `lib/sanity-client.ts`,
-  tagged with one of the tags from `lib/cache-tags.ts`
-  (`CACHE_TAGS.postList`, `CACHE_TAGS.post(slug)`, `CACHE_TAGS.portfolio`).
+  tagged with exactly one of `CACHE_TAGS.profile`, `CACHE_TAGS.post`, or
+  `CACHE_TAGS.project` from `lib/cache-tags.ts`.
 - There are exactly **two** invalidators:
     1. The Sanity webhook, `app/api/revalidate/route.ts`. It revalidates
-       `postList` + `post(slug)` when a `post` document changes, and
-       `portfolio` when the changed document's `_type` is in its
-       `portfolioTypes` array (currently `experience`, `project`,
-       `certification`, `skillCategory`, `about`, `intro`). **Adding a new
-       Sanity document type that portfolio pages read requires adding it to
-       `portfolioTypes` in that route, or it will never revalidate.**
+       the matching type tag when a `profile`, `post`, or `project` document
+       changes. Adding a new frontend query requires choosing one of those
+       three ownership tags and adding its webhook dispatch deliberately.
     2. The daily Vercel Cron, `app/api/cron/publish-due/route.ts`
-       (schedule in `vercel.json`, 00:05 UTC). Post visibility is gated by
-       `date <= $today`, so a future-dated post crosses the gate at
-       midnight UTC without any document change — no webhook fires. The
-       cron does a live (uncached) Sanity query for posts dated today and
-       revalidates `postList` + each due `post(slug)`. Auth is
+       (schedule in `vercel.json`, 00:05 UTC). `publishedAt` is a date and
+       visibility is gated by `publishedAt <= $today`, so a future post
+       crosses the gate on its UTC date without a document change. The cron
+       performs an uncached query for posts dated today and revalidates the
+       `post` tag. Auth is
        `Authorization: Bearer ${CRON_SECRET}` (Vercel attaches it
        automatically); missing/wrong auth → stealth 404. If `CRON_SECRET`
        is unset, same-day publishing silently degrades to the pages' daily
@@ -85,15 +82,13 @@ only live in comments or commit messages.
 
 ## External service contract
 
-- **Resend** — transactional email for the contact form and newsletter.
-  Env: `RESEND_API_KEY`, `CONTACT_FORM_TO_EMAIL`, `RESEND_AUDIENCE_ID`,
-  `NEWSLETTER_CONFIRM_SECRET`. `actions/sendEmail.ts` and
-  `actions/subscribe.ts` both no-op with a friendly error if their required
-  vars are missing rather than throwing at module load.
-- **Vercel WAF rate limiting** — `actions/sendEmail.ts` and
-  `actions/subscribe.ts` call `checkRateLimit()` (`@vercel/firewall`)
-  against rules that must exist in the Vercel dashboard (Firewall → Rate
-  Limit): `contact-form` and `newsletter-subscribe`. If a rule is absent,
+- **Resend** — transactional email for the contact form. Env:
+  `RESEND_API_KEY` and `CONTACT_FORM_TO_EMAIL`. `actions/sendEmail.ts`
+  no-ops with a friendly error if its required vars are missing rather than
+  throwing at module load.
+- **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
+  `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in
+  the Vercel dashboard (Firewall → Rate Limit). If the rule is absent,
   the SDK returns `error: "not-found"`, a warning is logged, and the form
   still works but is unprotected at that layer — it does not fail closed.
 - **Vercel BotID** — invisible bot check. The client protect list is
@@ -111,7 +106,7 @@ only live in comments or commit messages.
 - **Vercel platform toggles** (dashboard, not code): **Skew Protection**
   (Project → Settings → Advanced) keeps in-flight clients pinned to their
   deployed version across deploys — worth enabling since server actions
-  (contact/newsletter forms) break ungracefully on version skew. The
+  (the contact form) can break ungracefully on version skew. The
   **Vercel Toolbar** on previews is the review surface for this repo's
   preview-gate workflow (comments land in the dashboard; the
   `@vercel/toolbar` package is deliberately not installed — the injected
@@ -119,20 +114,21 @@ only live in comments or commit messages.
 
 ## Sanity schema changes
 
-Schema fields must be additive/optional — previously published posts and
-portfolio content must keep rendering against the new schema. After editing
-files in `sanity/schemas/*`:
+The repository is the schema source of truth. Define fields with Sanity's
+`defineType`, `defineField`, and `defineArrayMember`; never deploy an
+MCP-managed schema alongside this Studio. Breaking changes require a named,
+reviewable migration under `migrations/`. After editing the schema or named
+`defineQuery` constants:
 
 ```
-NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=fallback pnpm exec sanity schema extract
-NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=fallback pnpm typegen
+NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=ppk2h9tb \
+NEXT_PUBLIC_STORE_SANITY_DATASET=production \
+pnpm typegen
 ```
 
-Commit the regenerated `schema.json` and `sanity.types.ts`. Both commands
-operate on the local schema definition and need no real credentials, but
-`sanity.config.ts` asserts a project ID at eval time — without the env var,
-extract fails with "Invalid studio config format". Any project-id-shaped
-value works in a credential-less sandbox.
+Commit the regenerated `schema.json` and `sanity.types.ts`. Schema extraction
+and TypeGen are local; dataset export, migration execution, and schema
+deployment require an authenticated Sanity CLI session.
 
 ## Tests
 

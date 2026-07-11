@@ -2,7 +2,7 @@ import dns from "dns/promises";
 
 /**
  * Shared email-address validation used by the contact form and the
- * newsletter signup so both actions enforce identical rules.
+ * contact form before delivery.
  */
 
 /** Conservative allowlist applied on top of zod's email format check. */

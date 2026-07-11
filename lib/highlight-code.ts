@@ -5,7 +5,6 @@ import {
 } from "shiki";
 import { cacheLife, cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import type { Post } from "@/sanity.types";
 
 export interface HighlightedBlock {
     key: string;
@@ -75,10 +74,13 @@ function getHighlighter(): Promise<Highlighter> {
  * Takes only the code blocks (not the whole body) so the serialized
  * cache key stays proportional to the code, not the prose.
  */
-export type CodeBlock = Extract<
-    NonNullable<Post["body"]>[number],
-    { _type: "code" }
->;
+export type CodeBlock = {
+    _key: string;
+    _type: "code";
+    code?: string;
+    language?: string;
+    highlightedLines?: number[];
+};
 
 /**
  * Bump when the emitted markup contract changes (themes, classes, CSS
@@ -93,10 +95,12 @@ const HIGHLIGHT_MARKUP_VERSION = 2;
 export async function highlightCodeBlocks(
     codeBlocks: CodeBlock[],
     slug: string,
+    contentTag: string = CACHE_TAGS.post,
 ): Promise<Record<string, string>> {
     return highlightCodeBlocksVersioned(
         codeBlocks,
         slug,
+        contentTag,
         HIGHLIGHT_MARKUP_VERSION,
     );
 }
@@ -104,11 +108,12 @@ export async function highlightCodeBlocks(
 async function highlightCodeBlocksVersioned(
     codeBlocks: CodeBlock[],
     slug: string,
+    contentTag: string,
     _markupVersion: number,
 ): Promise<Record<string, string>> {
     "use cache";
     cacheLife("max");
-    cacheTag(CACHE_TAGS.post(slug));
+    cacheTag(contentTag);
 
     const highlighted: Record<string, string> = {};
 

@@ -121,19 +121,19 @@ describe("GET /api/cron/publish-due", () => {
         expect(afterMock).not.toHaveBeenCalled();
     });
 
-    it("queries with today's UTC date", async () => {
+    it("queries posts published on the current UTC date", async () => {
         const GET = await importGet();
 
         await GET(requestWith(`Bearer ${SECRET}`));
 
-        const today = new Date().toISOString().split("T")[0];
+        const today = new Date().toISOString().slice(0, 10);
         expect(fetchMock).toHaveBeenCalledWith(
-            expect.stringContaining("date == $today"),
+            expect.stringContaining("publishedAt == $today"),
             { today },
         );
     });
 
-    it("revalidates the list tag plus each due slug and schedules warming", async () => {
+    it("revalidates the post tag and schedules warming", async () => {
         fetchMock.mockResolvedValue(["post-a", "post-b", null]);
         const GET = await importGet();
 
@@ -146,16 +146,8 @@ describe("GET /api/cron/publish-due", () => {
             slugs: ["post-a", "post-b"],
             warming: "scheduled",
         });
-        expect(revalidateTagMock).toHaveBeenCalledWith("post-list", {
-            expire: 0,
-        });
-        expect(revalidateTagMock).toHaveBeenCalledWith("post:post-a", {
-            expire: 0,
-        });
-        expect(revalidateTagMock).toHaveBeenCalledWith("post:post-b", {
-            expire: 0,
-        });
-        expect(revalidateTagMock).toHaveBeenCalledTimes(3);
+        expect(revalidateTagMock).toHaveBeenCalledWith("post", "max");
+        expect(revalidateTagMock).toHaveBeenCalledTimes(1);
 
         // The scheduled callback actually warms the cache.
         expect(afterMock).toHaveBeenCalledTimes(1);

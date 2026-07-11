@@ -13,7 +13,7 @@ export default async function Image() {
         <OgTemplate
             eyebrow={siteConfig.author}
             title="About"
-            subtitle={`Who is ${siteConfig.author}? Infrastructure engineer and writer — background, credentials, and how to get in touch.`}
+            subtitle="A little more about me and where to find me online."
             footerRight={`${domain}/about`}
         />,
         { ...size },

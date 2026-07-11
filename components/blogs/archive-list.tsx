@@ -10,9 +10,9 @@ interface ArchivePostItem {
     slug: string;
     title: string;
     description: string;
-    date: string;
+    publishedAt: string;
     tags: string[];
-    readingMinutes: number;
+    readingMinutes: number | null;
 }
 
 interface ArchiveListProps {
@@ -33,9 +33,8 @@ function matchesQuery(post: ArchivePostItem, query: string): boolean {
  * Client-side searchable archive: a single text input filters the full
  * post list (title + description + tags, simple substring match) and the
  * results re-group by year on every keystroke. All posts ship to the
- * client up front — there is no server round trip for search. Rows are
- * dek-less compact `ls` lines: mono ISO date, display-face title, mono
- * reading time and bracket tags, hairline separators.
+ * client up front — there is no server round trip for search. Rows use compact
+ * dates, display-face titles, reading time, tags, and hairline separators.
  */
 export default function ArchiveList({ posts }: ArchiveListProps) {
     const [query, setQuery] = useState("");
@@ -100,7 +99,20 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                         className="grid gap-y-1 gap-x-8 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] items-baseline py-4 border-b border-slate-400/25 dark:border-white/10"
                                     >
                                         <span className="font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400">
-                                            {post.date}
+                                            <time dateTime={post.publishedAt}>
+                                                {post.publishedAt
+                                                    ? new Date(
+                                                          post.publishedAt,
+                                                      ).toLocaleDateString(
+                                                          "en-US",
+                                                          {
+                                                              month: "short",
+                                                              day: "numeric",
+                                                              timeZone: "UTC",
+                                                          },
+                                                      )
+                                                    : "Undated"}
+                                            </time>
                                         </span>
                                         <span className="min-w-0">
                                             <Link
@@ -109,9 +121,11 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                             >
                                                 {post.title}
                                             </Link>
-                                            <span className="ml-3 font-term text-[0.75rem] tabular-nums text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                                                {post.readingMinutes} min
-                                            </span>
+                                            {post.readingMinutes && (
+                                                <span className="ml-3 font-term text-[0.75rem] tabular-nums text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                                    {post.readingMinutes} min
+                                                </span>
+                                            )}
                                         </span>
 
                                         {post.tags.length > 0 && (
@@ -122,14 +136,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                                         href={`/blogs/tags/${tag}`}
                                                         className="font-term text-[0.75rem] whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-accent transition-colors"
                                                     >
-                                                        <span aria-hidden>
-                                                            [{" "}
-                                                        </span>
-                                                        {tag}
-                                                        <span aria-hidden>
-                                                            {" "}
-                                                            ]
-                                                        </span>
+                                                        # {tag}
                                                     </Link>
                                                 ))}
                                             </span>

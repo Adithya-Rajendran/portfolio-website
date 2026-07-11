@@ -1,106 +1,285 @@
-import { client, isSanityConfigured } from "./sanity-config";
 import { cacheLife, cacheTag } from "next/cache";
-import { CACHE_TAGS } from "./cache-tags";
-import { fixturesEnabled, resolveFixtureQuery } from "./fixtures";
-import type {
-    Post,
-    Experience,
-    Project,
-    Certification,
-    SkillCategory,
-    About,
-    Intro,
-} from "../sanity.types";
+import { defineQuery } from "next-sanity";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { fixturesEnabled, resolveFixtureQuery } from "@/lib/fixtures";
+import { client, isSanityConfigured } from "@/lib/sanity-config";
 
-export type IntroData = Pick<
-    Intro,
-    | "_id"
-    | "body"
-    | "subtitle"
-    | "heroDescription"
-    | "homeBio"
-    | "available"
-    | "role"
-    | "affiliation"
-    | "knowsAbout"
-    | "education"
-> & {
-    resumeUrl?: string | null;
+export type ContentBlock = {
+    _key?: string;
+    _type: string;
+    [key: string]: unknown;
 };
 
-/** List-shaped post: what the index cards/counters actually consume.
- *  No body — reading time ships as a precomputed word count. */
-export type PostListItem = Pick<
-    Post,
-    "_id" | "title" | "description" | "date" | "featured" | "image" | "tags"
-> & { slug: string; wordCount: number };
+export type ContentBody = ContentBlock[];
 
-export type PostWithBody = Pick<
-    Post,
-    "_id" | "title" | "description" | "date" | "body"
-> & { slug: string };
+export type SanityImageValue = {
+    _type?: "image";
+    asset?: { _ref?: string; _type?: "reference" };
+    alt?: string | null;
+    caption?: string | null;
+    lqip?: string | null;
+    dimensions?: { width?: number; height?: number } | null;
+};
 
-// Full post — only the single-post page needs the body. Body images get
-// the asset's LQIP + intrinsic dimensions joined in (blur-up placeholder
-// and CLS-free sizing in the renderer).
-const postProjection = `{
-    _id,
-    title,
-    "slug": slug.current,
-    description,
-    date,
-    featured,
-    tags,
-    image,
-    body[]{
+export type ExternalLink = {
+    _key: string;
+    _type?: "externalLink";
+    label: string;
+    url: string;
+};
+
+export type CuriosityItem = {
+    _key: string;
+    _type?: "curiosity";
+    title: string;
+    note?: string | null;
+    url?: string | null;
+};
+
+export type TimelineEntry = {
+    _key: string;
+    _type?: "timelineEntry";
+    kind: "work" | "education";
+    title: string;
+    organization: string;
+    location?: string | null;
+    startDate: string;
+    endDate?: string | null;
+    summary?: string | null;
+    highlights?: string[] | null;
+    skills?: string[] | null;
+    logo?: SanityImageValue | null;
+};
+
+export type SkillGroup = {
+    _key: string;
+    _type?: "skillGroup";
+    title: string;
+    skills: string[];
+};
+
+export type CredentialListItem = {
+    _key: string;
+    _type?: "credential";
+    title: string;
+    issuer: string;
+    issuedOn: string;
+    lifetime: boolean;
+    expiresOn?: string | null;
+    credentialId?: string | null;
+    verificationUrl?: string | null;
+    badge?: SanityImageValue | null;
+    lifecycleStatus: "active" | "lifetime" | "expired";
+};
+
+export type ProfileData = {
+    _id: string;
+    _updatedAt?: string;
+    name: string;
+    headline: string;
+    introduction: string;
+    bio: string;
+    location?: string | null;
+    portrait?: SanityImageValue | null;
+    resumeUrl?: string | null;
+    socialLinks?: ExternalLink[] | null;
+    currentCuriosities?: CuriosityItem[] | null;
+    curiositiesUpdatedAt?: string | null;
+    timeline?: TimelineEntry[] | null;
+    skillGroups?: SkillGroup[] | null;
+    credentials?: CredentialListItem[] | null;
+};
+
+export type PostListItem = {
+    _id: string;
+    title: string;
+    slug: string;
+    description: string;
+    publishedAt: string;
+    tags?: string[] | null;
+    cover?: SanityImageValue | null;
+    wordCount: number;
+};
+
+export type PostWithBody = PostListItem & {
+    body: ContentBody;
+    _updatedAt?: string;
+};
+
+export type PostMeta = Omit<PostListItem, "_id"> & {
+    _updatedAt?: string;
+};
+
+export type ProjectListItem = {
+    _id: string;
+    _updatedAt?: string;
+    title: string;
+    slug: string;
+    summary: string;
+    status: "active" | "completed" | "paused" | "archived";
+    startDate?: string | null;
+    endDate?: string | null;
+    technologies?: string[] | null;
+    highlights?: string[] | null;
+    cover?: SanityImageValue | null;
+    links?: ExternalLink[] | null;
+};
+
+export type ProjectWithBody = ProjectListItem & { body: ContentBody };
+
+const imageMetadataProjection = `
+    ...,
+    "lqip": asset->metadata.lqip,
+    "dimensions": asset->metadata.dimensions{width, height}
+`;
+
+const contentBodyProjection = `body[]{
+    ...,
+    _type == "image" => {${imageMetadataProjection}},
+    _type == "gallery" => {
         ...,
-        _type == "image" => {
-            ...,
-            "lqip": asset->metadata.lqip,
-            "dimensions": asset->metadata.dimensions{ width, height }
-        }
+        images[]{${imageMetadataProjection}}
     }
 }`;
 
-// List projection — everything the cards need, body replaced by a
-// server-computed word count so list payloads stay small.
-const postListProjection = `{
+export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
+    _id,
+    _updatedAt,
+    name,
+    headline,
+    introduction,
+    bio,
+    location,
+    portrait,
+    "resumeUrl": resume.asset->url,
+    socialLinks[]{_key, _type, label, url},
+    currentCuriosities[]{_key, _type, title, note, url},
+    curiositiesUpdatedAt,
+    timeline[]{
+        _key, _type, kind, title, organization, location, startDate, endDate,
+        summary, highlights, skills, logo
+    },
+    skillGroups[]{_key, _type, title, skills},
+    credentials[]{
+        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,
+        credentialId, verificationUrl, badge,
+        "lifecycleStatus": select(
+            lifetime == true => "lifetime",
+            defined(expiresOn) && expiresOn < $today => "expired",
+            "active"
+        )
+    }
+}`);
+
+export const POST_LIST_QUERY = defineQuery(`*[
+    _type == "post" && defined(publishedAt) && publishedAt <= $today
+] | order(publishedAt desc){
     _id,
     title,
     "slug": slug.current,
     description,
-    date,
-    featured,
+    publishedAt,
     tags,
-    image,
+    cover,
     "wordCount": length(string::split(pt::text(body), " "))
-}`;
+}`);
 
-// Lightweight metadata-only projection — no body payload.
-// Used by the blog hero so the title/date/description render before the
-// full post body (+ shiki highlighting) finishes loading.
-// _updatedAt + wordCount feed BlogPosting structured data
-// (dateModified/wordCount) — still body-free.
-const metaProjection = `{
+export const RECENT_POSTS_QUERY = defineQuery(`*[
+    _type == "post" && defined(publishedAt) && publishedAt <= $today
+] | order(publishedAt desc){
+    _id,
+    _updatedAt,
     title,
     "slug": slug.current,
     description,
-    date,
+    publishedAt,
     tags,
-    image,
+    cover,
+    "wordCount": length(string::split(pt::text(body), " ")),
+    ${contentBodyProjection}
+}`);
+
+export const POST_BY_SLUG_QUERY = defineQuery(`*[
+    _type == "post" && slug.current == $slug &&
+    defined(publishedAt) && publishedAt <= $today
+][0]{
+    _id,
+    _updatedAt,
+    title,
+    "slug": slug.current,
+    description,
+    publishedAt,
+    tags,
+    cover,
+    "wordCount": length(string::split(pt::text(body), " ")),
+    ${contentBodyProjection}
+}`);
+
+export const POST_META_QUERY = defineQuery(`*[
+    _type == "post" && slug.current == $slug &&
+    defined(publishedAt) && publishedAt <= $today
+][0]{
+    title,
+    "slug": slug.current,
+    description,
+    publishedAt,
+    tags,
+    cover,
     _updatedAt,
     "wordCount": length(string::split(pt::text(body), " "))
-}`;
+}`);
 
-/**
- * Single cached Sanity fetcher behind every typed wrapper below. The
- * (query, params, tag, fallback) arguments form the cache key, so one
- * "use cache" function safely serves every content type.
- *
- * $today is computed inside the cache scope (new Date() is illegal in an
- * uncached prerender under cacheComponents) and merged into every request;
- * the GROQ API ignores params a query doesn't reference.
- */
+export const POST_SLUGS_QUERY = defineQuery(`*[
+    _type == "post" && defined(publishedAt) && publishedAt <= $today
+].slug.current`);
+
+export const POST_SLUGS_WITH_DATES_QUERY = defineQuery(`*[
+    _type == "post" && defined(publishedAt) && publishedAt <= $today
+]{"slug": slug.current, "updatedAt": _updatedAt}`);
+
+export const PROJECT_LIST_QUERY = defineQuery(`*[
+    _type == "project" && defined(slug.current)
+] | order(coalesce(endDate, startDate, _createdAt) desc){
+    _id,
+    _updatedAt,
+    title,
+    "slug": slug.current,
+    summary,
+    status,
+    startDate,
+    endDate,
+    technologies,
+    highlights,
+    cover,
+    links[]{_key, _type, label, url}
+}`);
+
+export const PROJECT_BY_SLUG_QUERY = defineQuery(`*[
+    _type == "project" && slug.current == $slug
+][0]{
+    _id,
+    _updatedAt,
+    title,
+    "slug": slug.current,
+    summary,
+    status,
+    startDate,
+    endDate,
+    technologies,
+    highlights,
+    cover,
+    links[]{_key, _type, label, url},
+    ${contentBodyProjection}
+}`);
+
+export const PROJECT_SLUGS_QUERY = defineQuery(
+    `*[_type == "project" && defined(slug.current)].slug.current`,
+);
+
+export const PROJECT_SLUGS_WITH_DATES_QUERY = defineQuery(`*[
+    _type == "project" && defined(slug.current)
+]{"slug": slug.current, "updatedAt": _updatedAt}`);
+
 async function sanityFetch<T>(
     query: string,
     params: Record<string, unknown>,
@@ -108,191 +287,99 @@ async function sanityFetch<T>(
     fallback: T,
 ): Promise<T> {
     "use cache";
-    cacheLife("max");
+    cacheLife({
+        stale: 60 * 60,
+        revalidate: 60 * 60 * 24,
+        expire: 60 * 60 * 24 * 7,
+    });
     cacheTag(tag);
+
+    const now = new Date().toISOString();
+    const today = now.slice(0, 10);
+    const allParams = { now, today, ...params };
+
     if (!isSanityConfigured) {
-        // Dev-only: serve realistic sample content when explicitly asked
-        // (SANITY_USE_FIXTURES=1). Unreachable whenever Sanity is
-        // configured, so production can never serve fixtures.
         if (fixturesEnabled()) {
-            const fixture = resolveFixtureQuery<T>(query, params);
+            const fixture = resolveFixtureQuery<T>(query, allParams);
             if (fixture !== null) return fixture;
         }
         return fallback;
     }
+
     try {
-        const today = new Date().toISOString().split("T")[0];
-        const result = await client.fetch<T>(query, { today, ...params });
-        return result || fallback;
+        const result = await client.fetch<T>(query, allParams);
+        return result ?? fallback;
     } catch (error) {
-        console.error(`[Sanity] Error fetching (tag: ${tag}):`, error);
-        return fallback;
+        console.error(`[Sanity] Error fetching tag ${tag}:`, error);
+        throw error;
     }
 }
 
-/**
- * The single definition of "published" — this predicate gates the blog
- * index, feed, sitemap, tag/archive pages, generateStaticParams, AND the
- * single-post fetches, so they can never disagree about visibility.
- * `extra` is inserted before the date gate so the slug-scoped variants
- * stay byte-identical to the historical query strings (sanityFetch cache
- * keys derive from the literal query text).
- */
-const publishedPost = (extra = "") =>
-    `_type == "post"${extra} && date <= $today`;
-
-// Fetch all published posts (list shape, no bodies), newest first
-export async function getAllPosts(): Promise<PostListItem[]> {
-    return sanityFetch<PostListItem[]>(
-        `*[${publishedPost()}] | order(date desc) ${postListProjection}`,
-        {},
-        CACHE_TAGS.postList,
-        [],
-    );
+export function getProfile(): Promise<ProfileData | null> {
+    return sanityFetch(PROFILE_QUERY, {}, CACHE_TAGS.profile, null);
 }
 
-// Newest posts including bodies — feeds the RSS renderer. Tagged with
-// the list tag: the webhook revalidates post-list on every post change,
-// so body edits refresh the feed without new webhook wiring.
+export function getAllPosts(): Promise<PostListItem[]> {
+    return sanityFetch(POST_LIST_QUERY, {}, CACHE_TAGS.post, []);
+}
+
 export async function getRecentPostsWithBody(
     limit = 20,
 ): Promise<PostWithBody[]> {
-    // GROQ slice bounds must be literal constants — `[0...$limit]` is a
-    // parse error the API rejects (and sanityFetch would swallow into a
-    // permanently empty feed). Clamp and interpolate instead; limit is
-    // an internal integer, never user input.
-    const bound = Math.min(100, Math.max(1, Math.trunc(limit) || 1));
-    return sanityFetch<PostWithBody[]>(
-        `*[${publishedPost()}] | order(date desc) [0...${bound}] {
-                _id,
-                title,
-                "slug": slug.current,
-                description,
-                date,
-                body
-            }`,
+    const posts = await sanityFetch<PostWithBody[]>(
+        RECENT_POSTS_QUERY,
         {},
-        CACHE_TAGS.postList,
+        CACHE_TAGS.post,
         [],
     );
+    const safeLimit = Math.min(100, Math.max(1, Math.trunc(limit) || 1));
+    return posts.slice(0, safeLimit);
 }
 
-// Fetch a single published post by slug. The date filter matches the
-// listing queries so future-dated posts are not reachable by URL early.
-export async function getPostBySlug(slug: string): Promise<Post | null> {
-    return sanityFetch<Post | null>(
-        `*[${publishedPost(" && slug.current == $slug")}][0] ${postProjection}`,
-        { slug },
-        CACHE_TAGS.post(slug),
-        null,
-    );
+export function getPostBySlug(slug: string): Promise<PostWithBody | null> {
+    return sanityFetch(POST_BY_SLUG_QUERY, { slug }, CACHE_TAGS.post, null);
 }
 
-export type PostMeta = Pick<
-    Post,
-    "title" | "slug" | "description" | "date" | "tags" | "image" | "_updatedAt"
-> & { wordCount?: number };
-
-export async function getPostMeta(slug: string): Promise<PostMeta | null> {
-    return sanityFetch<PostMeta | null>(
-        `*[${publishedPost(" && slug.current == $slug")}][0] ${metaProjection}`,
-        { slug },
-        CACHE_TAGS.post(slug),
-        null,
-    );
+export function getPostMeta(slug: string): Promise<PostMeta | null> {
+    return sanityFetch(POST_META_QUERY, { slug }, CACHE_TAGS.post, null);
 }
 
-// Fetch all slugs and their last modified dates for sitemap generation
-export async function getAllSlugsWithDates(): Promise<
+export function getAllSlugs(): Promise<string[]> {
+    return sanityFetch(POST_SLUGS_QUERY, {}, CACHE_TAGS.post, []);
+}
+
+export function getAllSlugsWithDates(): Promise<
     { slug: string; updatedAt: string }[]
 > {
-    return sanityFetch<{ slug: string; updatedAt: string }[]>(
-        `*[${publishedPost()}] {
-                "slug": slug.current,
-                "updatedAt": _updatedAt
-            }`,
-        {},
-        CACHE_TAGS.postList,
-        [],
-    );
+    return sanityFetch(POST_SLUGS_WITH_DATES_QUERY, {}, CACHE_TAGS.post, []);
 }
 
-// Fetch all slugs for static path generation
-export async function getAllSlugs(): Promise<string[]> {
-    return sanityFetch<string[]>(
-        `*[${publishedPost()}].slug.current`,
-        {},
-        CACHE_TAGS.postList,
-        [],
-    );
+export function getAllProjects(): Promise<ProjectListItem[]> {
+    return sanityFetch(PROJECT_LIST_QUERY, {}, CACHE_TAGS.project, []);
 }
 
-// ---- Portfolio data fetchers ----
-
-// Fetch the singleton About document
-export async function getAbout(): Promise<About | null> {
-    return sanityFetch<About | null>(
-        `*[_type == "about"][0]{ _id, body, positioning, portrait, location }`,
-        {},
-        CACHE_TAGS.portfolio,
+export function getProjectBySlug(
+    slug: string,
+): Promise<ProjectWithBody | null> {
+    return sanityFetch(
+        PROJECT_BY_SLUG_QUERY,
+        { slug },
+        CACHE_TAGS.project,
         null,
     );
 }
 
-// Fetch the singleton Intro document
-export async function getIntro(): Promise<IntroData | null> {
-    return sanityFetch<IntroData | null>(
-        `*[_type == "intro"][0]{ _id, body, "resumeUrl": resume.asset->url, subtitle, heroDescription, homeBio, available, role, affiliation, knowsAbout, education }`,
-        {},
-        CACHE_TAGS.portfolio,
-        null,
-    );
+export function getAllProjectSlugs(): Promise<string[]> {
+    return sanityFetch(PROJECT_SLUGS_QUERY, {}, CACHE_TAGS.project, []);
 }
 
-// Fetch all experiences sorted by order
-export async function getAllExperiences(): Promise<Experience[]> {
-    return sanityFetch<Experience[]>(
-        `*[_type == "experience"] | order(order asc) {
-                _id, title, org, location, description, icon, date, order
-            }`,
+export function getAllProjectSlugsWithDates(): Promise<
+    { slug: string; updatedAt: string }[]
+> {
+    return sanityFetch(
+        PROJECT_SLUGS_WITH_DATES_QUERY,
         {},
-        CACHE_TAGS.portfolio,
-        [],
-    );
-}
-
-// Fetch all projects sorted by order
-export async function getAllProjects(): Promise<Project[]> {
-    return sanityFetch<Project[]>(
-        `*[_type == "project"] | order(order asc) {
-                _id, title, description, tags, image, linkTitle, linkUrl, order
-            }`,
-        {},
-        CACHE_TAGS.portfolio,
-        [],
-    );
-}
-
-// Fetch all certifications sorted by order
-export async function getAllCertifications(): Promise<Certification[]> {
-    return sanityFetch<Certification[]>(
-        `*[_type == "certification"] | order(order asc) {
-                _id, title, org, startDate, endDate, badge, verifyUrl, order
-            }`,
-        {},
-        CACHE_TAGS.portfolio,
-        [],
-    );
-}
-
-// Fetch all skill categories sorted by order
-export async function getAllSkillCategories(): Promise<SkillCategory[]> {
-    return sanityFetch<SkillCategory[]>(
-        `*[_type == "skillCategory"] | order(order asc) {
-                _id, title, "slug": slug.current, skills, colorVariant, order
-            }`,
-        {},
-        CACHE_TAGS.portfolio,
+        CACHE_TAGS.project,
         [],
     );
 }

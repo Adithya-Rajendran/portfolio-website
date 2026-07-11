@@ -3,15 +3,14 @@ import BlogNav from "@/components/blogs/blog-nav";
 import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
-    title: "Cybersecurity & Cloud Engineering Blog",
+    title: "Blog",
     description: BLOG_DESCRIPTION,
     alternates: {
         canonical: `${siteConfig.url}/blogs`,
     },
     openGraph: {
-        title: `Cybersecurity & Cloud Engineering Blog | ${siteConfig.author}`,
-        description:
-            "Technical blog covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.",
+        title: `Blog | ${siteConfig.author}`,
+        description: BLOG_DESCRIPTION,
         url: `${siteConfig.url}/blogs`,
     },
 };

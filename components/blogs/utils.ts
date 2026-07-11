@@ -5,14 +5,12 @@
  * portable-text-components.tsx.
  */
 
-import type { Post } from "@/sanity.types";
+import type {
+    ContentBlock,
+    ContentBody,
+    SanityImageValue,
+} from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
-
-/** Shared post-card grid layout — the single source of truth for
- *  components/blogs/latest.tsx, app/blogs/page.tsx (ShowMorePosts and its
- *  loading skeleton), and app/blogs/tags/[tag]/page.tsx's skeleton. */
-export const POST_GRID_CLASSES =
-    "grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3";
 
 /** Format a date string like "2026-03-06" → "March 6, 2026" */
 export function formatDate(dateStr?: string): string {
@@ -21,6 +19,7 @@ export function formatDate(dateStr?: string): string {
         month: "long",
         day: "numeric",
         year: "numeric",
+        timeZone: "UTC",
     });
 }
 
@@ -48,12 +47,12 @@ export const POST_IMAGE_DIMENSIONS = {
 
 /** Cropped, format-negotiated card image URL for a post (null if no image) */
 export function getPostImageUrl(
-    post: Pick<Post, "image">,
+    post: { cover?: SanityImageValue | null },
     width: number,
     height: number,
 ): string | null {
-    if (!post.image) return null;
-    return urlForImage(post.image)
+    if (!post.cover) return null;
+    return urlForImage(post.cover)
         .width(width)
         .height(height)
         .fit("crop")
@@ -61,15 +60,32 @@ export function getPostImageUrl(
         .url();
 }
 
-type PostBodyBlock = Extract<
-    NonNullable<Post["body"]>[number],
-    { _type: "block" }
->;
+type PostBodyBlock = ContentBlock & {
+    _key: string;
+    _type: "block";
+    style: "h2" | "h3" | "h4";
+    children?: { text?: string }[];
+};
 
-function isBodyBlock(
-    block: NonNullable<Post["body"]>[number],
-): block is PostBodyBlock {
-    return block._type === "block";
+function isHeadingBlock(block: ContentBlock): block is PostBodyBlock {
+    const hasValidChildren =
+        block.children === undefined ||
+        (Array.isArray(block.children) &&
+            block.children.every(
+                (child) =>
+                    !!child &&
+                    typeof child === "object" &&
+                    ((child as { text?: unknown }).text === undefined ||
+                        typeof (child as { text?: unknown }).text === "string"),
+            ));
+
+    return (
+        block._type === "block" &&
+        typeof block._key === "string" &&
+        typeof block.style === "string" &&
+        ["h2", "h3", "h4"].includes(block.style) &&
+        hasValidChildren
+    );
 }
 
 /** Words-per-minute reading estimate from a precomputed word count
@@ -101,7 +117,9 @@ export interface PostHeading {
  * heading ids: the ToC links and the rendered heading anchors both consume
  * these entries (via the _key → id map), so they agree by construction.
  */
-export function extractHeadings(post: Pick<Post, "body">): PostHeading[] {
+export function extractHeadings(post: {
+    body?: ContentBody | null;
+}): PostHeading[] {
     if (!post.body) return [];
 
     // Duplicate ids break anchor navigation (getElementById resolves to
@@ -111,11 +129,7 @@ export function extractHeadings(post: Pick<Post, "body">): PostHeading[] {
     const used = new Set<string>();
 
     return post.body
-        .filter(
-            (block): block is PostBodyBlock =>
-                isBodyBlock(block) &&
-                ["h2", "h3", "h4"].includes(block.style ?? ""),
-        )
+        .filter((block): block is PostBodyBlock => isHeadingBlock(block))
         .map((block) => {
             const text =
                 block.children?.map((child) => child.text || "").join("") || "";
@@ -128,7 +142,7 @@ export function extractHeadings(post: Pick<Post, "body">): PostHeading[] {
             return {
                 id,
                 text,
-                level: parseInt(block.style!.replace("h", ""), 10) as 2 | 3 | 4,
+                level: parseInt(block.style.replace("h", ""), 10) as 2 | 3 | 4,
                 key: block._key,
             };
         })

@@ -1,84 +1,80 @@
 import Image from "next/image";
-import RevealOnScroll from "@/components/reveal-on-scroll";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import type { ProjectListItem } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
-import type { Project as TProject } from "@/sanity.types";
 
-/**
- * Project card, terminal-tempered: opaque surface with a hairline
- * border (no glass), display-face title, Inter description, mono
- * bracket link, and mono bracket tag chips (same anatomy as
- * components/blogs/tag-chips.tsx, minus the links — project tags
- * aren't pages).
- *
- * Server component — the reveal is the shared RevealOnScroll client
- * wrapper; the card markup itself ships no hydration JS.
- */
-export default function Project({
-    title,
-    description,
-    tags,
-    image,
-    linkTitle,
-    linkUrl,
-}: TProject) {
-    const imageUrl = image
-        ? urlForImage(image).width(900).quality(95).url()
+const statusLabel: Record<ProjectListItem["status"], string> = {
+    active: "Active",
+    completed: "Completed",
+    paused: "Paused",
+    archived: "Archived",
+};
+
+export default function Project({ project }: { project: ProjectListItem }) {
+    const coverUrl = project.cover?.asset
+        ? urlForImage(project.cover)
+              .width(1200)
+              .height(720)
+              .fit("crop")
+              .auto("format")
+              .url()
         : null;
 
     return (
-        <RevealOnScroll className="w-full">
-            <article className="group relative h-full flex flex-col overflow-hidden rounded-card border border-slate-400/30 dark:border-white/10 bg-white dark:bg-[#0b0d10]">
-                {imageUrl && (
-                    <div className="relative aspect-[16/10] overflow-hidden border-b border-slate-400/25 dark:border-white/10">
-                        <Image
-                            src={imageUrl}
-                            alt={image?.alt || `Screenshot of ${title || ""}`}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
-                            loading="lazy"
-                            className="object-cover saturate-[0.92] transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                        />
-                    </div>
-                )}
-                <div className="flex flex-col flex-1 p-6 sm:p-7">
-                    <h3 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
-                        {title || ""}
-                    </h3>
-                    {description && (
-                        <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400">
-                            {description}
-                        </p>
-                    )}
-                    {linkTitle && linkUrl && (
-                        <a
-                            href={linkUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-4 inline-flex w-fit font-term text-sm font-bold text-accent hover:opacity-80 transition-opacity"
-                        >
-                            <span aria-hidden>[ </span>
-                            {linkTitle} ↗<span aria-hidden> ]</span>
-                        </a>
-                    )}
-                    {tags && tags.length > 0 && (
-                        <ul
-                            className="flex flex-wrap mt-5 gap-x-4 gap-y-2 sm:mt-auto sm:pt-5"
-                            aria-label="Related skills"
-                        >
-                            {tags.map((tag, index) => (
-                                <li
-                                    key={index}
-                                    className="font-term text-[0.8rem] whitespace-nowrap text-slate-600 dark:text-slate-400"
-                                >
-                                    <span aria-hidden>[ </span>
-                                    {tag}
-                                    <span aria-hidden> ]</span>
-                                </li>
-                            ))}
-                        </ul>
+        <article className="group flex h-full flex-col overflow-hidden rounded-card border border-slate-200/80 bg-white/55 dark:border-white/10 dark:bg-white/[0.035]">
+            {coverUrl && (
+                <div className="relative aspect-[5/3] overflow-hidden bg-slate-200/70 dark:bg-slate-900/70">
+                    <Image
+                        src={coverUrl}
+                        alt={project.cover?.alt || ""}
+                        fill
+                        sizes="(max-width: 640px) calc(100vw - 2.5rem), (max-width: 1280px) 50vw, 600px"
+                        className="object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-[1.015]"
+                    />
+                </div>
+            )}
+            <div className="flex flex-1 flex-col p-6 sm:p-7">
+                <div className="flex flex-wrap items-center gap-3 font-term text-[0.68rem] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                    <span className="text-accent">
+                        {statusLabel[project.status]}
+                    </span>
+                    {project.startDate && (
+                        <span>{project.startDate.slice(0, 4)}</span>
                     )}
                 </div>
-            </article>
-        </RevealOnScroll>
+                <h3 className="mt-4 font-display text-2xl font-semibold leading-tight tracking-[-0.03em] text-slate-950 dark:text-white">
+                    {project.title}
+                </h3>
+                <p className="mt-3 flex-1 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                    {project.summary}
+                </p>
+                {project.technologies?.length ? (
+                    <ul
+                        className="mt-5 flex flex-wrap gap-2"
+                        aria-label="Technologies"
+                    >
+                        {project.technologies.slice(0, 6).map((technology) => (
+                            <li
+                                key={technology}
+                                className="rounded-full border border-slate-200/80 px-2.5 py-1 font-term text-[0.65rem] text-slate-500 dark:border-white/10 dark:text-slate-400"
+                            >
+                                {technology}
+                            </li>
+                        ))}
+                    </ul>
+                ) : null}
+                <Link
+                    href={`/portfolio/${project.slug}`}
+                    className="os-press mt-6 inline-flex min-h-11 w-fit items-center gap-2 rounded-row font-term text-sm font-semibold text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
+                >
+                    Read the project
+                    <ArrowRight
+                        className="size-4 transition-transform group-hover:translate-x-0.5"
+                        aria-hidden
+                    />
+                </Link>
+            </div>
+        </article>
     );
 }

@@ -1,25 +1,28 @@
-import { defineField, defineType } from "sanity";
+import { defineArrayMember, defineField, defineType } from "sanity";
 import { TAG_PATTERN } from "@/lib/tags";
 
 export default defineType({
     name: "post",
     title: "Blog Post",
     type: "document",
+    groups: [
+        { name: "editorial", title: "Editorial", default: true },
+        { name: "content", title: "Content" },
+    ],
     fields: [
         defineField({
             name: "title",
             title: "Title",
             type: "string",
-            validation: (Rule) => Rule.required(),
+            group: "editorial",
+            validation: (Rule) => Rule.required().max(120),
         }),
         defineField({
             name: "slug",
             title: "Slug",
             type: "slug",
-            options: {
-                source: "title",
-                maxLength: 96,
-            },
+            group: "editorial",
+            options: { source: "title", maxLength: 96 },
             validation: (Rule) => Rule.required(),
         }),
         defineField({
@@ -27,150 +30,79 @@ export default defineType({
             title: "Description",
             type: "text",
             rows: 3,
+            group: "editorial",
             validation: (Rule) => Rule.required().max(300),
         }),
         defineField({
-            name: "date",
-            title: "Publish Date",
+            name: "publishedAt",
+            title: "Published At",
             type: "date",
+            group: "editorial",
             validation: (Rule) => Rule.required(),
-        }),
-        defineField({
-            name: "featured",
-            title: "Featured Post",
-            type: "boolean",
-            initialValue: false,
         }),
         defineField({
             name: "tags",
             title: "Tags",
             type: "array",
-            of: [{ type: "string" }],
+            group: "editorial",
+            of: [
+                defineArrayMember({
+                    type: "string",
+                    validation: (Rule) => Rule.required(),
+                }),
+            ],
             options: { layout: "tags" },
             description:
-                "Lowercase, hyphen-separated (e.g. kubernetes, ai-infra). " +
-                "The tag value doubles as its URL segment: /blogs/tags/<tag>.",
+                "Optional lowercase, hyphen-separated labels used by the tag archive.",
             validation: (Rule) =>
                 Rule.unique().custom((tags?: string[]) => {
                     if (!tags) return true;
-                    const invalid = tags.filter((t) => !TAG_PATTERN.test(t));
+                    const invalid = tags.filter((tag) =>
+                        TAG_PATTERN.test(tag) ? false : true,
+                    );
                     return invalid.length === 0
                         ? true
                         : `Invalid tag(s): ${invalid.join(", ")} — use lowercase letters, digits, and hyphens only`;
                 }),
         }),
         defineField({
-            name: "image",
+            name: "cover",
             title: "Cover Image",
             type: "image",
-            options: {
-                hotspot: true,
-            },
+            group: "editorial",
+            options: { hotspot: true },
             fields: [
                 defineField({
                     name: "alt",
                     title: "Alt Text",
                     type: "string",
+                    validation: (Rule) => Rule.required(),
                 }),
             ],
         }),
         defineField({
             name: "body",
             title: "Body",
-            type: "array",
-            of: [
-                {
-                    type: "block",
-                    styles: [
-                        { title: "Normal", value: "normal" },
-                        { title: "H2", value: "h2" },
-                        { title: "H3", value: "h3" },
-                        { title: "H4", value: "h4" },
-                        { title: "Quote", value: "blockquote" },
-                    ],
-                    marks: {
-                        decorators: [
-                            { title: "Bold", value: "strong" },
-                            { title: "Italic", value: "em" },
-                            { title: "Code", value: "code" },
-                            { title: "Underline", value: "underline" },
-                            { title: "Strikethrough", value: "strike-through" },
-                        ],
-                        annotations: [
-                            {
-                                title: "URL",
-                                name: "link",
-                                type: "object",
-                                fields: [
-                                    {
-                                        title: "URL",
-                                        name: "href",
-                                        type: "url",
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                },
-                {
-                    type: "image",
-                    options: { hotspot: true },
-                    fields: [
-                        defineField({
-                            name: "alt",
-                            title: "Alt Text",
-                            type: "string",
-                        }),
-                        defineField({
-                            name: "caption",
-                            title: "Caption",
-                            type: "string",
-                        }),
-                    ],
-                },
-                {
-                    type: "code",
-                    options: {
-                        languageAlternatives: [
-                            { title: "Bash", value: "bash" },
-                            { title: "CSS", value: "css" },
-                            { title: "Go", value: "go" },
-                            { title: "HTML", value: "html" },
-                            { title: "JavaScript", value: "javascript" },
-                            { title: "JSON", value: "json" },
-                            { title: "Markdown", value: "markdown" },
-                            { title: "Python", value: "python" },
-                            { title: "Rust", value: "rust" },
-                            { title: "Shell", value: "shell" },
-                            { title: "SQL", value: "sql" },
-                            { title: "TypeScript", value: "typescript" },
-                            { title: "YAML", value: "yaml" },
-                        ],
-                        withFilename: true,
-                    },
-                },
-            ],
+            type: "contentBody",
+            group: "content",
+            validation: (Rule) => Rule.required().min(1),
         }),
     ],
     preview: {
         select: {
             title: "title",
-            media: "image",
-            date: "date",
+            media: "cover",
+            publishedAt: "publishedAt",
         },
-        prepare({ title, media, date }) {
-            return {
-                title,
-                subtitle: date,
-                media,
-            };
+        prepare({ title, media, publishedAt }) {
+            return { title, subtitle: publishedAt, media };
         },
     },
     orderings: [
         {
-            title: "Publish Date, New",
-            name: "dateDesc",
-            by: [{ field: "date", direction: "desc" }],
+            title: "Published, Newest",
+            name: "publishedAtDesc",
+            by: [{ field: "publishedAt", direction: "desc" }],
         },
     ],
 });

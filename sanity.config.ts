@@ -1,97 +1,54 @@
 "use client";
 
-import { defineConfig } from "sanity";
-import { structureTool } from "sanity/structure";
-import { visionTool } from "@sanity/vision";
 import { codeInput } from "@sanity/code-input";
+import { visionTool } from "@sanity/vision";
+import { defineConfig } from "sanity";
+import { structureTool, type StructureBuilder } from "sanity/structure";
 import { schemaTypes } from "./sanity/schemas";
-import type { StructureBuilder } from "sanity/structure";
 
 const projectId = process.env.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID!;
 const dataset = process.env.NEXT_PUBLIC_STORE_SANITY_DATASET || "production";
 
+const PROFILE_ID = "profile";
+
 const structure = (S: StructureBuilder) =>
     S.list()
-        .title("Content")
+        .title("Adithya's Site")
         .items([
-            // Blog posts
             S.listItem()
-                .title("Blog Posts")
-                .schemaType("post")
-                .child(S.documentTypeList("post").title("Blog Posts")),
-
-            S.divider(),
-
-            // About page singleton — first-class section, not buried in
-            // the Portfolio group (it powers /about, not /portfolio).
-            S.listItem()
-                .title("About Page")
-                .child(S.document().schemaType("about").documentId("about")),
-
-            S.divider(),
-
-            // Portfolio section
-            S.listItem()
-                .title("Portfolio")
+                .id("profile")
+                .title("Profile")
+                .schemaType("profile")
                 .child(
-                    S.list()
-                        .title("Portfolio")
-                        .items([
-                            // Intro singleton
-                            S.listItem()
-                                .title("Intro")
-                                .child(
-                                    S.document()
-                                        .schemaType("intro")
-                                        .documentId("intro"),
-                                ),
-
-                            S.listItem()
-                                .title("Experience")
-                                .schemaType("experience")
-                                .child(
-                                    S.documentTypeList("experience").title(
-                                        "Experience",
-                                    ),
-                                ),
-
-                            S.listItem()
-                                .title("Projects")
-                                .schemaType("project")
-                                .child(
-                                    S.documentTypeList("project").title(
-                                        "Projects",
-                                    ),
-                                ),
-
-                            S.listItem()
-                                .title("Certifications")
-                                .schemaType("certification")
-                                .child(
-                                    S.documentTypeList("certification").title(
-                                        "Certifications",
-                                    ),
-                                ),
-
-                            S.listItem()
-                                .title("Skill Categories")
-                                .schemaType("skillCategory")
-                                .child(
-                                    S.documentTypeList("skillCategory").title(
-                                        "Skill Categories",
-                                    ),
-                                ),
-                        ]),
+                    S.document()
+                        .schemaType("profile")
+                        .documentId(PROFILE_ID)
+                        .title("Profile"),
                 ),
+            S.divider(),
+            S.documentTypeListItem("post").title("Blog Posts"),
+            S.documentTypeListItem("project").title("Projects"),
         ]);
 
 export default defineConfig({
     name: "portfolio-blog",
-    title: "Portfolio & Blog",
+    title: "Adithya's Site",
     projectId,
     dataset,
     plugins: [structureTool({ structure }), visionTool(), codeInput()],
     schema: {
         types: schemaTypes,
+        templates: (templates) =>
+            templates.filter((template) => template.schemaType !== "profile"),
+    },
+    document: {
+        actions: (actions, context) =>
+            context.schemaType === "profile"
+                ? actions.filter(
+                      (action) =>
+                          action.action !== "delete" &&
+                          action.action !== "duplicate",
+                  )
+                : actions,
     },
 });

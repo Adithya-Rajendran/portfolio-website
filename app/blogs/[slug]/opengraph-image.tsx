@@ -24,7 +24,7 @@ export default async function Image({
         <OgTemplate
             eyebrow={`${siteConfig.author} · Blog`}
             title={title}
-            footerLeft={formatDate(post?.date)}
+            footerLeft={formatDate(post?.publishedAt)}
             footerRight={domain}
         />,
         { ...size },

@@ -43,13 +43,13 @@ export function filterPostsByTag<T extends Pick<PostListItem, "tags">>(
  * Posts with missing/malformed dates land in an "Undated" group at the
  * end rather than disappearing.
  */
-export function groupPostsByYear<T extends Pick<PostListItem, "date">>(
+export function groupPostsByYear<T extends { publishedAt?: string }>(
     posts: T[],
 ): { year: string; posts: T[] }[] {
     const groups = new Map<string, T[]>();
     for (const post of posts) {
-        const year = /^\d{4}-/.test(post.date ?? "")
-            ? (post.date ?? "").slice(0, 4)
+        const year = /^\d{4}-/.test(post.publishedAt ?? "")
+            ? (post.publishedAt ?? "").slice(0, 4)
             : "Undated";
         const group = groups.get(year) ?? [];
         group.push(post);

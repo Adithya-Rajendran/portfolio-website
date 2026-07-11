@@ -1,47 +1,37 @@
-import Image from "next/image";
-import Link from "next/link";
 import type { Metadata } from "next";
 import {
     ArrowUpRight,
     BadgeCheck,
     Box,
+    Download,
     MapPin,
     ShieldCheck,
 } from "lucide-react";
 import { FaGithub, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
-import { PortableText, type PortableTextBlock } from "@portabletext/react";
-import { createPortableTextStyles } from "@/lib/portable-text";
-import { PromptLine } from "@/components/terminal/terminal-section";
 import { ProfilePageJsonLd } from "@/components/json-ld";
-import NewsletterSignupForm from "@/components/newsletter/signup-form";
-import { urlForImage } from "@/lib/sanity-image";
-import { getAbout, getAllCertifications, getIntro } from "@/lib/sanity-client";
+import { getProfile } from "@/lib/sanity-client";
 import { siteConfig, socialProfiles } from "@/lib/config";
-
-const portableTextComponents = createPortableTextStyles("about");
-
-/** Bracket-command CTA — same anatomy as the home/portfolio heroes. */
-const bracketBtn =
-    "font-term text-sm font-bold rounded-row px-4 py-2.5 border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]";
 
 export const metadata: Metadata = {
     title: "About",
-    description: `Who is ${siteConfig.author}? Infrastructure engineer and writer — background, credentials, and how to get in touch.`,
+    description: `About ${siteConfig.author}: what I do, where I am, and where to find me online.`,
     alternates: {
         canonical: `${siteConfig.url}/about`,
     },
     openGraph: {
         title: `About | ${siteConfig.author}`,
-        description: `Who is ${siteConfig.author}? Background, credentials, and how to get in touch.`,
+        description: `A little more about ${siteConfig.author}.`,
         url: `${siteConfig.url}/about`,
     },
 };
 
-/** Icon + label per known profile host; generic shield for the rest. */
-function profileMeta(url: string): {
+interface ProfileLink {
+    _key: string;
     label: string;
-    Icon: React.ComponentType<{ className?: string }>;
-} {
+    url: string;
+}
+
+function linkIcon(url: string) {
     const host = (() => {
         try {
             return new URL(url).hostname.replace(/^(www|app)\./, "");
@@ -49,254 +39,140 @@ function profileMeta(url: string): {
             return url;
         }
     })();
-    if (host.includes("linkedin"))
-        return { label: "LinkedIn", Icon: FaLinkedin };
-    if (host.includes("github")) return { label: "GitHub", Icon: FaGithub };
-    if (host.includes("credly")) return { label: "Credly", Icon: BadgeCheck };
-    if (host.includes("hackthebox"))
-        return { label: "Hack The Box", Icon: Box };
-    if (host.includes("tryhackme"))
-        return { label: "TryHackMe", Icon: ShieldCheck };
-    if (host === "x.com" || host.includes("twitter"))
-        return { label: "X", Icon: FaXTwitter };
-    if (host.includes("youtube")) return { label: "YouTube", Icon: FaYoutube };
-    return { label: host, Icon: ArrowUpRight };
+
+    if (host.includes("linkedin")) return FaLinkedin;
+    if (host.includes("github")) return FaGithub;
+    if (host.includes("credly")) return BadgeCheck;
+    if (host.includes("hackthebox")) return Box;
+    if (host.includes("tryhackme")) return ShieldCheck;
+    if (host === "x.com" || host.includes("twitter")) return FaXTwitter;
+    if (host.includes("youtube")) return FaYoutube;
+    return ArrowUpRight;
 }
 
-/**
- * Editorial identity page: asymmetric hero with portrait, open-layout
- * bio prose beside a sticky facts rail, credential badge tiles, and the
- * newsletter CTA. Everything renders from one data section — the hero's
- * identity line is live from the intro singleton.
- */
-async function AboutContent() {
-    const [about, intro, certifications] = await Promise.all([
-        getAbout(),
-        getIntro(),
-        getAllCertifications(),
-    ]);
+function fallbackLinks(): ProfileLink[] {
+    return socialProfiles.map((url) => {
+        const host = new URL(url).hostname.replace(/^(www|app)\./, "");
+        const label = host.includes("linkedin")
+            ? "LinkedIn"
+            : host.includes("github")
+              ? "GitHub"
+              : host.includes("credly")
+                ? "Credly"
+                : host.includes("hackthebox")
+                  ? "Hack The Box"
+                  : host.includes("tryhackme")
+                    ? "TryHackMe"
+                    : host;
 
-    const roleLine = intro?.role || intro?.subtitle || siteConfig.role;
-    const positioning = about?.positioning || intro?.heroDescription;
-    const focus = intro?.knowsAbout?.length
-        ? intro.knowsAbout
-        : siteConfig.knowsAbout;
-    const affiliation = intro?.affiliation?.name;
-    const location = about?.location || siteConfig.location;
-    const portraitSrc = about?.portrait?.asset
-        ? urlForImage(about.portrait)
-              .width(720)
-              .height(720)
-              .fit("crop")
-              .auto("format")
-              .url()
-        : "/hero.webp";
-    const portraitAlt =
-        about?.portrait?.alt || `Portrait of ${siteConfig.author}`;
+        return { _key: url, label, url };
+    });
+}
+
+export default async function AboutPage() {
+    const profile = await getProfile();
+    const name = profile?.name || siteConfig.author;
+    const location = profile?.location || siteConfig.location;
+    const links = profile?.socialLinks?.length
+        ? (profile.socialLinks as ProfileLink[])
+        : fallbackLinks();
 
     return (
-        <div className="mx-auto max-w-6xl px-6 sm:px-8">
-            {/* ---- Hero: name + positioning left, portrait right ---- */}
-            <section className="grid items-center gap-10 lg:gap-16 lg:grid-cols-[1fr_minmax(0,22rem)] pt-6 sm:pt-12 pb-16 sm:pb-20">
-                <div>
-                    <PromptLine
-                        command="cat about.txt --full"
-                        path="~/about"
-                        className="mb-4"
-                    />
-                    <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
-                        {siteConfig.author}
-                    </h1>
-                    <p className="mt-4 text-lg sm:text-xl text-accent-gradient font-medium">
-                        {roleLine}
+        <main id="main-content" tabIndex={-1}>
+            <ProfilePageJsonLd />
+            <div className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 sm:py-20 lg:py-24">
+                <header className="max-w-4xl">
+                    <p className="font-term text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                        About
                     </p>
-                    {positioning && (
-                        <p className="mt-5 max-w-xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300 text-pretty">
-                            {positioning}
+                    <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.98] tracking-[-0.05em] text-slate-950 dark:text-white sm:text-6xl lg:text-7xl">
+                        {name}
+                    </h1>
+                    <p className="mt-6 max-w-3xl font-display text-xl font-medium leading-snug text-slate-700 dark:text-slate-200 sm:text-2xl">
+                        {profile?.headline || siteConfig.role}
+                    </p>
+                    {profile?.introduction && (
+                        <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 text-pretty dark:text-slate-300 sm:text-lg">
+                            {profile.introduction}
                         </p>
                     )}
-                    <div className="mt-8 flex flex-wrap items-center gap-3">
-                        <Link
-                            href="/portfolio#contact"
-                            className={`${bracketBtn} border-accent bg-accent-soft text-accent hover:bg-accent hover:text-white dark:hover:text-slate-900`}
+                </header>
+
+                <div className="mt-14 grid gap-12 border-t border-slate-300/70 pt-12 dark:border-white/10 sm:mt-16 sm:pt-16 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-20">
+                    <article
+                        aria-labelledby="bio-heading"
+                        className="max-w-3xl"
+                    >
+                        <h2
+                            id="bio-heading"
+                            className="font-display text-2xl font-semibold tracking-[-0.035em] text-slate-950 dark:text-white sm:text-3xl"
                         >
-                            [ mail adithya ]
-                        </Link>
-                        <a
-                            href="/resume"
-                            className={`${bracketBtn} border-accent-soft text-accent hover:bg-accent-soft`}
-                        >
-                            [ ./resume ]
-                        </a>
-                        <div className="flex items-center gap-2 sm:ml-2">
-                            {socialProfiles.map((url) => {
-                                const { label, Icon } = profileMeta(url);
+                            A little more
+                        </h2>
+                        <div className="mt-7 whitespace-pre-line text-[1.0625rem] leading-8 text-slate-700 dark:text-slate-300 sm:text-lg">
+                            {profile?.bio ||
+                                "I like difficult infrastructure problems, clear explanations, and learning enough about a subject to take it apart. This site is a place for the work, notes, and interests I want to keep on the open web."}
+                        </div>
+                    </article>
+
+                    <aside className="self-start lg:sticky lg:top-24">
+                        <div className="border-t border-slate-300/70 dark:border-white/10">
+                            {location && (
+                                <div className="flex items-center gap-3 border-b border-slate-300/70 py-4 font-term text-xs text-slate-600 dark:border-white/10 dark:text-slate-300">
+                                    <MapPin
+                                        className="size-4 text-accent"
+                                        aria-hidden
+                                    />
+                                    {location}
+                                </div>
+                            )}
+                            <a
+                                href="/resume"
+                                className="group flex min-h-14 items-center gap-3 border-b border-slate-300/70 py-3 font-term text-sm font-semibold text-slate-700 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:border-white/10 dark:text-slate-200"
+                            >
+                                <Download className="size-4" aria-hidden />
+                                Résumé
+                                <ArrowUpRight
+                                    className="ml-auto size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                    aria-hidden
+                                />
+                            </a>
+                        </div>
+
+                        <h2 className="mt-10 font-term text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                            Elsewhere
+                        </h2>
+                        <ul className="mt-3 border-t border-slate-300/70 dark:border-white/10">
+                            {links.map((link) => {
+                                const Icon = linkIcon(link.url);
                                 return (
-                                    <a
-                                        key={url}
-                                        href={url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label={label}
-                                        title={label}
-                                        className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200/70 bg-white/60 text-slate-600 hover:border-accent-soft hover:text-accent dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 transition-colors backdrop-blur-md"
+                                    <li
+                                        key={link._key}
+                                        className="border-b border-slate-300/70 dark:border-white/10"
                                     >
-                                        <Icon className="w-4 h-4" />
-                                    </a>
+                                        <a
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group flex min-h-14 items-center gap-3 py-3 font-term text-sm font-semibold text-slate-700 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-200"
+                                        >
+                                            <Icon
+                                                className="size-4"
+                                                aria-hidden
+                                            />
+                                            {link.label}
+                                            <ArrowUpRight
+                                                className="ml-auto size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                                aria-hidden
+                                            />
+                                        </a>
+                                    </li>
                                 );
                             })}
-                        </div>
-                    </div>
+                        </ul>
+                    </aside>
                 </div>
-
-                {/* Portrait — layered accent glow behind a glass frame */}
-                <div className="relative mx-auto w-64 sm:w-72 lg:w-full max-w-[22rem]">
-                    <div
-                        aria-hidden
-                        className="absolute -inset-4 rounded-[2.5rem] bg-accent-gradient opacity-20 blur-2xl"
-                    />
-                    <div className="relative overflow-hidden rounded-[2rem] os-card-flat p-2">
-                        <Image
-                            src={portraitSrc}
-                            alt={portraitAlt}
-                            width={480}
-                            height={480}
-                            priority
-                            className="w-full h-auto rounded-[1.6rem] object-cover"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* ---- Bio prose + sticky facts rail ---- */}
-            <section className="grid gap-12 lg:gap-16 lg:grid-cols-[minmax(0,1fr)_18rem] pb-16 sm:pb-20">
-                <article aria-label="Bio">
-                    <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-white relative mb-7">
-                        <span className="absolute -left-4 top-1 bottom-1 w-1 bg-accent-gradient-vertical rounded-full hidden sm:block" />
-                        The longer version
-                    </h2>
-                    <div className="text-[1.0625rem] sm:text-lg leading-relaxed text-slate-700 dark:text-slate-300 space-y-5">
-                        {about?.body ? (
-                            <PortableText
-                                value={about.body as PortableTextBlock[]}
-                                components={portableTextComponents}
-                            />
-                        ) : (
-                            <p className="text-slate-600 dark:text-slate-400">
-                                About content coming soon.
-                            </p>
-                        )}
-                    </div>
-                </article>
-
-                <aside className="lg:sticky lg:top-28 self-start space-y-6">
-                    <div className="os-card p-6">
-                        <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-3">
-                            Currently
-                        </h3>
-                        <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 font-medium">
-                            {affiliation ? `${roleLine}` : roleLine}
-                        </p>
-                        <div className="mt-4 flex items-center gap-2 font-term text-xs text-slate-600 dark:text-slate-400">
-                            <MapPin
-                                aria-hidden
-                                className="w-3.5 h-3.5 text-accent opacity-80"
-                            />
-                            {location}
-                        </div>
-                    </div>
-
-                    <div className="os-card p-6">
-                        <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-3">
-                            Focus
-                        </h3>
-                        <div className="flex flex-wrap gap-1.5">
-                            {focus.map((topic) => (
-                                <span
-                                    key={topic}
-                                    className="rounded-pill bg-accent-soft border border-accent-soft px-2.5 py-1 text-xs font-medium text-accent"
-                                >
-                                    {topic}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </aside>
-            </section>
-
-            {/* ---- Credentials: real badge tiles ---- */}
-            {certifications.length > 0 && (
-                <section aria-label="Credentials" className="pb-16 sm:pb-20">
-                    <h2 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-white relative mb-8">
-                        <span className="absolute -left-4 top-1 bottom-1 w-1 bg-accent-gradient-vertical rounded-full hidden sm:block" />
-                        Credentials
-                    </h2>
-                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                        {certifications.map((cert) => {
-                            const badgeUrl = cert.badge
-                                ? urlForImage(cert.badge)
-                                      .width(160)
-                                      .height(160)
-                                      .fit("max")
-                                      .auto("format")
-                                      .url()
-                                : null;
-                            return (
-                                <div
-                                    key={cert._id}
-                                    className="os-card os-hover p-6 flex items-center gap-5"
-                                >
-                                    {badgeUrl && (
-                                        <Image
-                                            src={badgeUrl}
-                                            alt=""
-                                            width={80}
-                                            height={80}
-                                            className="w-20 h-20 shrink-0 object-contain"
-                                        />
-                                    )}
-                                    <div className="min-w-0">
-                                        <p className="font-display font-semibold text-slate-900 dark:text-white leading-snug">
-                                            {cert.title}
-                                        </p>
-                                        <p className="mt-1 font-term text-xs text-slate-600 dark:text-slate-400">
-                                            {cert.org}
-                                        </p>
-                                        {cert.verifyUrl && (
-                                            <a
-                                                href={cert.verifyUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="mt-2 inline-flex items-center gap-1 font-term text-xs font-medium text-accent hover:opacity-80 transition-opacity"
-                                            >
-                                                verify
-                                                <ArrowUpRight
-                                                    aria-hidden
-                                                    className="w-3 h-3"
-                                                />
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
-            )}
-
-            {/* ---- Newsletter ---- */}
-            <div className="max-w-3xl mx-auto pb-4">
-                <NewsletterSignupForm variant="inline" />
             </div>
-        </div>
-    );
-}
-
-export default function AboutPage() {
-    return (
-        <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
-            <ProfilePageJsonLd />
-            <AboutContent />
         </main>
     );
 }

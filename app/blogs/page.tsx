@@ -1,17 +1,30 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { PenLine } from "lucide-react";
 import PostRow, { POST_ROW_LIST_CLASSES } from "@/components/blogs/post-row";
-import ShowMorePosts from "@/components/blogs/show-more-posts";
 import TagChips from "@/components/blogs/tag-chips";
-import TerminalSection from "@/components/terminal/terminal-section";
+import NewsletterNotice from "@/components/newsletter/newsletter-notice";
 import { PageShell } from "@/components/page-shell";
 import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags } from "@/lib/tags";
 import { getPostSlug } from "@/components/blogs/utils";
-import NewsletterSignupForm from "@/components/newsletter/signup-form";
 import { BlogJsonLd } from "@/components/json-ld";
+import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
+
+export const metadata: Metadata = {
+    title: "Blog",
+    description: BLOG_DESCRIPTION,
+    alternates: {
+        canonical: `${siteConfig.url}/blogs`,
+    },
+    openGraph: {
+        title: `Blog | ${siteConfig.author}`,
+        description: BLOG_DESCRIPTION,
+        url: `${siteConfig.url}/blogs`,
+    },
+};
 
 /**
  * Empty state — renders when no posts exist (pre-launch, dev without
@@ -29,88 +42,108 @@ function BlogsEmpty() {
                     </Button>
                 }
             >
-                New deep-dives on cloud infrastructure, cybersecurity, and
-                homelab experiments are on the way. Check back soon.
+                Nothing here yet. When I publish something, it will appear here
+                in chronological order.
             </StatusCard>
         </section>
     );
 }
 
-async function BlogPosts() {
-    const allPosts = await getAllPosts();
-
-    if (allPosts.length === 0) {
-        return <BlogsEmpty />;
-    }
-
+function BlogPosts({
+    allPosts,
+}: {
+    allPosts: Awaited<ReturnType<typeof getAllPosts>>;
+}) {
+    const posts = allPosts.filter((post) => getPostSlug(post));
     const tags = collectTags(allPosts);
 
+    if (posts.length === 0) {
+        return (
+            <>
+                <BlogsEmpty />
+                <NewsletterNotice />
+            </>
+        );
+    }
+
     return (
-        <section aria-label="All posts">
-            {tags.length > 0 && <TagChips tags={tags} className="mb-10" />}
+        <>
+            <section aria-labelledby="all-posts-heading">
+                <header className="mb-7 flex flex-col gap-4 border-b border-slate-400/25 pb-5 dark:border-white/10 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p className="font-term text-[0.72rem] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">
+                            Newest first
+                        </p>
+                        <h2
+                            id="all-posts-heading"
+                            className="mt-2 font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+                        >
+                            All posts
+                        </h2>
+                    </div>
+                    <Link
+                        href="/blogs/archive"
+                        className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
+                    >
+                        Browse the full archive →
+                    </Link>
+                </header>
 
-            {/* One `ls` listing, newest first — featured posts keep their
-                place in time and carry a mono `★ featured` chip instead of
-                a separate card hero. ShowMorePosts caps the initial render
-                and reveals more per click without refetching. */}
-            <ShowMorePosts
-                listClassName={POST_ROW_LIST_CLASSES}
-                items={allPosts.map((post) => (
-                    <PostRow key={getPostSlug(post) || post._id} post={post} />
-                ))}
-            />
+                <div className={POST_ROW_LIST_CLASSES}>
+                    {posts.map((post) => (
+                        <PostRow
+                            key={getPostSlug(post) || post._id}
+                            post={post}
+                        />
+                    ))}
+                </div>
+            </section>
 
-            <div className="mt-8">
-                <Link
-                    href="/blogs/archive"
-                    className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                >
-                    [ ./archive --group-by year ]
-                </Link>
-            </div>
-        </section>
+            {tags.length > 0 && (
+                <section aria-labelledby="topics-heading">
+                    <p className="font-term text-[0.72rem] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">
+                        Index
+                    </p>
+                    <h2
+                        id="topics-heading"
+                        className="mt-2 font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+                    >
+                        Browse by topic
+                    </h2>
+                    <TagChips tags={tags} className="mt-6" />
+                </section>
+            )}
+
+            <NewsletterNotice />
+        </>
     );
 }
 
-export default function Blogs() {
+export default async function Blogs() {
+    const allPosts = await getAllPosts();
+
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <BlogJsonLd />
 
-            <TerminalSection
-                command="ls posts/ --sort date"
-                path="~/blogs"
-                className="w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
-                promptClassName="mb-8"
-            >
-                <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
-                    The Blog
-                </h1>
-                <p className="mt-4 max-w-2xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300 text-pretty">
-                    Technical deep-dives into cloud infrastructure,
-                    cybersecurity, and homelab experiments. All opinions are my
-                    own.
+            <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
+                <p className="font-term text-[0.72rem] font-bold uppercase tracking-[0.2em] text-accent">
+                    Personal writing
                 </p>
-                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
-                    <a
-                        href="/feed.xml"
-                        className="font-term text-sm font-bold text-accent hover:opacity-80 transition-opacity"
-                    >
-                        [ rss ]
-                    </a>
-                    <Link
-                        href="/blogs/archive"
-                        className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                    >
-                        [ ./archive ]
-                    </Link>
+                <h1 className="mt-5 max-w-4xl font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-balance text-slate-900 dark:text-white sm:text-7xl">
+                    Blog
+                </h1>
+                <div className="mt-6 max-w-3xl border-l-2 border-accent pl-5 sm:pl-7">
+                    <p className="text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
+                        Technical notes, documentaries, things I&apos;m
+                        learning, and the occasional detour. This is where I
+                        write about whatever has my attention.
+                    </p>
                 </div>
-            </TerminalSection>
+            </header>
 
-            <PageShell className="mt-14 sm:mt-16">
-                <BlogPosts />
-
-                <NewsletterSignupForm variant="inline" />
+            <PageShell className="mt-14 sm:mt-20 [&>*+*]:mt-16 sm:[&>*+*]:mt-24">
+                <BlogPosts allPosts={allPosts} />
             </PageShell>
         </main>
     );

@@ -23,29 +23,11 @@ export async function POST(req: NextRequest) {
             return new NextResponse(null, { status: 404 });
         }
 
-        const portfolioTypes = [
-            "experience",
-            "project",
-            "certification",
-            "skillCategory",
-            "about",
-            "intro",
-        ];
         const docType = body?._type;
 
         if (docType === "post") {
             const changedSlug = body?.slug?.current;
-
-            // Listing queries (getAllPosts, slug indexes) are tagged
-            // "post-list" — always invalidate so the new/edited post
-            // appears in the index.
-            revalidateTag(CACHE_TAGS.postList, { expire: 0 });
-
-            // Individual post queries are tagged "post:<slug>" — invalidate
-            // only the changed slug so other posts keep serving from cache.
-            if (changedSlug) {
-                revalidateTag(CACHE_TAGS.post(changedSlug), { expire: 0 });
-            }
+            revalidateTag(CACHE_TAGS.post, "max");
 
             // Warm after the response: warming scales with post count and
             // would otherwise push the webhook toward Sanity's delivery
@@ -71,11 +53,20 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        if (docType && portfolioTypes.includes(docType)) {
-            revalidateTag(CACHE_TAGS.portfolio, { expire: 0 });
+        if (docType === "profile") {
+            revalidateTag(CACHE_TAGS.profile, "max");
             return NextResponse.json({
                 revalidated: true,
-                message: `Revalidated tag "portfolio" (triggered by: ${docType})`,
+                message: `Revalidated tag "${CACHE_TAGS.profile}"`,
+                now: Date.now(),
+            });
+        }
+
+        if (docType === "project") {
+            revalidateTag(CACHE_TAGS.project, "max");
+            return NextResponse.json({
+                revalidated: true,
+                message: `Revalidated tag "${CACHE_TAGS.project}"`,
                 now: Date.now(),
             });
         }

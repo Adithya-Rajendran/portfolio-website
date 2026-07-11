@@ -1,5 +1,7 @@
 import Image from "next/image";
+import { PortableText } from "@portabletext/react";
 import { urlForImage } from "@/lib/sanity-image";
+import { classifyMediaEmbed } from "@/lib/media-embed";
 import type { PortableTextComponents } from "@portabletext/react";
 import CopyButton from "@/components/blogs/copy-button";
 
@@ -10,6 +12,123 @@ import CopyButton from "@/components/blogs/copy-button";
 type BodyImageMeta = {
     lqip?: string | null;
     dimensions?: { width?: number; height?: number } | null;
+};
+
+type BodyImageValue = BodyImageMeta & {
+    _key?: string;
+    asset?: { _ref?: string };
+    alt?: string;
+    caption?: string;
+};
+
+function isBodyImage(value: unknown): value is BodyImageValue {
+    if (!value || typeof value !== "object") return false;
+    const asset = (value as { asset?: unknown }).asset;
+    return (
+        !!asset &&
+        typeof asset === "object" &&
+        typeof (asset as { _ref?: unknown })._ref === "string"
+    );
+}
+
+function safeContentHref(value: unknown): string | null {
+    if (typeof value !== "string" || value.length === 0) return null;
+    if (value.startsWith("/") || value.startsWith("#")) return value;
+
+    try {
+        const url = new URL(value);
+        return ["http:", "https:", "mailto:"].includes(url.protocol)
+            ? url.href
+            : null;
+    } catch {
+        return null;
+    }
+}
+
+function BodyImage({
+    value,
+    maxWidth = 1000,
+}: {
+    value: BodyImageValue;
+    maxWidth?: number;
+}) {
+    const imageUrl = urlForImage(value)
+        .width(maxWidth)
+        .fit("max")
+        .auto("format")
+        .url();
+    const intrinsicWidth = value.dimensions?.width || maxWidth;
+    const intrinsicHeight =
+        value.dimensions?.height || Math.round(maxWidth / 2);
+    const width = Math.min(maxWidth, intrinsicWidth);
+    const height = Math.round(intrinsicHeight * (width / intrinsicWidth));
+
+    return (
+        <figure>
+            <div className="overflow-hidden os-card-flat">
+                <Image
+                    src={imageUrl}
+                    alt={value.alt || ""}
+                    width={width}
+                    height={height}
+                    className="h-auto w-full"
+                    style={{ objectFit: "scale-down" }}
+                    loading="lazy"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 1000px"
+                    {...(value.lqip
+                        ? {
+                              placeholder: "blur" as const,
+                              blurDataURL: value.lqip,
+                          }
+                        : {})}
+                />
+            </div>
+            {value.caption && (
+                <figcaption className="mt-3 text-center text-sm italic text-slate-600 dark:text-slate-400">
+                    {value.caption}
+                </figcaption>
+            )}
+        </figure>
+    );
+}
+
+const calloutBodyComponents: PortableTextComponents = {
+    block: {
+        normal: ({ children }) => (
+            <p className="my-2 leading-relaxed text-slate-700 dark:text-slate-300">
+                {children}
+            </p>
+        ),
+    },
+    marks: {
+        strong: ({ children }) => (
+            <strong className="font-semibold text-slate-900 dark:text-white">
+                {children}
+            </strong>
+        ),
+        em: ({ children }) => <em>{children}</em>,
+        code: ({ children }) => (
+            <code className="rounded bg-black/5 px-1.5 py-0.5 font-mono text-[0.875em] dark:bg-white/10">
+                {children}
+            </code>
+        ),
+        link: ({ children, value }) => {
+            const href = safeContentHref(value?.href);
+            if (!href) return <>{children}</>;
+            const isExternal = /^https?:\/\//.test(href);
+            return (
+                <a
+                    href={href}
+                    className="text-accent underline decoration-1 underline-offset-2 transition-opacity hover:opacity-80"
+                    {...(isExternal
+                        ? { target: "_blank", rel: "noopener noreferrer" }
+                        : {})}
+                >
+                    {children}
+                </a>
+            );
+        },
+    },
 };
 
 /** Hover-revealed anchor link on headings; ids come from extractHeadings. */
@@ -43,45 +162,119 @@ export function createPortableTextComponents(
     return {
         types: {
             image: ({ value }) => {
-                if (!value?.asset?._ref) return null;
-                const imageUrl = urlForImage(value)
-                    .width(1000)
-                    .fit("max")
-                    .auto("format")
-                    .url();
-                // Real intrinsic ratio (from asset->metadata in the
-                // projection) prevents layout shift; the LQIP gives a
-                // blur-up placeholder. Both fall back gracefully for
-                // cached/older query results without the join.
-                const meta = value as BodyImageMeta;
-                const intrinsicWidth = meta.dimensions?.width || 1000;
-                const intrinsicHeight = meta.dimensions?.height || 500;
-                const width = Math.min(1000, intrinsicWidth);
-                const height = Math.round(
-                    intrinsicHeight * (width / intrinsicWidth),
+                if (!isBodyImage(value)) return null;
+                return (
+                    <div className="my-10">
+                        <BodyImage value={value} />
+                    </div>
                 );
+            },
+            gallery: ({ value }) => {
+                const authoredImages: unknown[] = Array.isArray(value?.images)
+                    ? value.images
+                    : [];
+                const images = authoredImages.filter(
+                    (image): image is BodyImageValue =>
+                        isBodyImage(image) && typeof image._key === "string",
+                );
+                if (images.length === 0) return null;
+
                 return (
                     <figure className="my-10">
-                        <div className="overflow-hidden os-card-flat">
-                            <Image
-                                src={imageUrl}
-                                alt={value.alt || "Blog post image"}
-                                width={width}
-                                height={height}
-                                className="w-full h-auto"
-                                style={{ objectFit: "scale-down" }}
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {images.map((image) => (
+                                <BodyImage
+                                    key={image._key}
+                                    value={image}
+                                    maxWidth={700}
+                                />
+                            ))}
+                        </div>
+                        {value.caption && (
+                            <figcaption className="mt-4 text-center text-sm italic text-slate-600 dark:text-slate-400">
+                                {value.caption}
+                            </figcaption>
+                        )}
+                    </figure>
+                );
+            },
+            callout: ({ value }) => {
+                const body = Array.isArray(value?.body) ? value.body : [];
+                if (body.length === 0 && !value?.title) return null;
+
+                const tone =
+                    typeof value?.tone === "string" ? value.tone : "note";
+                const toneClasses =
+                    tone === "warning"
+                        ? "border-amber-500/70 bg-amber-500/8"
+                        : tone === "success" || tone === "tip"
+                          ? "border-emerald-500/70 bg-emerald-500/8"
+                          : "border-accent bg-accent-soft";
+
+                return (
+                    <aside
+                        className={`my-8 border-l-4 px-5 py-4 sm:px-6 ${toneClasses}`}
+                    >
+                        {value.title && (
+                            <p className="font-display font-semibold text-slate-900 dark:text-white">
+                                {value.title}
+                            </p>
+                        )}
+                        {body.length > 0 && (
+                            <PortableText
+                                value={body}
+                                components={calloutBodyComponents}
+                            />
+                        )}
+                    </aside>
+                );
+            },
+            mediaEmbed: ({ value }) => {
+                const media = classifyMediaEmbed(value?.url);
+                if (!media) return null;
+                const title =
+                    typeof value?.title === "string" && value.title
+                        ? value.title
+                        : `Media from ${media.hostname}`;
+
+                if (media.kind === "link") {
+                    return (
+                        <a
+                            href={media.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="my-8 block border-y border-slate-400/25 py-5 transition-colors hover:border-accent dark:border-white/10"
+                        >
+                            <span className="block font-display font-semibold text-slate-900 dark:text-white">
+                                {title}
+                            </span>
+                            <span className="mt-1 block break-all font-term text-xs text-accent">
+                                {media.hostname}
+                            </span>
+                            {value.caption && (
+                                <span className="mt-3 block text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                    {value.caption}
+                                </span>
+                            )}
+                        </a>
+                    );
+                }
+
+                return (
+                    <figure className="my-10">
+                        <div className="aspect-video overflow-hidden os-card-flat">
+                            <iframe
+                                src={media.embedUrl}
+                                title={title}
                                 loading="lazy"
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 1000px"
-                                {...(meta.lqip
-                                    ? {
-                                          placeholder: "blur" as const,
-                                          blurDataURL: meta.lqip,
-                                      }
-                                    : {})}
+                                referrerPolicy="strict-origin-when-cross-origin"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                                className="h-full w-full border-0"
                             />
                         </div>
                         {value.caption && (
-                            <figcaption className="text-center text-sm text-slate-600 dark:text-slate-400 mt-4 italic">
+                            <figcaption className="mt-4 text-center text-sm italic text-slate-600 dark:text-slate-400">
                                 {value.caption}
                             </figcaption>
                         )}
@@ -212,9 +405,9 @@ export function createPortableTextComponents(
                 </s>
             ),
             link: ({ children, value }) => {
-                const href = value?.href || "";
-                const isExternal =
-                    href.startsWith("http://") || href.startsWith("https://");
+                const href = safeContentHref(value?.href);
+                if (!href) return <>{children}</>;
+                const isExternal = /^https?:\/\//.test(href);
                 return (
                     <a
                         href={href}

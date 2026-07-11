@@ -9,10 +9,8 @@ interface TagChipsProps {
 }
 
 /**
- * Row of mono bracket-command links to each tag's archive page
- * (/blogs/tags/[tag]) — `[ kubernetes 4 ]`. The brackets are decorative
- * (aria-hidden) so assistive tech reads just the tag and count; the
- * active tag renders bold in the accent color.
+ * Compact links to each tag archive. Hashes provide familiar blog metadata
+ * without borrowing the homepage's bracket-command treatment.
  */
 export default function TagChips({ tags, active, className }: TagChipsProps) {
     if (!tags || tags.length === 0) return null;
@@ -20,7 +18,7 @@ export default function TagChips({ tags, active, className }: TagChipsProps) {
     return (
         <nav
             aria-label="Tags"
-            className={cn("flex flex-wrap gap-x-4 gap-y-2", className)}
+            className={cn("flex flex-wrap gap-2", className)}
         >
             {tags.map(({ tag, count }) => {
                 const isActive = tag === active;
@@ -30,13 +28,13 @@ export default function TagChips({ tags, active, className }: TagChipsProps) {
                         href={`/blogs/tags/${tag}`}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
-                            "font-term text-[0.8rem] whitespace-nowrap transition-colors",
+                            "inline-flex min-h-11 items-center rounded-full border px-3 font-term text-[0.78rem] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]",
                             isActive
-                                ? "font-bold text-accent"
-                                : "text-slate-600 dark:text-slate-400 hover:text-accent",
+                                ? "border-accent-soft bg-accent-soft font-bold text-accent"
+                                : "border-slate-400/25 text-slate-600 hover:border-accent-soft hover:text-accent dark:border-white/10 dark:text-slate-400",
                         )}
                     >
-                        <span aria-hidden>[ </span>
+                        <span aria-hidden># </span>
                         {tag}
                         {typeof count === "number" && (
                             <span className="tabular-nums opacity-70">
@@ -44,7 +42,6 @@ export default function TagChips({ tags, active, className }: TagChipsProps) {
                                 {count}
                             </span>
                         )}
-                        <span aria-hidden> ]</span>
                     </Link>
                 );
             })}

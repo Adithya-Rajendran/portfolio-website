@@ -23,12 +23,22 @@ function linkedParagraph(text: string, href: string): Body[number] {
     } as unknown as Body[number];
 }
 
+function contentLinkedParagraph(text: string, href: string): Body[number] {
+    return {
+        _type: "block",
+        _key: "clb",
+        style: "normal",
+        markDefs: [{ _key: "cl1", _type: "contentLink", href }],
+        children: [{ _type: "span", _key: "cls", text, marks: ["cl1"] }],
+    } as unknown as Body[number];
+}
+
 function postOf(overrides: Partial<FeedPost>): FeedPost {
     return {
         title: "A post",
         slug: "a-post",
         description: "A description",
-        date: "2026-01-15",
+        publishedAt: "2026-01-15T00:00:00.000Z",
         body: [paragraph("Hello world")] as Body,
         ...overrides,
     };
@@ -58,12 +68,18 @@ describe("renderFeedXml — channel", () => {
 
     it("uses the newest post date as lastBuildDate", () => {
         const xml = renderFeedXml([
-            postOf({ slug: "new", date: "2026-02-01" }),
-            postOf({ slug: "old", date: "2026-01-01" }),
+            postOf({
+                slug: "new",
+                publishedAt: "2026-02-01T12:30:00.000Z",
+            }),
+            postOf({
+                slug: "old",
+                publishedAt: "2026-01-01T00:00:00.000Z",
+            }),
         ]);
 
         expect(xml).toContain(
-            "<lastBuildDate>Sun, 01 Feb 2026 00:00:00 GMT</lastBuildDate>",
+            "<lastBuildDate>Sun, 01 Feb 2026 12:30:00 GMT</lastBuildDate>",
         );
     });
 });
@@ -80,11 +96,13 @@ describe("renderFeedXml — items", () => {
         );
     });
 
-    it("formats pubDate as RFC-822 from the date-only publish date", () => {
-        const xml = renderFeedXml([postOf({ date: "2026-01-15" })]);
+    it("formats pubDate as RFC-822 from the published datetime", () => {
+        const xml = renderFeedXml([
+            postOf({ publishedAt: "2026-01-15T09:45:00.000Z" }),
+        ]);
 
         expect(xml).toContain(
-            "<pubDate>Thu, 15 Jan 2026 00:00:00 GMT</pubDate>",
+            "<pubDate>Thu, 15 Jan 2026 09:45:00 GMT</pubDate>",
         );
     });
 
@@ -183,7 +201,7 @@ describe("renderFeedXml — content:encoded", () => {
     });
 
     it("omits pubDate rather than emitting 'Invalid Date' for malformed dates", () => {
-        const xml = renderFeedXml([postOf({ date: "not-a-date" })]);
+        const xml = renderFeedXml([postOf({ publishedAt: "not-a-date" })]);
 
         expect(xml).not.toContain("Invalid Date");
         expect(xml).not.toContain("<pubDate>");
@@ -206,7 +224,9 @@ describe("renderFeedXml — content:encoded", () => {
     it("absolutizes relative links against the site URL", () => {
         const xml = renderFeedXml([
             postOf({
-                body: [linkedParagraph("other post", "/blogs/other")] as Body,
+                body: [
+                    contentLinkedParagraph("other post", "/blogs/other"),
+                ] as Body,
             }),
         ]);
 
@@ -234,5 +254,44 @@ describe("renderFeedXml — content:encoded", () => {
         expect(xml).toContain("https://cdn.sanity.io/");
         expect(xml).toContain("Rack diagram");
         expect(xml).toContain("The homelab rack");
+    });
+
+    it("renders media embeds as safe links rather than executable markup", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    {
+                        _type: "mediaEmbed",
+                        _key: "m1",
+                        url: "https://www.youtube.com/watch?v=example",
+                        title: "A documentary",
+                        caption: "Worth revisiting.",
+                    },
+                ] as unknown as Body,
+            }),
+        ]);
+
+        expect(xml).toContain("https://www.youtube.com/watch?v=example");
+        expect(xml).toContain("A documentary");
+        expect(xml).not.toContain("iframe");
+        expect(xml).not.toContain("<script");
+    });
+
+    it("drops unsafe media URLs while preserving the caption", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    {
+                        _type: "mediaEmbed",
+                        _key: "m2",
+                        url: "javascript:alert(1)",
+                        caption: "A readable fallback.",
+                    },
+                ] as unknown as Body,
+            }),
+        ]);
+
+        expect(xml).not.toContain("javascript:");
+        expect(xml).toContain("A readable fallback.");
     });
 });

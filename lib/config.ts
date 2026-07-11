@@ -15,20 +15,19 @@ export const THEME_COLORS = {
  *  lib/structured-data.ts (buildBlog) and app/blogs/layout.tsx metadata;
  *  keep byte-identical across both. */
 export const BLOG_DESCRIPTION =
-    "Technical blog by Adithya Rajendran covering cybersecurity, cloud engineering, homelabs, penetration testing, and DevOps. Hands-on guides, write-ups, and insights.";
+    "Personal writing by Adithya Rajendran: technical notes, documentaries, interests, experiments, and whatever else feels worth keeping.";
 
 export const siteConfig = {
     url: "https://adithya-rajendran.com",
-    title: "Adithya Rajendran | Field Engineer & Cybersecurity Professional",
+    title: "Adithya Rajendran",
     description:
-        "Cloud Field Engineer at Canonical. Portfolio, projects, and cybersecurity blog.",
+        "The personal website of Adithya Rajendran: work, writing, interests, and whatever comes next.",
     author: "Adithya Rajendran",
     /** Default role line shown in OG images and structured data. */
     role: "Cloud Field Engineer @ Canonical",
-    /** Fallback location line (footer + /about rail) when the Sanity
-     *  about singleton doesn't provide one. */
+    /** Fallback location when the Profile singleton has no value. */
     location: "Remote · United States",
-    /** Named profiles consumed by the footer, hero, and intro CTAs.
+    /** Named profiles consumed by the footer and fallback profile views.
      *  x/youtube are slots — leave "" until the accounts exist and the
      *  footer icon + sameAs entry appear automatically when filled. */
     profiles: {
@@ -37,8 +36,7 @@ export const siteConfig = {
         x: "",
         youtube: "",
     },
-    /** Fallback identity facts for structured data when the Sanity intro
-     *  singleton doesn't provide them (also covers CI fallback builds). */
+    /** Fallback identity facts for structured data and CI builds. */
     alumniOf: "University of California, Santa Cruz",
     knowsAbout: [
         "Cloud Engineering",

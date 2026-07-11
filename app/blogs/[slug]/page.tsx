@@ -7,7 +7,7 @@ import BlogPostBody, {
 } from "@/components/blogs/blog-post-content";
 import { BlogPostJsonLd } from "@/components/json-ld";
 import { urlForImage } from "@/lib/sanity-image";
-import NewsletterSignupForm from "@/components/newsletter/signup-form";
+import NewsletterNotice from "@/components/newsletter/newsletter-notice";
 
 /**
  * Async body — fetches the full post (including body) and runs shiki
@@ -54,7 +54,7 @@ export default async function BlogPostPage({
                 <BlogPostJsonLd
                     title={meta.title || ""}
                     description={meta.description || ""}
-                    date={meta.date || ""}
+                    publishedAt={meta.publishedAt || ""}
                     slug={slug}
                     updatedAt={meta._updatedAt}
                     tags={meta.tags ?? undefined}
@@ -67,7 +67,7 @@ export default async function BlogPostPage({
 
                 {/* Width tracks the prose column. */}
                 <div className="mx-auto max-w-[45.5rem] px-6 sm:px-8 pb-20">
-                    <NewsletterSignupForm variant="inline" />
+                    <NewsletterNotice />
                 </div>
             </article>
         </main>
@@ -84,8 +84,8 @@ export async function generateMetadata({
     if (!post) {
         return;
     }
-    const sanityOgImage = post.image
-        ? urlForImage(post.image)
+    const sanityOgImage = post.cover
+        ? urlForImage(post.cover)
               .width(1200)
               .height(630)
               .fit("crop")
@@ -103,10 +103,10 @@ export async function generateMetadata({
             title: post.title,
             description: post.description,
             type: "article",
-            publishedTime: post.date,
+            publishedTime: post.publishedAt,
             authors: [siteConfig.author],
             url: `${siteConfig.url}/blogs/${slug}`,
-            // When the post has a featured image in Sanity, use it directly.
+            // When the post has a cover in Sanity, use it directly.
             // Otherwise omit images here so Next.js falls back to the
             // file-convention opengraph-image.tsx which renders the title
             // into a branded OG via next/og.

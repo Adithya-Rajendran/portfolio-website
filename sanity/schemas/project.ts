@@ -1,81 +1,158 @@
-import { defineField, defineType } from "sanity";
+import { defineArrayMember, defineField, defineType } from "sanity";
 
 export default defineType({
     name: "project",
     title: "Project",
     type: "document",
+    groups: [
+        { name: "editorial", title: "Editorial", default: true },
+        { name: "details", title: "Details" },
+        { name: "content", title: "Project Essay" },
+    ],
+    initialValue: { status: "active" },
     fields: [
         defineField({
             name: "title",
             title: "Title",
             type: "string",
+            group: "editorial",
+            validation: (Rule) => Rule.required().max(100),
+        }),
+        defineField({
+            name: "slug",
+            title: "Slug",
+            type: "slug",
+            group: "editorial",
+            options: { source: "title", maxLength: 96 },
             validation: (Rule) => Rule.required(),
         }),
         defineField({
-            name: "description",
-            title: "Description",
+            name: "summary",
+            title: "Summary",
             type: "text",
-            rows: 4,
+            rows: 3,
+            group: "editorial",
+            validation: (Rule) => Rule.required().max(300),
+        }),
+        defineField({
+            name: "status",
+            title: "Status",
+            type: "string",
+            group: "details",
+            options: {
+                list: [
+                    { title: "Active", value: "active" },
+                    { title: "Completed", value: "completed" },
+                    { title: "Paused", value: "paused" },
+                    { title: "Archived", value: "archived" },
+                ],
+                layout: "radio",
+            },
             validation: (Rule) => Rule.required(),
         }),
         defineField({
-            name: "tags",
-            title: "Tags",
-            type: "array",
-            of: [{ type: "string" }],
-            validation: (Rule) => Rule.required().min(1),
+            name: "startDate",
+            title: "Start Date",
+            type: "date",
+            group: "details",
         }),
         defineField({
-            name: "image",
-            title: "Screenshot",
+            name: "endDate",
+            title: "End Date",
+            type: "date",
+            group: "details",
+            description: "Leave empty for active work.",
+            validation: (Rule) => Rule.min(Rule.valueOfField("startDate")),
+        }),
+        defineField({
+            name: "technologies",
+            title: "Technologies",
+            type: "array",
+            group: "details",
+            of: [
+                defineArrayMember({
+                    type: "string",
+                    validation: (Rule) => Rule.required().max(80),
+                }),
+            ],
+            options: { layout: "tags" },
+            validation: (Rule) => Rule.required().min(1).unique(),
+        }),
+        defineField({
+            name: "highlights",
+            title: "Highlights",
+            type: "array",
+            group: "details",
+            of: [
+                defineArrayMember({
+                    type: "string",
+                    validation: (Rule) => Rule.required().max(300),
+                }),
+            ],
+            validation: (Rule) => Rule.required().min(1).unique(),
+        }),
+        defineField({
+            name: "cover",
+            title: "Cover Image",
             type: "image",
-            options: {
-                hotspot: true,
-            },
+            group: "editorial",
+            options: { hotspot: true },
             fields: [
                 defineField({
                     name: "alt",
                     title: "Alt Text",
                     type: "string",
+                    validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                    name: "caption",
+                    title: "Caption",
+                    type: "string",
+                    validation: (Rule) => Rule.max(220),
                 }),
             ],
-            validation: (Rule) => Rule.required(),
         }),
         defineField({
-            name: "linkTitle",
-            title: "Link Title",
-            type: "string",
-            description: 'e.g. "Source Code" or "Live Demo"',
+            name: "links",
+            title: "Links",
+            type: "array",
+            group: "details",
+            of: [defineArrayMember({ type: "externalLink" })],
+            validation: (Rule) => Rule.unique().max(6),
         }),
         defineField({
-            name: "linkUrl",
-            title: "Link URL",
-            type: "url",
-            validation: (Rule) =>
-                Rule.uri({
-                    allowRelative: true,
-                    scheme: ["http", "https"],
-                }),
-        }),
-        defineField({
-            name: "order",
-            title: "Sort Order",
-            type: "number",
-            description: "Lower numbers appear first",
-            validation: (Rule) => Rule.required(),
+            name: "body",
+            title: "Project Essay",
+            type: "contentBody",
+            group: "content",
+            validation: (Rule) => Rule.required().min(1),
         }),
     ],
     preview: {
         select: {
             title: "title",
-            media: "image",
+            summary: "summary",
+            status: "status",
+            media: "cover",
+        },
+        prepare({ title, summary, status, media }) {
+            return {
+                title,
+                subtitle: [status, summary].filter(Boolean).join(" · "),
+                media,
+            };
         },
     },
     orderings: [
         {
-            title: "Sort Order",
-            name: "orderAsc",
-            by: [{ field: "order", direction: "asc" }],
+            title: "Started, Newest",
+            name: "startDateDesc",
+            by: [{ field: "startDate", direction: "desc" }],
+        },
+        {
+            title: "Title",
+            name: "titleAsc",
+            by: [{ field: "title", direction: "asc" }],
         },
     ],
 });

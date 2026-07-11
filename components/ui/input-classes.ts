@@ -1,6 +1,6 @@
 /**
  * Shared text-input styling for glass-styled forms (contact form,
- * newsletter signup). Height is set per-use (h-10/h-12/h-44) so it's
+ * contact form). Height is set per-use (h-10/h-12/h-44) so it's
  * deliberately not part of this base.
  */
 export const inputClasses =

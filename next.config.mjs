@@ -1,9 +1,12 @@
 import { withBotId } from "botid/next/config";
 
+const isDevelopment = process.env.NODE_ENV !== "production";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     cacheComponents: true,
     reactCompiler: true,
+    allowedDevOrigins: ["127.0.0.1", "localhost"],
     env: {
         NEXT_PUBLIC_BUILD_DATE: new Date().toISOString(),
     },
@@ -42,13 +45,13 @@ const nextConfig = {
                         key: "Content-Security-Policy",
                         value: [
                             "default-src 'self'",
-                            "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
+                            `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com`,
                             "script-src-attr 'none'",
                             "style-src 'self' 'unsafe-inline'",
                             "img-src 'self' data: blob: https://cdn.sanity.io",
                             "font-src 'self' data:",
                             "connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://vitals.vercel-insights.com https://va.vercel-scripts.com",
-                            "frame-src 'self'",
+                            "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
                             "frame-ancestors 'none'",
                             "base-uri 'self'",
                             "form-action 'self'",

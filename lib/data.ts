@@ -12,11 +12,17 @@ export const links = [
         hash: "/portfolio#skills",
     },
     {
-        name: "Certs",
-        hash: "/portfolio#certs",
+        name: "Certifications",
+        hash: "/portfolio#certifications",
     },
     {
         name: "Contact",
         hash: "/portfolio#contact",
     },
 ] as const;
+
+export function portfolioLinks(showProjects: boolean) {
+    return showProjects
+        ? links
+        : links.filter((link) => link.name !== "Projects");
+}

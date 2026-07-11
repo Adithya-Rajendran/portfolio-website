@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import TerminalSection from "@/components/terminal/terminal-section";
 import { PageShell } from "@/components/page-shell";
 import Latest from "@/components/blogs/latest";
 import TagChips from "@/components/blogs/tag-chips";
@@ -22,20 +21,18 @@ async function TagPosts({ tag }: { tag: string }) {
 
     return (
         <>
-            <TerminalSection
-                command={`grep -ri "${tag}" posts/`}
-                path="~/blogs"
-                className="w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
-                promptClassName="mb-8"
-            >
-                <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
+            <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
+                <p className="font-term text-[0.72rem] font-bold uppercase tracking-[0.2em] text-accent">
+                    Blog topic
+                </p>
+                <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
                     {tag}
                 </h1>
                 <p className="mt-4 font-term text-sm text-slate-600 dark:text-slate-400">
-                    # {posts.length} post{posts.length === 1 ? "" : "s"} tagged{" "}
-                    {tag}
+                    {posts.length} post{posts.length === 1 ? "" : "s"} tagged{" "}
+                    <span className="text-accent"># {tag}</span>
                 </p>
-            </TerminalSection>
+            </header>
 
             <PageShell className="mt-14 sm:mt-16 pb-24 sm:pb-32">
                 <TagChips tags={allTags} active={tag} />
@@ -49,10 +46,10 @@ async function TagPosts({ tag }: { tag: string }) {
                 <div>
                     <Link
                         href="/blogs"
-                        aria-label="Back to all posts"
-                        className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
+                        aria-label="Back to the blog"
+                        className="text-sm text-slate-600 transition-colors hover:text-accent dark:text-slate-400"
                     >
-                        [ cd ~/blogs ]
+                        ← Back to the blog
                     </Link>
                 </div>
             </PageShell>
@@ -107,7 +104,7 @@ export async function generateMetadata({
     }
     return {
         title: `Posts tagged ${tag}`,
-        description: `Browse posts tagged "${tag}" — technical deep-dives into cloud infrastructure, cybersecurity, and homelab experiments.`,
+        description: `Browse Adithya Rajendran's posts tagged "${tag}".`,
         alternates: {
             canonical: `${siteConfig.url}/blogs/tags/${tag}`,
         },

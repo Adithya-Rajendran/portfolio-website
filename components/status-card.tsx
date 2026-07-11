@@ -2,8 +2,7 @@ import { IconPill } from "@/components/ui/icon-pill";
 
 /**
  * Centered os-card status/empty state: squircle icon, heading, body copy,
- * optional actions row. Used by the blog empty state and the newsletter
- * confirmation pages.
+ * optional actions row. Used by the Blog empty state.
  */
 export function StatusCard({
     icon,

@@ -1,22 +1,24 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import { Rss } from "lucide-react";
-import TerminalSection from "@/components/terminal/terminal-section";
+import SectionHeading from "@/components/portfolio/section-heading";
 import { useSectionInView } from "@/lib/hooks";
 import {
     sendEmailAction,
     INITIAL_CONTACT_FORM_STATE,
 } from "@/actions/sendEmail";
 import SubmitBtn from "../submit-btn";
-import { useToast } from "@/components/ui/use-toast";
 import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import { siteConfig } from "@/lib/config";
-import { FEED_PATH } from "@/lib/feed";
+
+// Keep this client component detached from lib/feed's server-only Portable
+// Text rendering dependencies.
+const FEED_PATH = "/feed.xml";
 
 const channelLinkClasses =
-    "flex items-center gap-2.5 py-3 font-term text-sm text-slate-600 dark:text-slate-400 hover:text-accent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]";
+    "flex items-center gap-2.5 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-accent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]";
 
 export default function Contact() {
     const { ref } = useSectionInView("Contact");
@@ -24,89 +26,61 @@ export default function Contact() {
         sendEmailAction,
         INITIAL_CONTACT_FORM_STATE,
     );
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (state.status === "success") {
-            toast({ description: "Email sent successfully!" });
-        }
-        // Errors render as a persistent inline alert below the form —
-        // a toast would auto-dismiss the only record of what went wrong.
-    }, [state, toast]);
-
     const hasError = state.status === "error";
 
     return (
-        <section id="contact" ref={ref} className="scroll-mt-28">
-            <TerminalSection
-                as="div"
-                command="mail adithya"
-                path="~/portfolio"
-                label="Contact"
-                promptClassName="mb-8"
-            >
-                <p className="max-w-xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-400 text-pretty">
-                    Whether it&apos;s a project, an opportunity, or just to say
-                    hi — it lands in my inbox.
-                </p>
+        <section id="contact" ref={ref} className="scroll-mt-32">
+            <SectionHeading
+                title="Contact"
+                description="Say hello. A question, an opportunity, or a simple note all reach the same inbox."
+            />
 
-                <div className="mt-8 grid gap-10 lg:gap-12 lg:grid-cols-[minmax(0,1fr)_20rem] items-start">
-                    {/* Deliberately opaque — never glass under a form. */}
-                    <div className="rounded-card border border-slate-400/30 dark:border-white/10 bg-white dark:bg-[#0b0d10] p-6 sm:p-8">
-                        <form action={formAction}>
-                            <div className="flex items-baseline gap-3 border-b border-slate-400/25 dark:border-white/10 py-3">
-                                <span className="font-term text-xs text-slate-600 dark:text-slate-400 w-14 shrink-0">
-                                    to:
-                                </span>
-                                <span
-                                    aria-hidden
-                                    className="font-term text-sm font-bold text-accent"
-                                >
-                                    Adithya Rajendran
-                                </span>
-                            </div>
+            <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-12">
+                {/* Deliberately opaque — never glass under a form. */}
+                <div className="rounded-card border border-slate-200/80 bg-white/80 p-6 dark:border-white/10 dark:bg-[#0b0d10] sm:p-8">
+                    <form action={formAction} className="space-y-5">
+                        <div>
+                            <label
+                                htmlFor="contact-sender-email"
+                                className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
+                            >
+                                Your email
+                            </label>
+                            <input
+                                id="contact-sender-email"
+                                className="min-h-12 w-full rounded-row border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-accent dark:border-white/12 dark:bg-white/[0.035] dark:text-white dark:placeholder:text-slate-500"
+                                name="senderEmail"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                maxLength={500}
+                                placeholder="you@example.com"
+                                aria-describedby={
+                                    hasError ? "contact-error" : undefined
+                                }
+                                defaultValue={
+                                    hasError
+                                        ? state.values.senderEmail
+                                        : undefined
+                                }
+                            />
+                        </div>
 
-                            <div className="flex items-baseline gap-3 border-b border-slate-400/25 dark:border-white/10 focus-within:border-[rgb(var(--c1))] transition-colors">
-                                <label
-                                    htmlFor="contact-sender-email"
-                                    className="font-term text-xs text-slate-600 dark:text-slate-400 w-14 shrink-0"
-                                >
-                                    from:
-                                </label>
-                                <input
-                                    id="contact-sender-email"
-                                    className="w-full bg-transparent font-term text-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500 border-0 outline-none focus-visible:outline-none py-3"
-                                    name="senderEmail"
-                                    type="email"
-                                    required
-                                    maxLength={500}
-                                    placeholder="you@example.com"
-                                    aria-invalid={hasError || undefined}
-                                    aria-describedby={
-                                        hasError ? "contact-error" : undefined
-                                    }
-                                    defaultValue={
-                                        hasError
-                                            ? state.values.senderEmail
-                                            : undefined
-                                    }
-                                />
-                            </div>
-
+                        <div>
                             <label
                                 htmlFor="contact-message"
-                                className="block font-term text-xs text-slate-600 dark:text-slate-400 pt-4 pb-2"
+                                className="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-200"
                             >
-                                message:
+                                Message
                             </label>
                             <textarea
                                 id="contact-message"
-                                className="w-full h-44 resize-none bg-transparent font-term text-sm leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-500 outline-none py-2 rounded-row border border-slate-400/25 dark:border-white/10 focus:border-[rgb(var(--c1))] transition-colors px-3"
+                                className="min-h-44 w-full resize-y rounded-row border border-slate-300 bg-white px-4 py-3 text-base leading-relaxed text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-accent dark:border-white/12 dark:bg-white/[0.035] dark:text-white dark:placeholder:text-slate-500"
                                 name="message"
+                                rows={7}
                                 placeholder="What's on your mind?"
                                 required
                                 maxLength={MESSAGE_MAX_LENGTH}
-                                aria-invalid={hasError || undefined}
                                 aria-describedby={
                                     hasError ? "contact-error" : undefined
                                 }
@@ -114,94 +88,85 @@ export default function Contact() {
                                     hasError ? state.values.message : undefined
                                 }
                             />
+                        </div>
 
-                            {hasError && (
-                                <p
-                                    id="contact-error"
-                                    role="alert"
-                                    className="mt-3 text-sm text-rose-700 dark:text-rose-300"
-                                >
-                                    {state.message}
-                                </p>
-                            )}
+                        {hasError && (
+                            <p
+                                id="contact-error"
+                                role="alert"
+                                className="mt-3 text-sm text-rose-700 dark:text-rose-300"
+                            >
+                                {state.message}
+                            </p>
+                        )}
 
-                            <div className="mt-5 flex items-center justify-between gap-4">
-                                <SubmitBtn />
-                            </div>
-                        </form>
-                    </div>
+                        {state.status === "success" && (
+                            <p
+                                role="status"
+                                className="mt-3 text-sm text-emerald-700 dark:text-emerald-300"
+                            >
+                                Message sent. Thanks for getting in touch.
+                            </p>
+                        )}
 
-                    <aside>
-                        <p
-                            aria-hidden
-                            className="font-term text-xs text-slate-600 dark:text-slate-400 mb-3"
-                        >
-                            # other channels
-                        </p>
-                        <h3 className="sr-only">Other channels</h3>
-                        <ul>
-                            <li className="border-t border-b border-slate-400/25 dark:border-white/10">
-                                <a
-                                    href={siteConfig.profiles.linkedin}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="LinkedIn profile"
-                                    className={channelLinkClasses}
-                                >
-                                    <FaLinkedin
-                                        aria-hidden
-                                        className="w-4 h-4"
-                                    />
-                                    linkedin
-                                    <span
-                                        aria-hidden
-                                        className="ml-auto font-term"
-                                    >
-                                        ↗
-                                    </span>
-                                </a>
-                            </li>
-                            <li className="border-b border-slate-400/25 dark:border-white/10">
-                                <a
-                                    href={siteConfig.profiles.github}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="GitHub profile"
-                                    className={channelLinkClasses}
-                                >
-                                    <FaGithub aria-hidden className="w-4 h-4" />
-                                    github
-                                    <span
-                                        aria-hidden
-                                        className="ml-auto font-term"
-                                    >
-                                        ↗
-                                    </span>
-                                </a>
-                            </li>
-                            <li className="border-b border-slate-400/25 dark:border-white/10">
-                                <a
-                                    href={FEED_PATH}
-                                    aria-label="RSS feed"
-                                    className={channelLinkClasses}
-                                >
-                                    <Rss aria-hidden className="w-4 h-4" />
-                                    rss
-                                    <span
-                                        aria-hidden
-                                        className="ml-auto font-term"
-                                    >
-                                        ↗
-                                    </span>
-                                </a>
-                            </li>
-                        </ul>
-                        <p className="mt-4 font-term text-xs text-slate-600 dark:text-slate-400">
-                            # usually replies within a day or two
-                        </p>
-                    </aside>
+                        <SubmitBtn />
+                    </form>
                 </div>
-            </TerminalSection>
+
+                <aside>
+                    <h3 className="mb-3 font-display text-lg font-semibold text-slate-900 dark:text-white">
+                        Elsewhere
+                    </h3>
+                    <ul>
+                        <li className="border-t border-b border-slate-400/25 dark:border-white/10">
+                            <a
+                                href={siteConfig.profiles.linkedin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="LinkedIn profile"
+                                className={channelLinkClasses}
+                            >
+                                <FaLinkedin aria-hidden className="w-4 h-4" />
+                                LinkedIn
+                                <span aria-hidden className="ml-auto">
+                                    ↗
+                                </span>
+                            </a>
+                        </li>
+                        <li className="border-b border-slate-400/25 dark:border-white/10">
+                            <a
+                                href={siteConfig.profiles.github}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="GitHub profile"
+                                className={channelLinkClasses}
+                            >
+                                <FaGithub aria-hidden className="w-4 h-4" />
+                                GitHub
+                                <span aria-hidden className="ml-auto">
+                                    ↗
+                                </span>
+                            </a>
+                        </li>
+                        <li className="border-b border-slate-400/25 dark:border-white/10">
+                            <a
+                                href={FEED_PATH}
+                                aria-label="RSS feed"
+                                className={channelLinkClasses}
+                            >
+                                <Rss aria-hidden className="w-4 h-4" />
+                                RSS
+                                <span aria-hidden className="ml-auto">
+                                    ↗
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                    <p className="mt-4 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                        I usually reply within a day or two.
+                    </p>
+                </aside>
+            </div>
         </section>
     );
 }

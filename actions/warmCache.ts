@@ -26,7 +26,7 @@ interface WarmResult {
 }
 
 export async function warmBlogCache(): Promise<WarmResult> {
-    // One query: the list projection already carries slug + image + tags.
+    // One query: the list projection already carries slug + cover + tags.
     const posts = await getAllPosts();
     const slugs = posts.map(getPostSlug).filter(Boolean);
     // collectTags already TAG_PATTERN-filters, so every tag here is
@@ -102,7 +102,7 @@ async function warmImages(
     // the cards use, so the URLs match by construction.
     const imageUrls: string[] = [];
     for (const post of posts) {
-        if (!post.image?.asset) continue;
+        if (!post.cover?.asset) continue;
         for (const preset of IMAGE_PRESETS) {
             try {
                 const url = getPostImageUrl(post, preset.width, preset.height);

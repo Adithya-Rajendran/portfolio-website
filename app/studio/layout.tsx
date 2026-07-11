@@ -1,6 +1,6 @@
 export const metadata = {
-    title: "Sanity Studio | Blog CMS",
-    description: "Content management studio for blog posts",
+    title: "Adithya's Site | Sanity Studio",
+    description: "Content management for Adithya's personal website",
 };
 
 export default function StudioLayout({
@@ -8,9 +8,5 @@ export default function StudioLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return (
-        <html lang="en">
-            <body style={{ margin: 0, padding: 0 }}>{children}</body>
-        </html>
-    );
+    return <div className="min-h-screen bg-white">{children}</div>;
 }

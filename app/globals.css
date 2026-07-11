@@ -60,95 +60,41 @@
     }
 }
 
+:root {
+    --site-header-height: 4rem;
+    --section-nav-height: 3rem;
+}
+
+html {
+    scroll-padding-top: calc(
+        var(--site-header-height) + var(--section-nav-height) + 0.75rem
+    );
+}
+
 /* ─────────────────────────────────────────────────────────────────────
-   THEME TOKENS — each [data-theme] block defines its accent palette as
-   RGB triplets so they compose with alpha (`rgb(var(--c1) / 0.1)`).
-   Dark-mode overrides live in the .dark[data-theme="x"] block below.
+   ACCENT TOKENS — one identity in both appearances. The c1/c2/c3 aliases
+   remain because shared components use them for categorical treatments,
+   but they intentionally resolve to the same emerald family.
    ───────────────────────────────────────────────────────────────────── */
 
-/* Default + Aurora: emerald / teal / cyan */
-:root,
-[data-theme="aurora"] {
+:root {
     --c1: 5 150 105; /* emerald-600 */
-    --c2: 13 148 136; /* teal-600 */
-    --c3: 8 145 178; /* cyan-600 */
-    /* Text-safe accents — 700-series so small accent text clears AA in
-       light mode (the 600s sit at ~3.1:1). Fills/icons keep --c1/2/3. */
+    --c2: 5 150 105;
+    --c3: 5 150 105;
+    --c1-foreground: 2 6 23; /* slate-950 */
     --c1-text: 4 120 87; /* emerald-700 */
-    --c2-text: 15 118 110; /* teal-700 */
-    --c3-text: 14 116 144; /* cyan-700 */
-    --mesh-a: 16 185 129; /* emerald-500 */
-    --mesh-b: 34 211 238; /* cyan-400 */
+    --c2-text: 4 120 87;
+    --c3-text: 4 120 87;
 }
 
-.dark,
-.dark[data-theme="aurora"] {
-    --c1: 52 211 153; /* emerald-400 */
-    --c2: 45 212 191; /* teal-400 */
-    --c3: 34 211 238; /* cyan-400 */
-}
-
-/* Surface Glass: indigo / violet / sky */
-[data-theme="glass"] {
-    --c1: 79 70 229; /* indigo-600 */
-    --c2: 124 58 237; /* violet-600 */
-    --c3: 2 132 199; /* sky-600 */
-    --c1-text: 67 56 202; /* indigo-700 */
-    --c2-text: 109 40 217; /* violet-700 */
-    --c3-text: 3 105 161; /* sky-700 */
-    --mesh-a: 99 102 241;
-    --mesh-b: 56 189 248;
-}
-
-.dark[data-theme="glass"] {
-    --c1: 129 140 248; /* indigo-400 */
-    --c2: 167 139 250; /* violet-400 */
-    --c3: 56 189 248; /* sky-400 */
-}
-
-[data-theme="sunset"] {
-    --c1: 234 88 12;
-    --c2: 225 29 72;
-    --c3: 217 119 6;
-    --c1-text: 194 65 12; /* orange-700 */
-    --c2-text: 190 18 60; /* rose-700 */
-    --c3-text: 180 83 9; /* amber-700 */
-    --mesh-a: 251 146 60;
-    --mesh-b: 251 113 133;
-}
-
-.dark[data-theme="sunset"] {
-    --c1: 251 146 60;
-    --c2: 251 113 133;
-    --c3: 251 191 36;
-}
-
-[data-theme="plum"] {
-    --c1: 192 38 211;
-    --c2: 124 58 237;
-    --c3: 219 39 119;
-    --c1-text: 162 28 175; /* fuchsia-700 */
-    --c2-text: 109 40 217; /* violet-700 */
-    --c3-text: 190 24 93; /* pink-700 */
-    --mesh-a: 217 70 239;
-    --mesh-b: 244 114 182;
-}
-
-.dark[data-theme="plum"] {
-    --c1: 232 121 249;
-    --c2: 167 139 250;
-    --c3: 244 114 182;
-}
-
-/* Dark mode brightens the base accents past AA already — text tokens
-   simply follow whatever the active theme resolved --c1/2/3 to.
-   MUST come after every [data-theme] block above: those declare the
-   light-mode 700-series text tokens at equal specificity, so this rule
-   only wins for html.dark via source order. */
 .dark {
+    --c1: 52 211 153; /* emerald-400 */
+    --c2: 52 211 153;
+    --c3: 52 211 153;
     --c1-text: var(--c1);
     --c2-text: var(--c2);
     --c3-text: var(--c3);
+    --c1-foreground: 2 6 23;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -167,6 +113,12 @@
 
 .bg-accent {
     background-color: rgb(var(--c1));
+}
+.text-on-accent {
+    color: rgb(var(--c1-foreground));
+}
+.hover\:text-on-accent:hover {
+    color: rgb(var(--c1-foreground));
 }
 .bg-accent-soft {
     background-color: rgb(var(--c1) / 0.08);
@@ -369,6 +321,21 @@
         box-shadow: 0 6px 24px -10px rgba(0, 0, 0, 0.55);
     }
 
+    /* Route-context navigation that sits below the persistent site header. */
+    .os-subnav {
+        background: rgba(244, 245, 248, 0.88);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+        -webkit-backdrop-filter: blur(18px) saturate(160%);
+        backdrop-filter: blur(18px) saturate(160%);
+        box-shadow: 0 8px 20px -18px rgba(15, 23, 42, 0.18);
+    }
+
+    .dark .os-subnav {
+        background: rgba(5, 6, 8, 0.86);
+        border-bottom-color: rgba(255, 255, 255, 0.07);
+        box-shadow: 0 8px 20px -18px rgba(0, 0, 0, 0.7);
+    }
+
     /* Hover lift — calm One UI elevation change with a whisper of accent */
     .os-hover {
         transition:
@@ -411,137 +378,44 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   LIQUID-GLASS BACKDROP — a calm One UI colour field given organic,
-   refracted "liquid glass" edges via a static SVG displacement filter
-   (#glass-liquid, defined once in components/glass-filters.tsx). Three
-   layers, all fixed and behind content:
-     1. base wash (.mesh-bg bg)  — the subtle colour, richer than canvas
-     2. liquid orbs (::before/after) — drifting blobs warped to glass
-     3. frosted grain (.bg-grain)    — the fine glass-surface texture
+   AMBIENT BACKDROP — a static, low-contrast emerald wash. It gives the
+   personal pages atmosphere without turning the canvas into a diagram or
+   suggesting a product dashboard. No layer animates.
    ───────────────────────────────────────────────────────────────────── */
 
 .mesh-bg {
     position: fixed;
     inset: 0;
     z-index: -2;
-    overflow: hidden;
     pointer-events: none;
     background:
         radial-gradient(
-            120% 80% at 12% -10%,
-            rgb(var(--mesh-a) / 0.1),
-            transparent 60%
+            72rem 44rem at 88% -8%,
+            rgb(var(--c1) / 0.11),
+            transparent 66%
         ),
         radial-gradient(
-            120% 90% at 105% 15%,
-            rgb(var(--mesh-b) / 0.1),
-            transparent 55%
-        ),
-        radial-gradient(
-            110% 110% at 50% 120%,
-            rgb(var(--c3) / 0.08),
-            transparent 60%
+            58rem 38rem at -8% 54%,
+            rgb(var(--c1) / 0.07),
+            transparent 70%
         );
 }
 
 .dark .mesh-bg {
     background:
         radial-gradient(
-            120% 80% at 12% -10%,
-            rgb(var(--mesh-a) / 0.14),
-            transparent 60%
+            72rem 44rem at 88% -8%,
+            rgb(var(--c1) / 0.105),
+            transparent 67%
         ),
         radial-gradient(
-            120% 90% at 105% 15%,
-            rgb(var(--mesh-b) / 0.12),
-            transparent 55%
-        ),
-        radial-gradient(
-            110% 110% at 50% 120%,
-            rgb(var(--c3) / 0.1),
-            transparent 60%
+            58rem 38rem at -8% 54%,
+            rgb(var(--c1) / 0.055),
+            transparent 72%
         );
 }
 
-/* Liquid orbs — blurred blobs displaced into organic glass shapes. The
-   displacement filter is static (fixed seed); motion is translate-only so
-   the filtered layer stays cached and rasterises once, not per frame. */
-.mesh-bg::before,
-.mesh-bg::after {
-    content: "";
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(42px) url(#glass-liquid);
-    opacity: 0.42;
-    will-change: transform;
-    transition: background 0.6s ease;
-}
-
-.mesh-bg::before {
-    top: -16%;
-    right: -14%;
-    width: 52rem;
-    height: 52rem;
-    background: radial-gradient(
-        circle at center,
-        rgb(var(--mesh-a) / 0.5),
-        rgb(var(--mesh-a) / 0) 60%
-    );
-    animation: drift-a 42s ease-in-out infinite alternate;
-}
-
-.mesh-bg::after {
-    bottom: -20%;
-    left: -14%;
-    width: 46rem;
-    height: 46rem;
-    background: radial-gradient(
-        circle at center,
-        rgb(var(--mesh-b) / 0.42),
-        rgb(var(--mesh-b) / 0) 60%
-    );
-    animation: drift-b 50s ease-in-out infinite alternate;
-}
-
-.dark .mesh-bg::before {
-    opacity: 0.5;
-    background: radial-gradient(
-        circle at center,
-        rgb(var(--mesh-a) / 0.32),
-        rgb(var(--mesh-a) / 0) 60%
-    );
-}
-
-.dark .mesh-bg::after {
-    opacity: 0.45;
-    background: radial-gradient(
-        circle at center,
-        rgb(var(--mesh-b) / 0.26),
-        rgb(var(--mesh-b) / 0) 60%
-    );
-}
-
-@keyframes drift-a {
-    from {
-        transform: translate(0, 0);
-    }
-    to {
-        transform: translate(-4rem, 3rem);
-    }
-}
-
-@keyframes drift-b {
-    from {
-        transform: translate(0, 0);
-    }
-    to {
-        transform: translate(3rem, -4rem);
-    }
-}
-
-/* Frosted grain — fine glass-surface texture over the colour field.
-   Static inline SVG noise (self-contained filter), soft-light blended
-   at low opacity. Replaces the old dot-grid. */
+/* Fine paper/screen texture over the colour wash. */
 .bg-grain {
     position: fixed;
     inset: 0;
@@ -570,125 +444,6 @@
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
-}
-
-@keyframes fade-in {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slide-up {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes scale-fade-in {
-    from {
-        opacity: 0;
-        transform: scale(0.94);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.animate-fade-in {
-    opacity: 0;
-    animation: fade-in 0.6s ease-out forwards;
-}
-
-.animate-slide-up {
-    opacity: 0;
-    animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-scale-fade-in {
-    opacity: 0;
-    animation: scale-fade-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes gradient-shift {
-    0%,
-    100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-}
-
-.animate-gradient-text {
-    animation: gradient-shift 6s ease-in-out infinite;
-    will-change: background-position;
-}
-
-@keyframes pulse-dot {
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
-    }
-    50% {
-        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
-    }
-}
-
-.pulse-dot {
-    animation: pulse-dot 2.4s ease-in-out infinite;
-}
-
-@keyframes slide-down {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-100%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-}
-
-.animate-slide-down {
-    animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes header-enter {
-    from {
-        opacity: 0;
-        transform: translateY(-100px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-header-enter {
-    animation: header-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes marquee {
-    from {
-        transform: translateX(0);
-    }
-    to {
-        transform: translateX(-50%);
-    }
-}
-
-.animate-marquee {
-    animation: marquee 38s linear infinite;
-    will-change: transform;
 }
 
 .font-display {
@@ -721,45 +476,29 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   TERMINAL CHROME — typed-prompt sections (components/terminal/).
-   The prompt line is decorative (aria-hidden); each section carries a
-   real sr-only heading. Content hides ONLY while its prompt is actively
-   typing (a JS-driven state), so crawlers, no-JS visitors, and
-   prefers-reduced-motion users always see everything immediately.
+   TERMINAL CHROME — static section prompts with one optional hero flourish.
+   The body is never gated by typing, hydration, or intersection state.
    ───────────────────────────────────────────────────────────────────── */
-/* Terminal typing show: pre-hydration mask + phase reveal. */
-/* Pre-hydration mask — the flash-free core. On a fresh armed load every
-   terminal section ships its full SSR markup, but the body and the typed
-   command are hidden from the very first paint until the section adopts
-   its own phase state (data-term-phase). Because nothing ever paints
-   visible and then hides, there is no flash. Gated on `data-term-arm`,
-   which the head script sets before paint ONLY when the show will play —
-   so no-JS, reduced-motion, and post-show loads never hide anything.
-   Placed before the phase rules; the `:not([data-term-phase])` guard
-   makes these mutually exclusive with the phase rules below. */
-html[data-term-arm="1"] .term-section:not([data-term-phase]) .term-body {
-    opacity: 0;
-    transform: translateY(0.4rem);
+.term-cmd-type {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
 }
-html[data-term-arm="1"] .term-section:not([data-term-phase]) .term-cmd {
-    visibility: hidden;
+
+/* No-JS visitors get the complete command immediately. Browsers only opt
+   into the short type-on flourish when scripting is actually enabled. */
+@media (scripting: enabled) {
+    .term-cmd-type {
+        width: 0;
+        animation: term-type var(--term-duration, 420ms)
+            steps(var(--term-steps, 20), end) forwards;
+    }
 }
-[data-term-phase="typing"] .term-body {
-    opacity: 0;
-    transform: translateY(0.5rem);
-}
-[data-term-phase="done"] .term-body {
-    opacity: 1;
-    transform: translateY(0);
-    transition:
-        opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@media (prefers-reduced-motion: reduce) {
-    [data-term-phase] .term-body {
-        opacity: 1 !important;
-        transform: none !important;
-        transition: none !important;
+
+@keyframes term-type {
+    to {
+        width: var(--term-width, 20ch);
     }
 }
 
@@ -771,15 +510,37 @@ html[data-term-arm="1"] .term-section:not([data-term-phase]) .term-cmd {
     margin-left: 0.15em;
     vertical-align: text-bottom;
     background: rgb(var(--c1));
-    animation: term-blink 1.1s steps(2, start) infinite;
+}
+.term-cursor-once {
+    display: none;
+}
+@media (scripting: enabled) {
+    .term-cursor-once {
+        display: inline-block;
+        animation:
+            term-blink 0.24s steps(2, start) 2,
+            term-cursor-out 0.01ms linear 0.48s forwards;
+    }
 }
 @keyframes term-blink {
     50% {
         opacity: 0;
     }
 }
+@keyframes term-cursor-out {
+    to {
+        opacity: 0;
+    }
+}
 @media (prefers-reduced-motion: reduce) {
+    .term-cmd-type {
+        width: auto;
+        animation: none;
+    }
     .term-cursor {
         animation: none;
+    }
+    .term-cursor-once {
+        display: none;
     }
 }

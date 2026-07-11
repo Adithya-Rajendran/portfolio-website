@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { ImageResponse } from "next/og";
-import { getIntro } from "@/lib/sanity-client";
+import { getProfile } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
@@ -37,7 +37,7 @@ export function OgTemplate({
                 justifyContent: "space-between",
                 padding: "80px",
                 background:
-                    "radial-gradient(circle at 20% 0%, #10b981 0%, transparent 45%), radial-gradient(circle at 100% 100%, #22d3ee 0%, transparent 40%), #050608",
+                    "radial-gradient(circle at 18% 12%, rgba(16, 185, 129, 0.28) 0%, rgba(16, 185, 129, 0.08) 32%, transparent 62%), #090c0b",
                 color: "#ffffff",
                 fontFamily: "sans-serif",
             }}
@@ -53,7 +53,7 @@ export function OgTemplate({
                     style={{
                         width: "44px",
                         height: "2px",
-                        background: "linear-gradient(90deg, #10b981, #22d3ee)",
+                        background: "#10b981",
                     }}
                 />
                 <span
@@ -119,29 +119,27 @@ export function OgTemplate({
     );
 }
 
-interface IntroOgImageOptions {
+interface ProfileOgImageOptions {
     eyebrow: string;
     footerRight: string;
 }
 
 /**
- * Factory for the intro-style OG routes (site root and /portfolio), which
- * only differ in eyebrow and footer text. Each route file must still export
- * its own alt/size/contentType — Next.js reads those per file — so only the
- * default-export image function is shared.
+ * Factory for identity-led OG routes. The CMS supplies only the name and
+ * headline; visual composition remains code-defined alongside the site.
  */
-export function makeIntroOgImage({
+export function makeProfileOgImage({
     eyebrow,
     footerRight,
-}: IntroOgImageOptions): () => Promise<ImageResponse> {
+}: ProfileOgImageOptions): () => Promise<ImageResponse> {
     return async function Image(): Promise<ImageResponse> {
-        const intro = await getIntro();
-        const subtitle = intro?.subtitle || siteConfig.role;
+        const profile = await getProfile();
+        const subtitle = profile?.headline || siteConfig.role;
 
         return new ImageResponse(
             <OgTemplate
                 eyebrow={eyebrow}
-                title={siteConfig.author}
+                title={profile?.name || siteConfig.author}
                 subtitle={subtitle}
                 footerRight={footerRight}
             />,
@@ -149,3 +147,6 @@ export function makeIntroOgImage({
         );
     };
 }
+
+/** Kept until the route modules are renamed in the V3 integration pass. */
+export const makeIntroOgImage = makeProfileOgImage;

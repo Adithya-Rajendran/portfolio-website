@@ -1,7 +1,8 @@
-import { siteConfig } from "@/lib/config";
 import { cacheLife, cacheTag } from "next/cache";
+import { siteConfig } from "@/lib/config";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { getAllCertifications, getIntro } from "@/lib/sanity-client";
+import { getProfile, type ProfileData } from "@/lib/sanity-client";
+import { urlForImage } from "@/lib/sanity-image";
 import {
     buildBlog,
     buildBlogPosting,
@@ -10,27 +11,38 @@ import {
     type BlogPostingInput,
 } from "@/lib/structured-data";
 
-/**
- * Escape "<" so attacker-influenced strings can never close the
- * <script> tag and inject markup via dangerouslySetInnerHTML.
- */
+/** Prevent CMS strings from closing the JSON-LD script element. */
 function safeJsonLd(data: unknown): string {
     return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+function profileImageUrl(profile: ProfileData | null) {
+    if (!profile?.portrait?.asset) return undefined;
+
+    try {
+        return urlForImage(profile.portrait)
+            .width(1200)
+            .height(1200)
+            .fit("crop")
+            .auto("format")
+            .url();
+    } catch {
+        return undefined;
+    }
 }
 
 export async function PersonJsonLd() {
     "use cache";
     cacheLife("max");
-    // Portfolio publishes (intro edits) refresh this via the webhook.
-    cacheTag(CACHE_TAGS.portfolio);
+    cacheTag(CACHE_TAGS.profile);
 
-    const intro = await getIntro();
-
+    const profile = await getProfile();
     const jsonLd = {
         "@context": "https://schema.org",
-        ...buildPersonEntity({ intro }),
-        description:
-            "Cloud Field Engineer at Canonical specializing in cloud infrastructure, cybersecurity, and DevOps. AWS Certified Solutions Architect and CompTIA Security+ certified.",
+        ...buildPersonEntity({
+            profile,
+            imageUrl: profileImageUrl(profile),
+        }),
     };
 
     return (
@@ -45,10 +57,9 @@ export function WebSiteJsonLd() {
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: `${siteConfig.author} - Portfolio & Blog`,
+        name: siteConfig.author,
         url: siteConfig.url,
-        description:
-            "Personal portfolio and cybersecurity blog by Adithya Rajendran, Cloud Field Engineer at Canonical.",
+        description: siteConfig.description,
         author: {
             "@type": "Person",
             name: siteConfig.author,
@@ -63,26 +74,10 @@ export function WebSiteJsonLd() {
     );
 }
 
-export function BlogPostJsonLd({
-    title,
-    description,
-    date,
-    slug,
-    updatedAt,
-    tags,
-    wordCount,
-}: BlogPostingInput) {
+export function BlogPostJsonLd(input: BlogPostingInput) {
     const jsonLd = {
         "@context": "https://schema.org",
-        ...buildBlogPosting({
-            title,
-            description,
-            date,
-            slug,
-            updatedAt,
-            tags,
-            wordCount,
-        }),
+        ...buildBlogPosting(input),
     };
 
     return (
@@ -93,14 +88,11 @@ export function BlogPostJsonLd({
     );
 }
 
-/** Blog index (/blogs) structured data. */
 export function BlogJsonLd() {
-    const jsonLd = buildBlog();
-
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(buildBlog()) }}
         />
     );
 }
@@ -108,20 +100,15 @@ export function BlogJsonLd() {
 export async function ProfilePageJsonLd() {
     "use cache";
     cacheLife("max");
-    // Portfolio publishes refresh dateModified via the webhook.
-    cacheTag(CACHE_TAGS.portfolio);
+    cacheTag(CACHE_TAGS.profile);
 
-    const [intro, certifications] = await Promise.all([
-        getIntro(),
-        getAllCertifications(),
-    ]);
-
+    const profile = await getProfile();
     const jsonLd = {
         "@context": "https://schema.org",
         ...buildProfilePage({
-            intro,
-            certifications,
-            dateModified: new Date().toISOString().split("T")[0],
+            profile,
+            imageUrl: profileImageUrl(profile),
+            dateModified: profile?._updatedAt?.slice(0, 10) || "2024-01-01",
         }),
     };
 

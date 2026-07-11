@@ -1,12 +1,11 @@
 import "./globals.css";
+import { Suspense } from "react";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { BotIdClient } from "botid/client";
 import Footer from "@/components/footer";
-import GlassFilters from "@/components/glass-filters";
-import ThemeSelector from "@/components/theme-selector";
+import SiteFrame from "@/components/site-frame";
 import ThemeContextProvider from "@/context/theme-context";
 import { Toaster } from "@/components/ui/toaster";
-import { DEFAULT_THEME, themes } from "@/lib/themes";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { PersonJsonLd, WebSiteJsonLd } from "@/components/json-ld";
@@ -49,16 +48,17 @@ export const metadata: Metadata = {
     },
     keywords: [
         "Adithya Rajendran",
+        "Personal website",
+        "Personal blog",
         "Cloud Field Engineer",
         "Canonical",
-        "AWS Solutions Architect",
-        "CompTIA Security+",
+        "Private Cloud",
+        "Field Engineering",
         "Cybersecurity",
         "OpenStack",
         "Kubernetes",
         "DevOps",
         "Cloud Engineering",
-        "Portfolio",
     ],
     robots: {
         index: true,
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
         title: siteConfig.title,
         description: siteConfig.description,
         url: siteConfig.url,
-        siteName: "Adithya's Portfolio",
+        siteName: "Adithya Rajendran",
         locale: "en_US",
         type: "website",
     },
@@ -102,34 +102,13 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className={`!scroll-smooth dark ${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+            className={`!scroll-smooth ${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
             suppressHydrationWarning
         >
             <head>
-                {/* Read persisted accent theme from localStorage and apply
-                    it to <html> before React hydrates to prevent FOUC. */}
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: `(function(){try{var t=localStorage.getItem('accent-theme');var v=${JSON.stringify(themes.map((t) => t.id))};document.documentElement.dataset.theme=v.indexOf(t)>-1?t:'${DEFAULT_THEME}';}catch(e){document.documentElement.dataset.theme='${DEFAULT_THEME}';}})();`,
-                    }}
-                />
-                {/* Arm the terminal typing show before first paint. Once the
-                    show has played this session (`term-played`), or when the
-                    visitor prefers reduced motion, the attribute is never set,
-                    so terminal sections render fully visible with no flash. The
-                    hide-until-typed CSS keys off this attribute, so with JS
-                    disabled it is absent and all content stays visible. */}
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: `(function(){try{if(sessionStorage.getItem('term-played')!=='1'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.dataset.termArm='1';}}catch(e){}})();`,
-                    }}
-                />
-                {/* Vercel BotID — protects the contact form and newsletter
-                    server actions. Server actions POST to the page they're
-                    invoked from, and the newsletter form lives in the
-                    sitewide footer, so every page path needs the challenge
-                    header ("*" compiles to a regex wildcard in the BotID
-                    client). checkBotId() in the actions verifies it. */}
+                {/* BotID protects the contact action. Server Actions post to
+                    the page that invokes them, so every public path needs the
+                    challenge header. */}
                 <BotIdClient protect={[{ path: "/*", method: "POST" }]} />
                 {/* ProfilePageJsonLd lives on /about — its semantically
                     correct home — rather than sitewide. */}
@@ -137,27 +116,24 @@ export default function RootLayout({
                 <WebSiteJsonLd />
             </head>
             <body
-                className={`${inter.className} bg-canvas text-slate-900 relative pt-28 sm:pt-32 dark:bg-canvas-dark dark:text-slate-100 antialiased overflow-x-hidden`}
+                className={`${inter.className} min-h-screen overflow-x-hidden bg-canvas text-slate-900 antialiased dark:bg-canvas-dark dark:text-slate-100`}
             >
                 {/* Bypass block for keyboard/switch users (WCAG 2.4.1) */}
                 <a
                     href="#main-content"
-                    className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[1000] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-white"
+                    className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[1100] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent"
                 >
                     Skip to content
                 </a>
 
-                <GlassFilters />
-
-                {/* Liquid-glass backdrop: colour wash + drifting refracted
-                    orbs (.mesh-bg), then the frosted glass grain (.bg-grain) */}
+                {/* Static ambient colour wash + fine paper/screen grain. */}
                 <div className="mesh-bg" aria-hidden="true" />
                 <div className="bg-grain" aria-hidden="true" />
 
                 <ThemeContextProvider>
-                    {children}
-                    <Footer />
-                    <ThemeSelector />
+                    <Suspense fallback={children}>
+                        <SiteFrame footer={<Footer />}>{children}</SiteFrame>
+                    </Suspense>
                     <Toaster />
                 </ThemeContextProvider>
                 <SpeedInsights />

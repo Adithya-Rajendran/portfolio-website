@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
-import { getIntro } from "@/lib/sanity-client";
+import { getProfile } from "@/lib/sanity-client";
 
 export async function GET() {
-    const intro = await getIntro();
-    const resumeUrl = intro?.resumeUrl;
+    const profile = await getProfile();
+    const resumeUrl = profile?.resumeUrl;
 
-    // Only redirect to Sanity-hosted PDFs to prevent the CMS field from being
-    // weaponized into an open redirect.
-    if (resumeUrl?.startsWith("https://cdn.sanity.io/")) {
-        // Appending ?dl=<filename> to Sanity CDN URLs triggers a file download
-        return NextResponse.redirect(
-            `${resumeUrl}?dl=Adithya_Rajendran_Resume.pdf`,
-        );
+    if (resumeUrl) {
+        try {
+            const target = new URL(resumeUrl);
+            // Keep the CMS field from becoming an open redirect. Sanity's file
+            // CDN honors `dl` while retaining any asset query parameters.
+            if (
+                target.protocol === "https:" &&
+                target.hostname === "cdn.sanity.io"
+            ) {
+                target.searchParams.set("dl", "Adithya_Rajendran_Resume.pdf");
+                return NextResponse.redirect(target);
+            }
+        } catch {
+            // A malformed CMS value degrades to the same quiet 404 as no file.
+        }
     }
 
     return new NextResponse("Resume not found", { status: 404 });

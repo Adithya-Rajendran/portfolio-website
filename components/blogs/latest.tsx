@@ -13,8 +13,8 @@ interface LatestProps {
 
 /**
  * Post listing section: mono eyebrow + display title over the shared
- * `ls`-style rows (components/blogs/post-row.tsx). Used by the tag
- * pages; the blog index composes PostRow directly via ShowMorePosts.
+ * chronological rows (components/blogs/post-row.tsx). Used by tag pages; the
+ * blog index composes the same rows directly.
  */
 export default function Latest({
     posts: allPosts,

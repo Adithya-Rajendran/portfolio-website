@@ -1,49 +1,32 @@
-import Project from "./project";
-import SectionSpy from "./section-spy";
-import TerminalSection from "@/components/terminal/terminal-section";
-import type { Project as TProject } from "@/sanity.types";
+import SectionHeading from "@/components/portfolio/section-heading";
+import SectionSpy from "@/components/portfolio/section-spy";
+import type { ProjectListItem } from "@/lib/sanity-client";
+import Project from "@/components/portfolio/project";
+import { hasVisibleItems } from "@/lib/content-rules";
 
-interface ProjectsProps {
-    projects: TProject[];
-}
+export default function Projects({
+    projects,
+}: {
+    projects: ProjectListItem[];
+}) {
+    if (!hasVisibleItems(projects)) return null;
 
-export default function Projects({ projects }: ProjectsProps) {
     return (
         <SectionSpy
             section="Projects"
-            threshold={0.5}
+            threshold={0.2}
             id="projects"
-            className="scroll-mt-28"
+            className="scroll-mt-32"
         >
-            <TerminalSection
-                as="div"
-                command="ls -l projects/"
-                path="~/portfolio"
-                label="Projects"
-                promptClassName="mb-3"
-            >
-                {/* `ls -l`'s first output line — decorative terminal flavor */}
-                <p
-                    aria-hidden
-                    className="font-term text-sm text-slate-600 dark:text-slate-400 mb-8"
-                >
-                    total {projects.length}
-                </p>
-                {projects.length === 0 ? (
-                    <p className="font-term text-sm text-slate-600 dark:text-slate-400">
-                        # nothing shipped from this directory yet — new builds
-                        land here first
-                    </p>
-                ) : (
-                    <ul className="grid gap-5 sm:gap-6 md:grid-cols-2">
-                        {projects.map((project) => (
-                            <li key={project._id} className="flex">
-                                <Project {...project} />
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </TerminalSection>
+            <SectionHeading
+                title="Projects"
+                description="Selected things I have built, investigated, or kept running. Each project opens into the fuller story."
+            />
+            <div className="grid gap-5 sm:grid-cols-2">
+                {projects.map((project) => (
+                    <Project key={project._id} project={project} />
+                ))}
+            </div>
         </SectionSpy>
     );
 }

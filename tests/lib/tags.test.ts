@@ -58,24 +58,30 @@ describe("filterPostsByTag", () => {
 describe("groupPostsByYear", () => {
     it("groups by year, newest year first, preserving input order within a year", () => {
         const groups = groupPostsByYear([
-            { date: "2026-05-01" },
-            { date: "2026-01-15" },
-            { date: "2025-11-30" },
+            { publishedAt: "2026-05-01T12:00:00.000Z" },
+            { publishedAt: "2026-01-15T12:00:00.000Z" },
+            { publishedAt: "2025-11-30T12:00:00.000Z" },
         ]);
 
         expect(groups).toEqual([
             {
                 year: "2026",
-                posts: [{ date: "2026-05-01" }, { date: "2026-01-15" }],
+                posts: [
+                    { publishedAt: "2026-05-01T12:00:00.000Z" },
+                    { publishedAt: "2026-01-15T12:00:00.000Z" },
+                ],
             },
-            { year: "2025", posts: [{ date: "2025-11-30" }] },
+            {
+                year: "2025",
+                posts: [{ publishedAt: "2025-11-30T12:00:00.000Z" }],
+            },
         ]);
     });
 
     it("keeps posts with identical dates", () => {
         const groups = groupPostsByYear([
-            { date: "2026-05-01" },
-            { date: "2026-05-01" },
+            { publishedAt: "2026-05-01T12:00:00.000Z" },
+            { publishedAt: "2026-05-01T12:00:00.000Z" },
         ]);
 
         expect(groups[0].posts).toHaveLength(2);
@@ -83,9 +89,9 @@ describe("groupPostsByYear", () => {
 
     it("collects malformed or missing dates into a trailing Undated group", () => {
         const groups = groupPostsByYear([
-            { date: "not-a-date" },
-            { date: "2026-05-01" },
-            { date: undefined },
+            { publishedAt: "not-a-date" },
+            { publishedAt: "2026-05-01T12:00:00.000Z" },
+            { publishedAt: undefined },
         ]);
 
         expect(groups.map((g) => g.year)).toEqual(["2026", "Undated"]);

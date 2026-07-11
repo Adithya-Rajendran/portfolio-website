@@ -1,86 +1,45 @@
-import dynamic from "next/dynamic";
-import Intro from "@/components/portfolio/intro";
-import { PageShell } from "@/components/page-shell";
 import type { Metadata } from "next";
-import type { PortableTextBlock } from "@portabletext/react";
+import { PageShell } from "@/components/page-shell";
+import Intro from "@/components/portfolio/intro";
+import Experience from "@/components/portfolio/experience";
+import Projects from "@/components/portfolio/projects";
+import Skills from "@/components/portfolio/skills";
+import Certifications from "@/components/portfolio/certifications";
+import Contact from "@/components/portfolio/contact";
+import { getAllProjects, getProfile } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
-import {
-    getIntro,
-    getAllSkillCategories,
-    getAllCertifications,
-    getAllExperiences,
-    getAllProjects,
-} from "@/lib/sanity-client";
-
-const Skills = dynamic(() => import("@/components/portfolio/skills"));
-const Certifications = dynamic(
-    () => import("@/components/portfolio/certifications"),
-);
-const Experience = dynamic(() => import("@/components/portfolio/experience"));
-const Projects = dynamic(() => import("@/components/portfolio/projects"));
-const Contact = dynamic(() => import("@/components/portfolio/contact"));
 
 export const metadata: Metadata = {
     title: "Portfolio",
-    description:
-        "Adithya Rajendran's portfolio - Cloud Field Engineer at Canonical with experience in OpenStack, Kubernetes, AWS, and cybersecurity. View projects, certifications, and work experience.",
-    alternates: {
-        canonical: `${siteConfig.url}/portfolio`,
-    },
+    description: `Experience, projects, skills, and certifications from ${siteConfig.author}.`,
+    alternates: { canonical: `${siteConfig.url}/portfolio` },
     openGraph: {
         title: `Portfolio | ${siteConfig.author}`,
         description:
-            "Cloud Field Engineer at Canonical with experience in OpenStack, Kubernetes, AWS, and cybersecurity. View projects, certifications, and work experience.",
+            "A straightforward record of professional work and experience.",
         url: `${siteConfig.url}/portfolio`,
     },
 };
 
-async function IntroWithData() {
-    const intro = await getIntro();
+export default async function Portfolio() {
+    const [profile, projects] = await Promise.all([
+        getProfile(),
+        getAllProjects(),
+    ]);
+
+    const timeline = profile?.timeline ?? [];
+    const skills = profile?.skillGroups ?? [];
+    const credentials = profile?.credentials ?? [];
+
     return (
-        <Intro
-            body={(intro?.body ?? null) as PortableTextBlock[] | null}
-            subtitle={intro?.subtitle ?? null}
-        />
-    );
-}
+        <main id="main-content" tabIndex={-1} className="pb-20 sm:pb-28">
+            <Intro profile={profile} hasProjects={projects.length > 0} />
 
-async function SkillsWithData() {
-    const skillCategories = await getAllSkillCategories();
-    return <Skills skillCategories={skillCategories} />;
-}
-
-async function CertsWithData() {
-    const certifications = await getAllCertifications();
-    return <Certifications certifications={certifications} />;
-}
-
-async function ExperienceWithData() {
-    const experiences = await getAllExperiences();
-    return <Experience experiences={experiences} />;
-}
-
-async function ProjectsWithData() {
-    const projects = await getAllProjects();
-    return <Projects projects={projects} />;
-}
-
-export default function Portfolio() {
-    return (
-        <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
-            <IntroWithData />
-
-            <PageShell className="mt-16 sm:mt-24">
-                {/* The About prose moved to the standalone /about page —
-                    the portfolio is the work/credentials deep view. */}
-                <ExperienceWithData />
-
-                <ProjectsWithData />
-
-                <SkillsWithData />
-
-                <CertsWithData />
-
+            <PageShell className="mt-4 max-w-7xl px-5 sm:px-8 lg:px-10">
+                <Experience entries={timeline} />
+                <Projects projects={projects} />
+                <Skills groups={skills} />
+                <Certifications certifications={credentials} />
                 <Contact />
             </PageShell>
         </main>

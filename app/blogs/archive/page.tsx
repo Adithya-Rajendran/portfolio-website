@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Archive as ArchiveIcon } from "lucide-react";
-import TerminalSection from "@/components/terminal/terminal-section";
 import { PageShell } from "@/components/page-shell";
 import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
@@ -16,14 +15,14 @@ import { getAllPosts } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
-    title: "Archive",
+    title: "Blog archive",
     description:
         "Every post, searchable by title, description, or tag and grouped by year.",
     alternates: {
         canonical: `${siteConfig.url}/blogs/archive`,
     },
     openGraph: {
-        title: `Archive | ${siteConfig.author}`,
+        title: `Blog archive | ${siteConfig.author}`,
         description:
             "Every post, searchable by title, description, or tag and grouped by year.",
         url: `${siteConfig.url}/blogs/archive`,
@@ -68,9 +67,12 @@ async function ArchiveContent() {
             slug: getPostSlug(post),
             title: post.title || "",
             description: post.description || "",
-            date: post.date || "",
+            publishedAt: post.publishedAt || "",
             tags: post.tags ?? [],
-            readingMinutes: readingTimeFromWordCount(post.wordCount),
+            readingMinutes:
+                post.wordCount > 0
+                    ? readingTimeFromWordCount(post.wordCount)
+                    : null,
         }));
 
     return (
@@ -84,29 +86,25 @@ async function ArchiveContent() {
 export default async function ArchivePage() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
-            <TerminalSection
-                command="ls posts/ --group-by year"
-                path="~/blogs"
-                className="w-full max-w-6xl mx-auto px-6 sm:px-8 pt-2 sm:pt-6"
-                promptClassName="mb-8"
-            >
-                <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
-                    Every post
+            <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
+                <p className="font-term text-[0.72rem] font-bold uppercase tracking-[0.2em] text-accent">
+                    Blog / Archive
+                </p>
+                <h1 className="mt-5 max-w-4xl font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
+                    The complete notebook
                 </h1>
-                <p className="mt-4 max-w-2xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300 text-pretty">
+                <p className="mt-5 max-w-2xl text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
                     Search by title, description, or tag, or browse everything
                     I&apos;ve written, grouped by year.
                 </p>
-                <div className="mt-6">
-                    <Link
-                        href="/blogs"
-                        aria-label="Back to all posts"
-                        className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                    >
-                        [ cd ~/blogs ]
-                    </Link>
-                </div>
-            </TerminalSection>
+                <Link
+                    href="/blogs"
+                    aria-label="Back to the blog"
+                    className="mt-6 inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
+                >
+                    ← Back to the blog
+                </Link>
+            </header>
 
             <PageShell className="mt-14 sm:mt-16">
                 <div>

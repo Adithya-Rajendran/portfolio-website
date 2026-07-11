@@ -10,9 +10,9 @@ export default function SubmitBtn() {
             type="submit"
             disabled={pending}
             aria-busy={pending}
-            className="font-term text-sm font-bold rounded-row px-4 py-2.5 border border-accent bg-accent-soft text-accent transition-colors hover:bg-accent hover:text-white dark:hover:text-slate-900 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
+            className="min-h-11 rounded-full border border-accent bg-accent px-5 text-sm font-bold text-on-accent transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
         >
-            {pending ? "[ sending… ]" : "[ send ]"}
+            {pending ? "Sending…" : "Send message"}
         </button>
     );
 }

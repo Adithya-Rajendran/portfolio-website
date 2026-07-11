@@ -1,13 +1,20 @@
 import { revalidateTag } from "next/cache";
 import { after, connection, type NextRequest, NextResponse } from "next/server";
+import { defineQuery } from "next-sanity";
 import { warmBlogCache } from "@/actions/warmCache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { client, isSanityConfigured } from "@/lib/sanity-config";
 
+const DUE_POSTS_QUERY = defineQuery(`*[
+    _type == "post" &&
+    defined(publishedAt) &&
+    publishedAt == $today
+].slug.current`);
+
 /**
  * Vercel Cron target (vercel.json) — runs daily just after the UTC date
- * flips. Published visibility is gated by `date <= $today`, so a
- * future-dated post becomes eligible at midnight UTC but stays invisible
+ * flips. Published visibility is date-based (`publishedAt <= $today`), so a
+ * future-dated post becomes eligible on its UTC date but stays invisible
  * until something invalidates the cached queries. This route is that
  * something: it looks for posts whose publish date is today and, when
  * found, revalidates the same tags the Sanity webhook would.
@@ -35,24 +42,20 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        // Live read, deliberately NOT sanityFetch: the whole point is to
-        // see past the data cache. $today is a fresh param value each day,
-        // so Sanity's CDN can't serve yesterday's result either.
-        const today = new Date().toISOString().split("T")[0];
-        const dueSlugs = await client.fetch<string[]>(
-            `*[_type == "post" && date == $today].slug.current`,
-            { today },
-        );
+        // This deliberately bypasses sanityFetch so the scheduled request
+        // can see the new publication date before invalidating the cache.
+        const now = new Date();
+        const today = now.toISOString().slice(0, 10);
+        const dueSlugs = await client.fetch<string[]>(DUE_POSTS_QUERY, {
+            today,
+        });
         const slugs = (dueSlugs ?? []).filter(Boolean);
 
         if (slugs.length === 0) {
             return NextResponse.json({ revalidated: false, due: 0 });
         }
 
-        revalidateTag(CACHE_TAGS.postList, { expire: 0 });
-        for (const slug of slugs) {
-            revalidateTag(CACHE_TAGS.post(slug), { expire: 0 });
-        }
+        revalidateTag(CACHE_TAGS.post, "max");
 
         // Same shape as the revalidate webhook: warm after the response
         // so a slow warm can't fail the cron invocation.

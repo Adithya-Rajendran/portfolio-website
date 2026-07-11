@@ -4,14 +4,13 @@ import { getRecentPostsWithBody } from "@/lib/sanity-client";
 import { renderFeedXml } from "@/lib/feed";
 
 /**
- * RSS feed. The XML is built inside a cached scope tagged post-list
- * (mirrors app/sitemap.ts), so publishing or editing any post through
- * the Sanity webhook refreshes the feed.
+ * RSS stays full-content and cacheable; the post tag is the same compact
+ * taxonomy used by the Sanity revalidation webhook.
  */
 async function getFeedXml(): Promise<string> {
     "use cache";
     cacheLife("max");
-    cacheTag(CACHE_TAGS.postList);
+    cacheTag(CACHE_TAGS.post);
     const posts = await getRecentPostsWithBody();
     return renderFeedXml(posts);
 }

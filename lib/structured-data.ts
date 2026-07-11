@@ -1,39 +1,37 @@
 /**
- * Pure schema.org builders for structured data (JSON-LD). No React, no
- * "use cache" — components/json-ld.tsx fetches Sanity content and wraps
- * these return values in <script> tags; tests/lib/structured-data.test.ts
- * exercises the fallback/override logic directly.
- *
- * Every builder falls back to lib/config.ts (siteConfig / socialProfiles)
- * whenever the Sanity intro singleton doesn't provide a field, so the
- * site keeps rendering correct structured data before content is ever
- * entered in the studio.
+ * Pure schema.org builders for the site's JSON-LD. Fetching and script-tag
+ * escaping live in components/json-ld.tsx so these functions stay easy to
+ * exercise without React or a Sanity connection.
  */
 import { BLOG_DESCRIPTION, siteConfig, socialProfiles } from "@/lib/config";
-import type { IntroData } from "@/lib/sanity-client";
-import type { Certification } from "@/sanity.types";
+import type {
+    CredentialListItem,
+    ProfileData,
+    TimelineEntry,
+} from "@/lib/sanity-client";
 
-/** Shared input for the two Person-shaped builders. */
 export interface PersonEntityInput {
-    intro: IntroData | null;
-    certifications?: Certification[];
+    profile: ProfileData | null;
+    imageUrl?: string;
 }
 
-type EducationEntry = { name?: string; url?: string };
+function currentWork(timeline?: TimelineEntry[] | null) {
+    return (timeline ?? []).find(
+        (entry) => entry.kind === "work" && !entry.endDate,
+    );
+}
 
-/**
- * intro.education → CollegeOrUniversity entries. Falls back to
- * siteConfig.alumniOf when Sanity has no (valid) entries yet.
- */
-function buildAlumniOf(education?: EducationEntry[]) {
-    const entries = (education ?? [])
-        .filter((entry): entry is EducationEntry & { name: string } =>
-            Boolean(entry.name),
-        )
+function splitHeadline(headline: string): [string, string | undefined] {
+    const match = headline.match(/^(.+?)\s+(?:@|at)\s+(.+)$/i);
+    return match ? [match[1].trim(), match[2].trim()] : [headline, undefined];
+}
+
+function buildAlumniOf(profile: ProfileData | null) {
+    const entries = (profile?.timeline ?? [])
+        .filter((entry) => entry.kind === "education" && entry.organization)
         .map((entry) => ({
             "@type": "CollegeOrUniversity",
-            name: entry.name,
-            ...(entry.url ? { url: entry.url } : {}),
+            name: entry.organization,
         }));
 
     if (entries.length > 0) return entries;
@@ -41,107 +39,95 @@ function buildAlumniOf(education?: EducationEntry[]) {
     return [{ "@type": "CollegeOrUniversity", name: siteConfig.alumniOf }];
 }
 
-/** Today's two hardcoded certifications — served until Sanity has content. */
-const FALLBACK_CREDENTIALS = [
-    {
-        "@type": "EducationalOccupationalCredential",
-        name: "AWS Certified Solutions Architect",
-        credentialCategory: "certification",
-        recognizedBy: { "@type": "Organization", name: "Amazon Web Services" },
-    },
-    {
-        "@type": "EducationalOccupationalCredential",
-        name: "CompTIA Security+",
-        credentialCategory: "certification",
-        recognizedBy: { "@type": "Organization", name: "CompTIA" },
-    },
-];
-
-/** Certification[] → EducationalOccupationalCredential entries. */
-function buildHasCredential(certifications?: Certification[]) {
-    const certs = (certifications ?? []).filter((cert) => cert.title);
-    if (certs.length === 0) return FALLBACK_CREDENTIALS;
-
-    return certs.map((cert) => ({
-        "@type": "EducationalOccupationalCredential",
-        name: cert.title,
-        credentialCategory: "certification",
-        recognizedBy: { "@type": "Organization", name: cert.org },
-    }));
+function buildKnowsAbout(profile: ProfileData | null) {
+    const skills = (profile?.skillGroups ?? []).flatMap(
+        (group) => group.skills ?? [],
+    );
+    const uniqueSkills = [...new Set(skills.filter(Boolean))];
+    return uniqueSkills.length > 0 ? uniqueSkills : siteConfig.knowsAbout;
 }
 
-/**
- * Shared schema.org Person fields used by PersonJsonLd and
- * ProfilePageJsonLd's mainEntity.
- *
- * - roleLine is `intro.role` when Sanity has it, else siteConfig.role;
- *   both are "<jobTitle> @ <employer>" strings, split for jobTitle/org.
- * - Affiliation prefers intro.affiliation: "work" → worksFor, "school" →
- *   memberOf. With no affiliation, falls back to the org parsed out of
- *   roleLine as worksFor (name only) — today's pre-Sanity behavior.
- * - alumniOf/knowsAbout/sameAs fall back to lib/config.ts.
- */
-export function buildPersonEntity(input: PersonEntityInput) {
-    const { intro } = input;
-    const roleLine = intro?.role || siteConfig.role;
-    const [jobTitle, roleOrg] = roleLine.split(" @ ");
+function buildSameAs(profile: ProfileData | null) {
+    const profileUrls = (profile?.socialLinks ?? [])
+        .map((link) => link.url)
+        .filter(Boolean);
+    return profileUrls.length > 0 ? [...new Set(profileUrls)] : socialProfiles;
+}
 
-    const affiliation = intro?.affiliation;
-    let worksFor: Record<string, unknown> | undefined;
-    let memberOf: Record<string, unknown> | undefined;
+function buildHasCredential(credentials?: CredentialListItem[] | null) {
+    return (credentials ?? [])
+        .filter((credential) => credential.title && credential.issuer)
+        .map((credential) => ({
+            "@type": "EducationalOccupationalCredential",
+            name: credential.title,
+            credentialCategory: "certification",
+            recognizedBy: {
+                "@type": "Organization",
+                name: credential.issuer,
+            },
+            ...(credential.issuedOn ? { validFrom: credential.issuedOn } : {}),
+            ...(!credential.lifetime && credential.expiresOn
+                ? { validUntil: credential.expiresOn }
+                : {}),
+            ...(credential.credentialId
+                ? { identifier: credential.credentialId }
+                : {}),
+            ...(credential.verificationUrl
+                ? { url: credential.verificationUrl }
+                : {}),
+        }));
+}
 
-    if (affiliation?.name) {
-        const org = {
-            "@type":
-                affiliation.kind === "school"
-                    ? "EducationalOrganization"
-                    : "Organization",
-            name: affiliation.name,
-            ...(affiliation.url ? { url: affiliation.url } : {}),
-        };
-        if (affiliation.kind === "school") {
-            memberOf = org;
-        } else {
-            worksFor = org;
-        }
-    } else if (roleOrg) {
-        worksFor = { "@type": "Organization", name: roleOrg };
-    }
+export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
+    const activeWork = currentWork(profile?.timeline);
+    const [headlineTitle, headlineOrganization] = splitHeadline(
+        profile?.headline || siteConfig.role,
+    );
+    const organization = activeWork?.organization || headlineOrganization;
 
     return {
         "@type": "Person",
-        name: siteConfig.author,
+        name: profile?.name || siteConfig.author,
         alternateName: "Adithya",
         url: siteConfig.url,
-        image: `${siteConfig.url}/hero.webp`,
-        jobTitle,
-        ...(worksFor ? { worksFor } : {}),
-        ...(memberOf ? { memberOf } : {}),
-        alumniOf: buildAlumniOf(intro?.education),
-        knowsAbout:
-            intro?.knowsAbout && intro.knowsAbout.length > 0
-                ? intro.knowsAbout
-                : siteConfig.knowsAbout,
-        sameAs: socialProfiles,
+        image: imageUrl || `${siteConfig.url}/hero.webp`,
+        jobTitle: activeWork?.title || headlineTitle,
+        description:
+            profile?.introduction || profile?.bio || siteConfig.description,
+        ...(organization
+            ? {
+                  worksFor: {
+                      "@type": "Organization",
+                      name: organization,
+                  },
+              }
+            : {}),
+        ...(profile?.location
+            ? {
+                  homeLocation: {
+                      "@type": "Place",
+                      name: profile.location,
+                  },
+              }
+            : {}),
+        alumniOf: buildAlumniOf(profile),
+        knowsAbout: buildKnowsAbout(profile),
+        sameAs: buildSameAs(profile),
     };
 }
 
-/**
- * Today's ProfilePage shape, with hasCredential now derived from the
- * certifications list instead of hardcoded. dateModified is caller-supplied
- * (usually `new Date().toISOString().split("T")[0]` computed inside the
- * cached scope of ProfilePageJsonLd) so this builder stays pure.
- */
 export function buildProfilePage(
     input: PersonEntityInput & { dateModified: string },
 ) {
+    const credentials = buildHasCredential(input.profile?.credentials);
+
     return {
         "@type": "ProfilePage",
         dateCreated: "2024-01-01",
         dateModified: input.dateModified,
         mainEntity: {
             ...buildPersonEntity(input),
-            hasCredential: buildHasCredential(input.certifications),
+            ...(credentials.length > 0 ? { hasCredential: credentials } : {}),
         },
     };
 }
@@ -149,26 +135,27 @@ export function buildProfilePage(
 export interface BlogPostingInput {
     title: string;
     description: string;
-    date: string;
+    publishedAt: string;
     slug: string;
     updatedAt?: string;
     tags?: string[];
     wordCount?: number;
 }
 
-/**
- * Today's BlogPosting shape, plus url/dateModified/keywords/wordCount
- * when getPostMeta's richer PostMeta fields are available.
- */
-export function buildBlogPosting(input: BlogPostingInput) {
-    const { title, description, date, slug, updatedAt, tags, wordCount } =
-        input;
-
+export function buildBlogPosting({
+    title,
+    description,
+    publishedAt,
+    slug,
+    updatedAt,
+    tags,
+    wordCount,
+}: BlogPostingInput) {
     return {
         "@type": "BlogPosting",
         headline: title,
         description,
-        datePublished: date,
+        datePublished: publishedAt,
         url: `${siteConfig.url}/blogs/${slug}`,
         image: `${siteConfig.url}/blogs/${slug}/opengraph-image`,
         author: {
@@ -192,8 +179,6 @@ export function buildBlogPosting(input: BlogPostingInput) {
     };
 }
 
-/** Blog index structured data. Includes its own "@context" since
- *  BlogJsonLd renders it directly (no other fields get spread in). */
 export function buildBlog() {
     return {
         "@context": "https://schema.org",

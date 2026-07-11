@@ -1,17 +1,29 @@
+import callout from "./objects/callout";
+import contentBody from "./objects/contentBody";
+import contentLink from "./objects/contentLink";
+import credential from "./objects/credential";
+import curiosity from "./objects/curiosity";
+import externalLink from "./objects/externalLink";
+import gallery from "./objects/gallery";
+import mediaEmbed from "./objects/mediaEmbed";
+import skillGroup from "./objects/skillGroup";
+import timelineEntry from "./objects/timelineEntry";
 import post from "./post";
-import experience from "./experience";
+import profile from "./profile";
 import project from "./project";
-import certification from "./certification";
-import skillCategory from "./skillCategory";
-import about from "./about";
-import intro from "./intro";
 
 export const schemaTypes = [
+    profile,
     post,
-    experience,
     project,
-    certification,
-    skillCategory,
-    about,
-    intro,
+    contentBody,
+    contentLink,
+    externalLink,
+    curiosity,
+    timelineEntry,
+    skillGroup,
+    credential,
+    callout,
+    gallery,
+    mediaEmbed,
 ];
