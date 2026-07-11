@@ -62,7 +62,7 @@ export default function Contact() {
                                     aria-hidden
                                     className="font-term text-sm font-bold text-accent"
                                 >
-                                    adithya@homelab
+                                    Adithya Rajendran
                                 </span>
                             </div>
 

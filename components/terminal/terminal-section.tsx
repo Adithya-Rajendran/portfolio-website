@@ -4,14 +4,14 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useInView } from "react-intersection-observer";
 import { cn } from "@/lib/utils";
 
-export const TERM_USER = "adithya@homelab";
+export const TERM_USER = "adithya@prod";
 
 /**
  * Static prompt line — the non-animated building block. Decorative
  * (`aria-hidden`): every section pairs it with a real sr-only heading.
  * The typed command sits in its own `.term-cmd` span so the pre-hydration
  * mask (app/globals.css) can hide just the command text, leaving the
- * `adithya@homelab:~$` prompt itself untouched.
+ * `adithya@prod:~$` prompt itself untouched.
  */
 export function PromptLine({
     command,
