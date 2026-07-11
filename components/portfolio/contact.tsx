@@ -50,7 +50,7 @@ export default function Contact() {
                     <form action={formAction} className="flex flex-col gap-3">
                         <label
                             htmlFor="contact-sender-email"
-                            className="font-term text-xs text-slate-500 dark:text-slate-400"
+                            className="font-term text-xs text-slate-600 dark:text-slate-400"
                         >
                             from:
                         </label>
@@ -72,7 +72,7 @@ export default function Contact() {
                         />
                         <label
                             htmlFor="contact-message"
-                            className="mt-1 font-term text-xs text-slate-500 dark:text-slate-400"
+                            className="mt-1 font-term text-xs text-slate-600 dark:text-slate-400"
                         >
                             message:
                         </label>

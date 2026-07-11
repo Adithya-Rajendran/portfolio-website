@@ -81,7 +81,7 @@ export function createPortableTextComponents(
                             />
                         </div>
                         {value.caption && (
-                            <figcaption className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4 italic">
+                            <figcaption className="text-center text-sm text-slate-600 dark:text-slate-400 mt-4 italic">
                                 {value.caption}
                             </figcaption>
                         )}
@@ -99,7 +99,7 @@ export function createPortableTextComponents(
                                 {value.language || "code"}
                             </span>
                             {value.filename && (
-                                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">
+                                <span className="text-xs text-slate-600 dark:text-slate-400 font-mono truncate">
                                     {value.filename}
                                 </span>
                             )}
@@ -207,7 +207,9 @@ export function createPortableTextComponents(
                 <u className="underline decoration-2">{children}</u>
             ),
             "strike-through": ({ children }) => (
-                <s className="line-through text-slate-500">{children}</s>
+                <s className="line-through text-slate-600 dark:text-slate-400">
+                    {children}
+                </s>
             ),
             link: ({ children, value }) => {
                 const href = value?.href || "";

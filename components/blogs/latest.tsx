@@ -26,7 +26,7 @@ export default function Latest({
     return (
         <section>
             <header className="mb-8">
-                <p className="font-term text-[0.7rem] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <p className="font-term text-[0.7rem] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">
                     {eyebrow}
                 </p>
                 <h2 className="mt-2 font-display text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">

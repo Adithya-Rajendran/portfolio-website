@@ -38,7 +38,7 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
             <div className="relative max-w-3xl mx-auto px-6 sm:px-8">
                 {/* Meta info — chrome goes mono: ISO date, byline, tags */}
                 <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-6">
-                    <div className="flex items-center gap-2 font-term text-[0.8rem] text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-2 font-term text-[0.8rem] text-slate-600 dark:text-slate-400">
                         <CalendarDays
                             aria-hidden
                             className="w-4 h-4 text-accent"
@@ -65,7 +65,7 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
                                 <Link
                                     key={tag}
                                     href={`/blogs/tags/${tag}`}
-                                    className="font-term text-[0.8rem] whitespace-nowrap text-slate-500 dark:text-slate-400 hover:text-accent transition-colors"
+                                    className="font-term text-[0.8rem] whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-accent transition-colors"
                                 >
                                     <span aria-hidden>[ </span>
                                     {tag}

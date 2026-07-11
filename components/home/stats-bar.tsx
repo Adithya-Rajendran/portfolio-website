@@ -79,7 +79,7 @@ export default function StatsBar({
                         <span className="font-term text-xl sm:text-2xl font-bold text-accent">
                             {value}
                         </span>
-                        <span className="font-term text-xs sm:text-[0.85rem] text-slate-500 dark:text-slate-400">
+                        <span className="font-term text-xs sm:text-[0.85rem] text-slate-600 dark:text-slate-400">
                             {label}
                         </span>
                     </div>

@@ -134,7 +134,7 @@ export default function NewsletterSignupForm({
                 every two weeks. Free — no spam, unsubscribe anytime.
             </p>
             <div aria-live="polite">{form}</div>
-            <p className="mt-3 font-term text-[0.7rem] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+            <p className="mt-3 font-term text-[0.7rem] uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400">
                 prefer feeds?{" "}
                 <a
                     href="/feed.xml"

@@ -22,7 +22,7 @@ export default function NotFound() {
                     bash: cd: /wherever-you-were-going: No such file or
                     directory
                 </p>
-                <p className="mt-2 font-term text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-2 font-term text-sm text-slate-600 dark:text-slate-400">
                     # exit 404 — this page doesn&apos;t exist or has moved.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
@@ -34,13 +34,13 @@ export default function NotFound() {
                     </Link>
                     <Link
                         href="/blogs"
-                        className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                        className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                     >
                         [ ./blog ]
                     </Link>
                     <Link
                         href="/portfolio"
-                        className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                        className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                     >
                         [ ./portfolio ]
                     </Link>

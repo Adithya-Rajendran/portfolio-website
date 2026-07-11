@@ -73,7 +73,7 @@ export default function ThemeSelector() {
                         className="mx-auto mb-4 h-1 w-9 rounded-full bg-slate-300/80 dark:bg-white/15"
                     />
 
-                    <p className="px-1 mb-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    <p className="px-1 mb-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">
                         Appearance
                     </p>
                     <div
@@ -99,7 +99,7 @@ export default function ThemeSelector() {
                         />
                     </div>
 
-                    <p className="px-1 mb-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    <p className="px-1 mb-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">
                         Accent
                     </p>
                     <ul
@@ -122,7 +122,7 @@ export default function ThemeSelector() {
                                             <span className="block text-sm font-medium text-slate-900 dark:text-slate-100">
                                                 {t.label}
                                             </span>
-                                            <span className="block text-xs text-slate-500 dark:text-slate-400 truncate">
+                                            <span className="block text-xs text-slate-600 dark:text-slate-400 truncate">
                                                 {t.description}
                                             </span>
                                         </span>

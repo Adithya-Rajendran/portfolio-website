@@ -38,7 +38,7 @@ function ToolItems() {
             {tools.map(({ Icon, label }) => (
                 <div
                     key={label}
-                    className="flex items-center gap-2.5 px-6 text-slate-500 dark:text-slate-400"
+                    className="flex items-center gap-2.5 px-6 text-slate-600 dark:text-slate-400"
                 >
                     <Icon className="w-6 h-6" aria-hidden />
                     <span className="font-term text-sm font-medium">
@@ -74,7 +74,7 @@ export default function ToolsMarquee() {
                 className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-canvas to-transparent dark:from-canvas-dark"
             />
 
-            <p className="text-center font-term text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mb-5">
+            <p className="text-center font-term text-[11px] font-bold uppercase tracking-[0.22em] text-slate-600 dark:text-slate-400 mb-5">
                 ~/toolbelt
             </p>
 

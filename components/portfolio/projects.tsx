@@ -25,12 +25,12 @@ export default function Projects({ projects }: ProjectsProps) {
                 {/* `ls -l`'s first output line — decorative terminal flavor */}
                 <p
                     aria-hidden
-                    className="font-term text-sm text-slate-500 dark:text-slate-400 mb-8"
+                    className="font-term text-sm text-slate-600 dark:text-slate-400 mb-8"
                 >
                     total {projects.length}
                 </p>
                 {projects.length === 0 ? (
-                    <p className="font-term text-sm text-slate-500 dark:text-slate-400">
+                    <p className="font-term text-sm text-slate-600 dark:text-slate-400">
                         # nothing shipped from this directory yet — new builds
                         land here first
                     </p>

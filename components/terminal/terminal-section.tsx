@@ -34,7 +34,7 @@ export function PromptLine({
         <p
             aria-hidden="true"
             className={cn(
-                "font-term text-sm text-slate-500 dark:text-slate-400",
+                "font-term text-sm text-slate-600 dark:text-slate-400",
                 className,
             )}
         >

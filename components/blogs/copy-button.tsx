@@ -40,7 +40,7 @@ export default function CopyButton({ code }: { code: string }) {
             type="button"
             onClick={copy}
             aria-label="Copy code to clipboard"
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-accent hover:border-accent-soft transition-colors shrink-0"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 dark:border-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:text-accent hover:border-accent-soft transition-colors shrink-0"
         >
             {status === "copied" ? (
                 <Check aria-hidden className="w-3 h-3 text-accent" />

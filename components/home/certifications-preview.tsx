@@ -50,7 +50,7 @@ export default function CertificationsPreview({
                             <span className="flex-1 min-w-0 font-term text-sm sm:text-[0.95rem] font-bold text-slate-900 dark:text-white leading-snug">
                                 {cert.title}
                             </span>
-                            <span className="hidden sm:inline font-term text-[0.8rem] text-slate-500 dark:text-slate-400">
+                            <span className="hidden sm:inline font-term text-[0.8rem] text-slate-600 dark:text-slate-400">
                                 {cert.org}
                             </span>
                             {cert.verifyUrl && (

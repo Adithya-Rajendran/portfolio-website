@@ -66,13 +66,13 @@ export default function Certifications({
                                         {cert.title}
                                     </span>
                                     {cert.org && (
-                                        <span className="block mt-0.5 font-term text-[0.75rem] text-slate-500 dark:text-slate-400">
+                                        <span className="block mt-0.5 font-term text-[0.75rem] text-slate-600 dark:text-slate-400">
                                             {cert.org}
                                         </span>
                                     )}
                                 </span>
                                 {dateRange && (
-                                    <span className="hidden sm:inline font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    <span className="hidden sm:inline font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400 whitespace-nowrap">
                                         {dateRange}
                                     </span>
                                 )}

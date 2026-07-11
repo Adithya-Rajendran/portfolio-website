@@ -68,7 +68,7 @@ export default function Project({
                             {tags.map((tag, index) => (
                                 <li
                                     key={index}
-                                    className="font-term text-[0.8rem] whitespace-nowrap text-slate-500 dark:text-slate-400"
+                                    className="font-term text-[0.8rem] whitespace-nowrap text-slate-600 dark:text-slate-400"
                                 >
                                     <span aria-hidden>[ </span>
                                     {tag}

@@ -20,7 +20,7 @@ export default function Header() {
     return (
         <nav
             aria-label="Main navigation"
-            className="os-nav animate-header-enter fixed top-0 left-0 right-0 z-[999] h-[3.5rem] flex items-center gap-3 sm:gap-4 px-4 sm:px-6 rounded-none border-x-0 border-t-0"
+            className="os-nav animate-header-enter fixed top-0 left-0 right-0 z-[999] h-[3.5rem] flex items-center gap-2.5 sm:gap-4 px-3 sm:px-6 rounded-none border-x-0 border-t-0"
         >
             <Link
                 href="/"
@@ -31,14 +31,14 @@ export default function Header() {
                 cd ~
             </Link>
 
-            <ul className="flex min-w-0 flex-1 items-center justify-start sm:justify-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden font-term text-[0.8rem] font-medium lowercase text-slate-600 dark:text-slate-300">
+            <ul className="flex min-w-0 flex-1 items-center justify-start sm:justify-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-sm:[mask-image:linear-gradient(to_right,black,black_calc(100%-24px),transparent)] max-sm:[-webkit-mask-image:linear-gradient(to_right,black,black_calc(100%-24px),transparent)] font-term text-[0.75rem] sm:text-[0.8rem] font-medium lowercase text-slate-600 dark:text-slate-300">
                 {links.map((link) => {
                     const isActive = activeSection === link.name;
                     return (
                         <li className="relative shrink-0" key={link.hash}>
                             <Link
                                 className={clsx(
-                                    "os-press inline-flex items-center justify-center whitespace-nowrap px-3 h-8 rounded-full transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]",
+                                    "os-press inline-flex items-center justify-center whitespace-nowrap px-2.5 sm:px-3 h-8 rounded-full transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]",
                                     isActive &&
                                         "text-accent bg-accent-soft border border-accent-soft",
                                 )}
@@ -58,7 +58,7 @@ export default function Header() {
 
             <span
                 aria-hidden
-                className="hidden sm:block whitespace-nowrap font-term text-xs text-slate-500 dark:text-slate-400"
+                className="hidden sm:block whitespace-nowrap font-term text-xs text-slate-600 dark:text-slate-400"
             >
                 ~/portfolio
             </span>

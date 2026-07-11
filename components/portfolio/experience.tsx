@@ -85,7 +85,7 @@ export default function Experience({ experiences }: ExperienceProps) {
                                     {item.title || ""}
                                 </h3>
                                 {(item.org || item.location) && (
-                                    <p className="mt-1 font-term text-[0.8rem] text-slate-500 dark:text-slate-400">
+                                    <p className="mt-1 font-term text-[0.8rem] text-slate-600 dark:text-slate-400">
                                         {[item.org, item.location]
                                             .filter(Boolean)
                                             .join(" · ")}

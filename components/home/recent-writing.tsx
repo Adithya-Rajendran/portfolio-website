@@ -27,7 +27,7 @@ export default function RecentWriting({ posts }: { posts: PostListItem[] }) {
                         href={`/blogs/${post.slug}`}
                         className="group grid gap-y-1 gap-x-8 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] items-baseline py-6 border-b border-slate-400/25 dark:border-white/10"
                     >
-                        <span className="font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400">
+                        <span className="font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400">
                             {post.date}
                         </span>
                         <span className="min-w-0">
@@ -58,7 +58,7 @@ export default function RecentWriting({ posts }: { posts: PostListItem[] }) {
                 </Link>
                 <Link
                     href="/blogs/archive"
-                    className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
+                    className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
                 >
                     [ ./archive ]
                 </Link>

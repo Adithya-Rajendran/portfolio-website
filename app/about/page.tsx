@@ -139,7 +139,7 @@ async function AboutContent() {
                                         rel="noopener noreferrer"
                                         aria-label={label}
                                         title={label}
-                                        className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200/70 bg-white/60 text-slate-500 hover:border-accent-soft hover:text-accent dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 transition-colors backdrop-blur-md"
+                                        className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200/70 bg-white/60 text-slate-600 hover:border-accent-soft hover:text-accent dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 transition-colors backdrop-blur-md"
                                     >
                                         <Icon className="w-4 h-4" />
                                     </a>
@@ -182,7 +182,7 @@ async function AboutContent() {
                                 components={portableTextComponents}
                             />
                         ) : (
-                            <p className="text-slate-500 dark:text-slate-400">
+                            <p className="text-slate-600 dark:text-slate-400">
                                 About content coming soon.
                             </p>
                         )}
@@ -191,13 +191,13 @@ async function AboutContent() {
 
                 <aside className="lg:sticky lg:top-28 self-start space-y-6">
                     <div className="os-card p-6">
-                        <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-3">
+                        <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-3">
                             Currently
                         </h3>
                         <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 font-medium">
                             {affiliation ? `${roleLine}` : roleLine}
                         </p>
-                        <div className="mt-4 flex items-center gap-2 font-term text-xs text-slate-500 dark:text-slate-400">
+                        <div className="mt-4 flex items-center gap-2 font-term text-xs text-slate-600 dark:text-slate-400">
                             <MapPin
                                 aria-hidden
                                 className="w-3.5 h-3.5 text-accent opacity-80"
@@ -207,7 +207,7 @@ async function AboutContent() {
                     </div>
 
                     <div className="os-card p-6">
-                        <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-3">
+                        <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-3">
                             Focus
                         </h3>
                         <div className="flex flex-wrap gap-1.5">
@@ -259,7 +259,7 @@ async function AboutContent() {
                                         <p className="font-display font-semibold text-slate-900 dark:text-white leading-snug">
                                             {cert.title}
                                         </p>
-                                        <p className="mt-1 font-term text-xs text-slate-500 dark:text-slate-400">
+                                        <p className="mt-1 font-term text-xs text-slate-600 dark:text-slate-400">
                                             {cert.org}
                                         </p>
                                         {cert.verifyUrl && (

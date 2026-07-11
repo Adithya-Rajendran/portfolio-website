@@ -186,7 +186,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                     />
                 </div>
 
-                <p className="font-term text-[0.7rem] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 mb-5">
+                <p className="font-term text-[0.7rem] font-bold uppercase tracking-[0.15em] text-slate-600 dark:text-slate-400 mb-5">
                     On this page
                 </p>
 
@@ -219,7 +219,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                         section.heading.id,
                                                     )
                                                 }
-                                                className="flex-shrink-0 w-4 h-4 mr-1 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                                                className="flex-shrink-0 w-4 h-4 mr-1 flex items-center justify-center text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                                                 aria-expanded={isExpanded}
                                                 aria-controls={childListId}
                                                 aria-label={
@@ -304,7 +304,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                                                                     activeId ===
                                                                     child.id
                                                                         ? "text-accent font-medium"
-                                                                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
+                                                                        : "text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
                                                                 ]
                                                                     .filter(
                                                                         Boolean,

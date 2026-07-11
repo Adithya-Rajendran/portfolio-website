@@ -72,25 +72,25 @@ export default async function Footer() {
                                     Rajendran
                                 </span>
                             </Link>
-                            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                            <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 max-w-xs leading-relaxed">
                                 Cloud engineer. Cybersecurity practitioner,
                                 infrastructure tinkerer, and writer.
                             </p>
-                            <div className="mt-5 flex items-center gap-2 font-term text-xs text-slate-500 dark:text-slate-400">
+                            <div className="mt-5 flex items-center gap-2 font-term text-xs text-slate-600 dark:text-slate-400">
                                 <MapPin className="w-3.5 h-3.5 text-accent opacity-80" />
                                 <span>{siteConfig.location}</span>
                             </div>
 
                             <div className="mt-7 max-w-xs">
-                                <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-3">
+                                <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-3">
                                     Newsletter
                                 </h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
                                     Biweekly deep-dives, straight to your inbox.
                                     Free, no spam.
                                 </p>
                                 <NewsletterSignupForm variant="footer" />
-                                <p className="mt-3 font-term text-[0.7rem] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                                <p className="mt-3 font-term text-[0.7rem] uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400">
                                     prefer feeds?{" "}
                                     <a
                                         href="/feed.xml"
@@ -103,7 +103,7 @@ export default async function Footer() {
                         </div>
 
                         <div>
-                            <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-4">
+                            <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-4">
                                 Sitemap
                             </h3>
                             <ul className="space-y-2.5">
@@ -129,7 +129,7 @@ export default async function Footer() {
                         </div>
 
                         <div>
-                            <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-4">
+                            <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-4">
                                 Portfolio
                             </h3>
                             <ul className="space-y-2.5">
@@ -148,7 +148,7 @@ export default async function Footer() {
                     </div>
 
                     <div className="mt-12 pt-6 border-t border-slate-200/60 dark:border-white/8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <small className="font-term text-[0.7rem] text-slate-500 dark:text-slate-400">
+                        <small className="font-term text-[0.7rem] text-slate-600 dark:text-slate-400">
                             © {year} {siteConfig.author}. All rights reserved.
                         </small>
 
@@ -160,14 +160,14 @@ export default async function Footer() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={`${label} profile`}
-                                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200/70 bg-white/60 text-slate-500 hover:border-accent-soft hover:text-accent dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 transition-colors backdrop-blur-md"
+                                    className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200/70 bg-white/60 text-slate-600 hover:border-accent-soft hover:text-accent dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 transition-colors backdrop-blur-md"
                                 >
                                     <Icon className="w-4 h-4" />
                                 </a>
                             ))}
                         </div>
 
-                        <p className="font-term text-[0.7rem] text-slate-500 dark:text-slate-400">
+                        <p className="font-term text-[0.7rem] text-slate-600 dark:text-slate-400">
                             built with next.js · typescript · tailwind
                         </p>
                     </div>

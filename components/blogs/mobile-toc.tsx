@@ -16,7 +16,7 @@ export default function MobileToc({ headings }: { headings: PostHeading[] }) {
             className="lg:hidden mx-auto max-w-[42.5rem] px-6 sm:px-8 pb-8"
         >
             <details className="group rounded-card border border-slate-400/25 dark:border-white/10 px-5 py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-term text-[0.7rem] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-term text-[0.7rem] font-bold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400 [&::-webkit-details-marker]:hidden">
                     On this page
                     <ChevronDown
                         aria-hidden

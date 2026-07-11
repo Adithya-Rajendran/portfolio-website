@@ -22,7 +22,7 @@ export function GroupedList({
     return (
         <div className={cn("w-full", className)} {...rest}>
             {label && (
-                <p className="px-5 mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                <p className="px-5 mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">
                     {label}
                 </p>
             )}
@@ -77,13 +77,13 @@ export function ListRow({
                     {title}
                 </p>
                 {subtitle && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5 leading-snug">
                         {subtitle}
                     </p>
                 )}
             </div>
             {value && (
-                <div className="text-sm text-slate-500 dark:text-slate-400 flex-shrink-0">
+                <div className="text-sm text-slate-600 dark:text-slate-400 flex-shrink-0">
                     {value}
                 </div>
             )}

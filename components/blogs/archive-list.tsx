@@ -67,7 +67,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
 
             <p
                 aria-live="polite"
-                className="mt-4 font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400"
+                className="mt-4 font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400"
             >
                 {filtered.length} of {posts.length} posts
             </p>
@@ -85,7 +85,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                 <h2 className="font-term text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                                     {group.year}/
                                 </h2>
-                                <span className="font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400">
+                                <span className="font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400">
                                     # {group.posts.length}{" "}
                                     {group.posts.length === 1
                                         ? "post"
@@ -99,7 +99,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                         key={post.slug}
                                         className="grid gap-y-1 gap-x-8 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] items-baseline py-4 border-b border-slate-400/25 dark:border-white/10"
                                     >
-                                        <span className="font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400">
+                                        <span className="font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400">
                                             {post.date}
                                         </span>
                                         <span className="min-w-0">
@@ -109,7 +109,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                             >
                                                 {post.title}
                                             </Link>
-                                            <span className="ml-3 font-term text-[0.75rem] tabular-nums text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                            <span className="ml-3 font-term text-[0.75rem] tabular-nums text-slate-600 dark:text-slate-400 whitespace-nowrap">
                                                 {post.readingMinutes} min
                                             </span>
                                         </span>
@@ -120,7 +120,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                                     <Link
                                                         key={tag}
                                                         href={`/blogs/tags/${tag}`}
-                                                        className="font-term text-[0.75rem] whitespace-nowrap text-slate-500 dark:text-slate-400 hover:text-accent transition-colors"
+                                                        className="font-term text-[0.75rem] whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-accent transition-colors"
                                                     >
                                                         <span aria-hidden>
                                                             [{" "}

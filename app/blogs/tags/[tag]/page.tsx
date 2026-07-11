@@ -59,7 +59,7 @@ async function TagPosts({ tag }: { tag: string }) {
                 <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white text-balance">
                     {tag}
                 </h1>
-                <p className="mt-4 font-term text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-4 font-term text-sm text-slate-600 dark:text-slate-400">
                     # {posts.length} post{posts.length === 1 ? "" : "s"} tagged{" "}
                     {tag}
                 </p>
@@ -78,7 +78,7 @@ async function TagPosts({ tag }: { tag: string }) {
                     <Link
                         href="/blogs"
                         aria-label="Back to all posts"
-                        className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                        className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                     >
                         [ cd ~/blogs ]
                     </Link>

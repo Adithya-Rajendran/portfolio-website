@@ -122,7 +122,7 @@ export default function ArchivePage() {
                     <Link
                         href="/blogs"
                         aria-label="Back to all posts"
-                        className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                        className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                     >
                         [ cd ~/blogs ]
                     </Link>

@@ -20,7 +20,7 @@ export default function PostRow({ post }: { post: PostListItem }) {
             href={`/blogs/${getPostSlug(post)}`}
             className="group grid gap-y-1 gap-x-8 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] items-baseline py-6 border-b border-slate-400/25 dark:border-white/10"
         >
-            <span className="font-term text-[0.8rem] tabular-nums text-slate-500 dark:text-slate-400">
+            <span className="font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400">
                 {post.date}
             </span>
             <span className="min-w-0">

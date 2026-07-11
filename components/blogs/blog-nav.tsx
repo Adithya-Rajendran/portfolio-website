@@ -24,7 +24,7 @@ export default function BlogNav() {
             </Link>
             <span
                 aria-hidden
-                className="ml-auto min-w-0 truncate font-term text-xs text-slate-500 dark:text-slate-400"
+                className="ml-auto min-w-0 truncate font-term text-xs text-slate-600 dark:text-slate-400"
             >
                 {displayPath}
             </span>

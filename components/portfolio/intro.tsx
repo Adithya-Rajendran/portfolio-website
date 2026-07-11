@@ -98,7 +98,7 @@ export default function Intro({ body, subtitle }: IntroProps) {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="LinkedIn profile"
-                            className="inline-flex items-center gap-1.5 font-term text-xs text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                            className="inline-flex items-center gap-1.5 font-term text-xs text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                         >
                             <FaLinkedin aria-hidden className="w-3.5 h-3.5" />
                             linkedin
@@ -108,14 +108,14 @@ export default function Intro({ body, subtitle }: IntroProps) {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="GitHub profile"
-                            className="inline-flex items-center gap-1.5 font-term text-xs text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                            className="inline-flex items-center gap-1.5 font-term text-xs text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                         >
                             <FaGithub aria-hidden className="w-3.5 h-3.5" />
                             github
                         </a>
                         <a
                             href="/resume"
-                            className="inline-flex items-center gap-1.5 font-term text-xs text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                            className="inline-flex items-center gap-1.5 font-term text-xs text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                         >
                             <Download aria-hidden className="w-3.5 h-3.5" />
                             resume

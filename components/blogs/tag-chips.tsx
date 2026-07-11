@@ -33,7 +33,7 @@ export default function TagChips({ tags, active, className }: TagChipsProps) {
                             "font-term text-[0.8rem] whitespace-nowrap transition-colors",
                             isActive
                                 ? "font-bold text-accent"
-                                : "text-slate-500 dark:text-slate-400 hover:text-accent",
+                                : "text-slate-600 dark:text-slate-400 hover:text-accent",
                         )}
                     >
                         <span aria-hidden>[ </span>

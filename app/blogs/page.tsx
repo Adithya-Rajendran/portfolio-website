@@ -63,7 +63,7 @@ async function BlogPosts() {
             <div className="mt-8">
                 <Link
                     href="/blogs/archive"
-                    className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                    className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                 >
                     [ ./archive --group-by year ]
                 </Link>
@@ -100,7 +100,7 @@ export default function Blogs() {
                     </a>
                     <Link
                         href="/blogs/archive"
-                        className="font-term text-sm text-slate-500 hover:text-accent dark:text-slate-400 transition-colors"
+                        className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                     >
                         [ ./archive ]
                     </Link>
