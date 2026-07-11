@@ -65,8 +65,7 @@ export async function GET(req: NextRequest) {
                 console.log(
                     `[Cron] Published ${slugs.length} due post(s); warmed ` +
                         `${result.pages.warmed.length} pages ` +
-                        `(${result.pages.failed.length} failed), ` +
-                        `${result.images.warmed} images (${result.images.failed} failed)`,
+                        `(${result.pages.failed.length} failed)`,
                 );
             } catch (err) {
                 console.error("[Cron] Cache warming failed:", err);

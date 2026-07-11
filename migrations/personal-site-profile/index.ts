@@ -85,7 +85,7 @@ const PROFILE_LINKS = [
         _key: "hackthebox",
         _type: "externalLink",
         label: "Hack The Box",
-        url: "https://app.hackthebox.com/profile/514798",
+        url: "https://app.hackthebox.com/users/514798",
     },
     {
         _key: "tryhackme",
@@ -384,13 +384,8 @@ function profilePatches(documents: LegacyDocument[]): NodePatch[] {
 function postPatches(document: LegacyDocument): NodePatch[] {
     const publishedAt =
         parseLegacyDate(document.publishedAt) || parseLegacyDate(document.date);
-    const cover = withImageAlt(
-        document.image,
-        `${asString(document.title) || "Post"} cover`,
-    );
     const patches: NodePatch[] = [];
     if (publishedAt) patches.push(at("publishedAt", set(publishedAt)));
-    if (cover) patches.push(at("cover", setIfMissing(cover)));
     return patches;
 }
 

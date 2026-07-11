@@ -37,8 +37,7 @@ export async function POST(req: NextRequest) {
                     const result = await warmBlogCache();
                     console.log(
                         `[Revalidate] Warmed ${result.pages.warmed.length} pages ` +
-                            `(${result.pages.failed.length} failed), ` +
-                            `${result.images.warmed} images (${result.images.failed} failed)`,
+                            `(${result.pages.failed.length} failed)`,
                     );
                 } catch (err) {
                     console.error("[Revalidate] Cache warming failed:", err);

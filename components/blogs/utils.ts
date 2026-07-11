@@ -5,12 +5,7 @@
  * portable-text-components.tsx.
  */
 
-import type {
-    ContentBlock,
-    ContentBody,
-    SanityImageValue,
-} from "@/lib/sanity-client";
-import { urlForImage } from "@/lib/sanity-image";
+import type { ContentBlock, ContentBody } from "@/lib/sanity-client";
 
 /** Format a date string like "2026-03-06" → "March 6, 2026" */
 export function formatDate(dateStr?: string): string {
@@ -30,34 +25,6 @@ export function getPostSlug(post: {
     return typeof post.slug === "string"
         ? post.slug
         : (post.slug?.current ?? "");
-}
-
-/**
- * Card image dimensions per PostCard variant — the single source of
- * truth shared by post-card.tsx (rendering) and actions/warmCache.ts
- * (CDN pre-warming), so the warmer always primes the exact URLs the
- * cards request.
- */
-export const POST_IMAGE_DIMENSIONS = {
-    hero: { width: 1200, height: 600 },
-    medium: { width: 800, height: 480 },
-    side: { width: 600, height: 400 },
-    list: { width: 400, height: 240 },
-} as const;
-
-/** Cropped, format-negotiated card image URL for a post (null if no image) */
-export function getPostImageUrl(
-    post: { cover?: SanityImageValue | null },
-    width: number,
-    height: number,
-): string | null {
-    if (!post.cover) return null;
-    return urlForImage(post.cover)
-        .width(width)
-        .height(height)
-        .fit("crop")
-        .auto("format")
-        .url();
 }
 
 type PostBodyBlock = ContentBlock & {

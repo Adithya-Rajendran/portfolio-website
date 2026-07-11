@@ -97,7 +97,6 @@ export type PostListItem = {
     description: string;
     publishedAt: string;
     tags?: string[] | null;
-    cover?: SanityImageValue | null;
     wordCount: number;
 };
 
@@ -180,7 +179,6 @@ export const POST_LIST_QUERY = defineQuery(`*[
     description,
     publishedAt,
     tags,
-    cover,
     "wordCount": length(string::split(pt::text(body), " "))
 }`);
 
@@ -194,7 +192,6 @@ export const RECENT_POSTS_QUERY = defineQuery(`*[
     description,
     publishedAt,
     tags,
-    cover,
     "wordCount": length(string::split(pt::text(body), " ")),
     ${contentBodyProjection}
 }`);
@@ -210,7 +207,6 @@ export const POST_BY_SLUG_QUERY = defineQuery(`*[
     description,
     publishedAt,
     tags,
-    cover,
     "wordCount": length(string::split(pt::text(body), " ")),
     ${contentBodyProjection}
 }`);
@@ -224,7 +220,6 @@ export const POST_META_QUERY = defineQuery(`*[
     description,
     publishedAt,
     tags,
-    cover,
     _updatedAt,
     "wordCount": length(string::split(pt::text(body), " "))
 }`);

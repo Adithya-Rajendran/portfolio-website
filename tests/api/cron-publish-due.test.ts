@@ -60,7 +60,6 @@ beforeEach(() => {
     fetchMock.mockResolvedValue([]);
     warmBlogCacheMock.mockResolvedValue({
         pages: { warmed: [], failed: [] },
-        images: { warmed: 0, failed: 0 },
     });
 });
 

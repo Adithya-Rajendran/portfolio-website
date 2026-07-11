@@ -52,6 +52,9 @@ describe("buildPersonEntity", () => {
         ]);
         expect(person.knowsAbout).toEqual(siteConfig.knowsAbout);
         expect(person.sameAs).toEqual(socialProfiles);
+        expect(person.sameAs).toContain(
+            "https://app.hackthebox.com/users/514798",
+        );
     });
 
     it("derives current work, education, skills, links, and location from Profile", () => {
@@ -63,6 +66,12 @@ describe("buildPersonEntity", () => {
                     _type: "externalLink",
                     label: "GitHub",
                     url: "https://github.com/Adithya-Rajendran",
+                },
+                {
+                    _key: "hackthebox",
+                    _type: "externalLink",
+                    label: "Hack The Box",
+                    url: "https://app.hackthebox.com/users/514798",
                 },
             ],
             timeline: [
@@ -107,7 +116,10 @@ describe("buildPersonEntity", () => {
             { "@type": "CollegeOrUniversity", name: "UC Santa Cruz" },
         ]);
         expect(person.knowsAbout).toEqual(["Kubernetes", "OpenStack"]);
-        expect(person.sameAs).toEqual(["https://github.com/Adithya-Rajendran"]);
+        expect(person.sameAs).toEqual([
+            "https://github.com/Adithya-Rajendran",
+            "https://app.hackthebox.com/users/514798",
+        ]);
         expect(person.homeLocation).toEqual({
             "@type": "Place",
             name: "Remote · United States",

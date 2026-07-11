@@ -142,7 +142,7 @@ export default async function BlogPostBody({ post }: { post: PostWithBody }) {
             <div className="relative mx-auto px-6 sm:px-8 pb-24 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,42.5rem)_16rem_1fr] xl:grid-cols-[1fr_minmax(0,42.5rem)_17rem_1fr] gap-0 max-w-[90rem]">
                 <div className="hidden lg:block" />
 
-                <div className="min-w-0">
+                <div className="mx-auto w-full max-w-[42.5rem] min-w-0">
                     <PortableText
                         value={post.body}
                         components={portableTextComponents}

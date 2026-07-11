@@ -2,31 +2,20 @@
 // webhook route. A "use server" directive here would expose warmBlogCache
 // as a public unauthenticated endpoint / traffic-amplification lever.
 
-import { getAllPosts, type PostListItem } from "@/lib/sanity-client";
+import { getAllPosts } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
-import {
-    getPostImageUrl,
-    getPostSlug,
-    POST_IMAGE_DIMENSIONS,
-} from "@/components/blogs/utils";
+import { getPostSlug } from "@/components/blogs/utils";
 import { collectTags } from "@/lib/tags";
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
-/**
- * Derived from the PostCard variant table so the warmer always fetches
- * the exact URLs the cards request and visitors get CDN cache HITs on
- * first load.
- */
-const IMAGE_PRESETS = Object.values(POST_IMAGE_DIMENSIONS);
-
 interface WarmResult {
     pages: { warmed: string[]; failed: string[] };
-    images: { warmed: number; failed: number };
 }
 
 export async function warmBlogCache(): Promise<WarmResult> {
-    // One query: the list projection already carries slug + cover + tags.
+    // One query: the list projection carries the slugs and tags needed for
+    // every public blog route.
     const posts = await getAllPosts();
     const slugs = posts.map(getPostSlug).filter(Boolean);
     // collectTags already TAG_PATTERN-filters, so every tag here is
@@ -34,9 +23,8 @@ export async function warmBlogCache(): Promise<WarmResult> {
     const tags = collectTags(posts).map(({ tag }) => tag);
 
     const pages = await warmPages(slugs, tags);
-    const images = await warmImages(posts);
 
-    return { pages, images };
+    return { pages };
 }
 
 /** Warm Vercel edge cache by fetching every blog page + the listing,
@@ -82,54 +70,6 @@ async function warmPages(
                 warmed.push(result.value);
             } else {
                 failed.push(batch[index]);
-            }
-        }
-    }
-
-    return { warmed, failed };
-}
-
-/** Pre-fetch Sanity CDN image URLs so they're warm for real visitors.
- *  Note: this warms the Sanity CDN (the optimizer's upstream), not the
- *  Vercel /_next/image cache itself — visitors' exact optimizer URLs
- *  depend on device widths, so upstream warming is the stable layer. */
-async function warmImages(
-    posts: PostListItem[],
-): Promise<{ warmed: number; failed: number }> {
-    if (!posts || posts.length === 0) return { warmed: 0, failed: 0 };
-
-    // Collect all image URLs we need to warm — built by the same helper
-    // the cards use, so the URLs match by construction.
-    const imageUrls: string[] = [];
-    for (const post of posts) {
-        if (!post.cover?.asset) continue;
-        for (const preset of IMAGE_PRESETS) {
-            try {
-                const url = getPostImageUrl(post, preset.width, preset.height);
-                if (url) imageUrls.push(url);
-            } catch {
-                // Skip if image URL generation fails
-            }
-        }
-    }
-
-    if (imageUrls.length === 0) return { warmed: 0, failed: 0 };
-
-    let warmed = 0;
-    let failed = 0;
-
-    // HEAD requests are cheaper — we just need to prime the CDN cache
-    const batchSize = 10;
-    for (let i = 0; i < imageUrls.length; i += batchSize) {
-        const batch = imageUrls.slice(i, i + batchSize);
-        const results = await Promise.allSettled(
-            batch.map((url) => fetch(url, { method: "HEAD" })),
-        );
-        for (const result of results) {
-            if (result.status === "fulfilled" && result.value.ok) {
-                warmed++;
-            } else {
-                failed++;
             }
         }
     }

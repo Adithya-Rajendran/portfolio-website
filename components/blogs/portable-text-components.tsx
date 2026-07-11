@@ -62,19 +62,31 @@ function BodyImage({
         value.dimensions?.height || Math.round(maxWidth / 2);
     const width = Math.min(maxWidth, intrinsicWidth);
     const height = Math.round(intrinsicHeight * (width / intrinsicWidth));
+    const aspectRatio = intrinsicWidth / intrinsicHeight;
+    const isPortrait = aspectRatio < 0.9;
+    const isSquare = aspectRatio >= 0.9 && aspectRatio <= 1.1;
+    const figureWidth = isPortrait
+        ? "mx-auto max-w-[28rem]"
+        : isSquare
+          ? "mx-auto max-w-[34rem]"
+          : "w-full";
+    const responsiveSizes = isPortrait
+        ? "(max-width: 639px) calc(100vw - 3rem), 28rem"
+        : isSquare
+          ? "(max-width: 639px) calc(100vw - 3rem), 34rem"
+          : "(max-width: 639px) calc(100vw - 3rem), (max-width: 1023px) min(calc(100vw - 4rem), 42.5rem), 42.5rem";
 
     return (
-        <figure>
-            <div className="overflow-hidden os-card-flat">
+        <figure className={figureWidth}>
+            <div className="overflow-hidden rounded-[1rem] bg-slate-100/70 dark:bg-white/[0.035]">
                 <Image
                     src={imageUrl}
                     alt={value.alt || ""}
                     width={width}
                     height={height}
-                    className="h-auto w-full"
-                    style={{ objectFit: "scale-down" }}
+                    className="mx-auto h-auto max-h-[min(72svh,44rem)] w-auto max-w-full object-contain"
                     loading="lazy"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 1000px"
+                    sizes={responsiveSizes}
                     {...(value.lqip
                         ? {
                               placeholder: "blur" as const,

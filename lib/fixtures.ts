@@ -52,6 +52,12 @@ export const FIXTURE_PROFILE: ProfileData = {
             label: "LinkedIn",
             url: "https://www.linkedin.com/in/adithya-rajendran/",
         },
+        {
+            _key: "profile-hackthebox",
+            _type: "externalLink",
+            label: "Hack The Box",
+            url: "https://app.hackthebox.com/users/514798",
+        },
     ],
     currentCuriosities: [],
     timeline: [

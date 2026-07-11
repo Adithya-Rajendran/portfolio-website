@@ -239,14 +239,6 @@ export type Post = {
     description: string;
     publishedAt: string;
     tags?: Array<string>;
-    cover?: {
-        asset?: SanityImageAssetReference;
-        media?: unknown;
-        hotspot?: SanityImageHotspot;
-        crop?: SanityImageCrop;
-        alt: string;
-        _type: "image";
-    };
     body: ContentBody;
 };
 
@@ -552,7 +544,7 @@ export type PROFILE_QUERY_RESULT =
 
 // Source: lib/sanity-client.ts
 // Variable: POST_LIST_QUERY
-// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    title,    "slug": slug.current,    description,    publishedAt,    tags,    cover,    "wordCount": length(string::split(pt::text(body), " "))}
+// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    title,    "slug": slug.current,    description,    publishedAt,    tags,    "wordCount": length(string::split(pt::text(body), " "))}
 export type POST_LIST_QUERY_RESULT = Array<{
     _id: string;
     title: string;
@@ -560,20 +552,12 @@ export type POST_LIST_QUERY_RESULT = Array<{
     description: string;
     publishedAt: string;
     tags: Array<string> | null;
-    cover: {
-        asset?: SanityImageAssetReference;
-        media?: unknown;
-        hotspot?: SanityImageHotspot;
-        crop?: SanityImageCrop;
-        alt: string;
-        _type: "image";
-    } | null;
     wordCount: number;
 }>;
 
 // Source: lib/sanity-client.ts
 // Variable: RECENT_POSTS_QUERY
-// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    tags,    cover,    "wordCount": length(string::split(pt::text(body), " ")),    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
+// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    tags,    "wordCount": length(string::split(pt::text(body), " ")),    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type RECENT_POSTS_QUERY_RESULT = Array<{
     _id: string;
     _updatedAt: string;
@@ -582,14 +566,6 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
     description: string;
     publishedAt: string;
     tags: Array<string> | null;
-    cover: {
-        asset?: SanityImageAssetReference;
-        media?: unknown;
-        hotspot?: SanityImageHotspot;
-        crop?: SanityImageCrop;
-        alt: string;
-        _type: "image";
-    } | null;
     wordCount: number;
     body: Array<
         | {
@@ -689,7 +665,7 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
 
 // Source: lib/sanity-client.ts
 // Variable: POST_BY_SLUG_QUERY
-// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    tags,    cover,    "wordCount": length(string::split(pt::text(body), " ")),    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
+// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    tags,    "wordCount": length(string::split(pt::text(body), " ")),    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type POST_BY_SLUG_QUERY_RESULT = {
     _id: string;
     _updatedAt: string;
@@ -698,14 +674,6 @@ export type POST_BY_SLUG_QUERY_RESULT = {
     description: string;
     publishedAt: string;
     tags: Array<string> | null;
-    cover: {
-        asset?: SanityImageAssetReference;
-        media?: unknown;
-        hotspot?: SanityImageHotspot;
-        crop?: SanityImageCrop;
-        alt: string;
-        _type: "image";
-    } | null;
     wordCount: number;
     body: Array<
         | {
@@ -805,21 +773,13 @@ export type POST_BY_SLUG_QUERY_RESULT = {
 
 // Source: lib/sanity-client.ts
 // Variable: POST_META_QUERY
-// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    title,    "slug": slug.current,    description,    publishedAt,    tags,    cover,    _updatedAt,    "wordCount": length(string::split(pt::text(body), " "))}
+// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    title,    "slug": slug.current,    description,    publishedAt,    tags,    _updatedAt,    "wordCount": length(string::split(pt::text(body), " "))}
 export type POST_META_QUERY_RESULT = {
     title: string;
     slug: string;
     description: string;
     publishedAt: string;
     tags: Array<string> | null;
-    cover: {
-        asset?: SanityImageAssetReference;
-        media?: unknown;
-        hotspot?: SanityImageHotspot;
-        crop?: SanityImageCrop;
-        alt: string;
-        _type: "image";
-    } | null;
     _updatedAt: string;
     wordCount: number;
 } | null;
@@ -1012,10 +972,10 @@ declare module "@sanity/client" {
     interface SanityQueries {
         '*[\n    _type == "post" &&\n    defined(publishedAt) &&\n    publishedAt == $today\n].slug.current': DUE_POSTS_QUERY_RESULT;
         '*[_id == "profile"][0]{\n    _id,\n    _updatedAt,\n    name,\n    headline,\n    introduction,\n    bio,\n    location,\n    portrait,\n    "resumeUrl": resume.asset->url,\n    socialLinks[]{_key, _type, label, url},\n    currentCuriosities[]{_key, _type, title, note, url},\n    curiositiesUpdatedAt,\n    timeline[]{\n        _key, _type, kind, title, organization, location, startDate, endDate,\n        summary, highlights, skills, logo\n    },\n    skillGroups[]{_key, _type, title, skills},\n    credentials[]{\n        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,\n        credentialId, verificationUrl, badge,\n        "lifecycleStatus": select(\n            lifetime == true => "lifetime",\n            defined(expiresOn) && expiresOn < $today => "expired",\n            "active"\n        )\n    }\n}': PROFILE_QUERY_RESULT;
-        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    cover,\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_LIST_QUERY_RESULT;
-        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    cover,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': RECENT_POSTS_QUERY_RESULT;
-        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    cover,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': POST_BY_SLUG_QUERY_RESULT;
-        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    cover,\n    _updatedAt,\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_META_QUERY_RESULT;
+        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_LIST_QUERY_RESULT;
+        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': RECENT_POSTS_QUERY_RESULT;
+        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': POST_BY_SLUG_QUERY_RESULT;
+        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    _updatedAt,\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_META_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n].slug.current': POST_SLUGS_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n]{"slug": slug.current, "updatedAt": _updatedAt}': POST_SLUGS_WITH_DATES_QUERY_RESULT;
         '*[\n    _type == "project" && defined(slug.current)\n] | order(coalesce(endDate, startDate, _createdAt) desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    summary,\n    status,\n    startDate,\n    endDate,\n    technologies,\n    highlights,\n    cover,\n    links[]{_key, _type, label, url}\n}': PROJECT_LIST_QUERY_RESULT;

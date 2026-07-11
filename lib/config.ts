@@ -55,7 +55,7 @@ export const socialProfiles: string[] = [
     siteConfig.profiles.linkedin,
     siteConfig.profiles.github,
     "https://www.credly.com/users/adithya-rajendran",
-    "https://app.hackthebox.com/profile/514798",
+    "https://app.hackthebox.com/users/514798",
     "https://tryhackme.com/p/Cagmas",
     siteConfig.profiles.x,
     siteConfig.profiles.youtube,

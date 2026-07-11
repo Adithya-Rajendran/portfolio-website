@@ -6,7 +6,6 @@ import BlogPostBody, {
     BlogPostHero,
 } from "@/components/blogs/blog-post-content";
 import { BlogPostJsonLd } from "@/components/json-ld";
-import { urlForImage } from "@/lib/sanity-image";
 import NewsletterNotice from "@/components/newsletter/newsletter-notice";
 
 /**
@@ -84,14 +83,6 @@ export async function generateMetadata({
     if (!post) {
         return;
     }
-    const sanityOgImage = post.cover
-        ? urlForImage(post.cover)
-              .width(1200)
-              .height(630)
-              .fit("crop")
-              .auto("format")
-              .url()
-        : null;
     return {
         title: post.title,
         description: post.description,
@@ -106,20 +97,6 @@ export async function generateMetadata({
             publishedTime: post.publishedAt,
             authors: [siteConfig.author],
             url: `${siteConfig.url}/blogs/${slug}`,
-            // When the post has a cover in Sanity, use it directly.
-            // Otherwise omit images here so Next.js falls back to the
-            // file-convention opengraph-image.tsx which renders the title
-            // into a branded OG via next/og.
-            ...(sanityOgImage && {
-                images: [
-                    {
-                        url: sanityOgImage,
-                        width: 1200,
-                        height: 630,
-                        alt: post.title,
-                    },
-                ],
-            }),
         },
         robots: {
             index: true,

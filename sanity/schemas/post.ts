@@ -66,21 +66,6 @@ export default defineType({
                 }),
         }),
         defineField({
-            name: "cover",
-            title: "Cover Image",
-            type: "image",
-            group: "editorial",
-            options: { hotspot: true },
-            fields: [
-                defineField({
-                    name: "alt",
-                    title: "Alt Text",
-                    type: "string",
-                    validation: (Rule) => Rule.required(),
-                }),
-            ],
-        }),
-        defineField({
             name: "body",
             title: "Body",
             type: "contentBody",
@@ -91,11 +76,10 @@ export default defineType({
     preview: {
         select: {
             title: "title",
-            media: "cover",
             publishedAt: "publishedAt",
         },
-        prepare({ title, media, publishedAt }) {
-            return { title, subtitle: publishedAt, media };
+        prepare({ title, publishedAt }) {
+            return { title, subtitle: publishedAt };
         },
     },
     orderings: [
