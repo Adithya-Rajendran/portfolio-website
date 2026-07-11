@@ -506,8 +506,8 @@ html {
     .home-hero-reveal {
         opacity: 0;
         transform: translateY(0.7rem);
-        animation: home-hero-reveal 380ms cubic-bezier(0.16, 1, 0.3, 1) 260ms
-            both;
+        animation: home-hero-reveal 560ms cubic-bezier(0.16, 1, 0.3, 1)
+            var(--term-reveal-delay, 860ms) both;
     }
 }
 
@@ -534,8 +534,8 @@ html {
     .term-cursor-once {
         display: inline-block;
         animation:
-            term-blink 0.24s steps(2, start) 2,
-            term-cursor-out 0.01ms linear 0.48s forwards;
+            term-blink 360ms steps(2, start) 2,
+            term-cursor-out 0.01ms linear var(--term-duration, 720ms) forwards;
     }
 }
 @keyframes term-blink {

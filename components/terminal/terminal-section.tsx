@@ -7,7 +7,11 @@ type PromptStyle = CSSProperties & {
     "--term-steps"?: number;
     "--term-width"?: string;
     "--term-duration"?: string;
+    "--term-reveal-delay"?: string;
 };
+
+const getPromptDuration = (characters: number) =>
+    Math.min(1200, Math.max(720, characters * 110));
 
 /**
  * Decorative terminal prompt. Prompts are static by default; the homepage
@@ -34,7 +38,7 @@ export function PromptLine({
 }) {
     const shown =
         typedChars === undefined ? command : command.slice(0, typedChars);
-    const duration = Math.min(480, Math.max(220, shown.length * 18));
+    const duration = getPromptDuration(shown.length);
     const style: PromptStyle | undefined = animated
         ? {
               "--term-steps": Math.max(shown.length, 1),
@@ -86,8 +90,9 @@ interface TerminalSectionProps {
 }
 
 /**
- * A content section introduced by a lightweight terminal prompt. Meaningful
- * content is never hidden for animation, hydration, or intersection state.
+ * A content section introduced by a lightweight terminal prompt. Content is
+ * server-rendered; the homepage may briefly delay it visually when scripting
+ * and motion preferences allow the entrance sequence.
  */
 export default function TerminalSection({
     command,
@@ -100,8 +105,16 @@ export default function TerminalSection({
     bodyClassName,
     children,
 }: TerminalSectionProps) {
+    const promptDuration = getPromptDuration(command.length);
+    const animationStyle: PromptStyle | undefined = animatePrompt
+        ? {
+              "--term-duration": `${promptDuration}ms`,
+              "--term-reveal-delay": `${promptDuration + 140}ms`,
+          }
+        : undefined;
+
     return (
-        <Tag className={cn("term-section", className)}>
+        <Tag className={cn("term-section", className)} style={animationStyle}>
             {label && <h2 className="sr-only">{label}</h2>}
             <PromptLine
                 command={command}
