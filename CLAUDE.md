@@ -121,10 +121,12 @@ reviewable migration under `migrations/`. After editing the schema or named
 `defineQuery` constants:
 
 ```
-NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=ppk2h9tb \
-NEXT_PUBLIC_STORE_SANITY_DATASET=production \
 pnpm typegen
 ```
+
+Load `NEXT_PUBLIC_STORE_SANITY_PROJECT_ID` and
+`NEXT_PUBLIC_STORE_SANITY_DATASET` from the local environment before running
+Sanity commands; never commit their concrete values.
 
 Commit the regenerated `schema.json` and `sanity.types.ts`. Schema extraction
 and TypeGen are local; dataset export, migration execution, and schema
