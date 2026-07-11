@@ -82,9 +82,9 @@ export default async function Footer() {
                             </div>
 
                             <div className="mt-7 max-w-xs">
-                                <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-3">
+                                <h2 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-3">
                                     Newsletter
-                                </h3>
+                                </h2>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
                                     Biweekly deep-dives, straight to your inbox.
                                     Free, no spam.
@@ -102,49 +102,51 @@ export default async function Footer() {
                             </div>
                         </div>
 
-                        <div>
-                            <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-4">
-                                Sitemap
-                            </h3>
-                            <ul className="space-y-2.5">
-                                {navLinks.map((link) => (
-                                    <li key={link.href}>
-                                        <Link
-                                            href={link.href}
+                        <nav aria-label="Footer" className="contents">
+                            <div>
+                                <h2 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-4">
+                                    Sitemap
+                                </h2>
+                                <ul className="space-y-2.5">
+                                    {navLinks.map((link) => (
+                                        <li key={link.href}>
+                                            <Link
+                                                href={link.href}
+                                                className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                    <li>
+                                        <a
+                                            href="/feed.xml"
                                             className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                                         >
-                                            {link.label}
-                                        </Link>
+                                            RSS
+                                        </a>
                                     </li>
-                                ))}
-                                <li>
-                                    <a
-                                        href="/feed.xml"
-                                        className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                                    >
-                                        RSS
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                                </ul>
+                            </div>
 
-                        <div>
-                            <h3 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-4">
-                                Portfolio
-                            </h3>
-                            <ul className="space-y-2.5">
-                                {portfolioLinks.map((link) => (
-                                    <li key={link.href}>
-                                        <Link
-                                            href={link.href}
-                                            className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                                        >
-                                            {link.label}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                            <div>
+                                <h2 className="font-term text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-400 mb-4">
+                                    Portfolio
+                                </h2>
+                                <ul className="space-y-2.5">
+                                    {portfolioLinks.map((link) => (
+                                        <li key={link.href}>
+                                            <Link
+                                                href={link.href}
+                                                className="text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </nav>
                     </div>
 
                     <div className="mt-12 pt-6 border-t border-slate-200/60 dark:border-white/8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">

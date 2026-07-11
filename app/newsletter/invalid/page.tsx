@@ -3,11 +3,15 @@ import { MailWarning } from "lucide-react";
 import { StatusCard } from "@/components/status-card";
 import { PromptLine } from "@/components/terminal/terminal-section";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
+import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
     title: "Link expired",
     description: "This confirmation link is invalid or has expired.",
     robots: { index: false, follow: false },
+    alternates: {
+        canonical: `${siteConfig.url}/newsletter/invalid`,
+    },
 };
 
 /** Landing page for an expired/tampered/missing confirmation token. */

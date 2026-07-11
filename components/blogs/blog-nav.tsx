@@ -13,7 +13,10 @@ export default function BlogNav() {
     const displayPath = pathname === "/" ? "~" : `~${pathname}`;
 
     return (
-        <nav className="os-nav fixed top-0 left-0 right-0 z-[999] h-[3.5rem] flex items-center gap-4 px-6 rounded-none border-x-0 border-t-0">
+        <nav
+            aria-label="Blog navigation"
+            className="os-nav fixed top-0 left-0 right-0 z-[999] h-[3.5rem] flex items-center gap-4 px-6 rounded-none border-x-0 border-t-0"
+        >
             <Link
                 href={isPostPage ? "/blogs" : "/"}
                 aria-label={isPostPage ? "Back to blog" : "Back to home"}

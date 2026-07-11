@@ -27,7 +27,7 @@ export default function Skills({ skillCategories }: SkillsProps) {
         <SectionSpy section="Skills" id="skills" className="scroll-mt-28">
             <TerminalSection
                 as="div"
-                command="tree skills/"
+                command="tree skills/ --dirs-first"
                 path="~/portfolio"
                 label="Skills"
                 promptClassName="mb-10"

@@ -3,11 +3,15 @@ import Link from "next/link";
 import { MailCheck } from "lucide-react";
 import { StatusCard } from "@/components/status-card";
 import { PromptLine } from "@/components/terminal/terminal-section";
+import { siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
     title: "Subscription confirmed",
     description: "Your newsletter subscription is confirmed.",
     robots: { index: false, follow: false },
+    alternates: {
+        canonical: `${siteConfig.url}/newsletter/confirmed`,
+    },
 };
 
 /** Landing page for a successful double-opt-in confirmation. */

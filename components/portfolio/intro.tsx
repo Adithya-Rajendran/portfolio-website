@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Download } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import heroImg from "@/public/hero.webp";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
@@ -112,13 +111,6 @@ export default function Intro({ body, subtitle }: IntroProps) {
                         >
                             <FaGithub aria-hidden className="w-3.5 h-3.5" />
                             github
-                        </a>
-                        <a
-                            href="/resume"
-                            className="inline-flex items-center gap-1.5 font-term text-xs text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                        >
-                            <Download aria-hidden className="w-3.5 h-3.5" />
-                            resume
                         </a>
                     </div>
                 </div>

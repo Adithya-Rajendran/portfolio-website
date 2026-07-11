@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
 import BlogNav from "@/components/blogs/blog-nav";
 import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
 
-export const metadata = {
+export const metadata: Metadata = {
     title: "Cybersecurity & Cloud Engineering Blog",
     description: BLOG_DESCRIPTION,
     alternates: {

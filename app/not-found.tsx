@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PromptLine } from "@/components/terminal/terminal-section";
+
+export const metadata: Metadata = {
+    title: "404 — no such file or directory",
+    robots: { index: false, follow: false },
+    alternates: { canonical: null },
+};
 
 /**
  * Terminal-native 404: a failed `cd` with the shell's error line, mono
@@ -25,7 +32,10 @@ export default function NotFound() {
                 <p className="mt-2 font-term text-sm text-slate-600 dark:text-slate-400">
                     # exit 404 — this page doesn&apos;t exist or has moved.
                 </p>
-                <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
+                <nav
+                    aria-label="Page links"
+                    className="mt-8 flex flex-wrap gap-x-6 gap-y-2"
+                >
                     <Link
                         href="/"
                         className="font-term text-sm font-bold text-accent hover:opacity-80 transition-opacity"
@@ -44,7 +54,7 @@ export default function NotFound() {
                     >
                         [ ./portfolio ]
                     </Link>
-                </div>
+                </nav>
                 <PromptLine command="" cursor className="mt-10" />
             </section>
         </main>
