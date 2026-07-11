@@ -1,33 +1,18 @@
 "use client";
 
-import { Send } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/ui/button";
 
 export default function SubmitBtn() {
     const { pending } = useFormStatus();
 
     return (
-        <Button
+        <button
             type="submit"
             disabled={pending}
             aria-busy={pending}
-            className="group"
+            className="font-term text-sm font-bold rounded-row px-4 py-2.5 border border-accent bg-accent-soft text-accent transition-colors hover:bg-accent hover:text-white dark:hover:text-slate-900 disabled:opacity-60 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]"
         >
-            {pending ? (
-                <>
-                    <div
-                        aria-hidden
-                        className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"
-                    ></div>
-                    <span className="sr-only">Sending…</span>
-                </>
-            ) : (
-                <>
-                    Submit{" "}
-                    <Send className="w-3 h-3 opacity-70 transition-all group-hover:translate-x-1 group-hover:-translate-y-1" />{" "}
-                </>
-            )}
-        </Button>
+            {pending ? "[ sending… ]" : "[ send ]"}
+        </button>
     );
 }
