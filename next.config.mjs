@@ -84,7 +84,7 @@ const nextConfig = {
         return [
             {
                 source: "/resume.pdf",
-                destination: "/resume",
+                destination: "/resume/download",
                 permanent: true,
             },
         ];

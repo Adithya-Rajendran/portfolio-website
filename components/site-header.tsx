@@ -12,7 +12,7 @@ const navigation = [
     { href: "/portfolio", label: "Portfolio", match: "work" },
     { href: "/blogs", label: "Blog", match: "writing" },
     { href: "/about", label: "About", match: "about" },
-    { href: "/portfolio#contact", label: "Contact", match: "contact" },
+    { href: "/resume", label: "Résumé", match: "resume" },
 ] as const;
 
 function isCurrent(
@@ -23,6 +23,7 @@ function isCurrent(
     if (match === "work") return pathname.startsWith("/portfolio");
     if (match === "writing") return pathname.startsWith("/blogs");
     if (match === "about") return pathname.startsWith("/about");
+    if (match === "resume") return pathname.startsWith("/resume");
     return false;
 }
 

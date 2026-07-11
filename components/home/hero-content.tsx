@@ -130,19 +130,19 @@ export default function HeroContent({
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
+                            className="inline-flex min-h-11 items-center gap-1.5 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
                         >
                             {link.label.toLowerCase()}
                             <ArrowUpRight className="size-3" aria-hidden />
                         </a>
                     ))}
-                    <a
+                    <Link
                         href="/resume"
-                        className="inline-flex items-center gap-1.5 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
+                        className="inline-flex min-h-11 items-center gap-1.5 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
                     >
                         <Download className="size-3.5" aria-hidden />
                         résumé
-                    </a>
+                    </Link>
                 </div>
             </div>
 
