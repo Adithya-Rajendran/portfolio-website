@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import "./globals.css";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { BotIdClient } from "botid/client";
@@ -155,14 +154,12 @@ export default function RootLayout({
                 <div className="mesh-bg" aria-hidden="true" />
                 <div className="bg-grain" aria-hidden="true" />
 
-                <Suspense>
-                    <ThemeContextProvider>
-                        {children}
-                        <Footer />
-                        <ThemeSelector />
-                        <Toaster />
-                    </ThemeContextProvider>
-                </Suspense>
+                <ThemeContextProvider>
+                    {children}
+                    <Footer />
+                    <ThemeSelector />
+                    <Toaster />
+                </ThemeContextProvider>
                 <SpeedInsights />
                 <Analytics />
             </body>

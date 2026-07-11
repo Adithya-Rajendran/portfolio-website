@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -13,7 +12,6 @@ import { FaGithub, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextStyles } from "@/lib/portable-text";
 import { PromptLine } from "@/components/terminal/terminal-section";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ProfilePageJsonLd } from "@/components/json-ld";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
 import { urlForImage } from "@/lib/sanity-image";
@@ -38,21 +36,6 @@ export const metadata: Metadata = {
         url: `${siteConfig.url}/about`,
     },
 };
-
-function AboutSkeleton() {
-    return (
-        <div className="mx-auto max-w-6xl px-6 sm:px-8 pt-16 animate-pulse">
-            <div className="grid gap-10 lg:grid-cols-[1fr_20rem]">
-                <div className="space-y-6">
-                    <Skeleton className="h-12 w-72 rounded" />
-                    <Skeleton className="h-5 w-96 max-w-full rounded" />
-                    <Skeleton className="h-64 w-full rounded-3xl" />
-                </div>
-                <Skeleton className="h-80 w-full rounded-3xl" />
-            </div>
-        </div>
-    );
-}
 
 /** Icon + label per known profile host; generic shield for the rest. */
 function profileMeta(url: string): {
@@ -313,9 +296,7 @@ export default function AboutPage() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <ProfilePageJsonLd />
-            <Suspense fallback={<AboutSkeleton />}>
-                <AboutContent />
-            </Suspense>
+            <AboutContent />
         </main>
     );
 }

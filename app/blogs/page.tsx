@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { PenLine } from "lucide-react";
 import PostRow, { POST_ROW_LIST_CLASSES } from "@/components/blogs/post-row";
@@ -11,27 +10,8 @@ import { Button } from "@/components/ui/button";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags } from "@/lib/tags";
 import { getPostSlug } from "@/components/blogs/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 import NewsletterSignupForm from "@/components/newsletter/signup-form";
 import { BlogJsonLd } from "@/components/json-ld";
-
-/** Loading silhouette matching the tag row + listing rows. */
-function PostRowsSkeleton() {
-    return (
-        <div className="animate-pulse">
-            <div className="flex flex-wrap gap-4 mb-10">
-                {[1, 2, 3, 4].map((i) => (
-                    <Skeleton key={i} className="h-5 w-24" />
-                ))}
-            </div>
-            <div className="space-y-4">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <Skeleton key={i} className="h-20 w-full" />
-                ))}
-            </div>
-        </div>
-    );
-}
 
 /**
  * Empty state — renders when no posts exist (pre-launch, dev without
@@ -128,9 +108,7 @@ export default function Blogs() {
             </TerminalSection>
 
             <PageShell className="mt-14 sm:mt-16">
-                <Suspense fallback={<PostRowsSkeleton />}>
-                    <BlogPosts />
-                </Suspense>
+                <BlogPosts />
 
                 <NewsletterSignupForm variant="inline" />
             </PageShell>

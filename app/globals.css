@@ -411,37 +411,10 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   LIQUID-GLASS CHROME — the floating chrome refracts the backdrop where
-   the browser can. Chromium supports SVG filters in backdrop-filter;
-   Safari/Firefox don't, so this is a progressive enhancement layered
-   over the frosted base in @layer components above. If a browser drops
-   the url() declaration it simply keeps that frost. Slightly lower fills
-   let the lensing read through. Unlayered so it wins over the base.
-   ───────────────────────────────────────────────────────────────────── */
-@supports (backdrop-filter: url(#x)) or (-webkit-backdrop-filter: url(#x)) {
-    .os-nav {
-        background: rgba(255, 255, 255, 0.72);
-        backdrop-filter: blur(20px) saturate(180%) url(#glass-refract);
-        -webkit-backdrop-filter: blur(20px) saturate(180%) url(#glass-refract);
-    }
-    .dark .os-nav {
-        background: rgba(15, 17, 26, 0.7);
-    }
-    .os-card-raised {
-        background: rgba(255, 255, 255, 0.88);
-        backdrop-filter: blur(22px) saturate(170%) url(#glass-refract);
-        -webkit-backdrop-filter: blur(22px) saturate(170%) url(#glass-refract);
-    }
-    .dark .os-card-raised {
-        background: rgba(28, 30, 40, 0.86);
-    }
-}
-
-/* ─────────────────────────────────────────────────────────────────────
    LIQUID-GLASS BACKDROP — a calm One UI colour field given organic,
    refracted "liquid glass" edges via a static SVG displacement filter
-   (#glass-liquid, defined once in app/layout.tsx). Three layers, all
-   fixed and behind content:
+   (#glass-liquid, defined once in components/glass-filters.tsx). Three
+   layers, all fixed and behind content:
      1. base wash (.mesh-bg bg)  — the subtle colour, richer than canvas
      2. liquid orbs (::before/after) — drifting blobs warped to glass
      3. frosted grain (.bg-grain)    — the fine glass-surface texture

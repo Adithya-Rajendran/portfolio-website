@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import Intro from "@/components/portfolio/intro";
 import { PageShell } from "@/components/page-shell";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { Metadata } from "next";
 import type { PortableTextBlock } from "@portabletext/react";
 import { siteConfig } from "@/lib/config";
@@ -37,37 +35,6 @@ export const metadata: Metadata = {
     },
 };
 
-/** Hero silhouette: prompt line, heading block, portrait column. */
-function HeroFallback() {
-    return (
-        <div className="mx-auto w-full max-w-6xl px-6 sm:px-8 pt-2 sm:pt-6">
-            <Skeleton className="mb-8 h-5 w-72 max-w-full" />
-            <div className="grid items-center gap-10 lg:gap-16 lg:grid-cols-[minmax(0,1fr)_15rem]">
-                <div>
-                    <Skeleton className="h-11 w-64 max-w-full" />
-                    <Skeleton className="mt-4 h-5 w-96 max-w-full" />
-                    <Skeleton className="mt-5 h-20 w-full max-w-xl" />
-                </div>
-                <Skeleton className="mx-auto hidden aspect-square w-full max-w-[15rem] lg:block" />
-            </div>
-        </div>
-    );
-}
-
-/** Section silhouette: prompt line plus log-style rows. */
-function SectionFallback() {
-    return (
-        <div>
-            <Skeleton className="mb-10 h-5 w-64" />
-            <div className="space-y-4">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-            </div>
-        </div>
-    );
-}
-
 async function IntroWithData() {
     const intro = await getIntro();
     return (
@@ -101,32 +68,20 @@ async function ProjectsWithData() {
 export default function Portfolio() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
-            <Suspense fallback={<HeroFallback />}>
-                <IntroWithData />
-            </Suspense>
+            <IntroWithData />
 
             <PageShell className="mt-16 sm:mt-24">
                 {/* The About prose moved to the standalone /about page —
                     the portfolio is the work/credentials deep view. */}
-                <Suspense fallback={<SectionFallback />}>
-                    <ExperienceWithData />
-                </Suspense>
+                <ExperienceWithData />
 
-                <Suspense fallback={<SectionFallback />}>
-                    <ProjectsWithData />
-                </Suspense>
+                <ProjectsWithData />
 
-                <Suspense fallback={<SectionFallback />}>
-                    <SkillsWithData />
-                </Suspense>
+                <SkillsWithData />
 
-                <Suspense fallback={<SectionFallback />}>
-                    <CertsWithData />
-                </Suspense>
+                <CertsWithData />
 
-                <Suspense fallback={<SectionFallback />}>
-                    <Contact />
-                </Suspense>
+                <Contact />
             </PageShell>
         </main>
     );

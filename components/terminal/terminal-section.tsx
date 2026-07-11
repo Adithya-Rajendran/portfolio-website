@@ -108,10 +108,12 @@ export default function TerminalSection({
     const [phase, setPhase] = useState<Phase>("static");
     const [chars, setChars] = useState(command.length);
     const { ref, inView } = useInView({
-        threshold: 0.2,
+        threshold: 0.05,
+        rootMargin: "0px 0px -5% 0px",
         triggerOnce: true,
         fallbackInView: true,
     });
+    const [forceStart, setForceStart] = useState(false);
 
     // Hand an armed section over to its phase machine. The SSR/hydration
     // render is always the static markup (full command, no phase attr), so
@@ -128,9 +130,18 @@ export default function TerminalSection({
         return () => window.clearTimeout(t);
     }, [armed]);
 
+    // Belt-and-braces: if the IntersectionObserver crossing is missed
+    // (e.g. an interrupted smooth-scroll animation), start the show anyway
+    // after a grace period so content can never stay hidden.
+    useEffect(() => {
+        if (phase !== "waiting" || inView) return;
+        const t = window.setTimeout(() => setForceStart(true), 4000);
+        return () => window.clearTimeout(t);
+    }, [phase, inView]);
+
     // Type the command once the armed section scrolls into view, then reveal.
     useEffect(() => {
-        if (phase !== "waiting" || !inView) return;
+        if (phase !== "waiting" || (!inView && !forceStart)) return;
         let cancelled = false;
         let i = 0;
         const tick = () => {
@@ -166,7 +177,7 @@ export default function TerminalSection({
         return () => {
             cancelled = true;
         };
-    }, [phase, inView, command]);
+    }, [phase, inView, forceStart, command]);
 
     // "waiting" renders as data-term-phase="typing": the body stays hidden
     // from arm-time until the prompt finishes typing. The block cursor only
