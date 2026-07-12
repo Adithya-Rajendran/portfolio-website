@@ -116,7 +116,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                         </span>
                                         <span className="min-w-0">
                                             <Link
-                                                href={`/blogs/${post.slug}`}
+                                                href={`/blog/${post.slug}`}
                                                 className="font-display font-semibold text-base sm:text-lg text-slate-900 dark:text-white hover:text-accent transition-colors"
                                             >
                                                 {post.title}
@@ -133,7 +133,7 @@ export default function ArchiveList({ posts }: ArchiveListProps) {
                                                 {post.tags.map((tag) => (
                                                     <Link
                                                         key={tag}
-                                                        href={`/blogs/tags/${tag}`}
+                                                        href={`/blog/tags/${tag}`}
                                                         className="font-term text-[0.75rem] whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-accent transition-colors"
                                                     >
                                                         # {tag}

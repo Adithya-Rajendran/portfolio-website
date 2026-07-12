@@ -25,7 +25,7 @@ export default function TagChips({ tags, active, className }: TagChipsProps) {
                 return (
                     <Link
                         key={tag}
-                        href={`/blogs/tags/${tag}`}
+                        href={`/blog/tags/${tag}`}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
                             "inline-flex min-h-11 items-center rounded-full border px-3 font-term text-[0.78rem] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))]",

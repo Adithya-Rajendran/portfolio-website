@@ -12,7 +12,7 @@ export const THEME_COLORS = {
 } as const;
 
 /** Blog index copy — the single home for this text. Consumed by
- *  lib/structured-data.ts (buildBlog) and app/blogs/layout.tsx metadata;
+ *  lib/structured-data.ts (buildBlog) and app/blog/layout.tsx metadata;
  *  keep byte-identical across both. */
 export const BLOG_DESCRIPTION =
     "Personal writing by Adithya Rajendran: technical notes, documentaries, interests, experiments, and whatever else feels worth keeping.";

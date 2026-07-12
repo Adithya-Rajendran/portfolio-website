@@ -7,6 +7,8 @@ import BlogPostBody, {
 } from "@/components/blogs/blog-post-content";
 import { BlogPostJsonLd } from "@/components/json-ld";
 import NewsletterNotice from "@/components/newsletter/newsletter-notice";
+import TerminalSection from "@/components/terminal/terminal-section";
+import BlogNav from "@/components/blogs/blog-nav";
 
 /**
  * Async body — fetches the full post (including body) and runs shiki
@@ -49,26 +51,36 @@ export default async function BlogPostPage({
 
     return (
         <main id="main-content" tabIndex={-1} className="w-full">
-            <article>
-                <BlogPostJsonLd
-                    title={meta.title || ""}
-                    description={meta.description || ""}
-                    publishedAt={meta.publishedAt || ""}
-                    slug={slug}
-                    updatedAt={meta._updatedAt}
-                    tags={meta.tags ?? undefined}
-                    wordCount={meta.wordCount}
-                />
+            <BlogPostJsonLd
+                title={meta.title || ""}
+                description={meta.description || ""}
+                publishedAt={meta.publishedAt || ""}
+                slug={slug}
+                updatedAt={meta._updatedAt}
+                tags={meta.tags ?? undefined}
+                wordCount={meta.wordCount}
+            />
 
-                <BlogPostHero post={meta} slug={slug} />
+            <TerminalSection
+                as="div"
+                path=""
+                command={`cat ${slug}.md`}
+                promptVariant="compact"
+                animatePrompt
+                promptClassName="post-route-prompt mx-auto mb-7 max-w-3xl justify-center px-1 pt-14 min-[360px]:px-3 sm:px-8 sm:pt-20 lg:pt-24"
+            >
+                <BlogNav />
+                <article>
+                    <BlogPostHero post={meta} />
 
-                <BodyWithData slug={slug} />
+                    <BodyWithData slug={slug} />
 
-                {/* Width tracks the prose column. */}
-                <div className="mx-auto max-w-[45.5rem] px-6 sm:px-8 pb-20">
-                    <NewsletterNotice />
-                </div>
-            </article>
+                    {/* Width tracks the prose column. */}
+                    <div className="mx-auto max-w-[45.5rem] px-6 sm:px-8 pb-20">
+                        <NewsletterNotice />
+                    </div>
+                </article>
+            </TerminalSection>
         </main>
     );
 }
@@ -88,7 +100,7 @@ export async function generateMetadata({
         description: post.description,
         ...(post.tags && post.tags.length > 0 && { keywords: post.tags }),
         alternates: {
-            canonical: `${siteConfig.url}/blogs/${slug}`,
+            canonical: `${siteConfig.url}/blog/${slug}`,
         },
         openGraph: {
             title: post.title,
@@ -96,7 +108,7 @@ export async function generateMetadata({
             type: "article",
             publishedTime: post.publishedAt,
             authors: [siteConfig.author],
-            url: `${siteConfig.url}/blogs/${slug}`,
+            url: `${siteConfig.url}/blog/${slug}`,
         },
         robots: {
             index: true,

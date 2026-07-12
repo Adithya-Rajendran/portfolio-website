@@ -6,6 +6,7 @@ import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
 import TagChips from "@/components/blogs/tag-chips";
 import ArchiveList from "@/components/blogs/archive-list";
+import BlogNav from "@/components/blogs/blog-nav";
 import {
     getPostSlug,
     readingTimeFromWordCount,
@@ -20,13 +21,13 @@ export const metadata: Metadata = {
     description:
         "Every post, searchable by title, description, or tag and grouped by year.",
     alternates: {
-        canonical: `${siteConfig.url}/blogs/archive`,
+        canonical: `${siteConfig.url}/blog/archive`,
     },
     openGraph: {
         title: `Blog archive | ${siteConfig.author}`,
         description:
             "Every post, searchable by title, description, or tag and grouped by year.",
-        url: `${siteConfig.url}/blogs/archive`,
+        url: `${siteConfig.url}/blog/archive`,
     },
 };
 
@@ -42,7 +43,7 @@ function ArchiveEmpty() {
                 heading="Nothing to search yet"
                 actions={
                     <Button asChild variant="outline" size="sm">
-                        <Link href="/blogs">Back to blog</Link>
+                        <Link href="/blog">Back to blog</Link>
                     </Button>
                 }
             >
@@ -61,7 +62,7 @@ async function ArchiveContent() {
     }
 
     // Rows key/link on the slug, so drop the (schema-invalid) slugless
-    // edge case entirely rather than emitting /blogs/ links.
+    // edge case entirely rather than emitting /blog/ links.
     const posts = allPosts
         .filter((post) => getPostSlug(post))
         .map((post) => ({
@@ -88,35 +89,37 @@ export default async function ArchivePage() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <TerminalSection
-                as="header"
+                as="div"
                 path="~/blog"
                 command="find . -type f"
                 promptVariant="compact"
                 animatePrompt
-                className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
-                promptClassName="route-prompt mb-5"
+                promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
             >
-                <h1 className="max-w-4xl font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
-                    The complete notebook
-                </h1>
-                <p className="mt-5 max-w-2xl text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
-                    Search by title, description, or tag, or browse everything
-                    I&apos;ve written, grouped by year.
-                </p>
-                <Link
-                    href="/blogs"
-                    aria-label="Back to the blog"
-                    className="mt-6 inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
-                >
-                    ← Back to the blog
-                </Link>
-            </TerminalSection>
+                <BlogNav />
+                <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
+                    <h1 className="max-w-4xl font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
+                        The complete notebook
+                    </h1>
+                    <p className="mt-5 max-w-2xl text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
+                        Search by title, description, or tag, or browse
+                        everything I&apos;ve written, grouped by year.
+                    </p>
+                    <Link
+                        href="/blog"
+                        aria-label="Back to the blog"
+                        className="mt-6 inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
+                    >
+                        ← Back to the blog
+                    </Link>
+                </header>
 
-            <PageShell className="mt-14 sm:mt-16">
-                <div>
-                    <ArchiveContent />
-                </div>
-            </PageShell>
+                <PageShell className="mt-14 sm:mt-16">
+                    <div>
+                        <ArchiveContent />
+                    </div>
+                </PageShell>
+            </TerminalSection>
         </main>
     );
 }

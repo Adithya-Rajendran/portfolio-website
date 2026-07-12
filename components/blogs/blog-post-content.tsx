@@ -4,7 +4,6 @@ import { createPortableTextComponents } from "@/components/blogs/portable-text-c
 import type { PostWithBody } from "@/lib/sanity-client";
 import TableOfContents from "@/components/blogs/table-of-contents";
 import MobileToc from "@/components/blogs/mobile-toc";
-import TerminalSection from "@/components/terminal/terminal-section";
 import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
 import {
     extractHeadings,
@@ -15,7 +14,6 @@ import { TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
 
 interface BlogPostHeroProps {
-    slug: string;
     post: {
         title?: string | null;
         slug?: string | { current?: string } | null;
@@ -28,23 +26,14 @@ interface BlogPostHeroProps {
 /**
  * Blog post hero — renders instantly from lightweight post metadata.
  */
-export function BlogPostHero({ post, slug }: BlogPostHeroProps) {
+export function BlogPostHero({ post }: BlogPostHeroProps) {
     // Same gate every other tag surface applies (collectTags, tag pages):
     // schema-invalid tags authored outside the Studio would otherwise
     // render as pills linking to guaranteed 404s.
     const tags = (post.tags ?? []).filter((tag) => TAG_PATTERN.test(tag));
 
     return (
-        <TerminalSection
-            as="header"
-            path=""
-            command={`cat ${slug}.md`}
-            promptVariant="compact"
-            animatePrompt
-            className="relative overflow-hidden py-14 sm:py-20 lg:py-24"
-            promptClassName="post-route-prompt mx-auto mb-7 max-w-3xl justify-center px-1 min-[360px]:px-3 sm:px-8"
-            bodyClassName="relative mx-auto max-w-3xl px-6 sm:px-8"
-        >
+        <header className="relative mx-auto max-w-3xl px-6 pb-14 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:pb-24 lg:pt-24">
             {/* Meta info — chrome goes mono: ISO date, byline, tags */}
             <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-6">
                 <div className="flex flex-col items-center gap-1 font-term text-[0.8rem] text-slate-600 sm:flex-row sm:gap-2 dark:text-slate-400">
@@ -83,7 +72,7 @@ export function BlogPostHero({ post, slug }: BlogPostHeroProps) {
                         {tags.map((tag) => (
                             <Link
                                 key={tag}
-                                href={`/blogs/tags/${tag}`}
+                                href={`/blog/tags/${tag}`}
                                 className="font-term text-[0.8rem] whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-accent transition-colors"
                             >
                                 # {tag}
@@ -104,7 +93,7 @@ export function BlogPostHero({ post, slug }: BlogPostHeroProps) {
                     {post.description}
                 </p>
             )}
-        </TerminalSection>
+        </header>
     );
 }
 

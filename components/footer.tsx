@@ -14,7 +14,7 @@ async function getYear(): Promise<number> {
 const navLinks = [
     { href: "/", label: "Home" },
     { href: "/portfolio", label: "Portfolio" },
-    { href: "/blogs", label: "Blog" },
+    { href: "/blog", label: "Blog" },
     { href: "/about", label: "About" },
     { href: "/portfolio#contact", label: "Contact" },
 ];

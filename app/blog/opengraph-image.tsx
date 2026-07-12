@@ -14,7 +14,7 @@ export default async function Image() {
             eyebrow={`${siteConfig.author} · Writing`}
             title="Blog"
             subtitle={BLOG_DESCRIPTION}
-            footerRight={`${domain}/blogs`}
+            footerRight={`${domain}/blog`}
         />,
         { ...size },
     );

@@ -1,5 +1,6 @@
 import HeroContent from "@/components/home/hero-content";
 import RightNow from "@/components/home/right-now";
+import TerminalSection from "@/components/terminal/terminal-section";
 import { getProfile } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 
@@ -16,18 +17,27 @@ export default async function Home() {
 
     return (
         <main id="main-content" tabIndex={-1}>
-            <HeroContent
-                name={profile?.name}
-                headline={profile?.headline}
-                introduction={profile?.introduction}
-                portraitSrc={portraitSrc}
-                portraitAlt={profile?.portrait?.alt}
-                socialLinks={profile?.socialLinks}
-            />
-            <RightNow
-                items={profile?.currentCuriosities ?? []}
-                updatedAt={profile?.curiositiesUpdatedAt}
-            />
+            <TerminalSection
+                as="div"
+                command="whoami"
+                animatePrompt
+                className="mx-auto flex min-h-[calc(100svh-var(--site-header-height)-5rem)] w-full max-w-6xl flex-col justify-center px-5 py-12 sm:px-8 sm:py-16 lg:py-20"
+                promptClassName="mb-8"
+            >
+                <HeroContent
+                    name={profile?.name}
+                    headline={profile?.headline}
+                    introduction={profile?.introduction}
+                    portraitSrc={portraitSrc}
+                    portraitAlt={profile?.portrait?.alt}
+                    socialLinks={profile?.socialLinks}
+                />
+                <RightNow
+                    embedded
+                    items={profile?.currentCuriosities ?? []}
+                    updatedAt={profile?.curiositiesUpdatedAt}
+                />
+            </TerminalSection>
         </main>
     );
 }

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowDown, FileText } from "lucide-react";
 import type { ProfileData } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
-import TerminalSection from "@/components/terminal/terminal-section";
 
 export default function Intro({
     profile,
@@ -12,13 +11,9 @@ export default function Intro({
     hasProjects: boolean;
 }) {
     return (
-        <TerminalSection
+        <header
             id="home"
-            command="cat work.log"
-            promptVariant="compact"
-            animatePrompt
-            className="mx-auto w-full max-w-7xl scroll-mt-[100rem] px-5 py-14 sm:px-8 sm:py-20 lg:px-10 lg:py-24"
-            promptClassName="route-prompt mb-5"
+            className="mx-auto w-full max-w-7xl scroll-mt-[100rem] px-5 pb-14 sm:px-8 sm:pb-20 lg:px-10 lg:pb-24"
         >
             <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[0.98] tracking-[-0.05em] text-slate-950 dark:text-white sm:text-6xl lg:text-7xl">
                 Work and experience.
@@ -49,6 +44,6 @@ export default function Intro({
                     </a>
                 )}
             </div>
-        </TerminalSection>
+        </header>
     );
 }

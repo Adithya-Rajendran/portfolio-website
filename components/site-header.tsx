@@ -10,7 +10,7 @@ import ThemeSelector from "@/components/theme-selector";
 const navigation = [
     { href: "/", label: "Home", match: "home" },
     { href: "/portfolio", label: "Portfolio", match: "work" },
-    { href: "/blogs", label: "Blog", match: "writing" },
+    { href: "/blog", label: "Blog", match: "writing" },
     { href: "/about", label: "About", match: "about" },
     { href: "/resume", label: "Résumé", match: "resume" },
 ] as const;
@@ -21,7 +21,7 @@ function isCurrent(
 ) {
     if (match === "home") return pathname === "/";
     if (match === "work") return pathname.startsWith("/portfolio");
-    if (match === "writing") return pathname.startsWith("/blogs");
+    if (match === "writing") return pathname.startsWith("/blog");
     if (match === "about") return pathname.startsWith("/about");
     if (match === "resume") return pathname.startsWith("/resume");
     return false;

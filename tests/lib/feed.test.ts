@@ -89,10 +89,10 @@ describe("renderFeedXml — items", () => {
         const xml = renderFeedXml([postOf({ slug: "k8s-deep-dive" })]);
 
         expect(xml).toContain(
-            "<link>https://adithya-rajendran.com/blogs/k8s-deep-dive</link>",
+            "<link>https://adithya-rajendran.com/blog/k8s-deep-dive</link>",
         );
         expect(xml).toContain(
-            '<guid isPermaLink="true">https://adithya-rajendran.com/blogs/k8s-deep-dive</guid>',
+            '<guid isPermaLink="true">https://adithya-rajendran.com/blog/k8s-deep-dive</guid>',
         );
     });
 
@@ -225,12 +225,12 @@ describe("renderFeedXml — content:encoded", () => {
         const xml = renderFeedXml([
             postOf({
                 body: [
-                    contentLinkedParagraph("other post", "/blogs/other"),
+                    contentLinkedParagraph("other post", "/blog/other"),
                 ] as Body,
             }),
         ]);
 
-        expect(xml).toContain("https://adithya-rajendran.com/blogs/other");
+        expect(xml).toContain("https://adithya-rajendran.com/blog/other");
     });
 
     it("renders images as absolute CDN URLs with alt and caption", () => {

@@ -114,9 +114,9 @@ interface TerminalSectionProps {
 }
 
 /**
- * A route introduction headed by a lightweight terminal prompt. Content is
- * server-rendered and may briefly reveal after the command when scripting and
- * motion preferences allow the entrance sequence.
+ * A route-level command followed by its complete server-rendered output.
+ * Scripting may briefly delay the output reveal; no-JS and reduced-motion
+ * visitors receive the complete static route immediately.
  */
 export default function TerminalSection({
     command,

@@ -14,7 +14,7 @@ export default async function Image() {
             eyebrow={`${siteConfig.author} · Blog`}
             title="Archive"
             subtitle="Every post, searchable by title, description, or tag and grouped by year."
-            footerRight={`${domain}/blogs/archive`}
+            footerRight={`${domain}/blog/archive`}
         />,
         { ...size },
     );

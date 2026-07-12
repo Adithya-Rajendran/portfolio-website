@@ -46,11 +46,11 @@ async function warmPages(
 
     // Also warm the blog listing, archive, and tag pages
     const urls = [
-        `${siteConfig.url}/blogs`,
-        `${siteConfig.url}/blogs/archive`,
+        `${siteConfig.url}/blog`,
+        `${siteConfig.url}/blog/archive`,
         `${siteConfig.url}/feed.xml`,
-        ...tags.map((tag) => `${siteConfig.url}/blogs/tags/${tag}`),
-        ...safeSlugs.map((slug) => `${siteConfig.url}/blogs/${slug}`),
+        ...tags.map((tag) => `${siteConfig.url}/blog/tags/${tag}`),
+        ...safeSlugs.map((slug) => `${siteConfig.url}/blog/${slug}`),
     ];
 
     const batchSize = 5;

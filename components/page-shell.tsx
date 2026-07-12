@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Width and rhythm container for content pages (/portfolio, /blogs).
+ * Width and rhythm container for content pages (/portfolio, /blog).
  * Every direct child is a section that gets the same vertical spacing,
  * so individual section components don't each ship their own margins.
  */

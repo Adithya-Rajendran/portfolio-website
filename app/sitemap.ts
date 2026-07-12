@@ -65,13 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.8,
         },
         {
-            url: `${BASE_URL}/blogs`,
+            url: `${BASE_URL}/blog`,
             lastModified: newestPostDate,
             changeFrequency: "weekly",
             priority: 0.8,
         },
         {
-            url: `${BASE_URL}/blogs/archive`,
+            url: `${BASE_URL}/blog/archive`,
             lastModified: newestPostDate,
             changeFrequency: "weekly",
             priority: 0.5,
@@ -79,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
 
     const blogPages: MetadataRoute.Sitemap = (postData || []).map((post) => ({
-        url: `${BASE_URL}/blogs/${post.slug}`,
+        url: `${BASE_URL}/blog/${post.slug}`,
         lastModified: validDate(post.updatedAt),
         changeFrequency: "weekly" as const,
         priority: 0.6,
@@ -95,7 +95,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
 
     const tagPages: MetadataRoute.Sitemap = tags.map(({ tag }) => ({
-        url: `${BASE_URL}/blogs/tags/${tag}`,
+        url: `${BASE_URL}/blog/tags/${tag}`,
         lastModified: newestPostDate,
         changeFrequency: "weekly" as const,
         priority: 0.5,

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PenLine } from "lucide-react";
 import PostRow, { POST_ROW_LIST_CLASSES } from "@/components/blogs/post-row";
 import TagChips from "@/components/blogs/tag-chips";
+import BlogNav from "@/components/blogs/blog-nav";
 import NewsletterNotice from "@/components/newsletter/newsletter-notice";
 import { PageShell } from "@/components/page-shell";
 import { StatusCard } from "@/components/status-card";
@@ -18,12 +19,12 @@ export const metadata: Metadata = {
     title: "Blog",
     description: BLOG_DESCRIPTION,
     alternates: {
-        canonical: `${siteConfig.url}/blogs`,
+        canonical: `${siteConfig.url}/blog`,
     },
     openGraph: {
         title: `Blog | ${siteConfig.author}`,
         description: BLOG_DESCRIPTION,
-        url: `${siteConfig.url}/blogs`,
+        url: `${siteConfig.url}/blog`,
     },
 };
 
@@ -80,7 +81,7 @@ function BlogPosts({
                         </h2>
                     </div>
                     <Link
-                        href="/blogs/archive"
+                        href="/blog/archive"
                         className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
                     >
                         Browse the full archive →
@@ -125,29 +126,31 @@ export default async function Blogs() {
             <BlogJsonLd />
 
             <TerminalSection
-                as="header"
+                as="div"
                 path="~/blog"
                 command="ls -t"
                 promptVariant="compact"
                 animatePrompt
-                className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
-                promptClassName="route-prompt mb-5"
+                promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
             >
-                <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-balance text-slate-900 dark:text-white sm:text-7xl">
-                    Blog
-                </h1>
-                <div className="mt-6 max-w-3xl border-l-2 border-accent pl-5 sm:pl-7">
-                    <p className="text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
-                        Technical notes, documentaries, things I&apos;m
-                        learning, and the occasional detour. This is where I
-                        write about whatever has my attention.
-                    </p>
-                </div>
-            </TerminalSection>
+                <BlogNav />
+                <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
+                    <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-balance text-slate-900 dark:text-white sm:text-7xl">
+                        Blog
+                    </h1>
+                    <div className="mt-6 max-w-3xl border-l-2 border-accent pl-5 sm:pl-7">
+                        <p className="text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
+                            Technical notes, documentaries, things I&apos;m
+                            learning, and the occasional detour. This is where I
+                            write about whatever has my attention.
+                        </p>
+                    </div>
+                </header>
 
-            <PageShell className="mt-14 sm:mt-20 [&>*+*]:mt-16 sm:[&>*+*]:mt-24">
-                <BlogPosts allPosts={allPosts} />
-            </PageShell>
+                <PageShell className="mt-14 sm:mt-20 [&>*+*]:mt-16 sm:[&>*+*]:mt-24">
+                    <BlogPosts allPosts={allPosts} />
+                </PageShell>
+            </TerminalSection>
         </main>
     );
 }

@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 
 export default function BlogNav() {
     const pathname = usePathname();
-    const isArchive = pathname === "/blogs/archive";
+    const isArchive = pathname === "/blog/archive";
     const isArticle =
-        pathname.startsWith("/blogs/") &&
+        pathname.startsWith("/blog/") &&
         !isArchive &&
-        !pathname.startsWith("/blogs/tags/");
+        !pathname.startsWith("/blog/tags/");
 
     return (
         <nav
@@ -21,7 +21,7 @@ export default function BlogNav() {
             <div className="mx-auto flex h-full w-full max-w-7xl items-center gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
                 {isArticle ? (
                     <Link
-                        href="/blogs"
+                        href="/blog"
                         className="os-press flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-2 text-[0.7rem] font-semibold text-accent transition-opacity hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] sm:text-xs"
                     >
                         <ArrowLeft aria-hidden className="size-3.5" />
@@ -40,13 +40,11 @@ export default function BlogNav() {
 
                 <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <Link
-                        href="/blogs"
-                        aria-current={
-                            pathname === "/blogs" ? "page" : undefined
-                        }
+                        href="/blog"
+                        aria-current={pathname === "/blog" ? "page" : undefined}
                         className={cn(
                             "os-press inline-flex h-8 shrink-0 items-center rounded-full px-3 text-[0.72rem] font-medium transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] sm:text-[0.78rem]",
-                            pathname === "/blogs"
+                            pathname === "/blog"
                                 ? "border border-accent-soft bg-accent-soft text-accent"
                                 : "text-slate-600 dark:text-slate-300",
                         )}
@@ -54,7 +52,7 @@ export default function BlogNav() {
                         Latest
                     </Link>
                     <Link
-                        href="/blogs/archive"
+                        href="/blog/archive"
                         aria-current={isArchive ? "page" : undefined}
                         className={cn(
                             "os-press inline-flex h-8 shrink-0 items-center rounded-full px-3 text-[0.72rem] font-medium transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] sm:text-[0.78rem]",

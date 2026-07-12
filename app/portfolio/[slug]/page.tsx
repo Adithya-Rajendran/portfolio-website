@@ -81,123 +81,124 @@ export default async function ProjectPage({
 
     return (
         <main id="main-content" tabIndex={-1}>
-            <article>
-                <header className="mx-auto w-full max-w-6xl px-5 pb-12 pt-12 sm:px-8 sm:pb-16 sm:pt-20">
-                    <Link
-                        href="/portfolio#projects"
-                        className="os-press inline-flex min-h-11 items-center gap-2 rounded-row font-term text-xs font-semibold text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-300"
-                    >
-                        <ArrowLeft className="size-4" aria-hidden />
-                        Portfolio
-                    </Link>
-                    <TerminalSection
-                        as="div"
-                        path="~/portfolio"
-                        command="cat project.md"
-                        promptVariant="compact"
-                        animatePrompt
-                        className="mt-8"
-                        promptClassName="route-prompt mb-5"
-                    >
-                        <div className="flex flex-wrap gap-3 font-term text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                            <span className="text-accent">
-                                {statusLabel[project.status]}
-                            </span>
-                            {dates && <span>{dates}</span>}
-                        </div>
-                        <h1 className="mt-5 max-w-4xl font-display text-4xl font-semibold leading-[1.02] tracking-[-0.045em] text-slate-950 text-balance dark:text-white sm:text-6xl lg:text-7xl">
-                            {project.title}
-                        </h1>
-                        <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300 sm:text-xl">
-                            {project.summary}
-                        </p>
+            <TerminalSection
+                as="div"
+                path="~/portfolio"
+                command="cat project.md"
+                promptVariant="compact"
+                animatePrompt
+                promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-5 pt-12 sm:px-8 sm:pt-20"
+            >
+                <article>
+                    <header className="mx-auto w-full max-w-6xl px-5 pb-12 sm:px-8 sm:pb-16">
+                        <Link
+                            href="/portfolio#projects"
+                            className="os-press inline-flex min-h-11 items-center gap-2 rounded-row font-term text-xs font-semibold text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-300"
+                        >
+                            <ArrowLeft className="size-4" aria-hidden />
+                            Portfolio
+                        </Link>
+                        <div className="mt-8">
+                            <div className="flex flex-wrap gap-3 font-term text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                                <span className="text-accent">
+                                    {statusLabel[project.status]}
+                                </span>
+                                {dates && <span>{dates}</span>}
+                            </div>
+                            <h1 className="mt-5 max-w-4xl font-display text-4xl font-semibold leading-[1.02] tracking-[-0.045em] text-slate-950 text-balance dark:text-white sm:text-6xl lg:text-7xl">
+                                {project.title}
+                            </h1>
+                            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300 sm:text-xl">
+                                {project.summary}
+                            </p>
 
-                        {project.technologies?.length ? (
-                            <ul
-                                className="mt-7 flex flex-wrap gap-2"
-                                aria-label="Technologies"
-                            >
-                                {project.technologies.map((technology) => (
+                            {project.technologies?.length ? (
+                                <ul
+                                    className="mt-7 flex flex-wrap gap-2"
+                                    aria-label="Technologies"
+                                >
+                                    {project.technologies.map((technology) => (
+                                        <li
+                                            key={technology}
+                                            className="rounded-full border border-slate-200/80 px-3 py-1.5 font-term text-[0.7rem] text-slate-600 dark:border-white/10 dark:text-slate-300"
+                                        >
+                                            {technology}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : null}
+                        </div>
+                    </header>
+
+                    {coverUrl && (
+                        <figure className="mx-auto mb-14 w-full max-w-6xl px-5 sm:px-8">
+                            <Image
+                                src={coverUrl}
+                                alt={project.cover?.alt || ""}
+                                width={1600}
+                                height={960}
+                                sizes="(max-width: 1200px) 100vw, 1152px"
+                                className="h-auto w-full rounded-card border border-slate-200/80 object-cover dark:border-white/10"
+                                priority
+                            />
+                            {project.cover?.caption && (
+                                <figcaption className="mt-3 text-center text-sm italic text-slate-500 dark:text-slate-400">
+                                    {project.cover.caption}
+                                </figcaption>
+                            )}
+                        </figure>
+                    )}
+
+                    {project.highlights?.length ? (
+                        <aside className="mx-auto mb-14 max-w-[45.5rem] border-y border-slate-300/70 px-5 py-7 dark:border-white/10 sm:px-8">
+                            <h2 className="font-term text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+                                Highlights
+                            </h2>
+                            <ul className="mt-4 space-y-3">
+                                {project.highlights.map((highlight) => (
                                     <li
-                                        key={technology}
-                                        className="rounded-full border border-slate-200/80 px-3 py-1.5 font-term text-[0.7rem] text-slate-600 dark:border-white/10 dark:text-slate-300"
+                                        key={highlight}
+                                        className="relative pl-5 text-sm leading-7 text-slate-700 before:absolute before:left-0 before:top-[0.7rem] before:size-1.5 before:rounded-full before:bg-accent dark:text-slate-300"
                                     >
-                                        {technology}
+                                        {highlight}
                                     </li>
                                 ))}
                             </ul>
-                        ) : null}
-                    </TerminalSection>
-                </header>
+                        </aside>
+                    ) : null}
 
-                {coverUrl && (
-                    <figure className="mx-auto mb-14 w-full max-w-6xl px-5 sm:px-8">
-                        <Image
-                            src={coverUrl}
-                            alt={project.cover?.alt || ""}
-                            width={1600}
-                            height={960}
-                            sizes="(max-width: 1200px) 100vw, 1152px"
-                            className="h-auto w-full rounded-card border border-slate-200/80 object-cover dark:border-white/10"
-                            priority
-                        />
-                        {project.cover?.caption && (
-                            <figcaption className="mt-3 text-center text-sm italic text-slate-500 dark:text-slate-400">
-                                {project.cover.caption}
-                            </figcaption>
-                        )}
-                    </figure>
-                )}
+                    <ProjectEssay project={project} />
 
-                {project.highlights?.length ? (
-                    <aside className="mx-auto mb-14 max-w-[45.5rem] border-y border-slate-300/70 px-5 py-7 dark:border-white/10 sm:px-8">
-                        <h2 className="font-term text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-                            Highlights
-                        </h2>
-                        <ul className="mt-4 space-y-3">
-                            {project.highlights.map((highlight) => (
-                                <li
-                                    key={highlight}
-                                    className="relative pl-5 text-sm leading-7 text-slate-700 before:absolute before:left-0 before:top-[0.7rem] before:size-1.5 before:rounded-full before:bg-accent dark:text-slate-300"
-                                >
-                                    {highlight}
-                                </li>
-                            ))}
-                        </ul>
-                    </aside>
-                ) : null}
-
-                <ProjectEssay project={project} />
-
-                {project.links?.length ? (
-                    <footer className="mx-auto mb-24 max-w-[45.5rem] px-5 sm:px-8">
-                        <h2 className="font-display text-2xl font-semibold text-slate-950 dark:text-white">
-                            Links
-                        </h2>
-                        <ul className="mt-4 border-t border-slate-300/70 dark:border-white/10">
-                            {project.links.map((link) => (
-                                <li
-                                    key={link._key}
-                                    className="border-b border-slate-300/70 dark:border-white/10"
-                                >
-                                    <a
-                                        href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="group flex min-h-14 items-center justify-between gap-4 font-term text-sm font-semibold text-slate-700 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-200"
+                    {project.links?.length ? (
+                        <footer className="mx-auto mb-24 max-w-[45.5rem] px-5 sm:px-8">
+                            <h2 className="font-display text-2xl font-semibold text-slate-950 dark:text-white">
+                                Links
+                            </h2>
+                            <ul className="mt-4 border-t border-slate-300/70 dark:border-white/10">
+                                {project.links.map((link) => (
+                                    <li
+                                        key={link._key}
+                                        className="border-b border-slate-300/70 dark:border-white/10"
                                     >
-                                        {link.label}
-                                        <ArrowUpRight
-                                            className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                                            aria-hidden
-                                        />
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </footer>
-                ) : null}
-            </article>
+                                        <a
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group flex min-h-14 items-center justify-between gap-4 font-term text-sm font-semibold text-slate-700 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-200"
+                                        >
+                                            {link.label}
+                                            <ArrowUpRight
+                                                className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                                                aria-hidden
+                                            />
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </footer>
+                    ) : null}
+                </article>
+            </TerminalSection>
         </main>
     );
 }

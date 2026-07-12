@@ -156,8 +156,8 @@ export function buildBlogPosting({
         headline: title,
         description,
         datePublished: publishedAt,
-        url: `${siteConfig.url}/blogs/${slug}`,
-        image: `${siteConfig.url}/blogs/${slug}/opengraph-image`,
+        url: `${siteConfig.url}/blog/${slug}`,
+        image: `${siteConfig.url}/blog/${slug}/opengraph-image`,
         author: {
             "@type": "Person",
             name: siteConfig.author,
@@ -169,7 +169,7 @@ export function buildBlogPosting({
         },
         mainEntityOfPage: {
             "@type": "WebPage",
-            "@id": `${siteConfig.url}/blogs/${slug}`,
+            "@id": `${siteConfig.url}/blog/${slug}`,
         },
         ...(updatedAt ? { dateModified: updatedAt } : {}),
         ...(tags && tags.length > 0 ? { keywords: tags.join(", ") } : {}),
@@ -184,7 +184,7 @@ export function buildBlog() {
         "@context": "https://schema.org",
         "@type": "Blog",
         name: `${siteConfig.author} — Blog`,
-        url: `${siteConfig.url}/blogs`,
+        url: `${siteConfig.url}/blog`,
         description: BLOG_DESCRIPTION,
         author: {
             "@type": "Person",

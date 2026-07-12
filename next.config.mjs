@@ -83,6 +83,11 @@ const nextConfig = {
     async redirects() {
         return [
             {
+                source: "/blogs/:path*",
+                destination: "/blog/:path*",
+                permanent: true,
+            },
+            {
                 source: "/resume.pdf",
                 destination: "/resume/download",
                 permanent: true,

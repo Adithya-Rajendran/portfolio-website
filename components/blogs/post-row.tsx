@@ -20,7 +20,7 @@ export default function PostRow({ post }: { post: PostListItem }) {
 
     return (
         <Link
-            href={`/blogs/${getPostSlug(post)}`}
+            href={`/blog/${getPostSlug(post)}`}
             className="group grid min-h-11 gap-x-8 gap-y-3 border-b border-slate-400/25 py-6 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))] dark:border-white/10 sm:grid-cols-[8.5rem_minmax(0,1fr)_auto] sm:items-start sm:py-7"
         >
             <span className="flex flex-wrap items-center gap-x-2 font-term text-[0.76rem] tabular-nums text-slate-600 dark:text-slate-400 sm:block">

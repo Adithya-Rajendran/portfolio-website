@@ -200,7 +200,7 @@ export function renderFeedXml(posts: FeedPost[]): string {
     );
 
     const items = publishable.map((post) => {
-        const url = `${siteConfig.url}/blogs/${post.slug}`;
+        const url = `${siteConfig.url}/blog/${post.slug}`;
         const pubDate = toRfc822(post.publishedAt);
         const lines = [
             `<title>${escapeXml(post.title)}</title>`,
@@ -221,7 +221,7 @@ export function renderFeedXml(posts: FeedPost[]): string {
         : null;
     const channelLines = [
         `<title>${escapeXml(FEED_TITLE)}</title>`,
-        `<link>${escapeXml(`${siteConfig.url}/blogs`)}</link>`,
+        `<link>${escapeXml(`${siteConfig.url}/blog`)}</link>`,
         `<description>${escapeXml(BLOG_DESCRIPTION)}</description>`,
         `<language>en-us</language>`,
         ...(lastBuildDate

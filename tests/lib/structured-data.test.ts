@@ -193,7 +193,7 @@ describe("buildBlogPosting", () => {
     it("uses publishedAt and an absolute canonical URL", () => {
         const post = buildBlogPosting(base);
         expect(post.datePublished).toBe(base.publishedAt);
-        expect(post.url).toBe(`${siteConfig.url}/blogs/a-post`);
+        expect(post.url).toBe(`${siteConfig.url}/blog/a-post`);
     });
 
     it("adds optional article metadata only when supplied", () => {
@@ -222,7 +222,7 @@ describe("buildBlog", () => {
         expect(blog["@context"]).toBe("https://schema.org");
         expect(blog["@type"]).toBe("Blog");
         expect(blog.name).toBe(`${siteConfig.author} — Blog`);
-        expect(blog.url).toBe(`${siteConfig.url}/blogs`);
+        expect(blog.url).toBe(`${siteConfig.url}/blog`);
         expect(blog.description).toMatch(/Personal writing/);
     });
 });

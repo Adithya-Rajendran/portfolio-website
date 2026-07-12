@@ -11,16 +11,22 @@ export interface CuriosityItem {
 export default function RightNow({
     items,
     updatedAt,
+    embedded = false,
 }: {
     items: CuriosityItem[];
     updatedAt?: string | null;
+    embedded?: boolean;
 }) {
     if (!hasVisibleItems(items)) return null;
 
     return (
         <section
             aria-labelledby="right-now-heading"
-            className="mx-auto w-full max-w-6xl px-5 pb-20 sm:px-8 sm:pb-24"
+            className={
+                embedded
+                    ? "mt-16 w-full pb-4 sm:mt-20"
+                    : "mx-auto w-full max-w-6xl px-5 pb-20 sm:px-8 sm:pb-24"
+            }
         >
             <div className="grid gap-8 border-t border-slate-300/70 pt-10 dark:border-white/10 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-12 sm:pt-12">
                 <header>
