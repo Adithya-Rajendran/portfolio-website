@@ -57,7 +57,7 @@ export default function ResumeShareAction({
             ? "Link copied"
             : status === "shared"
               ? "Shared"
-              : "Share page";
+              : "Share";
 
     return (
         <>
