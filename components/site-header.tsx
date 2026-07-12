@@ -6,18 +6,11 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ThemeSelector from "@/components/theme-selector";
-
-const navigation = [
-    { href: "/", label: "Home", match: "home" },
-    { href: "/portfolio", label: "Portfolio", match: "work" },
-    { href: "/blog", label: "Blog", match: "writing" },
-    { href: "/about", label: "About", match: "about" },
-    { href: "/resume", label: "Résumé", match: "resume" },
-] as const;
+import { primaryNavigation, siteRoutes } from "@/lib/navigation";
 
 function isCurrent(
     pathname: string,
-    match: (typeof navigation)[number]["match"],
+    match: (typeof primaryNavigation)[number]["match"],
 ) {
     if (match === "home") return pathname === "/";
     if (match === "work") return pathname.startsWith("/portfolio");
@@ -63,7 +56,7 @@ export default function SiteHeader() {
         <header className="os-nav sticky top-0 z-[1000] h-16 rounded-none border-x-0 border-t-0">
             <div className="mx-auto flex h-full w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
                 <Link
-                    href="/"
+                    href={siteRoutes.home}
                     aria-label="Adithya Rajendran — home"
                     className="group flex min-w-0 items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
                 >
@@ -83,7 +76,7 @@ export default function SiteHeader() {
                     aria-label="Primary navigation"
                     className="ml-auto hidden items-center gap-1 md:flex"
                 >
-                    {navigation.map((item) => {
+                    {primaryNavigation.map((item) => {
                         const current = isCurrent(pathname, item.match);
                         return (
                             <Link
@@ -137,7 +130,7 @@ export default function SiteHeader() {
                         >
                             <nav aria-label="Mobile navigation">
                                 <ul className="grid gap-1">
-                                    {navigation.map((item) => {
+                                    {primaryNavigation.map((item) => {
                                         const current = isCurrent(
                                             pathname,
                                             item.match,

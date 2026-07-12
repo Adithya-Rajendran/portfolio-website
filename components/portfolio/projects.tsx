@@ -1,4 +1,4 @@
-import SectionHeading from "@/components/portfolio/section-heading";
+import { SectionHeading } from "@/components/section-heading";
 import SectionSpy from "@/components/portfolio/section-spy";
 import type { ProjectListItem } from "@/lib/sanity-client";
 import Project from "@/components/portfolio/project";

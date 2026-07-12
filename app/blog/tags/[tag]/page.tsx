@@ -7,7 +7,8 @@ import TagChips from "@/components/blogs/tag-chips";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
-import TerminalSection from "@/components/terminal/terminal-section";
+import { PageIntro } from "@/components/page-intro";
+import { TerminalRoute } from "@/components/terminal/terminal-route";
 
 /**
  * Data section — fetches posts, filters by tag, and 404s when the tag
@@ -21,32 +22,22 @@ async function TagPosts({ tag }: { tag: string }) {
     const allTags = collectTags(allPosts);
 
     return (
-        <TerminalSection
-            as="div"
-            path="~/blog"
-            command={`rg -l "#${tag}" .`}
-            promptVariant="compact"
-            animatePrompt
-            promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
-        >
-            <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
-                <h1 className="font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
-                    {tag}
-                </h1>
-                <p className="mt-4 font-term text-sm text-slate-600 dark:text-slate-400">
-                    {posts.length} post{posts.length === 1 ? "" : "s"} tagged{" "}
-                    <span className="text-accent"># {tag}</span>
-                </p>
-            </header>
+        <TerminalRoute path="~/blog" command={`rg -l "#${tag}" .`}>
+            <PageIntro
+                size="compact"
+                title={tag}
+                description={
+                    <span className="font-term text-sm">
+                        {posts.length} post{posts.length === 1 ? "" : "s"}{" "}
+                        tagged <span className="text-accent"># {tag}</span>
+                    </span>
+                }
+            />
 
             <PageShell className="mt-14 sm:mt-16 pb-24 sm:pb-32">
                 <TagChips tags={allTags} active={tag} />
 
-                <Latest
-                    posts={posts}
-                    eyebrow="Posts"
-                    title={`Tagged "${tag}"`}
-                />
+                <Latest posts={posts} title={`Tagged "${tag}"`} />
 
                 <div>
                     <Link
@@ -58,7 +49,7 @@ async function TagPosts({ tag }: { tag: string }) {
                     </Link>
                 </div>
             </PageShell>
-        </TerminalSection>
+        </TerminalRoute>
     );
 }
 

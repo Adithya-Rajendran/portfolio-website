@@ -27,7 +27,7 @@ export default function SiteFrame({
             <div className="min-h-[calc(100svh-var(--site-header-height))]">
                 {children}
             </div>
-            {pathname !== "/" && footer}
+            <div className="site-footer-slot">{footer}</div>
         </>
     );
 }

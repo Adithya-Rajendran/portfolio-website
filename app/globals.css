@@ -71,6 +71,13 @@ html {
     );
 }
 
+/* Keep the shared frame markup identical on the server and client. Home marks
+   itself as footer-free; CSS removes the slot without a pathname-dependent
+   hydration branch. */
+body:has([data-hide-site-footer]) .site-footer-slot {
+    display: none;
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    ACCENT TOKENS — one identity in both appearances. The c1/c2/c3 aliases
    remain because shared components use them for categorical treatments,

@@ -4,6 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    CONTEXT_NAV_ITEM_CLASSES,
+    CONTEXT_NAV_LABEL_CLASSES,
+    ContextNav,
+} from "@/components/context-nav";
 
 export default function BlogNav() {
     const pathname = usePathname();
@@ -14,36 +19,30 @@ export default function BlogNav() {
         !pathname.startsWith("/blog/tags/");
 
     return (
-        <nav
-            aria-label="Writing navigation"
-            className="os-subnav sticky top-16 z-[900] h-12 border-x-0"
-        >
-            <div className="mx-auto flex h-full w-full max-w-7xl items-center gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
-                {isArticle ? (
+        <ContextNav
+            ariaLabel="Writing navigation"
+            collapseIdentityOnMobile={!isArticle}
+            identity={
+                isArticle ? (
                     <Link
                         href="/blog"
-                        className="os-press flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-2 text-[0.7rem] font-semibold text-accent transition-opacity hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] sm:text-xs"
+                        className="os-press flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-2 font-term text-[0.7rem] font-semibold text-accent transition-opacity hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] sm:text-xs"
                     >
                         <ArrowLeft aria-hidden className="size-3.5" />
                         All posts
                     </Link>
                 ) : (
-                    <span className="shrink-0 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-accent sm:text-xs">
-                        Blog
-                    </span>
-                )}
-
-                <span
-                    aria-hidden
-                    className="h-4 w-px shrink-0 bg-slate-300/80 dark:bg-white/10"
-                />
-
-                <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <span className={CONTEXT_NAV_LABEL_CLASSES}>Blog</span>
+                )
+            }
+        >
+            <ul className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <li className="shrink-0">
                     <Link
                         href="/blog"
                         aria-current={pathname === "/blog" ? "page" : undefined}
                         className={cn(
-                            "os-press inline-flex h-8 shrink-0 items-center rounded-full px-3 text-[0.72rem] font-medium transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] sm:text-[0.78rem]",
+                            CONTEXT_NAV_ITEM_CLASSES,
                             pathname === "/blog"
                                 ? "border border-accent-soft bg-accent-soft text-accent"
                                 : "text-slate-600 dark:text-slate-300",
@@ -51,11 +50,13 @@ export default function BlogNav() {
                     >
                         Latest
                     </Link>
+                </li>
+                <li className="shrink-0">
                     <Link
                         href="/blog/archive"
                         aria-current={isArchive ? "page" : undefined}
                         className={cn(
-                            "os-press inline-flex h-8 shrink-0 items-center rounded-full px-3 text-[0.72rem] font-medium transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] sm:text-[0.78rem]",
+                            CONTEXT_NAV_ITEM_CLASSES,
                             isArchive
                                 ? "border border-accent-soft bg-accent-soft text-accent"
                                 : "text-slate-600 dark:text-slate-300",
@@ -63,14 +64,19 @@ export default function BlogNav() {
                     >
                         Archive
                     </Link>
+                </li>
+                <li className="shrink-0">
                     <a
                         href="/feed.xml"
-                        className="os-press inline-flex h-8 shrink-0 items-center rounded-full px-3 text-[0.72rem] font-medium text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-300 sm:text-[0.78rem]"
+                        className={cn(
+                            CONTEXT_NAV_ITEM_CLASSES,
+                            "text-slate-600 dark:text-slate-300",
+                        )}
                     >
                         RSS
                     </a>
-                </div>
-            </div>
-        </nav>
+                </li>
+            </ul>
+        </ContextNav>
     );
 }

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import SectionSpy from "@/components/portfolio/section-spy";
-import SectionHeading from "@/components/portfolio/section-heading";
+import { SectionHeading } from "@/components/section-heading";
 import { urlForImage } from "@/lib/sanity-image";
 import { cn } from "@/lib/utils";
 import type { CredentialListItem } from "@/lib/sanity-client";

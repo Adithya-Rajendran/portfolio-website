@@ -11,7 +11,7 @@ import {
 } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 import { siteConfig } from "@/lib/config";
-import TerminalSection from "@/components/terminal/terminal-section";
+import { TerminalRoute } from "@/components/terminal/terminal-route";
 
 const statusLabel: Record<ProjectListItem["status"], string> = {
     active: "Active",
@@ -81,14 +81,7 @@ export default async function ProjectPage({
 
     return (
         <main id="main-content" tabIndex={-1}>
-            <TerminalSection
-                as="div"
-                path="~/portfolio"
-                command="cat project.md"
-                promptVariant="compact"
-                animatePrompt
-                promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-5 pt-12 sm:px-8 sm:pt-20"
-            >
+            <TerminalRoute path="~/portfolio" command="cat project.md">
                 <article>
                     <header className="mx-auto w-full max-w-6xl px-5 pb-12 sm:px-8 sm:pb-16">
                         <Link
@@ -198,7 +191,7 @@ export default async function ProjectPage({
                         </footer>
                     ) : null}
                 </article>
-            </TerminalSection>
+            </TerminalRoute>
         </main>
     );
 }

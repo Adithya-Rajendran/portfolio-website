@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Download } from "lucide-react";
 import { siteConfig } from "@/lib/config";
+import { siteRoutes } from "@/lib/navigation";
 
 interface SocialLink {
     _key: string;
@@ -97,19 +98,19 @@ export default function HeroContent({
                     className="mt-8 flex flex-wrap gap-3"
                 >
                     <Link
-                        href="/portfolio"
+                        href={siteRoutes.portfolio}
                         className={`${bracketLink} border-accent bg-accent-soft hover:bg-accent hover:text-on-accent`}
                     >
                         [ cd ~/portfolio ]
                     </Link>
                     <Link
-                        href="/blog"
+                        href={siteRoutes.blog}
                         className={`${bracketLink} border-accent-soft hover:bg-accent-soft`}
                     >
                         [ cd ~/blog ]
                     </Link>
                     <Link
-                        href="/about"
+                        href={siteRoutes.about}
                         className={`${bracketLink} border-accent-soft hover:bg-accent-soft`}
                     >
                         [ cd ~/about ]
@@ -130,7 +131,7 @@ export default function HeroContent({
                         </a>
                     ))}
                     <Link
-                        href="/resume"
+                        href={siteRoutes.resume}
                         className="inline-flex min-h-11 items-center gap-1.5 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
                     >
                         <Download className="size-3.5" aria-hidden />

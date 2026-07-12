@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { FaGithub, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { siteConfig } from "@/lib/config";
+import { footerNavigation, siteRoutes } from "@/lib/navigation";
 
 // Under cacheComponents, new Date() is illegal in an uncached prerender —
 // the copyright year gets its own daily-refreshed cache scope instead.
@@ -10,14 +11,6 @@ async function getYear(): Promise<number> {
     cacheLife({ stale: 86400, revalidate: 86400, expire: 31536000 });
     return new Date().getFullYear();
 }
-
-const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/portfolio", label: "Portfolio" },
-    { href: "/blog", label: "Blog" },
-    { href: "/about", label: "About" },
-    { href: "/portfolio#contact", label: "Contact" },
-];
 
 const socialLinks = [
     {
@@ -50,7 +43,7 @@ export default async function Footer() {
             <div className="mx-auto grid w-full max-w-7xl gap-8 px-6 py-9 sm:px-8 sm:py-10 lg:grid-cols-[minmax(14rem,1fr)_auto] lg:items-center">
                 <div>
                     <Link
-                        href="/"
+                        href={siteRoutes.home}
                         className="inline-flex items-center font-display text-lg font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
                     >
                         <span className="text-slate-900 dark:text-white">
@@ -67,7 +60,7 @@ export default async function Footer() {
                 <div className="grid gap-5 sm:justify-items-end">
                     <nav aria-label="Footer navigation">
                         <ul className="flex flex-wrap gap-x-5 gap-y-2 font-term text-xs font-medium text-slate-600 dark:text-slate-300">
-                            {navLinks.map((link) => (
+                            {footerNavigation.map((link) => (
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}

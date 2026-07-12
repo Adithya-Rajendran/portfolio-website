@@ -16,7 +16,7 @@ export default async function Home() {
         : "/hero.webp";
 
     return (
-        <main id="main-content" tabIndex={-1}>
+        <main id="main-content" tabIndex={-1} data-hide-site-footer>
             <TerminalSection
                 as="div"
                 command="whoami"

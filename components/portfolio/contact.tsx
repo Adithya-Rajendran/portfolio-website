@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { FaGithub, FaLinkedin } from "react-icons/fa6";
 import { Rss } from "lucide-react";
-import SectionHeading from "@/components/portfolio/section-heading";
+import { SectionHeading } from "@/components/section-heading";
 import { useSectionInView } from "@/lib/hooks";
 import {
     sendEmailAction,

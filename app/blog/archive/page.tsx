@@ -13,7 +13,8 @@ import {
 import { collectTags } from "@/lib/tags";
 import { getAllPosts } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
-import TerminalSection from "@/components/terminal/terminal-section";
+import { PageIntro } from "@/components/page-intro";
+import { TerminalRoute } from "@/components/terminal/terminal-route";
 
 export const metadata: Metadata = {
     title: "Blog archive",
@@ -87,37 +88,28 @@ async function ArchiveContent() {
 export default async function ArchivePage() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
-            <TerminalSection
-                as="div"
-                path="~/blog"
-                command="find . -type f"
-                promptVariant="compact"
-                animatePrompt
-                promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
-            >
-                <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
-                    <h1 className="max-w-4xl font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
-                        The complete notebook
-                    </h1>
-                    <p className="mt-5 max-w-2xl text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
-                        Search by title, description, or tag, or browse
-                        everything I&apos;ve written, grouped by year.
-                    </p>
-                    <Link
-                        href="/blog"
-                        aria-label="Back to the blog"
-                        className="mt-6 inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
-                    >
-                        ← Back to the blog
-                    </Link>
-                </header>
+            <TerminalRoute path="~/blog" command="find . -type f">
+                <PageIntro
+                    size="compact"
+                    title="The complete notebook"
+                    description="Search by title, description, or tag, or browse everything I’ve written, grouped by year."
+                    actions={
+                        <Link
+                            href="/blog"
+                            aria-label="Back to the blog"
+                            className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
+                        >
+                            ← Back to the blog
+                        </Link>
+                    }
+                />
 
                 <PageShell className="mt-14 sm:mt-16">
                     <div>
                         <ArchiveContent />
                     </div>
                 </PageShell>
-            </TerminalSection>
+            </TerminalRoute>
         </main>
     );
 }

@@ -60,8 +60,6 @@ function BodyImage({
     const intrinsicWidth = value.dimensions?.width || maxWidth;
     const intrinsicHeight =
         value.dimensions?.height || Math.round(maxWidth / 2);
-    const width = Math.min(maxWidth, intrinsicWidth);
-    const height = Math.round(intrinsicHeight * (width / intrinsicWidth));
     const aspectRatio = intrinsicWidth / intrinsicHeight;
     const isPortrait = aspectRatio < 0.9;
     const isSquare = aspectRatio >= 0.9 && aspectRatio <= 1.1;
@@ -78,13 +76,17 @@ function BodyImage({
 
     return (
         <figure className={figureWidth}>
-            <div className="overflow-hidden rounded-[1rem] bg-slate-100/70 dark:bg-white/[0.035]">
+            <div
+                className="relative w-full max-h-[min(72svh,44rem)] overflow-hidden rounded-[1rem] bg-slate-100/70 dark:bg-white/[0.035]"
+                style={{
+                    aspectRatio: `${intrinsicWidth} / ${intrinsicHeight}`,
+                }}
+            >
                 <Image
                     src={imageUrl}
                     alt={value.alt || ""}
-                    width={width}
-                    height={height}
-                    className="mx-auto h-auto max-h-[min(72svh,44rem)] w-auto max-w-full object-contain"
+                    fill
+                    className="object-contain"
                     loading="lazy"
                     sizes={responsiveSizes}
                     {...(value.lqip

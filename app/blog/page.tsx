@@ -12,7 +12,9 @@ import { collectTags } from "@/lib/tags";
 import { getPostSlug } from "@/components/blogs/utils";
 import { BlogJsonLd } from "@/components/json-ld";
 import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
-import TerminalSection from "@/components/terminal/terminal-section";
+import { PageIntro } from "@/components/page-intro";
+import { SectionHeading } from "@/components/section-heading";
+import { TerminalRoute } from "@/components/terminal/terminal-route";
 
 export const metadata: Metadata = {
     title: "Blog",
@@ -70,22 +72,18 @@ function BlogPosts({
     return (
         <>
             <section aria-labelledby="all-posts-heading">
-                <header className="mb-7 flex flex-col gap-4 border-b border-slate-400/25 pb-5 dark:border-white/10 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <h2
-                            id="all-posts-heading"
-                            className="font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+                <SectionHeading
+                    headingId="all-posts-heading"
+                    title="All posts"
+                    action={
+                        <Link
+                            href="/blog/archive"
+                            className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
                         >
-                            All posts
-                        </h2>
-                    </div>
-                    <Link
-                        href="/blog/archive"
-                        className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-400"
-                    >
-                        Browse the full archive →
-                    </Link>
-                </header>
+                            Browse the full archive →
+                        </Link>
+                    }
+                />
 
                 <div className={POST_ROW_LIST_CLASSES}>
                     {posts.map((post) => (
@@ -99,16 +97,11 @@ function BlogPosts({
 
             {tags.length > 0 && (
                 <section aria-labelledby="topics-heading">
-                    <p className="font-term text-[0.72rem] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">
-                        Index
-                    </p>
-                    <h2
-                        id="topics-heading"
-                        className="mt-2 font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
-                    >
-                        Browse by topic
-                    </h2>
-                    <TagChips tags={tags} className="mt-6" />
+                    <SectionHeading
+                        headingId="topics-heading"
+                        title="Browse by topic"
+                    />
+                    <TagChips tags={tags} />
                 </section>
             )}
 
@@ -124,31 +117,16 @@ export default async function Blogs() {
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <BlogJsonLd />
 
-            <TerminalSection
-                as="div"
-                path="~/blog"
-                command="ls -t"
-                promptVariant="compact"
-                animatePrompt
-                promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
-            >
-                <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
-                    <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-balance text-slate-900 dark:text-white sm:text-7xl">
-                        Blog
-                    </h1>
-                    <div className="mt-6 max-w-3xl border-l-2 border-accent pl-5 sm:pl-7">
-                        <p className="text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
-                            Technical notes, documentaries, things I&apos;m
-                            learning, and the occasional detour. This is where I
-                            write about whatever has my attention.
-                        </p>
-                    </div>
-                </header>
+            <TerminalRoute path="~/blog" command="ls -t">
+                <PageIntro
+                    title="Blog"
+                    description="Technical notes, documentaries, things I’m learning, and the occasional detour. This is where I write about whatever has my attention."
+                />
 
                 <PageShell className="mt-14 sm:mt-20 [&>*+*]:mt-16 sm:[&>*+*]:mt-24">
                     <BlogPosts allPosts={allPosts} />
                 </PageShell>
-            </TerminalSection>
+            </TerminalRoute>
         </main>
     );
 }
