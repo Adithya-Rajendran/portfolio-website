@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { PageShell } from "@/components/page-shell";
 import Latest from "@/components/blogs/latest";
 import TagChips from "@/components/blogs/tag-chips";
-import BlogNav from "@/components/blogs/blog-nav";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
@@ -30,7 +29,6 @@ async function TagPosts({ tag }: { tag: string }) {
             animatePrompt
             promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
         >
-            <BlogNav />
             <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
                 <h1 className="font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
                     {tag}

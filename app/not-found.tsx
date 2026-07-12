@@ -52,13 +52,13 @@ export default function NotFound() {
                             href="/blog"
                             className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                         >
-                            [ ./blog ]
+                            [ cd ~/blog ]
                         </Link>
                         <Link
                             href="/portfolio"
                             className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
                         >
-                            [ ./portfolio ]
+                            [ cd ~/portfolio ]
                         </Link>
                     </nav>
                     <PromptLine command="" cursor className="mt-10" />

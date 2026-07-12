@@ -84,6 +84,7 @@ export default async function AboutPage() {
             <div className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 sm:py-20 lg:py-24">
                 <TerminalSection
                     as="div"
+                    path="~/about"
                     command="cat about.txt"
                     promptVariant="compact"
                     animatePrompt

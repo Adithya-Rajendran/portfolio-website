@@ -36,6 +36,7 @@ export default async function Portfolio() {
         <main id="main-content" tabIndex={-1} className="pb-20 sm:pb-28">
             <TerminalSection
                 as="div"
+                path="~/portfolio"
                 command="cat work.log"
                 promptVariant="compact"
                 animatePrompt

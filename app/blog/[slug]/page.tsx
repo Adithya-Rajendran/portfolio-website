@@ -8,7 +8,6 @@ import BlogPostBody, {
 import { BlogPostJsonLd } from "@/components/json-ld";
 import NewsletterNotice from "@/components/newsletter/newsletter-notice";
 import TerminalSection from "@/components/terminal/terminal-section";
-import BlogNav from "@/components/blogs/blog-nav";
 
 /**
  * Async body — fetches the full post (including body) and runs shiki
@@ -63,13 +62,12 @@ export default async function BlogPostPage({
 
             <TerminalSection
                 as="div"
-                path=""
+                path="~/blog"
                 command={`cat ${slug}.md`}
                 promptVariant="compact"
                 animatePrompt
                 promptClassName="post-route-prompt mx-auto mb-7 max-w-3xl justify-center px-1 pt-14 min-[360px]:px-3 sm:px-8 sm:pt-20 lg:pt-24"
             >
-                <BlogNav />
                 <article>
                     <BlogPostHero post={meta} />
 

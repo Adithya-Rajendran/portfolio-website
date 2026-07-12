@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import BlogNav from "@/components/blogs/blog-nav";
 import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -19,5 +20,10 @@ export default function BlogsLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return <div className="flex-1">{children}</div>;
+    return (
+        <div className="flex-1">
+            <BlogNav />
+            {children}
+        </div>
+    );
 }

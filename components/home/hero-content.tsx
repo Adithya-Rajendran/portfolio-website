@@ -100,19 +100,19 @@ export default function HeroContent({
                         href="/portfolio"
                         className={`${bracketLink} border-accent bg-accent-soft hover:bg-accent hover:text-on-accent`}
                     >
-                        [ ./portfolio ]
+                        [ cd ~/portfolio ]
                     </Link>
                     <Link
                         href="/blog"
                         className={`${bracketLink} border-accent-soft hover:bg-accent-soft`}
                     >
-                        [ ./blog ]
+                        [ cd ~/blog ]
                     </Link>
                     <Link
                         href="/about"
                         className={`${bracketLink} border-accent-soft hover:bg-accent-soft`}
                     >
-                        [ ./about ]
+                        [ cd ~/about ]
                     </Link>
                 </nav>
 

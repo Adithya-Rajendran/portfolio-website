@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { PenLine } from "lucide-react";
 import PostRow, { POST_ROW_LIST_CLASSES } from "@/components/blogs/post-row";
 import TagChips from "@/components/blogs/tag-chips";
-import BlogNav from "@/components/blogs/blog-nav";
 import NewsletterNotice from "@/components/newsletter/newsletter-notice";
 import { PageShell } from "@/components/page-shell";
 import { StatusCard } from "@/components/status-card";
@@ -133,7 +132,6 @@ export default async function Blogs() {
                 animatePrompt
                 promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
             >
-                <BlogNav />
                 <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
                     <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-balance text-slate-900 dark:text-white sm:text-7xl">
                         Blog

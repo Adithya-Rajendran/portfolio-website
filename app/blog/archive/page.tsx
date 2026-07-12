@@ -6,7 +6,6 @@ import { StatusCard } from "@/components/status-card";
 import { Button } from "@/components/ui/button";
 import TagChips from "@/components/blogs/tag-chips";
 import ArchiveList from "@/components/blogs/archive-list";
-import BlogNav from "@/components/blogs/blog-nav";
 import {
     getPostSlug,
     readingTimeFromWordCount,
@@ -96,7 +95,6 @@ export default async function ArchivePage() {
                 animatePrompt
                 promptClassName="route-prompt mx-auto mb-5 w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
             >
-                <BlogNav />
                 <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
                     <h1 className="max-w-4xl font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
                         The complete notebook
