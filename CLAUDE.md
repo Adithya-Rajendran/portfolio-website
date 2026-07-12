@@ -22,6 +22,21 @@ only live in comments or commit messages.
     to empty content with zero network I/O — this is how CI builds without
     real Sanity credentials (`.github/workflows/node.js.yml`).
 
+- **pnpm config lives in `pnpm-workspace.yaml`, not `package.json`.** pnpm 11
+  silently stops reading `package.json`'s `pnpm` field with no warning
+  (tracked at [pnpm/pnpm#11536](https://github.com/pnpm/pnpm/issues/11536)) —
+  since that field is how CVE fixes for transitive dependencies get pinned
+  (`overrides:` in `pnpm-workspace.yaml`), losing it silently reintroduces
+  those CVEs. `vercel.json`'s `installCommand` pins Vercel's build to
+  `pnpm@10` for the same reason from the other direction: Vercel infers its
+  install-time pnpm _major_ version from `pnpm-lock.yaml`'s `lockfileVersion`
+  (see [Vercel's package-manager docs](https://vercel.com/docs/package-managers)),
+  which is ambiguous between pnpm 9 and 10 for this lockfile's format version
+  and never resolves to 11 — an inferred pnpm 9 can't parse
+  `pnpm-workspace.yaml`'s `overrides`/`allowBuilds` keys (introduced in pnpm
+  10/11 respectively) and fails the deploy. GitHub Actions CI sidesteps this
+  by pinning `pnpm/action-setup`'s `version: 10` explicitly.
+
 - **Tailwind v4 is CSS-first.** There is no `tailwind.config.js`. Design
   tokens, theme colors, radii, and custom animations live directly in
   `app/globals.css` under `@theme inline`.

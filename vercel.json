@@ -1,5 +1,6 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
+    "installCommand": "npx --yes pnpm@10 install",
     "crons": [
         {
             "path": "/api/cron/publish-due",
