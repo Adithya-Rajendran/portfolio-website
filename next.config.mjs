@@ -51,7 +51,7 @@ const nextConfig = {
                             "img-src 'self' data: blob: https://cdn.sanity.io",
                             "font-src 'self' data:",
                             "connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://vitals.vercel-insights.com https://va.vercel-scripts.com",
-                            "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
+                            "frame-src 'self' https://cdn.sanity.io/files/ https://www.youtube-nocookie.com https://player.vimeo.com",
                             "frame-ancestors 'none'",
                             "base-uri 'self'",
                             "form-action 'self'",
@@ -89,7 +89,7 @@ const nextConfig = {
             },
             {
                 source: "/resume.pdf",
-                destination: "/resume/download",
+                destination: "/resume/view",
                 permanent: true,
             },
         ];
