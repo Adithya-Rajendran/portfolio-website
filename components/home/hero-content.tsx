@@ -79,7 +79,7 @@ export default function HeroContent({
             animatePrompt
             className="mx-auto flex min-h-[calc(100svh-var(--site-header-height)-5rem)] w-full max-w-6xl flex-col justify-center px-5 py-12 sm:px-8 sm:py-16 lg:py-20"
             promptClassName="mb-8"
-            bodyClassName="home-hero-reveal grid items-center gap-11 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-16"
+            bodyClassName="grid items-center gap-11 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-16"
         >
             <div>
                 <h1 className="font-term text-[2.55rem] font-bold leading-[1.03] tracking-[-0.055em] text-slate-950 dark:text-white sm:text-6xl lg:text-[4.25rem]">

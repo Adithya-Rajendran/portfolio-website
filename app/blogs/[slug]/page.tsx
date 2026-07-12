@@ -60,7 +60,7 @@ export default async function BlogPostPage({
                     wordCount={meta.wordCount}
                 />
 
-                <BlogPostHero post={meta} />
+                <BlogPostHero post={meta} slug={slug} />
 
                 <BodyWithData slug={slug} />
 

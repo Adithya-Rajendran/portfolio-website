@@ -11,6 +11,7 @@ import {
 } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 import { siteConfig } from "@/lib/config";
+import TerminalSection from "@/components/terminal/terminal-section";
 
 const statusLabel: Record<ProjectListItem["status"], string> = {
     active: "Active",
@@ -89,34 +90,44 @@ export default async function ProjectPage({
                         <ArrowLeft className="size-4" aria-hidden />
                         Portfolio
                     </Link>
-                    <div className="mt-8 flex flex-wrap gap-3 font-term text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                        <span className="text-accent">
-                            {statusLabel[project.status]}
-                        </span>
-                        {dates && <span>{dates}</span>}
-                    </div>
-                    <h1 className="mt-5 max-w-4xl font-display text-4xl font-semibold leading-[1.02] tracking-[-0.045em] text-slate-950 text-balance dark:text-white sm:text-6xl lg:text-7xl">
-                        {project.title}
-                    </h1>
-                    <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300 sm:text-xl">
-                        {project.summary}
-                    </p>
+                    <TerminalSection
+                        as="div"
+                        path="~/portfolio"
+                        command="cat project.md"
+                        promptVariant="compact"
+                        animatePrompt
+                        className="mt-8"
+                        promptClassName="route-prompt mb-5"
+                    >
+                        <div className="flex flex-wrap gap-3 font-term text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                            <span className="text-accent">
+                                {statusLabel[project.status]}
+                            </span>
+                            {dates && <span>{dates}</span>}
+                        </div>
+                        <h1 className="mt-5 max-w-4xl font-display text-4xl font-semibold leading-[1.02] tracking-[-0.045em] text-slate-950 text-balance dark:text-white sm:text-6xl lg:text-7xl">
+                            {project.title}
+                        </h1>
+                        <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300 sm:text-xl">
+                            {project.summary}
+                        </p>
 
-                    {project.technologies?.length ? (
-                        <ul
-                            className="mt-7 flex flex-wrap gap-2"
-                            aria-label="Technologies"
-                        >
-                            {project.technologies.map((technology) => (
-                                <li
-                                    key={technology}
-                                    className="rounded-full border border-slate-200/80 px-3 py-1.5 font-term text-[0.7rem] text-slate-600 dark:border-white/10 dark:text-slate-300"
-                                >
-                                    {technology}
-                                </li>
-                            ))}
-                        </ul>
-                    ) : null}
+                        {project.technologies?.length ? (
+                            <ul
+                                className="mt-7 flex flex-wrap gap-2"
+                                aria-label="Technologies"
+                            >
+                                {project.technologies.map((technology) => (
+                                    <li
+                                        key={technology}
+                                        className="rounded-full border border-slate-200/80 px-3 py-1.5 font-term text-[0.7rem] text-slate-600 dark:border-white/10 dark:text-slate-300"
+                                    >
+                                        {technology}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : null}
+                    </TerminalSection>
                 </header>
 
                 {coverUrl && (

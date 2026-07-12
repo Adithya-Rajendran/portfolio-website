@@ -7,6 +7,7 @@ import TagChips from "@/components/blogs/tag-chips";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
+import TerminalSection from "@/components/terminal/terminal-section";
 
 /**
  * Data section — fetches posts, filters by tag, and 404s when the tag
@@ -21,18 +22,23 @@ async function TagPosts({ tag }: { tag: string }) {
 
     return (
         <>
-            <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
-                <p className="font-term text-[0.72rem] font-bold uppercase tracking-[0.2em] text-accent">
-                    Blog topic
-                </p>
-                <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
+            <TerminalSection
+                as="header"
+                path="~/blog"
+                command={`rg -l "#${tag}" .`}
+                promptVariant="compact"
+                animatePrompt
+                className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
+                promptClassName="route-prompt mb-5"
+            >
+                <h1 className="font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
                     {tag}
                 </h1>
                 <p className="mt-4 font-term text-sm text-slate-600 dark:text-slate-400">
                     {posts.length} post{posts.length === 1 ? "" : "s"} tagged{" "}
                     <span className="text-accent"># {tag}</span>
                 </p>
-            </header>
+            </TerminalSection>
 
             <PageShell className="mt-14 sm:mt-16 pb-24 sm:pb-32">
                 <TagChips tags={allTags} active={tag} />

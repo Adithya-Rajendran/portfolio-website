@@ -476,14 +476,15 @@ html {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   TERMINAL CHROME — one homepage command and its coordinated content reveal.
+   TERMINAL CHROME — one command per route and its coordinated intro reveal.
    No-JS and reduced-motion visitors always receive complete static content.
    ───────────────────────────────────────────────────────────────────── */
 .term-cmd-type {
     display: inline-block;
     max-width: 100%;
     overflow: hidden;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    white-space: normal;
 }
 
 /* No-JS visitors get the complete command immediately. Browsers only opt
@@ -491,31 +492,58 @@ html {
 @media (scripting: enabled) {
     .term-cmd-type {
         width: 0;
+        white-space: nowrap;
         animation: term-type var(--term-duration, 420ms)
             steps(var(--term-steps, 20), end) forwards;
     }
 }
 
 @keyframes term-type {
-    to {
+    99.9% {
         width: var(--term-width, 20ch);
+        white-space: nowrap;
+    }
+    100% {
+        width: auto;
+        white-space: normal;
     }
 }
 
 @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
-    .home-hero-reveal {
+    .term-output-reveal {
+        visibility: hidden;
         opacity: 0;
-        transform: translateY(0.7rem);
-        animation: home-hero-reveal 560ms cubic-bezier(0.16, 1, 0.3, 1)
-            var(--term-reveal-delay, 860ms) both;
+        transform: translateY(var(--term-output-shift, 0.7rem));
+        animation: term-output-reveal var(--term-output-duration, 560ms)
+            cubic-bezier(0.16, 1, 0.3, 1) var(--term-reveal-delay, 860ms)
+            forwards;
     }
 }
 
-@keyframes home-hero-reveal {
+@keyframes term-output-reveal {
+    from {
+        visibility: visible;
+        opacity: 0;
+        transform: translateY(var(--term-output-shift, 0.7rem));
+    }
     to {
+        visibility: visible;
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Subsequent pages read like commands in the same shell session. Their
+   compact prompt omits the repeated hostname and stays mobile-safe. */
+.route-prompt {
+    font-size: 0.78rem;
+    letter-spacing: -0.015em;
+}
+
+/* Long article slugs still read as literal filenames on 320px screens. */
+.post-route-prompt {
+    font-size: 0.75rem;
+    letter-spacing: -0.015em;
 }
 
 /* Block cursor parked at the end of a prompt line */
@@ -552,6 +580,7 @@ html {
     .term-cmd-type {
         width: auto;
         animation: none;
+        white-space: normal;
     }
     .term-cursor {
         animation: none;

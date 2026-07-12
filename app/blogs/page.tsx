@@ -12,6 +12,7 @@ import { collectTags } from "@/lib/tags";
 import { getPostSlug } from "@/components/blogs/utils";
 import { BlogJsonLd } from "@/components/json-ld";
 import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
+import TerminalSection from "@/components/terminal/terminal-section";
 
 export const metadata: Metadata = {
     title: "Blog",
@@ -71,12 +72,9 @@ function BlogPosts({
             <section aria-labelledby="all-posts-heading">
                 <header className="mb-7 flex flex-col gap-4 border-b border-slate-400/25 pb-5 dark:border-white/10 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="font-term text-[0.72rem] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">
-                            Newest first
-                        </p>
                         <h2
                             id="all-posts-heading"
-                            className="mt-2 font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+                            className="font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl"
                         >
                             All posts
                         </h2>
@@ -126,11 +124,16 @@ export default async function Blogs() {
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
             <BlogJsonLd />
 
-            <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
-                <p className="font-term text-[0.72rem] font-bold uppercase tracking-[0.2em] text-accent">
-                    Personal writing
-                </p>
-                <h1 className="mt-5 max-w-4xl font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-balance text-slate-900 dark:text-white sm:text-7xl">
+            <TerminalSection
+                as="header"
+                path="~/blog"
+                command="ls -t"
+                promptVariant="compact"
+                animatePrompt
+                className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
+                promptClassName="route-prompt mb-5"
+            >
+                <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-balance text-slate-900 dark:text-white sm:text-7xl">
                     Blog
                 </h1>
                 <div className="mt-6 max-w-3xl border-l-2 border-accent pl-5 sm:pl-7">
@@ -140,7 +143,7 @@ export default async function Blogs() {
                         write about whatever has my attention.
                     </p>
                 </div>
-            </header>
+            </TerminalSection>
 
             <PageShell className="mt-14 sm:mt-20 [&>*+*]:mt-16 sm:[&>*+*]:mt-24">
                 <BlogPosts allPosts={allPosts} />

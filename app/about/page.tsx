@@ -11,6 +11,7 @@ import { FaGithub, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
 import { ProfilePageJsonLd } from "@/components/json-ld";
 import { getProfile } from "@/lib/sanity-client";
 import { siteConfig, socialProfiles } from "@/lib/config";
+import TerminalSection from "@/components/terminal/terminal-section";
 
 export const metadata: Metadata = {
     title: "About",
@@ -81,11 +82,15 @@ export default async function AboutPage() {
         <main id="main-content" tabIndex={-1}>
             <ProfilePageJsonLd />
             <div className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 sm:py-20 lg:py-24">
-                <header className="max-w-4xl">
-                    <p className="font-term text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-                        About
-                    </p>
-                    <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.98] tracking-[-0.05em] text-slate-950 dark:text-white sm:text-6xl lg:text-7xl">
+                <TerminalSection
+                    as="header"
+                    command="cat about.txt"
+                    promptVariant="compact"
+                    animatePrompt
+                    className="max-w-4xl"
+                    promptClassName="route-prompt mb-5"
+                >
+                    <h1 className="font-display text-5xl font-semibold leading-[0.98] tracking-[-0.05em] text-slate-950 dark:text-white sm:text-6xl lg:text-7xl">
                         {name}
                     </h1>
                     <p className="mt-6 max-w-3xl font-display text-xl font-medium leading-snug text-slate-700 dark:text-slate-200 sm:text-2xl">
@@ -96,7 +101,7 @@ export default async function AboutPage() {
                             {profile.introduction}
                         </p>
                     )}
-                </header>
+                </TerminalSection>
 
                 <div className="mt-14 grid gap-12 border-t border-slate-300/70 pt-12 dark:border-white/10 sm:mt-16 sm:pt-16 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-20">
                     <article

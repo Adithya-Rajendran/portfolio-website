@@ -13,6 +13,7 @@ import {
 import { collectTags } from "@/lib/tags";
 import { getAllPosts } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
+import TerminalSection from "@/components/terminal/terminal-section";
 
 export const metadata: Metadata = {
     title: "Blog archive",
@@ -86,11 +87,16 @@ async function ArchiveContent() {
 export default async function ArchivePage() {
     return (
         <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
-            <header className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16">
-                <p className="font-term text-[0.72rem] font-bold uppercase tracking-[0.2em] text-accent">
-                    Blog / Archive
-                </p>
-                <h1 className="mt-5 max-w-4xl font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
+            <TerminalSection
+                as="header"
+                path="~/blog"
+                command="find . -type f"
+                promptVariant="compact"
+                animatePrompt
+                className="mx-auto w-full max-w-6xl px-6 pt-10 sm:px-8 sm:pt-16"
+                promptClassName="route-prompt mb-5"
+            >
+                <h1 className="max-w-4xl font-display text-4xl font-semibold tracking-tight text-balance text-slate-900 dark:text-white sm:text-6xl">
                     The complete notebook
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-relaxed text-pretty text-slate-600 dark:text-slate-300 sm:text-lg">
@@ -104,7 +110,7 @@ export default async function ArchivePage() {
                 >
                     ← Back to the blog
                 </Link>
-            </header>
+            </TerminalSection>
 
             <PageShell className="mt-14 sm:mt-16">
                 <div>
