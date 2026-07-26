@@ -13,7 +13,7 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
-        "typegen": "sanity schema extract --enforce-required-fields --workspace portfolio-blog && sanity typegen generate",
+        "typegen": "sanity schema extract --force --enforce-required-fields --workspace portfolio-blog && sanity typegen generate",
         "prepare": "husky"
     },
     "lint-staged": {
