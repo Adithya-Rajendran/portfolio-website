@@ -37,7 +37,7 @@ jobs:
                   # schema definitions with zero network I/O.
                   NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: fallback
               run: |
-                  pnpm exec sanity schema extract
+                  pnpm exec sanity schema extract --force
                   pnpm typegen
                   git diff --exit-code schema.json sanity.types.ts
             - run: pnpm run format:check
