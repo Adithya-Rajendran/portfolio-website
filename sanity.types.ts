@@ -967,8 +967,7 @@ export type PROJECT_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
 }>;
 
 // Query TypeMap
-import "@sanity/client";
-declare module "@sanity/client" {
+declare global {
     interface SanityQueries {
         '*[\n    _type == "post" &&\n    defined(publishedAt) &&\n    publishedAt == $today\n].slug.current': DUE_POSTS_QUERY_RESULT;
         '*[_id == "profile"][0]{\n    _id,\n    _updatedAt,\n    name,\n    headline,\n    introduction,\n    bio,\n    location,\n    portrait,\n    "resumeUrl": resume.asset->url,\n    socialLinks[]{_key, _type, label, url},\n    currentCuriosities[]{_key, _type, title, note, url},\n    curiositiesUpdatedAt,\n    timeline[]{\n        _key, _type, kind, title, organization, location, startDate, endDate,\n        summary, highlights, skills, logo\n    },\n    skillGroups[]{_key, _type, title, skills},\n    credentials[]{\n        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,\n        credentialId, verificationUrl, badge,\n        "lifecycleStatus": select(\n            lifetime == true => "lifetime",\n            defined(expiresOn) && expiresOn < $today => "expired",\n            "active"\n        )\n    }\n}': PROFILE_QUERY_RESULT;
@@ -983,4 +982,8 @@ declare module "@sanity/client" {
         '*[_type == "project" && defined(slug.current)].slug.current': PROJECT_SLUGS_QUERY_RESULT;
         '*[\n    _type == "project" && defined(slug.current)\n]{"slug": slug.current, "updatedAt": _updatedAt}': PROJECT_SLUGS_WITH_DATES_QUERY_RESULT;
     }
+}
+// Lets @sanity/client releases that predate the global registry read it too
+declare module "@sanity/client" {
+    interface SanityQueries extends globalThis.SanityQueries {}
 }
