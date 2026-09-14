@@ -85,15 +85,15 @@
         "@types/node": "^26.4.1",
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.7",
-        "@vitest/coverage-v8": "^4.1.11",
-        "eslint": "^9.39.5",
+        "@vitest/coverage-v8": "^5.0.0",
+        "eslint": "^10.10.0",
         "eslint-config-next": "^16.3.4",
         "husky": "^9.1.7",
-        "lint-staged": "^17.5.0",
+        "lint-staged": "^17.5.1",
         "postcss": "^8.5.28",
         "prettier": "^3.9.6",
         "tailwindcss": "^4.3.3",
-        "typescript": "~6.0.3",
-        "vitest": "^4.1.11"
+        "typescript": "~7.0.2",
+        "vitest": "^5.0.0"
     }
 }
