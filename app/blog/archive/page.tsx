@@ -45,6 +45,7 @@ export default async function ArchivePage() {
                     ? readingTimeFromWordCount(post.wordCount)
                     : null,
         }));
+    const tags = collectTags(posts);
     return (
         <main
             id="main-content"
@@ -59,10 +60,15 @@ export default async function ArchivePage() {
                     has led.
                 </p>
             </header>
-            <TagChips
-                tags={collectTags(allPosts)}
-                className="journal-archive-tags"
-            />
+            {tags.length > 0 && (
+                <details className="journal-archive-topics">
+                    <summary>
+                        Browse {tags.length}{" "}
+                        {tags.length === 1 ? "topic" : "topics"}
+                    </summary>
+                    <TagChips tags={tags} />
+                </details>
+            )}
             {posts.length ? (
                 <ArchiveList posts={posts} />
             ) : (

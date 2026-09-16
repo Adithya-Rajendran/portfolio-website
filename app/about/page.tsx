@@ -4,7 +4,7 @@ import { ArrowUpRight, MapPin } from "lucide-react";
 import { ProfilePageJsonLd } from "@/components/json-ld";
 import { getProfile } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
-import { getProfileLinks } from "@/lib/profile-content";
+import { getProfileLink, getProfileLinks } from "@/lib/profile-content";
 import "@/app/journal-career.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -29,6 +29,7 @@ export default async function AboutPage() {
     const profile = await getProfile();
     const location = profile?.location;
     const links = getProfileLinks(profile);
+    const linkedIn = getProfileLink(profile, "linkedin");
     return (
         <main
             id="main-content"
@@ -52,6 +53,25 @@ export default async function AboutPage() {
                         {profile.introduction}
                     </p>
                 )}
+                <div className="career-actions career-about-actions">
+                    <Link href="/portfolio" className="journal-link">
+                        Work &amp; experience{" "}
+                        <ArrowUpRight size={16} aria-hidden />
+                    </Link>
+                    <Link href="/portfolio#contact" className="journal-link">
+                        Get in touch <ArrowUpRight size={16} aria-hidden />
+                    </Link>
+                    {linkedIn && (
+                        <a
+                            href={linkedIn.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="journal-link"
+                        >
+                            LinkedIn <ArrowUpRight size={16} aria-hidden />
+                        </a>
+                    )}
+                </div>
             </header>
             <div className="career-about-grid">
                 <article
@@ -65,10 +85,6 @@ export default async function AboutPage() {
                     <div className="career-actions">
                         <Link href="/blog" className="journal-link">
                             Explore my writing{" "}
-                            <ArrowUpRight size={16} aria-hidden />
-                        </Link>
-                        <Link href="/portfolio" className="journal-link">
-                            Work &amp; experience{" "}
                             <ArrowUpRight size={16} aria-hidden />
                         </Link>
                     </div>

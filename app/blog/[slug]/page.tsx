@@ -7,6 +7,7 @@ import BlogPostBody, {
 } from "@/components/blogs/blog-post-content";
 import { BlogPostJsonLd } from "@/components/json-ld";
 import NewsletterNotice from "@/components/newsletter/newsletter-notice";
+import ArticleContinuation from "@/components/blogs/article-continuation";
 
 /**
  * Async body — fetches the full post (including body) and runs shiki
@@ -63,6 +64,7 @@ export default async function BlogPostPage({
                 <BlogPostHero post={meta} />
                 <BodyWithData slug={slug} />
                 <div className="journal-article-follow">
+                    <ArticleContinuation currentPost={meta} />
                     <NewsletterNotice />
                 </div>
             </article>

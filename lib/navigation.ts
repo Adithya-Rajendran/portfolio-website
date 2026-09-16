@@ -14,6 +14,7 @@ export const primaryNavigation = [
 ] as const;
 
 export const footerNavigation = [
+    { href: siteRoutes.portfolio, label: "Work" },
     { href: siteRoutes.about, label: "About" },
     { href: `${siteRoutes.portfolio}#contact`, label: "Contact" },
     { href: siteRoutes.resume, label: "Résumé" },

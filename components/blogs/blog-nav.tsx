@@ -5,6 +5,11 @@ import { usePathname } from "next/navigation";
 
 export default function BlogNav() {
     const pathname = usePathname();
+    // Articles already have a direct route back to the notebook.
+    const isArticle =
+        /^\/blog\/[^/]+\/?$/.test(pathname) && pathname !== "/blog/archive";
+    if (isArticle) return null;
+
     return (
         <nav
             aria-label="Writing navigation"
