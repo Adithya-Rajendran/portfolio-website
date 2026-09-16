@@ -1,5 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { siteConfig } from "@/lib/config";
+import { getProfileDescription } from "@/lib/profile-content";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { getProfile, type ProfileData } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
@@ -53,13 +54,14 @@ export async function PersonJsonLd() {
     );
 }
 
-export function WebSiteJsonLd() {
+export async function WebSiteJsonLd() {
+    const profile = await getProfile();
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "WebSite",
         name: siteConfig.author,
         url: siteConfig.url,
-        description: siteConfig.description,
+        description: getProfileDescription(profile),
         author: {
             "@type": "Person",
             name: siteConfig.author,
@@ -88,11 +90,12 @@ export function BlogPostJsonLd(input: BlogPostingInput) {
     );
 }
 
-export function BlogJsonLd() {
+export async function BlogJsonLd() {
+    const profile = await getProfile();
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: safeJsonLd(buildBlog()) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonLd(buildBlog(profile)) }}
         />
     );
 }

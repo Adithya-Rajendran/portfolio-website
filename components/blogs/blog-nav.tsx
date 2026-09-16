@@ -22,9 +22,6 @@ export default function BlogNav() {
             >
                 Archive
             </Link>
-            <a href="/feed.xml" className="journal-blog-rss">
-                RSS <span aria-hidden>↗</span>
-            </a>
         </nav>
     );
 }

@@ -6,13 +6,13 @@ export default defineType({
     type: "document",
     groups: [
         { name: "identity", title: "Identity", default: true },
+        { name: "writing", title: "Homepage & Writing" },
         { name: "about", title: "About" },
         { name: "now", title: "Right Now" },
         { name: "portfolio", title: "Portfolio" },
     ],
     initialValue: {
         name: "Adithya Rajendran",
-        headline: "Cloud Field Engineer @ Canonical",
         currentCuriosities: [],
     },
     fields: [
@@ -29,7 +29,7 @@ export default defineType({
             type: "string",
             group: "identity",
             description:
-                "The short comment-style role line used on the homepage.",
+                "Your current role or studies. Used on the homepage, About, Work, and social sharing images.",
             validation: (Rule) => Rule.required().max(140),
         }),
         defineField({
@@ -39,8 +39,63 @@ export default defineType({
             rows: 4,
             group: "identity",
             description:
-                "A short personal introduction for the homepage and portfolio.",
+                "A short personal introduction for the homepage, About, and Work. Keep it concise enough to read at a glance.",
             validation: (Rule) => Rule.required().max(500),
+        }),
+        defineField({
+            name: "focusAreas",
+            title: "Current Focus Areas",
+            type: "array",
+            group: "writing",
+            description:
+                "Short topics shown above the homepage headline and used in search metadata. These are interests, not claims of expertise.",
+            of: [
+                defineArrayMember({
+                    type: "string",
+                    validation: (Rule) => Rule.required().max(60),
+                }),
+            ],
+            options: { layout: "tags" },
+            validation: (Rule) => Rule.unique().max(4),
+        }),
+        defineField({
+            name: "workSummary",
+            title: "Homepage Work Summary",
+            type: "text",
+            rows: 3,
+            group: "writing",
+            description:
+                "Connect your current direction with the experience behind it. Appears beside the homepage Work and Résumé links.",
+            validation: (Rule) => Rule.max(500),
+        }),
+        defineField({
+            name: "writingDescription",
+            title: "Writing Introduction",
+            type: "text",
+            rows: 3,
+            group: "writing",
+            description:
+                "What readers will find in your notebook. Also used for writing search results, social sharing, and the RSS feed.",
+            validation: (Rule) => Rule.max(300),
+        }),
+        defineField({
+            name: "seoDescription",
+            title: "Site Search Description",
+            type: "text",
+            rows: 3,
+            group: "identity",
+            description:
+                "A concise description for search results and social sharing. Uses your Introduction when empty.",
+            validation: (Rule) => Rule.max(200),
+        }),
+        defineField({
+            name: "featuredPost",
+            title: "Featured Homepage Post",
+            type: "reference",
+            group: "writing",
+            to: [{ type: "post" }],
+            description:
+                "Choose the homepage's Start here article. Until it is published, or when no post is selected, the newest published post is shown.",
         }),
         defineField({
             name: "bio",
@@ -80,6 +135,18 @@ export default defineType({
             type: "file",
             group: "portfolio",
             options: { accept: ".pdf" },
+            description:
+                "The source file for the résumé viewer and download links. Changes to profile text do not edit this PDF; upload a revised file when needed.",
+        }),
+        defineField({
+            name: "resumeNote",
+            title: "Résumé Note",
+            type: "text",
+            rows: 3,
+            group: "portfolio",
+            description:
+                "Optional context shown above the résumé, such as what version it is or which opportunities it covers.",
+            validation: (Rule) => Rule.max(400),
         }),
         defineField({
             name: "socialLinks",
@@ -95,7 +162,7 @@ export default defineType({
             type: "array",
             group: "now",
             description:
-                "Optional things you are reading, learning, making, or thinking about. The homepage hides this section when empty.",
+                "Optional things you are reading, learning, making, or thinking about. Shown on About; the section is hidden when empty.",
             of: [defineArrayMember({ type: "curiosity" })],
             validation: (Rule) => Rule.max(6),
         }),

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { siteConfig } from "@/lib/config";
-import { warmBlogCache } from "@/actions/warmCache";
+import { warmBlogCache, warmProfileCache } from "@/actions/warmCache";
 import type { PostListItem } from "@/lib/sanity-client";
 
 const { getAllPostsMock } = vi.hoisted(() => ({
@@ -89,6 +89,56 @@ describe("warmBlogCache", () => {
         );
         expect(fetchMock.mock.calls.every(([url]) => !url.includes(".."))).toBe(
             true,
+        );
+    });
+});
+
+describe("warmProfileCache", () => {
+    it("refreshes public identity, writing, feed, and sharing images without reading the entire post collection", async () => {
+        const result = await warmProfileCache();
+
+        expect(getAllPostsMock).not.toHaveBeenCalled();
+        expect(result.pages.failed).toEqual([]);
+        expect(result.pages.warmed).toEqual(
+            expect.arrayContaining([
+                `${siteConfig.url}/`,
+                `${siteConfig.url}/about`,
+                `${siteConfig.url}/portfolio`,
+                `${siteConfig.url}/resume`,
+                `${siteConfig.url}/blog`,
+                `${siteConfig.url}/blog/archive`,
+                `${siteConfig.url}/feed.xml`,
+                `${siteConfig.url}/opengraph-image`,
+                `${siteConfig.url}/about/opengraph-image`,
+                `${siteConfig.url}/portfolio/opengraph-image`,
+                `${siteConfig.url}/blog/opengraph-image`,
+            ]),
+        );
+        expect(
+            fetchMock.mock.calls.every(
+                ([url]) => new URL(url).origin === siteConfig.url,
+            ),
+        ).toBe(true);
+        expect(
+            fetchMock.mock.calls.some(
+                ([url]) => url.includes("/studio") || url.includes("/api/"),
+            ),
+        ).toBe(false);
+    });
+
+    it("continues refreshing the feed and sharing images after a profile page fails", async () => {
+        fetchMock.mockImplementation(async (url: string) => {
+            if (url === `${siteConfig.url}/about`)
+                throw new Error("connection failed");
+            return { ok: true };
+        });
+
+        const result = await warmProfileCache();
+
+        expect(result.pages.failed).toEqual([`${siteConfig.url}/about`]);
+        expect(result.pages.warmed).toContain(`${siteConfig.url}/feed.xml`);
+        expect(result.pages.warmed).toContain(
+            `${siteConfig.url}/blog/opengraph-image`,
         );
     });
 });

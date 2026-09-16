@@ -1,20 +1,28 @@
 import type { Metadata } from "next";
 import "@/app/journal-blog.css";
 import BlogNav from "@/components/blogs/blog-nav";
-import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/config";
+import { getProfile } from "@/lib/sanity-client";
+import { getWritingDescription } from "@/lib/profile-content";
 
-export const metadata: Metadata = {
-    title: "Writing",
-    description: BLOG_DESCRIPTION,
-    alternates: {
-        canonical: `${siteConfig.url}/blog`,
-    },
-    openGraph: {
-        title: `Writing | ${siteConfig.author}`,
-        description: BLOG_DESCRIPTION,
-        url: `${siteConfig.url}/blog`,
-    },
-};
+export async function generateMetadata(): Promise<Metadata> {
+    const description = getWritingDescription(await getProfile());
+    return {
+        title: "Writing",
+        description,
+        alternates: { canonical: `${siteConfig.url}/blog` },
+        openGraph: {
+            title: `Writing | ${siteConfig.author}`,
+            description,
+            url: `${siteConfig.url}/blog`,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `Writing | ${siteConfig.author}`,
+            description,
+        },
+    };
+}
 
 export default function BlogsLayout({
     children,

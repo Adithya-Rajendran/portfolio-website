@@ -13,7 +13,7 @@ export default function Image() {
         <OgTemplate
             eyebrow={siteConfig.author}
             title="Résumé"
-            subtitle="View the current PDF résumé directly in your browser."
+            subtitle="Experience, education, and skills. Read the PDF in your browser."
             footerRight={`${domain}/resume`}
         />,
         { ...size },

@@ -43,8 +43,10 @@ export type TimelineEntry = {
     title: string;
     organization: string;
     location?: string | null;
-    startDate: string;
+    startDate?: string | null;
     endDate?: string | null;
+    isCurrent?: boolean | null;
+    expectedEndYear?: number | null;
     summary?: string | null;
     highlights?: string[] | null;
     skills?: string[] | null;
@@ -79,9 +81,15 @@ export type ProfileData = {
     headline: string;
     introduction: string;
     bio: string;
+    focusAreas?: string[] | null;
+    workSummary?: string | null;
+    writingDescription?: string | null;
+    seoDescription?: string | null;
+    featuredPostId?: string | null;
     location?: string | null;
     portrait?: SanityImageValue | null;
     resumeUrl?: string | null;
+    resumeNote?: string | null;
     socialLinks?: ExternalLink[] | null;
     currentCuriosities?: CuriosityItem[] | null;
     curiositiesUpdatedAt?: string | null;
@@ -148,14 +156,21 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     headline,
     introduction,
     bio,
+    focusAreas,
+    workSummary,
+    writingDescription,
+    seoDescription,
+    "featuredPostId": featuredPost._ref,
     location,
     portrait,
     "resumeUrl": resume.asset->url,
+    resumeNote,
     socialLinks[]{_key, _type, label, url},
     currentCuriosities[]{_key, _type, title, note, url},
     curiositiesUpdatedAt,
     timeline[]{
         _key, _type, kind, title, organization, location, startDate, endDate,
+        isCurrent, expectedEndYear,
         summary, highlights, skills, logo
     },
     skillGroups[]{_key, _type, title, skills},

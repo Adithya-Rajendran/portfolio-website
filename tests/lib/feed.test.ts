@@ -45,6 +45,11 @@ function postOf(overrides: Partial<FeedPost>): FeedPost {
 }
 
 describe("renderFeedXml — channel", () => {
+    it("escapes the CMS channel description", () => {
+        expect(renderFeedXml([], "Robotics & <AI>")).toContain(
+            "<description>Robotics &amp; &lt;AI&gt;</description>",
+        );
+    });
     it("renders a valid empty channel when there are no posts (CI fallback path)", () => {
         const xml = renderFeedXml([]);
 

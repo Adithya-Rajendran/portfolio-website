@@ -1,26 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
+import { getProfileLink, selectFeaturedPost } from "@/lib/profile-content";
 import { siteConfig } from "@/lib/config";
 import { formatDate } from "@/components/blogs/utils";
 import "./journal-home.css";
 
 export default async function Home() {
     const [profile, posts] = await Promise.all([getProfile(), getAllPosts()]);
-    const featured =
-        posts.find(
-            (post) => post.slug === "kubernetes-on-the-nvidia-dgx-spark",
-        ) ?? posts[0];
+    const featured = selectFeaturedPost(profile, posts);
     const recent = posts
         .filter((post) => post._id !== featured?._id)
         .slice(0, 4);
-    const role = profile?.headline?.split("|")[0].trim() || siteConfig.role;
-    const linkedin =
-        profile?.socialLinks?.find((link) => /linkedin/i.test(link.label))
-            ?.url || siteConfig.profiles.linkedin;
-    const github =
-        profile?.socialLinks?.find((link) => /github/i.test(link.label))?.url ||
-        siteConfig.profiles.github;
+    const role = profile?.headline || siteConfig.role;
+    const linkedin = getProfileLink(profile, "linkedin");
+    const github = getProfileLink(profile, "github");
     return (
         <main id="main-content" tabIndex={-1} className="home-journal">
             <div className="fj-shell">
@@ -34,9 +28,11 @@ export default async function Home() {
                         preload
                     />
                     <div className="fj-hero-copy">
-                        <p className="fj-eyebrow">
-                            Robotic vision · Systems · Possible futures
-                        </p>
+                        {profile?.focusAreas?.length ? (
+                            <p className="fj-eyebrow">
+                                {profile.focusAreas.join(" · ")}
+                            </p>
+                        ) : null}
                         <h1 className="fj-title" id="home-title">
                             <span>The future is </span>
                             <span>
@@ -44,22 +40,24 @@ export default async function Home() {
                             </span>
                         </h1>
                         <p className="fj-intro">
-                            <span className="fj-role">{role}.</span>Exploring
-                            robotic vision and the systems behind intelligent
-                            machines.
+                            <span className="fj-role">{role}</span>
+                            {profile?.introduction || siteConfig.description}
                         </p>
                         <div className="fj-hero-actions">
                             <a className="fj-explore" href="#writing">
                                 Read the notebook <span aria-hidden>↓</span>
                             </a>
-                            <a
-                                className="fj-linkedin-top"
-                                href={linkedin}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Follow on LinkedIn <span aria-hidden>↗</span>
-                            </a>
+                            {linkedin && (
+                                <a
+                                    className="fj-linkedin-top"
+                                    href={linkedin.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Follow on LinkedIn{" "}
+                                    <span aria-hidden>↗</span>
+                                </a>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -104,8 +102,8 @@ export default async function Home() {
                         </Link>
                     ) : (
                         <p className="journal-description py-8">
-                            The notebook is just getting started. Follow on
-                            LinkedIn or RSS for the next note.
+                            The notebook is just getting started. Follow via RSS
+                            for the next note.
                         </p>
                     )}
                     {recent.length > 0 && (
@@ -145,21 +143,21 @@ export default async function Home() {
                     </div>
                     <div className="fj-work-copy">
                         <p>
-                            <strong>{role}</strong>
-                            {profile?.headline?.split("|")[1]?.trim()
-                                ? `${profile.headline.split("|")[1].trim().replace(/[.!]$/, "")}.`
-                                : "Systems engineering, infrastructure, and the work that informs the writing."}{" "}
-                            Explore my experience and code.
+                            {profile?.workSummary ||
+                                profile?.introduction ||
+                                siteConfig.description}
                         </p>
                         <div className="fj-work-links">
                             <Link href="/portfolio">View my work ↗</Link>
-                            <a
-                                href={github}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                GitHub ↗
-                            </a>
+                            {github && (
+                                <a
+                                    href={github.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    GitHub ↗
+                                </a>
+                            )}
                             <Link href="/resume">Résumé ↗</Link>
                         </div>
                     </div>
@@ -168,18 +166,21 @@ export default async function Home() {
                     <div>
                         <h2 id="follow-title">Follow the next note.</h2>
                         <p>
-                            Get new writing through RSS, or join the
-                            conversation on LinkedIn.
+                            {linkedin
+                                ? "Get new writing through RSS, or join the conversation on LinkedIn."
+                                : "Get new writing through RSS."}
                         </p>
                     </div>
                     <div className="fj-follow-links">
-                        <a
-                            href={linkedin}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            LinkedIn ↗
-                        </a>
+                        {linkedin && (
+                            <a
+                                href={linkedin.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                LinkedIn ↗
+                            </a>
+                        )}
                         <a href="/feed.xml">Follow via RSS ↗</a>
                     </div>
                 </section>

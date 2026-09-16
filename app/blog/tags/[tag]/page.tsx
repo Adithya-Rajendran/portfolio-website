@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Latest from "@/components/blogs/latest";
 import TagChips from "@/components/blogs/tag-chips";
-import { getAllPosts } from "@/lib/sanity-client";
+import { getAllPosts, getProfile } from "@/lib/sanity-client";
+import { getWritingDescription } from "@/lib/profile-content";
 import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
 
@@ -82,11 +83,22 @@ export async function generateMetadata({
     if (!TAG_PATTERN.test(tag)) {
         return;
     }
+    const description = `Notes on ${tag}. ${getWritingDescription(await getProfile())}`;
     return {
         title: `Posts tagged ${tag}`,
-        description: `Browse Adithya Rajendran's posts tagged "${tag}".`,
+        description,
         alternates: {
             canonical: `${siteConfig.url}/blog/tags/${tag}`,
+        },
+        openGraph: {
+            title: `${tag} | ${siteConfig.author}`,
+            description,
+            url: `${siteConfig.url}/blog/tags/${tag}`,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `${tag} | ${siteConfig.author}`,
+            description,
         },
         robots: {
             index: true,
