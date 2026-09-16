@@ -7,24 +7,24 @@
  *  in app/globals.css. Duplicated as literals only because viewport.themeColor
  *  and OG images cannot read CSS variables. */
 export const THEME_COLORS = {
-    light: "#f4f5f8",
-    dark: "#050608",
+    light: "#0c1318",
+    dark: "#0c1318",
 } as const;
 
 /** Blog index copy — the single home for this text. Consumed by
  *  lib/structured-data.ts (buildBlog) and app/blog/layout.tsx metadata;
  *  keep byte-identical across both. */
 export const BLOG_DESCRIPTION =
-    "Personal writing by Adithya Rajendran: technical notes, documentaries, interests, experiments, and whatever else feels worth keeping.";
+    "Field notes by Adithya Rajendran on systems, robotic vision, AI, and possible futures.";
 
 export const siteConfig = {
     url: "https://adithya-rajendran.com",
     title: "Adithya Rajendran",
     description:
-        "The personal website of Adithya Rajendran: work, writing, interests, and whatever comes next.",
+        "Field notes on systems, robotic vision, and possible futures. Writing and engineering work by Adithya Rajendran.",
     author: "Adithya Rajendran",
     /** Default role line shown in OG images and structured data. */
-    role: "Cloud Field Engineer @ Canonical",
+    role: "Field Software Engineer at Canonical",
     /** Fallback location when the Profile singleton has no value. */
     location: "Remote · United States",
     /** Named profiles consumed by the footer and fallback profile views.

@@ -22,6 +22,7 @@ export default function ThemeContextProvider({
         <NextThemesProvider
             attribute="class"
             defaultTheme="dark"
+            forcedTheme="dark"
             enableSystem={false}
         >
             <ThemeBridge>{children}</ThemeBridge>

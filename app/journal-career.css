@@ -1,0 +1,680 @@
+/* Quiet, editorial layouts for the journal’s professional pages. */
+.career-page {
+    padding-bottom: 100px;
+}
+.career-page svg {
+    flex-shrink: 0;
+}
+.career-intro {
+    padding: 64px 0 60px;
+    max-width: 900px;
+}
+.career-intro .journal-title {
+    margin-top: 20px;
+}
+.career-role {
+    color: var(--journal-accent);
+    font-size: 16px;
+    line-height: 1.75;
+    max-width: 760px;
+    margin-top: 25px;
+}
+.career-intro .journal-description {
+    margin-top: 16px;
+    max-width: 700px;
+}
+.career-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px 32px;
+    margin-top: 30px;
+}
+.career-accent {
+    color: var(--journal-accent);
+}
+.career-nav {
+    display: flex;
+    align-items: center;
+    gap: 34px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--journal-line);
+}
+.career-nav-label {
+    font-family: var(--font-mono), monospace;
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    color: var(--journal-muted);
+    white-space: nowrap;
+}
+.career-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 26px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.career-nav a {
+    display: inline-block;
+    padding: 8px 0;
+    color: var(--journal-muted);
+    font-size: 12px;
+}
+.career-nav a:hover,
+.career-nav a[aria-current] {
+    color: var(--journal-accent);
+}
+.career-section {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 54px;
+    padding: 48px 0;
+    border-top: 1px solid var(--journal-line);
+    scroll-margin-top: 120px;
+}
+.career-section-heading .journal-eyebrow {
+    margin-bottom: 12px;
+}
+.career-section-heading h2,
+.career-biography h2,
+.career-reading h2,
+.career-case-highlights h2,
+.career-case-links h2 {
+    font-family: var(--font-display), sans-serif;
+    color: var(--journal-text);
+    font-weight: 400;
+    font-size: 27px;
+    line-height: 1.2;
+    letter-spacing: -0.04em;
+}
+.career-section-heading > p:last-child {
+    color: var(--journal-muted);
+    font-size: 14px;
+    line-height: 1.8;
+    margin-top: 15px;
+}
+.career-timeline,
+.career-credentials,
+.career-tags,
+.career-skill-groups ul,
+.career-about-aside ul,
+.career-curiosities ul,
+.career-case-links ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.career-timeline-item + .career-timeline-item {
+    margin-top: 35px;
+    padding-top: 35px;
+    border-top: 1px solid var(--journal-line);
+}
+.career-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    font-family: var(--font-mono), monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--journal-muted);
+    margin-bottom: 15px;
+}
+.career-meta > span:first-child {
+    color: var(--journal-accent);
+}
+.career-role-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.career-logo {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+.career-page h3 {
+    font-family: var(--font-display), sans-serif;
+    color: var(--journal-text);
+    font-weight: 400;
+    font-size: 23px;
+    line-height: 1.35;
+    letter-spacing: -0.025em;
+}
+.career-organization {
+    color: var(--journal-accent);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 7px;
+}
+.career-summary {
+    color: var(--journal-muted);
+    font-size: 15px;
+    line-height: 1.85;
+    margin-top: 18px;
+}
+.career-highlights {
+    list-style: none;
+    padding: 0;
+    margin: 22px 0 0;
+    display: grid;
+    gap: 13px;
+}
+.career-highlights li {
+    position: relative;
+    padding-left: 17px;
+    color: var(--journal-muted);
+    font-size: 14px;
+    line-height: 1.85;
+}
+.career-highlights li::before {
+    content: "";
+    position: absolute;
+    top: 0.85em;
+    left: 0;
+    width: 4px;
+    height: 4px;
+    background: var(--journal-accent);
+}
+.career-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 23px;
+}
+.career-tags li {
+    font-family: var(--font-mono), monospace;
+    color: var(--journal-muted);
+    font-size: 11px;
+    line-height: 1.8;
+}
+.career-tags li:not(:last-child)::after {
+    content: "/";
+    margin-left: 16px;
+    color: var(--journal-line);
+}
+.career-skill-groups {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+.career-skill-groups article {
+    min-width: 0;
+}
+.career-skill-groups h3 {
+    font-size: 20px;
+}
+.career-skill-groups ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 17px;
+    margin-top: 17px;
+}
+.career-skill-groups li {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--journal-muted);
+}
+.career-project-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 36px;
+}
+.career-project {
+    min-width: 0;
+}
+.career-project-image {
+    position: relative;
+    aspect-ratio: 5/3;
+    overflow: hidden;
+    margin-bottom: 23px;
+    background: var(--journal-surface);
+}
+.career-project h3 a:hover {
+    color: var(--journal-accent);
+}
+.career-project .journal-link {
+    margin-top: 25px;
+}
+.career-credentials > li + li {
+    border-top: 1px solid var(--journal-line);
+}
+.career-credential {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 25px 0;
+}
+.career-credentials > li:first-child .career-credential {
+    padding-top: 0;
+}
+.career-credential:hover .career-credential-title {
+    color: var(--journal-accent);
+}
+.career-badge {
+    object-fit: contain;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+}
+.career-credential-initial {
+    font-family: var(--font-display), sans-serif;
+    color: var(--journal-accent);
+    font-size: 23px;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--journal-line);
+    flex-shrink: 0;
+}
+.career-credential-body {
+    display: block;
+    min-width: 0;
+    flex: 1;
+}
+.career-credential-title {
+    display: block;
+    font-family: var(--font-display), sans-serif;
+    font-size: 20px;
+    color: var(--journal-text);
+    line-height: 1.4;
+}
+.career-credential-issuer {
+    display: block;
+    font-size: 14px;
+    color: var(--journal-muted);
+    margin-top: 5px;
+}
+.career-credential-date,
+.career-credential-id {
+    display: block;
+    font-family: var(--font-mono), monospace;
+    color: var(--journal-muted);
+    font-size: 11px;
+    line-height: 1.8;
+    margin-top: 8px;
+    overflow-wrap: anywhere;
+}
+.career-credential-id {
+    margin-top: 2px;
+}
+.career-status {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: var(--font-mono), monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #aed6bf;
+}
+.career-status-expired {
+    color: var(--journal-muted);
+}
+.career-credential-arrow {
+    color: var(--journal-accent);
+}
+.career-reading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    border-top: 1px solid var(--journal-line);
+    padding: 40px 0;
+}
+.career-reading h2 {
+    margin: 15px 0 12px;
+}
+.career-reading p:not(.journal-eyebrow) {
+    color: var(--journal-muted);
+    font-size: 14px;
+    line-height: 1.8;
+}
+.career-reading > .journal-link {
+    flex-shrink: 0;
+}
+.career-contact-form {
+    display: grid;
+    gap: 24px;
+}
+.career-contact-form label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--journal-text);
+}
+.career-contact-form input,
+.career-contact-form textarea {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--journal-line);
+    border-radius: 0;
+    background: var(--journal-bg);
+    color: var(--journal-text);
+    font: inherit;
+    font-size: 16px;
+    line-height: 1.7;
+    padding: 14px 17px;
+    transition: border-color 0.2s;
+}
+.career-contact-form input::placeholder,
+.career-contact-form textarea::placeholder {
+    color: #8898a2;
+}
+.career-contact-form input:focus,
+.career-contact-form textarea:focus {
+    outline: 2px solid var(--journal-accent);
+    outline-offset: 3px;
+    border-color: var(--journal-accent);
+}
+.career-contact-form textarea {
+    resize: vertical;
+    min-height: 160px;
+}
+.career-contact-form button {
+    justify-self: start;
+}
+.career-contact-form button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+.career-form-error {
+    color: #f4a9a9;
+    font-size: 14px;
+}
+.career-form-success {
+    color: #aed6bf;
+    font-size: 14px;
+}
+.career-contact-channels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 22px;
+    align-items: center;
+    margin-top: 30px;
+    color: var(--journal-muted);
+    font-size: 12px;
+}
+.career-contact-channels a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    color: var(--journal-accent);
+}
+.career-about-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 90px;
+    padding-top: 45px;
+    border-top: 1px solid var(--journal-line);
+}
+.career-bio-text {
+    white-space: pre-line;
+    color: var(--journal-muted);
+    font-size: 17px;
+    line-height: 1.95;
+    margin-top: 27px;
+}
+.career-about-aside {
+    min-width: 0;
+}
+.career-location {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--journal-muted);
+    padding: 16px 0;
+    border-bottom: 1px solid var(--journal-line);
+}
+.career-channel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    min-height: 55px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--journal-line);
+    color: var(--journal-text);
+    font-size: 14px;
+}
+.career-channel svg {
+    color: var(--journal-accent);
+}
+.career-channel:hover {
+    color: var(--journal-accent);
+}
+.career-about-aside h2 {
+    margin: 38px 0 8px;
+}
+.career-about-aside > .journal-link {
+    margin-top: 30px;
+}
+.career-curiosities {
+    margin-top: 60px;
+    padding-top: 35px;
+    border-top: 1px solid var(--journal-line);
+}
+.career-curiosities h2 {
+    margin-top: 16px;
+}
+.career-curiosities li {
+    margin-top: 28px;
+}
+.career-curiosities h3 {
+    font-size: 20px;
+}
+.career-curiosities a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.career-curiosities a:hover {
+    color: var(--journal-accent);
+}
+.career-curiosities li p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--journal-muted);
+    margin-top: 9px;
+}
+.career-resume-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 55px 0 35px;
+}
+.career-resume-heading .journal-title {
+    font-size: clamp(36px, 5vw, 58px);
+    margin: 16px 0;
+}
+.career-resume-heading .journal-description {
+    font-size: 15px;
+}
+.career-resume-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.career-action-secondary {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--journal-line);
+    color: var(--journal-text);
+    background: var(--journal-bg);
+    min-height: 45px;
+    padding: 10px 18px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.career-action-secondary:hover {
+    color: var(--journal-accent);
+    border-color: var(--journal-accent);
+}
+.career-resume-viewer {
+    border: 1px solid var(--journal-line);
+    background: var(--journal-surface);
+}
+.career-resume-viewer iframe {
+    display: block;
+    width: 100%;
+    height: max(650px, calc(100svh - 160px));
+    border: 0;
+}
+.career-resume-note {
+    color: var(--journal-muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin: 20px 0 32px;
+}
+.career-resume-note a {
+    color: var(--journal-accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+.career-case-heading {
+    max-width: 900px;
+    padding: 44px 0 45px;
+}
+.career-case-heading > .career-meta {
+    margin-top: 45px;
+}
+.career-case-heading .journal-description {
+    margin-top: 25px;
+}
+.career-case-cover {
+    margin-bottom: 45px;
+}
+.career-case-image {
+    width: 100%;
+    height: auto;
+}
+.career-case-cover figcaption {
+    font-size: 12px;
+    color: var(--journal-muted);
+    margin-top: 13px;
+    text-align: center;
+}
+.career-case-highlights,
+.career-project-essay,
+.career-case-links {
+    max-width: 730px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.career-case-highlights {
+    border-top: 1px solid var(--journal-line);
+    border-bottom: 1px solid var(--journal-line);
+    padding: 28px 0;
+    margin-bottom: 45px;
+}
+.career-case-links {
+    margin-top: 48px;
+    padding-top: 30px;
+    border-top: 1px solid var(--journal-line);
+}
+.career-case-links ul {
+    margin-top: 20px;
+}
+@media (max-width: 1000px) {
+    .career-section {
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 30px;
+    }
+    .career-about-grid {
+        gap: 40px;
+        grid-template-columns: minmax(0, 1fr) 230px;
+    }
+    .career-project-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 760px) {
+    .career-page {
+        padding-bottom: 60px;
+    }
+    .career-intro {
+        padding: 42px 0;
+    }
+    .career-nav {
+        gap: 15px;
+        padding-top: 13px;
+        padding-bottom: 13px;
+    }
+    .career-nav-label {
+        display: none;
+    }
+    .career-nav ul {
+        gap: 3px 21px;
+    }
+    .career-section {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding: 35px 0;
+    }
+    .career-section-heading > p:last-child {
+        margin-top: 10px;
+        max-width: 350px;
+    }
+    .career-reading {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 32px 0;
+        gap: 20px;
+    }
+    .career-about-grid {
+        grid-template-columns: 1fr;
+        padding-top: 35px;
+        gap: 45px;
+    }
+    .career-bio-text {
+        font-size: 16px;
+    }
+    .career-about-aside {
+        border-top: 1px solid var(--journal-line);
+        padding-top: 15px;
+    }
+    .career-resume-heading {
+        padding-top: 40px;
+    }
+    .career-resume-actions {
+        gap: 8px;
+    }
+    .career-action-secondary {
+        padding: 10px 13px;
+    }
+    .career-resume-viewer iframe {
+        height: 680px;
+    }
+}
+@media (max-width: 400px) {
+    .career-skill-groups {
+        grid-template-columns: 1fr;
+    }
+    .career-credential {
+        gap: 13px;
+    }
+    .career-badge,
+    .career-credential-initial {
+        width: 43px;
+        height: 43px;
+    }
+    .career-credential-title {
+        font-size: 18px;
+    }
+    .career-contact-channels > span {
+        width: 100%;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .career-page *,
+    .career-nav * {
+        scroll-behavior: auto;
+        transition: none;
+    }
+}

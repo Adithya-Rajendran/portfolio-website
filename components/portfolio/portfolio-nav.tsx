@@ -1,89 +1,54 @@
 "use client";
 
-import { portfolioLinks } from "@/lib/data";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { portfolioLinks } from "@/lib/data";
 import { useActiveSectionContext } from "@/context/active-section-context";
-import {
-    CONTEXT_NAV_ITEM_CLASSES,
-    CONTEXT_NAV_LABEL_CLASSES,
-    ContextNav,
-} from "@/components/context-nav";
-import { cn } from "@/lib/utils";
 
-/**
- * Contextual portfolio navigation. The global site header owns route-level
- * navigation; this bar stays below it and lets visitors move through the
- * long work page without losing their place.
- */
 export default function PortfolioNav({
     showProjects,
+    showExperience = true,
+    showSkills = true,
+    showCertifications = true,
 }: {
     showProjects: boolean;
+    showExperience?: boolean;
+    showSkills?: boolean;
+    showCertifications?: boolean;
 }) {
     const { activeSection, setActiveSection, setTimeOfLastClick } =
         useActiveSectionContext();
-    const listRef = useRef<HTMLUListElement>(null);
-    const activeLinkRef = useRef<HTMLAnchorElement>(null);
-
-    useEffect(() => {
-        const list = listRef.current;
-        const link = activeLinkRef.current;
-        if (!list || !link) return;
-
-        const listBounds = list.getBoundingClientRect();
-        const linkBounds = link.getBoundingClientRect();
-        const outsideView =
-            linkBounds.left < listBounds.left ||
-            linkBounds.right > listBounds.right;
-
-        if (outsideView) {
-            link.scrollIntoView({
-                behavior: "smooth",
-                block: "nearest",
-                inline: "center",
-            });
-        }
-    }, [activeSection]);
-
-    const links = portfolioLinks(showProjects);
-
+    const links = portfolioLinks(showProjects).filter(
+        (link) =>
+            (link.name !== "Experience" || showExperience) &&
+            (link.name !== "Skills" || showSkills) &&
+            (link.name !== "Certifications" || showCertifications),
+    );
     return (
-        <ContextNav
-            ariaLabel="Portfolio sections"
-            collapseIdentityOnMobile
-            identity={
-                <span className={CONTEXT_NAV_LABEL_CLASSES}>Portfolio</span>
-            }
+        <nav
+            className="career-nav journal-container"
+            aria-label="Work sections"
         >
-            <ul
-                ref={listRef}
-                className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth pr-5 text-slate-600 [scrollbar-width:none] [mask-image:linear-gradient(to_right,black,black_calc(100%-22px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black,black_calc(100%-22px),transparent)] dark:text-slate-300 sm:pr-0 sm:[mask-image:none] sm:[-webkit-mask-image:none] [&::-webkit-scrollbar]:hidden"
-            >
-                {links.map((link) => {
-                    const isActive = activeSection === link.name;
-                    return (
-                        <li className="relative shrink-0" key={link.hash}>
-                            <Link
-                                ref={isActive ? activeLinkRef : undefined}
-                                className={cn(
-                                    CONTEXT_NAV_ITEM_CLASSES,
-                                    isActive &&
-                                        "border border-accent-soft bg-accent-soft text-accent",
-                                )}
-                                href={link.hash}
-                                aria-current={isActive ? "location" : undefined}
-                                onClick={() => {
-                                    setActiveSection(link.name);
-                                    setTimeOfLastClick(Date.now());
-                                }}
-                            >
-                                {link.name}
-                            </Link>
-                        </li>
-                    );
-                })}
+            <span className="career-nav-label">WORK INDEX</span>
+            <ul>
+                {links.map((link) => (
+                    <li key={link.hash}>
+                        <Link
+                            href={link.hash}
+                            aria-current={
+                                activeSection === link.name
+                                    ? "location"
+                                    : undefined
+                            }
+                            onClick={() => {
+                                setActiveSection(link.name);
+                                setTimeOfLastClick(Date.now());
+                            }}
+                        >
+                            {link.name}
+                        </Link>
+                    </li>
+                ))}
             </ul>
-        </ContextNav>
+        </nav>
     );
 }

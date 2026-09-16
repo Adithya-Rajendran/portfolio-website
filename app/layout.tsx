@@ -1,6 +1,7 @@
 import "./globals.css";
+import "./journal-blog.css";
 import { Suspense } from "react";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { DM_Sans, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import { BotIdClient } from "botid/client";
 import Footer from "@/components/footer";
 import SiteFrame from "@/components/site-frame";
@@ -14,10 +15,10 @@ import type { Viewport } from "next";
 import { siteConfig, THEME_COLORS } from "@/lib/config";
 import { FEED_PATH, FEED_TITLE } from "@/lib/feed";
 
-const inter = Inter({
+const dmSans = DM_Sans({
     subsets: ["latin"],
     display: "swap",
-    variable: "--font-inter",
+    variable: "--font-dm-sans",
 });
 
 const spaceGrotesk = Space_Grotesk({
@@ -26,12 +27,12 @@ const spaceGrotesk = Space_Grotesk({
     variable: "--font-space-grotesk",
 });
 
-// Terminal chrome face (prompts, labels, dates) — OFL-licensed, self-hosted
-// by next/font. Body copy stays Inter: mono is chrome, never prose.
-const jetbrainsMono = JetBrains_Mono({
+// Self-hosted type for dates and small editorial labels.
+const ibmPlexMono = IBM_Plex_Mono({
+    weight: ["400", "500"],
     subsets: ["latin"],
     display: "swap",
-    variable: "--font-jetbrains-mono",
+    variable: "--font-ibm-plex-mono",
 });
 
 export const metadata: Metadata = {
@@ -50,7 +51,10 @@ export const metadata: Metadata = {
         "Adithya Rajendran",
         "Personal website",
         "Personal blog",
-        "Cloud Field Engineer",
+        "Field Software Engineer",
+        "Robotic vision",
+        "AI",
+        "Autonomous systems",
         "Canonical",
         "Private Cloud",
         "Field Engineering",
@@ -102,7 +106,7 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className={`!scroll-smooth ${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+            className={`dark ${dmSans.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
             suppressHydrationWarning
         >
             <head>
@@ -116,7 +120,7 @@ export default function RootLayout({
                 <WebSiteJsonLd />
             </head>
             <body
-                className={`${inter.className} min-h-screen overflow-x-hidden bg-canvas text-slate-900 antialiased dark:bg-canvas-dark dark:text-slate-100`}
+                className={`${dmSans.className} min-h-screen bg-canvas text-slate-100 antialiased`}
             >
                 {/* Bypass block for keyboard/switch users (WCAG 2.4.1) */}
                 <a
@@ -125,10 +129,6 @@ export default function RootLayout({
                 >
                     Skip to content
                 </a>
-
-                {/* Static ambient colour wash + fine paper/screen grain. */}
-                <div className="mesh-bg" aria-hidden="true" />
-                <div className="bg-grain" aria-hidden="true" />
 
                 <ThemeContextProvider>
                     <Suspense fallback={children}>

@@ -1,0 +1,164 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500&display=swap');
+#future-journal{--future-bg:#0c1318;--future-text:#e9e9e2;--future-muted:#b6c2c9;--future-line:#34434d;--future-accent:#f6af80;--future-star-strength:1;position:relative;isolation:isolate;width:100%;overflow:hidden;background:var(--future-bg);color:var(--future-text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.6;text-align:left}
+#future-journal *{box-sizing:border-box}
+#future-journal h1,#future-journal h2,#future-journal h3,#future-journal p{margin:0}
+#future-journal a{color:inherit;text-decoration:none}
+#future-journal a:hover{color:var(--future-accent)}
+#future-journal a:focus-visible,#future-journal button:focus-visible{outline:2px solid var(--future-accent);outline-offset:5px}
+#future-journal .fj-shell{max-width:1200px;margin:0 auto;padding:0 42px;position:relative;z-index:1}
+#future-journal .fj-header{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:19px 0;border-bottom:1px solid #ffffff22}
+#future-journal .fj-name{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:500;letter-spacing:-.4px;white-space:nowrap}
+#future-journal .fj-name span{color:var(--future-accent)}
+#future-journal .fj-nav{display:flex;align-items:center;gap:27px;font-size:13px;color:#c1cbd0}
+#future-journal .fj-nav a{min-height:44px;display:inline-flex;align-items:center}
+#future-journal .fj-nav a:first-child{color:var(--future-accent)}
+#future-journal .fj-nav .fj-rss{border-left:1px solid #485861;padding-left:26px}
+#future-journal .fj-hero{position:relative;isolation:isolate;min-height:448px;display:flex;align-items:center;margin:0 -42px;overflow:hidden;background:#0c141b}
+#future-journal .fj-art{position:absolute;width:100%;height:100%;inset:0;object-fit:cover;object-position:center;z-index:-3;transform:scale(1.025);transition:transform .7s ease-out}
+#future-journal .fj-hero:before{content:'';position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,#0c1318f2 0%,#0c1318de 23%,#0c131873 47%,#0c13180a 76%),linear-gradient(0deg,#0c1318 0%,#0c131819 23%,#0c131800 70%,#0c13184d 100%)}
+#future-journal .fj-hero-copy{padding:36px 42px 43px;max-width:650px}
+#future-journal .fj-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5;letter-spacing:.065em;text-transform:uppercase;color:var(--future-accent);margin-bottom:20px}
+#future-journal .fj-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(52px,6.15vw,74px);font-weight:400;line-height:1.04;letter-spacing:-3.6px}
+#future-journal .fj-title>span{display:block;white-space:nowrap}
+#future-journal .fj-title em{color:var(--future-accent);font-weight:400;font-style:normal}
+#future-journal .fj-intro{font-size:15px;line-height:1.7;color:#bdcbd2;max-width:420px;margin-top:24px}
+#future-journal .fj-intro .fj-role{display:block;color:#e0e5e4;font-weight:400;margin-bottom:7px;font-size:14px}
+#future-journal .fj-hero-actions{display:flex;align-items:baseline;gap:27px;flex-wrap:wrap;margin-top:21px;font-size:13px}
+#future-journal .fj-explore{display:inline-flex;gap:27px;align-items:center;min-height:44px;border-bottom:1px solid #c58c68}
+#future-journal .fj-explore span{color:var(--future-accent);font-size:20px;line-height:1}
+#future-journal .fj-linkedin-top{color:#c6d0d3;min-height:44px;display:inline-flex;align-items:center;gap:12px}
+#future-journal .fj-linkedin-top span{color:var(--future-accent)}
+#future-journal .fj-writing{position:relative;padding:8px 0 0;background:linear-gradient(90deg,#0c131829,#0c13188c 25%,#0c131880 75%,#0c131829)}
+#future-journal .fj-section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:21px 0 18px;border-bottom:1px solid var(--future-line)}
+#future-journal .fj-section-head h2{font-family:'Space Grotesk',sans-serif;font-weight:400;font-size:27px;line-height:1.2;letter-spacing:-.8px}
+#future-journal .fj-section-links{display:flex;align-items:center;gap:23px;font-size:12px;color:#c8d0d2}
+#future-journal .fj-section-links a{min-height:44px;display:inline-flex;align-items:center}
+#future-journal .fj-section-links a:last-child{color:var(--future-accent)}
+#future-journal .fj-featured{display:grid;grid-template-columns:1.3fr 1fr;gap:42px;padding:26px 0 29px;border-bottom:1px solid #51616b}
+#future-journal .fj-kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5;letter-spacing:.075em;text-transform:uppercase;color:var(--future-accent)}
+#future-journal .fj-featured h3{font-family:'Space Grotesk',sans-serif;font-size:32px;line-height:1.18;letter-spacing:-1px;font-weight:400;margin-top:11px;max-width:500px}
+#future-journal .fj-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;color:#a2b3bd;letter-spacing:.015em;margin-top:15px}
+#future-journal .fj-featured-summary{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:15px;max-width:415px}
+#future-journal .fj-featured-summary p{font-size:15px;line-height:1.8;color:#bbc8cf}
+#future-journal .fj-read-link{font-size:13px;color:var(--future-accent)}
+#future-journal .fj-featured:hover h3,#future-journal .fj-note:hover h3{color:var(--future-accent)}
+#future-journal .fj-recent-label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9eafb8;letter-spacing:.07em;text-transform:uppercase;padding-top:25px}
+#future-journal .fj-note{display:grid;grid-template-columns:115px minmax(0,1.3fr) minmax(0,1fr) 20px;gap:24px;align-items:start;padding:24px 0;border-bottom:1px solid var(--future-line)}
+#future-journal .fj-note-date{font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.7;color:#a2b3bd;padding-top:4px}
+#future-journal .fj-note h3{font-family:'Space Grotesk',sans-serif;font-size:23px;line-height:1.3;letter-spacing:-.65px;font-weight:400}
+#future-journal .fj-note-category{font-size:11px;font-family:'IBM Plex Mono',monospace;line-height:1.6;color:#9cabb4;margin-top:10px}
+#future-journal .fj-note p{font-size:14px;line-height:1.75;color:#b5c3cb}
+#future-journal .fj-note-arrow{font-size:22px;color:var(--future-accent);line-height:1.5}
+#future-journal .fj-work{display:grid;grid-template-columns:1fr 1.15fr;gap:60px;padding:40px 0;border-bottom:1px solid var(--future-line);background:linear-gradient(90deg,#0c131829,#0c131888 45%,#0c131829)}
+#future-journal .fj-work h2{font-family:'Space Grotesk',sans-serif;font-size:29px;font-weight:400;line-height:1.2;letter-spacing:-.9px;margin-top:10px}
+#future-journal .fj-work-copy p{font-size:14px;color:#b9c6cd;line-height:1.85}
+#future-journal .fj-work-copy strong{font-weight:500;color:#e0e4e2;display:block;margin-bottom:5px}
+#future-journal .fj-work-links{display:flex;align-items:center;gap:25px;font-size:13px;margin-top:13px;flex-wrap:wrap}
+#future-journal .fj-work-links a{display:inline-flex;align-items:center;min-height:44px}
+#future-journal .fj-work-links a:first-child{color:var(--future-accent)}
+#future-journal .fj-follow{display:flex;align-items:center;justify-content:space-between;gap:35px;padding:34px 0;border-bottom:1px solid var(--future-line)}
+#future-journal .fj-follow h2{font-family:'Space Grotesk',sans-serif;font-size:27px;letter-spacing:-.7px;font-weight:400;line-height:1.25}
+#future-journal .fj-follow p{color:#b6c4cb;font-size:14px;margin-top:9px;line-height:1.7;max-width:520px}
+#future-journal .fj-follow-links{display:flex;align-items:center;gap:22px;font-size:13px;flex-shrink:0}
+#future-journal .fj-follow-links a{min-height:44px;display:inline-flex;align-items:center}
+#future-journal .fj-follow-links a:first-child{border:1px solid #a77959;color:var(--future-accent);padding:9px 15px}
+#future-journal .fj-follow-links a:first-child:hover{background:#f6af8012}
+#future-journal .fj-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:23px 0 28px;color:#9caeb8;font-size:11px;line-height:1.8}
+#future-journal .fj-footer-credit{color:#91a4af}
+#future-journal .fj-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:var(--future-star-strength)}
+#future-journal .fj-stars i{position:absolute;display:block;width:var(--star-size);height:var(--star-size);border-radius:50%;background:#e2eaf1;opacity:var(--star-opacity)}
+#future-journal .fj-stars-page{z-index:0;mask-image:linear-gradient(90deg,#000e,#0008 22%,#0007 50%,#0008 78%,#000e)}
+#future-journal .fj-stars-hero{z-index:-1;mask-image:linear-gradient(90deg,#000b,#0007 20%,#0000 45%)}
+@media(max-width:900px){#future-journal .fj-shell{padding:0 30px}#future-journal .fj-hero{margin:0 -30px}#future-journal .fj-hero-copy{padding-left:30px;padding-right:30px;max-width:600px}#future-journal .fj-title{font-size:60px;letter-spacing:-3px}#future-journal .fj-featured{gap:25px}#future-journal .fj-featured h3{font-size:29px}#future-journal .fj-note{grid-template-columns:95px minmax(0,1.2fr) minmax(0,1fr) 18px;gap:18px}#future-journal .fj-note h3{font-size:21px}#future-journal .fj-work{gap:35px}#future-journal .fj-follow{align-items:flex-start;flex-direction:column;gap:20px}}
+@media(max-width:620px){#future-journal .fj-shell{padding:0 23px}#future-journal .fj-header{flex-wrap:wrap;gap:9px;padding:17px 0 9px}#future-journal .fj-name{font-size:18px;min-height:30px;display:inline-flex;align-items:center}#future-journal .fj-nav{width:100%;justify-content:space-between;gap:12px;font-size:13px}#future-journal .fj-nav .fj-rss{padding-left:20px}#future-journal .fj-hero{margin:0 -23px;min-height:420px}#future-journal .fj-hero-copy{padding:31px 23px 40px;max-width:100%}#future-journal .fj-eyebrow{font-size:10px;letter-spacing:.035em;margin-bottom:18px}#future-journal .fj-title{font-size:clamp(40px,8.9vw,55px);letter-spacing:-2.2px;line-height:1.08}#future-journal .fj-intro{font-size:14px;line-height:1.8;max-width:355px;margin-top:22px}#future-journal .fj-intro .fj-role{font-size:13px;line-height:1.7;margin-bottom:8px;max-width:310px}#future-journal .fj-hero-actions{font-size:12px;gap:22px;margin-top:17px}#future-journal .fj-explore{gap:19px}#future-journal .fj-art{object-position:69% center}#future-journal .fj-hero:before{background:linear-gradient(90deg,#0c1318e5,#0c1318b5 48%,#0c131840),linear-gradient(0deg,#0c1318,#0c131800 60%,#0c131850)}#future-journal .fj-stars-hero{mask-image:linear-gradient(90deg,#0009,#0003 60%,#0000)}#future-journal .fj-writing{padding-top:0}#future-journal .fj-section-head{padding:12px 0 10px;gap:14px}#future-journal .fj-section-head h2{font-size:25px}#future-journal .fj-section-links{gap:18px;font-size:12px}#future-journal .fj-featured{grid-template-columns:1fr;gap:15px;padding:23px 0 25px}#future-journal .fj-featured h3{font-size:28px;letter-spacing:-.8px;line-height:1.2;margin-top:10px}#future-journal .fj-meta{margin-top:12px}#future-journal .fj-featured-summary{gap:12px;max-width:none}#future-journal .fj-featured-summary p{font-size:14px;line-height:1.8}#future-journal .fj-note{grid-template-columns:minmax(0,1fr) 20px;gap:8px 13px;padding:21px 0}#future-journal .fj-note-date{grid-column:1;grid-row:1;padding:0}#future-journal .fj-note-title{grid-column:1;grid-row:2}#future-journal .fj-note h3{font-size:24px;line-height:1.3;letter-spacing:-.6px}#future-journal .fj-note p{grid-column:1;grid-row:3;font-size:14px;line-height:1.75;margin-top:3px}#future-journal .fj-note-category{margin-top:7px}#future-journal .fj-note-arrow{grid-column:2;grid-row:2}#future-journal .fj-work{grid-template-columns:1fr;gap:19px;padding:31px 0}#future-journal .fj-work h2{font-size:28px}#future-journal .fj-work-links{gap:25px;margin-top:12px}#future-journal .fj-follow{padding:29px 0;gap:19px}#future-journal .fj-follow h2{font-size:27px}#future-journal .fj-footer{padding:21px 0 25px;gap:7px;font-size:11px}#future-journal .fj-footer-credit{width:100%}#future-journal .fj-stars-page i:nth-child(n+281){display:none}}
+@media(max-width:360px){#future-journal .fj-shell{padding:0 21px}#future-journal .fj-hero{margin:0 -21px}#future-journal .fj-hero-copy{padding-left:21px;padding-right:21px}#future-journal .fj-eyebrow{font-size:9px}#future-journal .fj-title{font-size:40px;letter-spacing:-2px}#future-journal .fj-hero-actions{gap:17px;font-size:12px}#future-journal .fj-linkedin-top{gap:8px}#future-journal .fj-explore{gap:13px}#future-journal .fj-section-links{gap:15px}#future-journal .fj-featured h3{font-size:26px}}
+@media(prefers-reduced-motion:reduce){#future-journal .fj-art{transition:none!important;transform:none!important}}
+</style>
+<main id="future-journal" aria-label="Adithya Rajendran — writing on engineering and possible futures">
+ <div class="fj-stars fj-stars-page" aria-hidden="true"></div>
+ <div class="fj-shell">
+  <header class="fj-header">
+   <a class="fj-name" href="https://adithya-rajendran.com/about" target="_blank" rel="noopener noreferrer">Adithya Rajendran<span>.</span></a>
+   <nav class="fj-nav" aria-label="Main navigation">
+    <a href="#future-writing" data-fj-scroll>Writing</a>
+    <a href="https://adithya-rajendran.com/portfolio" target="_blank" rel="noopener noreferrer">Work</a>
+    <a href="https://adithya-rajendran.com/resume" target="_blank" rel="noopener noreferrer">Résumé ↗</a>
+    <a class="fj-rss" href="https://adithya-rajendran.com/feed.xml" target="_blank" rel="noopener noreferrer" aria-label="Follow via RSS">RSS ↗</a>
+   </nav>
+  </header>
+  <section class="fj-hero" aria-labelledby="fj-title">
+   <img class="fj-art" src="assets/observatory-living.webp" alt="An imagined observation gallery overlooking vast inhabited orbital terraces, enclosed gardens, and distant stars" width="1672" height="941">
+   <div class="fj-stars fj-stars-hero" aria-hidden="true"></div>
+   <div class="fj-hero-copy">
+    <p class="fj-eyebrow">Robotic vision · Systems · Possible futures</p>
+    <h1 class="fj-title" id="fj-title"><span>The future is</span><span>still <em>unwritten.</em></span></h1>
+    <p class="fj-intro"><span class="fj-role">Field Software Engineer at Canonical.</span>Exploring robotic vision and the systems<br class="fj-wide-break"> behind intelligent machines.</p>
+    <div class="fj-hero-actions">
+     <a class="fj-explore" href="#future-writing" data-fj-scroll>Read the notebook <span aria-hidden="true">↓</span></a>
+     <a class="fj-linkedin-top" href="https://www.linkedin.com/in/adithya-rajendran" target="_blank" rel="noopener noreferrer">Follow on LinkedIn <span aria-hidden="true">↗</span></a>
+    </div>
+   </div>
+  </section>
+  <section class="fj-writing" id="future-writing" aria-labelledby="fj-writing-title">
+   <div class="fj-section-head"><h2 id="fj-writing-title">Writing</h2><div class="fj-section-links"><a href="https://adithya-rajendran.com/blog/archive" target="_blank" rel="noopener noreferrer">Archive ↗</a><a href="https://adithya-rajendran.com/feed.xml" target="_blank" rel="noopener noreferrer">RSS ↗</a></div></div>
+   <a class="fj-featured" href="https://adithya-rajendran.com/blog/kubernetes-on-the-nvidia-dgx-spark" target="_blank" rel="noopener noreferrer">
+    <div><div class="fj-kicker">Start here · GPU systems</div><h3>Kubernetes on the<br>NVIDIA DGX Spark</h3><div class="fj-meta"><time datetime="2026-03-06">06 MAR 2026</time></div></div>
+    <div class="fj-featured-summary"><p>Setting up MicroK8s and the NVIDIA GPU Operator, with GPU time-slicing for concurrent workloads.</p><span class="fj-read-link">Read the field note <span aria-hidden="true">↗</span></span></div>
+   </a>
+   <div class="fj-recent-label">Recent notes</div>
+   <a class="fj-note" href="https://adithya-rajendran.com/blog/my-homelab" target="_blank" rel="noopener noreferrer">
+    <time class="fj-note-date" datetime="2026-03-30">30 MAR 2026</time><div class="fj-note-title"><h3>Bootstrapping a Homelab the Hard Way</h3><div class="fj-note-category">HOMELAB</div></div><p>A small dynamic cloud on three Raspberry Pis, three mini PCs, and an old Dell laptop.</p><span class="fj-note-arrow" aria-hidden="true">↗</span>
+   </a>
+   <a class="fj-note" href="https://adithya-rajendran.com/blog/running-gui-apps-in-lxc-containers" target="_blank" rel="noopener noreferrer">
+    <time class="fj-note-date" datetime="2026-03-26">26 MAR 2026</time><div class="fj-note-title"><h3>Running GUI Apps in LXD Containers</h3><div class="fj-note-category">LINUX · CONTAINERS</div></div><p>Running isolated GUI applications in LXD, with their windows rendered on the host desktop.</p><span class="fj-note-arrow" aria-hidden="true">↗</span>
+   </a>
+  </section>
+  <section class="fj-work" aria-labelledby="fj-work-title">
+   <div><div class="fj-kicker">The work behind the notes</div><h2 id="fj-work-title">Engineering, in practice.</h2></div>
+   <div class="fj-work-copy"><p><strong>Field Software Engineer · Canonical</strong>Linux, OpenStack, Kubernetes, and Ceph. Explore my experience and code.</p><div class="fj-work-links"><a href="https://adithya-rajendran.com/portfolio" target="_blank" rel="noopener noreferrer">View my work ↗</a><a href="https://github.com/Adithya-Rajendran" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://adithya-rajendran.com/resume" target="_blank" rel="noopener noreferrer">Résumé ↗</a></div></div>
+  </section>
+  <section class="fj-follow" aria-labelledby="fj-follow-title">
+   <div><h2 id="fj-follow-title">Follow the next note.</h2><p>Get new writing through RSS, or join the conversation on LinkedIn.</p></div>
+   <div class="fj-follow-links"><a href="https://www.linkedin.com/in/adithya-rajendran" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a><a href="https://adithya-rajendran.com/feed.xml" target="_blank" rel="noopener noreferrer">Follow via RSS ↗</a></div>
+  </section>
+  <footer class="fj-footer"><span>© 2026 Adithya Rajendran</span><span class="fj-footer-credit">Imagined habitat · AI-generated artwork</span></footer>
+ </div>
+</main>
+<script>
+(()=>{
+ const root=document.getElementById('future-journal');
+ const hero=root.querySelector('.fj-hero');
+ const art=root.querySelector('.fj-art');
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ const fine=matchMedia('(pointer: fine)');
+ const state={accent:'#f6af80',motion:true,starlight:1};
+ function populateStars(layer,count,seed){
+  let value=seed;
+  const random=()=>{value=value*16807%2147483647;return(value-1)/2147483646;};
+  const fragment=document.createDocumentFragment();
+  for(let i=0;i<count;i++){
+   const star=document.createElement('i');
+   star.style.left=(random()*100).toFixed(3)+'%';
+   star.style.top=(random()*100).toFixed(3)+'%';
+   star.style.setProperty('--star-size',i%15===0?'1.6px':(.65+random()*.65).toFixed(2)+'px');
+   star.style.setProperty('--star-opacity',i%15===0?'.65':(.18+random()*.32).toFixed(2));
+   fragment.appendChild(star);
+  }
+  layer.appendChild(fragment);
+ }
+ root.querySelectorAll('.fj-stars').forEach((layer,index)=>populateStars(layer,index?90:520,47+index*109));
+ let pending=0;
+ function reset(){cancelAnimationFrame(pending);art.style.transform='scale(1.025)';}
+ hero.addEventListener('pointermove',e=>{
+  if(reduced.matches||!fine.matches||!state.motion)return;
+  cancelAnimationFrame(pending);
+  pending=requestAnimationFrame(()=>{const b=hero.getBoundingClientRect();const x=((e.clientX-b.left)/b.width-.5)*8;const y=((e.clientY-b.top)/b.height-.5)*5;art.style.transform=`scale(1.025) translate(${x}px,${y}px)`;});
+ });
+ hero.addEventListener('pointerleave',reset);
+ reduced.addEventListener('change',reset);
+ root.querySelectorAll('[data-fj-scroll]').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();root.querySelector('#future-writing').scrollIntoView({behavior:reduced.matches?'instant':'smooth',block:'start'});}));
+ function apply(){root.style.setProperty('--future-accent',state.accent);root.style.setProperty('--future-star-strength',state.starlight);if(!state.motion)reset();}
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:apply});tweak.addColorPicker(state,'accent',{label:'Copper light',reference:'--future-accent'});tweak.addToggle(state,'motion',{label:'Gentle depth movement'});tweak.addSlider(state,'starlight',{label:'Quiet starlight',min:.4,max:1.3,step:.1});}
+})();
+</script>

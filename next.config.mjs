@@ -1,6 +1,27 @@
 import { withBotId } from "botid/next/config";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
+// Vercel injects its feedback toolbar on previews. Keep its documented
+// origins scoped to that environment; production retains the public policy.
+const isPreview = process.env.VERCEL_ENV === "preview";
+
+function contentSecurityPolicy(isStudio = false) {
+    return [
+        "default-src 'self'",
+        `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com${isPreview ? " https://vercel.live" : ""}${isStudio ? " https://core.sanity-cdn.com" : ""}`,
+        "script-src-attr 'none'",
+        `style-src 'self' 'unsafe-inline'${isPreview ? " https://vercel.live" : ""}`,
+        `img-src 'self' data: blob: https://cdn.sanity.io${isPreview ? " https://vercel.live https://vercel.com" : ""}`,
+        `font-src 'self' data:${isPreview ? " https://vercel.live https://assets.vercel.com" : ""}${isStudio ? " https://design-system-static.sanity.io" : ""}`,
+        `connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://vitals.vercel-insights.com https://va.vercel-scripts.com${isPreview ? " https://vercel.live wss://ws-us3.pusher.com" : ""}`,
+        `frame-src 'self' https://cdn.sanity.io/files/ https://www.youtube-nocookie.com https://player.vimeo.com${isPreview ? " https://vercel.live" : ""}`,
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "object-src 'none'",
+        "upgrade-insecure-requests",
+    ].join("; ");
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -43,21 +64,7 @@ const nextConfig = {
                         // va.vercel-scripts.com and report to
                         // vitals.vercel-insights.com.
                         key: "Content-Security-Policy",
-                        value: [
-                            "default-src 'self'",
-                            `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com`,
-                            "script-src-attr 'none'",
-                            "style-src 'self' 'unsafe-inline'",
-                            "img-src 'self' data: blob: https://cdn.sanity.io",
-                            "font-src 'self' data:",
-                            "connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://vitals.vercel-insights.com https://va.vercel-scripts.com",
-                            "frame-src 'self' https://cdn.sanity.io/files/ https://www.youtube-nocookie.com https://player.vimeo.com",
-                            "frame-ancestors 'none'",
-                            "base-uri 'self'",
-                            "form-action 'self'",
-                            "object-src 'none'",
-                            "upgrade-insecure-requests",
-                        ].join("; "),
+                        value: contentSecurityPolicy(),
                     },
                     {
                         // Isolate the browsing-context group (tabnabbing /
@@ -65,6 +72,17 @@ const nextConfig = {
                         // auth popup functional.
                         key: "Cross-Origin-Opener-Policy",
                         value: "same-origin-allow-popups",
+                    },
+                ],
+            },
+            // Sanity Studio loads its integration bridge and typefaces from
+            // Sanity's own CDNs. Keep these origins off public page policies.
+            {
+                source: "/studio/:path*",
+                headers: [
+                    {
+                        key: "Content-Security-Policy",
+                        value: contentSecurityPolicy(true),
                     },
                 ],
             },

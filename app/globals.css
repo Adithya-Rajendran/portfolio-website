@@ -3,446 +3,339 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-    --font-sans: "Inter", "Inter Fallback";
-    --font-display:
-        "Space Grotesk", "Space Grotesk Fallback", "Inter", sans-serif;
-    /* Terminal chrome face — prompts, labels, dates, status bars. Loaded
-       via next/font in app/layout.tsx; never used for body prose. */
-    --font-term:
-        "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace,
-        "SFMono-Regular", monospace;
-
-    /* One UI canvas — the only two page-background colors. Referenced as
-       bg-canvas / dark:bg-canvas-dark, gradient stops (from-canvas) and
-       rings (ring-canvas-dark). Keep in sync with THEME_COLORS in
-       lib/config.ts (viewport.themeColor cannot read CSS variables).
-       Mirrored as literals in lib/config.ts THEME_COLORS
-       (viewport.themeColor + OG images can't read CSS vars) — change
-       both together. */
-    --color-canvas: #f4f5f8;
-    --color-canvas-dark: #050608;
-
-    --color-surface-light: rgba(255, 255, 255, 0.7);
-    --color-surface-medium: rgba(255, 255, 255, 0.08);
-    --color-surface-strong: rgba(255, 255, 255, 0.12);
-    --color-border-subtle: rgba(255, 255, 255, 0.08);
-
-    /* One UI-style large radii */
-    --radius-card: 1.5rem; /* 24px — primary cards */
-    --radius-card-lg: 1.75rem; /* 28px — hero panels, sheets */
-    --radius-row: 1rem; /* 16px — inputs, list rows */
-    --radius-squircle: 31%; /* One UI 8 icon-tile squircle */
+    --font-sans: var(--font-dm-sans), sans-serif;
+    --font-display: var(--font-space-grotesk), sans-serif;
+    --font-mono: var(--font-ibm-plex-mono), monospace;
+    --font-term: var(--font-ibm-plex-mono), monospace;
+    --color-canvas: #0c1318;
+    --color-canvas-dark: #0c1318;
+    --color-accent: #f6af80;
+    --color-on-accent: #0c1318;
+    --color-accent-soft: #f6af8018;
+    --color-border-subtle: #34434d;
+    --radius-card: 0.5rem;
+    --radius-card-lg: 0.75rem;
+    --radius-row: 0.25rem;
     --radius-pill: 999px;
-
-    /* One UI snackbar enter/exit (consumed via data-[state] variants) */
-    --animate-toast-in: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    --animate-toast-out: toast-out 0.18s ease-in forwards;
-
+    --animate-toast-in: toast-in 0.2s ease-out;
+    --animate-toast-out: toast-out 0.15s ease-in forwards;
     @keyframes toast-in {
         from {
             opacity: 0;
-            transform: translateY(0.75rem) scale(0.97);
+            transform: translateY(0.5rem);
         }
         to {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translateY(0);
         }
     }
-
     @keyframes toast-out {
         from {
             opacity: 1;
         }
         to {
             opacity: 0;
-            transform: translateY(0.5rem) scale(0.97);
         }
     }
 }
 
 :root {
-    --site-header-height: 4rem;
+    color-scheme: dark;
+    --journal-bg: #0c1318;
+    --journal-surface: #101b23;
+    --journal-text: #e9e9e2;
+    --journal-muted: #b6c2c9;
+    --journal-line: #34434d;
+    --journal-accent: #f6af80;
+    --site-header-height: 5.25rem;
     --section-nav-height: 3rem;
+    --c1: 246 175 128;
+    --c2: 246 175 128;
+    --c3: 246 175 128;
+    --c1-text: 246 175 128;
+    --c2-text: 246 175 128;
+    --c3-text: 246 175 128;
+    --c1-foreground: 12 19 24;
 }
 
 html {
-    scroll-padding-top: calc(
-        var(--site-header-height) + var(--section-nav-height) + 0.75rem
-    );
+    scroll-behavior: smooth;
+    scroll-padding-top: 2rem;
+}
+body {
+    margin: 0;
+    background: var(--journal-bg);
+    color: var(--journal-text);
+}
+::selection {
+    background: #f6af8040;
+    color: #fff;
+}
+:focus-visible {
+    outline: 2px solid var(--journal-accent);
+    outline-offset: 5px;
+}
+main:focus {
+    outline: none;
+}
+button,
+input,
+textarea {
+    font: inherit;
+}
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled) {
+    cursor: pointer;
+}
+button:disabled {
+    cursor: wait;
+    opacity: 0.6;
 }
 
-/* Keep the shared frame markup identical on the server and client. Home marks
-   itself as footer-free; CSS removes the slot without a pathname-dependent
-   hydration branch. */
-body:has([data-hide-site-footer]) .site-footer-slot {
-    display: none;
+.journal-frame {
+    position: relative;
+    isolation: isolate;
+    min-height: 100svh;
 }
-
-/* ─────────────────────────────────────────────────────────────────────
-   ACCENT TOKENS — one identity in both appearances. The c1/c2/c3 aliases
-   remain because shared components use them for categorical treatments,
-   but they intentionally resolve to the same emerald family.
-   ───────────────────────────────────────────────────────────────────── */
-
-:root {
-    --c1: 5 150 105; /* emerald-600 */
-    --c2: 5 150 105;
-    --c3: 5 150 105;
-    --c1-foreground: 2 6 23; /* slate-950 */
-    --c1-text: 4 120 87; /* emerald-700 */
-    --c2-text: 4 120 87;
-    --c3-text: 4 120 87;
-}
-
-.dark {
-    --c1: 52 211 153; /* emerald-400 */
-    --c2: 52 211 153;
-    --c3: 52 211 153;
-    --c1-text: var(--c1);
-    --c2-text: var(--c2);
-    --c3-text: var(--c3);
-    --c1-foreground: 2 6 23;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   ACCENT UTILITY CLASSES — semantic names that resolve via theme tokens.
-   ───────────────────────────────────────────────────────────────────── */
-
-.text-accent {
-    color: rgb(var(--c1-text));
-}
-.hover\:text-accent:hover {
-    color: rgb(var(--c1-text));
-}
-.group:hover .group-hover\:text-accent {
-    color: rgb(var(--c1-text));
-}
-
-.bg-accent {
-    background-color: rgb(var(--c1));
-}
-.text-on-accent {
-    color: rgb(var(--c1-foreground));
-}
-.hover\:text-on-accent:hover {
-    color: rgb(var(--c1-foreground));
-}
-.bg-accent-soft {
-    background-color: rgb(var(--c1) / 0.08);
-}
-.dark .bg-accent-soft {
-    background-color: rgb(var(--c1) / 0.15);
-}
-.hover\:bg-accent-soft:hover {
-    background-color: rgb(var(--c1) / 0.08);
-}
-.dark .hover\:bg-accent-soft:hover {
-    background-color: rgb(var(--c1) / 0.15);
-}
-
-.border-accent {
-    border-color: rgb(var(--c1));
-}
-.focus\:border-accent:focus {
-    border-color: rgb(var(--c1));
-}
-.border-accent-soft {
-    border-color: rgb(var(--c1) / 0.22);
-}
-.dark .border-accent-soft {
-    border-color: rgb(var(--c1) / 0.28);
-}
-.hover\:border-accent-soft:hover {
-    border-color: rgb(var(--c1) / 0.4);
-}
-
-.ring-accent {
-    --tw-ring-color: rgb(var(--c1));
-}
-
-.bg-accent-gradient {
-    background-image: linear-gradient(to right, rgb(var(--c1)), rgb(var(--c2)));
-}
-.bg-accent-gradient-soft {
-    background-image: linear-gradient(
-        to right,
-        rgb(var(--c1) / 0.15),
-        rgb(var(--c2) / 0.15)
-    );
-}
-.bg-accent-gradient-vertical {
-    background-image: linear-gradient(
-        to bottom,
-        rgb(var(--c1)),
-        rgb(var(--c2))
-    );
-}
-
-.text-accent-gradient {
-    background-image: linear-gradient(
-        to right,
-        rgb(var(--c1)),
-        rgb(var(--c2)),
-        rgb(var(--c3))
-    );
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
-
-.bg-accent-halo {
-    background-image: linear-gradient(
-        to bottom right,
-        rgb(var(--c1) / 0.7),
-        rgb(var(--c2) / 0.7),
-        rgb(var(--c3) / 0.6)
-    );
-}
-
-.shadow-accent {
-    box-shadow: 0 2px 10px rgb(var(--c1) / 0.22);
-}
-.hover\:shadow-accent:hover {
-    box-shadow: 0 6px 20px -4px rgb(var(--c1) / 0.32);
-}
-
-/* Categorical c2 / c3 utilities for three-color contexts */
-.text-c2 {
-    color: rgb(var(--c2-text));
-}
-.text-c3 {
-    color: rgb(var(--c3-text));
-}
-.bg-c1-soft {
-    background-color: rgb(var(--c1) / 0.1);
-}
-.dark .bg-c1-soft {
-    background-color: rgb(var(--c1) / 0.18);
-}
-.bg-c2-soft {
-    background-color: rgb(var(--c2) / 0.1);
-}
-.dark .bg-c2-soft {
-    background-color: rgb(var(--c2) / 0.18);
-}
-.bg-c3-soft {
-    background-color: rgb(var(--c3) / 0.1);
-}
-.dark .bg-c3-soft {
-    background-color: rgb(var(--c3) / 0.18);
-}
-.border-c1-soft {
-    border-color: rgb(var(--c1) / 0.22);
-}
-.dark .border-c1-soft {
-    border-color: rgb(var(--c1) / 0.28);
-}
-.border-c2-soft {
-    border-color: rgb(var(--c2) / 0.22);
-}
-.dark .border-c2-soft {
-    border-color: rgb(var(--c2) / 0.28);
-}
-.border-c3-soft {
-    border-color: rgb(var(--c3) / 0.22);
-}
-.dark .border-c3-soft {
-    border-color: rgb(var(--c3) / 0.28);
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   ONE UI 8.5 SURFACES — near-opaque, calm cards with flat soft shadows.
-   Blur is reserved for floating chrome (.os-nav, .os-card-raised); the
-   inset "lifted glass" highlight of earlier iterations is gone.
-
-   Declared in @layer components so Tailwind utilities (layer utilities,
-   which wins over components) can override individual properties —
-   e.g. `os-card-raised rounded-card-lg` or `os-card rounded-none`.
-   ───────────────────────────────────────────────────────────────────── */
-
-@layer components {
-    .os-card {
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(15, 23, 42, 0.04);
-        border-radius: var(--radius-card);
-        -webkit-backdrop-filter: blur(16px) saturate(150%);
-        backdrop-filter: blur(16px) saturate(150%);
-        box-shadow:
-            0 1px 2px rgba(15, 23, 42, 0.03),
-            0 8px 24px -16px rgba(15, 23, 42, 0.08);
-    }
-
-    .dark .os-card {
-        background: rgba(23, 25, 34, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        box-shadow:
-            0 1px 2px rgba(0, 0, 0, 0.25),
-            0 12px 32px -20px rgba(0, 0, 0, 0.5);
-    }
-
-    .os-card-flat {
-        background: rgba(255, 255, 255, 0.65);
-        border: 1px solid rgba(15, 23, 42, 0.04);
-        border-radius: var(--radius-card);
-    }
-
-    .dark .os-card-flat {
-        background: rgba(23, 25, 34, 0.55);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    /* Floating elevated tier — popovers, bottom sheets, snackbars. The one
-   surface that keeps heavy frost, like the One UI 8.5 quick panel. */
-    .os-card-raised {
-        background: rgba(255, 255, 255, 0.97);
-        border: 1px solid rgba(15, 23, 42, 0.05);
-        border-radius: var(--radius-card);
-        -webkit-backdrop-filter: blur(24px) saturate(170%);
-        backdrop-filter: blur(24px) saturate(170%);
-        box-shadow:
-            0 2px 4px rgba(15, 23, 42, 0.04),
-            0 24px 48px -24px rgba(15, 23, 42, 0.18);
-    }
-
-    .dark .os-card-raised {
-        background: rgba(28, 30, 40, 0.97);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow:
-            0 2px 4px rgba(0, 0, 0, 0.3),
-            0 24px 48px -24px rgba(0, 0, 0, 0.7);
-    }
-
-    /* Header / nav surface */
-    .os-nav {
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid rgba(15, 23, 42, 0.04);
-        -webkit-backdrop-filter: blur(24px) saturate(180%);
-        backdrop-filter: blur(24px) saturate(180%);
-        box-shadow: 0 6px 24px -12px rgba(15, 23, 42, 0.1);
-    }
-
-    .dark .os-nav {
-        background: rgba(15, 17, 26, 0.82);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        box-shadow: 0 6px 24px -10px rgba(0, 0, 0, 0.55);
-    }
-
-    /* Route-context navigation that sits below the persistent site header. */
-    .os-subnav {
-        background: rgba(244, 245, 248, 0.88);
-        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-        -webkit-backdrop-filter: blur(18px) saturate(160%);
-        backdrop-filter: blur(18px) saturate(160%);
-        box-shadow: 0 8px 20px -18px rgba(15, 23, 42, 0.18);
-    }
-
-    .dark .os-subnav {
-        background: rgba(5, 6, 8, 0.86);
-        border-bottom-color: rgba(255, 255, 255, 0.07);
-        box-shadow: 0 8px 20px -18px rgba(0, 0, 0, 0.7);
-    }
-
-    /* Hover lift — calm One UI elevation change with a whisper of accent */
-    .os-hover {
-        transition:
-            transform 0.25s ease,
-            box-shadow 0.25s ease,
-            border-color 0.25s ease;
-    }
-
-    .os-hover:hover {
-        transform: translateY(-2px);
-        border-color: rgb(var(--c1) / 0.22);
-        box-shadow:
-            0 4px 12px -4px rgba(15, 23, 42, 0.08),
-            0 16px 32px -20px rgb(var(--c1) / 0.12);
-    }
-
-    .dark .os-hover:hover {
-        border-color: rgb(var(--c1) / 0.22);
-        box-shadow:
-            0 4px 12px -4px rgba(0, 0, 0, 0.4),
-            0 16px 32px -20px rgb(var(--c1) / 0.18);
-    }
-
-    /* Everything tappable presses — One UI's signature touch feedback */
-    .os-press {
-        transition: transform 0.15s ease;
-    }
-    .os-press:active {
-        transform: scale(0.97);
-    }
-
-    /* Settings-style row divider used inside grouped lists */
-    .os-divider {
-        height: 1px;
-        background: rgba(15, 23, 42, 0.06);
-    }
-    .dark .os-divider {
-        background: rgba(255, 255, 255, 0.06);
-    }
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   AMBIENT BACKDROP — a static, low-contrast emerald wash. It gives the
-   personal pages atmosphere without turning the canvas into a diagram or
-   suggesting a product dashboard. No layer animates.
-   ───────────────────────────────────────────────────────────────────── */
-
-.mesh-bg {
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    background:
-        radial-gradient(
-            72rem 44rem at 88% -8%,
-            rgb(var(--c1) / 0.11),
-            transparent 66%
-        ),
-        radial-gradient(
-            58rem 38rem at -8% 54%,
-            rgb(var(--c1) / 0.07),
-            transparent 70%
-        );
-}
-
-.dark .mesh-bg {
-    background:
-        radial-gradient(
-            72rem 44rem at 88% -8%,
-            rgb(var(--c1) / 0.105),
-            transparent 67%
-        ),
-        radial-gradient(
-            58rem 38rem at -8% 54%,
-            rgb(var(--c1) / 0.055),
-            transparent 72%
-        );
-}
-
-/* Fine paper/screen texture over the colour wash. */
-.bg-grain {
-    position: fixed;
+.journal-stars {
+    position: absolute;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    opacity: 0.45;
-    mix-blend-mode: soft-light;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 160px 160px;
+    background-image:
+        radial-gradient(1px 1px at 11% 9%, #e2eaf170 75%, transparent),
+        radial-gradient(0.7px 0.7px at 31% 23%, #e2eaf155 75%, transparent),
+        radial-gradient(1px 1px at 69% 6%, #e2eaf150 75%, transparent),
+        radial-gradient(0.7px 0.7px at 88% 32%, #e2eaf160 75%, transparent),
+        radial-gradient(0.8px 0.8px at 44% 41%, #e2eaf160 75%, transparent),
+        radial-gradient(1px 1px at 6% 52%, #e2eaf170 75%, transparent),
+        radial-gradient(0.6px 0.6px at 25% 73%, #e2eaf180 75%, transparent),
+        radial-gradient(0.8px 0.8px at 77% 68%, #e2eaf175 75%, transparent),
+        radial-gradient(1px 1px at 57% 94%, #e2eaf180 75%, transparent),
+        radial-gradient(0.7px 0.7px at 94% 88%, #e2eaf160 75%, transparent);
+    background-size: 337px 479px;
+    mask-image: linear-gradient(
+        90deg,
+        #000,
+        #0008 25%,
+        #0006 50%,
+        #0008 75%,
+        #000
+    );
+}
+.journal-container {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 42px;
+}
+.journal-page {
+    padding-block: 62px 70px;
+}
+.journal-eyebrow {
+    font-family: var(--font-ibm-plex-mono), monospace;
+    color: var(--journal-accent);
+    font-size: 11px;
+    line-height: 1.7;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.journal-title {
+    font-family: var(--font-space-grotesk), sans-serif;
+    font-size: clamp(40px, 5.6vw, 68px);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+    margin-top: 18px;
+    text-wrap: balance;
+}
+.journal-description {
+    color: var(--journal-muted);
+    font-size: 16px;
+    line-height: 1.85;
+    max-width: 670px;
+}
+.journal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    color: var(--journal-accent);
+    font-size: 14px;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-color: #f6af8055;
+}
+.journal-link:hover {
+    text-decoration-color: var(--journal-accent);
+}
+.journal-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 11px 18px;
+    border: 1px solid #a77959;
+    background: #f6af8008;
+    color: var(--journal-accent);
+    font-size: 14px;
+    line-height: 1.5;
+}
+.journal-button:hover {
+    background: #f6af8015;
+}
+.journal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 19px 0;
+    border-bottom: 1px solid #ffffff22;
+}
+.journal-name {
+    font-family: var(--font-space-grotesk), sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.4px;
+    white-space: nowrap;
+}
+.journal-name span {
+    color: var(--journal-accent);
+}
+.journal-nav {
+    display: flex;
+    align-items: center;
+    gap: 27px;
+    font-size: 13px;
+    color: #c1cbd0;
+}
+.journal-nav a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+.journal-nav a:hover,
+.journal-nav a[aria-current],
+.journal-footer a:hover {
+    color: var(--journal-accent);
+}
+.journal-nav .journal-rss {
+    border-left: 1px solid #485861;
+    padding-left: 26px;
+}
+.journal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    padding: 18px 0 24px;
+    border-top: 1px solid var(--journal-line);
+    color: #9caeb8;
+}
+.journal-footer small {
+    font-size: 11px;
+}
+.journal-footer nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 24px;
+    font-size: 12px;
+}
+.journal-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+.journal-art-credit {
+    font-size: 11px;
+    color: #91a4af;
+    padding-block: 16px;
 }
 
-.dark .bg-grain {
-    opacity: 0.55;
+/* Shared controls used by contact, recovery, and PDF viewing. */
+.os-card-raised {
+    border: 1px solid var(--journal-line);
+    background: #14202a;
+    box-shadow: 0 12px 35px #0004;
+}
+.os-card {
+    border: 1px solid var(--journal-line);
+    background: var(--journal-surface);
+}
+.os-press {
+    transition:
+        background-color 0.15s,
+        color 0.15s;
+}
+.border-accent-soft {
+    border-color: #f6af8047;
+}
+.ring-accent {
+    --tw-ring-color: var(--journal-accent);
+}
+.bg-accent-gradient {
+    background: var(--journal-accent);
 }
 
-/* ─────────────────────────────────────────────────────────────────────
-   Motion preferences + entrance animations
-   ───────────────────────────────────────────────────────────────────── */
-
+@media (max-width: 900px) {
+    .journal-container {
+        padding-inline: 30px;
+    }
+}
+@media (max-width: 620px) {
+    :root {
+        --site-header-height: 7.15rem;
+    }
+    .journal-container {
+        padding-inline: 23px;
+    }
+    .journal-page {
+        padding-block: 36px 46px;
+    }
+    .journal-header {
+        flex-wrap: wrap;
+        gap: 9px;
+        padding: 17px 0 9px;
+    }
+    .journal-name {
+        min-height: 30px;
+        display: inline-flex;
+        align-items: center;
+    }
+    .journal-nav {
+        width: 100%;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .journal-nav .journal-rss {
+        padding-left: 20px;
+    }
+    .journal-footer {
+        padding-block: 20px;
+        gap: 4px;
+    }
+    .journal-footer nav {
+        width: 100%;
+        gap: 22px;
+    }
+}
+@media (max-width: 360px) {
+    .journal-container {
+        padding-inline: 21px;
+    }
+}
 @media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
     *,
     *::before,
     *::after {
@@ -450,149 +343,5 @@ body:has([data-hide-site-footer]) .site-footer-slot {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
-    }
-}
-
-.font-display {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
-}
-
-/* ---- Code blocks: dual-theme shiki + line highlighting ----
-   Shiki emits every token with --shiki-light/--shiki-dark variables
-   (defaultColor: false in lib/highlight-code.ts); these rules pick the
-   palette that matches the site appearance. */
-.shiki-wrapper .shiki,
-.shiki-wrapper .shiki span {
-    color: var(--shiki-light);
-}
-.dark .shiki-wrapper .shiki,
-.dark .shiki-wrapper .shiki span {
-    color: var(--shiki-dark);
-}
-
-/* Lines flagged via the Sanity code editor's highlightedLines field */
-.shiki-wrapper .line.line-highlight {
-    display: inline-block;
-    width: 100%;
-    background: rgb(var(--c1) / 0.08);
-    box-shadow: inset 3px 0 0 rgb(var(--c1));
-}
-.dark .shiki-wrapper .line.line-highlight {
-    background: rgb(var(--c1) / 0.12);
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   TERMINAL CHROME — one command per route and its coordinated intro reveal.
-   No-JS and reduced-motion visitors always receive complete static content.
-   ───────────────────────────────────────────────────────────────────── */
-.term-cmd-type {
-    display: inline-block;
-    max-width: 100%;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    white-space: normal;
-}
-
-/* No-JS visitors get the complete command immediately. Browsers only opt
-   into the short type-on flourish when scripting is actually enabled. */
-@media (scripting: enabled) {
-    .term-cmd-type {
-        width: 0;
-        white-space: nowrap;
-        animation: term-type var(--term-duration, 420ms)
-            steps(var(--term-steps, 20), end) forwards;
-    }
-}
-
-@keyframes term-type {
-    99.9% {
-        width: var(--term-width, 20ch);
-        white-space: nowrap;
-    }
-    100% {
-        width: auto;
-        white-space: normal;
-    }
-}
-
-@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
-    .term-output-reveal {
-        visibility: hidden;
-        opacity: 0;
-        transform: translateY(var(--term-output-shift, 0.7rem));
-        animation: term-output-reveal var(--term-output-duration, 560ms)
-            cubic-bezier(0.16, 1, 0.3, 1) var(--term-reveal-delay, 860ms)
-            forwards;
-    }
-}
-
-@keyframes term-output-reveal {
-    from {
-        visibility: visible;
-        opacity: 0;
-        transform: translateY(var(--term-output-shift, 0.7rem));
-    }
-    to {
-        visibility: visible;
-        opacity: 1;
-        transform: none;
-    }
-}
-
-/* Subsequent pages read like commands in the same shell session. Their
-   compact prompt omits the repeated hostname and stays mobile-safe. */
-.route-prompt {
-    font-size: 0.78rem;
-    letter-spacing: -0.015em;
-}
-
-/* Long article slugs still read as literal filenames on 320px screens. */
-.post-route-prompt {
-    font-size: 0.75rem;
-    letter-spacing: -0.015em;
-}
-
-/* Block cursor parked at the end of a prompt line */
-.term-cursor {
-    display: inline-block;
-    width: 0.55em;
-    height: 1.05em;
-    margin-left: 0.15em;
-    vertical-align: text-bottom;
-    background: rgb(var(--c1));
-}
-.term-cursor-once {
-    display: none;
-}
-@media (scripting: enabled) {
-    .term-cursor-once {
-        display: inline-block;
-        animation:
-            term-blink 360ms steps(2, start) 2,
-            term-cursor-out 0.01ms linear var(--term-duration, 720ms) forwards;
-    }
-}
-@keyframes term-blink {
-    50% {
-        opacity: 0;
-    }
-}
-@keyframes term-cursor-out {
-    to {
-        opacity: 0;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    .term-cmd-type {
-        width: auto;
-        animation: none;
-        white-space: normal;
-    }
-    .term-cursor {
-        animation: none;
-    }
-    .term-cursor-once {
-        display: none;
     }
 }

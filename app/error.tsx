@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import TerminalSection from "@/components/terminal/terminal-section";
 
 export default function Error({
     error,
@@ -16,23 +16,28 @@ export default function Error({
     }, [error]);
 
     return (
-        <main className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-            <div className="os-card w-full max-w-md px-7 py-10 sm:px-10 text-center">
-                <TerminalSection
-                    as="div"
-                    command="tail -n 1 site.log"
-                    promptVariant="compact"
-                    animatePrompt
-                    promptClassName="route-prompt mb-3 justify-center"
+        <main
+            id="main-content"
+            tabIndex={-1}
+            className="mx-auto flex min-h-[65svh] w-full max-w-3xl flex-col justify-center px-6 py-24 sm:px-10"
+        >
+            <p className="font-term text-xs uppercase tracking-[0.18em] text-accent">
+                A brief interruption
+            </p>
+            <h1 className="mt-6 font-display text-4xl leading-tight tracking-tight text-slate-900 sm:text-5xl dark:text-slate-100">
+                This page couldn’t load.
+            </h1>
+            <p className="mt-6 max-w-lg text-base leading-8 text-slate-600 dark:text-slate-400">
+                Please try again in a moment.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-6">
+                <Button onClick={reset}>Try again</Button>
+                <Link
+                    href="/"
+                    className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent dark:text-slate-400"
                 >
-                    <h2 className="font-display text-2xl font-semibold mb-4 text-slate-900 dark:text-white">
-                        Something went wrong
-                    </h2>
-                    <p className="text-slate-600 dark:text-slate-400 mb-8">
-                        An unexpected error occurred. Please try again.
-                    </p>
-                    <Button onClick={reset}>Try again</Button>
-                </TerminalSection>
+                    Back to home
+                </Link>
             </div>
         </main>
     );

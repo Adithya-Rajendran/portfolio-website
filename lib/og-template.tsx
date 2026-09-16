@@ -35,13 +35,36 @@ export function OgTemplate({
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                padding: "80px",
+                padding: "76px 80px",
+                position: "relative",
+                overflow: "hidden",
                 background:
-                    "radial-gradient(circle at 18% 12%, rgba(16, 185, 129, 0.28) 0%, rgba(16, 185, 129, 0.08) 32%, transparent 62%), #090c0b",
-                color: "#ffffff",
+                    "radial-gradient(ellipse at 100% 0%, rgba(66, 103, 131, 0.28) 0%, transparent 60%), radial-gradient(ellipse at 90% 100%, rgba(246, 175, 128, 0.12) 0%, transparent 50%), #0c1318",
+                color: "#e9e9e2",
                 fontFamily: "sans-serif",
             }}
         >
+            {[
+                { x: 1056, y: 77 },
+                { x: 1130, y: 194 },
+                { x: 989, y: 308 },
+                { x: 1160, y: 433 },
+                { x: 890, y: 53 },
+            ].map(({ x, y }, index) => (
+                <div
+                    key={`${x}-${y}`}
+                    style={{
+                        position: "absolute",
+                        left: x,
+                        top: y,
+                        width: index === 0 ? 3 : 2,
+                        height: index === 0 ? 3 : 2,
+                        borderRadius: "50%",
+                        background: "#dae4ec",
+                        opacity: 0.3,
+                    }}
+                />
+            ))}
             <div
                 style={{
                     display: "flex",
@@ -53,7 +76,7 @@ export function OgTemplate({
                     style={{
                         width: "44px",
                         height: "2px",
-                        background: "#10b981",
+                        background: "#f6af80",
                     }}
                 />
                 <span
@@ -61,7 +84,7 @@ export function OgTemplate({
                         fontSize: "22px",
                         textTransform: "uppercase",
                         letterSpacing: "0.22em",
-                        color: "#34d399",
+                        color: "#f6af80",
                         fontWeight: 600,
                     }}
                 >
@@ -79,11 +102,16 @@ export function OgTemplate({
             >
                 <div
                     style={{
-                        fontSize: title.length > 70 ? "62px" : "78px",
-                        fontWeight: 700,
+                        fontSize:
+                            title.length > 110
+                                ? "46px"
+                                : title.length > 70
+                                  ? "58px"
+                                  : "76px",
+                        fontWeight: 600,
                         lineHeight: 1.08,
                         letterSpacing: "-0.02em",
-                        color: "#ffffff",
+                        color: "#e9e9e2",
                         display: "flex",
                     }}
                 >
@@ -92,9 +120,9 @@ export function OgTemplate({
                 {subtitle && (
                     <div
                         style={{
-                            fontSize: "30px",
+                            fontSize: subtitle.length > 110 ? "25px" : "29px",
                             lineHeight: 1.3,
-                            color: "#cbd5e1",
+                            color: "#b2bbbf",
                             display: "flex",
                         }}
                     >
@@ -108,8 +136,10 @@ export function OgTemplate({
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    fontSize: "26px",
-                    color: "#94a3b8",
+                    fontSize: "23px",
+                    borderTop: "1px solid #344048",
+                    paddingTop: "25px",
+                    color: "#a2adb4",
                 }}
             >
                 <span style={{ display: "flex" }}>{footerLeft ?? ""}</span>

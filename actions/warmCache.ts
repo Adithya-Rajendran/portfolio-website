@@ -27,14 +27,11 @@ export async function warmBlogCache(): Promise<WarmResult> {
     return { pages };
 }
 
-/** Warm Vercel edge cache by fetching every blog page + the listing,
- *  archive, and tag pages */
+/** Warm the writing-led homepage, feed, listings, and every published post. */
 async function warmPages(
     slugs: string[],
     tags: string[],
 ): Promise<{ warmed: string[]; failed: string[] }> {
-    if (!slugs || slugs.length === 0) return { warmed: [], failed: [] };
-
     const warmed: string[] = [];
     const failed: string[] = [];
 
@@ -44,8 +41,9 @@ async function warmPages(
     // arbitrary site paths.
     const safeSlugs = slugs.filter((slug) => SAFE_SLUG.test(slug));
 
-    // Also warm the blog listing, archive, and tag pages
+    // Always warm the entry points, including after the last post is removed.
     const urls = [
+        `${siteConfig.url}/`,
         `${siteConfig.url}/blog`,
         `${siteConfig.url}/blog/archive`,
         `${siteConfig.url}/feed.xml`,

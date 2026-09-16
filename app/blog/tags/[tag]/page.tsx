@@ -1,14 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PageShell } from "@/components/page-shell";
 import Latest from "@/components/blogs/latest";
 import TagChips from "@/components/blogs/tag-chips";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
-import { PageIntro } from "@/components/page-intro";
-import { TerminalRoute } from "@/components/terminal/terminal-route";
 
 /**
  * Data section — fetches posts, filters by tag, and 404s when the tag
@@ -22,34 +19,21 @@ async function TagPosts({ tag }: { tag: string }) {
     const allTags = collectTags(allPosts);
 
     return (
-        <TerminalRoute path="~/blog" command={`rg -l "#${tag}" .`}>
-            <PageIntro
-                size="compact"
-                title={tag}
-                description={
-                    <span className="font-term text-sm">
-                        {posts.length} post{posts.length === 1 ? "" : "s"}{" "}
-                        tagged <span className="text-accent"># {tag}</span>
-                    </span>
-                }
-            />
-
-            <PageShell className="mt-14 sm:mt-16 pb-24 sm:pb-32">
-                <TagChips tags={allTags} active={tag} />
-
-                <Latest posts={posts} title={`Tagged "${tag}"`} />
-
-                <div>
-                    <Link
-                        href="/blog"
-                        aria-label="Back to the blog"
-                        className="text-sm text-slate-600 transition-colors hover:text-accent dark:text-slate-400"
-                    >
-                        ← Back to the blog
-                    </Link>
-                </div>
-            </PageShell>
-        </TerminalRoute>
+        <div className="journal-page journal-container journal-writing">
+            <header className="journal-writing-intro">
+                <p className="journal-eyebrow">Follow a thread</p>
+                <h1 className="journal-title">{tag}</h1>
+                <p className="journal-description">
+                    {posts.length} {posts.length === 1 ? "note" : "notes"} on{" "}
+                    {tag}.
+                </p>
+            </header>
+            <TagChips tags={allTags} active={tag} />
+            <Latest posts={posts} title="From the notebook" />
+            <Link href="/blog" className="journal-link">
+                ← All writing
+            </Link>
+        </div>
     );
 }
 

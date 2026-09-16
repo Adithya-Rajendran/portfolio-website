@@ -5,7 +5,7 @@ import {
     buildPersonEntity,
     buildProfilePage,
 } from "@/lib/structured-data";
-import { siteConfig, socialProfiles } from "@/lib/config";
+import { BLOG_DESCRIPTION, siteConfig, socialProfiles } from "@/lib/config";
 import type { CredentialListItem, ProfileData } from "@/lib/sanity-client";
 
 function profileOf(overrides: Partial<ProfileData> = {}): ProfileData {
@@ -39,13 +39,12 @@ function credentialOf(
 describe("buildPersonEntity", () => {
     it("uses stable personal fallbacks before the Profile exists", () => {
         const person = buildPersonEntity({ profile: null });
-        const [jobTitle, organization] = siteConfig.role.split(" @ ");
 
         expect(person.name).toBe(siteConfig.author);
-        expect(person.jobTitle).toBe(jobTitle);
+        expect(person.jobTitle).toBe("Field Software Engineer");
         expect(person.worksFor).toEqual({
             "@type": "Organization",
-            name: organization,
+            name: "Canonical",
         });
         expect(person.alumniOf).toEqual([
             { "@type": "CollegeOrUniversity", name: siteConfig.alumniOf },
@@ -217,12 +216,12 @@ describe("buildBlogPosting", () => {
 });
 
 describe("buildBlog", () => {
-    it("describes the route as a broad personal Blog", () => {
+    it("keeps the writing metadata aligned with the public blog description", () => {
         const blog = buildBlog();
         expect(blog["@context"]).toBe("https://schema.org");
         expect(blog["@type"]).toBe("Blog");
         expect(blog.name).toBe(`${siteConfig.author} — Blog`);
         expect(blog.url).toBe(`${siteConfig.url}/blog`);
-        expect(blog.description).toMatch(/Personal writing/);
+        expect(blog.description).toBe(BLOG_DESCRIPTION);
     });
 });

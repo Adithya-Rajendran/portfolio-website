@@ -23,7 +23,7 @@ export default async function ProjectEssay({
     );
 
     return (
-        <div className="mx-auto max-w-[45.5rem] px-5 pb-24 sm:px-8">
+        <div className="journal-prose career-project-essay">
             <PortableText
                 value={project.body as unknown as PortableTextBlock[]}
                 components={createPortableTextComponents(highlighted, {})}
