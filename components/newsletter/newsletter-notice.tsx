@@ -1,23 +1,32 @@
-import Link from "next/link";
+import { siteConfig } from "@/lib/config";
 
-/** A truthful placeholder until there is an actual newsletter to subscribe to. */
 export default function NewsletterNotice() {
     return (
         <aside
-            aria-label="Newsletter"
-            className="border-y border-slate-400/25 py-6 dark:border-white/10"
+            aria-labelledby="journal-follow-heading"
+            className="journal-follow"
         >
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
-                <span className="font-display font-semibold text-slate-900 dark:text-white">
-                    Newsletter — coming soon.
-                </span>{" "}
-                <Link
-                    href="/feed.xml"
-                    className="font-term text-sm text-accent underline decoration-1 underline-offset-4 transition-opacity hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[rgb(var(--c1))]"
+            <div>
+                <p className="journal-eyebrow">Keep the conversation going</p>
+                <h2 id="journal-follow-heading">Wonder is better shared.</h2>
+                <p>
+                    Follow along on LinkedIn, or get new writing in your RSS
+                    reader.
+                </p>
+            </div>
+            <div className="journal-follow-links">
+                <a
+                    href={siteConfig.profiles.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="journal-link"
                 >
-                    RSS is available now.
-                </Link>
-            </p>
+                    LinkedIn <span aria-hidden>↗</span>
+                </a>
+                <a href="/feed.xml" className="journal-link">
+                    Follow via RSS <span aria-hidden>↗</span>
+                </a>
+            </div>
         </aside>
     );
 }

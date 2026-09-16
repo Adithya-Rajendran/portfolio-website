@@ -1,18 +1,25 @@
 import PortfolioNav from "@/components/portfolio/portfolio-nav";
 import ActiveSectionContextProvider from "@/context/active-section-context";
-import { getAllProjects } from "@/lib/sanity-client";
-import { hasVisibleItems } from "@/lib/content-rules";
+import { getAllProjects, getProfile } from "@/lib/sanity-client";
+import "@/app/journal-career.css";
 
 export default async function PortfolioLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const projects = await getAllProjects();
-
+    const [projects, profile] = await Promise.all([
+        getAllProjects(),
+        getProfile(),
+    ]);
     return (
         <ActiveSectionContextProvider>
-            <PortfolioNav showProjects={hasVisibleItems(projects)} />
+            <PortfolioNav
+                showProjects={projects.length > 0}
+                showExperience={Boolean(profile?.timeline?.length)}
+                showSkills={Boolean(profile?.skillGroups?.length)}
+                showCertifications={Boolean(profile?.credentials?.length)}
+            />
             {children}
         </ActiveSectionContextProvider>
     );

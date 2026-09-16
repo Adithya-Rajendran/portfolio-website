@@ -4,7 +4,7 @@ import { formatDate } from "@/components/blogs/utils";
 import { siteConfig } from "@/lib/config";
 import { OgTemplate, OG_SIZE, OG_CONTENT_TYPE } from "@/lib/og-template";
 
-export const alt = "Adithya Rajendran — Blog";
+export const alt = "Adithya Rajendran — Writing";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
@@ -18,11 +18,11 @@ export default async function Image({
     const { slug } = await params;
     const post = await getPostMeta(slug);
 
-    const title = post?.title ?? "Blog Post";
+    const title = post?.title ?? "From the notebook";
 
     return new ImageResponse(
         <OgTemplate
-            eyebrow={`${siteConfig.author} · Blog`}
+            eyebrow={`${siteConfig.author} · Writing`}
             title={title}
             footerLeft={formatDate(post?.publishedAt)}
             footerRight={domain}

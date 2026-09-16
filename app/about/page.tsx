@@ -1,61 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-    ArrowUpRight,
-    BadgeCheck,
-    Box,
-    Download,
-    MapPin,
-    ShieldCheck,
-} from "lucide-react";
-import { FaGithub, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import { ProfilePageJsonLd } from "@/components/json-ld";
 import { getProfile } from "@/lib/sanity-client";
 import { siteConfig, socialProfiles } from "@/lib/config";
-import { PageIntro } from "@/components/page-intro";
-import { PageShell } from "@/components/page-shell";
-import { SectionHeading } from "@/components/section-heading";
-import { TerminalRoute } from "@/components/terminal/terminal-route";
+import "@/app/journal-career.css";
 
 export const metadata: Metadata = {
     title: "About",
-    description: `About ${siteConfig.author}: what I do, where I am, and where to find me online.`,
-    alternates: {
-        canonical: `${siteConfig.url}/about`,
-    },
+    description: `About ${siteConfig.author}: the engineer behind the notebook.`,
+    alternates: { canonical: `${siteConfig.url}/about` },
     openGraph: {
         title: `About | ${siteConfig.author}`,
-        description: `A little more about ${siteConfig.author}.`,
+        description: `The engineer behind the notebook.`,
         url: `${siteConfig.url}/about`,
     },
 };
 
-interface ProfileLink {
-    _key: string;
-    label: string;
-    url: string;
-}
-
-function linkIcon(url: string) {
-    const host = (() => {
-        try {
-            return new URL(url).hostname.replace(/^(www|app)\./, "");
-        } catch {
-            return url;
-        }
-    })();
-
-    if (host.includes("linkedin")) return FaLinkedin;
-    if (host.includes("github")) return FaGithub;
-    if (host.includes("credly")) return BadgeCheck;
-    if (host.includes("hackthebox")) return Box;
-    if (host.includes("tryhackme")) return ShieldCheck;
-    if (host === "x.com" || host.includes("twitter")) return FaXTwitter;
-    if (host.includes("youtube")) return FaYoutube;
-    return ArrowUpRight;
-}
-
-function fallbackLinks(): ProfileLink[] {
+function fallbackLinks() {
     return socialProfiles.map((url) => {
         const host = new URL(url).hostname.replace(/^(www|app)\./, "");
         const label = host.includes("linkedin")
@@ -69,104 +31,132 @@ function fallbackLinks(): ProfileLink[] {
                   : host.includes("tryhackme")
                     ? "TryHackMe"
                     : host;
-
         return { _key: url, label, url };
     });
 }
 
 export default async function AboutPage() {
     const profile = await getProfile();
-    const name = profile?.name || siteConfig.author;
     const location = profile?.location || siteConfig.location;
     const links = profile?.socialLinks?.length
-        ? (profile.socialLinks as ProfileLink[])
+        ? profile.socialLinks
         : fallbackLinks();
-
     return (
-        <main id="main-content" tabIndex={-1} className="pb-24 sm:pb-32">
+        <main
+            id="main-content"
+            tabIndex={-1}
+            className="journal-page journal-container career-page"
+        >
             <ProfilePageJsonLd />
-            <TerminalRoute path="~/about" command="cat about.txt">
-                <PageIntro
-                    title={name}
-                    lead={profile?.headline || siteConfig.role}
-                    description={profile?.introduction}
-                />
-
-                <PageShell className="mt-16 sm:mt-20">
-                    <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-20">
-                        <article
-                            aria-labelledby="bio-heading"
-                            className="max-w-3xl"
-                        >
-                            <SectionHeading
-                                headingId="bio-heading"
-                                title="A little more"
-                            />
-                            <div className="whitespace-pre-line text-[1.0625rem] leading-8 text-slate-700 dark:text-slate-300 sm:text-lg">
-                                {profile?.bio ||
-                                    "I like difficult infrastructure problems, clear explanations, and learning enough about a subject to take it apart. This site is a place for the work, notes, and interests I want to keep on the open web."}
-                            </div>
-                        </article>
-
-                        <aside className="self-start lg:sticky lg:top-24">
-                            <div className="border-t border-slate-300/70 dark:border-white/10">
-                                {location && (
-                                    <div className="flex items-center gap-3 border-b border-slate-300/70 py-4 font-term text-xs text-slate-600 dark:border-white/10 dark:text-slate-300">
-                                        <MapPin
-                                            className="size-4 text-accent"
-                                            aria-hidden
-                                        />
-                                        {location}
-                                    </div>
-                                )}
-                                <Link
-                                    href="/resume"
-                                    className="group flex min-h-14 items-center gap-3 border-b border-slate-300/70 py-3 font-term text-sm font-semibold text-slate-700 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:border-white/10 dark:text-slate-200"
-                                >
-                                    <Download className="size-4" aria-hidden />
-                                    Résumé
-                                    <ArrowUpRight
-                                        className="ml-auto size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                                        aria-hidden
-                                    />
-                                </Link>
-                            </div>
-
-                            <h2 className="mt-10 font-term text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                                Elsewhere
-                            </h2>
-                            <ul className="mt-3 border-t border-slate-300/70 dark:border-white/10">
-                                {links.map((link) => {
-                                    const Icon = linkIcon(link.url);
-                                    return (
-                                        <li
-                                            key={link._key}
-                                            className="border-b border-slate-300/70 dark:border-white/10"
-                                        >
-                                            <a
-                                                href={link.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="group flex min-h-14 items-center gap-3 py-3 font-term text-sm font-semibold text-slate-700 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[rgb(var(--c1))] dark:text-slate-200"
-                                            >
-                                                <Icon
-                                                    className="size-4"
-                                                    aria-hidden
-                                                />
-                                                {link.label}
-                                                <ArrowUpRight
-                                                    className="ml-auto size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                                                    aria-hidden
-                                                />
-                                            </a>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </aside>
+            <header className="career-intro">
+                <p className="journal-eyebrow">
+                    THE PERSON BEHIND THE NOTEBOOK
+                </p>
+                <h1 className="journal-title">
+                    {profile?.name || siteConfig.author}
+                    <span className="career-accent">.</span>
+                </h1>
+                <p className="career-role">
+                    {profile?.headline || siteConfig.role}
+                </p>
+                {profile?.introduction && (
+                    <p className="journal-description">
+                        {profile.introduction}
+                    </p>
+                )}
+            </header>
+            <div className="career-about-grid">
+                <article
+                    className="career-biography"
+                    aria-labelledby="about-heading"
+                >
+                    <h2 id="about-heading">Curiosity, put into practice.</h2>
+                    <div className="career-bio-text">
+                        {profile?.bio ||
+                            "I’m interested in how intelligent machines see, act, and help us build what comes next. This notebook is where I share what I’m learning, alongside the systems and engineering work that get me there."}
                     </div>
-                </PageShell>
-            </TerminalRoute>
+                    <div className="career-actions">
+                        <Link href="/blog" className="journal-link">
+                            Explore my writing{" "}
+                            <ArrowUpRight size={16} aria-hidden />
+                        </Link>
+                        <Link href="/portfolio" className="journal-link">
+                            Work &amp; experience{" "}
+                            <ArrowUpRight size={16} aria-hidden />
+                        </Link>
+                    </div>
+                    {profile?.currentCuriosities?.length ? (
+                        <section
+                            className="career-curiosities"
+                            aria-labelledby="curiosities-heading"
+                        >
+                            <p className="journal-eyebrow">
+                                FOLLOWING MY CURIOSITY
+                            </p>
+                            <h2 id="curiosities-heading">
+                                Questions worth pursuing.
+                            </h2>
+                            <ul>
+                                {profile.currentCuriosities.map((item) => (
+                                    <li key={item._key}>
+                                        <h3>
+                                            {item.url ? (
+                                                <a
+                                                    href={item.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    {item.title}{" "}
+                                                    <ArrowUpRight
+                                                        size={15}
+                                                        aria-hidden
+                                                    />
+                                                </a>
+                                            ) : (
+                                                item.title
+                                            )}
+                                        </h3>
+                                        {item.note && <p>{item.note}</p>}
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    ) : null}
+                </article>
+                <aside
+                    className="career-about-aside"
+                    aria-label="Profile links"
+                >
+                    {location && (
+                        <p className="career-location">
+                            <MapPin size={16} aria-hidden />
+                            {location}
+                        </p>
+                    )}
+                    <Link className="career-channel" href="/resume">
+                        Read my résumé <ArrowUpRight size={17} aria-hidden />
+                    </Link>
+                    <h2 className="journal-eyebrow">ELSEWHERE</h2>
+                    <ul>
+                        {links.map((link) => (
+                            <li key={link._key}>
+                                <a
+                                    className="career-channel"
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {link.label}
+                                    <ArrowUpRight size={17} aria-hidden />
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                    <Link className="journal-link" href="/portfolio#contact">
+                        Say hello <ArrowUpRight size={16} aria-hidden />
+                    </Link>
+                </aside>
+            </div>
         </main>
     );
 }

@@ -11,7 +11,7 @@ const domain = new URL(siteConfig.url).hostname;
 export default async function Image() {
     return new ImageResponse(
         <OgTemplate
-            eyebrow={`${siteConfig.author} · Blog`}
+            eyebrow={`${siteConfig.author} · Writing`}
             title="Archive"
             subtitle="Every post, searchable by title, description, or tag and grouped by year."
             footerRight={`${domain}/blog/archive`}

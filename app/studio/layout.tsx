@@ -1,6 +1,10 @@
-export const metadata = {
-    title: "Adithya's Site | Sanity Studio",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Sanity Studio",
     description: "Content management for Adithya's personal website",
+    robots: { index: false, follow: false },
+    alternates: { canonical: null },
 };
 
 export default function StudioLayout({

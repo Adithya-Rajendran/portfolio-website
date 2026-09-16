@@ -48,8 +48,11 @@ export default function ResumeShareAction({
                 return;
             } catch {
                 window.location.assign(mailtoUrl);
+                return;
             }
         }
+
+        if (event.defaultPrevented) window.location.assign(mailtoUrl);
     }
 
     const label =
@@ -64,10 +67,7 @@ export default function ResumeShareAction({
             <a
                 href={mailtoUrl}
                 onClick={handleShare}
-                className={cn(
-                    "os-press inline-flex min-h-11 items-center justify-center gap-2 rounded-row border border-slate-300/80 bg-white/55 px-4 font-term text-xs font-bold text-slate-700 transition-colors hover:border-accent-soft hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[rgb(var(--c1))] dark:border-white/12 dark:bg-white/[0.04] dark:text-slate-200",
-                    className,
-                )}
+                className={cn("career-action-secondary", className)}
             >
                 <Share2 className="size-4" aria-hidden />
                 {label}

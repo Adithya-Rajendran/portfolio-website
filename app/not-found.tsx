@@ -1,69 +1,46 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import TerminalSection, {
-    PromptLine,
-} from "@/components/terminal/terminal-section";
 
 export const metadata: Metadata = {
-    title: "404 — no such file or directory",
+    title: "Page not found",
     robots: { index: false, follow: false },
     alternates: { canonical: null },
 };
 
-/**
- * Terminal-native 404: a failed `cd` with the shell's error line, mono
- * throughout (the one page where full commitment is the joke), bracket
- * links back to real destinations, and a parked cursor. The prompt is
- * decorative (aria-hidden) — the sr-only h1 and the visible error lines
- * carry the semantics.
- */
 export default function NotFound() {
     return (
         <main
             id="main-content"
             tabIndex={-1}
-            className="flex min-h-[calc(100svh-var(--site-header-height))] w-full flex-col items-center justify-center px-6 sm:px-8"
+            className="mx-auto flex min-h-[65svh] w-full max-w-3xl flex-col justify-center px-6 py-24 sm:px-10"
         >
-            <section className="w-full max-w-2xl">
-                <h1 className="sr-only">404: Page not found</h1>
-                <TerminalSection
-                    as="div"
-                    command="cd /wherever-you-were-going"
-                    animatePrompt
+            <p className="font-term text-xs uppercase tracking-[0.18em] text-accent">
+                404 / A missing page
+            </p>
+            <h1 className="mt-6 font-display text-4xl leading-tight tracking-tight text-slate-900 sm:text-6xl dark:text-slate-100">
+                There’s more to explore.
+            </h1>
+            <p className="mt-6 max-w-lg text-base leading-8 text-slate-600 dark:text-slate-400">
+                This page may have moved, or the link may be incomplete. You can
+                find my latest notes in the writing archive.
+            </p>
+            <nav
+                aria-label="Where to go next"
+                className="mt-10 flex flex-wrap gap-x-8 gap-y-3 border-t border-slate-300/50 pt-6 dark:border-slate-700/60"
+            >
+                <Link
+                    href="/blog"
+                    className="inline-flex min-h-11 items-center text-sm text-accent underline decoration-accent/40 underline-offset-8 hover:decoration-accent"
                 >
-                    <p className="mt-4 font-term text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                        bash: cd: /wherever-you-were-going: No such file or
-                        directory
-                    </p>
-                    <p className="mt-2 font-term text-sm text-slate-600 dark:text-slate-400">
-                        # exit 404 — this page doesn&apos;t exist or has moved.
-                    </p>
-                    <nav
-                        aria-label="Page links"
-                        className="mt-8 flex flex-wrap gap-x-6 gap-y-2"
-                    >
-                        <Link
-                            href="/"
-                            className="font-term text-sm font-bold text-accent hover:opacity-80 transition-opacity"
-                        >
-                            [ cd ~ ]
-                        </Link>
-                        <Link
-                            href="/blog"
-                            className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                        >
-                            [ cd ~/blog ]
-                        </Link>
-                        <Link
-                            href="/portfolio"
-                            className="font-term text-sm text-slate-600 hover:text-accent dark:text-slate-400 transition-colors"
-                        >
-                            [ cd ~/portfolio ]
-                        </Link>
-                    </nav>
-                    <PromptLine command="" cursor className="mt-10" />
-                </TerminalSection>
-            </section>
+                    Explore the writing →
+                </Link>
+                <Link
+                    href="/"
+                    className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent dark:text-slate-400"
+                >
+                    Back to home
+                </Link>
+            </nav>
         </main>
     );
 }

@@ -2,9 +2,9 @@
 
 import { useId, useMemo, useState } from "react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { groupPostsByYear } from "@/lib/tags";
-import { cn } from "@/lib/utils";
-import { inputClasses } from "@/components/ui/input-classes";
+import { formatDate } from "./utils";
 
 interface ArchivePostItem {
     slug: string;
@@ -15,138 +15,126 @@ interface ArchivePostItem {
     readingMinutes: number | null;
 }
 
-interface ArchiveListProps {
-    posts: ArchivePostItem[];
-}
-
-/** Case-insensitive substring match over title, description, and tags. */
-function matchesQuery(post: ArchivePostItem, query: string): boolean {
-    if (!query) return true;
-    return (
-        post.title.toLowerCase().includes(query) ||
-        post.description.toLowerCase().includes(query) ||
-        post.tags.some((tag) => tag.toLowerCase().includes(query))
-    );
-}
-
-/**
- * Client-side searchable archive: a single text input filters the full
- * post list (title + description + tags, simple substring match) and the
- * results re-group by year on every keystroke. All posts ship to the
- * client up front — there is no server round trip for search. Rows use compact
- * dates, display-face titles, reading time, tags, and hairline separators.
- */
-export default function ArchiveList({ posts }: ArchiveListProps) {
+export default function ArchiveList({ posts }: { posts: ArchivePostItem[] }) {
     const [query, setQuery] = useState("");
     const inputId = useId();
-
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        return q ? posts.filter((post) => matchesQuery(post, q)) : posts;
+        return q
+            ? posts.filter(
+                  (post) =>
+                      post.title.toLowerCase().includes(q) ||
+                      post.description.toLowerCase().includes(q) ||
+                      post.tags.some((tag) => tag.toLowerCase().includes(q)),
+              )
+            : posts;
     }, [posts, query]);
-
     const groups = useMemo(() => groupPostsByYear(filtered), [filtered]);
-
     return (
-        <section>
-            <label
-                htmlFor={inputId}
-                className="block font-term text-sm text-slate-700 dark:text-slate-300 mb-2"
-            >
-                Search posts
+        <section
+            className="journal-archive"
+            aria-label="Search the writing archive"
+        >
+            <label htmlFor={inputId} className="journal-search-label">
+                Search the notebook
             </label>
-            <input
-                id={inputId}
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by title, description, or tag…"
-                className={cn(inputClasses, "h-12")}
-            />
-
+            <div className="journal-search-field">
+                <Search aria-hidden size={18} />
+                <input
+                    id={inputId}
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search titles, summaries, or topics…"
+                />
+            </div>
             <p
                 aria-live="polite"
-                className="mt-4 font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400"
+                aria-atomic="true"
+                className="journal-search-count"
             >
-                {filtered.length} of {posts.length} posts
+                {filtered.length} of {posts.length}{" "}
+                {posts.length === 1 ? "note" : "notes"}
             </p>
-
             {filtered.length === 0 ? (
-                <div className="mt-8 rounded-card border border-slate-400/25 dark:border-white/10 p-10 text-center text-slate-600 dark:text-slate-400">
-                    No posts match &ldquo;{query}&rdquo;. Try a different
-                    search.
+                <div className="journal-empty">
+                    <h2>No notes found.</h2>
+                    <p>
+                        No writing matches “{query}”. Try another word or topic.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setQuery("")}
+                        className="journal-link"
+                    >
+                        Clear search →
+                    </button>
                 </div>
             ) : (
-                <div className="mt-8 flex flex-col gap-10 sm:gap-12">
-                    {groups.map((group) => (
-                        <div key={group.year}>
-                            <div className="flex items-baseline gap-3 mb-2 pb-2 border-b border-slate-400/25 dark:border-white/10">
-                                <h2 className="font-term text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                                    {group.year}/
-                                </h2>
-                                <span className="font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400">
-                                    # {group.posts.length}{" "}
-                                    {group.posts.length === 1
-                                        ? "post"
-                                        : "posts"}
-                                </span>
-                            </div>
-
-                            <ul>
-                                {group.posts.map((post) => (
-                                    <li
-                                        key={post.slug}
-                                        className="grid gap-y-1 gap-x-8 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] items-baseline py-4 border-b border-slate-400/25 dark:border-white/10"
+                groups.map((group) => (
+                    <section
+                        key={group.year}
+                        className="journal-archive-year"
+                        aria-labelledby={`year-${group.year}`}
+                    >
+                        <div className="journal-section-heading">
+                            <h2 id={`year-${group.year}`}>{group.year}</h2>
+                            <span className="journal-post-meta">
+                                {group.posts.length}{" "}
+                                {group.posts.length === 1 ? "note" : "notes"}
+                            </span>
+                        </div>
+                        <ul className="journal-post-list">
+                            {group.posts.map((post) => (
+                                <li key={post.slug}>
+                                    <Link
+                                        href={`/blog/${post.slug}`}
+                                        className="journal-post-row"
                                     >
-                                        <span className="font-term text-[0.8rem] tabular-nums text-slate-600 dark:text-slate-400">
-                                            <time dateTime={post.publishedAt}>
-                                                {post.publishedAt
-                                                    ? new Date(
-                                                          post.publishedAt,
-                                                      ).toLocaleDateString(
-                                                          "en-US",
-                                                          {
-                                                              month: "short",
-                                                              day: "numeric",
-                                                              timeZone: "UTC",
-                                                          },
-                                                      )
-                                                    : "Undated"}
-                                            </time>
-                                        </span>
-                                        <span className="min-w-0">
-                                            <Link
-                                                href={`/blog/${post.slug}`}
-                                                className="font-display font-semibold text-base sm:text-lg text-slate-900 dark:text-white hover:text-accent transition-colors"
+                                        <span className="journal-post-meta">
+                                            <time
+                                                dateTime={
+                                                    post.publishedAt ||
+                                                    undefined
+                                                }
                                             >
-                                                {post.title}
-                                            </Link>
+                                                {formatDate(post.publishedAt) ||
+                                                    "Undated"}
+                                            </time>
                                             {post.readingMinutes && (
-                                                <span className="ml-3 font-term text-[0.75rem] tabular-nums text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                                <span>
                                                     {post.readingMinutes} min
+                                                    read
                                                 </span>
                                             )}
                                         </span>
-
-                                        {post.tags.length > 0 && (
-                                            <span className="flex flex-wrap gap-x-3 gap-y-1 sm:justify-end">
-                                                {post.tags.map((tag) => (
-                                                    <Link
-                                                        key={tag}
-                                                        href={`/blog/tags/${tag}`}
-                                                        className="font-term text-[0.75rem] whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-accent transition-colors"
-                                                    >
-                                                        # {tag}
-                                                    </Link>
-                                                ))}
+                                        <span className="journal-post-summary">
+                                            <span className="journal-post-title">
+                                                {post.title}
                                             </span>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </div>
+                                            {post.description && (
+                                                <span className="journal-post-description">
+                                                    {post.description}
+                                                </span>
+                                            )}
+                                            {post.tags.length > 0 && (
+                                                <span className="journal-post-tags">
+                                                    {post.tags.join(" / ")}
+                                                </span>
+                                            )}
+                                        </span>
+                                        <span
+                                            aria-hidden
+                                            className="journal-post-arrow"
+                                        >
+                                            ↗
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                ))
             )}
         </section>
     );

@@ -38,11 +38,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const profileDate = validDate(profile?._updatedAt) ?? buildDate;
     const newestPostDate = newestDate(postData) ?? buildDate;
     const newestProjectDate = newestDate(projectData) ?? profileDate;
+    const homepageDate =
+        newestDate([{ updatedAt: profile?._updatedAt ?? "" }, ...postData]) ??
+        buildDate;
 
     const staticPages: MetadataRoute.Sitemap = [
         {
             url: BASE_URL,
-            lastModified: profileDate,
+            lastModified: homepageDate,
             changeFrequency: "monthly",
             priority: 1,
         },

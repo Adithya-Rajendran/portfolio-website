@@ -22,12 +22,13 @@ export default function SiteFrame({
     }
 
     return (
-        <>
+        <div className="journal-frame">
+            <div className="journal-stars" aria-hidden="true" />
             <SiteHeader />
             <div className="min-h-[calc(100svh-var(--site-header-height))]">
                 {children}
             </div>
-            <div className="site-footer-slot">{footer}</div>
-        </>
+            {footer}
+        </div>
     );
 }

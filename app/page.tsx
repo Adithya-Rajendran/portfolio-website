@@ -1,43 +1,192 @@
-import HeroContent from "@/components/home/hero-content";
-import RightNow from "@/components/home/right-now";
-import TerminalSection from "@/components/terminal/terminal-section";
-import { getProfile } from "@/lib/sanity-client";
-import { urlForImage } from "@/lib/sanity-image";
+import Image from "next/image";
+import Link from "next/link";
+import { getAllPosts, getProfile } from "@/lib/sanity-client";
+import { siteConfig } from "@/lib/config";
+import { formatDate } from "@/components/blogs/utils";
+import "./journal-home.css";
 
 export default async function Home() {
-    const profile = await getProfile();
-    const portraitSrc = profile?.portrait?.asset
-        ? urlForImage(profile.portrait)
-              .width(720)
-              .height(720)
-              .fit("crop")
-              .auto("format")
-              .url()
-        : "/hero.webp";
-
+    const [profile, posts] = await Promise.all([getProfile(), getAllPosts()]);
+    const featured =
+        posts.find(
+            (post) => post.slug === "kubernetes-on-the-nvidia-dgx-spark",
+        ) ?? posts[0];
+    const recent = posts
+        .filter((post) => post._id !== featured?._id)
+        .slice(0, 4);
+    const role = profile?.headline?.split("|")[0].trim() || siteConfig.role;
+    const linkedin =
+        profile?.socialLinks?.find((link) => /linkedin/i.test(link.label))
+            ?.url || siteConfig.profiles.linkedin;
+    const github =
+        profile?.socialLinks?.find((link) => /github/i.test(link.label))?.url ||
+        siteConfig.profiles.github;
     return (
-        <main id="main-content" tabIndex={-1} data-hide-site-footer>
-            <TerminalSection
-                as="div"
-                command="whoami"
-                animatePrompt
-                className="mx-auto flex min-h-[calc(100svh-var(--site-header-height)-5rem)] w-full max-w-6xl flex-col justify-center px-5 py-12 sm:px-8 sm:py-16 lg:py-20"
-                promptClassName="mb-8"
-            >
-                <HeroContent
-                    name={profile?.name}
-                    headline={profile?.headline}
-                    introduction={profile?.introduction}
-                    portraitSrc={portraitSrc}
-                    portraitAlt={profile?.portrait?.alt}
-                    socialLinks={profile?.socialLinks}
-                />
-                <RightNow
-                    embedded
-                    items={profile?.currentCuriosities ?? []}
-                    updatedAt={profile?.curiositiesUpdatedAt}
-                />
-            </TerminalSection>
+        <main id="main-content" tabIndex={-1} className="home-journal">
+            <div className="fj-shell">
+                <section className="fj-hero" aria-labelledby="home-title">
+                    <Image
+                        className="fj-art"
+                        src="/images/living-future.webp"
+                        alt="An imagined observation gallery overlooking vast inhabited orbital terraces, enclosed gardens, and distant stars"
+                        fill
+                        sizes="(max-width: 1200px) 100vw, 1200px"
+                        preload
+                    />
+                    <div className="fj-hero-copy">
+                        <p className="fj-eyebrow">
+                            Robotic vision · Systems · Possible futures
+                        </p>
+                        <h1 className="fj-title" id="home-title">
+                            <span>The future is </span>
+                            <span>
+                                still <em>unwritten.</em>
+                            </span>
+                        </h1>
+                        <p className="fj-intro">
+                            <span className="fj-role">{role}.</span>Exploring
+                            robotic vision and the systems behind intelligent
+                            machines.
+                        </p>
+                        <div className="fj-hero-actions">
+                            <a className="fj-explore" href="#writing">
+                                Read the notebook <span aria-hidden>↓</span>
+                            </a>
+                            <a
+                                className="fj-linkedin-top"
+                                href={linkedin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Follow on LinkedIn <span aria-hidden>↗</span>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+                <section
+                    className="fj-writing"
+                    id="writing"
+                    aria-labelledby="writing-title"
+                >
+                    <div className="fj-section-head">
+                        <h2 id="writing-title">Writing</h2>
+                        <div className="fj-section-links">
+                            <Link href="/blog/archive">Archive ↗</Link>
+                            <a href="/feed.xml">RSS ↗</a>
+                        </div>
+                    </div>
+                    {featured ? (
+                        <Link
+                            className="fj-featured"
+                            href={`/blog/${featured.slug}`}
+                        >
+                            <div>
+                                <p className="fj-kicker">
+                                    Start here
+                                    {featured.tags?.[0]
+                                        ? ` · ${featured.tags[0]}`
+                                        : ""}
+                                </p>
+                                <h3>{featured.title}</h3>
+                                <p className="fj-meta">
+                                    <time dateTime={featured.publishedAt}>
+                                        {formatDate(featured.publishedAt)}
+                                    </time>
+                                </p>
+                            </div>
+                            <div className="fj-featured-summary">
+                                <p>{featured.description}</p>
+                                <span className="fj-read-link">
+                                    Read the field note{" "}
+                                    <span aria-hidden>↗</span>
+                                </span>
+                            </div>
+                        </Link>
+                    ) : (
+                        <p className="journal-description py-8">
+                            The notebook is just getting started. Follow on
+                            LinkedIn or RSS for the next note.
+                        </p>
+                    )}
+                    {recent.length > 0 && (
+                        <p className="fj-recent-label">Recent notes</p>
+                    )}
+                    {recent.map((post) => (
+                        <Link
+                            key={post._id}
+                            className="fj-note"
+                            href={`/blog/${post.slug}`}
+                        >
+                            <time
+                                className="fj-note-date"
+                                dateTime={post.publishedAt}
+                            >
+                                {formatDate(post.publishedAt)}
+                            </time>
+                            <div className="fj-note-title">
+                                <h3>{post.title}</h3>
+                                {post.tags?.length ? (
+                                    <div className="fj-note-category">
+                                        {post.tags.slice(0, 3).join(" · ")}
+                                    </div>
+                                ) : null}
+                            </div>
+                            <p>{post.description}</p>
+                            <span className="fj-note-arrow" aria-hidden>
+                                ↗
+                            </span>
+                        </Link>
+                    ))}
+                </section>
+                <section className="fj-work" aria-labelledby="work-title">
+                    <div>
+                        <p className="fj-kicker">The work behind the notes</p>
+                        <h2 id="work-title">Engineering, in practice.</h2>
+                    </div>
+                    <div className="fj-work-copy">
+                        <p>
+                            <strong>{role}</strong>
+                            {profile?.headline?.split("|")[1]?.trim()
+                                ? `${profile.headline.split("|")[1].trim().replace(/[.!]$/, "")}.`
+                                : "Systems engineering, infrastructure, and the work that informs the writing."}{" "}
+                            Explore my experience and code.
+                        </p>
+                        <div className="fj-work-links">
+                            <Link href="/portfolio">View my work ↗</Link>
+                            <a
+                                href={github}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                GitHub ↗
+                            </a>
+                            <Link href="/resume">Résumé ↗</Link>
+                        </div>
+                    </div>
+                </section>
+                <section className="fj-follow" aria-labelledby="follow-title">
+                    <div>
+                        <h2 id="follow-title">Follow the next note.</h2>
+                        <p>
+                            Get new writing through RSS, or join the
+                            conversation on LinkedIn.
+                        </p>
+                    </div>
+                    <div className="fj-follow-links">
+                        <a
+                            href={linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            LinkedIn ↗
+                        </a>
+                        <a href="/feed.xml">Follow via RSS ↗</a>
+                    </div>
+                </section>
+                <p className="journal-art-credit">
+                    Imagined habitat · AI-generated artwork
+                </p>
+            </div>
         </main>
     );
 }

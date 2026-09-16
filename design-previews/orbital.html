@@ -1,0 +1,130 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+#orbital-journal{--orb-bg:#0b1014;--orb-panel:#10181e;--orb-text:#ecece5;--orb-muted:#9ca9ad;--orb-line:#29343b;--orb-accent:#ff9c66;--orb-cyan:#a8cacc;background:var(--orb-bg);color:var(--orb-text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.7;text-align:left;width:100%;overflow:hidden;isolation:isolate}
+#orbital-journal *{box-sizing:border-box}
+#orbital-journal button,#orbital-journal input{font:inherit}
+#orbital-journal button{cursor:pointer}
+#orbital-journal a{color:inherit;text-decoration:none}
+#orbital-journal a:focus-visible,#orbital-journal button:focus-visible,#orbital-journal input:focus-visible{outline:2px solid var(--orb-accent);outline-offset:5px}
+#orbital-journal h1,#orbital-journal h2,#orbital-journal h3,#orbital-journal p,#orbital-journal figure{margin:0}
+#orbital-journal .orb-shell{padding:0 42px;max-width:1320px;margin:auto}
+#orbital-journal .orb-mono{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;line-height:1.6;letter-spacing:.07em;text-transform:uppercase}
+#orbital-journal .orb-topline{display:flex;justify-content:space-between;gap:20px;padding:12px 0;color:#94a1a7;border-bottom:1px solid var(--orb-line);font-size:10px}
+#orbital-journal .orb-topline span:first-child{color:var(--orb-accent)}
+#orbital-journal .orb-header{display:flex;align-items:center;justify-content:space-between;padding:23px 0;gap:20px}
+#orbital-journal .orb-brand{display:flex;align-items:center;gap:12px;color:var(--orb-text);background:none;border:0;padding:0;text-align:left;font-size:14px;font-weight:500;line-height:1.3}
+#orbital-journal .orb-mark{font-family:'Space Grotesk',sans-serif;color:var(--orb-accent);border:1px solid #74604c;width:32px;height:32px;display:grid;place-items:center;font-size:16px;letter-spacing:-2px}
+#orbital-journal .orb-brand small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;font-weight:400;color:#8e9ea6;margin-top:4px;text-transform:uppercase}
+#orbital-journal .orb-nav{display:flex;align-items:center;gap:22px}
+#orbital-journal .orb-nav button{padding:7px 0;background:none;border:0;color:#b3bfc2;font-size:12px}
+#orbital-journal .orb-nav button[aria-current=page]{color:var(--orb-accent)}
+#orbital-journal .orb-nav .orb-resume{font-size:12px;border:1px solid #465056;padding:7px 12px}
+#orbital-journal .orb-hero{position:relative;border:1px solid #465052;min-height:391px;display:flex;align-items:center;background:#111a20;isolation:isolate}
+#orbital-journal .orb-hero-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:74% 46%;z-index:-3;filter:saturate(.55) brightness(.77)}
+#orbital-journal .orb-hero:before{content:'';position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,#0e171deb 0%,#0e171ded 25%,#0e171dcc 41%,#0e171d33 68%,#0e171d00 100%),linear-gradient(0deg,#10181ee8,transparent 32%)}
+#orbital-journal .orb-hero-copy{padding:35px 36px 58px;max-width:610px}
+#orbital-journal .orb-hero-kicker{color:var(--orb-accent);font-size:10px;letter-spacing:.075em;margin-bottom:19px}
+#orbital-journal .orb-title{font-family:'Space Grotesk',sans-serif;font-size:65px;font-weight:400;line-height:1.06;letter-spacing:-3.4px}
+#orbital-journal .orb-title em{font-family:'DM Serif Display',Georgia,serif;letter-spacing:-1.8px;color:#f1d4ac;font-weight:400}
+#orbital-journal .orb-hero-copy p{max-width:370px;color:#c3cbcc;font-size:14px;line-height:1.9;margin-top:21px}
+#orbital-journal .orb-hero-caption{position:absolute;bottom:15px;left:36px;right:22px;display:flex;justify-content:space-between;gap:20px;color:#b3bfc2;font-size:9px}
+#orbital-journal .orb-hero-caption a{text-decoration:underline;text-underline-offset:3px}
+#orbital-journal .orb-hero-plus{position:absolute;top:15px;right:20px;font-size:24px;font-weight:400;color:#e1d8c2}
+#orbital-journal .orb-topics{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 0;border-bottom:1px solid var(--orb-line);font-size:10px;color:#c1c6bf}
+#orbital-journal .orb-topics span:first-child{color:#8b9da6}
+#orbital-journal .orb-topics b{font-weight:400;color:var(--orb-accent);margin-right:6px}
+#orbital-journal .orb-section-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin:32px 0 22px}
+#orbital-journal .orb-section-heading h2{font-family:'Space Grotesk',sans-serif;font-size:25px;font-weight:400;letter-spacing:-.8px}
+#orbital-journal .orb-section-heading h2 span{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--orb-accent);margin-right:14px;letter-spacing:0;vertical-align:middle}
+#orbital-journal .orb-text-link{display:inline-flex;align-items:center;gap:18px;font-size:12px;background:none;border:0;padding:0;color:var(--orb-accent)}
+#orbital-journal .orb-feature{display:grid;grid-template-columns:1.1fr 1fr;gap:30px;border-top:1px solid #51616a;border-bottom:1px solid var(--orb-line);padding:25px 0 28px;align-items:start}
+#orbital-journal .orb-category{font-family:'IBM Plex Mono',monospace;color:var(--orb-accent);font-size:10px;letter-spacing:.055em;text-transform:uppercase}
+#orbital-journal .orb-feature h3{font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:400;line-height:1.2;letter-spacing:-1.1px;margin-top:12px}
+#orbital-journal .orb-feature h3 a:hover,#orbital-journal .orb-card h3 a:hover{color:var(--orb-accent)}
+#orbital-journal .orb-feature p{color:var(--orb-muted);font-size:14px;line-height:1.9;margin-top:22px}
+#orbital-journal .orb-meta{font-family:'IBM Plex Mono',monospace;color:#94a5ad;font-size:10px;line-height:1.6;letter-spacing:.025em;margin-top:19px}
+#orbital-journal .orb-feature .orb-text-link{margin-top:18px;font-size:13px}
+#orbital-journal .orb-cards{display:grid;grid-template-columns:1fr 1fr;gap:31px;margin-top:25px}
+#orbital-journal .orb-card{padding-bottom:5px}
+#orbital-journal .orb-card h3{font-family:'Space Grotesk',sans-serif;font-size:23px;font-weight:400;line-height:1.3;letter-spacing:-.5px;margin-top:11px;max-width:360px}
+#orbital-journal .orb-card p{font-size:13px;color:var(--orb-muted);line-height:1.8;margin-top:11px}
+#orbital-journal .orb-card .orb-meta{margin-top:15px}
+#orbital-journal .orb-follow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:30px;padding:27px 29px;border:1px solid #3b4c56;background:#121e26;margin-top:35px;position:relative}
+#orbital-journal .orb-follow .orb-mono{font-size:9px;color:var(--orb-cyan);margin-bottom:6px}
+#orbital-journal .orb-follow h2{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:400;letter-spacing:-.8px;line-height:1.3}
+#orbital-journal .orb-follow p{font-size:13px;color:#a5b5bc;margin-top:8px;max-width:440px}
+#orbital-journal .orb-follow-links{display:flex;align-items:center;gap:20px;font-size:12px}
+#orbital-journal .orb-follow-links a:first-child{background:var(--orb-accent);color:#1b1612;padding:11px 15px;font-weight:500;white-space:nowrap}
+#orbital-journal .orb-follow-links a:last-child{white-space:nowrap;color:#c6d4d8}
+#orbital-journal .orb-author{display:grid;grid-template-columns:145px 1fr;gap:30px;padding:32px 0;border-bottom:1px solid var(--orb-line)}
+#orbital-journal .orb-author .orb-mono{font-size:10px;color:var(--orb-accent);padding-top:3px}
+#orbital-journal .orb-author p{font-size:13px;line-height:1.9;color:var(--orb-muted);max-width:680px}
+#orbital-journal .orb-author strong{font-weight:400;color:var(--orb-text)}
+#orbital-journal .orb-author button{font:inherit;font-size:13px;color:var(--orb-accent);border:0;background:none;padding:0;text-decoration:underline;text-underline-offset:3px}
+#orbital-journal .orb-footer{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:23px 0 24px;font-size:10px;color:#94a2aa;flex-wrap:wrap}
+#orbital-journal .orb-footer-links{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+#orbital-journal .orb-footer button{background:none;border:0;padding:0;color:inherit;font-size:10px}
+#orbital-journal .orb-inner{padding:33px 0 18px;border-top:1px solid var(--orb-line);min-height:610px}
+#orbital-journal .orb-page-title{font-family:'Space Grotesk',sans-serif;font-size:58px;font-weight:400;letter-spacing:-2.7px;line-height:1.1;margin:17px 0 25px}
+#orbital-journal .orb-page-title em{font-family:'DM Serif Display',Georgia,serif;font-weight:400;color:#f1d4ac;letter-spacing:-1px}
+#orbital-journal .orb-lede{max-width:620px;font-size:16px;line-height:1.9;color:#b7c3c9;margin-bottom:30px}
+#orbital-journal .orb-search-label{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#acbbc2;margin-bottom:9px}
+#orbital-journal .orb-search{width:100%;border:1px solid #4e5e67;background:#111d24;color:var(--orb-text);padding:12px 15px;font-size:16px;margin-bottom:24px;border-radius:0}
+#orbital-journal .orb-archive-list{display:grid;gap:0}
+#orbital-journal .orb-archive-row{display:grid;grid-template-columns:108px 1fr 24px;gap:25px;border-top:1px solid var(--orb-line);padding:25px 0}
+#orbital-journal .orb-archive-row h2{font-family:'Space Grotesk',sans-serif;font-size:25px;font-weight:400;letter-spacing:-.5px;line-height:1.3}
+#orbital-journal .orb-archive-row p{font-size:14px;color:var(--orb-muted);margin-top:9px}
+#orbital-journal .orb-archive-row .orb-meta{margin:0}
+#orbital-journal .orb-archive-row .orb-category{margin-top:12px;display:block}
+#orbital-journal .orb-work-row{display:grid;grid-template-columns:150px 1fr;gap:33px;padding:27px 0;border-top:1px solid var(--orb-line)}
+#orbital-journal .orb-work-row h2{font-family:'Space Grotesk',sans-serif;font-size:25px;font-weight:400;line-height:1.3;letter-spacing:-.6px}
+#orbital-journal .orb-work-row p{font-size:15px;color:var(--orb-muted);line-height:1.8;margin-top:9px}
+#orbital-journal .orb-work-row .orb-mono{color:#a7b7bf;font-size:10px}
+#orbital-journal .orb-about-copy{max-width:670px}
+#orbital-journal .orb-about-copy p{font-size:16px;color:#b5c2c9;line-height:1.95;margin-bottom:25px}
+#orbital-journal .orb-about-copy strong{color:var(--orb-text);font-weight:400}
+#orbital-journal .orb-route-actions{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin:25px 0 31px}
+#orbital-journal .orb-route-actions a{border:1px solid #58636b;padding:9px 13px;font-size:13px;color:var(--orb-accent)}
+#orbital-journal .orb-route-actions button{font-size:14px}
+#orbital-journal .orb-skills{display:flex;flex-wrap:wrap;gap:8px;margin-top:21px}
+#orbital-journal .orb-skills span{font-size:12px;color:#becacf;border:1px solid #394b55;padding:5px 11px}
+#orbital-journal .orb-empty{padding:25px 0;color:var(--orb-muted);font-size:15px}
+#orbital-journal .orb-announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:800px){#orbital-journal .orb-shell{padding:0 27px}#orbital-journal .orb-nav{gap:16px}#orbital-journal .orb-brand{font-size:12px}#orbital-journal .orb-title{font-size:57px}#orbital-journal .orb-hero-copy{padding-left:26px}#orbital-journal .orb-hero-caption{left:26px}#orbital-journal .orb-follow{grid-template-columns:1fr;gap:20px}#orbital-journal .orb-feature h3{font-size:30px}#orbital-journal .orb-topics{font-size:9px;gap:10px}#orbital-journal .orb-topline{font-size:9px}}
+@media(max-width:580px){#orbital-journal .orb-shell{padding:0 19px}#orbital-journal .orb-topline{font-size:8px;gap:8px}#orbital-journal .orb-topline span:last-child{display:none}#orbital-journal .orb-header{flex-wrap:wrap;padding:18px 0;gap:18px}#orbital-journal .orb-brand{font-size:14px}#orbital-journal .orb-nav{width:100%;gap:12px;justify-content:space-between}#orbital-journal .orb-nav button,#orbital-journal .orb-nav .orb-resume{font-size:11px}#orbital-journal .orb-nav .orb-resume{padding:6px 8px}#orbital-journal .orb-hero{min-height:450px;align-items:flex-start}#orbital-journal .orb-hero-copy{padding:27px 21px 70px}#orbital-journal .orb-title{font-size:48px;letter-spacing:-2.8px}#orbital-journal .orb-hero-kicker{font-size:8px;letter-spacing:.035em;margin-bottom:21px}#orbital-journal .orb-hero-copy p{font-size:14px;max-width:260px;line-height:1.8}#orbital-journal .orb-hero-image{object-position:71% 50%;filter:saturate(.5) brightness(.62)}#orbital-journal .orb-hero:before{background:linear-gradient(180deg,#0e171ded 2%,#0e171dbd 48%,#0e171d19 80%,#0e171d 100%)}#orbital-journal .orb-hero-caption{left:21px;right:15px;font-size:7px;gap:12px;flex-wrap:wrap}#orbital-journal .orb-hero-plus{right:12px;top:9px;font-size:19px}#orbital-journal .orb-topics{flex-wrap:wrap;justify-content:flex-start;gap:9px 13px;font-size:9px;padding:14px 0}#orbital-journal .orb-topics span:first-child{width:100%}#orbital-journal .orb-section-heading{margin-top:28px;gap:13px}#orbital-journal .orb-section-heading h2{font-size:22px}#orbital-journal .orb-section-heading h2 span{margin-right:8px;font-size:10px}#orbital-journal .orb-text-link{font-size:11px;gap:9px}#orbital-journal .orb-feature{grid-template-columns:1fr;gap:0;padding:23px 0}#orbital-journal .orb-feature h3{font-size:31px}#orbital-journal .orb-feature p{margin-top:16px}#orbital-journal .orb-cards{grid-template-columns:1fr;gap:25px}#orbital-journal .orb-card{border-bottom:1px solid var(--orb-line);padding-bottom:24px}#orbital-journal .orb-card:last-child{border:0;padding-bottom:0}#orbital-journal .orb-card h3{font-size:25px}#orbital-journal .orb-card p{font-size:14px}#orbital-journal .orb-follow{padding:23px 20px;margin-top:28px}#orbital-journal .orb-follow h2{font-size:26px}#orbital-journal .orb-follow-links{gap:19px;font-size:12px;flex-wrap:wrap}#orbital-journal .orb-author{grid-template-columns:1fr;gap:10px}#orbital-journal .orb-author p{font-size:14px}#orbital-journal .orb-footer{font-size:9px;gap:16px}#orbital-journal .orb-page-title{font-size:43px;letter-spacing:-1.7px}#orbital-journal .orb-work-row{grid-template-columns:1fr;gap:14px}#orbital-journal .orb-archive-row{grid-template-columns:1fr 18px;gap:12px}#orbital-journal .orb-archive-row>.orb-meta{grid-column:1/-1}#orbital-journal .orb-archive-row h2{font-size:24px}}
+</style>
+<div id="orbital-journal" aria-label="Adithya Rajendran's space-inspired writing journal">
+ <div class="orb-shell">
+  <div class="orb-topline orb-mono"><span>A personal journal from planet Earth</span><span>Robotics / AI / Autonomous exploration</span></div>
+  <header class="orb-header"><button type="button" class="orb-brand" data-orb-page="home" aria-label="Adithya Rajendran — home"><span class="orb-mark" aria-hidden="true">a/r</span><span>Adithya Rajendran<small>Engineer. Writer. Explorer.</small></span></button><nav class="orb-nav" aria-label="Main navigation"><button type="button" data-orb-page="home" aria-current="page">Writing</button><button type="button" data-orb-page="archive">Archive</button><button type="button" data-orb-page="about">About</button><button type="button" data-orb-page="work">Portfolio</button><a class="orb-resume" href="https://adithya-rajendran.com/resume" target="_blank" rel="noopener noreferrer">Résumé ↗</a></nav></header>
+  <main id="orb-page"></main>
+  <footer class="orb-footer"><span>© 2026 Adithya Rajendran · Stay curious.</span><div class="orb-footer-links"><button type="button" data-orb-page="work">Portfolio</button><a href="https://adithya-rajendran.com/resume" target="_blank" rel="noopener noreferrer">Résumé ↗</a><a href="https://github.com/Adithya-Rajendran" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://www.linkedin.com/in/adithya-rajendran" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a><a href="https://adithya-rajendran.com/feed.xml" target="_blank" rel="noopener noreferrer">RSS ↗</a></div></footer>
+ </div>
+ <span id="orb-status" class="orb-announcement" role="status"></span>
+</div>
+<script>
+(()=>{
+ const root=document.getElementById('orbital-journal');
+ const main=root.querySelector('#orb-page');
+ const hero='__MARS_IMAGE__';
+ const state={page:'home',accent:'#ff9c66'};
+ const posts=[
+  {title:'Bootstrapping a Homelab the Hard Way',description:'A view into my homelab and some notes on running a small dynamic cloud on three Raspberry Pis, three mini PCs, and an old Dell laptop.',date:'MAR 30, 2026',time:'7 MIN READ',category:'Homelab / Infrastructure',slug:'my-homelab'},
+  {title:'Running GUI Apps in LXD Containers',description:'Run GUI tools such as Antigravity in an isolated LXD container while rendering their windows on the host desktop.',date:'MAR 26, 2026',time:'5 MIN READ',category:'Linux / Containers',slug:'running-gui-apps-in-lxc-containers'},
+  {title:'Kubernetes on the NVIDIA DGX Spark',description:'MicroK8s, the NVIDIA GPU Operator, and GPU time-slicing for concurrent workloads.',date:'MAR 06, 2026',time:'4 MIN READ',category:'Kubernetes / GPU computing',slug:'kubernetes-on-the-nvidia-dgx-spark'}
+ ];
+ const postLink=p=>`https://adithya-rajendran.com/blog/${p.slug}`;
+ const external='target="_blank" rel="noopener noreferrer"';
+ const follow=()=>`<section class="orb-follow"><div><div class="orb-mono">KEEP THE SIGNAL GOING</div><h2>Good ideas deserve company.</h2><p>Follow the conversation on LinkedIn, or let the next article find you through RSS.</p></div><div class="orb-follow-links"><a href="https://www.linkedin.com/in/adithya-rajendran" ${external}>Follow on LinkedIn ↗</a><a href="https://adithya-rajendran.com/feed.xml" ${external}>Get the RSS feed ↗</a></div></section>`;
+ const home=()=>`<section class="orb-hero"><img class="orb-hero-image" src="${hero}" alt="NASA's Perseverance rover on the rocky surface of Mars" width="1440" height="810"><span class="orb-hero-plus" aria-hidden="true">+</span><div class="orb-hero-copy"><div class="orb-hero-kicker orb-mono">NOTES FROM THE EDGE OF WHAT'S NEXT</div><h1 class="orb-title">A curious mind.<br>An <em>open universe.</em></h1><p>Robots that think. Machines that explore.<br>My notebook on AI, robotics, and the systems that could take us further.</p></div><div class="orb-hero-caption orb-mono"><span>Inspired by science fiction. Grounded in curiosity.</span><a href="https://www.jpl.nasa.gov/missions/mars-2020-perseverance-rover/" ${external}>Perseverance on Mars · NASA/JPL</a></div></section><div class="orb-topics orb-mono"><span>ON MY RADAR</span><span><b>01</b> Robotics</span><span><b>02</b> Artificial intelligence</span><span><b>03</b> Autonomous spaceflight</span></div><section aria-label="Latest writing"><div class="orb-section-heading"><h2><span>01 /</span>Latest writing</h2><button type="button" class="orb-text-link" data-orb-page="archive">All field notes <span aria-hidden="true">↗</span></button></div><article class="orb-feature"><div><div class="orb-category">LATEST ENTRY / ${posts[0].category}</div><h3><a href="${postLink(posts[0])}" ${external}>${posts[0].title}</a></h3><div class="orb-meta">${posts[0].date} &nbsp;·&nbsp; ${posts[0].time}</div></div><div><p>${posts[0].description}</p><a class="orb-text-link" href="${postLink(posts[0])}" ${external}>Read the field notes <span aria-hidden="true">↗</span></a></div></article><div class="orb-cards">${posts.slice(1).map(p=>`<article class="orb-card"><div class="orb-category">${p.category}</div><h3><a href="${postLink(p)}" ${external}>${p.title}</a></h3><p>${p.description}</p><div class="orb-meta">${p.date} &nbsp;·&nbsp; ${p.time}</div></article>`).join('')}</div></section>${follow()}<section class="orb-author"><div class="orb-mono">THE HUMAN BEHIND<br>THE NOTEBOOK</div><p><strong>I'm Adithya.</strong> I work on infrastructure at Canonical, experiment in my homelab, and keep coming back to one question: what can we build next? This is where I think out loud about the things that fascinate me. <button type="button" data-orb-page="about">More about me ↗</button></p></section>`;
+ const archiveRows=(items)=>items.map(p=>`<a class="orb-archive-row" href="${postLink(p)}" ${external}><div class="orb-meta">${p.date}<br>${p.time}</div><div><h2>${p.title}</h2><p>${p.description}</p><span class="orb-category">${p.category}</span></div><span aria-hidden="true">↗</span></a>`).join('')||'<p class="orb-empty">No field notes match that search. Try “Linux”, “GPU”, or “homelab”.</p>';
+ const archive=()=>`<section class="orb-inner"><div class="orb-mono orb-category">THE NOTEBOOK / ARCHIVE</div><h1 class="orb-page-title">Ideas, experiments,<br><em>and useful detours.</em></h1><p class="orb-lede">The things I've built, broken, and spent enough time with to write down.</p><label class="orb-search-label" for="orb-search">SEARCH THE FIELD NOTES</label><input id="orb-search" class="orb-search" type="search" placeholder="Search by title, topic, or keyword…" autocomplete="off"><div id="orb-results" class="orb-archive-list">${archiveRows(posts)}</div>${follow()}</section>`;
+ const about=()=>`<section class="orb-inner"><div class="orb-mono orb-category">THE HUMAN / ADITHYA RAJENDRAN</div><h1 class="orb-page-title">An engineer with<br><em>his eyes on the stars.</em></h1><div class="orb-about-copy"><p>I'm drawn to robotics, AI, and the possibility of machines exploring places we haven't reached. Science fiction is part of that curiosity. I want to write about the ideas, experiments, and systems behind that future.</p><p><strong>My day-to-day work is closer to Earth.</strong> At Canonical, I help design and deploy private-cloud systems built around Linux, OpenStack, Kubernetes, and Ceph. My homelab is where I take them apart, rebuild them, and test what I can't safely try in production.</p><p>I came to infrastructure through security. At UC Santa Cruz, the Slug Security Club gave me a place to explore network security and ethical hacking. After graduating, I worked on cloud compliance, threat modeling, and automation before moving into field engineering.</p><p>This site is my notebook: part technical write-up, part record of what I'm learning, and a place to develop ideas in public. There is plenty still to figure out.</p></div><div class="orb-route-actions"><button type="button" class="orb-text-link" data-orb-page="work">Explore my experience ↗</button><a href="https://www.linkedin.com/in/adithya-rajendran" ${external}>Find me on LinkedIn ↗</a></div>${follow()}</section>`;
+ const work=()=>`<section class="orb-inner"><div class="orb-mono orb-category">PORTFOLIO / EXPERIENCE</div><h1 class="orb-page-title">The work behind<br><em>the curiosity.</em></h1><p class="orb-lede">Field software engineering, cloud infrastructure, security, and the practical work of making systems run.</p><div class="orb-route-actions"><a href="https://adithya-rajendran.com/resume" ${external}>View résumé ↗</a><a href="https://adithya-rajendran.com/portfolio#contact" ${external}>Get in touch ↗</a><a href="https://github.com/Adithya-Rajendran" ${external}>GitHub ↗</a></div><section class="orb-work-row"><div class="orb-mono">MAY 2024 — PRESENT<br>REMOTE</div><div><h2>Field Software Engineer I</h2><p>Canonical Ltd (Ubuntu)</p><p>Architecting and deploying private clouds with OpenStack, Kubernetes, and Ceph. Automating infrastructure with Python, Terraform, and Bash, and troubleshooting across the stack, from the kernel to the network.</p></div></section><section class="orb-work-row"><div class="orb-mono">DEC 2023 — MAY 2024<br>FREMONT, CA</div><div><h2>Cybersecurity Analyst Intern</h2><p>Technical Consulting & Research, Inc.</p><p>Cloud compliance, threat modeling, security automation, and authentication and access control.</p></div></section><section class="orb-work-row"><div class="orb-mono">JUNE 2023<br>SANTA CRUZ, CA</div><div><h2>B.Sc. Computer Science</h2><p>University of California, Santa Cruz</p><p>Network security, ethical hacking, and participation in the Slug Security Club.</p></div></section><div class="orb-skills">${['Linux','OpenStack','Kubernetes','Ceph','Terraform','Python','Bash','Cybersecurity'].map(s=>`<span>${s}</span>`).join('')}</div></section>`;
+ function render(){root.style.setProperty('--orb-accent',state.accent);main.innerHTML=state.page==='archive'?archive():state.page==='about'?about():state.page==='work'?work():home();root.querySelectorAll('nav [data-orb-page]').forEach(b=>{if(b.dataset.orbPage===state.page)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});}
+ root.addEventListener('click',e=>{const target=e.target.closest('[data-orb-page]');if(!target)return;state.page=target.dataset.orbPage;render();const current=root.querySelector('nav [aria-current=page]');if(current)current.focus({preventScroll:true});root.querySelector('#orb-status').textContent=(state.page==='home'?'Writing':state.page)+' page opened';});
+ root.addEventListener('input',e=>{if(e.target.id!=='orb-search')return;const q=e.target.value.toLocaleLowerCase().trim();const results=posts.filter(p=>[p.title,p.description,p.category].join(' ').toLocaleLowerCase().includes(q));root.querySelector('#orb-results').innerHTML=archiveRows(results);root.querySelector('#orb-status').textContent=results.length+' matching articles';});
+ render();
+ if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:render});tweak.addColorPicker(state,'accent',{label:'Journal accent',reference:'--orb-accent'});}
+})();
+</script>
