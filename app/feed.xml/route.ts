@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { getRecentPostsWithBody } from "@/lib/sanity-client";
+import { getWritingDescription } from "@/lib/profile-content";
+import { getProfile, getRecentPostsWithBody } from "@/lib/sanity-client";
 import { renderFeedXml } from "@/lib/feed";
 
 /**
@@ -10,9 +11,12 @@ import { renderFeedXml } from "@/lib/feed";
 async function getFeedXml(): Promise<string> {
     "use cache";
     cacheLife("max");
-    cacheTag(CACHE_TAGS.post);
-    const posts = await getRecentPostsWithBody();
-    return renderFeedXml(posts);
+    cacheTag(CACHE_TAGS.post, CACHE_TAGS.profile);
+    const [posts, profile] = await Promise.all([
+        getRecentPostsWithBody(),
+        getProfile(),
+    ]);
+    return renderFeedXml(posts, getWritingDescription(profile));
 }
 
 export async function GET() {

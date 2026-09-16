@@ -10,7 +10,7 @@ import {
     INITIAL_CONTACT_FORM_STATE,
 } from "@/actions/sendEmail";
 import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
-import { siteConfig } from "@/lib/config";
+import type { ExternalLink } from "@/lib/sanity-client";
 
 function ContactSubmit() {
     const { pending } = useFormStatus();
@@ -27,7 +27,7 @@ function ContactSubmit() {
     );
 }
 
-export default function Contact() {
+export default function Contact({ links }: { links: ExternalLink[] }) {
     const { ref } = useSectionInView("Contact");
     const [state, formAction] = useActionState(
         sendEmailAction,
@@ -99,22 +99,17 @@ export default function Contact() {
                 </form>
                 <div className="career-contact-channels">
                     <span>Or find me elsewhere</span>
-                    <a
-                        href={siteConfig.profiles.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        LinkedIn
-                        <ArrowUpRight size={14} aria-hidden />
-                    </a>
-                    <a
-                        href={siteConfig.profiles.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        GitHub
-                        <ArrowUpRight size={14} aria-hidden />
-                    </a>
+                    {links.map((link) => (
+                        <a
+                            key={link._key}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {link.label}
+                            <ArrowUpRight size={14} aria-hidden />
+                        </a>
+                    ))}
                     <a href="/feed.xml">
                         RSS
                         <ArrowUpRight size={14} aria-hidden />

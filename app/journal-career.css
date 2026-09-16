@@ -178,6 +178,51 @@
     height: 4px;
     background: var(--journal-accent);
 }
+.career-role-details {
+    margin-top: 18px;
+}
+.career-role-details summary {
+    width: fit-content;
+    min-height: 44px;
+    padding: 10px 0;
+    color: var(--journal-accent);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.career-role-details summary:hover {
+    color: var(--journal-text);
+}
+.career-role-details summary:focus-visible {
+    outline: 2px solid var(--journal-accent);
+    outline-offset: 4px;
+}
+.career-role-details .career-highlights {
+    margin-top: 12px;
+}
+.career-writing-list {
+    display: grid;
+    gap: 30px;
+}
+.career-writing-list article + article {
+    padding-top: 28px;
+    border-top: 1px solid var(--journal-line);
+}
+.career-writing-list .career-meta {
+    margin-bottom: 10px;
+}
+.career-writing-list h3 a:hover {
+    color: var(--journal-accent);
+}
+.career-writing-list h3 svg {
+    display: inline;
+    vertical-align: baseline;
+    margin-left: 3px;
+    color: var(--journal-accent);
+}
+.career-writing-list .career-summary {
+    margin-top: 10px;
+}
 .career-tags {
     display: flex;
     flex-wrap: wrap;
@@ -515,6 +560,19 @@
 .career-action-secondary:hover {
     color: var(--journal-accent);
     border-color: var(--journal-accent);
+}
+.career-resume-update {
+    padding: 24px 28px;
+    margin: 0 0 30px;
+    border-left: 2px solid var(--journal-accent);
+    background: var(--journal-surface);
+}
+.career-resume-update > p:not(.journal-eyebrow) {
+    max-width: 75ch;
+    margin: 12px 0 16px;
+    color: var(--journal-muted);
+    font-size: 15px;
+    line-height: 1.75;
 }
 .career-resume-viewer {
     border: 1px solid var(--journal-line);

@@ -3,7 +3,13 @@
  * escaping live in components/json-ld.tsx so these functions stay easy to
  * exercise without React or a Sanity connection.
  */
-import { BLOG_DESCRIPTION, siteConfig, socialProfiles } from "@/lib/config";
+import { siteConfig } from "@/lib/config";
+import {
+    getProfileDescription,
+    getProfileLinks,
+    getWritingDescription,
+    isCurrentTimelineEntry,
+} from "@/lib/profile-content";
 import type {
     CredentialListItem,
     ProfileData,
@@ -17,41 +23,40 @@ export interface PersonEntityInput {
 
 function currentWork(timeline?: TimelineEntry[] | null) {
     return (timeline ?? []).find(
-        (entry) => entry.kind === "work" && !entry.endDate,
+        (entry) => entry.kind === "work" && isCurrentTimelineEntry(entry),
     );
 }
 
-function splitHeadline(headline: string): [string, string | undefined] {
-    const match = headline.match(/^(.+?)\s+(?:@|at)\s+(.+)$/i);
-    return match ? [match[1].trim(), match[2].trim()] : [headline, undefined];
-}
-
-function buildAlumniOf(profile: ProfileData | null) {
-    const entries = (profile?.timeline ?? [])
-        .filter((entry) => entry.kind === "education" && entry.organization)
-        .map((entry) => ({
-            "@type": "CollegeOrUniversity",
-            name: entry.organization,
-        }));
-
-    if (entries.length > 0) return entries;
-
-    return [{ "@type": "CollegeOrUniversity", name: siteConfig.alumniOf }];
+function educationOrganizations(profile: ProfileData | null, current: boolean) {
+    const names = (profile?.timeline ?? [])
+        .filter(
+            (entry) =>
+                entry.kind === "education" &&
+                entry.organization &&
+                isCurrentTimelineEntry(entry) === current,
+        )
+        .map((entry) => entry.organization);
+    return [...new Set(names)].map((name) => ({
+        "@type": "CollegeOrUniversity",
+        name,
+    }));
 }
 
 function buildKnowsAbout(profile: ProfileData | null) {
     const skills = (profile?.skillGroups ?? []).flatMap(
         (group) => group.skills ?? [],
     );
-    const uniqueSkills = [...new Set(skills.filter(Boolean))];
-    return uniqueSkills.length > 0 ? uniqueSkills : siteConfig.knowsAbout;
+    return [...new Set(skills.filter(Boolean))];
 }
 
 function buildSameAs(profile: ProfileData | null) {
-    const profileUrls = (profile?.socialLinks ?? [])
-        .map((link) => link.url)
-        .filter(Boolean);
-    return profileUrls.length > 0 ? [...new Set(profileUrls)] : socialProfiles;
+    return [
+        ...new Set(
+            getProfileLinks(profile)
+                .map((link) => link.url)
+                .filter(Boolean),
+        ),
+    ];
 }
 
 function buildHasCredential(credentials?: CredentialListItem[] | null) {
@@ -80,25 +85,23 @@ function buildHasCredential(credentials?: CredentialListItem[] | null) {
 
 export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
     const activeWork = currentWork(profile?.timeline);
-    const [headlineTitle, headlineOrganization] = splitHeadline(
-        profile?.headline || siteConfig.role,
-    );
-    const organization = activeWork?.organization || headlineOrganization;
+    const alumniOf = educationOrganizations(profile, false);
+    const affiliation = educationOrganizations(profile, true);
+    const knowsAbout = buildKnowsAbout(profile);
 
     return {
         "@type": "Person",
         name: profile?.name || siteConfig.author,
         alternateName: "Adithya",
         url: siteConfig.url,
-        image: imageUrl || `${siteConfig.url}/hero.webp`,
-        jobTitle: activeWork?.title || headlineTitle,
-        description:
-            profile?.introduction || profile?.bio || siteConfig.description,
-        ...(organization
+        ...(imageUrl ? { image: imageUrl } : {}),
+        description: getProfileDescription(profile),
+        ...(activeWork
             ? {
+                  jobTitle: activeWork.title,
                   worksFor: {
                       "@type": "Organization",
-                      name: organization,
+                      name: activeWork.organization,
                   },
               }
             : {}),
@@ -110,8 +113,9 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
                   },
               }
             : {}),
-        alumniOf: buildAlumniOf(profile),
-        knowsAbout: buildKnowsAbout(profile),
+        ...(alumniOf.length > 0 ? { alumniOf } : {}),
+        ...(affiliation.length > 0 ? { affiliation } : {}),
+        ...(knowsAbout.length > 0 ? { knowsAbout } : {}),
         sameAs: buildSameAs(profile),
     };
 }
@@ -179,13 +183,13 @@ export function buildBlogPosting({
     };
 }
 
-export function buildBlog() {
+export function buildBlog(profile: ProfileData | null = null) {
     return {
         "@context": "https://schema.org",
         "@type": "Blog",
         name: `${siteConfig.author} — Blog`,
         url: `${siteConfig.url}/blog`,
-        description: BLOG_DESCRIPTION,
+        description: getWritingDescription(profile),
         author: {
             "@type": "Person",
             name: siteConfig.author,

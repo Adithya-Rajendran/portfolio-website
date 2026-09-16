@@ -7,21 +7,28 @@ import {
     readingTimeFromWordCount,
 } from "@/components/blogs/utils";
 import { collectTags } from "@/lib/tags";
-import { getAllPosts } from "@/lib/sanity-client";
+import { getAllPosts, getProfile } from "@/lib/sanity-client";
+import { getWritingDescription } from "@/lib/profile-content";
 import { siteConfig } from "@/lib/config";
 
-export const metadata: Metadata = {
-    title: "Writing archive",
-    description:
-        "Every post, searchable by title, description, or topic and grouped by year.",
-    alternates: { canonical: `${siteConfig.url}/blog/archive` },
-    openGraph: {
-        title: `Writing archive | ${siteConfig.author}`,
-        description:
-            "Every post, searchable by title, description, or topic and grouped by year.",
-        url: `${siteConfig.url}/blog/archive`,
-    },
-};
+export async function generateMetadata(): Promise<Metadata> {
+    const description = getWritingDescription(await getProfile());
+    return {
+        title: "Writing archive",
+        description,
+        alternates: { canonical: `${siteConfig.url}/blog/archive` },
+        openGraph: {
+            title: `Writing archive | ${siteConfig.author}`,
+            description,
+            url: `${siteConfig.url}/blog/archive`,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `Writing archive | ${siteConfig.author}`,
+            description,
+        },
+    };
+}
 
 export default async function ArchivePage() {
     const allPosts = await getAllPosts();

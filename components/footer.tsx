@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { siteConfig } from "@/lib/config";
+import { getProfile } from "@/lib/sanity-client";
+import { getProfileLink } from "@/lib/profile-content";
 import { footerNavigation } from "@/lib/navigation";
 
 async function getYear(): Promise<number> {
@@ -10,7 +12,8 @@ async function getYear(): Promise<number> {
 }
 
 export default async function Footer() {
-    const year = await getYear();
+    const [year, profile] = await Promise.all([getYear(), getProfile()]);
+    const github = getProfileLink(profile, "github");
     return (
         <footer className="journal-container">
             <div className="journal-footer">
@@ -23,13 +26,15 @@ export default async function Footer() {
                             {label}
                         </Link>
                     ))}
-                    <a
-                        href={siteConfig.profiles.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        GitHub ↗
-                    </a>
+                    {github && (
+                        <a
+                            href={github.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            GitHub ↗
+                        </a>
+                    )}
                 </nav>
             </div>
         </footer>

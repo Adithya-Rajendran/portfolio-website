@@ -3,44 +3,32 @@ import Link from "next/link";
 import { ArrowUpRight, MapPin } from "lucide-react";
 import { ProfilePageJsonLd } from "@/components/json-ld";
 import { getProfile } from "@/lib/sanity-client";
-import { siteConfig, socialProfiles } from "@/lib/config";
+import { siteConfig } from "@/lib/config";
+import { getProfileLinks } from "@/lib/profile-content";
 import "@/app/journal-career.css";
 
-export const metadata: Metadata = {
-    title: "About",
-    description: `About ${siteConfig.author}: the engineer behind the notebook.`,
-    alternates: { canonical: `${siteConfig.url}/about` },
-    openGraph: {
-        title: `About | ${siteConfig.author}`,
-        description: `The engineer behind the notebook.`,
-        url: `${siteConfig.url}/about`,
-    },
-};
-
-function fallbackLinks() {
-    return socialProfiles.map((url) => {
-        const host = new URL(url).hostname.replace(/^(www|app)\./, "");
-        const label = host.includes("linkedin")
-            ? "LinkedIn"
-            : host.includes("github")
-              ? "GitHub"
-              : host.includes("credly")
-                ? "Credly"
-                : host.includes("hackthebox")
-                  ? "Hack The Box"
-                  : host.includes("tryhackme")
-                    ? "TryHackMe"
-                    : host;
-        return { _key: url, label, url };
-    });
+export async function generateMetadata(): Promise<Metadata> {
+    const profile = await getProfile();
+    const name = profile?.name || siteConfig.author;
+    const description =
+        profile?.introduction ||
+        `About ${name}: the person behind the notebook.`;
+    return {
+        title: "About",
+        description,
+        alternates: { canonical: `${siteConfig.url}/about` },
+        openGraph: {
+            title: `About | ${name}`,
+            description,
+            url: `${siteConfig.url}/about`,
+        },
+    };
 }
 
 export default async function AboutPage() {
     const profile = await getProfile();
-    const location = profile?.location || siteConfig.location;
-    const links = profile?.socialLinks?.length
-        ? profile.socialLinks
-        : fallbackLinks();
+    const location = profile?.location;
+    const links = getProfileLinks(profile);
     return (
         <main
             id="main-content"
@@ -56,9 +44,9 @@ export default async function AboutPage() {
                     {profile?.name || siteConfig.author}
                     <span className="career-accent">.</span>
                 </h1>
-                <p className="career-role">
-                    {profile?.headline || siteConfig.role}
-                </p>
+                {profile?.headline && (
+                    <p className="career-role">{profile.headline}</p>
+                )}
                 {profile?.introduction && (
                     <p className="journal-description">
                         {profile.introduction}
@@ -71,10 +59,9 @@ export default async function AboutPage() {
                     aria-labelledby="about-heading"
                 >
                     <h2 id="about-heading">Curiosity, put into practice.</h2>
-                    <div className="career-bio-text">
-                        {profile?.bio ||
-                            "I’m interested in how intelligent machines see, act, and help us build what comes next. This notebook is where I share what I’m learning, alongside the systems and engineering work that get me there."}
-                    </div>
+                    {profile?.bio && (
+                        <div className="career-bio-text">{profile.bio}</div>
+                    )}
                     <div className="career-actions">
                         <Link href="/blog" className="journal-link">
                             Explore my writing{" "}
@@ -136,7 +123,9 @@ export default async function AboutPage() {
                     <Link className="career-channel" href="/resume">
                         Read my résumé <ArrowUpRight size={17} aria-hidden />
                     </Link>
-                    <h2 className="journal-eyebrow">ELSEWHERE</h2>
+                    {links.length > 0 && (
+                        <h2 className="journal-eyebrow">ELSEWHERE</h2>
+                    )}
                     <ul>
                         {links.map((link) => (
                             <li key={link._key}>

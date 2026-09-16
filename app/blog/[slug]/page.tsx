@@ -95,6 +95,11 @@ export async function generateMetadata({
             authors: [siteConfig.author],
             url: `${siteConfig.url}/blog/${slug}`,
         },
+        twitter: {
+            card: "summary_large_image",
+            title: post.title || undefined,
+            description: post.description || undefined,
+        },
         robots: {
             index: true,
             follow: true,

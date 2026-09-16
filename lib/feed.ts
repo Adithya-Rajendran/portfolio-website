@@ -193,7 +193,10 @@ function renderPostHtml(post: FeedPost): string {
     return toHTML(post.body, { components, onMissingComponent: false });
 }
 
-export function renderFeedXml(posts: FeedPost[]): string {
+export function renderFeedXml(
+    posts: FeedPost[],
+    description = BLOG_DESCRIPTION,
+): string {
     const feedUrl = `${siteConfig.url}${FEED_PATH}`;
     const publishable = posts.filter(
         (post) => post.title && post.slug && SAFE_SLUG.test(post.slug),
@@ -222,7 +225,7 @@ export function renderFeedXml(posts: FeedPost[]): string {
     const channelLines = [
         `<title>${escapeXml(FEED_TITLE)}</title>`,
         `<link>${escapeXml(`${siteConfig.url}/blog`)}</link>`,
-        `<description>${escapeXml(BLOG_DESCRIPTION)}</description>`,
+        `<description>${escapeXml(description)}</description>`,
         `<language>en-us</language>`,
         ...(lastBuildDate
             ? [`<lastBuildDate>${lastBuildDate}</lastBuildDate>`]

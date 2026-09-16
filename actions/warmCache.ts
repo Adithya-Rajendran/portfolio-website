@@ -1,6 +1,6 @@
-// NOT a server action: the only caller is the server-side revalidate
-// webhook route. A "use server" directive here would expose warmBlogCache
-// as a public unauthenticated endpoint / traffic-amplification lever.
+// Server-only helpers called by the authenticated webhook and publish cron.
+// A "use server" directive would expose warming as a public unauthenticated
+// endpoint / traffic-amplification lever.
 
 import { getAllPosts } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
@@ -27,14 +27,35 @@ export async function warmBlogCache(): Promise<WarmResult> {
     return { pages };
 }
 
+/**
+ * Profile edits affect identity, editorial copy, links, and résumé metadata.
+ * Keep this list bounded: other pages are refreshed when visited through the
+ * shared profile tag, without crawling the entire writing archive each edit.
+ */
+export async function warmProfileCache(): Promise<WarmResult> {
+    const paths = [
+        "/",
+        "/about",
+        "/portfolio",
+        "/resume",
+        "/blog",
+        "/blog/archive",
+        "/feed.xml",
+        "/opengraph-image",
+        "/about/opengraph-image",
+        "/portfolio/opengraph-image",
+        "/blog/opengraph-image",
+    ];
+    return {
+        pages: await warmUrls(paths.map((path) => `${siteConfig.url}${path}`)),
+    };
+}
+
 /** Warm the writing-led homepage, feed, listings, and every published post. */
 async function warmPages(
     slugs: string[],
     tags: string[],
 ): Promise<{ warmed: string[]; failed: string[] }> {
-    const warmed: string[] = [];
-    const failed: string[] = [];
-
     // Defence-in-depth: only warm slugs that match the safe pattern.
     // Sanity schemas validate slugs, but treating them as URL fragments
     // without checking would let a misconfigured doc trigger fetches against
@@ -51,6 +72,14 @@ async function warmPages(
         ...safeSlugs.map((slug) => `${siteConfig.url}/blog/${slug}`),
     ];
 
+    return warmUrls(urls);
+}
+
+async function warmUrls(
+    urls: string[],
+): Promise<{ warmed: string[]; failed: string[] }> {
+    const warmed: string[] = [];
+    const failed: string[] = [];
     const batchSize = 5;
     for (let i = 0; i < urls.length; i += batchSize) {
         const batch = urls.slice(i, i + batchSize);

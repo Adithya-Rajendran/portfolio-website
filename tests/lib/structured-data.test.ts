@@ -41,19 +41,14 @@ describe("buildPersonEntity", () => {
         const person = buildPersonEntity({ profile: null });
 
         expect(person.name).toBe(siteConfig.author);
-        expect(person.jobTitle).toBe("Field Software Engineer");
-        expect(person.worksFor).toEqual({
-            "@type": "Organization",
-            name: "Canonical",
-        });
-        expect(person.alumniOf).toEqual([
-            { "@type": "CollegeOrUniversity", name: siteConfig.alumniOf },
-        ]);
-        expect(person.knowsAbout).toEqual(siteConfig.knowsAbout);
+        expect(person).not.toHaveProperty("jobTitle");
+        expect(person).not.toHaveProperty("worksFor");
+        expect(person).not.toHaveProperty("alumniOf");
+        expect(person).not.toHaveProperty("knowsAbout");
+        expect(person).not.toHaveProperty("homeLocation");
+        expect(person).not.toHaveProperty("image");
+        expect(person.description).toBe(siteConfig.description);
         expect(person.sameAs).toEqual(socialProfiles);
-        expect(person.sameAs).toContain(
-            "https://app.hackthebox.com/users/514798",
-        );
     });
 
     it("derives current work, education, skills, links, and location from Profile", () => {
@@ -124,6 +119,77 @@ describe("buildPersonEntity", () => {
             name: "Remote · United States",
         });
         expect(person.image).toBe("https://cdn.sanity.io/profile.webp");
+    });
+
+    it("represents current study without inventing employment or a completed degree", () => {
+        const person = buildPersonEntity({
+            profile: profileOf({
+                headline: "MS Engineering student at San José State University",
+                timeline: [
+                    {
+                        _key: "sjsu",
+                        kind: "education",
+                        title: "MS Engineering (Interdisciplinary)",
+                        organization: "San José State University",
+                        startDate: "2026-08-01",
+                        expectedEndYear: 2028,
+                        isCurrent: true,
+                    },
+                    {
+                        _key: "canonical",
+                        kind: "work",
+                        title: "Field Software Engineer",
+                        organization: "Canonical",
+                        startDate: "2025-01-01",
+                        endDate: "2026-07-01",
+                        isCurrent: false,
+                    },
+                    {
+                        _key: "ucsc",
+                        kind: "education",
+                        title: "B.S. Computer Science",
+                        organization: "UC Santa Cruz",
+                        isCurrent: false,
+                    },
+                ],
+            }),
+        });
+
+        expect(person).not.toHaveProperty("worksFor");
+        expect(person).not.toHaveProperty("jobTitle");
+        expect(person.affiliation).toEqual([
+            {
+                "@type": "CollegeOrUniversity",
+                name: "San José State University",
+            },
+        ]);
+        expect(person.alumniOf).toEqual([
+            { "@type": "CollegeOrUniversity", name: "UC Santa Cruz" },
+        ]);
+        expect(JSON.stringify(person)).not.toContain("2028-01-01");
+    });
+
+    it("does not revive removed links, skills, schools, or former employment", () => {
+        const person = buildPersonEntity({
+            profile: profileOf({
+                socialLinks: [],
+                skillGroups: [],
+                timeline: [
+                    {
+                        _key: "former",
+                        kind: "work",
+                        title: "Engineer",
+                        organization: "Former employer",
+                        isCurrent: false,
+                    },
+                ],
+            }),
+        });
+
+        expect(person.sameAs).toEqual([]);
+        expect(person).not.toHaveProperty("knowsAbout");
+        expect(person).not.toHaveProperty("alumniOf");
+        expect(person).not.toHaveProperty("worksFor");
     });
 
     it("passes CMS prose through for safe escaping at the script boundary", () => {
@@ -216,6 +282,13 @@ describe("buildBlogPosting", () => {
 });
 
 describe("buildBlog", () => {
+    it("uses the CMS writing introduction", () => {
+        const blog = buildBlog(
+            profileOf({ writingDescription: "Research notes from the lab." }),
+        );
+        expect(blog.description).toBe("Research notes from the lab.");
+    });
+
     it("keeps the writing metadata aligned with the public blog description", () => {
         const blog = buildBlog();
         expect(blog["@context"]).toBe("https://schema.org");

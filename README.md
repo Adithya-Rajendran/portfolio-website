@@ -4,7 +4,7 @@ Public Website: [https://adithya-rajendran.com](https://adithya-rajendran.com)
 
 ## Overview
 
-A writing-first personal website about systems, robotic vision, AI, and possible futures. The design pairs quiet stars and an imagined orbital habitat with readable field notes. Professional experience, projects, and a current résumé remain one click away.
+A writing-first personal website about systems, robotic vision, AI, and possible futures. The design pairs quiet stars and an imagined orbital habitat with readable field notes. Professional experience, projects, and a résumé remain one click away.
 
 ## Features and Technologies
 
@@ -49,7 +49,12 @@ pnpm start
 
 - Copy `.env.example` to `.env.local` and set the public Sanity project and dataset values. Published content needs no read token. Keep local environment files out of Git.
 - Edit your profile, résumé PDF, posts, and projects in `/studio`. Publishing retains the existing Sanity webhook and daily scheduled-post refresh; both also refresh the homepage.
-- The homepage currently introduces the DGX Spark article, falling back to the latest published post if it is removed. Recent notes update automatically. The featured selection lives in `app/page.tsx`.
+- In **Profile → Identity**, edit the current headline, short introduction, and search description. These flow through the homepage, About, search metadata, and social previews.
+- In **Profile → Homepage & Writing**, edit focus areas, Work summary, writing introduction, and featured article. The featured selection falls back to the latest published post; unpublished and future-dated posts stay hidden. Recent notes update automatically.
+- In **Profile → About / Right Now**, edit the biography, location, profile links, portrait, and current interests. Removing a link or optional content hides it on the site.
+- In **Profile → Portfolio**, maintain experience, education, skills, credentials, and the résumé PDF. Use **Currently Here** for ongoing work or study and **Expected Graduation Year** for a year-only estimate. The optional **Résumé Note** identifies an older PDF while a replacement is being prepared. Profile edits do not rewrite the uploaded PDF.
+- Posts own their title, description, body, publication date, and topic tags; Projects own their case studies. Topic pages and archive filters follow published tags automatically.
+- The visual theme, navigation, section labels, artwork, and stable site identity stay in code. No code change or redeploy is needed for the content fields above.
 - The approved artwork is `public/images/living-future.webp`. Design explorations and artwork notes are in `design-previews/`.
 - The existing Vercel project builds GitHub branches as previews and `main` as production. Keep the existing Sanity, Resend, BotID, webhook, and cron settings. No new service or environment variable is required by this redesign.
 - Before merging, run the checks documented in `CLAUDE.md` and verify a Vercel preview. Existing `/blog`, `/portfolio`, `/resume`, RSS, and résumé PDF routes are preserved.

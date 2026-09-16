@@ -3,10 +3,13 @@ import SectionSpy from "@/components/portfolio/section-spy";
 import CareerSectionHeading from "@/components/portfolio/section-heading";
 import { urlForImage } from "@/lib/sanity-image";
 import type { TimelineEntry } from "@/lib/sanity-client";
+import { isCurrentTimelineEntry } from "@/lib/profile-content";
 
 function formatMonth(value?: string | null) {
     if (!value) return null;
-    const parsed = new Date(`${value}T00:00:00Z`);
+    if (/^\d{4}$/.test(value)) return value;
+    const normalized = /^\d{4}-\d{2}$/.test(value) ? `${value}-01` : value;
+    const parsed = new Date(`${normalized}T00:00:00Z`);
     if (Number.isNaN(parsed.getTime())) return value;
     return new Intl.DateTimeFormat("en", {
         month: "short",
@@ -31,7 +34,14 @@ export default function Experience({ entries }: { entries: TimelineEntry[] }) {
             />
             <ol className="career-timeline">
                 {entries.map((item) => {
-                    const isCurrent = !item.endDate && item.kind === "work";
+                    const isCurrent = isCurrentTimelineEntry(item);
+                    const start = formatMonth(item.startDate);
+                    const end = isCurrent
+                        ? "Present"
+                        : formatMonth(item.endDate);
+                    const dates = [start, end].filter(Boolean);
+                    const dateLabel = [...new Set(dates)].join(" — ");
+                    const highlights = item.highlights ?? [];
                     return (
                         <li key={item._key} className="career-timeline-item">
                             <div className="career-meta">
@@ -40,16 +50,10 @@ export default function Experience({ entries }: { entries: TimelineEntry[] }) {
                                         ? "Education"
                                         : "Work"}
                                 </span>
-                                <span>
-                                    {[
-                                        formatMonth(item.startDate),
-                                        isCurrent
-                                            ? "Present"
-                                            : formatMonth(item.endDate),
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" — ")}
-                                </span>
+                                {dateLabel && <span>{dateLabel}</span>}
+                                {item.expectedEndYear && (
+                                    <span>Expected {item.expectedEndYear}</span>
+                                )}
                             </div>
                             <article>
                                 <div className="career-role-heading">
@@ -82,13 +86,40 @@ export default function Experience({ entries }: { entries: TimelineEntry[] }) {
                                         {item.summary}
                                     </p>
                                 )}
-                                {item.highlights?.length ? (
+                                {highlights.length > 0 && (
                                     <ul className="career-highlights">
-                                        {item.highlights.map((highlight) => (
-                                            <li key={highlight}>{highlight}</li>
-                                        ))}
+                                        {highlights
+                                            .slice(0, 3)
+                                            .map((highlight) => (
+                                                <li key={highlight}>
+                                                    {highlight}
+                                                </li>
+                                            ))}
                                     </ul>
-                                ) : null}
+                                )}
+                                {highlights.length > 3 && (
+                                    <details className="career-role-details">
+                                        <summary>
+                                            More about this{" "}
+                                            {item.kind === "education"
+                                                ? "program"
+                                                : "role"}
+                                            <span className="sr-only">
+                                                {" "}
+                                                at {item.organization}
+                                            </span>
+                                        </summary>
+                                        <ul className="career-highlights">
+                                            {highlights
+                                                .slice(3)
+                                                .map((highlight) => (
+                                                    <li key={highlight}>
+                                                        {highlight}
+                                                    </li>
+                                                ))}
+                                        </ul>
+                                    </details>
+                                )}
                                 {item.skills?.length ? (
                                     <ul
                                         className="career-tags"

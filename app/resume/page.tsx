@@ -8,17 +8,22 @@ import { getProfile } from "@/lib/sanity-client";
 import "@/app/journal-career.css";
 
 const canonicalUrl = `${siteConfig.url}/resume`;
-export const metadata: Metadata = {
-    title: "Résumé",
-    description: `View ${siteConfig.author}'s current PDF résumé directly in your browser.`,
-    alternates: { canonical: canonicalUrl },
-    openGraph: {
-        title: `Résumé | ${siteConfig.author}`,
-        description: "Read the current PDF résumé directly in your browser.",
-        url: canonicalUrl,
-        type: "profile",
-    },
-};
+export async function generateMetadata(): Promise<Metadata> {
+    const profile = await getProfile();
+    const name = profile?.name || siteConfig.author;
+    const description = `Read ${name}'s résumé, with experience, education, and skills.`;
+    return {
+        title: "Résumé",
+        description,
+        alternates: { canonical: canonicalUrl },
+        openGraph: {
+            title: `Résumé | ${name}`,
+            description,
+            url: canonicalUrl,
+            type: "profile",
+        },
+    };
+}
 
 export default async function ResumePage() {
     const profile = await getProfile();
@@ -89,13 +94,25 @@ export default async function ResumePage() {
                     <ResumeShareAction canonicalUrl={canonicalUrl} />
                 </div>
             </header>
+            {profile?.resumeNote && (
+                <aside
+                    className="career-resume-update"
+                    aria-label="Résumé update"
+                >
+                    <p className="journal-eyebrow">ABOUT THIS PDF</p>
+                    <p>{profile.resumeNote}</p>
+                    <Link href="/portfolio" className="journal-link">
+                        View work &amp; education <span aria-hidden>↗</span>
+                    </Link>
+                </aside>
+            )}
             <section
                 aria-label="PDF résumé viewer"
                 className="career-resume-viewer"
             >
                 <iframe
                     src={embeddedUrl.toString()}
-                    title={`${siteConfig.author} résumé PDF`}
+                    title={`${profile?.name || siteConfig.author} résumé PDF`}
                     loading="eager"
                     referrerPolicy="no-referrer"
                 />

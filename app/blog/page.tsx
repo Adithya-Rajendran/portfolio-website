@@ -1,27 +1,17 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import PostRow, { POST_ROW_LIST_CLASSES } from "@/components/blogs/post-row";
 import TagChips from "@/components/blogs/tag-chips";
 import NewsletterNotice from "@/components/newsletter/newsletter-notice";
-import { getAllPosts } from "@/lib/sanity-client";
+import { getAllPosts, getProfile } from "@/lib/sanity-client";
+import { getWritingDescription } from "@/lib/profile-content";
 import { collectTags } from "@/lib/tags";
 import { getPostSlug } from "@/components/blogs/utils";
 import { BlogJsonLd } from "@/components/json-ld";
-import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
-
-export const metadata: Metadata = {
-    title: "Writing",
-    description: BLOG_DESCRIPTION,
-    alternates: { canonical: `${siteConfig.url}/blog` },
-    openGraph: {
-        title: `Writing | ${siteConfig.author}`,
-        description: BLOG_DESCRIPTION,
-        url: `${siteConfig.url}/blog`,
-    },
-};
-
 export default async function Blogs() {
-    const allPosts = await getAllPosts();
+    const [allPosts, profile] = await Promise.all([
+        getAllPosts(),
+        getProfile(),
+    ]);
     const posts = allPosts.filter((post) => getPostSlug(post));
     const tags = collectTags(posts);
 
@@ -36,9 +26,7 @@ export default async function Blogs() {
                 <p className="journal-eyebrow">From the notebook</p>
                 <h1 className="journal-title">Ideas, explored.</h1>
                 <p className="journal-description">
-                    Notes from building and learning. Infrastructure,
-                    intelligent machines, and the questions that keep me
-                    curious.
+                    {getWritingDescription(profile)}
                 </p>
             </header>
             <section aria-labelledby="all-posts-heading">

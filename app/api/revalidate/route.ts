@@ -1,7 +1,7 @@
 import { revalidateTag } from "next/cache";
 import { after, type NextRequest, NextResponse } from "next/server";
 import { parseBody } from "next-sanity/webhook";
-import { warmBlogCache } from "@/actions/warmCache";
+import { warmBlogCache, warmProfileCache } from "@/actions/warmCache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 
 // Secret shared between Sanity webhook and this API route
@@ -54,9 +54,28 @@ export async function POST(req: NextRequest) {
 
         if (docType === "profile") {
             revalidateTag(CACHE_TAGS.profile, "max");
+
+            // Tag invalidation is stale-while-revalidate. Visiting the core
+            // routes starts regeneration without waiting for a real reader.
+            after(async () => {
+                try {
+                    const result = await warmProfileCache();
+                    console.log(
+                        `[Revalidate] Warmed ${result.pages.warmed.length} profile pages ` +
+                            `(${result.pages.failed.length} failed)`,
+                    );
+                } catch (err) {
+                    console.error(
+                        "[Revalidate] Profile cache warming failed:",
+                        err,
+                    );
+                }
+            });
+
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated tag "${CACHE_TAGS.profile}"`,
+                warming: "scheduled",
                 now: Date.now(),
             });
         }

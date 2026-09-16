@@ -13,6 +13,8 @@ import { PersonJsonLd, WebSiteJsonLd } from "@/components/json-ld";
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { siteConfig, THEME_COLORS } from "@/lib/config";
+import { getProfile } from "@/lib/sanity-client";
+import { getProfileDescription } from "@/lib/profile-content";
 import { FEED_PATH, FEED_TITLE } from "@/lib/feed";
 
 const dmSans = DM_Sans({
@@ -35,58 +37,51 @@ const ibmPlexMono = IBM_Plex_Mono({
     variable: "--font-ibm-plex-mono",
 });
 
-export const metadata: Metadata = {
-    title: {
-        default: siteConfig.title,
-        template: `%s | ${siteConfig.author}`,
-    },
-    description: siteConfig.description,
-    alternates: {
-        canonical: siteConfig.url,
-        types: {
-            "application/rss+xml": [{ url: FEED_PATH, title: FEED_TITLE }],
+export async function generateMetadata(): Promise<Metadata> {
+    const profile = await getProfile();
+    const description = getProfileDescription(profile);
+    return {
+        title: {
+            default: siteConfig.title,
+            template: `%s | ${siteConfig.author}`,
         },
-    },
-    keywords: [
-        "Adithya Rajendran",
-        "Personal website",
-        "Personal blog",
-        "Field Software Engineer",
-        "Robotic vision",
-        "AI",
-        "Autonomous systems",
-        "Canonical",
-        "Private Cloud",
-        "Field Engineering",
-        "Cybersecurity",
-        "OpenStack",
-        "Kubernetes",
-        "DevOps",
-        "Cloud Engineering",
-    ],
-    robots: {
-        index: true,
-        follow: true,
-    },
-    category: "technology",
-    metadataBase: new URL(siteConfig.url),
-    openGraph: {
-        title: siteConfig.title,
-        description: siteConfig.description,
-        url: siteConfig.url,
-        siteName: "Adithya Rajendran",
-        locale: "en_US",
-        type: "website",
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: siteConfig.title,
-        description: siteConfig.description,
-    },
-    verification: {
-        google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-    },
-};
+        description,
+        alternates: {
+            canonical: siteConfig.url,
+            types: {
+                "application/rss+xml": [{ url: FEED_PATH, title: FEED_TITLE }],
+            },
+        },
+        keywords: [
+            siteConfig.author,
+            "Personal website",
+            "Personal blog",
+            ...(profile?.focusAreas || []),
+        ],
+        robots: {
+            index: true,
+            follow: true,
+        },
+        category: "technology",
+        metadataBase: new URL(siteConfig.url),
+        openGraph: {
+            title: siteConfig.title,
+            description,
+            url: siteConfig.url,
+            siteName: "Adithya Rajendran",
+            locale: "en_US",
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: siteConfig.title,
+            description,
+        },
+        verification: {
+            google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        },
+    };
+}
 
 export const viewport: Viewport = {
     width: "device-width",
