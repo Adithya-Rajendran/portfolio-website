@@ -6,7 +6,7 @@ import { siteConfig } from "@/lib/config";
 import { formatDate } from "@/components/blogs/utils";
 import "./journal-home.css";
 
-const heroArtwork = "/images/living-future-v3.webp";
+const heroArtwork = "/images/lunar-shared-horizon-v1.webp";
 
 export default async function Home() {
     const [profile, posts] = await Promise.all([getProfile(), getAllPosts()]);
@@ -29,7 +29,7 @@ export default async function Home() {
                     <Image
                         className="fj-art"
                         src={heroArtwork}
-                        alt="Two people at the railing of an imagined observation gallery, looking over vast orbital terraces, enclosed gardens, and distant stars"
+                        alt="Two distant figures standing together at an observation railing, overlooking an imagined lunar settlement beneath Earth and a quiet starfield"
                         fill
                         sizes="(max-width: 620px) max(100vw, 854px, calc(177.78svh - 416px)), max(100vw, 960px, calc(177.78svh - 469px))"
                         quality={90}
