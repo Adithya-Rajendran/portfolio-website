@@ -6,6 +6,8 @@ import { siteConfig } from "@/lib/config";
 import { formatDate } from "@/components/blogs/utils";
 import "./journal-home.css";
 
+const heroArtwork = "/images/living-future-v3.webp";
+
 export default async function Home() {
     const [profile, posts] = await Promise.all([getProfile(), getAllPosts()]);
     const featured = selectFeaturedPost(profile, posts);
@@ -18,15 +20,23 @@ export default async function Home() {
     return (
         <main id="main-content" tabIndex={-1} className="home-journal">
             <section className="fj-hero" aria-labelledby="home-title">
-                {/* Size requests account for the landscape image covering tall phone screens. */}
-                <Image
-                    className="fj-art"
-                    src="/images/living-future-v3.webp"
-                    alt="Two people at the railing of an imagined observation gallery, looking over vast orbital terraces, enclosed gardens, and distant stars"
-                    fill
-                    sizes="(max-width: 620px) max(100vw, 854px, calc(177.78svh - 416px)), max(100vw, 960px, calc(177.78svh - 469px))"
-                    preload
-                />
+                <picture>
+                    {/* Large displays receive the full-quality master without a second encode. */}
+                    <source
+                        media="(min-width: 1600px), (min-width: 1200px) and (min-resolution: 2dppx)"
+                        srcSet={heroArtwork}
+                    />
+                    <Image
+                        className="fj-art"
+                        src={heroArtwork}
+                        alt="Two people at the railing of an imagined observation gallery, looking over vast orbital terraces, enclosed gardens, and distant stars"
+                        fill
+                        sizes="(max-width: 620px) max(100vw, 854px, calc(177.78svh - 416px)), max(100vw, 960px, calc(177.78svh - 469px))"
+                        quality={90}
+                        loading="eager"
+                        fetchPriority="high"
+                    />
+                </picture>
                 <div className="fj-shell fj-hero-inner">
                     <div className="fj-hero-copy">
                         {profile?.focusAreas?.length ? (

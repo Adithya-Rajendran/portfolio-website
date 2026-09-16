@@ -63,8 +63,6 @@
     object-fit: cover;
     object-position: center;
     z-index: -3;
-    transform: scale(1.025);
-    transition: transform 0.7s ease-out;
 }
 .home-journal .fj-hero:before {
     content: "";
@@ -586,12 +584,6 @@
     }
     .home-journal .fj-featured h3 {
         font-size: 26px;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    .home-journal .fj-art {
-        transition: none !important;
-        transform: none !important;
     }
 }
 .home-journal .fj-note-date {
