@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import type { ProfileData } from "@/lib/sanity-client";
 
 export default function Intro({
@@ -31,10 +31,6 @@ export default function Intro({
                         <ArrowDown size={16} aria-hidden />
                     </Link>
                 )}
-                <Link className="journal-link" href="/resume">
-                    Read my résumé
-                    <ArrowUpRight size={16} aria-hidden />
-                </Link>
             </div>
         </header>
     );

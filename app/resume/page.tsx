@@ -92,6 +92,12 @@ export default async function ResumePage() {
                         Download
                     </a>
                     <ResumeShareAction canonicalUrl={canonicalUrl} />
+                    <Link
+                        href="/portfolio#contact"
+                        className="journal-link career-resume-contact"
+                    >
+                        Get in touch <span aria-hidden>↗</span>
+                    </Link>
                 </div>
             </header>
             {profile?.resumeNote && (

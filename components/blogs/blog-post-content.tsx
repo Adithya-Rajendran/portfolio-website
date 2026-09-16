@@ -58,8 +58,9 @@ export function BlogPostHero({ post }: BlogPostHeroProps) {
                 </p>
             )}
             <div className="journal-article-byline">
-                <Link href="/about">{siteConfig.author}</Link>
-                <span>Engineering notes &amp; explorations</span>
+                <Link href="/about">
+                    {siteConfig.author} <span aria-hidden>↗</span>
+                </Link>
             </div>
             {tags.length > 0 && (
                 <nav

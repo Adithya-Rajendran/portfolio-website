@@ -324,7 +324,7 @@ button:disabled {
     }
     .journal-footer nav {
         width: 100%;
-        gap: 22px;
+        gap: 16px;
     }
 }
 @media (max-width: 360px) {

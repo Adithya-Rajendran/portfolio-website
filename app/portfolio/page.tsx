@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Intro from "@/components/portfolio/intro";
 import Experience from "@/components/portfolio/experience";
 import Projects from "@/components/portfolio/projects";
@@ -43,24 +42,11 @@ export default async function Portfolio() {
             className="journal-page journal-container career-page"
         >
             <Intro profile={profile} hasProjects={projects.length > 0} />
-            {!projects.length && <EngineeringWriting posts={posts} />}
-            <Experience entries={profile?.timeline ?? []} />
             <Projects projects={projects} />
+            <Experience entries={profile?.timeline ?? []} />
             <Skills groups={profile?.skillGroups ?? []} />
             <Certifications certifications={profile?.credentials ?? []} />
-            <aside className="career-reading">
-                <div>
-                    <p className="journal-eyebrow">THINKING IN PUBLIC</p>
-                    <h2>The notes behind the work.</h2>
-                    <p>
-                        Experiments, engineering decisions, and lessons from
-                        getting things running.
-                    </p>
-                </div>
-                <Link className="journal-link" href="/blog">
-                    Read the notebook <span aria-hidden>↗</span>
-                </Link>
-            </aside>
+            <EngineeringWriting posts={posts} />
             <Contact links={getProfileLinks(profile)} />
         </main>
     );
