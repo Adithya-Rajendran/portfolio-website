@@ -17,16 +17,17 @@ export default async function Home() {
     const github = getProfileLink(profile, "github");
     return (
         <main id="main-content" tabIndex={-1} className="home-journal">
-            <div className="fj-shell">
-                <section className="fj-hero" aria-labelledby="home-title">
-                    <Image
-                        className="fj-art"
-                        src="/images/living-future.webp"
-                        alt="An imagined observation gallery overlooking vast inhabited orbital terraces, enclosed gardens, and distant stars"
-                        fill
-                        sizes="(max-width: 1200px) 100vw, 1200px"
-                        preload
-                    />
+            <section className="fj-hero" aria-labelledby="home-title">
+                {/* Size requests account for the landscape image covering tall phone screens. */}
+                <Image
+                    className="fj-art"
+                    src="/images/living-future-v3.webp"
+                    alt="Two people at the railing of an imagined observation gallery, looking over vast orbital terraces, enclosed gardens, and distant stars"
+                    fill
+                    sizes="(max-width: 620px) max(100vw, 854px, calc(177.78svh - 416px)), max(100vw, 960px, calc(177.78svh - 469px))"
+                    preload
+                />
+                <div className="fj-shell fj-hero-inner">
                     <div className="fj-hero-copy">
                         {profile?.focusAreas?.length ? (
                             <p className="fj-eyebrow">
@@ -60,7 +61,9 @@ export default async function Home() {
                             )}
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
+            <div className="fj-shell">
                 <section
                     className="fj-writing"
                     id="writing"

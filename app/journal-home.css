@@ -46,12 +46,14 @@
 .home-journal .fj-hero {
     position: relative;
     isolation: isolate;
-    min-height: 448px;
+    min-height: max(540px, calc(100svh - var(--site-header-height) - 180px));
     display: flex;
     align-items: center;
-    margin: 0 -42px;
     overflow: hidden;
     background: #0c141b;
+}
+.home-journal .fj-hero-inner {
+    width: 100%;
 }
 .home-journal .fj-art {
     position: absolute;
@@ -86,8 +88,8 @@
         );
 }
 .home-journal .fj-hero-copy {
-    padding: 36px 42px 43px;
-    max-width: 650px;
+    padding: clamp(48px, 7svh, 112px) 0;
+    max-width: 760px;
 }
 .home-journal .fj-eyebrow {
     font-family: var(--font-ibm-plex-mono), monospace;
@@ -100,10 +102,10 @@
 }
 .home-journal .fj-title {
     font-family: var(--font-space-grotesk), sans-serif;
-    font-size: clamp(52px, 6.15vw, 74px);
+    font-size: clamp(62px, 5.4vw, 96px);
     font-weight: 400;
     line-height: 1.04;
-    letter-spacing: -3.6px;
+    letter-spacing: -0.048em;
 }
 .home-journal .fj-title > span {
     display: block;
@@ -115,10 +117,10 @@
     font-style: normal;
 }
 .home-journal .fj-intro {
-    font-size: 15px;
+    font-size: clamp(15px, 1vw, 18px);
     line-height: 1.7;
     color: #bdcbd2;
-    max-width: 420px;
+    max-width: 460px;
     margin-top: 24px;
 }
 .home-journal .fj-intro .fj-role {
@@ -388,12 +390,7 @@
     .home-journal .fj-shell {
         padding: 0 30px;
     }
-    .home-journal .fj-hero {
-        margin: 0 -30px;
-    }
     .home-journal .fj-hero-copy {
-        padding-left: 30px;
-        padding-right: 30px;
         max-width: 600px;
     }
     .home-journal .fj-title {
@@ -427,11 +424,13 @@
         padding: 0 23px;
     }
     .home-journal .fj-hero {
-        margin: 0 -23px;
-        min-height: 420px;
+        min-height: max(
+            480px,
+            calc(100svh - var(--site-header-height) - 120px)
+        );
     }
     .home-journal .fj-hero-copy {
-        padding: 31px 23px 40px;
+        padding: 40px 0 48px;
         max-width: 100%;
     }
     .home-journal .fj-eyebrow {
@@ -465,7 +464,7 @@
         gap: 19px;
     }
     .home-journal .fj-art {
-        object-position: 69% center;
+        object-position: 58% center;
     }
     .home-journal .fj-hero:before {
         background:
@@ -564,13 +563,6 @@
 @media (max-width: 360px) {
     .home-journal .fj-shell {
         padding: 0 21px;
-    }
-    .home-journal .fj-hero {
-        margin: 0 -21px;
-    }
-    .home-journal .fj-hero-copy {
-        padding-left: 21px;
-        padding-right: 21px;
     }
     .home-journal .fj-eyebrow {
         font-size: 9px;
