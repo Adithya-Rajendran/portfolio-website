@@ -44,7 +44,7 @@ for (const [family, widths] of [
         }
         pipeline = pipeline.resize({
             width: targetWidth,
-            ...(isLarge ? { height: 2160 } : {}),
+            ...(isLarge ? { height: 2160, fit: "fill" } : {}),
         });
         const avif = `${family}-${targetWidth}.avif`;
         const webp = `${family}-${targetWidth}.webp`;
