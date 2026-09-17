@@ -12,6 +12,7 @@ export default function SiteHeader() {
             <div className="journal-header">
                 <Link
                     href="/"
+                    prefetch={false}
                     className="journal-name"
                     aria-label={`${siteConfig.author} — home`}
                 >

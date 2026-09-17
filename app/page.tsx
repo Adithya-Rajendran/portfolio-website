@@ -1,4 +1,6 @@
-import Image from "next/image";
+import HeroArtwork, {
+    preloadHeroArtwork,
+} from "@/components/home/hero-artwork";
 import Link from "next/link";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
 import { getProfileLink, selectFeaturedPost } from "@/lib/profile-content";
@@ -6,9 +8,8 @@ import { siteConfig } from "@/lib/config";
 import { formatDate } from "@/components/blogs/utils";
 import "./journal-home.css";
 
-const heroArtwork = "/images/lunar-shared-horizon-v1.webp";
-
 export default async function Home() {
+    preloadHeroArtwork();
     const [profile, posts] = await Promise.all([getProfile(), getAllPosts()]);
     const featured = selectFeaturedPost(profile, posts);
     const recent = posts
@@ -20,23 +21,7 @@ export default async function Home() {
     return (
         <main id="main-content" tabIndex={-1} className="home-journal">
             <section className="fj-hero" aria-labelledby="home-title">
-                <picture>
-                    {/* Large displays receive the full-quality master without a second encode. */}
-                    <source
-                        media="(min-width: 1600px), (min-width: 1200px) and (min-resolution: 2dppx)"
-                        srcSet={heroArtwork}
-                    />
-                    <Image
-                        className="fj-art"
-                        src={heroArtwork}
-                        alt="Two distant figures standing together at an observation railing, overlooking an imagined lunar settlement beneath Earth and a quiet starfield"
-                        fill
-                        sizes="(max-width: 620px) max(100vw, 854px, calc(177.78svh - 416px)), max(100vw, 960px, calc(177.78svh - 469px))"
-                        quality={90}
-                        loading="eager"
-                        fetchPriority="high"
-                    />
-                </picture>
+                <HeroArtwork />
                 <div className="fj-shell fj-hero-inner">
                     <div className="fj-hero-copy">
                         {profile?.focusAreas?.length ? (
