@@ -36,6 +36,7 @@ export default function NotFound() {
                 </Link>
                 <Link
                     href="/"
+                    prefetch={false}
                     className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent dark:text-slate-400"
                 >
                     Back to home
