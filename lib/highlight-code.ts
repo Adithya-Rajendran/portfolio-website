@@ -97,6 +97,8 @@ export async function highlightCodeBlocks(
     slug: string,
     contentTag: string = CACHE_TAGS.post,
 ): Promise<Record<string, string>> {
+    if (codeBlocks.length === 0) return {};
+
     return highlightCodeBlocksVersioned(
         codeBlocks,
         slug,

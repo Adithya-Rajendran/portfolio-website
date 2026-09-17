@@ -5,8 +5,6 @@ import { DM_Sans, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import { BotIdClient } from "botid/client";
 import Footer from "@/components/footer";
 import SiteFrame from "@/components/site-frame";
-import ThemeContextProvider from "@/context/theme-context";
-import { Toaster } from "@/components/ui/toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { PersonJsonLd, WebSiteJsonLd } from "@/components/json-ld";
@@ -125,12 +123,17 @@ export default function RootLayout({
                     Skip to content
                 </a>
 
-                <ThemeContextProvider>
-                    <Suspense fallback={children}>
-                        <SiteFrame footer={<Footer />}>{children}</SiteFrame>
-                    </Suspense>
-                    <Toaster />
-                </ThemeContextProvider>
+                <Suspense fallback={children}>
+                    <SiteFrame
+                        footer={
+                            <Suspense fallback={null}>
+                                <Footer />
+                            </Suspense>
+                        }
+                    >
+                        {children}
+                    </SiteFrame>
+                </Suspense>
                 <SpeedInsights />
                 <Analytics />
             </body>

@@ -44,6 +44,7 @@
     z-index: 1;
 }
 .home-journal .fj-hero {
+    --hero-art-position: center 25%;
     position: relative;
     isolation: isolate;
     min-height: max(540px, calc(100svh - var(--site-header-height) - 180px));
@@ -55,14 +56,20 @@
 .home-journal .fj-hero-inner {
     width: 100%;
 }
+.home-journal .fj-artwork {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    background-size: cover;
+    background-position: var(--hero-art-position);
+}
 .home-journal .fj-art {
     position: absolute;
     width: 100%;
     height: 100%;
     inset: 0;
     object-fit: cover;
-    object-position: center 25%;
-    z-index: -3;
+    object-position: var(--hero-art-position);
 }
 .home-journal .fj-hero:before {
     content: "";
@@ -461,8 +468,8 @@
     .home-journal .fj-explore {
         gap: 19px;
     }
-    .home-journal .fj-art {
-        object-position: 58% center;
+    .home-journal .fj-hero {
+        --hero-art-position: 58% center;
     }
     .home-journal .fj-hero:before {
         background:

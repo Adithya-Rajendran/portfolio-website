@@ -1,0 +1,47 @@
+{
+    "landscape": [
+        {
+            "width": 1280,
+            "avif": "/images/lunar-horizon-v2/landscape-1280.avif",
+            "webp": "/images/lunar-horizon-v2/landscape-1280.webp"
+        },
+        {
+            "width": 1920,
+            "avif": "/images/lunar-horizon-v2/landscape-1920.avif",
+            "webp": "/images/lunar-horizon-v2/landscape-1920.webp"
+        },
+        {
+            "width": 2560,
+            "avif": "/images/lunar-horizon-v2/landscape-2560.avif",
+            "webp": "/images/lunar-horizon-v2/landscape-2560.webp"
+        },
+        {
+            "width": 3840,
+            "avif": "/images/lunar-horizon-v2/landscape-3840.avif",
+            "webp": "/images/lunar-horizon-v2/landscape-3840.webp"
+        }
+    ],
+    "mobile": [
+        {
+            "width": 640,
+            "avif": "/images/lunar-horizon-v2/mobile-640.avif",
+            "webp": "/images/lunar-horizon-v2/mobile-640.webp"
+        },
+        {
+            "width": 960,
+            "avif": "/images/lunar-horizon-v2/mobile-960.avif",
+            "webp": "/images/lunar-horizon-v2/mobile-960.webp"
+        },
+        {
+            "width": 1440,
+            "avif": "/images/lunar-horizon-v2/mobile-1440.avif",
+            "webp": "/images/lunar-horizon-v2/mobile-1440.webp"
+        },
+        {
+            "width": 1920,
+            "avif": "/images/lunar-horizon-v2/mobile-1920.avif",
+            "webp": "/images/lunar-horizon-v2/mobile-1920.webp"
+        }
+    ],
+    "preview": "data:image/webp;base64,UklGRgIBAABXRUJQVlA4IPYAAABwCACdASpAACQAPv1orU6rJaQiNVYIAWAfiWcA09g/bW9hCmoBnlhy2o1xXUI71t+AVwOTx7PxfmvvUMj72TRau0A/LqTo+ZztfJXAAP72iIVfNKx5CSB55LHmRninkalVquaZ94uWwtqXmtCy1q2qneHd8+pcUluihl4gpFySA1vNn2+pVsMH57PEnBSjvAm7Z0f6VwFd+5KO5I77c1SGTgYfABHe54DZw5iNlCxudrgvMIaw+4k0GH5xmokVwPGJPkK9EF1epq5WkMeyhKS8PCbin1iP+rrQvX9UW+lU+ySvCSa7+1ss76UYDtCMmmS7nM+AAAA="
+}
