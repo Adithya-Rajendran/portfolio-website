@@ -10,6 +10,7 @@ export const siteRoutes = {
 export const primaryNavigation = [
     { href: siteRoutes.blog, label: "Writing", match: "writing" },
     { href: siteRoutes.portfolio, label: "Work", match: "work" },
+    { href: siteRoutes.about, label: "About", match: "about" },
     { href: siteRoutes.resume, label: "Résumé", match: "resume" },
 ] as const;
 

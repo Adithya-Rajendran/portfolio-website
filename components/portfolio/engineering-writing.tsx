@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import CareerSectionHeading from "@/components/portfolio/section-heading";
+import SectionSpy from "@/components/portfolio/section-spy";
 import { formatDate } from "@/components/blogs/utils";
 import type { PostListItem } from "@/lib/sanity-client";
 
@@ -12,10 +13,15 @@ export default function EngineeringWriting({
     const publishedPosts = posts.filter((post) => post.slug);
     if (!publishedPosts.length) return null;
     return (
-        <section id="engineering-writing" className="career-section">
+        <SectionSpy
+            section="Writing"
+            threshold={0.2}
+            id="engineering-writing"
+            className="career-section"
+        >
             <CareerSectionHeading
-                title="Engineering, in writing."
-                description="A closer look at the experiments, decisions, and lessons behind the work."
+                title="Selected writing."
+                description="Notes on what I build, investigate, and learn."
             />
             <div className="career-writing-list">
                 {publishedPosts.slice(0, 3).map((post) => (
@@ -40,6 +46,6 @@ export default function EngineeringWriting({
                     All writing <ArrowUpRight size={16} aria-hidden />
                 </Link>
             </div>
-        </section>
+        </SectionSpy>
     );
 }

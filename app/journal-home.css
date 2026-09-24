@@ -391,6 +391,28 @@
 .home-journal .fj-follow-links a:first-child:hover {
     background: #f6af8012;
 }
+.home-journal .fj-contact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 32px;
+    padding: 26px 0;
+    border-bottom: 1px solid var(--future-line);
+    color: var(--future-muted);
+    font-size: 14px;
+}
+.home-journal .fj-contact p {
+    max-width: 650px;
+}
+.home-journal .fj-contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    flex-shrink: 0;
+    color: var(--future-accent);
+    font-size: 13px;
+}
 @media (max-width: 900px) {
     .home-journal .fj-shell {
         padding: 0 30px;
@@ -431,12 +453,18 @@
     .home-journal .fj-hero {
         min-height: max(
             480px,
-            calc(100svh - var(--site-header-height) - 120px)
+            calc(100svh - var(--site-header-height) - 240px)
         );
+        align-items: flex-end;
     }
     .home-journal .fj-hero-copy {
-        padding: 40px 0 48px;
+        padding: 40px 0 32px;
         max-width: 100%;
+    }
+    .home-journal .fj-contact {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
     }
     .home-journal .fj-eyebrow {
         font-size: 10px;

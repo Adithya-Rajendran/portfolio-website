@@ -84,6 +84,7 @@ export type ProfileData = {
     focusAreas?: string[] | null;
     workSummary?: string | null;
     writingDescription?: string | null;
+    contactInvitation?: string | null;
     seoDescription?: string | null;
     featuredPostId?: string | null;
     location?: string | null;
@@ -159,6 +160,7 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     focusAreas,
     workSummary,
     writingDescription,
+    contactInvitation,
     seoDescription,
     "featuredPostId": featuredPost._ref,
     location,

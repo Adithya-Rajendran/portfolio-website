@@ -182,6 +182,14 @@ export default async function Home() {
                         <a href="/feed.xml">Follow via RSS ↗</a>
                     </div>
                 </section>
+                {profile?.contactInvitation && (
+                    <aside className="fj-contact" aria-label="Get in touch">
+                        <p>{profile.contactInvitation}</p>
+                        <Link href="/portfolio#contact">
+                            Get in touch <span aria-hidden>↗</span>
+                        </Link>
+                    </aside>
+                )}
                 <p className="journal-art-credit">
                     Imagined habitat · AI-generated artwork
                 </p>
