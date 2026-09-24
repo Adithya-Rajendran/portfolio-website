@@ -4,6 +4,10 @@ export const links = [
         hash: "/portfolio#projects",
     },
     {
+        name: "Writing",
+        hash: "/portfolio#engineering-writing",
+    },
+    {
         name: "Experience",
         hash: "/portfolio#experience",
     },

@@ -26,6 +26,9 @@ export default async function Footer() {
                             {label}
                         </Link>
                     ))}
+                    <a href="/feed.xml" aria-label="Follow via RSS">
+                        RSS <span aria-hidden>↗</span>
+                    </a>
                     {github && (
                         <a
                             href={github.url}

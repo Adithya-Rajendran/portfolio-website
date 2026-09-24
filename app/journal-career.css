@@ -427,7 +427,7 @@
 .career-contact-form textarea {
     display: block;
     width: 100%;
-    border: 1px solid var(--journal-line);
+    border: 1px solid #647580;
     border-radius: 0;
     background: var(--journal-bg);
     color: var(--journal-text);

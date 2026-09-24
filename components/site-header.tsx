@@ -34,13 +34,6 @@ export default function SiteHeader() {
                             {label}
                         </Link>
                     ))}
-                    <a
-                        className="journal-rss"
-                        href="/feed.xml"
-                        aria-label="Follow via RSS"
-                    >
-                        RSS <span aria-hidden>↗</span>
-                    </a>
                 </nav>
             </div>
         </header>

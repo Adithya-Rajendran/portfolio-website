@@ -4,7 +4,7 @@ Public Website: [https://adithya-rajendran.com](https://adithya-rajendran.com)
 
 ## Overview
 
-A writing-first personal website about systems, robotic vision, AI, and possible futures. The design pairs quiet stars and an imagined orbital habitat with readable field notes. Professional experience, projects, and a résumé remain one click away.
+A writing-first personal website about systems, robotic vision, AI, and possible futures. The design pairs quiet stars and an imagined lunar settlement with readable field notes. Professional experience, projects, and a résumé remain one click away.
 
 ## Features and Technologies
 
@@ -50,7 +50,7 @@ pnpm start
 - Copy `.env.example` to `.env.local` and set the public Sanity project and dataset values. Published content needs no read token. Keep local environment files out of Git.
 - Edit your profile, résumé PDF, posts, and projects in `/studio`. Publishing retains the existing Sanity webhook and daily scheduled-post refresh; both also refresh the homepage.
 - In **Profile → Identity**, edit the current headline, short introduction, and search description. These flow through the homepage, About, search metadata, and social previews.
-- In **Profile → Homepage & Writing**, edit focus areas, Work summary, writing introduction, and featured article. The featured selection falls back to the latest published post; unpublished and future-dated posts stay hidden. Recent notes update automatically.
+- In **Profile → Homepage & Writing**, edit focus areas, Work summary, writing introduction, featured article, and the optional closing contact invitation. The featured selection falls back to the latest published post; unpublished and future-dated posts stay hidden. Recent notes update automatically.
 - In **Profile → About / Right Now**, edit the biography, location, profile links, portrait, and current interests. Removing a link or optional content hides it on the site.
 - In **Profile → Portfolio**, maintain experience, education, skills, credentials, and the résumé PDF. Use **Currently Here** for ongoing work or study and **Expected Graduation Year** for a year-only estimate. The optional **Résumé Note** identifies an older PDF while a replacement is being prepared. Profile edits do not rewrite the uploaded PDF.
 - Posts own their title, description, body, publication date, and topic tags; Projects own their case studies. Topic pages and archive filters follow published tags automatically.

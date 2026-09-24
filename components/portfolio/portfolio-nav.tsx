@@ -7,11 +7,13 @@ import { useActiveSectionContext } from "@/context/active-section-context";
 
 export default function PortfolioNav({
     showProjects,
+    showWriting,
     showExperience = true,
     showSkills = true,
     showCertifications = true,
 }: {
     showProjects: boolean;
+    showWriting: boolean;
     showExperience?: boolean;
     showSkills?: boolean;
     showCertifications?: boolean;
@@ -22,6 +24,7 @@ export default function PortfolioNav({
     const links = portfolioLinks(showProjects).filter(
         (link) =>
             link.name !== "Contact" &&
+            (link.name !== "Writing" || showWriting) &&
             (link.name !== "Experience" || showExperience) &&
             (link.name !== "Skills" || showSkills) &&
             (link.name !== "Certifications" || showCertifications),

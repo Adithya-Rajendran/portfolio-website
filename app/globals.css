@@ -225,10 +225,6 @@ button:disabled {
 .journal-footer a:hover {
     color: var(--journal-accent);
 }
-.journal-nav .journal-rss {
-    border-left: 1px solid #485861;
-    padding-left: 26px;
-}
 .journal-footer {
     display: flex;
     justify-content: space-between;
@@ -314,9 +310,6 @@ button:disabled {
         width: 100%;
         justify-content: space-between;
         gap: 12px;
-    }
-    .journal-nav .journal-rss {
-        padding-left: 20px;
     }
     .journal-footer {
         padding-block: 20px;

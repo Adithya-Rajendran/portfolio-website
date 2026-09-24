@@ -4,8 +4,8 @@ import artwork from "@/lib/hero-artwork.json";
 const mobileMedia = "(max-width: 480px)";
 const landscapeMedia = "not all and (max-width: 480px)";
 const landscapeSizes =
-    "(max-width: 620px) max(100vw, 854px, calc(177.78svh - 416px)), max(100vw, 960px, calc(177.78svh - 469px))";
-const mobileSizes = "max(100vw, 480px, calc(100svh - 234px))";
+    "(max-width: 620px) max(100vw, 854px, calc(177.78svh - 630px)), max(100vw, 960px, calc(177.78svh - 469px))";
+const mobileSizes = "max(100vw, 480px, calc(100svh - 354px))";
 
 function sourceSet(
     variants: typeof artwork.landscape,

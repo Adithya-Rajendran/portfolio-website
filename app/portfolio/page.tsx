@@ -41,12 +41,16 @@ export default async function Portfolio() {
             tabIndex={-1}
             className="journal-page journal-container career-page"
         >
-            <Intro profile={profile} hasProjects={projects.length > 0} />
+            <Intro
+                profile={profile}
+                hasProjects={projects.length > 0}
+                hasWriting={posts.some((post) => post.slug)}
+            />
             <Projects projects={projects} />
+            <EngineeringWriting posts={posts} />
             <Experience entries={profile?.timeline ?? []} />
             <Skills groups={profile?.skillGroups ?? []} />
             <Certifications certifications={profile?.credentials ?? []} />
-            <EngineeringWriting posts={posts} />
             <Contact links={getProfileLinks(profile)} />
         </main>
     );

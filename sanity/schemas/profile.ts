@@ -79,6 +79,16 @@ export default defineType({
             validation: (Rule) => Rule.max(300),
         }),
         defineField({
+            name: "contactInvitation",
+            title: "Contact Invitation",
+            type: "text",
+            rows: 3,
+            group: "writing",
+            description:
+                "A short invitation below the homepage follow links. Describe the conversations or opportunities you welcome. Leave blank to hide it.",
+            validation: (Rule) => Rule.max(300),
+        }),
+        defineField({
             name: "seoDescription",
             title: "Site Search Description",
             type: "text",
