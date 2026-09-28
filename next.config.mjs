@@ -27,6 +27,14 @@ function contentSecurityPolicy(isStudio = false) {
 const nextConfig = {
     cacheComponents: true,
     reactCompiler: true,
+    // Partial Prefetching stays off app-wide (plan §4.6 rule 8, measured in
+    // PR 9). It cut /blog's page prefetches from 9 to 5 at 412px, but made
+    // the first request for an unknown post or tag slug answer 200 (a soft
+    // 404; the next one was 404) on `next start`, and posts beyond the
+    // first then loaded on the click. The two list-heavy routes, posts and
+    // tags, opt in on their own (`export const prefetch = "partial"`),
+    // which keeps the 404.
+    partialPrefetching: false,
     experimental: {
         // app/global-not-found.tsx renders unmatched URLs as its own
         // document, so the site's stylesheet is not attached to every route

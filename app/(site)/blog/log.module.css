@@ -1,0 +1,144 @@
+/*
+ * Flight Log pages (/blog, /blog/archive, /blog/tags/[tag]): the page head,
+ * the chart's place, the index section and the Downlink. Ported from the
+ * mockup's writing.css "LOG.HTML · § 01". The index, its rows, the chips
+ * and the chart have their own modules beside their components.
+ */
+
+/* One column whose order changes below 960px: there the chart follows the
+   index, so the first entries reach the first viewport (plan §6.2 PR 9).
+   The chart holds no focusable element, so the focus order is unchanged. */
+.page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+.index {
+    order: 1;
+}
+.chart {
+    order: 2;
+}
+.downlink {
+    order: 3;
+}
+
+/* ---- Page head: title on the left, intro and actions on the right ------ */
+.head {
+    padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+    padding-bottom: var(--s-5);
+}
+.head > :global(.page-head__intro) {
+    margin-top: var(--s-4);
+}
+.actions {
+    --cluster: var(--s-3);
+    margin-top: var(--s-5);
+}
+@media (max-width: 37.49rem) {
+    .head > :global(.page-head__title) {
+        margin-top: var(--s-3);
+    }
+    .head > :global(.page-head__title) > :global(.page-head__plain) {
+        margin-top: var(--s-2);
+    }
+    .head > :global(.page-head__intro) {
+        font-size: var(--step-0);
+    }
+    .actions {
+        margin-top: var(--s-4);
+    }
+}
+@media (min-width: 60rem) {
+    .head {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        column-gap: var(--gutter);
+        align-items: end;
+    }
+    .head > :global(.section-tag) {
+        grid-column: 1 / -1;
+    }
+    .head > :global(.page-head__title) {
+        grid-column: 1 / span 6;
+        grid-row: 2 / span 2;
+    }
+    .head > :global(.page-head__intro) {
+        grid-column: 7 / -1;
+        grid-row: 2;
+    }
+    .actions {
+        grid-column: 7 / -1;
+        grid-row: 3;
+        padding-bottom: 0.4rem;
+    }
+    .chart {
+        order: 0;
+        padding-top: var(--s-4);
+    }
+}
+
+/* ---- § 01.1 Index --------------------------------------------------------- */
+.index {
+    padding-top: var(--s-5);
+    padding-bottom: var(--s-8);
+}
+.indexInner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--s-5);
+}
+@media (max-width: 37.49rem) {
+    .index {
+        padding-top: var(--s-4);
+    }
+    .indexInner {
+        row-gap: var(--s-4);
+    }
+    /* The page head already counts the entries. */
+    .indexInner > :global(.section-tag) > :global(.section-tag__meta) {
+        display: none;
+    }
+}
+.empty {
+    display: grid;
+    justify-items: start;
+    gap: var(--s-3);
+    padding: var(--s-7) 0;
+    border-top: var(--rule-hair) solid var(--rule-1);
+}
+.emptyTitle {
+    font: 300 var(--step-3) / 1.1 var(--font-display);
+}
+
+/* ---- § 01.2 Downlink ------------------------------------------------------ */
+.downlink {
+    padding-top: var(--s-7);
+}
+.downGrid {
+    display: grid;
+    gap: var(--s-6) var(--gutter);
+}
+@media (min-width: 37.5rem) {
+    .downGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+.downItem {
+    display: grid;
+    align-content: start;
+    gap: var(--s-3);
+    padding-top: var(--s-4);
+    border-top: var(--rule-hair) solid var(--rule-2);
+}
+.downUrl {
+    color: var(--ink-1);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+}
+.downNote {
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.5 var(--font-text);
+}
+.downItem > :global(.cluster) {
+    margin-top: var(--s-2);
+}

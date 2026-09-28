@@ -1,3 +1,4 @@
+import "@/app/journal-blog.css";
 import { getAllSlugs, getPostBySlug, getPostMeta } from "@/lib/sanity-client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -8,6 +9,14 @@ import BlogPostBody, {
 import { BlogPostJsonLd } from "@/components/json-ld";
 import NewsletterNotice from "@/components/newsletter/newsletter-notice";
 import ArticleContinuation from "@/components/blogs/article-continuation";
+
+/**
+ * Partial Prefetching for this route only (plan §4.6 rule 8, measured in
+ * PR 9): the entry links on a list share one prefetched App Shell instead
+ * of each prefetching its own post, and the post's content loads on the
+ * click. The app-wide flag stays off (next.config.mjs).
+ */
+export const prefetch = "partial";
 
 /**
  * Async body — fetches the full post (including body) and runs shiki

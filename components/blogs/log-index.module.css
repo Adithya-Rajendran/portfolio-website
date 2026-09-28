@@ -1,0 +1,190 @@
+/*
+ * The scannable Flight Log index (G8) and its rows. Ported from the
+ * mockup's site.css 4.10 (Post row) and 4.27 (Scannable log index), with
+ * the year groups the plan adds: the year heads the Entry column of its
+ * group. Below 960px the tracks fold into a stacked row.
+ */
+.index {
+    --log-cols: 6.5rem 7rem minmax(0, 1fr) 4.5rem 1.5rem;
+    min-width: 0;
+}
+.group + .group {
+    margin-top: var(--s-7);
+}
+
+/* ---- Column head: the year, then the column names ---------------------- */
+.head {
+    display: flex;
+    align-items: baseline;
+    padding-bottom: var(--s-2);
+    color: var(--ink-3);
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
+}
+.head > span {
+    display: none;
+}
+.year {
+    margin: 0;
+    color: var(--ink-1);
+    font: 400 var(--label-size-lg) / 1.35 var(--font-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+}
+@media (min-width: 60rem) {
+    .head {
+        display: grid;
+        grid-template-columns: var(--log-cols);
+        column-gap: var(--gutter);
+    }
+    .head > span {
+        display: block;
+    }
+    .head > span:last-child {
+        text-align: right;
+    }
+}
+
+/* ---- Rows --------------------------------------------------------------- */
+.list {
+    margin: 0;
+    padding: 0;
+    border-bottom: var(--rule-hair) solid var(--rule-1);
+    list-style: none;
+}
+.row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-2);
+    padding-block: var(--s-5);
+    border-top: var(--rule-hair) solid var(--rule-1);
+    transition:
+        border-color var(--dur-hover) var(--ease-dock),
+        background-color var(--dur-hover) var(--ease-dock);
+}
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+}
+.log {
+    color: var(--accent-text);
+    font: 400 var(--label-size) / 1.4 var(--font-label);
+    letter-spacing: var(--track-label);
+    white-space: nowrap;
+}
+.date,
+.read {
+    color: var(--ink-2);
+    font: 400 0.8125rem / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    white-space: nowrap;
+}
+.title {
+    margin: 0;
+    font: 400 var(--step-1) / 1.25 var(--font-display);
+    letter-spacing: -0.003em;
+    text-wrap: pretty;
+}
+.title a {
+    text-decoration: none;
+}
+.dek {
+    max-width: 62ch;
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.5 var(--font-long);
+    text-wrap: pretty;
+}
+.tags {
+    margin-top: var(--s-1);
+}
+.match {
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+}
+.match::before {
+    color: inherit;
+}
+.arrow {
+    display: none;
+}
+
+/* Hover: a warm rule, a lit surface, the title underlined and the arrow
+   nudged. The whole row is the title's link. */
+.row:hover {
+    border-top-color: var(--accent);
+    background: linear-gradient(to right, var(--surface-1), transparent 80%);
+}
+.row:hover .title a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.16em;
+}
+
+@media (min-width: 60rem) {
+    .row {
+        grid-template-columns: var(--log-cols);
+        column-gap: var(--gutter);
+        align-items: baseline;
+    }
+    .meta {
+        display: contents;
+    }
+    .log {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .date {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    .read {
+        grid-column: 4;
+        grid-row: 1;
+        text-align: right;
+    }
+    .row > :not(.meta):not(.arrow) {
+        grid-column: 3;
+    }
+    .title {
+        grid-row: 1;
+        font-size: var(--step-2);
+        font-weight: 300;
+        line-height: 1.15;
+    }
+    .arrow {
+        display: block;
+        grid-column: 5;
+        grid-row: 1;
+        align-self: center;
+        justify-self: end;
+        width: 20px;
+        height: 20px;
+        color: var(--ink-3);
+        transition:
+            transform var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+    .row:hover .arrow {
+        color: var(--accent-text);
+        transform: translateX(4px);
+    }
+}
+
+@media (forced-colors: active) {
+    .row:hover {
+        background: none;
+    }
+}
+@media print {
+    .row {
+        break-inside: avoid;
+    }
+    .arrow {
+        display: none !important;
+    }
+}

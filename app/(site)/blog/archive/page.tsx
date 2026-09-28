@@ -1,85 +1,84 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import TagChips from "@/components/blogs/tag-chips";
 import ArchiveList from "@/components/blogs/archive-list";
-import {
-    getPostSlug,
-    readingTimeFromWordCount,
-} from "@/components/blogs/utils";
-import { collectTags } from "@/lib/tags";
-import { getAllPosts, getProfile } from "@/lib/sanity-client";
-import { getWritingDescription } from "@/lib/profile-content";
+import TagChips from "@/components/blogs/tag-chips";
+import { ButtonLink } from "@/components/ui/button";
+import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
+import { logCopy } from "@/lib/copy";
+import { entryCount, logEntries, logSince } from "@/lib/log-index";
+import { siteRoutes } from "@/lib/navigation";
+import { getWritingDescription } from "@/lib/profile-content";
+import { getAllPosts, getProfile } from "@/lib/sanity-client";
+import { collectTags } from "@/lib/tags";
+import styles from "../log.module.css";
+
+const copy = logCopy.archive;
 
 export async function generateMetadata(): Promise<Metadata> {
-    const description = getWritingDescription(await getProfile());
+    const profile = await getProfile();
+    const description = getWritingDescription(profile);
+    const name = profile?.name || siteConfig.author;
+    const title = `${copy.title} · ${logCopy.themed}`;
+    const url = `${siteConfig.url}/blog/archive`;
     return {
-        title: "Writing archive",
+        title,
         description,
-        alternates: { canonical: `${siteConfig.url}/blog/archive` },
-        openGraph: {
-            title: `Writing archive | ${siteConfig.author}`,
-            description,
-            url: `${siteConfig.url}/blog/archive`,
-        },
+        alternates: { canonical: url },
+        openGraph: { title: `${title} | ${name}`, description, url },
         twitter: {
             card: "summary_large_image",
-            title: `Writing archive | ${siteConfig.author}`,
+            title: `${title} | ${name}`,
             description,
         },
     };
 }
 
+/**
+ * Archive · All entries: every Flight Log entry by year in the log index,
+ * with the tag chips and a search over titles, standfirsts and tags. The
+ * whole list is server-rendered; only the search needs JavaScript.
+ */
 export default async function ArchivePage() {
-    const allPosts = await getAllPosts();
-    const posts = allPosts
-        .filter((post) => getPostSlug(post))
-        .map((post) => ({
-            slug: getPostSlug(post),
-            title: post.title || "",
-            description: post.description || "",
-            publishedAt: post.publishedAt || "",
-            tags: post.tags ?? [],
-            readingMinutes:
-                post.wordCount > 0
-                    ? readingTimeFromWordCount(post.wordCount)
-                    : null,
-        }));
-    const tags = collectTags(posts);
+    const entries = logEntries(await getAllPosts());
+    const tags = collectTags(entries);
+
     return (
-        <div
-            data-page="archive"
-            data-legacy
-            className="journal-page journal-container journal-writing"
-        >
-            <header className="journal-writing-intro">
-                <p className="journal-eyebrow">The complete notebook</p>
-                <h1 className="journal-title">A trail of ideas.</h1>
-                <p className="journal-description">
-                    Search the writing, follow a topic, or see where curiosity
-                    has led.
-                </p>
-            </header>
-            {tags.length > 0 && (
-                <details className="journal-archive-topics">
-                    <summary>
-                        Browse {tags.length}{" "}
-                        {tags.length === 1 ? "topic" : "topics"}
-                    </summary>
-                    <TagChips tags={tags} />
-                </details>
-            )}
-            {posts.length ? (
-                <ArchiveList posts={posts} />
-            ) : (
-                <div className="journal-empty">
-                    <h2>Nothing to search yet.</h2>
-                    <p>Published notes will appear here.</p>
-                    <Link href="/blog" className="journal-link">
-                        Back to writing →
-                    </Link>
+        <div data-page="archive" className={styles.page}>
+            <PageHead
+                className={`shell ${styles.head}`}
+                ornament="wave"
+                num={logCopy.num}
+                themed={copy.themed}
+                plain={copy.plain}
+                title={copy.title}
+                meta={logCopy.meta(
+                    entryCount(entries.length),
+                    logSince(entries),
+                )}
+                intro={copy.intro}
+            >
+                <div className={`cluster ${styles.actions}`}>
+                    <ButtonLink
+                        size="sm"
+                        icon="arrow"
+                        iconAt="end"
+                        href={siteRoutes.blog}
+                    >
+                        {logCopy.back}
+                    </ButtonLink>
                 </div>
-            )}
+            </PageHead>
+
+            <section
+                className={`section ${styles.index}`}
+                aria-label={copy.plain}
+            >
+                <div className={`shell ${styles.indexInner}`}>
+                    <ArchiveList entries={entries}>
+                        <TagChips tags={tags} total={entries.length} />
+                    </ArchiveList>
+                </div>
+            </section>
         </div>
     );
 }

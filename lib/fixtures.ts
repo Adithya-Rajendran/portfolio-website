@@ -462,6 +462,24 @@ const fixturePosts: PostWithBody[] = [
             ),
         ] as ContentBody,
     },
+    {
+        // A year earlier than the others, so the Flight Log index shows two
+        // year groups and its chart ticks a new year.
+        _id: "fixture-post-4",
+        _updatedAt: "2025-11-14T00:00:00Z",
+        title: "Fixture post: an entry from an earlier year",
+        slug: "fixture-post-earlier-year",
+        description:
+            "Fixture content for offline builds: the oldest entry, filed the year before the others.",
+        publishedAt: "2025-11-14",
+        tags: ["fixture", "notes"],
+        wordCount: 16,
+        body: [
+            textBlock(
+                "This fixture post exists only in builds without Sanity credentials. It is dated a year earlier.",
+            ),
+        ] as ContentBody,
+    },
 ];
 
 function listPost(post: PostWithBody): PostListItem {

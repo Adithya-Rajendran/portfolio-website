@@ -1,24 +1,47 @@
 import { ImageResponse } from "next/og";
-import { OgTemplate, OG_SIZE, OG_CONTENT_TYPE } from "@/lib/og-template";
+import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
-import { getProfile } from "@/lib/sanity-client";
+import { logCopy as copy } from "@/lib/copy";
+import { entryCount, logEntries, logSince } from "@/lib/log-index";
+import { OG_CARD_FONTS, OgCard } from "@/lib/og-card";
+import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-template";
 import { getWritingDescription } from "@/lib/profile-content";
+import { getAllPosts, getProfile } from "@/lib/sanity-client";
+import { transmissions } from "@/lib/transmissions";
 
-export const alt = "Writing — Adithya Rajendran";
+export const alt = `${copy.themed} · ${copy.plain} — ${siteConfig.author}`;
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
 const domain = new URL(siteConfig.url).hostname;
 
+/**
+ * The Flight Log's share card: the owner's description of his writing,
+ * the transmissions strip (every entry on its date, the newest in orange)
+ * and the entry count. It shows only published content.
+ */
 export default async function Image() {
-    const description = getWritingDescription(await getProfile());
+    const [posts, profile, today] = await Promise.all([
+        getAllPosts(),
+        getProfile(),
+        getToday(),
+    ]);
+    const entries = logEntries(posts);
     return new ImageResponse(
-        <OgTemplate
-            eyebrow={`${siteConfig.author} · Writing`}
-            title="Writing"
-            subtitle={description}
+        <OgCard
+            num={copy.num}
+            themed={copy.themed}
+            plain={copy.plain}
+            title={copy.themed}
+            subtitle={getWritingDescription(profile)}
+            chart={transmissions(entries, today)}
+            footerLeft={
+                entries.length
+                    ? copy.meta(entryCount(entries.length), logSince(entries))
+                    : profile?.name || siteConfig.author
+            }
             footerRight={`${domain}/blog`}
         />,
-        { ...size },
+        { ...size, fonts: OG_CARD_FONTS },
     );
 }

@@ -1,141 +1,80 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
-import Link from "next/link";
-import { Search } from "lucide-react";
-import { groupPostsByYear } from "@/lib/tags";
-import { formatDate } from "./utils";
+import { useId, useState } from "react";
+import LogIndex from "@/components/blogs/log-index";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { logCopy } from "@/lib/copy";
+import { entryCount, type LogEntry } from "@/lib/log-index";
+import styles from "./archive-list.module.css";
 
-interface ArchivePostItem {
-    slug: string;
-    title: string;
-    description: string;
-    publishedAt: string;
-    tags: string[];
-    readingMinutes: number | null;
+const copy = logCopy.archive;
+
+/** Every word must appear in the title, the standfirst or a tag. */
+function matches(entry: LogEntry, words: string[]): boolean {
+    const haystack = [entry.title, entry.dek, entry.designation, ...entry.tags]
+        .join(" ")
+        .toLowerCase();
+    return words.every((word) => haystack.includes(word));
 }
 
-export default function ArchiveList({ posts }: { posts: ArchivePostItem[] }) {
+/**
+ * The archive's search over every Flight Log entry, grouped by year in the
+ * log index. The server renders the whole list; the search field needs
+ * JavaScript, so it is shown only with it (`.js-only`). The count is a
+ * polite live region.
+ */
+export default function ArchiveList({
+    entries,
+    children,
+}: {
+    entries: LogEntry[];
+    /** Shown between the search and the list: the tag chips. */
+    children?: React.ReactNode;
+}) {
     const [query, setQuery] = useState("");
     const inputId = useId();
-    const filtered = useMemo(() => {
-        const q = query.trim().toLowerCase();
-        return q
-            ? posts.filter(
-                  (post) =>
-                      post.title.toLowerCase().includes(q) ||
-                      post.description.toLowerCase().includes(q) ||
-                      post.tags.some((tag) => tag.toLowerCase().includes(q)),
-              )
-            : posts;
-    }, [posts, query]);
-    const groups = useMemo(() => groupPostsByYear(filtered), [filtered]);
+    const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const shown = words.length
+        ? entries.filter((entry) => matches(entry, words))
+        : entries;
+    const total = entryCount(entries.length);
+
     return (
-        <section
-            className="journal-archive"
-            aria-label="Search the writing archive"
-        >
-            <label htmlFor={inputId} className="journal-search-label">
-                Search the notebook
-            </label>
-            <div className="journal-search-field">
-                <Search aria-hidden size={18} />
-                <input
-                    id={inputId}
-                    type="search"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search titles, summaries, or topics…"
-                />
-            </div>
-            <p
-                aria-live="polite"
-                aria-atomic="true"
-                className="journal-search-count"
-            >
-                {filtered.length} of {posts.length}{" "}
-                {posts.length === 1 ? "note" : "notes"}
-            </p>
-            {filtered.length === 0 ? (
-                <div className="journal-empty">
-                    <h2>No notes found.</h2>
-                    <p>
-                        No writing matches “{query}”. Try another word or topic.
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => setQuery("")}
-                        className="journal-link"
-                    >
-                        Clear search →
-                    </button>
+        <>
+            <div className={`js-only ${styles.search}`} role="search">
+                <label className="field__label" htmlFor={inputId}>
+                    {copy.searchLabel}
+                </label>
+                <div className={styles.field}>
+                    <Icon name="search" className={styles.icon} />
+                    <input
+                        id={inputId}
+                        className={`input ${styles.input}`}
+                        type="search"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder={copy.searchPlaceholder}
+                        autoComplete="off"
+                        spellCheck={false}
+                    />
                 </div>
+            </div>
+            {children}
+            <p className={styles.count} role="status">
+                {words.length ? copy.count(shown.length, total) : total}
+            </p>
+            {shown.length ? (
+                <LogIndex entries={shown} level={2} />
             ) : (
-                groups.map((group) => (
-                    <section
-                        key={group.year}
-                        className="journal-archive-year"
-                        aria-labelledby={`year-${group.year}`}
-                    >
-                        <div className="journal-section-heading">
-                            <h2 id={`year-${group.year}`}>{group.year}</h2>
-                            <span className="journal-post-meta">
-                                {group.posts.length}{" "}
-                                {group.posts.length === 1 ? "note" : "notes"}
-                            </span>
-                        </div>
-                        <ul className="journal-post-list">
-                            {group.posts.map((post) => (
-                                <li key={post.slug}>
-                                    <Link
-                                        href={`/blog/${post.slug}`}
-                                        className="journal-post-row"
-                                    >
-                                        <span className="journal-post-meta">
-                                            <time
-                                                dateTime={
-                                                    post.publishedAt ||
-                                                    undefined
-                                                }
-                                            >
-                                                {formatDate(post.publishedAt) ||
-                                                    "Undated"}
-                                            </time>
-                                            {post.readingMinutes && (
-                                                <span>
-                                                    {post.readingMinutes} min
-                                                    read
-                                                </span>
-                                            )}
-                                        </span>
-                                        <span className="journal-post-summary">
-                                            <span className="journal-post-title">
-                                                {post.title}
-                                            </span>
-                                            {post.description && (
-                                                <span className="journal-post-description">
-                                                    {post.description}
-                                                </span>
-                                            )}
-                                            {post.tags.length > 0 && (
-                                                <span className="journal-post-tags">
-                                                    {post.tags.join(" / ")}
-                                                </span>
-                                            )}
-                                        </span>
-                                        <span
-                                            aria-hidden
-                                            className="journal-post-arrow"
-                                        >
-                                            ↗
-                                        </span>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                ))
+                <div className={styles.empty}>
+                    <p className={styles.emptyTitle}>{copy.noMatch}</p>
+                    <p className="t-small">{copy.noMatchNote(query.trim())}</p>
+                    <Button size="sm" icon="close" onClick={() => setQuery("")}>
+                        {copy.clear}
+                    </Button>
+                </div>
             )}
-        </section>
+        </>
     );
 }

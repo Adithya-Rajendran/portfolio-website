@@ -168,3 +168,75 @@ export const contactCopy = {
     /** The /portfolio#contact section's pointer to the routes. */
     portfolioRoutes: "Or pick a route:",
 } as const;
+
+/**
+ * The Flight Log (G8): the index, the archive and the tag pages. The intro
+ * is the owner's own writing description from the profile; everything here
+ * is UI copy.
+ */
+export const logCopy = {
+    num: "01",
+    themed: "Flight Log",
+    plain: "Blog",
+    /** The page-head meta: "3 entries · since Mar 2026". */
+    meta: (entries: string, since: string) =>
+        since ? `${entries} · since ${since}` : entries,
+    follow: "RSS & follow",
+    search: "Search entries",
+    indexThemed: "Index",
+    indexPlain: "All entries",
+    /** The index's status line: "Showing all 3 entries, newest first." */
+    showing: (entries: string) => `Showing all ${entries}, newest first.`,
+    tags: "Tags",
+    all: "All",
+    /** Column heads of the log index. */
+    columns: {
+        entry: "Entry",
+        filed: "Filed",
+        title: "Title · standfirst",
+        read: "Read",
+    },
+    read: (minutes: number) => `${minutes} min`,
+    readSuffix: " read",
+    tagList: "Tags",
+    empty: "No entries yet.",
+    emptyNote: "Entries appear here as they are filed.",
+    chart: {
+        num: "Fig. 1",
+        /** "Transmissions, Mar 2026 to now · 3 entries · 2,863 words". */
+        what: (from: string, entries: string, words: number) =>
+            `Transmissions, ${from} to now · ${entries} · ${words.toLocaleString("en-US")} words`,
+        key: "Height = reading time",
+        now: "Now",
+    },
+    downlinkThemed: "Downlink",
+    downlinkPlain: "Follow",
+    feedLabel: "RSS feed",
+    feedNote: "Every new entry, in any feed reader.",
+    feedAction: "Open the feed",
+    linkedInLabel: "LinkedIn",
+    linkedInNote: "Follow along there.",
+    linkedInAction: "Follow on LinkedIn",
+    archive: {
+        themed: "Archive",
+        plain: "All entries",
+        title: "Archive",
+        intro: "Every Flight Log entry by year. Search titles, standfirsts and tags.",
+        searchLabel: "Search the Flight Log",
+        searchPlaceholder: "A title, a word or a tag",
+        /** "2 of 3 entries" while a search is on. */
+        count: (shown: number, entries: string) =>
+            `${shown.toLocaleString("en-US")} of ${entries}`,
+        noMatch: "No entries match.",
+        noMatchNote: (query: string) =>
+            `Nothing in the log matches “${query}”. Try another word or tag.`,
+        clear: "Clear search",
+    },
+    tag: {
+        themed: "Subsystem",
+        plain: "Tag",
+        /** "Entries tagged homelab." */
+        intro: (tag: string) => `Flight Log entries tagged ${tag}.`,
+    },
+    back: "Flight Log index",
+} as const;

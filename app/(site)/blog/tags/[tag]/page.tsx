@@ -1,40 +1,79 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Latest from "@/components/blogs/latest";
+import LogIndex from "@/components/blogs/log-index";
 import TagChips from "@/components/blogs/tag-chips";
-import { getAllPosts, getProfile } from "@/lib/sanity-client";
-import { getWritingDescription } from "@/lib/profile-content";
-import { collectTags, filterPostsByTag, TAG_PATTERN } from "@/lib/tags";
+import { ButtonLink } from "@/components/ui/button";
+import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
+import { logCopy } from "@/lib/copy";
+import { entriesTagged, entryCount, logEntries } from "@/lib/log-index";
+import { siteRoutes } from "@/lib/navigation";
+import { getAllPosts } from "@/lib/sanity-client";
+import { collectTags, TAG_PATTERN } from "@/lib/tags";
+import styles from "../../log.module.css";
 
 /**
- * Data section — fetches posts, filters by tag, and 404s when the tag
- * has no matches. The hero and rows both render from this one fetch.
+ * Partial Prefetching for this route only (plan §4.6 rule 8, measured in
+ * PR 9): the tag links on a page share one prefetched App Shell instead of
+ * each prefetching its own page, and the tag's entries load on the click.
+ * The app-wide flag stays off (next.config.mjs).
  */
-async function TagPosts({ tag }: { tag: string }) {
-    const allPosts = await getAllPosts();
-    const posts = filterPostsByTag(allPosts, tag);
-    if (posts.length === 0) notFound();
+export const prefetch = "partial";
 
-    const allTags = collectTags(allPosts);
+const copy = logCopy.tag;
+
+/**
+ * Data section: the tag's entries in the log index, with every tag's chip.
+ * An unknown tag has no entries and answers 404. Entries keep the LOG
+ * numbers they have on the index, because they are numbered before
+ * filtering.
+ */
+async function TagEntries({ tag }: { tag: string }) {
+    const all = logEntries(await getAllPosts());
+    const entries = entriesTagged(all, tag);
+    if (entries.length === 0) notFound();
 
     return (
-        <div className="journal-page journal-container journal-writing">
-            <header className="journal-writing-intro">
-                <p className="journal-eyebrow">Follow a thread</p>
-                <h1 className="journal-title">{tag}</h1>
-                <p className="journal-description">
-                    {posts.length} {posts.length === 1 ? "note" : "notes"} on{" "}
-                    {tag}.
-                </p>
-            </header>
-            <TagChips tags={allTags} active={tag} />
-            <Latest posts={posts} title="From the notebook" />
-            <Link href="/blog" className="journal-link">
-                ← All writing
-            </Link>
-        </div>
+        <>
+            <PageHead
+                className={`shell ${styles.head}`}
+                ornament="wave"
+                num={logCopy.num}
+                themed={copy.themed}
+                plain={copy.plain}
+                title={tag}
+                meta={entryCount(entries.length)}
+                intro={copy.intro(tag)}
+            >
+                <div className={`cluster ${styles.actions}`}>
+                    <ButtonLink
+                        size="sm"
+                        icon="arrow"
+                        iconAt="end"
+                        href={siteRoutes.blog}
+                    >
+                        {logCopy.back}
+                    </ButtonLink>
+                    <ButtonLink size="sm" icon="search" href="/blog/archive">
+                        {logCopy.search}
+                    </ButtonLink>
+                </div>
+            </PageHead>
+
+            <section
+                className={`section ${styles.index}`}
+                aria-label={copy.intro(tag)}
+            >
+                <div className={`shell ${styles.indexInner}`}>
+                    <TagChips
+                        tags={collectTags(all)}
+                        total={all.length}
+                        current={tag}
+                    />
+                    <LogIndex entries={entries} level={2} matchTag={tag} />
+                </div>
+            </section>
+        </>
     );
 }
 
@@ -53,8 +92,8 @@ export async function generateStaticParams() {
 }
 
 /**
- * Tag archive page — validates the route param before handing off to the
- * async data section for the actual post lookup.
+ * Subsystem · Tag: one tag's Flight Log entries. Validates the route param
+ * before handing off to the data section.
  */
 export default async function TagPage({
     params,
@@ -68,8 +107,8 @@ export default async function TagPage({
     if (!TAG_PATTERN.test(tag)) notFound();
 
     return (
-        <div data-page="tag" data-legacy className="w-full">
-            <TagPosts tag={tag} />
+        <div data-page="tag" className={styles.page}>
+            <TagEntries tag={tag} />
         </div>
     );
 }
@@ -83,21 +122,22 @@ export async function generateMetadata({
     if (!TAG_PATTERN.test(tag)) {
         return;
     }
-    const description = `Notes on ${tag}. ${getWritingDescription(await getProfile())}`;
+    const description = copy.intro(tag);
+    const title = `${tag} · ${logCopy.themed}`;
     return {
-        title: `Posts tagged ${tag}`,
+        title,
         description,
         alternates: {
             canonical: `${siteConfig.url}/blog/tags/${tag}`,
         },
         openGraph: {
-            title: `${tag} | ${siteConfig.author}`,
+            title: `${title} | ${siteConfig.author}`,
             description,
             url: `${siteConfig.url}/blog/tags/${tag}`,
         },
         twitter: {
             card: "summary_large_image",
-            title: `${tag} | ${siteConfig.author}`,
+            title: `${title} | ${siteConfig.author}`,
             description,
         },
         robots: {

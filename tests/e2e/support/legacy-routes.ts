@@ -10,7 +10,6 @@
  */
 const LEGACY_ROUTES: { pattern: RegExp; until: string }[] = [
     { pattern: /^\/$/, until: "PR 13 (home)" },
-    { pattern: /^\/blog(\/archive|\/tags\/[^/]+)?$/, until: "PR 9 (log)" },
     { pattern: /^\/blog\/(?!archive$|tags\/)[^/]+$/, until: "PR 10 (post)" },
     { pattern: /^\/resume$/, until: "PR 11 (trajectory)" },
     { pattern: /^\/portfolio(\/[^/]+)?$/, until: "PR 12 (missions)" },

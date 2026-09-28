@@ -5,7 +5,9 @@ import { STATIC_PAGES, contentPages, isPostPage } from "./support/routes";
 
 /**
  * The byte report (plan §7.1): brotli sizes of the HTML, scripts, styles
- * and fonts each page loads, plus its RSC prefetch count. `next start`
+ * and fonts each page loads, plus its prefetches: the page prefetches the
+ * budget counts, and the per-URL route trees (`/_tree`, small static
+ * responses) beside them. `next start`
  * serves gzip only, so each body is compressed here at quality 11; a
  * preview run reports the same numbers for the deployed build. Budgets are
  * printed next to the figures but only enforced from PR 17, so nothing
@@ -33,6 +35,8 @@ interface PageBytes {
     path: string;
     resources: Map<string, Resource>;
     prefetches: number;
+    /** Route-tree lookups (`next-router-segment-prefetch: /_tree`). */
+    trees: number;
     /** Responses whose body the browser no longer held (not counted). */
     unread: number;
 }
@@ -73,12 +77,17 @@ test("byte report", async ({ browser, request, baseURL }, testInfo) => {
             path,
             resources: new Map(),
             prefetches: 0,
+            trees: 0,
             unread: 0,
         };
         const reads: Promise<void>[] = [];
 
         page.on("request", (req) => {
-            if (req.headers()["rsc"] === "1" && req.url().startsWith(origin)) {
+            const headers = req.headers();
+            if (headers["rsc"] !== "1" || !req.url().startsWith(origin)) return;
+            if (headers["next-router-segment-prefetch"] === "/_tree") {
+                measured.trees += 1;
+            } else {
                 measured.prefetches += 1;
             }
         });
@@ -148,6 +157,7 @@ test("byte report", async ({ browser, request, baseURL }, testInfo) => {
             "css br": `${kb(total(page, "stylesheet"))}${over(total(page, "stylesheet"), BUDGETS.css)}`,
             "fonts br": `${kb(total(page, "font"))}${over(total(page, "font"), BUDGETS.fonts)}`,
             prefetches: `${page.prefetches}${over(page.prefetches, BUDGETS.prefetches)}`,
+            "route trees": page.trees,
             ...(page.unread ? { unread: page.unread } : {}),
         };
     });

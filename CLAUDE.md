@@ -74,6 +74,27 @@ only live in comments or commit messages.
 - **The mission patch** is generated: `node scripts/generate-patch.mjs`
   writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
   `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
+- **Share images.** Redesigned pages draw the Deep Field card
+  (`lib/og-card.tsx`; `/blog` and `/blog/archive` so far), the others the
+  older `lib/og-template.tsx` until their PR. Satori takes TTF, not WOFF2,
+  so the card reads static copies from `assets/fonts/og/` (each with its
+  OFL licence) once at module scope, which keeps the image prerendered.
+- **Prefetching** (plan §4.6 rule 8). The app-wide `partialPrefetching`
+  flag is off: in Next.js 16.3.4 it made the first request for an unknown
+  post or tag slug answer 200 instead of 404 on `next start`. The two
+  list-heavy routes opt in per segment instead
+  (`export const prefetch = "partial"` in `blog/[slug]` and
+  `blog/tags/[tag]`, which keeps the 404), so the links to them on a page
+  share one prefetched App Shell and the entry loads on the click. Links
+  that repeat another link on the page (the chart's marks) pass
+  `prefetch={false}`. A first view stays within 8 page prefetches
+  (`tests/e2e/log.spec.ts`); each distinct URL also fetches its small route
+  tree (`/_tree`), which the byte report lists apart.
+- **LOG numbers** are derived, never stored: `logNumbers` in
+  `lib/designations.ts` numbers published posts by `publishedAt`, oldest
+  first (LOG 001), ties by document id. Number the whole list, then filter
+  (`logEntries` in `lib/log-index.ts`), so a tag page keeps each entry's
+  number. A post back-dated before an existing one renumbers those after it.
 
 ## Layout: the `(site)` route group
 
@@ -108,7 +129,7 @@ only live in comments or commit messages.
   (`usePathname`) can suspend under Cache Components, so it sits in a
   small leaf `<Suspense>` with a static fallback (`ActiveNavLink` in the
   header, one boundary per link because the list as a whole passes the
-  threshold, and `BlogNav`); larger URL-dependent UI takes its variant as
+  threshold); larger URL-dependent UI takes its variant as
   a prop from the page instead (`PortfolioNav`).
 - `app/(site)/not-found.tsx` renders `notFound()` calls inside pages;
   `app/global-not-found.tsx` (`experimental.globalNotFound`) renders
@@ -342,9 +363,14 @@ deployment require an authenticated Sanity CLI session.
   checks, a refused send keeps the draft and its stale alert clears after
   leaving and returning, Consulting hidden while off, no email address or
   phone number, the no-JavaScript LinkedIn alternative; sends only on the
-  fixture build, which has no Resend credentials),
+  fixture build, which has no Resend credentials), `log` (the first
+  entry in the first viewport at 1280×800 and 390×844 in both themes, LOG
+  numbers that count up from the oldest entry and hold on the archive and
+  tag pages, tag chips and their counts, 404 for an unknown or malformed
+  tag, the archive's search and its no-JavaScript list, the chart's marks,
+  and the prefetch budget on `/blog`),
   `budgets` (the brotli byte report, printed,
-  not enforced yet), `screens` (review screenshots in both themes and the
+  not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio
   with JavaScript, fixture project only: it boots to its login screen and,
   signed in against the stand-in API in `tests/e2e/support/sanity-api.ts`,
