@@ -41,9 +41,6 @@
     .t-faint {
         color: var(--ink-3);
     }
-    .t-accent {
-        color: var(--accent-text);
-    }
 
     /* Tier-1 micro label: Michroma caps, tracked. */
     .label {
@@ -58,9 +55,6 @@
     }
     .label--ink {
         color: var(--ink-1);
-    }
-    .label--accent {
-        color: var(--accent-text);
     }
 
     /* Dates, metrics, codes. */

@@ -10,23 +10,9 @@
     position: relative;
 }
 
-/* ---- The head band: stars behind the head, fading before § 03.1 -------- */
+/* ---- The head band: the shared split head, then the tool row ------------ */
 .band {
-    position: relative;
-    isolation: isolate;
     padding-bottom: var(--s-5);
-}
-
-.head {
-    padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
-    padding-bottom: var(--s-6);
-}
-.head > :global(.page-head__intro) {
-    margin-top: var(--s-4);
-}
-.actions {
-    --cluster: var(--s-3);
-    margin-top: var(--s-5);
 }
 .note {
     max-width: 52ch;
@@ -46,36 +32,6 @@
     max-width: 34ch;
     color: var(--ink-1);
     font: 300 var(--step-1) / 1.35 var(--font-display);
-}
-@media (max-width: 37.49rem) {
-    .head > :global(.page-head__title) {
-        margin-top: var(--s-3);
-    }
-    .head > :global(.page-head__intro) {
-        font-size: var(--step-0);
-    }
-}
-@media (min-width: 60rem) {
-    .head {
-        display: grid;
-        grid-template-columns: repeat(12, minmax(0, 1fr));
-        column-gap: var(--gutter);
-        align-items: end;
-    }
-    .head > :global(.section-tag) {
-        grid-column: 1 / -1;
-    }
-    .head > :global(.page-head__title) {
-        grid-column: 1 / span 6;
-        grid-row: 2 / span 4;
-        align-self: end;
-    }
-    .head > :global(.page-head__intro),
-    .actions,
-    .note,
-    .openTo {
-        grid-column: 7 / -1;
-    }
 }
 
 /* ---- Tools: the view switch, Print and Share (JavaScript only) ---------- */

@@ -1,6 +1,6 @@
 /**
  * The site's navigation, the one source for the header, the menu sheet,
- * the footer, the 404's return routes and (from PR 16) the console's page
+ * the footer, the 404's link rows and (from PR 16) the console's page
  * list. Themed names are labels only: URLs keep their plain words (plan
  * §2.1). Keep this module free of imports.
  */

@@ -47,19 +47,16 @@
         --step-5: clamp(2.488rem, 1.739rem + 3.328vw, 4.735rem);
         --step-6: clamp(2.75rem, 1.877rem + 4.927vw, 6.312rem);
         --step-7: clamp(3.2rem, 1.973rem + 7.156vw, 8.413rem);
-        --step-hero: clamp(2.5rem, 0.55rem + 10.2vw, 11.25rem);
         --step-long: clamp(1.125rem, 1.083rem + 0.185vw, 1.25rem);
         --label-size: 0.6875rem;
         --label-size-lg: 0.75rem;
 
-        --lh-hero: 0.92;
         --lh-display: 1.02;
         --lh-heading: 1.14;
         --lh-body: 1.55;
         --lh-long: 1.62;
         --lh-label: 1.4;
 
-        --track-hero: 0.14em;
         --track-caps: 0.12em;
         --track-label: 0.16em;
         --track-display: -0.018em;
@@ -77,7 +74,6 @@
         --s-10: 8rem;
         --space-block: clamp(2rem, 1.667rem + 1.481vw, 3rem);
         --space-section: clamp(5rem, 3.333rem + 7.407vw, 10rem);
-        --space-void: clamp(6rem, 2rem + 16vw, 16rem);
 
         /* ---- layout ------------------------------------------------ */
         --margin: 16px;
@@ -94,7 +90,6 @@
         --radius-round: 50%;
         --rule-hair: 1px;
         --rule-strong: 2px;
-        --rule-heavy: 4px;
 
         /* ---- motion: orbital, never elastic ------------------------- */
         --ease-coast: linear;
@@ -166,13 +161,10 @@
         --on-accent: #050507; /* 6.5:1 on accent */
         --focus: var(--accent);
         --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
-        --scrim: rgb(3 3 5 / 0.74);
         --falloff: color-mix(in oklab, var(--ink-1) 6.5%, transparent);
         --falloff-warm: color-mix(in oklab, var(--accent) 8%, transparent);
         --glass: color-mix(in oklab, var(--bg) 94%, transparent);
         --limb-fill: #070709;
-        --limb-rim: var(--ink-1);
-        --sun-core: #fff1e4;
         --star-rgb: 236 232 223;
         --plate-bg: transparent;
         --plate-border: transparent;
@@ -203,13 +195,10 @@
         --on-accent: #17150f; /*  4.75:1 on accent */
         --focus: var(--accent-text);
         --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
-        --scrim: rgb(23 21 15 / 0.38);
         --falloff: transparent;
         --falloff-warm: transparent;
         --glass: color-mix(in oklab, var(--bg) 96%, transparent);
         --limb-fill: var(--bg);
-        --limb-rim: var(--ink-1);
-        --sun-core: var(--accent);
         --star-rgb: 23 21 15;
         --plate-bg: var(--surface-1);
         --plate-border: var(--rule-1);

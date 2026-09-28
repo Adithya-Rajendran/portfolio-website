@@ -275,10 +275,11 @@ export default async function ResumePage() {
         <div data-page="resume" data-view="map" className={styles.page}>
             <OrbitInteraction />
 
-            <div className={styles.band}>
+            <div className={`head-band ${styles.band}`}>
                 <StaticStars variant="band" />
                 <PageHead
-                    className={`shell ${styles.head}`}
+                    className="shell"
+                    split
                     ornament="orbit"
                     num={copy.num}
                     themed={copy.themed}
@@ -287,7 +288,7 @@ export default async function ResumePage() {
                     intro={summary}
                 >
                     {hasPdf ? (
-                        <div className={`cluster ${styles.actions}`}>
+                        <div className="cluster page-head__actions">
                             <a
                                 className={buttonClass({
                                     variant: "primary",

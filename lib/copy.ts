@@ -481,7 +481,7 @@ export const orbitCopy = {
 export const homeCopy = {
     /** The hero's quick links, CV first. */
     routesLabel: "Start here",
-    cv: "Experience / CV",
+    cv: "Experience & CV",
     work: "Selected work",
     blog: "Read the blog",
     now: "Now",

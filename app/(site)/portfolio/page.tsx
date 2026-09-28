@@ -155,7 +155,6 @@ export default async function Portfolio() {
                             className={styles.tag}
                             ornament="star"
                             num={num("flagship")}
-                            meta={flagship.designation}
                         >
                             <h2 className="section-tag__h" id="msn-flagship-h">
                                 <Pair
@@ -216,7 +215,6 @@ export default async function Portfolio() {
                         <SectionTag
                             className={styles.tag}
                             num={num("register")}
-                            meta={copy.table}
                         >
                             <h2 className="section-tag__h" id="msn-register-h">
                                 <Pair

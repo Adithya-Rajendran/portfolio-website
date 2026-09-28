@@ -1,7 +1,7 @@
 import { mulberry32 } from "@/lib/sky/stars";
 
 /**
- * Fig. 0 of the Loss of Signal page: a strip-chart carrier trace that
+ * The Loss of Signal page's strip-chart carrier trace, which
  * weakens and drops to the axis at LOS (ported from the mockup's
  * writing.js `traceSVG`). Drawn in a 1000 × 100 box, seeded so it is the
  * same on every build.
