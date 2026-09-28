@@ -41,15 +41,14 @@ export type SeedParagraph = readonly (
 
 /**
  * An image that already exists in a published post, so nothing is uploaded
- * again. The alt text and caption are the post's own, as published on
- * 2026-09-28. The migration checks that the asset is still in that post and
- * leaves the field out when it is not.
+ * again. The alt text is the post's own, as published on 2026-09-28. The
+ * migration checks that the asset is still in that post and leaves the field
+ * out when it is not.
  */
 export type SeedImage = {
     post: string;
     asset: string;
     alt: string;
-    caption?: string;
 };
 
 /** A numbered balloon on the 3D model, linked to a heading of `anchorPost`. */
@@ -84,7 +83,6 @@ export type SeedProject = {
     results?: { key: string; metric: string; value: string; note?: string }[];
     lessons?: string[];
     next?: string[];
-    cover?: SeedImage;
     model?: {
         procedural: ProceduralModelKey;
         title: string;
@@ -105,13 +103,16 @@ export type SeedProject = {
 const HOMELAB_POST = "my-homelab";
 const DGX_SPARK_POST_URL = "/blog/kubernetes-on-the-nvidia-dgx-spark";
 
-/** The rack photo in the homelab post: the homelab's cover and poster. */
+/**
+ * The rack photo in the homelab post: the 3D model's poster. No project is
+ * seeded with a cover: the owner picks one in the Studio (IMPLEMENTATION.md
+ * §3.10), because the current project page prints a cover uncropped above
+ * the essay and this photo is a tall portrait.
+ */
 const RACK_PHOTO: SeedImage = {
     post: HOMELAB_POST,
     asset: "image-05754647a9226f0938def18645edaef5169c8aec-3000x4000-jpg",
     alt: "Server rack with three Minisforum MS-01 systems and an ASUS Ascent.",
-    caption:
-        "Inside the server rack. Excuse the cables at the bottom—the dust is proof that I rarely touch this hardware when redeploying the lab.",
 };
 
 // Résumé bullets, verbatim.
@@ -246,11 +247,6 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
                 note: "The Raspberry Pi 5s. MAAS provisions the rest of the chain over PXE.",
             },
             {
-                key: "rebuild",
-                metric: "Rebuilding the x86 tier",
-                value: "No USB stick needed",
-            },
-            {
                 key: "ceph-latency",
                 metric: "Ceph traffic latency",
                 value: "0.4 ms",
@@ -261,12 +257,6 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
                 metric: "Ceph monitor hosts that can fail",
                 value: "1",
                 note: "Three nodes give the Ceph monitor layer enough quorum.",
-            },
-            {
-                key: "workloads",
-                metric: "Load-bearing workloads",
-                value: "None yet",
-                note: "A handful of VMs support the lab itself.",
             },
         ],
         // Quoted from the homelab post.
@@ -281,7 +271,6 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
             "A broader compute layer that includes Arm and AMD systems.",
             "The Jetson Nano: a future project involving a small ground robot and, eventually, a drone.",
         ],
-        cover: RACK_PHOTO,
         model: {
             procedural: "homelab-rack",
             title: "The homelab rack",

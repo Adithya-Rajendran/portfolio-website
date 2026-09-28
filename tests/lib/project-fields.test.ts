@@ -302,6 +302,18 @@ describe("fixture projects", () => {
 });
 
 describe("post fixture queries", () => {
+    it("label every fixture post as a fixture", () => {
+        const posts =
+            resolveFixtureQuery<PostListItem[]>(POST_LIST_QUERY, {
+                today: "9999-12-31",
+            }) ?? [];
+        expect(posts.length).toBeGreaterThan(0);
+        for (const post of posts) {
+            expect(post.title, post.slug).toMatch(/^Fixture post: /);
+            expect(post.slug, post.title).toMatch(/^fixture-post-/);
+        }
+    });
+
     it("keep the plain post list separate from the body queries", () => {
         const list = resolveFixtureQuery<PostListItem[]>(POST_LIST_QUERY, {
             today: "2026-09-28",
@@ -311,7 +323,7 @@ describe("post fixture queries", () => {
         expect(
             resolveFixtureQuery<PostWithBody>(POST_BY_SLUG_QUERY, {
                 today: "2026-09-28",
-                slug: "small-kubernetes-cluster-notes",
+                slug: "fixture-post-code-and-links",
             })?.projectIds,
         ).toEqual(["fixture-project-flagship"]);
     });

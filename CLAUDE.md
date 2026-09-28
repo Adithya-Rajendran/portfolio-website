@@ -214,7 +214,9 @@ deployment require an authenticated Sanity CLI session.
   value, in `migrations/seed-resume-projects/data.ts`. The seed migration
   writes them as Studio drafts, and `lib/fixtures.ts` lists the same four
   (without images, and without links to posts that are not fixtures). Any
-  other fixture project is named as a fixture and describes no real work.
+  other fixture project, and every fixture post, is named as a fixture and
+  describes no real work. The fixture profile holds only the owner's
+  published values: a field the real profile leaves empty stays empty.
 - Content migrations (`migrations/<name>/index.ts`) are run only by the owner,
   from an authenticated CLI (`migrations/README.md` has the commands, from
   the backup to publishing); never from CI or an agent session. Keep their

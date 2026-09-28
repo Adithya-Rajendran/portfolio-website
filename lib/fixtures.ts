@@ -64,11 +64,12 @@ function linkedTextBlock(...parts: (string | [text: string, href: string])[]) {
 }
 
 /**
- * The fixture profile carries the owner's real published values (Sanity and
- * the résumé, recorded in design/shared/content-real.md) for every field the
- * redesign adds, so fixture builds exercise them without inventing facts. The
- * UC Santa Cruz start is known only to the year (2019), so it is stored as a
- * year-precision date and printed without a month.
+ * The fixture profile carries only the owner's real published values (Sanity
+ * and the résumé, recorded in design/shared/content-real.md), including every
+ * field the redesign adds, so fixture builds exercise them without inventing
+ * facts. A field the published profile leaves empty (location) stays empty.
+ * The UC Santa Cruz start is known only to the year (2019), so it is stored as
+ * a year-precision date and printed without a month.
  */
 export const FIXTURE_PROFILE: ProfileData = {
     _id: "profile",
@@ -78,7 +79,14 @@ export const FIXTURE_PROFILE: ProfileData = {
     tagline: "I’m exploring how robots perceive and remember the world.",
     introduction:
         "I’m exploring how robots perceive and remember the world. Here I share practical engineering notes and the questions I’m following next.",
-    bio: "My best work starts with a system that is technically possible but operationally unclear. I like learning in public, building small systems at home, and keeping useful notes on the open web.\n\nWriting here does not follow a content strategy. It is simply a record of the things I care enough to understand and remember.",
+    // profile.bio as published, all five paragraphs.
+    bio: [
+        "I’m pursuing an MS in Engineering (Interdisciplinary) at San José State University, with a focus on the intersection of robotics and AI. I started in August 2026 and expect to graduate in 2028.",
+        "What draws me to robotic vision is the possibility of machines understanding the environments people live in: recognizing familiar objects, remembering where they were seen, and reasoning about what has changed. I’m particularly interested in shared spaces, where people move, borrow, and return objects, and a robot has to decide when to look again or ask for help.",
+        "Before SJSU, I worked as a Field Software Engineer at Canonical until July 2026. I designed and deployed private-cloud systems built on Linux, OpenStack, Kubernetes, and Ceph, and worked through problems across the stack. Customer conversations, technical demonstrations, and explaining complex systems were as much a part of the role as troubleshooting. I’m bringing that combination of problem-solving and speaking into my studies.",
+        "My route into engineering began with security. At UC Santa Cruz, the Slug Security Club gave me a place to explore network security and ethical hacking. After graduating, I worked on cloud compliance, threat modeling, and automation before moving to Canonical. My homelab remains a place to recreate systems, test ideas, and learn by breaking and rebuilding them.",
+        "This notebook follows the systems I build and the questions I want to explore next. My longer-term interests include space exploration and the role autonomous machines could play beyond Earth.",
+    ].join("\n\n"),
     availability: {
         status: "open",
         // The résumé header line, printed as written.
@@ -95,7 +103,7 @@ export const FIXTURE_PROFILE: ProfileData = {
         event: "Started at UC Santa Cruz",
     },
     startHereIds: ["fixture-post-3", "fixture-post-1"],
-    location: "United States",
+    // profile.location is empty in the published profile.
     socialLinks: [
         {
             _key: "profile-linkedin",
@@ -261,50 +269,99 @@ export const FIXTURE_PROFILE: ProfileData = {
             ],
         },
     ],
+    // profile.skillGroups as published.
     skillGroups: [
         {
-            _key: "skills-platforms",
+            _key: "skills-infrastructure",
             _type: "skillGroup",
-            title: "Platforms",
-            skills: ["Kubernetes", "OpenStack", "Linux", "AWS"],
+            title: "Infrastructure",
+            skills: [
+                "OpenStack",
+                "Ceph",
+                "KVM",
+                "LXC/LXD",
+                "Kubernetes",
+                "AWS",
+                "Azure",
+                "Linux",
+                "Git",
+                "CI/CD",
+                "Terraform",
+            ],
         },
         {
-            _key: "skills-practice",
+            _key: "skills-cybersecurity",
             _type: "skillGroup",
-            title: "Practice",
-            skills: ["Terraform", "Ansible", "GitOps", "Security"],
+            title: "Cybersecurity",
+            skills: [
+                "CMMC",
+                "CIS",
+                "DISA STIG",
+                "FIPS 140-3",
+                "MITRE ATT&CK",
+                "NIST",
+                "Metasploit",
+                "Burp Suite",
+                "Firewalls",
+                "VLANs",
+                "Networking",
+            ],
+        },
+        {
+            _key: "skills-development",
+            _type: "skillGroup",
+            title: "Development",
+            skills: [
+                "Python",
+                "Rust",
+                "Bash",
+                "TypeScript",
+                "React",
+                "Next.js",
+                "Vercel",
+                "Tailwind CSS",
+                "HTML",
+                "PostgreSQL",
+            ],
         },
     ],
+    // profile.credentials as published. The status is the one the profile
+    // query computes on 2026-09-28: both expiring credentials have expired.
     credentials: [
         {
-            _key: "credential-active",
+            _key: "credential-aws-saa",
             _type: "credential",
-            title: "Kubernetes Administrator",
-            issuer: "Cloud Native Computing Foundation",
-            issuedOn: "2025-03-01",
-            expiresOn: "2028-03-01",
-            lifetime: false,
-            lifecycleStatus: "active",
-            verificationUrl: "https://www.credly.com/",
-        },
-        {
-            _key: "credential-lifetime",
-            _type: "credential",
-            title: "Security+",
-            issuer: "CompTIA",
-            issuedOn: "2021-02-01",
-            lifetime: true,
-            lifecycleStatus: "lifetime",
-        },
-        {
-            _key: "credential-expired",
-            _type: "credential",
-            title: "Solutions Architect",
-            issuer: "Amazon Web Services",
-            issuedOn: "2020-04-01",
-            expiresOn: "2023-04-01",
+            title: "AWS Certified Solutions Architect – Associate",
+            issuer: "AWS",
+            issuedOn: "2023-09-01",
+            expiresOn: "2026-09-01",
             lifetime: false,
             lifecycleStatus: "expired",
+            verificationUrl:
+                "https://www.credly.com/badges/80207866-2bf2-41a0-8c92-991295e79063/",
+        },
+        {
+            _key: "credential-security-plus",
+            _type: "credential",
+            title: "CompTIA Security+",
+            issuer: "CompTIA",
+            issuedOn: "2022-08-01",
+            expiresOn: "2025-08-01",
+            lifetime: false,
+            lifecycleStatus: "expired",
+            verificationUrl:
+                "https://www.credly.com/badges/78c2780d-63dc-4c2b-a6df-72138c469271",
+        },
+        {
+            _key: "credential-mta-security",
+            _type: "credential",
+            title: "MTA: Security Fundamentals",
+            issuer: "Microsoft",
+            issuedOn: "2018-05-01",
+            lifetime: true,
+            lifecycleStatus: "lifetime",
+            verificationUrl:
+                "https://www.credly.com/badges/b0889cff-2fbc-46c0-b16e-f631fefb024b",
         },
     ],
     talksAndPapers: [
@@ -319,42 +376,44 @@ export const FIXTURE_PROFILE: ProfileData = {
     ],
 };
 
+/**
+ * Fixture posts. They are not the owner's writing: their titles say so, and
+ * their text only describes what each one exercises (code listings, links,
+ * a quotation, a short entry).
+ */
 const fixturePosts: PostWithBody[] = [
     {
         _id: "fixture-post-1",
         _updatedAt: "2026-06-26T00:00:00Z",
-        title: "Notes from a small Kubernetes cluster",
-        slug: "small-kubernetes-cluster-notes",
+        title: "Fixture post: code listings and links",
+        slug: "fixture-post-code-and-links",
         description:
-            "A few things I learned by running infrastructure that is deliberately too small to hide its failure modes.",
+            "Fixture content for offline builds: a section heading, two code listings and Studio-style links.",
         publishedAt: "2026-06-26",
         revisedAt: "2026-07-02",
-        tags: ["kubernetes", "homelab"],
+        tags: ["fixture", "code"],
         projectIds: ["fixture-project-flagship"],
-        wordCount: 78,
+        wordCount: 42,
         body: [
             textBlock(
-                "A small cluster makes every assumption visible. There is nowhere for a noisy workload, a bad storage decision, or a brittle upgrade to hide.",
+                "This fixture post exists only in builds without Sanity credentials. It describes no real work.",
             ),
-            textBlock("What stayed useful", "h2"),
+            textBlock("Fixture section in a post", "h2"),
             textBlock(
-                "The most useful result was not a perfect configuration. It was a short recovery path that I could still understand six months later.",
+                "A fixture paragraph under a heading that a fixture mission callout links to.",
             ),
             {
                 _key: nextKey(),
                 _type: "code",
                 language: "bash",
-                filename: "check-nodes.sh",
-                code: "kubectl get nodes -o wide\nkubectl get pods -A --field-selector=status.phase!=Running",
+                filename: "fixture.sh",
+                code: "echo fixture\nls -la",
             },
             linkedTextBlock(
-                "Related: ",
-                [
-                    "things worth keeping on the open web",
-                    "/blog/things-worth-keeping-on-the-open-web",
-                ],
-                ", and the ",
-                ["Kubernetes documentation", "https://kubernetes.io/docs/"],
+                "Fixture links: ",
+                ["a fixture post", "/blog/fixture-post-short-note"],
+                " and ",
+                ["an external page", "https://example.com/fixture"],
                 ".",
             ),
             {
@@ -368,36 +427,32 @@ const fixturePosts: PostWithBody[] = [
     {
         _id: "fixture-post-2",
         _updatedAt: "2026-05-12T00:00:00Z",
-        title: "The documentary I kept thinking about",
-        slug: "documentary-i-kept-thinking-about",
+        title: "Fixture post: a quotation",
+        slug: "fixture-post-quotation",
         description:
-            "A personal note about observation, editing, and why a quiet documentary stayed with me.",
+            "Fixture content for offline builds: a paragraph and a quotation.",
         publishedAt: "2026-05-12",
-        tags: ["film", "notes"],
-        wordCount: 52,
+        tags: ["fixture", "notes"],
+        wordCount: 13,
         body: [
             textBlock(
-                "The film trusts the audience enough to leave pauses intact. That changed how I thought about explanation in places far outside filmmaking.",
+                "This fixture post exists only in builds without Sanity credentials.",
             ),
-            textBlock(
-                "Sometimes the clearest account of a complicated thing is the one that gives it room.",
-                "blockquote",
-            ),
+            textBlock("A fixture quotation.", "blockquote"),
         ] as ContentBody,
     },
     {
         _id: "fixture-post-3",
         _updatedAt: "2026-04-02T00:00:00Z",
-        title: "Things worth keeping on the open web",
-        slug: "things-worth-keeping-on-the-open-web",
-        description:
-            "Why I still want a small personal website even when almost nobody is looking at it.",
+        title: "Fixture post: a short note",
+        slug: "fixture-post-short-note",
+        description: "Fixture content for offline builds: a single paragraph.",
         publishedAt: "2026-04-02",
-        tags: ["personal-web"],
-        wordCount: 44,
+        tags: ["fixture"],
+        wordCount: 10,
         body: [
             textBlock(
-                "A personal site can be an address rather than a funnel: a durable place for work, half-formed interests, and writing that does not need an audience strategy.",
+                "This fixture post exists only in builds without Sanity credentials.",
             ),
         ] as ContentBody,
     },
@@ -416,10 +471,11 @@ function metaPost(post: PostWithBody): PostMeta {
 /**
  * The owner's four résumé projects, from the drafts the seed migration
  * writes (`migrations/seed-resume-projects/data.ts`), so fixture builds show
- * the real missions with their published ids (`project-<slug>`). Fixture
- * builds have no Sanity assets and no copy of the homelab post, so the cover
- * is left out, the model poster keeps only its alt text and the callouts carry
- * no links; links in the essays point at the real posts' URLs.
+ * the real missions with their published ids (`project-<slug>`). The seeds
+ * have no cover (the owner picks one). Fixture builds have no Sanity assets
+ * and no copy of the homelab post, so the model poster keeps only its alt
+ * text and the callouts carry no links; links in the essays point at the real
+ * posts' URLs.
  */
 function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
     const model = seed.model;
@@ -563,7 +619,7 @@ export const FIXTURE_PROJECTS: ProjectWithBody[] = [
                     title: "Fixture callout to a post",
                     part: "power",
                     anchor: {
-                        heading: "what-stayed-useful",
+                        heading: "fixture-section-in-a-post",
                         postId: "fixture-post-1",
                     },
                 },

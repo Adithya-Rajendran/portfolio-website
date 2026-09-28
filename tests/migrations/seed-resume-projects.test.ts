@@ -246,15 +246,31 @@ describe("seed-resume-projects drafts", () => {
         ).toHaveLength(5);
     });
 
-    it("makes the homelab the flagship, with the rack photo from its post", () => {
+    it("makes the homelab the flagship, with the rack photo from its post as the model poster", () => {
         const homelab = draftFor(plan, "homelab");
         expect(homelab.featured).toBe(1);
         expect(plan.drafts.filter((draft) => draft.featured)).toHaveLength(1);
-        expect(homelab.cover?.asset?._ref).toBe(RACK_ASSET);
         expect(homelab.model?.poster.asset?._ref).toBe(RACK_ASSET);
-        expect(homelab.cover?.alt).toBe(
+        expect(homelab.model?.poster.alt).toBe(
             "Server rack with three Minisforum MS-01 systems and an ASUS Ascent.",
         );
+    });
+
+    it("leaves every cover for the owner to pick", () => {
+        // The current project page prints a cover uncropped above the
+        // essay; the owner chooses it in the Studio before publishing.
+        expect(plan.drafts.map((draft) => draft.cover)).toEqual([
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        ]);
+    });
+
+    it("seeds only measured values as results", () => {
+        expect(
+            draftFor(plan, "homelab").results?.map((result) => result.value),
+        ).toEqual(["195.1 W", "3", "0.4 ms", "1"]);
     });
 
     it("puts a callout on every rack part, linked to its homelab post section", () => {
@@ -332,14 +348,13 @@ describe("seed-resume-projects drafts", () => {
 });
 
 describe("seed-resume-projects without the homelab post's content", () => {
-    it("leaves out the cover and model when the rack photo is gone", async () => {
+    it("leaves out the model when the rack photo is gone", async () => {
         const { draft, notes } = buildSeedDraft(
             SEED_PROJECTS[1],
             publishedPosts([homelabPost(HOMELAB_HEADINGS, "image-other-jpg")]),
         );
-        expect(draft.cover).toBeUndefined();
         expect(draft.model).toBeUndefined();
-        expect(notes).toHaveLength(2);
+        expect(notes).toHaveLength(1);
         expect(await validate(draft, null)).toEqual([]);
     });
 

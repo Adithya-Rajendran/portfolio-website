@@ -136,12 +136,11 @@ export function publishedPosts(
     return posts;
 }
 
-function imageValue(image: SeedImage, withCaption: boolean) {
+function imageValue(image: SeedImage) {
     return {
         _type: "image" as const,
         asset: { _type: "reference" as const, _ref: image.asset },
         alt: image.alt,
-        ...(withCaption && image.caption ? { caption: image.caption } : {}),
     };
 }
 
@@ -162,17 +161,6 @@ export function buildSeedDraft(
         return false;
     };
 
-    let cover: SeedDraft["cover"];
-    if (seed.cover) {
-        if (hasImage(seed.cover)) {
-            cover = imageValue(seed.cover, true);
-        } else {
-            notes.push(
-                `${seed.slug}: cover left out, because its image is not in the published post “${seed.cover.post}”.`,
-            );
-        }
-    }
-
     let model: SeedDraft["model"];
     if (seed.model) {
         const source = seed.model;
@@ -190,7 +178,7 @@ export function buildSeedDraft(
             model = {
                 kind: "procedural",
                 procedural: source.procedural,
-                poster: imageValue(source.poster, false),
+                poster: imageValue(source.poster),
                 title: source.title,
                 alt: source.alt,
                 realWorld: { ...source.realWorld },
@@ -235,7 +223,6 @@ export function buildSeedDraft(
         summary: seed.summary,
         types: [...seed.types],
         ...(seed.featured ? { featured: seed.featured } : {}),
-        ...(cover ? { cover } : {}),
         status: seed.status,
         ...(seed.dates
             ? {
