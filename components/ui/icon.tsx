@@ -21,7 +21,8 @@ export type IconName =
     | "pause"
     | "play"
     | "print"
-    | "share";
+    | "share"
+    | "theme";
 
 export type OrnamentName =
     | "pulsar"

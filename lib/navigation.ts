@@ -22,18 +22,19 @@ export const siteRoutes = {
 export interface NavItem {
     /** Stable id, also the section a page belongs to. */
     id: "log" | "missions" | "trajectory" | "crew" | "comms";
-    /** The site as one numbered document: § 01 … § 05. */
+    /** The site as one numbered document: § 01 … § 05 (page heads and the
+     *  404's link rows; the header nav carries no numbers). */
     num: string;
     href: string;
     /** The path whose pages are this section (aria-current). */
     section: string;
     themed: string;
     plain: string;
-    /** One line for the 404's return routes. */
+    /** One line for the 404's link rows. */
     blurb: string;
 }
 
-/** The five themed + plain pairs, in the order of the voyage. */
+/** The five themed + plain pairs, in site order. */
 export const primaryNavigation: readonly NavItem[] = [
     {
         id: "log",
@@ -42,7 +43,7 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/blog",
         themed: "Flight Log",
         plain: "Blog",
-        blurb: "Every entry, newest first.",
+        blurb: "Articles and technical notes.",
     },
     {
         id: "missions",
@@ -51,7 +52,7 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/portfolio",
         themed: "Missions",
         plain: "Projects",
-        blurb: "Projects and the work behind them.",
+        blurb: "Projects and case studies.",
     },
     {
         id: "trajectory",
@@ -60,7 +61,7 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/resume",
         themed: "Trajectory",
         plain: "Experience",
-        blurb: "Roles, study and the CV.",
+        blurb: "Experience, education and CV.",
     },
     {
         id: "crew",
@@ -69,7 +70,7 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/about",
         themed: "Crew File",
         plain: "About",
-        blurb: "Who is behind the missions.",
+        blurb: "Background and interests.",
     },
     {
         id: "comms",
@@ -78,17 +79,17 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/contact",
         themed: "Comms",
         plain: "Contact",
-        blurb: "Write about a role, a project or anything else.",
+        blurb: "Send a message.",
     },
 ];
 
-/** The home page as a return route (the 404). */
+/** The home page as a link row (the 404). */
 export const homeRoute = {
     num: "00",
     href: siteRoutes.home,
     themed: "Launch",
     plain: "Home",
-    blurb: "Where the voyage starts.",
+    blurb: "Overview and latest work.",
 } as const;
 
 /** The recruiter shortcut in the header bar, at every width. */
@@ -104,7 +105,7 @@ export const sheetLinks = [
 export const footerLinks = [
     { href: siteRoutes.resume, label: "CV" },
     { href: siteRoutes.resumePdf, label: "Résumé (PDF)" },
-    { href: siteRoutes.feed, label: "RSS feed" },
+    { href: siteRoutes.feed, label: "RSS" },
 ] as const;
 
 /**

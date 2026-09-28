@@ -25,6 +25,7 @@ const SYMBOLS = [
     '<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5 18.5 12 8 18.5z"/></symbol>',
     '<symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V4h10v5M4 9h16v7h-3M7 16H4M7 13.5h10V20H7z"/></symbol>',
     '<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 12v8h14v-8"/></symbol>',
+    '<symbol id="i-theme" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></symbol>',
     '<symbol id="o-pulsar" viewBox="0 0 24 24"><path d="M12 12 3 5.5M12 12l9.5-4M12 12l10 3.5M12 12l6 9M12 12l-3 9.5M12 12 2 14.5M12 12 13.5 2M12 12 5 21M12 12l-8.5-1.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>',
     '<symbol id="o-hydrogen" viewBox="0 0 24 24"><circle cx="6" cy="12" r="3.5"/><circle cx="18" cy="12" r="3.5"/><circle cx="6" cy="8.5" r=".9" fill="currentColor" stroke="none"/><circle cx="18" cy="15.5" r=".9" fill="currentColor" stroke="none"/><path d="M9.5 12h5M12 10v4"/></symbol>',
     '<symbol id="o-record" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.5"/><path d="M21 3 14.5 9.5"/></symbol>',

@@ -259,9 +259,8 @@
     .nav__link {
         position: relative;
         display: grid;
-        grid-template-columns: auto auto;
+        grid-template-columns: auto;
         grid-template-rows: auto auto;
-        column-gap: 0.55rem;
         align-items: baseline;
         min-height: 44px;
         align-content: center;
@@ -269,15 +268,9 @@
         color: var(--ink-1);
         text-decoration: none;
     }
-    .nav__num {
-        grid-row: 1;
-        grid-column: 1;
-        font: 400 0.6875rem / 1 var(--font-mono);
-        color: var(--ink-3);
-    }
     .nav__themed {
         grid-row: 1;
-        grid-column: 2;
+        grid-column: 1;
         font: 500 0.75rem / 1.2 var(--font-display);
         letter-spacing: 0.16em;
         text-transform: uppercase;
@@ -285,7 +278,7 @@
     }
     .nav__plain {
         grid-row: 2;
-        grid-column: 2;
+        grid-column: 1;
         font: 400 0.8125rem / 1.3 var(--font-display);
         color: var(--ink-2);
         white-space: nowrap;
@@ -310,9 +303,6 @@
     }
     .nav__link[aria-current]::after {
         transform: scaleX(1);
-    }
-    .nav__link[aria-current] .nav__num {
-        color: var(--accent-text);
     }
 
     .header-tools {
@@ -378,25 +368,40 @@
         display: none;
     }
 
-    /* Width budget, measured with the real labels from 320 to 1920px:
-       nav numbers and "Flight Manual" at >= 1600px, the brand name at
-       >= 1360px (and 600–959px). CV and Menu keep their words everywhere. */
-    @media (max-width: 99.99rem) {
-        .nav__num {
-            display: none;
-        }
-        .nav__link {
-            grid-template-columns: auto;
-            column-gap: 0;
-        }
-        .nav__themed,
-        .nav__plain {
-            grid-column: 1;
-        }
-        .header-tools .theme-toggle__long {
-            display: none;
-        }
+    /* The theme switch (contract §6): one icon button, the half-lit disc.
+       Its name is the theme it switches to, picked by html[data-theme]. */
+    .theme-switch {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        flex: none;
+        padding: 0;
+        border: var(--rule-hair) solid var(--rule-2);
+        background: transparent;
+        color: var(--ink-1);
+        cursor: pointer;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
     }
+    .theme-switch .icon {
+        width: 18px;
+        height: 18px;
+    }
+    .theme-switch:hover {
+        border-color: var(--ink-1);
+        background: var(--surface-2);
+    }
+    html[data-theme="manual"] .theme-switch__to-light,
+    html:not([data-theme="manual"]) .theme-switch__to-dark {
+        display: none;
+    }
+
+    /* Width budget, measured with the real labels from 320 to 1920px: the
+       brand name at >= 1360px (and 600–959px). CV and Menu keep their
+       words everywhere. */
     @media (max-width: 84.99rem) {
         .brand__name {
             display: none;
@@ -411,9 +416,6 @@
         }
         .header-tools {
             gap: var(--s-2);
-        }
-        .site-header .theme-toggle label {
-            padding-inline: 0.55rem;
         }
     }
     @media (min-width: 60rem) {
@@ -441,7 +443,7 @@
         .nav-toggle {
             display: inline-flex;
         }
-        .header-tools .theme-toggle {
+        .header-tools .theme-switch {
             display: none;
         }
         .nav {
@@ -480,23 +482,13 @@
             border-bottom: var(--rule-hair) solid var(--rule-1);
         }
         .nav__link {
-            grid-template-columns: 2.5rem 1fr;
             padding-block: var(--s-4);
             min-height: 64px;
         }
-        .nav__num {
-            display: block;
-            grid-row: 1 / span 2;
-            grid-column: 1;
-            align-self: center;
-            font-size: 0.8125rem;
-        }
         .nav__themed {
-            grid-column: 2;
             font-size: 1rem;
         }
         .nav__plain {
-            grid-column: 2;
             font-size: 0.9375rem;
         }
         .nav__link::after {
@@ -544,103 +536,6 @@
         }
     }
 
-    /* ===== Theme toggle: Void, Manual, Auto (site.css 4.3) ============= */
-    /* Each option shows its themed name over its plain name, like the nav:
-       VOID / Dark · MANUAL / Light · AUTO / System. */
-    .theme-toggle {
-        display: inline-flex;
-        flex-wrap: wrap;
-        margin: 0;
-        padding: 0;
-        border: 0;
-        min-inline-size: 0;
-    }
-    .theme-toggle legend {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-    }
-    .theme-toggle__opt {
-        position: relative;
-        display: flex;
-    }
-    .theme-toggle__opt + .theme-toggle__opt {
-        margin-left: -1px;
-    }
-    /* Phones: "Manual" alone, so the three options fit in 288px. */
-    @media (max-width: 29.99rem) {
-        .theme-toggle__long {
-            display: none;
-        }
-    }
-    .theme-toggle input {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        opacity: 0;
-        cursor: pointer;
-    }
-    .theme-toggle label {
-        display: inline-grid;
-        grid-template-columns: auto auto;
-        align-items: center;
-        align-content: center;
-        column-gap: 0.5rem;
-        min-height: 44px;
-        padding: 0.25rem 0.75rem;
-        border: var(--rule-hair) solid var(--rule-2);
-        color: var(--ink-2);
-        font: 500 0.6875rem / 1.15 var(--font-display);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        white-space: nowrap;
-        transition:
-            color var(--dur-hover) var(--ease-dock),
-            background-color var(--dur-hover) var(--ease-dock);
-    }
-    .theme-toggle label::before {
-        content: "";
-        grid-row: 1 / span 2;
-        width: 7px;
-        height: 7px;
-        border-radius: var(--radius-round);
-        box-shadow: inset 0 0 0 1px var(--ink-3);
-    }
-    .theme-toggle__t {
-        grid-column: 2;
-    }
-    .theme-toggle__p {
-        grid-column: 2;
-        color: var(--ink-2);
-        font: 400 0.75rem / 1.15 var(--font-display);
-        letter-spacing: 0.01em;
-        text-transform: none;
-    }
-    .theme-toggle input:hover + label {
-        color: var(--ink-1);
-    }
-    .theme-toggle input:checked + label {
-        position: relative;
-        z-index: 1;
-        color: var(--ink-1);
-        background: var(--surface-2);
-        border-color: var(--ink-2);
-    }
-    .theme-toggle input:checked + label::before {
-        background: var(--accent);
-        box-shadow: none;
-    }
-    .theme-toggle input:focus-visible + label {
-        z-index: 2;
-        outline: var(--rule-strong) solid var(--focus);
-        outline-offset: 2px;
-    }
-
     /* Pause motion (WCAG 2.2.2): in the footer, the menu sheet and the
        home hero. Its label names the action; under the OS reduce-motion
        setting a plain note replaces it. */
@@ -666,7 +561,7 @@
         }
     }
     /* Theme and motion controls need JavaScript. */
-    html:not([data-js]) :is(.theme-toggle, .motion-ctl) {
+    html:not([data-js]) :is(.theme-switch, .theme-choice, .motion-ctl) {
         display: none;
     }
 
@@ -1038,13 +933,18 @@
         width: 88px;
         height: 88px;
     }
-    .site-footer__sign {
-        max-width: 22ch;
+    .site-footer__name {
         margin-top: var(--s-4);
         color: var(--ink-1);
-        /* Roman light: italic here would load Newsreader's italic file on
-           every page (see .sect). */
-        font: 300 var(--step-1) / 1.35 var(--font-long);
+        font: 400 var(--label-size-lg) / var(--lh-label) var(--font-label);
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+    }
+    .site-footer__headline {
+        max-width: 34ch;
+        margin-top: var(--s-2);
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.5 var(--font-text);
     }
     .site-footer__nav ul,
     .site-footer__links {
@@ -1100,16 +1000,12 @@
         font: 400 var(--label-size) / 1.6 var(--font-label);
         letter-spacing: var(--track-label);
     }
-    /* "MET c. 7Y": the circa mark stays lower case. */
-    .site-footer__met {
-        text-transform: none;
-    }
     .site-footer__base a {
         display: inline-flex;
         align-items: center;
         min-height: 44px;
     }
-    /* The controls take a row of their own until the theme toggle fits in
+    /* The controls take a row of their own until the theme choice fits in
        a column (>= 1280px). */
     @media (min-width: 37.5rem) {
         .site-footer__grid {

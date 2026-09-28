@@ -23,9 +23,6 @@ export default function NavLink({
             aria-current={navCurrent(pathname, item)}
             aria-label={pairName(item)}
         >
-            <span className="nav__num" aria-hidden="true">
-                {item.num}
-            </span>
             <span className="nav__themed">{item.themed}</span>
             <span className="nav__plain">{item.plain}</span>
         </Link>

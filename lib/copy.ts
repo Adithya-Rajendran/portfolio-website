@@ -10,19 +10,21 @@ export const chromeCopy = {
     menu: "Menu",
     close: "Close",
     themeLegend: "Theme",
+    /** The header's theme switch names the theme it switches to. */
+    toLight: "Switch to light theme",
+    toDark: "Switch to dark theme",
     holdDrift: "Pause motion",
     resumeDrift: "Resume motion",
     motionHeldByOs: "Motion reduced by system settings",
-    footerSign: "Built on Earth. Still in flight.",
     backToTop: "Back to top",
     revTitle: "Last revised",
 } as const;
 
-/** The theme toggle's options, themed name over plain name. */
+/** The theme choices in the footer and the menu sheet, themed over plain. */
 export const themeOptions = [
-    { value: "void", themed: "Void", plain: "Dark" },
-    { value: "manual", themed: "Manual", long: "Flight ", plain: "Light" },
-    { value: "auto", themed: "Auto", plain: "System" },
+    { value: "void", label: "Void", sub: "Dark" },
+    { value: "manual", label: "Manual", sub: "Light" },
+    { value: "auto", label: "Auto", sub: "System" },
 ] as const;
 
 /** Loss of Signal: the 404 (G7). */

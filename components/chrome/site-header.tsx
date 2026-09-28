@@ -1,8 +1,8 @@
 import Link from "next/link";
 import MenuButton from "@/components/chrome/menu-button";
-import MotionToggle from "@/components/chrome/motion-toggle";
 import NavLinks from "@/components/chrome/nav-links";
-import ThemeToggle from "@/components/chrome/theme-toggle";
+import ThemeChoice from "@/components/chrome/theme-choice";
+import ThemeSwitch from "@/components/chrome/theme-switch";
 import { Icon, Patch } from "@/components/ui/icon";
 import { chromeCopy } from "@/lib/copy";
 import { siteConfig } from "@/lib/config";
@@ -12,8 +12,9 @@ const PANEL_ID = "site-nav";
 
 /**
  * The header, a Server Component: brand and patch, the five nav pairs, the
- * CV link (at every width) and the theme toggle are in the static HTML.
- * Below 960px the nav is a popover sheet that opens without JavaScript;
+ * CV link (at every width) and the theme switch (from 960px) are in the
+ * static HTML. Below 960px the nav is a popover sheet that opens without
+ * JavaScript, with the PDF, the feed and the three-way theme choice;
  * where the Popover API is missing, a fallback Menu link jumps to the
  * footer's nav. Only the current-section mark needs the pathname
  * (components/chrome/nav-links.tsx). Search arrives with the console
@@ -48,8 +49,7 @@ export default function SiteHeader() {
                                     </li>
                                 ))}
                             </ul>
-                            <ThemeToggle instance="sheet" />
-                            <MotionToggle />
+                            <ThemeChoice instance="sheet" />
                         </div>
                     </div>
                 </nav>
@@ -57,7 +57,7 @@ export default function SiteHeader() {
                     <Link className="header-cv" href={cvLink.href}>
                         {cvLink.label}
                     </Link>
-                    <ThemeToggle instance="head" />
+                    <ThemeSwitch />
                     <MenuButton panelId={PANEL_ID} />
                     <a
                         className="nav-toggle nav-toggle--fallback"

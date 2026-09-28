@@ -53,7 +53,8 @@
         .site-header,
         .site-footer,
         .skip-link,
-        .theme-toggle,
+        .theme-switch,
+        .theme-choice,
         .motion-ctl,
         [data-print="hide"] {
             display: none !important;

@@ -179,8 +179,8 @@ html[data-motion="reduced"] *::after {
     }
     .btn,
     .chip,
-    .theme-toggle label,
     .seg__box,
+    .theme-switch,
     .nav-toggle {
         border-color: ButtonText;
     }
@@ -188,7 +188,6 @@ html[data-motion="reduced"] *::after {
     :is(
         .chip[aria-pressed="true"],
         .chip[aria-current],
-        .theme-toggle input:checked + label,
         .seg__input:checked + .seg__box,
         .nav__link[aria-current]
     ) {
@@ -197,16 +196,14 @@ html[data-motion="reduced"] *::after {
         color: SelectedItemText;
         border-color: SelectedItem;
     }
-    .theme-toggle input:checked + label :is(.theme-toggle__p, span) {
+    .seg__input:checked + .seg__box :is(.seg__sub, span) {
         color: SelectedItemText;
     }
     :is(.chip[aria-pressed="true"], .chip[aria-current])::before,
-    .theme-toggle input:checked + label::before,
     .seg__input:checked + .seg__box::before {
         background: SelectedItemText;
     }
-    .nav__link[aria-current] .nav__plain,
-    .nav__link[aria-current] .nav__num {
+    .nav__link[aria-current] .nav__plain {
         color: SelectedItemText;
     }
 }

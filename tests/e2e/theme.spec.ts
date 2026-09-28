@@ -3,15 +3,18 @@ import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
 
 /**
- * Theme and motion (plan §2.5.1): Void for every first visit, a stored
- * choice applied before the first paint, the toggle's choice kept across
- * reloads, pages and tabs, Auto following the OS, and Pause motion.
+ * Theme and motion (plan §2.5.1, contract §6): Void for every first visit,
+ * a stored choice applied before the first paint, the header's switch
+ * (Void ↔ Flight Manual) and the footer's three-way choice kept in step
+ * across reloads, pages and tabs, Auto following the OS, and Pause motion.
  */
 
 const html = (page: Page) => page.locator("html");
-const headerToggle = (page: Page) =>
-    page.getByRole("banner").getByRole("group", { name: "Theme" });
-const footerToggle = (page: Page) =>
+const headerSwitch = (page: Page, to: "light" | "dark") =>
+    page
+        .getByRole("banner")
+        .getByRole("button", { name: `Switch to ${to} theme`, exact: true });
+const footerChoice = (page: Page) =>
     page.getByRole("contentinfo").getByRole("group", { name: "Theme" });
 
 test("a first visit is Void, even when the OS prefers light", async ({
@@ -56,23 +59,23 @@ test("a stored theme applies before the body is parsed", async ({ page }) => {
     );
 });
 
-test("the toggle's choice persists across reloads and pages", async ({
+test("the header switch's choice persists across reloads and pages", async ({
     page,
 }) => {
     await page.goto("/about");
-    await headerToggle(page)
-        .getByRole("radio", { name: /Manual/ })
-        .check();
+    await expect(headerSwitch(page, "dark")).toBeHidden();
+    await headerSwitch(page, "light").click();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
-    // Every instance shows the same choice.
+    // The switch now offers the way back, and the footer shows the choice.
+    await expect(headerSwitch(page, "dark")).toBeVisible();
     await expect(
-        footerToggle(page).getByRole("radio", { name: /Manual/ }),
+        footerChoice(page).getByRole("radio", { name: /Manual/ }),
     ).toBeChecked();
 
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expect(
-        headerToggle(page).getByRole("radio", { name: /Manual/ }),
+        footerChoice(page).getByRole("radio", { name: /Manual/ }),
     ).toBeChecked();
 
     await page
@@ -82,7 +85,7 @@ test("the toggle's choice persists across reloads and pages", async ({
     await expect(page).toHaveURL(/\/portfolio$/);
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
 
-    await headerToggle(page).getByRole("radio", { name: /Void/ }).check();
+    await headerSwitch(page, "dark").click();
     await expect(html(page)).toHaveAttribute("data-theme", "void");
     await page.goto("/");
     await expect(html(page)).toHaveAttribute("data-theme", "void");
@@ -91,14 +94,16 @@ test("the toggle's choice persists across reloads and pages", async ({
 test("Auto follows the OS colour scheme as it changes", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/");
-    await headerToggle(page).getByRole("radio", { name: /Auto/ }).check();
+    await footerChoice(page).getByRole("radio", { name: /Auto/ }).check();
     await expect(html(page)).toHaveAttribute("data-theme", "void");
     await page.emulateMedia({ colorScheme: "light" });
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    // Under Auto, the header switch shows the theme on screen.
+    await expect(headerSwitch(page, "dark")).toBeVisible();
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expect(
-        headerToggle(page).getByRole("radio", { name: /Auto/ }),
+        footerChoice(page).getByRole("radio", { name: /Auto/ }),
     ).toBeChecked();
 });
 
@@ -106,13 +111,11 @@ test("a choice made in another tab applies here", async ({ page, context }) => {
     await page.goto("/");
     const other = await context.newPage();
     await other.goto("/about");
-    await headerToggle(other)
-        .getByRole("radio", { name: /Manual/ })
-        .check();
+    await headerSwitch(other, "light").click();
     await expect(html(other)).toHaveAttribute("data-theme", "manual");
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expect(
-        headerToggle(page).getByRole("radio", { name: /Manual/ }),
+        footerChoice(page).getByRole("radio", { name: /Manual/ }),
     ).toBeChecked();
 });
 

@@ -58,8 +58,12 @@ only live in comments or commit messages.
   on `<html>` before the first paint. The server renders the literal
   `data-theme="void"` and never `data-motion`, so without JavaScript there
   is no spatial motion; never read a cookie for this, it would make every
-  route request-bound. The controls read `lib/prefs.ts` through
-  `useSyncExternalStore` (server snapshot `undefined`). Spatial motion runs
+  route request-bound. The header's `ThemeSwitch` (one button, Void ↔
+  Flight Manual) names the theme it switches to from `html[data-theme]`
+  in CSS, so under Auto it follows the screen; the footer and the menu
+  sheet carry `ThemeChoice` (Void · Manual · Auto, a `Segmented`), which
+  reads `lib/prefs.ts` through `useSyncExternalStore` (server snapshot
+  `undefined`). Spatial motion runs
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
   (their variables on `<html>`); italic Newsreader is its own family,
@@ -69,8 +73,7 @@ only live in comments or commit messages.
 - **Dates in render.** Never call `new Date()`, `Date.now()` or
   `Math.random()` in render outside `"use cache"`: the build fails, or the
   page becomes request-bound. "Today" is `getToday()` from `lib/clock.ts`
-  (cached for a day); the copyright year and the footer's mission elapsed
-  time (`formatMet`, never more precise than the profile's launch date)
+  (cached for a day); the copyright year and the orbit map's "now"
   derive from it. Random-looking art is seeded (`lib/sky/`).
 - **The mission patch** is generated: `node scripts/generate-patch.mjs`
   writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
