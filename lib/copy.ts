@@ -294,7 +294,8 @@ export const postCopy = {
     question: "Questions about this entry?",
     reply: "Reply via Comms",
     copyLink: "Copy link",
-    copyLinkLabel: "Copy the link to this entry",
+    /** Starts with the visible label, for voice control (WCAG 2.5.3). */
+    copyLinkLabel: "Copy link to this entry",
     linkCopied: "Link copied",
     allEntries: "All entries",
     after: "After this entry",

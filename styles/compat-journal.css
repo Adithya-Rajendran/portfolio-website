@@ -6,9 +6,9 @@
  * empty.
  *
  * 1. The --journal-* variables and the old font variables read the new
- *    tokens, so legacy pages follow the theme where they use variables.
- *    Their hard-coded colours are dark-only: legacy pages are checked in
- *    Void only.
+ *    tokens. Their hard-coded colours are dark-only, so under Flight Manual
+ *    a legacy page keeps Void's tokens (styles/tokens.css) on a Void
+ *    panel inside the Manual chrome; legacy pages are checked in Void only.
  * 2. Tailwind-preflight-like defaults inside [data-legacy], in the base
  *    layer: unlayered legacy rules still win, but the new base styles
  *    (underlined links, Jost headings, the fluid body size) do not leak in.
@@ -18,7 +18,10 @@
  */
 
 /* ---- 1. Variable aliases ------------------------------------------------ */
-:root {
+/* Declared again on [data-legacy], so they resolve against the Void tokens
+   a legacy page keeps under Flight Manual. */
+:root,
+[data-legacy] {
     --journal-bg: var(--bg);
     --journal-surface: var(--surface-1);
     --journal-text: var(--ink-1);
@@ -37,6 +40,10 @@
         font-family: var(--font-dm-sans), sans-serif;
         font-size: 1rem;
         line-height: 1.5;
+    }
+    [data-theme="manual"] [data-legacy] {
+        background: var(--bg);
+        color: var(--ink-1);
     }
     [data-legacy] a {
         color: inherit;

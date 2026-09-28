@@ -148,8 +148,12 @@
     }
 
     /* ---- VOID (dark, default): near-total darkness, one distant sun -- */
+    /* TEMPORARY (goes with styles/compat-journal.css in PR 14): pages not
+       yet converted (`data-legacy`) hard-code dark colours, so under Flight
+       Manual they keep Void's tokens and read as a dark panel. */
     :root,
-    [data-theme="void"] {
+    [data-theme="void"],
+    [data-theme="manual"] [data-legacy] {
         color-scheme: dark;
         --bg: #050507; /* the void */
         --surface-1: #0c0c10; /* raised: code, callouts */

@@ -36,14 +36,12 @@ export function PostCrumb({
                 <Link className={styles.crumbHome} href={siteRoutes.blog}>
                     <Pair themed={copy.themed} plain={copy.plain} />
                 </Link>
-                <span className="section-tag__meta">
+                <span className={`section-tag__meta ${styles.crumbMeta}`}>
                     {designation ? (
                         <span className={styles.crumbLog}>{designation}</span>
                     ) : null}
-                    <span className={styles.crumbAddress}>
-                        {designation ? " · " : ""}
-                        {address}
-                    </span>
+                    {designation ? " · " : ""}
+                    {address}
                 </span>
             </p>
         </div>

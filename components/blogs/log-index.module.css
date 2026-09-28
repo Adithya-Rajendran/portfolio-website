@@ -4,9 +4,13 @@
  * the year groups the plan adds: the year heads the Entry column of its
  * group. Below 960px the tracks fold into a stacked row.
  */
+/* As wide as the mockup's index beside its preview plate (8 of 12
+   columns at 1440px), so the read time and arrow stay by the standfirst,
+   which stops at 62ch, instead of drifting to the page's far edge. */
 .index {
     --log-cols: 6.5rem 7rem minmax(0, 1fr) 4.5rem 1.5rem;
     min-width: 0;
+    max-width: 61rem;
 }
 .group + .group {
     margin-top: var(--s-7);

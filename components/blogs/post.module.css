@@ -76,8 +76,10 @@
 .crumbLog {
     color: var(--accent-text);
 }
+/* On phones the meta line under the crumb already starts with LOG nnn,
+   and the address would wrap: the crumb keeps § 01 and the log's name. */
 @media (max-width: 37.49rem) {
-    .crumbAddress {
+    .crumbMeta {
         display: none;
     }
 }
@@ -186,11 +188,15 @@
 .contentsList li {
     counter-increment: contents;
 }
+/* The number sits on the title's first baseline; the pair is centred in
+   the 44px target, so a one-line title reads level with its number. */
 .contentsList a {
-    display: flex;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.75rem;
+    align-items: baseline;
+    align-content: center;
     min-height: 44px;
-    align-items: center;
     margin-left: -1px;
     padding: 0.35rem 0 0.35rem 1rem;
     border-left: var(--rule-strong) solid transparent;
@@ -202,7 +208,6 @@
 }
 .contentsList a::before {
     content: counter(contents, decimal-leading-zero);
-    align-self: baseline;
     color: var(--ink-3);
     font: 400 0.75rem / 1.6 var(--font-mono);
 }

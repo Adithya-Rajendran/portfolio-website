@@ -276,6 +276,32 @@ test("a listing is numbered, named and copies its code", async ({
     expect(copied.replace(/\s+$/, "")).toBe(shown);
 });
 
+test("on a phone an entry's LOG number is printed once above its title", async ({
+    page,
+    request,
+}, testInfo) => {
+    const [path] = await postPaths(request, testInfo);
+    for (const width of [390, 1280]) {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto(path);
+        const title = page.locator('[data-page="post"]:visible h1');
+        await expect(title).toBeVisible();
+        const above = await title.evaluate((h1) => {
+            const top = h1.getBoundingClientRect().top;
+            return [
+                ...h1.closest("[data-page]")!.querySelectorAll("span, p"),
+            ].filter(
+                (el) =>
+                    /^LOG \d{3}$/.test(el.textContent?.trim() ?? "") &&
+                    el.checkVisibility() &&
+                    el.getBoundingClientRect().bottom <= top,
+            ).length;
+        });
+        // At 1280px the crumb also prints it with the entry's address.
+        expect(above, `${path} at ${width}px`).toBe(width < 600 ? 1 : 2);
+    }
+});
+
 test("the phone's record box opens, and a contents link closes it", async ({
     page,
     request,

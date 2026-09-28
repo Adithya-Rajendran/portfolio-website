@@ -53,7 +53,10 @@ only live in comments or commit messages.
     - `styles/compat-journal.css` is TEMPORARY: it lets the pages not yet
       converted (root element `data-legacy`, listed in
       `tests/e2e/support/legacy-routes.ts`) keep their `app/journal-*.css`
-      look inside the new chrome. It goes, with those files, in PR 14.
+      look inside the new chrome. Their colours are dark-only, so under
+      Flight Manual a legacy page keeps Void's tokens (the
+      `[data-theme="manual"] [data-legacy]` selector in `styles/tokens.css`)
+      on a Void panel. Both go, with those files, in PR 14.
 - **Theme and motion** (plan §2.5.1). `lib/theme-boot.ts` is the inline boot
   script (under 600 bytes, unit-tested) that `ThemeBootScript` renders in
   both root documents' `<head>`: it reads localStorage `ar-theme`
@@ -67,7 +70,9 @@ only live in comments or commit messages.
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
   (their variables on `<html>`); italic Newsreader is its own family,
-  `var(--font-long-italic)`, so it is not preloaded.
+  `var(--font-long-italic)`, so it is not preloaded. The chrome (header,
+  footer, section marks) sets nothing in italic, so that file loads only
+  on pages whose text is italic (an `<em>` in a post); keep it that way.
 - **Dates in render.** Never call `new Date()`, `Date.now()` or
   `Math.random()` in render outside `"use cache"`: the build fails, or the
   page becomes request-bound. "Today" is `getToday()` from `lib/clock.ts`

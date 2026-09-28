@@ -919,13 +919,14 @@
             white-space: normal;
         }
     }
-    /* A section mark set in the serif, so it reads as § and not a letter. */
+    /* A section mark set in the serif, so it reads as § and not a letter.
+       Roman, not italic like the mockup's: the chrome sets no italic, so
+       Newsreader's italic file loads only on pages whose text uses it. */
     .sect {
         margin-right: 0.18em;
         color: var(--ink-3);
-        font-family: var(--font-long-italic);
+        font-family: var(--font-long);
         font-size: 1.15em;
-        font-style: italic;
         letter-spacing: 0;
     }
 
@@ -1052,7 +1053,9 @@
         max-width: 22ch;
         margin-top: var(--s-4);
         color: var(--ink-1);
-        font: italic 300 var(--step-1) / 1.35 var(--font-long-italic);
+        /* Roman light: italic here would load Newsreader's italic file on
+           every page (see .sect). */
+        font: 300 var(--step-1) / 1.35 var(--font-long);
     }
     .site-footer__nav ul,
     .site-footer__links {
