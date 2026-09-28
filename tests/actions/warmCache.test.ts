@@ -1,6 +1,13 @@
+import { existsSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { normalizeMetadataRoute } from "next/dist/lib/metadata/get-metadata-route";
+import { normalizeAppPath } from "next/dist/shared/lib/router/utils/app-paths";
 import { siteConfig } from "@/lib/config";
-import { warmBlogCache, warmProfileCache } from "@/actions/warmCache";
+import {
+    PROFILE_OG_IMAGE_PATHS,
+    warmBlogCache,
+    warmProfileCache,
+} from "@/actions/warmCache";
 import type { PostListItem } from "@/lib/sanity-client";
 
 const { getAllPostsMock } = vi.hoisted(() => ({
@@ -108,10 +115,10 @@ describe("warmProfileCache", () => {
                 `${siteConfig.url}/blog`,
                 `${siteConfig.url}/blog/archive`,
                 `${siteConfig.url}/feed.xml`,
-                `${siteConfig.url}/opengraph-image`,
-                `${siteConfig.url}/about/opengraph-image`,
-                `${siteConfig.url}/portfolio/opengraph-image`,
-                `${siteConfig.url}/blog/opengraph-image`,
+                `${siteConfig.url}/opengraph-image-12o0cb`,
+                `${siteConfig.url}/about/opengraph-image-1ycygp`,
+                `${siteConfig.url}/portfolio/opengraph-image-98lokn`,
+                `${siteConfig.url}/blog/opengraph-image-14vkmf`,
             ]),
         );
         expect(
@@ -138,7 +145,19 @@ describe("warmProfileCache", () => {
         expect(result.pages.failed).toEqual([`${siteConfig.url}/about`]);
         expect(result.pages.warmed).toContain(`${siteConfig.url}/feed.xml`);
         expect(result.pages.warmed).toContain(
-            `${siteConfig.url}/blog/opengraph-image`,
+            `${siteConfig.url}/blog/opengraph-image-14vkmf`,
         );
+    });
+
+    it("warms the sharing-image URLs Next.js builds for each file", () => {
+        // Route groups add a hashed suffix to metadata image routes. Recompute
+        // each built URL from its file with Next's own helper, so moving a
+        // file or a Next.js change fails here instead of silently warming 404s.
+        for (const [file, path] of Object.entries(PROFILE_OG_IMAGE_PATHS)) {
+            expect(existsSync(file)).toBe(true);
+            const page = `/${file.replace(/^app\//, "").replace(/\.tsx$/, "")}`;
+            const route = normalizeMetadataRoute(page).replace(/\/route$/, "");
+            expect(normalizeAppPath(route)).toBe(path);
+        }
     });
 });

@@ -12,9 +12,14 @@ import { collectTags } from "@/lib/tags";
 
 const BASE_URL = siteConfig.url;
 
+/**
+ * `days`, not `max`: a post whose publishedAt arrives must reach the sitemap
+ * within a day even if the publish cron is missing (the tags only fire on
+ * webhook or cron). The same rule applies to every derived artifact.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "use cache";
-    cacheLife("max");
+    cacheLife("days");
     cacheTag(CACHE_TAGS.profile, CACHE_TAGS.post, CACHE_TAGS.project);
     const [profile, postData, posts, projectData] = await Promise.all([
         getProfile(),

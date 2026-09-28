@@ -4,6 +4,8 @@ import { urlForImage } from "@/lib/sanity-image";
 import { classifyMediaEmbed } from "@/lib/media-embed";
 import type { PortableTextComponents } from "@portabletext/react";
 import CopyButton from "@/components/blogs/copy-button";
+import { codeListingLabel } from "@/components/blogs/utils";
+import { resolveLinkMark } from "@/lib/content-links";
 
 /**
  * GROQ-derived fields the postProjection joins onto body images
@@ -31,18 +33,29 @@ function isBodyImage(value: unknown): value is BodyImageValue {
     );
 }
 
-function safeContentHref(value: unknown): string | null {
-    if (typeof value !== "string" || value.length === 0) return null;
-    if (value.startsWith("/") || value.startsWith("#")) return value;
-
-    try {
-        const url = new URL(value);
-        return ["http:", "https:", "mailto:"].includes(url.protocol)
-            ? url.href
-            : null;
-    } catch {
-        return null;
-    }
+/**
+ * Studio-authored links are `contentLink` markDefs; legacy documents may
+ * still carry `link`. Both render through this one safe renderer.
+ */
+function LinkMark({
+    children,
+    value,
+}: {
+    children: React.ReactNode;
+    value?: unknown;
+}) {
+    const link = resolveLinkMark(value);
+    if (!link) return <>{children}</>;
+    return (
+        <a
+            href={link.href}
+            {...(link.external
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
+        >
+            {children}
+        </a>
+    );
 }
 
 function BodyImage({
@@ -114,20 +127,8 @@ const calloutBodyComponents: PortableTextComponents = {
         code: ({ children }) => (
             <code className="journal-inline-code">{children}</code>
         ),
-        link: ({ children, value }) => {
-            const href = safeContentHref(value?.href);
-            if (!href) return <>{children}</>;
-            return (
-                <a
-                    href={href}
-                    {...(/^https?:\/\//.test(href)
-                        ? { target: "_blank", rel: "noopener noreferrer" }
-                        : {})}
-                >
-                    {children}
-                </a>
-            );
-        },
+        contentLink: LinkMark,
+        link: LinkMark,
     },
 };
 
@@ -143,10 +144,15 @@ function HeadingAnchor({ id }: { id?: string }) {
     ) : null;
 }
 
-/** The same precomputed heading ids power the prose anchors and contents links. */
+/**
+ * The same precomputed heading ids power the prose anchors and contents
+ * links; listing numbers (numberCodeListings) give each code block a unique
+ * accessible name.
+ */
 export function createPortableTextComponents(
     highlightedCode: Record<string, string>,
     headingIds: Record<string, string>,
+    codeListingNumbers: Record<string, number> = {},
 ): PortableTextComponents {
     return {
         types: {
@@ -187,8 +193,14 @@ export function createPortableTextComponents(
                 if (!body.length && !value?.title) return null;
                 const tone =
                     typeof value?.tone === "string" ? value.tone : "note";
+                // A note, not a landmark: an <aside> inside <main> is a
+                // complementary landmark that is not top-level.
                 return (
-                    <aside className="journal-callout" data-tone={tone}>
+                    <div
+                        className="journal-callout"
+                        data-tone={tone}
+                        role="note"
+                    >
                         {value.title && (
                             <p className="journal-callout-title">
                                 {value.title}
@@ -200,7 +212,7 @@ export function createPortableTextComponents(
                                 components={calloutBodyComponents}
                             />
                         )}
-                    </aside>
+                    </div>
                 );
             },
             mediaEmbed: ({ value }) => {
@@ -245,6 +257,13 @@ export function createPortableTextComponents(
             },
             code: ({ value }) => {
                 const highlightedHtml = highlightedCode[value._key];
+                // Unique per listing: code regions are landmarks, and
+                // landmarks of one role need distinct names.
+                const label = codeListingLabel({
+                    number: codeListingNumbers[value._key],
+                    language: value.language,
+                    filename: value.filename,
+                });
                 return (
                     <div className="journal-code-block">
                         <div className="journal-code-toolbar">
@@ -264,17 +283,18 @@ export function createPortableTextComponents(
                                 className="journal-code-content shiki-wrapper"
                                 tabIndex={0}
                                 role="region"
-                                aria-label={
-                                    value.filename
-                                        ? `Code: ${value.filename}`
-                                        : `${value.language || "Plain text"} code`
-                                }
+                                aria-label={label}
                                 dangerouslySetInnerHTML={{
                                     __html: highlightedHtml,
                                 }}
                             />
                         ) : (
-                            <pre className="journal-code-content" tabIndex={0}>
+                            <pre
+                                className="journal-code-content"
+                                tabIndex={0}
+                                role="region"
+                                aria-label={label}
+                            >
                                 <code>{value.code}</code>
                             </pre>
                         )}
@@ -321,20 +341,8 @@ export function createPortableTextComponents(
             ),
             underline: ({ children }) => <u>{children}</u>,
             "strike-through": ({ children }) => <s>{children}</s>,
-            link: ({ children, value }) => {
-                const href = safeContentHref(value?.href);
-                if (!href) return <>{children}</>;
-                return (
-                    <a
-                        href={href}
-                        {...(/^https?:\/\//.test(href)
-                            ? { target: "_blank", rel: "noopener noreferrer" }
-                            : {})}
-                    >
-                        {children}
-                    </a>
-                );
-            },
+            contentLink: LinkMark,
+            link: LinkMark,
         },
         list: {
             bullet: ({ children }) => <ul>{children}</ul>,

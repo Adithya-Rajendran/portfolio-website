@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "@/app/journal-blog.css";
 import BlogNav from "@/components/blogs/blog-nav";
 import { siteConfig } from "@/lib/config";
@@ -31,7 +32,11 @@ export default function BlogsLayout({
 }) {
     return (
         <div className="journal-blog-layout">
-            <BlogNav />
+            {/* BlogNav reads the pathname, which suspends for post slugs
+                outside generateStaticParams; keep that to this leaf. */}
+            <Suspense fallback={null}>
+                <BlogNav />
+            </Suspense>
             {children}
         </div>
     );

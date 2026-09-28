@@ -122,3 +122,30 @@ export function headingIdsByKey(
 ): Record<string, string> {
     return Object.fromEntries(headings.map((h) => [h.key, h.id]));
 }
+
+/**
+ * Number a body's code blocks 1…n in reading order, keyed by block _key,
+ * so every listing gets a unique accessible name (see codeListingLabel).
+ */
+export function numberCodeListings(
+    codeBlocks: { _key: string }[],
+): Record<string, number> {
+    return Object.fromEntries(
+        codeBlocks.map((block, index) => [block._key, index + 1]),
+    );
+}
+
+/** "Code listing 2 (bash, install.sh)": unique per listing on a page. */
+export function codeListingLabel({
+    number,
+    language,
+    filename,
+}: {
+    number?: number;
+    language?: string | null;
+    filename?: string | null;
+}): string {
+    const name = number ? `Code listing ${number}` : "Code listing";
+    const details = [language, filename].filter(Boolean).join(", ");
+    return details ? `${name} (${details})` : name;
+}

@@ -1,24 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { portfolioLinks } from "@/lib/data";
 import { useActiveSectionContext } from "@/context/active-section-context";
 
+/**
+ * Rendered by each portfolio page with an explicit `variant`, not from the
+ * layout via the pathname: reading the pathname would need a Suspense
+ * boundary, and React streams a boundary this large as a hidden segment
+ * that only JavaScript reveals.
+ */
 export default function PortfolioNav({
-    showProjects,
-    showWriting,
+    variant,
+    showProjects = false,
+    showWriting = false,
     showExperience = true,
     showSkills = true,
     showCertifications = true,
 }: {
-    showProjects: boolean;
-    showWriting: boolean;
+    variant: "index" | "detail";
+    showProjects?: boolean;
+    showWriting?: boolean;
     showExperience?: boolean;
     showSkills?: boolean;
     showCertifications?: boolean;
 }) {
-    const isWorkIndex = usePathname() === "/portfolio";
+    const isWorkIndex = variant === "index";
     const { activeSection, setActiveSection, setTimeOfLastClick } =
         useActiveSectionContext();
     const links = portfolioLinks(showProjects).filter(

@@ -8,6 +8,7 @@ import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
 import {
     extractHeadings,
     headingIdsByKey,
+    numberCodeListings,
     getPostSlug,
     formatDate,
     readingTimeFromWordCount,
@@ -102,6 +103,7 @@ export default async function BlogPostBody({ post }: { post: PostWithBody }) {
     const portableTextComponents = createPortableTextComponents(
         highlightedCode,
         headingIds,
+        numberCodeListings(codeBlocks),
     );
 
     return (

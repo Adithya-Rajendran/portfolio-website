@@ -6,6 +6,7 @@ import Skills from "@/components/portfolio/skills";
 import Certifications from "@/components/portfolio/certifications";
 import Contact from "@/components/portfolio/contact";
 import EngineeringWriting from "@/components/portfolio/engineering-writing";
+import PortfolioNav from "@/components/portfolio/portfolio-nav";
 import { getAllPosts, getAllProjects, getProfile } from "@/lib/sanity-client";
 import { getProfileLinks } from "@/lib/profile-content";
 import { siteConfig } from "@/lib/config";
@@ -26,6 +27,11 @@ export async function generateMetadata(): Promise<Metadata> {
             description,
             url: `${siteConfig.url}/portfolio`,
         },
+        twitter: {
+            card: "summary_large_image",
+            title: `Work & experience | ${name}`,
+            description,
+        },
     };
 }
 
@@ -36,22 +42,32 @@ export default async function Portfolio() {
         getAllPosts(),
     ]);
     return (
-        <main
-            id="main-content"
-            tabIndex={-1}
-            className="journal-page journal-container career-page"
-        >
-            <Intro
-                profile={profile}
-                hasProjects={projects.length > 0}
-                hasWriting={posts.some((post) => post.slug)}
+        <>
+            <PortfolioNav
+                variant="index"
+                showProjects={projects.length > 0}
+                showWriting={posts.some((post) => post.slug)}
+                showExperience={Boolean(profile?.timeline?.length)}
+                showSkills={Boolean(profile?.skillGroups?.length)}
+                showCertifications={Boolean(profile?.credentials?.length)}
             />
-            <Projects projects={projects} />
-            <EngineeringWriting posts={posts} />
-            <Experience entries={profile?.timeline ?? []} />
-            <Skills groups={profile?.skillGroups ?? []} />
-            <Certifications certifications={profile?.credentials ?? []} />
-            <Contact links={getProfileLinks(profile)} />
-        </main>
+            <main
+                id="main-content"
+                tabIndex={-1}
+                className="journal-page journal-container career-page"
+            >
+                <Intro
+                    profile={profile}
+                    hasProjects={projects.length > 0}
+                    hasWriting={posts.some((post) => post.slug)}
+                />
+                <Projects projects={projects} />
+                <EngineeringWriting posts={posts} />
+                <Experience entries={profile?.timeline ?? []} />
+                <Skills groups={profile?.skillGroups ?? []} />
+                <Certifications certifications={profile?.credentials ?? []} />
+                <Contact links={getProfileLinks(profile)} />
+            </main>
+        </>
     );
 }

@@ -578,10 +578,12 @@ pre.journal-code-content {
 .journal-code-content code {
     font-family: inherit;
 }
+/* No background here: token spans inherit the --shiki-dark-bg custom
+   property from the <pre>, so painting it on spans drew a box behind every
+   token run. The listing background is .journal-code-content's alone. */
 .journal-code-content .shiki,
 .journal-code-content .shiki span {
     color: var(--shiki-dark);
-    background-color: var(--shiki-dark-bg);
     font-style: var(--shiki-dark-font-style);
     font-weight: var(--shiki-dark-font-weight);
     text-decoration: var(--shiki-dark-text-decoration);

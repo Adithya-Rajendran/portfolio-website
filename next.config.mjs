@@ -27,6 +27,7 @@ function contentSecurityPolicy(isStudio = false) {
 const nextConfig = {
     cacheComponents: true,
     reactCompiler: true,
+    poweredByHeader: false,
     allowedDevOrigins: ["127.0.0.1", "localhost"],
     env: {
         NEXT_PUBLIC_BUILD_DATE: new Date().toISOString(),
@@ -86,13 +87,27 @@ const nextConfig = {
                     },
                 ],
             },
-            // Cache static assets aggressively
+            // Cache static assets aggressively. This includes unhashed
+            // /public files, so every new or re-encoded public asset needs a
+            // versioned path (public/images/lunar-horizon-v3/…).
             {
                 source: "/(.*)\\.(ico|png|jpg|jpeg|gif|webp|avif|svg|woff|woff2)",
                 headers: [
                     {
                         key: "Cache-Control",
                         value: "public, max-age=31536000, immutable",
+                    },
+                ],
+            },
+            // /favicon.ico has a fixed, unversioned URL, so the immutable
+            // rule above would pin a replaced favicon for a year. When two
+            // rules set the same key, the later one wins.
+            {
+                source: "/favicon.ico",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=86400, must-revalidate",
                     },
                 ],
             },

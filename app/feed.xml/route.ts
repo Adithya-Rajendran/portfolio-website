@@ -6,11 +6,13 @@ import { renderFeedXml } from "@/lib/feed";
 
 /**
  * RSS stays full-content and cacheable; the post tag is the same compact
- * taxonomy used by the Sanity revalidation webhook.
+ * taxonomy used by the Sanity revalidation webhook. `days`, not `max`: a
+ * post whose publishedAt arrives must reach the feed within a day even if
+ * the publish cron is missing (the tags only fire on webhook or cron).
  */
 async function getFeedXml(): Promise<string> {
     "use cache";
-    cacheLife("max");
+    cacheLife("days");
     cacheTag(CACHE_TAGS.post, CACHE_TAGS.profile);
     const [posts, profile] = await Promise.all([
         getRecentPostsWithBody(),

@@ -22,6 +22,11 @@ export async function generateMetadata(): Promise<Metadata> {
             url: canonicalUrl,
             type: "profile",
         },
+        twitter: {
+            card: "summary_large_image",
+            title: `Résumé | ${name}`,
+            description,
+        },
     };
 }
 

@@ -30,6 +30,30 @@ function textBlock(
     };
 }
 
+/**
+ * A paragraph whose links are Studio-style `contentLink` annotations:
+ * `[text, href]` pairs become linked spans between the plain `parts`.
+ */
+function linkedTextBlock(...parts: (string | [text: string, href: string])[]) {
+    const markDefs: { _key: string; _type: "contentLink"; href: string }[] = [];
+    const children = parts.map((part) => {
+        if (typeof part === "string") {
+            return { _key: nextKey(), _type: "span", text: part, marks: [] };
+        }
+        const [text, href] = part;
+        const mark = { _key: nextKey(), _type: "contentLink" as const, href };
+        markDefs.push(mark);
+        return { _key: nextKey(), _type: "span", text, marks: [mark._key] };
+    });
+    return {
+        _key: nextKey(),
+        _type: "block",
+        style: "normal",
+        markDefs,
+        children,
+    };
+}
+
 export const FIXTURE_PROFILE: ProfileData = {
     _id: "profile",
     _updatedAt: "2026-07-11T00:00:00Z",
@@ -163,6 +187,22 @@ const fixturePosts: PostWithBody[] = [
                 language: "bash",
                 filename: "check-nodes.sh",
                 code: "kubectl get nodes -o wide\nkubectl get pods -A --field-selector=status.phase!=Running",
+            },
+            linkedTextBlock(
+                "Related: ",
+                [
+                    "things worth keeping on the open web",
+                    "/blog/things-worth-keeping-on-the-open-web",
+                ],
+                ", and the ",
+                ["Kubernetes documentation", "https://kubernetes.io/docs/"],
+                ".",
+            ),
+            {
+                _key: nextKey(),
+                _type: "code",
+                language: "yaml",
+                code: "apiVersion: v1\nkind: Namespace\nmetadata:\n  name: fixture",
             },
         ] as ContentBody,
     },

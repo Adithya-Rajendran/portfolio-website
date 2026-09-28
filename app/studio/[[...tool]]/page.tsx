@@ -4,16 +4,56 @@ export default function StudioPage() {
     const configured = Boolean(process.env.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID);
 
     if (!configured) {
+        // Inline styles: the site's Tailwind stylesheet is not loaded under
+        // /studio (see app/studio/layout.tsx).
         return (
-            <main className="grid min-h-screen place-items-center bg-slate-950 p-6 text-slate-100">
-                <div className="max-w-xl rounded-2xl border border-white/10 bg-white/[0.04] p-8">
-                    <p className="font-mono text-xs uppercase tracking-[0.16em] text-emerald-300">
+            <main
+                style={{
+                    display: "grid",
+                    placeItems: "center",
+                    minHeight: "100vh",
+                    padding: "1.5rem",
+                    background: "#020617",
+                    color: "#f1f5f9",
+                }}
+            >
+                <div
+                    style={{
+                        maxWidth: "36rem",
+                        padding: "2rem",
+                        border: "1px solid rgb(255 255 255 / 0.1)",
+                        borderRadius: "1rem",
+                        background: "rgb(255 255 255 / 0.04)",
+                    }}
+                >
+                    <p
+                        style={{
+                            margin: 0,
+                            color: "#6ee7b7",
+                            fontFamily: "var(--font-ibm-plex-mono), monospace",
+                            fontSize: "0.75rem",
+                            letterSpacing: "0.16em",
+                            textTransform: "uppercase",
+                        }}
+                    >
                         Sanity Studio
                     </p>
-                    <h1 className="mt-4 text-3xl font-semibold">
+                    <h1
+                        style={{
+                            margin: "1rem 0 0",
+                            fontSize: "1.875rem",
+                            fontWeight: 600,
+                        }}
+                    >
                         Studio is not configured.
                     </h1>
-                    <p className="mt-4 leading-7 text-slate-300">
+                    <p
+                        style={{
+                            margin: "1rem 0 0",
+                            lineHeight: 1.75,
+                            color: "#cbd5e1",
+                        }}
+                    >
                         Add the public Sanity project ID to this environment,
                         then rebuild the site. The public routes can still use
                         local fixtures for visual development without opening a

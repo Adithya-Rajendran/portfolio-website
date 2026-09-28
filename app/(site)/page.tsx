@@ -6,7 +6,7 @@ import { getAllPosts, getProfile } from "@/lib/sanity-client";
 import { getProfileLink, selectFeaturedPost } from "@/lib/profile-content";
 import { siteConfig } from "@/lib/config";
 import { formatDate } from "@/components/blogs/utils";
-import "./journal-home.css";
+import "@/app/journal-home.css";
 
 export default async function Home() {
     preloadHeroArtwork();

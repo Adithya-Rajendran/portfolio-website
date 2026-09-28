@@ -35,9 +35,12 @@ export default function TableOfContents({
         return () => observer.disconnect();
     }, [headings]);
     if (!headings.length) return null;
+    // A named nav, not an <aside>: a complementary landmark inside <main>
+    // is not top-level. Shares its label with MobileToc; CSS shows only one
+    // of the two at any width.
     return (
-        <aside className="journal-desktop-toc">
-            <nav aria-label="Table of contents">
+        <div className="journal-desktop-toc">
+            <nav aria-label="On this page">
                 <p className="journal-eyebrow">On this page</p>
                 <ul>
                     {headings.map((heading) => (
@@ -57,6 +60,6 @@ export default function TableOfContents({
                     ))}
                 </ul>
             </nav>
-        </aside>
+        </div>
     );
 }

@@ -1,5 +1,6 @@
 import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
+import { numberCodeListings } from "@/components/blogs/utils";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
 import type { ProjectWithBody } from "@/lib/sanity-client";
@@ -26,7 +27,11 @@ export default async function ProjectEssay({
         <div className="journal-prose career-project-essay">
             <PortableText
                 value={project.body as unknown as PortableTextBlock[]}
-                components={createPortableTextComponents(highlighted, {})}
+                components={createPortableTextComponents(
+                    highlighted,
+                    {},
+                    numberCodeListings(codeBlocks),
+                )}
             />
         </div>
     );

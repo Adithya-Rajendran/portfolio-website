@@ -24,7 +24,38 @@ only live in comments or commit messages.
 
 - **Tailwind v4 is CSS-first.** There is no `tailwind.config.js`. Design
   tokens, theme colors, radii, and custom animations live directly in
-  `app/globals.css` under `@theme inline`.
+  `app/globals.css` under `@theme inline`. It is imported by
+  `components/chrome/site-shell.tsx`, so it loads on public pages only.
+
+## Layout: the `(site)` route group
+
+- `app/layout.tsx` is the minimal root layout shared by the public site and
+  the Studio: `<html>`, fonts, BotID and route-independent metadata only.
+  Do not add site CSS, chrome, JSON-LD or analytics there.
+- Every public page lives under `app/(site)/` (route groups do not change
+  URLs). `app/(site)/layout.tsx` renders `components/chrome/site-shell.tsx`:
+  the global stylesheets, the server-rendered header and footer, JSON-LD
+  and analytics. They are part of each page's static shell, so the chrome
+  works without JavaScript and page content is rendered once. New public
+  routes go under `app/(site)/`; `app/studio/` stays outside the group, so
+  none of this loads in the Studio.
+- Never wrap page content in `<Suspense fallback={children}>`, and keep
+  anything that must work without JavaScript out of Suspense: in a long
+  page React streams a completed boundary holding more than ~500 bytes as
+  a hidden segment that only JavaScript reveals, showing the fallback
+  meanwhile. Async Server Components that read cached data (the footer,
+  the pages) need no boundary. A client component that reads the URL
+  (`usePathname`) can suspend under Cache Components, so it sits in a
+  small leaf `<Suspense>` with a static fallback (`ActiveNavLinks` in the
+  header, `BlogNav`); larger URL-dependent UI takes its variant as a prop
+  from the page instead (`PortfolioNav`).
+- `app/(site)/not-found.tsx` renders `notFound()` calls inside pages;
+  `app/not-found.tsx` renders unmatched URLs and wraps the same content in
+  `SiteShell`, because it sits outside the group.
+- Metadata image routes inside a route group get a stable `-<hash>` URL
+  suffix from Next.js (`/about/opengraph-image-1ycygp`; `next build` prints
+  them). Anything that requests them directly, like the warm list in
+  `actions/warmCache.ts`, uses the built URL; a test recomputes each one.
 
 ## Caching contract
 
@@ -46,6 +77,10 @@ only live in comments or commit messages.
        automatically); missing/wrong auth → stealth 404. If `CRON_SECRET`
        is unset, same-day publishing silently degrades to the pages' daily
        cache revalidation.
+- Derived artifacts that include the post list (`app/feed.xml/route.ts`,
+  `app/sitemap.ts`) use `cacheLife("days")`, never `"max"`: a post whose
+  `publishedAt` arrives must reach them within a day even if the cron is
+  missing, because their tags only fire on the webhook or the cron.
 - Cache keys are derived from the literal GROQ query string passed into
   `sanityFetch`/`"use cache"`. Reformatting a query string (whitespace,
   line breaks) changes the cache key and silently orphans the old cache

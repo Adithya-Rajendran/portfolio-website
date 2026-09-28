@@ -44,7 +44,7 @@ async function TagPosts({ tag }: { tag: string }) {
  * one param at build time, so when there are no posts/tags yet (CI's
  * fallback sentinel, or pre-launch) we emit a placeholder tag that
  * prerenders as the 404 page and is linked from nowhere — mirrors
- * app/blog/[slug]/page.tsx.
+ * app/(site)/blog/[slug]/page.tsx.
  */
 export async function generateStaticParams() {
     const tags = collectTags(await getAllPosts());
