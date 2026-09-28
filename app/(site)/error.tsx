@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 export default function Error({
     error,
@@ -31,7 +30,13 @@ export default function Error({
                 Please try again in a moment.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-6">
-                <Button onClick={reset}>Try again</Button>
+                <button
+                    type="button"
+                    onClick={reset}
+                    className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 py-2 font-term text-xs font-bold text-on-accent shadow-accent ring-accent ring-offset-white transition-all duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950"
+                >
+                    Try again
+                </button>
                 <Link
                     href="/"
                     prefetch={false}

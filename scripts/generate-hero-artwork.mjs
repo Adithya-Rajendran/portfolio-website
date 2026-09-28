@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const sharp = createRequire(require.resolve("next/package.json"))("sharp");
 const root = new URL("../", import.meta.url);
 const input = fileURLToPath(
-    new URL("public/images/lunar-shared-horizon-v1.webp", root),
+    new URL("assets/artwork/lunar-shared-horizon-v1.webp", root),
 );
 const original = fileURLToPath(
     new URL("assets/artwork/lunar-shared-horizon-original.png", root),
