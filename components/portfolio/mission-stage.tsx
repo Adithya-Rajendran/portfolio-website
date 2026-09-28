@@ -6,13 +6,13 @@ import { LinkArrow } from "@/components/ui/marks";
 import Metrics from "@/components/ui/metrics";
 import Plate from "@/components/ui/plate";
 import { missionsCopy as copy } from "@/lib/copy";
-import type { Mission } from "@/lib/missions";
+import { cardStats, type Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
 
 /**
  * The flagship (contract §4 and §9): the mission's line, its name in
- * capitals, its title and summary, its parameters as stats and its stack
+ * capitals, its title and summary, its quantities as stats and its stack
  * in seven columns, beside its photograph as a plate in five. Without a
  * photograph the copy takes the full width and the stats go four across.
  * Shared by /portfolio (§ 02.1) and, from PR 13, the home Missions act.
@@ -55,7 +55,7 @@ export default function MissionStage({
                 ) : null}
                 <Metrics
                     className={styles.stageMetrics}
-                    items={mission.parameters}
+                    items={cardStats(mission)}
                     columns={plate ? 2 : 4}
                 />
                 <MissionStack items={mission.technologies} label={copy.stack} />

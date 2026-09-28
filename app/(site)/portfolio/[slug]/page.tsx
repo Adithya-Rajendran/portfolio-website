@@ -29,8 +29,10 @@ import {
     adjacentMissions,
     missionCallouts,
     missionEntries,
+    resultRows,
     toMission,
     type Mission,
+    type MissionParameter,
 } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
 import {
@@ -120,47 +122,66 @@ function recordCells(mission: Mission): TitleBlockCell[] {
               ]
             : []),
     ];
-    const second: TitleBlockCell[] = [
-        ...(mission.role
-            ? [{ id: "role", label: r.role, value: mission.role }]
-            : []),
-        ...(mission.technologies.length
-            ? [
-                  {
-                      id: "stack",
-                      label: r.stack,
-                      value: mission.technologies.join(" · "),
-                  },
-              ]
-            : []),
-        ...(mission.revised
-            ? [
-                  {
-                      id: "revision",
-                      label: r.revision,
-                      value: <Rev date={mission.revised} />,
-                  },
-              ]
-            : []),
-    ];
+    // Named parameters the stack does not list ("Feed · RSS") are cells of
+    // the second row, before the stack; more than the row holds take a row
+    // of their own.
+    const specs: TitleBlockCell[] = mission.specs.map(
+        (spec: MissionParameter) => ({
+            id: `spec-${spec.id}`,
+            label: spec.label,
+            value: spec.value,
+        }),
+    );
+    const role: TitleBlockCell[] = mission.role
+        ? [{ id: "role", label: r.role, value: mission.role }]
+        : [];
+    const stack: TitleBlockCell[] = mission.technologies.length
+        ? [
+              {
+                  id: "stack",
+                  label: r.stack,
+                  value: mission.technologies.join(" · "),
+              },
+          ]
+        : [];
+    const revision: TitleBlockCell[] = mission.revised
+        ? [
+              {
+                  id: "revision",
+                  label: r.revision,
+                  value: <Rev date={mission.revised} />,
+              },
+          ]
+        : [];
+    const inline = role.length + specs.length + revision.length <= 3;
+    const second = [...role, ...(inline ? specs : []), ...stack, ...revision];
+    const own = inline ? [] : specs;
+
     // Each row fills the twelve columns: the mission and the stack take
     // what the short cells leave.
     const firstSpans = first.length === 4 ? [4, 2, 3, 3] : [5, 3, 4];
     first.forEach((cell, index) => {
         cell.span = first.length === 2 ? [7, 5][index] : firstSpans[index];
     });
-    const fixed = second.filter((cell) => cell.id !== "stack");
-    second.forEach((cell) => {
-        cell.span =
-            cell.id === "stack"
-                ? 12 - fixed.length * 3
-                : second.length === 1
-                  ? 12
-                  : second.some((item) => item.id === "stack")
-                    ? 3
-                    : 6;
+    fillRow(own);
+    if (stack.length) {
+        const fixed = second.length - 1;
+        second.forEach((cell) => {
+            cell.span = cell.id === "stack" ? 12 - fixed * 3 : 3;
+        });
+    } else {
+        fillRow(second);
+    }
+    return [...first, ...own, ...second];
+}
+
+/** Spans that fill one row of twelve columns, the first cells widest. */
+function fillRow(cells: TitleBlockCell[]) {
+    const base = Math.floor(12 / Math.max(cells.length, 1));
+    const extra = 12 - base * cells.length;
+    cells.forEach((cell, index) => {
+        cell.span = base + (index < extra ? 1 : 0);
     });
-    return [...first, ...second];
 }
 
 /**
@@ -220,9 +241,15 @@ export default async function ProjectPage({
     ].filter((row): row is [keyof typeof copy.brief, string] =>
         Boolean(row[1]?.trim()),
     );
-    const results = (project.results ?? []).filter(
-        (row) => row.metric?.trim() && row.value?.trim(),
+    // The results, unless each one repeats a stat in the head; the note
+    // column only when a row has a note.
+    const results = resultRows(
+        (project.results ?? []).filter(
+            (row) => row.metric?.trim() && row.value?.trim(),
+        ),
+        mission.stats,
     );
+    const hasNotes = results.some((row) => row.note?.trim());
     const lessons = (project.lessons ?? []).filter((line) => line.trim());
     const nextSteps = (project.next ?? []).filter((line) => line.trim());
     const hasEssay = project.body?.length > 0;
@@ -315,7 +342,7 @@ export default async function ProjectPage({
                         ) : null}
                         <Metrics
                             className={styles.metrics}
-                            items={mission.parameters}
+                            items={mission.stats}
                             columns={hasPlate ? 2 : 4}
                             size={hasPlate ? "lg" : "md"}
                         />
@@ -420,7 +447,6 @@ export default async function ProjectPage({
                     num={num("results")}
                     themed={copy.resultsThemed}
                     plain={copy.resultsPlain}
-                    meta={copy.table}
                 >
                     <div
                         className={`table-wrap ${styles.results}`}
@@ -443,9 +469,11 @@ export default async function ProjectPage({
                                     <th scope="col" className="num">
                                         {copy.resultColumns.value}
                                     </th>
-                                    <th scope="col">
-                                        {copy.resultColumns.note}
-                                    </th>
+                                    {hasNotes ? (
+                                        <th scope="col">
+                                            {copy.resultColumns.note}
+                                        </th>
+                                    ) : null}
                                 </tr>
                             </thead>
                             <tbody>
@@ -455,9 +483,11 @@ export default async function ProjectPage({
                                         <td className={`num ${styles.value}`}>
                                             {row.value}
                                         </td>
-                                        <td className={styles.note}>
-                                            {row.note}
-                                        </td>
+                                        {hasNotes ? (
+                                            <td className={styles.note}>
+                                                {row.note}
+                                            </td>
+                                        ) : null}
                                     </tr>
                                 ))}
                             </tbody>

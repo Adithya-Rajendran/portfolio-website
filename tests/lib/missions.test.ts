@@ -1,16 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { FIXTURE_PROJECTS } from "@/lib/fixtures";
 import { logEntries, type LogSource } from "@/lib/log-index";
-import { splitUnit } from "@/lib/metrics";
+import { isQuantity, sameValue, splitUnit } from "@/lib/metrics";
 import {
     adjacentMissions,
     bodyLinks,
+    cardStats,
+    inStack,
     missionCallouts,
     missionEntries,
     missionName,
     missionOrder,
     originalEntries,
+    resultRows,
     sitePostSlug,
+    splitParameters,
     statusTally,
     toMission,
     typeList,
@@ -90,7 +94,8 @@ describe("toMission", () => {
             types: ["Infrastructure"],
             dates: "c. 2024–2025",
             revised: "2026-09-28",
-            parameters: [{ id: "a", label: "Nodes", value: "3" }],
+            stats: [{ id: "a", label: "Nodes", value: "3" }],
+            specs: [],
         });
     });
 
@@ -437,6 +442,86 @@ describe("splitUnit", () => {
             amount: "CIS Level 1",
             unit: "",
         });
+    });
+});
+
+describe("isQuantity", () => {
+    it("takes a value that starts with a number or a number word", () => {
+        for (const value of ["195.1 W", "3 × MS-01", "90%", "0.4 ms", "Zero"])
+            expect(isQuantity(value), value).toBe(true);
+        for (const value of [
+            "Okta OIDC",
+            "CIS Level 1",
+            "Next.js + React",
+            "MLP",
+            "Gmail API",
+            "Oneida",
+        ])
+            expect(isQuantity(value), value).toBe(false);
+    });
+
+    it("compares values without case or spaces", () => {
+        expect(sameValue("90 %", "90%")).toBe(true);
+        expect(sameValue("Zero", "zero")).toBe(true);
+        expect(sameValue("3", "3 × Pi 5")).toBe(false);
+    });
+});
+
+describe("splitParameters", () => {
+    const param = (id: string, label: string, value: string) => ({
+        id,
+        label,
+        value,
+    });
+
+    it("sets quantities as stats and names the stack lacks as specs", () => {
+        const { stats, specs } = splitParameters(
+            [
+                param("a", "Nodes", "3"),
+                param("b", "Downtime during upgrades", "Zero"),
+                param("c", "Hardening", "CIS Level 1"),
+                param("d", "Identity", "Okta OIDC"),
+                param("e", "Feed", "RSS"),
+            ],
+            ["Kubernetes", "NFS", "Okta OIDC", "CIS Level 1"],
+        );
+        expect(stats.map((item) => item.id)).toEqual(["a", "b"]);
+        expect(specs.map((item) => item.id)).toEqual(["e"]);
+    });
+
+    it("finds a name in the stack by its parts or a whole word", () => {
+        const stack = [
+            "Next.js",
+            "React",
+            "Sanity",
+            "Multilayer perceptron (MLP)",
+            "Gmail API",
+        ];
+        expect(inStack("Next.js + React", stack)).toBe(true);
+        expect(inStack("MLP", stack)).toBe(true);
+        expect(inStack("Gmail API", stack)).toBe(true);
+        expect(inStack("sanity", stack)).toBe(true);
+        expect(inStack("Next.js + Vue", stack)).toBe(false);
+        expect(inStack("API", ["Gmail APIs"])).toBe(false);
+        expect(inStack("", stack)).toBe(false);
+    });
+
+    it("shows a card's stats only in twos or more", () => {
+        const one = { stats: [param("a", "Accuracy", "90%")] };
+        const two = {
+            stats: [param("a", "Nodes", "3"), param("b", "Downtime", "Zero")],
+        };
+        expect(cardStats(one)).toEqual([]);
+        expect(cardStats(two)).toHaveLength(2);
+    });
+
+    it("leaves out results that only repeat the stats", () => {
+        const stats = [param("a", "Spam-detection accuracy", "90%")];
+        expect(resultRows([{ value: "90 %" }], stats)).toEqual([]);
+        expect(
+            resultRows([{ value: "90%" }, { value: "0.4 ms" }], stats),
+        ).toHaveLength(2);
+        expect(resultRows([{ value: "100%" }], [])).toHaveLength(1);
     });
 });
 

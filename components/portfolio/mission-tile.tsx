@@ -5,7 +5,7 @@ import { Icon } from "@/components/ui/icon";
 import Metrics from "@/components/ui/metrics";
 import Plate from "@/components/ui/plate";
 import { missionsCopy as copy } from "@/lib/copy";
-import type { Mission } from "@/lib/missions";
+import { cardStats, type Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
 
@@ -17,7 +17,8 @@ export function MissionTiles({ children }: { children: React.ReactNode }) {
 /**
  * A mission as a tile (contract §4): text first. Its line, its name in
  * capitals (the link to its file, stretched over the tile), its title, its
- * summary, up to four stats and its stack, under a hairline. A cover adds
+ * summary, its stats (two to four quantities, or none) and its stack,
+ * under a hairline. A cover adds
  * a 3:2 plate on top; a mission without one is not given a stand-in.
  */
 export default function MissionTile({
@@ -61,7 +62,7 @@ export default function MissionTile({
             ) : null}
             <Metrics
                 className={styles.tileMetrics}
-                items={mission.parameters}
+                items={cardStats(mission)}
                 columns={2}
                 size="sm"
             />

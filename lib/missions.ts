@@ -2,6 +2,7 @@ import type { StatusValue } from "@/components/ui/marks";
 import { hostOf } from "@/lib/cv";
 import { formatMissionDesignation } from "@/lib/designations";
 import type { LogEntry } from "@/lib/log-index";
+import { isQuantity, sameValue } from "@/lib/metrics";
 import { formatProjectYears, projectStatusLabel } from "@/lib/project-content";
 import {
     PROJECT_TYPES,
@@ -33,6 +34,12 @@ export interface MissionLink {
     host: string;
 }
 
+export interface MissionParameter {
+    id: string;
+    label: string;
+    value: string;
+}
+
 export interface Mission {
     id: string;
     slug: string;
@@ -57,7 +64,10 @@ export interface Mission {
     role: string | null;
     technologies: string[];
     highlights: string[];
-    parameters: { id: string; label: string; value: string }[];
+    /** The parameters that are quantities: the mission's stats. */
+    stats: MissionParameter[];
+    /** The named parameters the stack does not already list. */
+    specs: MissionParameter[];
     /** External links; links to this site's own posts are entries instead. */
     links: MissionLink[];
     featured: number | null;
@@ -147,6 +157,66 @@ function externalLinks(
         }));
 }
 
+/** Whether the stack already names a value: every part of "Next.js +
+ *  React" is a technology, or a whole word of one ("MLP" in "Multilayer
+ *  perceptron (MLP)"). */
+export function inStack(value: string, technologies: readonly string[]) {
+    const parts = value
+        .split(/\s*(?:\+|,|&|\/|\band\b)\s*/i)
+        .map((part) => part.trim())
+        .filter(Boolean);
+    const escape = (text: string) =>
+        text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return (
+        parts.length > 0 &&
+        parts.every((part) =>
+            technologies.some((technology) =>
+                new RegExp(
+                    `(^|[^\\p{L}\\p{N}])${escape(part)}($|[^\\p{L}\\p{N}])`,
+                    "iu",
+                ).test(technology),
+            ),
+        )
+    );
+}
+
+/**
+ * A mission's parameters as a spec sheet reads them (contract §11): the
+ * quantities are its stats ("195.1 W", "3 × MS-01", "Zero"); a named value
+ * ("Okta OIDC") is a spec, or nothing when the stack already lists it, so
+ * a name is never set as a stat or repeated under the stack.
+ */
+export function splitParameters(
+    parameters: readonly MissionParameter[],
+    technologies: readonly string[],
+): { stats: MissionParameter[]; specs: MissionParameter[] } {
+    return {
+        stats: parameters.filter((item) => isQuantity(item.value)),
+        specs: parameters.filter(
+            (item) =>
+                !isQuantity(item.value) && !inStack(item.value, technologies),
+        ),
+    };
+}
+
+/** A card's stats (the tiles and the stage): two or more, or none. */
+export function cardStats(mission: Pick<Mission, "stats">) {
+    return mission.stats.length >= 2 ? mission.stats : [];
+}
+
+/**
+ * The results table's rows, unless every row repeats a stat the file
+ * already shows: then the table is left out.
+ */
+export function resultRows<T extends { value: string }>(
+    rows: readonly T[],
+    stats: readonly Pick<MissionParameter, "value">[],
+): T[] {
+    const repeats = (row: T) =>
+        stats.some((stat) => sameValue(stat.value, row.value));
+    return rows.every(repeats) ? [] : [...rows];
+}
+
 export function toMission(project: ProjectListItem, siteUrl: string): Mission {
     const name = missionName(project.slug);
     const revised = /^\d{4}-\d{2}-\d{2}/.test(project._updatedAt ?? "")
@@ -173,13 +243,16 @@ export function toMission(project: ProjectListItem, siteUrl: string): Mission {
             item.trim(),
         ),
         highlights: (project.highlights ?? []).filter((line) => line.trim()),
-        parameters: (project.parameters ?? [])
-            .filter((item) => item.label?.trim() && item.value?.trim())
-            .map((item) => ({
-                id: item._key,
-                label: item.label.trim(),
-                value: item.value.trim(),
-            })),
+        ...splitParameters(
+            (project.parameters ?? [])
+                .filter((item) => item.label?.trim() && item.value?.trim())
+                .map((item) => ({
+                    id: item._key,
+                    label: item.label.trim(),
+                    value: item.value.trim(),
+                })),
+            project.technologies ?? [],
+        ),
         links: externalLinks(project.links, siteUrl),
         featured: project.featured ?? null,
         revised,

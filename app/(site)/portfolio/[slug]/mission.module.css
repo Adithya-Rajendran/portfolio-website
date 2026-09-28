@@ -164,26 +164,22 @@
     border-bottom: var(--rule-hair) solid var(--rule-1);
     list-style: none;
 }
+/* One list style for both columns, like the callouts: only the mark
+   tells them apart. */
 .lessons li,
 .next li {
     position: relative;
     padding: var(--s-4) 0 var(--s-4) var(--s-6);
     border-top: var(--rule-hair) solid var(--rule-1);
-    text-wrap: pretty;
-}
-.lessons li {
-    color: var(--ink-1);
-    font: 300 var(--step-1) / 1.45 var(--font-long);
-}
-.next li {
     color: var(--ink-1);
     font: 400 var(--step-0) / 1.55 var(--font-display);
+    text-wrap: pretty;
 }
 .lessons li::before {
     content: "";
     position: absolute;
     left: 0;
-    top: calc(var(--s-4) + 0.75em);
+    top: calc(var(--s-4) + 0.78em);
     width: 0.9rem;
     height: 1px;
     background: var(--ink-3);

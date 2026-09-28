@@ -23,7 +23,8 @@ export default function Metrics({
     className,
 }: {
     items: readonly MetricItem[];
-    /** Across from 600px; always two on phones. */
+    /** Across from 600px; always two on phones. Fewer stats keep the
+     *  column width and leave the rest of the row empty. */
     columns?: 2 | 3 | 4;
     /** `lg` on a mission head, `sm` on a tile. */
     size?: "sm" | "md" | "lg";
@@ -39,7 +40,7 @@ export default function Metrics({
             className={classes}
             style={
                 {
-                    "--metric-cols": Math.min(columns, shown.length),
+                    "--metric-cols": columns,
                 } as CSSProperties
             }
         >
