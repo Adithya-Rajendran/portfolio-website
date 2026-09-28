@@ -4,15 +4,17 @@ import { buttonClass } from "@/components/ui/button";
 import type { ContactRoute } from "@/lib/contact";
 import { contactCopy as copy } from "@/lib/copy";
 import { contactHref } from "@/lib/navigation";
+import RouteWriteLink from "./route-write-link";
 import styles from "./contact-routes.module.css";
 
 /**
  * The contact routes (G4) as numbered rows. On /contact (`onPage`) each
- * row carries its topic's fragment id (`#hiring`), and its button is a
- * link to the message section that ContactDesk turns into "pick this topic
- * and go to the form"; without JavaScript it still lands on the message
- * section, which then offers LinkedIn. Anywhere else the button links to
- * the route on /contact. Ported from the mockup's `DF.render.routes`.
+ * row carries its topic's fragment id (`#hiring`), and its button
+ * (RouteWriteLink) links to that fragment, which ContactDesk turns into
+ * "pick this topic and go to the form"; without JavaScript it links to the
+ * message section instead, which then offers LinkedIn. Anywhere else the
+ * button links to the route on /contact. Ported from the mockup's
+ * `DF.render.routes`.
  */
 export default function ContactRoutes({
     routes,
@@ -49,16 +51,15 @@ export default function ContactRoutes({
                     </p>
                     <div className={styles.actions}>
                         {onPage ? (
-                            <a
+                            <RouteWriteLink
                                 className={buttonClass({
                                     className: styles.write,
                                 })}
-                                href="#message"
-                                data-contact-topic={route.topic}
+                                topic={route.topic}
                             >
                                 {route.cta}
                                 <Icon name="arrow" className="icon--nudge" />
-                            </a>
+                            </RouteWriteLink>
                         ) : (
                             <Link
                                 className={buttonClass({

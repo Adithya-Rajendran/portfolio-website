@@ -264,7 +264,9 @@ only live in comments or commit messages.
   block offers LinkedIn instead. The routes and topics (`hiring`,
   `research`, `consulting`, `hello`) live in `lib/contact.ts`: Consulting
   shows only while `availability.consultingOpen` is on, and the topic
-  prefixes the email subject. A `"use server"` module may export only async
+  prefixes the email subject. `sendEmail` sends a topic whose route is not
+  shown (a crafted POST) as a hello, and treats Resend's returned
+  `{ error }` as a failure: Resend 6 does not throw on API errors. A `"use server"` module may export only async
   functions (anything else reaches the client as a server reference), so
   the form's state type and initial value live in `lib/contact.ts` too.
   `/contact` reads its fragment (`#hiring`) on the client, never

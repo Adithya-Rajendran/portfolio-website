@@ -5,6 +5,7 @@ const resolveMxMock = vi.fn();
 const headersMock = vi.fn();
 const checkBotIdMock = vi.fn();
 const checkRateLimitMock = vi.fn();
+const getProfileMock = vi.fn();
 
 vi.mock("resend", () => ({
     Resend: class Resend {
@@ -32,6 +33,16 @@ vi.mock("@vercel/firewall", () => ({
 vi.mock("@/email/contact-form-email", () => ({
     default: vi.fn(() => null),
 }));
+
+vi.mock("@/lib/sanity-client", () => ({
+    getProfile: getProfileMock,
+}));
+
+/** A profile whose page shows all four routes. */
+const EVERY_ROUTE = {
+    availability: { status: "open", consultingOpen: true },
+    contactInvitation: "Write about research.",
+};
 
 function formDataOf(fields: Record<string, string>): FormData {
     const fd = new FormData();
@@ -63,6 +74,8 @@ beforeEach(() => {
     headersMock.mockReset();
     checkBotIdMock.mockReset();
     checkRateLimitMock.mockReset();
+    getProfileMock.mockReset();
+    getProfileMock.mockResolvedValue(EVERY_ROUTE);
     resendSendMock.mockResolvedValue({ data: { id: "msg_1" }, error: null });
     resolveMxMock.mockResolvedValue([
         { exchange: "mx.example.com", priority: 10 },
@@ -265,6 +278,36 @@ describe("sendEmail — happy path and Resend integration", () => {
         expect((result as { error: string }).error).not.toContain("re_abc123");
     });
 
+    it("reports a send Resend refuses as a failure, not as sent", async () => {
+        withIp("10.0.3.3");
+        // Resend 6 returns API errors instead of throwing them.
+        resendSendMock.mockResolvedValue({
+            data: null,
+            error: {
+                name: "validation_error",
+                statusCode: 403,
+                message:
+                    "The email.adithya-rajendran.com domain is not verified.",
+            },
+        });
+        const { sendEmailAction } = await import("@/actions/sendEmail");
+        const { INITIAL_CONTACT_FORM_STATE } = await import("@/lib/contact");
+
+        const result = await sendEmailAction(
+            INITIAL_CONTACT_FORM_STATE,
+            formDataOf({
+                senderEmail: "sender@example.com",
+                message: "hello",
+            }),
+        );
+
+        expect(resendSendMock).toHaveBeenCalledTimes(1);
+        expect(result).toEqual({
+            status: "error",
+            message: "Failed to send the email. Please try again later.",
+        });
+    });
+
     it("processes the request when x-forwarded-for is missing", async () => {
         headersMock.mockResolvedValue({ get: () => null });
         const sendEmail = await importSendEmail();
@@ -329,6 +372,62 @@ describe("sendEmail — topic", () => {
         }
     });
 
+    it("sends a topic whose route is hidden as a hello", async () => {
+        withIp("10.0.4.6");
+        // Consulting is off and there is no research invitation.
+        getProfileMock.mockResolvedValue({
+            availability: { status: "open", consultingOpen: false },
+        });
+        const sendEmail = await importSendEmail();
+
+        for (const topic of ["consulting", "research"]) {
+            resendSendMock.mockClear();
+            const result = await sendEmail(
+                formDataOf({
+                    senderEmail: "a@example.com",
+                    message: "hi",
+                    topic,
+                }),
+            );
+            expect(result, topic).toMatchObject({ topic: "hello" });
+            expect(resendSendMock.mock.calls[0][0].subject, topic).toBe(
+                "[Hello] Contact Form for My Website",
+            );
+        }
+
+        // Hiring shows unless availability is Closed.
+        getProfileMock.mockResolvedValue({
+            availability: { status: "closed" },
+        });
+        resendSendMock.mockClear();
+        await expect(
+            sendEmail(
+                formDataOf({
+                    senderEmail: "a@example.com",
+                    message: "hi",
+                    topic: "hiring",
+                }),
+            ),
+        ).resolves.toMatchObject({ topic: "hello" });
+    });
+
+    it("still sends, as a hello, when the profile cannot be read", async () => {
+        withIp("10.0.4.7");
+        getProfileMock.mockRejectedValue(new Error("Sanity is down"));
+        const sendEmail = await importSendEmail();
+
+        const result = await sendEmail(
+            formDataOf({
+                senderEmail: "a@example.com",
+                message: "hi",
+                topic: "hiring",
+            }),
+        );
+
+        expect(result).toMatchObject({ topic: "hello" });
+        expect(resendSendMock).toHaveBeenCalledTimes(1);
+    });
+
     it("refuses an unknown topic before any lookup or send", async () => {
         withIp("10.0.4.3");
         const sendEmail = await importSendEmail();
@@ -342,6 +441,7 @@ describe("sendEmail — topic", () => {
         );
 
         expect(result).toEqual({ error: "Choose one of the listed topics." });
+        expect(getProfileMock).not.toHaveBeenCalled();
         expect(resolveMxMock).not.toHaveBeenCalled();
         expect(resendSendMock).not.toHaveBeenCalled();
     });

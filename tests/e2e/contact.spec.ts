@@ -28,8 +28,13 @@ test("Comms in the header opens the contact page", async ({ page }) => {
         .getByRole("link", { name: pairName(comms) })
         .click();
     await expect(page).toHaveURL(/\/contact$/);
+    // The page's own title, then both of its names, as the mockup has them.
     await expect(
-        page.getByRole("heading", { level: 1, name: /Let’s talk\./ }),
+        page.getByRole("heading", {
+            level: 1,
+            name: "Let’s talk. Comms · Contact",
+            exact: true,
+        }),
     ).toBeVisible();
     await expect(
         page
@@ -57,7 +62,11 @@ test("a route's button picks its topic and brings the form into view", async ({
     await page.goto("/contact");
     const hello = topicRadio(page, topics.hello.title);
     await expect(hello).not.toBeChecked();
-    await page.getByRole("link", { name: topics.hello.cta }).click();
+    // Hydrated, the button links to its route's fragment, so a new tab or
+    // a copied link keeps the topic.
+    const write = page.getByRole("link", { name: topics.hello.cta });
+    await expect(write).toHaveAttribute("href", "#hello");
+    await write.click();
     await expect(hello).toBeChecked();
     await expect(page).toHaveURL(/\/contact#hello$/);
     await expect(
