@@ -1,4 +1,5 @@
 import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
+import type { TimelineDatePrecision } from "@/lib/profile-fields";
 import type {
     ExternalLink,
     PostListItem,
@@ -55,6 +56,27 @@ export function getProfileDescription(profile: ProfileData | null): string {
 
 export function getWritingDescription(profile: ProfileData | null): string {
     return profile?.writingDescription?.trim() || BLOG_DESCRIPTION;
+}
+
+/**
+ * A timeline date as month and year ("Jun 2023"). With `year` precision only
+ * the year is known, so only the year is printed: a month is never invented.
+ */
+export function formatTimelineDate(
+    value?: string | null,
+    precision?: TimelineDatePrecision | null,
+): string | null {
+    if (!value) return null;
+    if (/^\d{4}$/.test(value)) return value;
+    if (precision === "year" && /^\d{4}-/.test(value)) return value.slice(0, 4);
+    const normalized = /^\d{4}-\d{2}$/.test(value) ? `${value}-01` : value;
+    const parsed = new Date(`${normalized}T00:00:00Z`);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return new Intl.DateTimeFormat("en", {
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
+    }).format(parsed);
 }
 
 /** Preserve legacy date semantics until an editor explicitly sets status. */

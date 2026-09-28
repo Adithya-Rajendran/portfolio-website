@@ -3,20 +3,10 @@ import SectionSpy from "@/components/portfolio/section-spy";
 import CareerSectionHeading from "@/components/portfolio/section-heading";
 import { urlForImage } from "@/lib/sanity-image";
 import type { TimelineEntry } from "@/lib/sanity-client";
-import { isCurrentTimelineEntry } from "@/lib/profile-content";
-
-function formatMonth(value?: string | null) {
-    if (!value) return null;
-    if (/^\d{4}$/.test(value)) return value;
-    const normalized = /^\d{4}-\d{2}$/.test(value) ? `${value}-01` : value;
-    const parsed = new Date(`${normalized}T00:00:00Z`);
-    if (Number.isNaN(parsed.getTime())) return value;
-    return new Intl.DateTimeFormat("en", {
-        month: "short",
-        year: "numeric",
-        timeZone: "UTC",
-    }).format(parsed);
-}
+import {
+    formatTimelineDate,
+    isCurrentTimelineEntry,
+} from "@/lib/profile-content";
 
 export default function Experience({ entries }: { entries: TimelineEntry[] }) {
     if (!entries.length) return null;
@@ -35,10 +25,13 @@ export default function Experience({ entries }: { entries: TimelineEntry[] }) {
             <ol className="career-timeline">
                 {entries.map((item) => {
                     const isCurrent = isCurrentTimelineEntry(item);
-                    const start = formatMonth(item.startDate);
+                    const start = formatTimelineDate(
+                        item.startDate,
+                        item.startPrecision,
+                    );
                     const end = isCurrent
                         ? "Present"
-                        : formatMonth(item.endDate);
+                        : formatTimelineDate(item.endDate);
                     const dates = [start, end].filter(Boolean);
                     const dateLabel = [...new Set(dates)].join(" — ");
                     const highlights = item.highlights ?? [];

@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { LINK_KINDS, listValuesOnly } from "@/lib/profile-fields";
 
 export default defineType({
     name: "externalLink",
@@ -17,6 +18,15 @@ export default defineType({
             type: "url",
             validation: (Rule) =>
                 Rule.required().uri({ scheme: ["http", "https"] }),
+        }),
+        defineField({
+            name: "kind",
+            title: "Kind",
+            type: "string",
+            description:
+                "Optional. What the link points to: it picks the link's icon, decides which links print on the CV, and marks a repository as source code for search engines.",
+            options: { list: [...LINK_KINDS] },
+            validation: listValuesOnly,
         }),
     ],
     preview: {

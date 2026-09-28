@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    formatTimelineDate,
     getProfileDescription,
     getProfileLink,
     getProfileLinks,
@@ -126,6 +127,26 @@ describe("current work and study", () => {
         expect(
             isCurrentTimelineEntry(entryOf({ startDate: "2026-08-01" })),
         ).toBe(true);
+    });
+});
+
+describe("timeline dates", () => {
+    it("prints month and year for full dates and year-month values", () => {
+        expect(formatTimelineDate("2023-06-01")).toBe("Jun 2023");
+        expect(formatTimelineDate("2026-08")).toBe("Aug 2026");
+        expect(formatTimelineDate("2024-05-01", "month")).toBe("May 2024");
+    });
+
+    it("never adds a month to a date known only to the year", () => {
+        expect(formatTimelineDate("2019-01-01", "year")).toBe("2019");
+        expect(formatTimelineDate("2019-09-23", "year")).toBe("2019");
+        expect(formatTimelineDate("2019")).toBe("2019");
+    });
+
+    it("leaves missing and unparseable values alone", () => {
+        expect(formatTimelineDate(null)).toBeNull();
+        expect(formatTimelineDate(undefined, "year")).toBeNull();
+        expect(formatTimelineDate("Summer 2027")).toBe("Summer 2027");
     });
 });
 

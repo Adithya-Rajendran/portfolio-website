@@ -54,55 +54,182 @@ function linkedTextBlock(...parts: (string | [text: string, href: string])[]) {
     };
 }
 
+/**
+ * The fixture profile carries the owner's real published values (Sanity and
+ * the résumé, recorded in design/shared/content-real.md) for every field the
+ * redesign adds, so fixture builds exercise them without inventing facts. The
+ * UC Santa Cruz start is known only to the year (2019), so it is stored as a
+ * year-precision date and printed without a month.
+ */
 export const FIXTURE_PROFILE: ProfileData = {
     _id: "profile",
     _updatedAt: "2026-07-11T00:00:00Z",
     name: "Adithya Rajendran",
-    headline: "Cloud Field Engineer @ Canonical",
+    headline: "Former Canonical engineer · Robotics & AI studies at SJSU",
+    tagline: "I’m exploring how robots perceive and remember the world.",
     introduction:
-        "I work on infrastructure and security, build things to understand them, and write about whatever keeps my attention.",
+        "I’m exploring how robots perceive and remember the world. Here I share practical engineering notes and the questions I’m following next.",
     bio: "My best work starts with a system that is technically possible but operationally unclear. I like learning in public, building small systems at home, and keeping useful notes on the open web.\n\nWriting here does not follow a content strategy. It is simply a record of the things I care enough to understand and remember.",
+    availability: {
+        status: "open",
+        // The résumé header line, printed as written.
+        openTo: "Summer 2027 internships · Full-time opportunities in 2028",
+        // Summer 2027, approximated for placing the planned orbit only.
+        from: "2027-06-01",
+        consultingOpen: false,
+        updatedAt: "2026-09-24",
+    },
+    // The plan's default launch (open question 8): the UC Santa Cruz start.
+    launch: {
+        date: "2019-01-01",
+        precision: "year",
+        event: "Started at UC Santa Cruz",
+    },
+    startHereIds: ["fixture-post-3", "fixture-post-1"],
     location: "United States",
     socialLinks: [
+        {
+            _key: "profile-linkedin",
+            _type: "externalLink",
+            label: "LinkedIn",
+            url: "https://www.linkedin.com/in/adithya-rajendran",
+            kind: "profile",
+        },
         {
             _key: "profile-github",
             _type: "externalLink",
             label: "GitHub",
             url: "https://github.com/Adithya-Rajendran",
+            kind: "profile",
         },
         {
-            _key: "profile-linkedin",
+            _key: "profile-credly",
             _type: "externalLink",
-            label: "LinkedIn",
-            url: "https://www.linkedin.com/in/adithya-rajendran/",
+            label: "Credly",
+            url: "https://www.credly.com/users/adithya-rajendran",
+            kind: "profile",
         },
         {
             _key: "profile-hackthebox",
             _type: "externalLink",
             label: "Hack The Box",
             url: "https://app.hackthebox.com/users/514798",
+            kind: "profile",
+        },
+        {
+            _key: "profile-tryhackme",
+            _type: "externalLink",
+            label: "TryHackMe",
+            url: "https://tryhackme.com/p/Cagmas",
+            kind: "profile",
         },
     ],
-    currentCuriosities: [],
+    currentCuriosities: [
+        {
+            _key: "curiosity-memory-confidence",
+            _type: "curiosity",
+            kind: "question",
+            title: "When should a robot stop trusting where it last saw an object?",
+            note: "A question I want to investigate: how missed detections, occlusion, and time should change confidence in a remembered location.",
+        },
+        {
+            _key: "curiosity-shared-objects",
+            _type: "curiosity",
+            kind: "question",
+            title: "How should robots track objects that people move, borrow, and return?",
+            note: "I’m interested in visual memory for shared spaces, where a tool can be visible, in use, or somewhere a robot has not checked.",
+        },
+        {
+            _key: "curiosity-search-or-ask",
+            _type: "curiosity",
+            kind: "question",
+            title: "When should a robot ask a person instead of continuing to search?",
+            note: "Exploring the tradeoff between taking another look, searching elsewhere, waiting, and interrupting someone for help.",
+        },
+    ],
+    curiositiesUpdatedAt: "2026-09-24T00:00:00Z",
     timeline: [
+        {
+            _key: "timeline-sjsu",
+            _type: "timelineEntry",
+            kind: "education",
+            title: "M.S. Engineering (Interdisciplinary)",
+            organization: "San José State University",
+            orgShort: "SJSU",
+            orgUrl: "https://www.sjsu.edu/",
+            employment: "degree",
+            isCurrent: true,
+            startDate: "2026-08-01",
+            expectedEndYear: 2028,
+            summary: "Studying the intersection of robotics and AI.",
+            highlights: [
+                "Study focus: the intersection of robotics and artificial intelligence.",
+                "Expected graduation: 2028.",
+            ],
+        },
         {
             _key: "timeline-canonical",
             _type: "timelineEntry",
             kind: "work",
-            title: "Cloud Field Engineer",
-            organization: "Canonical",
+            title: "Field Software Engineer I",
+            organization: "Canonical Ltd (Ubuntu)",
+            orgShort: "Canonical",
+            orgUrl: "https://canonical.com/",
             location: "Remote",
-            startDate: "2023-08-01",
+            isCurrent: false,
+            startDate: "2024-05-01",
+            endDate: "2026-07-01",
+            // Paraphrases and quotes the bio's own account of the move.
+            burn: {
+                label: "Security → Cloud",
+                note: "After graduating, I worked on cloud compliance, threat modeling, and automation before moving to Canonical.",
+            },
             summary:
-                "Customer-facing engineering across private cloud and Kubernetes.",
+                "Systems engineering, customer problem-solving, and technical communication across private-cloud deployments.",
             highlights: [
-                "Turn ambiguous infrastructure problems into testable paths forward.",
-                "Explain platform decisions across engineering and operator audiences.",
-                "Build repeatable delivery and troubleshooting practices.",
-                "Feed lessons from real environments back into documentation and tooling.",
-                "Work across Linux, OpenStack, Kubernetes, storage, and networking.",
+                "Designed and led large-scale private-cloud deployments using OpenStack, Kubernetes, and Ceph.",
+                "Diagnosed issues from the Linux kernel and network switches through to applications, contributing patches where needed.",
+                "Led customer discovery calls and tailored technical demonstrations, helping clients evaluate approaches against their business goals.",
+                "Automated deployment and operations tasks with Python, Terraform, and Bash to reduce manual work and errors.",
+                "Worked with engineering and support teams on custom solutions to improve performance and resolve recurring customer issues.",
+                "Created CIS and DISA STIG tailoring files to support customers’ CMMC and HIPAA compliance work.",
+                "Documented root causes and fixes in the knowledge base to help resolve similar incidents faster.",
+                "Helped define statements of work, aligning sales, support, and engineering on the scope of each engagement.",
+                "Brought customer use cases and technical challenges to product and engineering teams to inform the roadmap.",
             ],
-            skills: ["OpenStack", "Kubernetes", "Linux"],
+            // Only terms named in the highlights above.
+            skills: [
+                "OpenStack",
+                "Kubernetes",
+                "Ceph",
+                "Linux",
+                "Python",
+                "Terraform",
+                "Bash",
+            ],
+        },
+        {
+            _key: "timeline-tcr",
+            _type: "timelineEntry",
+            kind: "work",
+            title: "Cybersecurity Analyst Intern",
+            organization: "Technical Consulting & Research, Inc. (TCR)",
+            orgShort: "TCR",
+            employment: "internship",
+            location: "Fremont, CA",
+            isCurrent: false,
+            startDate: "2023-12-01",
+            endDate: "2024-05-01",
+            highlights: [
+                "Identified gaps between cloud-provider configurations and compliance requirements through fit-gap analysis.",
+                "Built Python automation that saved 1–2 hours of manual work per week.",
+                "Presented “Navigating AI Risks for Small Businesses” at IGNITE and Bucknell University conferences.",
+                "Used MITRE ATT&CK to improve threat modeling, contributing to a 15% reduction in system vulnerabilities.",
+                "Applied least-privilege access and network segmentation to strengthen security.",
+                "Built JavaScript demos to explain how compliance requirements affect applications.",
+                "Implemented authentication and authorization with Auth0.",
+                "Created security reports and visualizations to explain findings to non-technical stakeholders.",
+            ],
         },
         {
             _key: "timeline-ucsc",
@@ -110,8 +237,19 @@ export const FIXTURE_PROFILE: ProfileData = {
             kind: "education",
             title: "B.S. Computer Science",
             organization: "University of California, Santa Cruz",
-            startDate: "2023-06-01",
+            orgShort: "UCSC",
+            orgUrl: "https://www.ucsc.edu/",
+            employment: "degree",
+            location: "Santa Cruz, CA",
+            isCurrent: false,
+            // The owner gave the year only (2019 – 2023): never print a month.
+            startDate: "2019-01-01",
+            startPrecision: "year",
             endDate: "2023-06-01",
+            highlights: [
+                "Explored network security and ethical hacking through the Slug Security Club’s workshops and competitions.",
+                "Relevant coursework: Computer Systems and C, Cryptography, Advanced Computer Networking, Principle of System Design, Artificial Intelligence, and Natural Language Processing.",
+            ],
         },
     ],
     skillGroups: [
@@ -158,6 +296,16 @@ export const FIXTURE_PROFILE: ProfileData = {
             expiresOn: "2023-04-01",
             lifetime: false,
             lifecycleStatus: "expired",
+        },
+    ],
+    talksAndPapers: [
+        {
+            // Its date, co-presenters and links are not published yet.
+            _key: "talk-navigating-ai-risks",
+            _type: "talkOrPaper",
+            title: "Navigating AI Risks for Small Businesses",
+            kind: "talk",
+            venue: "IGNITE · Bucknell University",
         },
     ],
 };

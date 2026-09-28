@@ -170,6 +170,25 @@ Commit the regenerated `schema.json` and `sanity.types.ts`. Schema extraction
 and TypeGen are local; dataset export, migration execution, and schema
 deployment require an authenticated Sanity CLI session.
 
+- Option lists that both the schema and the site read (availability status,
+  link kinds, employment types, date precision…) live in
+  `lib/profile-fields.ts`, which has no imports because the Studio bundles
+  it. Sanity checks a value against `options.list` only when the field
+  declares a validation rule, so an optional list field uses
+  `validation: listValuesOnly`.
+- `PROFILE_QUERY_RESULT` must stay assignable to the hand-written
+  `ProfileData`; `tests/lib/profile-fields.test.ts` checks this in
+  `pnpm typecheck`.
+- Real content only. A date known only to the year is stored as any day in
+  that year with precision `year` (`timelineEntry.startPrecision`,
+  `profile.launch.precision`), and the site prints the year alone
+  (`formatTimelineDate` in `lib/profile-content.ts`). Never print a month or
+  day the owner has not given.
+- No public email address or phone number anywhere: pages, JSON-LD, RSS, OG
+  images, the console or the printed CV. Contact is the form only, so there is
+  deliberately no `publicEmail` field, and `externalLink` accepts http(s)
+  URLs only.
+
 ## Tests
 
 - **Vitest** (`pnpm test`, `tests/**/*.test.ts`) covers pure logic.

@@ -1,4 +1,10 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import {
+    AVAILABILITY_STATUSES,
+    checkAvailabilityOpenTo,
+    DATE_PRECISIONS,
+    listValuesOnly,
+} from "@/lib/profile-fields";
 
 export default defineType({
     name: "profile",
@@ -6,10 +12,12 @@ export default defineType({
     type: "document",
     groups: [
         { name: "identity", title: "Identity", default: true },
+        { name: "status", title: "Status" },
         { name: "writing", title: "Homepage & Writing" },
         { name: "about", title: "About" },
         { name: "now", title: "Right Now" },
         { name: "portfolio", title: "Portfolio" },
+        { name: "talks", title: "Talks & Papers" },
     ],
     initialValue: {
         name: "Adithya Rajendran",
@@ -33,6 +41,15 @@ export default defineType({
             validation: (Rule) => Rule.required().max(140),
         }),
         defineField({
+            name: "tagline",
+            title: "Tagline",
+            type: "string",
+            group: "identity",
+            description:
+                "One line under your name on the home page. Leave blank to use the first sentence of the Introduction.",
+            validation: (Rule) => Rule.max(120),
+        }),
+        defineField({
             name: "introduction",
             title: "Introduction",
             type: "text",
@@ -41,6 +58,103 @@ export default defineType({
             description:
                 "A short personal introduction for the homepage, About, and Work. Keep it concise enough to read at a glance.",
             validation: (Rule) => Rule.required().max(500),
+        }),
+        defineField({
+            name: "availability",
+            title: "Availability",
+            type: "object",
+            group: "status",
+            description:
+                "What you are open to right now. Shown in the home status line, the Hiring route on Contact, the CV and the planned orbit on the Trajectory map.",
+            fields: [
+                defineField({
+                    name: "status",
+                    title: "Status",
+                    type: "string",
+                    options: {
+                        list: [...AVAILABILITY_STATUSES],
+                        layout: "radio",
+                        direction: "horizontal",
+                    },
+                    validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                    name: "openTo",
+                    title: "Open To",
+                    type: "string",
+                    description:
+                        "Printed as written, for example the line from your résumé header. Required unless the status is Closed.",
+                    validation: (Rule) =>
+                        Rule.max(140).custom((openTo, context) =>
+                            checkAvailabilityOpenTo(
+                                (
+                                    context.parent as
+                                        { status?: string } | undefined
+                                )?.status,
+                                openTo,
+                            ),
+                        ),
+                }),
+                defineField({
+                    name: "from",
+                    title: "Planned Orbit Starts",
+                    type: "date",
+                    description:
+                        "Optional. Where the planned orbit begins on the Trajectory map. It only places the drawing and is never printed; Open To is what readers see.",
+                }),
+                defineField({
+                    name: "consultingOpen",
+                    title: "Open to Consulting",
+                    type: "boolean",
+                    initialValue: false,
+                    description:
+                        "Shows the Consulting route on Contact. Move the site to the Vercel Pro plan before turning this on: the Hobby plan is for personal, non-commercial use.",
+                }),
+                defineField({
+                    name: "updatedAt",
+                    title: "Updated On",
+                    type: "date",
+                    description:
+                        "When you last confirmed this status. Printed as “Updated” next to it.",
+                    validation: (Rule) => Rule.required(),
+                }),
+            ],
+        }),
+        defineField({
+            name: "launch",
+            title: "Launch",
+            type: "object",
+            group: "status",
+            description:
+                "Where your story starts: the mission clock in the footer counts from this date, and it labels the origin of the Trajectory map.",
+            fields: [
+                defineField({
+                    name: "date",
+                    title: "Date",
+                    type: "date",
+                    validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                    name: "precision",
+                    title: "Date Precision",
+                    type: "string",
+                    description:
+                        "How much of the date you know. With Year only (enter any day in that year), the site prints the year alone and never a month or day. Empty means an exact date.",
+                    options: {
+                        list: [...DATE_PRECISIONS],
+                        layout: "radio",
+                        direction: "horizontal",
+                    },
+                    validation: listValuesOnly,
+                }),
+                defineField({
+                    name: "event",
+                    title: "Event",
+                    type: "string",
+                    description: "For example, Started at UC Santa Cruz.",
+                    validation: (Rule) => Rule.required().max(60),
+                }),
+            ],
         }),
         defineField({
             name: "focusAreas",
@@ -106,6 +220,22 @@ export default defineType({
             to: [{ type: "post" }],
             description:
                 "Choose the homepage's Start here article. Until it is published, or when no post is selected, the newest published post is shown.",
+        }),
+        defineField({
+            name: "startHere",
+            title: "Start Here Posts",
+            type: "array",
+            group: "writing",
+            description:
+                "Up to three posts for new readers, shown on the home page and at the end of each post. The Featured Homepage Post, when set, keeps the first place.",
+            of: [
+                defineArrayMember({
+                    type: "reference",
+                    to: [{ type: "post" }],
+                    weak: true,
+                }),
+            ],
+            validation: (Rule) => Rule.unique().max(3),
         }),
         defineField({
             name: "bio",
@@ -216,6 +346,16 @@ export default defineType({
             type: "array",
             group: "portfolio",
             of: [defineArrayMember({ type: "credential" })],
+        }),
+        defineField({
+            name: "talksAndPapers",
+            title: "Talks & Papers",
+            type: "array",
+            group: "talks",
+            description:
+                "Talks you gave and papers you wrote. Shown on About and the CV; the section is hidden when empty.",
+            of: [defineArrayMember({ type: "talkOrPaper" })],
+            validation: (Rule) => Rule.max(20),
         }),
     ],
     preview: {

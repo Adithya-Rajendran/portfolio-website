@@ -1,5 +1,28 @@
 [
   {
+    "type": "type",
+    "name": "burn",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "label": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": false
+        },
+        "note": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        }
+      }
+    }
+  },
+  {
     "name": "mediaEmbed",
     "type": "type",
     "value": {
@@ -336,6 +359,150 @@
     }
   },
   {
+    "type": "type",
+    "name": "project.reference",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_ref": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          }
+        },
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "reference"
+          }
+        },
+        "_weak": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "boolean"
+          },
+          "optional": true
+        }
+      },
+      "dereferencesTo": "project"
+    }
+  },
+  {
+    "name": "talkOrPaper",
+    "type": "type",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "talkOrPaper"
+          }
+        },
+        "title": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": false
+        },
+        "kind": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "talk"
+              },
+              {
+                "type": "string",
+                "value": "paper"
+              },
+              {
+                "type": "string",
+                "value": "preprint"
+              },
+              {
+                "type": "string",
+                "value": "poster"
+              },
+              {
+                "type": "string",
+                "value": "thesis"
+              },
+              {
+                "type": "string",
+                "value": "report"
+              }
+            ]
+          },
+          "optional": false
+        },
+        "venue": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "date": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "authors": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "links": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "array",
+            "of": {
+              "type": "object",
+              "attributes": {
+                "_key": {
+                  "type": "objectAttribute",
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              },
+              "rest": {
+                "type": "inline",
+                "name": "externalLink"
+              }
+            }
+          },
+          "optional": true
+        },
+        "abstract": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "project": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "inline",
+            "name": "project.reference"
+          },
+          "optional": true
+        }
+      }
+    }
+  },
+  {
     "name": "credential",
     "type": "type",
     "value": {
@@ -531,6 +698,53 @@
           },
           "optional": false
         },
+        "orgShort": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "orgUrl": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "employment": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "full-time"
+              },
+              {
+                "type": "string",
+                "value": "internship"
+              },
+              {
+                "type": "string",
+                "value": "part-time"
+              },
+              {
+                "type": "string",
+                "value": "contract"
+              },
+              {
+                "type": "string",
+                "value": "degree"
+              },
+              {
+                "type": "string",
+                "value": "research"
+              }
+            ]
+          },
+          "optional": true
+        },
         "location": {
           "type": "objectAttribute",
           "value": {
@@ -552,6 +766,23 @@
           },
           "optional": true
         },
+        "startPrecision": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "month"
+              },
+              {
+                "type": "string",
+                "value": "year"
+              }
+            ]
+          },
+          "optional": true
+        },
         "endDate": {
           "type": "objectAttribute",
           "value": {
@@ -563,6 +794,14 @@
           "type": "objectAttribute",
           "value": {
             "type": "number"
+          },
+          "optional": true
+        },
+        "burn": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "inline",
+            "name": "burn"
           },
           "optional": true
         },
@@ -651,6 +890,36 @@
     }
   },
   {
+    "type": "type",
+    "name": "post.reference",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_ref": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          }
+        },
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "reference"
+          }
+        },
+        "_weak": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "boolean"
+          },
+          "optional": true
+        }
+      },
+      "dereferencesTo": "post"
+    }
+  },
+  {
     "name": "curiosity",
     "type": "type",
     "value": {
@@ -662,6 +931,31 @@
             "type": "string",
             "value": "curiosity"
           }
+        },
+        "kind": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "question"
+              },
+              {
+                "type": "string",
+                "value": "building"
+              },
+              {
+                "type": "string",
+                "value": "reading"
+              },
+              {
+                "type": "string",
+                "value": "learning"
+              }
+            ]
+          },
+          "optional": true
         },
         "title": {
           "type": "objectAttribute",
@@ -681,6 +975,22 @@
           "type": "objectAttribute",
           "value": {
             "type": "string"
+          },
+          "optional": true
+        },
+        "project": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "inline",
+            "name": "project.reference"
+          },
+          "optional": true
+        },
+        "post": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "inline",
+            "name": "post.reference"
           },
           "optional": true
         }
@@ -713,6 +1023,51 @@
             "type": "string"
           },
           "optional": false
+        },
+        "kind": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "repo"
+              },
+              {
+                "type": "string",
+                "value": "docs"
+              },
+              {
+                "type": "string",
+                "value": "paper"
+              },
+              {
+                "type": "string",
+                "value": "video"
+              },
+              {
+                "type": "string",
+                "value": "dataset"
+              },
+              {
+                "type": "string",
+                "value": "demo"
+              },
+              {
+                "type": "string",
+                "value": "article"
+              },
+              {
+                "type": "string",
+                "value": "profile"
+              },
+              {
+                "type": "string",
+                "value": "other"
+              }
+            ]
+          },
+          "optional": true
         }
       }
     }
@@ -1354,36 +1709,6 @@
   },
   {
     "type": "type",
-    "name": "post.reference",
-    "value": {
-      "type": "object",
-      "attributes": {
-        "_ref": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "string"
-          }
-        },
-        "_type": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "string",
-            "value": "reference"
-          }
-        },
-        "_weak": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "boolean"
-          },
-          "optional": true
-        }
-      },
-      "dereferencesTo": "post"
-    }
-  },
-  {
-    "type": "type",
     "name": "sanity.fileAsset.reference",
     "value": {
       "type": "object",
@@ -1461,12 +1786,121 @@
         },
         "optional": false
       },
+      "tagline": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
       "introduction": {
         "type": "objectAttribute",
         "value": {
           "type": "string"
         },
         "optional": false
+      },
+      "availability": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "status": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "union",
+                "of": [
+                  {
+                    "type": "string",
+                    "value": "open"
+                  },
+                  {
+                    "type": "string",
+                    "value": "selective"
+                  },
+                  {
+                    "type": "string",
+                    "value": "closed"
+                  }
+                ]
+              },
+              "optional": false
+            },
+            "openTo": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "from": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "consultingOpen": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "boolean"
+              },
+              "optional": true
+            },
+            "updatedAt": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": false
+            }
+          }
+        },
+        "optional": true
+      },
+      "launch": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "date": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": false
+            },
+            "precision": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "union",
+                "of": [
+                  {
+                    "type": "string",
+                    "value": "day"
+                  },
+                  {
+                    "type": "string",
+                    "value": "month"
+                  },
+                  {
+                    "type": "string",
+                    "value": "year"
+                  }
+                ]
+              },
+              "optional": true
+            },
+            "event": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": false
+            }
+          }
+        },
+        "optional": true
       },
       "focusAreas": {
         "type": "objectAttribute",
@@ -1511,6 +1945,28 @@
         "value": {
           "type": "inline",
           "name": "post.reference"
+        },
+        "optional": true
+      },
+      "startHere": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "_key": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "rest": {
+              "type": "inline",
+              "name": "post.reference"
+            }
+          }
         },
         "optional": true
       },
@@ -1732,6 +2188,28 @@
             "rest": {
               "type": "inline",
               "name": "credential"
+            }
+          }
+        },
+        "optional": true
+      },
+      "talksAndPapers": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "_key": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "rest": {
+              "type": "inline",
+              "name": "talkOrPaper"
             }
           }
         },

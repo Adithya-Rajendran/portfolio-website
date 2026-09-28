@@ -2,6 +2,15 @@ import { cacheLife, cacheTag } from "next/cache";
 import { defineQuery } from "next-sanity";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { fixturesEnabled, resolveFixtureQuery } from "@/lib/fixtures";
+import type {
+    AvailabilityStatus,
+    CuriosityKind,
+    DatePrecision,
+    EmploymentType,
+    LinkKind,
+    TalkKind,
+    TimelineDatePrecision,
+} from "@/lib/profile-fields";
 import { client, isSanityConfigured } from "@/lib/sanity-config";
 
 export type ContentBlock = {
@@ -26,14 +35,19 @@ export type ExternalLink = {
     _type?: "externalLink";
     label: string;
     url: string;
+    kind?: LinkKind | null;
 };
 
 export type CuriosityItem = {
     _key: string;
     _type?: "curiosity";
+    /** Missing on items saved before kinds existed: treat as a question. */
+    kind?: CuriosityKind | null;
     title: string;
     note?: string | null;
     url?: string | null;
+    projectId?: string | null;
+    postId?: string | null;
 };
 
 export type TimelineEntry = {
@@ -42,8 +56,13 @@ export type TimelineEntry = {
     kind: "work" | "education";
     title: string;
     organization: string;
+    orgShort?: string | null;
+    orgUrl?: string | null;
+    employment?: EmploymentType | null;
     location?: string | null;
     startDate?: string | null;
+    /** `year`: only the year of `startDate` is known; never print a month. */
+    startPrecision?: TimelineDatePrecision | null;
     endDate?: string | null;
     isCurrent?: boolean | null;
     expectedEndYear?: number | null;
@@ -51,6 +70,7 @@ export type TimelineEntry = {
     highlights?: string[] | null;
     skills?: string[] | null;
     logo?: SanityImageValue | null;
+    burn?: { label: string; note?: string | null } | null;
 };
 
 export type SkillGroup = {
@@ -74,19 +94,52 @@ export type CredentialListItem = {
     lifecycleStatus: "active" | "lifetime" | "expired";
 };
 
+export type Availability = {
+    status: AvailabilityStatus;
+    openTo?: string | null;
+    /** Places the planned orbit only; never printed. */
+    from?: string | null;
+    consultingOpen?: boolean | null;
+    updatedAt: string;
+};
+
+export type Launch = {
+    date: string;
+    /** Missing means an exact date; `year` means print the year alone. */
+    precision?: DatePrecision | null;
+    event: string;
+};
+
+export type TalkOrPaper = {
+    _key: string;
+    _type?: "talkOrPaper";
+    title: string;
+    kind: TalkKind;
+    venue?: string | null;
+    date?: string | null;
+    authors?: string | null;
+    links?: ExternalLink[] | null;
+    abstract?: string | null;
+    projectId?: string | null;
+};
+
 export type ProfileData = {
     _id: string;
     _updatedAt?: string;
     name: string;
     headline: string;
+    tagline?: string | null;
     introduction: string;
     bio: string;
+    availability?: Availability | null;
+    launch?: Launch | null;
     focusAreas?: string[] | null;
     workSummary?: string | null;
     writingDescription?: string | null;
     contactInvitation?: string | null;
     seoDescription?: string | null;
     featuredPostId?: string | null;
+    startHereIds?: string[] | null;
     location?: string | null;
     portrait?: SanityImageValue | null;
     resumeUrl?: string | null;
@@ -97,6 +150,7 @@ export type ProfileData = {
     timeline?: TimelineEntry[] | null;
     skillGroups?: SkillGroup[] | null;
     credentials?: CredentialListItem[] | null;
+    talksAndPapers?: TalkOrPaper[] | null;
 };
 
 export type PostListItem = {
@@ -155,25 +209,34 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     _updatedAt,
     name,
     headline,
+    tagline,
     introduction,
     bio,
+    availability{status, openTo, from, consultingOpen, updatedAt},
+    launch{date, precision, event},
     focusAreas,
     workSummary,
     writingDescription,
     contactInvitation,
     seoDescription,
     "featuredPostId": featuredPost._ref,
+    "startHereIds": startHere[]._ref,
     location,
     portrait,
     "resumeUrl": resume.asset->url,
     resumeNote,
-    socialLinks[]{_key, _type, label, url},
-    currentCuriosities[]{_key, _type, title, note, url},
+    socialLinks[]{_key, _type, label, url, kind},
+    currentCuriosities[]{
+        _key, _type, kind, title, note, url,
+        "projectId": project._ref,
+        "postId": post._ref
+    },
     curiositiesUpdatedAt,
     timeline[]{
-        _key, _type, kind, title, organization, location, startDate, endDate,
+        _key, _type, kind, title, organization, orgShort, orgUrl, employment,
+        location, startDate, startPrecision, endDate,
         isCurrent, expectedEndYear,
-        summary, highlights, skills, logo
+        summary, highlights, skills, logo, burn{label, note}
     },
     skillGroups[]{_key, _type, title, skills},
     credentials[]{
@@ -184,6 +247,12 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
             defined(expiresOn) && expiresOn < $today => "expired",
             "active"
         )
+    },
+    talksAndPapers[]{
+        _key, _type, title, kind, venue, date, authors,
+        links[]{_key, _type, label, url, kind},
+        abstract,
+        "projectId": project._ref
     }
 }`);
 

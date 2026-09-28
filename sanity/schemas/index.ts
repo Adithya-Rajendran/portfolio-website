@@ -7,6 +7,7 @@ import externalLink from "./objects/externalLink";
 import gallery from "./objects/gallery";
 import mediaEmbed from "./objects/mediaEmbed";
 import skillGroup from "./objects/skillGroup";
+import talkOrPaper from "./objects/talkOrPaper";
 import timelineEntry from "./objects/timelineEntry";
 import post from "./post";
 import profile from "./profile";
@@ -23,6 +24,7 @@ export const schemaTypes = [
     timelineEntry,
     skillGroup,
     credential,
+    talkOrPaper,
     callout,
     gallery,
     mediaEmbed,
