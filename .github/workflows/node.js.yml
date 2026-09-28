@@ -4,9 +4,9 @@ permissions:
 
 on:
     push:
-        branches: ["main"]
+        branches: ["main", "redesign", "redesign/**"]
     pull_request:
-        branches: ["main"]
+        branches: ["main", "redesign", "redesign/**"]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -65,3 +65,33 @@ jobs:
                   cache: "pnpm"
             - run: pnpm install --frozen-lockfile
             - run: pnpm run build
+
+    e2e:
+        # Playwright against a fixture build (lib/fixtures.ts content, no
+        # Sanity credentials): smoke, no-JS, axe, layout, the byte report and
+        # review screenshots. playwright.config.ts builds and starts the
+        # site itself.
+        name: Browser tests
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+
+        steps:
+            - uses: actions/checkout@v7
+            # pnpm version comes from package.json "packageManager".
+            - uses: pnpm/action-setup@v6
+            - name: Use Node.js 24.x
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24.x
+                  cache: "pnpm"
+            - run: pnpm install --frozen-lockfile
+            - name: Install Chromium and its system libraries
+              run: pnpm exec playwright install --with-deps chromium
+            - run: pnpm test:e2e
+            - name: Upload the report and screenshots
+              if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@v7
+              with:
+                  name: playwright-report-fixture
+                  path: playwright-report/
+                  retention-days: 14

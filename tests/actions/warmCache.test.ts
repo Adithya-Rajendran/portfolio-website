@@ -3,11 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { normalizeMetadataRoute } from "next/dist/lib/metadata/get-metadata-route";
 import { normalizeAppPath } from "next/dist/shared/lib/router/utils/app-paths";
 import { siteConfig } from "@/lib/config";
-import {
-    PROFILE_OG_IMAGE_PATHS,
-    warmBlogCache,
-    warmProfileCache,
-} from "@/actions/warmCache";
+import { warmBlogCache, warmProfileCache } from "@/actions/warmCache";
+import { PROFILE_OG_IMAGE_PATHS } from "@/lib/og-image-paths";
 import type { PostListItem } from "@/lib/sanity-client";
 
 const { getAllPostsMock } = vi.hoisted(() => ({

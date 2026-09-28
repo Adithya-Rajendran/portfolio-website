@@ -14,7 +14,7 @@ A writing-first personal website about systems, robotic vision, AI, and possible
 - **Sanity CMS**: Code-defined Profile, Blog Post, Project, and structured rich-prose schemas.
 - **SEO Optimized**: Implements structured data (JSON-LD) and semantic HTML for optimal search engine visibility.
 - **Blog**: Chronological posts, optional topics, archive search, readable code blocks, article contents, and a full-content RSS feed. Follow actions connect to LinkedIn and RSS.
-- **Automated Testing**: Integrated GitHub Actions CI/CD workflows to ensure code quality before merges.
+- **Automated Testing**: GitHub Actions runs lint, type checks, Vitest unit tests, a production build, and Playwright browser tests (smoke, no-JavaScript, axe accessibility, layout, a byte report and review screenshots) against a fixture build, then again against each Vercel preview.
 - **Contact Handling**: A Resend-backed contact form protected by Vercel BotID and WAF rate limiting, with Zod validation and MX record checks.
 
 ## Getting Started
@@ -45,6 +45,17 @@ pnpm build
 pnpm start
 ```
 
+**Tests:**
+
+```bash
+pnpm test                               # Vitest unit tests
+pnpm exec playwright install chromium   # once, for the browser tests
+pnpm test:e2e                           # builds the fixture site and runs Playwright
+BASE_URL=https://<preview-url> pnpm test:e2e:preview   # the same specs against a deployment
+```
+
+`CLAUDE.md` lists the full pre-merge gate and what each browser spec checks. Reports are written to `playwright-report/`.
+
 ## Content and deployment
 
 - Copy `.env.example` to `.env.local` and set the public Sanity project and dataset values. Published content needs no read token. Keep local environment files out of Git.
@@ -57,6 +68,7 @@ pnpm start
 - The visual theme, navigation, section labels, artwork, and stable site identity stay in code. No code change or redeploy is needed for the content fields above.
 - The approved artwork is the Lunar Shared Horizon scene. `public/images/lunar-horizon-v2/` contains the smaller pre-encoded AVIF/WebP sizes and mobile crops. The 3840px variants in `public/images/lunar-horizon-v3/` are encoded directly from the lossless original in `assets/artwork/` at higher quality, preserving fine texture and full chroma detail in AVIF. An inline preview appears while the selected image loads. Responsive preloads fetch only the format and size needed. Regenerate the assets and `lib/hero-artwork.json` with `node scripts/generate-hero-artwork.mjs`; bump the output directory version when changing artwork or encoding settings because these URLs are cached immutably. The source is 1672 × 941, so the 4K delivery dimensions do not imply native 4K detail. The WebP master that reproduces the existing smaller variants, `assets/artwork/lunar-shared-horizon-v1.webp`, sits next to the original and outside `public/`, so neither is served.
 - The existing Vercel project builds GitHub branches as previews and `main` as production. Keep the existing Sanity, Resend, BotID, webhook, and cron settings. No new service or environment variable is required by this redesign. Vercel honours the `packageManager` pnpm pin only when `ENABLE_EXPERIMENTAL_COREPACK=1` is set in the project; otherwise it infers pnpm from the lockfile.
+- The browser tests also run against every successful Vercel preview (`.github/workflows/e2e-preview.yml`). If previews are protected, create a **Protection Bypass for Automation** secret in Vercel (Settings → Deployment Protection) and store it as the GitHub Actions secret `VERCEL_AUTOMATION_BYPASS_SECRET`; until it exists, that workflow skips with a notice.
 - Before merging, run the checks documented in `CLAUDE.md` and verify a Vercel preview. Existing `/blog`, `/portfolio`, `/resume`, RSS, and résumé PDF routes are preserved.
 
 ## Contribution

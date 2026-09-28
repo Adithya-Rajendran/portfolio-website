@@ -17,6 +17,8 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
+        "test:e2e": "playwright test --project=fixture",
+        "test:e2e:preview": "playwright test --project=preview",
         "typegen": "sanity schema extract --enforce-required-fields --workspace portfolio-blog --force && sanity typegen generate",
         "prepare": "husky"
     },
@@ -80,6 +82,8 @@
         }
     },
     "devDependencies": {
+        "@axe-core/playwright": "^4.13.0",
+        "@playwright/test": "^1.63.0",
         "@tailwindcss/postcss": "^4.3.3",
         "@types/node": "^26.4.1",
         "@types/react": "^19.2.18",

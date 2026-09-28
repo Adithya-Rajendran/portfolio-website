@@ -3,7 +3,15 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 
 const eslintConfig = defineConfig([
     ...nextVitals,
-    globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+    globalIgnores([
+        ".next/**",
+        "out/**",
+        "build/**",
+        "next-env.d.ts",
+        "playwright-report/**",
+        "test-results/**",
+        "blob-report/**",
+    ]),
     {
         rules: {
             "react/no-unescaped-entities": 0,

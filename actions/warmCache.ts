@@ -6,6 +6,7 @@ import { getAllPosts } from "@/lib/sanity-client";
 import { siteConfig } from "@/lib/config";
 import { getPostSlug } from "@/components/blogs/utils";
 import { collectTags } from "@/lib/tags";
+import { PROFILE_OG_IMAGE_PATHS } from "@/lib/og-image-paths";
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -26,21 +27,6 @@ export async function warmBlogCache(): Promise<WarmResult> {
 
     return { pages };
 }
-
-/**
- * Sharing images warmed on profile edits, keyed by the file that serves
- * them. Metadata image routes inside the `app/(site)` route group get a
- * stable `-<hash>` suffix from Next.js (derived from the group path), so
- * these are the built URLs `next build` prints, not `/…/opengraph-image`.
- * tests/actions/warmCache.test.ts recomputes each one from its file.
- */
-export const PROFILE_OG_IMAGE_PATHS = {
-    "app/(site)/opengraph-image.tsx": "/opengraph-image-12o0cb",
-    "app/(site)/about/opengraph-image.tsx": "/about/opengraph-image-1ycygp",
-    "app/(site)/portfolio/opengraph-image.tsx":
-        "/portfolio/opengraph-image-98lokn",
-    "app/(site)/blog/opengraph-image.tsx": "/blog/opengraph-image-14vkmf",
-} as const;
 
 /**
  * Profile edits affect identity, editorial copy, links, and résumé metadata.

@@ -14,6 +14,7 @@ only live in comments or commit messages.
     ```
     pnpm lint && pnpm typecheck && pnpm format:check && pnpm test
     NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=fallback pnpm build
+    pnpm test:e2e
     ```
 
     `fallback` is the sentinel `lib/sanity-config.ts`'s `isSanityConfigured`
@@ -54,8 +55,10 @@ only live in comments or commit messages.
   `SiteShell`, because it sits outside the group.
 - Metadata image routes inside a route group get a stable `-<hash>` URL
   suffix from Next.js (`/about/opengraph-image-1ycygp`; `next build` prints
-  them). Anything that requests them directly, like the warm list in
-  `actions/warmCache.ts`, uses the built URL; a test recomputes each one.
+  them). Anything that requests them directly, like the warm list
+  (`lib/og-image-paths.ts`, used by `actions/warmCache.ts`), uses the built
+  URL; a Vitest test recomputes each one and the e2e smoke spec requests
+  each one from a real build.
 
 ## Caching contract
 
@@ -169,12 +172,45 @@ deployment require an authenticated Sanity CLI session.
 
 ## Tests
 
-`vitest.config.ts` uses `environment: "node"` by design — there is no
-jsdom/component-rendering setup in this repo (`tests/` contains only
-`*.test.ts`, no rendered-component tests). Component-level verification is
-done by running the app (optionally with `SANITY_USE_FIXTURES=1`) and
-taking screenshots against the live dev server, not by rendering components
-in a simulated DOM.
+- **Vitest** (`pnpm test`, `tests/**/*.test.ts`) covers pure logic.
+  `vitest.config.ts` uses `environment: "node"` by design: there is no
+  jsdom or component-rendering setup. Anything that needs a browser is a
+  Playwright spec.
+- **Playwright** (`tests/e2e/*.spec.ts`, Chromium, `playwright.config.ts`)
+  covers the built site: `smoke` (every page returns its status with one
+  `h1` and one `main`, no console errors, uncaught exceptions or CSP
+  violations; share images, feed, icons, headers, redirects, the Studio
+  without chrome), `nojs` (complete pages without JavaScript: header, nav,
+  footer, no hidden streamed segments, nothing rendered twice), `a11y`
+  (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px), `layout` (no
+  sideways scroll at 320–1440 px), `budgets` (the brotli byte report, printed,
+  not enforced yet) and `screens` (review screenshots and the `/resume`
+  print PDF, attached to the HTML report).
+    - `pnpm test:e2e` runs the `fixture` project: Playwright builds the site
+      with `NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=fallback` and
+      `SANITY_USE_FIXTURES=1` (this overwrites `.next`), then serves it with
+      `next start` on port 3100 (`E2E_PORT`). Off-origin requests are
+      stubbed, so the run is offline. Locally a server already on the port is
+      reused: start a fixture build by hand to iterate on specs quickly.
+    - `pnpm test:e2e:preview` runs the same specs against a deployment:
+      `BASE_URL=<url>`, plus `VERCEL_AUTOMATION_BYPASS_SECRET` for protected
+      previews (sent to that origin only). CI runs it on every successful
+      Vercel preview (`.github/workflows/e2e-preview.yml`); it is skipped
+      with a notice while that repository secret is missing.
+    - First run: `pnpm exec playwright install chromium` (add
+      `--with-deps` on a machine without Chromium's system libraries).
+    - Pages come from `tests/e2e/support/routes.ts`: the static pages, plus
+      posts, tags and projects read from `/sitemap.xml` at run time, so the
+      same specs fit fixture and real content. A new public route is added
+      there or reaches the sitemap.
+    - Select by role (`getByRole`), not CSS: Cache Components keeps visited
+      routes mounted but hidden, and role queries skip hidden content.
+    - axe exceptions live only in `AXE_ALLOWANCES`
+      (`tests/e2e/support/axe.ts`), each with a reason and the PR that
+      removes it. Known defects are `test.fail(...)` with a comment, never
+      skipped, so fixing one turns the test red until the marker goes.
+- Reports land in `playwright-report/` and `test-results/` (ignored); CI
+  uploads the report as an artifact.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
