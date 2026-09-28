@@ -41,7 +41,18 @@ export default defineConfig({
         { name: "fixture", use: { baseURL: FIXTURE_URL } },
         // Defined only with a target, so the fixture run never needs one.
         ...(PREVIEW_URL
-            ? [{ name: "preview", use: { baseURL: PREVIEW_URL } }]
+            ? [
+                  {
+                      name: "preview",
+                      use: {
+                          baseURL: PREVIEW_URL,
+                          // A trace records request headers, which carry the
+                          // protection-bypass secret, and CI uploads the
+                          // report as an artifact. Screenshots still attach.
+                          trace: "off" as const,
+                      },
+                  },
+              ]
             : []),
     ],
     webServer: PREVIEW_URL

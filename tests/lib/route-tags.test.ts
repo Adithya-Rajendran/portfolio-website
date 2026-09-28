@@ -244,3 +244,34 @@ describe("warm lists", () => {
         ).toBe(false);
     });
 });
+
+describe("share-image redirects", () => {
+    it("send every pre-route-group share image URL to its built URL", async () => {
+        const { default: config } = await import("@/next.config.mjs");
+        const redirects = (await config.redirects?.()) ?? [];
+        const moved = redirects.filter(({ source }) =>
+            source.endsWith("/opengraph-image"),
+        );
+        const images = ROUTE_TAGS.filter((route) =>
+            route.file.endsWith("/opengraph-image.tsx"),
+        );
+        // One redirect per share image, to the path the build serves.
+        expect(moved.map(({ destination }) => destination).sort()).toEqual(
+            images.map((route) => route.path.replace("[slug]", ":slug")).sort(),
+        );
+        for (const redirect of moved) {
+            expect(redirect.permanent, redirect.source).toBe(true);
+            expect(redirect.destination, redirect.source).toBe(
+                `${redirect.source}-${redirect.destination.split("-").pop()}`,
+            );
+        }
+        // The archive's own image is not caught by the post pattern.
+        const archive = moved.findIndex(
+            ({ source }) => source === "/blog/archive/opengraph-image",
+        );
+        const post = moved.findIndex(
+            ({ source }) => source === "/blog/:slug/opengraph-image",
+        );
+        expect(archive).toBeLessThan(post);
+    });
+});

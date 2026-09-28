@@ -75,11 +75,19 @@ for (const width of [1440, 390]) {
             test(`an unknown ${kind} URL shows the 404 page`, async ({
                 page,
             }) => {
-                // Known defect, not caused by the harness: an unknown slug
-                // under a dynamic segment answers 404 with an error document
-                // whose body only JavaScript renders. Production does the
-                // same. Remove this line when the defect is fixed; the test
-                // then has to pass.
+                // Known defect in Next.js 16.3.4, not in the harness: an
+                // unknown slug under a dynamic segment answers 404, but
+                // notFound() thrown while the page renders fails React's
+                // shell, and Next.js sends its recovery document
+                // (<html id="__next_error__"> with an empty body) that only
+                // JavaScript fills with not-found.tsx and the chrome
+                // (app-render.js, getErrorRSCPayload; it renders the
+                // not-found tree on the server only for server actions).
+                // Production does the same. The app-level workaround, a
+                // proxy.ts slug check before rendering, would put a function
+                // call in front of every cached post, tag and project view,
+                // so it is not taken. Re-check on each Next.js upgrade: when
+                // this starts passing, remove the marker.
                 test.fail(
                     kind !== "unmatched",
                     "Unknown dynamic slugs render their 404 only with JavaScript",

@@ -97,6 +97,10 @@ const structure = (S: StructureBuilder) =>
 export default defineConfig({
     name: "portfolio-blog",
     title: "Adithya's Site",
+    // The Studio is embedded at /studio (app/studio/[[...tool]]). Without
+    // this, it reads "studio" as a tool name ("Tool not found: studio") and
+    // links its tools to /structure and /vision, outside the route.
+    basePath: "/studio",
     projectId,
     dataset,
     plugins: [structureTool({ structure }), visionTool(), codeInput()],

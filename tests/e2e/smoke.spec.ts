@@ -173,6 +173,16 @@ test.describe("routes and headers", () => {
         const redirects: [from: string, to: string][] = [
             ["/blogs/e2e-legacy-post", "/blog/e2e-legacy-post"],
             ["/resume.pdf", "/resume/view"],
+            // Share images from before the (site) route group.
+            ["/about/opengraph-image", "/about/opengraph-image-1ycygp"],
+            [
+                "/blog/archive/opengraph-image",
+                "/blog/archive/opengraph-image-dfhyke",
+            ],
+            [
+                "/blog/e2e-legacy-post/opengraph-image",
+                "/blog/e2e-legacy-post/opengraph-image-fx5gi7",
+            ],
         ];
         for (const [from, to] of redirects) {
             const response = await request.get(from, { maxRedirects: 0 });

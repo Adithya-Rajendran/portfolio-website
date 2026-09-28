@@ -52,7 +52,11 @@ only live in comments or commit messages.
   from the page instead (`PortfolioNav`).
 - `app/(site)/not-found.tsx` renders `notFound()` calls inside pages;
   `app/not-found.tsx` renders unmatched URLs and wraps the same content in
-  `SiteShell`, because it sits outside the group.
+  `SiteShell`, because it sits outside the group. An unmatched URL gets a
+  complete server-rendered 404. An unknown slug under a dynamic route
+  (`notFound()` during the render) answers 404 with Next.js's recovery
+  document, which only JavaScript fills (a Next.js 16.3 limitation, marked
+  `test.fail` in `tests/e2e/nojs.spec.ts`).
 - Metadata image routes inside a route group get a stable `-<hash>` URL
   suffix from Next.js (`/about/opengraph-image-1ycygp`; `next build` prints
   them). Anything that requests them directly, like the warm lists
@@ -251,8 +255,12 @@ deployment require an authenticated Sanity CLI session.
   footer, no hidden streamed segments, nothing rendered twice), `a11y`
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px), `layout` (no
   sideways scroll at 320–1440 px), `budgets` (the brotli byte report, printed,
-  not enforced yet) and `screens` (review screenshots and the `/resume`
-  print PDF, attached to the HTML report).
+  not enforced yet), `screens` (review screenshots and the `/resume`
+  print PDF, attached to the HTML report) and `studio` (the embedded Studio
+  with JavaScript, fixture project only: it boots to its login screen and,
+  signed in against the stand-in API in `tests/e2e/support/sanity-api.ts`,
+  shows the structure under `/studio` and a new project's form with no
+  uncaught exception).
     - `pnpm test:e2e` runs the `fixture` project: Playwright builds the site
       with `NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=fallback` and
       `SANITY_USE_FIXTURES=1` (this overwrites `.next`), then serves it with
@@ -261,7 +269,8 @@ deployment require an authenticated Sanity CLI session.
       reused: start a fixture build by hand to iterate on specs quickly.
     - `pnpm test:e2e:preview` runs the same specs against a deployment:
       `BASE_URL=<url>`, plus `VERCEL_AUTOMATION_BYPASS_SECRET` for protected
-      previews (sent to that origin only). CI runs it on every successful
+      previews (sent to that origin only, and never traced, because traces
+      record request headers and CI uploads the report). CI runs it on every successful
       Vercel preview (`.github/workflows/e2e-preview.yml`); it is skipped
       with a notice while that repository secret is missing.
     - First run: `pnpm exec playwright install chromium` (add

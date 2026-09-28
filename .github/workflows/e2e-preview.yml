@@ -22,14 +22,18 @@ jobs:
         timeout-minutes: 30
         env:
             BASE_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
-            # Vercel → Project → Settings → Deployment Protection →
-            # Protection Bypass for Automation. Sent to the preview origin
-            # only (tests/e2e/support/test.ts).
-            VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
+        # The protection-bypass secret is exposed only to the two steps that
+        # need it (the check and the test run), never to checkout, the
+        # dependency install or the Playwright install (which runs apt).
+        # Note: on deployment_status, checkout gets the deployed commit, so
+        # the test step runs that commit's code with the secret; the secret
+        # only opens this project's protected previews.
         steps:
             - name: Check for the protection-bypass secret
               id: bypass
+              env:
+                  VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
               run: |
                   if [ -n "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
                       echo "enabled=true" >> "$GITHUB_OUTPUT"
@@ -56,6 +60,11 @@ jobs:
               run: pnpm exec playwright install --with-deps chromium
             - name: Run the browser tests against ${{ env.BASE_URL }}
               if: steps.bypass.outputs.enabled == 'true'
+              env:
+                  # Vercel → Project → Settings → Deployment Protection →
+                  # Protection Bypass for Automation. Sent to the preview
+                  # origin only (tests/e2e/support/test.ts).
+                  VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
               run: pnpm test:e2e:preview
             - name: Upload the report and screenshots
               if: ${{ !cancelled() && steps.bypass.outputs.enabled == 'true' }}

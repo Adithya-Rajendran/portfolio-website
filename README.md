@@ -14,7 +14,7 @@ A writing-first personal website about systems, robotic vision, AI, and possible
 - **Sanity CMS**: Code-defined Profile, Blog Post, Project, and structured rich-prose schemas.
 - **SEO Optimized**: Implements structured data (JSON-LD) and semantic HTML for optimal search engine visibility.
 - **Blog**: Chronological posts, optional topics, archive search, readable code blocks, article contents, and a full-content RSS feed. Follow actions connect to LinkedIn and RSS.
-- **Automated Testing**: GitHub Actions runs lint, type checks, Vitest unit tests, a production build, and Playwright browser tests (smoke, no-JavaScript, axe accessibility, layout, a byte report and review screenshots) against a fixture build, then again against each Vercel preview.
+- **Automated Testing**: GitHub Actions runs lint, type checks, Vitest unit tests, a production build, and Playwright browser tests (smoke, no-JavaScript, axe accessibility, layout, a byte report, review screenshots and the embedded Studio) against a fixture build, then again against each Vercel preview.
 - **Contact Handling**: A Resend-backed contact form protected by Vercel BotID and WAF rate limiting, with Zod validation and MX record checks.
 
 ## Getting Started
