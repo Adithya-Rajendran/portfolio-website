@@ -19,7 +19,7 @@ export default async function Home() {
     const linkedin = getProfileLink(profile, "linkedin");
     const github = getProfileLink(profile, "github");
     return (
-        <main id="main-content" tabIndex={-1} className="home-journal">
+        <div data-page="home" data-legacy className="home-journal">
             <section className="fj-hero" aria-labelledby="home-title">
                 <HeroArtwork />
                 <div className="fj-shell fj-hero-inner">
@@ -194,6 +194,6 @@ export default async function Home() {
                     Imagined habitat · AI-generated artwork
                 </p>
             </div>
-        </main>
+        </div>
     );
 }

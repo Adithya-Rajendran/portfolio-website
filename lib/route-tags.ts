@@ -157,7 +157,7 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
     // No content tags: never warmed.
     { path: "/robots.txt", file: "app/robots.ts", tags: [] },
     { path: "/icon.svg", file: "app/icon.svg", tags: [] },
-    { path: "/apple-icon", file: "app/apple-icon.tsx", tags: [] },
+    { path: "/apple-icon.png", file: "app/apple-icon.png", tags: [] },
     { path: "/favicon.ico", file: "app/favicon.ico", tags: [] },
     { path: "/api/revalidate", file: "app/api/revalidate/route.ts", tags: [] },
     {

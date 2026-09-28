@@ -16,9 +16,9 @@ export default async function Blogs() {
     const tags = collectTags(posts);
 
     return (
-        <main
-            id="main-content"
-            tabIndex={-1}
+        <div
+            data-page="log"
+            data-legacy
             className="journal-page journal-container journal-writing"
         >
             <BlogJsonLd />
@@ -61,6 +61,6 @@ export default async function Blogs() {
                 </section>
             )}
             <NewsletterNotice />
-        </main>
+        </div>
     );
 }

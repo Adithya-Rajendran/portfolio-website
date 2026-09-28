@@ -31,7 +31,7 @@ export default function BlogsLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="journal-blog-layout">
+        <div className="journal-blog-layout" data-legacy>
             {/* BlogNav reads the pathname, which suspends for post slugs
                 outside generateStaticParams; keep that to this leaf. */}
             <Suspense fallback={null}>

@@ -100,7 +100,7 @@ test.describe("routes and headers", () => {
             ["/sitemap.xml", /xml/, /<urlset[\s>]/],
             ["/robots.txt", /text\/plain/, /^Sitemap: /m],
             ["/icon.svg", /image\/svg\+xml/],
-            ["/apple-icon", /image\/png/],
+            ["/apple-icon.png", /image\/png/],
             ["/favicon.ico", /image\//],
         ];
         for (const [path, type, body] of expectations) {
@@ -200,5 +200,14 @@ test.describe("routes and headers", () => {
         expect(html).not.toContain("application/ld+json");
         expect(html).not.toMatch(/<header[\s>]/);
         expect(html).not.toMatch(/<footer[\s>]/);
+        // Nor its stylesheet: no root not-found boundary attaches it
+        // (app/global-not-found.tsx).
+        const sheets = [...html.matchAll(/<link[^>]+href="([^"]+\.css)"/g)].map(
+            ([, href]) => href,
+        );
+        for (const href of sheets) {
+            const css = await (await request.get(href)).text();
+            expect(css, href).not.toContain(".site-header");
+        }
     });
 });

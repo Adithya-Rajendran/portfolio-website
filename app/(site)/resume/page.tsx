@@ -35,9 +35,9 @@ export default async function ResumePage() {
     const viewUrl = resolveResumeAssetUrl(profile?.resumeUrl, "view");
     if (!viewUrl)
         return (
-            <main
-                id="main-content"
-                tabIndex={-1}
+            <div
+                data-page="resume"
+                data-legacy
                 className="journal-page journal-container career-page"
             >
                 <header className="career-intro">
@@ -59,14 +59,14 @@ export default async function ResumePage() {
                         </Link>
                     </div>
                 </header>
-            </main>
+            </div>
         );
     const embeddedUrl = new URL(viewUrl);
     embeddedUrl.hash = "view=FitH&toolbar=1&navpanes=0";
     return (
-        <main
-            id="main-content"
-            tabIndex={-1}
+        <div
+            data-page="resume"
+            data-legacy
             className="journal-page journal-container career-page career-resume"
         >
             <header className="career-resume-heading">
@@ -141,6 +141,6 @@ export default async function ResumePage() {
             <Link href="/portfolio" className="journal-link">
                 Explore work &amp; experience <span aria-hidden>↗</span>
             </Link>
-        </main>
+        </div>
     );
 }

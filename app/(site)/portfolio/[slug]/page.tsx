@@ -67,13 +67,9 @@ export default async function ProjectPage({
     const dates = formatProjectYears(project);
 
     return (
-        <>
+        <div data-page="mission" data-legacy>
             <PortfolioNav variant="detail" />
-            <main
-                id="main-content"
-                tabIndex={-1}
-                className="journal-page journal-container career-page career-case-study"
-            >
+            <div className="journal-page journal-container career-page career-case-study">
                 <article>
                     <header className="career-case-heading">
                         <Link
@@ -153,7 +149,7 @@ export default async function ProjectPage({
                         </footer>
                     ) : null}
                 </article>
-            </main>
-        </>
+            </div>
+        </div>
     );
 }

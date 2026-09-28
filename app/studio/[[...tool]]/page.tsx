@@ -30,7 +30,7 @@ export default function StudioPage() {
                         style={{
                             margin: 0,
                             color: "#6ee7b7",
-                            fontFamily: "var(--font-ibm-plex-mono), monospace",
+                            fontFamily: "var(--font-dm-mono), monospace",
                             fontSize: "0.75rem",
                             letterSpacing: "0.16em",
                             textTransform: "uppercase",

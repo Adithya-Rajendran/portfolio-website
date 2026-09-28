@@ -1,0 +1,75 @@
+/*
+ * Print: Flight Manual tokens on white, no chrome. Per-page print layouts
+ * (the CV, posts) are scoped by [data-page] and arrive with those pages.
+ * Ported from d-deep-field-plus site.css "7. PRINT".
+ */
+@layer utilities {
+    @media screen {
+        [data-print="only"] {
+            display: none;
+        }
+    }
+    @media print {
+        :root,
+        [data-theme] {
+            color-scheme: light;
+            --bg: #ffffff;
+            --surface-1: #ffffff;
+            --surface-2: #ffffff;
+            --ink-1: #17150f;
+            --ink-2: #433e36;
+            --ink-3: #5a554c;
+            --rule-1: #d5cdbd;
+            --rule-2: #7a7468;
+            --accent: #e4501b;
+            --accent-text: #a13a0d;
+            --on-accent: #17150f;
+            --falloff: transparent;
+            --falloff-warm: transparent;
+            --plate-bg: transparent;
+            --plate-border: #d5cdbd;
+            --limb-fill: #ffffff;
+            --sun-core: #e4501b;
+            --glass: transparent;
+            --scrim: transparent;
+            --accent-wash: #fbe3d8;
+            --star-rgb: 23 21 15;
+        }
+        @page {
+            margin: 18mm 16mm 20mm;
+        }
+        html,
+        body {
+            background: #fff;
+        }
+        .site-header,
+        .site-footer,
+        .skip-link,
+        .theme-toggle,
+        .motion-ctl,
+        [data-print="hide"] {
+            display: none !important;
+        }
+        [data-print="only"] {
+            display: block !important;
+        }
+        span[data-print="only"] {
+            display: inline !important;
+        }
+        h1,
+        h2,
+        h3,
+        h4,
+        .section-tag {
+            break-after: avoid;
+        }
+        figure,
+        tr {
+            break-inside: avoid;
+        }
+        p {
+            orphans: 3;
+            widows: 3;
+        }
+    }
+}

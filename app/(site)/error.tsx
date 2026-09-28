@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
+import LossOfSignal from "@/components/los/loss-of-signal";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { errorCopy as copy } from "@/lib/copy";
+import { siteRoutes } from "@/lib/navigation";
 
+/**
+ * A render error inside a public page: the Loss of Signal instrument with
+ * a Try again button, inside the site chrome.
+ */
 export default function Error({
     error,
     retry,
@@ -15,38 +22,24 @@ export default function Error({
     }, [error]);
 
     return (
-        <main
-            id="main-content"
-            tabIndex={-1}
-            className="mx-auto flex min-h-[65svh] w-full max-w-3xl flex-col justify-center px-6 py-24 sm:px-10"
-        >
-            <p className="font-term text-xs uppercase tracking-[0.18em] text-accent">
-                A brief interruption
-            </p>
-            <h1 className="mt-6 font-display text-4xl leading-tight tracking-tight text-slate-900 sm:text-5xl dark:text-slate-100">
-                This page couldn’t load.
-            </h1>
-            <p className="mt-6 max-w-lg text-base leading-8 text-slate-600 dark:text-slate-400">
-                Please try again in a moment.
-            </p>
-            <div className="mt-9 flex flex-wrap items-center gap-6">
-                <button
-                    type="button"
-                    // retry() re-fetches the segment before re-rendering it
-                    // (Next.js 16.3 error.md); reset() would only re-render.
-                    onClick={retry}
-                    className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 py-2 font-term text-xs font-bold text-on-accent shadow-accent ring-accent ring-offset-white transition-all duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950"
-                >
-                    Try again
-                </button>
-                <Link
-                    href="/"
-                    prefetch={false}
-                    className="inline-flex min-h-11 items-center text-sm text-slate-600 transition-colors hover:text-accent dark:text-slate-400"
-                >
-                    Back to home
-                </Link>
-            </div>
-        </main>
+        <LossOfSignal
+            page="error"
+            tag={copy.tag}
+            themed={copy.themed}
+            plain={copy.plain}
+            title={copy.title}
+            lead={copy.lead}
+            actions={
+                <>
+                    {/* retry() re-fetches the segment before re-rendering
+                        it (Next.js 16.3 error.md); reset() would only
+                        re-render. */}
+                    <Button variant="primary" icon="reset" onClick={retry}>
+                        {copy.retry}
+                    </Button>
+                    <ButtonLink href={siteRoutes.home}>Home</ButtonLink>
+                </>
+            }
+        />
     );
 }

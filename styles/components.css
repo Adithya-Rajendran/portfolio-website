@@ -1,0 +1,1136 @@
+/*
+ * The shared design system: every class a Server Component can use on any
+ * route without an import. Ported from d-deep-field-plus site.css
+ * "4. COMPONENTS" (4.1–4.6, 4.8, 4.21, 4.27), pruned to what the site
+ * renders. Route- and feature-specific styles live in CSS Modules beside
+ * their component instead.
+ */
+@layer components {
+    /* ===== Typography roles (site.css 4.1) ============================ */
+    .t-display {
+        font: 300 var(--step-6) / var(--lh-display) var(--font-display);
+        letter-spacing: var(--track-display);
+        text-wrap: balance;
+    }
+    .t-h1 {
+        font: 300 var(--step-5) / 1.04 var(--font-display);
+        letter-spacing: -0.012em;
+    }
+    .t-h2 {
+        font: 400 var(--step-3) / 1.12 var(--font-display);
+        letter-spacing: -0.008em;
+    }
+    .t-h3 {
+        font: 400 var(--step-2) / 1.18 var(--font-display);
+    }
+    .t-lead {
+        font: 300 var(--step-2) / 1.38 var(--font-long);
+        color: var(--ink-2);
+        text-wrap: pretty;
+    }
+    .t-body {
+        font: 400 var(--step-0) / var(--lh-body) var(--font-text);
+    }
+    .t-small {
+        font: 400 var(--step--1) / 1.5 var(--font-text);
+        color: var(--ink-2);
+    }
+    .t-muted {
+        color: var(--ink-2);
+    }
+    .t-faint {
+        color: var(--ink-3);
+    }
+    .t-accent {
+        color: var(--accent-text);
+    }
+
+    /* Tier-1 micro label: Michroma caps, tracked. */
+    .label {
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--ink-2);
+    }
+    .label--ui {
+        font: var(--label-2);
+        letter-spacing: var(--track-label-2);
+    }
+    .label--ink {
+        color: var(--ink-1);
+    }
+    .label--accent {
+        color: var(--accent-text);
+    }
+
+    /* Dates, metrics, codes. */
+    .data {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums lining-nums slashed-zero;
+        letter-spacing: 0;
+    }
+
+    /* Themed + plain name pair. Assistive tech hears "Flight Log, Blog". */
+    .pair {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        column-gap: 0.6em;
+        row-gap: 0.1em;
+    }
+    .pair__themed {
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--ink-1);
+    }
+    .pair__plain {
+        font: 400 var(--step--1) / 1.3 var(--font-display);
+        color: var(--ink-2);
+        letter-spacing: 0.01em;
+    }
+    .pair__plain::before {
+        content: "/" / "";
+        margin-right: 0.6em;
+        color: var(--ink-3);
+    }
+
+    /* ===== Icons, ornaments, the patch (inline sprite) ================= */
+    .df-sprite {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+    }
+    .icon {
+        display: inline-block;
+        width: 1.25em;
+        height: 1.25em;
+        vertical-align: -0.25em;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: square;
+        stroke-linejoin: miter;
+        flex: none;
+    }
+    .icon--sm {
+        width: 1em;
+        height: 1em;
+        vertical-align: -0.14em;
+    }
+    .ornament {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
+        color: var(--ink-2);
+        flex: none;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.1;
+        stroke-linecap: round;
+    }
+    .patch {
+        display: block;
+        width: 96px;
+        height: 96px;
+        color: var(--ink-1);
+        --patch-sun: var(--accent);
+    }
+    .patch--mark {
+        --patch-band: none;
+    }
+
+    /* Status: a glyph and a label, never colour alone. */
+    .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55em;
+        font: 400 var(--label-size) / 1 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--ink-2);
+        white-space: nowrap;
+    }
+    .status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: var(--radius-round);
+        background: var(--ink-1);
+        flex: none;
+    }
+    .status[data-status="active"] {
+        color: var(--accent-text);
+    }
+    .status[data-status="active"]::before {
+        background: var(--accent);
+    }
+    .status:is([data-status="complete"], [data-status="lifetime"])::before {
+        border-radius: 0;
+        width: 6px;
+        height: 6px;
+    }
+    .status:is([data-status="archived"], [data-status="expired"]) {
+        color: var(--ink-3);
+    }
+    .status:is([data-status="archived"], [data-status="expired"])::before {
+        background: transparent;
+        box-shadow: inset 0 0 0 1px var(--ink-3);
+    }
+    .status[data-status="paused"]::before {
+        width: 6px;
+        height: 8px;
+        border-radius: 0;
+        background: transparent;
+        border-inline: 2px solid var(--ink-1);
+    }
+    .status[data-status="planned"]::before {
+        background: transparent;
+        border: 1px dashed var(--ink-2);
+    }
+    .status[data-status="stopped"]::before {
+        content: "×";
+        width: auto;
+        height: auto;
+        border-radius: 0;
+        background: none;
+        font: 400 0.875rem / 1 var(--font-display);
+    }
+
+    /* ===== Header and navigation (site.css 4.2) ======================== */
+    /* Sticky and always opaque: body text never shows through it. The
+       home hero's clear state arrives with the home page. */
+    .site-header {
+        position: sticky;
+        top: 0;
+        z-index: var(--z-header);
+        height: var(--header-h);
+        background: var(--bg);
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .site-header__inner {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: var(--s-5);
+    }
+
+    .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--s-3);
+        min-height: 44px;
+        flex: none;
+        color: var(--ink-1);
+        text-decoration: none;
+    }
+    .brand .patch {
+        width: 36px;
+        height: 36px;
+        --patch-band: none;
+    }
+    .brand__name {
+        font: 400 var(--label-size-lg) / 1 var(--font-label);
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .nav {
+        margin-inline-start: auto;
+    }
+    .nav__list {
+        display: flex;
+        align-items: center;
+        gap: clamp(1rem, 2.1vw, 2.5rem);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .nav__link {
+        position: relative;
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto;
+        column-gap: 0.55rem;
+        align-items: baseline;
+        min-height: 44px;
+        align-content: center;
+        padding-block: var(--s-1);
+        color: var(--ink-1);
+        text-decoration: none;
+    }
+    .nav__num {
+        grid-row: 1;
+        grid-column: 1;
+        font: 400 0.6875rem / 1 var(--font-mono);
+        color: var(--ink-3);
+    }
+    .nav__themed {
+        grid-row: 1;
+        grid-column: 2;
+        font: 500 0.75rem / 1.2 var(--font-display);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .nav__plain {
+        grid-row: 2;
+        grid-column: 2;
+        font: 400 0.8125rem / 1.3 var(--font-display);
+        color: var(--ink-2);
+        white-space: nowrap;
+    }
+    .nav__link::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -2px;
+        height: var(--rule-strong);
+        background: var(--accent);
+        transform: scaleX(0);
+        transform-origin: left center;
+        transition: transform var(--dur-3) var(--ease-transfer);
+    }
+    .nav__link:hover::after {
+        transform: scaleX(0.35);
+    }
+    .nav__link:hover .nav__plain {
+        color: var(--ink-1);
+    }
+    .nav__link[aria-current]::after {
+        transform: scaleX(1);
+    }
+    .nav__link[aria-current] .nav__num {
+        color: var(--accent-text);
+    }
+
+    .header-tools {
+        display: flex;
+        align-items: center;
+        gap: var(--s-3);
+        flex: none;
+    }
+
+    /* CV: the recruiter shortcut, visible at every width. */
+    .header-cv {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 0.35rem;
+        color: var(--ink-1);
+        font: 500 0.75rem / 1 var(--font-display);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: 0.55em;
+        white-space: nowrap;
+    }
+    .header-cv:hover {
+        color: var(--accent-text);
+    }
+
+    /* The menu button and sheet (< 960px). The sheet is a popover: it
+       opens without JavaScript, in the top layer. The fallback link to the
+       footer nav shows only where the Popover API is missing. */
+    .nav-toggle {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0 0.7rem;
+        background: transparent;
+        border: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-1);
+        font: 500 0.75rem / 1 var(--font-display);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    .nav-toggle .icon {
+        width: 16px;
+        height: 16px;
+    }
+    .nav-toggle.nav-toggle--fallback {
+        display: none;
+    }
+    .nav-toggle:hover {
+        border-color: var(--ink-1);
+        background: var(--surface-2);
+    }
+    .nav__sheet-extra {
+        display: none;
+    }
+
+    /* Width budget, measured with the real labels from 320 to 1920px:
+       nav numbers and "Flight Manual" at >= 1600px, the brand name at
+       >= 1360px (and 600–959px). CV and Menu keep their words everywhere. */
+    @media (max-width: 99.99rem) {
+        .nav__num {
+            display: none;
+        }
+        .nav__link {
+            grid-template-columns: auto;
+            column-gap: 0;
+        }
+        .nav__themed,
+        .nav__plain {
+            grid-column: 1;
+        }
+        .header-tools .theme-toggle__long {
+            display: none;
+        }
+    }
+    @media (max-width: 84.99rem) {
+        .brand__name {
+            display: none;
+        }
+    }
+    @media (min-width: 60rem) and (max-width: 74.99rem) {
+        .site-header__inner {
+            gap: var(--s-4);
+        }
+        .nav__list {
+            gap: 1rem;
+        }
+        .header-tools {
+            gap: var(--s-2);
+        }
+        .site-header .theme-toggle label {
+            padding-inline: 0.55rem;
+        }
+    }
+    @media (min-width: 60rem) {
+        .nav__panel,
+        .nav__panel:popover-open {
+            display: block;
+            position: static;
+            inset: auto;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: none;
+            color: inherit;
+            overflow: visible;
+        }
+    }
+    @media (max-width: 59.99rem) {
+        .brand__name {
+            display: inline;
+        }
+        .nav-toggle {
+            display: inline-flex;
+        }
+        .header-tools .theme-toggle {
+            display: none;
+        }
+        .nav {
+            order: 3;
+            margin-inline-start: 0;
+        }
+        .header-tools {
+            margin-inline-start: auto;
+        }
+        .nav__panel {
+            display: none;
+        }
+        .nav__panel:popover-open {
+            display: block;
+            position: fixed;
+            inset: var(--header-h) 0 0 0;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+            padding: var(--s-6) var(--margin) var(--s-8);
+            border: 0;
+            border-top: var(--rule-hair) solid var(--rule-1);
+            background: var(--bg);
+            color: var(--ink-1);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+        .nav__list {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+        }
+        .nav__list > li {
+            border-bottom: var(--rule-hair) solid var(--rule-1);
+        }
+        .nav__link {
+            grid-template-columns: 2.5rem 1fr;
+            padding-block: var(--s-4);
+            min-height: 64px;
+        }
+        .nav__num {
+            display: block;
+            grid-row: 1 / span 2;
+            grid-column: 1;
+            align-self: center;
+            font-size: 0.8125rem;
+        }
+        .nav__themed {
+            grid-column: 2;
+            font-size: 1rem;
+        }
+        .nav__plain {
+            grid-column: 2;
+            font-size: 0.9375rem;
+        }
+        .nav__link::after {
+            bottom: -1px;
+        }
+        .nav__sheet-extra {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--s-5);
+            margin-top: var(--s-6);
+        }
+        .nav__utility {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--s-2) var(--s-5);
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .nav__utility a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            font: 500 0.8125rem / 1 var(--font-display);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        @supports not selector(:popover-open) {
+            .nav-toggle[popovertarget] {
+                display: none;
+            }
+            .nav-toggle.nav-toggle--fallback {
+                display: inline-flex;
+            }
+        }
+    }
+    @media (max-width: 37.49rem) {
+        /* phones: the patch alone is the brand */
+        .site-header__inner {
+            gap: var(--s-3);
+        }
+        .brand__name {
+            display: none;
+        }
+    }
+
+    /* ===== Theme toggle: Void, Manual, Auto (site.css 4.3) ============= */
+    /* Each option shows its themed name over its plain name, like the nav:
+       VOID / Dark · MANUAL / Light · AUTO / System. */
+    .theme-toggle {
+        display: inline-flex;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-inline-size: 0;
+    }
+    .theme-toggle legend {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+    .theme-toggle__opt {
+        position: relative;
+        display: flex;
+    }
+    .theme-toggle__opt + .theme-toggle__opt {
+        margin-left: -1px;
+    }
+    /* Phones: "Manual" alone, so the three options fit in 288px. */
+    @media (max-width: 29.99rem) {
+        .theme-toggle__long {
+            display: none;
+        }
+    }
+    .theme-toggle input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .theme-toggle label {
+        display: inline-grid;
+        grid-template-columns: auto auto;
+        align-items: center;
+        align-content: center;
+        column-gap: 0.5rem;
+        min-height: 44px;
+        padding: 0.25rem 0.75rem;
+        border: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-2);
+        font: 500 0.6875rem / 1.15 var(--font-display);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        transition:
+            color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    .theme-toggle label::before {
+        content: "";
+        grid-row: 1 / span 2;
+        width: 7px;
+        height: 7px;
+        border-radius: var(--radius-round);
+        box-shadow: inset 0 0 0 1px var(--ink-3);
+    }
+    .theme-toggle__t {
+        grid-column: 2;
+    }
+    .theme-toggle__p {
+        grid-column: 2;
+        color: var(--ink-2);
+        font: 400 0.75rem / 1.15 var(--font-display);
+        letter-spacing: 0.01em;
+        text-transform: none;
+    }
+    .theme-toggle input:hover + label {
+        color: var(--ink-1);
+    }
+    .theme-toggle input:checked + label {
+        position: relative;
+        z-index: 1;
+        color: var(--ink-1);
+        background: var(--surface-2);
+        border-color: var(--ink-2);
+    }
+    .theme-toggle input:checked + label::before {
+        background: var(--accent);
+        box-shadow: none;
+    }
+    .theme-toggle input:focus-visible + label {
+        z-index: 2;
+        outline: var(--rule-strong) solid var(--focus);
+        outline-offset: 2px;
+    }
+
+    /* Hold drift (WCAG 2.2.2): in the footer and the menu sheet. Its label
+       names the action; under the OS reduce-motion setting a plain note
+       replaces it. */
+    .motion-ctl {
+        display: inline-flex;
+        align-items: center;
+    }
+    html:not([data-motion="reduced"]) .motion-toggle__off,
+    html[data-motion="reduced"] .motion-toggle__on {
+        display: none;
+    }
+    .motion-ctl__os {
+        display: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .motion-ctl .motion-toggle {
+            display: none;
+        }
+        .motion-ctl__os {
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+        }
+    }
+    /* Theme and motion controls need JavaScript. */
+    html:not([data-js]) :is(.theme-toggle, .motion-ctl) {
+        display: none;
+    }
+
+    /* ===== Buttons and links (site.css 4.4) ============================ */
+    .btn {
+        --btn-h: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+        min-height: var(--btn-h);
+        padding: 0 1.25rem;
+        border: var(--rule-hair) solid var(--rule-2);
+        border-radius: 0;
+        background: transparent;
+        color: var(--ink-1);
+        font: 500 0.8125rem / 1 var(--font-display);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+    .btn .icon {
+        width: 16px;
+        height: 16px;
+        transition: transform var(--dur-hover) var(--ease-dock);
+    }
+    .btn:hover {
+        border-color: var(--ink-1);
+        background: var(--surface-1);
+    }
+    .btn:hover .icon--nudge {
+        transform: translateX(4px);
+    }
+    .btn:active {
+        background: var(--surface-2);
+    }
+    .btn[disabled],
+    .btn[aria-disabled="true"] {
+        opacity: 0.45;
+        cursor: not-allowed;
+        background: transparent;
+        border-color: var(--rule-2);
+    }
+    /* Orange fill with dark ink: white on orange is never used. */
+    .btn--primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--on-accent);
+    }
+    .btn--primary:hover {
+        background: var(--ink-1);
+        border-color: var(--ink-1);
+        color: var(--bg);
+    }
+    .btn--primary:active {
+        background: var(--ink-2);
+    }
+    .btn--quiet {
+        border-color: transparent;
+        padding-inline: 0.25rem;
+    }
+    .btn--quiet:hover {
+        background: transparent;
+        border-color: transparent;
+        color: var(--accent-text);
+    }
+    .btn--sm {
+        --btn-h: 44px;
+        padding: 0 0.85rem;
+        font-size: 0.75rem;
+    }
+
+    /* "All entries →" */
+    .link-arrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55em;
+        min-height: 44px;
+        border-bottom: var(--rule-hair) solid var(--accent);
+        color: var(--ink-1);
+        font: 500 0.8125rem / 1.2 var(--font-display);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-decoration: none;
+    }
+    .link-arrow .icon {
+        width: 15px;
+        height: 15px;
+        transition: transform var(--dur-hover) var(--ease-dock);
+    }
+    .link-arrow:hover {
+        color: var(--accent-text);
+    }
+    .link-arrow:hover .icon {
+        transform: translateX(4px);
+    }
+
+    .link-quiet {
+        text-decoration: none;
+    }
+    .link-quiet:hover {
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+    }
+
+    /* Stretched link: the whole card is clickable, the title is the link. */
+    .stretch {
+        position: static;
+    }
+    .stretch::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+    }
+
+    /* ===== Tags and chips (site.css 4.5) =============================== */
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.9rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .tag {
+        color: var(--ink-2);
+        font: 400 0.8125rem / 1.4 var(--font-mono);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .tag::before {
+        content: "#";
+        margin-right: 0.08em;
+        color: var(--ink-3);
+    }
+    a.tag {
+        position: relative;
+        z-index: 2;
+    }
+    a.tag:hover {
+        color: var(--ink-1);
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        padding: 0 0.85rem;
+        border: var(--rule-hair) solid var(--rule-2);
+        border-radius: 0;
+        background: transparent;
+        color: var(--ink-2);
+        font: 400 0.8125rem / 1 var(--font-mono);
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    .chip:hover {
+        color: var(--ink-1);
+        border-color: var(--ink-1);
+    }
+    /* Selected: a filled surface, an orange underline and a leading dot
+       (shape, not colour alone). */
+    .chip[aria-pressed="true"],
+    .chip[aria-current] {
+        color: var(--ink-1);
+        background: var(--surface-2);
+        border-color: var(--ink-2);
+        box-shadow: inset 0 -2px 0 var(--accent);
+    }
+    .chip[aria-pressed="true"]::before,
+    .chip[aria-current]::before {
+        content: "";
+        flex: none;
+        width: 6px;
+        height: 6px;
+        border-radius: var(--radius-round);
+        background: var(--accent);
+    }
+    .chip__count {
+        color: var(--ink-2);
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== Section head and page head (site.css 4.6, 4.27) ============= */
+    /* <div class="section-tag"> ornament · number · h2 or pair · meta </div>:
+       the number and meta stay out of the heading's name. */
+    .section-tag {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--s-2) var(--s-3);
+        margin: 0;
+        color: var(--ink-1);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .section-tag::after {
+        content: "";
+        flex: 1;
+        height: var(--rule-hair);
+        min-width: var(--s-6);
+        background: var(--rule-1);
+    }
+    .section-tag__num {
+        color: var(--accent-text);
+        font-family: var(--font-mono);
+        font-size: 0.8125rem;
+        letter-spacing: 0.04em;
+    }
+    .section-tag__h {
+        display: inline-flex;
+        min-width: 0;
+        margin: 0;
+        color: inherit;
+        font: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+    }
+    .section-tag__meta {
+        order: 3;
+        color: var(--ink-2);
+        font: 400 0.75rem / 1.4 var(--font-mono);
+        letter-spacing: 0;
+        text-transform: none;
+        white-space: nowrap;
+    }
+    @media (max-width: 37.49rem) {
+        .section-tag::after {
+            order: 4;
+            flex-basis: 100%;
+            min-width: 0;
+        }
+        .section-tag__meta {
+            order: 5;
+            flex-basis: 100%;
+            white-space: normal;
+        }
+    }
+    /* A section mark set in the serif, so it reads as § and not a letter. */
+    .sect {
+        margin-right: 0.18em;
+        color: var(--ink-3);
+        font-family: var(--font-long-italic);
+        font-size: 1.15em;
+        font-style: italic;
+        letter-spacing: 0;
+    }
+
+    /* One page head per page: tag row, the themed h1 with its plain name,
+       then a serif intro. */
+    .page-head {
+        position: relative;
+        padding-top: clamp(2.5rem, 1rem + 4vw, 4.5rem);
+        padding-bottom: var(--space-block);
+    }
+    .page-head__title {
+        margin-top: var(--s-4);
+        font: 300 var(--step-6) / 0.98 var(--font-display);
+        letter-spacing: -0.02em;
+    }
+    .page-head__plain {
+        display: block;
+        margin-top: var(--s-3);
+        color: var(--ink-2);
+        font: 400 var(--step-1) / 1.3 var(--font-display);
+        letter-spacing: 0;
+    }
+    .page-head__intro {
+        max-width: 52ch;
+        margin-top: var(--s-6);
+        color: var(--ink-2);
+        font: 300 var(--step-1) / 1.5 var(--font-long);
+    }
+
+    /* ===== Captions, plates, revision marks, gaps (site.css 4.8, 4.27) = */
+    .caption {
+        display: flex;
+        gap: var(--s-3);
+        max-width: 60ch;
+        margin-top: var(--s-3);
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.5 var(--font-text);
+    }
+    .caption--plate {
+        padding-top: var(--s-3);
+        border-top: var(--rule-hair) solid var(--rule-1);
+    }
+    .caption__num {
+        flex: none;
+        color: var(--ink-1);
+        font: 400 var(--label-size) / 1.9 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .caption__body {
+        min-width: 0;
+    }
+    .caption__src {
+        display: block;
+        margin-top: 0.3rem;
+        color: var(--ink-3);
+        font: 400 0.75rem / 1.45 var(--font-mono);
+    }
+
+    /* A hollow orange triangle and a date: document control and dated
+       "Updated" stamps. */
+    .rev {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5em;
+        color: var(--ink-2);
+        font: 400 0.75rem / 1.2 var(--font-mono);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+    .rev__tri {
+        flex: none;
+        width: 0.8em;
+        height: 0.72em;
+        background: var(--accent);
+        clip-path: polygon(
+            50% 0,
+            100% 100%,
+            0 100%,
+            50% 0,
+            50% 28%,
+            21% 86%,
+            79% 86%,
+            50% 28%
+        );
+    }
+    @media (forced-colors: active) {
+        .rev__tri {
+            forced-color-adjust: none;
+            background: CanvasText;
+        }
+    }
+
+    /* A dashed gap chip for data that does not exist yet. */
+    .tbd {
+        display: inline-block;
+        padding: 0 0.35em;
+        border: var(--rule-hair) dashed var(--rule-2);
+        color: var(--ink-3);
+        font: 400 0.8125em / 1.35 var(--font-mono);
+        letter-spacing: 0.02em;
+        text-transform: none;
+        white-space: nowrap;
+    }
+
+    /* ===== Footer (site.css 4.21, document control 4.27) =============== */
+    .site-footer {
+        position: relative;
+        padding-block: var(--space-block) var(--s-7);
+        border-top: var(--rule-hair) solid var(--rule-1);
+        color: var(--ink-2);
+        font-size: var(--step--1);
+    }
+    .site-footer__grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--s-6) var(--gutter);
+    }
+    .site-footer .patch {
+        width: 88px;
+        height: 88px;
+    }
+    .site-footer__sign {
+        max-width: 22ch;
+        margin-top: var(--s-4);
+        color: var(--ink-1);
+        font: italic 300 var(--step-1) / 1.35 var(--font-long-italic);
+    }
+    .site-footer__nav ul,
+    .site-footer__links {
+        display: grid;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .site-footer__nav a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        text-decoration: none;
+    }
+    .site-footer__nav a:hover .pair__themed,
+    .site-footer__nav a[aria-current] .pair__themed {
+        color: var(--accent-text);
+    }
+    .site-footer__links a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        color: var(--ink-1);
+        text-decoration-color: var(--rule-2);
+    }
+    .site-footer__links a:hover {
+        text-decoration-color: var(--accent);
+    }
+    .site-footer__controls {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--s-3);
+    }
+    .site-footer__base {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--s-3) var(--s-6);
+        margin-top: var(--s-7);
+        padding-top: var(--s-4);
+        border-top: var(--rule-hair) solid var(--rule-1);
+    }
+    .site-footer__base > * {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.6 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .site-footer__base .rev {
+        font: 400 var(--label-size) / 1.6 var(--font-label);
+        letter-spacing: var(--track-label);
+    }
+    /* "MET c. 7Y": the circa mark stays lower case. */
+    .site-footer__met {
+        text-transform: none;
+    }
+    .site-footer__base a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+    }
+    /* The controls take a row of their own until the theme toggle fits in
+       a column (>= 1280px). */
+    @media (min-width: 37.5rem) {
+        .site-footer__grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .site-footer__controls {
+            grid-column: 1 / -1;
+        }
+    }
+    @media (min-width: 60rem) {
+        .site-footer__grid {
+            grid-template-columns: 4fr 3fr 3fr;
+        }
+    }
+    @media (min-width: 80rem) {
+        .site-footer__grid {
+            grid-template-columns: 4fr 3fr 3fr auto;
+        }
+        .site-footer__controls {
+            grid-column: auto;
+        }
+    }
+}

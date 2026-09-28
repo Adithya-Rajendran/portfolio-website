@@ -128,7 +128,7 @@ describe("route table", () => {
         for (const path of [
             "/robots.txt",
             "/icon.svg",
-            "/apple-icon",
+            "/apple-icon.png",
             "/favicon.ico",
             "/api/revalidate",
             "/api/cron/publish-due",

@@ -23,10 +23,57 @@ only live in comments or commit messages.
     to empty content with zero network I/O — this is how CI builds without
     real Sanity credentials (`.github/workflows/node.js.yml`).
 
-- **Tailwind v4 is CSS-first.** There is no `tailwind.config.js`. Design
-  tokens, theme colors, radii, and custom animations live directly in
-  `app/globals.css` under `@theme inline`. It is imported by
-  `components/chrome/site-shell.tsx`, so it loads on public pages only.
+- **Tailwind v4 is CSS-first.** There is no `tailwind.config.js`.
+  `app/globals.css` is the one global entry, imported by
+  `components/chrome/site-shell.tsx` (and `app/global-not-found.tsx`), so
+  it loads on public pages only. It fixes the layer order
+  (`theme, base, components, utilities`), imports Tailwind and the files in
+  `styles/`, and maps the tokens to utilities under `@theme inline`; the
+  default palette and fonts are removed (`--color-*: initial`), so
+  utilities use tokens only.
+    - `styles/tokens.css` (layer `theme`) holds every design token: both
+      themes (Void on `:root`/`[data-theme="void"]`, Flight Manual on
+      `[data-theme="manual"]`), type scale, space, motion. Colours are
+      defined there and nowhere else; orange text is `var(--accent-text)`,
+      `--accent` is for fills and marks.
+    - `styles/base.css`, `layout.css`, `components.css` (the shared design
+      system: header, footer, buttons, pairs, section tags…), `los.css`
+      (Loss of Signal) and `print.css`.
+    - Route- or feature-specific styles go in a CSS Module beside the
+      component, or are scoped under the page's `[data-page="…"]`: global
+      CSS is not removed on navigation and Cache Components keeps visited
+      routes mounted. Modules are unlayered and beat every layer, so never
+      put a Tailwind utility on an element that has a module class. A
+      module imported by `app/global-not-found.tsx` is merged into the root
+      layout's stylesheet, which the Studio loads, so the 404's styles are
+      global (`styles/los.css`).
+    - `styles/compat-journal.css` is TEMPORARY: it lets the pages not yet
+      converted (root element `data-legacy`, listed in
+      `tests/e2e/support/legacy-routes.ts`) keep their `app/journal-*.css`
+      look inside the new chrome. It goes, with those files, in PR 14.
+- **Theme and motion** (plan §2.5.1). `lib/theme-boot.ts` is the inline boot
+  script (under 600 bytes, unit-tested) that `ThemeBootScript` renders in
+  both root documents' `<head>`: it reads localStorage `ar-theme`
+  (`void` | `manual` | `auto`; missing means Void) and `ar-motion`
+  (`full` | `reduced`), and sets `data-theme`, `data-motion` and `data-js`
+  on `<html>` before the first paint. The server renders the literal
+  `data-theme="void"` and never `data-motion`, so without JavaScript there
+  is no spatial motion; never read a cookie for this, it would make every
+  route request-bound. The controls read `lib/prefs.ts` through
+  `useSyncExternalStore` (server snapshot `undefined`). Spatial motion runs
+  only under `html[data-motion="full"]` and
+  `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
+  (their variables on `<html>`); italic Newsreader is its own family,
+  `var(--font-long-italic)`, so it is not preloaded.
+- **Dates in render.** Never call `new Date()`, `Date.now()` or
+  `Math.random()` in render outside `"use cache"`: the build fails, or the
+  page becomes request-bound. "Today" is `getToday()` from `lib/clock.ts`
+  (cached for a day); the copyright year and the footer's mission elapsed
+  time (`formatMet`, never more precise than the profile's launch date)
+  derive from it. Random-looking art is seeded (`lib/sky/`).
+- **The mission patch** is generated: `node scripts/generate-patch.mjs`
+  writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
+  `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
 
 ## Layout: the `(site)` route group
 
@@ -35,11 +82,22 @@ only live in comments or commit messages.
   Do not add site CSS, chrome, JSON-LD or analytics there.
 - Every public page lives under `app/(site)/` (route groups do not change
   URLs). `app/(site)/layout.tsx` renders `components/chrome/site-shell.tsx`:
-  the global stylesheets, the server-rendered header and footer, JSON-LD
-  and analytics. They are part of each page's static shell, so the chrome
+  the global stylesheet, the skip link, the icon sprite, the server-rendered
+  header and footer, the one `<main id="main-content">`, JSON-LD and
+  analytics. They are part of each page's static shell, so the chrome
   works without JavaScript and page content is rendered once. New public
   routes go under `app/(site)/`; `app/studio/` stays outside the group, so
   none of this loads in the Studio.
+- Pages never render `<main>`: `SiteShell` owns the only one, because
+  Cache Components keeps up to three visited routes mounted but hidden, and
+  a page-owned `<main>` would repeat. A page's root element is a `<div>`
+  with `data-page="…"` (`home`, `log`, `post`, `missions`, `resume`,
+  `not-found`…), which scopes its styles. Links and in-page lookups must
+  resolve inside the visible page, not with `document.getElementById`.
+- Navigation labels and URLs come from `lib/navigation.ts` (header, menu
+  sheet, footer and the 404). Below 960px the header nav is a native
+  `popover` sheet, so it opens without JavaScript; `MenuButton` adds focus,
+  `inert` and the Tab loop.
 - Never wrap page content in `<Suspense fallback={children}>`, and keep
   anything that must work without JavaScript out of Suspense: in a long
   page React streams a completed boundary holding more than ~500 bytes as
@@ -47,13 +105,17 @@ only live in comments or commit messages.
   meanwhile. Async Server Components that read cached data (the footer,
   the pages) need no boundary. A client component that reads the URL
   (`usePathname`) can suspend under Cache Components, so it sits in a
-  small leaf `<Suspense>` with a static fallback (`ActiveNavLinks` in the
-  header, `BlogNav`); larger URL-dependent UI takes its variant as a prop
-  from the page instead (`PortfolioNav`).
+  small leaf `<Suspense>` with a static fallback (`ActiveNavLink` in the
+  header, one boundary per link because the list as a whole passes the
+  threshold, and `BlogNav`); larger URL-dependent UI takes its variant as
+  a prop from the page instead (`PortfolioNav`).
 - `app/(site)/not-found.tsx` renders `notFound()` calls inside pages;
-  `app/not-found.tsx` renders unmatched URLs and wraps the same content in
-  `SiteShell`, because it sits outside the group. An unmatched URL gets a
-  complete server-rendered 404. An unknown slug under a dynamic route
+  `app/global-not-found.tsx` (`experimental.globalNotFound`) renders
+  unmatched URLs as its own document, repeating the root layout's `<html>`,
+  fonts and boot script around `SiteShell` and the same Loss of Signal
+  page. There is deliberately no root `app/not-found.tsx`: Next.js attaches
+  its stylesheet to every route under the root layout, the Studio
+  included. An unmatched URL gets a complete server-rendered 404. An unknown slug under a dynamic route
   (`notFound()` during the render) answers 404 with Next.js's recovery
   document, which only JavaScript fills (a Next.js 16.3 limitation, marked
   `test.fail` in `tests/e2e/nojs.spec.ts`).
@@ -251,12 +313,19 @@ deployment require an authenticated Sanity CLI session.
   covers the built site: `smoke` (every page returns its status with one
   `h1` and one `main`, no console errors, uncaught exceptions or CSP
   violations; share images, feed, icons, headers, redirects, the Studio
-  without chrome), `nojs` (complete pages without JavaScript: header, nav,
-  footer, no hidden streamed segments, nothing rendered twice), `a11y`
-  (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px), `layout` (no
-  sideways scroll at 320–1440 px), `budgets` (the brotli byte report, printed,
-  not enforced yet), `screens` (review screenshots and the `/resume`
-  print PDF, attached to the HTML report) and `studio` (the embedded Studio
+  without chrome), `nojs` (complete pages without JavaScript: header, nav
+  through the popover menu, footer, Void with no motion and no theme
+  controls, no hidden streamed segments, nothing rendered twice), `a11y`
+  (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
+  Flight Manual; a page in `tests/e2e/support/legacy-routes.ts` is checked
+  in full in Void and only its chrome in Flight Manual), `layout` (no
+  sideways scroll at 320–1920 px, and the header's parts fit without
+  overlapping), `theme` (no flash of the wrong theme, persistence across
+  reloads, pages and tabs, Auto following the OS, Hold drift), `chrome`
+  (the menu sheet's focus, `inert` and closing; the current nav section),
+  `budgets` (the brotli byte report, printed,
+  not enforced yet), `screens` (review screenshots in both themes and the
+  `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio
   with JavaScript, fixture project only: it boots to its login screen and,
   signed in against the stand-in API in `tests/e2e/support/sanity-api.ts`,
   shows the structure under `/studio` and a new project's form with no

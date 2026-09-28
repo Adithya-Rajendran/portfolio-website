@@ -1,0 +1,50 @@
+import { describe, expect, it } from "vitest";
+import {
+    cvLink,
+    navCurrent,
+    pairName,
+    primaryNavigation,
+} from "@/lib/navigation";
+
+describe("site navigation", () => {
+    it("has the five themed and plain pairs in voyage order", () => {
+        expect(primaryNavigation.map(pairName)).toEqual([
+            "Flight Log, Blog",
+            "Missions, Projects",
+            "Trajectory, Experience",
+            "Crew File, About",
+            "Comms, Contact",
+        ]);
+        expect(primaryNavigation.map((item) => item.num)).toEqual([
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+        ]);
+    });
+
+    it("keeps plain URLs and links the CV", () => {
+        expect(primaryNavigation.map((item) => item.href)).toEqual([
+            "/blog",
+            "/portfolio",
+            "/resume",
+            "/about",
+            // Until /contact exists (PR 8), Comms is the form on /portfolio.
+            "/portfolio#contact",
+        ]);
+        expect(cvLink.href).toBe("/resume");
+    });
+
+    it("marks the section's own page and the pages below it", () => {
+        const [log, missions, , , comms] = primaryNavigation;
+        expect(navCurrent("/blog", log)).toBe("page");
+        expect(navCurrent("/blog/", log)).toBe("page");
+        expect(navCurrent("/blog/my-homelab", log)).toBe("true");
+        expect(navCurrent("/blogroll", log)).toBeUndefined();
+        expect(navCurrent("/portfolio/homelab", missions)).toBe("true");
+        expect(navCurrent("/portfolio", comms)).toBeUndefined();
+        expect(navCurrent("/contact", comms)).toBe("page");
+        expect(navCurrent(undefined, log)).toBeUndefined();
+    });
+});

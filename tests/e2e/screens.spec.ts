@@ -6,12 +6,13 @@ import {
     contentPages,
     isPostPage,
 } from "./support/routes";
+import { storeTheme } from "./support/theme";
 
 /**
  * Review screenshots for the PR, attached to the HTML report (and so to
  * the CI artifact): every static page, the newest post and the 404, at 390
- * and 1440 px, with and without JavaScript, plus /resume printed on A4 and
- * Letter. Nothing is compared against a baseline; the preview review is the
+ * and 1440 px, with and without JavaScript and in Flight Manual, plus
+ * /resume printed on A4 and Letter. Nothing is compared against a baseline; the preview review is the
  * check (plan §7.3).
  */
 
@@ -57,6 +58,19 @@ for (const javaScriptEnabled of [true, false]) {
         },
     );
 }
+
+test("screenshots in Flight Manual", async ({ page, request }, testInfo) => {
+    test.setTimeout(120_000);
+    await storeTheme(page, "manual");
+    for (const path of await reviewPaths(request, testInfo)) {
+        for (const width of WIDTHS) {
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto(path);
+            await page.waitForLoadState("networkidle");
+            await shoot(page, testInfo, fileName(path, `${width}-manual`));
+        }
+    }
+});
 
 test("/resume prints on A4 and Letter", async ({ page }, testInfo) => {
     await page.goto("/resume");

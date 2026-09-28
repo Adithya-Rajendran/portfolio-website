@@ -1,0 +1,489 @@
+/*
+ * Loss of Signal: the 404 and error pages (components/los/loss-of-signal.tsx)
+ * and the static star layer behind them (components/sky/static-stars.tsx).
+ * Global, not a CSS Module: the page answers every unmatched URL through
+ * app/global-not-found.tsx, and Turbopack merged a module imported there
+ * into the root layout's stylesheet, which the Studio loads too. The
+ * classes are prefixed (los-, static-stars) so nothing else matches them.
+ * Ported from the mockup's writing.css "404.HTML · Loss of Signal".
+ */
+@layer components {
+    .static-stars {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-starfield);
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        fill: none;
+        stroke: rgb(var(--star-rgb));
+        stroke-linecap: round;
+    }
+    .static-stars path {
+        vector-effect: non-scaling-stroke;
+    }
+    .static-stars__faint {
+        stroke-width: 1.1px;
+        opacity: 0.38;
+    }
+    .static-stars__mid {
+        stroke-width: 1.6px;
+        opacity: 0.6;
+    }
+    .static-stars__bright {
+        stroke-width: 2.3px;
+        opacity: 0.9;
+    }
+    /* On paper the stars are faint printed dots. */
+    [data-theme="manual"] .static-stars {
+        opacity: 0.4;
+    }
+    @media (forced-colors: active) {
+        .static-stars {
+            display: none;
+        }
+    }
+
+    .los {
+        position: relative;
+        isolation: isolate;
+        padding-top: clamp(1.5rem, 0.5rem + 2.5vw, 3rem);
+    }
+
+    /* ---- Fig. 0: the carrier trace, a strip-chart recorder ---------------- */
+    .los-trace {
+        margin: 0 0 clamp(1.75rem, 1rem + 2vw, 3rem);
+    }
+    .los-legend {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--s-4);
+        margin-bottom: var(--s-3);
+        color: var(--ink-3);
+        font: 400 0.6875rem / 1.3 var(--font-mono);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+    .los-fig {
+        margin-right: var(--s-3);
+        color: var(--ink-1);
+        font: 400 var(--label-size) / 1.3 var(--font-label);
+        letter-spacing: var(--track-label);
+    }
+    .los-plot {
+        position: relative;
+        padding-top: var(--s-2);
+        border-top: var(--rule-hair) solid var(--rule-2);
+    }
+    .los-trace-svg {
+        display: block;
+        width: 100%;
+        height: clamp(3.5rem, 2.75rem + 2.2vw, 5rem);
+        overflow: visible;
+    }
+    .los-trace-svg path {
+        fill: none;
+        vector-effect: non-scaling-stroke;
+    }
+    .los-grid-v,
+    .los-grid-h {
+        stroke: var(--rule-1);
+        stroke-width: 1;
+    }
+    .los-grid-v {
+        stroke-dasharray: 1 4;
+    }
+    .los-axis {
+        stroke: var(--rule-2);
+        stroke-width: 1;
+    }
+    .los-signal {
+        stroke: var(--ink-1);
+        stroke-width: 1.25;
+        stroke-linejoin: round;
+    }
+    [data-theme="void"] .los-signal {
+        filter: drop-shadow(
+            0 0 3px color-mix(in oklab, var(--ink-1) 45%, transparent)
+        );
+    }
+    .los-dead {
+        stroke: var(--ink-3);
+        stroke-width: 1.25;
+        stroke-dasharray: 3 4;
+    }
+    .los-los-line {
+        stroke: var(--accent);
+        stroke-width: 1.5;
+    }
+    .los-los-label,
+    .los-flat-label {
+        position: absolute;
+        top: var(--s-2);
+        font: 400 var(--label-size) / 1 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .los-los-label {
+        left: 68.4%;
+        transform: translateX(8px);
+        color: var(--accent-text);
+    }
+    .los-flat-label {
+        top: auto;
+        right: 0;
+        bottom: calc(8% + 8px);
+        color: var(--ink-3);
+    }
+    @media (max-width: 37.49rem) {
+        .los-legend-mid,
+        .los-flat-label {
+            display: none;
+        }
+    }
+    /* Drawn once, like a recorder pen: full motion only, static otherwise. */
+    @media (prefers-reduced-motion: no-preference) {
+        html[data-motion="full"] .los-signal {
+            clip-path: inset(0 100% 0 0);
+            animation: trace-draw 2.6s linear 0.25s forwards;
+        }
+        html[data-motion="full"]
+            :is(.los-dead, .los-los-line, .los-los-label, .los-flat-label) {
+            opacity: 0;
+            animation: trace-in 0.5s var(--ease-dock) 2.85s forwards;
+        }
+    }
+    @keyframes trace-draw {
+        to {
+            clip-path: inset(0 0 0 0);
+        }
+    }
+    @keyframes trace-in {
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* ---- The message ------------------------------------------------------ */
+    .los-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-block) var(--gutter);
+        align-items: center;
+    }
+    .los-copy {
+        min-width: 0;
+    }
+    .los-title {
+        margin-top: var(--s-4);
+        overflow-wrap: break-word;
+        font: 300 var(--step-6) / 0.98 var(--font-display);
+        letter-spacing: -0.02em;
+    }
+    .los-plain {
+        display: block;
+        margin-top: var(--s-3);
+        color: var(--ink-2);
+        font: 400 var(--step-1) / 1.3 var(--font-display);
+        letter-spacing: 0;
+    }
+    .los-lead {
+        max-width: 40ch;
+        margin-top: var(--s-5);
+        color: var(--ink-2);
+        font: 300 var(--step-1) / 1.45 var(--font-long);
+        text-wrap: pretty;
+    }
+    .los-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s-3);
+        margin-top: var(--s-6);
+    }
+    .los-requested {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--s-2) var(--s-4);
+        margin-top: var(--s-7);
+    }
+    .los-requested-path {
+        padding: 0.1em 0.45em;
+        border: var(--rule-hair) solid var(--rule-1);
+        background: var(--surface-1);
+        color: var(--ink-1);
+        font-size: 0.9375rem;
+        overflow-wrap: anywhere;
+    }
+
+    /* ---- Fig. 1: the last frame, drawn as a dark plate ------------------- */
+    .los-frame {
+        width: 100%;
+        max-width: 20rem;
+        margin: 0;
+    }
+    .los-plate {
+        position: relative;
+        aspect-ratio: 3 / 4;
+        overflow: hidden;
+        /* Faint diagonal sunbeams across a black frame, one of them warm:
+           the composition of a long-exposure frame, drawn in CSS. */
+        background:
+            linear-gradient(
+                116deg,
+                transparent 34%,
+                color-mix(in oklab, var(--accent) 9%, transparent) 39%,
+                transparent 44%
+            ),
+            linear-gradient(
+                116deg,
+                transparent 50%,
+                color-mix(in oklab, var(--photo-ink) 7%, transparent) 54%,
+                transparent 58%
+            ),
+            linear-gradient(
+                116deg,
+                transparent 62%,
+                color-mix(in oklab, var(--accent) 6%, transparent) 66%,
+                transparent 70%
+            ),
+            radial-gradient(
+                ellipse 80% 70% at 50% 50%,
+                transparent 45%,
+                var(--photo-black) 100%
+            ),
+            var(--photo-black);
+    }
+    [data-theme="manual"] .los-frame {
+        padding: 10px 10px 0;
+        border: var(--rule-hair) solid var(--plate-border);
+        background: var(--plate-bg);
+    }
+    .los-plate-label {
+        position: absolute;
+        top: var(--s-4);
+        left: var(--s-4);
+        color: var(--photo-ink-2);
+        font: 400 var(--label-size) / 1 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .los-beam {
+        position: absolute;
+        top: 50%;
+        left: 63%;
+        width: 3px;
+        height: 3px;
+        border-radius: var(--radius-round);
+        background: var(--photo-ink);
+        transform: translate(-50%, -50%);
+    }
+    .los-contact {
+        position: absolute;
+        top: 50%;
+        right: 37%;
+        display: flex;
+        align-items: center;
+        gap: var(--s-2);
+        transform: translate(14px, -50%);
+    }
+    .los-contact-text {
+        color: var(--photo-ink);
+        font: 400 var(--label-size) / 1.5 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-align: right;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .los-contact-line {
+        flex: none;
+        width: 2rem;
+        height: 1px;
+        background: var(--photo-ink-2);
+    }
+    .los-contact-ring {
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border: var(--rule-hair) solid var(--photo-ink-2);
+        border-radius: var(--radius-round);
+    }
+    .los-frame .caption {
+        max-width: none;
+    }
+    @media (min-width: 60rem) {
+        .los-body {
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+        }
+        .los-copy {
+            grid-column: 1 / span 7;
+        }
+        .los-frame {
+            grid-column: 9 / span 4;
+            justify-self: center;
+            max-width: 24rem;
+        }
+    }
+
+    /* ---- Return trajectory over an engraved horizon ------------------------ */
+    .los-return {
+        position: relative;
+        isolation: isolate;
+        padding-top: var(--s-8);
+        padding-bottom: clamp(10rem, 4rem + 20vw, 22rem);
+    }
+    .los-chart {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        z-index: -1;
+        width: 100%;
+        height: clamp(10rem, 4rem + 20vw, 22rem);
+        overflow: hidden;
+        pointer-events: none;
+    }
+    .los-chart * {
+        vector-effect: non-scaling-stroke;
+    }
+    .los-glow {
+        opacity: 0.9;
+    }
+    .los-glow-core {
+        stop-color: var(--accent);
+        stop-opacity: 0.14;
+    }
+    .los-glow-edge {
+        stop-color: var(--accent);
+        stop-opacity: 0;
+    }
+    [data-theme="manual"] .los-glow {
+        display: none;
+    }
+    .los-rim {
+        fill: var(--limb-fill);
+        stroke: var(--accent);
+        stroke-width: 1.5;
+    }
+    [data-theme="manual"] .los-rim {
+        stroke: var(--ink-1);
+        stroke-width: 1.25;
+    }
+    .los-lat path {
+        fill: none;
+        stroke: var(--rule-2);
+        stroke-width: 1;
+        stroke-dasharray: 2 6;
+    }
+    .los-halo {
+        fill: none;
+        stroke: var(--ink-2);
+        stroke-width: 1;
+        stroke-dasharray: 1.5 5;
+    }
+    .los-sun {
+        fill: var(--accent);
+    }
+    .los-path {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 1.25;
+        stroke-dasharray: 4 5;
+    }
+    .los-ghost {
+        fill: none;
+        stroke: var(--ink-3);
+        stroke-width: 1;
+        stroke-dasharray: 1 6;
+    }
+    .los-tick {
+        stroke: var(--accent);
+        stroke-width: 2;
+    }
+
+    .los-routes {
+        margin-top: var(--s-5);
+    }
+    .los-routes ol {
+        display: grid;
+        column-gap: var(--gutter);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    @media (min-width: 37.5rem) {
+        .los-routes ol {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 60rem) {
+        .los-routes ol {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    .los-route {
+        display: grid;
+        grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+        grid-template-rows: auto auto;
+        column-gap: var(--s-3);
+        row-gap: var(--s-2);
+        padding: var(--s-5) 0;
+        border-top: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-1);
+        text-decoration: none;
+        transition: border-color var(--dur-hover) var(--ease-dock);
+    }
+    .los-route-num {
+        grid-row: 1;
+        grid-column: 1;
+        padding-top: 0.1rem;
+        color: var(--accent-text);
+        font: 400 0.8125rem / 1.4 var(--font-mono);
+    }
+    .los-route-name {
+        grid-row: 1;
+        grid-column: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+    .los-route-themed {
+        font: 400 var(--label-size-lg) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .los-route-plain {
+        font: 400 var(--step-0) / 1.3 var(--font-display);
+    }
+    .los-route-blurb {
+        grid-row: 2;
+        grid-column: 2;
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.45 var(--font-text);
+    }
+    .los-route-arrow {
+        grid-row: 1 / span 2;
+        grid-column: 3;
+        align-self: center;
+        color: var(--ink-3);
+        transition:
+            transform var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+    .los-route:hover {
+        border-top-color: var(--accent);
+    }
+    .los-route:hover .los-route-plain {
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+    }
+    .los-route:hover .los-route-arrow {
+        transform: translateX(4px);
+        color: var(--accent-text);
+    }
+    .los-report {
+        margin-top: var(--s-6);
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.5 var(--font-text);
+    }
+}

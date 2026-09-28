@@ -1,0 +1,215 @@
+/*
+ * Design tokens for both themes: Void (the default) and Flight Manual.
+ * Ported from design/explorations/d-deep-field-plus/assets/site.css
+ * "1. TOKENS" (mockup freeze sha256 0427267632dc…). Colours are defined
+ * here and nowhere else: component CSS reads them through these custom
+ * properties, and app/globals.css exposes the colour tokens to Tailwind
+ * utilities through `@theme inline`.
+ *
+ * The font families come from next/font (lib/fonts.ts), whose variables
+ * sit on <html>; each already carries a metric-matched fallback face.
+ */
+@layer theme {
+    :root {
+        /* ---- families ------------------------------------------------
+           Jost        display, headings, UI, tier-2 labels
+           Michroma    tier-1 labels only (section tags, plates, status)
+           Newsreader  long reading, deks, the intent line
+           DM Mono     dates, codes, listings, metrics                  */
+        --font-display:
+            var(--font-jost), "Futura", "Century Gothic", "Avenir Next",
+            system-ui, sans-serif;
+        --font-text: var(--font-display);
+        --font-long:
+            var(--font-newsreader), "Iowan Old Style", "Charter", Georgia, serif;
+        /* Newsreader's italic is a separate family (lib/fonts.ts): italic
+           serif text sets this with font-style: italic. */
+        --font-long-italic: var(--font-newsreader-italic), var(--font-long);
+        --font-label: var(--font-michroma), "Eurostile", var(--font-display);
+        --font-mono:
+            var(--font-dm-mono), ui-monospace, "SFMono-Regular", Menlo,
+            Consolas, monospace;
+        /* ---- label tiers ---------------------------------------------
+           1  Michroma caps 11px   section tags, plate numbers, status
+           2  Jost 500 caps 12px   metric labels, dl terms, form labels
+           3  DM Mono 12px         counts and dates in meta lines      */
+        --label-2: 500 0.75rem/1.35 var(--font-display);
+        --track-label-2: 0.08em;
+
+        /* ---- fluid type scale (360 → 1440 px) ---------------------- */
+        --step--2: clamp(0.75rem, 0.729rem + 0.093vw, 0.8125rem);
+        --step--1: clamp(0.875rem, 0.854rem + 0.093vw, 0.9375rem);
+        --step-0: clamp(1rem, 0.958rem + 0.185vw, 1.125rem);
+        --step-1: clamp(1.2rem, 1.1rem + 0.444vw, 1.5rem);
+        --step-2: clamp(1.44rem, 1.254rem + 0.828vw, 2rem);
+        --step-3: clamp(1.728rem, 1.416rem + 1.388vw, 2.665rem);
+        --step-4: clamp(2.074rem, 1.581rem + 2.19vw, 3.552rem);
+        --step-5: clamp(2.488rem, 1.739rem + 3.328vw, 4.735rem);
+        --step-6: clamp(2.75rem, 1.877rem + 4.927vw, 6.312rem);
+        --step-7: clamp(3.2rem, 1.973rem + 7.156vw, 8.413rem);
+        --step-hero: clamp(2.5rem, 0.55rem + 10.2vw, 11.25rem);
+        --step-long: clamp(1.125rem, 1.083rem + 0.185vw, 1.25rem);
+        --label-size: 0.6875rem;
+        --label-size-lg: 0.75rem;
+
+        --lh-hero: 0.92;
+        --lh-display: 1.02;
+        --lh-heading: 1.14;
+        --lh-body: 1.55;
+        --lh-long: 1.62;
+        --lh-label: 1.4;
+
+        --track-hero: 0.14em;
+        --track-caps: 0.12em;
+        --track-label: 0.16em;
+        --track-display: -0.018em;
+
+        /* ---- space: 4px base --------------------------------------- */
+        --s-1: 0.25rem;
+        --s-2: 0.5rem;
+        --s-3: 0.75rem;
+        --s-4: 1rem;
+        --s-5: 1.5rem;
+        --s-6: 2rem;
+        --s-7: 3rem;
+        --s-8: 4rem;
+        --s-9: 6rem;
+        --s-10: 8rem;
+        --space-block: clamp(2rem, 1.667rem + 1.481vw, 3rem);
+        --space-section: clamp(5rem, 3.333rem + 7.407vw, 10rem);
+        --space-void: clamp(6rem, 2rem + 16vw, 16rem);
+
+        /* ---- layout ------------------------------------------------ */
+        --margin: 16px;
+        --gutter: 16px;
+        --cols: 4;
+        --maxw: 97rem;
+        --measure: 37rem;
+        --header-h: 64px;
+
+        /* ---- shape: radius 0, hairlines, no shadows ----------------- */
+        --radius-0: 0;
+        --radius-round: 50%;
+        --rule-hair: 1px;
+        --rule-strong: 2px;
+        --rule-heavy: 4px;
+
+        /* ---- motion: orbital, never elastic ------------------------- */
+        --ease-coast: linear;
+        --ease-dock: cubic-bezier(0.2, 0, 0, 1);
+        --ease-insert: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-burn: cubic-bezier(0.5, 0, 0.75, 0);
+        --ease-transfer: cubic-bezier(0.65, 0, 0.35, 1);
+        --dur-1: 90ms;
+        --dur-2: 150ms;
+        --dur-3: 220ms;
+        --dur-4: 320ms;
+        --dur-5: 480ms;
+        --dur-6: 800ms;
+        --dur-hover: var(--dur-2);
+        --dur-enter: var(--dur-3);
+        --dur-exit: var(--dur-2);
+
+        /* ---- photographs and plates stay dark in both themes -------- */
+        --photo-black: #050507;
+        --photo-ink: #ece8df;
+        --photo-ink-2: #bcb7ad;
+
+        /* ---- z ----------------------------------------------------- */
+        --z-starfield: -1;
+        --z-raised: 10;
+        --z-rail: 50;
+        --z-header: 100;
+        --z-sheet: 200;
+        --z-toast: 400;
+        --z-skip: 1000;
+    }
+
+    @media (min-width: 37.5rem) {
+        :root {
+            --margin: 32px;
+            --gutter: 20px;
+            --cols: 8;
+        }
+    }
+    @media (min-width: 60rem) {
+        :root {
+            --margin: 48px;
+            --gutter: 24px;
+            --cols: 12;
+            --header-h: 72px;
+        }
+    }
+    @media (min-width: 80rem) {
+        :root {
+            --margin: 64px;
+            --gutter: 32px;
+        }
+    }
+
+    /* ---- VOID (dark, default): near-total darkness, one distant sun -- */
+    :root,
+    [data-theme="void"] {
+        color-scheme: dark;
+        --bg: #050507; /* the void */
+        --surface-1: #0c0c10; /* raised: code, callouts */
+        --surface-2: #15151a; /* hover and selected rows, inputs */
+        --ink-1: #ece8df; /* 16.65:1 on bg: body, headings */
+        --ink-2: #bcb7ad; /* 10.20:1: deks, captions, labels */
+        --ink-3: #8f8a80; /*  5.93:1: non-essential metadata only */
+        --rule-1: #1f1f25; /* decorative hairlines */
+        --rule-2: #67635c; /*  3.3:1: input borders, rules with meaning */
+        --accent: #ff5a1f; /* the one orange: fills and marks (6.5:1) */
+        --accent-text: #ff7a45; /* 7.9:1: orange as text */
+        --on-accent: #050507; /* 6.5:1 on accent */
+        --focus: var(--accent);
+        --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
+        --scrim: rgb(3 3 5 / 0.74);
+        --falloff: color-mix(in oklab, var(--ink-1) 6.5%, transparent);
+        --falloff-warm: color-mix(in oklab, var(--accent) 8%, transparent);
+        --glass: color-mix(in oklab, var(--bg) 94%, transparent);
+        --limb-fill: #070709;
+        --limb-rim: var(--ink-1);
+        --sun-core: #fff1e4;
+        --star-rgb: 236 232 223;
+        --plate-bg: transparent;
+        --plate-border: transparent;
+    }
+
+    /* ---- FLIGHT MANUAL (light): expedition photo-book on warm paper -- */
+    [data-theme="manual"] {
+        color-scheme: light;
+        --bg: #f2ede3; /* warm paper */
+        --surface-1: #e9e3d6;
+        --surface-2: #dfd8c8;
+        --ink-1: #17150f; /* 15.64:1 */
+        --ink-2: #433e36; /*  9.09:1 */
+        --ink-3: #5a554c; /*  6.34:1 */
+        --rule-1: #d5cdbd;
+        --rule-2: #7a7468; /*  3.98:1 */
+        --accent: #e4501b; /* fills, rules, marks only (3.3:1 on paper) */
+        --accent-text: #a13a0d; /* burnt orange for text: 5.76:1 */
+        --on-accent: #17150f; /*  4.75:1 on accent */
+        --focus: var(--accent-text);
+        --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
+        --scrim: rgb(23 21 15 / 0.38);
+        --falloff: transparent;
+        --falloff-warm: transparent;
+        --glass: color-mix(in oklab, var(--bg) 96%, transparent);
+        --limb-fill: var(--bg);
+        --limb-rim: var(--ink-1);
+        --sun-core: var(--accent);
+        --star-rgb: 23 21 15;
+        --plate-bg: var(--surface-1);
+        --plate-border: var(--rule-1);
+    }
+
+    @media (prefers-contrast: more) {
+        :root,
+        [data-theme] {
+            --ink-2: var(--ink-1);
+            --ink-3: var(--ink-1);
+            --rule-1: var(--rule-2);
+        }
+    }
+}

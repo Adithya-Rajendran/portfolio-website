@@ -42,10 +42,12 @@ export interface AxeFinding {
 export async function axeViolations(
     page: Page,
     path: string,
+    /** CSS selectors to limit the run to (the chrome on a legacy page). */
+    include: string[] = [],
 ): Promise<AxeFinding[]> {
-    const { violations } = await new AxeBuilder({ page })
-        .withTags(AXE_TAGS)
-        .analyze();
+    let builder = new AxeBuilder({ page }).withTags(AXE_TAGS);
+    for (const selector of include) builder = builder.include(selector);
+    const { violations } = await builder.analyze();
     return violations
         .map((violation) => ({
             rule: violation.id,

@@ -3,14 +3,6 @@
  * interests, biography, and editorial copy are owned by the Sanity Profile.
  */
 
-/** Canvas (page background) colors — mirror --color-canvas/--color-canvas-dark
- *  in app/globals.css. Duplicated as literals only because viewport.themeColor
- *  and OG images cannot read CSS variables. */
-export const THEME_COLORS = {
-    light: "#0c1318",
-    dark: "#0c1318",
-} as const;
-
 /** Neutral writing description used only when no CMS description is set. */
 export const BLOG_DESCRIPTION =
     "Notes, essays, and experiments by Adithya Rajendran.";

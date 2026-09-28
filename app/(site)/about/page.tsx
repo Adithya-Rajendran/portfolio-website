@@ -36,9 +36,9 @@ export default async function AboutPage() {
     const links = getProfileLinks(profile);
     const linkedIn = getProfileLink(profile, "linkedin");
     return (
-        <main
-            id="main-content"
-            tabIndex={-1}
+        <div
+            data-page="about"
+            data-legacy
             className="journal-page journal-container career-page"
         >
             <ProfilePageJsonLd />
@@ -167,6 +167,6 @@ export default async function AboutPage() {
                     </Link>
                 </aside>
             </div>
-        </main>
+        </div>
     );
 }

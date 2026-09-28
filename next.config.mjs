@@ -27,6 +27,13 @@ function contentSecurityPolicy(isStudio = false) {
 const nextConfig = {
     cacheComponents: true,
     reactCompiler: true,
+    experimental: {
+        // app/global-not-found.tsx renders unmatched URLs as its own
+        // document, so the site's stylesheet is not attached to every route
+        // under the root layout (the Studio included), as a root
+        // app/not-found.tsx would make it.
+        globalNotFound: true,
+    },
     poweredByHeader: false,
     allowedDevOrigins: ["127.0.0.1", "localhost"],
     env: {

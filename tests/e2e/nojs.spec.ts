@@ -1,13 +1,15 @@
 import type { Page } from "@playwright/test";
-import { primaryNavigation } from "@/lib/navigation";
+import { cvLink, pairName, primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 import { MISSING_PAGES, STATIC_PAGES, contentPages } from "./support/routes";
 
 /**
  * Without JavaScript every page is complete: the skip link, header, primary
- * navigation, one `main` with content, one `h1` and the footer, with nothing
- * held back in a streamed segment only JavaScript reveals and nothing
- * rendered twice (the defects PR 1 fixed).
+ * navigation (in the popover menu sheet below 960px), the CV link, one
+ * `main` with content, one `h1` and the footer, in Void with no motion and
+ * no theme or motion controls. Nothing is held back in a streamed segment
+ * only JavaScript reveals, and nothing is rendered twice (the defects PR 1
+ * fixed).
  */
 test.use({ javaScriptEnabled: false });
 
@@ -24,11 +26,22 @@ async function expectCompletePage(page: Page, path: string, status = 200) {
 
     const banner = page.getByRole("banner");
     await expect(banner).toBeVisible();
-    for (const { label } of primaryNavigation) {
+    await expect(
+        banner.getByRole("link", { name: cvLink.label, exact: true }),
+    ).toBeVisible();
+    // Below 960px the nav is a popover sheet, which opens without
+    // JavaScript (popovertarget).
+    const menu = banner.getByRole("button", { name: "Menu" });
+    if (await menu.isVisible()) await menu.click();
+    for (const item of primaryNavigation) {
         await expect(
-            banner.getByRole("link", { name: label, exact: true }),
+            banner.getByRole("link", { name: pairName(item), exact: true }),
         ).toBeVisible();
     }
+    // Controls that need JavaScript are not shown: no dead buttons.
+    await expect(page.getByRole("radio")).toHaveCount(0);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "void");
+    await expect(page.locator("html")).not.toHaveAttribute("data-motion", /.*/);
     await expect(page.getByRole("contentinfo")).toBeVisible();
 
     // React streams a finished Suspense boundary that arrives after the

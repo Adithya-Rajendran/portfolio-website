@@ -49,7 +49,7 @@ export default async function BlogPostPage({
     if (!meta) notFound();
 
     return (
-        <main id="main-content" tabIndex={-1} className="w-full">
+        <div data-page="post" data-legacy className="w-full">
             <BlogPostJsonLd
                 title={meta.title || ""}
                 description={meta.description || ""}
@@ -68,7 +68,7 @@ export default async function BlogPostPage({
                     <NewsletterNotice />
                 </div>
             </article>
-        </main>
+        </div>
     );
 }
 

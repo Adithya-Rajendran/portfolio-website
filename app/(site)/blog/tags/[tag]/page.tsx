@@ -68,9 +68,9 @@ export default async function TagPage({
     if (!TAG_PATTERN.test(tag)) notFound();
 
     return (
-        <main id="main-content" tabIndex={-1} className="w-full">
+        <div data-page="tag" data-legacy className="w-full">
             <TagPosts tag={tag} />
-        </main>
+        </div>
     );
 }
 

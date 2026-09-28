@@ -1,4 +1,5 @@
 import ActiveSectionContextProvider from "@/context/active-section-context";
+import "@/app/journal-blog.css";
 import "@/app/journal-career.css";
 
 /**

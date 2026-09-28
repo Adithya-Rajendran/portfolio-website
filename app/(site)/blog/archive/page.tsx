@@ -47,9 +47,9 @@ export default async function ArchivePage() {
         }));
     const tags = collectTags(posts);
     return (
-        <main
-            id="main-content"
-            tabIndex={-1}
+        <div
+            data-page="archive"
+            data-legacy
             className="journal-page journal-container journal-writing"
         >
             <header className="journal-writing-intro">
@@ -80,6 +80,6 @@ export default async function ArchivePage() {
                     </Link>
                 </div>
             )}
-        </main>
+        </div>
     );
 }

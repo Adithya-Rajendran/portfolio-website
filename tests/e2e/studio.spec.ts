@@ -83,8 +83,10 @@ test("the signed-in Studio shows the site's structure under /studio", async ({
     ]) {
         await expect(page.getByRole("tab", { name: group })).toBeVisible();
     }
+    // .first(): the Studio can also list the (empty, required) field in its
+    // validation panel, depending on when validation finishes.
     await expect(
-        page.getByText("Mission Number", { exact: true }),
+        page.getByText("Mission Number", { exact: true }).first(),
     ).toBeVisible();
 
     await expectNoStudioErrorScreen(page);

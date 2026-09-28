@@ -1,0 +1,204 @@
+/*
+ * Element defaults on top of Tailwind's preflight: typography, links,
+ * focus, selection, the skip link, the reduced-motion kill switch and the
+ * user-setting modes. Ported from d-deep-field-plus site.css "2. BASE" and
+ * "6. REDUCED MOTION, FORCED COLOURS".
+ */
+@layer base {
+    html {
+        background: var(--bg);
+        color: var(--ink-1);
+        font-family: var(--font-text);
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        scroll-padding-top: calc(var(--header-h) + var(--s-5));
+        accent-color: var(--accent);
+        caret-color: var(--accent);
+        scrollbar-color: var(--rule-2) var(--bg);
+    }
+
+    /* No body background: the page colour is the root's (html, above), so
+       a fixed star layer at z-index -1 shows through. */
+    body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink-1);
+        font-size: var(--step-0);
+        line-height: var(--lh-body);
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+        overflow-x: clip;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 400;
+        line-height: var(--lh-heading);
+        text-wrap: balance;
+    }
+    p,
+    dd,
+    li,
+    figcaption {
+        text-wrap: pretty;
+    }
+
+    a {
+        color: inherit;
+        text-decoration-line: underline;
+        text-decoration-color: var(--accent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.22em;
+        transition:
+            text-decoration-thickness var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+    a:hover {
+        text-decoration-thickness: 2px;
+    }
+
+    svg {
+        overflow: visible;
+    }
+
+    button:not(:disabled) {
+        cursor: pointer;
+    }
+
+    :focus {
+        outline: none;
+    }
+    /* A 2px ring in the focus colour, never animated. */
+    :focus-visible {
+        outline: var(--rule-strong) solid var(--focus);
+        outline-offset: 3px;
+    }
+
+    ::selection {
+        background: var(--accent);
+        color: var(--on-accent);
+    }
+
+    small {
+        font-size: var(--step--1);
+    }
+    abbr[title] {
+        text-decoration: underline dotted var(--ink-3);
+        cursor: help;
+    }
+    code,
+    kbd,
+    samp,
+    pre {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+    }
+
+    /* The skip link: the first focusable element on every page. */
+    .skip-link {
+        position: absolute;
+        left: var(--margin);
+        top: 0;
+        z-index: var(--z-skip);
+        transform: translateY(-120%);
+        padding: var(--s-3) var(--s-4);
+        background: var(--accent);
+        color: var(--on-accent);
+        font: 500 var(--step--1) / 1 var(--font-display);
+        letter-spacing: var(--track-caps);
+        text-transform: uppercase;
+        text-decoration: none;
+    }
+    .skip-link:focus-visible {
+        transform: translateY(var(--s-3));
+        outline-color: var(--ink-1);
+    }
+
+    :target {
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+
+    main {
+        display: block;
+    }
+    main:focus {
+        outline: none;
+    }
+
+    /* Without JavaScript (no data-js from the boot script), controls that
+       need it are not shown, so there are no dead buttons. */
+    html:not([data-js]) .js-only {
+        display: none !important;
+    }
+}
+
+/* The theme switch is a same-document view transition (lib/prefs.ts): a
+   short cross-fade of the whole page, header included. Transitions on the
+   old snapshot would lag behind it, so they are off for its duration. */
+html[data-vt="theme"] *,
+html[data-vt="theme"] *::before,
+html[data-vt="theme"] *::after {
+    transition: none !important;
+}
+
+/* Spatial motion runs only with html[data-motion="full"] (set by the boot
+   script, never by the server) and no OS reduce-motion setting. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+        scroll-behavior: auto !important;
+    }
+}
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+    animation: none !important;
+}
+
+@media (forced-colors: active) {
+    .status::before {
+        forced-color-adjust: none;
+    }
+    .btn,
+    .chip,
+    .theme-toggle label,
+    .nav-toggle {
+        border-color: ButtonText;
+    }
+    /* Selected states use the system highlight colours. */
+    :is(
+        .chip[aria-pressed="true"],
+        .chip[aria-current],
+        .theme-toggle input:checked + label,
+        .nav__link[aria-current]
+    ) {
+        forced-color-adjust: none;
+        background: SelectedItem;
+        color: SelectedItemText;
+        border-color: SelectedItem;
+    }
+    .theme-toggle input:checked + label :is(.theme-toggle__p, span) {
+        color: SelectedItemText;
+    }
+    :is(.chip[aria-pressed="true"], .chip[aria-current])::before,
+    .theme-toggle input:checked + label::before {
+        background: SelectedItemText;
+    }
+    .nav__link[aria-current] .nav__plain,
+    .nav__link[aria-current] .nav__num {
+        color: SelectedItemText;
+    }
+}

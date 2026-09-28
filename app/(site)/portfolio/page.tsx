@@ -42,7 +42,7 @@ export default async function Portfolio() {
         getAllPosts(),
     ]);
     return (
-        <>
+        <div data-page="missions" data-legacy>
             <PortfolioNav
                 variant="index"
                 showProjects={projects.length > 0}
@@ -51,11 +51,7 @@ export default async function Portfolio() {
                 showSkills={Boolean(profile?.skillGroups?.length)}
                 showCertifications={Boolean(profile?.credentials?.length)}
             />
-            <main
-                id="main-content"
-                tabIndex={-1}
-                className="journal-page journal-container career-page"
-            >
+            <div className="journal-page journal-container career-page">
                 <Intro
                     profile={profile}
                     hasProjects={projects.length > 0}
@@ -67,7 +63,7 @@ export default async function Portfolio() {
                 <Skills groups={profile?.skillGroups ?? []} />
                 <Certifications certifications={profile?.credentials ?? []} />
                 <Contact links={getProfileLinks(profile)} />
-            </main>
-        </>
+            </div>
+        </div>
     );
 }
