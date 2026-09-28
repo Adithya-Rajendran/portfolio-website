@@ -13,18 +13,30 @@ import styles from "./contact-routes.module.css";
  * (RouteWriteLink) links to that fragment, which ContactDesk turns into
  * "pick this topic and go to the form"; without JavaScript it links to the
  * message section instead, which then offers LinkedIn. Anywhere else the
- * button links to the route on /contact. Ported from the mockup's
- * `DF.render.routes`.
+ * button links to the route on /contact. `grid` sets the routes side by
+ * side from 960px, without their "Include" guidance (the home Comms act).
+ * Ported from the mockup's `DF.render.routes`.
  */
 export default function ContactRoutes({
     routes,
     onPage = false,
+    layout = "rows",
 }: {
     routes: readonly ContactRoute[];
     onPage?: boolean;
+    layout?: "rows" | "grid";
 }) {
+    const grid = layout === "grid";
     return (
-        <ol className={styles.routes} role="list">
+        <ol
+            className={grid ? `${styles.routes} ${styles.grid}` : styles.routes}
+            role="list"
+            style={
+                grid
+                    ? ({ "--routes": routes.length } as React.CSSProperties)
+                    : undefined
+            }
+        >
             {routes.map((route) => (
                 <li
                     key={route.topic}
@@ -45,10 +57,12 @@ export default function ContactRoutes({
                     {route.body ? (
                         <p className={styles.body}>{route.body}</p>
                     ) : null}
-                    <p className={styles.template}>
-                        <span className={styles.key}>{copy.include}</span>
-                        {route.template}
-                    </p>
+                    {grid ? null : (
+                        <p className={styles.template}>
+                            <span className={styles.key}>{copy.include}</span>
+                            {route.template}
+                        </p>
+                    )}
                     <div className={styles.actions}>
                         {onPage ? (
                             <RouteWriteLink

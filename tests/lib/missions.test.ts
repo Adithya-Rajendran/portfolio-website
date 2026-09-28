@@ -9,6 +9,7 @@ import {
     missionEntries,
     missionName,
     missionOrder,
+    originalEntries,
     sitePostSlug,
     statusTally,
     toMission,
@@ -292,6 +293,36 @@ describe("missionEntries", () => {
                 siteUrl: SITE,
             }),
         ).toEqual({ original: null, related: [] });
+    });
+});
+
+describe("originalEntries", () => {
+    it("maps each mission to its write-up, from the list data alone", () => {
+        const originals = originalEntries(
+            [
+                project({
+                    _id: "linked",
+                    links: [
+                        {
+                            _key: "w",
+                            label: "The write-up",
+                            url: `${SITE}/blog/my-homelab`,
+                        },
+                    ],
+                }),
+                project({ _id: "cited" }),
+                project({ _id: "alone" }),
+            ],
+            [
+                { slug: "gpu", projectIds: ["cited"] },
+                { slug: "gui", projectIds: ["cited"] },
+            ],
+            ENTRIES,
+            SITE,
+        );
+        expect(originals.get("linked")?.slug).toBe("my-homelab");
+        expect(originals.get("cited")?.slug).toBe("gpu");
+        expect(originals.has("alone")).toBe(false);
     });
 });
 

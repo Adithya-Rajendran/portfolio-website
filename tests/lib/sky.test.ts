@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { mulberry32, starLayout, starPaths } from "@/lib/sky/stars";
+import {
+    clearance,
+    driftX,
+    mulberry32,
+    starCount,
+    starLayout,
+    starPaths,
+} from "@/lib/sky/stars";
 import { TRACE_AXIS, TRACE_LOS, carrierTrace } from "@/lib/sky/trace";
 
 describe("the seeded sky", () => {
@@ -37,6 +44,30 @@ describe("the seeded sky", () => {
             2: "",
             3: "M3.3 4.0h0M5.0 6.0h0",
         });
+    });
+});
+
+describe("the drifting starfield", () => {
+    const text = [{ x: 100, y: 100, width: 200, height: 40 }];
+
+    it("keeps stars off text and fades them in around it", () => {
+        expect(clearance(150, 120, text, 20)).toBe(0);
+        expect(clearance(310, 120, text, 20)).toBeCloseTo(0.5);
+        expect(clearance(100, 70, text, 20)).toBe(1);
+        expect(clearance(10, 10, [], 20)).toBe(1);
+    });
+
+    it("drifts left and wraps around the field", () => {
+        expect(driftX(100, 10, 2, 1000)).toBe(80);
+        expect(driftX(10, 10, 2, 1000)).toBe(990);
+        expect(driftX(10, 1000, 2, 1000)).toBe(10);
+        expect(driftX(10, 5, 2, 0)).toBe(10);
+    });
+
+    it("scales the number of stars with the field, within bounds", () => {
+        expect(starCount(1440, 828)).toBe(213);
+        expect(starCount(10, 10)).toBe(40);
+        expect(starCount(10000, 10000)).toBe(420);
     });
 });
 

@@ -104,7 +104,7 @@ const nextConfig = {
             },
             // Cache static assets aggressively. This includes unhashed
             // /public files, so every new or re-encoded public asset needs a
-            // versioned path (public/images/lunar-horizon-v3/…).
+            // versioned path (public/images/hero-sunrise-v1/…).
             {
                 source: "/(.*)\\.(ico|png|jpg|jpeg|gif|webp|avif|svg|woff|woff2)",
                 headers: [

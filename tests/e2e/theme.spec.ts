@@ -5,7 +5,7 @@ import { storeTheme } from "./support/theme";
 /**
  * Theme and motion (plan §2.5.1): Void for every first visit, a stored
  * choice applied before the first paint, the toggle's choice kept across
- * reloads, pages and tabs, Auto following the OS, and Hold drift.
+ * reloads, pages and tabs, Auto following the OS, and Pause motion.
  */
 
 const html = (page: Page) => page.locator("html");
@@ -116,17 +116,17 @@ test("a choice made in another tab applies here", async ({ page, context }) => {
     ).toBeChecked();
 });
 
-test("Hold drift reduces motion and is remembered", async ({ page }) => {
+test("Pause motion reduces motion and is remembered", async ({ page }) => {
     await page.goto("/");
     const footer = page.getByRole("contentinfo");
-    await footer.getByRole("button", { name: "Hold drift" }).click();
+    await footer.getByRole("button", { name: "Pause motion" }).click();
     await expect(html(page)).toHaveAttribute("data-motion", "reduced");
     await expect(
-        footer.getByRole("button", { name: "Resume drift" }),
+        footer.getByRole("button", { name: "Resume motion" }),
     ).toBeVisible();
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-motion", "reduced");
-    await footer.getByRole("button", { name: "Resume drift" }).click();
+    await footer.getByRole("button", { name: "Resume motion" }).click();
     await expect(html(page)).toHaveAttribute("data-motion", "full");
 });
 
@@ -138,7 +138,7 @@ test("the OS reduce-motion setting holds motion and says so", async ({
     await expect(html(page)).toHaveAttribute("data-motion", "reduced");
     const footer = page.getByRole("contentinfo");
     await expect(
-        footer.getByText("Motion held · system setting"),
+        footer.getByText("Motion reduced by system settings"),
     ).toBeVisible();
-    await expect(footer.getByRole("button", { name: /drift/ })).toBeHidden();
+    await expect(footer.getByRole("button", { name: /motion/ })).toBeHidden();
 });

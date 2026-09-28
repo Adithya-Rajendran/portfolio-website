@@ -131,6 +131,23 @@
 }
 
 /* ---- Tiles: text first, a hairline on top, the whole tile one link ---- */
+/* The row of tiles: one column on phones, two from 600px, three from
+   960px (MissionTiles; /portfolio § 02.2 and the home Missions act). */
+.tiles {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-8) var(--gutter);
+}
+@media (min-width: 37.5rem) {
+    .tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (min-width: 60rem) {
+    .tiles {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
 .tile {
     position: relative;
     display: flex;

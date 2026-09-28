@@ -1,7 +1,4 @@
 import type { ReactElement } from "react";
-import { ImageResponse } from "next/og";
-import { getProfile } from "@/lib/sanity-client";
-import { siteConfig } from "@/lib/config";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const OG_CONTENT_TYPE = "image/png" as const;
@@ -148,35 +145,3 @@ export function OgTemplate({
         </div>
     );
 }
-
-interface ProfileOgImageOptions {
-    eyebrow: string;
-    footerRight: string;
-}
-
-/**
- * Factory for identity-led OG routes. The CMS supplies only the name and
- * headline; visual composition remains code-defined alongside the site.
- */
-export function makeProfileOgImage({
-    eyebrow,
-    footerRight,
-}: ProfileOgImageOptions): () => Promise<ImageResponse> {
-    return async function Image(): Promise<ImageResponse> {
-        const profile = await getProfile();
-        const subtitle = profile?.headline || siteConfig.role;
-
-        return new ImageResponse(
-            <OgTemplate
-                eyebrow={eyebrow}
-                title={profile?.name || siteConfig.author}
-                subtitle={subtitle}
-                footerRight={footerRight}
-            />,
-            { ...OG_SIZE },
-        );
-    };
-}
-
-/** Kept until the route modules are renamed in the V3 integration pass. */
-export const makeIntroOgImage = makeProfileOgImage;

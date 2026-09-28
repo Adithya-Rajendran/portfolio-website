@@ -1,0 +1,89 @@
+{
+    "credit": "Photo: NASA / Expedition 72",
+    "source": "https://images.nasa.gov/details/iss072e030246",
+    "title": "The first rays of an orbital sunrise illuminate Earth's atmosphere",
+    "desktop": {
+        "width": 3840,
+        "height": 1646,
+        "sources": [
+            {
+                "width": 1280,
+                "height": 549,
+                "avif": "/images/hero-sunrise-v1/desktop-1280.avif",
+                "webp": "/images/hero-sunrise-v1/desktop-1280.webp"
+            },
+            {
+                "width": 1920,
+                "height": 823,
+                "avif": "/images/hero-sunrise-v1/desktop-1920.avif",
+                "webp": "/images/hero-sunrise-v1/desktop-1920.webp"
+            },
+            {
+                "width": 2560,
+                "height": 1097,
+                "avif": "/images/hero-sunrise-v1/desktop-2560.avif",
+                "webp": "/images/hero-sunrise-v1/desktop-2560.webp"
+            },
+            {
+                "width": 3840,
+                "height": 1646,
+                "avif": "/images/hero-sunrise-v1/desktop-3840.avif",
+                "webp": "/images/hero-sunrise-v1/desktop-3840.webp"
+            }
+        ],
+        "preview": "data:image/webp;base64,UklGRpoAAABXRUJQVlA4II4AAADQBACdASowABUAPu1qrU8ppiQiKqoBMB2JQBlEJAEqazboZgIPlFyxRiBfKRfIgAD+/hLdof3kQA67INwSayW9h0DyGjPFzpUaz5JoQtvXV4BYv/WPNPTVQMb9tC2GdiBaflMjNa5T6KF9e4wKJe0RudEPhki5KWyT+xRBJo6SWo7R5ikveFXQfp7XAAAA",
+        "limb": {
+            "cx": 1717.2,
+            "cy": 17642.8,
+            "r": 16480.4
+        },
+        "surface": {
+            "cx": 1581.9,
+            "cy": 20288.3,
+            "r": 19002
+        },
+        "sun": {
+            "x": 2657.8,
+            "y": 1284.7
+        }
+    },
+    "mobile": {
+        "width": 1440,
+        "height": 2560,
+        "sources": [
+            {
+                "width": 640,
+                "height": 1138,
+                "avif": "/images/hero-sunrise-v1/mobile-640.avif",
+                "webp": "/images/hero-sunrise-v1/mobile-640.webp"
+            },
+            {
+                "width": 960,
+                "height": 1707,
+                "avif": "/images/hero-sunrise-v1/mobile-960.avif",
+                "webp": "/images/hero-sunrise-v1/mobile-960.webp"
+            },
+            {
+                "width": 1440,
+                "height": 2560,
+                "avif": "/images/hero-sunrise-v1/mobile-1440.avif",
+                "webp": "/images/hero-sunrise-v1/mobile-1440.webp"
+            }
+        ],
+        "preview": "data:image/webp;base64,UklGRsYAAABXRUJQVlA4ILoAAADQBgCdASowAFUAPu1ys1IppySiqPZooTAdiWUA1OlZCAbcDn/7t06/8EZMzMzMHURddbgAL09urHbHwBUNStAA/vQRgALSb8vV8rd4efL+Ue2orgXhvdmq2nNjiQWiuKlspHWAssuhr9+NgQ3p5uRTBKkcPLxw9kC06DdBo+Zo4amcfMl/u5QtNamqYe4Ns0skT8e6cnO70B4HgvyD6WqHYwNnTb7Zz9qj9MVTD+uJ9Deorjg2HJoAAAA=",
+        "limb": {
+            "cx": -78.1,
+            "cy": 16017.7,
+            "r": 14284.7
+        },
+        "surface": {
+            "cx": -195.3,
+            "cy": 18310.7,
+            "r": 16470.2
+        },
+        "sun": {
+            "x": 737.2,
+            "y": 1839.1
+        }
+    }
+}

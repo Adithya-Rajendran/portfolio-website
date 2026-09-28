@@ -101,7 +101,7 @@ describe("the theme boot script", () => {
         });
     });
 
-    it("reduces motion for Hold drift or the OS setting", () => {
+    it("reduces motion for Pause motion or the OS setting", () => {
         expect(
             boot({ stored: { "ar-motion": "reduced" } }).dataset.motion,
         ).toBe("reduced");

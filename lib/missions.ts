@@ -343,6 +343,36 @@ export function missionEntries({
     return { original, related };
 }
 
+/**
+ * Each mission's original Flight Log entry (its write-up), from the list
+ * data alone: its links to the site's posts, else the oldest post that
+ * references it. For the index pages (/portfolio and the home act); a
+ * mission file also reads its essay and callouts (`missionEntries`).
+ */
+export function originalEntries(
+    projects: readonly Pick<ProjectListItem, "_id" | "links">[],
+    posts: readonly { slug: string; projectIds?: string[] | null }[],
+    entries: readonly LogEntry[],
+    siteUrl: string,
+): Map<string, LogEntry> {
+    const originals = new Map<string, LogEntry>();
+    for (const project of projects) {
+        const { original } = missionEntries({
+            entries,
+            postIds: new Map(),
+            referencing: posts
+                .filter((post) => post.projectIds?.includes(project._id))
+                .map((post) => post.slug),
+            links: project.links,
+            body: null,
+            hotspots: null,
+            siteUrl,
+        });
+        if (original) originals.set(project._id, original);
+    }
+    return originals;
+}
+
 export interface Callout {
     id: string;
     /** The balloon's label: "1". */

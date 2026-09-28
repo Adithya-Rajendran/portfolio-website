@@ -30,19 +30,3 @@
 .tag {
     margin-bottom: var(--s-7);
 }
-
-.tiles {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s-8) var(--gutter);
-}
-@media (min-width: 37.5rem) {
-    .tiles {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-@media (min-width: 60rem) {
-    .tiles {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}

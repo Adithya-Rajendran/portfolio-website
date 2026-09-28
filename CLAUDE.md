@@ -85,9 +85,10 @@ only live in comments or commit messages.
   writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
   `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
 - **Share images.** Redesigned pages draw the Deep Field card
-  (`lib/og-card.tsx`; `/blog`, `/blog/archive`, the posts, `/resume`,
-  `/portfolio` and the mission files so far), the others the
-  older `lib/og-template.tsx` until their PR. Satori takes TTF, not WOFF2,
+  (`lib/og-card.tsx`; `/` (and so any page without its own card),
+  `/blog`, `/blog/archive`, the posts, `/resume`, `/portfolio` and the
+  mission files so far), the others the older `lib/og-template.tsx`
+  until their PR. Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
 - **The Trajectory map and the CV** (G2, G3). `lib/orbit/geometry.ts` is
@@ -134,7 +135,8 @@ only live in comments or commit messages.
   `headerMode`) get `html[data-header="solid"]` from RouteMarker.
 - **Missions** (G5, G6). `lib/missions.ts` is pure and unit-tested: it
   words each project once (`toMission`) for `/portfolio`, the mission files
-  and (PR 13) the home act. A mission's name, set in capitals on the stage
+  and the home Missions act (the stage and `MissionTiles`), and finds each
+  one's write-up from the list data (`originalEntries`). A mission's name, set in capitals on the stage
   and the file, comes from its slug (`homelab` → Homelab); the order is the
   featured slots, then the list query's; the register and the files'
   previous / next go by mission number. A mission's Flight Log entries are
@@ -149,6 +151,24 @@ only live in comments or commit messages.
   file. The old `/portfolio` fragments (`#experience`, `#skills`,
   `#certifications`, `#engineering-writing`, `#contact`) are link rows
   (`RouteList`) carrying those ids; `#projects` is the tiles.
+- **The home page** (plan §6.2 row 13, contract §9). The hero
+  (`components/home/hero.tsx`) is NASA's orbital sunrise, pre-encoded by
+  `node scripts/generate-hero-sunrise.mjs` from `assets/artwork/` into
+  `public/images/hero-sunrise-v<n>/` and `lib/hero-sunrise.json` (bump the
+  version on every re-encode). The photograph is screen-blended over the
+  starfield in Void; under it, and alone in Flight Manual and print, an
+  SVG draws the limb from circles fitted to the photograph, in the same
+  cover crop, so the two stay aligned at every size. The starfield
+  (`components/sky/starfield.tsx`, the site's only ambient motion) is a
+  seeded canvas over `StaticStars variant="field"`, which it hides once it
+  has drawn: it runs at about 30 fps only while the hero is on screen, the
+  tab is visible, the theme is Void and motion is allowed, keeps stars off
+  `[data-clear]` text, reports `data-state` (`running` | `stopped`) and
+  stops in its effect cleanup, because a visited page stays mounted. The
+  acts come and go with their content (`lib/home.ts`), numbered as they
+  appear; the Now and Crew acts read `lib/crew.ts` (the current role, the
+  tagline or the introduction's first sentence, availability, the
+  questions and the record), which the Crew File reuses in PR 14.
 - **LOG numbers** are derived, never stored: `logNumbers` in
   `lib/designations.ts` numbers published posts by `publishedAt`, oldest
   first (LOG 001), ties by document id. Number the whole list, then filter
@@ -421,7 +441,7 @@ deployment require an authenticated Sanity CLI session.
   in full in Void and only its chrome in Flight Manual), `layout` (no
   sideways scroll at 320–1920 px, and the header's parts fit without
   overlapping), `theme` (no flash of the wrong theme, persistence across
-  reloads, pages and tabs, Auto following the OS, Hold drift), `chrome`
+  reloads, pages and tabs, Auto following the OS, Pause motion), `chrome`
   (the menu sheet's focus, `inert` and closing; the current nav section),
   `contact` (routes pick the form's topic by click and by fragment, field
   checks, a refused send keeps the draft and its stale alert clears after
@@ -450,7 +470,13 @@ deployment require an authenticated Sanity CLI session.
   its head, record, pager and no stand-in text, Read the write-up lands
   on the write-up; on the fixture build a filled mission shows every
   module with its callouts linked to their sections, and a planned one
-  none of them),
+  none of them), `home` (the hero's name, status line and quick links,
+  CV first, in the first viewport at 1280×800 and 390×844 with and
+  without JavaScript; the starfield `running` only on screen, in a
+  visible tab, in Void and with motion allowed; the credit, and the drawn
+  limb in Flight Manual; the acts numbered in order with their section
+  links; an orbit label leading to its row; no gap wording and no old
+  artwork),
   `budgets` (the brotli byte report, printed,
   not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio

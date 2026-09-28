@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import MissionRegister from "@/components/portfolio/mission-register";
 import MissionStage from "@/components/portfolio/mission-stage";
-import MissionTile from "@/components/portfolio/mission-tile";
+import MissionTile, { MissionTiles } from "@/components/portfolio/mission-tile";
 import StaticStars from "@/components/sky/static-stars";
 import { LinkArrow, Status } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
@@ -11,10 +11,10 @@ import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
 import { missionsCopy as copy } from "@/lib/copy";
 import { cvCredentials, cvEntries } from "@/lib/cv";
-import { logEntries, type LogEntry } from "@/lib/log-index";
+import { logEntries } from "@/lib/log-index";
 import {
-    missionEntries,
     missionOrder,
+    originalEntries,
     statusTally,
     toMission,
     typeList,
@@ -149,22 +149,12 @@ export default async function Portfolio() {
     const cover = detail?.cover?.asset ? detail.cover : null;
     const poster = detail?.model?.poster?.asset ? detail.model.poster : null;
 
-    const entries = logEntries(posts);
-    const originals = new Map<string, LogEntry>();
-    for (const project of ordered) {
-        const { original } = missionEntries({
-            entries,
-            postIds: new Map(),
-            referencing: posts
-                .filter((post) => post.projectIds?.includes(project._id))
-                .map((post) => post.slug),
-            links: project.links,
-            body: null,
-            hotspots: null,
-            siteUrl: siteConfig.url,
-        });
-        if (original) originals.set(project._id, original);
-    }
+    const originals = originalEntries(
+        ordered,
+        posts,
+        logEntries(posts),
+        siteConfig.url,
+    );
     const writeUp = (mission: Mission) => {
         const entry = originals.get(mission.id);
         return entry ? `/blog/${entry.slug}` : `${mission.href}#write-up`;
@@ -263,14 +253,14 @@ export default async function Portfolio() {
                                 />
                             </h2>
                         </SectionTag>
-                        <div className={styles.tiles}>
+                        <MissionTiles>
                             {others.map((mission) => (
                                 <MissionTile
                                     key={mission.id}
                                     mission={mission}
                                 />
                             ))}
-                        </div>
+                        </MissionTiles>
                     </div>
                 </section>
             ) : null}

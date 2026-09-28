@@ -1,8 +1,10 @@
 /**
- * The pure parts of the sky: a seeded PRNG and the static star layout.
- * Seeded, so the server renders the same stars on every build and no
- * `Math.random()` runs in render. The canvas starfield (PR 13) reuses the
- * PRNG. Keep this module free of imports.
+ * The pure parts of the sky: a seeded PRNG, the static star layout and
+ * the drifting starfield's geometry (density, drift and the clearings
+ * that keep stars off text). Seeded, so the server renders the same stars
+ * on every build and no `Math.random()` runs in render; the canvas
+ * (components/sky/starfield.tsx) draws from the same layout. Keep this
+ * module free of imports.
  */
 
 /** mulberry32: a small, fast, seeded PRNG returning [0, 1). */
@@ -55,4 +57,62 @@ export function starPaths(stars: readonly Star[]): Record<Magnitude, string> {
         paths[mag].push(`M${x.toFixed(1)} ${y.toFixed(1)}h0`);
     }
     return { 1: paths[1].join(""), 2: paths[2].join(""), 3: paths[3].join("") };
+}
+
+/** A box in the field's pixels, as measured from a text block. */
+export interface Clearing {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+/**
+ * How visible a star at (x, y) is among the clearings kept around text:
+ * 0 inside a clearing, rising linearly to 1 at `pad` pixels beyond its
+ * edge, so a drifting star fades out before it reaches a letter.
+ */
+export function clearance(
+    x: number,
+    y: number,
+    clearings: readonly Clearing[],
+    pad: number,
+): number {
+    let alpha = 1;
+    for (const box of clearings) {
+        const dx = Math.max(box.x - x, 0, x - (box.x + box.width));
+        const dy = Math.max(box.y - y, 0, y - (box.y + box.height));
+        const distance = Math.hypot(dx, dy);
+        if (distance === 0) return 0;
+        if (distance < pad) alpha = Math.min(alpha, distance / pad);
+    }
+    return alpha;
+}
+
+/** Drift in pixels per second: nearer (brighter) stars move faster. */
+export const DRIFT_SPEED: Readonly<Record<Magnitude, number>> = {
+    1: 4.2,
+    2: 2.6,
+    3: 1.4,
+};
+
+/**
+ * A star's x after `seconds` of drift to the left at `speed`, wrapping
+ * inside [0, width): the field is a loop, so it never runs out.
+ */
+export function driftX(
+    x: number,
+    seconds: number,
+    speed: number,
+    width: number,
+): number {
+    if (width <= 0) return x;
+    const moved = (x - seconds * speed) % width;
+    return moved < 0 ? moved + width : moved;
+}
+
+/** Stars for a field of this size: one per ~5,600 px², within bounds. */
+export function starCount(width: number, height: number): number {
+    const count = Math.round((Math.max(0, width) * Math.max(0, height)) / 5600);
+    return Math.min(420, Math.max(40, count));
 }

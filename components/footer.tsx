@@ -13,7 +13,7 @@ import { getProfileLink } from "@/lib/profile-content";
 
 /**
  * The footer: the patch and sign, the nav pairs (also the menu's fallback
- * target without the Popover API), plain links, the theme and Hold drift
+ * target without the Popover API), plain links, the theme and Pause motion
  * controls, then the document-control strip (G7): the profile's revision
  * date, mission elapsed time since the profile's launch, the copyright and
  * Back to top. Reads only cached data (the profile and a day-cached

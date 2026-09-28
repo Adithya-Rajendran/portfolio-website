@@ -10,9 +10,9 @@ export const chromeCopy = {
     menu: "Menu",
     close: "Close",
     themeLegend: "Theme",
-    holdDrift: "Hold drift",
-    resumeDrift: "Resume drift",
-    motionHeldByOs: "Motion held · system setting",
+    holdDrift: "Pause motion",
+    resumeDrift: "Resume motion",
+    motionHeldByOs: "Motion reduced by system settings",
     footerSign: "Built on Earth. Still in flight.",
     backToTop: "Back to top",
     revTitle: "Last revised",
@@ -496,4 +496,71 @@ export const orbitCopy = {
     writeAboutRole: "Write about a role",
     pinned: "Selected",
     showing: "Showing",
+} as const;
+
+/**
+ * The home page (§ 00): the hero and its acts. UI copy only: the name,
+ * the headline, the tagline, the roles, the questions, the missions and
+ * the entries are the owner's.
+ */
+export const homeCopy = {
+    /** The hero's quick links, CV first. */
+    routesLabel: "Start here",
+    cv: "Experience / CV",
+    work: "Selected work",
+    blog: "Read the blog",
+    now: "Now",
+    openTo: "Open to",
+    updated: "Updated",
+    nowAct: {
+        themed: "Now",
+        plain: "Current focus",
+        current: "Current",
+        questions: "Open questions",
+    },
+    missionsAct: {
+        themed: "Missions",
+        plain: "Projects",
+        title: "Selected work",
+        all: "All projects",
+    },
+    logAct: {
+        themed: "Flight Log",
+        plain: "Blog",
+        title: "Latest writing",
+        all: "All entries",
+        rss: "RSS",
+        linkedIn: "Follow on LinkedIn",
+    },
+    trajectoryAct: {
+        themed: "Trajectory",
+        plain: "Experience",
+        title: "Experience and education",
+        all: "Experience & CV",
+        resume: "Résumé (PDF)",
+    },
+    crewAct: {
+        themed: "Crew File",
+        plain: "About",
+        all: "About",
+    },
+    commsAct: {
+        themed: "Comms",
+        plain: "Contact",
+        title: "Let’s talk.",
+        all: "Contact",
+        profiles: "Profiles",
+    },
+} as const;
+
+/** The crew record (G6): the home Crew act and, from PR 14, /about. */
+export const crewCopy = {
+    recordLabel: "Profile record",
+    name: "Name",
+    studying: "Studying",
+    previously: "Previously",
+    focus: "Focus",
+    openTo: "Open to",
+    links: "Links",
+    updated: "Updated",
 } as const;

@@ -83,12 +83,9 @@ describe("route table", () => {
     });
 
     it("gives each share image the tags of its page, or none when it reads no content", () => {
-        // Content reaches a share image through the Sanity client, directly
-        // or through lib/og-template.tsx's makeIntroOgImage.
+        // Content reaches a share image through the Sanity client.
         const readsContent = (file: string) =>
-            /@\/lib\/sanity-client|makeIntroOgImage/.test(
-                readFileSync(file, "utf8"),
-            );
+            /@\/lib\/sanity-client/.test(readFileSync(file, "utf8"));
         for (const image of ROUTE_TAGS.filter((route) =>
             route.file.endsWith("/opengraph-image.tsx"),
         )) {

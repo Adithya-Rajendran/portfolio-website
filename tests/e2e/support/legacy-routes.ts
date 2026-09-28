@@ -9,7 +9,6 @@
  * which deletes the shim and app/journal-*.css.
  */
 const LEGACY_ROUTES: { pattern: RegExp; until: string }[] = [
-    { pattern: /^\/$/, until: "PR 13 (home)" },
     { pattern: /^\/about$/, until: "PR 14 (crew file)" },
 ];
 

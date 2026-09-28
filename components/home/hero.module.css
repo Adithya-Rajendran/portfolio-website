@@ -1,0 +1,381 @@
+/*
+ * The home hero (components/home/hero.tsx): full-bleed under the header.
+ * The sky layer (stars, the drawn limb, the photograph) is isolated, so
+ * the photograph screen-blends with the stars and the limb only. The photo
+ * box keeps the crop's aspect ratio against the bottom edge (21:9 from
+ * 48rem, 9:16 below) and gives way at the top on short screens; the
+ * photograph and the SVG both cover it anchored to the bottom, so they
+ * stay aligned. The copy is centred in the black above the limb: the
+ * centre keeps clear of the box's lower 40%, where the sun and the limb
+ * are. Ported from the mockup's home.css "00 · LAUNCH", without its
+ * corner labels, scroll cue or scroll-linked sinking (contract §7, §11).
+ */
+.hero {
+    position: relative;
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    min-height: max(calc(100svh - var(--header-h)), 36rem);
+    --photo-h: min(100cqw * 1646 / 3840, 0.82 * (100svh - var(--header-h)));
+    --limb-clear: calc(var(--photo-h) * 0.47);
+}
+@media (max-width: 47.99rem) {
+    .hero {
+        --photo-h: min(100cqw * 16 / 9, 0.94 * (100svh - var(--header-h)));
+        --limb-clear: calc(var(--photo-h) * 0.3);
+    }
+}
+
+/* ---- The sky: stars, the drawn limb, the photograph ------------------- */
+.sky {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    isolation: isolate;
+    /* The backdrop the photograph screens onto: its black becomes the
+       page's black, not a darker box. */
+    background: var(--bg);
+    pointer-events: none;
+}
+/* From 48rem the box stands on the foot row (the credit and Pause motion
+   sit on the night side, under the limb); the drawn planet runs on below
+   it. On phones the crop's own night side is deep enough. */
+.photo {
+    position: absolute;
+    right: 0;
+    bottom: calc(44px + var(--s-5) * 2);
+    left: 0;
+    height: var(--photo-h);
+}
+@media (max-width: 47.99rem) {
+    .photo {
+        bottom: calc(var(--photo-h) * -0.06);
+    }
+}
+.alignD,
+.alignM {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+.alignM {
+    display: none;
+}
+@media (max-width: 47.99rem) {
+    .alignD {
+        display: none;
+    }
+    .alignM {
+        display: block;
+    }
+}
+.alignD circle,
+.alignM circle {
+    vector-effect: non-scaling-stroke;
+}
+/* The night side hides the stars behind the planet; the drawn rim, the
+   surface line and the sun show only where the photograph does not. */
+.body {
+    fill: var(--bg);
+}
+.rim,
+.surface,
+.halo {
+    display: none;
+    fill: none;
+}
+.sun {
+    display: none;
+    fill: var(--accent);
+}
+
+.picture {
+    display: contents;
+}
+.img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 100%;
+    /* A 48px preview until the photograph arrives. */
+    background: var(--preview-d) 50% 100% / cover no-repeat;
+    mix-blend-mode: screen;
+    -webkit-mask-image:
+        linear-gradient(
+            to bottom,
+            transparent 0,
+            #000 26%,
+            #000 84%,
+            transparent
+        ),
+        linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image:
+        linear-gradient(
+            to bottom,
+            transparent 0,
+            #000 26%,
+            #000 84%,
+            transparent
+        ),
+        linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+    mask-composite: intersect;
+}
+@media (max-width: 47.99rem) {
+    .img {
+        background-image: var(--preview-m);
+    }
+}
+
+/* Flight Manual: no photograph; the limb is drawn in ink, the sun is the
+   one orange mark. */
+:global([data-theme="manual"]) .img {
+    display: none;
+}
+:global([data-theme="manual"]) .rim {
+    display: inline;
+    stroke: var(--ink-1);
+    stroke-width: 1.25px;
+}
+:global([data-theme="manual"]) .surface {
+    display: inline;
+    stroke: var(--rule-2);
+    stroke-width: 1px;
+}
+:global([data-theme="manual"]) .halo {
+    display: inline;
+    stroke: var(--ink-2);
+    stroke-width: 1px;
+    stroke-dasharray: 1.5 5;
+}
+:global([data-theme="manual"]) .sun {
+    display: inline;
+}
+@media (forced-colors: active) {
+    .img {
+        display: none;
+    }
+    .rim {
+        display: inline;
+        stroke: CanvasText;
+        stroke-width: 1.25px;
+    }
+}
+
+/* ---- The copy --------------------------------------------------------- */
+.frame {
+    position: relative;
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    padding-top: clamp(1.5rem, 0.5rem + 4svh, 4.5rem);
+    padding-bottom: var(--s-5);
+}
+.centre {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: var(--limb-clear);
+    text-align: center;
+}
+.headline {
+    max-width: 44rem;
+    color: var(--ink-2);
+    font-size: var(--label-size-lg);
+    line-height: 1.7;
+    text-wrap: balance;
+}
+.name {
+    margin: var(--s-5) -0.13em 0 0;
+    color: var(--ink-1);
+    font: 300 clamp(2.3rem, 0.2rem + 6.55vw, 8.25rem) / 1 var(--font-display);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.word {
+    display: inline-block;
+}
+.tagline {
+    max-width: 44ch;
+    margin-top: var(--s-5);
+    color: var(--ink-2);
+    font: 300 var(--step-2) / 1.35 var(--font-long);
+    text-wrap: balance;
+}
+.status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--s-2) var(--s-5);
+    max-width: 52rem;
+    margin-top: var(--s-5);
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.45 var(--font-display);
+}
+.statusNow {
+    color: var(--ink-1);
+    text-wrap: balance;
+}
+.statusNow :global(.status) {
+    margin-right: 0.4rem;
+}
+.statusKey {
+    margin-right: 0.3rem;
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
+}
+.statusUpdated {
+    font: 400 0.75rem / 1.45 var(--font-mono);
+}
+.routes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--s-3);
+    margin-top: var(--s-7);
+}
+.routes :global(.btn) {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+.routes :global(.btn):hover {
+    background: var(--surface-1);
+}
+
+.foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--s-3) var(--s-5);
+}
+.credit {
+    color: var(--ink-2);
+    font: 400 0.6875rem / 1.5 var(--font-mono);
+    letter-spacing: 0.02em;
+}
+.credit a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: inherit;
+    text-decoration-color: var(--rule-2);
+    text-underline-offset: 0.3em;
+}
+.credit a:hover {
+    color: var(--ink-1);
+    text-decoration-color: var(--accent);
+}
+.motion {
+    margin-left: auto;
+}
+.motion :global(.motion-toggle) {
+    background: var(--glass);
+}
+/* No photograph and nothing drifting in Flight Manual. */
+:global([data-theme="manual"]) .credit,
+:global([data-theme="manual"]) .motion {
+    display: none;
+}
+
+/* ---- Phones: the name on two lines, the links 2 + 1 ------------------ */
+@media (max-width: 37.49rem) {
+    .frame {
+        padding-top: var(--s-5);
+    }
+    .headline {
+        max-width: 22rem;
+        font-size: var(--label-size);
+    }
+    .name {
+        margin-right: -0.1em;
+        font-size: clamp(2.3rem, 11.4vw, 3.4rem);
+        letter-spacing: 0.1em;
+        line-height: 1.02;
+        white-space: normal;
+    }
+    .word {
+        display: block;
+    }
+    .tagline {
+        font-size: var(--step-1);
+    }
+    .status {
+        gap: var(--s-1) var(--s-4);
+    }
+    .statusUpdated {
+        display: none;
+    }
+    .routes {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: var(--s-2);
+        width: 100%;
+        max-width: 24rem;
+        margin-top: var(--s-6);
+    }
+    .routes > :first-child {
+        grid-column: 1 / -1;
+    }
+    .routes :global(.btn) {
+        justify-content: space-between;
+        padding-inline: 0.9rem;
+    }
+    /* The credit and Pause motion share one line. */
+    .foot {
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+    .credit {
+        font-size: 0.625rem;
+    }
+    .motion :global(.motion-toggle) {
+        gap: 0.5rem;
+        padding-inline: 0.7rem;
+        font-size: 0.6875rem;
+        letter-spacing: 0.1em;
+    }
+}
+@media (max-width: 23.99rem) {
+    .name {
+        font-size: 2.15rem;
+        letter-spacing: 0.08em;
+    }
+    .routes :global(.btn) {
+        gap: 0.4rem;
+        padding-inline: 0.6rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+    }
+}
+
+/* ---- Print: a title page drawn in ink -------------------------------- */
+@media print {
+    .hero {
+        min-height: auto;
+    }
+    .img,
+    .routes,
+    .foot {
+        display: none;
+    }
+    .rim {
+        display: inline;
+        stroke: var(--ink-1);
+        stroke-width: 1.25px;
+    }
+    .sun {
+        display: inline;
+    }
+}

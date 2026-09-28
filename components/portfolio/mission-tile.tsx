@@ -9,6 +9,11 @@ import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
 
+/** The row of tiles: 1, 2 or 3 across (/portfolio and the home act). */
+export function MissionTiles({ children }: { children: React.ReactNode }) {
+    return <div className={styles.tiles}>{children}</div>;
+}
+
 /**
  * A mission as a tile (contract §4): text first. Its line, its name in
  * capitals (the link to its file, stretched over the tile), its title, its

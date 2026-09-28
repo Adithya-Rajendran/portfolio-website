@@ -5,8 +5,8 @@ import { chromeCopy } from "@/lib/copy";
 import { getMotionPref, setMotionPref } from "@/lib/prefs";
 
 /**
- * Hold drift / Resume drift (WCAG 2.2.2), in the footer and the menu
- * sheet. One button whose label names the action; CSS picks the label
+ * Pause motion / Resume motion (WCAG 2.2.2), in the footer, the menu
+ * sheet and the home hero (beside the drifting starfield). One button whose label names the action; CSS picks the label
  * from `html[data-motion]`, so nothing re-renders. Under the OS
  * reduce-motion setting a plain note replaces it. Hidden without
  * JavaScript, when nothing moves anyway (no `data-motion`).

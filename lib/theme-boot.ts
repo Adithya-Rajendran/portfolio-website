@@ -7,7 +7,7 @@
  *   is Void, so every first-time visitor sees Void; `auto` follows the OS
  *   and is opt-in (the toggle's third option). A stored `flight-manual`
  *   (the mockups' key value) means `manual`.
- * - `ar-motion` holds `full` | `reduced` (Hold drift). The OS setting can
+ * - `ar-motion` holds `full` | `reduced` (Pause motion). The OS setting can
  *   only reduce motion, never override it.
  *
  * localStorage only, never a cookie: a cookie read on the server would make
