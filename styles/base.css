@@ -138,6 +138,11 @@
     html:not([data-js]) .js-only {
         display: none !important;
     }
+    /* Its no-JavaScript counterpart: a plain link in place of a control
+       (the orbit map's labels). */
+    html[data-js] .nojs-only {
+        display: none !important;
+    }
 }
 
 /* The theme switch is a same-document view transition (lib/prefs.ts): a
@@ -175,6 +180,7 @@ html[data-motion="reduced"] *::after {
     .btn,
     .chip,
     .theme-toggle label,
+    .seg__box,
     .nav-toggle {
         border-color: ButtonText;
     }
@@ -183,6 +189,7 @@ html[data-motion="reduced"] *::after {
         .chip[aria-pressed="true"],
         .chip[aria-current],
         .theme-toggle input:checked + label,
+        .seg__input:checked + .seg__box,
         .nav__link[aria-current]
     ) {
         forced-color-adjust: none;
@@ -194,7 +201,8 @@ html[data-motion="reduced"] *::after {
         color: SelectedItemText;
     }
     :is(.chip[aria-pressed="true"], .chip[aria-current])::before,
-    .theme-toggle input:checked + label::before {
+    .theme-toggle input:checked + label::before,
+    .seg__input:checked + .seg__box::before {
         background: SelectedItemText;
     }
     .nav__link[aria-current] .nav__plain,

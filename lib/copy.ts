@@ -318,3 +318,73 @@ export const postCopy = {
     printKicker: (designation: string) => `Flight Log · ${designation}`,
     printFiled: "Filed",
 } as const;
+
+/**
+ * Trajectory · Experience / CV (G2, G3): /resume, its print and the
+ * orbit map. UI copy only: roles, dates and the summary are the owner's.
+ */
+export const cvCopy = {
+    num: "03",
+    themed: "Trajectory",
+    plain: "Experience / CV",
+    /** The share card and metadata when the profile has no summary. */
+    description: "Experience, education and skills.",
+    viewLegend: "View",
+    views: [
+        { value: "map", label: "Orbit map" },
+        { value: "list", label: "CV list" },
+    ],
+    download: "Download CV (PDF)",
+    openPdf: "Open PDF",
+    print: "Print CV",
+    share: "Share",
+    shared: "Shared",
+    copied: "Link copied",
+    announceCopied: "Link to the CV copied.",
+    openTo: "Open to",
+    writeAboutRole: "Write about a role",
+    mapTitle: "Orbit map",
+    figure: "Fig. 1",
+    education: "Education",
+    experience: "Experience",
+    projects: "Projects",
+    allProjects: "All projects",
+    writing: "Writing",
+    writingAndTalks: "Writing & talks",
+    talks: "Talks",
+    flightLog: "Flight Log",
+    skills: "Skills",
+    certifications: "Certifications",
+    showOnMap: "Show on map",
+    stack: "Stack",
+    links: "Links",
+    current: "Current",
+    /** The printed document's control marks (G3). */
+    document: "AR-CV-001",
+    documentTitle: "Curriculum vitae",
+    sheet: (sheet: number, of: number) => `Sheet ${sheet} of ${of}`,
+} as const;
+
+/** The orbit map's labels, key and record panel (G2). */
+export const orbitCopy = {
+    /** 3 → "Orbit 03". */
+    designation: (number: number) => `Orbit ${String(number).padStart(2, "0")}`,
+    hint: "Select an orbit to see its record.",
+    caption: "Roles over time, to scale.",
+    key: {
+        orbit: "Role",
+        current: "Current",
+        burn: "Change of role",
+        planned: "Planned",
+    },
+    planned: "Planned",
+    education: "Education",
+    role: "Role",
+    current: "Current",
+    earlier: "Earlier",
+    later: "Later",
+    fullRecord: "Full record",
+    writeAboutRole: "Write about a role",
+    pinned: "Selected",
+    showing: "Showing",
+} as const;

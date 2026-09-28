@@ -10,7 +10,7 @@
 .index {
     --log-cols: 6.5rem 7rem minmax(0, 1fr) 4.5rem 1.5rem;
     min-width: 0;
-    max-width: 61rem;
+    max-width: var(--measure-index);
 }
 .group + .group {
     margin-top: var(--s-7);
@@ -75,7 +75,7 @@
     gap: 0.25rem 1rem;
 }
 .log {
-    color: var(--accent-text);
+    color: var(--ink-2);
     font: 400 var(--label-size) / 1.4 var(--font-label);
     letter-spacing: var(--track-label);
     white-space: nowrap;
@@ -122,6 +122,9 @@
 .row:hover {
     border-top-color: var(--accent);
     background: linear-gradient(to right, var(--surface-1), transparent 80%);
+}
+.row:hover .log {
+    color: var(--accent-text);
 }
 .row:hover .title a {
     text-decoration: underline;

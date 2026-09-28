@@ -19,7 +19,9 @@ export type IconName =
     | "download"
     | "reset"
     | "pause"
-    | "play";
+    | "play"
+    | "print"
+    | "share";
 
 export type OrnamentName =
     | "pulsar"

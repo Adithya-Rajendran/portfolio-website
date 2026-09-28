@@ -11,8 +11,8 @@
  * - Every page also shows the profile in its header, footer and JSON-LD.
  *   That alone does not list it under `profile`: those pages refresh on
  *   their next visit instead of being crawled on every profile edit.
- * - A share image carries its page's tags, or none when it reads no content
- *   (the résumé's is fixed text). Inside the `(site)` group its URL has a
+ * - A share image carries its page's tags, or none when it reads no
+ *   content. Inside the `(site)` group its URL has a
  *   stable hash suffix; `tests/lib/route-tags.test.ts` recomputes every path
  *   from its file, and fails for a route file missing here.
  * - A route that renders on every request (`perRequest`; it is not in the
@@ -65,7 +65,7 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
     {
         path: "/resume",
         file: "app/(site)/resume/page.tsx",
-        tags: [profile, project],
+        tags: [profile, project, post],
     },
     {
         path: "/about",
@@ -101,11 +101,10 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         file: "app/(site)/portfolio/opengraph-image.tsx",
         tags: [profile, project, post],
     },
-    // Fixed text: it reads no content, so it is never warmed.
     {
         path: "/resume/opengraph-image-1nyaml",
         file: "app/(site)/resume/opengraph-image.tsx",
-        tags: [],
+        tags: [profile, project, post],
     },
     {
         path: "/about/opengraph-image-1ycygp",

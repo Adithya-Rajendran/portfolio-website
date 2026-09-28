@@ -34,6 +34,13 @@
         stroke-width: 2.3px;
         opacity: 0.9;
     }
+    /* Behind a page head: the field fades out before the first section. */
+    .static-stars--band {
+        position: absolute;
+        inset: 0 0 auto;
+        -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent);
+        mask-image: linear-gradient(to bottom, #000 35%, transparent);
+    }
     /* On paper the stars are faint printed dots. */
     [data-theme="manual"] .static-stars {
         opacity: 0.4;

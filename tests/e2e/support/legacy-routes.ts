@@ -10,7 +10,6 @@
  */
 const LEGACY_ROUTES: { pattern: RegExp; until: string }[] = [
     { pattern: /^\/$/, until: "PR 13 (home)" },
-    { pattern: /^\/resume$/, until: "PR 11 (trajectory)" },
     { pattern: /^\/portfolio(\/[^/]+)?$/, until: "PR 12 (missions)" },
     { pattern: /^\/about$/, until: "PR 14 (crew file)" },
 ];

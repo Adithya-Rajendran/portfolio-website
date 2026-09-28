@@ -85,6 +85,8 @@
         --cols: 4;
         --maxw: 97rem;
         --measure: 37rem;
+        /* An index or list beside its rail: the log index, the CV rows. */
+        --measure-index: 61rem;
         --header-h: 64px;
 
         /* ---- shape: radius 0, hairlines, no shadows ----------------- */

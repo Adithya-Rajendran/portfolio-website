@@ -85,10 +85,26 @@ only live in comments or commit messages.
   writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
   `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
 - **Share images.** Redesigned pages draw the Deep Field card
-  (`lib/og-card.tsx`; `/blog`, `/blog/archive` and the posts so far), the others the
+  (`lib/og-card.tsx`; `/blog`, `/blog/archive`, the posts and `/resume` so far), the others the
   older `lib/og-template.tsx` until their PR. Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
+- **The Trajectory map and the CV** (G2, G3). `lib/orbit/geometry.ts` is
+  pure and unit-tested: it places the timeline in time (a zero-length or
+  missing start is unknown and fades in; burns, coasts, flybys and the
+  planned orbit from `availability.from`) and projects it twice, time
+  running right (a 1000-unit width stretched to the plot, heights in
+  pixels) and up (pixels). `components/orbit/orbit-map.tsx` draws both
+  SVGs on the server with every word in HTML over them, and CSS shows one
+  (60rem). Its SVG masks need document-unique ids, so each page passes its
+  own `idPrefix`. `OrbitInteraction` is event delegation on the page root
+  (`data-orbit-id`, `data-orbit-row`, `data-orbit-show`…): it renders
+  nothing and keeps state in attributes. `lib/cv.ts` words the rows'
+  dates. The print is the only paper artefact: two sheets on the named
+  page `cv` (`styles/print.css`), sheet 2 breaking before its control
+  line. `[data-print="only"]` forces `display: block !important` from a
+  layer, which no unlayered rule overrides, so a print-only part that
+  needs another display sits inside a print-only container instead.
 - **Prefetching** (plan §4.6 rule 8). The app-wide `partialPrefetching`
   flag is off: in Next.js 16.3.4 it made the first request for an unknown
   post or tag slug answer 200 instead of 404 on `next start`. The two
@@ -406,7 +422,12 @@ deployment require an authenticated Sanity CLI session.
   fixture build also the wide listing and highlighted line, footnotes and
   margin notes, the caution callout and revisions, their RSS output, and
   in-page links landing in the visible entry after a client-side
-  navigation),
+  navigation), `orbit` (a CV row lights its orbit and back, a click pins
+  a record and a second click or Escape releases it, Earlier and Later,
+  "Show on map", the view switch, every orbit labelled on a phone, and
+  without JavaScript the labels as links to their rows), `print` (the CV
+  on two sheets on A4 and on Letter, without the map, chrome or
+  controls),
   `budgets` (the brotli byte report, printed,
   not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio

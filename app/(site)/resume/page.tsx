@@ -1,147 +1,590 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { contactHref } from "@/lib/navigation";
-import { Download, ExternalLink } from "lucide-react";
+import LogIndex from "@/components/blogs/log-index";
+import { CvItem, CvList } from "@/components/cv/cv-list";
+import OrbitInteraction from "@/components/orbit/orbit-interaction";
+import OrbitMap from "@/components/orbit/orbit-map";
 import ResumeShareAction from "@/components/resume/resume-share-action";
+import StaticStars from "@/components/sky/static-stars";
+import { Button, buttonClass } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import {
+    LinkArrow,
+    Rev,
+    Status,
+    type StatusValue,
+} from "@/components/ui/marks";
+import PageHead from "@/components/ui/page-head";
+import SectionTag from "@/components/ui/section-tag";
+import Segmented from "@/components/ui/segmented";
+import Specs from "@/components/ui/specs";
+import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
+import { cvCopy as copy, orbitCopy } from "@/lib/copy";
+import {
+    cvCredentials,
+    cvEntries,
+    cvProjects,
+    cvTalks,
+    hostOf,
+    type CvEntry,
+} from "@/lib/cv";
+import { logEntries } from "@/lib/log-index";
+import { contactHref, siteRoutes } from "@/lib/navigation";
+import { orbitModel } from "@/lib/orbit/geometry";
+import { getProfileLink } from "@/lib/profile-content";
+import type { ProjectStatus } from "@/lib/project-fields";
 import { resolveResumeAssetUrl } from "@/lib/resume";
-import { getProfile } from "@/lib/sanity-client";
-import "@/app/journal-career.css";
+import {
+    getAllPosts,
+    getAllProjects,
+    getProfile,
+    type ProfileData,
+} from "@/lib/sanity-client";
+import styles from "./resume.module.css";
 
-const canonicalUrl = `${siteConfig.url}/resume`;
+const canonicalUrl = `${siteConfig.url}${siteRoutes.resume}`;
+const title = `${copy.themed} · ${copy.plain}`;
+
+function summaryOf(profile: ProfileData | null): string | null {
+    return profile?.workSummary?.trim() || null;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
     const profile = await getProfile();
     const name = profile?.name || siteConfig.author;
-    const description = `Read ${name}'s résumé, with experience, education, and skills.`;
+    const description = summaryOf(profile) ?? copy.description;
     return {
-        title: "Résumé",
+        title,
         description,
         alternates: { canonical: canonicalUrl },
         openGraph: {
-            title: `Résumé | ${name}`,
+            title: `${title} | ${name}`,
             description,
             url: canonicalUrl,
             type: "profile",
         },
         twitter: {
             card: "summary_large_image",
-            title: `Résumé | ${name}`,
+            title: `${title} | ${name}`,
             description,
         },
     };
 }
 
-export default async function ResumePage() {
-    const profile = await getProfile();
-    const viewUrl = resolveResumeAssetUrl(profile?.resumeUrl, "view");
-    if (!viewUrl)
-        return (
-            <div
-                data-page="resume"
-                data-legacy
-                className="journal-page journal-container career-page"
-            >
-                <header className="career-intro">
-                    <p className="journal-eyebrow">RÉSUMÉ</p>
-                    <h1 className="journal-title">The record of my work.</h1>
-                    <p className="journal-description">
-                        The PDF is temporarily unavailable. You can still
-                        explore my professional experience and get in touch.
-                    </p>
-                    <div className="career-actions">
-                        <Link href="/portfolio" className="journal-button">
-                            View work &amp; experience
-                        </Link>
-                        <Link
-                            href={contactHref("hiring")}
-                            className="journal-link"
-                        >
-                            Say hello <span aria-hidden>↗</span>
-                        </Link>
-                    </div>
-                </header>
-            </div>
-        );
-    const embeddedUrl = new URL(viewUrl);
-    embeddedUrl.hash = "view=FitH&toolbar=1&navpanes=0";
+const PROJECT_STATUS: Record<ProjectStatus, StatusValue> = {
+    active: "active",
+    completed: "complete",
+    paused: "paused",
+    archived: "archived",
+    planned: "planned",
+    stopped: "stopped",
+};
+
+/** A CV section: its tag in the rail, the rows in the main column. */
+function CvSection({
+    id,
+    num,
+    heading,
+    after,
+    print = true,
+    children,
+}: {
+    id: string;
+    num: string;
+    heading: React.ReactNode;
+    after?: React.ReactNode;
+    /** False leaves the section off the paper. */
+    print?: boolean;
+    children: React.ReactNode;
+}) {
     return (
-        <div
-            data-page="resume"
-            data-legacy
-            className="journal-page journal-container career-page career-resume"
+        <section
+            className={`section section--tight ${styles.cv}`}
+            id={id}
+            aria-labelledby={`${id}-h`}
+            data-print={print ? undefined : "hide"}
         >
-            <header className="career-resume-heading">
-                <div>
-                    <p className="journal-eyebrow">RÉSUMÉ / PDF</p>
-                    <h1 className="journal-title">The record of my work.</h1>
-                    <p className="journal-description">
-                        {profile?.name || siteConfig.author} · Experience,
-                        education, and skills.
-                    </p>
+            <div className={`shell grid ${styles.cvGrid}`}>
+                <div className="g-rail">
+                    <SectionTag num={num} className={styles.cvTag}>
+                        <h2 className="section-tag__h" id={`${id}-h`}>
+                            {heading}
+                        </h2>
+                    </SectionTag>
                 </div>
-                <div className="career-resume-actions">
-                    <a
-                        href="/resume/view"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="journal-button"
-                    >
-                        <ExternalLink size={16} aria-hidden />
-                        Open PDF
-                    </a>
-                    <a
-                        href="/resume/download"
-                        className="career-action-secondary"
-                        aria-label="Download résumé PDF"
-                    >
-                        <Download size={16} aria-hidden />
-                        Download
-                    </a>
-                    <ResumeShareAction canonicalUrl={canonicalUrl} />
-                    <Link
-                        href={contactHref("hiring")}
-                        className="journal-link career-resume-contact"
-                    >
-                        Get in touch <span aria-hidden>↗</span>
-                    </Link>
+                <div className="g-main">
+                    {children}
+                    {after ? <div className={styles.after}>{after}</div> : null}
                 </div>
+            </div>
+        </section>
+    );
+}
+
+/** The printed document's control line, at the top of each sheet (G3). */
+function SheetHead({
+    sheet,
+    sheets,
+    rev,
+}: {
+    sheet: number;
+    sheets: number;
+    rev: string | null;
+}) {
+    return (
+        <p className={styles.sheetHead}>
+            <span className={styles.sheetDoc}>
+                {copy.document} · {copy.documentTitle}
+            </span>
+            <span className={styles.sheetRev}>
+                {rev ? (
+                    <>
+                        <Rev date={rev} />
+                        <span aria-hidden="true"> · </span>
+                    </>
+                ) : null}
+                {copy.sheet(sheet, sheets)}
+            </span>
+        </p>
+    );
+}
+
+/**
+ * Trajectory · Experience / CV (G2, G3): the profile's timeline as a
+ * time-scaled orbit map with a record panel, then the CV itself
+ * (education, experience, projects, writing and talks, skills,
+ * certifications), downloadable as the owner's PDF and printable as a
+ * two-sheet controlled document. Everything is server-rendered: without
+ * JavaScript the map's labels link to the CV rows; with it,
+ * `OrbitInteraction` previews, pins and cross-lights map and list, and
+ * runs the view switch and Print. There is no email address or phone
+ * number, on screen or on paper.
+ */
+export default async function ResumePage() {
+    const [profile, projects, posts, today] = await Promise.all([
+        getProfile(),
+        getAllProjects(),
+        getAllPosts(),
+        getToday(),
+    ]);
+    const name = profile?.name || siteConfig.author;
+    const hasPdf = Boolean(resolveResumeAssetUrl(profile?.resumeUrl, "view"));
+    const rev =
+        hasPdf && /^\d{4}-\d{2}-\d{2}/.test(profile?.resumeUploadedAt ?? "")
+            ? profile!.resumeUploadedAt!.slice(0, 10)
+            : null;
+    const summary = summaryOf(profile);
+    const availability = profile?.availability;
+    const openTo =
+        availability && availability.status !== "closed"
+            ? availability.openTo?.trim() || null
+            : null;
+
+    const timeline = cvEntries(profile?.timeline);
+    const model = orbitModel({
+        entries: timeline.all.map((entry) => entry.orbit),
+        today,
+        plannedFrom: openTo ? availability?.from : null,
+    });
+    const numbers = new Map(
+        model?.orbits.map((orbit) => [orbit.id, orbit.number]) ?? [],
+    );
+    const missions = cvProjects(projects);
+    const writing = logEntries(posts);
+    const talks = cvTalks(profile?.talksAndPapers);
+    const skills = (profile?.skillGroups ?? []).filter(
+        (group) => group.title && group.skills?.length,
+    );
+    const credentials = cvCredentials(profile?.credentials);
+    const linkedIn = getProfileLink(profile, "linkedin");
+    const gitHub = getProfileLink(profile, "github");
+
+    // Sections are numbered in the order they appear; an empty one is
+    // absent, and so is its number. Paper: education and experience on
+    // sheet 1, the rest on sheet 2.
+    const present = {
+        education: timeline.education.length > 0,
+        experience: timeline.experience.length > 0,
+        projects: missions.length > 0,
+        writing: writing.length + talks.length > 0,
+        skills: skills.length > 0,
+        certifications: credentials.length > 0,
+    };
+    const order = (Object.keys(present) as (keyof typeof present)[]).filter(
+        (id) => present[id],
+    );
+    const numOf = (id: keyof typeof present) =>
+        `${copy.num}.${order.indexOf(id) + (model ? 2 : 1)}`;
+    const sheetOne = present.education || present.experience;
+    // Paper leaves the Flight Log off: writing prints only with talks.
+    const sheetTwo = order.some(
+        (id) =>
+            id !== "education" &&
+            id !== "experience" &&
+            (id !== "writing" || talks.length > 0),
+    );
+    const sheets = sheetOne && sheetTwo ? 2 : 1;
+
+    const roleRow = (entry: CvEntry) => (
+        <CvItem
+            key={entry.id}
+            anchor={entry.anchor}
+            orbit={model ? entry.id : undefined}
+            current={entry.current}
+            code={
+                numbers.has(entry.id)
+                    ? orbitCopy.designation(numbers.get(entry.id)!)
+                    : undefined
+            }
+            dates={entry.dates}
+            meta={[
+                entry.location,
+                entry.duration,
+                entry.expected,
+                entry.employment,
+            ]}
+            status={
+                entry.current ? (
+                    <Status value="active">{copy.current}</Status>
+                ) : null
+            }
+            title={entry.title}
+            sub={entry.organization}
+            dek={entry.summary}
+            lines={entry.highlights}
+            skills={entry.skills}
+            skillsLabel={copy.skills}
+            actions={
+                model ? (
+                    <Button
+                        size="sm"
+                        variant="quiet"
+                        icon="arrow-up"
+                        className="js-only"
+                        data-orbit-show={entry.id}
+                        data-print="hide"
+                    >
+                        {copy.showOnMap}
+                    </Button>
+                ) : null
+            }
+        />
+    );
+
+    return (
+        <div data-page="resume" data-view="map" className={styles.page}>
+            <OrbitInteraction />
+
+            <div className={styles.band}>
+                <StaticStars variant="band" />
+                <PageHead
+                    className={`shell ${styles.head}`}
+                    ornament="orbit"
+                    num={copy.num}
+                    themed={copy.themed}
+                    plain={copy.plain}
+                    meta={rev ? <Rev date={rev} /> : undefined}
+                    intro={summary}
+                >
+                    {hasPdf ? (
+                        <div className={`cluster ${styles.actions}`}>
+                            <a
+                                className={buttonClass({
+                                    variant: "primary",
+                                    size: "sm",
+                                })}
+                                href="/resume/download"
+                            >
+                                <Icon name="download" />
+                                {copy.download}
+                            </a>
+                            <a
+                                className={buttonClass({ size: "sm" })}
+                                href={siteRoutes.resumePdf}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {copy.openPdf}
+                                <Icon name="external" />
+                            </a>
+                        </div>
+                    ) : null}
+                    {profile?.resumeNote?.trim() ? (
+                        <p className={styles.note}>
+                            {profile.resumeNote.trim()}
+                        </p>
+                    ) : null}
+                    {openTo ? (
+                        <div className={styles.openTo}>
+                            <Status value="active">{copy.openTo}</Status>
+                            <p className={styles.openToText}>{openTo}</p>
+                            <LinkArrow href={contactHref("hiring")}>
+                                {copy.writeAboutRole}
+                            </LinkArrow>
+                        </div>
+                    ) : null}
+                </PageHead>
+
+                <div className={`shell js-only ${styles.toolbar}`}>
+                    {model ? (
+                        <Segmented
+                            legend={copy.viewLegend}
+                            name="cv-view"
+                            options={copy.views}
+                            defaultValue="map"
+                            className={styles.switch}
+                        />
+                    ) : null}
+                    <div className={`cluster ${styles.tools}`}>
+                        <Button
+                            size="sm"
+                            variant="quiet"
+                            icon="print"
+                            data-cv-print
+                        >
+                            {copy.print}
+                        </Button>
+                        <ResumeShareAction
+                            canonicalUrl={canonicalUrl}
+                            title={`${name} · ${copy.documentTitle}`}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {model ? (
+                <section
+                    className={`section ${styles.map}`}
+                    id="orbit-map"
+                    aria-labelledby="cv-map-h"
+                    data-print="hide"
+                >
+                    <div className="shell">
+                        <SectionTag num={`${copy.num}.1`}>
+                            <h2 className="section-tag__h" id="cv-map-h">
+                                {copy.mapTitle}
+                            </h2>
+                        </SectionTag>
+                        <div className={styles.mapBody}>
+                            <OrbitMap
+                                model={model}
+                                entries={timeline.all}
+                                planned={
+                                    openTo
+                                        ? {
+                                              text: openTo,
+                                              href: contactHref("hiring"),
+                                          }
+                                        : null
+                                }
+                                idPrefix="cv-orbit"
+                                figure={copy.figure}
+                            />
+                        </div>
+                    </div>
+                </section>
+            ) : null}
+
+            {/* The printed masthead: sheet 1 opens with it (G3). */}
+            <header className={`shell ${styles.mast}`} data-print="only">
+                <SheetHead sheet={1} sheets={sheets} rev={rev} />
+                <span className={styles.mastName}>{name}</span>
+                {profile?.headline ? (
+                    <span className={styles.mastRole}>{profile.headline}</span>
+                ) : null}
+                <span className={styles.mastLinks}>
+                    {[
+                        `${hostOf(siteConfig.url)}${siteRoutes.resume}`,
+                        linkedIn ? hostOf(linkedIn.url) : null,
+                        gitHub ? hostOf(gitHub.url) : null,
+                    ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                </span>
+                {openTo ? (
+                    <span className={styles.mastOpen}>
+                        <span className={styles.mastKey}>{copy.openTo}</span>
+                        {openTo}
+                    </span>
+                ) : null}
+                {summary ? (
+                    <span className={styles.mastSummary}>{summary}</span>
+                ) : null}
             </header>
-            {profile?.resumeNote && (
-                <aside
-                    className="career-resume-update"
-                    aria-label="Résumé update"
-                >
-                    <p className="journal-eyebrow">ABOUT THIS PDF</p>
-                    <p>{profile.resumeNote}</p>
-                    <Link href="/portfolio" className="journal-link">
-                        View work &amp; education <span aria-hidden>↗</span>
-                    </Link>
-                </aside>
-            )}
-            <section
-                aria-label="PDF résumé viewer"
-                className="career-resume-viewer"
-            >
-                <iframe
-                    src={embeddedUrl.toString()}
-                    title={`${profile?.name || siteConfig.author} résumé PDF`}
-                    loading="eager"
-                    referrerPolicy="no-referrer"
-                />
-            </section>
-            <p className="career-resume-note">
-                Prefer a separate window?{" "}
-                <a
-                    href="/resume/view"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Open the PDF directly.
-                </a>
-            </p>
-            <Link href="/portfolio" className="journal-link">
-                Explore work &amp; experience <span aria-hidden>↗</span>
-            </Link>
+
+            <div className={styles.cvBody}>
+                {timeline.education.length ? (
+                    <CvSection
+                        id="education"
+                        num={numOf("education")}
+                        heading={copy.education}
+                    >
+                        <CvList>{timeline.education.map(roleRow)}</CvList>
+                    </CvSection>
+                ) : null}
+
+                {timeline.experience.length ? (
+                    <CvSection
+                        id="experience"
+                        num={numOf("experience")}
+                        heading={copy.experience}
+                    >
+                        <CvList>{timeline.experience.map(roleRow)}</CvList>
+                    </CvSection>
+                ) : null}
+
+                {sheets === 2 ? (
+                    <div
+                        className={`shell ${styles.sheetTwo}`}
+                        data-print="only"
+                    >
+                        <SheetHead sheet={2} sheets={sheets} rev={rev} />
+                    </div>
+                ) : null}
+
+                {missions.length ? (
+                    <CvSection
+                        id="projects"
+                        num={numOf("projects")}
+                        heading={copy.projects}
+                        after={
+                            <LinkArrow href={siteRoutes.portfolio}>
+                                {copy.allProjects}
+                            </LinkArrow>
+                        }
+                    >
+                        <CvList>
+                            {missions.map((mission) => (
+                                <CvItem
+                                    key={mission.id}
+                                    anchor={`cv-${mission.slug}`}
+                                    code={mission.designation}
+                                    dates={mission.years}
+                                    status={
+                                        <Status
+                                            value={
+                                                PROJECT_STATUS[mission.status]
+                                            }
+                                        >
+                                            {mission.statusLabel}
+                                        </Status>
+                                    }
+                                    title={mission.title}
+                                    href={`/portfolio/${mission.slug}`}
+                                    sub={
+                                        [mission.types, mission.role]
+                                            .filter(Boolean)
+                                            .join(" · ") || null
+                                    }
+                                    lines={mission.lines}
+                                    skills={mission.technologies}
+                                    skillsLabel={copy.stack}
+                                    links={mission.links}
+                                    linksLabel={copy.links}
+                                />
+                            ))}
+                        </CvList>
+                    </CvSection>
+                ) : null}
+
+                {writing.length || talks.length ? (
+                    <CvSection
+                        id="writing"
+                        num={numOf("writing")}
+                        heading={
+                            writing.length && talks.length ? (
+                                <>
+                                    <span data-print="hide">
+                                        {copy.writingAndTalks}
+                                    </span>
+                                    <span data-print="only">{copy.talks}</span>
+                                </>
+                            ) : talks.length ? (
+                                copy.talks
+                            ) : (
+                                copy.writing
+                            )
+                        }
+                        print={talks.length > 0}
+                        after={
+                            writing.length ? (
+                                <LinkArrow href={siteRoutes.blog}>
+                                    {copy.flightLog}
+                                </LinkArrow>
+                            ) : null
+                        }
+                    >
+                        {/* Paper lists talks, not the Flight Log (plan
+                            §2.5.5). */}
+                        {writing.length ? (
+                            <div data-print="hide">
+                                <LogIndex entries={writing} level={3} />
+                            </div>
+                        ) : null}
+                        {talks.length ? (
+                            <CvList
+                                className={
+                                    writing.length ? styles.talks : undefined
+                                }
+                            >
+                                {talks.map((talk) => (
+                                    <CvItem
+                                        key={talk.id}
+                                        code={talk.kind}
+                                        dates={talk.date}
+                                        title={talk.title}
+                                        sub={talk.venue}
+                                        links={talk.links}
+                                    />
+                                ))}
+                            </CvList>
+                        ) : null}
+                    </CvSection>
+                ) : null}
+
+                {skills.length ? (
+                    <CvSection
+                        id="skills"
+                        num={numOf("skills")}
+                        heading={copy.skills}
+                    >
+                        <Specs
+                            className={styles.skills}
+                            items={skills.map((group) => ({
+                                id: group._key,
+                                term: group.title,
+                                value: group.skills.join(" · "),
+                            }))}
+                        />
+                    </CvSection>
+                ) : null}
+
+                {credentials.length ? (
+                    <CvSection
+                        id="certifications"
+                        num={numOf("certifications")}
+                        heading={copy.certifications}
+                    >
+                        <CvList>
+                            {credentials.map((credential) => (
+                                <CvItem
+                                    key={credential.id}
+                                    status={
+                                        <Status value={credential.status}>
+                                            {credential.statusLabel}
+                                        </Status>
+                                    }
+                                    title={credential.title}
+                                    href={credential.url ?? undefined}
+                                    sub={[credential.issuer, credential.meta]
+                                        .filter(Boolean)
+                                        .join(" · ")}
+                                />
+                            ))}
+                        </CvList>
+                    </CvSection>
+                ) : null}
+            </div>
         </div>
     );
 }

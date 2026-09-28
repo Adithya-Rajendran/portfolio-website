@@ -1,83 +1,73 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
-import { Share2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cvCopy as copy } from "@/lib/copy";
 
 type ShareStatus = "idle" | "copied" | "shared";
 
+/**
+ * Share the CV's address: the system share sheet where there is one,
+ * otherwise a copy to the clipboard. It needs JavaScript, so it is not
+ * shown without it (`js-only`), and it never falls back to an email link:
+ * the site publishes no address and opens no mail client for the reader.
+ */
 export default function ResumeShareAction({
     canonicalUrl,
-    className,
+    title,
 }: {
     canonicalUrl: string;
-    className?: string;
+    title: string;
 }) {
     const [status, setStatus] = useState<ShareStatus>("idle");
-    const shareText = "Adithya Rajendran's résumé";
-    const mailtoUrl = `mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(canonicalUrl)}`;
 
-    async function handleShare(event: MouseEvent<HTMLAnchorElement>) {
-        if (typeof navigator === "undefined") return;
+    // The label reverts after a moment, and when the page is hidden.
+    useEffect(() => {
+        if (status === "idle") return;
+        const timer = window.setTimeout(() => setStatus("idle"), 2400);
+        return () => window.clearTimeout(timer);
+    }, [status]);
+    useLayoutEffect(() => () => setStatus("idle"), []);
 
+    async function share() {
         if (navigator.share) {
-            event.preventDefault();
             try {
-                await navigator.share({
-                    title: shareText,
-                    text: shareText,
-                    url: canonicalUrl,
-                });
+                await navigator.share({ title, url: canonicalUrl });
                 setStatus("shared");
                 return;
             } catch (error) {
                 if (
                     error instanceof DOMException &&
                     error.name === "AbortError"
-                ) {
+                )
                     return;
-                }
             }
         }
-
-        if (navigator.clipboard?.writeText) {
-            event.preventDefault();
-            try {
-                await navigator.clipboard.writeText(canonicalUrl);
-                setStatus("copied");
-                return;
-            } catch {
-                window.location.assign(mailtoUrl);
-                return;
-            }
+        try {
+            await navigator.clipboard.writeText(canonicalUrl);
+            setStatus("copied");
+        } catch {
+            setStatus("idle");
         }
-
-        if (event.defaultPrevented) window.location.assign(mailtoUrl);
     }
-
-    const label =
-        status === "copied"
-            ? "Link copied"
-            : status === "shared"
-              ? "Shared"
-              : "Share";
 
     return (
         <>
-            <a
-                href={mailtoUrl}
-                onClick={handleShare}
-                className={cn("career-action-secondary", className)}
+            <Button
+                size="sm"
+                variant="quiet"
+                icon={status === "idle" ? "share" : "check"}
+                className="js-only"
+                onClick={share}
             >
-                <Share2 className="size-4" aria-hidden />
-                {label}
-            </a>
-            <span className="sr-only" role="status" aria-live="polite">
                 {status === "copied"
-                    ? "Résumé link copied to clipboard."
+                    ? copy.copied
                     : status === "shared"
-                      ? "Résumé sharing completed."
-                      : ""}
+                      ? copy.shared
+                      : copy.share}
+            </Button>
+            <span className="sr-only" role="status" aria-live="polite">
+                {status === "copied" ? copy.announceCopied : ""}
             </span>
         </>
     );

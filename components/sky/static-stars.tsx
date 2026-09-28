@@ -6,16 +6,29 @@ const HEIGHT = 1000;
 const PATHS = starPaths(starLayout(1990, 240, WIDTH, HEIGHT));
 
 /**
- * The server star layer: a fixed, seeded field of dots in three
- * magnitudes behind the page, drawn without JavaScript and without the
- * visibly repeating tile of the old design. It never moves; the drifting
- * canvas (PR 13) is a separate island. Used by the Loss of Signal and
- * error pages, never on reading pages.
+ * The server star layer: a seeded field of dots in three magnitudes,
+ * drawn without JavaScript and without the visibly repeating tile of the
+ * old design. It never moves; the drifting canvas (PR 13) is a separate
+ * island.
+ *
+ * - `fixed` fills the viewport behind the page: the Loss of Signal and
+ *   error pages.
+ * - `band` sits behind a page head and fades out before the first
+ *   section (contract §1): its parent is `position: relative` with
+ *   `isolation: isolate`. Never behind a long read.
  */
-export default function StaticStars() {
+export default function StaticStars({
+    variant = "fixed",
+}: {
+    variant?: "fixed" | "band";
+}) {
     return (
         <svg
-            className="static-stars"
+            className={
+                variant === "band"
+                    ? "static-stars static-stars--band"
+                    : "static-stars"
+            }
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
             preserveAspectRatio="xMidYMid slice"
             aria-hidden="true"

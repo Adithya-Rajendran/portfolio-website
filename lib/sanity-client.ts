@@ -156,6 +156,8 @@ export type ProfileData = {
     location?: string | null;
     portrait?: SanityImageValue | null;
     resumeUrl?: string | null;
+    /** When the résumé PDF was uploaded: the CV's revision. */
+    resumeUploadedAt?: string | null;
     resumeNote?: string | null;
     socialLinks?: ExternalLink[] | null;
     currentCuriosities?: CuriosityItem[] | null;
@@ -325,6 +327,7 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     location,
     portrait,
     "resumeUrl": resume.asset->url,
+    "resumeUploadedAt": resume.asset->_createdAt,
     resumeNote,
     socialLinks[]{_key, _type, label, url, kind},
     currentCuriosities[]{

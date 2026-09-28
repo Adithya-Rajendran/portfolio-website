@@ -160,8 +160,9 @@
         background: var(--ink-1);
         flex: none;
     }
+    /* The label stays ink; the dot carries the orange (contract §3). */
     .status[data-status="active"] {
-        color: var(--accent-text);
+        color: var(--ink-1);
     }
     .status[data-status="active"]::before {
         background: var(--accent);
@@ -885,7 +886,7 @@
         background: var(--rule-1);
     }
     .section-tag__num {
-        color: var(--accent-text);
+        color: var(--ink-3);
         font-family: var(--font-mono);
         font-size: 0.8125rem;
         letter-spacing: 0.04em;
@@ -1301,6 +1302,324 @@
     }
     [data-theme="manual"] .titleblock__cell {
         border-color: var(--rule-2);
+    }
+
+    /* ===== Segmented control (contract §4; the theme toggle's grammar) == */
+    /* A radio group of joined hairline boxes; the chosen one is filled,
+       with an orange dot (shape, not colour alone).
+       components/ui/segmented.tsx */
+    .seg {
+        display: inline-flex;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-inline-size: 0;
+    }
+    .seg__opt {
+        position: relative;
+        display: flex;
+    }
+    .seg__opt + .seg__opt {
+        margin-left: -1px;
+    }
+    .seg__input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .seg__box {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        min-height: 44px;
+        padding: 0 0.9rem;
+        border: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-2);
+        font: 500 0.75rem / 1.15 var(--font-display);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        transition:
+            color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    .seg__box::before {
+        content: "";
+        flex: none;
+        width: 7px;
+        height: 7px;
+        border-radius: var(--radius-round);
+        box-shadow: inset 0 0 0 1px var(--ink-3);
+    }
+    /* With a plain name under the label: "VOID / Dark". */
+    .seg__box--pair {
+        display: inline-grid;
+        grid-template-columns: auto auto;
+        align-content: center;
+        column-gap: 0.5rem;
+    }
+    .seg__box--pair::before {
+        grid-row: 1 / span 2;
+    }
+    .seg__sub {
+        grid-column: 2;
+        color: var(--ink-2);
+        font: 400 0.75rem / 1.15 var(--font-display);
+        letter-spacing: 0.01em;
+        text-transform: none;
+    }
+    .seg__input:hover + .seg__box {
+        color: var(--ink-1);
+    }
+    .seg__input:checked + .seg__box {
+        position: relative;
+        z-index: 1;
+        border-color: var(--ink-2);
+        background: var(--surface-2);
+        color: var(--ink-1);
+    }
+    .seg__input:checked + .seg__box::before {
+        background: var(--accent);
+        box-shadow: none;
+    }
+    .seg__input:focus-visible + .seg__box {
+        z-index: 2;
+        outline: var(--rule-strong) solid var(--focus);
+        outline-offset: 2px;
+    }
+
+    /* ===== Key/value list (site.css 4.9) =============================== */
+    /* components/ui/specs.tsx: tier-2 labels in a rail beside their
+       values, one hairline across each row; stacked on phones. */
+    .specs {
+        margin: 0;
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .specs__row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--s-1) var(--gutter);
+        padding-block: var(--s-3);
+        border-top: var(--rule-hair) solid var(--rule-1);
+    }
+    @media (min-width: 37.5rem) {
+        .specs__row {
+            grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+        }
+    }
+    .specs dt {
+        padding-top: 0.2rem;
+        color: var(--ink-2);
+        font: var(--label-2);
+        letter-spacing: var(--track-label-2);
+        text-transform: uppercase;
+    }
+    .specs dd {
+        margin: 0;
+        color: var(--ink-1);
+        font: 400 var(--step-0) / 1.55 var(--font-display);
+    }
+
+    /* ===== CV rows (site.css 4.13, on the log index's grammar) ========= */
+    /* components/cv/cv-list.tsx: a mono column (designation, dates, place,
+       status) beside the title, organization, a serif line and the facts.
+       A row that stands for an orbit lights with it (`data-hl`, set by the
+       orbit map's island); a linked row is one big target. */
+    .cv-list {
+        max-width: var(--measure-index);
+        margin: 0;
+        padding: 0;
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+        list-style: none;
+    }
+    .cv-item {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--s-3);
+        padding-block: var(--s-5);
+        border-top: var(--rule-hair) solid var(--rule-1);
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    @media (min-width: 37.5rem) {
+        .cv-item {
+            grid-template-columns: 11rem minmax(0, 1fr);
+            column-gap: var(--gutter);
+        }
+    }
+    .cv-item__aside {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--s-1) var(--s-4);
+        color: var(--ink-2);
+        font: 400 0.8125rem / 1.5 var(--font-mono);
+        font-variant-numeric: tabular-nums slashed-zero;
+    }
+    @media (min-width: 37.5rem) {
+        .cv-item__aside {
+            flex-direction: column;
+            align-items: flex-start;
+            padding-top: 0.35rem;
+        }
+    }
+    .cv-item__code {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.5 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .cv-item__dates {
+        color: var(--ink-1);
+    }
+    .cv-item__status {
+        margin-top: var(--s-1);
+    }
+    .cv-item__body {
+        min-width: 0;
+    }
+    .cv-item__title {
+        margin: 0;
+        font: 300 var(--step-2) / 1.18 var(--font-display);
+        letter-spacing: -0.005em;
+        text-wrap: pretty;
+    }
+    .cv-item__title a {
+        text-decoration: none;
+    }
+    .cv-item__ext {
+        width: 0.7em;
+        height: 0.7em;
+        margin-left: 0.3em;
+        color: var(--ink-3);
+        vertical-align: 0.05em;
+    }
+    .cv-item__sub {
+        margin-top: var(--s-1);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.4 var(--font-display);
+    }
+    .cv-item__dek {
+        max-width: 60ch;
+        margin-top: var(--s-3);
+        color: var(--ink-2);
+        font: 300 var(--step-1) / 1.45 var(--font-long);
+        text-wrap: pretty;
+    }
+    .cv-item__lines {
+        max-width: 68ch;
+        margin: var(--s-3) 0 0;
+        padding: 0;
+        list-style: none;
+    }
+    .cv-item__lines li {
+        position: relative;
+        padding-left: 1.35rem;
+        color: var(--ink-1);
+        font: 400 var(--step-0) / 1.55 var(--font-display);
+    }
+    .cv-item__lines li + li {
+        margin-top: var(--s-2);
+    }
+    .cv-item__lines li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.78em;
+        width: 0.7rem;
+        height: 1px;
+        background: var(--ink-3);
+    }
+    .cv-item__facts {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.15rem var(--s-3);
+        max-width: 68ch;
+        margin-top: var(--s-3);
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.5 var(--font-display);
+    }
+    @media (min-width: 37.5rem) {
+        .cv-item__facts {
+            grid-template-columns: 5rem minmax(0, 1fr);
+        }
+    }
+    .cv-item__key {
+        padding-top: 0.15rem;
+        color: var(--ink-3);
+        font: var(--label-2);
+        letter-spacing: var(--track-label-2);
+        text-transform: uppercase;
+    }
+    .cv-item__skills {
+        grid-column: -2;
+        font-family: var(--font-mono);
+        font-size: 0.8125rem;
+    }
+    .cv-item__links {
+        grid-column: -2;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 var(--s-4);
+    }
+    .cv-item__link a {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        min-height: 32px;
+        color: var(--ink-1);
+        text-decoration-color: var(--rule-2);
+        text-underline-offset: 0.18em;
+    }
+    .cv-item__link a:hover {
+        color: var(--accent-text);
+        text-decoration-color: var(--accent);
+    }
+    .cv-item__link .icon {
+        width: 0.9em;
+        height: 0.9em;
+    }
+    .cv-item__url {
+        margin-left: 0.4em;
+        color: var(--ink-2);
+        font: 400 0.75rem / 1.4 var(--font-mono);
+    }
+    .cv-item__actions {
+        position: relative;
+        z-index: 2;
+        margin-top: var(--s-3);
+    }
+    /* Lit: the log row's hover (a warm rule and a lit surface), from the
+       pointer or from the orbit map. */
+    .cv-item:hover,
+    .cv-item[data-hl] {
+        border-top-color: var(--accent);
+        background: linear-gradient(
+            to right,
+            var(--surface-1),
+            transparent 80%
+        );
+    }
+    .cv-item:hover .cv-item__title a {
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: 0.16em;
+    }
+    @media (forced-colors: active) {
+        .cv-item:hover,
+        .cv-item[data-hl] {
+            background: none;
+        }
     }
 
     /* ===== Photographs and plates (site.css 4.26, 4.27) ================= */
