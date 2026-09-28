@@ -73,6 +73,8 @@ export type TimelineEntry = {
     /** `year`: only the year of `startDate` is known; never print a month. */
     startPrecision?: TimelineDatePrecision | null;
     endDate?: string | null;
+    /** `year`: only the year of `endDate` is known; never print a month. */
+    endPrecision?: TimelineDatePrecision | null;
     isCurrent?: boolean | null;
     expectedEndYear?: number | null;
     summary?: string | null;
@@ -321,7 +323,7 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     curiositiesUpdatedAt,
     timeline[]{
         _key, _type, kind, title, organization, orgShort, orgUrl, employment,
-        location, startDate, startPrecision, endDate,
+        location, startDate, startPrecision, endDate, endPrecision,
         isCurrent, expectedEndYear,
         summary, highlights, skills, logo, burn{label, note}
     },

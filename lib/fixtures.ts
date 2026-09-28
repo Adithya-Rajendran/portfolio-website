@@ -68,8 +68,8 @@ function linkedTextBlock(...parts: (string | [text: string, href: string])[]) {
  * and the résumé, recorded in design/shared/content-real.md), including every
  * field the redesign adds, so fixture builds exercise them without inventing
  * facts. A field the published profile leaves empty (location) stays empty.
- * The UC Santa Cruz start is known only to the year (2019), so it is stored as
- * a year-precision date and printed without a month.
+ * The UC Santa Cruz years are known only to the year (2019 – 2023), so both
+ * dates are stored with year precision and printed without a month.
  */
 export const FIXTURE_PROFILE: ProfileData = {
     _id: "profile",
@@ -259,10 +259,12 @@ export const FIXTURE_PROFILE: ProfileData = {
             employment: "degree",
             location: "Santa Cruz, CA",
             isCurrent: false,
-            // The owner gave the year only (2019 – 2023): never print a month.
+            // The owner gave the years only (2019 – 2023): never print a
+            // month. The end keeps the published day, with year precision.
             startDate: "2019-01-01",
             startPrecision: "year",
             endDate: "2023-06-01",
+            endPrecision: "year",
             highlights: [
                 "Explored network security and ethical hacking through the Slug Security Club’s workshops and competitions.",
                 "Relevant coursework: Computer Systems and C, Cryptography, Advanced Computer Networking, Principle of System Design, Artificial Intelligence, and Natural Language Processing.",

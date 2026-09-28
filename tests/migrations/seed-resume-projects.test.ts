@@ -100,11 +100,16 @@ const schema = createSchema({
 
 /**
  * A client for the Studio-only rules: no other project holds a mission
- * number or slug, and the linked post is the homelab stand-in.
+ * number, featured slot or slug, and the linked post is the homelab
+ * stand-in.
  */
-function validationClient(post: StoredDocument | null) {
+function validationClient(
+    post: StoredDocument | null,
+    featuredHolders: { _id: string; title: string }[] = [],
+) {
     const fetch = async (query: string) => {
         if (query.includes("designation == $designation")) return [];
+        if (query.includes("featured == $featured")) return featuredHolders;
         if (query.includes('_type == "post" && _id == $id')) {
             return post ? { body: post.body } : null;
         }
@@ -124,8 +129,12 @@ function validationClient(post: StoredDocument | null) {
 
 type ValidationOptions = Parameters<typeof validateDocument>[0];
 
-async function validate(draft: SeedDraft, post: StoredDocument | null) {
-    const client = validationClient(post);
+async function validate(
+    draft: SeedDraft,
+    post: StoredDocument | null,
+    featuredHolders?: { _id: string; title: string }[],
+) {
+    const client = validationClient(post, featuredHolders);
     const markers = await validateDocument({
         document: draft as unknown as SanityDocument,
         // `i18n` is left out: validation then uses its built-in messages.
@@ -271,6 +280,22 @@ describe("seed-resume-projects drafts", () => {
         expect(
             draftFor(plan, "homelab").results?.map((result) => result.value),
         ).toEqual(["195.1 W", "3", "0.4 ms", "1"]);
+    });
+
+    it("warns, without blocking publishing, when another mission holds its featured slot", async () => {
+        const markers = await validate(
+            draftFor(plan, "homelab"),
+            homelabPost(),
+            [{ _id: "drafts.project-other", title: "Other mission" }],
+        );
+        expect(markers).toEqual([
+            {
+                level: "warning",
+                path: '["featured"]',
+                message:
+                    "Featured slot 1 is also set on “Other mission”. Each slot shows one mission: clear it there, or pick another slot.",
+            },
+        ]);
     });
 
     it("puts a callout on every rack part, linked to its homelab post section", () => {

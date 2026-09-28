@@ -52,12 +52,15 @@ describe("fixture profile", () => {
         (entry) => entry.orgShort === "UCSC",
     );
 
-    it("prints the year-only UC Santa Cruz start without a month", () => {
+    it("prints the year-only UC Santa Cruz dates without a month", () => {
         expect(ucsc?.startPrecision).toBe("year");
         expect(formatTimelineDate(ucsc?.startDate, ucsc?.startPrecision)).toBe(
             "2019",
         );
-        expect(formatTimelineDate(ucsc?.endDate)).toBe("Jun 2023");
+        expect(ucsc?.endPrecision).toBe("year");
+        expect(formatTimelineDate(ucsc?.endDate, ucsc?.endPrecision)).toBe(
+            "2023",
+        );
         expect(
             checkTimelineRange(
                 ucsc?.startDate ?? undefined,

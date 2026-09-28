@@ -11,6 +11,7 @@ import { TIMELINE_DATE_PRECISIONS, listValuesOnly } from "@/lib/profile-fields";
 import {
     checkAnchorHeading,
     checkDesignationUnique,
+    checkFeaturedSlotFree,
     checkParameterCount,
     DESIGNATION_MAX,
     DESIGNATION_MIN,
@@ -59,6 +60,33 @@ export async function validateDesignation(
         );
     return checkDesignationUnique(
         designation,
+        getPublishedId(context.document._id),
+        (holders ?? []).map((holder) => ({
+            id: getPublishedId(holder._id),
+            title: holder.title,
+        })),
+    );
+}
+
+/**
+ * Every other stored project set to this featured slot, drafts and release
+ * versions included (raw perspective), told apart by published id like the
+ * mission number.
+ */
+export async function validateFeaturedSlot(
+    slot: number | undefined,
+    context: Pick<ValidationContext, "document" | "getClient">,
+): Promise<true | string> {
+    if (typeof slot !== "number" || !context.document?._id) return true;
+    const holders = await context
+        .getClient({ apiVersion: STUDIO_API_VERSION })
+        .fetch<{ _id: string; title?: string | null }[]>(
+            `*[_type == "project" && featured == $featured]{_id, title}`,
+            { featured: slot },
+            { perspective: "raw" },
+        );
+    return checkFeaturedSlotFree(
+        slot,
         getPublishedId(context.document._id),
         (holders ?? []).map((holder) => ({
             id: getPublishedId(holder._id),
@@ -213,9 +241,14 @@ export default defineType({
             type: "number",
             group: "editorial",
             description:
-                "Optional. 1 puts this mission on the photographic stage of the home page and Missions; 2 and 3 feature it next to that. Leave empty for the rest.",
+                "Optional. 1 puts this mission on the photographic stage of the home page and Missions; 2 and 3 feature it next to that. Leave empty for the rest. Each slot holds one mission.",
             options: { list: [1, 2, 3] },
-            validation: (Rule) => Rule.integer().min(1).max(3),
+            validation: (Rule) => [
+                Rule.integer().min(1).max(3),
+                Rule.custom((value: number | undefined, context) =>
+                    validateFeaturedSlot(value, context),
+                ).warning(),
+            ],
         }),
         defineField({
             name: "cover",

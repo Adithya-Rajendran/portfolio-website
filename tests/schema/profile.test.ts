@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import profile from "@/sanity/schemas/profile";
+import timelineEntry from "@/sanity/schemas/objects/timelineEntry";
 
 function fieldsInGroup(group: string) {
     return profile.fields
@@ -28,6 +29,35 @@ describe("profile schema groups", () => {
             for (const group of [field.group].flat()) {
                 expect(names, `${field.name} → ${group}`).toContain(group);
             }
+        }
+    });
+});
+
+describe("timeline entry schema", () => {
+    type Field = {
+        name: string;
+        options?: { list?: { value: string }[] };
+        hidden?: (context: { parent?: Record<string, unknown> }) => boolean;
+    };
+    const fields = timelineEntry.fields as unknown as Field[];
+    const field = (name: string) => fields.find((item) => item.name === name);
+
+    it("records a year-only precision for the start and the end", () => {
+        for (const [precision, date] of [
+            ["startPrecision", "startDate"],
+            ["endPrecision", "endDate"],
+        ] as const) {
+            expect(
+                field(precision)?.options?.list?.map((item) => item.value),
+                precision,
+            ).toEqual(["month", "year"]);
+            // Shown only once its date is set.
+            expect(field(precision)?.hidden?.({ parent: {} })).toBe(true);
+            expect(
+                field(precision)?.hidden?.({
+                    parent: { [date]: "2023-06-01" },
+                }),
+            ).toBe(false);
         }
     });
 });

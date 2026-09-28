@@ -110,7 +110,7 @@ export default defineType({
             type: "date",
             group: "role",
             description:
-                "The actual end date, not an expected graduation date. Only the month and year are displayed.",
+                "The actual end date, not an expected graduation date. Only the month and year are displayed, or only the year when End Date Precision is Year only.",
             validation: (Rule) => [
                 Rule.min(Rule.valueOfField("startDate")),
                 Rule.custom((endDate, context) =>
@@ -121,6 +121,17 @@ export default defineType({
                     ),
                 ).warning(),
             ],
+        }),
+        defineField({
+            name: "endPrecision",
+            title: "End Date Precision",
+            type: "string",
+            group: "role",
+            description:
+                "Choose Year only when you know the year but not the month (enter any day in that year). The site then prints and plots the year alone. Empty means month and year.",
+            options: { list: [...TIMELINE_DATE_PRECISIONS], layout: "radio" },
+            hidden: ({ parent }) => !parent?.endDate,
+            validation: listValuesOnly,
         }),
         defineField({
             name: "expectedEndYear",

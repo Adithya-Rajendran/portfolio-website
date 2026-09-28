@@ -13,7 +13,11 @@ export interface ResolvedLinkMark {
     external: boolean;
 }
 
-const ALLOWED_PROTOCOLS = ["http:", "https:", "mailto:"];
+/**
+ * No `mailto:`: the site publishes no email address (contact is the form
+ * only), so an email link authored before this rule renders as plain text.
+ */
+const ALLOWED_PROTOCOLS = ["http:", "https:"];
 
 /**
  * Resolve a link markDef to a safe `href`, or null when the value is
@@ -22,7 +26,7 @@ const ALLOWED_PROTOCOLS = ["http:", "https:", "mailto:"];
  * - Site-relative paths (`/blog/x`) and fragments (`#section`) pass through.
  *   `//host` and `/\host` are protocol-relative in browsers, so they are not
  *   treated as site-relative.
- * - Absolute URLs must use http, https or mailto; http(s) links are external.
+ * - Absolute URLs must use http or https, and are external.
  */
 export function resolveLinkMark(value: unknown): ResolvedLinkMark | null {
     const href =
@@ -40,7 +44,7 @@ export function resolveLinkMark(value: unknown): ResolvedLinkMark | null {
     try {
         const url = new URL(trimmed);
         if (!ALLOWED_PROTOCOLS.includes(url.protocol)) return null;
-        return { href: url.href, external: url.protocol !== "mailto:" };
+        return { href: url.href, external: true };
     } catch {
         return null;
     }

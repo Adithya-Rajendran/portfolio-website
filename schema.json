@@ -790,6 +790,23 @@
           },
           "optional": true
         },
+        "endPrecision": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "month"
+              },
+              {
+                "type": "string",
+                "value": "year"
+              }
+            ]
+          },
+          "optional": true
+        },
         "expectedEndYear": {
           "type": "objectAttribute",
           "value": {

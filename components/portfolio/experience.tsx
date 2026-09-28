@@ -31,7 +31,7 @@ export default function Experience({ entries }: { entries: TimelineEntry[] }) {
                     );
                     const end = isCurrent
                         ? "Present"
-                        : formatTimelineDate(item.endDate);
+                        : formatTimelineDate(item.endDate, item.endPrecision);
                     const dates = [start, end].filter(Boolean);
                     const dateLabel = [...new Set(dates)].join(" — ");
                     const highlights = item.highlights ?? [];

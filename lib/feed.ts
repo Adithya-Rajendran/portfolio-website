@@ -59,9 +59,8 @@ function safeLinkTarget(href: unknown): string | null {
 
     try {
         const parsed = new URL(href);
-        if (!["http:", "https:", "mailto:"].includes(parsed.protocol)) {
-            return null;
-        }
+        // No mailto: the site publishes no email address (lib/content-links.ts).
+        if (!["http:", "https:"].includes(parsed.protocol)) return null;
         return parsed.toString();
     } catch {
         return null;

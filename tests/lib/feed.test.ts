@@ -226,6 +226,24 @@ describe("renderFeedXml — content:encoded", () => {
         expect(xml).toContain("click me");
     });
 
+    it("drops mailto and tel links but keeps their text", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    contentLinkedParagraph(
+                        "write to me",
+                        "mailto:someone@example.com",
+                    ),
+                    linkedParagraph("call me", "tel:+15555550100"),
+                ] as Body,
+            }),
+        ]);
+
+        expect(xml).not.toMatch(/mailto:|tel:|someone@example\.com/);
+        expect(xml).toContain("write to me");
+        expect(xml).toContain("call me");
+    });
+
     it("absolutizes relative links against the site URL", () => {
         const xml = renderFeedXml([
             postOf({

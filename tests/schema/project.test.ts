@@ -3,6 +3,7 @@ import post from "@/sanity/schemas/post";
 import project, {
     validateAnchorHeading,
     validateDesignation,
+    validateFeaturedSlot,
 } from "@/sanity/schemas/project";
 
 type Fetch = (
@@ -163,6 +164,47 @@ describe("designation uniqueness", () => {
         });
 
         await expect(validateDesignation(undefined, context)).resolves.toBe(
+            true,
+        );
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+});
+
+describe("featured slot uniqueness", () => {
+    it("lets a draft keep the slot of its own published version", async () => {
+        const { context, fetchMock } = contextWith(
+            async () => [
+                { _id: "project-homelab", title: "Homelab" },
+                { _id: "drafts.project-homelab", title: "Homelab" },
+            ],
+            { _id: "drafts.project-homelab" },
+        );
+
+        await expect(validateFeaturedSlot(1, context)).resolves.toBe(true);
+        expect(fetchMock).toHaveBeenCalledWith(
+            expect.stringContaining("featured == $featured"),
+            { featured: 1 },
+            { perspective: "raw" },
+        );
+    });
+
+    it("warns when another mission, even a draft, holds the slot", async () => {
+        const { context } = contextWith(
+            async () => [{ _id: "drafts.project-website", title: "Website" }],
+            { _id: "drafts.project-homelab" },
+        );
+
+        await expect(validateFeaturedSlot(1, context)).resolves.toBe(
+            "Featured slot 1 is also set on “Website”. Each slot shows one mission: clear it there, or pick another slot.",
+        );
+    });
+
+    it("checks nothing when the slot is empty", async () => {
+        const { context, fetchMock } = contextWith(async () => [], {
+            _id: "drafts.project-homelab",
+        });
+
+        await expect(validateFeaturedSlot(undefined, context)).resolves.toBe(
             true,
         );
         expect(fetchMock).not.toHaveBeenCalled();

@@ -193,8 +193,8 @@ deployment require an authenticated Sanity CLI session.
   checks a value against `options.list` only when the field declares a
   validation rule, so an optional list field uses
   `validation: listValuesOnly`.
-- Rules that query the dataset (mission-number uniqueness, callout anchors
-  in a linked post) are exported from `sanity/schemas/project.ts` and read
+- Rules that query the dataset (mission-number uniqueness, the one-mission-
+  per-featured-slot warning, callout anchors in a linked post) are exported from `sanity/schemas/project.ts` and read
   through `context.getClient`, so tests pass a fake client. They query with
   an explicit perspective: `raw` where drafts count, `published` where
   readers see the result.
@@ -204,11 +204,12 @@ deployment require an authenticated Sanity CLI session.
   `tests/lib/profile-fields.test.ts` and `tests/lib/project-fields.test.ts`
   check this in `pnpm typecheck`.
 - Real content only. A date known only to the year is stored as any day in
-  that year with precision `year` (`timelineEntry.startPrecision`,
-  `profile.launch.precision`, `project.datePrecision`), and the site prints
-  the year alone (`formatTimelineDate` in `lib/profile-content.ts`,
-  `formatProjectYears` in `lib/project-content.ts`). Never print a month or
-  day the owner has not given. Project dates the owner estimated set
+  that year with precision `year` (`timelineEntry.startPrecision` and
+  `endPrecision`, `profile.launch.precision`, `project.datePrecision`), and
+  the site prints the year alone (`formatTimelineDate` in
+  `lib/profile-content.ts`, `formatProjectYears` in
+  `lib/project-content.ts`). Never print a month or day the owner has not
+  given. Project dates the owner estimated set
   `datesApproximate` and print with "c." ("c. 2024–2025").
 - The owner's four résumé projects are drafted, with the source of every
   value, in `migrations/seed-resume-projects/data.ts`. The seed migration
@@ -227,8 +228,9 @@ deployment require an authenticated Sanity CLI session.
   schema, as `tests/migrations/seed-resume-projects.test.ts` does).
 - No public email address or phone number anywhere: pages, JSON-LD, RSS, OG
   images, the console or the printed CV. Contact is the form only, so there is
-  deliberately no `publicEmail` field, and `externalLink` accepts http(s)
-  URLs only.
+  deliberately no `publicEmail` field, `externalLink` accepts http(s) URLs
+  only, and so do essay links (`contentLink`): the web and RSS renderers
+  print a `mailto:` or `tel:` annotation as plain text.
 
 ## Tests
 

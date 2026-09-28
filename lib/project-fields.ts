@@ -118,6 +118,24 @@ export function checkDesignationUnique(
     return `MSN-${number} is already used by ${name}. Pick another number.`;
 }
 
+/**
+ * One mission per featured slot. `holders` are the stored projects set to
+ * `slot`, by published id, so a draft and its own published version never
+ * clash. The schema reports this as a warning: moving a mission into a slot
+ * and clearing the previous holder takes two edits.
+ */
+export function checkFeaturedSlotFree(
+    slot: number | undefined,
+    ownId: string | undefined,
+    holders: readonly { id: string; title?: string | null }[],
+): true | string {
+    if (typeof slot !== "number") return true;
+    const clash = holders.find((holder) => holder.id !== ownId);
+    if (!clash) return true;
+    const name = clash.title ? `“${clash.title}”` : "another project";
+    return `Featured slot ${slot} is also set on ${name}. Each slot shows one mission: clear it there, or pick another slot.`;
+}
+
 /** The parameter row under a mission header reads best with 3 to 6 items. */
 export function checkParameterCount(
     parameters: readonly unknown[] | undefined,

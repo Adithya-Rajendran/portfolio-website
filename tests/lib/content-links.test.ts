@@ -38,10 +38,11 @@ describe("resolveLinkMark", () => {
         });
     });
 
-    it("keeps mailto links in the same tab", () => {
-        expect(resolveLinkMark({ href: "mailto:someone@example.com" })).toEqual(
-            { href: "mailto:someone@example.com", external: false },
-        );
+    it("publishes no email links: a mailto href renders as plain text", () => {
+        expect(
+            resolveLinkMark({ href: "mailto:someone@example.com" }),
+        ).toBeNull();
+        expect(resolveLinkMark({ href: "tel:+15555550100" })).toBeNull();
     });
 
     it("rejects unsafe or malformed hrefs so the text renders unlinked", () => {
