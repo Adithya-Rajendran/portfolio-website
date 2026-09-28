@@ -3,6 +3,7 @@ import LogIndex from "@/components/blogs/log-index";
 import TagChips, { ALL_ENTRIES } from "@/components/blogs/tag-chips";
 import Transmissions from "@/components/blogs/transmissions";
 import { BlogJsonLd } from "@/components/json-ld";
+import StaticStars from "@/components/sky/static-stars";
 import { ButtonLink, buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import PageHead from "@/components/ui/page-head";
@@ -11,7 +12,7 @@ import SectionTag from "@/components/ui/section-tag";
 import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
 import { logCopy as copy } from "@/lib/copy";
-import { entryCount, logEntries, logSince } from "@/lib/log-index";
+import { logEntries } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import { getProfileLink, getWritingDescription } from "@/lib/profile-content";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
@@ -50,8 +51,7 @@ function host(url: string): string {
  * and LinkedIn; there is no newsletter). Everything is server-rendered
  * links, so the page is complete without JavaScript. Below 960px the chart
  * follows the index, so the first entries reach the first viewport.
- * Ported from the mockup's log.html (§ 01). Its preview plate and mission
- * chips are left out: no post has a cover or a linked mission yet.
+ * Ported from the mockup's log.html (§ 01).
  */
 export default async function FlightLogPage() {
     const [posts, profile, today] = await Promise.all([
@@ -62,37 +62,42 @@ export default async function FlightLogPage() {
     const entries = logEntries(posts);
     const tags = collectTags(entries);
     const chart = transmissions(entries, today);
-    const count = entryCount(entries.length);
     const linkedIn = getProfileLink(profile, "linkedin");
 
     return (
         <div data-page="log" className={styles.page}>
             <BlogJsonLd />
-            <PageHead
-                className={`shell ${styles.head}`}
-                ornament="wave"
-                num={copy.num}
-                themed={copy.themed}
-                plain={copy.plain}
-                meta={copy.meta(count, logSince(entries))}
-                intro={getWritingDescription(profile)}
-            >
-                <div className={`cluster ${styles.actions}`}>
-                    <a className={buttonClass({ size: "sm" })} href="#downlink">
-                        <Icon name="rss" />
-                        {copy.follow}
-                    </a>
-                    {entries.length > 0 ? (
-                        <ButtonLink
-                            size="sm"
-                            icon="search"
-                            href="/blog/archive"
+            <div className="head-band">
+                <StaticStars variant="band" />
+                <PageHead
+                    className="shell"
+                    split
+                    ornament="wave"
+                    num={copy.num}
+                    themed={copy.themed}
+                    plain={copy.plain}
+                    intro={getWritingDescription(profile)}
+                >
+                    <div className="cluster page-head__actions">
+                        <a
+                            className={buttonClass({ size: "sm" })}
+                            href="#downlink"
                         >
-                            {copy.search}
-                        </ButtonLink>
-                    ) : null}
-                </div>
-            </PageHead>
+                            <Icon name="rss" />
+                            {copy.follow}
+                        </a>
+                        {entries.length > 0 ? (
+                            <ButtonLink
+                                size="sm"
+                                icon="search"
+                                href="/blog/archive"
+                            >
+                                {copy.search}
+                            </ButtonLink>
+                        ) : null}
+                    </div>
+                </PageHead>
+            </div>
 
             {chart ? (
                 <Transmissions
@@ -106,10 +111,7 @@ export default async function FlightLogPage() {
                 aria-labelledby="log-index-h"
             >
                 <div className={`shell ${styles.indexInner}`}>
-                    <SectionTag
-                        num={`${copy.num}.1`}
-                        meta={entries.length ? copy.showing(count) : undefined}
-                    >
+                    <SectionTag num={`${copy.num}.1`}>
                         <h2 className="section-tag__h" id="log-index-h">
                             <Pair
                                 themed={copy.indexThemed}
@@ -127,7 +129,6 @@ export default async function FlightLogPage() {
                     ) : (
                         <div className={styles.empty}>
                             <p className={styles.emptyTitle}>{copy.empty}</p>
-                            <p className="t-small">{copy.emptyNote}</p>
                         </div>
                     )}
                 </div>
@@ -174,9 +175,6 @@ export default async function FlightLogPage() {
                                 </p>
                                 <p className={`data ${styles.downUrl}`}>
                                     {host(linkedIn.url)}
-                                </p>
-                                <p className={styles.downNote}>
-                                    {copy.linkedInNote}
                                 </p>
                                 <div className="cluster">
                                     <a

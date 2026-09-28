@@ -297,7 +297,7 @@ test("on a phone an entry's LOG number is printed once above its title", async (
                     el.getBoundingClientRect().bottom <= top,
             ).length;
         });
-        // At 1280px the crumb also prints it with the entry's address.
+        // From 600px the crumb also carries it, after the section.
         expect(above, `${path} at ${width}px`).toBe(width < 600 ? 1 : 2);
     }
 });

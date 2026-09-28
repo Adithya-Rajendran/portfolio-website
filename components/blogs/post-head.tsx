@@ -1,47 +1,36 @@
 import Link from "next/link";
 import CrumbRow from "@/components/ui/crumb-row";
 import { Rev } from "@/components/ui/marks";
-import { siteConfig } from "@/lib/config";
 import { postCopy as copy } from "@/lib/copy";
 import { formatEntryDate } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import styles from "./post.module.css";
 
 /**
- * The top of an entry (G1): the crumb row (§ 01 · Flight Log / Blog · LOG
- * nnn · its address), then LOG nnn · date · read time · Updated · tags, the
- * title and the standfirst. Kept short, so the first paragraph reaches the
- * first screen. Ported from the mockup's post.html (`.post-crumbrow`,
- * `.post-head`).
+ * The top of an entry (G1): the crumb row (§ 01 · Flight Log / Blog / LOG
+ * nnn, as a mission file's), then LOG nnn · date · read time · Updated ·
+ * tags, the title and the standfirst. Kept short, so the first paragraph
+ * reaches the first screen. Ported from the mockup's post.html
+ * (`.post-crumbrow`, `.post-head`).
  */
 export function PostCrumb({
     designation,
-    slug,
     className,
 }: {
     designation?: string;
-    slug: string;
     className?: string;
 }) {
-    const address = `${new URL(siteConfig.url).host}/blog/${slug}`;
     return (
         <CrumbRow
-            className={className}
+            className={
+                className ? `${styles.crumb} ${className}` : styles.crumb
+            }
             ornament="wave"
             num={copy.num}
             themed={copy.themed}
             plain={copy.plain}
             href={siteRoutes.blog}
-            metaClassName={styles.crumbMeta}
-            meta={
-                <>
-                    {designation ? (
-                        <span className={styles.crumbLog}>{designation}</span>
-                    ) : null}
-                    {designation ? " · " : ""}
-                    {address}
-                </>
-            }
+            code={designation}
         />
     );
 }

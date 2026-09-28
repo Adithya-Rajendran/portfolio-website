@@ -156,7 +156,7 @@
     box-shadow: 0 0 0 4px var(--accent-wash);
 }
 .latest .num {
-    color: var(--accent-text);
+    color: var(--ink-1);
 }
 
 .now {

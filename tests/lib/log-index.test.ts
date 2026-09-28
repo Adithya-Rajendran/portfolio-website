@@ -4,7 +4,6 @@ import {
     entriesTagged,
     entryCount,
     logEntries,
-    logSince,
     monthLabel,
     type LogSource,
 } from "@/lib/log-index";
@@ -105,11 +104,9 @@ describe("the year groups", () => {
 });
 
 describe("labels", () => {
-    it("prints months, the first month and counts", () => {
+    it("prints months and counts", () => {
         expect(monthLabel("2026-03-06")).toBe("Mar 2026");
         expect(monthLabel("")).toBe("");
-        expect(logSince(logEntries(POSTS))).toBe("Mar 2026");
-        expect(logSince([])).toBe("");
         expect(entryCount(1)).toBe("1 entry");
         expect(entryCount(3)).toBe("3 entries");
     });

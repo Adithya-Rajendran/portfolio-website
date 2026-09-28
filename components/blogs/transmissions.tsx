@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { logCopy as copy } from "@/lib/copy";
-import { entryCount } from "@/lib/log-index";
 import type { TransmissionsChart } from "@/lib/transmissions";
 import styles from "./transmissions.module.css";
 
 /**
- * Fig. 1 · Transmissions (Deep Field's chart on the Flight Log index):
+ * Fig. 1 · Entries by date (Deep Field's chart on the Flight Log index):
  * every entry as a mark on a real time axis, height = reading time, the
  * newest in the accent. The caption says what it shows; the plot is a
  * picture of the index below, so it is hidden from assistive technology
@@ -31,13 +30,7 @@ export default function Transmissions({
         >
             <figcaption className={styles.legend} id="transmissions-caption">
                 <span className="caption__num">{text.num}</span>
-                <span>
-                    {text.what(
-                        chart.from,
-                        entryCount(chart.entries),
-                        chart.words,
-                    )}
-                </span>
+                <span>{text.what(chart.from)}</span>
                 <span className={`label ${styles.key}`} aria-hidden="true">
                     {text.key}
                 </span>

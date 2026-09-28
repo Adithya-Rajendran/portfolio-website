@@ -203,7 +203,6 @@ export default async function BlogPostPage({
                 <PostCrumb
                     className={styles.crumbRow}
                     designation={designation}
-                    slug={slug}
                 />
                 <PostHead
                     className={styles.head}

@@ -183,10 +183,7 @@ test.describe("without JavaScript", () => {
 test("each mark on the chart leads to its entry", async ({ page }) => {
     await page.goto("/blog");
     const index = await rows(page);
-    const figure = page.getByRole("figure", { name: /Transmissions/ });
-    await expect(figure).toContainText(
-        `${index.length} ${index.length === 1 ? "entry" : "entries"}`,
-    );
+    const figure = page.getByRole("figure", { name: /Entries by date/ });
     // The plot is a picture of the index (aria-hidden): its marks are
     // pointer targets that link to the same entries.
     const marks = figure.locator("a");

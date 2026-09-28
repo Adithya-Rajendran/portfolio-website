@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
 import { logCopy as copy } from "@/lib/copy";
-import { entryCount, logEntries, logSince } from "@/lib/log-index";
+import { logEntries } from "@/lib/log-index";
 import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
 import { getWritingDescription } from "@/lib/profile-content";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
@@ -15,9 +15,9 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * The Flight Log's share card: the owner's description of his writing,
- * the transmissions strip (every entry on its date, the newest in orange)
- * and the entry count. It shows only published content.
+ * The Flight Log's share card: the owner's description of his writing and
+ * the strip of every entry on its date (the newest in orange), signed like
+ * every other card. It shows only published content.
  */
 export default async function Image() {
     const [posts, profile, today] = await Promise.all([
@@ -34,11 +34,7 @@ export default async function Image() {
             title={copy.themed}
             subtitle={getWritingDescription(profile)}
             chart={transmissions(entries, today)}
-            footerLeft={
-                entries.length
-                    ? copy.meta(entryCount(entries.length), logSince(entries))
-                    : profile?.name || siteConfig.author
-            }
+            footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/blog`}
         />,
         { ...size, fonts: OG_CARD_FONTS },

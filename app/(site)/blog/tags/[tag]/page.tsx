@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import LogIndex from "@/components/blogs/log-index";
 import TagChips from "@/components/blogs/tag-chips";
+import StaticStars from "@/components/sky/static-stars";
 import { ButtonLink } from "@/components/ui/button";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { logCopy } from "@/lib/copy";
-import { entriesTagged, entryCount, logEntries } from "@/lib/log-index";
+import { entriesTagged, logEntries } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, TAG_PATTERN } from "@/lib/tags";
@@ -35,30 +36,37 @@ async function TagEntries({ tag }: { tag: string }) {
 
     return (
         <>
-            <PageHead
-                className={`shell ${styles.head}`}
-                ornament="wave"
-                num={logCopy.num}
-                themed={copy.themed}
-                plain={copy.plain}
-                title={tag}
-                meta={entryCount(entries.length)}
-                intro={copy.intro(tag)}
-            >
-                <div className={`cluster ${styles.actions}`}>
-                    <ButtonLink
-                        size="sm"
-                        icon="arrow"
-                        iconAt="end"
-                        href={siteRoutes.blog}
-                    >
-                        {logCopy.back}
-                    </ButtonLink>
-                    <ButtonLink size="sm" icon="search" href="/blog/archive">
-                        {logCopy.search}
-                    </ButtonLink>
-                </div>
-            </PageHead>
+            <div className="head-band">
+                <StaticStars variant="band" />
+                <PageHead
+                    className="shell"
+                    split
+                    ornament="wave"
+                    num={logCopy.num}
+                    themed={copy.themed}
+                    plain={copy.plain}
+                    title={tag}
+                    intro={copy.intro(tag)}
+                >
+                    <div className="cluster page-head__actions">
+                        <ButtonLink
+                            size="sm"
+                            icon="arrow"
+                            iconAt="end"
+                            href={siteRoutes.blog}
+                        >
+                            {logCopy.back}
+                        </ButtonLink>
+                        <ButtonLink
+                            size="sm"
+                            icon="search"
+                            href="/blog/archive"
+                        >
+                            {logCopy.search}
+                        </ButtonLink>
+                    </div>
+                </PageHead>
+            </div>
 
             <section
                 className={`section ${styles.index}`}

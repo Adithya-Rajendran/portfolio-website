@@ -158,15 +158,10 @@ export const logCopy = {
     num: "01",
     themed: "Flight Log",
     plain: "Blog",
-    /** The page-head meta: "3 entries · since Mar 2026". */
-    meta: (entries: string, since: string) =>
-        since ? `${entries} · since ${since}` : entries,
     follow: "RSS & follow",
     search: "Search entries",
     indexThemed: "Index",
     indexPlain: "All entries",
-    /** The index's status line: "Showing all 3 entries, newest first." */
-    showing: (entries: string) => `Showing all ${entries}, newest first.`,
     tags: "Tags",
     all: "All",
     /** Column heads of the log index. */
@@ -180,12 +175,10 @@ export const logCopy = {
     readSuffix: " read",
     tagList: "Tags",
     empty: "No entries yet.",
-    emptyNote: "Entries appear here as they are filed.",
     chart: {
         num: "Fig. 1",
-        /** "Transmissions, Mar 2026 to now · 3 entries · 2,863 words". */
-        what: (from: string, entries: string, words: number) =>
-            `Transmissions, ${from} to now · ${entries} · ${words.toLocaleString("en-US")} words`,
+        /** "Entries by date, Mar 2026 to today". */
+        what: (from: string) => `Entries by date, ${from} to today`,
         key: "Height = reading time",
         now: "Now",
     },
@@ -195,7 +188,6 @@ export const logCopy = {
     feedNote: "Every new entry, in any feed reader.",
     feedAction: "Open the feed",
     linkedInLabel: "LinkedIn",
-    linkedInNote: "Follow along there.",
     linkedInAction: "Follow on LinkedIn",
     archive: {
         themed: "Archive",
@@ -272,7 +264,7 @@ export const postCopy = {
     end: (designation?: string) =>
         designation ? `End of entry ${designation}` : "End of entry",
     question: "Questions about this entry?",
-    reply: "Reply via Comms",
+    reply: "Send a message",
     copyLink: "Copy link",
     /** Starts with the visible label, for voice control (WCAG 2.5.3). */
     copyLinkLabel: "Copy link to this entry",
@@ -286,8 +278,6 @@ export const postCopy = {
     pagerPlain: "Previous and next",
     previous: "Previous entry",
     next: "Next entry",
-    first: "This is the first entry.",
-    latest: "This is the latest entry.",
     relatedThemed: "Same subsystem",
     relatedPlain: "Related entries",
     crewThemed: "Crew",

@@ -101,15 +101,6 @@ export function formatEntryDate(date: string | null | undefined): string {
     return `${Number(match[3])} ${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
 }
 
-/** The month the first entry was filed ("Mar 2026"), or "" with none. */
-export function logSince(entries: readonly LogEntry[]): string {
-    const dates = entries
-        .map((entry) => entry.publishedAt)
-        .filter(Boolean)
-        .sort();
-    return dates.length ? monthLabel(dates[0]) : "";
-}
-
 /** "3 entries", "1 entry". */
 export function entryCount(count: number): string {
     return `${count.toLocaleString("en-US")} ${count === 1 ? "entry" : "entries"}`;

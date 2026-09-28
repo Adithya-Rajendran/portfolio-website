@@ -64,15 +64,12 @@
     }
 }
 
-/* ---- Crumb row: § 01 · Flight Log / Blog · LOG nnn · its address ------ */
-/* The row itself is the shared CrumbRow (.crumb-row in components.css). */
-.crumbLog {
-    color: var(--accent-text);
-}
-/* On phones the meta line under the crumb already starts with LOG nnn,
-   and the address would wrap: the crumb keeps § 01 and the log's name. */
+/* ---- Crumb row: § 01 · Flight Log / Blog / LOG nnn -------------------- */
+/* The row itself is the shared CrumbRow (.crumb-row in components.css).
+   On phones the meta line under the crumb already starts with LOG nnn:
+   the crumb keeps § 01 and the log's name. */
 @media (max-width: 37.49rem) {
-    .crumbMeta {
+    .crumb :global(.crumb-row__item) {
         display: none;
     }
 }
@@ -85,7 +82,7 @@
     gap: var(--s-2) var(--s-4);
 }
 .metaLog {
-    color: var(--accent-text);
+    color: var(--ink-2);
     font: 400 var(--label-size) / 1.4 var(--font-label);
     letter-spacing: var(--track-label);
     white-space: nowrap;
@@ -162,7 +159,7 @@
     text-decoration-color: var(--accent);
 }
 .recordMission :global(.data) {
-    color: var(--accent-text);
+    color: var(--ink-2);
 }
 .contents {
     margin-top: var(--s-7);
@@ -212,7 +209,7 @@
     color: var(--ink-1);
 }
 .contentsList a[aria-current]::before {
-    color: var(--accent-text);
+    color: var(--ink-1);
 }
 
 /* The phone's box: a closed disclosure above the text. */
@@ -266,7 +263,7 @@
     content: counter(prose-h2, decimal-leading-zero);
     display: block;
     margin-bottom: 0.6rem;
-    color: var(--accent-text);
+    color: var(--ink-3);
     font: 400 0.8125rem / 1 var(--font-mono);
     letter-spacing: 0.04em;
 }
@@ -337,7 +334,7 @@
     text-transform: uppercase;
 }
 .revision[data-kind="correction"] .revisionKind {
-    color: var(--accent-text);
+    color: var(--ink-1);
 }
 .revisionNote {
     margin-top: var(--s-1);
@@ -433,7 +430,7 @@
     text-transform: uppercase;
 }
 .msnCode {
-    color: var(--accent-text);
+    color: var(--ink-2);
     font: 400 0.8125rem / 1.4 var(--font-mono);
     letter-spacing: 0.02em;
 }
@@ -470,48 +467,7 @@
 }
 
 .pager {
-    display: grid;
-    gap: var(--s-4) var(--gutter);
     max-width: 56rem;
-}
-@media (min-width: 37.5rem) {
-    .pager {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-.pagerItem {
-    display: flex;
-    flex-direction: column;
-    gap: var(--s-2);
-    padding: var(--s-4) 0 var(--s-2);
-    border-top: var(--rule-strong) solid var(--rule-2);
-    text-decoration: none;
-    transition: border-color var(--dur-hover) var(--ease-dock);
-}
-a.pagerItem:hover {
-    border-top-color: var(--accent);
-}
-@media (min-width: 37.5rem) {
-    .pagerNext {
-        align-items: flex-end;
-        text-align: right;
-    }
-}
-.pagerTitle {
-    font: 400 var(--step-1) / 1.25 var(--font-display);
-    text-wrap: balance;
-}
-a.pagerItem:hover .pagerTitle {
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-}
-.pagerMeta {
-    color: var(--ink-3);
-    font-size: 0.75rem;
-}
-.pagerNone > span:last-child {
-    color: var(--ink-2);
-    font: 400 var(--step--1) / 1.5 var(--font-text);
 }
 
 .by {

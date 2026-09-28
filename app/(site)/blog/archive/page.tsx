@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import ArchiveList from "@/components/blogs/archive-list";
 import TagChips from "@/components/blogs/tag-chips";
+import StaticStars from "@/components/sky/static-stars";
 import { ButtonLink } from "@/components/ui/button";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { logCopy } from "@/lib/copy";
-import { entryCount, logEntries, logSince } from "@/lib/log-index";
+import { logEntries } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import { getWritingDescription } from "@/lib/profile-content";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
@@ -44,30 +45,30 @@ export default async function ArchivePage() {
 
     return (
         <div data-page="archive" className={styles.page}>
-            <PageHead
-                className={`shell ${styles.head}`}
-                ornament="wave"
-                num={logCopy.num}
-                themed={copy.themed}
-                plain={copy.plain}
-                title={copy.title}
-                meta={logCopy.meta(
-                    entryCount(entries.length),
-                    logSince(entries),
-                )}
-                intro={copy.intro}
-            >
-                <div className={`cluster ${styles.actions}`}>
-                    <ButtonLink
-                        size="sm"
-                        icon="arrow"
-                        iconAt="end"
-                        href={siteRoutes.blog}
-                    >
-                        {logCopy.back}
-                    </ButtonLink>
-                </div>
-            </PageHead>
+            <div className="head-band">
+                <StaticStars variant="band" />
+                <PageHead
+                    className="shell"
+                    split
+                    ornament="wave"
+                    num={logCopy.num}
+                    themed={copy.themed}
+                    plain={copy.plain}
+                    title={copy.title}
+                    intro={copy.intro}
+                >
+                    <div className="cluster page-head__actions">
+                        <ButtonLink
+                            size="sm"
+                            icon="arrow"
+                            iconAt="end"
+                            href={siteRoutes.blog}
+                        >
+                            {logCopy.back}
+                        </ButtonLink>
+                    </div>
+                </PageHead>
+            </div>
 
             <section
                 className={`section ${styles.index}`}

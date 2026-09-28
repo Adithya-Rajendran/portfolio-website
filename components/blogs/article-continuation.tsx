@@ -3,6 +3,7 @@ import LogIndex from "@/components/blogs/log-index";
 import { buttonClass } from "@/components/ui/button";
 import { Icon, Patch } from "@/components/ui/icon";
 import { Status, type StatusValue } from "@/components/ui/marks";
+import Pager, { type PagerLink } from "@/components/ui/pager";
 import Pair from "@/components/ui/pair";
 import SectionTag from "@/components/ui/section-tag";
 import { postCopy as copy } from "@/lib/copy";
@@ -16,9 +17,10 @@ import styles from "./post.module.css";
 
 /**
  * After an entry (G1): the mission it belongs to (only when the owner
- * linked one), the entries filed just before and after it, other entries
- * that share a tag (only when there are any), and the author. Every block
- * is server-rendered links; empty blocks are left out. Ported from the
+ * linked one), the entries filed just before and after it (the shared
+ * `Pager`, only the sides that exist), other entries that share a tag
+ * (only when there are any), and the author. Every block is
+ * server-rendered links; empty blocks are left out. Ported from the
  * mockup's post.html `.post-end`.
  */
 
@@ -66,43 +68,24 @@ function MissionCard({ project }: { project: ProjectListItem }) {
     );
 }
 
-function PagerLink({
-    entry,
-    direction,
-}: {
-    entry: LogEntry | null;
-    direction: "previous" | "next";
-}) {
-    const label = direction === "previous" ? copy.previous : copy.next;
-    const cls = direction === "next" ? styles.pagerNext : styles.pagerPrevious;
-    if (!entry) {
-        return (
-            <p className={`${styles.pagerItem} ${styles.pagerNone} ${cls}`}>
-                <span className="label">{label}</span>
-                <span>{direction === "next" ? copy.latest : copy.first}</span>
-            </p>
-        );
-    }
-    return (
-        <Link
-            className={`${styles.pagerItem} ${cls}`}
-            href={`/blog/${entry.slug}`}
-            rel={direction === "next" ? "next" : "prev"}
-        >
-            <span className="label">
-                {label} · {entry.designation}
-            </span>
-            <span className={styles.pagerTitle}>{entry.title}</span>
-            <span className={`data ${styles.pagerMeta}`}>
-                {[
-                    entry.publishedAt,
-                    entry.readMinutes ? `${entry.readMinutes} min` : null,
-                ]
-                    .filter(Boolean)
-                    .join(" · ")}
-            </span>
-        </Link>
-    );
+/** A neighbouring entry as a pager side: "Next entry · LOG 002". */
+function pagerLink(
+    entry: LogEntry | null,
+    direction: "previous" | "next",
+): PagerLink | null {
+    if (!entry) return null;
+    return {
+        href: `/blog/${entry.slug}`,
+        label: `${direction === "previous" ? copy.previous : copy.next} · ${entry.designation}`,
+        title: entry.title,
+        meta:
+            [
+                entry.publishedAt,
+                entry.readMinutes ? `${entry.readMinutes} min` : null,
+            ]
+                .filter(Boolean)
+                .join(" · ") || null,
+    };
 }
 
 function Block({
@@ -152,7 +135,7 @@ export default function ArticleContinuation({
     // § 01.1, 01.2 …: the blocks shown, numbered in order.
     const shown = [
         missions.length > 0 ? "mission" : null,
-        "pager",
+        previous || next ? "pager" : null,
         related.length > 0 ? "related" : null,
         "author",
     ].filter(Boolean);
@@ -181,17 +164,21 @@ export default function ArticleContinuation({
                         </div>
                     </Block>
                 ) : null}
-                <Block
-                    id="entry-pager"
-                    num={num("pager")}
-                    themed={copy.pagerThemed}
-                    plain={copy.pagerPlain}
-                >
-                    <nav className={styles.pager} aria-labelledby="entry-pager">
-                        <PagerLink entry={previous} direction="previous" />
-                        <PagerLink entry={next} direction="next" />
-                    </nav>
-                </Block>
+                {previous || next ? (
+                    <Block
+                        id="entry-pager"
+                        num={num("pager")}
+                        themed={copy.pagerThemed}
+                        plain={copy.pagerPlain}
+                    >
+                        <Pager
+                            className={styles.pager}
+                            label={copy.pagerPlain}
+                            previous={pagerLink(previous, "previous")}
+                            next={pagerLink(next, "next")}
+                        />
+                    </Block>
+                ) : null}
                 {related.length > 0 ? (
                     <Block
                         id="entry-related"
