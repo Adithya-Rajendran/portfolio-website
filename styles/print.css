@@ -12,8 +12,12 @@
         }
     }
     @media print {
+        /* [data-legacy]: TEMPORARY, with the Void tokens a legacy page
+           keeps under Flight Manual (styles/tokens.css); on paper it
+           prints like every other page. */
         :root,
-        [data-theme] {
+        [data-theme],
+        [data-legacy] {
             color-scheme: light;
             --bg: #ffffff;
             --surface-1: #ffffff;

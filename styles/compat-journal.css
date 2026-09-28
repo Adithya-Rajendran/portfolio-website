@@ -42,7 +42,6 @@
         line-height: 1.5;
     }
     [data-theme="manual"] [data-legacy] {
-        background: var(--bg);
         color: var(--ink-1);
     }
     [data-legacy] a {
@@ -59,6 +58,15 @@
     }
     [data-legacy] svg {
         overflow: hidden;
+    }
+}
+
+/* Under Flight Manual a legacy page is a Void panel on screen (on paper
+   it takes the print tokens, styles/print.css). Unlayered: the legacy
+   roots set their own (transparent) background. */
+@media screen {
+    [data-theme="manual"] [data-legacy] {
+        background-color: var(--bg);
     }
 }
 

@@ -56,7 +56,9 @@ only live in comments or commit messages.
       look inside the new chrome. Their colours are dark-only, so under
       Flight Manual a legacy page keeps Void's tokens (the
       `[data-theme="manual"] [data-legacy]` selector in `styles/tokens.css`)
-      on a Void panel. Both go, with those files, in PR 14.
+      on a Void panel on screen, and prints on the print tokens
+      (`[data-legacy]` in `styles/print.css`). All three go, with those
+      files, in PR 14.
 - **Theme and motion** (plan §2.5.1). `lib/theme-boot.ts` is the inline boot
   script (under 600 bytes, unit-tested) that `ThemeBootScript` renders in
   both root documents' `<head>`: it reads localStorage `ar-theme`
