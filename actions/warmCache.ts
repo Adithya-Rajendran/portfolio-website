@@ -2,10 +2,9 @@
 // A "use server" directive would expose warming as a public unauthenticated
 // endpoint / traffic-amplification lever.
 
-import { getAllPosts, getAllProjectSlugs } from "@/lib/sanity-client";
+import { getWarmLists } from "@/lib/sanity-client";
 import { CACHE_TAGS, type CacheTag } from "@/lib/cache-tags";
 import { siteConfig } from "@/lib/config";
-import { getPostSlug } from "@/components/blogs/utils";
 import { warmPaths, type WarmTarget } from "@/lib/route-tags";
 import { collectTags } from "@/lib/tags";
 
@@ -14,19 +13,19 @@ interface WarmResult {
 }
 
 /**
- * Request every route that shows content under `tag` (lib/route-tags.ts),
- * so its stale pages regenerate before a reader asks for them. The post
- * and project lists give the slugs and tags of the dynamic routes; entry
- * points are warmed even when those lists are empty, so listings refresh
- * after the last post or project is removed.
+ * Request every cached route that shows content under `tag`
+ * (lib/route-tags.ts), so its stale pages regenerate before a reader asks
+ * for them. The post and project lists give the slugs and tags of the
+ * dynamic routes. They are read uncached (`getWarmLists`), because this runs
+ * right after the tag is revalidated and the cached lists would still miss a
+ * post or project published a moment ago. Entry points are warmed even when
+ * the lists are empty, so listings refresh after the last post or project
+ * is removed.
  */
 export async function warm(tag: CacheTag): Promise<WarmResult> {
-    const [posts, projectSlugs] = await Promise.all([
-        getAllPosts(),
-        getAllProjectSlugs(),
-    ]);
+    const { posts, projectSlugs } = await getWarmLists();
     const targets = warmPaths(tag, {
-        post: posts.map(getPostSlug),
+        post: posts.map(({ slug }) => slug),
         tag: collectTags(posts).map(({ tag: name }) => name),
         project: projectSlugs,
     });

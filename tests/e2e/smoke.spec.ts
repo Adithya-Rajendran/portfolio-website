@@ -1,5 +1,10 @@
 import type { APIRequestContext, Page } from "@playwright/test";
-import { warmPaths, type WarmLists } from "@/lib/route-tags";
+import {
+    expandRoute,
+    ROUTE_TAGS,
+    warmPaths,
+    type WarmLists,
+} from "@/lib/route-tags";
 import { expect, test, type PageErrors } from "./support/test";
 import {
     MISSING_PAGES,
@@ -106,7 +111,7 @@ test.describe("routes and headers", () => {
         }
     });
 
-    test("every URL the warm lists request answers", async ({ request }) => {
+    test("every URL the route table lists answers", async ({ request }) => {
         // actions/warmCache.ts requests these paths (lib/route-tags.ts)
         // after a change; a 404 here means the table has drifted from the
         // build. The dynamic routes expand from this build's sitemap.
@@ -124,6 +129,13 @@ test.describe("routes and headers", () => {
                 .flatMap((tag) => warmPaths(tag, lists))
                 .map((target) => [target.path, target]),
         );
+        // Routes rendered per request are not warmed, but the table still
+        // names their built URL, so they are checked here too.
+        for (const route of ROUTE_TAGS.filter((item) => item.perRequest)) {
+            for (const path of expandRoute(route, lists)) {
+                targets.set(path, { path, redirects: false });
+            }
+        }
         for (const { path, redirects } of targets.values()) {
             const response = await request.get(path, {
                 maxRedirects: redirects ? 0 : undefined,

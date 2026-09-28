@@ -21,6 +21,7 @@ import type {
 } from "@/lib/project-fields";
 import { client, isSanityConfigured } from "@/lib/sanity-config";
 import type { ModelPartKey, ProceduralModelKey } from "@/lib/viewer/registry";
+import type { WARM_LISTS_QUERY_RESULT } from "@/sanity.types";
 
 export type ContentBlock = {
     _key?: string;
@@ -470,6 +471,17 @@ export const PROJECT_SLUGS_WITH_DATES_QUERY = defineQuery(`*[
     _type == "project" && defined(slug.current)
 ]{"slug": slug.current, "updatedAt": _updatedAt}`);
 
+/**
+ * The published post slugs with their tags, and the project slugs: what
+ * cache warming expands `[slug]` and `[tag]` routes from.
+ */
+export const WARM_LISTS_QUERY = defineQuery(`{
+    "posts": *[
+        _type == "post" && defined(publishedAt) && publishedAt <= $today
+    ]{"slug": slug.current, tags},
+    "projectSlugs": *[_type == "project" && defined(slug.current)].slug.current
+}`);
+
 async function sanityFetch<T>(
     query: string,
     params: Record<string, unknown>,
@@ -571,6 +583,46 @@ export function getProjectBySlug(
 
 export function getAllProjectSlugs(): Promise<string[]> {
     return sanityFetch(PROJECT_SLUGS_QUERY, {}, CACHE_TAGS.project, []);
+}
+
+export type WarmSource = {
+    posts: { slug: string; tags: string[] }[];
+    projectSlugs: string[];
+};
+
+/**
+ * The lists `warm(tag)` expands its routes from, read uncached from the
+ * live API (not the Sanity CDN). The webhook and the cron call it right after
+ * `revalidateTag(…, "max")`, when the cached lists are still the stale ones,
+ * so a post or project published a moment ago would not be warmed. This is
+ * the one read outside `sanityFetch` besides the cron's due-post check
+ * (CLAUDE.md, caching contract). Without Sanity (fixture builds, tests) it
+ * reads the cached fixture lists instead.
+ */
+export async function getWarmLists(): Promise<WarmSource> {
+    if (!isSanityConfigured) {
+        const [posts, projectSlugs] = await Promise.all([
+            getAllPosts(),
+            getAllProjectSlugs(),
+        ]);
+        return {
+            posts: posts.map(({ slug, tags }) => ({ slug, tags: tags ?? [] })),
+            projectSlugs,
+        };
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const lists = await client
+        .withConfig({ useCdn: false })
+        .fetch<WARM_LISTS_QUERY_RESULT>(WARM_LISTS_QUERY, { today });
+    return {
+        posts: (lists?.posts ?? []).map(({ slug, tags }) => ({
+            slug,
+            tags: tags ?? [],
+        })),
+        projectSlugs: (lists?.projectSlugs ?? []).filter(
+            (slug): slug is string => Boolean(slug),
+        ),
+    };
 }
 
 export function getAllProjectSlugsWithDates(): Promise<

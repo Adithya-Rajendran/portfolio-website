@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -81,7 +81,13 @@ describe("route table", () => {
         ]);
     });
 
-    it("gives each share image the tags of its page", () => {
+    it("gives each share image the tags of its page, or none when it reads no content", () => {
+        // Content reaches a share image through the Sanity client, directly
+        // or through lib/og-template.tsx's makeIntroOgImage.
+        const readsContent = (file: string) =>
+            /@\/lib\/sanity-client|makeIntroOgImage/.test(
+                readFileSync(file, "utf8"),
+            );
         for (const image of ROUTE_TAGS.filter((route) =>
             route.file.endsWith("/opengraph-image.tsx"),
         )) {
@@ -92,9 +98,25 @@ describe("route table", () => {
             );
             expect(page, image.file).toBeDefined();
             expect([...image.tags].sort(), image.path).toEqual(
-                [...(page?.tags ?? [])].sort(),
+                readsContent(image.file) ? [...(page?.tags ?? [])].sort() : [],
             );
         }
+    });
+
+    it("never warms a route rendered on every request", () => {
+        // Not in the build's prerender manifest (`next build` marks it ƒ):
+        // a warm request would render it once for nobody.
+        expect(
+            ROUTE_TAGS.filter((route) => route.perRequest).map(
+                (route) => route.path,
+            ),
+        ).toEqual(["/blog/[slug]/opengraph-image-fx5gi7"]);
+        const warmed = (["profile", "post", "project"] as const).flatMap(
+            (tag) => warmPaths(tag, LISTS).map(({ path }) => path),
+        );
+        expect(
+            warmed.some((path) => path.includes("/opengraph-image-fx5gi7")),
+        ).toBe(false);
     });
 
     it("never warms icons, robots, the API or the Studio", () => {
@@ -137,8 +159,6 @@ describe("warm lists", () => {
             "/about/opengraph-image-1ycygp",
             "/blog/post-a",
             "/blog/post-b",
-            "/blog/post-a/opengraph-image-fx5gi7",
-            "/blog/post-b/opengraph-image-fx5gi7",
             "/blog/tags/robotics",
             "/portfolio/homelab",
         ]);
@@ -153,12 +173,9 @@ describe("warm lists", () => {
             "/sitemap.xml",
             "/opengraph-image-12o0cb",
             "/portfolio/opengraph-image-98lokn",
-            "/resume/opengraph-image-1nyaml",
             "/about/opengraph-image-1ycygp",
             "/blog/post-a",
             "/blog/post-b",
-            "/blog/post-a/opengraph-image-fx5gi7",
-            "/blog/post-b/opengraph-image-fx5gi7",
             "/portfolio/homelab",
         ]);
     });
@@ -177,12 +194,9 @@ describe("warm lists", () => {
             "/blog/opengraph-image-14vkmf",
             "/blog/archive/opengraph-image-dfhyke",
             "/portfolio/opengraph-image-98lokn",
-            "/resume/opengraph-image-1nyaml",
             "/about/opengraph-image-1ycygp",
             "/blog/post-a",
             "/blog/post-b",
-            "/blog/post-a/opengraph-image-fx5gi7",
-            "/blog/post-b/opengraph-image-fx5gi7",
             "/portfolio/homelab",
             "/resume/view",
             "/resume/download",

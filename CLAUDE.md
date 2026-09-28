@@ -87,7 +87,12 @@ only live in comments or commit messages.
   it shows. `warm(tag)` in `actions/warmCache.ts` requests every route
   listed under a tag, expanding `[slug]` and `[tag]` from the published
   post and project lists; `warmBlogCache`, `warmProfileCache` and
-  `warmProjectCache` are its wrappers. A new route goes into the table in
+  `warmProjectCache` are its wrappers. Those lists come from
+  `getWarmLists()`, the one read besides the cron's that bypasses
+  `sanityFetch`: it queries the live API uncached, because right after
+  `revalidateTag(…, "max")` the cached lists are still stale and would miss
+  a post or project published a moment ago. A route that renders on every
+  request (`perRequest`, today the post share image) is never warmed. A new route goes into the table in
   the PR that adds it: `tests/lib/route-tags.test.ts` fails for a route file
   missing from the table or a path that differs from the build, and the
   e2e smoke spec requests every warmed URL. Redirect routes (`redirects`)

@@ -11,9 +11,14 @@
  * - Every page also shows the profile in its header, footer and JSON-LD.
  *   That alone does not list it under `profile`: those pages refresh on
  *   their next visit instead of being crawled on every profile edit.
- * - A share image carries its page's tags. Inside the `(site)` group its
- *   URL has a stable hash suffix; `tests/lib/route-tags.test.ts` recomputes
- *   every path from its file, and fails for a route file missing here.
+ * - A share image carries its page's tags, or none when it reads no content
+ *   (the résumé's is fixed text). Inside the `(site)` group its URL has a
+ *   stable hash suffix; `tests/lib/route-tags.test.ts` recomputes every path
+ *   from its file, and fails for a route file missing here.
+ * - A route that renders on every request (`perRequest`; it is not in the
+ *   build's prerender manifest) keeps its tags as a record but is never
+ *   warmed: there is no cached copy to refresh, so a warm request would only
+ *   render it once for nobody.
  *
  * This module has no server-only imports, so the e2e smoke spec reads it.
  */
@@ -33,6 +38,8 @@ export type RouteTagEntry = {
     readonly expand?: RouteExpansion;
     /** It answers with a redirect, which is warmed without following it. */
     readonly redirects?: true;
+    /** It renders on every request, so it is never warmed. */
+    readonly perRequest?: true;
 };
 
 const { profile, post, project } = CACHE_TAGS;
@@ -93,10 +100,11 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         file: "app/(site)/portfolio/opengraph-image.tsx",
         tags: [profile, project, post],
     },
+    // Fixed text: it reads no content, so it is never warmed.
     {
         path: "/resume/opengraph-image-1nyaml",
         file: "app/(site)/resume/opengraph-image.tsx",
-        tags: [profile, project],
+        tags: [],
     },
     {
         path: "/about/opengraph-image-1ycygp",
@@ -112,10 +120,12 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         expand: "post",
     },
     {
+        // No static params of its own, so Next.js renders it per request.
         path: "/blog/[slug]/opengraph-image-fx5gi7",
         file: "app/(site)/blog/[slug]/opengraph-image.tsx",
         tags: [post, project, profile],
         expand: "post",
+        perRequest: true,
     },
     {
         path: "/blog/tags/[tag]",
@@ -183,9 +193,23 @@ function expansionValues(
     return lists[expand].filter((value) => pattern.test(value));
 }
 
-/** The routes a tag's content appears on, in table order. */
+/**
+ * The cached routes a tag's content appears on, in table order: the ones
+ * warming requests. Routes rendered per request are left out.
+ */
 export function routesForTag(tag: CacheTag): RouteTagEntry[] {
-    return ROUTE_TAGS.filter((route) => route.tags.includes(tag));
+    return ROUTE_TAGS.filter(
+        (route) => route.tags.includes(tag) && !route.perRequest,
+    );
+}
+
+/** A route's URLs, with its dynamic segment expanded from `lists`. */
+export function expandRoute(route: RouteTagEntry, lists: WarmLists): string[] {
+    return route.expand
+        ? expansionValues(route.expand, lists).map((value) =>
+              route.path.replace(SEGMENT, value),
+          )
+        : [route.path];
 }
 
 /**
@@ -195,12 +219,7 @@ export function routesForTag(tag: CacheTag): RouteTagEntry[] {
 export function warmPaths(tag: CacheTag, lists: WarmLists): WarmTarget[] {
     const targets = new Map<string, WarmTarget>();
     for (const route of routesForTag(tag)) {
-        const paths = route.expand
-            ? expansionValues(route.expand, lists).map((value) =>
-                  route.path.replace(SEGMENT, value),
-              )
-            : [route.path];
-        for (const path of paths) {
+        for (const path of expandRoute(route, lists)) {
             targets.set(path, { path, redirects: route.redirects === true });
         }
     }

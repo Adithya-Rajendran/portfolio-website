@@ -1503,6 +1503,17 @@ export type PROJECT_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
     updatedAt: string;
 }>;
 
+// Source: lib/sanity-client.ts
+// Variable: WARM_LISTS_QUERY
+// Query: {    "posts": *[        _type == "post" && defined(publishedAt) && publishedAt <= $today    ]{"slug": slug.current, tags},    "projectSlugs": *[_type == "project" && defined(slug.current)].slug.current}
+export type WARM_LISTS_QUERY_RESULT = {
+    posts: Array<{
+        slug: string;
+        tags: Array<string> | null;
+    }>;
+    projectSlugs: Array<string>;
+};
+
 // Query TypeMap
 declare global {
     interface SanityQueries {
@@ -1519,6 +1530,7 @@ declare global {
         '*[\n    _type == "project" && slug.current == $slug\n][0]{\n    _id,\n    _updatedAt,\n    designation,\n    title,\n    "slug": slug.current,\n    summary,\n    status,\n    statusNote,\n    types,\n    featured,\n    myRole,\n    startDate,\n    endDate,\n    datePrecision,\n    datesApproximate,\n    technologies,\n    highlights,\n    parameters[]{_key, label, value},\n    cover{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    coverPortrait{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    links[]{_key, _type, label, url, kind},\n    "hasModel": defined(model),\n    brief{problem, approach, outcome},\n    results[]{_key, metric, value, note},\n    lessons,\n    next,\n    model{\n        kind,\n        procedural,\n        "fileUrl": file.asset->url,\n        poster{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n        title,\n        alt,\n        realWorld{dimension, value, unit},\n        hotspots[]{\n            _key, label, title, body, part,\n            position{x, y, z},\n            anchor{heading, "postId": post._ref}\n        }\n    },\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': PROJECT_BY_SLUG_QUERY_RESULT;
         '*[_type == "project" && defined(slug.current)].slug.current': PROJECT_SLUGS_QUERY_RESULT;
         '*[\n    _type == "project" && defined(slug.current)\n]{"slug": slug.current, "updatedAt": _updatedAt}': PROJECT_SLUGS_WITH_DATES_QUERY_RESULT;
+        '{\n    "posts": *[\n        _type == "post" && defined(publishedAt) && publishedAt <= $today\n    ]{"slug": slug.current, tags},\n    "projectSlugs": *[_type == "project" && defined(slug.current)].slug.current\n}': WARM_LISTS_QUERY_RESULT;
     }
 }
 // Lets @sanity/client releases that predate the global registry read it too

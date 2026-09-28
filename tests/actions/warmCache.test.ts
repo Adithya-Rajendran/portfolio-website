@@ -9,14 +9,20 @@ import {
 import { warmPaths } from "@/lib/route-tags";
 import type { PostListItem } from "@/lib/sanity-client";
 
-const { getAllPostsMock, getAllProjectSlugsMock } = vi.hoisted(() => ({
-    getAllPostsMock: vi.fn(),
-    getAllProjectSlugsMock: vi.fn(),
+const { postsMock, projectSlugsMock } = vi.hoisted(() => ({
+    postsMock: vi.fn(),
+    projectSlugsMock: vi.fn(),
 }));
 
+// getWarmLists reads the published lists uncached; the mocks stand in for
+// the posts and project slugs it returns.
 vi.mock("@/lib/sanity-client", () => ({
-    getAllPosts: getAllPostsMock,
-    getAllProjectSlugs: getAllProjectSlugsMock,
+    getWarmLists: async () => ({
+        posts: ((await postsMock()) as PostListItem[]).map(
+            ({ slug, tags }) => ({ slug, tags: tags ?? [] }),
+        ),
+        projectSlugs: await projectSlugsMock(),
+    }),
 }));
 
 const fetchMock = vi.fn();
@@ -37,10 +43,10 @@ function postOf(overrides: Partial<PostListItem> = {}): PostListItem {
 const url = (path: string) => `${siteConfig.url}${path}`;
 
 beforeEach(() => {
-    getAllPostsMock.mockReset();
-    getAllPostsMock.mockResolvedValue([postOf()]);
-    getAllProjectSlugsMock.mockReset();
-    getAllProjectSlugsMock.mockResolvedValue(["homelab"]);
+    postsMock.mockReset();
+    postsMock.mockResolvedValue([postOf()]);
+    projectSlugsMock.mockReset();
+    projectSlugsMock.mockResolvedValue(["homelab"]);
     fetchMock.mockReset();
     fetchMock.mockResolvedValue({ ok: true, status: 200 });
     vi.stubGlobal("fetch", fetchMock);
@@ -98,7 +104,6 @@ describe("warmBlogCache", () => {
                 url("/blog/archive"),
                 url("/feed.xml"),
                 url("/blog/vision-experiment"),
-                url("/blog/vision-experiment/opengraph-image-fx5gi7"),
                 url("/blog/tags/robotics"),
                 // Pages that list posts since the redesign's route map.
                 url("/about"),
@@ -112,8 +117,8 @@ describe("warmBlogCache", () => {
     });
 
     it("refreshes listings after the final post and project are removed", async () => {
-        getAllPostsMock.mockResolvedValue([]);
-        getAllProjectSlugsMock.mockResolvedValue([]);
+        postsMock.mockResolvedValue([]);
+        projectSlugsMock.mockResolvedValue([]);
 
         const result = await warmBlogCache();
 
@@ -132,11 +137,11 @@ describe("warmBlogCache", () => {
     });
 
     it("isolates a failing homepage response and rejects unsafe document URLs", async () => {
-        getAllPostsMock.mockResolvedValue([
+        postsMock.mockResolvedValue([
             postOf(),
             postOf({ slug: "../../api/revalidate", tags: ["../admin"] }),
         ]);
-        getAllProjectSlugsMock.mockResolvedValue(["homelab", "../studio"]);
+        projectSlugsMock.mockResolvedValue(["homelab", "../studio"]);
         fetchMock.mockImplementation(async (target: string) => ({
             ok: target !== url("/"),
             status: target === url("/") ? 503 : 200,
@@ -171,7 +176,6 @@ describe("warmProfileCache", () => {
                 url("/portfolio/opengraph-image-98lokn"),
                 url("/blog/opengraph-image-14vkmf"),
                 url("/blog/archive/opengraph-image-dfhyke"),
-                url("/resume/opengraph-image-1nyaml"),
                 url("/resume/view"),
                 url("/resume/download"),
             ]),
@@ -232,7 +236,7 @@ describe("warmProfileCache", () => {
 
 describe("warmProjectCache", () => {
     it("refreshes the mission page, the pages that list missions and the posts that link to them", async () => {
-        getAllProjectSlugsMock.mockResolvedValue(["homelab", "website"]);
+        projectSlugsMock.mockResolvedValue(["homelab", "website"]);
 
         const result = await warmProjectCache();
 
