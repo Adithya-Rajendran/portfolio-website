@@ -5,6 +5,7 @@ import Transmissions from "@/components/blogs/transmissions";
 import { BlogJsonLd } from "@/components/json-ld";
 import StaticStars from "@/components/sky/static-stars";
 import { ButtonLink, buttonClass } from "@/components/ui/button";
+import DocSection from "@/components/ui/doc-section";
 import { Icon } from "@/components/ui/icon";
 import PageHead from "@/components/ui/page-head";
 import Pair from "@/components/ui/pair";
@@ -134,64 +135,55 @@ export default async function FlightLogPage() {
                 </div>
             </section>
 
-            <section
-                className={`section ${styles.downlink}`}
+            <DocSection
+                className={styles.downlink}
                 id="downlink"
-                aria-labelledby="log-downlink-h"
+                headingId="log-downlink-h"
+                num={`${copy.num}.2`}
+                themed={copy.downlinkThemed}
+                plain={copy.downlinkPlain}
             >
-                <div className="shell grid">
-                    <div className="g-rail">
-                        <SectionTag num={`${copy.num}.2`}>
-                            <h2 className="section-tag__h" id="log-downlink-h">
-                                <Pair
-                                    themed={copy.downlinkThemed}
-                                    plain={copy.downlinkPlain}
-                                />
-                            </h2>
-                        </SectionTag>
+                <div className={styles.downGrid}>
+                    <div className={styles.downItem}>
+                        <p className="label label--ink">{copy.feedLabel}</p>
+                        <p className={`data ${styles.downUrl}`}>
+                            {host(siteConfig.url)}
+                            {siteRoutes.feed}
+                        </p>
+                        <p className={styles.downNote}>{copy.feedNote}</p>
+                        <div className="cluster">
+                            <a
+                                className={buttonClass({ size: "sm" })}
+                                href={siteRoutes.feed}
+                            >
+                                <Icon name="rss" />
+                                {copy.feedAction}
+                            </a>
+                        </div>
                     </div>
-                    <div className={`g-main ${styles.downGrid}`}>
+                    {linkedIn ? (
                         <div className={styles.downItem}>
-                            <p className="label label--ink">{copy.feedLabel}</p>
-                            <p className={`data ${styles.downUrl}`}>
-                                {host(siteConfig.url)}
-                                {siteRoutes.feed}
+                            <p className="label label--ink">
+                                {copy.linkedInLabel}
                             </p>
-                            <p className={styles.downNote}>{copy.feedNote}</p>
+                            <p className={`data ${styles.downUrl}`}>
+                                {host(linkedIn.url)}
+                            </p>
                             <div className="cluster">
                                 <a
                                     className={buttonClass({ size: "sm" })}
-                                    href={siteRoutes.feed}
+                                    href={linkedIn.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                 >
-                                    <Icon name="rss" />
-                                    {copy.feedAction}
+                                    {copy.linkedInAction}
+                                    <Icon name="external" />
                                 </a>
                             </div>
                         </div>
-                        {linkedIn ? (
-                            <div className={styles.downItem}>
-                                <p className="label label--ink">
-                                    {copy.linkedInLabel}
-                                </p>
-                                <p className={`data ${styles.downUrl}`}>
-                                    {host(linkedIn.url)}
-                                </p>
-                                <div className="cluster">
-                                    <a
-                                        className={buttonClass({ size: "sm" })}
-                                        href={linkedIn.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {copy.linkedInAction}
-                                        <Icon name="external" />
-                                    </a>
-                                </div>
-                            </div>
-                        ) : null}
-                    </div>
+                    ) : null}
                 </div>
-            </section>
+            </DocSection>
         </div>
     );
 }

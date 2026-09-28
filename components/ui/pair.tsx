@@ -9,7 +9,7 @@ export default function Pair({
     className,
 }: {
     themed: string;
-    plain: string;
+    plain: React.ReactNode;
     className?: string;
 }) {
     return (

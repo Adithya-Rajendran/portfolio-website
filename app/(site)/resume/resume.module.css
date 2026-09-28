@@ -1,7 +1,7 @@
 /*
  * Trajectory · Experience / CV (/resume): the page head over a band of
  * static stars, the tool row, the orbit map's section and the CV sections
- * (rail + main). The map, the CV rows and the key/value list have their
+ * (DocSection: the shared section head, then the rows). The map, the CV rows and the key/value list have their
  * own styles (components/orbit/orbit.module.css; `.cv-list` and `.specs`
  * in styles/components.css). On paper the page is the controlled
  * document (G3): the print rules close this file and styles/print.css.
@@ -66,33 +66,18 @@
 .page[data-view="list"] .map {
     display: none;
 }
-.mapBody {
-    margin-top: var(--s-6);
-}
 
-/* ---- The CV: tag in the rail, rows in the main column ------------------- */
+/* ---- The CV: the shared section head, the rows in the main column ------- */
 .cv + .cv {
-    padding-top: var(--s-4);
+    padding-top: var(--s-6);
 }
 .cvBody {
     padding-bottom: var(--space-section);
 }
-.cvGrid {
-    row-gap: var(--s-5);
-}
-.cvTag::after {
-    display: none;
-}
-/* Each section opens on its first row's rule, level with its tag; the
-   space between sections parts them, so lists drop their closing rule. */
-.cvGrid :global(:is(.cv-list, .specs)) {
+/* The next section's head parts each list from the one before, so lists
+   drop their closing rule. */
+.cv :global(:is(.cv-list, .specs)) {
     border-bottom: 0;
-}
-@media (min-width: 60rem) {
-    .cvTag {
-        padding-top: var(--s-5);
-        border-top: var(--rule-hair) solid var(--rule-1);
-    }
 }
 .after {
     margin-top: var(--s-5);
@@ -215,19 +200,30 @@
         margin-top: 2.2mm;
         padding: 0 !important;
     }
-    .cvGrid {
+    .cv :global(.doc-section__body) {
         display: block;
     }
-    .cvTag {
+    /* The section head on paper: the number and the plain name over a
+       rule, no themed name. */
+    .cv :global(.doc-section__tag) {
         margin-bottom: 1.3mm;
         padding: 0 0 0.7mm;
-        border-top: 0;
         border-bottom: 0.6pt solid var(--rule-2);
         font-size: 6.6pt;
         letter-spacing: 0.14em;
         break-after: avoid;
     }
-    .cvTag :global(.section-tag__num) {
+    .cv :global(.doc-section__tag)::after,
+    .cv :global(.pair__themed),
+    .cv :global(.pair__plain)::before {
+        display: none;
+    }
+    .cv :global(.pair__plain) {
+        color: var(--ink-1);
+        font: inherit;
+        letter-spacing: inherit;
+    }
+    .cv :global(.doc-section__tag .section-tag__num) {
         font-size: 7pt;
     }
     .after {

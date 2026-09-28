@@ -165,8 +165,9 @@ only live in comments or commit messages.
 - **The Crew File** (`/about`, plan §6.2 row 14, contract §9). The patch
   is the identity mark (a `PageHead` `figure`; the site shows no
   portrait), then the record (`CrewRecord`), and numbered
-  `DocSection`s (`components/ui/doc-section.tsx`, shared with the mission
-  files): the biography, the Now list grouped by
+  `DocSection`s (`components/ui/doc-section.tsx`, the one section head:
+  also the mission files, `/contact`, `/blog`'s Downlink and the CV on
+  `/resume`): the biography, the Now list grouped by
   `currentCuriosities[].kind` (`nowGroups`; the home Now act groups the
   same way), the latest entries and any talks, and the related pages
   (`lib/directory.ts`, shared with `/portfolio`'s Directory), each only

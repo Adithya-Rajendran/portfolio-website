@@ -37,6 +37,13 @@
     padding-top: var(--s-5);
     padding-bottom: var(--s-8);
 }
+/* From 960px /blog's chart comes first, and the index keeps a block's
+   distance from it, as a section does from a page head elsewhere. */
+@media (min-width: 60rem) {
+    .chart + .index {
+        padding-top: var(--space-block);
+    }
+}
 .indexInner {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -61,7 +68,7 @@
     font: 300 var(--step-3) / 1.1 var(--font-display);
 }
 
-/* ---- § 01.2 Downlink ------------------------------------------------------ */
+/* ---- § 01.2 Downlink (DocSection) ----------------------------------------- */
 .downlink {
     padding-top: var(--s-7);
 }

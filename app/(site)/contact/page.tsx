@@ -5,10 +5,9 @@ import ContactNoScript from "@/components/contact/contact-no-script";
 import ContactRoutes from "@/components/contact/contact-routes";
 import { ContactPageJsonLd } from "@/components/json-ld";
 import StaticStars from "@/components/sky/static-stars";
+import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
-import Pair from "@/components/ui/pair";
 import RouteList from "@/components/ui/route-list";
-import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
 import { contactRoutes, topicOptions } from "@/lib/contact";
 import { contactCopy as copy } from "@/lib/copy";
@@ -91,89 +90,49 @@ export default async function ContactPage() {
             </div>
 
             <ContactDesk topics={routes.map((route) => route.topic)}>
-                <section
-                    className="section section--tight"
-                    aria-labelledby="contact-routes-h"
+                <DocSection
+                    className="section--tight"
+                    headingId="contact-routes-h"
+                    num={`${copy.num}.1`}
+                    themed={copy.routesThemed}
+                    plain={copy.routesPlain}
+                    wide
                 >
-                    <div className="shell">
-                        <SectionTag num={`${copy.num}.1`}>
-                            <h2
-                                className="section-tag__h"
-                                id="contact-routes-h"
-                            >
-                                <Pair
-                                    themed={copy.routesThemed}
-                                    plain={copy.routesPlain}
-                                />
-                            </h2>
-                        </SectionTag>
-                        <div className={styles.routes}>
-                            <ContactRoutes routes={routes} onPage />
-                        </div>
-                    </div>
-                </section>
+                    <ContactRoutes routes={routes} onPage />
+                </DocSection>
 
-                <section
-                    className="section"
+                <DocSection
                     id="message"
-                    data-contact-message
-                    aria-labelledby="contact-message-h"
+                    headingId="contact-message-h"
+                    data={{ "data-contact-message": true }}
+                    num={`${copy.num}.2`}
+                    themed={copy.messageThemed}
+                    plain={copy.messagePlain}
                 >
-                    <div className="shell grid">
-                        <div className="g-rail">
-                            <SectionTag num={`${copy.num}.2`}>
-                                <h2
-                                    className="section-tag__h"
-                                    id="contact-message-h"
-                                >
-                                    <Pair
-                                        themed={copy.messageThemed}
-                                        plain={copy.messagePlain}
-                                    />
-                                </h2>
-                            </SectionTag>
-                        </div>
-                        <div className="g-main">
-                            <div className="js-only">
-                                <ContactForm topics={topicOptions(routes)} />
-                            </div>
-                            <ContactNoScript
-                                linkedIn={getProfileLink(profile, "linkedin")}
-                                className={styles.noScript}
-                            />
-                        </div>
+                    <div className="js-only">
+                        <ContactForm topics={topicOptions(routes)} />
                     </div>
-                </section>
+                    <ContactNoScript
+                        linkedIn={getProfileLink(profile, "linkedin")}
+                        className={styles.noScript}
+                    />
+                </DocSection>
             </ContactDesk>
 
             {profiles.length ? (
-                <section
-                    className={`section ${styles.elsewhere}`}
-                    aria-labelledby="contact-else-h"
+                <DocSection
+                    className={styles.elsewhere}
+                    headingId="contact-else-h"
+                    num={`${copy.num}.3`}
+                    themed={copy.elsewhereThemed}
+                    plain={copy.elsewherePlain}
                 >
-                    <div className="shell grid">
-                        <div className="g-rail">
-                            <SectionTag num={`${copy.num}.3`}>
-                                <h2
-                                    className="section-tag__h"
-                                    id="contact-else-h"
-                                >
-                                    <Pair
-                                        themed={copy.elsewhereThemed}
-                                        plain={copy.elsewherePlain}
-                                    />
-                                </h2>
-                            </SectionTag>
-                        </div>
-                        <div className="g-main">
-                            <RouteList
-                                items={profiles}
-                                columns={2}
-                                labelledBy="contact-else-h"
-                            />
-                        </div>
-                    </div>
-                </section>
+                    <RouteList
+                        items={profiles}
+                        columns={2}
+                        labelledBy="contact-else-h"
+                    />
+                </DocSection>
             ) : null}
         </div>
     );

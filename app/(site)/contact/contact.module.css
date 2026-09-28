@@ -1,8 +1,8 @@
 /*
  * Comms · Contact (/contact): the carrier trace in the page head, the
- * routes' place and the no-JavaScript note. The head, the section tags and
- * the profile rows are shared (styles/components.css); the routes and the
- * form have their own modules beside their components.
+ * no-JavaScript note and the profiles' place. The head, the sections
+ * (DocSection) and the profile rows are shared (styles/components.css);
+ * the routes and the form have their own modules beside their components.
  */
 
 /* ---- The acquisition-of-signal trace, under the intro ------------------ */
@@ -38,11 +38,6 @@
 }
 .aosAcq {
     fill: var(--accent);
-}
-
-/* ---- Routes ----------------------------------------------------------- */
-.routes {
-    margin-top: var(--s-6);
 }
 
 /* ---- Message: without JavaScript, the way to LinkedIn ------------------- */

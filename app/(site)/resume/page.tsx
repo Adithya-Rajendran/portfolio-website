@@ -13,8 +13,8 @@ import {
     Status,
     type StatusValue,
 } from "@/components/ui/marks";
+import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
-import SectionTag from "@/components/ui/section-tag";
 import Segmented from "@/components/ui/segmented";
 import Specs from "@/components/ui/specs";
 import { getToday } from "@/lib/clock";
@@ -80,44 +80,41 @@ const PROJECT_STATUS: Record<ProjectStatus, StatusValue> = {
     stopped: "stopped",
 };
 
-/** A CV section: its tag in the rail, the rows in the main column. */
+/**
+ * A CV section: the shared section head (DocSection: the full-width tag
+ * row with its themed / plain pair), then the rows in the main column. On
+ * paper the head prints its plain name only.
+ */
 function CvSection({
     id,
     num,
-    heading,
+    themed,
+    plain,
     after,
     print = true,
     children,
 }: {
     id: string;
     num: string;
-    heading: React.ReactNode;
+    themed: string;
+    plain: React.ReactNode;
     after?: React.ReactNode;
     /** False leaves the section off the paper. */
     print?: boolean;
     children: React.ReactNode;
 }) {
     return (
-        <section
-            className={`section section--tight ${styles.cv}`}
+        <DocSection
+            className={`section--tight ${styles.cv}`}
             id={id}
-            aria-labelledby={`${id}-h`}
-            data-print={print ? undefined : "hide"}
+            num={num}
+            themed={themed}
+            plain={plain}
+            data={{ "data-print": print ? undefined : "hide" }}
         >
-            <div className={`shell grid ${styles.cvGrid}`}>
-                <div className="g-rail">
-                    <SectionTag num={num} className={styles.cvTag}>
-                        <h2 className="section-tag__h" id={`${id}-h`}>
-                            {heading}
-                        </h2>
-                    </SectionTag>
-                </div>
-                <div className="g-main">
-                    {children}
-                    {after ? <div className={styles.after}>{after}</div> : null}
-                </div>
-            </div>
-        </section>
+            {children}
+            {after ? <div className={styles.after}>{after}</div> : null}
+        </DocSection>
     );
 }
 
@@ -253,7 +250,7 @@ export default async function ResumePage() {
             dek={entry.summary}
             lines={entry.highlights}
             skills={entry.skills}
-            skillsLabel={copy.skills}
+            skillsLabel={copy.skillsLabel}
             actions={
                 model ? (
                     <Button
@@ -354,36 +351,31 @@ export default async function ResumePage() {
             </div>
 
             {model ? (
-                <section
-                    className={`section ${styles.map}`}
+                <DocSection
+                    className={styles.map}
                     id="orbit-map"
-                    aria-labelledby="cv-map-h"
-                    data-print="hide"
+                    headingId="cv-map-h"
+                    data={{ "data-print": "hide" }}
+                    num={`${copy.num}.1`}
+                    themed={copy.map.themed}
+                    plain={copy.map.plain}
+                    wide
                 >
-                    <div className="shell">
-                        <SectionTag num={`${copy.num}.1`}>
-                            <h2 className="section-tag__h" id="cv-map-h">
-                                {copy.mapTitle}
-                            </h2>
-                        </SectionTag>
-                        <div className={styles.mapBody}>
-                            <OrbitMap
-                                model={model}
-                                entries={timeline.all}
-                                planned={
-                                    openTo
-                                        ? {
-                                              text: openTo,
-                                              href: contactHref("hiring"),
-                                          }
-                                        : null
-                                }
-                                idPrefix="cv-orbit"
-                                figure={copy.figure}
-                            />
-                        </div>
-                    </div>
-                </section>
+                    <OrbitMap
+                        model={model}
+                        entries={timeline.all}
+                        planned={
+                            openTo
+                                ? {
+                                      text: openTo,
+                                      href: contactHref("hiring"),
+                                  }
+                                : null
+                        }
+                        idPrefix="cv-orbit"
+                        figure={copy.figure}
+                    />
+                </DocSection>
             ) : null}
 
             {/* The printed masthead: sheet 1 opens with it (G3). */}
@@ -418,7 +410,8 @@ export default async function ResumePage() {
                     <CvSection
                         id="education"
                         num={numOf("education")}
-                        heading={copy.education}
+                        themed={copy.education.themed}
+                        plain={copy.education.plain}
                     >
                         <CvList>{timeline.education.map(roleRow)}</CvList>
                     </CvSection>
@@ -428,7 +421,8 @@ export default async function ResumePage() {
                     <CvSection
                         id="experience"
                         num={numOf("experience")}
-                        heading={copy.experience}
+                        themed={copy.experience.themed}
+                        plain={copy.experience.plain}
                     >
                         <CvList>{timeline.experience.map(roleRow)}</CvList>
                     </CvSection>
@@ -447,7 +441,8 @@ export default async function ResumePage() {
                     <CvSection
                         id="projects"
                         num={numOf("projects")}
-                        heading={copy.projects}
+                        themed={copy.projects.themed}
+                        plain={copy.projects.plain}
                         after={
                             <LinkArrow href={siteRoutes.portfolio}>
                                 {copy.allProjects}
@@ -492,18 +487,21 @@ export default async function ResumePage() {
                     <CvSection
                         id="writing"
                         num={numOf("writing")}
-                        heading={
+                        themed={copy.writing.themed}
+                        plain={
                             writing.length && talks.length ? (
                                 <>
                                     <span data-print="hide">
-                                        {copy.writingAndTalks}
+                                        {copy.writing.plainWithTalks}
                                     </span>
-                                    <span data-print="only">{copy.talks}</span>
+                                    <span data-print="only">
+                                        {copy.writing.talks}
+                                    </span>
                                 </>
                             ) : talks.length ? (
-                                copy.talks
+                                copy.writing.talks
                             ) : (
-                                copy.writing
+                                copy.writing.plain
                             )
                         }
                         print={talks.length > 0}
@@ -547,7 +545,8 @@ export default async function ResumePage() {
                     <CvSection
                         id="skills"
                         num={numOf("skills")}
-                        heading={copy.skills}
+                        themed={copy.skills.themed}
+                        plain={copy.skills.plain}
                     >
                         <Specs
                             className={styles.skills}
@@ -564,7 +563,8 @@ export default async function ResumePage() {
                     <CvSection
                         id="certifications"
                         num={numOf("certifications")}
-                        heading={copy.certifications}
+                        themed={copy.certifications.themed}
+                        plain={copy.certifications.plain}
                     >
                         <CvList>
                             {credentials.map((credential) => (
