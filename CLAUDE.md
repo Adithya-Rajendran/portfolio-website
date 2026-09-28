@@ -229,7 +229,9 @@ only live in comments or commit messages.
   included. An unmatched URL gets a complete server-rendered 404. An unknown slug under a dynamic route
   (`notFound()` during the render) answers 404 with Next.js's recovery
   document, which only JavaScript fills (a Next.js 16.3 limitation, marked
-  `test.fail` in `tests/e2e/nojs.spec.ts`).
+  `test.fail` in `tests/e2e/nojs.spec.ts`). React renders the head's boot
+  script into that document, where it never runs, so `SiteShell`'s
+  `ThemeBootFallback` runs it once when `html[data-js]` is missing.
 - Metadata image routes inside a route group get a stable `-<hash>` URL
   suffix from Next.js (`/about/opengraph-image-1ycygp`; `next build` prints
   them). Anything that requests them directly, like the warm lists
@@ -447,10 +449,11 @@ deployment require an authenticated Sanity CLI session.
   through the popover menu, footer, Void with no motion and no theme
   controls, no hidden streamed segments, nothing rendered twice), `a11y`
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
-  Flight Manual, every page in full), `layout` (no
+  Flight Manual, every page in full, and both kinds of 404), `layout` (no
   sideways scroll at 320–1920 px, and the header's parts fit without
   overlapping), `theme` (no flash of the wrong theme, persistence across
-  reloads, pages and tabs, Auto following the OS, Pause motion), `chrome`
+  reloads, pages and tabs, Auto following the OS, Pause motion, the stored
+  theme on an unknown post or project URL), `chrome`
   (the menu sheet's focus, `inert` and closing; the current nav section),
   `contact` (routes pick the form's topic by click and by fragment, field
   checks, a refused send keeps the draft and its stale alert clears after

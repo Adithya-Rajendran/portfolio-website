@@ -4,13 +4,15 @@ import { Analytics } from "@vercel/analytics/react";
 import Footer from "@/components/footer";
 import SiteHeader from "@/components/chrome/site-header";
 import SvgSprite from "@/components/chrome/svg-sprite";
+import ThemeBootFallback from "@/components/chrome/theme-boot-fallback";
 import { PersonJsonLd, WebSiteJsonLd } from "@/components/json-ld";
 import { chromeCopy } from "@/lib/copy";
 
 /**
  * Server-rendered public site chrome, part of every page's static shell:
  * the skip link, the sprite, the header, the one <main>, the footer,
- * JSON-LD and analytics. Rendered by app/(site)/layout.tsx and, for
+ * JSON-LD and analytics, plus the boot script's fallback for Next.js's
+ * not-found recovery document (ThemeBootFallback). Rendered by app/(site)/layout.tsx and, for
  * unmatched URLs, app/global-not-found.tsx. The Studio sits outside the
  * (site) group and never loads any of this.
  *
@@ -23,6 +25,7 @@ import { chromeCopy } from "@/lib/copy";
 export default function SiteShell({ children }: { children: React.ReactNode }) {
     return (
         <>
+            <ThemeBootFallback />
             <a className="skip-link" id="top" href="#main-content">
                 {chromeCopy.skipLink}
             </a>

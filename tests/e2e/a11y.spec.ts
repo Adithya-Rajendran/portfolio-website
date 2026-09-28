@@ -52,13 +52,17 @@ for (const theme of THEMES) {
                 }
             });
 
-            test("the 404 page has no violations", async ({ page }) => {
-                await expectNoViolations(
-                    page,
-                    theme,
+            test("the 404 pages have no violations", async ({ page }) => {
+                // An unmatched URL, and an unknown post (Next.js's
+                // recovery document, filled by JavaScript).
+                for (const path of [
                     MISSING_PAGES.unmatched,
-                    404,
-                );
+                    MISSING_PAGES.post,
+                ]) {
+                    await test.step(path, () =>
+                        expectNoViolations(page, theme, path, 404),
+                    );
+                }
             });
         });
     }

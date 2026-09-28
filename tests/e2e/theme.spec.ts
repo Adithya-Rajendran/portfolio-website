@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { chromeCopy } from "@/lib/copy";
+import { MISSING_PAGES } from "./support/routes";
 import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
 
@@ -118,6 +119,22 @@ test("a choice made in another tab applies here", async ({ page, context }) => {
     await expect(
         footerChoice(page).getByRole("radio", { name: /Manual/ }),
     ).toBeChecked();
+});
+
+test("an unknown post or project URL keeps the stored theme and controls", async ({
+    page,
+}) => {
+    // Next.js answers these with a recovery document that only JavaScript
+    // fills, so the head's boot script never runs there (ThemeBootFallback).
+    await storeTheme(page, "manual");
+    for (const path of [MISSING_PAGES.post, MISSING_PAGES.project]) {
+        const response = await page.goto(path);
+        expect(response?.status(), path).toBe(404);
+        await expect(html(page), path).toHaveAttribute("data-theme", "manual");
+        await expect(html(page), path).toHaveAttribute("data-js", "");
+        await expect(headerSwitch(page, "dark"), path).toBeVisible();
+        await expect(footerChoice(page), path).toBeVisible();
+    }
 });
 
 test("Pause motion reduces motion and is remembered", async ({ page }) => {
