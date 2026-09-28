@@ -1,18 +1,22 @@
-import { existsSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { normalizeMetadataRoute } from "next/dist/lib/metadata/get-metadata-route";
-import { normalizeAppPath } from "next/dist/shared/lib/router/utils/app-paths";
 import { siteConfig } from "@/lib/config";
-import { warmBlogCache, warmProfileCache } from "@/actions/warmCache";
-import { PROFILE_OG_IMAGE_PATHS } from "@/lib/og-image-paths";
+import {
+    warm,
+    warmBlogCache,
+    warmProfileCache,
+    warmProjectCache,
+} from "@/actions/warmCache";
+import { warmPaths } from "@/lib/route-tags";
 import type { PostListItem } from "@/lib/sanity-client";
 
-const { getAllPostsMock } = vi.hoisted(() => ({
+const { getAllPostsMock, getAllProjectSlugsMock } = vi.hoisted(() => ({
     getAllPostsMock: vi.fn(),
+    getAllProjectSlugsMock: vi.fn(),
 }));
 
 vi.mock("@/lib/sanity-client", () => ({
     getAllPosts: getAllPostsMock,
+    getAllProjectSlugs: getAllProjectSlugsMock,
 }));
 
 const fetchMock = vi.fn();
@@ -30,10 +34,15 @@ function postOf(overrides: Partial<PostListItem> = {}): PostListItem {
     };
 }
 
+const url = (path: string) => `${siteConfig.url}${path}`;
+
 beforeEach(() => {
     getAllPostsMock.mockReset();
+    getAllPostsMock.mockResolvedValue([postOf()]);
+    getAllProjectSlugsMock.mockReset();
+    getAllProjectSlugsMock.mockResolvedValue(["homelab"]);
     fetchMock.mockReset();
-    fetchMock.mockResolvedValue({ ok: true });
+    fetchMock.mockResolvedValue({ ok: true, status: 200 });
     vi.stubGlobal("fetch", fetchMock);
 });
 
@@ -41,38 +50,85 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
+describe("warm", () => {
+    it("requests exactly the routes lib/route-tags.ts lists under each tag", async () => {
+        const lists = {
+            post: ["vision-experiment"],
+            tag: ["robotics"],
+            project: ["homelab"],
+        };
+        for (const tag of ["post", "profile", "project"] as const) {
+            fetchMock.mockClear();
+            const result = await warm(tag);
+            const expected = warmPaths(tag, lists).map(({ path }) => url(path));
+            expect(result.pages.warmed, tag).toEqual(expected);
+            expect(result.pages.failed, tag).toEqual([]);
+            expect(fetchMock.mock.calls.map(([called]) => called)).toEqual(
+                expected,
+            );
+        }
+    });
+
+    it("stays on the site, away from the Studio and the API", async () => {
+        for (const tag of ["post", "profile", "project"] as const) {
+            await warm(tag);
+        }
+        const called = fetchMock.mock.calls.map(([target]) => target as string);
+        expect(
+            called.every((target) => new URL(target).origin === siteConfig.url),
+        ).toBe(true);
+        expect(
+            called.some(
+                (target) =>
+                    target.includes("/studio") || target.includes("/api/"),
+            ),
+        ).toBe(false);
+    });
+});
+
 describe("warmBlogCache", () => {
-    it("refreshes the home entry point alongside the published article and its topic", async () => {
-        getAllPostsMock.mockResolvedValue([postOf()]);
+    it("refreshes the entry points, the article, its topic and the pages that list posts", async () => {
+        const result = await warmBlogCache();
+
+        expect(result.pages.failed).toEqual([]);
+        expect(result.pages.warmed).toEqual(
+            expect.arrayContaining([
+                url("/"),
+                url("/blog"),
+                url("/blog/archive"),
+                url("/feed.xml"),
+                url("/blog/vision-experiment"),
+                url("/blog/vision-experiment/opengraph-image-fx5gi7"),
+                url("/blog/tags/robotics"),
+                // Pages that list posts since the redesign's route map.
+                url("/about"),
+                url("/portfolio"),
+                url("/portfolio/homelab"),
+            ]),
+        );
+        expect(fetchMock).toHaveBeenCalledWith(url("/"), {
+            headers: { "x-cache-warm": "1" },
+        });
+    });
+
+    it("refreshes listings after the final post and project are removed", async () => {
+        getAllPostsMock.mockResolvedValue([]);
+        getAllProjectSlugsMock.mockResolvedValue([]);
 
         const result = await warmBlogCache();
 
         expect(result.pages.failed).toEqual([]);
         expect(result.pages.warmed).toEqual(
             expect.arrayContaining([
-                `${siteConfig.url}/`,
-                `${siteConfig.url}/feed.xml`,
-                `${siteConfig.url}/blog/vision-experiment`,
-                `${siteConfig.url}/blog/tags/robotics`,
+                url("/"),
+                url("/blog"),
+                url("/blog/archive"),
+                url("/feed.xml"),
             ]),
         );
-        expect(fetchMock).toHaveBeenCalledWith(`${siteConfig.url}/`, {
-            headers: { "x-cache-warm": "1" },
-        });
-    });
-
-    it("refreshes empty listings after the final post is unpublished", async () => {
-        getAllPostsMock.mockResolvedValue([]);
-
-        const result = await warmBlogCache();
-
-        expect(result.pages.warmed).toEqual([
-            `${siteConfig.url}/`,
-            `${siteConfig.url}/blog`,
-            `${siteConfig.url}/blog/archive`,
-            `${siteConfig.url}/feed.xml`,
-        ]);
-        expect(result.pages.failed).toEqual([]);
+        expect(result.pages.warmed.some((target) => target.includes("["))).toBe(
+            false,
+        );
     });
 
     it("isolates a failing homepage response and rejects unsafe document URLs", async () => {
@@ -80,81 +136,122 @@ describe("warmBlogCache", () => {
             postOf(),
             postOf({ slug: "../../api/revalidate", tags: ["../admin"] }),
         ]);
-        fetchMock.mockImplementation(async (url: string) => ({
-            ok: url !== `${siteConfig.url}/`,
-            status: url === `${siteConfig.url}/` ? 503 : 200,
+        getAllProjectSlugsMock.mockResolvedValue(["homelab", "../studio"]);
+        fetchMock.mockImplementation(async (target: string) => ({
+            ok: target !== url("/"),
+            status: target === url("/") ? 503 : 200,
         }));
 
         const result = await warmBlogCache();
 
-        expect(result.pages.failed).toEqual([`${siteConfig.url}/`]);
-        expect(result.pages.warmed).toContain(
-            `${siteConfig.url}/blog/vision-experiment`,
-        );
-        expect(fetchMock.mock.calls.every(([url]) => !url.includes(".."))).toBe(
-            true,
-        );
+        expect(result.pages.failed).toEqual([url("/")]);
+        expect(result.pages.warmed).toContain(url("/blog/vision-experiment"));
+        expect(
+            fetchMock.mock.calls.every(([target]) => !target.includes("..")),
+        ).toBe(true);
     });
 });
 
 describe("warmProfileCache", () => {
-    it("refreshes public identity, writing, feed, and sharing images without reading the entire post collection", async () => {
+    it("refreshes identity pages, sharing images and every page that shows the profile's content", async () => {
         const result = await warmProfileCache();
 
-        expect(getAllPostsMock).not.toHaveBeenCalled();
         expect(result.pages.failed).toEqual([]);
         expect(result.pages.warmed).toEqual(
             expect.arrayContaining([
-                `${siteConfig.url}/`,
-                `${siteConfig.url}/about`,
-                `${siteConfig.url}/portfolio`,
-                `${siteConfig.url}/resume`,
-                `${siteConfig.url}/blog`,
-                `${siteConfig.url}/blog/archive`,
-                `${siteConfig.url}/feed.xml`,
-                `${siteConfig.url}/opengraph-image-12o0cb`,
-                `${siteConfig.url}/about/opengraph-image-1ycygp`,
-                `${siteConfig.url}/portfolio/opengraph-image-98lokn`,
-                `${siteConfig.url}/blog/opengraph-image-14vkmf`,
+                url("/"),
+                url("/about"),
+                url("/portfolio"),
+                url("/resume"),
+                url("/blog"),
+                url("/blog/archive"),
+                url("/feed.xml"),
+                url("/opengraph-image-12o0cb"),
+                url("/about/opengraph-image-1ycygp"),
+                url("/portfolio/opengraph-image-98lokn"),
+                url("/blog/opengraph-image-14vkmf"),
+                url("/blog/archive/opengraph-image-dfhyke"),
+                url("/resume/opengraph-image-1nyaml"),
+                url("/resume/view"),
+                url("/resume/download"),
             ]),
         );
-        expect(
-            fetchMock.mock.calls.every(
-                ([url]) => new URL(url).origin === siteConfig.url,
-            ),
-        ).toBe(true);
-        expect(
-            fetchMock.mock.calls.some(
-                ([url]) => url.includes("/studio") || url.includes("/api/"),
-            ),
-        ).toBe(false);
     });
 
-    it("continues refreshing the feed and sharing images after a profile page fails", async () => {
-        fetchMock.mockImplementation(async (url: string) => {
-            if (url === `${siteConfig.url}/about`)
-                throw new Error("connection failed");
-            return { ok: true };
+    it("warms the CV links without following them to the PDF", async () => {
+        fetchMock.mockImplementation(async (target: string) =>
+            [url("/resume/view"), url("/resume/download")].includes(target)
+                ? { ok: false, status: 307 }
+                : { ok: true, status: 200 },
+        );
+
+        const result = await warmProfileCache();
+
+        expect(result.pages.failed).toEqual([]);
+        expect(fetchMock).toHaveBeenCalledWith(url("/resume/view"), {
+            headers: { "x-cache-warm": "1" },
+            redirect: "manual",
+        });
+        expect(fetchMock).toHaveBeenCalledWith(url("/resume"), {
+            headers: { "x-cache-warm": "1" },
+        });
+    });
+
+    it("counts a redirect from a page, or an error from a CV link, as a failure", async () => {
+        fetchMock.mockImplementation(async (target: string) => {
+            if (target === url("/about")) return { ok: false, status: 308 };
+            if (target === url("/resume/download")) {
+                return { ok: false, status: 500 };
+            }
+            return { ok: true, status: 200 };
         });
 
         const result = await warmProfileCache();
 
-        expect(result.pages.failed).toEqual([`${siteConfig.url}/about`]);
-        expect(result.pages.warmed).toContain(`${siteConfig.url}/feed.xml`);
-        expect(result.pages.warmed).toContain(
-            `${siteConfig.url}/blog/opengraph-image-14vkmf`,
-        );
+        expect(result.pages.failed).toEqual([
+            url("/about"),
+            url("/resume/download"),
+        ]);
     });
 
-    it("warms the sharing-image URLs Next.js builds for each file", () => {
-        // Route groups add a hashed suffix to metadata image routes. Recompute
-        // each built URL from its file with Next's own helper, so moving a
-        // file or a Next.js change fails here instead of silently warming 404s.
-        for (const [file, path] of Object.entries(PROFILE_OG_IMAGE_PATHS)) {
-            expect(existsSync(file)).toBe(true);
-            const page = `/${file.replace(/^app\//, "").replace(/\.tsx$/, "")}`;
-            const route = normalizeMetadataRoute(page).replace(/\/route$/, "");
-            expect(normalizeAppPath(route)).toBe(path);
-        }
+    it("continues refreshing the feed and sharing images after a profile page fails", async () => {
+        fetchMock.mockImplementation(async (target: string) => {
+            if (target === url("/about")) throw new Error("connection failed");
+            return { ok: true, status: 200 };
+        });
+
+        const result = await warmProfileCache();
+
+        expect(result.pages.failed).toEqual([url("/about")]);
+        expect(result.pages.warmed).toContain(url("/feed.xml"));
+        expect(result.pages.warmed).toContain(
+            url("/blog/opengraph-image-14vkmf"),
+        );
+    });
+});
+
+describe("warmProjectCache", () => {
+    it("refreshes the mission page, the pages that list missions and the posts that link to them", async () => {
+        getAllProjectSlugsMock.mockResolvedValue(["homelab", "website"]);
+
+        const result = await warmProjectCache();
+
+        expect(result.pages.failed).toEqual([]);
+        expect(result.pages.warmed).toEqual(
+            expect.arrayContaining([
+                url("/portfolio/homelab"),
+                url("/portfolio/website"),
+                url("/portfolio"),
+                url("/portfolio/opengraph-image-98lokn"),
+                url("/"),
+                url("/about"),
+                url("/resume"),
+                url("/sitemap.xml"),
+                url("/blog/vision-experiment"),
+            ]),
+        );
+        // Tag pages and the feed show no project content.
+        expect(result.pages.warmed).not.toContain(url("/blog/tags/robotics"));
+        expect(result.pages.warmed).not.toContain(url("/feed.xml"));
     });
 });

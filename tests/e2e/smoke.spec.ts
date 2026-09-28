@@ -1,10 +1,11 @@
 import type { APIRequestContext, Page } from "@playwright/test";
-import { PROFILE_OG_IMAGE_PATHS } from "@/lib/og-image-paths";
+import { warmPaths, type WarmLists } from "@/lib/route-tags";
 import { expect, test, type PageErrors } from "./support/test";
 import {
     MISSING_PAGES,
     STATIC_PAGES,
     contentPages,
+    sitemapPages,
     sitePath,
 } from "./support/routes";
 
@@ -105,15 +106,39 @@ test.describe("routes and headers", () => {
         }
     });
 
-    test("every share image the profile warm list requests exists", async ({
-        request,
-    }) => {
-        // actions/warmCache.ts requests these hashed URLs after profile
-        // edits; a 404 here means the warm list has drifted from the build.
-        for (const path of Object.values(PROFILE_OG_IMAGE_PATHS)) {
-            const response = await request.get(path);
-            expect(response.status(), path).toBe(200);
-            expect(response.headers()["content-type"], path).toBe("image/png");
+    test("every URL the warm lists request answers", async ({ request }) => {
+        // actions/warmCache.ts requests these paths (lib/route-tags.ts)
+        // after a change; a 404 here means the table has drifted from the
+        // build. The dynamic routes expand from this build's sitemap.
+        const listed = await sitemapPages(request);
+        const values = (pattern: RegExp) =>
+            listed.flatMap((path) => pattern.exec(path)?.slice(1) ?? []);
+        const lists: WarmLists = {
+            post: values(/^\/blog\/(?!tags\/|archive$)([^/]+)$/),
+            tag: values(/^\/blog\/tags\/([^/]+)$/),
+            project: values(/^\/portfolio\/([^/]+)$/),
+        };
+        expect(lists.post.length, "posts in the sitemap").toBeGreaterThan(0);
+        const targets = new Map(
+            (["profile", "post", "project"] as const)
+                .flatMap((tag) => warmPaths(tag, lists))
+                .map((target) => [target.path, target]),
+        );
+        for (const { path, redirects } of targets.values()) {
+            const response = await request.get(path, {
+                maxRedirects: redirects ? 0 : undefined,
+            });
+            if (redirects) {
+                expect(response.status(), path).toBeGreaterThanOrEqual(300);
+                expect(response.status(), path).toBeLessThan(400);
+            } else {
+                expect(response.status(), path).toBe(200);
+            }
+            if (path.includes("/opengraph-image-")) {
+                expect(response.headers()["content-type"], path).toBe(
+                    "image/png",
+                );
+            }
         }
     });
 

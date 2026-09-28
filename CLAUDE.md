@@ -55,10 +55,9 @@ only live in comments or commit messages.
   `SiteShell`, because it sits outside the group.
 - Metadata image routes inside a route group get a stable `-<hash>` URL
   suffix from Next.js (`/about/opengraph-image-1ycygp`; `next build` prints
-  them). Anything that requests them directly, like the warm list
-  (`lib/og-image-paths.ts`, used by `actions/warmCache.ts`), uses the built
-  URL; a Vitest test recomputes each one and the e2e smoke spec requests
-  each one from a real build.
+  them). Anything that requests them directly, like the warm lists
+  (`lib/route-tags.ts`), uses the built URL; a Vitest test recomputes each
+  one and the e2e smoke spec requests each one from a real build.
 
 ## Caching contract
 
@@ -68,18 +67,31 @@ only live in comments or commit messages.
 - There are exactly **two** invalidators:
     1. The Sanity webhook, `app/api/revalidate/route.ts`. It revalidates
        the matching type tag when a `profile`, `post`, or `project` document
-       changes. Adding a new frontend query requires choosing one of those
-       three ownership tags and adding its webhook dispatch deliberately.
+       changes, then warms that tag's routes (below). Adding a new frontend
+       query requires choosing one of those three ownership tags and adding
+       its webhook dispatch deliberately. The webhook's filter in the Sanity
+       dashboard must include all three types.
     2. The daily Vercel Cron, `app/api/cron/publish-due/route.ts`
        (schedule in `vercel.json`, 00:05 UTC). `publishedAt` is a date and
        visibility is gated by `publishedAt <= $today`, so a future post
        crosses the gate on its UTC date without a document change. The cron
-       performs an uncached query for posts dated today and revalidates the
-       `post` tag. Auth is
+       performs an uncached query for posts dated today, revalidates the
+       `post` tag and warms its routes. Auth is
        `Authorization: Bearer ${CRON_SECRET}` (Vercel attaches it
        automatically); missing/wrong auth → stealth 404. If `CRON_SECRET`
        is unset, same-day publishing silently degrades to the pages' daily
        cache revalidation.
+- `lib/route-tags.ts` is the route → tag table: every URL the app serves
+  (pages, share images at their built URL, the feed, the sitemap, the CV
+  redirects, icons, API routes and the Studio) with the tags of the content
+  it shows. `warm(tag)` in `actions/warmCache.ts` requests every route
+  listed under a tag, expanding `[slug]` and `[tag]` from the published
+  post and project lists; `warmBlogCache`, `warmProfileCache` and
+  `warmProjectCache` are its wrappers. A new route goes into the table in
+  the PR that adds it: `tests/lib/route-tags.test.ts` fails for a route file
+  missing from the table or a path that differs from the build, and the
+  e2e smoke spec requests every warmed URL. Redirect routes (`redirects`)
+  are warmed without following the redirect.
 - Derived artifacts that include the post list (`app/feed.xml/route.ts`,
   `app/sitemap.ts`) use `cacheLife("days")`, never `"max"`: a post whose
   `publishedAt` arrives must reach them within a day even if the cron is

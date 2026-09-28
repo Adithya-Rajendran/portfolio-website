@@ -2,99 +2,82 @@
 // A "use server" directive would expose warming as a public unauthenticated
 // endpoint / traffic-amplification lever.
 
-import { getAllPosts } from "@/lib/sanity-client";
+import { getAllPosts, getAllProjectSlugs } from "@/lib/sanity-client";
+import { CACHE_TAGS, type CacheTag } from "@/lib/cache-tags";
 import { siteConfig } from "@/lib/config";
 import { getPostSlug } from "@/components/blogs/utils";
+import { warmPaths, type WarmTarget } from "@/lib/route-tags";
 import { collectTags } from "@/lib/tags";
-import { PROFILE_OG_IMAGE_PATHS } from "@/lib/og-image-paths";
-
-const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
 interface WarmResult {
     pages: { warmed: string[]; failed: string[] };
 }
 
-export async function warmBlogCache(): Promise<WarmResult> {
-    // One query: the list projection carries the slugs and tags needed for
-    // every public blog route.
-    const posts = await getAllPosts();
-    const slugs = posts.map(getPostSlug).filter(Boolean);
-    // collectTags already TAG_PATTERN-filters, so every tag here is
-    // URL-safe by construction — no extra SAFE_SLUG-style gate needed.
-    const tags = collectTags(posts).map(({ tag }) => tag);
-
-    const pages = await warmPages(slugs, tags);
-
-    return { pages };
-}
-
 /**
- * Profile edits affect identity, editorial copy, links, and résumé metadata.
- * Keep this list bounded: other pages are refreshed when visited through the
- * shared profile tag, without crawling the entire writing archive each edit.
+ * Request every route that shows content under `tag` (lib/route-tags.ts),
+ * so its stale pages regenerate before a reader asks for them. The post
+ * and project lists give the slugs and tags of the dynamic routes; entry
+ * points are warmed even when those lists are empty, so listings refresh
+ * after the last post or project is removed.
  */
-export async function warmProfileCache(): Promise<WarmResult> {
-    const paths = [
-        "/",
-        "/about",
-        "/portfolio",
-        "/resume",
-        "/blog",
-        "/blog/archive",
-        "/feed.xml",
-        ...Object.values(PROFILE_OG_IMAGE_PATHS),
-    ];
-    return {
-        pages: await warmUrls(paths.map((path) => `${siteConfig.url}${path}`)),
-    };
+export async function warm(tag: CacheTag): Promise<WarmResult> {
+    const [posts, projectSlugs] = await Promise.all([
+        getAllPosts(),
+        getAllProjectSlugs(),
+    ]);
+    const targets = warmPaths(tag, {
+        post: posts.map(getPostSlug),
+        tag: collectTags(posts).map(({ tag: name }) => name),
+        project: projectSlugs,
+    });
+    return { pages: await warmUrls(targets) };
 }
 
-/** Warm the writing-led homepage, feed, listings, and every published post. */
-async function warmPages(
-    slugs: string[],
-    tags: string[],
-): Promise<{ warmed: string[]; failed: string[] }> {
-    // Defence-in-depth: only warm slugs that match the safe pattern.
-    // Sanity schemas validate slugs, but treating them as URL fragments
-    // without checking would let a misconfigured doc trigger fetches against
-    // arbitrary site paths.
-    const safeSlugs = slugs.filter((slug) => SAFE_SLUG.test(slug));
+/** After a post is published, changed or removed, and by the publish cron. */
+export function warmBlogCache(): Promise<WarmResult> {
+    return warm(CACHE_TAGS.post);
+}
 
-    // Always warm the entry points, including after the last post is removed.
-    const urls = [
-        `${siteConfig.url}/`,
-        `${siteConfig.url}/blog`,
-        `${siteConfig.url}/blog/archive`,
-        `${siteConfig.url}/feed.xml`,
-        ...tags.map((tag) => `${siteConfig.url}/blog/tags/${tag}`),
-        ...safeSlugs.map((slug) => `${siteConfig.url}/blog/${slug}`),
-    ];
+/** After the profile changes. */
+export function warmProfileCache(): Promise<WarmResult> {
+    return warm(CACHE_TAGS.profile);
+}
 
-    return warmUrls(urls);
+/** After a project is published, changed or removed. */
+export function warmProjectCache(): Promise<WarmResult> {
+    return warm(CACHE_TAGS.project);
 }
 
 async function warmUrls(
-    urls: string[],
+    targets: WarmTarget[],
 ): Promise<{ warmed: string[]; failed: string[] }> {
     const warmed: string[] = [];
     const failed: string[] = [];
     const batchSize = 5;
-    for (let i = 0; i < urls.length; i += batchSize) {
-        const batch = urls.slice(i, i + batchSize);
+    for (let i = 0; i < targets.length; i += batchSize) {
+        const batch = targets.slice(i, i + batchSize);
         const results = await Promise.allSettled(
-            batch.map(async (url) => {
+            batch.map(async ({ path, redirects }) => {
+                const url = `${siteConfig.url}${path}`;
+                // A redirect route's cached answer is the redirect itself:
+                // do not follow it to the file it points at.
                 const res = await fetch(url, {
                     headers: { "x-cache-warm": "1" },
+                    ...(redirects ? { redirect: "manual" as const } : {}),
                 });
-                if (!res.ok) throw new Error(`${res.status}`);
+                const answered =
+                    res.ok ||
+                    (redirects && res.status >= 300 && res.status < 400);
+                if (!answered) throw new Error(`${res.status}`);
                 return url;
             }),
         );
         for (const [index, result] of results.entries()) {
+            const url = `${siteConfig.url}${batch[index].path}`;
             if (result.status === "fulfilled") {
-                warmed.push(result.value);
+                warmed.push(url);
             } else {
-                failed.push(batch[index]);
+                failed.push(url);
             }
         }
     }

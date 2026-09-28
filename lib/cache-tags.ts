@@ -4,3 +4,5 @@ export const CACHE_TAGS = {
     post: "post",
     project: "project",
 } as const;
+
+export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];

@@ -1,7 +1,11 @@
 import { revalidateTag } from "next/cache";
 import { after, type NextRequest, NextResponse } from "next/server";
 import { parseBody } from "next-sanity/webhook";
-import { warmBlogCache, warmProfileCache } from "@/actions/warmCache";
+import {
+    warmBlogCache,
+    warmProfileCache,
+    warmProjectCache,
+} from "@/actions/warmCache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 
 // Secret shared between Sanity webhook and this API route
@@ -82,9 +86,28 @@ export async function POST(req: NextRequest) {
 
         if (docType === "project") {
             revalidateTag(CACHE_TAGS.project, "max");
+
+            // Mission pages, the lists that show projects and the posts that
+            // link to them (lib/route-tags.ts).
+            after(async () => {
+                try {
+                    const result = await warmProjectCache();
+                    console.log(
+                        `[Revalidate] Warmed ${result.pages.warmed.length} project pages ` +
+                            `(${result.pages.failed.length} failed)`,
+                    );
+                } catch (err) {
+                    console.error(
+                        "[Revalidate] Project cache warming failed:",
+                        err,
+                    );
+                }
+            });
+
             return NextResponse.json({
                 revalidated: true,
                 message: `Revalidated tag "${CACHE_TAGS.project}"`,
+                warming: "scheduled",
                 now: Date.now(),
             });
         }
