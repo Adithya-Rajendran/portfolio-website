@@ -12,9 +12,9 @@ export const siteRoutes = {
     portfolio: "/portfolio",
     resume: "/resume",
     about: "/about",
-    /** The Comms page arrives in PR 8; until then Comms is the form on
-     *  /portfolio, whose #contact anchor stays valid afterwards too. */
-    contact: "/portfolio#contact",
+    /** Comms: the contact routes and the form. /portfolio#contact keeps
+     *  the same form for links shared before the page existed. */
+    contact: "/contact",
     resumePdf: "/resume/view",
     feed: "/feed.xml",
 } as const;
@@ -106,6 +106,14 @@ export const footerLinks = [
     { href: siteRoutes.resumePdf, label: "Résumé (PDF)" },
     { href: siteRoutes.feed, label: "RSS feed" },
 ] as const;
+
+/**
+ * A contact route from anywhere on the site: "/contact#hiring" opens Comms
+ * with that route's topic chosen (lib/contact.ts lists the topics).
+ */
+export function contactHref(topic?: string): string {
+    return topic ? `${siteRoutes.contact}#${topic}` : siteRoutes.contact;
+}
 
 /** The accessible name of a pair: "Flight Log, Blog". */
 export function pairName(item: { themed: string; plain: string }): string {

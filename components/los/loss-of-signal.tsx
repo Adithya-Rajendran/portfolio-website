@@ -6,10 +6,10 @@ import { Icon } from "@/components/ui/icon";
 import RequestedPath from "@/components/los/requested-path";
 import { lossOfSignalCopy } from "@/lib/copy";
 import {
+    contactHref,
     homeRoute,
     pairName,
     primaryNavigation,
-    siteRoutes,
 } from "@/lib/navigation";
 import {
     TRACE_AXIS,
@@ -245,7 +245,9 @@ export default function LossOfSignal({
                     </nav>
                     <p className="los-report">
                         {copy.report}{" "}
-                        <Link href={siteRoutes.contact}>{copy.reportLink}</Link>{" "}
+                        <Link href={contactHref("hello")}>
+                            {copy.reportLink}
+                        </Link>{" "}
                         {copy.reportTail}
                     </p>
                 </div>

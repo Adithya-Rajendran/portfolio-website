@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     buildBlog,
     buildBlogPosting,
+    buildContactPage,
     buildPersonEntity,
     buildProfilePage,
 } from "@/lib/structured-data";
@@ -296,5 +297,60 @@ describe("buildBlog", () => {
         expect(blog.name).toBe(`${siteConfig.author} — Blog`);
         expect(blog.url).toBe(`${siteConfig.url}/blog`);
         expect(blog.description).toBe(BLOG_DESCRIPTION);
+    });
+});
+
+describe("buildContactPage", () => {
+    it("describes /contact as a ContactPage about the person, with the profile's links", () => {
+        const page = buildContactPage(
+            profileOf({
+                contactInvitation: "Working on robotic vision?",
+                socialLinks: [
+                    {
+                        _key: "linkedin",
+                        label: "LinkedIn",
+                        url: "https://www.linkedin.com/in/adithya-rajendran",
+                    },
+                ],
+            }),
+        );
+        expect(page["@type"]).toBe("ContactPage");
+        expect(page.url).toBe(`${siteConfig.url}/contact`);
+        expect(page.description).toBe("Working on robotic vision?");
+        expect(page.about).toEqual({
+            "@type": "Person",
+            name: "Adithya Rajendran",
+            url: siteConfig.url,
+            sameAs: ["https://www.linkedin.com/in/adithya-rajendran"],
+        });
+    });
+
+    it("never publishes an email address, a phone number or a contact point", () => {
+        // The form is the only channel: no public email or phone anywhere.
+        const json = JSON.stringify(
+            buildContactPage(
+                profileOf({
+                    socialLinks: [
+                        {
+                            _key: "mail",
+                            label: "Email",
+                            url: "mailto:someone@example.com",
+                        },
+                    ],
+                }),
+            ),
+        );
+        for (const key of ["email", "telephone", "contactPoint", "faxNumber"]) {
+            expect(json).not.toContain(`"${key}"`);
+        }
+        expect(json).not.toMatch(/mailto:|tel:/);
+    });
+
+    it("falls back to the page's own line without a profile", () => {
+        const page = buildContactPage();
+        expect(page.description).toBe(
+            "An idea, a question, or an opportunity. I’d like to hear from you.",
+        );
+        expect(page.about.sameAs).toEqual(socialProfiles);
     });
 });

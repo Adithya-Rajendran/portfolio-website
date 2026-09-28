@@ -51,6 +51,11 @@ async function importSendEmail() {
     return mod.sendEmail;
 }
 
+async function importEmailTemplate() {
+    const mod = await import("@/email/contact-form-email");
+    return vi.mocked(mod.default);
+}
+
 beforeEach(() => {
     vi.resetModules();
     resendSendMock.mockReset();
@@ -275,5 +280,117 @@ describe("sendEmail — happy path and Resend integration", () => {
         // Vercel WAF receives the synthetic Request without that header
         // and falls back to its own IP resolution server-side.
         expect(result).toHaveProperty("data");
+    });
+});
+
+describe("sendEmail — topic", () => {
+    it("sends as a hello when no topic is chosen", async () => {
+        withIp("10.0.4.1");
+        const sendEmail = await importSendEmail();
+        const template = await importEmailTemplate();
+
+        const result = await sendEmail(
+            formDataOf({ senderEmail: "a@example.com", message: "hi" }),
+        );
+
+        expect(result).toMatchObject({ topic: "hello" });
+        expect(resendSendMock.mock.calls[0][0].subject).toBe(
+            "[Hello] Contact Form for My Website",
+        );
+        expect(template).toHaveBeenCalledWith({
+            message: "hi",
+            senderEmail: "a@example.com",
+            topic: "hello",
+        });
+    });
+
+    it("prefixes the subject with the chosen route's topic", async () => {
+        withIp("10.0.4.2");
+        const sendEmail = await importSendEmail();
+
+        for (const [topic, subject] of [
+            ["hiring", "[Hiring] Contact Form for My Website"],
+            ["research", "[Research] Contact Form for My Website"],
+            ["consulting", "[Consulting] Contact Form for My Website"],
+            ["", "[Hello] Contact Form for My Website"],
+        ]) {
+            resendSendMock.mockClear();
+            const result = await sendEmail(
+                formDataOf({
+                    senderEmail: "a@example.com",
+                    message: "hi",
+                    topic,
+                }),
+            );
+            expect(result, topic).toMatchObject({ topic: topic || "hello" });
+            expect(resendSendMock.mock.calls[0][0].subject, topic).toBe(
+                subject,
+            );
+        }
+    });
+
+    it("refuses an unknown topic before any lookup or send", async () => {
+        withIp("10.0.4.3");
+        const sendEmail = await importSendEmail();
+
+        const result = await sendEmail(
+            formDataOf({
+                senderEmail: "a@example.com",
+                message: "hi",
+                topic: "role",
+            }),
+        );
+
+        expect(result).toEqual({ error: "Choose one of the listed topics." });
+        expect(resolveMxMock).not.toHaveBeenCalled();
+        expect(resendSendMock).not.toHaveBeenCalled();
+    });
+
+    it("still checks BotID first, whatever the topic", async () => {
+        withIp("10.0.4.4");
+        checkBotIdMock.mockResolvedValue({ isBot: true });
+        const sendEmail = await importSendEmail();
+
+        const result = await sendEmail(
+            formDataOf({
+                senderEmail: "a@example.com",
+                message: "hi",
+                topic: "hiring",
+            }),
+        );
+
+        expect((result as { error: string }).error).toMatch(/verification/i);
+        expect(checkRateLimitMock).not.toHaveBeenCalled();
+        expect(resendSendMock).not.toHaveBeenCalled();
+    });
+
+    it("reports the topic sent to the form", async () => {
+        withIp("10.0.4.5");
+        const { sendEmailAction } = await import("@/actions/sendEmail");
+        const { INITIAL_CONTACT_FORM_STATE } = await import("@/lib/contact");
+
+        await expect(
+            sendEmailAction(
+                INITIAL_CONTACT_FORM_STATE,
+                formDataOf({
+                    senderEmail: "a@example.com",
+                    message: "hi",
+                    topic: "research",
+                }),
+            ),
+        ).resolves.toEqual({ status: "success", topic: "research" });
+        await expect(
+            sendEmailAction(
+                INITIAL_CONTACT_FORM_STATE,
+                formDataOf({
+                    senderEmail: "a@example.com",
+                    message: "",
+                    topic: "research",
+                }),
+            ),
+        ).resolves.toEqual({
+            status: "error",
+            message: "Message cannot be empty",
+        });
     });
 });

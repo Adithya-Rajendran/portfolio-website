@@ -199,7 +199,7 @@ export default defineType({
             rows: 3,
             group: "writing",
             description:
-                "A short invitation below the homepage follow links. Describe the conversations or opportunities you welcome. Leave blank to hide it.",
+                "Describe the conversations or opportunities you welcome. Shown below the homepage follow links and as the Research & collaboration route on Contact. Leave blank to hide both.",
             validation: (Rule) => Rule.max(300),
         }),
         defineField({

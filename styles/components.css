@@ -1133,4 +1133,163 @@
             grid-column: auto;
         }
     }
+
+    /* ===== Forms (site.css 4.18) ======================================= */
+    /* A label over its control; errors are rendered only when present
+       (the control carries aria-invalid and points at the message). */
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+    }
+    .field__label {
+        color: var(--ink-1);
+        font: var(--label-2);
+        letter-spacing: var(--track-label-2);
+        text-transform: uppercase;
+    }
+    .field__hint {
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.45 var(--font-text);
+    }
+    .field__error {
+        color: var(--accent-text);
+        font: 500 var(--step--1) / 1.45 var(--font-text);
+    }
+    /* Drawn, not read: the field's aria-invalid already says so. */
+    .field__error::before {
+        content: "✕ " / "";
+    }
+    .input,
+    .textarea {
+        width: 100%;
+        min-height: 48px;
+        padding: 0.7rem 0.9rem;
+        border: var(--rule-hair) solid var(--rule-2);
+        border-radius: 0;
+        background: var(--surface-1);
+        color: var(--ink-1);
+        font: 400 var(--step-0) / 1.4 var(--font-text);
+        -webkit-appearance: none;
+        appearance: none;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    .textarea {
+        min-height: 8.5rem;
+        line-height: 1.55;
+        resize: vertical;
+    }
+    .input::placeholder,
+    .textarea::placeholder {
+        color: var(--ink-3);
+        opacity: 1;
+    }
+    .input:hover,
+    .textarea:hover {
+        border-color: var(--ink-2);
+    }
+    .input:focus-visible,
+    .textarea:focus-visible {
+        outline: var(--rule-strong) solid var(--focus);
+        outline-offset: 0;
+        border-color: var(--focus);
+        background: var(--surface-2);
+    }
+    .input[aria-invalid="true"],
+    .textarea[aria-invalid="true"] {
+        border-color: var(--accent-text);
+        box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .input:disabled,
+    .textarea:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* ===== Title block (site.css, graft 6) ============================= */
+    /* The drawing title block set in the dark: a hairline grid of cells,
+       each a tiny label over a value. 12 internal columns from 960px
+       (--span), 2 on phones (--span-sm: 1 | 2). components/ui/title-block.tsx */
+    .titleblock {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 0;
+        border-top: var(--rule-hair) solid var(--rule-2);
+        border-left: var(--rule-hair) solid var(--rule-1);
+        background:
+            radial-gradient(
+                ellipse 60% 80% at 100% 0%,
+                var(--falloff-warm),
+                transparent 70%
+            ),
+            var(--plate-bg);
+    }
+    .titleblock__cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-width: 0;
+        grid-column: span var(--span-sm, 2);
+        padding: var(--s-3) var(--s-4) var(--s-4);
+        border-right: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .titleblock__cell > dt {
+        color: var(--ink-3);
+        font: 400 0.625rem / 1.3 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .titleblock__cell > dd {
+        margin: 0;
+        overflow-wrap: break-word;
+        color: var(--ink-1);
+        font: 400 var(--step--1) / 1.45 var(--font-display);
+    }
+    .titleblock__cell > dd + dd {
+        color: var(--ink-2);
+        font-size: 0.8125rem;
+    }
+    .titleblock__cell > dd.titleblock__v--data {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums slashed-zero;
+    }
+    .titleblock__cell--blank {
+        justify-content: center;
+        align-items: center;
+        background: repeating-linear-gradient(
+            135deg,
+            transparent 0 7px,
+            var(--rule-1) 7px 8px
+        );
+    }
+    .titleblock__cell--blank span {
+        padding: 0.2rem 0.4rem;
+        background: var(--bg);
+        color: var(--ink-3);
+        font: 400 0.625rem / 1.3 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-align: center;
+        text-transform: uppercase;
+    }
+    .titleblock__cell--accent {
+        box-shadow: inset 0 2px 0 var(--accent);
+    }
+    @media (min-width: 60rem) {
+        .titleblock {
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+        }
+        .titleblock__cell {
+            grid-column: span var(--span, 3);
+        }
+    }
+    [data-theme="manual"] .titleblock {
+        border-top-color: var(--ink-1);
+        border-left-color: var(--rule-2);
+    }
+    [data-theme="manual"] .titleblock__cell {
+        border-color: var(--rule-2);
+    }
 }

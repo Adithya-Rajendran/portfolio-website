@@ -12,6 +12,7 @@ export const STATIC_PAGES = [
     "/about",
     "/portfolio",
     "/resume",
+    "/contact",
     "/blog",
     "/blog/archive",
 ] as const;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { contactHref } from "@/lib/navigation";
 import { Download, ExternalLink } from "lucide-react";
 import ResumeShareAction from "@/components/resume/resume-share-action";
 import { siteConfig } from "@/lib/config";
@@ -52,7 +53,7 @@ export default async function ResumePage() {
                             View work &amp; experience
                         </Link>
                         <Link
-                            href="/portfolio#contact"
+                            href={contactHref("hiring")}
                             className="journal-link"
                         >
                             Say hello <span aria-hidden>↗</span>
@@ -98,7 +99,7 @@ export default async function ResumePage() {
                     </a>
                     <ResumeShareAction canonicalUrl={canonicalUrl} />
                     <Link
-                        href="/portfolio#contact"
+                        href={contactHref("hiring")}
                         className="journal-link career-resume-contact"
                     >
                         Get in touch <span aria-hidden>↗</span>

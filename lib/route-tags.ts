@@ -72,6 +72,7 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         file: "app/(site)/about/page.tsx",
         tags: [profile, post, project],
     },
+    { path: "/contact", file: "app/(site)/contact/page.tsx", tags: [profile] },
     { path: "/feed.xml", file: "app/feed.xml/route.ts", tags: [post, profile] },
     {
         path: "/sitemap.xml",
@@ -110,6 +111,11 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         path: "/about/opengraph-image-1ycygp",
         file: "app/(site)/about/opengraph-image.tsx",
         tags: [profile, post, project],
+    },
+    {
+        path: "/contact/opengraph-image-upzrkl",
+        file: "app/(site)/contact/opengraph-image.tsx",
+        tags: [profile],
     },
 
     // One page per published post, tag and project.

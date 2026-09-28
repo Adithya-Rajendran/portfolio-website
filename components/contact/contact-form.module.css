@@ -1,0 +1,252 @@
+/*
+ * The contact form: topic chips, the counter, the send row and the
+ * "Signal acquired" panel. The fields themselves use the shared .field,
+ * .input and .textarea (styles/components.css). Ported from the mockup's
+ * contact.css "Form" and "Success: Signal acquired".
+ */
+.form {
+    display: grid;
+    gap: var(--s-6);
+    max-width: 46rem;
+}
+
+/* ---- Topic: radios drawn as chips ------------------------------------- */
+.topics {
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.topics legend {
+    margin-bottom: var(--s-3);
+    padding: 0;
+}
+.optional {
+    color: var(--ink-3);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+}
+.option {
+    position: relative;
+    display: flex;
+}
+/* The native radio covers its chip: it takes the click and the focus. */
+.option input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.option label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    padding: 0 1rem 0 0.8rem;
+    border: var(--rule-hair) solid var(--rule-2);
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.2 var(--font-display);
+    cursor: pointer;
+    transition:
+        border-color var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock),
+        background-color var(--dur-hover) var(--ease-dock);
+}
+.optionNum {
+    color: var(--ink-3);
+    font: 400 0.75rem / 1 var(--font-mono);
+}
+.option input:hover + label {
+    border-color: var(--ink-1);
+    color: var(--ink-1);
+}
+.option input:checked + label {
+    border-color: var(--ink-2);
+    background: var(--surface-2);
+    color: var(--ink-1);
+    box-shadow: inset 0 -2px 0 var(--accent);
+}
+.option input:checked + label .optionNum {
+    color: var(--accent-text);
+}
+/* Chosen is marked by a dot as well as the fill, never colour alone. */
+.option input:checked + label::before {
+    content: "";
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-round);
+    background: var(--accent);
+}
+.option input:focus-visible + label {
+    outline: var(--rule-strong) solid var(--focus);
+    outline-offset: 2px;
+}
+@media (forced-colors: active) {
+    .option input:checked + label {
+        border-color: SelectedItem;
+        outline: 2px solid SelectedItem;
+    }
+}
+
+/* ---- Message ----------------------------------------------------------- */
+.fieldRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-2) var(--s-4);
+}
+.count {
+    color: var(--ink-2);
+    font: 400 0.75rem / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+.count[data-near] {
+    color: var(--accent-text);
+}
+.count[data-near]::before {
+    content: "▲ ";
+    font-size: 0.625rem;
+}
+
+.alert {
+    padding: var(--s-3) var(--s-4);
+    border-left: var(--rule-strong) solid var(--accent);
+    background: var(--surface-1);
+    color: var(--ink-1);
+    font: 400 var(--step--1) / 1.5 var(--font-text);
+}
+.alert::before {
+    content: "✕ " / "";
+    color: var(--accent-text);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-3) var(--s-5);
+}
+.actions [aria-busy="true"] {
+    cursor: progress;
+}
+.note {
+    max-width: 44ch;
+    color: var(--ink-2);
+    font: 400 0.75rem / 1.5 var(--font-mono);
+}
+
+/* ---- Success: Signal acquired ------------------------------------------ */
+.signal {
+    max-width: 46rem;
+    padding-top: var(--s-4);
+    border-top: var(--rule-strong) solid var(--accent);
+}
+.trace {
+    display: block;
+    width: 100%;
+    height: 64px;
+    overflow: visible;
+}
+.floor {
+    fill: none;
+    stroke: var(--rule-1);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+.wave {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+.acq {
+    fill: var(--accent);
+}
+/* The carrier locks once, only where spatial motion is allowed. */
+@media (prefers-reduced-motion: no-preference) {
+    :global(html[data-motion="full"]) .wave {
+        stroke-dasharray: 1 1;
+        animation: lock 1.1s var(--ease-insert) both;
+    }
+}
+@keyframes lock {
+    from {
+        stroke-dashoffset: 1;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+.signalKey {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    margin-top: var(--s-4);
+    color: var(--accent-text);
+    font: 400 var(--label-size) / 1.4 var(--font-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+}
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-round);
+    background: var(--accent);
+}
+.signalTitle {
+    margin-top: var(--s-3);
+    color: var(--ink-1);
+    font: 300 var(--step-4) / 1.08 var(--font-display);
+    letter-spacing: -0.012em;
+}
+.signalTitle:focus {
+    outline: none;
+}
+.signalTitle:focus-visible {
+    outline: var(--rule-strong) solid var(--focus);
+    outline-offset: 4px;
+}
+.log {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 var(--gutter);
+    margin: var(--s-5) 0 0;
+    border-top: var(--rule-hair) solid var(--rule-1);
+}
+.log > div {
+    min-width: 0;
+    padding-block: var(--s-3);
+    border-bottom: var(--rule-hair) solid var(--rule-1);
+}
+.log dt {
+    color: var(--ink-3);
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
+}
+.log dd {
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+    color: var(--ink-1);
+    font: 400 0.875rem / 1.4 var(--font-mono);
+}
+.again {
+    margin-top: var(--s-5);
+}
+@media (max-width: 37.49rem) {
+    .log {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

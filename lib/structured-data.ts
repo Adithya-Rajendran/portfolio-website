@@ -4,6 +4,7 @@
  * exercise without React or a Sanity connection.
  */
 import { siteConfig } from "@/lib/config";
+import { contactCopy } from "@/lib/copy";
 import {
     getProfileDescription,
     getProfileLinks,
@@ -49,12 +50,17 @@ function buildKnowsAbout(profile: ProfileData | null) {
     return [...new Set(skills.filter(Boolean))];
 }
 
+/**
+ * Profile links as `sameAs`, web addresses only. The schema accepts only
+ * http(s) links; this keeps a `mailto:` or `tel:` out of the JSON-LD even
+ * if one got in some other way (no public email or phone anywhere).
+ */
 function buildSameAs(profile: ProfileData | null) {
     return [
         ...new Set(
             getProfileLinks(profile)
                 .map((link) => link.url)
-                .filter(Boolean),
+                .filter((url) => /^https?:\/\//i.test(url ?? "")),
         ),
     ];
 }
@@ -194,6 +200,27 @@ export function buildBlog(profile: ProfileData | null = null) {
             "@type": "Person",
             name: siteConfig.author,
             url: siteConfig.url,
+        },
+    };
+}
+
+/**
+ * `/contact` as a schema.org ContactPage about the site's person. There is
+ * deliberately no `email`, `telephone` or `contactPoint`: the form is the
+ * only channel (no public email address or phone number anywhere).
+ */
+export function buildContactPage(profile: ProfileData | null = null) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        name: `Contact ${profile?.name || siteConfig.author}`,
+        url: `${siteConfig.url}/contact`,
+        description: profile?.contactInvitation?.trim() || contactCopy.intro,
+        about: {
+            "@type": "Person",
+            name: profile?.name || siteConfig.author,
+            url: siteConfig.url,
+            sameAs: buildSameAs(profile),
         },
     };
 }

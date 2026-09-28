@@ -96,6 +96,10 @@ export const FIXTURE_PROFILE: ProfileData = {
         consultingOpen: false,
         updatedAt: "2026-09-24",
     },
+    // profile.contactInvitation as published: the Research & collaboration
+    // route on /contact and the homepage's closing invitation.
+    contactInvitation:
+        "Working on robotic vision, physical AI, or a related engineering problem? I’d welcome a conversation about research, collaboration, or opportunities to contribute.",
     // The plan's default launch (open question 8): the UC Santa Cruz start.
     launch: {
         date: "2019-01-01",

@@ -1,39 +1,33 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-import { ArrowUpRight, Send } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import CareerSectionHeading from "@/components/portfolio/section-heading";
+import ContactForm from "@/components/contact/contact-form";
+import ContactNoScript from "@/components/contact/contact-no-script";
 import { useSectionInView } from "@/lib/hooks";
-import {
-    sendEmailAction,
-    INITIAL_CONTACT_FORM_STATE,
-} from "@/actions/sendEmail";
-import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
+import { contactCopy } from "@/lib/copy";
+import { contactHref } from "@/lib/navigation";
+import type { TopicOption } from "@/lib/contact";
 import type { ExternalLink } from "@/lib/sanity-client";
 
-function ContactSubmit() {
-    const { pending } = useFormStatus();
-    return (
-        <button
-            className="journal-button"
-            type="submit"
-            disabled={pending}
-            aria-busy={pending}
-        >
-            {pending ? "Sending…" : "Send message"}
-            <Send size={16} aria-hidden />
-        </button>
-    );
-}
-
-export default function Contact({ links }: { links: ExternalLink[] }) {
+/**
+ * The /portfolio#contact section. Links shared before /contact existed
+ * (LinkedIn, the résumé, older posts) point here, and fragments cannot be
+ * redirected, so it keeps the `contact` anchor with the same form as
+ * /contact, plus links to each contact route there. The page's legacy
+ * layout goes with PR 12 (Missions).
+ */
+export default function Contact({
+    links,
+    topics,
+    linkedIn,
+}: {
+    links: ExternalLink[];
+    topics: readonly TopicOption[];
+    linkedIn?: ExternalLink;
+}) {
     const { ref } = useSectionInView("Contact");
-    const [state, formAction] = useActionState(
-        sendEmailAction,
-        INITIAL_CONTACT_FORM_STATE,
-    );
-    const hasError = state.status === "error";
     return (
         <section
             id="contact"
@@ -41,64 +35,24 @@ export default function Contact({ links }: { links: ExternalLink[] }) {
             className="career-section career-contact"
         >
             <CareerSectionHeading
-                title="Let’s talk."
-                description="An idea, a question, or an opportunity. I’d like to hear from you."
+                title={contactCopy.title}
+                description={contactCopy.intro}
             />
             <div>
-                <form action={formAction} className="career-contact-form">
-                    <div>
-                        <label htmlFor="contact-sender-email">Your email</label>
-                        <input
-                            id="contact-sender-email"
-                            name="senderEmail"
-                            type="email"
-                            autoComplete="email"
-                            required
-                            maxLength={500}
-                            placeholder="you@example.com"
-                            aria-describedby={
-                                hasError ? "contact-error" : undefined
-                            }
-                            defaultValue={
-                                hasError ? state.values.senderEmail : undefined
-                            }
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="contact-message">Message</label>
-                        <textarea
-                            id="contact-message"
-                            name="message"
-                            rows={6}
-                            placeholder="What’s on your mind?"
-                            required
-                            maxLength={MESSAGE_MAX_LENGTH}
-                            aria-describedby={
-                                hasError ? "contact-error" : undefined
-                            }
-                            defaultValue={
-                                hasError ? state.values.message : undefined
-                            }
-                        />
-                    </div>
-                    {hasError && (
-                        <p
-                            id="contact-error"
-                            role="alert"
-                            className="career-form-error"
-                        >
-                            {state.message}
-                        </p>
-                    )}
-                    {state.status === "success" && (
-                        <p role="status" className="career-form-success">
-                            Message sent. Thanks for getting in touch.
-                        </p>
-                    )}
-                    <ContactSubmit />
-                </form>
+                <div className="js-only">
+                    <ContactForm topics={topics} />
+                </div>
+                <ContactNoScript linkedIn={linkedIn} />
                 <div className="career-contact-channels">
-                    <span>Or find me elsewhere</span>
+                    <span>{contactCopy.portfolioRoutes}</span>
+                    {topics.map((topic) => (
+                        <Link key={topic.value} href={contactHref(topic.value)}>
+                            {topic.label}
+                        </Link>
+                    ))}
+                </div>
+                <div className="career-contact-channels">
+                    <span>{contactCopy.elsewhereLede}</span>
                     {links.map((link) => (
                         <a
                             key={link._key}

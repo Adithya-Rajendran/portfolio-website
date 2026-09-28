@@ -11,20 +11,26 @@ import {
     Tailwind,
     Text,
 } from "react-email";
+import { contactCopy } from "@/lib/copy";
+import type { ContactTopic } from "@/lib/contact";
 
 type ContactFormEmailProps = {
     message: string;
     senderEmail: string;
+    /** The contact route the sender picked (Hello when none). */
+    topic: ContactTopic;
 };
 
 export default function ContactFormEmail({
     message,
     senderEmail,
+    topic,
 }: ContactFormEmailProps) {
+    const route = contactCopy.topics[topic].title;
     return (
         <Html>
             <Head />
-            <Preview>New message from your portfolio site</Preview>
+            <Preview>{`New message from your portfolio site: ${route}`}</Preview>
             <Tailwind>
                 <Body className="bg-gray-100 text-black">
                     <Container>
@@ -33,6 +39,7 @@ export default function ContactFormEmail({
                                 You received the following message from the
                                 contact form
                             </Heading>
+                            <Text>Topic: {route}</Text>
                             <Text>{message}</Text>
                             <Hr />
                             <Text>The sender's email is: {senderEmail}</Text>

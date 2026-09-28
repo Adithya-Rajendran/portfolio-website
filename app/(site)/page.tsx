@@ -2,6 +2,7 @@ import HeroArtwork, {
     preloadHeroArtwork,
 } from "@/components/home/hero-artwork";
 import Link from "next/link";
+import { contactHref } from "@/lib/navigation";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
 import { getProfileLink, selectFeaturedPost } from "@/lib/profile-content";
 import { siteConfig } from "@/lib/config";
@@ -185,7 +186,7 @@ export default async function Home() {
                 {profile?.contactInvitation && (
                     <aside className="fj-contact" aria-label="Get in touch">
                         <p>{profile.contactInvitation}</p>
-                        <Link href="/portfolio#contact">
+                        <Link href={contactHref("research")}>
                             Get in touch <span aria-hidden>↗</span>
                         </Link>
                     </aside>

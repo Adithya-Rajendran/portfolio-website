@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { siteRoutes } from "@/lib/navigation";
 import { ArrowUpRight, MapPin } from "lucide-react";
 import { ProfilePageJsonLd } from "@/components/json-ld";
 import { getProfile } from "@/lib/sanity-client";
@@ -63,7 +64,7 @@ export default async function AboutPage() {
                         Work &amp; experience{" "}
                         <ArrowUpRight size={16} aria-hidden />
                     </Link>
-                    <Link href="/portfolio#contact" className="journal-link">
+                    <Link href={siteRoutes.contact} className="journal-link">
                         Get in touch <ArrowUpRight size={16} aria-hidden />
                     </Link>
                     {linkedIn && (
@@ -162,7 +163,7 @@ export default async function AboutPage() {
                             </li>
                         ))}
                     </ul>
-                    <Link className="journal-link" href="/portfolio#contact">
+                    <Link className="journal-link" href={siteRoutes.contact}>
                         Say hello <ArrowUpRight size={16} aria-hidden />
                     </Link>
                 </aside>

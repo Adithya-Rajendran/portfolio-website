@@ -4,3 +4,6 @@
  * a "use server" module may only export async functions.
  */
 export const MESSAGE_MAX_LENGTH = 1000;
+
+/** The email field's `maxLength` in the form. */
+export const EMAIL_MAX_LENGTH = 500;

@@ -173,6 +173,7 @@ test.describe("routes and headers", () => {
         const redirects: [from: string, to: string][] = [
             ["/blogs/e2e-legacy-post", "/blog/e2e-legacy-post"],
             ["/resume.pdf", "/resume/view"],
+            ["/comms", "/contact"],
             // Share images from before the (site) route group.
             ["/about/opengraph-image", "/about/opengraph-image-1ycygp"],
             [

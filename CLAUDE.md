@@ -92,8 +92,9 @@ only live in comments or commit messages.
   Cache Components keeps up to three visited routes mounted but hidden, and
   a page-owned `<main>` would repeat. A page's root element is a `<div>`
   with `data-page="…"` (`home`, `log`, `post`, `missions`, `resume`,
-  `not-found`…), which scopes its styles. Links and in-page lookups must
-  resolve inside the visible page, not with `document.getElementById`.
+  `contact`, `not-found`…), which scopes its styles. Links and in-page
+  lookups must resolve inside the visible page, not with
+  `document.getElementById`.
 - Navigation labels and URLs come from `lib/navigation.ts` (header, menu
   sheet, footer and the 404). Below 960px the header nav is a native
   `popover` sheet, so it opens without JavaScript; `MenuButton` adds focus,
@@ -216,6 +217,18 @@ only live in comments or commit messages.
   registered in `app/layout.tsx` (`<BotIdClient protect={[...]} />`); each
   server action verifies the challenge with `checkBotId()` from
   `botid/server`.
+- **The contact form** (`components/contact/contact-form.tsx`) is on
+  `/contact` and `/portfolio#contact` and dispatches `sendEmailAction`
+  from `onSubmit`, so React never resets its controlled fields. It needs
+  JavaScript for BotID, so its wrapper is `.js-only` and a `<noscript>`
+  block offers LinkedIn instead. The routes and topics (`hiring`,
+  `research`, `consulting`, `hello`) live in `lib/contact.ts`: Consulting
+  shows only while `availability.consultingOpen` is on, and the topic
+  prefixes the email subject. A `"use server"` module may export only async
+  functions (anything else reaches the client as a server reference), so
+  the form's state type and initial value live in `lib/contact.ts` too.
+  `/contact` reads its fragment (`#hiring`) on the client, never
+  `searchParams`.
 - **Sanity webhook** — `app/api/revalidate/route.ts` requires
   `SANITY_REVALIDATE_SECRET`; if unset, the route 404s on every request
   and cache invalidation is silently disabled.
@@ -301,7 +314,9 @@ deployment require an authenticated Sanity CLI session.
   images, the console or the printed CV. Contact is the form only, so there is
   deliberately no `publicEmail` field, `externalLink` accepts http(s) URLs
   only, and so do essay links (`contentLink`): the web and RSS renderers
-  print a `mailto:` or `tel:` annotation as plain text.
+  print a `mailto:` or `tel:` annotation as plain text. JSON-LD `sameAs`
+  keeps http(s) links only, and `/contact`'s `ContactPage` has no `email`,
+  `telephone` or `contactPoint`.
 
 ## Tests
 
@@ -323,6 +338,11 @@ deployment require an authenticated Sanity CLI session.
   overlapping), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, Hold drift), `chrome`
   (the menu sheet's focus, `inert` and closing; the current nav section),
+  `contact` (routes pick the form's topic by click and by fragment, field
+  checks, a refused send keeps the draft and its stale alert clears after
+  leaving and returning, Consulting hidden while off, no email address or
+  phone number, the no-JavaScript LinkedIn alternative; sends only on the
+  fixture build, which has no Resend credentials),
   `budgets` (the brotli byte report, printed,
   not enforced yet), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio

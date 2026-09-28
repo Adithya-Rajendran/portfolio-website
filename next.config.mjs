@@ -132,6 +132,13 @@ const nextConfig = {
                 destination: "/resume/view",
                 permanent: true,
             },
+            // Comms is the themed name of /contact (plan §2.2). Never
+            // redirect from /contact itself.
+            {
+                source: "/comms",
+                destination: "/contact",
+                permanent: true,
+            },
             // Share images moved into the app/(site) route group, which
             // gives each one a stable hash suffix (lib/route-tags.ts). Links
             // shared before the move keep their preview image. The archive
@@ -153,6 +160,9 @@ const nextConfig = {
                     "/portfolio/opengraph-image-98lokn",
                 ],
                 ["/resume/opengraph-image", "/resume/opengraph-image-1nyaml"],
+                // Newer than the move, kept at the unhashed URL like the
+                // others so every share image answers there.
+                ["/contact/opengraph-image", "/contact/opengraph-image-upzrkl"],
             ].map(([source, destination]) => ({
                 source,
                 destination,

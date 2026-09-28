@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    contactHref,
     cvLink,
     navCurrent,
     pairName,
@@ -30,10 +31,14 @@ describe("site navigation", () => {
             "/portfolio",
             "/resume",
             "/about",
-            // Until /contact exists (PR 8), Comms is the form on /portfolio.
-            "/portfolio#contact",
+            "/contact",
         ]);
         expect(cvLink.href).toBe("/resume");
+    });
+
+    it("links a contact route by its fragment", () => {
+        expect(contactHref()).toBe("/contact");
+        expect(contactHref("hiring")).toBe("/contact#hiring");
     });
 
     it("marks the section's own page and the pages below it", () => {

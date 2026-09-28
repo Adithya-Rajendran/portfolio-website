@@ -8,7 +8,8 @@ import Contact from "@/components/portfolio/contact";
 import EngineeringWriting from "@/components/portfolio/engineering-writing";
 import PortfolioNav from "@/components/portfolio/portfolio-nav";
 import { getAllPosts, getAllProjects, getProfile } from "@/lib/sanity-client";
-import { getProfileLinks } from "@/lib/profile-content";
+import { getProfileLink, getProfileLinks } from "@/lib/profile-content";
+import { contactRoutes, topicOptions } from "@/lib/contact";
 import { siteConfig } from "@/lib/config";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -62,7 +63,11 @@ export default async function Portfolio() {
                 <Experience entries={profile?.timeline ?? []} />
                 <Skills groups={profile?.skillGroups ?? []} />
                 <Certifications certifications={profile?.credentials ?? []} />
-                <Contact links={getProfileLinks(profile)} />
+                <Contact
+                    links={getProfileLinks(profile)}
+                    topics={topicOptions(contactRoutes(profile))}
+                    linkedIn={getProfileLink(profile, "linkedin")}
+                />
             </div>
         </div>
     );

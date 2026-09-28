@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { contactHref } from "@/lib/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { getAllPosts, type PostMeta } from "@/lib/sanity-client";
 import { selectNextPosts } from "@/lib/related-posts";
@@ -58,7 +59,7 @@ export default async function ArticleContinuation({
                     <Link href="/portfolio" className="journal-link">
                         Explore my work <ArrowUpRight size={15} aria-hidden />
                     </Link>
-                    <Link href="/portfolio#contact" className="journal-link">
+                    <Link href={contactHref("hello")} className="journal-link">
                         Get in touch <ArrowUpRight size={15} aria-hidden />
                     </Link>
                 </div>

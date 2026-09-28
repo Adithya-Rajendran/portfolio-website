@@ -7,6 +7,7 @@ import { urlForImage } from "@/lib/sanity-image";
 import {
     buildBlog,
     buildBlogPosting,
+    buildContactPage,
     buildPersonEntity,
     buildProfilePage,
     type BlogPostingInput,
@@ -119,6 +120,21 @@ export async function ProfilePageJsonLd() {
         <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
+        />
+    );
+}
+
+export function ContactPageJsonLd({
+    profile,
+}: {
+    profile: ProfileData | null;
+}) {
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+                __html: safeJsonLd(buildContactPage(profile)),
+            }}
         />
     );
 }

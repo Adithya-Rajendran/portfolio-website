@@ -9,6 +9,12 @@ import { checkRateLimit } from "@vercel/firewall";
 import ContactFormEmail from "@/email/contact-form-email";
 import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import {
+    CONTACT_TOPICS,
+    DEFAULT_CONTACT_TOPIC,
+    contactSubject,
+    type ContactFormState,
+} from "@/lib/contact";
+import {
     EMAIL_CHARSET_PATTERN,
     hasValidMxRecords,
 } from "@/lib/email-validation";
@@ -35,25 +41,20 @@ const emailSchema = z.object({
         .string()
         .min(1, "Message cannot be empty")
         .max(MESSAGE_MAX_LENGTH),
+    // The contact route the sender picked; none chosen is a hello. It only
+    // sorts the subject line, so an unknown value is refused, not guessed.
+    topic: z
+        .enum(CONTACT_TOPICS, "Choose one of the listed topics.")
+        .default(DEFAULT_CONTACT_TOPIC),
 });
 
-export type ContactFormState =
-    | { status: "idle" }
-    | { status: "success" }
-    | {
-          status: "error";
-          message: string;
-          /** Echo of the submitted fields so the form can repopulate —
-           *  React 19 resets uncontrolled inputs after the action runs. */
-          values: { senderEmail: string; message: string };
-      };
-
-export const INITIAL_CONTACT_FORM_STATE: ContactFormState = { status: "idle" };
-
 /**
- * useActionState-compatible wrapper around sendEmail. The form in
- * `components/portfolio/contact.tsx` uses this as its server action so
- * React 19 wires up pending state and the result without manual glue.
+ * useActionState-compatible wrapper around sendEmail. The contact form
+ * (`components/contact/contact-form.tsx`, on /contact and /portfolio)
+ * dispatches it, so React 19 wires up pending state and the result. Its
+ * state type and initial value live in lib/contact.ts: a "use server"
+ * module may export only async functions, and anything else it exports
+ * reaches the client as a server reference, not as the value.
  */
 export async function sendEmailAction(
     _prevState: ContactFormState,
@@ -67,13 +68,12 @@ export async function sendEmailAction(
                 typeof result.error === "string"
                     ? result.error
                     : "Error sending the message! Please try again.",
-            values: {
-                senderEmail: String(formData.get("senderEmail") ?? ""),
-                message: String(formData.get("message") ?? ""),
-            },
         };
     }
-    return { status: "success" };
+    return {
+        status: "success",
+        topic: result.topic ?? DEFAULT_CONTACT_TOPIC,
+    };
 }
 
 export const sendEmail = async (formData: FormData) => {
@@ -88,7 +88,8 @@ export const sendEmail = async (formData: FormData) => {
     }
 
     // Vercel BotID — invisible CAPTCHA. The client SDK in app/layout.tsx
-    // protects /portfolio POST; this verifies the challenge response on
+    // protects every POST (Server Actions post to the page that runs them:
+    // /contact and /portfolio); this verifies the challenge response on
     // the server before doing any expensive work.
     const { isBot } = await checkBotId();
     if (isBot) {
@@ -99,9 +100,13 @@ export const sendEmail = async (formData: FormData) => {
 
     // FormData.get() can return File | string | null; coerce to string so
     // a file upload field with the same name can't bypass the zod schema.
+    // No topic chosen (the radios are optional) is left undefined, so the
+    // schema's default applies.
+    const topic = formData.get("topic");
     const rawData = {
         senderEmail: String(formData.get("senderEmail") ?? ""),
         message: String(formData.get("message") ?? ""),
+        topic: topic === null || topic === "" ? undefined : String(topic),
     };
 
     const validatedData = emailSchema.safeParse(rawData);
@@ -110,7 +115,7 @@ export const sendEmail = async (formData: FormData) => {
         return { error: validatedData.error.issues[0].message };
     }
 
-    const { senderEmail, message } = validatedData.data;
+    const { senderEmail, message, topic: chosenTopic } = validatedData.data;
 
     // Vercel WAF rate limit. The rule with ID "contact-form" must be
     // configured in the Vercel dashboard (Firewall → Rate Limit) — the
@@ -152,12 +157,16 @@ export const sendEmail = async (formData: FormData) => {
         const data = await resend.emails.send({
             from: "Contact Form <contact-form@email.adithya-rajendran.com>",
             to: config.toEmail,
-            subject: "Contact Form for My Website",
+            subject: contactSubject(chosenTopic),
             replyTo: senderEmail,
-            react: ContactFormEmail({ message, senderEmail }),
+            react: ContactFormEmail({
+                message,
+                senderEmail,
+                topic: chosenTopic,
+            }),
         });
 
-        return { data };
+        return { data, topic: chosenTopic };
     } catch (error: unknown) {
         // Log the real error server-side for debugging; return a generic
         // message so we don't leak Resend internals (rate-limit details,
