@@ -1,18 +1,14 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support/test";
 import { axeViolations } from "./support/axe";
-import { isLegacyRoute } from "./support/legacy-routes";
 import { MISSING_PAGES, STATIC_PAGES, contentPages } from "./support/routes";
 import { THEMES, storeTheme, type SiteTheme } from "./support/theme";
 
 /**
  * axe finds no violations on any page at 390 and 1440 px, in Void and in
  * Flight Manual (plan §7.2), apart from the documented allowances in
- * support/axe.ts. A page still on the legacy layout (support/
- * legacy-routes.ts) is checked in full in Void; in Flight Manual only its
- * chrome is, because the legacy styles are dark-only.
+ * support/axe.ts. Every page is checked in full in both themes.
  */
-const CHROME = ["header.site-header", "footer.site-footer"];
 
 async function expectNoViolations(
     page: Page,
@@ -24,11 +20,9 @@ async function expectNoViolations(
     expect(response?.status(), `${path} status`).toBe(status);
     await page.waitForLoadState("networkidle");
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
-    const include = theme === "manual" && isLegacyRoute(path) ? CHROME : [];
-    expect(
-        await axeViolations(page, path, include),
-        `${path} axe (${theme}${include.length ? ", chrome only" : ""})`,
-    ).toEqual([]);
+    expect(await axeViolations(page, path), `${path} axe (${theme})`).toEqual(
+        [],
+    );
 }
 
 for (const theme of THEMES) {

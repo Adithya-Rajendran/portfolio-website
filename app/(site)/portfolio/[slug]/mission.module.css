@@ -89,20 +89,7 @@
     margin-top: var(--space-block);
 }
 
-/* ---- Sections ---------------------------------------------------------- */
-.tag {
-    margin-bottom: var(--s-7);
-}
-.body {
-    row-gap: var(--s-6);
-}
-@media (min-width: 60rem) {
-    .rail {
-        align-self: start;
-        position: sticky;
-        top: calc(var(--header-h) + var(--s-6));
-    }
-}
+/* ---- Sections (components/ui/doc-section.tsx) -------------------------- */
 
 .brief {
     max-width: var(--measure-index);
@@ -211,20 +198,6 @@
 }
 
 /* ---- Close: the question, then the neighbouring files ------------------- */
-.ask {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--s-5);
-    padding-block: var(--s-6);
-    border-top: var(--rule-hair) solid var(--rule-2);
-    border-bottom: var(--rule-hair) solid var(--rule-1);
-}
-.askTitle {
-    font: 300 var(--step-4) / 1.05 var(--font-display);
-    letter-spacing: -0.014em;
-}
 .pager {
     margin-top: var(--s-7);
 }

@@ -52,6 +52,9 @@
 .subhead {
     margin-bottom: var(--s-4);
 }
+.nowGroup + .nowGroup {
+    margin-top: var(--s-8);
+}
 
 /* ---- Missions: the stage, then the tiles ------------------------------ */
 .tiles {

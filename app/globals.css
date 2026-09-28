@@ -5,9 +5,9 @@
  * Cascade layers fix the order whatever order Next.js chunks CSS in:
  * theme (tokens) < base (preflight, element defaults) < components (layout
  * and the design system) < utilities (Tailwind utilities, print). CSS
- * Modules and the legacy journal-*.css files are unlayered, so they win
- * over every layer; never put a Tailwind utility on an element that has a
- * CSS Module class, because the utility would silently lose.
+ * Modules are unlayered, so they win over every layer; never put a
+ * Tailwind utility on an element that has a CSS Module class, because the
+ * utility would silently lose.
  */
 @layer theme, base, components, utilities;
 @import "tailwindcss";
@@ -18,9 +18,6 @@
 @import "../styles/prose.css";
 @import "../styles/los.css";
 @import "../styles/print.css";
-/* TEMPORARY (PRs 7–13): aliases for the pages not yet converted; PR 14
-   deletes it with app/journal-*.css. */
-@import "../styles/compat-journal.css";
 
 @custom-variant void (&:where([data-theme="void"], [data-theme="void"] *));
 @custom-variant manual (&:where([data-theme="manual"], [data-theme="manual"] *));

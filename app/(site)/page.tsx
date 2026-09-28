@@ -17,12 +17,12 @@ import SectionTag from "@/components/ui/section-tag";
 import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
 import { contactRoutes } from "@/lib/contact";
-import { homeCopy as copy, orbitCopy } from "@/lib/copy";
+import { homeCopy as copy, nowKinds, orbitCopy } from "@/lib/copy";
 import {
     currentEntry,
     firstParagraph,
+    nowGroups,
     openTo,
-    questions,
     roleLine,
     taglineOf,
 } from "@/lib/crew";
@@ -103,10 +103,10 @@ export default async function Home() {
     ]);
     const name = profile?.name?.trim() || siteConfig.author;
 
-    // Now: the current role and the owner's questions.
+    // Now: the current role and the owner's Now list, by kind.
     const now = currentEntry(profile?.timeline);
     const open = openTo(profile);
-    const asked = questions(profile?.currentCuriosities, posts, projects);
+    const asked = nowGroups(profile?.currentCuriosities, posts, projects);
     const curiositiesDate = /^\d{4}-\d{2}-\d{2}/.exec(
         profile?.curiositiesUpdatedAt ?? "",
     )?.[0];
@@ -195,7 +195,13 @@ export default async function Home() {
                     ornament="limb"
                     themed={copy.nowAct.themed}
                     plain={copy.nowAct.plain}
-                    title={now?.summary || now?.title || copy.nowAct.questions}
+                    title={
+                        now?.summary ||
+                        now?.title ||
+                        (asked.length === 1
+                            ? nowKinds[asked[0].kind]
+                            : copy.nowAct.plain)
+                    }
                     meta={
                         curiositiesDate && asked.length ? (
                             <Rev label={copy.updated} date={curiositiesDate} />
@@ -223,20 +229,35 @@ export default async function Home() {
                         ) : null}
                         {asked.length ? (
                             <div className="g-main">
-                                {now ? (
-                                    <h3
-                                        className={`label label--ink ${styles.subhead}`}
-                                        id="now-questions-h"
-                                    >
-                                        {copy.nowAct.questions}
-                                    </h3>
-                                ) : null}
-                                <Questions
-                                    items={asked}
-                                    labelledBy={
-                                        now ? "now-questions-h" : "now-h"
-                                    }
-                                />
+                                {asked.map((group) => {
+                                    // Without a current role, the act is
+                                    // titled by its one group's kind, so
+                                    // that group needs no label of its own.
+                                    const labelled =
+                                        Boolean(now) || asked.length > 1;
+                                    const id = `now-${group.kind}-h`;
+                                    return (
+                                        <div
+                                            key={group.kind}
+                                            className={styles.nowGroup}
+                                        >
+                                            {labelled ? (
+                                                <h3
+                                                    className={`label label--ink ${styles.subhead}`}
+                                                    id={id}
+                                                >
+                                                    {nowKinds[group.kind]}
+                                                </h3>
+                                            ) : null}
+                                            <Questions
+                                                items={group.items}
+                                                labelledBy={
+                                                    labelled ? id : "now-h"
+                                                }
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         ) : null}
                     </div>

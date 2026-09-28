@@ -1,5 +1,6 @@
 import { cvEntries, hostOf, type CvEntry } from "@/lib/cv";
 import { formatEntryDate } from "@/lib/log-index";
+import { CURIOSITY_KINDS, type CuriosityKind } from "@/lib/profile-fields";
 import type {
     CuriosityItem,
     ExternalLink,
@@ -8,9 +9,9 @@ import type {
 } from "@/lib/sanity-client";
 
 /**
- * The owner as the home page and (from PR 14) the Crew File present
- * them: the current role, the tagline, the availability line, the
- * questions and the record (G6). Pure and derived from the profile only:
+ * The owner as the home page and the Crew File (/about) present them:
+ * the current role, the tagline, the availability line, the questions
+ * and the Now list by kind, and the record (G6). Pure and derived from the profile only:
  * a value the profile leaves empty is left out, never filled in.
  */
 
@@ -96,42 +97,93 @@ export interface Question {
     external: boolean;
 }
 
+type Linkable = readonly { _id: string; slug: string }[];
+
 /**
- * The current questions as numbered rows. An item that points at one of
- * the site's posts or projects links there; one with its own URL links
- * out; a reference to something unpublished is dropped, not the item.
+ * The items as rows, numbered by `num`. An item that points at one of the
+ * site's posts or projects links there; one with its own URL links out; a
+ * reference to something unpublished is dropped, not the item.
  */
-export function questions(
-    items: readonly CuriosityItem[] | null | undefined,
-    posts: readonly { _id: string; slug: string }[] = [],
-    projects: readonly { _id: string; slug: string }[] = [],
+function toRows(
+    items: readonly CuriosityItem[],
+    posts: Linkable,
+    projects: Linkable,
+    num: (index: number) => string,
 ): Question[] {
     const postSlug = new Map(posts.map((post) => [post._id, post.slug]));
     const projectSlug = new Map(
         projects.map((project) => [project._id, project.slug]),
     );
-    return (items ?? [])
-        .filter((item) => item?.title?.trim())
-        .map((item, index) => {
-            const post = item.postId ? postSlug.get(item.postId) : undefined;
-            const project = item.projectId
-                ? projectSlug.get(item.projectId)
-                : undefined;
-            const url = /^https?:\/\//.test(item.url ?? "") ? item.url! : null;
-            const href = post
-                ? `/blog/${post}`
-                : project
-                  ? `/portfolio/${project}`
-                  : url;
-            return {
-                id: item._key,
-                num: `Q${index + 1}`,
-                title: item.title.trim(),
-                note: item.note?.trim() || null,
-                href,
-                external: Boolean(href && href === url),
-            };
-        });
+    return items.map((item, index) => {
+        const post = item.postId ? postSlug.get(item.postId) : undefined;
+        const project = item.projectId
+            ? projectSlug.get(item.projectId)
+            : undefined;
+        const url = /^https?:\/\//.test(item.url ?? "") ? item.url! : null;
+        const href = post
+            ? `/blog/${post}`
+            : project
+              ? `/portfolio/${project}`
+              : url;
+        return {
+            id: item._key,
+            num: num(index),
+            title: item.title.trim(),
+            note: item.note?.trim() || null,
+            href,
+            external: Boolean(href && href === url),
+        };
+    });
+}
+
+function listed(
+    items: readonly CuriosityItem[] | null | undefined,
+): CuriosityItem[] {
+    return (items ?? []).filter((item) => item?.title?.trim());
+}
+
+/** The current questions as numbered rows (Q1…), whatever their kind. */
+export function questions(
+    items: readonly CuriosityItem[] | null | undefined,
+    posts: Linkable = [],
+    projects: Linkable = [],
+): Question[] {
+    return toRows(listed(items), posts, projects, (index) => `Q${index + 1}`);
+}
+
+export interface NowGroup {
+    kind: CuriosityKind;
+    items: Question[];
+}
+
+/**
+ * The Now list on the Crew File: the items grouped by kind, in the
+ * schema's order (questions first), each group numbered from one:
+ * questions Q1…, the other kinds 01…. An item saved before kinds existed
+ * (or with an unknown kind) is a question. Empty groups are absent.
+ */
+export function nowGroups(
+    items: readonly CuriosityItem[] | null | undefined,
+    posts: Linkable = [],
+    projects: Linkable = [],
+): NowGroup[] {
+    const all = listed(items);
+    const kindOf = (item: CuriosityItem): CuriosityKind =>
+        CURIOSITY_KINDS.some((option) => option.value === item.kind)
+            ? item.kind!
+            : "question";
+    return CURIOSITY_KINDS.map(({ value: kind }) => ({
+        kind,
+        items: toRows(
+            all.filter((item) => kindOf(item) === kind),
+            posts,
+            projects,
+            (index) =>
+                kind === "question"
+                    ? `Q${index + 1}`
+                    : String(index + 1).padStart(2, "0"),
+        ),
+    })).filter((group) => group.items.length > 0);
 }
 
 export interface RecordCell {

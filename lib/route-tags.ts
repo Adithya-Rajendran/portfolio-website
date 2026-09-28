@@ -5,9 +5,9 @@
  * route listed under it, so readers get fresh pages instead of starting the
  * regeneration themselves.
  *
- * - Tags follow the redesign's route map, so a page may be listed under a
- *   tag a little before it shows that content (`/about` under post and
- *   project until the Crew File lands); that costs one request per warm.
+ * - Tags follow the redesign's route map: a page is listed under the tag
+ *   of every content type it shows (`/about`: its entries and the
+ *   projects its Now list and related pages link to).
  * - Every page also shows the profile in its header, footer and JSON-LD.
  *   That alone does not list it under `profile`: those pages refresh on
  *   their next visit instead of being crawled on every profile edit.

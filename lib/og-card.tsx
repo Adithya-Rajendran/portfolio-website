@@ -9,9 +9,8 @@ import type { TransmissionsChart } from "@/lib/transmissions";
  * stars, the patch, one orange rule, Jost for the title, Michroma for the
  * tier-1 labels and DM Mono for the data. Satori reads static TTF copies
  * (assets/fonts/og/, each with its OFL licence), read once at module scope
- * so the image prerenders (docs: image-response.md §Custom fonts). Pages
- * move from the older lib/og-template.tsx to this card as they are
- * redesigned: /blog first (PR 9).
+ * so the image prerenders (docs: image-response.md §Custom fonts). Every
+ * page's share image is this card.
  */
 
 const FONTS = join(process.cwd(), "assets/fonts/og");
@@ -67,6 +66,10 @@ const VOID = {
 
 const WIDTH = 1200;
 const HEIGHT = 630;
+
+/** Every share image's size and type (the routes' `size`, `contentType`). */
+export const OG_SIZE = { width: WIDTH, height: HEIGHT } as const;
+export const OG_CONTENT_TYPE = "image/png" as const;
 const PAD_X = 80;
 const STARS = starLayout(1990, 70, WIDTH, HEIGHT);
 

@@ -9,7 +9,10 @@ import type { OrnamentName } from "@/components/ui/icon";
  * A page with its own title ("Let’s talk.") names both under it, "Comms ·
  * Contact", read after the title's own full stop when it has one.
  * `split` sets the title on the left half and the intro and actions on
- * the right from 960px (`.page-head--split`).
+ * the right from 960px (`.page-head--split`). `figure` is a decorative
+ * drawing beside the head (`.page-head--figure`): at the title's right on
+ * phones, 4 of 12 columns from 960px. Actions go in children, wrapped in
+ * `.page-head__actions`.
  */
 export default function PageHead({
     ornament,
@@ -22,6 +25,7 @@ export default function PageHead({
     meta,
     intro,
     split = false,
+    figure,
     className,
     children,
 }: {
@@ -36,6 +40,8 @@ export default function PageHead({
     meta?: React.ReactNode;
     intro?: React.ReactNode;
     split?: boolean;
+    /** A decorative drawing beside the head; hidden from assistive tech. */
+    figure?: React.ReactNode;
     className?: string;
     children?: React.ReactNode;
 }) {
@@ -43,7 +49,12 @@ export default function PageHead({
     const separator = /[.!?…]$/.test(title) ? " " : ": ";
     return (
         <header
-            className={["page-head", split && "page-head--split", className]
+            className={[
+                "page-head",
+                split && "page-head--split",
+                figure && "page-head--figure",
+                className,
+            ]
                 .filter(Boolean)
                 .join(" ")}
         >
@@ -65,6 +76,11 @@ export default function PageHead({
             </h1>
             {intro ? <p className="page-head__intro">{intro}</p> : null}
             {children}
+            {figure ? (
+                <div className="page-head__figure" aria-hidden="true">
+                    {figure}
+                </div>
+            ) : null}
         </header>
     );
 }

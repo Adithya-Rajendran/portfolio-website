@@ -3,8 +3,7 @@ import { readingTimeFromWordCount } from "@/components/blogs/utils";
 import { siteConfig } from "@/lib/config";
 import { postCopy as copy } from "@/lib/copy";
 import { formatEntryDate, logEntries } from "@/lib/log-index";
-import { OG_CARD_FONTS, OgCard } from "@/lib/og-card";
-import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-template";
+import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
 import { getAllPosts, getPostMeta } from "@/lib/sanity-client";
 
 export const alt = `${copy.themed} entry — ${siteConfig.author}`;

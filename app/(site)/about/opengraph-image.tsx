@@ -1,23 +1,31 @@
 import { ImageResponse } from "next/og";
-import { OgTemplate, OG_SIZE, OG_CONTENT_TYPE } from "@/lib/og-template";
 import { siteConfig } from "@/lib/config";
+import { aboutCopy as copy } from "@/lib/copy";
+import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
 import { getProfile } from "@/lib/sanity-client";
 
-export const alt = `About — ${siteConfig.author}`;
+export const alt = `${copy.themed} · ${copy.plain} — ${siteConfig.author}`;
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
 const domain = new URL(siteConfig.url).hostname;
 
+/**
+ * The Crew File share card: the page's themed name over the profile's
+ * headline, and the name and address.
+ */
 export default async function Image() {
     const profile = await getProfile();
     return new ImageResponse(
-        <OgTemplate
-            eyebrow={profile?.name || siteConfig.author}
-            title="About"
-            subtitle={profile?.headline || "The person behind the notebook."}
+        <OgCard
+            num={copy.num}
+            themed={copy.themed}
+            plain={copy.plain}
+            title={copy.themed}
+            subtitle={profile?.headline?.trim() || copy.description}
+            footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/about`}
         />,
-        { ...size },
+        { ...size, fonts: OG_CARD_FONTS },
     );
 }

@@ -6,16 +6,16 @@ import PostReader from "@/components/blogs/post-reader";
 import { BreadcrumbJsonLd, MissionJsonLd } from "@/components/json-ld";
 import MissionLine from "@/components/portfolio/mission-line";
 import ProjectEssay from "@/components/portfolio/project-essay";
+import Ask from "@/components/ui/ask";
 import { ButtonLink, buttonClass } from "@/components/ui/button";
 import CrumbRow from "@/components/ui/crumb-row";
+import DocSection from "@/components/ui/doc-section";
 import { Icon } from "@/components/ui/icon";
 import { Rev, Status } from "@/components/ui/marks";
 import Metrics from "@/components/ui/metrics";
 import Pager from "@/components/ui/pager";
-import Pair from "@/components/ui/pair";
 import Plate from "@/components/ui/plate";
 import RouteList from "@/components/ui/route-list";
-import SectionTag from "@/components/ui/section-tag";
 import Specs from "@/components/ui/specs";
 import TitleBlock, { type TitleBlockCell } from "@/components/ui/title-block";
 import ViewerFigure, {
@@ -161,51 +161,6 @@ function recordCells(mission: Mission): TitleBlockCell[] {
                     : 6;
     });
     return [...first, ...second];
-}
-
-/** A numbered section of the file: the tag, then its body on the grid. */
-function FileSection({
-    id,
-    num,
-    themed,
-    plain,
-    meta,
-    rail,
-    prose = false,
-    children,
-}: {
-    id: string;
-    num: string;
-    themed: string;
-    plain: string;
-    meta?: React.ReactNode;
-    rail?: React.ReactNode;
-    prose?: boolean;
-    children: React.ReactNode;
-}) {
-    return (
-        <section
-            className={`section ${styles.section}`}
-            id={id}
-            aria-labelledby={`${id}-h`}
-        >
-            <div className="shell">
-                <SectionTag className={styles.tag} num={num} meta={meta}>
-                    <h2 className="section-tag__h" id={`${id}-h`}>
-                        <Pair themed={themed} plain={plain} />
-                    </h2>
-                </SectionTag>
-                <div className={`grid ${styles.body}`}>
-                    {rail ? (
-                        <div className={`g-rail ${styles.rail}`}>{rail}</div>
-                    ) : null}
-                    <div className={prose ? "g-prose" : "g-main"}>
-                        {children}
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
 }
 
 /**
@@ -394,7 +349,7 @@ export default async function ProjectPage({
             </div>
 
             {callouts.length ? (
-                <FileSection
+                <DocSection
                     id="callouts"
                     num={num("callouts")}
                     themed={copy.calloutsThemed}
@@ -404,11 +359,11 @@ export default async function ProjectPage({
                         callouts={callouts}
                         labelledBy="callouts-h"
                     />
-                </FileSection>
+                </DocSection>
             ) : null}
 
             {brief.length ? (
-                <FileSection
+                <DocSection
                     id="brief"
                     num={num("brief")}
                     themed={copy.briefThemed}
@@ -422,11 +377,11 @@ export default async function ProjectPage({
                             value: text.trim(),
                         }))}
                     />
-                </FileSection>
+                </DocSection>
             ) : null}
 
             {hasEssay ? (
-                <FileSection
+                <DocSection
                     id="write-up"
                     num={num("write-up")}
                     themed={copy.writeUpThemed}
@@ -456,11 +411,11 @@ export default async function ProjectPage({
                     }
                 >
                     <ProjectEssay project={project} />
-                </FileSection>
+                </DocSection>
             ) : null}
 
             {results.length ? (
-                <FileSection
+                <DocSection
                     id="results"
                     num={num("results")}
                     themed={copy.resultsThemed}
@@ -508,11 +463,11 @@ export default async function ProjectPage({
                             </tbody>
                         </table>
                     </div>
-                </FileSection>
+                </DocSection>
             ) : null}
 
             {lessons.length || nextSteps.length ? (
-                <FileSection
+                <DocSection
                     id="debrief"
                     num={num("debrief")}
                     themed={copy.debriefThemed}
@@ -544,11 +499,11 @@ export default async function ProjectPage({
                             </div>
                         ) : null}
                     </div>
-                </FileSection>
+                </DocSection>
             ) : null}
 
             {mission.links.length ? (
-                <FileSection
+                <DocSection
                     id="links"
                     num={num("links")}
                     themed={copy.linksThemed}
@@ -566,30 +521,27 @@ export default async function ProjectPage({
                             external: true,
                         }))}
                     />
-                </FileSection>
+                </DocSection>
             ) : null}
 
             {related.length ? (
-                <FileSection
+                <DocSection
                     id="related"
                     num={num("related")}
                     themed={copy.relatedThemed}
                     plain={copy.relatedPlain}
                 >
                     <LogIndex entries={related} level={3} />
-                </FileSection>
+                </DocSection>
             ) : null}
 
             <section
-                className={`section ${styles.close}`}
+                className="section"
                 aria-labelledby="mission-close-h"
                 data-print="hide"
             >
                 <div className="shell">
-                    <div className={styles.ask}>
-                        <h2 className={styles.askTitle} id="mission-close-h">
-                            {copy.question}
-                        </h2>
+                    <Ask id="mission-close-h" title={copy.question}>
                         <ButtonLink
                             href={contactHref("hello")}
                             icon="arrow"
@@ -597,7 +549,7 @@ export default async function ProjectPage({
                         >
                             {copy.getInTouch}
                         </ButtonLink>
-                    </div>
+                    </Ask>
                     <Pager
                         className={styles.pager}
                         label={copy.pagerLabel}

@@ -6,7 +6,7 @@ import type { Question } from "@/lib/crew";
  * The owner's current questions as numbered hairline rows (the log
  * index's grammar): a mono number in ink, the question, and the owner's
  * note under it in the serif. A question that points somewhere links
- * there. Shared by the home Now act and, from PR 14, the Crew File.
+ * there. Shared by the home Now act and the Crew File.
  */
 export default function Questions({
     items,

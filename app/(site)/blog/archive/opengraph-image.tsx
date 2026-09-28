@@ -2,8 +2,7 @@ import { ImageResponse } from "next/og";
 import { siteConfig } from "@/lib/config";
 import { logCopy } from "@/lib/copy";
 import { entryCount, logEntries, logSince } from "@/lib/log-index";
-import { OG_CARD_FONTS, OgCard } from "@/lib/og-card";
-import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-template";
+import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
 import { getWritingDescription } from "@/lib/profile-content";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
 

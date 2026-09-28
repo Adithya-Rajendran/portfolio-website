@@ -15,8 +15,8 @@ const LABELS = {
 } as const;
 
 /**
- * The owner's record as a title block (G6): the home Crew act and, from
- * PR 14, the Crew File. The cells and their spans come from
+ * The owner's record as a title block (G6): the home Crew act and the
+ * Crew File. The cells and their spans come from
  * `crewRecord` (lib/crew.ts); a value the profile leaves empty has no
  * cell. Returns nothing without a profile.
  */

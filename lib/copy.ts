@@ -364,6 +364,44 @@ export const cvCopy = {
 } as const;
 
 /**
+ * Link rows to the site's other sections (lib/directory.ts): /portfolio's
+ * Directory and the Crew File's Elsewhere. Each row is a themed / plain
+ * pair and one line about where it leads.
+ */
+export const directoryCopy = {
+    experience: {
+        themed: "Trajectory",
+        plain: "Experience",
+        blurb: "Roles and education, on the orbit map and as a CV.",
+    },
+    skills: {
+        themed: "Trajectory",
+        plain: "Skills",
+        blurb: "Skills by area.",
+    },
+    certifications: {
+        themed: "Trajectory",
+        plain: "Certifications",
+        blurb: "Certifications and their status.",
+    },
+    missions: {
+        themed: "Missions",
+        plain: "Projects",
+        blurb: "Projects and case studies.",
+    },
+    writing: {
+        themed: "Flight Log",
+        plain: "Blog",
+        blurb: "Articles and technical notes.",
+    },
+    contact: {
+        themed: "Comms",
+        plain: "Contact",
+        blurb: "Send a message about a project or a role.",
+    },
+} as const;
+
+/**
  * Missions · Projects (G5, G6): the /portfolio index and the mission files.
  * UI copy only: names, titles, summaries, parameters, briefs, results and
  * lessons are the owner's.
@@ -397,33 +435,6 @@ export const missionsCopy = {
     file: "File",
     directoryThemed: "Directory",
     directoryPlain: "Related pages",
-    directory: {
-        experience: {
-            themed: "Trajectory",
-            plain: "Experience",
-            blurb: "Roles and education, on the orbit map and as a CV.",
-        },
-        skills: {
-            themed: "Trajectory",
-            plain: "Skills",
-            blurb: "Skills by area.",
-        },
-        certifications: {
-            themed: "Trajectory",
-            plain: "Certifications",
-            blurb: "Certifications and their status.",
-        },
-        writing: {
-            themed: "Flight Log",
-            plain: "Blog",
-            blurb: "Articles and technical notes.",
-        },
-        contact: {
-            themed: "Comms",
-            plain: "Contact",
-            blurb: "Send a message about a project or a role.",
-        },
-    },
     openFile: "Open the mission file",
     readWriteUp: "Read the write-up",
     stack: "Stack",
@@ -516,7 +527,6 @@ export const homeCopy = {
         themed: "Now",
         plain: "Current focus",
         current: "Current",
-        questions: "Open questions",
     },
     missionsAct: {
         themed: "Missions",
@@ -553,7 +563,47 @@ export const homeCopy = {
     },
 } as const;
 
-/** The crew record (G6): the home Crew act and, from PR 14, /about. */
+/**
+ * The Now list's groups, by `currentCuriosities[].kind` (lib/crew.ts
+ * `nowGroups`): the home Now act and the Crew File.
+ */
+export const nowKinds = {
+    question: "Open questions",
+    building: "Building",
+    reading: "Reading",
+    learning: "Learning",
+} as const;
+
+/**
+ * Crew File · About (/about, § 04): the page head, its sections and the
+ * close. UI copy only: the headline, the biography, the Now list, the
+ * entries and the talks are the owner's.
+ */
+export const aboutCopy = {
+    num: "04",
+    themed: "Crew File",
+    plain: "About",
+    /** The metadata and share card when the profile has no headline. */
+    description: "Background and interests.",
+    experience: "Experience & CV",
+    bioThemed: "Biography",
+    bioPlain: "Background",
+    nowThemed: "Now",
+    nowPlain: "Current focus",
+    updated: "Updated",
+    writingThemed: "Flight Log",
+    writingPlain: "Writing",
+    writingAndTalksPlain: "Writing & talks",
+    talksThemed: "Talks",
+    talksPlain: "Talks and papers",
+    allEntries: "All entries",
+    elsewhereThemed: "Elsewhere",
+    elsewherePlain: "Related pages",
+    ask: "Interested in working together?",
+    getInTouch: "Get in touch",
+} as const;
+
+/** The crew record (G6): the home Crew act and /about. */
 export const crewCopy = {
     recordLabel: "Profile record",
     name: "Name",

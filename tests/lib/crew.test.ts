@@ -3,6 +3,7 @@ import {
     crewRecord,
     currentEntry,
     firstParagraph,
+    nowGroups,
     openTo,
     previousRole,
     questions,
@@ -152,6 +153,46 @@ describe("questions", () => {
                 note: null,
             },
             { num: "Q5", href: null, external: false, note: null },
+        ]);
+    });
+});
+
+describe("nowGroups", () => {
+    it("groups the Now list by kind, questions first, each numbered from one", () => {
+        const groups = nowGroups(
+            [
+                { _key: "r1", kind: "reading", title: "A book" },
+                { _key: "q1", kind: "question", title: "Why?" },
+                { _key: "b1", kind: "building", title: "A rig", postId: "p1" },
+                // Saved before kinds existed: a question.
+                { _key: "q2", title: "How?" },
+                { _key: "r2", kind: "reading", title: "A paper" },
+                { _key: "blank", kind: "learning", title: " " },
+            ],
+            [{ _id: "p1", slug: "a-post" }],
+        );
+        expect(
+            groups.map((group) => [
+                group.kind,
+                group.items.map((item) => `${item.num} ${item.title}`),
+            ]),
+        ).toEqual([
+            ["question", ["Q1 Why?", "Q2 How?"]],
+            ["building", ["01 A rig"]],
+            ["reading", ["01 A book", "02 A paper"]],
+        ]);
+        expect(groups[1].items[0].href).toBe("/blog/a-post");
+    });
+
+    it("is empty without items", () => {
+        expect(nowGroups(null)).toEqual([]);
+        expect(nowGroups([{ _key: "x", title: "" }])).toEqual([]);
+    });
+
+    it("matches the home page's questions when every item is a question", () => {
+        const items = FIXTURE_PROFILE.currentCuriosities;
+        expect(nowGroups(items)).toEqual([
+            { kind: "question", items: questions(items) },
         ]);
     });
 });

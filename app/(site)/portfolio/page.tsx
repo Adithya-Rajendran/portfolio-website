@@ -6,11 +6,11 @@ import StaticStars from "@/components/sky/static-stars";
 import { LinkArrow, Status } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
 import Pair from "@/components/ui/pair";
-import RouteList, { type RouteItem } from "@/components/ui/route-list";
+import RouteList from "@/components/ui/route-list";
 import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
 import { missionsCopy as copy } from "@/lib/copy";
-import { cvCredentials, cvEntries } from "@/lib/cv";
+import { directoryRows } from "@/lib/directory";
 import { logEntries } from "@/lib/log-index";
 import {
     missionOrder,
@@ -26,8 +26,6 @@ import {
     getAllProjects,
     getProfile,
     getProjectBySlug,
-    type PostListItem,
-    type ProfileData,
 } from "@/lib/sanity-client";
 import styles from "./portfolio.module.css";
 
@@ -58,67 +56,6 @@ export async function generateMetadata(): Promise<Metadata> {
             description,
         },
     };
-}
-
-/**
- * The rows that keep the old /portfolio fragments working: each carries
- * the id a shared link may still point at, and leads to where that
- * section lives now. A row whose destination has nothing to show is left
- * out.
- */
-function directory(
-    profile: ProfileData | null,
-    posts: readonly PostListItem[],
-): RouteItem[] {
-    const d = copy.directory;
-    const rows: (RouteItem | null)[] = [
-        cvEntries(profile?.timeline).experience.length
-            ? {
-                  key: "experience",
-                  id: "experience",
-                  href: `${siteRoutes.resume}#experience`,
-                  ...d.experience,
-              }
-            : null,
-        (profile?.skillGroups ?? []).some(
-            (group) => group.title && group.skills?.length,
-        )
-            ? {
-                  key: "skills",
-                  id: "skills",
-                  href: `${siteRoutes.resume}#skills`,
-                  ...d.skills,
-              }
-            : null,
-        cvCredentials(profile?.credentials).length
-            ? {
-                  key: "certifications",
-                  id: "certifications",
-                  href: `${siteRoutes.resume}#certifications`,
-                  ...d.certifications,
-              }
-            : null,
-        posts.some((post) => post.slug)
-            ? {
-                  key: "writing",
-                  id: "engineering-writing",
-                  href: siteRoutes.blog,
-                  ...d.writing,
-              }
-            : null,
-        {
-            key: "contact",
-            id: "contact",
-            href: siteRoutes.contact,
-            ...d.contact,
-        },
-    ];
-    return rows
-        .filter((row): row is RouteItem => row !== null)
-        .map((row, index) => ({
-            ...row,
-            num: String(index + 1).padStart(2, "0"),
-        }));
 }
 
 /**
@@ -161,7 +98,11 @@ export default async function Portfolio() {
     };
 
     const tally = statusTally(missions);
-    const rows = directory(profile, posts);
+    const rows = directoryRows(
+        ["experience", "skills", "certifications", "writing", "contact"],
+        { profile, posts: posts.filter((post) => post.slug).length },
+        { anchors: true },
+    );
     const sections = [
         flagship ? "flagship" : null,
         others.length ? "more" : null,

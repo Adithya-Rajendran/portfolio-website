@@ -50,15 +50,6 @@ only live in comments or commit messages.
       module imported by `app/global-not-found.tsx` is merged into the root
       layout's stylesheet, which the Studio loads, so the 404's styles are
       global (`styles/los.css`).
-    - `styles/compat-journal.css` is TEMPORARY: it lets the pages not yet
-      converted (root element `data-legacy`, listed in
-      `tests/e2e/support/legacy-routes.ts`) keep their `app/journal-*.css`
-      look inside the new chrome. Their colours are dark-only, so under
-      Flight Manual a legacy page keeps Void's tokens (the
-      `[data-theme="manual"] [data-legacy]` selector in `styles/tokens.css`)
-      on a Void panel on screen, and prints on the print tokens
-      (`[data-legacy]` in `styles/print.css`). All three go, with those
-      files, in PR 14.
 - **Theme and motion** (plan §2.5.1). `lib/theme-boot.ts` is the inline boot
   script (under 600 bytes, unit-tested) that `ThemeBootScript` renders in
   both root documents' `<head>`: it reads localStorage `ar-theme`
@@ -84,11 +75,10 @@ only live in comments or commit messages.
 - **The mission patch** is generated: `node scripts/generate-patch.mjs`
   writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
   `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
-- **Share images.** Redesigned pages draw the Deep Field card
-  (`lib/og-card.tsx`; `/` (and so any page without its own card),
-  `/blog`, `/blog/archive`, the posts, `/resume`, `/portfolio` and the
-  mission files so far), the others the older `lib/og-template.tsx`
-  until their PR. Satori takes TTF, not WOFF2,
+- **Share images.** Every page draws the Deep Field card
+  (`lib/og-card.tsx`, which also exports the routes' `OG_SIZE` and
+  `OG_CONTENT_TYPE`); `/`'s card stands in for any page without its own.
+  Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
 - **The Trajectory map and the CV** (G2, G3). `lib/orbit/geometry.ts` is
@@ -167,8 +157,21 @@ only live in comments or commit messages.
   stops in its effect cleanup, because a visited page stays mounted. The
   acts come and go with their content (`lib/home.ts`), numbered as they
   appear; the Now and Crew acts read `lib/crew.ts` (the current role, the
-  tagline or the introduction's first sentence, availability, the
-  questions and the record), which the Crew File reuses in PR 14.
+  tagline or the introduction's first sentence, availability, the Now
+  list by kind and the record), which the Crew File shares.
+- **The Crew File** (`/about`, plan §6.2 row 14, contract §9). The patch
+  is the identity mark (a `PageHead` `figure`; the site shows no
+  portrait), then the record (`CrewRecord`), and numbered
+  `DocSection`s (`components/ui/doc-section.tsx`, shared with the mission
+  files): the biography, the Now list grouped by
+  `currentCuriosities[].kind` (`nowGroups`; the home Now act groups the
+  same way), the latest entries and any talks, and the related pages
+  (`lib/directory.ts`, shared with `/portfolio`'s Directory), each only
+  when it has content, then the close (`components/ui/ask.tsx`). Its
+  section ids are prefixed (`crew-…`) because a visited home page, still
+  mounted, has a `#now`. No page carries the old design: there is no
+  legacy stylesheet, token, class or icon library left, and
+  `tests/e2e/crew.spec.ts` checks every static page for one.
 - **LOG numbers** are derived, never stored: `logNumbers` in
   `lib/designations.ts` numbers published posts by `publishedAt`, oldest
   first (LOG 001), ties by document id. Number the whole list, then filter
@@ -437,8 +440,7 @@ deployment require an authenticated Sanity CLI session.
   through the popover menu, footer, Void with no motion and no theme
   controls, no hidden streamed segments, nothing rendered twice), `a11y`
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
-  Flight Manual; a page in `tests/e2e/support/legacy-routes.ts` is checked
-  in full in Void and only its chrome in Flight Manual), `layout` (no
+  Flight Manual, every page in full), `layout` (no
   sideways scroll at 320–1920 px, and the header's parts fit without
   overlapping), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, Pause motion), `chrome`
@@ -476,7 +478,10 @@ deployment require an authenticated Sanity CLI session.
   visible tab, in Void and with motion allowed; the credit, and the drawn
   limb in Flight Manual; the acts numbered in order with their section
   links; an orbit label leading to its row; no gap wording and no old
-  artwork),
+  artwork), `crew` (the Crew File's head with the patch and no portrait,
+  its record, the sections numbered in order with their links, Get in
+  touch, no gap wording; and no page keeping the old design's roots,
+  classes or tokens),
   `budgets` (the brotli byte report, printed,
   not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio

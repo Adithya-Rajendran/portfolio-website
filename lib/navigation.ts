@@ -138,8 +138,8 @@ export function navCurrent(
 
 /**
  * The header's mode on a route (G1): reading pages (an entry, a mission
- * file, the CV, Comms) get the solid header, with a firmer rule under it.
- * RouteMarker sets it as `html[data-header]`.
+ * file, the CV, the Crew File, Comms) get the solid header, with a firmer
+ * rule under it. RouteMarker sets it as `html[data-header]`.
  */
 export function headerMode(
     pathname: string | null | undefined,
@@ -148,7 +148,11 @@ export function headerMode(
     const path = pathname.replace(/\/+$/, "") || "/";
     if (/^\/blog\/(?!archive$|tags$)[^/]+$/.test(path)) return "solid";
     if (/^\/portfolio\/[^/]+$/.test(path)) return "solid";
-    if (path === siteRoutes.resume || path === siteRoutes.contact) {
+    if (
+        path === siteRoutes.resume ||
+        path === siteRoutes.about ||
+        path === siteRoutes.contact
+    ) {
         return "solid";
     }
     return undefined;

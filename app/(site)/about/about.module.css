@@ -1,0 +1,24 @@
+/*
+ * Crew File · About (/about, § 04): the head band with the patch, the
+ * profile record, then numbered document sections (the biography, the Now
+ * list by kind, the writing, the related pages) and the close. Every part
+ * is shared (styles/components.css: the page head and its figure, the
+ * title block, the question rows, the log index, the CV rows, the link
+ * rows, the document sections and the close); only the spacing is here.
+ * The close is the last section, so its own padding ends the page.
+ */
+.record {
+    margin-top: var(--s-4);
+}
+
+/* The Now list: one group per kind, its label over its rows. */
+.group + .group {
+    margin-top: var(--s-8);
+}
+.groupTitle {
+    margin-bottom: var(--s-4);
+}
+
+.talks {
+    margin-top: var(--s-7);
+}

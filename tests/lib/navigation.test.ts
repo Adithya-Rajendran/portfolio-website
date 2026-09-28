@@ -62,6 +62,7 @@ describe("headerMode", () => {
             "/blog/my-homelab/",
             "/portfolio/homelab",
             "/resume",
+            "/about",
             "/contact",
         ]) {
             expect(headerMode(path), path).toBe("solid");
@@ -72,7 +73,6 @@ describe("headerMode", () => {
             "/blog/archive",
             "/blog/tags/homelab",
             "/portfolio",
-            "/about",
             null,
         ]) {
             expect(headerMode(path), String(path)).toBeUndefined();

@@ -2262,4 +2262,98 @@
         font: 300 var(--step-1) / 1.5 var(--font-long);
         text-wrap: pretty;
     }
+
+    /* ===== Page head: actions and a figure (contract §1) =============== */
+    /* The head's links or buttons, under the intro. */
+    .page-head__actions {
+        --cluster: var(--s-3);
+        margin-top: var(--s-5);
+    }
+    /* A drawing beside the head (the Crew File's patch): at the title's
+       right on phones, 4 of 12 columns from 960px, the tag row above it
+       running the full width. Decorative: its parent is aria-hidden. */
+    .page-head--figure {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: var(--s-5);
+    }
+    .page-head--figure > * {
+        grid-column: 1 / -1;
+    }
+    .page-head--figure > .page-head__title {
+        grid-column: 1;
+    }
+    .page-head__figure {
+        grid-column: 2;
+        grid-row: 2;
+        align-self: end;
+        width: clamp(4.5rem, 3rem + 7vw, 7rem);
+    }
+    @media (min-width: 60rem) {
+        .page-head--figure {
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            grid-template-rows: auto auto auto auto;
+            column-gap: var(--gutter);
+        }
+        .page-head--figure > * {
+            grid-column: 1 / span 7;
+        }
+        .page-head--figure > .section-tag {
+            grid-column: 1 / -1;
+        }
+        .page-head--figure > .page-head__title {
+            grid-column: 1 / span 7;
+        }
+        .page-head--figure > .page-head__figure {
+            grid-column: 9 / -1;
+            grid-row: 2 / -1;
+            align-self: center;
+            justify-self: end;
+            width: min(100%, 19rem);
+            margin-top: var(--s-5);
+        }
+    }
+    /* The patch as a figure: the ring's disc is solid, so the band's
+       stars stay behind it. */
+    .page-head__figure .patch {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: var(--bg);
+    }
+
+    /* ===== Document sections (contract §1; components/ui/doc-section.tsx) */
+    /* The full-width tag row, then the rail and the main column. */
+    .doc-section__tag {
+        margin-bottom: var(--s-7);
+    }
+    .doc-section__body {
+        row-gap: var(--s-6);
+    }
+    @media (min-width: 60rem) {
+        .doc-section__rail {
+            align-self: start;
+            position: sticky;
+            top: calc(var(--header-h) + var(--s-6));
+        }
+    }
+
+    /* ===== Close (contract §1; components/ui/ask.tsx) ================== */
+    /* One question and its action, between a meaningful rule and a quiet
+       one. */
+    .ask {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--s-5);
+        padding-block: var(--s-6);
+        border-top: var(--rule-hair) solid var(--rule-2);
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .ask__title {
+        font: 300 var(--step-4) / 1.05 var(--font-display);
+        letter-spacing: -0.014em;
+    }
 }

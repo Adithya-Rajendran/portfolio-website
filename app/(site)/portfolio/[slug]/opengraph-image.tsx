@@ -2,8 +2,7 @@ import { ImageResponse } from "next/og";
 import { siteConfig } from "@/lib/config";
 import { missionsCopy as copy } from "@/lib/copy";
 import { toMission } from "@/lib/missions";
-import { OG_CARD_FONTS, OgCard } from "@/lib/og-card";
-import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/og-template";
+import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
 import { getProjectBySlug } from "@/lib/sanity-client";
 
 export const alt = `${copy.fileThemed} — ${siteConfig.author}`;
