@@ -11,6 +11,10 @@ const dataset = process.env.NEXT_PUBLIC_STORE_SANITY_DATASET || "production";
 
 const PROFILE_ID = "profile";
 
+/** API version for the Studio's own filtered lists. */
+const STRUCTURE_API_VERSION = "2025-02-19";
+
+// Labels only: the `post` and `project` type names and the site URLs stay.
 const structure = (S: StructureBuilder) =>
     S.list()
         .title("Adithya's Site")
@@ -26,8 +30,68 @@ const structure = (S: StructureBuilder) =>
                         .title("Profile"),
                 ),
             S.divider(),
-            S.documentTypeListItem("post").title("Blog Posts"),
-            S.documentTypeListItem("project").title("Projects"),
+            S.listItem()
+                .id("post")
+                .title("Flight Log · Posts")
+                .schemaType("post")
+                .child(
+                    S.list()
+                        .title("Flight Log · Posts")
+                        .items([
+                            S.listItem()
+                                .id("all-posts")
+                                .title("All Posts")
+                                .schemaType("post")
+                                .child(
+                                    S.documentTypeList("post")
+                                        .title("All Posts")
+                                        .defaultOrdering([
+                                            {
+                                                field: "publishedAt",
+                                                direction: "desc",
+                                            },
+                                        ]),
+                                ),
+                            // Posts dated after today (UTC): the site hides
+                            // them until the daily cron releases each one.
+                            S.listItem()
+                                .id("scheduled-posts")
+                                .title("Scheduled")
+                                .schemaType("post")
+                                .child(() =>
+                                    S.documentList()
+                                        .id("scheduled-posts")
+                                        .title("Scheduled")
+                                        .schemaType("post")
+                                        .apiVersion(STRUCTURE_API_VERSION)
+                                        .filter(
+                                            '_type == "post" && publishedAt > $today',
+                                        )
+                                        .params({
+                                            today: new Date()
+                                                .toISOString()
+                                                .slice(0, 10),
+                                        })
+                                        .defaultOrdering([
+                                            {
+                                                field: "publishedAt",
+                                                direction: "asc",
+                                            },
+                                        ]),
+                                ),
+                        ]),
+                ),
+            S.listItem()
+                .id("project")
+                .title("Missions · Projects")
+                .schemaType("project")
+                .child(
+                    S.documentTypeList("project")
+                        .title("Missions · Projects")
+                        .defaultOrdering([
+                            { field: "designation", direction: "asc" },
+                        ]),
+                ),
         ]);
 
 export default defineConfig({

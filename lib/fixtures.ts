@@ -4,6 +4,7 @@ import type {
     PostMeta,
     PostWithBody,
     ProfileData,
+    ProjectListItem,
     ProjectWithBody,
 } from "@/lib/sanity-client";
 import { newestFirst } from "@/lib/content-rules";
@@ -319,7 +320,9 @@ const fixturePosts: PostWithBody[] = [
         description:
             "A few things I learned by running infrastructure that is deliberately too small to hide its failure modes.",
         publishedAt: "2026-06-26",
+        revisedAt: "2026-07-02",
         tags: ["kubernetes", "homelab"],
+        projectIds: ["fixture-project-flagship"],
         wordCount: 78,
         body: [
             textBlock(
@@ -403,16 +406,158 @@ function metaPost(post: PostWithBody): PostMeta {
 }
 
 /**
+ * Listed fixture projects. Their names say they are fixtures: they describe
+ * no real work (the owner's projects are entered in the Studio from sourced
+ * drafts), and only exercise the mission fields, one status and date shape
+ * each: a flagship with every field and a model, a completed project with
+ * estimated years ("c. 2023"), and a planned one without dates.
+ */
+export const FIXTURE_PROJECTS: ProjectWithBody[] = [
+    {
+        _id: "fixture-project-flagship",
+        _updatedAt: "2026-07-11T00:00:00Z",
+        designation: 1,
+        title: "Fixture flagship mission",
+        slug: "fixture-flagship-mission",
+        summary:
+            "A fixture project that fills every mission field the site reads.",
+        status: "active",
+        statusNote: "Fixture status note.",
+        types: ["infrastructure", "hardware"],
+        featured: 1,
+        myRole: "Fixture role",
+        technologies: ["Fixture technology A", "Fixture technology B"],
+        highlights: ["Exercises every module of a mission page."],
+        parameters: [
+            { _key: "parameter-a", label: "Parameter A", value: "1" },
+            { _key: "parameter-b", label: "Parameter B", value: "2 × 3" },
+            { _key: "parameter-c", label: "Parameter C", value: "4 W" },
+        ],
+        links: [
+            {
+                _key: "fixture-flagship-link",
+                _type: "externalLink",
+                label: "Fixture repository",
+                url: "https://example.com/fixture-repository",
+                kind: "repo",
+            },
+        ],
+        hasModel: true,
+        brief: {
+            problem: "The fixture problem statement.",
+            approach: "The fixture approach.",
+            outcome: "The fixture outcome.",
+        },
+        results: [
+            {
+                _key: "result-a",
+                metric: "Fixture metric",
+                value: "100%",
+                note: "A fixture note on how it was measured.",
+            },
+        ],
+        lessons: ["A fixture lesson."],
+        next: ["A fixture next step."],
+        model: {
+            kind: "procedural",
+            procedural: "homelab-rack",
+            poster: { _type: "image", alt: "Fixture poster of the model" },
+            title: "Fixture model",
+            alt: "A fixture description of the model for readers who cannot see it.",
+            realWorld: { dimension: "height", value: 12, unit: "U" },
+            hotspots: [
+                {
+                    _key: "hotspot-essay",
+                    label: "1",
+                    title: "Fixture callout to the essay",
+                    body: "Links to a section of this project's essay.",
+                    part: "tier0",
+                    anchor: { heading: "fixture-section" },
+                },
+                {
+                    _key: "hotspot-post",
+                    label: "2",
+                    title: "Fixture callout to a post",
+                    part: "power",
+                    anchor: {
+                        heading: "what-stayed-useful",
+                        postId: "fixture-post-1",
+                    },
+                },
+            ],
+        },
+        body: [
+            textBlock("Fixture section", "h2"),
+            textBlock("A fixture paragraph under the section heading."),
+        ] as ContentBody,
+    },
+    {
+        _id: "fixture-project-complete",
+        _updatedAt: "2026-06-01T00:00:00Z",
+        designation: 2,
+        title: "Fixture completed mission",
+        slug: "fixture-completed-mission",
+        summary:
+            "A fixture project whose dates are an estimate known to the year.",
+        status: "completed",
+        types: ["software"],
+        startDate: "2023-01-01",
+        endDate: "2023-12-31",
+        datePrecision: "year",
+        datesApproximate: true,
+        technologies: ["Fixture technology C"],
+        highlights: ["Prints its years as an estimate."],
+        results: [
+            { _key: "result-b", metric: "Fixture accuracy", value: "90%" },
+        ],
+        hasModel: false,
+        body: [textBlock("A fixture essay without headings.")] as ContentBody,
+    },
+    {
+        _id: "fixture-project-planned",
+        _updatedAt: "2026-05-01T00:00:00Z",
+        designation: 3,
+        title: "Fixture planned mission",
+        slug: "fixture-planned-mission",
+        summary: "A fixture project that has not started, so it has no dates.",
+        status: "planned",
+        types: ["research"],
+        technologies: ["Fixture technology D"],
+        highlights: ["Has a status but no dates."],
+        hasModel: false,
+        body: [
+            textBlock("A fixture essay for a planned project."),
+        ] as ContentBody,
+    },
+];
+
+function listProject(project: ProjectWithBody): ProjectListItem {
+    const {
+        body: _body,
+        brief: _brief,
+        results: _results,
+        lessons: _lessons,
+        next: _next,
+        model: _model,
+        ...item
+    } = project;
+    return item;
+}
+
+/**
  * A renderer-only project fixture. It deliberately exercises every custom
  * contentBody member but is never returned by the public project-list query.
  */
 export const PROJECT_ESSAY_FIXTURE: ProjectWithBody = {
     _id: "fixture-project-essay",
     _updatedAt: "2026-07-11T00:00:00Z",
+    designation: 99,
     title: "Portable Text project essay fixture",
     slug: "portable-text-project-fixture",
     summary: "A non-published fixture for exercising rich project prose.",
     status: "completed",
+    types: ["software"],
+    hasModel: false,
     startDate: "2026-01-01",
     endDate: "2026-02-01",
     technologies: ["Next.js", "Sanity"],
@@ -478,14 +623,20 @@ export function resolveFixtureQuery<T>(
 
     if (query.includes('_type == "project"')) {
         if (query.includes("slug.current == $slug")) {
-            return (
-                params.slug === PROJECT_ESSAY_FIXTURE.slug
-                    ? PROJECT_ESSAY_FIXTURE
-                    : null
-            ) as T;
+            return ([...FIXTURE_PROJECTS, PROJECT_ESSAY_FIXTURE].find(
+                (project) => project.slug === params.slug,
+            ) ?? null) as T;
         }
-        if (query.includes(".slug.current")) return [] as T;
-        return [] as T;
+        if (query.includes('"updatedAt": _updatedAt')) {
+            return FIXTURE_PROJECTS.map(({ slug, _updatedAt }) => ({
+                slug,
+                updatedAt: _updatedAt ?? "",
+            })) as T;
+        }
+        if (query.includes(".slug.current")) {
+            return FIXTURE_PROJECTS.map(({ slug }) => slug) as T;
+        }
+        return FIXTURE_PROJECTS.map(listProject) as T;
     }
 
     if (!query.includes('_type == "post"')) return null;
@@ -494,6 +645,14 @@ export function resolveFixtureQuery<T>(
     const posts = newestFirst(
         fixturePosts.filter((post) => post.publishedAt <= today),
     );
+
+    if (query.includes("references($projectId)")) {
+        return posts
+            .filter((post) =>
+                post.projectIds?.includes(String(params.projectId)),
+            )
+            .map(listPost) as T;
+    }
 
     if (query.includes("slug.current == $slug")) {
         const post = posts.find((item) => item.slug === params.slug);

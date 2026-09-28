@@ -11,7 +11,16 @@ import type {
     TalkKind,
     TimelineDatePrecision,
 } from "@/lib/profile-fields";
+import type {
+    ImageKind,
+    ModelKind,
+    ProjectStatus,
+    ProjectType,
+    RealWorldDimension,
+    RealWorldUnit,
+} from "@/lib/project-fields";
 import { client, isSanityConfigured } from "@/lib/sanity-config";
+import type { ModelPartKey, ProceduralModelKey } from "@/lib/viewer/registry";
 
 export type ContentBlock = {
     _key?: string;
@@ -153,13 +162,25 @@ export type ProfileData = {
     talksAndPapers?: TalkOrPaper[] | null;
 };
 
+/** A post's cover: image metadata plus its dominant colour (`bg`). */
+export type PostCover = SanityImageValue & {
+    credit?: string | null;
+    kind?: ImageKind | null;
+    bg?: string | null;
+};
+
 export type PostListItem = {
     _id: string;
     title: string;
     slug: string;
     description: string;
     publishedAt: string;
+    /** The last substantive revision; never before `publishedAt`. */
+    revisedAt?: string | null;
     tags?: string[] | null;
+    /** Related projects, as ids: join against the project list. */
+    projectIds?: string[] | null;
+    cover?: PostCover | null;
     wordCount: number;
 };
 
@@ -172,22 +193,88 @@ export type PostMeta = Omit<PostListItem, "_id"> & {
     _updatedAt?: string;
 };
 
+export type ProjectParameter = {
+    _key: string;
+    label: string;
+    value: string;
+};
+
 export type ProjectListItem = {
     _id: string;
     _updatedAt?: string;
+    /** The mission number: 2 prints as MSN-02. */
+    designation: number;
     title: string;
     slug: string;
     summary: string;
-    status: "active" | "completed" | "paused" | "archived";
+    status: ProjectStatus;
+    statusNote?: string | null;
+    types: ProjectType[];
+    /** 1 is the photographic stage; 2 and 3 are featured beside it. */
+    featured?: number | null;
+    myRole?: string | null;
     startDate?: string | null;
     endDate?: string | null;
+    /** `year`: only the years of the dates are known; never print a month. */
+    datePrecision?: TimelineDatePrecision | null;
+    /** The dates are the owner's estimate: print them with "c.". */
+    datesApproximate?: boolean | null;
     technologies?: string[] | null;
     highlights?: string[] | null;
+    parameters?: ProjectParameter[] | null;
     cover?: SanityImageValue | null;
+    coverPortrait?: SanityImageValue | null;
     links?: ExternalLink[] | null;
+    hasModel: boolean;
 };
 
-export type ProjectWithBody = ProjectListItem & { body: ContentBody };
+export type ProjectResult = {
+    _key: string;
+    metric: string;
+    value: string;
+    note?: string | null;
+};
+
+export type ModelHotspot = {
+    _key: string;
+    label: string;
+    title: string;
+    body?: string | null;
+    /** Procedural models: the part the balloon points at. */
+    part?: ModelPartKey | null;
+    /** glTF models: where the balloon points, in model coordinates. */
+    position?: { x: number; y: number; z: number } | null;
+    /** A heading id in this project's essay, or in the post `postId`. */
+    anchor?: { heading: string; postId?: string | null } | null;
+};
+
+export type ProjectModel = {
+    kind: ModelKind;
+    procedural?: ProceduralModelKey | null;
+    fileUrl?: string | null;
+    poster: SanityImageValue;
+    title?: string | null;
+    alt: string;
+    realWorld?: {
+        dimension: RealWorldDimension;
+        value: number;
+        unit: RealWorldUnit;
+    } | null;
+    hotspots?: ModelHotspot[] | null;
+};
+
+export type ProjectWithBody = ProjectListItem & {
+    brief?: {
+        problem?: string | null;
+        approach?: string | null;
+        outcome?: string | null;
+    } | null;
+    results?: ProjectResult[] | null;
+    lessons?: string[] | null;
+    next?: string[] | null;
+    model?: ProjectModel | null;
+    body: ContentBody;
+};
 
 const imageMetadataProjection = `
     ...,
@@ -256,29 +343,42 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     }
 }`);
 
-export const POST_LIST_QUERY = defineQuery(`*[
-    _type == "post" && defined(publishedAt) && publishedAt <= $today
-] | order(publishedAt desc){
-    _id,
+const postCoverProjection = `cover{
+    ${imageMetadataProjection},
+    "bg": asset->metadata.palette.dominant.background
+}`;
+
+/** The list fields every post query shares (never the body). */
+const postListFields = `
     title,
     "slug": slug.current,
     description,
     publishedAt,
+    revisedAt,
     tags,
-    "wordCount": length(string::split(pt::text(body), " "))
+    "projectIds": projects[]._ref,
+    ${postCoverProjection},
+    "wordCount": length(string::split(pt::text(body), " "))`;
+
+export const POST_LIST_QUERY = defineQuery(`*[
+    _type == "post" && defined(publishedAt) && publishedAt <= $today
+] | order(publishedAt desc){
+    _id,${postListFields}
+}`);
+
+/** A project's Flight Log entries: published posts that reference it. */
+export const POSTS_BY_PROJECT_QUERY = defineQuery(`*[
+    _type == "post" && defined(publishedAt) && publishedAt <= $today &&
+    references($projectId)
+] | order(publishedAt desc){
+    _id,${postListFields}
 }`);
 
 export const RECENT_POSTS_QUERY = defineQuery(`*[
     _type == "post" && defined(publishedAt) && publishedAt <= $today
 ] | order(publishedAt desc){
     _id,
-    _updatedAt,
-    title,
-    "slug": slug.current,
-    description,
-    publishedAt,
-    tags,
-    "wordCount": length(string::split(pt::text(body), " ")),
+    _updatedAt,${postListFields},
     ${contentBodyProjection}
 }`);
 
@@ -287,13 +387,7 @@ export const POST_BY_SLUG_QUERY = defineQuery(`*[
     defined(publishedAt) && publishedAt <= $today
 ][0]{
     _id,
-    _updatedAt,
-    title,
-    "slug": slug.current,
-    description,
-    publishedAt,
-    tags,
-    "wordCount": length(string::split(pt::text(body), " ")),
+    _updatedAt,${postListFields},
     ${contentBodyProjection}
 }`);
 
@@ -301,13 +395,7 @@ export const POST_META_QUERY = defineQuery(`*[
     _type == "post" && slug.current == $slug &&
     defined(publishedAt) && publishedAt <= $today
 ][0]{
-    title,
-    "slug": slug.current,
-    description,
-    publishedAt,
-    tags,
-    _updatedAt,
-    "wordCount": length(string::split(pt::text(body), " "))
+    _updatedAt,${postListFields}
 }`);
 
 export const POST_SLUGS_QUERY = defineQuery(`*[
@@ -318,38 +406,57 @@ export const POST_SLUGS_WITH_DATES_QUERY = defineQuery(`*[
     _type == "post" && defined(publishedAt) && publishedAt <= $today
 ]{"slug": slug.current, "updatedAt": _updatedAt}`);
 
-export const PROJECT_LIST_QUERY = defineQuery(`*[
-    _type == "project" && defined(slug.current)
-] | order(coalesce(endDate, startDate, _createdAt) desc){
+/** The list fields every project query shares (never the essay). */
+const projectListFields = `
     _id,
     _updatedAt,
+    designation,
     title,
     "slug": slug.current,
     summary,
     status,
+    statusNote,
+    types,
+    featured,
+    myRole,
     startDate,
     endDate,
+    datePrecision,
+    datesApproximate,
     technologies,
     highlights,
-    cover,
-    links[]{_key, _type, label, url}
+    parameters[]{_key, label, value},
+    cover{${imageMetadataProjection}},
+    coverPortrait{${imageMetadataProjection}},
+    links[]{_key, _type, label, url, kind},
+    "hasModel": defined(model)`;
+
+export const PROJECT_LIST_QUERY = defineQuery(`*[
+    _type == "project" && defined(slug.current)
+] | order(coalesce(endDate, startDate, _createdAt) desc){${projectListFields}
 }`);
 
 export const PROJECT_BY_SLUG_QUERY = defineQuery(`*[
     _type == "project" && slug.current == $slug
-][0]{
-    _id,
-    _updatedAt,
-    title,
-    "slug": slug.current,
-    summary,
-    status,
-    startDate,
-    endDate,
-    technologies,
-    highlights,
-    cover,
-    links[]{_key, _type, label, url},
+][0]{${projectListFields},
+    brief{problem, approach, outcome},
+    results[]{_key, metric, value, note},
+    lessons,
+    next,
+    model{
+        kind,
+        procedural,
+        "fileUrl": file.asset->url,
+        poster{${imageMetadataProjection}},
+        title,
+        alt,
+        realWorld{dimension, value, unit},
+        hotspots[]{
+            _key, label, title, body, part,
+            position{x, y, z},
+            anchor{heading, "postId": post._ref}
+        }
+    },
     ${contentBodyProjection}
 }`);
 
@@ -402,6 +509,16 @@ export function getProfile(): Promise<ProfileData | null> {
 
 export function getAllPosts(): Promise<PostListItem[]> {
     return sanityFetch(POST_LIST_QUERY, {}, CACHE_TAGS.post, []);
+}
+
+/** Published posts whose `projects` include this project id. */
+export function getPostsByProject(projectId: string): Promise<PostListItem[]> {
+    return sanityFetch(
+        POSTS_BY_PROJECT_QUERY,
+        { projectId },
+        CACHE_TAGS.post,
+        [],
+    );
 }
 
 export async function getRecentPostsWithBody(

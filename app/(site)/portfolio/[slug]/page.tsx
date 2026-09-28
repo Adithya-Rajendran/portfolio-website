@@ -5,29 +5,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ProjectEssay from "@/components/portfolio/project-essay";
 import PortfolioNav from "@/components/portfolio/portfolio-nav";
-import {
-    getAllProjectSlugs,
-    getProjectBySlug,
-    type ProjectListItem,
-} from "@/lib/sanity-client";
+import { formatProjectYears, projectStatusLabel } from "@/lib/project-content";
+import { getAllProjectSlugs, getProjectBySlug } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 import { siteConfig } from "@/lib/config";
-
-const statusLabel: Record<ProjectListItem["status"], string> = {
-    active: "Active",
-    completed: "Completed",
-    paused: "Paused",
-    archived: "Archived",
-};
-
-function yearRange(start?: string | null, end?: string | null) {
-    if (!start && !end) return null;
-    const startYear = start?.slice(0, 4);
-    const endYear = end?.slice(0, 4);
-    if (!startYear) return endYear;
-    if (!endYear || startYear === endYear) return startYear;
-    return `${startYear}–${endYear}`;
-}
 
 export async function generateStaticParams() {
     const slugs = await getAllProjectSlugs();
@@ -83,7 +64,7 @@ export default async function ProjectPage({
     const coverUrl = project.cover?.asset
         ? urlForImage(project.cover).width(1600).fit("max").auto("format").url()
         : null;
-    const dates = yearRange(project.startDate, project.endDate);
+    const dates = formatProjectYears(project);
 
     return (
         <>
@@ -103,7 +84,7 @@ export default async function ProjectPage({
                             Back to work
                         </Link>
                         <div className="career-meta">
-                            <span>{statusLabel[project.status]}</span>
+                            <span>{projectStatusLabel(project.status)}</span>
                             {dates && <span>{dates}</span>}
                         </div>
                         <h1 className="journal-title">{project.title}</h1>

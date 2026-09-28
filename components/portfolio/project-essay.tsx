@@ -2,6 +2,7 @@ import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
 import { numberCodeListings } from "@/components/blogs/utils";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { extractHeadings, headingIdsByKey } from "@/lib/headings";
 import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
 import type { ProjectWithBody } from "@/lib/sanity-client";
 
@@ -29,7 +30,9 @@ export default async function ProjectEssay({
                 value={project.body as unknown as PortableTextBlock[]}
                 components={createPortableTextComponents(
                     highlighted,
-                    {},
+                    // The same ids the Studio checks 3D-model callout anchors
+                    // against, so a callout can link to an essay section.
+                    headingIdsByKey(extractHeadings(project)),
                     numberCodeListings(codeBlocks),
                 )}
             />

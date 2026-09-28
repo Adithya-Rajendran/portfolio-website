@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import type { PostHeading } from "./utils";
+import type { PostHeading } from "@/lib/headings";
 
 export default function MobileToc({ headings }: { headings: PostHeading[] }) {
     if (!headings.length) return null;

@@ -6,13 +6,12 @@ import TableOfContents from "@/components/blogs/table-of-contents";
 import MobileToc from "@/components/blogs/mobile-toc";
 import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
 import {
-    extractHeadings,
-    headingIdsByKey,
     numberCodeListings,
     getPostSlug,
     formatDate,
     readingTimeFromWordCount,
 } from "@/components/blogs/utils";
+import { extractHeadings, headingIdsByKey } from "@/lib/headings";
 import { TAG_PATTERN } from "@/lib/tags";
 import { siteConfig } from "@/lib/config";
 

@@ -1,15 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { formatProjectYears, projectStatusLabel } from "@/lib/project-content";
 import type { ProjectListItem } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
-
-const statusLabel: Record<ProjectListItem["status"], string> = {
-    active: "Active",
-    completed: "Completed",
-    paused: "Paused",
-    archived: "Archived",
-};
 
 export default function Project({ project }: { project: ProjectListItem }) {
     const coverUrl = project.cover?.asset
@@ -20,6 +14,7 @@ export default function Project({ project }: { project: ProjectListItem }) {
               .auto("format")
               .url()
         : null;
+    const years = formatProjectYears(project);
     return (
         <article className="career-project">
             {coverUrl && (
@@ -34,10 +29,8 @@ export default function Project({ project }: { project: ProjectListItem }) {
                 </div>
             )}
             <div className="career-meta">
-                <span>{statusLabel[project.status]}</span>
-                {project.startDate && (
-                    <span>{project.startDate.slice(0, 4)}</span>
-                )}
+                <span>{projectStatusLabel(project.status)}</span>
+                {years && <span>{years}</span>}
             </div>
             <h3>
                 <Link href={`/portfolio/${project.slug}`}>{project.title}</Link>

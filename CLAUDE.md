@@ -170,20 +170,37 @@ Commit the regenerated `schema.json` and `sanity.types.ts`. Schema extraction
 and TypeGen are local; dataset export, migration execution, and schema
 deployment require an authenticated Sanity CLI session.
 
-- Option lists that both the schema and the site read (availability status,
-  link kinds, employment types, date precision…) live in
-  `lib/profile-fields.ts`, which has no imports because the Studio bundles
-  it. Sanity checks a value against `options.list` only when the field
-  declares a validation rule, so an optional list field uses
+- Option lists and pure rules that both the schema and the site read live
+  in modules with no imports, because the Studio bundles them:
+  `lib/profile-fields.ts` (availability, link kinds, employment types, date
+  precision…), `lib/project-fields.ts` (project statuses and types, image
+  kinds, model kinds, mission numbers, the anchor and revision rules),
+  `lib/viewer/registry.ts` (the 3D models built in code and the parts a
+  callout can point at; never import three.js there) and `lib/headings.ts`
+  (heading ids, shared by the pages and the Studio's anchor check). Sanity
+  checks a value against `options.list` only when the field declares a
+  validation rule, so an optional list field uses
   `validation: listValuesOnly`.
+- Rules that query the dataset (mission-number uniqueness, callout anchors
+  in a linked post) are exported from `sanity/schemas/project.ts` and read
+  through `context.getClient`, so tests pass a fake client. They query with
+  an explicit perspective: `raw` where drafts count, `published` where
+  readers see the result.
 - `PROFILE_QUERY_RESULT` must stay assignable to the hand-written
-  `ProfileData`; `tests/lib/profile-fields.test.ts` checks this in
-  `pnpm typecheck`.
+  `ProfileData`, and the post and project query results to `PostListItem`,
+  `PostWithBody`, `PostMeta`, `ProjectListItem` and `ProjectWithBody`;
+  `tests/lib/profile-fields.test.ts` and `tests/lib/project-fields.test.ts`
+  check this in `pnpm typecheck`.
 - Real content only. A date known only to the year is stored as any day in
   that year with precision `year` (`timelineEntry.startPrecision`,
-  `profile.launch.precision`), and the site prints the year alone
-  (`formatTimelineDate` in `lib/profile-content.ts`). Never print a month or
-  day the owner has not given.
+  `profile.launch.precision`, `project.datePrecision`), and the site prints
+  the year alone (`formatTimelineDate` in `lib/profile-content.ts`,
+  `formatProjectYears` in `lib/project-content.ts`). Never print a month or
+  day the owner has not given. Project dates the owner estimated set
+  `datesApproximate` and print with "c." ("c. 2024–2025").
+- Fixture projects (`lib/fixtures.ts`) are named as fixtures and describe no
+  real work; the owner's projects come from sources through the seed
+  migration and the Studio.
 - No public email address or phone number anywhere: pages, JSON-LD, RSS, OG
   images, the console or the printed CV. Contact is the form only, so there is
   deliberately no `publicEmail` field, and `externalLink` accepts http(s)
