@@ -14,6 +14,12 @@ dataset come from `.env.local`; never commit them.
 
 ## Running them
 
+**Run both only once the code that adds them is live on production.** Before
+that, production renders only the legacy `link` annotation, so the rewritten
+homelab link would print as plain text there, and the production Studio's
+older schema does not know the fields the drafts carry (mission number,
+types, brief, model).
+
 From the repository root, with Node 24 and pnpm installed:
 
 ```bash
