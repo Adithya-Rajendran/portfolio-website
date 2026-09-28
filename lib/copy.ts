@@ -32,20 +32,13 @@ export const lossOfSignalCopy = {
     tag: "LOS · 404",
     themed: "Loss of Signal",
     plain: "Page not found",
-    title: "Loss of signal",
-    lead: "Nothing is transmitting from this address. The page may have moved, been renamed, or never existed.",
+    lead: "The page you requested could not be found. It may have moved or no longer exists.",
+    home: "Home",
     requested: "Requested",
-    traceCaption: "Carrier · last 60 s",
-    traceMid: "Signal strength, relative",
-    traceEnd: "AOS · pending",
-    traceLos: "LOS",
-    traceFlat: "No carrier",
-    returnTag: "AOS",
-    returnThemed: "Return trajectory",
+    returnThemed: "Directory",
     returnPlain: "Site sections",
-    report: "Followed a broken link on this site?",
-    reportLink: "Send a message",
-    reportTail: "with the address.",
+    report: "Found a broken link?",
+    reportLink: "Let me know",
 } as const;
 
 /** The error page: the same instrument, a different fault. */
@@ -53,8 +46,7 @@ export const errorCopy = {
     tag: "ERR · 500",
     themed: "Telemetry fault",
     plain: "Page error",
-    title: "Telemetry fault",
-    lead: "This page failed to load. Nothing you did caused it; try again in a moment.",
+    lead: "This page failed to load. Please try again.",
     retry: "Try again",
 } as const;
 

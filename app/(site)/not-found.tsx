@@ -20,7 +20,6 @@ export default function NotFound() {
             tag={copy.tag}
             themed={copy.themed}
             plain={copy.plain}
-            title={copy.title}
             lead={copy.lead}
             actions={<NotFoundActions />}
             showRequested

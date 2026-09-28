@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import LossOfSignal from "@/components/los/loss-of-signal";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { errorCopy as copy } from "@/lib/copy";
+import { errorCopy as copy, lossOfSignalCopy } from "@/lib/copy";
 import { siteRoutes } from "@/lib/navigation";
 
 /**
@@ -27,7 +27,6 @@ export default function Error({
             tag={copy.tag}
             themed={copy.themed}
             plain={copy.plain}
-            title={copy.title}
             lead={copy.lead}
             actions={
                 <>
@@ -37,7 +36,9 @@ export default function Error({
                     <Button variant="primary" icon="reset" onClick={retry}>
                         {copy.retry}
                     </Button>
-                    <ButtonLink href={siteRoutes.home}>Home</ButtonLink>
+                    <ButtonLink href={siteRoutes.home}>
+                        {lossOfSignalCopy.home}
+                    </ButtonLink>
                 </>
             }
         />
