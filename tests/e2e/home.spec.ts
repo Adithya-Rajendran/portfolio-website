@@ -98,7 +98,11 @@ test("the starfield drifts only while it may", async ({ page }) => {
     });
     await expect(stars).toHaveAttribute("data-state", "running");
 
-    // Pause motion, beside it in the hero.
+    // Pause motion, beside it in the hero; the footer leaves it to the
+    // hero on home.
+    await expect(
+        page.getByRole("contentinfo").getByRole("button", { name: /motion/ }),
+    ).toBeHidden();
     await hero(page)
         .getByRole("button", { name: chromeCopy.holdDrift })
         .click();

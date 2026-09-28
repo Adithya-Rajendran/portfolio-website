@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { chromeCopy } from "@/lib/copy";
 import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
 
@@ -120,7 +121,7 @@ test("a choice made in another tab applies here", async ({ page, context }) => {
 });
 
 test("Pause motion reduces motion and is remembered", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/about");
     const footer = page.getByRole("contentinfo");
     await footer.getByRole("button", { name: "Pause motion" }).click();
     await expect(html(page)).toHaveAttribute("data-motion", "reduced");
@@ -137,11 +138,9 @@ test("the OS reduce-motion setting holds motion and says so", async ({
     page,
 }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto("/");
+    await page.goto("/about");
     await expect(html(page)).toHaveAttribute("data-motion", "reduced");
     const footer = page.getByRole("contentinfo");
-    await expect(
-        footer.getByText("Motion reduced by system settings"),
-    ).toBeVisible();
+    await expect(footer.getByText(chromeCopy.motionHeldByOs)).toBeVisible();
     await expect(footer.getByRole("button", { name: /motion/ })).toBeHidden();
 });

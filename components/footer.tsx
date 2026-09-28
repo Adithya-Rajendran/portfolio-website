@@ -3,7 +3,6 @@ import MotionToggle from "@/components/chrome/motion-toggle";
 import ThemeChoice from "@/components/chrome/theme-choice";
 import Pair from "@/components/ui/pair";
 import { Patch } from "@/components/ui/icon";
-import { Rev } from "@/components/ui/marks";
 import { getToday } from "@/lib/clock";
 import { chromeCopy } from "@/lib/copy";
 import { siteConfig } from "@/lib/config";
@@ -14,16 +13,17 @@ import { getProfileLink } from "@/lib/profile-content";
 /**
  * The footer (contract §6): the patch, the name and the profile's
  * headline, the nav pairs (also the menu's fallback target without the
- * Popover API), plain links, the theme choice and Pause motion, then the
- * document-control strip (G7): the profile's revision date, the copyright
- * and Back to top. Reads only cached data (the profile and a day-cached
- * "today"), so it is part of every page's static shell.
+ * Popover API), plain links, the theme choice and Pause motion (on home
+ * the hero carries it, beside the starfield), then the strip: the
+ * copyright and Back to top. No date: a revision belongs to the document
+ * it revises (a mission file, the CV), not to every page. Reads only
+ * cached data (the profile and a day-cached "today"), so it is part of
+ * every page's static shell.
  */
 export default async function Footer() {
     const [today, profile] = await Promise.all([getToday(), getProfile()]);
     const name = profile?.name?.trim() || siteConfig.author;
     const headline = profile?.headline?.trim();
-    const revised = profile?._updatedAt?.slice(0, 10);
     const social = (["github", "linkedin"] as const)
         .map((kind) => getProfileLink(profile, kind))
         .filter((link) => link !== undefined);
@@ -83,9 +83,6 @@ export default async function Footer() {
                     </div>
                 </div>
                 <div className="site-footer__base">
-                    {revised ? (
-                        <Rev date={revised} title={chromeCopy.revTitle} />
-                    ) : null}
                     <span>
                         © {today.slice(0, 4)} {name}
                     </span>

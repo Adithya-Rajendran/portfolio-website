@@ -9,7 +9,7 @@ import Ask from "@/components/ui/ask";
 import { ButtonLink } from "@/components/ui/button";
 import DocSection from "@/components/ui/doc-section";
 import { Patch } from "@/components/ui/icon";
-import { LinkArrow, Rev } from "@/components/ui/marks";
+import { LinkArrow, Updated } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
 import RouteList from "@/components/ui/route-list";
 import { siteConfig } from "@/lib/config";
@@ -156,7 +156,7 @@ export default async function AboutPage() {
                     plain={copy.nowPlain}
                     meta={
                         nowDate ? (
-                            <Rev label={copy.updated} date={nowDate} />
+                            <Updated label={copy.updated} date={nowDate} />
                         ) : undefined
                     }
                 >

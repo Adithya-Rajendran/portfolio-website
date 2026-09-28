@@ -530,9 +530,10 @@
         }
     }
 
-    /* Pause motion (WCAG 2.2.2): in the footer, the menu sheet and the
-       home hero. Its label names the action; under the OS reduce-motion
-       setting a plain note replaces it. */
+    /* Pause motion (WCAG 2.2.2): in the footer and the home hero. Its
+       label names the action; under the OS reduce-motion setting a plain
+       note replaces it. On home the hero's control, beside the starfield,
+       is the one shown (html[data-route] is set by RouteMarker). */
     .motion-ctl {
         display: inline-flex;
         align-items: center;
@@ -553,6 +554,9 @@
             align-items: center;
             min-height: 44px;
         }
+    }
+    html[data-route="/"] .site-footer .motion-ctl {
+        display: none;
     }
     /* Theme and motion controls need JavaScript. */
     html:not([data-js]) :is(.theme-switch, .theme-choice, .motion-ctl) {
@@ -990,10 +994,6 @@
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
-    .site-footer__base .rev {
-        font: 400 var(--label-size) / 1.6 var(--font-label);
-        letter-spacing: var(--track-label);
-    }
     .site-footer__base a {
         display: inline-flex;
         align-items: center;
@@ -1127,7 +1127,7 @@
     }
     .titleblock__cell > dt {
         color: var(--ink-3);
-        font: 400 0.625rem / 1.3 var(--font-label);
+        font: 400 var(--label-size) / 1.3 var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -2030,7 +2030,7 @@
         min-width: 0;
     }
     .route-row__themed {
-        font: 400 var(--label-size-lg) / var(--lh-label) var(--font-label);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }

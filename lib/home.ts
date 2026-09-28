@@ -21,7 +21,7 @@ export function homeActs(content: {
     missions: number;
     entries: number;
     roles: number;
-    /** A published profile. */
+    /** A profile with a biography (the Crew act introduces it). */
     profile: boolean;
 }): HomeAct[] {
     const shown: Record<HomeAct, boolean> = {

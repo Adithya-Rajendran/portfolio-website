@@ -161,7 +161,10 @@ only live in comments or commit messages.
   acts come and go with their content (`lib/home.ts`), numbered as they
   appear; the Now and Crew acts read `lib/crew.ts` (the current role, the
   tagline or the introduction's first sentence, availability, the Now
-  list by kind and the record), which the Crew File shares.
+  list by kind and the biography's first paragraph), which the Crew File
+  shares; the record (`CrewRecord`) is the Crew File's alone. In Flight
+  Manual the hero draws the planet's parallels under the limb and has no
+  foot row; on home the footer leaves Pause motion to the hero.
 - **The Crew File** (`/about`, plan §6.2 row 14, contract §9). The patch
   is the identity mark (a `PageHead` `figure`; the site shows no
   portrait), then the record (`CrewRecord`), and numbered

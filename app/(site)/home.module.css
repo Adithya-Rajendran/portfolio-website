@@ -9,6 +9,11 @@
 .act {
     scroll-margin-top: var(--header-h);
 }
+/* Flight Manual draws the planet to the hero's foot, so the first act
+   follows it at a block's distance instead of a section's. */
+:global([data-theme="manual"]) :global([data-drift-zone]) + .act {
+    padding-top: var(--s-8);
+}
 .statement {
     max-width: 22ch;
     margin-top: var(--s-6);
@@ -66,10 +71,9 @@
     margin-bottom: var(--s-7);
 }
 
-/* ---- Crew: the record, then the first paragraph ----------------------- */
+/* ---- Crew: the biography's first paragraph (the record is /about's) --- */
 .bio {
     max-width: 60ch;
-    margin-top: var(--s-7);
     color: var(--ink-2);
     font: 300 var(--step-1) / 1.55 var(--font-long);
     text-wrap: pretty;

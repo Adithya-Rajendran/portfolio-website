@@ -15,9 +15,8 @@ export const chromeCopy = {
     toDark: "Switch to dark theme",
     holdDrift: "Pause motion",
     resumeDrift: "Resume motion",
-    motionHeldByOs: "Motion reduced by system settings",
+    motionHeldByOs: "Motion reduced",
     backToTop: "Back to top",
-    revTitle: "Last revised",
 } as const;
 
 /** The theme choices in the footer and the menu sheet, themed over plain. */
@@ -522,6 +521,7 @@ export const homeCopy = {
     crewAct: {
         themed: "Crew File",
         plain: "About",
+        title: "Background",
         all: "About",
     },
     commsAct: {

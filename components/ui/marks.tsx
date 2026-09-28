@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
 import { Icon } from "@/components/ui/icon";
+import { formatEntryDate } from "@/lib/log-index";
 
 /**
  * Small marks of the design system: the arrow link, status, revision mark,
@@ -68,6 +69,25 @@ export function Rev({
         <span className="rev" title={title}>
             <span className="rev__tri" aria-hidden="true" />
             {label} <time dateTime={date}>{date}</time>
+        </span>
+    );
+}
+
+/**
+ * "Updated 24 Sep 2026": when a list was last updated, in words. `Rev`
+ * (ISO, with its triangle) is kept for document revisions (contract §2).
+ */
+export function Updated({
+    date,
+    label = "Updated",
+}: {
+    /** `YYYY-MM-DD` */
+    date: string;
+    label?: string;
+}) {
+    return (
+        <span className="updated">
+            {label} <time dateTime={date}>{formatEntryDate(date)}</time>
         </span>
     );
 }

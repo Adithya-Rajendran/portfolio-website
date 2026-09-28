@@ -52,12 +52,20 @@ export function preloadHeroPhoto() {
     }
 }
 
+/** How far below the surface line the drawn parallels run, in CSS pixels
+ *  at the crop's reference width: closer together toward the horizon. */
+const PARALLELS: Record<Crop, readonly number[]> = {
+    desktop: [20, 46, 80],
+    mobile: [22, 52, 96],
+};
+
 /**
  * The limb drawn on the photograph's own geometry: the night side (which
  * hides the stars behind the planet), the top of the atmosphere and the
- * surface under it as hairlines, and the sun as the one orange mark. The
- * viewBox is the crop's largest encode, and `xMidYMax slice` matches the
- * photograph's `object-fit: cover` anchored to the bottom.
+ * surface under it as hairlines, the planet's parallels, and the sun as
+ * the one orange mark. The viewBox is the crop's largest encode, and
+ * `xMidYMax slice` matches the photograph's `object-fit: cover` anchored
+ * to the bottom.
  */
 function Alignment({ crop }: { crop: Crop }) {
     const { width, height, limb, surface, sun } = sunrise[crop];
@@ -84,6 +92,16 @@ function Alignment({ crop }: { crop: Crop }) {
                 cy={surface.cy}
                 r={surface.r}
             />
+            <g className={styles.parallels}>
+                {PARALLELS[crop].map((depth) => (
+                    <circle
+                        key={depth}
+                        cx={surface.cx}
+                        cy={surface.cy}
+                        r={surface.r - depth * unit}
+                    />
+                ))}
+            </g>
             <circle
                 className={styles.rim}
                 cx={limb.cx}
@@ -193,7 +211,7 @@ export default function Hero({
             <div className={`shell ${styles.frame}`}>
                 <div className={styles.centre}>
                     {headline ? (
-                        <p className={`label ${styles.headline}`} data-clear>
+                        <p className={styles.headline} data-clear>
                             {headline}
                         </p>
                     ) : null}

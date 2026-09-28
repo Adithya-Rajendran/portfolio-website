@@ -1,6 +1,5 @@
 import LogIndex from "@/components/blogs/log-index";
 import ContactRoutes from "@/components/contact/contact-routes";
-import CrewRecord from "@/components/crew/crew-record";
 import Questions from "@/components/crew/questions";
 import { CvItem, CvList } from "@/components/cv/cv-list";
 import Hero, { preloadHeroPhoto } from "@/components/home/hero";
@@ -10,7 +9,7 @@ import MissionStage from "@/components/portfolio/mission-stage";
 import MissionTile, { MissionTiles } from "@/components/portfolio/mission-tile";
 import { buttonClass } from "@/components/ui/button";
 import { Icon, type OrnamentName } from "@/components/ui/icon";
-import { LinkArrow, Rev, Status } from "@/components/ui/marks";
+import { LinkArrow, Status, Updated } from "@/components/ui/marks";
 import Pair from "@/components/ui/pair";
 import RouteList from "@/components/ui/route-list";
 import SectionTag from "@/components/ui/section-tag";
@@ -158,7 +157,7 @@ export default async function Home() {
         missions: missions.length,
         entries: latest.length,
         roles: timeline.all.length,
-        profile: Boolean(profile),
+        profile: Boolean(bio),
     });
     const num = (act: HomeAct) => actNumber(acts, act);
 
@@ -197,7 +196,10 @@ export default async function Home() {
                     }
                     meta={
                         curiositiesDate && asked.length ? (
-                            <Rev label={copy.updated} date={curiositiesDate} />
+                            <Updated
+                                label={copy.updated}
+                                date={curiositiesDate}
+                            />
                         ) : undefined
                     }
                 >
@@ -413,22 +415,21 @@ export default async function Home() {
                 </Act>
             ) : null}
 
-            {acts.includes("crew") && profile ? (
+            {acts.includes("crew") && bio ? (
                 <Act
                     id="crew"
                     num={num("crew")}
                     ornament="hydrogen"
                     themed={copy.crewAct.themed}
                     plain={copy.crewAct.plain}
-                    title={profile.headline?.trim() || name}
+                    title={copy.crewAct.title}
                     meta={
                         <LinkArrow href={siteRoutes.about}>
                             {copy.crewAct.all}
                         </LinkArrow>
                     }
                 >
-                    <CrewRecord profile={profile} />
-                    {bio ? <p className={styles.bio}>{bio}</p> : null}
+                    <p className={styles.bio}>{bio}</p>
                 </Act>
             ) : null}
 
