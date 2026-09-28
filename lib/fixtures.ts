@@ -8,6 +8,14 @@ import type {
     ProjectWithBody,
 } from "@/lib/sanity-client";
 import { newestFirst } from "@/lib/content-rules";
+import {
+    SEED_PROJECTS,
+    type SeedProject,
+} from "@/migrations/seed-resume-projects/data";
+import {
+    seedBody,
+    seedDocumentId,
+} from "@/migrations/seed-resume-projects/build";
 
 export function fixturesEnabled(): boolean {
     return process.env.SANITY_USE_FIXTURES === "1";
@@ -406,17 +414,91 @@ function metaPost(post: PostWithBody): PostMeta {
 }
 
 /**
- * Listed fixture projects. Their names say they are fixtures: they describe
- * no real work (the owner's projects are entered in the Studio from sourced
- * drafts), and only exercise the mission fields, one status and date shape
- * each: a flagship with every field and a model, a completed project with
- * estimated years ("c. 2023"), and a planned one without dates.
+ * The owner's four résumé projects, from the drafts the seed migration
+ * writes (`migrations/seed-resume-projects/data.ts`), so fixture builds show
+ * the real missions with their published ids (`project-<slug>`). Fixture
+ * builds have no Sanity assets and no copy of the homelab post, so the cover
+ * is left out, the model poster keeps only its alt text and the callouts carry
+ * no links; links in the essays point at the real posts' URLs.
+ */
+function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
+    const model = seed.model;
+    return {
+        _id: seedDocumentId(seed.slug),
+        _updatedAt: "2026-09-28T00:00:00Z",
+        designation: seed.designation,
+        title: seed.title,
+        slug: seed.slug,
+        summary: seed.summary,
+        status: seed.status,
+        types: [...seed.types],
+        ...(seed.featured ? { featured: seed.featured } : {}),
+        ...(seed.dates
+            ? {
+                  startDate: seed.dates.start,
+                  endDate: seed.dates.end,
+                  datePrecision: seed.dates.precision,
+                  datesApproximate: seed.dates.approximate,
+              }
+            : {}),
+        technologies: [...seed.technologies],
+        highlights: [...seed.highlights],
+        parameters: seed.parameters?.map(({ key, label, value }) => ({
+            _key: key,
+            label,
+            value,
+        })),
+        links: seed.links?.map(({ key, ...link }) => ({
+            _key: key,
+            _type: "externalLink",
+            ...link,
+        })),
+        hasModel: Boolean(model),
+        brief: seed.brief,
+        results: seed.results?.map(({ key, ...result }) => ({
+            _key: key,
+            ...result,
+        })),
+        lessons: seed.lessons,
+        next: seed.next,
+        ...(model
+            ? {
+                  model: {
+                      kind: "procedural",
+                      procedural: model.procedural,
+                      poster: { _type: "image", alt: model.poster.alt },
+                      title: model.title,
+                      alt: model.alt,
+                      realWorld: { ...model.realWorld },
+                      hotspots: model.callouts.map(
+                          ({ key, label, title, body, part }) => ({
+                              _key: key,
+                              label,
+                              title,
+                              body,
+                              part,
+                          }),
+                      ),
+                  },
+              }
+            : {}),
+        body: seedBody(seed.body),
+    };
+}
+
+/**
+ * Listed projects: the owner's four seeded missions (MSN-01 to MSN-04), then
+ * fixture stand-ins for shapes the real missions lack. The stand-ins' names
+ * say they are fixtures and they describe no real work: one fills every
+ * mission field and links callouts to its essay and to a fixture post, one
+ * has estimated years ("c. 2023"), and one is planned, without dates.
  */
 export const FIXTURE_PROJECTS: ProjectWithBody[] = [
+    ...SEED_PROJECTS.map(fixtureFromSeed),
     {
         _id: "fixture-project-flagship",
         _updatedAt: "2026-07-11T00:00:00Z",
-        designation: 1,
+        designation: 5,
         title: "Fixture flagship mission",
         slug: "fixture-flagship-mission",
         summary:
@@ -424,7 +506,8 @@ export const FIXTURE_PROJECTS: ProjectWithBody[] = [
         status: "active",
         statusNote: "Fixture status note.",
         types: ["infrastructure", "hardware"],
-        featured: 1,
+        // Slot 1 is the homelab's.
+        featured: 2,
         myRole: "Fixture role",
         technologies: ["Fixture technology A", "Fixture technology B"],
         highlights: ["Exercises every module of a mission page."],
@@ -494,7 +577,7 @@ export const FIXTURE_PROJECTS: ProjectWithBody[] = [
     {
         _id: "fixture-project-complete",
         _updatedAt: "2026-06-01T00:00:00Z",
-        designation: 2,
+        designation: 6,
         title: "Fixture completed mission",
         slug: "fixture-completed-mission",
         summary:
@@ -516,7 +599,7 @@ export const FIXTURE_PROJECTS: ProjectWithBody[] = [
     {
         _id: "fixture-project-planned",
         _updatedAt: "2026-05-01T00:00:00Z",
-        designation: 3,
+        designation: 7,
         title: "Fixture planned mission",
         slug: "fixture-planned-mission",
         summary: "A fixture project that has not started, so it has no dates.",

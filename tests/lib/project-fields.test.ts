@@ -30,6 +30,8 @@ import {
     type ProjectWithBody,
 } from "@/lib/sanity-client";
 import { checkModelPart } from "@/lib/viewer/registry";
+import { planSeed } from "@/migrations/seed-resume-projects/build";
+import { SEED_PROJECTS } from "@/migrations/seed-resume-projects/data";
 import type {
     POST_BY_SLUG_QUERY_RESULT,
     POST_LIST_QUERY_RESULT,
@@ -200,6 +202,41 @@ describe("fixture projects", () => {
                 slug: "missing",
             }),
         ).toBeNull();
+    });
+
+    it("show the owner's four missions as the seed migration drafts them", () => {
+        const drafts = planSeed([], SEED_PROJECTS).drafts;
+        const seeded = FIXTURE_PROJECTS.slice(0, drafts.length);
+        const summary = (project: {
+            designation: number;
+            title: string;
+            summary: string;
+            status: string;
+            types: string[];
+        }) => [
+            project.designation,
+            project.title,
+            project.summary,
+            project.status,
+            project.types,
+        ];
+        expect(seeded.map((project) => project._id)).toEqual(
+            drafts.map((draft) => draft._id.replace(/^drafts\./, "")),
+        );
+        expect(seeded.map((project) => project.slug)).toEqual(
+            drafts.map((draft) => draft.slug.current),
+        );
+        expect(seeded.map(summary)).toEqual(drafts.map(summary));
+        expect(seeded.map((project) => project.body)).toEqual(
+            drafts.map((draft) => draft.body),
+        );
+    });
+
+    it("give each featured slot to one project", () => {
+        const slots = FIXTURE_PROJECTS.flatMap((project) =>
+            project.featured ? [project.featured] : [],
+        );
+        expect(new Set(slots).size).toBe(slots.length);
     });
 
     it("use unique mission numbers and listed statuses", () => {

@@ -210,9 +210,19 @@ deployment require an authenticated Sanity CLI session.
   `formatProjectYears` in `lib/project-content.ts`). Never print a month or
   day the owner has not given. Project dates the owner estimated set
   `datesApproximate` and print with "c." ("c. 2024–2025").
-- Fixture projects (`lib/fixtures.ts`) are named as fixtures and describe no
-  real work; the owner's projects come from sources through the seed
-  migration and the Studio.
+- The owner's four résumé projects are drafted, with the source of every
+  value, in `migrations/seed-resume-projects/data.ts`. The seed migration
+  writes them as Studio drafts, and `lib/fixtures.ts` lists the same four
+  (without images, and without links to posts that are not fixtures). Any
+  other fixture project is named as a fixture and describes no real work.
+- Content migrations (`migrations/<name>/index.ts`) are run only by the owner,
+  from an authenticated CLI (`migrations/README.md` has the commands, from
+  the backup to publishing); never from CI or an agent session. Keep their
+  logic in pure modules beside `index.ts` and test it in `tests/migrations/`,
+  including through `collectMigrationMutations` from `sanity/migrate`. Make
+  them safe to run twice, and check that any document they create passes
+  the Studio's own validation (`validateDocument` against the repository
+  schema, as `tests/migrations/seed-resume-projects.test.ts` does).
 - No public email address or phone number anywhere: pages, JSON-LD, RSS, OG
   images, the console or the printed CV. Contact is the form only, so there is
   deliberately no `publicEmail` field, and `externalLink` accepts http(s)
