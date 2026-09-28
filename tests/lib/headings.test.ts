@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { extractHeadings, headingIdsByKey } from "@/lib/headings";
+import {
+    contentsHeadings,
+    extractHeadings,
+    headingIdsByKey,
+} from "@/lib/headings";
 import type { Post } from "@/sanity.types";
 
 function heading(style: "h2" | "h3" | "h4", text: string, key: string) {
@@ -143,5 +147,29 @@ describe("headingIdsByKey", () => {
         );
 
         expect(map).toEqual({ a: "setup", b: "setup-2" });
+    });
+});
+
+describe("contentsHeadings", () => {
+    it("lists the sections (h2) of a post", () => {
+        const headings = extractHeadings(
+            bodyOf(
+                heading("h2", "One", "a"),
+                heading("h3", "Detail", "b"),
+                heading("h2", "Two", "c"),
+            ),
+        );
+        expect(contentsHeadings(headings).map((h) => h.text)).toEqual([
+            "One",
+            "Two",
+        ]);
+    });
+
+    it("falls back to the top level when there is no h2", () => {
+        const headings = extractHeadings(
+            bodyOf(heading("h3", "Only", "a"), heading("h4", "Deeper", "b")),
+        );
+        expect(contentsHeadings(headings).map((h) => h.text)).toEqual(["Only"]);
+        expect(contentsHeadings([])).toEqual([]);
     });
 });

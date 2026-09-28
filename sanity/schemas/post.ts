@@ -1,4 +1,9 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import {
+    CHANGE_KINDS,
+    CHANGE_NOTE_MAX,
+    checkChangeDate,
+} from "@/lib/post-fields";
 import { listValuesOnly } from "@/lib/profile-fields";
 import { checkRevisedAt, IMAGE_KINDS } from "@/lib/project-fields";
 import { TAG_PATTERN } from "@/lib/tags";
@@ -57,6 +62,73 @@ export default defineType({
                         value,
                     ),
                 ),
+        }),
+        defineField({
+            name: "changelog",
+            title: "Changelog",
+            type: "array",
+            group: "editorial",
+            description:
+                "Optional. Dated updates and corrections, listed at the end of the post (and in the RSS feed) with a revision mark. Add one only for a real change a reader should know about.",
+            of: [
+                defineArrayMember({
+                    type: "object",
+                    name: "postChange",
+                    title: "Change",
+                    fields: [
+                        defineField({
+                            name: "date",
+                            title: "Date",
+                            type: "date",
+                            validation: (Rule) =>
+                                Rule.required().custom(
+                                    (value: string | undefined, context) =>
+                                        checkChangeDate(
+                                            (
+                                                context.document as {
+                                                    publishedAt?: string;
+                                                }
+                                            )?.publishedAt,
+                                            value,
+                                        ),
+                                ),
+                        }),
+                        defineField({
+                            name: "kind",
+                            title: "Kind",
+                            type: "string",
+                            description:
+                                "A correction fixes something the post got wrong; an update adds or changes content.",
+                            initialValue: "update",
+                            options: {
+                                list: [...CHANGE_KINDS],
+                                layout: "radio",
+                            },
+                            validation: (Rule) => Rule.required(),
+                        }),
+                        defineField({
+                            name: "note",
+                            title: "Note",
+                            type: "text",
+                            rows: 3,
+                            description: "What changed, in a sentence or two.",
+                            validation: (Rule) =>
+                                Rule.required().max(CHANGE_NOTE_MAX),
+                        }),
+                    ],
+                    preview: {
+                        select: { date: "date", kind: "kind", note: "note" },
+                        prepare({ date, kind, note }) {
+                            return {
+                                title: note,
+                                subtitle: [date, kind]
+                                    .filter(Boolean)
+                                    .join(" · "),
+                            };
+                        },
+                    },
+                }),
+            ],
         }),
         defineField({
             name: "tags",

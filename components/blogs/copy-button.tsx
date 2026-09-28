@@ -1,15 +1,39 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { buttonClass } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 
 /**
- * Copy-to-clipboard button for code blocks. A tiny client leaf: the code
- * card itself stays server-rendered; only the raw code string crosses
- * the serialization boundary.
+ * A visible Copy button (a listing's bar, the entry's link). A small client
+ * leaf: the listing around it stays server-rendered and only the text to
+ * copy crosses the boundary. It needs the Clipboard API, so without
+ * JavaScript it is not shown (`js-only`), and a failure says so instead of
+ * pretending. The result is announced in a polite status region beside the
+ * button (a live region inside a button is not read reliably).
  */
-export default function CopyButton({ code }: { code: string }) {
-    const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+export default function CopyButton({
+    text,
+    idle,
+    done,
+    failed,
+    label,
+    announceDone,
+    announceFailed,
+    className,
+}: {
+    text: string;
+    /** The visible word: "Copy", "Copy link". */
+    idle: string;
+    done: string;
+    failed: string;
+    /** The accessible name, when it says more than `idle`. */
+    label?: string;
+    announceDone: string;
+    announceFailed: string;
+    className?: string;
+}) {
+    const [status, setStatus] = useState<"idle" | "done" | "failed">("idle");
     const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -18,7 +42,7 @@ export default function CopyButton({ code }: { code: string }) {
         };
     }, []);
 
-    function flash(next: "copied" | "failed") {
+    function flash(next: "done" | "failed") {
         setStatus(next);
         if (resetTimer.current) clearTimeout(resetTimer.current);
         resetTimer.current = setTimeout(() => setStatus("idle"), 2000);
@@ -26,36 +50,45 @@ export default function CopyButton({ code }: { code: string }) {
 
     async function copy() {
         try {
-            await navigator.clipboard.writeText(code);
-            flash("copied");
+            await navigator.clipboard.writeText(text);
+            flash("done");
         } catch {
-            // Clipboard API unavailable (permissions, insecure context) —
-            // say so instead of silently pretending it worked.
+            // Clipboard API unavailable (permissions, insecure context).
             flash("failed");
         }
     }
 
     return (
-        <button
-            type="button"
-            onClick={copy}
-            aria-label="Copy code to clipboard"
-            className="journal-copy-button"
-        >
-            {status === "copied" ? (
-                <Check aria-hidden className="w-3 h-3 text-accent" />
-            ) : (
-                <Copy aria-hidden className="w-3 h-3" />
-            )}
-            {status === "idle" && "Copy"}
-            {status === "copied" && "Copied"}
-            {status === "failed" && "Copy failed"}
-            {/* Announced state change for screen readers — aria-label
-                mutations on a focused element are not reliably re-read. */}
-            <span aria-live="polite" role="status" className="sr-only">
-                {status === "copied" && "Code copied to clipboard"}
-                {status === "failed" && "Copying failed"}
+        <span className="copy js-only">
+            <button
+                type="button"
+                onClick={copy}
+                aria-label={label}
+                data-state={status}
+                className={buttonClass({
+                    size: "sm",
+                    variant: "quiet",
+                    className: className
+                        ? `copy__btn ${className}`
+                        : "copy__btn",
+                })}
+            >
+                <Icon name={status === "done" ? "check" : "copy"} />
+                <span>
+                    {status === "done"
+                        ? done
+                        : status === "failed"
+                          ? failed
+                          : idle}
+                </span>
+            </button>
+            <span role="status" className="sr-only">
+                {status === "done"
+                    ? announceDone
+                    : status === "failed"
+                      ? announceFailed
+                      : ""}
             </span>
-        </button>
+        </span>
     );
 }

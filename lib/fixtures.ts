@@ -64,6 +64,36 @@ function linkedTextBlock(...parts: (string | [text: string, href: string])[]) {
 }
 
 /**
+ * A paragraph with Studio-style `footnote` annotations: `[text, note]`
+ * pairs become annotated spans between the plain `parts`.
+ */
+function footnotedTextBlock(
+    ...parts: (string | [text: string, note: string])[]
+) {
+    const markDefs: { _key: string; _type: "footnote"; text: string }[] = [];
+    const children = parts.map((part) => {
+        if (typeof part === "string") {
+            return { _key: nextKey(), _type: "span", text: part, marks: [] };
+        }
+        const [text, note] = part;
+        const mark = {
+            _key: nextKey(),
+            _type: "footnote" as const,
+            text: note,
+        };
+        markDefs.push(mark);
+        return { _key: nextKey(), _type: "span", text, marks: [mark._key] };
+    });
+    return {
+        _key: nextKey(),
+        _type: "block",
+        style: "normal",
+        markDefs,
+        children,
+    };
+}
+
+/**
  * The fixture profile carries only the owner's real published values (Sanity
  * and the résumé, recorded in design/shared/content-real.md), including every
  * field the redesign adds, so fixture builds exercise them without inventing
@@ -390,19 +420,41 @@ export const FIXTURE_PROFILE: ProfileData = {
 const fixturePosts: PostWithBody[] = [
     {
         _id: "fixture-post-1",
-        _updatedAt: "2026-06-26T00:00:00Z",
+        _updatedAt: "2026-07-02T00:00:00Z",
         title: "Fixture post: code listings and links",
         slug: "fixture-post-code-and-links",
         description:
-            "Fixture content for offline builds: a section heading, two code listings and Studio-style links.",
+            "Fixture content for offline builds: sections, code listings, footnotes, a caution callout, links and a changelog.",
         publishedAt: "2026-06-26",
         revisedAt: "2026-07-02",
         tags: ["fixture", "code"],
         projectIds: ["fixture-project-flagship"],
-        wordCount: 42,
+        wordCount: 128,
+        changelog: [
+            {
+                _key: "fixture-change-update",
+                date: "2026-07-02",
+                kind: "update",
+                note: "Fixture update: it exercises a dated revision entry.",
+            },
+            {
+                _key: "fixture-change-correction",
+                date: "2026-06-30",
+                kind: "correction",
+                note: "Fixture correction: it exercises an erratum.",
+            },
+        ],
         body: [
             textBlock(
                 "This fixture post exists only in builds without Sanity credentials. It describes no real work.",
+            ),
+            footnotedTextBlock(
+                "A fixture sentence that carries ",
+                [
+                    "a first footnote",
+                    "Fixture footnote one: it exercises the margin note and the numbered notes.",
+                ],
+                ", then goes on.",
             ),
             textBlock("Fixture section in a post", "h2"),
             textBlock(
@@ -415,6 +467,26 @@ const fixturePosts: PostWithBody[] = [
                 filename: "fixture.sh",
                 code: "echo fixture\nls -la",
             },
+            textBlock("Fixture subsection", "h3"),
+            {
+                _key: nextKey(),
+                _type: "code",
+                language: "bash",
+                filename: "fixture-wide.sh",
+                highlightedLines: [2],
+                code: "echo fixture\n# A fixture comment long enough to carry this listing past the 72-column measure.\nls -la",
+            },
+            {
+                _key: nextKey(),
+                _type: "callout",
+                tone: "caution",
+                title: "Fixture caution",
+                body: [
+                    textBlock(
+                        "A fixture advisory: it exercises the caution tone.",
+                    ),
+                ],
+            },
             linkedTextBlock(
                 "Fixture links: ",
                 ["a fixture post", "/blog/fixture-post-short-note"],
@@ -422,11 +494,17 @@ const fixturePosts: PostWithBody[] = [
                 ["an external page", "https://example.com/fixture"],
                 ".",
             ),
+            textBlock("Fixture second section", "h2"),
+            footnotedTextBlock(
+                "Another fixture sentence with ",
+                ["a second footnote", "Fixture footnote two."],
+                ".",
+            ),
             {
                 _key: nextKey(),
                 _type: "code",
                 language: "yaml",
-                code: "apiVersion: v1\nkind: Namespace\nmetadata:\n  name: fixture",
+                code: "# A fixture namespace\napiVersion: v1\nkind: Namespace\nmetadata:\n  name: fixture",
             },
         ] as ContentBody,
     },
@@ -439,12 +517,17 @@ const fixturePosts: PostWithBody[] = [
             "Fixture content for offline builds: a paragraph and a quotation.",
         publishedAt: "2026-05-12",
         tags: ["fixture", "notes"],
-        wordCount: 13,
+        wordCount: 25,
         body: [
             textBlock(
                 "This fixture post exists only in builds without Sanity credentials.",
             ),
             textBlock("A fixture quotation.", "blockquote"),
+            // The same heading as the code-and-links fixture, so a test can
+            // check that contents links resolve inside the visible entry
+            // while the other one stays mounted but hidden.
+            textBlock("Fixture section in a post", "h2"),
+            textBlock("A fixture paragraph under the shared heading."),
         ] as ContentBody,
     },
     {

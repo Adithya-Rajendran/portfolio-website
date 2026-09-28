@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     buildBlog,
     buildBlogPosting,
+    buildBreadcrumbList,
     buildContactPage,
     buildPersonEntity,
     buildProfilePage,
@@ -266,19 +267,77 @@ describe("buildBlogPosting", () => {
         expect(buildBlogPosting(base)).not.toHaveProperty("dateModified");
         const post = buildBlogPosting({
             ...base,
-            updatedAt: "2026-02-01T00:00:00Z",
+            revisedAt: "2026-02-01",
             tags: ["documentary", "notes"],
             wordCount: 812,
         });
-        expect(post.dateModified).toBe("2026-02-01T00:00:00Z");
+        expect(post.dateModified).toBe("2026-02-01");
         expect(post.keywords).toBe("documentary, notes");
         expect(post.wordCount).toBe(812);
+    });
+
+    it("dates a modification only from a recorded revision", () => {
+        expect(
+            buildBlogPosting({ ...base, revisedAt: null }),
+        ).not.toHaveProperty("dateModified");
+    });
+
+    it("names the share image at its built URL, or the cover when there is one", () => {
+        expect(buildBlogPosting(base).image).toMatch(
+            new RegExp(
+                `^${siteConfig.url}/blog/a-post/opengraph-image-[a-z0-9]+$`,
+            ),
+        );
+        expect(
+            buildBlogPosting({
+                ...base,
+                imageUrl: "https://cdn.sanity.io/images/x/y/cover.jpg",
+            }).image,
+        ).toBe("https://cdn.sanity.io/images/x/y/cover.jpg");
+    });
+
+    it("belongs to the blog", () => {
+        expect(buildBlogPosting(base).isPartOf).toEqual({
+            "@type": "Blog",
+            "@id": `${siteConfig.url}/blog`,
+        });
     });
 
     it("omits empty tags and a zero word count", () => {
         const post = buildBlogPosting({ ...base, tags: [], wordCount: 0 });
         expect(post).not.toHaveProperty("keywords");
         expect(post).not.toHaveProperty("wordCount");
+    });
+});
+
+describe("buildBreadcrumbList", () => {
+    it("lists Home, the section and the page in order, as absolute URLs", () => {
+        const list = buildBreadcrumbList([
+            { name: "Home", path: "/" },
+            { name: "Flight Log", path: "/blog" },
+            { name: "A post", path: "/blog/a-post" },
+        ]);
+        expect(list["@type"]).toBe("BreadcrumbList");
+        expect(list.itemListElement).toEqual([
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: siteConfig.url,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Flight Log",
+                item: `${siteConfig.url}/blog`,
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: "A post",
+                item: `${siteConfig.url}/blog/a-post`,
+            },
+        ]);
     });
 });
 

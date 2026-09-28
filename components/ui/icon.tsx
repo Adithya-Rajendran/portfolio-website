@@ -14,6 +14,7 @@ export type IconName =
     | "close"
     | "menu"
     | "check"
+    | "copy"
     | "rss"
     | "download"
     | "reset"

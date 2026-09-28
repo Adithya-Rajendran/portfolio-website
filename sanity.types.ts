@@ -51,7 +51,7 @@ export type Gallery = {
 
 export type Callout = {
     _type: "callout";
-    tone: "note" | "tip" | "warning";
+    tone: "note" | "tip" | "warning" | "caution";
     title?: string;
     body: Array<{
         children?: Array<{
@@ -189,6 +189,11 @@ export type ExternalLink = {
         | "other";
 };
 
+export type Footnote = {
+    _type: "footnote";
+    text: string;
+};
+
 export type ContentLink = {
     _type: "contentLink";
     href: string;
@@ -205,9 +210,12 @@ export type ContentBody = Array<
           style?: "normal" | "h2" | "h3" | "h4" | "blockquote";
           listItem?: "bullet" | "number";
           markDefs?: Array<
-              {
-                  _key: string;
-              } & ContentLink
+              | ({
+                    _key: string;
+                } & ContentLink)
+              | ({
+                    _key: string;
+                } & Footnote)
           >;
           level?: number;
           _type: "block";
@@ -220,6 +228,9 @@ export type ContentBody = Array<
           crop?: SanityImageCrop;
           alt: string;
           caption?: string;
+          credit?: string;
+          kind?: "photo" | "diagram" | "plot" | "screenshot";
+          width?: "prose" | "wide" | "full";
           _type: "image";
           _key: string;
       }
@@ -467,6 +478,13 @@ export type Post = {
     description: string;
     publishedAt: string;
     revisedAt?: string;
+    changelog?: Array<{
+        date: string;
+        kind: "update" | "correction";
+        note: string;
+        _type: "postChange";
+        _key: string;
+    }>;
     tags?: Array<string>;
     cover?: {
         asset?: SanityImageAssetReference;
@@ -606,6 +624,7 @@ export type AllSanitySchemaTypes =
     | PostReference
     | Curiosity
     | ExternalLink
+    | Footnote
     | ContentLink
     | ContentBody
     | SanityFileAssetReference
@@ -897,7 +916,7 @@ export type POSTS_BY_PROJECT_QUERY_RESULT = Array<{
 
 // Source: lib/sanity-client.ts
 // Variable: RECENT_POSTS_QUERY
-// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " ")),    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
+// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " ")),    changelog[]{_key, date, kind, note},    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type RECENT_POSTS_QUERY_RESULT = Array<{
     _id: string;
     _updatedAt: string;
@@ -926,6 +945,12 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
         bg: string | null;
     } | null;
     wordCount: number;
+    changelog: Array<{
+        _key: string;
+        date: string;
+        kind: "correction" | "update";
+        note: string;
+    }> | null;
     body: Array<
         | {
               children?: Array<{
@@ -937,9 +962,12 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
               style?: "blockquote" | "h2" | "h3" | "h4" | "normal";
               listItem?: "bullet" | "number";
               markDefs?: Array<
-                  {
-                      _key: string;
-                  } & ContentLink
+                  | ({
+                        _key: string;
+                    } & ContentLink)
+                  | ({
+                        _key: string;
+                    } & Footnote)
               >;
               level?: number;
               _type: "block";
@@ -948,7 +976,7 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
         | {
               _key: string;
               _type: "callout";
-              tone: "note" | "tip" | "warning";
+              tone: "caution" | "note" | "tip" | "warning";
               title?: string;
               body: Array<{
                   children?: Array<{
@@ -1004,6 +1032,9 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
               crop?: SanityImageCrop;
               alt: string;
               caption?: string;
+              credit?: string;
+              kind?: "diagram" | "photo" | "plot" | "screenshot";
+              width?: "full" | "prose" | "wide";
               _type: "image";
               _key: string;
               lqip: string | null;
@@ -1024,7 +1055,7 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
 
 // Source: lib/sanity-client.ts
 // Variable: POST_BY_SLUG_QUERY
-// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " ")),    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
+// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " ")),    changelog[]{_key, date, kind, note},    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type POST_BY_SLUG_QUERY_RESULT = {
     _id: string;
     _updatedAt: string;
@@ -1053,6 +1084,12 @@ export type POST_BY_SLUG_QUERY_RESULT = {
         bg: string | null;
     } | null;
     wordCount: number;
+    changelog: Array<{
+        _key: string;
+        date: string;
+        kind: "correction" | "update";
+        note: string;
+    }> | null;
     body: Array<
         | {
               children?: Array<{
@@ -1064,9 +1101,12 @@ export type POST_BY_SLUG_QUERY_RESULT = {
               style?: "blockquote" | "h2" | "h3" | "h4" | "normal";
               listItem?: "bullet" | "number";
               markDefs?: Array<
-                  {
-                      _key: string;
-                  } & ContentLink
+                  | ({
+                        _key: string;
+                    } & ContentLink)
+                  | ({
+                        _key: string;
+                    } & Footnote)
               >;
               level?: number;
               _type: "block";
@@ -1075,7 +1115,7 @@ export type POST_BY_SLUG_QUERY_RESULT = {
         | {
               _key: string;
               _type: "callout";
-              tone: "note" | "tip" | "warning";
+              tone: "caution" | "note" | "tip" | "warning";
               title?: string;
               body: Array<{
                   children?: Array<{
@@ -1131,6 +1171,9 @@ export type POST_BY_SLUG_QUERY_RESULT = {
               crop?: SanityImageCrop;
               alt: string;
               caption?: string;
+              credit?: string;
+              kind?: "diagram" | "photo" | "plot" | "screenshot";
+              width?: "full" | "prose" | "wide";
               _type: "image";
               _key: string;
               lqip: string | null;
@@ -1405,9 +1448,12 @@ export type PROJECT_BY_SLUG_QUERY_RESULT = {
               style?: "blockquote" | "h2" | "h3" | "h4" | "normal";
               listItem?: "bullet" | "number";
               markDefs?: Array<
-                  {
-                      _key: string;
-                  } & ContentLink
+                  | ({
+                        _key: string;
+                    } & ContentLink)
+                  | ({
+                        _key: string;
+                    } & Footnote)
               >;
               level?: number;
               _type: "block";
@@ -1416,7 +1462,7 @@ export type PROJECT_BY_SLUG_QUERY_RESULT = {
         | {
               _key: string;
               _type: "callout";
-              tone: "note" | "tip" | "warning";
+              tone: "caution" | "note" | "tip" | "warning";
               title?: string;
               body: Array<{
                   children?: Array<{
@@ -1472,6 +1518,9 @@ export type PROJECT_BY_SLUG_QUERY_RESULT = {
               crop?: SanityImageCrop;
               alt: string;
               caption?: string;
+              credit?: string;
+              kind?: "diagram" | "photo" | "plot" | "screenshot";
+              width?: "full" | "prose" | "wide";
               _type: "image";
               _key: string;
               lqip: string | null;
@@ -1521,8 +1570,8 @@ declare global {
         '*[_id == "profile"][0]{\n    _id,\n    _updatedAt,\n    name,\n    headline,\n    tagline,\n    introduction,\n    bio,\n    availability{status, openTo, from, consultingOpen, updatedAt},\n    launch{date, precision, event},\n    focusAreas,\n    workSummary,\n    writingDescription,\n    contactInvitation,\n    seoDescription,\n    "featuredPostId": featuredPost._ref,\n    "startHereIds": startHere[]._ref,\n    location,\n    portrait,\n    "resumeUrl": resume.asset->url,\n    resumeNote,\n    socialLinks[]{_key, _type, label, url, kind},\n    currentCuriosities[]{\n        _key, _type, kind, title, note, url,\n        "projectId": project._ref,\n        "postId": post._ref\n    },\n    curiositiesUpdatedAt,\n    timeline[]{\n        _key, _type, kind, title, organization, orgShort, orgUrl, employment,\n        location, startDate, startPrecision, endDate, endPrecision,\n        isCurrent, expectedEndYear,\n        summary, highlights, skills, logo, burn{label, note}\n    },\n    skillGroups[]{_key, _type, title, skills},\n    credentials[]{\n        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,\n        credentialId, verificationUrl, badge,\n        "lifecycleStatus": select(\n            lifetime == true => "lifetime",\n            defined(expiresOn) && expiresOn < $today => "expired",\n            "active"\n        )\n    },\n    talksAndPapers[]{\n        _key, _type, title, kind, venue, date, authors,\n        links[]{_key, _type, label, url, kind},\n        abstract,\n        "projectId": project._ref\n    }\n}': PROFILE_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_LIST_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today &&\n    references($projectId)\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POSTS_BY_PROJECT_QUERY_RESULT;
-        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " ")),\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': RECENT_POSTS_QUERY_RESULT;
-        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " ")),\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': POST_BY_SLUG_QUERY_RESULT;
+        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " ")),\n    changelog[]{_key, date, kind, note},\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': RECENT_POSTS_QUERY_RESULT;
+        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " ")),\n    changelog[]{_key, date, kind, note},\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': POST_BY_SLUG_QUERY_RESULT;
         '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_META_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n].slug.current': POST_SLUGS_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n]{"slug": slug.current, "updatedAt": _updatedAt}': POST_SLUGS_WITH_DATES_QUERY_RESULT;

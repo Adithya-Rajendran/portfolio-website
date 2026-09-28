@@ -4,6 +4,7 @@ import contentLink from "./objects/contentLink";
 import credential from "./objects/credential";
 import curiosity from "./objects/curiosity";
 import externalLink from "./objects/externalLink";
+import footnote from "./objects/footnote";
 import gallery from "./objects/gallery";
 import mediaEmbed from "./objects/mediaEmbed";
 import skillGroup from "./objects/skillGroup";
@@ -19,6 +20,7 @@ export const schemaTypes = [
     project,
     contentBody,
     contentLink,
+    footnote,
     externalLink,
     curiosity,
     timelineEntry,

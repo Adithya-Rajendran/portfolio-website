@@ -1,0 +1,573 @@
+/*
+ * The long read (G1): what the rich-text renderers emit
+ * (components/blogs/portable-text-components.tsx) under `.prose`, on the
+ * post page and in the project essay. Newsreader at a 68-character measure,
+ * numbered listings with the one Shiki theme's colours, plates and figures,
+ * callouts, footnotes with margin notes, and the notes list. A page decides
+ * the column around it (components/blogs/post.module.css for posts).
+ * Ported from d-deep-field-plus site.css 4.15–4.17 and writing.css.
+ */
+
+@layer components {
+    /* The measure: 36rem, about 68 characters of Newsreader to the line at
+       18–20px (CSS `ch` counts the wide "0", so it reads 52ch). */
+    .prose {
+        --prose-measure: 36rem;
+        counter-reset: prose-h2;
+        color: var(--ink-1);
+        font: 400 var(--step-long) / var(--lh-long) var(--font-long);
+        font-optical-sizing: auto;
+        text-wrap: pretty;
+        hanging-punctuation: first;
+        hyphenate-limit-chars: 8 4 4;
+    }
+    .prose > * {
+        max-width: var(--prose-measure);
+    }
+    .prose > * + * {
+        margin-top: 1.1em;
+    }
+    /* Phones: hyphenate long words only, never in lists, quotes, callouts,
+       captions or headings. */
+    @media (max-width: 37.49rem) {
+        .prose {
+            hyphens: auto;
+        }
+        .prose :is(li, blockquote, .callout, figcaption, h2, h3, h4) {
+            hyphens: manual;
+        }
+    }
+
+    /* ---- Headings ---------------------------------------------------- */
+    .prose h2 {
+        counter-increment: prose-h2;
+        margin-top: 2.4em;
+        font: 400 var(--step-3) / 1.12 var(--font-display);
+        letter-spacing: -0.01em;
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+    .prose h3 {
+        margin-top: 1.9em;
+        font: 500 var(--step-1) / 1.25 var(--font-display);
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+    .prose h4 {
+        margin-top: 1.6em;
+        font: 500 var(--step-0) / 1.35 var(--font-display);
+        letter-spacing: 0.01em;
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+    .prose :is(h2, h3, h4) + * {
+        margin-top: 0.7em;
+    }
+
+    /* ---- Text -------------------------------------------------------- */
+    .prose a {
+        text-decoration-color: var(--accent);
+    }
+    .prose a:visited {
+        text-decoration-color: var(--ink-3);
+    }
+    .prose strong {
+        font-weight: 600;
+    }
+    .prose :is(ul, ol) {
+        padding-left: 1.3em;
+    }
+    .prose ul {
+        list-style: disc;
+    }
+    .prose ol {
+        list-style: decimal;
+    }
+    .prose li + li {
+        margin-top: 0.4em;
+    }
+    .prose li::marker {
+        color: var(--ink-3);
+        font-family: var(--font-mono);
+        font-size: 0.85em;
+    }
+    .prose :not(pre) > code {
+        padding: 0.08em 0.32em;
+        border: var(--rule-hair) solid var(--rule-1);
+        background: var(--surface-1);
+        font-size: 0.86em;
+        font-variant-ligatures: none;
+        white-space: break-spaces;
+    }
+    /* The owner's asides: a quiet note, not a pull quote. */
+    .prose blockquote {
+        margin-block: var(--s-6);
+        padding: var(--s-1) 0 var(--s-1) var(--s-5);
+        border-left: var(--rule-strong) solid var(--accent);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.6 var(--font-long);
+    }
+    .prose blockquote strong {
+        color: var(--ink-1);
+    }
+
+    /* ---- Listings (components/prose/listing.tsx) --------------------- */
+    /* The one Shiki theme (lib/highlight-code.ts) colours tokens with
+       these variables: monochrome with one accent, from the tokens, so
+       every theme and print follow. Comments are ink-3: 5.7:1 (Void) and
+       5.8:1 (Flight Manual) on the listing, 5.2:1 on a highlighted line. */
+    .listing {
+        --code-foreground: var(--ink-1);
+        --code-background: transparent;
+        --code-token-comment: var(--ink-3);
+        --code-token-keyword: var(--accent-text);
+        --code-token-string: var(--ink-2);
+        --code-token-string-expression: var(--ink-2);
+        --code-token-constant: var(--ink-1);
+        --code-token-function: var(--ink-1);
+        --code-token-parameter: var(--ink-2);
+        --code-token-punctuation: var(--ink-3);
+        --code-token-link: var(--accent-text);
+        --code-token-inserted: var(--ink-1);
+        --code-token-deleted: var(--ink-2);
+        --code-token-changed: var(--ink-1);
+        margin-block: var(--space-block);
+        border: var(--rule-hair) solid var(--rule-1);
+        background: var(--surface-1);
+        font: 400 0.8125rem / 1.62 var(--font-mono);
+    }
+    .prose > .listing--wide {
+        max-width: min(100%, 60rem);
+    }
+    .listing__bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 var(--s-4);
+        min-height: 44px;
+        padding: 0 var(--s-2) 0 var(--s-5);
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .listing__num {
+        color: var(--ink-1);
+        font: 400 var(--label-size) / 1 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .listing__lang {
+        color: var(--accent-text);
+        font: 400 0.75rem / 1 var(--font-mono);
+    }
+    .listing__file {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--ink-2);
+        font: 400 0.75rem / 1 var(--font-mono);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .listing__meta {
+        margin-right: auto;
+        color: var(--ink-3);
+        font: 400 0.75rem / 1 var(--font-mono);
+    }
+    .listing .copy__btn {
+        --btn-h: 40px;
+        gap: 0.45rem;
+        padding-inline: 0.6rem;
+        color: var(--ink-2);
+        font-size: 0.6875rem;
+    }
+    .listing .copy__btn .icon {
+        width: 15px;
+        height: 15px;
+    }
+    .listing .copy__btn:hover,
+    .listing .copy__btn:focus-visible {
+        color: var(--ink-1);
+    }
+    /* The scroll box is the focusable, labelled region. */
+    .listing__code {
+        overflow-x: auto;
+        border-left: var(--rule-strong) solid var(--accent);
+        scrollbar-width: thin;
+        scrollbar-color: var(--rule-2) transparent;
+    }
+    .listing__code:focus-visible {
+        outline-offset: -2px;
+    }
+    .listing__code pre {
+        margin: 0;
+        width: max-content;
+        min-width: 100%;
+        padding: var(--s-5) var(--s-5) var(--s-5) 0;
+        background: transparent !important;
+        color: var(--code-foreground);
+        font: inherit;
+        tab-size: 4;
+        font-variant-ligatures: none;
+    }
+    .listing__code code {
+        display: block;
+        font: inherit;
+    }
+    .listing__code .line {
+        display: inline-block;
+        min-width: 100%;
+        padding-left: calc(var(--s-5) - var(--rule-strong));
+    }
+    .listing__code span[style*="--code-token-comment"] {
+        font-style: italic;
+    }
+    /* Highlighted lines (the Studio's `highlightedLines`): a wash and a
+       mark in the gutter, so the line is not told apart by colour alone. */
+    .listing__code .line-highlight {
+        position: relative;
+        background: color-mix(in oklab, var(--accent) 10%, var(--surface-1));
+    }
+    .listing__code .line-highlight::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0.35rem;
+        background: var(--accent);
+    }
+
+    /* ---- Plates and figures (components/prose/figure-plate.tsx) ------ */
+    .prose > .plate,
+    .prose > .gallery,
+    .prose > .media {
+        margin-block: var(--space-block);
+    }
+    .plate > .caption {
+        max-width: 60ch;
+    }
+    .prose > .plate--wide {
+        max-width: min(100%, 60rem);
+    }
+    .prose > .plate--full {
+        max-width: none;
+    }
+    /* A tall or square plate at text width keeps its caption beside it. */
+    @media (min-width: 37.5rem) {
+        .prose > .plate--prose:is(.plate--portrait, .plate--square) {
+            display: grid;
+            grid-template-columns: minmax(0, 22rem) minmax(9rem, 15rem);
+            column-gap: var(--gutter);
+            align-items: end;
+            max-width: min(100%, 40rem);
+        }
+        .prose > .plate--prose.plate--square {
+            grid-template-columns: minmax(0, 24rem) minmax(9rem, 15rem);
+        }
+        .prose > .plate--prose:is(.plate--portrait, .plate--square) > .caption {
+            flex-direction: column;
+            gap: var(--s-2);
+            margin-top: 0;
+            padding-bottom: var(--s-2);
+        }
+    }
+    /* Wide and full plates of a tall picture stay within the screen. */
+    .plate:is(.plate--wide, .plate--full):is(.plate--portrait, .plate--square)
+        .photo__img {
+        width: auto;
+        max-width: 100%;
+        max-height: 88svh;
+        margin-inline: auto;
+    }
+    [data-theme="manual"] .prose > :is(.plate, .gallery) {
+        margin-inline: 13px;
+    }
+    .gallery__plates {
+        display: grid;
+        gap: var(--s-6) var(--gutter);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    @media (min-width: 37.5rem) {
+        .gallery__plates {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    .gallery__plates .plate {
+        margin: 0;
+    }
+    .media__frame {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        border: var(--rule-hair) solid var(--rule-1);
+        background: var(--surface-1);
+    }
+    .media__frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+    .media-link {
+        display: grid;
+        gap: var(--s-1);
+        padding: var(--s-4) var(--s-5);
+        border: var(--rule-hair) solid var(--rule-1);
+        font: 400 var(--step--1) / 1.5 var(--font-text);
+    }
+    .media-link a {
+        font: 500 var(--step-0) / 1.35 var(--font-display);
+    }
+    .media-link__host {
+        color: var(--ink-3);
+        font: 400 0.75rem / 1.4 var(--font-mono);
+    }
+    .media-link__caption {
+        color: var(--ink-2);
+    }
+
+    /* ---- Callouts ---------------------------------------------------- */
+    .callout {
+        position: relative;
+        margin-block: var(--space-block);
+        padding: var(--s-5) var(--s-5) var(--s-5) var(--s-7);
+        border: var(--rule-hair) solid var(--rule-1);
+        background: var(--surface-1);
+        font: 400 var(--step-0) / 1.55 var(--font-text);
+    }
+    .callout::before {
+        content: "";
+        position: absolute;
+        left: var(--s-5);
+        top: calc(var(--s-5) + 0.3rem);
+        width: 7px;
+        height: 7px;
+        border-radius: var(--radius-round);
+        background: var(--accent);
+    }
+    .callout[data-tone="tip"]::before {
+        border: var(--rule-hair) solid var(--accent);
+        background: transparent;
+    }
+    .callout[data-tone="warning"] {
+        border-left: var(--rule-strong) solid var(--accent);
+    }
+    /* Caution, the advisory box: an orange frame and a hatched band. */
+    .callout[data-tone="caution"] {
+        border-color: var(--accent);
+        padding-top: calc(var(--s-5) + 6px);
+    }
+    .callout[data-tone="caution"]::before {
+        width: 0;
+        height: 0;
+        border-radius: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-bottom: 9px solid var(--accent);
+        background: none;
+        top: calc(var(--s-5) + 6px + 0.2rem);
+    }
+    .callout[data-tone="caution"]::after {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 6px;
+        background: repeating-linear-gradient(
+            -45deg,
+            var(--accent) 0 3px,
+            transparent 3px 8px
+        );
+    }
+    .callout > * + * {
+        margin-top: var(--s-3);
+    }
+    .callout__tone {
+        color: var(--ink-1);
+        font: 400 var(--label-size) / 1.6 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .callout:is([data-tone="warning"], [data-tone="caution"]) .callout__tone {
+        color: var(--accent-text);
+    }
+    .callout__title {
+        margin-top: var(--s-1);
+        font: 500 var(--step-0) / 1.35 var(--font-display);
+    }
+    @media (forced-colors: active) {
+        .listing__code .line-highlight::before {
+            forced-color-adjust: none;
+            background: Highlight;
+        }
+        .callout::before,
+        .callout::after {
+            forced-color-adjust: none;
+            background: CanvasText;
+        }
+    }
+
+    /* ---- Footnotes --------------------------------------------------- */
+    .fnref {
+        line-height: 0;
+    }
+    .fnref a {
+        padding: 0 0.15em;
+        color: var(--accent-text);
+        font: 400 0.72em / 1 var(--font-mono);
+        text-decoration: none;
+    }
+    .fnref a::before {
+        content: "[";
+        color: var(--ink-3);
+    }
+    .fnref a::after {
+        content: "]";
+        color: var(--ink-3);
+    }
+    .fnref a:hover {
+        text-decoration: underline;
+    }
+    .fnref:target {
+        background: var(--accent-wash);
+        outline: 0.2em solid var(--accent-wash);
+    }
+    /* The margin copy of a note (≥ 1280px): floated into the space right
+       of the measure, beside the line that cites it. Decorative; the
+       numbered notes at the end are canonical. */
+    .sidenote {
+        display: none;
+    }
+    @media (min-width: 80rem) {
+        .prose :is(p, li) .sidenote {
+            display: grid;
+            grid-template-columns: 1.4rem minmax(0, 1fr);
+            float: right;
+            clear: right;
+            width: 12.5rem;
+            margin: 0.35rem -14.5rem var(--s-4) 0;
+            padding-left: var(--s-4);
+            border-left: var(--rule-hair) solid var(--rule-1);
+            color: var(--ink-2);
+            font: 400 var(--step--1) / 1.5 var(--font-text);
+            text-indent: 0;
+            hyphens: manual;
+        }
+        /* Anything wider than the measure clears the margin notes. */
+        .prose > :is(.listing--wide, .plate--wide, .plate--full, .gallery) {
+            clear: right;
+        }
+    }
+    .sidenote__n {
+        color: var(--accent-text);
+        font: 400 0.75rem / 1.95 var(--font-mono);
+    }
+
+    /* The numbered notes at the end (components/prose/footnotes.tsx). */
+    .notes {
+        max-width: var(--prose-measure, 36rem);
+        padding-top: var(--s-5);
+        border-top: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.55 var(--font-text);
+    }
+    .notes__title {
+        margin-bottom: var(--s-4);
+        color: var(--ink-1);
+        font: 400 var(--label-size) / 1 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .notes__list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .notes__item {
+        display: grid;
+        grid-template-columns: 1.75rem minmax(0, 1fr);
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+    .notes__item + .notes__item {
+        margin-top: var(--s-3);
+    }
+    .notes__n {
+        color: var(--accent-text);
+        font: 400 0.8125rem / 1.9 var(--font-mono);
+    }
+    .notes__text {
+        margin: 0;
+    }
+    .notes__back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        min-height: 24px;
+        vertical-align: middle;
+        color: var(--ink-1);
+    }
+    .notes__back .icon {
+        width: 14px;
+        height: 14px;
+    }
+    .notes__item:target {
+        background: var(--accent-wash);
+        outline: 0.3em solid var(--accent-wash);
+    }
+}
+
+@layer utilities {
+    @media print {
+        .prose {
+            font-size: 10.5pt;
+            line-height: 1.5;
+        }
+        .prose > * {
+            max-width: none;
+        }
+        .sidenote,
+        .copy {
+            display: none !important;
+        }
+        .listing {
+            border-color: var(--rule-2);
+            break-inside: auto;
+        }
+        .listing__bar {
+            min-height: 0;
+            padding-block: 4pt;
+        }
+        .listing__code {
+            overflow: visible;
+        }
+        .listing__code pre {
+            width: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .plate,
+        .callout,
+        .notes__item {
+            break-inside: avoid;
+        }
+        .photo__frame::before,
+        .photo__frame::after,
+        .photo__plate {
+            display: none !important;
+        }
+        .photo__frame {
+            background: none !important;
+            border: 0 !important;
+        }
+        .photo__img {
+            max-height: 110mm;
+            width: auto;
+            max-width: 100%;
+            -webkit-mask-image: none !important;
+            mask-image: none !important;
+        }
+        .prose a[href^="http"]::after {
+            content: " (" attr(href) ")";
+            color: var(--ink-2);
+            font: 7.5pt var(--font-mono);
+            overflow-wrap: anywhere;
+        }
+    }
+}

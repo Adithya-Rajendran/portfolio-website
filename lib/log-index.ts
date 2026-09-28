@@ -94,6 +94,13 @@ export function monthLabel(date: string): string {
     return `${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
 }
 
+/** "2026-03-30" → "30 Mar 2026": the post head's date. */
+export function formatEntryDate(date: string | null | undefined): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date ?? "");
+    if (!match) return "";
+    return `${Number(match[3])} ${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
+}
+
 /** The month the first entry was filed ("Mar 2026"), or "" with none. */
 export function logSince(entries: readonly LogEntry[]): string {
     const dates = entries

@@ -1,6 +1,8 @@
 /*
  * Print: Flight Manual tokens on white, no chrome. Per-page print layouts
- * (the CV, posts) are scoped by [data-page] and arrive with those pages.
+ * are scoped to their page: a post's in components/blogs/post.module.css
+ * (the masthead, one column) and styles/prose.css (listings, plates,
+ * notes, link addresses); the CV's arrives with /resume.
  * Ported from d-deep-field-plus site.css "7. PRINT".
  */
 @layer utilities {
@@ -34,6 +36,11 @@
             --scrim: transparent;
             --accent-wash: #fbe3d8;
             --star-rgb: 23 21 15;
+            --photo-treatment: grayscale(1) contrast(1.04);
+            --photo-treatment-real: grayscale(1) contrast(1.04);
+            --photo-feather: 0px;
+            --photo-mount: 0px;
+            --photo-mount-b: 0px;
         }
         @page {
             margin: 18mm 16mm 20mm;

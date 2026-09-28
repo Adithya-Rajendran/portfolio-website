@@ -7,6 +7,7 @@ import { urlForImage } from "@/lib/sanity-image";
 import {
     buildBlog,
     buildBlogPosting,
+    buildBreadcrumbList,
     buildContactPage,
     buildPersonEntity,
     buildProfilePage,
@@ -87,6 +88,21 @@ export function BlogPostJsonLd(input: BlogPostingInput) {
         <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
+        />
+    );
+}
+
+export function BreadcrumbJsonLd({
+    items,
+}: {
+    items: readonly { name: string; path: string }[];
+}) {
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+                __html: safeJsonLd(buildBreadcrumbList(items)),
+            }}
         />
     );
 }

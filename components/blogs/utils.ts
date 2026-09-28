@@ -1,8 +1,6 @@
 /**
- * Shared utility functions for blog components.
- * Consolidates duplicated helpers that were previously scattered
- * across featured.tsx, latest.tsx, blog-post-content.tsx, and
- * portable-text-components.tsx.
+ * Shared helpers for the blog pages, the share images and cache warming.
+ * Listing, plate and footnote numbering live in lib/prose.ts.
  */
 
 /** Format a date string like "2026-03-06" → "March 6, 2026" */
@@ -30,31 +28,4 @@ export function getPostSlug(post: {
 export function readingTimeFromWordCount(wordCount?: number | null): number {
     const wordsPerMinute = 200;
     return Math.max(1, Math.ceil((wordCount ?? 0) / wordsPerMinute));
-}
-
-/**
- * Number a body's code blocks 1…n in reading order, keyed by block _key,
- * so every listing gets a unique accessible name (see codeListingLabel).
- */
-export function numberCodeListings(
-    codeBlocks: { _key: string }[],
-): Record<string, number> {
-    return Object.fromEntries(
-        codeBlocks.map((block, index) => [block._key, index + 1]),
-    );
-}
-
-/** "Code listing 2 (bash, install.sh)": unique per listing on a page. */
-export function codeListingLabel({
-    number,
-    language,
-    filename,
-}: {
-    number?: number;
-    language?: string | null;
-    filename?: string | null;
-}): string {
-    const name = number ? `Code listing ${number}` : "Code listing";
-    const details = [language, filename].filter(Boolean).join(", ");
-    return details ? `${name} (${details})` : name;
 }

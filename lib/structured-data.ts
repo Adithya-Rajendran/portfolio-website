@@ -11,6 +11,7 @@ import {
     getWritingDescription,
     isCurrentTimelineEntry,
 } from "@/lib/profile-content";
+import { postShareImagePath } from "@/lib/route-tags";
 import type {
     CredentialListItem,
     ProfileData,
@@ -147,9 +148,12 @@ export interface BlogPostingInput {
     description: string;
     publishedAt: string;
     slug: string;
-    updatedAt?: string;
+    /** The last substantive revision (`post.revisedAt`), as dateModified. */
+    revisedAt?: string | null;
     tags?: string[];
     wordCount?: number;
+    /** The cover, when the post has one; otherwise its share image. */
+    imageUrl?: string;
 }
 
 export function buildBlogPosting({
@@ -157,17 +161,19 @@ export function buildBlogPosting({
     description,
     publishedAt,
     slug,
-    updatedAt,
+    revisedAt,
     tags,
     wordCount,
+    imageUrl,
 }: BlogPostingInput) {
+    const url = `${siteConfig.url}/blog/${slug}`;
     return {
         "@type": "BlogPosting",
         headline: title,
         description,
         datePublished: publishedAt,
-        url: `${siteConfig.url}/blog/${slug}`,
-        image: `${siteConfig.url}/blog/${slug}/opengraph-image`,
+        url,
+        image: imageUrl ?? `${siteConfig.url}${postShareImagePath(slug)}`,
         author: {
             "@type": "Person",
             name: siteConfig.author,
@@ -179,13 +185,36 @@ export function buildBlogPosting({
         },
         mainEntityOfPage: {
             "@type": "WebPage",
-            "@id": `${siteConfig.url}/blog/${slug}`,
+            "@id": url,
         },
-        ...(updatedAt ? { dateModified: updatedAt } : {}),
+        isPartOf: {
+            "@type": "Blog",
+            "@id": `${siteConfig.url}/blog`,
+        },
+        ...(revisedAt ? { dateModified: revisedAt } : {}),
         ...(tags && tags.length > 0 ? { keywords: tags.join(", ") } : {}),
         ...(typeof wordCount === "number" && wordCount > 0
             ? { wordCount }
             : {}),
+    };
+}
+
+/**
+ * Where a page sits: Home › a section › the page. Every item but the last
+ * links; the last is the page itself (schema.org BreadcrumbList).
+ */
+export function buildBreadcrumbList(
+    items: readonly { name: string; path: string }[],
+) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: item.name,
+            item: `${siteConfig.url}${item.path === "/" ? "" : item.path}`,
+        })),
     };
 }
 

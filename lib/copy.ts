@@ -240,3 +240,80 @@ export const logCopy = {
     },
     back: "Flight Log index",
 } as const;
+
+/**
+ * A Flight Log entry (G1, the paper-grade post). UI copy only: the title,
+ * standfirst, text, captions, notes and changelog are the owner's.
+ */
+export const postCopy = {
+    num: "01",
+    themed: "Flight Log",
+    plain: "Blog",
+    /** "7 min read". */
+    read: (minutes: number) => `${minutes} min read`,
+    updated: "Updated",
+    tags: "Tags",
+    record: {
+        title: "In this entry",
+        entry: "Entry",
+        of: "of",
+        filed: "Filed",
+        length: "Length",
+        minutes: (minutes: number) => `${minutes} min`,
+        inside: "Inside",
+        mission: "Mission",
+        missions: "Missions",
+        revised: "Revised",
+    },
+    contents: "Contents",
+    /** The contents' landmark name (plan §4.5). */
+    contentsLabel: "On this page",
+    listing: {
+        num: (number: number) => `Listing ${number}`,
+        lines: (lines: number) => `${lines} ${lines === 1 ? "line" : "lines"}`,
+        copy: "Copy",
+        copyLabel: (number: number) => `Copy listing ${number}`,
+        copied: "Copied",
+        failed: "Copy failed",
+        announceCopied: (number: number) => `Listing ${number} copied`,
+        announceFailed: "Copying failed",
+    },
+    notes: {
+        title: "Notes",
+        ref: (number: number) => `Note ${number}`,
+        back: (number: number) => `Back to note ${number} in the text`,
+    },
+    revisions: {
+        title: "Revisions",
+        /** "△ Rev 2026-07-02 · Correction". */
+        rev: "Rev",
+    },
+    /** "End of entry LOG 003". */
+    end: (designation?: string) =>
+        designation ? `End of entry ${designation}` : "End of entry",
+    question: "Questions about this entry?",
+    reply: "Reply via Comms",
+    copyLink: "Copy link",
+    copyLinkLabel: "Copy the link to this entry",
+    linkCopied: "Link copied",
+    allEntries: "All entries",
+    after: "After this entry",
+    missionThemed: "Mission file",
+    missionPlain: (count: number) =>
+        count === 1 ? "Related project" : "Related projects",
+    pagerThemed: "Keep reading",
+    pagerPlain: "Previous and next",
+    previous: "Previous entry",
+    next: "Next entry",
+    first: "This is the first entry.",
+    latest: "This is the latest entry.",
+    relatedThemed: "Same subsystem",
+    relatedPlain: "Related entries",
+    crewThemed: "Crew",
+    crewPlain: "Author",
+    writtenBy: "Written by",
+    rss: "RSS",
+    /** The print masthead: "Flight Log · LOG 003". */
+    printKicker: (designation: string) => `Flight Log · ${designation}`,
+    printFiled: "Filed",
+} as const;

@@ -135,3 +135,21 @@ export function navCurrent(
     if (path.startsWith(`${item.section}/`)) return "true";
     return undefined;
 }
+
+/**
+ * The header's mode on a route (G1): reading pages (an entry, a mission
+ * file, the CV, Comms) get the solid header, with a firmer rule under it.
+ * RouteMarker sets it as `html[data-header]`.
+ */
+export function headerMode(
+    pathname: string | null | undefined,
+): "solid" | undefined {
+    if (!pathname) return undefined;
+    const path = pathname.replace(/\/+$/, "") || "/";
+    if (/^\/blog\/(?!archive$|tags$)[^/]+$/.test(path)) return "solid";
+    if (/^\/portfolio\/[^/]+$/.test(path)) return "solid";
+    if (path === siteRoutes.resume || path === siteRoutes.contact) {
+        return "solid";
+    }
+    return undefined;
+}

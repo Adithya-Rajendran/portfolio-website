@@ -330,7 +330,9 @@ describe("seed-resume-projects drafts", () => {
         const homelab = draftFor(plan, "homelab");
         const hrefs = homelab.body.flatMap((item) =>
             item._type === "block"
-                ? (item.markDefs ?? []).map((mark) => mark.href)
+                ? (item.markDefs ?? []).map((mark) =>
+                      mark._type === "contentLink" ? mark.href : undefined,
+                  )
                 : [],
         );
         expect(hrefs).toEqual([

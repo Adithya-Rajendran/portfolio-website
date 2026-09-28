@@ -179,6 +179,20 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
 ];
 
 /**
+ * A post's share image at its built URL (`/blog/<slug>/opengraph-image-…`),
+ * for metadata that names the image directly (the BlogPosting JSON-LD).
+ */
+export function postShareImagePath(slug: string): string {
+    const route = ROUTE_TAGS.find(
+        (entry) => entry.file === "app/(site)/blog/[slug]/opengraph-image.tsx",
+    );
+    return (route?.path ?? "/blog/[slug]/opengraph-image").replace(
+        "[slug]",
+        slug,
+    );
+}
+
+/**
  * Only slugs of this shape are put into a URL. Sanity validates slugs, but
  * a misconfigured document must not make warming fetch arbitrary paths.
  */

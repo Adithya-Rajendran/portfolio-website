@@ -11,6 +11,7 @@ import type {
     TalkKind,
     TimelineDatePrecision,
 } from "@/lib/profile-fields";
+import type { ChangeKind } from "@/lib/post-fields";
 import type {
     ImageKind,
     ModelKind,
@@ -187,9 +188,19 @@ export type PostListItem = {
     wordCount: number;
 };
 
+/** A dated update or correction to a post (G7 errata). */
+export type PostChange = {
+    _key: string;
+    date: string;
+    kind: ChangeKind;
+    note: string;
+};
+
 export type PostWithBody = PostListItem & {
     body: ContentBody;
     _updatedAt?: string;
+    /** Dated updates and corrections, oldest first as authored. */
+    changelog?: PostChange[] | null;
 };
 
 export type PostMeta = Omit<PostListItem, "_id"> & {
@@ -377,11 +388,15 @@ export const POSTS_BY_PROJECT_QUERY = defineQuery(`*[
     _id,${postListFields}
 }`);
 
+/** A post's changelog: detail queries only (the page and the feed). */
+const postChangelogProjection = `changelog[]{_key, date, kind, note}`;
+
 export const RECENT_POSTS_QUERY = defineQuery(`*[
     _type == "post" && defined(publishedAt) && publishedAt <= $today
 ] | order(publishedAt desc){
     _id,
     _updatedAt,${postListFields},
+    ${postChangelogProjection},
     ${contentBodyProjection}
 }`);
 
@@ -391,6 +406,7 @@ export const POST_BY_SLUG_QUERY = defineQuery(`*[
 ][0]{
     _id,
     _updatedAt,${postListFields},
+    ${postChangelogProjection},
     ${contentBodyProjection}
 }`);
 

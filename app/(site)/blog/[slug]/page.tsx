@@ -1,14 +1,49 @@
-import "@/app/journal-blog.css";
-import { getAllSlugs, getPostBySlug, getPostMeta } from "@/lib/sanity-client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { siteConfig } from "@/lib/config";
-import BlogPostBody, {
-    BlogPostHero,
-} from "@/components/blogs/blog-post-content";
-import { BlogPostJsonLd } from "@/components/json-ld";
-import NewsletterNotice from "@/components/newsletter/newsletter-notice";
+import { PortableText, type PortableTextBlock } from "@portabletext/react";
 import ArticleContinuation from "@/components/blogs/article-continuation";
+import EndMatter from "@/components/blogs/end-matter";
+import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
+import { PostCrumb, PostHead } from "@/components/blogs/post-head";
+import {
+    PostBox,
+    PostRail,
+    type EntryRecord,
+} from "@/components/blogs/post-rail";
+import PostReader from "@/components/blogs/post-reader";
+import styles from "@/components/blogs/post.module.css";
+import { BlogPostJsonLd, BreadcrumbJsonLd } from "@/components/json-ld";
+import { siteConfig } from "@/lib/config";
+import { postCopy as copy } from "@/lib/copy";
+import { entryCounts } from "@/lib/entry-counts";
+import {
+    contentsHeadings,
+    extractHeadings,
+    headingIdsByKey,
+} from "@/lib/headings";
+import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
+import { formatEntryDate, logEntries } from "@/lib/log-index";
+import { siteRoutes } from "@/lib/navigation";
+import { getProfileLink } from "@/lib/profile-content";
+import FigurePlate from "@/components/prose/figure-plate";
+import {
+    hasImageAsset,
+    indexProse,
+    LEAD_KEY,
+    leadPlateIndex,
+} from "@/lib/prose";
+import { adjacentEntries, relatedEntries } from "@/lib/related-posts";
+import {
+    getAllPosts,
+    getAllProjects,
+    getAllSlugs,
+    getPostBySlug,
+    getPostMeta,
+    getProfile,
+} from "@/lib/sanity-client";
+import { urlForImage } from "@/lib/sanity-image";
+import { TAG_PATTERN } from "@/lib/tags";
+import { readingTimeFromWordCount } from "@/components/blogs/utils";
 
 /**
  * Partial Prefetching for this route only (plan §4.6 rule 8, measured in
@@ -17,16 +52,6 @@ import ArticleContinuation from "@/components/blogs/article-continuation";
  * click. The app-wide flag stays off (next.config.mjs).
  */
 export const prefetch = "partial";
-
-/**
- * Async body — fetches the full post (including body) and runs shiki
- * highlighting.
- */
-async function BodyWithData({ slug }: { slug: string }) {
-    const post = await getPostBySlug(slug);
-    if (!post?.body) return null;
-    return <BlogPostBody post={post} />;
-}
 
 /**
  * Prerender every published post at build time; unknown slugs still
@@ -41,10 +66,33 @@ export async function generateStaticParams() {
     return slugs.map((slug) => ({ slug }));
 }
 
+function isCodeBlock(value: unknown): value is CodeBlock {
+    if (!value || typeof value !== "object") return false;
+    const block = value as { _type?: unknown; _key?: unknown };
+    return block._type === "code" && typeof block._key === "string";
+}
+
+function coverUrl(cover: Parameters<typeof urlForImage>[0] | null | undefined) {
+    if (!cover || !(cover as { asset?: unknown }).asset) return undefined;
+    try {
+        return urlForImage(cover).width(1200).fit("max").auto("format").url();
+    } catch {
+        return undefined;
+    }
+}
+
 /**
- * Blog post page — awaits the lightweight meta query up front (it gates
- * notFound and JSON-LD anyway), renders the hero directly from it, and
- * awaits the body (full post + shiki highlighting) inline.
+ * A Flight Log entry (G1, the paper-grade post). One grid: the crumb row,
+ * the head (LOG nnn · date · read time · tags, the title, the standfirst)
+ * in the reading column with the first paragraph in the first screen, the
+ * sticky "In this entry" rail beside it (the record and the contents; a
+ * closed box above the text on phones), the text at a 68ch measure with
+ * numbered listings, plates, callouts and margin notes, then the end
+ * matter (notes, revisions, the end mark) and what comes after (the
+ * mission, previous and next, related entries, the author). No ambient
+ * motion. Everything is server-rendered; PostReader marks the current
+ * section and keeps in-page links inside the visible entry, and the Copy
+ * buttons need JavaScript. Ported from the mockup's post.html.
  */
 export default async function BlogPostPage({
     params,
@@ -52,31 +100,186 @@ export default async function BlogPostPage({
     params: Promise<{ slug: string }>;
 }) {
     const { slug } = await params;
-    // Fetch meta synchronously at the page level so JSON-LD is in the SSR
-    // payload; the hero renders from the same result.
-    const meta = await getPostMeta(slug);
-    if (!meta) notFound();
+    const post = await getPostBySlug(slug);
+    if (!post) notFound();
+
+    const codeBlocks = (post.body ?? []).filter(isCodeBlock);
+    const [posts, projects, profile, highlighted] = await Promise.all([
+        getAllPosts(),
+        getAllProjects(),
+        getProfile(),
+        highlightCodeBlocks(codeBlocks, slug),
+    ]);
+
+    const entries = logEntries(posts);
+    const entry = entries.find((item) => item.slug === slug);
+    const designation = entry?.designation;
+    const headings = extractHeadings(post);
+    // The cover, when there is one, is the lead plate after the first
+    // paragraph (Pl. I).
+    const lead = post.cover && hasImageAsset(post.cover) ? post.cover : null;
+    const index = indexProse(post.body, { lead });
+    const leadInfo = lead ? index.figures[LEAD_KEY] : undefined;
+    const split = leadInfo ? leadPlateIndex(index.body) : index.body.length;
+    const components = createPortableTextComponents({
+        index,
+        highlightedCode: highlighted,
+        headingIds: headingIdsByKey(headings),
+        plateTag: designation,
+    });
+    const counts = entryCounts(post.body, index);
+    const contents = contentsHeadings(headings);
+    const readMinutes =
+        post.wordCount > 0 ? readingTimeFromWordCount(post.wordCount) : null;
+    const tags = (post.tags ?? []).filter((tag) => TAG_PATTERN.test(tag));
+    const missions = (post.projectIds ?? [])
+        .map((id) => projects.find((project) => project._id === id))
+        .filter((project) => project !== undefined);
+    const { previous, next } = adjacentEntries(entries, slug);
+    const related = relatedEntries(entries, slug, {
+        exclude: [previous?.slug, next?.slug].filter((value): value is string =>
+            Boolean(value),
+        ),
+    });
+    const url = `${siteConfig.url}/blog/${slug}`;
+    const filed = post.publishedAt?.slice(0, 10);
+    const revised = post.revisedAt?.slice(0, 10) ?? null;
+    const record: EntryRecord = {
+        designation,
+        total: entries.length,
+        filed,
+        revised,
+        words: post.wordCount,
+        readMinutes,
+        counts,
+        missions: missions.map((project) => ({
+            slug: project.slug,
+            designation: project.designation,
+            title: project.title,
+        })),
+    };
 
     return (
-        <div data-page="post" data-legacy className="w-full">
+        <div data-page="post" className={styles.page}>
             <BlogPostJsonLd
-                title={meta.title || ""}
-                description={meta.description || ""}
-                publishedAt={meta.publishedAt || ""}
+                title={post.title || ""}
+                description={post.description || ""}
+                publishedAt={post.publishedAt || ""}
                 slug={slug}
-                updatedAt={meta._updatedAt}
-                tags={meta.tags ?? undefined}
-                wordCount={meta.wordCount}
+                revisedAt={revised}
+                tags={tags}
+                wordCount={post.wordCount}
+                imageUrl={coverUrl(post.cover)}
+            />
+            <BreadcrumbJsonLd
+                items={[
+                    { name: "Home", path: siteRoutes.home },
+                    {
+                        name: `${copy.themed} · ${copy.plain}`,
+                        path: siteRoutes.blog,
+                    },
+                    { name: post.title, path: `/blog/${slug}` },
+                ]}
             />
 
-            <article className="journal-article journal-container">
-                <BlogPostHero post={meta} />
-                <BodyWithData slug={slug} />
-                <div className="journal-article-follow">
-                    <ArticleContinuation currentPost={meta} />
-                    <NewsletterNotice />
+            <div className={`shell ${styles.printHead}`} data-print="only">
+                <p className="label">
+                    {copy.printKicker(designation ?? copy.themed)}
+                </p>
+                <p className="data">
+                    {[
+                        url.replace(/^https?:\/\//, ""),
+                        filed
+                            ? `${copy.printFiled} ${formatEntryDate(filed)}`
+                            : null,
+                        profile?.name || siteConfig.author,
+                    ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                </p>
+            </div>
+
+            <article className={`shell ${styles.layout}`}>
+                <PostCrumb
+                    className={styles.crumbRow}
+                    designation={designation}
+                    slug={slug}
+                />
+                <PostHead
+                    className={styles.head}
+                    title={post.title}
+                    description={post.description}
+                    designation={designation}
+                    publishedAt={post.publishedAt}
+                    revisedAt={revised}
+                    readMinutes={readMinutes}
+                    tags={tags}
+                />
+                <PostRail
+                    className={styles.rail}
+                    record={record}
+                    headings={contents}
+                />
+                <div className={styles.main}>
+                    <PostBox
+                        className={styles.box}
+                        record={record}
+                        headings={contents}
+                    />
+                    <div className={`prose ${styles.body}`}>
+                        <PortableText
+                            value={
+                                index.body.slice(
+                                    0,
+                                    split,
+                                ) as unknown as PortableTextBlock[]
+                            }
+                            components={components}
+                            onMissingComponent={false}
+                        />
+                        {lead && leadInfo ? (
+                            <FigurePlate
+                                value={{ ...lead, width: "wide" }}
+                                info={leadInfo}
+                                tag={designation}
+                                priority
+                            />
+                        ) : null}
+                        {split < index.body.length ? (
+                            <PortableText
+                                value={
+                                    index.body.slice(
+                                        split,
+                                    ) as unknown as PortableTextBlock[]
+                                }
+                                components={components}
+                                onMissingComponent={false}
+                            />
+                        ) : null}
+                    </div>
+                    <EndMatter
+                        className={styles.after}
+                        notes={index.notes}
+                        changelog={post.changelog ?? []}
+                        designation={designation}
+                        url={url}
+                    />
                 </div>
             </article>
+
+            <ArticleContinuation
+                className={`shell ${styles.endSec}`}
+                missions={missions}
+                previous={previous}
+                next={next}
+                related={related}
+                author={{
+                    name: profile?.name || siteConfig.author,
+                    headline: profile?.headline,
+                    linkedIn: getProfileLink(profile, "linkedin"),
+                }}
+            />
+            <PostReader />
         </div>
     );
 }
@@ -91,20 +294,23 @@ export async function generateMetadata({
     if (!post) {
         return;
     }
+    const url = `${siteConfig.url}/blog/${slug}`;
     return {
         title: post.title,
         description: post.description,
         ...(post.tags && post.tags.length > 0 && { keywords: post.tags }),
         alternates: {
-            canonical: `${siteConfig.url}/blog/${slug}`,
+            canonical: url,
         },
         openGraph: {
             title: post.title,
             description: post.description,
             type: "article",
             publishedTime: post.publishedAt,
+            ...(post.revisedAt ? { modifiedTime: post.revisedAt } : {}),
+            ...(post.tags && post.tags.length > 0 ? { tags: post.tags } : {}),
             authors: [siteConfig.author],
-            url: `${siteConfig.url}/blog/${slug}`,
+            url,
         },
         twitter: {
             card: "summary_large_image",

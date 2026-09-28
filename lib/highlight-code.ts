@@ -1,4 +1,5 @@
 import {
+    createCssVariablesTheme,
     createHighlighter,
     type Highlighter,
     type ShikiTransformer,
@@ -20,19 +21,23 @@ export interface HighlightedBlock {
 let highlighterPromise: Promise<Highlighter> | null = null;
 
 /**
- * Dual themes: tokens are emitted with --shiki-light/--shiki-dark CSS
- * variables (defaultColor: false) and globals.css switches on `.dark`,
- * so code blocks follow the site appearance instead of being dark-only.
+ * One theme for both site themes: every token colour is a CSS variable
+ * (`var(--code-token-comment)` …) that styles/prose.css maps to the design
+ * tokens per theme, so listings are monochrome with one accent (keywords)
+ * and follow Void, Flight Manual and print without a second pass. The
+ * comment colour is ink-3, at least 5.2:1 on the listing in both themes
+ * (the GitHub theme's own comment colour was 3.87:1 in Void).
  */
-const SHIKI_THEMES = {
-    light: "github-light",
-    dark: "github-dark-dimmed",
-} as const;
+const CODE_THEME = createCssVariablesTheme({
+    name: "deep-field",
+    variablePrefix: "--code-",
+    fontStyle: true,
+});
 
 function getHighlighter(): Promise<Highlighter> {
     if (!highlighterPromise) {
         highlighterPromise = createHighlighter({
-            themes: ["github-dark-dimmed", "github-light"],
+            themes: [CODE_THEME],
             langs: [
                 "javascript",
                 "typescript",
@@ -89,8 +94,11 @@ export type CodeBlock = {
  * into styles they were never written for — the data cache persists
  * across deployments, so a code change alone does not invalidate them.
  * v2: dual-theme CSS variables (defaultColor: false) + line-highlight.
+ * v3: the one css-variables theme (`--code-*`, styles/prose.css), no
+ *     tabindex on the <pre> (the listing's scroll box is the focusable,
+ *     labelled region) and `line-highlight` restyled.
  */
-const HIGHLIGHT_MARKUP_VERSION = 2;
+const HIGHLIGHT_MARKUP_VERSION = 3;
 
 export async function highlightCodeBlocks(
     codeBlocks: CodeBlock[],
@@ -145,8 +153,10 @@ async function highlightCodeBlocksVersioned(
                       ]
                     : [];
             const options = {
-                themes: SHIKI_THEMES,
-                defaultColor: false as const,
+                theme: CODE_THEME.name ?? "deep-field",
+                // The listing's scroll box (components/prose/listing.tsx)
+                // is the focusable, labelled region, not the <pre>.
+                tabindex: false as const,
                 transformers,
             };
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    formatEntryDate,
     entriesTagged,
     entryCount,
     logEntries,
@@ -209,5 +210,14 @@ describe("transmissions", () => {
     it("is empty without a dated entry", () => {
         expect(transmissions([], "2026-09-28")).toBeNull();
         expect(transmissions(logEntries(POSTS), "today")).toBeNull();
+    });
+});
+
+describe("formatEntryDate", () => {
+    it("prints the day, the month and the year", () => {
+        expect(formatEntryDate("2026-03-30")).toBe("30 Mar 2026");
+        expect(formatEntryDate("2026-03-06T00:00:00Z")).toBe("6 Mar 2026");
+        expect(formatEntryDate("")).toBe("");
+        expect(formatEntryDate(null)).toBe("");
     });
 });

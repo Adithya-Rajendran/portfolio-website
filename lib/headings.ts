@@ -101,3 +101,15 @@ export function headingIdsByKey(
 ): Record<string, string> {
     return Object.fromEntries(headings.map((h) => [h.key, h.id]));
 }
+
+/**
+ * The headings a post's contents list: its sections (h2). A body with no
+ * h2 lists its top level instead, so the contents are never empty while
+ * the text has headings.
+ */
+export function contentsHeadings(
+    headings: readonly PostHeading[],
+): PostHeading[] {
+    const top = Math.min(...headings.map((heading) => heading.level));
+    return headings.filter((heading) => heading.level === top);
+}

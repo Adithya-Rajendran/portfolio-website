@@ -1,0 +1,583 @@
+/*
+ * A Flight Log entry (G1, the paper-grade post): one grid holding the crumb
+ * row, the head and the text, with the "In this entry" rail beside them;
+ * then the end matter and what comes after. The text itself is styled by
+ * styles/prose.css. Ported from the mockup's writing.css "POST.HTML". No
+ * ambient motion on a reading page.
+ */
+.page {
+    padding-bottom: var(--space-section);
+}
+
+/* ---- Layout: rows crumb · head · text; the rail spans head and text --- */
+.layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: clamp(1.75rem, 1rem + 2.2vw, 3rem);
+}
+.layout > * {
+    min-width: 0;
+}
+.crumbRow {
+    margin-bottom: var(--s-6);
+}
+.rail {
+    display: none;
+}
+.main {
+    margin-top: var(--s-5);
+}
+@media (min-width: 60rem) {
+    .layout {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        column-gap: var(--gutter);
+    }
+    .crumbRow {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+    .head {
+        grid-column: 4 / -1;
+        grid-row: 2;
+    }
+    .main {
+        grid-column: 4 / -1;
+        grid-row: 3;
+        margin-top: var(--s-7);
+    }
+    .rail {
+        display: block;
+        grid-column: 1 / span 3;
+        grid-row: 2 / span 2;
+        align-self: start;
+        position: sticky;
+        top: calc(var(--header-h) + var(--s-5));
+        max-height: calc(100vh - var(--header-h) - 2 * var(--s-5));
+        padding-right: var(--s-4);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: var(--rule-2) transparent;
+    }
+    .box {
+        display: none;
+    }
+}
+
+/* ---- Crumb row: § 01 · Flight Log / Blog · LOG nnn · its address ------ */
+.crumbHome {
+    text-decoration: none;
+}
+.crumbHome:hover :global(.pair__themed) {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.3em;
+}
+.crumbLog {
+    color: var(--accent-text);
+}
+@media (max-width: 37.49rem) {
+    .crumbAddress {
+        display: none;
+    }
+}
+
+/* ---- Head: LOG · date · read · Updated · tags → title → standfirst ---- */
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-2) var(--s-4);
+}
+.metaLog {
+    color: var(--accent-text);
+    font: 400 var(--label-size) / 1.4 var(--font-label);
+    letter-spacing: var(--track-label);
+    white-space: nowrap;
+}
+.metaData {
+    color: var(--ink-2);
+    font: 400 0.8125rem / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    white-space: nowrap;
+}
+.metaTags {
+    margin-left: var(--s-1);
+}
+.title {
+    max-width: 21ch;
+    margin-top: var(--s-4);
+    font: 300 var(--step-5) / 1.04 var(--font-display);
+    letter-spacing: -0.014em;
+    text-wrap: balance;
+}
+.dek {
+    max-width: 48ch;
+    margin-top: var(--s-4);
+    color: var(--ink-2);
+    font: 300 var(--step-1) / 1.45 var(--font-long);
+    text-wrap: pretty;
+}
+
+/* ---- The record and the contents: the rail (≥ 960) or a box --------- */
+.railTitle {
+    margin-bottom: var(--s-4);
+    padding-top: 0.35rem;
+}
+.record {
+    display: grid;
+    margin: 0;
+    border-bottom: var(--rule-hair) solid var(--rule-1);
+}
+.record > div {
+    display: grid;
+    grid-template-columns: 5.25rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: var(--s-3);
+    padding: 0.55rem 0;
+    border-top: var(--rule-hair) solid var(--rule-1);
+}
+.record dt {
+    color: var(--ink-3);
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
+}
+.record dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--ink-1);
+    font: 400 var(--step--1) / 1.45 var(--font-display);
+}
+.record dd:global(.data),
+.record dd :global(.data) {
+    font-size: 0.8125rem;
+}
+.recordOf {
+    color: var(--ink-3);
+}
+.recordMissions {
+    display: grid;
+    gap: var(--s-1);
+}
+.recordMission {
+    text-decoration-color: var(--rule-2);
+}
+.recordMission:hover {
+    text-decoration-color: var(--accent);
+}
+.recordMission :global(.data) {
+    color: var(--accent-text);
+}
+.contents {
+    margin-top: var(--s-7);
+    font: 400 var(--step--1) / 1.4 var(--font-display);
+}
+.contentsTitle {
+    margin-bottom: var(--s-3);
+}
+.contentsList {
+    margin: 0;
+    padding: 0;
+    border-left: var(--rule-hair) solid var(--rule-1);
+    counter-reset: contents;
+    list-style: none;
+}
+.contentsList li {
+    counter-increment: contents;
+}
+.contentsList a {
+    display: flex;
+    gap: 0.75rem;
+    min-height: 44px;
+    align-items: center;
+    margin-left: -1px;
+    padding: 0.35rem 0 0.35rem 1rem;
+    border-left: var(--rule-strong) solid transparent;
+    color: var(--ink-2);
+    text-decoration: none;
+    transition:
+        color var(--dur-hover) var(--ease-dock),
+        border-color var(--dur-3) var(--ease-dock);
+}
+.contentsList a::before {
+    content: counter(contents, decimal-leading-zero);
+    align-self: baseline;
+    color: var(--ink-3);
+    font: 400 0.75rem / 1.6 var(--font-mono);
+}
+.contentsList a:hover {
+    color: var(--ink-1);
+}
+.contentsList a[aria-current] {
+    border-left-color: var(--accent);
+    color: var(--ink-1);
+}
+.contentsList a[aria-current]::before {
+    color: var(--accent-text);
+}
+
+/* The phone's box: a closed disclosure above the text. */
+.box {
+    margin-bottom: var(--s-6);
+}
+.boxSummary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-4);
+    min-height: 48px;
+    padding: 0 var(--s-4);
+    border: var(--rule-hair) solid var(--rule-2);
+    cursor: pointer;
+    list-style: none;
+}
+.boxSummary::-webkit-details-marker {
+    display: none;
+}
+.boxSummary::after {
+    content: "+";
+    flex: none;
+    width: 1rem;
+    color: var(--ink-2);
+    font: 300 1.25rem / 1 var(--font-display);
+    text-align: center;
+}
+.box[open] > .boxSummary::after {
+    content: "\2212";
+}
+.boxSummary:hover {
+    border-color: var(--ink-1);
+    background: var(--surface-1);
+}
+.boxCount {
+    margin-left: auto;
+    color: var(--ink-2);
+    font-size: 0.75rem;
+}
+.boxBody {
+    padding-top: var(--s-5);
+}
+.boxBody .contents {
+    margin-top: var(--s-6);
+}
+
+/* ---- The text ------------------------------------------------------- */
+/* Section numbers: 01 above each h2, in the margin on wide screens. */
+.body > h2::before {
+    content: counter(prose-h2, decimal-leading-zero);
+    display: block;
+    margin-bottom: 0.6rem;
+    color: var(--accent-text);
+    font: 400 0.8125rem / 1 var(--font-mono);
+    letter-spacing: 0.04em;
+}
+@media (min-width: 60rem) {
+    .body > h2 {
+        position: relative;
+    }
+    .body > h2::before {
+        position: absolute;
+        right: calc(100% + 1.25rem);
+        top: 0.7em;
+        margin: 0;
+    }
+    .body > :is(ul, ol) {
+        padding-left: 0;
+    }
+}
+/* The first line of the entry in small capitals. */
+.body > p:first-of-type::first-line {
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.04em;
+}
+
+/* ---- End matter: notes, revisions, the end mark, the actions -------- */
+.after {
+    max-width: 36rem;
+    margin-top: var(--s-8);
+}
+.endBlock + .endBlock,
+.endBlock + .endmark {
+    margin-top: var(--s-7);
+}
+.endBlock + .endmark {
+    margin-top: var(--s-7);
+}
+.after > .endmark:first-child {
+    margin-top: 0;
+}
+.endTitle {
+    margin-bottom: var(--s-4);
+    color: var(--ink-1);
+    font: 400 var(--label-size) / 1 var(--font-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+}
+.revisions {
+    padding-top: var(--s-5);
+    border-top: var(--rule-hair) solid var(--rule-2);
+}
+.revisionList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.revision + .revision {
+    margin-top: var(--s-4);
+}
+.revisionHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-2) var(--s-3);
+}
+.revisionKind {
+    color: var(--ink-2);
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
+}
+.revision[data-kind="correction"] .revisionKind {
+    color: var(--accent-text);
+}
+.revisionNote {
+    margin-top: var(--s-1);
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.55 var(--font-text);
+}
+.endmark {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+}
+.endmark::after {
+    content: "";
+    flex: 1;
+    height: var(--rule-hair);
+    background: var(--rule-1);
+}
+.endmark :global(.label) {
+    color: var(--ink-1);
+}
+.actions {
+    display: grid;
+    gap: var(--s-4);
+    margin-top: var(--s-5);
+}
+.actionsNote {
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.5 var(--font-text);
+}
+.actionsRow {
+    --cluster: var(--s-3) var(--s-5);
+}
+
+/* ---- After this entry: aligned to the reading column --------------- */
+.endSec {
+    padding-top: var(--s-9);
+}
+.end {
+    display: grid;
+    gap: var(--s-8);
+}
+@media (min-width: 60rem) {
+    .end {
+        padding-left: calc(
+            (100% - 11 * var(--gutter)) / 12 * 3 + 3 * var(--gutter)
+        );
+    }
+}
+.endSection > :global(.section-tag) {
+    margin-bottom: var(--s-5);
+}
+
+.msns {
+    display: grid;
+    gap: var(--s-5) var(--gutter);
+}
+.msn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    max-width: 44rem;
+    padding: var(--s-5) var(--s-7) var(--s-5) var(--s-5);
+    border: var(--rule-hair) solid var(--rule-1);
+    background:
+        radial-gradient(
+            ellipse 70% 90% at 100% 0%,
+            var(--falloff-warm),
+            transparent 70%
+        ),
+        radial-gradient(
+            ellipse 60% 70% at 40% 40%,
+            var(--falloff),
+            transparent 72%
+        ),
+        var(--plate-bg);
+    transition: border-color var(--dur-hover) var(--ease-dock);
+}
+.msn:hover {
+    border-color: var(--rule-2);
+}
+.msn:focus-within {
+    border-color: var(--accent);
+}
+.msnHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-2) var(--s-4);
+    color: var(--ink-2);
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
+}
+.msnCode {
+    color: var(--accent-text);
+    font: 400 0.8125rem / 1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+}
+.msnTitle {
+    font: 300 var(--step-3) / 1.05 var(--font-display);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.msnTitle a {
+    text-decoration: none;
+}
+.msn:hover .msnTitle a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
+}
+.msnSummary {
+    max-width: 52ch;
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.45 var(--font-display);
+}
+.msnArrow {
+    position: absolute;
+    top: var(--s-5);
+    right: var(--s-5);
+    color: var(--ink-3);
+    transition:
+        transform var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock);
+}
+.msn:hover .msnArrow {
+    color: var(--accent-text);
+}
+
+.pager {
+    display: grid;
+    gap: var(--s-4) var(--gutter);
+    max-width: 56rem;
+}
+@media (min-width: 37.5rem) {
+    .pager {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+.pagerItem {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    padding: var(--s-4) 0 var(--s-2);
+    border-top: var(--rule-strong) solid var(--rule-2);
+    text-decoration: none;
+    transition: border-color var(--dur-hover) var(--ease-dock);
+}
+a.pagerItem:hover {
+    border-top-color: var(--accent);
+}
+@media (min-width: 37.5rem) {
+    .pagerNext {
+        align-items: flex-end;
+        text-align: right;
+    }
+}
+.pagerTitle {
+    font: 400 var(--step-1) / 1.25 var(--font-display);
+    text-wrap: balance;
+}
+a.pagerItem:hover .pagerTitle {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+}
+.pagerMeta {
+    color: var(--ink-3);
+    font-size: 0.75rem;
+}
+.pagerNone > span:last-child {
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.5 var(--font-text);
+}
+
+.by {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--s-5);
+    max-width: 44rem;
+}
+.byPatch {
+    flex: none;
+    width: 56px;
+    height: 56px;
+}
+.byName {
+    font: 500 var(--step-0) / 1.35 var(--font-display);
+}
+.byLine {
+    max-width: 40ch;
+    margin-top: var(--s-2);
+    color: var(--ink-2);
+    font: 300 var(--step-1) / 1.45 var(--font-long);
+}
+.byLinks {
+    --cluster: var(--s-3);
+    margin-top: var(--s-4);
+}
+
+/* ---- Print: one column, a masthead, no rail or actions -------------- */
+.printHead :global(.data) {
+    color: var(--ink-2);
+}
+@media print {
+    .page {
+        padding-bottom: 0;
+    }
+    .printHead {
+        width: auto;
+        margin-inline: 0;
+        margin-bottom: 12pt;
+        padding-bottom: 6pt;
+        border-bottom: 1px solid var(--rule-2);
+    }
+    .layout {
+        display: block;
+        width: auto;
+        padding-top: 0;
+    }
+    .main {
+        margin-top: 12pt;
+    }
+    .title {
+        max-width: none;
+        font-size: 22pt;
+    }
+    .dek {
+        font-size: 12pt;
+    }
+    .body > h2::before {
+        position: static;
+        display: inline;
+        margin-right: 0.6em;
+    }
+    .after {
+        max-width: none;
+        margin-top: 18pt;
+    }
+}

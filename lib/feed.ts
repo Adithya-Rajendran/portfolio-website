@@ -5,13 +5,22 @@ import {
 } from "@portabletext/to-html";
 import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
 import { urlForImage } from "@/lib/sanity-image";
+import { changeKindTitle } from "@/lib/post-fields";
+import {
+    calloutHeading,
+    indexProse,
+    type FigureInfo,
+    type NumberedFootnote,
+    type ProseIndex,
+} from "@/lib/prose";
 import type { PostWithBody } from "@/lib/sanity-client";
 
 /** The exact projection consumed by the RSS renderer. */
 export type FeedPost = Pick<
     PostWithBody,
     "title" | "slug" | "description" | "publishedAt" | "body"
->;
+> &
+    Partial<Pick<PostWithBody, "changelog">>;
 
 export const FEED_PATH = "/feed.xml";
 export const FEED_TITLE = `${siteConfig.author} — Blog`;
@@ -79,7 +88,10 @@ function safeHttpTarget(url: unknown): string | null {
     }
 }
 
-function renderImage(value: Record<string, unknown>): string {
+function renderImage(
+    value: Record<string, unknown>,
+    info: FigureInfo | undefined,
+): string {
     if (!value.asset) return "";
 
     try {
@@ -90,12 +102,20 @@ function renderImage(value: Record<string, unknown>): string {
             .url();
         const alt = typeof value.alt === "string" ? value.alt : "";
         const caption =
-            typeof value.caption === "string" && value.caption
-                ? `<figcaption>${escapeHtmlText(value.caption)}</figcaption>`
-                : "";
+            typeof value.caption === "string" ? value.caption.trim() : "";
+        const credit =
+            typeof value.credit === "string" ? value.credit.trim() : "";
+        const parts = [
+            info ? `<strong>${escapeHtmlText(info.label)}</strong>` : "",
+            caption ? escapeHtmlText(caption) : "",
+            credit ? `<small>${escapeHtmlText(credit)}</small>` : "",
+        ].filter(Boolean);
+        const figcaption = parts.length
+            ? `<figcaption>${parts.join(" ")}</figcaption>`
+            : "";
         return `<figure><img src="${escapeHtmlAttr(src)}" alt="${escapeHtmlAttr(
             alt,
-        )}"/>${caption}</figure>`;
+        )}"/>${figcaption}</figure>`;
     } catch {
         return "";
     }
@@ -114,82 +134,163 @@ function renderLink(
 /**
  * Portable Text to conservative feed HTML. Video URLs are links, never
  * iframe markup; malformed links and images degrade to readable text.
+ * Listings, plates, figures and footnotes carry the numbers the page
+ * prints (lib/prose.ts): "Listing 3 · Bash · install.sh", "Pl. I", and a
+ * raised note number that links to the Notes list at the end.
  */
-const components: Partial<PortableTextHtmlComponents> = {
-    types: {
-        image: ({ value }) => renderImage(value),
-        gallery: ({ value }) => {
-            const images = Array.isArray(value?.images)
-                ? value.images
-                      .filter(
-                          (image: unknown): image is Record<string, unknown> =>
-                              Boolean(image) && typeof image === "object",
-                      )
-                      .map(renderImage)
-                      .filter(Boolean)
-                      .join("")
-                : "";
-            if (!images) return "";
-            const caption =
-                typeof value?.caption === "string" && value.caption
-                    ? `<p>${escapeHtmlText(value.caption)}</p>`
+function feedComponents(
+    index: ProseIndex,
+): Partial<PortableTextHtmlComponents> {
+    const components: Partial<PortableTextHtmlComponents> = {
+        types: {
+            image: ({ value }) =>
+                renderImage(
+                    value,
+                    typeof value?._key === "string"
+                        ? index.figures[value._key]
+                        : undefined,
+                ),
+            gallery: ({ value }) => {
+                const images = Array.isArray(value?.images)
+                    ? value.images
+                          .filter(
+                              (
+                                  image: unknown,
+                              ): image is Record<string, unknown> =>
+                                  Boolean(image) && typeof image === "object",
+                          )
+                          .map((image: Record<string, unknown>) =>
+                              renderImage(
+                                  image,
+                                  typeof image._key === "string"
+                                      ? index.figures[image._key]
+                                      : undefined,
+                              ),
+                          )
+                          .filter(Boolean)
+                          .join("")
                     : "";
-            return `<section>${images}${caption}</section>`;
+                if (!images) return "";
+                const caption =
+                    typeof value?.caption === "string" && value.caption
+                        ? `<p>${escapeHtmlText(value.caption)}</p>`
+                        : "";
+                return `<section>${images}${caption}</section>`;
+            },
+            code: ({ value }) => {
+                const info =
+                    typeof value?._key === "string"
+                        ? index.listings[value._key]
+                        : undefined;
+                const filename =
+                    typeof value?.filename === "string" && value.filename
+                        ? `<code>${escapeHtmlText(value.filename)}</code>`
+                        : "";
+                const label = info
+                    ? [
+                          `Listing ${info.number}`,
+                          escapeHtmlText(info.language),
+                          filename,
+                      ]
+                          .filter(Boolean)
+                          .join(" · ")
+                    : filename;
+                const figcaption = label
+                    ? `<figcaption>${label}</figcaption>`
+                    : "";
+                const language =
+                    typeof value?.language === "string" && value.language
+                        ? ` class="language-${escapeHtmlAttr(value.language)}"`
+                        : "";
+                return `<figure>${figcaption}<pre><code${language}>${escapeHtmlText(
+                    typeof value?.code === "string" ? value.code : "",
+                )}</code></pre></figure>`;
+            },
+            callout: ({ value }) => {
+                const heading = `<p><strong>${escapeHtmlText(
+                    calloutHeading(value ?? {}),
+                )}</strong></p>`;
+                const body = Array.isArray(value?.body)
+                    ? toHTML(value.body, {
+                          components,
+                          onMissingComponent: false,
+                      })
+                    : "";
+                return `<aside>${heading}${body}</aside>`;
+            },
+            mediaEmbed: ({ value }) => {
+                const href = safeHttpTarget(value?.url);
+                const title =
+                    typeof value?.title === "string" && value.title
+                        ? value.title
+                        : href || "Linked media";
+                const caption =
+                    typeof value?.caption === "string" && value.caption
+                        ? `<p>${escapeHtmlText(value.caption)}</p>`
+                        : "";
+                if (!href) return caption;
+                return `<aside><a href="${escapeHtmlAttr(href)}">${escapeHtmlText(
+                    title,
+                )}</a>${caption}</aside>`;
+            },
         },
-        code: ({ value }) => {
-            const filename =
-                typeof value?.filename === "string" && value.filename
-                    ? `<figcaption><code>${escapeHtmlText(value.filename)}</code></figcaption>`
-                    : "";
-            const language =
-                typeof value?.language === "string" && value.language
-                    ? ` class="language-${escapeHtmlAttr(value.language)}"`
-                    : "";
-            return `<figure>${filename}<pre><code${language}>${escapeHtmlText(
-                typeof value?.code === "string" ? value.code : "",
-            )}</code></pre></figure>`;
+        marks: {
+            contentLink: ({ children, value }) => renderLink(children, value),
+            // Keep legacy documents readable during the additive-migration phase.
+            link: ({ children, value }) => renderLink(children, value),
+            underline: ({ children }) => `<u>${children}</u>`,
+            "strike-through": ({ children }) => `<del>${children}</del>`,
+            footnote: ({ children, value }) => {
+                const number = (value as NumberedFootnote | undefined)?.number;
+                const note = number ? index.notes[number - 1] : undefined;
+                if (!note) return children;
+                return `${children}<sup><a href="#${note.id}" id="${note.refId}">${note.number}</a></sup>`;
+            },
         },
-        callout: ({ value }) => {
-            const title =
-                typeof value?.title === "string" && value.title
-                    ? `<strong>${escapeHtmlText(value.title)}</strong>`
-                    : "";
-            const body = Array.isArray(value?.body)
-                ? toHTML(value.body, {
-                      components,
-                      onMissingComponent: false,
-                  })
-                : "";
-            return title || body ? `<aside>${title}${body}</aside>` : "";
-        },
-        mediaEmbed: ({ value }) => {
-            const href = safeHttpTarget(value?.url);
-            const title =
-                typeof value?.title === "string" && value.title
-                    ? value.title
-                    : href || "Linked media";
-            const caption =
-                typeof value?.caption === "string" && value.caption
-                    ? `<p>${escapeHtmlText(value.caption)}</p>`
-                    : "";
-            if (!href) return caption;
-            return `<aside><a href="${escapeHtmlAttr(href)}">${escapeHtmlText(
-                title,
-            )}</a>${caption}</aside>`;
-        },
-    },
-    marks: {
-        contentLink: ({ children, value }) => renderLink(children, value),
-        // Keep legacy documents readable during the additive-migration phase.
-        link: ({ children, value }) => renderLink(children, value),
-        underline: ({ children }) => `<u>${children}</u>`,
-        "strike-through": ({ children }) => `<del>${children}</del>`,
-    },
-};
+    };
+    return components;
+}
+
+/** The Notes list after the text, each note linking back to its number. */
+function renderNotes(index: ProseIndex): string {
+    if (!index.notes.length) return "";
+    const items = index.notes
+        .map(
+            (note) =>
+                `<li id="${note.id}">${escapeHtmlText(note.text)} <a href="#${note.refId}">↩</a></li>`,
+        )
+        .join("");
+    return `<section><h2>Notes</h2><ol>${items}</ol></section>`;
+}
+
+/** The post's recorded updates and corrections, oldest first. */
+function renderRevisions(changelog: FeedPost["changelog"]): string {
+    const changes = (changelog ?? [])
+        .filter((change) => change?.date && change.note)
+        .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    if (!changes.length) return "";
+    const items = changes
+        .map(
+            (change) =>
+                `<li><strong>${escapeHtmlText(change.date.slice(0, 10))} · ${escapeHtmlText(
+                    changeKindTitle(change.kind),
+                )}.</strong> ${escapeHtmlText(change.note)}</li>`,
+        )
+        .join("");
+    return `<section><h2>Revisions</h2><ul>${items}</ul></section>`;
+}
 
 function renderPostHtml(post: FeedPost): string {
     if (!post.body) return "";
-    return toHTML(post.body, { components, onMissingComponent: false });
+    const index = indexProse(post.body);
+    return (
+        toHTML(index.body as typeof post.body, {
+            components: feedComponents(index),
+            onMissingComponent: false,
+        }) +
+        renderNotes(index) +
+        renderRevisions(post.changelog)
+    );
 }
 
 export function renderFeedXml(

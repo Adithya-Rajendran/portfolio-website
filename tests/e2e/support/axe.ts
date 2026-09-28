@@ -16,9 +16,9 @@ const AXE_TAGS = [
  * covers, the elements it covers, why it is allowed and the PR that removes
  * it. Anything else axe reports fails the run.
  *
- * The plan allowed the post code-comment contrast until PR 10's Shiki
- * themes. PR 1 already lifted it to 4.55:1 (from 3.87:1), so no allowance
- * is needed today; add one here, never inline in a spec.
+ * Code comments are ink-3 in the one Shiki theme (PR 10): 5.7:1 or more on
+ * a listing in both themes, checked by axe and by tests/e2e/post.spec.ts.
+ * No allowance is needed today; add one here, never inline in a spec.
  */
 interface Allowance {
     rule: string;

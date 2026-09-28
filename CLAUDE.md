@@ -37,8 +37,11 @@ only live in comments or commit messages.
       defined there and nowhere else; orange text is `var(--accent-text)`,
       `--accent` is for fills and marks.
     - `styles/base.css`, `layout.css`, `components.css` (the shared design
-      system: header, footer, buttons, pairs, section tags…), `los.css`
-      (Loss of Signal) and `print.css`.
+      system: header, footer, buttons, pairs, section tags, photographs and
+      plates…), `prose.css` (the long read under `.prose`: listings and the
+      Shiki token colours, plates, callouts, footnotes and margin notes,
+      the notes list, and their print rules), `los.css` (Loss of Signal)
+      and `print.css`.
     - Route- or feature-specific styles go in a CSS Module beside the
       component, or are scoped under the page's `[data-page="…"]`: global
       CSS is not removed on navigation and Cache Components keeps visited
@@ -75,7 +78,7 @@ only live in comments or commit messages.
   writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
   `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
 - **Share images.** Redesigned pages draw the Deep Field card
-  (`lib/og-card.tsx`; `/blog` and `/blog/archive` so far), the others the
+  (`lib/og-card.tsx`; `/blog`, `/blog/archive` and the posts so far), the others the
   older `lib/og-template.tsx` until their PR. Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
@@ -90,6 +93,21 @@ only live in comments or commit messages.
   `prefetch={false}`. A first view stays within 8 page prefetches
   (`tests/e2e/log.spec.ts`); each distinct URL also fetches its small route
   tree (`/_tree`), which the byte report lists apart.
+- **The long read** (G1). `lib/prose.ts` `indexProse(body)` numbers a
+  Portable Text body once: listings (LISTING n, wide past 72 columns),
+  plates and figures (Pl. I for photographs, Fig. 1 for diagrams, plots
+  and screenshots; a post's cover is the lead plate) and footnotes (in
+  reading order, written onto a copy of the body's markDefs). The post
+  page, the project essay, the "In this entry" record
+  (`lib/entry-counts.ts`) and the RSS feed (`lib/feed.ts`) all read it, so
+  they agree; render `index.body`, not `post.body`. The renderers are
+  `components/blogs/portable-text-components.tsx` and
+  `components/prose/`; a new `contentBody` type lands with its web and
+  feed renderer in the same change. `components/blogs/post-reader.tsx`
+  marks the current section and resolves in-page links (`#fn-1`, the
+  contents) inside the visible entry, because a hidden, still-mounted
+  entry can hold the same ids. Reading pages (lib/navigation.ts
+  `headerMode`) get `html[data-header="solid"]` from RouteMarker.
 - **LOG numbers** are derived, never stored: `logNumbers` in
   `lib/designations.ts` numbers published posts by `publishedAt`, oldest
   first (LOG 001), ties by document id. Number the whole list, then filter
@@ -194,8 +212,9 @@ only live in comments or commit messages.
   line breaks) changes the cache key and silently orphans the old cache
   entry. Harmless (the old entry just goes cold), but worth knowing when a
   cache "isn't updating" after a query edit.
-- `lib/highlight-code.ts` has a `HIGHLIGHT_MARKUP_VERSION` constant that
-  participates in its cache key. Bump it whenever the emitted markup's CSS
+- `lib/highlight-code.ts` has a `HIGHLIGHT_MARKUP_VERSION` constant (3: one
+  css-variables Shiki theme whose `--code-*` colours styles/prose.css maps
+  to the design tokens) that participates in its cache key. Bump it whenever the emitted markup's CSS
   contract changes (themes, classes, structure) — the data cache persists
   across deploys, so a code-only change does not itself invalidate
   previously cached highlighted HTML.
@@ -292,8 +311,10 @@ deployment require an authenticated Sanity CLI session.
   `lib/profile-fields.ts` (availability, link kinds, employment types, date
   precision…), `lib/project-fields.ts` (project statuses and types, image
   kinds, model kinds, mission numbers, the anchor and revision rules),
-  `lib/viewer/registry.ts` (the 3D models built in code and the parts a
-  callout can point at; never import three.js there) and `lib/headings.ts`
+  `lib/post-fields.ts` (callout tones, image widths, changelog kinds, the
+  footnote and note limits), `lib/viewer/registry.ts` (the 3D models built
+  in code and the parts a callout can point at; never import three.js
+  there) and `lib/headings.ts`
   (heading ids, shared by the pages and the Studio's anchor check). Sanity
   checks a value against `options.list` only when the field declares a
   validation rule, so an optional list field uses
@@ -368,7 +389,15 @@ deployment require an authenticated Sanity CLI session.
   numbers that count up from the oldest entry and hold on the archive and
   tag pages, tag chips and their counts, 404 for an unknown or malformed
   tag, the archive's search and its no-JavaScript list, the chart's marks,
-  and the prefetch budget on `/blog`),
+  and the prefetch budget on `/blog`), `post` (every entry's first
+  paragraph in the first viewport at 1280×800 and 390×844 in both themes,
+  a 60–75 character measure, code comments at 4.5:1 or more, the "In this
+  entry" counts against the text, Copy on a listing, the phone's record
+  box, the solid header, print, BlogPosting and BreadcrumbList; on the
+  fixture build also the wide listing and highlighted line, footnotes and
+  margin notes, the caution callout and revisions, their RSS output, and
+  in-page links landing in the visible entry after a client-side
+  navigation),
   `budgets` (the brotli byte report, printed,
   not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio

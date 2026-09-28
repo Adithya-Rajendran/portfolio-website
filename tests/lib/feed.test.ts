@@ -318,3 +318,227 @@ describe("renderFeedXml — content:encoded", () => {
         expect(xml).toContain("A readable fallback.");
     });
 });
+
+/** Decodes the item HTML out of content:encoded (XML-escaped once). */
+function itemHtml(xml: string): string {
+    const match = /<content:encoded>([\s\S]*?)<\/content:encoded>/.exec(xml);
+    return (match?.[1] ?? "")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, "&");
+}
+
+function footnotedParagraph(
+    key: string,
+    parts: (string | [text: string, note: string])[],
+): Body[number] {
+    const markDefs: { _key: string; _type: string; text: string }[] = [];
+    const children = parts.map((part, index) => {
+        if (typeof part === "string") {
+            return {
+                _type: "span",
+                _key: `${key}s${index}`,
+                text: part,
+                marks: [],
+            };
+        }
+        const mark = {
+            _key: `${key}n${index}`,
+            _type: "footnote",
+            text: part[1],
+        };
+        markDefs.push(mark);
+        return {
+            _type: "span",
+            _key: `${key}s${index}`,
+            text: part[0],
+            marks: [mark._key],
+        };
+    });
+    return {
+        _type: "block",
+        _key: key,
+        style: "normal",
+        markDefs,
+        children,
+    } as unknown as Body[number];
+}
+
+describe("renderFeedXml — the long-read types (PR 10)", () => {
+    it("numbers footnotes in reading order and lists them as Notes with back-links", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        footnotedParagraph("p1", [
+                            "A claim",
+                            [
+                                " with a source",
+                                "The first note & its <source>.",
+                            ],
+                            ".",
+                        ]),
+                        footnotedParagraph("p2", [
+                            ["Another", "The second note."],
+                        ]),
+                    ] as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            'A claim with a source<sup><a href="#fn-1" id="fnref-1">1</a></sup>.',
+        );
+        expect(html).toContain(
+            'Another<sup><a href="#fn-2" id="fnref-2">2</a></sup>',
+        );
+        expect(html).toContain(
+            '<section><h2>Notes</h2><ol><li id="fn-1">The first note &amp; its &lt;source&gt;. <a href="#fnref-1">↩</a></li><li id="fn-2">The second note. <a href="#fnref-2">↩</a></li></ol></section>',
+        );
+    });
+
+    it("prints a footnote without a note as its text alone", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        footnotedParagraph("p1", [["Plain words", "  "]]),
+                    ] as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain("<p>Plain words</p>");
+        expect(html).not.toContain("<sup>");
+        expect(html).not.toContain("Notes");
+    });
+
+    it("labels a caution callout with its tone and title", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "callout",
+                            _key: "c1",
+                            tone: "caution",
+                            title: "Back up first",
+                            body: [paragraph("This wipes the disk.", "cb")],
+                        },
+                        {
+                            _type: "callout",
+                            _key: "c2",
+                            tone: "note",
+                            body: [paragraph("A plain note.", "nb")],
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<aside><p><strong>Caution: Back up first</strong></p><p>This wipes the disk.</p></aside>",
+        );
+        expect(html).toContain(
+            "<aside><p><strong>Note</strong></p><p>A plain note.</p></aside>",
+        );
+    });
+
+    it("numbers listings and names their language and file", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "code",
+                            _key: "k1",
+                            language: "bash",
+                            filename: "install.sh",
+                            code: "echo one",
+                        },
+                        {
+                            _type: "code",
+                            _key: "k2",
+                            code: "plain text",
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            '<figure><figcaption>Listing 1 · Bash · <code>install.sh</code></figcaption><pre><code class="language-bash">echo one</code></pre></figure>',
+        );
+        expect(html).toContain(
+            "<figure><figcaption>Listing 2 · Text</figcaption><pre><code>plain text</code></pre></figure>",
+        );
+    });
+
+    it("numbers plates and figures and prints the credit", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "image",
+                            _key: "i1",
+                            asset: {
+                                _type: "reference",
+                                _ref: "image-abc123def456-1000x500-png",
+                            },
+                            alt: "A photograph",
+                            caption: "The rack",
+                            credit: "Photo: the author",
+                        },
+                        {
+                            _type: "image",
+                            _key: "i2",
+                            kind: "diagram",
+                            asset: {
+                                _type: "reference",
+                                _ref: "image-abc123def456-1000x500-png",
+                            },
+                            alt: "A diagram",
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<figcaption><strong>Pl. I</strong> The rack <small>Photo: the author</small></figcaption>",
+        );
+        expect(html).toContain(
+            "<figcaption><strong>Fig. 1</strong></figcaption>",
+        );
+    });
+
+    it("lists the post's revisions, oldest first", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    changelog: [
+                        {
+                            _key: "r2",
+                            date: "2026-03-01",
+                            kind: "update",
+                            note: "Added a section.",
+                        },
+                        {
+                            _key: "r1",
+                            date: "2026-02-01",
+                            kind: "correction",
+                            note: "Fixed a <wrong> path.",
+                        },
+                    ],
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<section><h2>Revisions</h2><ul><li><strong>2026-02-01 · Correction.</strong> Fixed a &lt;wrong&gt; path.</li><li><strong>2026-03-01 · Update.</strong> Added a section.</li></ul></section>",
+        );
+    });
+
+    it("adds no Notes or Revisions to a post without them", () => {
+        const html = itemHtml(renderFeedXml([postOf({})]));
+        expect(html).not.toContain("Notes");
+        expect(html).not.toContain("Revisions");
+    });
+});

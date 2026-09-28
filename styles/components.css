@@ -209,6 +209,13 @@
         background: var(--bg);
         border-bottom: var(--rule-hair) solid var(--rule-1);
     }
+    /* Reading pages (a post, a mission file, the CV, Comms): a firmer rule
+       under the header, set from the route by RouteMarker
+       (lib/navigation.ts headerMode). Without JavaScript the header keeps
+       its hairline; it is opaque either way. */
+    html[data-header="solid"] .site-header {
+        border-bottom-color: var(--rule-2);
+    }
     .site-header__inner {
         height: 100%;
         display: flex;
@@ -1291,5 +1298,171 @@
     }
     [data-theme="manual"] .titleblock__cell {
         border-color: var(--rule-2);
+    }
+
+    /* ===== Photographs and plates (site.css 4.26, 4.27) ================= */
+    /* The owner's photographs behave the same way in both themes: in Void
+       an object in the dark (the frame dissolves into the void, warm light
+       on hover), in Flight Manual a catalogue plate mounted on card with
+       crop marks and the plate number in its strip. Diagrams, plots and
+       screenshots (`photo--drawing`) keep hard edges and no grade.
+       <figure class="photo" style="--photo-ratio: 3 / 4">
+         <div class="photo__frame"><img class="photo__img" …>
+           <span class="photo__plate" aria-hidden="true">Pl. I · LOG 003</span></div>
+         <figcaption class="caption caption--plate">…</figcaption></figure> */
+    .photo {
+        position: relative;
+        min-width: 0;
+        margin: 0;
+    }
+    .photo__frame {
+        position: relative;
+        isolation: isolate;
+        padding: var(--photo-mount) var(--photo-mount) var(--photo-mount-b);
+    }
+    .photo__img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: var(--photo-ratio, auto);
+        object-fit: cover;
+        object-position: var(--photo-focus, 50% 50%);
+        background: var(--surface-1);
+        filter: var(--photo-treatment);
+    }
+    .photo--real .photo__img {
+        filter: var(--photo-treatment-real);
+    }
+    /* Light falloff: the edges fade into the void (mask alpha, not a
+       colour). The hover light shares it, so it never shows a hard edge. */
+    .photo:not(.photo--drawing) .photo__img,
+    .photo:not(.photo--drawing) .photo__frame::before {
+        -webkit-mask-image:
+            linear-gradient(
+                to right,
+                transparent,
+                #000 var(--photo-feather),
+                #000 calc(100% - var(--photo-feather)),
+                transparent
+            ),
+            linear-gradient(
+                to bottom,
+                transparent,
+                #000 var(--photo-feather),
+                #000 calc(100% - var(--photo-feather)),
+                transparent
+            );
+        -webkit-mask-composite: source-in;
+        mask-image:
+            linear-gradient(
+                to right,
+                transparent,
+                #000 var(--photo-feather),
+                #000 calc(100% - var(--photo-feather)),
+                transparent
+            ),
+            linear-gradient(
+                to bottom,
+                transparent,
+                #000 var(--photo-feather),
+                #000 calc(100% - var(--photo-feather)),
+                transparent
+            );
+        mask-composite: intersect;
+    }
+    .photo:not(.photo--drawing) .photo__frame::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: radial-gradient(
+            ellipse 60% 70% at 90% 8%,
+            var(--beam-warm),
+            transparent 70%
+        );
+        mix-blend-mode: screen;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--dur-5) var(--ease-dock);
+    }
+    .photo:hover .photo__frame::before {
+        opacity: 1;
+    }
+    .photo--drawing .photo__img {
+        border: var(--rule-hair) solid var(--rule-1);
+        filter: none;
+    }
+    /* The plate number: a tiny label on the photograph (decorative; the
+       caption carries it for everyone). Photographs stay dark in both
+       themes, so it is set in the photo inks. */
+    .photo__plate {
+        position: absolute;
+        z-index: 2;
+        top: calc(var(--photo-mount) + var(--s-4));
+        left: calc(var(--photo-mount) + var(--s-4));
+        max-width: calc(100% - 2 * var(--photo-mount) - 2 * var(--s-4));
+        color: var(--photo-ink-2);
+        font: 400 var(--label-size) / 1.2 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        pointer-events: none;
+    }
+    .photo--drawing .photo__plate {
+        display: none;
+    }
+
+    /* Flight Manual: the exhibition-catalogue plate. */
+    [data-theme="manual"] .photo__frame {
+        background: var(--surface-1);
+        border: var(--rule-hair) solid var(--rule-1);
+    }
+    [data-theme="manual"] .photo__img {
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+    [data-theme="manual"] .photo__frame::before {
+        display: none;
+    }
+    [data-theme="manual"] .photo__plate {
+        top: auto;
+        bottom: 0;
+        left: var(--photo-mount);
+        right: var(--photo-mount);
+        height: var(--photo-mount-b);
+        display: flex;
+        align-items: center;
+        color: var(--ink-2);
+    }
+    [data-theme="manual"] .photo--drawing .photo__plate {
+        display: flex;
+    }
+    /* Crop marks outside the four corners. */
+    [data-theme="manual"] .photo__frame::after {
+        content: "";
+        position: absolute;
+        inset: -13px;
+        z-index: 2;
+        pointer-events: none;
+        background:
+            linear-gradient(var(--ink-2), var(--ink-2)) left 0 top 12px / 8px
+                1px,
+            linear-gradient(var(--ink-2), var(--ink-2)) left 12px top 0 / 1px
+                8px,
+            linear-gradient(var(--ink-2), var(--ink-2)) right 0 top 12px / 8px
+                1px,
+            linear-gradient(var(--ink-2), var(--ink-2)) right 12px top 0 / 1px
+                8px,
+            linear-gradient(var(--ink-2), var(--ink-2)) left 0 bottom 12px / 8px
+                1px,
+            linear-gradient(var(--ink-2), var(--ink-2)) left 12px bottom 0 / 1px
+                8px,
+            linear-gradient(var(--ink-2), var(--ink-2)) right 0 bottom 12px /
+                8px 1px,
+            linear-gradient(var(--ink-2), var(--ink-2)) right 12px bottom 0 /
+                1px 8px;
+        background-repeat: no-repeat;
+    }
+    [data-theme="manual"] .photo--drawing .photo__img {
+        border: 0;
     }
 }

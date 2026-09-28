@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LINK_MARK_TYPES, resolveLinkMark } from "@/lib/content-links";
+import { indexProse } from "@/lib/prose";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
 
 describe("resolveLinkMark", () => {
@@ -71,7 +72,11 @@ describe("resolveLinkMark", () => {
 
 describe("web Portable Text renderer", () => {
     it("renders every link annotation type with the shared link mark", () => {
-        const { marks } = createPortableTextComponents({}, {});
+        const { marks } = createPortableTextComponents({
+            index: indexProse([]),
+            highlightedCode: {},
+            headingIds: {},
+        });
         const renderers = LINK_MARK_TYPES.map(
             (type) => (marks as Record<string, unknown> | undefined)?.[type],
         );

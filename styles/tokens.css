@@ -174,6 +174,15 @@
         --star-rgb: 236 232 223;
         --plate-bg: transparent;
         --plate-border: transparent;
+        --beam-warm: color-mix(in oklab, var(--accent) 10%, transparent);
+        /* Photographs (styles/components.css `.photo`): the frame dissolves
+           into the void, and the owner's photos are graded down into it
+           (exposure and saturation only, never content). */
+        --photo-treatment: saturate(0.92) contrast(1.04);
+        --photo-treatment-real: brightness(0.8) saturate(0.78) contrast(1.08);
+        --photo-feather: clamp(1.5rem, 7%, 4.5rem);
+        --photo-mount: 0px;
+        --photo-mount-b: 0px;
     }
 
     /* ---- FLIGHT MANUAL (light): expedition photo-book on warm paper -- */
@@ -202,6 +211,14 @@
         --star-rgb: 23 21 15;
         --plate-bg: var(--surface-1);
         --plate-border: var(--rule-1);
+        --beam-warm: color-mix(in oklab, var(--accent) 16%, transparent);
+        /* Photographs become catalogue plates: mounted on card, hard edges,
+           crop marks, the plate number in the bottom strip. */
+        --photo-treatment: saturate(0.86) sepia(0.06) contrast(1.02);
+        --photo-treatment-real: saturate(0.82) sepia(0.05) contrast(1.02);
+        --photo-feather: 0px;
+        --photo-mount: 10px;
+        --photo-mount-b: 34px;
     }
 
     @media (prefers-contrast: more) {

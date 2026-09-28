@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     contactHref,
     cvLink,
+    headerMode,
     navCurrent,
     pairName,
     primaryNavigation,
@@ -51,5 +52,30 @@ describe("site navigation", () => {
         expect(navCurrent("/portfolio", comms)).toBeUndefined();
         expect(navCurrent("/contact", comms)).toBe("page");
         expect(navCurrent(undefined, log)).toBeUndefined();
+    });
+});
+
+describe("headerMode", () => {
+    it("is solid on reading pages only", () => {
+        for (const path of [
+            "/blog/my-homelab",
+            "/blog/my-homelab/",
+            "/portfolio/homelab",
+            "/resume",
+            "/contact",
+        ]) {
+            expect(headerMode(path), path).toBe("solid");
+        }
+        for (const path of [
+            "/",
+            "/blog",
+            "/blog/archive",
+            "/blog/tags/homelab",
+            "/portfolio",
+            "/about",
+            null,
+        ]) {
+            expect(headerMode(path), String(path)).toBeUndefined();
+        }
     });
 });
