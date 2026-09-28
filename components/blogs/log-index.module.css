@@ -105,10 +105,12 @@
 .tags {
     margin-top: var(--s-1);
 }
+/* The tag the page is filtered by: ink, with an accent underline. */
 .match {
-    color: var(--accent-text);
+    color: var(--ink-1);
     text-decoration: underline;
     text-decoration-color: var(--accent);
+    text-underline-offset: 0.25em;
 }
 .match::before {
     color: inherit;

@@ -22,7 +22,7 @@ function matches(entry: LogEntry, words: string[]): boolean {
  * The archive's search over every Flight Log entry, grouped by year in the
  * log index. The server renders the whole list; the search field needs
  * JavaScript, so it is shown only with it (`.js-only`). The count is a
- * polite live region.
+ * polite live region, filled only while a search narrows the list.
  */
 export default function ArchiveList({
     entries,
@@ -62,7 +62,7 @@ export default function ArchiveList({
             </div>
             {children}
             <p className={styles.count} role="status">
-                {words.length ? copy.count(shown.length, total) : total}
+                {words.length ? copy.count(shown.length, total) : null}
             </p>
             {shown.length ? (
                 <LogIndex entries={shown} level={2} />

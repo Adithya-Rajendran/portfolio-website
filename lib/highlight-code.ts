@@ -23,8 +23,8 @@ let highlighterPromise: Promise<Highlighter> | null = null;
 /**
  * One theme for both site themes: every token colour is a CSS variable
  * (`var(--code-token-comment)` …) that styles/prose.css maps to the design
- * tokens per theme, so listings are monochrome with one accent (keywords)
- * and follow Void, Flight Manual and print without a second pass. The
+ * tokens per theme, so listings are monochrome (keywords by weight, not
+ * colour) and follow Void, Flight Manual and print without a second pass. The
  * comment colour is ink-3, at least 5.2:1 on the listing in both themes
  * (the GitHub theme's own comment colour was 3.87:1 in Void).
  */

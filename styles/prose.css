@@ -100,7 +100,7 @@
     .prose blockquote {
         margin-block: var(--s-6);
         padding: var(--s-1) 0 var(--s-1) var(--s-5);
-        border-left: var(--rule-strong) solid var(--accent);
+        border-left: var(--rule-strong) solid var(--rule-2);
         color: var(--ink-2);
         font: 400 var(--step-0) / 1.6 var(--font-long);
     }
@@ -110,21 +110,23 @@
 
     /* ---- Listings (components/prose/listing.tsx) --------------------- */
     /* The one Shiki theme (lib/highlight-code.ts) colours tokens with
-       these variables: monochrome with one accent, from the tokens, so
-       every theme and print follow. Comments are ink-3: 5.7:1 (Void) and
-       5.8:1 (Flight Manual) on the listing, 5.2:1 on a highlighted line. */
+       these variables: monochrome, from the tokens, so every theme and
+       print follow (contract §3: text, strokes and labels are never
+       orange). Keywords are ink-1 at weight 500, strings ink-2, links
+       ink-2 underlined. Comments are ink-3: 5.7:1 (Void) and 5.8:1
+       (Flight Manual) on the listing, 5.2:1 on a highlighted line. */
     .listing {
         --code-foreground: var(--ink-1);
         --code-background: transparent;
         --code-token-comment: var(--ink-3);
-        --code-token-keyword: var(--accent-text);
+        --code-token-keyword: var(--ink-1);
         --code-token-string: var(--ink-2);
         --code-token-string-expression: var(--ink-2);
         --code-token-constant: var(--ink-1);
         --code-token-function: var(--ink-1);
         --code-token-parameter: var(--ink-2);
         --code-token-punctuation: var(--ink-3);
-        --code-token-link: var(--accent-text);
+        --code-token-link: var(--ink-2);
         --code-token-inserted: var(--ink-1);
         --code-token-deleted: var(--ink-2);
         --code-token-changed: var(--ink-1);
@@ -152,7 +154,7 @@
         text-transform: uppercase;
     }
     .listing__lang {
-        color: var(--accent-text);
+        color: var(--ink-2);
         font: 400 0.75rem / 1 var(--font-mono);
     }
     .listing__file {
@@ -186,7 +188,7 @@
     /* The scroll box is the focusable, labelled region. */
     .listing__code {
         overflow-x: auto;
-        border-left: var(--rule-strong) solid var(--accent);
+        border-left: var(--rule-strong) solid var(--rule-2);
         scrollbar-width: thin;
         scrollbar-color: var(--rule-2) transparent;
     }
@@ -215,6 +217,15 @@
     }
     .listing__code span[style*="--code-token-comment"] {
         font-style: italic;
+    }
+    .listing__code span[style*="--code-token-keyword"] {
+        font-weight: 500;
+    }
+    .listing__code span[style*="--code-token-link"] {
+        text-decoration: underline;
+        text-decoration-color: var(--rule-2);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.2em;
     }
     /* Highlighted lines (the Studio's `highlightedLines`): a wash and a
        mark in the gutter, so the line is not told apart by colour alone. */

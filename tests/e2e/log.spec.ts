@@ -142,10 +142,9 @@ test("an unknown or malformed tag answers 404", async ({ request }) => {
 test("the archive searches titles, standfirsts and tags", async ({ page }) => {
     await page.goto("/blog/archive");
     const all = await rows(page);
+    // The count speaks only while a search narrows the list.
     const status = page.getByRole("main").getByRole("status");
-    await expect(status).toHaveText(
-        `${all.length} ${all.length === 1 ? "entry" : "entries"}`,
-    );
+    await expect(status).toHaveText("");
     const search = page.getByRole("searchbox", {
         name: logCopy.archive.searchLabel,
     });

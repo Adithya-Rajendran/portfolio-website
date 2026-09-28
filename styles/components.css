@@ -1695,14 +1695,21 @@
     }
     /* The plate number: a tiny label on the photograph (decorative; the
        caption carries it for everyone). Photographs stay dark in both
-       themes, so it is set in the photo inks. */
+       themes, so it is set in the photo inks, over a soft shadow of the
+       photo's black that keeps it legible on bright hardware. */
     .photo__plate {
         position: absolute;
         z-index: 2;
-        top: calc(var(--photo-mount) + var(--s-4));
-        left: calc(var(--photo-mount) + var(--s-4));
+        top: calc(var(--photo-mount) + var(--s-4) - var(--s-2));
+        left: calc(var(--photo-mount) + var(--s-4) - var(--s-3));
         max-width: calc(100% - 2 * var(--photo-mount) - 2 * var(--s-4));
-        color: var(--photo-ink-2);
+        padding: var(--s-2) var(--s-3);
+        background: radial-gradient(
+            farthest-side,
+            color-mix(in srgb, var(--photo-black) 78%, transparent) 55%,
+            transparent
+        );
+        color: var(--photo-ink);
         font: 400 var(--label-size) / 1.2 var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -1732,6 +1739,8 @@
         height: var(--photo-mount-b);
         display: flex;
         align-items: center;
+        padding: 0;
+        background: none;
         color: var(--ink-2);
     }
     [data-theme="manual"] .photo--drawing .photo__plate {
