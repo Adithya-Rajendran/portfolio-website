@@ -186,7 +186,7 @@
            (exposure and saturation only, never content). */
         --photo-treatment: saturate(0.92) contrast(1.04);
         --photo-treatment-real: brightness(0.8) saturate(0.78) contrast(1.08);
-        --photo-feather: clamp(1.5rem, 7%, 4.5rem);
+        --photo-feather: clamp(0.75rem, 3%, 2rem);
         --photo-mount: 0px;
         --photo-mount-b: 0px;
     }

@@ -4,7 +4,7 @@ import { Icon } from "@/components/ui/icon";
 
 /**
  * Small marks of the design system: the arrow link, status, revision mark,
- * gap chip, tags and chips (the mockup's site.css 4.4–4.5, 4.27).
+ * tags and chips (the mockup's site.css 4.4–4.5, 4.27).
  * Directive-free, so server and client components can both render them.
  */
 
@@ -70,11 +70,6 @@ export function Rev({
             {label} <time dateTime={date}>{date}</time>
         </span>
     );
-}
-
-/** A dashed gap chip for data that does not exist yet ("Start TBD"). */
-export function Tbd({ children = "TBD" }: { children?: React.ReactNode }) {
-    return <span className="tbd">{children}</span>;
 }
 
 /** Topic tags as links: "#homelab". */

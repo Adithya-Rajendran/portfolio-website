@@ -1,0 +1,48 @@
+/*
+ * Missions · Projects (/portfolio, § 02): the head band, then full-width
+ * section tags over the flagship, the tiles, the register and the
+ * directory. The missions' own parts are styled in
+ * components/portfolio/missions.module.css; the head, the stats, the
+ * table and the link rows are shared (styles/components.css).
+ */
+.page {
+    padding-bottom: var(--space-section);
+}
+
+.headMeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-4) var(--s-7);
+    margin-top: var(--s-5);
+}
+.tally {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-2) var(--s-5);
+    margin: 0;
+}
+
+.first {
+    padding-top: var(--space-block);
+}
+.tag {
+    margin-bottom: var(--s-7);
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-8) var(--gutter);
+}
+@media (min-width: 37.5rem) {
+    .tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (min-width: 60rem) {
+    .tiles {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

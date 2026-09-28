@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Ornament } from "@/components/ui/icon";
+import CrumbRow from "@/components/ui/crumb-row";
 import { Rev } from "@/components/ui/marks";
-import Pair from "@/components/ui/pair";
 import { siteConfig } from "@/lib/config";
 import { postCopy as copy } from "@/lib/copy";
 import { formatEntryDate } from "@/lib/log-index";
@@ -26,25 +25,24 @@ export function PostCrumb({
 }) {
     const address = `${new URL(siteConfig.url).host}/blog/${slug}`;
     return (
-        <div className={className} data-print="hide">
-            <p className={`section-tag ${styles.crumb}`}>
-                <Ornament name="wave" />
-                <span className="section-tag__num" aria-hidden="true">
-                    <span className="sect">§</span>
-                    {copy.num}
-                </span>
-                <Link className={styles.crumbHome} href={siteRoutes.blog}>
-                    <Pair themed={copy.themed} plain={copy.plain} />
-                </Link>
-                <span className={`section-tag__meta ${styles.crumbMeta}`}>
+        <CrumbRow
+            className={className}
+            ornament="wave"
+            num={copy.num}
+            themed={copy.themed}
+            plain={copy.plain}
+            href={siteRoutes.blog}
+            metaClassName={styles.crumbMeta}
+            meta={
+                <>
                     {designation ? (
                         <span className={styles.crumbLog}>{designation}</span>
                     ) : null}
                     {designation ? " · " : ""}
                     {address}
-                </span>
-            </p>
-        </div>
+                </>
+            }
+        />
     );
 }
 

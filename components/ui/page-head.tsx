@@ -8,6 +8,8 @@ import type { OrnamentName } from "@/components/ui/icon";
  * serif intro. The plain name is read after a colon: "Flight Log: Blog".
  * A page with its own title ("Let’s talk.") names both under it, "Comms ·
  * Contact", read after the title's own full stop when it has one.
+ * `split` sets the title on the left half and the intro and actions on
+ * the right from 960px (`.page-head--split`).
  */
 export default function PageHead({
     ornament,
@@ -19,6 +21,7 @@ export default function PageHead({
     titleId,
     meta,
     intro,
+    split = false,
     className,
     children,
 }: {
@@ -32,13 +35,18 @@ export default function PageHead({
     titleId?: string;
     meta?: React.ReactNode;
     intro?: React.ReactNode;
+    split?: boolean;
     className?: string;
     children?: React.ReactNode;
 }) {
     const sub = title === themed ? plain : `${themed} · ${plain}`;
     const separator = /[.!?…]$/.test(title) ? " " : ": ";
     return (
-        <header className={className ? `page-head ${className}` : "page-head"}>
+        <header
+            className={["page-head", split && "page-head--split", className]
+                .filter(Boolean)
+                .join(" ")}
+        >
             <SectionTag
                 as="p"
                 ornament={ornament}

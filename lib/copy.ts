@@ -165,8 +165,6 @@ export const contactCopy = {
         linkedIn: "Message me on LinkedIn",
         profiles: "Write to me through one of the profiles below instead.",
     },
-    /** The /portfolio#contact section's pointer to the routes. */
-    portfolioRoutes: "Or pick a route:",
 } as const;
 
 /**
@@ -363,6 +361,117 @@ export const cvCopy = {
     document: "AR-CV-001",
     documentTitle: "Curriculum vitae",
     sheet: (sheet: number, of: number) => `Sheet ${sheet} of ${of}`,
+} as const;
+
+/**
+ * Missions · Projects (G5, G6): the /portfolio index and the mission files.
+ * UI copy only: names, titles, summaries, parameters, briefs, results and
+ * lessons are the owner's.
+ */
+export const missionsCopy = {
+    num: "02",
+    themed: "Missions",
+    plain: "Projects",
+    /** "Selected projects in infrastructure and software." */
+    dek: (types: string) =>
+        types ? `Selected projects in ${types}.` : "Selected projects.",
+    tallyLabel: "Projects by status",
+    experience: "Experience & CV",
+    flagshipThemed: "Flagship",
+    flagshipPlain: "Featured project",
+    moreThemed: "Also flown",
+    morePlain: "More projects",
+    registerThemed: "Register",
+    registerPlain: "All projects",
+    /** The register's caption. */
+    table: "Table 1",
+    registerCaption: "Every project by code, status and dates.",
+    columns: {
+        code: "Code",
+        mission: "Mission",
+        type: "Type",
+        status: "Status",
+        dates: "Dates",
+        links: "Links",
+    },
+    file: "File",
+    directoryThemed: "Directory",
+    directoryPlain: "Related pages",
+    directory: {
+        experience: {
+            themed: "Trajectory",
+            plain: "Experience",
+            blurb: "Roles and education, on the orbit map and as a CV.",
+        },
+        skills: {
+            themed: "Trajectory",
+            plain: "Skills",
+            blurb: "Skills by area.",
+        },
+        certifications: {
+            themed: "Trajectory",
+            plain: "Certifications",
+            blurb: "Certifications and their status.",
+        },
+        writing: {
+            themed: "Flight Log",
+            plain: "Blog",
+            blurb: "Articles and technical notes.",
+        },
+        contact: {
+            themed: "Comms",
+            plain: "Contact",
+            blurb: "Send a message about a project or a role.",
+        },
+    },
+    openFile: "Open the mission file",
+    readWriteUp: "Read the write-up",
+    stack: "Stack",
+    /** The mission file. */
+    fileThemed: "Mission file",
+    filePlain: "Project",
+    originalEntry: (designation: string) => `Original entry · ${designation}`,
+    parameters: "Parameters",
+    record: {
+        mission: "Mission",
+        status: "Status",
+        type: "Type",
+        dates: "Dates",
+        role: "Role",
+        stack: "Stack",
+        revision: "Revision",
+    },
+    calloutsThemed: "Callouts",
+    calloutsPlain: "Parts of the build",
+    briefThemed: "Brief",
+    briefPlain: "Problem, approach and outcome",
+    brief: {
+        problem: "Problem",
+        approach: "Approach",
+        outcome: "Outcome",
+    },
+    writeUpThemed: "Write-up",
+    writeUpPlain: "Case study",
+    contents: "Contents",
+    contentsLabel: "On this page",
+    resultsThemed: "Results",
+    resultsPlain: "Outcomes",
+    resultsCaption: (name: string) => `${name} results`,
+    resultColumns: { metric: "Metric", value: "Value", note: "Note" },
+    debriefThemed: "Debrief",
+    debriefPlain: "Lessons and next steps",
+    lessons: "Lessons",
+    nextSteps: "Next steps",
+    linksThemed: "Links",
+    linksPlain: "Code and references",
+    relatedThemed: "Flight Log",
+    relatedPlain: "Related entries",
+    question: "Questions about this project?",
+    getInTouch: "Get in touch",
+    pagerLabel: "More mission files",
+    previousFile: "Previous file",
+    nextFile: "Next file",
+    all: "All missions",
 } as const;
 
 /** The orbit map's labels, key and record panel (G2). */

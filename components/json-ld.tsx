@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { siteConfig } from "@/lib/config";
 import { getProfileDescription } from "@/lib/profile-content";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import type { Mission } from "@/lib/missions";
 import { getProfile, type ProfileData } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 import {
@@ -9,6 +10,7 @@ import {
     buildBlogPosting,
     buildBreadcrumbList,
     buildContactPage,
+    buildMission,
     buildPersonEntity,
     buildProfilePage,
     type BlogPostingInput,
@@ -150,6 +152,17 @@ export function ContactPageJsonLd({
             type="application/ld+json"
             dangerouslySetInnerHTML={{
                 __html: safeJsonLd(buildContactPage(profile)),
+            }}
+        />
+    );
+}
+
+export function MissionJsonLd({ mission }: { mission: Mission }) {
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+                __html: safeJsonLd(buildMission(mission)),
             }}
         />
     );

@@ -30,8 +30,8 @@ export default function TitleBlock({
     className,
 }: {
     cells: readonly TitleBlockCell[];
-    /** The words in a blank cell. */
-    blankLabel: string;
+    /** The words in a blank cell (the contract retires blank cells). */
+    blankLabel?: string;
     className?: string;
 }) {
     return (

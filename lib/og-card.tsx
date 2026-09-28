@@ -156,7 +156,8 @@ function Strip({ chart }: { chart: TransmissionsChart }) {
 /**
  * A page's card: the kicker (the § number and the themed / plain pair),
  * the title with its plain name, one line from the page, and a footer of
- * data. `chart` adds the transmissions strip (the Flight Log).
+ * data. `chart` adds the transmissions strip (the Flight Log); `upper`
+ * sets the title in capitals (a mission's name, the vehicle treatment).
  */
 export function OgCard({
     num,
@@ -167,6 +168,7 @@ export function OgCard({
     footerLeft,
     footerRight,
     chart,
+    upper = false,
 }: {
     num: string;
     themed: string;
@@ -176,6 +178,7 @@ export function OgCard({
     footerLeft?: string;
     footerRight: string;
     chart?: TransmissionsChart | null;
+    upper?: boolean;
 }): ReactElement {
     return (
         <div
@@ -266,7 +269,8 @@ export function OgCard({
                         fontSize: title.length > 24 ? 84 : 124,
                         fontWeight: 300,
                         lineHeight: 1,
-                        letterSpacing: "-0.02em",
+                        letterSpacing: upper ? "0.04em" : "-0.02em",
+                        textTransform: upper ? "uppercase" : "none",
                     }}
                 >
                     {title}

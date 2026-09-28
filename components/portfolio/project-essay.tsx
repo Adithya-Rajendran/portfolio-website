@@ -14,9 +14,9 @@ function isCodeBlock(value: unknown): value is CodeBlock {
 }
 
 /**
- * A project's essay, drawn by the same long-read renderers as a post
- * (numbered listings, plates, callouts, footnotes with their notes). The
- * mission page around it is redesigned in PR 12.
+ * A mission's write-up, drawn by the same long-read renderers as a post
+ * (numbered listings, plates, callouts, footnotes with their notes). Its
+ * headings carry the ids a model callout can link to.
  */
 export default async function ProjectEssay({
     project,
@@ -32,7 +32,7 @@ export default async function ProjectEssay({
     const index = indexProse(project.body);
 
     return (
-        <div className="prose career-project-essay">
+        <div className="prose">
             <PortableText
                 value={index.body as unknown as PortableTextBlock[]}
                 components={createPortableTextComponents({

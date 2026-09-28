@@ -171,17 +171,19 @@ test("the page shows no email address or phone number", async ({ request }) => {
     ).toEqual([]);
 });
 
-test("/portfolio#contact keeps the form and links each route", async ({
+test("/portfolio#contact still answers, with the way to Comms", async ({
     page,
 }) => {
     await page.goto("/portfolio#contact");
-    const section = page.locator("#contact");
+    const row = page.locator("#contact");
+    await expect(row).toBeInViewport();
+    const link = row.getByRole("link", { name: /^Comms\s*,\s*Contact\b/ });
+    await expect(link).toHaveAttribute("href", "/contact");
+    await link.click();
+    await expect(page).toHaveURL(/\/contact$/);
     await expect(
-        section.getByRole("textbox", { name: form.emailLabel }),
+        page.getByRole("textbox", { name: form.emailLabel }),
     ).toBeVisible();
-    await expect(
-        section.getByRole("link", { name: topics.hello.title, exact: true }),
-    ).toHaveAttribute("href", "/contact#hello");
 });
 
 test.describe("without JavaScript", () => {

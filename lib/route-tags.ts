@@ -144,6 +144,14 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         tags: [project, post, profile],
         expand: "project",
     },
+    {
+        // Like a post's card: rendered per request.
+        path: "/portfolio/[slug]/opengraph-image-ysfoa1",
+        file: "app/(site)/portfolio/[slug]/opengraph-image.tsx",
+        tags: [project, post, profile],
+        expand: "project",
+        perRequest: true,
+    },
 
     // The résumé PDF links: redirects to the current file.
     {

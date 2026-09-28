@@ -85,7 +85,8 @@ only live in comments or commit messages.
   writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
   `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
 - **Share images.** Redesigned pages draw the Deep Field card
-  (`lib/og-card.tsx`; `/blog`, `/blog/archive`, the posts and `/resume` so far), the others the
+  (`lib/og-card.tsx`; `/blog`, `/blog/archive`, the posts, `/resume`,
+  `/portfolio` and the mission files so far), the others the
   older `lib/og-template.tsx` until their PR. Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
@@ -131,6 +132,23 @@ only live in comments or commit messages.
   contents) inside the visible entry, because a hidden, still-mounted
   entry can hold the same ids. Reading pages (lib/navigation.ts
   `headerMode`) get `html[data-header="solid"]` from RouteMarker.
+- **Missions** (G5, G6). `lib/missions.ts` is pure and unit-tested: it
+  words each project once (`toMission`) for `/portfolio`, the mission files
+  and (PR 13) the home act. A mission's name, set in capitals on the stage
+  and the file, comes from its slug (`homelab` → Homelab); the order is the
+  featured slots, then the list query's; the register and the files'
+  previous / next go by mission number. A mission's Flight Log entries are
+  derived (`missionEntries`): the posts that reference it, and the posts
+  its links, its essay and its model's callouts point at; the original
+  entry is the first linked one, else the oldest referencing one. Links to
+  the site's own posts are entries, never external links. The 3D viewer's
+  server part (`components/viewer/viewer-figure.tsx`) is the model's
+  poster as a plate, and its callouts are numbered rows linked to their
+  sections; PR 15 mounts the drawing in its `data-viewer` slot. The file
+  reuses `PostReader`, so its in-page links resolve inside the visible
+  file. The old `/portfolio` fragments (`#experience`, `#skills`,
+  `#certifications`, `#engineering-writing`, `#contact`) are link rows
+  (`RouteList`) carrying those ids; `#projects` is the tiles.
 - **LOG numbers** are derived, never stored: `logNumbers` in
   `lib/designations.ts` numbers published posts by `publishedAt`, oldest
   first (LOG 001), ties by document id. Number the whole list, then filter
@@ -171,7 +189,7 @@ only live in comments or commit messages.
   small leaf `<Suspense>` with a static fallback (`ActiveNavLink` in the
   header, one boundary per link because the list as a whole passes the
   threshold); larger URL-dependent UI takes its variant as
-  a prop from the page instead (`PortfolioNav`).
+  a prop from the page instead.
 - `app/(site)/not-found.tsx` renders `notFound()` calls inside pages;
   `app/global-not-found.tsx` (`experimental.globalNotFound`) renders
   unmatched URLs as its own document, repeating the root layout's `<html>`,
@@ -281,7 +299,7 @@ only live in comments or commit messages.
   server action verifies the challenge with `checkBotId()` from
   `botid/server`.
 - **The contact form** (`components/contact/contact-form.tsx`) is on
-  `/contact` and `/portfolio#contact` and dispatches `sendEmailAction`
+  `/contact` (`/portfolio#contact` is a link row to it) and dispatches `sendEmailAction`
   from `onSubmit`, so React never resets its controlled fields. It needs
   JavaScript for BotID, so its wrapper is `.js-only` and a `<noscript>`
   block offers LinkedIn instead. The routes and topics (`hiring`,
@@ -427,7 +445,12 @@ deployment require an authenticated Sanity CLI session.
   "Show on map", the view switch, every orbit labelled on a phone, and
   without JavaScript the labels as links to their rows), `print` (the CV
   on two sheets on A4 and on Letter, without the map, chrome or
-  controls),
+  controls), `missions` (every old `/portfolio` fragment still answers
+  and leads on, the register lists every mission, each mission file has
+  its head, record, pager and no stand-in text, Read the write-up lands
+  on the write-up; on the fixture build a filled mission shows every
+  module with its callouts linked to their sections, and a planned one
+  none of them),
   `budgets` (the brotli byte report, printed,
   not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio

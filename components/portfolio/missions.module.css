@@ -1,0 +1,273 @@
+/*
+ * Missions (G5, G6): the mission line, the flagship stage, the tiles and
+ * the register, shared by /portfolio, the mission files and (from PR 13)
+ * the home Missions act. Ported from the mockup's site.css 4.12 and
+ * missions.css, held to the unified contract: one accent, hairlines, no
+ * boxes; mission names in capitals only on the flagship and the file.
+ */
+
+/* ---- The line: MSN-02 · TYPE · ● Status · dates, never wrapped -------- */
+.lineBox {
+    min-width: 0;
+    container-type: inline-size;
+}
+.line {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--s-4);
+    overflow: hidden;
+    white-space: nowrap;
+}
+.code {
+    flex: none;
+    color: var(--ink-2);
+    font: 400 0.8125rem / 1 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    letter-spacing: 0.02em;
+}
+.type {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink-2);
+    font: 400 var(--label-size) / 1 var(--font-label);
+    letter-spacing: var(--track-label);
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+}
+.dates {
+    flex: none;
+    color: var(--ink-1);
+    font: 400 0.8125rem / 1 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+}
+/* Where the line would wrap, the type goes first. */
+@container (max-width: 30rem) {
+    .type {
+        display: none;
+    }
+}
+
+.stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-1) var(--s-4);
+    margin: 0;
+    padding: 0;
+    color: var(--ink-2);
+    font: 400 0.8125rem / 1.5 var(--font-mono);
+    list-style: none;
+}
+
+/* ---- The flagship: copy 7/12 beside its plate 5/12 -------------------- */
+.stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-7) var(--gutter);
+}
+.stageCopy {
+    min-width: 0;
+    container-type: inline-size;
+}
+/* The name in capitals (the vehicle treatment), sized so its longest word
+   always fits its column (`--chars`, set from the name). */
+.stageName {
+    margin-top: var(--s-5);
+    margin-right: -0.04em;
+    font: 300 min(var(--step-5), calc(100cqi / (var(--chars, 8) * 0.74))) / 0.98
+        var(--font-display);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-wrap: balance;
+}
+.stageName a {
+    text-decoration: none;
+}
+.stageName a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.12em;
+}
+.stageTitle {
+    max-width: 44ch;
+    margin-top: var(--s-4);
+    color: var(--ink-1);
+    font: 400 var(--step-1) / 1.3 var(--font-display);
+    text-wrap: balance;
+}
+.stageSummary {
+    max-width: 52ch;
+    margin-top: var(--s-3);
+    color: var(--ink-2);
+    font: 300 var(--step-1) / 1.5 var(--font-long);
+    text-wrap: pretty;
+}
+.stageMetrics {
+    margin-top: var(--s-6);
+}
+.stageCopy > .stack {
+    margin-top: var(--s-5);
+}
+.stageActions {
+    --cluster: var(--s-3) var(--s-6);
+    margin-top: var(--s-6);
+}
+@media (min-width: 60rem) {
+    .stage {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        align-items: center;
+    }
+    .stageCopy {
+        grid-column: 1 / span 7;
+    }
+    .stagePlate {
+        grid-column: 8 / -1;
+        grid-row: 1;
+    }
+    .stageText .stageCopy {
+        grid-column: 1 / span 10;
+    }
+}
+
+/* ---- Tiles: text first, a hairline on top, the whole tile one link ---- */
+.tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    min-width: 0;
+    padding-top: var(--s-5);
+    border-top: var(--rule-hair) solid var(--rule-2);
+    transition: border-color var(--dur-hover) var(--ease-dock);
+}
+.tile:hover {
+    border-top-color: var(--accent);
+}
+.tilePlate {
+    margin-bottom: var(--s-3);
+}
+.tileName {
+    margin-top: var(--s-2);
+    padding-right: var(--s-6);
+    font: 300 var(--step-3) / 1.08 var(--font-display);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+.tileName a {
+    text-decoration: none;
+}
+.tile:hover .tileName a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.14em;
+}
+.tileTitle {
+    color: var(--ink-1);
+    font: 400 var(--step-0) / 1.4 var(--font-display);
+}
+.tileSummary {
+    max-width: 52ch;
+    color: var(--ink-2);
+    font: 300 var(--step-0) / 1.55 var(--font-long);
+    text-wrap: pretty;
+}
+.tileMetrics {
+    margin-block: var(--s-3) var(--s-2);
+}
+.tileArrow {
+    position: absolute;
+    top: calc(var(--s-5) + 0.1rem);
+    right: 0;
+    color: var(--ink-3);
+    transition:
+        transform var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock);
+}
+.tile:hover .tileArrow {
+    transform: translateX(4px);
+    color: var(--accent-text);
+}
+
+/* ---- Table 1, the register -------------------------------------------- */
+.register {
+    max-width: var(--measure-index);
+}
+.colType,
+.colDates,
+.colStatus {
+    display: none;
+}
+.regStatusSm {
+    display: block;
+    margin-top: var(--s-2);
+}
+@media (min-width: 37.5rem) {
+    .colType,
+    .colDates,
+    .colStatus {
+        display: table-cell;
+    }
+    .regStatusSm {
+        display: none;
+    }
+}
+.regCode {
+    color: var(--ink-2);
+    font-size: 0.8125rem;
+}
+.regMission {
+    min-width: 9rem;
+}
+.regName {
+    font: 400 var(--step-1) / 1.2 var(--font-display);
+    text-decoration: none;
+}
+.regName:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.18em;
+}
+.regTitle {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.4 var(--font-display);
+}
+.regType {
+    color: var(--ink-2);
+    font: 400 var(--label-size) / 1.9 var(--font-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.register :global(.status) {
+    padding-top: 0.35rem;
+}
+.regLinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.regLinks a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--ink-1);
+    text-decoration-color: var(--rule-2);
+    text-underline-offset: 0.2em;
+    white-space: nowrap;
+}
+.regLinks a:hover {
+    color: var(--accent-text);
+    text-decoration-color: var(--accent);
+}
+@media (max-width: 37.49rem) {
+    .regName {
+        font-size: var(--step-0);
+    }
+}

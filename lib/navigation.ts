@@ -12,8 +12,8 @@ export const siteRoutes = {
     portfolio: "/portfolio",
     resume: "/resume",
     about: "/about",
-    /** Comms: the contact routes and the form. /portfolio#contact keeps
-     *  the same form for links shared before the page existed. */
+    /** Comms: the contact routes and the form. /portfolio#contact still
+     *  answers, with a link here, for links shared before it existed. */
     contact: "/contact",
     resumePdf: "/resume/view",
     feed: "/feed.xml",

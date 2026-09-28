@@ -78,6 +78,7 @@ describe("route table", () => {
             ["/blog/[slug]/opengraph-image-fx5gi7", "post"],
             ["/blog/tags/[tag]", "tag"],
             ["/portfolio/[slug]", "project"],
+            ["/portfolio/[slug]/opengraph-image-ysfoa1", "project"],
         ]);
     });
 
@@ -110,12 +111,17 @@ describe("route table", () => {
             ROUTE_TAGS.filter((route) => route.perRequest).map(
                 (route) => route.path,
             ),
-        ).toEqual(["/blog/[slug]/opengraph-image-fx5gi7"]);
+        ).toEqual([
+            "/blog/[slug]/opengraph-image-fx5gi7",
+            "/portfolio/[slug]/opengraph-image-ysfoa1",
+        ]);
         const warmed = (["profile", "post", "project"] as const).flatMap(
             (tag) => warmPaths(tag, LISTS).map(({ path }) => path),
         );
         expect(
-            warmed.some((path) => path.includes("/opengraph-image-fx5gi7")),
+            warmed.some((path) =>
+                /\/opengraph-image-(fx5gi7|ysfoa1)/.test(path),
+            ),
         ).toBe(false);
     });
 

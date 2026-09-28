@@ -40,7 +40,7 @@ interface Sent {
  * <noscript> block instead (plan §2.5.6).
  *
  * - Inside ContactDesk (/contact) the topic is the page's, so routes and
- *   radios stay in step; elsewhere (/portfolio#contact) it is local.
+ *   radios stay in step; outside one it is local.
  * - The fields are controlled and the action is dispatched from onSubmit,
  *   so React never resets them: a refused send keeps what was written.
  * - A successful send shows "Signal acquired". Cache Components keeps a

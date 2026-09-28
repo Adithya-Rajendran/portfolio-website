@@ -171,6 +171,10 @@ const nextConfig = {
                 // Newer than the move, kept at the unhashed URL like the
                 // others so every share image answers there.
                 ["/contact/opengraph-image", "/contact/opengraph-image-upzrkl"],
+                [
+                    "/portfolio/:slug/opengraph-image",
+                    "/portfolio/:slug/opengraph-image-ysfoa1",
+                ],
             ].map(([source, destination]) => ({
                 source,
                 destination,

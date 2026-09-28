@@ -65,14 +65,7 @@
 }
 
 /* ---- Crumb row: § 01 · Flight Log / Blog · LOG nnn · its address ------ */
-.crumbHome {
-    text-decoration: none;
-}
-.crumbHome:hover :global(.pair__themed) {
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-underline-offset: 0.3em;
-}
+/* The row itself is the shared CrumbRow (.crumb-row in components.css). */
 .crumbLog {
     color: var(--accent-text);
 }

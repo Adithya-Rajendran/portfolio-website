@@ -1,14 +1,46 @@
-import Image from "next/image";
-import Link from "next/link";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import LogIndex from "@/components/blogs/log-index";
+import PostReader from "@/components/blogs/post-reader";
+import { BreadcrumbJsonLd, MissionJsonLd } from "@/components/json-ld";
+import MissionLine from "@/components/portfolio/mission-line";
 import ProjectEssay from "@/components/portfolio/project-essay";
-import PortfolioNav from "@/components/portfolio/portfolio-nav";
-import { formatProjectYears, projectStatusLabel } from "@/lib/project-content";
-import { getAllProjectSlugs, getProjectBySlug } from "@/lib/sanity-client";
-import { urlForImage } from "@/lib/sanity-image";
+import { ButtonLink, buttonClass } from "@/components/ui/button";
+import CrumbRow from "@/components/ui/crumb-row";
+import { Icon } from "@/components/ui/icon";
+import { Rev, Status } from "@/components/ui/marks";
+import Metrics from "@/components/ui/metrics";
+import Pager from "@/components/ui/pager";
+import Pair from "@/components/ui/pair";
+import Plate from "@/components/ui/plate";
+import RouteList from "@/components/ui/route-list";
+import SectionTag from "@/components/ui/section-tag";
+import Specs from "@/components/ui/specs";
+import TitleBlock, { type TitleBlockCell } from "@/components/ui/title-block";
+import ViewerFigure, {
+    ViewerCallouts,
+} from "@/components/viewer/viewer-figure";
 import { siteConfig } from "@/lib/config";
+import { missionsCopy as copy } from "@/lib/copy";
+import { contentsHeadings, extractHeadings } from "@/lib/headings";
+import { logEntries } from "@/lib/log-index";
+import {
+    adjacentMissions,
+    missionCallouts,
+    missionEntries,
+    toMission,
+    type Mission,
+} from "@/lib/missions";
+import { contactHref, siteRoutes } from "@/lib/navigation";
+import {
+    getAllPosts,
+    getAllProjects,
+    getAllProjectSlugs,
+    getPostsByProject,
+    getProjectBySlug,
+} from "@/lib/sanity-client";
+import styles from "./mission.module.css";
 
 export async function generateStaticParams() {
     const slugs = await getAllProjectSlugs();
@@ -23,35 +55,168 @@ export async function generateMetadata({
     const { slug } = await params;
     const project = await getProjectBySlug(slug);
     if (!project) return;
-
-    const coverUrl = project.cover?.asset
-        ? urlForImage(project.cover)
-              .width(1200)
-              .height(630)
-              .fit("crop")
-              .auto("format")
-              .url()
-        : null;
-
+    const url = `${siteConfig.url}/portfolio/${slug}`;
     return {
         title: project.title,
         description: project.summary,
-        alternates: { canonical: `${siteConfig.url}/portfolio/${slug}` },
+        alternates: { canonical: url },
         openGraph: {
             title: project.title,
             description: project.summary,
-            url: `${siteConfig.url}/portfolio/${slug}`,
-            ...(coverUrl ? { images: [{ url: coverUrl }] } : {}),
+            url,
         },
         twitter: {
             card: "summary_large_image",
             title: project.title,
             description: project.summary,
-            ...(coverUrl ? { images: [coverUrl] } : {}),
         },
     };
 }
 
+/** The drawing's title block (G6): the mission's record, set cells only. */
+function recordCells(mission: Mission): TitleBlockCell[] {
+    const r = copy.record;
+    const first: TitleBlockCell[] = [
+        {
+            id: "mission",
+            label: r.mission,
+            value: (
+                <>
+                    <span className="data">{mission.designation}</span> ·{" "}
+                    {mission.name}
+                </>
+            ),
+            accent: true,
+        },
+        {
+            id: "status",
+            label: r.status,
+            value: (
+                <Status value={mission.statusValue}>
+                    {mission.statusLabel}
+                </Status>
+            ),
+            note: mission.statusNote,
+            spanSm: 1,
+        },
+        ...(mission.types.length
+            ? [
+                  {
+                      id: "type",
+                      label: r.type,
+                      value: mission.types.join(" · "),
+                      spanSm: 1 as const,
+                  },
+              ]
+            : []),
+        ...(mission.dates
+            ? [
+                  {
+                      id: "dates",
+                      label: r.dates,
+                      value: mission.dates,
+                      data: true,
+                  },
+              ]
+            : []),
+    ];
+    const second: TitleBlockCell[] = [
+        ...(mission.role
+            ? [{ id: "role", label: r.role, value: mission.role }]
+            : []),
+        ...(mission.technologies.length
+            ? [
+                  {
+                      id: "stack",
+                      label: r.stack,
+                      value: mission.technologies.join(" · "),
+                  },
+              ]
+            : []),
+        ...(mission.revised
+            ? [
+                  {
+                      id: "revision",
+                      label: r.revision,
+                      value: <Rev date={mission.revised} />,
+                  },
+              ]
+            : []),
+    ];
+    // Each row fills the twelve columns: the mission and the stack take
+    // what the short cells leave.
+    const firstSpans = first.length === 4 ? [4, 2, 3, 3] : [5, 3, 4];
+    first.forEach((cell, index) => {
+        cell.span = first.length === 2 ? [7, 5][index] : firstSpans[index];
+    });
+    const fixed = second.filter((cell) => cell.id !== "stack");
+    second.forEach((cell) => {
+        cell.span =
+            cell.id === "stack"
+                ? 12 - fixed.length * 3
+                : second.length === 1
+                  ? 12
+                  : second.some((item) => item.id === "stack")
+                    ? 3
+                    : 6;
+    });
+    return [...first, ...second];
+}
+
+/** A numbered section of the file: the tag, then its body on the grid. */
+function FileSection({
+    id,
+    num,
+    themed,
+    plain,
+    meta,
+    rail,
+    prose = false,
+    children,
+}: {
+    id: string;
+    num: string;
+    themed: string;
+    plain: string;
+    meta?: React.ReactNode;
+    rail?: React.ReactNode;
+    prose?: boolean;
+    children: React.ReactNode;
+}) {
+    return (
+        <section
+            className={`section ${styles.section}`}
+            id={id}
+            aria-labelledby={`${id}-h`}
+        >
+            <div className="shell">
+                <SectionTag className={styles.tag} num={num} meta={meta}>
+                    <h2 className="section-tag__h" id={`${id}-h`}>
+                        <Pair themed={themed} plain={plain} />
+                    </h2>
+                </SectionTag>
+                <div className={`grid ${styles.body}`}>
+                    {rail ? (
+                        <div className={`g-rail ${styles.rail}`}>{rail}</div>
+                    ) : null}
+                    <div className={prose ? "g-prose" : "g-main"}>
+                        {children}
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+/**
+ * A mission file (G5, G6): the crumb, the head (line, name, title,
+ * summary, the way to the write-up and its original entry, the stats)
+ * beside the photograph, the title block, then the callouts, the brief,
+ * the write-up, the results, the debrief, the links and the related
+ * entries, each only when the owner has published it, and the way to get
+ * in touch and to the neighbouring files. Server-rendered; PostReader
+ * keeps in-page links inside this file while another is still mounted.
+ */
 export default async function ProjectPage({
     params,
 }: {
@@ -60,96 +225,406 @@ export default async function ProjectPage({
     const { slug } = await params;
     const project = await getProjectBySlug(slug);
     if (!project) notFound();
+    const [projects, posts, citing] = await Promise.all([
+        getAllProjects(),
+        getAllPosts(),
+        getPostsByProject(project._id),
+    ]);
 
-    const coverUrl = project.cover?.asset
-        ? urlForImage(project.cover).width(1600).fit("max").auto("format").url()
-        : null;
-    const dates = formatProjectYears(project);
+    const mission = toMission(project, siteConfig.url);
+    const entries = logEntries(posts);
+    const postIds = new Map(posts.map((post) => [post._id, post.slug]));
+    const headings = extractHeadings(project);
+    const { original, related } = missionEntries({
+        entries,
+        postIds,
+        referencing: citing.map((post) => post.slug),
+        links: project.links,
+        body: project.body,
+        hotspots: project.model?.hotspots,
+        siteUrl: siteConfig.url,
+    });
+    const callouts = missionCallouts({
+        hotspots: project.model?.hotspots,
+        entries,
+        postIds,
+        essayHeadings: new Set(headings.map((heading) => heading.id)),
+    });
+    const { previous, next } = adjacentMissions(
+        projects.map((item) => toMission(item, siteConfig.url)),
+        slug,
+    );
+
+    const model = project.model?.poster?.asset ? project.model : null;
+    const cover = project.cover?.asset ? project.cover : null;
+    const hasPlate = Boolean(model || cover);
+    const brief = [
+        ["problem", project.brief?.problem],
+        ["approach", project.brief?.approach],
+        ["outcome", project.brief?.outcome],
+    ].filter((row): row is [keyof typeof copy.brief, string] =>
+        Boolean(row[1]?.trim()),
+    );
+    const results = (project.results ?? []).filter(
+        (row) => row.metric?.trim() && row.value?.trim(),
+    );
+    const lessons = (project.lessons ?? []).filter((line) => line.trim());
+    const nextSteps = (project.next ?? []).filter((line) => line.trim());
+    const hasEssay = project.body?.length > 0;
+    const contents = headings.length ? contentsHeadings(headings) : [];
+
+    // Sections are numbered in the order they appear; an empty one is
+    // absent, and so is its number.
+    const present = [
+        callouts.length ? "callouts" : null,
+        brief.length ? "brief" : null,
+        hasEssay ? "write-up" : null,
+        results.length ? "results" : null,
+        lessons.length || nextSteps.length ? "debrief" : null,
+        mission.links.length ? "links" : null,
+        related.length ? "related" : null,
+    ].filter(Boolean);
+    const num = (id: string) => `${copy.num}.${present.indexOf(id) + 1}`;
 
     return (
-        <div data-page="mission" data-legacy>
-            <PortfolioNav variant="detail" />
-            <div className="journal-page journal-container career-page career-case-study">
-                <article>
-                    <header className="career-case-heading">
-                        <Link
-                            href="/portfolio#projects"
-                            className="journal-link"
+        <div data-page="mission" className={styles.page}>
+            <BreadcrumbJsonLd
+                items={[
+                    { name: "Home", path: "/" },
+                    { name: copy.themed, path: siteRoutes.portfolio },
+                    { name: project.title, path: mission.href },
+                ]}
+            />
+            <MissionJsonLd mission={mission} />
+
+            <div className="shell">
+                <CrumbRow
+                    className={styles.crumb}
+                    ornament="pulsar"
+                    num={copy.num}
+                    themed={copy.themed}
+                    plain={copy.plain}
+                    href={siteRoutes.portfolio}
+                    name={mission.name}
+                />
+
+                <header
+                    className={
+                        hasPlate
+                            ? styles.head
+                            : `${styles.head} ${styles.headText}`
+                    }
+                >
+                    <div className={styles.headCopy}>
+                        <MissionLine mission={mission} />
+                        <h1
+                            className={styles.title}
+                            style={
+                                {
+                                    "--chars": mission.nameChars,
+                                } as CSSProperties
+                            }
                         >
-                            <ArrowLeft size={16} aria-hidden />
-                            Back to work
-                        </Link>
-                        <div className="career-meta">
-                            <span>{projectStatusLabel(project.status)}</span>
-                            {dates && <span>{dates}</span>}
-                        </div>
-                        <h1 className="journal-title">{project.title}</h1>
-                        <p className="journal-description">{project.summary}</p>
-                        {project.technologies?.length ? (
-                            <ul
-                                className="career-tags"
-                                aria-label="Technologies"
-                            >
-                                {project.technologies.map((technology) => (
-                                    <li key={technology}>{technology}</li>
-                                ))}
-                            </ul>
+                            {mission.name}
+                            <span className="sr-only">: </span>
+                            <span className={styles.dek}>{mission.title}</span>
+                        </h1>
+                        {mission.summary ? (
+                            <p className={styles.summary}>{mission.summary}</p>
                         ) : null}
-                    </header>
-                    {coverUrl && (
-                        <figure className="career-case-cover">
-                            <Image
-                                src={coverUrl}
-                                alt={project.cover?.alt || ""}
-                                width={project.cover?.dimensions?.width || 1600}
-                                height={
-                                    project.cover?.dimensions?.height || 960
-                                }
-                                sizes="(max-width: 1200px) calc(100vw - 46px), 1116px"
-                                className="career-case-image"
-                                priority
-                            />
-                            {project.cover?.caption && (
-                                <figcaption>{project.cover.caption}</figcaption>
+                        {hasEssay || original ? (
+                            <div className={`cluster ${styles.actions}`}>
+                                {hasEssay ? (
+                                    <a
+                                        className={buttonClass({
+                                            variant: "primary",
+                                        })}
+                                        href="#write-up"
+                                    >
+                                        {copy.readWriteUp}
+                                        <Icon name="arrow-down" />
+                                    </a>
+                                ) : null}
+                                {original ? (
+                                    <ButtonLink
+                                        href={`/blog/${original.slug}`}
+                                        icon="arrow"
+                                        iconAt="end"
+                                    >
+                                        {copy.originalEntry(
+                                            original.designation,
+                                        )}
+                                    </ButtonLink>
+                                ) : null}
+                            </div>
+                        ) : null}
+                        <Metrics
+                            className={styles.metrics}
+                            items={mission.parameters}
+                            columns={hasPlate ? 2 : 4}
+                            size={hasPlate ? "lg" : "md"}
+                        />
+                    </div>
+                    {hasPlate ? (
+                        <div className={styles.headMedia}>
+                            {model ? (
+                                <ViewerFigure
+                                    model={model}
+                                    designation={mission.designation}
+                                    priority
+                                />
+                            ) : (
+                                <Plate
+                                    image={cover}
+                                    label="Pl. I"
+                                    tag={mission.designation}
+                                    caption={cover?.caption}
+                                    sizes="(min-width: 60rem) 36vw, 100vw"
+                                    priority
+                                />
                             )}
-                        </figure>
-                    )}
-                    {project.highlights?.length ? (
-                        <aside className="career-case-highlights">
-                            <h2>At a glance</h2>
-                            <ul className="career-highlights">
-                                {project.highlights.map((highlight) => (
-                                    <li key={highlight}>{highlight}</li>
-                                ))}
-                            </ul>
-                        </aside>
+                        </div>
                     ) : null}
-                    <ProjectEssay project={project} />
-                    {project.links?.length ? (
-                        <footer className="career-case-links">
-                            <h2>Explore further</h2>
-                            <ul>
-                                {project.links.map((link) => (
-                                    <li key={link._key}>
-                                        <a
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="career-channel"
-                                        >
-                                            {link.label}
-                                            <ArrowUpRight
-                                                size={16}
-                                                aria-hidden
-                                            />
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </footer>
-                    ) : null}
-                </article>
+                </header>
+
+                <TitleBlock
+                    className={styles.record}
+                    cells={recordCells(mission)}
+                />
             </div>
+
+            {callouts.length ? (
+                <FileSection
+                    id="callouts"
+                    num={num("callouts")}
+                    themed={copy.calloutsThemed}
+                    plain={project.model?.title?.trim() || copy.calloutsPlain}
+                >
+                    <ViewerCallouts
+                        callouts={callouts}
+                        labelledBy="callouts-h"
+                    />
+                </FileSection>
+            ) : null}
+
+            {brief.length ? (
+                <FileSection
+                    id="brief"
+                    num={num("brief")}
+                    themed={copy.briefThemed}
+                    plain={copy.briefPlain}
+                >
+                    <Specs
+                        className={`specs--read ${styles.brief}`}
+                        items={brief.map(([key, text]) => ({
+                            id: key,
+                            term: copy.brief[key],
+                            value: text.trim(),
+                        }))}
+                    />
+                </FileSection>
+            ) : null}
+
+            {hasEssay ? (
+                <FileSection
+                    id="write-up"
+                    num={num("write-up")}
+                    themed={copy.writeUpThemed}
+                    plain={copy.writeUpPlain}
+                    prose
+                    rail={
+                        contents.length > 1 ? (
+                            <nav
+                                className={styles.contents}
+                                aria-label={copy.contentsLabel}
+                                data-contents
+                            >
+                                <p className={styles.contentsTitle}>
+                                    {copy.contents}
+                                </p>
+                                <ol role="list">
+                                    {contents.map((heading) => (
+                                        <li key={heading.id}>
+                                            <a href={`#${heading.id}`}>
+                                                {heading.text}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </nav>
+                        ) : undefined
+                    }
+                >
+                    <ProjectEssay project={project} />
+                </FileSection>
+            ) : null}
+
+            {results.length ? (
+                <FileSection
+                    id="results"
+                    num={num("results")}
+                    themed={copy.resultsThemed}
+                    plain={copy.resultsPlain}
+                    meta={copy.table}
+                >
+                    <div
+                        className={`table-wrap ${styles.results}`}
+                        role="region"
+                        aria-labelledby="results-cap"
+                        tabIndex={0}
+                    >
+                        <table className="table">
+                            <caption id="results-cap">
+                                <span className="caption__num">
+                                    {copy.table}
+                                </span>
+                                {copy.resultsCaption(mission.name)}
+                            </caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        {copy.resultColumns.metric}
+                                    </th>
+                                    <th scope="col" className="num">
+                                        {copy.resultColumns.value}
+                                    </th>
+                                    <th scope="col">
+                                        {copy.resultColumns.note}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {results.map((row) => (
+                                    <tr key={row._key}>
+                                        <th scope="row">{row.metric}</th>
+                                        <td className={`num ${styles.value}`}>
+                                            {row.value}
+                                        </td>
+                                        <td className={styles.note}>
+                                            {row.note}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </FileSection>
+            ) : null}
+
+            {lessons.length || nextSteps.length ? (
+                <FileSection
+                    id="debrief"
+                    num={num("debrief")}
+                    themed={copy.debriefThemed}
+                    plain={copy.debriefPlain}
+                >
+                    <div className={styles.debrief}>
+                        {lessons.length ? (
+                            <div>
+                                <h3 className={styles.subhead}>
+                                    {copy.lessons}
+                                </h3>
+                                <ul className={styles.lessons} role="list">
+                                    {lessons.map((line) => (
+                                        <li key={line}>{line}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : null}
+                        {nextSteps.length ? (
+                            <div>
+                                <h3 className={styles.subhead}>
+                                    {copy.nextSteps}
+                                </h3>
+                                <ul className={styles.next} role="list">
+                                    {nextSteps.map((line) => (
+                                        <li key={line}>{line}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : null}
+                    </div>
+                </FileSection>
+            ) : null}
+
+            {mission.links.length ? (
+                <FileSection
+                    id="links"
+                    num={num("links")}
+                    themed={copy.linksThemed}
+                    plain={copy.linksPlain}
+                >
+                    <RouteList
+                        labelledBy="links-h"
+                        columns={2}
+                        items={mission.links.map((link, index) => ({
+                            key: link.id,
+                            href: link.url,
+                            num: String(index + 1).padStart(2, "0"),
+                            plain: link.label,
+                            blurb: link.host === link.label ? null : link.host,
+                            external: true,
+                        }))}
+                    />
+                </FileSection>
+            ) : null}
+
+            {related.length ? (
+                <FileSection
+                    id="related"
+                    num={num("related")}
+                    themed={copy.relatedThemed}
+                    plain={copy.relatedPlain}
+                >
+                    <LogIndex entries={related} level={3} />
+                </FileSection>
+            ) : null}
+
+            <section
+                className={`section ${styles.close}`}
+                aria-labelledby="mission-close-h"
+                data-print="hide"
+            >
+                <div className="shell">
+                    <div className={styles.ask}>
+                        <h2 className={styles.askTitle} id="mission-close-h">
+                            {copy.question}
+                        </h2>
+                        <ButtonLink
+                            href={contactHref("hello")}
+                            icon="arrow"
+                            iconAt="end"
+                        >
+                            {copy.getInTouch}
+                        </ButtonLink>
+                    </div>
+                    <Pager
+                        className={styles.pager}
+                        label={copy.pagerLabel}
+                        previous={
+                            previous
+                                ? {
+                                      href: previous.href,
+                                      label: `${copy.previousFile} · ${previous.designation}`,
+                                      title: previous.name,
+                                  }
+                                : null
+                        }
+                        all={{ href: siteRoutes.portfolio, label: copy.all }}
+                        next={
+                            next
+                                ? {
+                                      href: next.href,
+                                      label: `${copy.nextFile} · ${next.designation}`,
+                                      title: next.name,
+                                  }
+                                : null
+                        }
+                    />
+                </div>
+            </section>
+
+            <PostReader />
         </div>
     );
 }

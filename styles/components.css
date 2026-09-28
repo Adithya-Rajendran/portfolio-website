@@ -957,7 +957,7 @@
         font: 300 var(--step-1) / 1.5 var(--font-long);
     }
 
-    /* ===== Captions, plates, revision marks, gaps (site.css 4.8, 4.27) = */
+    /* ===== Captions, plates, revision marks (site.css 4.8, 4.27) ====== */
     .caption {
         display: flex;
         gap: var(--s-3);
@@ -1019,18 +1019,6 @@
             forced-color-adjust: none;
             background: CanvasText;
         }
-    }
-
-    /* A dashed gap chip for data that does not exist yet. */
-    .tbd {
-        display: inline-block;
-        padding: 0 0.35em;
-        border: var(--rule-hair) dashed var(--rule-2);
-        color: var(--ink-3);
-        font: 400 0.8125em / 1.35 var(--font-mono);
-        letter-spacing: 0.02em;
-        text-transform: none;
-        white-space: nowrap;
     }
 
     /* ===== Footer (site.css 4.21, document control 4.27) =============== */
@@ -1786,5 +1774,371 @@
     }
     [data-theme="manual"] .photo--drawing .photo__img {
         border: 0;
+    }
+
+    /* ===== Page head, split (contract §1) ============================== */
+    /* The title on the left half, the intro and the actions on the right
+       from 960px, over a band of static stars (`.head-band`). */
+    .head-band {
+        position: relative;
+        isolation: isolate;
+    }
+    .page-head--split {
+        padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+        padding-bottom: var(--s-6);
+    }
+    .page-head--split > .page-head__intro {
+        margin-top: var(--s-4);
+    }
+    @media (max-width: 37.49rem) {
+        .page-head--split > .page-head__title {
+            margin-top: var(--s-3);
+        }
+        .page-head--split > .page-head__intro {
+            font-size: var(--step-0);
+        }
+    }
+    @media (min-width: 60rem) {
+        .page-head--split {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            column-gap: var(--gutter);
+            align-items: end;
+        }
+        .page-head--split > .section-tag {
+            grid-column: 1 / -1;
+        }
+        .page-head--split > .page-head__title {
+            grid-column: 1 / span 6;
+            grid-row: 2 / span 4;
+            align-self: end;
+        }
+        .page-head--split > :not(.section-tag, .page-head__title) {
+            grid-column: 7 / -1;
+        }
+    }
+
+    /* ===== Crumb row (contract §1; components/ui/crumb-row.tsx) ======== */
+    .crumb-row__home {
+        text-decoration: none;
+    }
+    .crumb-row__home:hover .pair__themed {
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: 0.3em;
+    }
+    .crumb-row__item {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.6em;
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.3 var(--font-display);
+        letter-spacing: 0;
+        text-transform: none;
+    }
+    .crumb-row__sep {
+        margin-right: 0.15em;
+        color: var(--ink-3);
+        font: 400 0.8125rem / 1 var(--font-mono);
+    }
+    .crumb-row__code {
+        color: var(--ink-2);
+        font: 400 0.8125rem / 1 var(--font-mono);
+        letter-spacing: 0.02em;
+    }
+
+    /* ===== Stats (site.css 4.9; components/ui/metrics.tsx) ============= */
+    /* The value over its label, a meaningful hairline on top; the unit
+       smaller and quieter. Two across on phones. */
+    .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--s-5) var(--gutter);
+        margin: 0;
+    }
+    @media (min-width: 37.5rem) {
+        .metrics {
+            grid-template-columns: repeat(
+                var(--metric-cols, 4),
+                minmax(0, 1fr)
+            );
+        }
+    }
+    .metric {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+        min-width: 0;
+        padding-top: var(--s-3);
+        border-top: var(--rule-hair) solid var(--rule-2);
+    }
+    .metric > dt {
+        color: var(--ink-2);
+        font: var(--label-2);
+        letter-spacing: var(--track-label-2);
+        text-transform: uppercase;
+    }
+    .metric > dd {
+        order: -1;
+        margin: 0;
+        color: var(--ink-1);
+        font: 300 var(--metric-size, var(--step-3)) / 1.05 var(--font-display);
+        letter-spacing: -0.01em;
+        font-variant-numeric: tabular-nums lining-nums;
+        overflow-wrap: break-word;
+        text-wrap: balance;
+    }
+    .metric__unit {
+        color: var(--ink-2);
+        font-size: 0.6em;
+        letter-spacing: 0;
+    }
+    .metrics--lg {
+        --metric-size: var(--step-4);
+    }
+    /* Jost 300 only from step 3 (contract §2): a small stat is 400. */
+    .metrics--sm {
+        --metric-size: var(--step-1);
+    }
+    .metrics--sm .metric > dd {
+        font-weight: 400;
+    }
+
+    /* ===== Tables (site.css 4.14) ======================================= */
+    /* <div class="table-wrap" role="region" tabindex="0"
+         aria-labelledby="…"><table class="table"><caption>…</caption> */
+    /* Positioned, so an absolutely placed descendant (a visually hidden
+       label) scrolls with the table instead of widening the page. */
+    .table-wrap {
+        position: relative;
+        overflow-x: auto;
+    }
+    .table-wrap:focus-visible {
+        outline-offset: 4px;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font: 400 var(--step--1) / 1.45 var(--font-text);
+        font-variant-numeric: tabular-nums lining-nums;
+    }
+    .table caption {
+        max-width: 60ch;
+        padding-bottom: var(--s-4);
+        caption-side: top;
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.5 var(--font-text);
+        text-align: left;
+    }
+    .table caption .caption__num {
+        display: inline-block;
+        margin-right: var(--s-3);
+        line-height: 1.5;
+    }
+    .table th,
+    .table td {
+        padding: var(--s-4) var(--s-4) var(--s-4) 0;
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+        text-align: left;
+        vertical-align: top;
+    }
+    .table thead th {
+        padding-block: var(--s-3);
+        border-bottom-color: var(--rule-2);
+        color: var(--ink-2);
+        font: var(--label-2);
+        letter-spacing: var(--track-label-2);
+        text-transform: uppercase;
+        vertical-align: bottom;
+        white-space: nowrap;
+    }
+    .table tbody th {
+        font-weight: 400;
+    }
+    .table .num {
+        font-family: var(--font-mono);
+        text-align: right;
+        white-space: nowrap;
+    }
+    .table .data {
+        white-space: nowrap;
+    }
+    .table tbody tr {
+        transition: background-color var(--dur-hover) var(--ease-dock);
+    }
+    .table tbody tr:hover {
+        background: linear-gradient(
+            to right,
+            var(--surface-1),
+            transparent 85%
+        );
+    }
+    @media (forced-colors: active) {
+        .table tbody tr:hover {
+            background: none;
+        }
+    }
+
+    /* ===== Link rows (contract §4; components/ui/route-list.tsx) ======= */
+    /* Numbered hairline rows, the whole row one link (from the 404's). */
+    .route-list ol {
+        display: grid;
+        column-gap: var(--gutter);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    @media (min-width: 37.5rem) {
+        .route-list--2 ol,
+        .route-list--3 ol {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 60rem) {
+        .route-list--3 ol {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    .route-list li {
+        scroll-margin-top: calc(var(--header-h) + var(--s-6));
+    }
+    .route-row {
+        display: grid;
+        grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+        column-gap: var(--s-3);
+        row-gap: var(--s-2);
+        height: 100%;
+        padding: var(--s-5) 0;
+        border-top: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-1);
+        text-decoration: none;
+        transition: border-color var(--dur-hover) var(--ease-dock);
+    }
+    .route-row__num {
+        grid-row: 1;
+        grid-column: 1;
+        padding-top: 0.1rem;
+        color: var(--ink-3);
+        font: 400 0.8125rem / 1.4 var(--font-mono);
+    }
+    .route-row__name {
+        grid-row: 1;
+        grid-column: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 0;
+    }
+    .route-row__themed {
+        font: 400 var(--label-size-lg) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .route-row__plain {
+        overflow-wrap: anywhere;
+        font: 400 var(--step-0) / 1.3 var(--font-display);
+    }
+    .route-row__blurb {
+        grid-row: 2;
+        grid-column: 2;
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.45 var(--font-text);
+    }
+    .route-row__arrow {
+        grid-row: 1 / span 2;
+        grid-column: 3;
+        align-self: center;
+        color: var(--ink-3);
+        transition:
+            transform var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+    .route-row:hover {
+        border-top-color: var(--accent);
+    }
+    .route-row:hover .route-row__plain {
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-underline-offset: 0.2em;
+    }
+    .route-row:hover .route-row__arrow {
+        transform: translateX(4px);
+        color: var(--accent-text);
+    }
+
+    /* ===== Pager (contract §4; components/ui/pager.tsx) ================ */
+    .pager {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--s-4) var(--gutter);
+    }
+    .pager__item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+        min-width: 0;
+        padding: var(--s-4) 0 var(--s-2);
+        border-top: var(--rule-strong) solid var(--rule-2);
+        color: var(--ink-1);
+        text-decoration: none;
+        transition: border-color var(--dur-hover) var(--ease-dock);
+    }
+    .pager__item:hover {
+        border-top-color: var(--accent);
+    }
+    .pager__label {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .pager__title {
+        font: 400 var(--step-1) / 1.25 var(--font-display);
+        text-wrap: balance;
+    }
+    .pager__title--upper {
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .pager__item:hover .pager__title {
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.18em;
+    }
+    .pager__meta {
+        color: var(--ink-3);
+        font: 400 0.75rem / 1.4 var(--font-mono);
+    }
+    .pager__all {
+        justify-self: start;
+        align-self: center;
+    }
+    @media (min-width: 60rem) {
+        .pager {
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        }
+        .pager__item--previous {
+            grid-column: 1;
+        }
+        .pager__all {
+            grid-column: 2;
+            grid-row: 1;
+            justify-self: center;
+        }
+        .pager__item--next {
+            grid-column: 3;
+            grid-row: 1;
+            align-items: flex-end;
+            text-align: right;
+        }
+    }
+
+    /* ===== Key/value list, long values (components/ui/specs.tsx) ======= */
+    /* A brief: the values are sentences, set in the serif. */
+    .specs--read dd {
+        max-width: 60ch;
+        font: 300 var(--step-1) / 1.5 var(--font-long);
+        text-wrap: pretty;
     }
 }
