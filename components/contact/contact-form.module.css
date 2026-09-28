@@ -1,8 +1,8 @@
 /*
- * The contact form: topic chips, the counter, the send row and the
- * "Signal acquired" panel. The fields themselves use the shared .field,
- * .input and .textarea (styles/components.css). Ported from the mockup's
- * contact.css "Form" and "Success: Signal acquired".
+ * The contact form: the topic, the counter, the send row and the "Sent"
+ * panel. The fields and the topic's segmented control are shared (.field,
+ * .input, .textarea and .seg in styles/components.css). Ported from the
+ * mockup's contact.css "Form" and "Success".
  */
 .form {
     display: grid;
@@ -10,92 +10,25 @@
     max-width: 46rem;
 }
 
-/* ---- Topic: radios drawn as chips ------------------------------------- */
+/* ---- Topic: the shared segmented control ------------------------------ */
 .topics {
-    min-inline-size: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
+    width: 100%;
 }
-.topics legend {
-    margin-bottom: var(--s-3);
-    padding: 0;
+/* Phones: one topic per line, the full width. */
+@media (max-width: 37.49rem) {
+    .topics :global(.seg__opt) {
+        flex: 1 1 100%;
+    }
+    .topics :global(.seg__opt + .seg__opt) {
+        margin-top: -1px;
+        margin-left: 0;
+    }
 }
 .optional {
     color: var(--ink-3);
     font-weight: 400;
     letter-spacing: 0;
     text-transform: none;
-}
-.options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--s-2);
-}
-.option {
-    position: relative;
-    display: flex;
-}
-/* The native radio covers its chip: it takes the click and the focus. */
-.option input {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-.option label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    min-height: 44px;
-    padding: 0 1rem 0 0.8rem;
-    border: var(--rule-hair) solid var(--rule-2);
-    color: var(--ink-2);
-    font: 400 var(--step--1) / 1.2 var(--font-display);
-    cursor: pointer;
-    transition:
-        border-color var(--dur-hover) var(--ease-dock),
-        color var(--dur-hover) var(--ease-dock),
-        background-color var(--dur-hover) var(--ease-dock);
-}
-.optionNum {
-    color: var(--ink-3);
-    font: 400 0.75rem / 1 var(--font-mono);
-}
-.option input:hover + label {
-    border-color: var(--ink-1);
-    color: var(--ink-1);
-}
-.option input:checked + label {
-    border-color: var(--ink-2);
-    background: var(--surface-2);
-    color: var(--ink-1);
-    box-shadow: inset 0 -2px 0 var(--accent);
-}
-.option input:checked + label .optionNum {
-    color: var(--accent-text);
-}
-/* Chosen is marked by a dot as well as the fill, never colour alone. */
-.option input:checked + label::before {
-    content: "";
-    flex: none;
-    width: 6px;
-    height: 6px;
-    border-radius: var(--radius-round);
-    background: var(--accent);
-}
-.option input:focus-visible + label {
-    outline: var(--rule-strong) solid var(--focus);
-    outline-offset: 2px;
-}
-@media (forced-colors: active) {
-    .option input:checked + label {
-        border-color: SelectedItem;
-        outline: 2px solid SelectedItem;
-    }
 }
 
 /* ---- Message ----------------------------------------------------------- */
@@ -140,17 +73,12 @@
 .actions [aria-busy="true"] {
     cursor: progress;
 }
-.note {
-    max-width: 44ch;
-    color: var(--ink-2);
-    font: 400 0.75rem / 1.5 var(--font-mono);
-}
 
-/* ---- Success: Signal acquired ------------------------------------------ */
+/* ---- Success: the carrier locks, in ink with one accent mark ----------- */
 .signal {
     max-width: 46rem;
     padding-top: var(--s-4);
-    border-top: var(--rule-strong) solid var(--accent);
+    border-top: var(--rule-hair) solid var(--rule-2);
 }
 .trace {
     display: block;
@@ -166,8 +94,8 @@
 }
 .wave {
     fill: none;
-    stroke: var(--accent);
-    stroke-width: 1.5;
+    stroke: var(--ink-1);
+    stroke-width: 1.25;
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
 }
@@ -194,7 +122,7 @@
     align-items: center;
     gap: 0.6em;
     margin-top: var(--s-4);
-    color: var(--accent-text);
+    color: var(--ink-1);
     font: 400 var(--label-size) / 1.4 var(--font-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;

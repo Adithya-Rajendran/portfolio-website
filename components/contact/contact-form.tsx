@@ -11,6 +11,7 @@ import {
 } from "react";
 import { sendEmailAction } from "@/actions/sendEmail";
 import { Button } from "@/components/ui/button";
+import Segmented from "@/components/ui/segmented";
 import {
     INITIAL_CONTACT_FORM_STATE,
     remainingNotice,
@@ -43,7 +44,7 @@ interface Sent {
  *   radios stay in step; outside one it is local.
  * - The fields are controlled and the action is dispatched from onSubmit,
  *   so React never resets them: a refused send keeps what was written.
- * - A successful send shows "Signal acquired". Cache Components keeps a
+ * - A successful send shows "Sent". Cache Components keeps a
  *   visited page mounted but hidden, so that panel and a refused send's
  *   alert are reset when the page is hidden (docs: preserving-ui-state,
  *   Forms), while an unsent draft is kept.
@@ -213,37 +214,22 @@ export default function ContactForm({
     return (
         <form className={styles.form} onSubmit={onSubmit} noValidate>
             {topics.length > 1 ? (
-                <fieldset className={styles.topics}>
-                    <legend className="field__label">
-                        {copy.topicLegend}{" "}
-                        <span className={styles.optional}>
-                            {copy.topicOptional}
-                        </span>
-                    </legend>
-                    <div className={styles.options}>
-                        {topics.map((option) => (
-                            <span className={styles.option} key={option.value}>
-                                <input
-                                    type="radio"
-                                    name="topic"
-                                    id={`${id}-topic-${option.value}`}
-                                    value={option.value}
-                                    checked={topic === option.value}
-                                    onChange={() => chooseTopic(option.value)}
-                                />
-                                <label htmlFor={`${id}-topic-${option.value}`}>
-                                    <span
-                                        className={styles.optionNum}
-                                        aria-hidden="true"
-                                    >
-                                        {option.num}
-                                    </span>
-                                    {option.label}
-                                </label>
+                <Segmented
+                    className={styles.topics}
+                    legend={
+                        <>
+                            {copy.topicLegend}{" "}
+                            <span className={styles.optional}>
+                                {copy.topicOptional}
                             </span>
-                        ))}
-                    </div>
-                </fieldset>
+                        </>
+                    }
+                    legendClassName="field__label"
+                    name="topic"
+                    options={topics}
+                    value={topic ?? ""}
+                    onChange={(value) => chooseTopic(value as ContactTopic)}
+                />
             ) : null}
 
             <div className="field">
@@ -335,7 +321,6 @@ export default function ContactForm({
                 >
                     {pending ? copy.sending : copy.send}
                 </Button>
-                <p className={styles.note}>{copy.note}</p>
             </div>
         </form>
     );

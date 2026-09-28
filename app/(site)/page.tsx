@@ -26,13 +26,14 @@ import {
     roleLine,
     taglineOf,
 } from "@/lib/crew";
-import { cvEntries, hostOf } from "@/lib/cv";
+import { cvEntries } from "@/lib/cv";
+import { profileRows } from "@/lib/directory";
 import { actNumber, homeActs, type HomeAct } from "@/lib/home";
 import { logEntries } from "@/lib/log-index";
 import { missionOrder, originalEntries, toMission } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
 import { orbitModel } from "@/lib/orbit/geometry";
-import { getProfileLink, getProfileLinks } from "@/lib/profile-content";
+import { getProfileLink } from "@/lib/profile-content";
 import { resolveResumeAssetUrl } from "@/lib/resume";
 import {
     getAllPosts,
@@ -150,15 +151,7 @@ export default async function Home() {
     // Crew and Comms.
     const bio = firstParagraph(profile?.bio);
     const routes = contactRoutes(profile);
-    const profiles = getProfileLinks(profile)
-        .filter((link) => /^https?:\/\//.test(link.url))
-        .map((link) => ({
-            key: link._key,
-            href: link.url,
-            plain: link.label,
-            blurb: hostOf(link.url),
-            external: true,
-        }));
+    const profiles = profileRows(profile);
 
     const acts = homeActs({
         now: Boolean(now || asked.length),

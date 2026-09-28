@@ -28,12 +28,11 @@ test("Comms in the header opens the contact page", async ({ page }) => {
         .getByRole("link", { name: pairName(comms) })
         .click();
     await expect(page).toHaveURL(/\/contact$/);
-    // The page's own title, then both of its names, as the mockup has them.
+    // The themed name, then the plain one (contract §1).
     await expect(
         page.getByRole("heading", {
             level: 1,
-            name: "Let’s talk. Comms · Contact",
-            exact: true,
+            name: /^Comms\s*:\s*Contact$/,
         }),
     ).toBeVisible();
     await expect(

@@ -4,125 +4,71 @@ import ContactForm from "@/components/contact/contact-form";
 import ContactNoScript from "@/components/contact/contact-no-script";
 import ContactRoutes from "@/components/contact/contact-routes";
 import { ContactPageJsonLd } from "@/components/json-ld";
-import { Icon } from "@/components/ui/icon";
+import StaticStars from "@/components/sky/static-stars";
 import PageHead from "@/components/ui/page-head";
 import Pair from "@/components/ui/pair";
+import RouteList from "@/components/ui/route-list";
 import SectionTag from "@/components/ui/section-tag";
-import TitleBlock, { type TitleBlockCell } from "@/components/ui/title-block";
 import { siteConfig } from "@/lib/config";
 import { contactRoutes, topicOptions } from "@/lib/contact";
-import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import { contactCopy as copy } from "@/lib/copy";
+import { profileRows } from "@/lib/directory";
 import { siteRoutes } from "@/lib/navigation";
-import { getProfileLink, getProfileLinks } from "@/lib/profile-content";
-import { getProfile, type ProfileData } from "@/lib/sanity-client";
+import { getProfileLink } from "@/lib/profile-content";
+import { getProfile } from "@/lib/sanity-client";
 import styles from "./contact.module.css";
 
 export async function generateMetadata(): Promise<Metadata> {
     const profile = await getProfile();
     const name = profile?.name || siteConfig.author;
     const description = profile?.contactInvitation?.trim() || copy.intro;
+    const title = `${copy.themed} · ${copy.plain}`;
     const url = `${siteConfig.url}${siteRoutes.contact}`;
     return {
-        title: copy.plain,
+        title,
         description,
         alternates: { canonical: url },
-        openGraph: { title: `${copy.plain} | ${name}`, description, url },
+        openGraph: { title: `${title} | ${name}`, description, url },
         twitter: {
             card: "summary_large_image",
-            title: `${copy.plain} | ${name}`,
+            title: `${title} | ${name}`,
             description,
         },
     };
 }
 
-/** "linkedin.com/in/…": a profile link's address without the scheme. */
-function host(url: string): string {
-    return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
-}
-
-/** The channel record beside the form: facts only, gaps left blank. */
-function recordCells(profile: ProfileData | null): TitleBlockCell[] {
-    const record = copy.record;
-    const availability = profile?.availability;
-    const openTo =
-        availability?.status !== "closed" ? availability?.openTo?.trim() : "";
-    return [
-        {
-            id: "channel",
-            label: record.channel,
-            value: record.channelValue,
-            note: record.channelNote(MESSAGE_MAX_LENGTH),
-            span: 12,
-        },
-        ...(openTo
-            ? [
-                  {
-                      id: "open-to",
-                      label: record.openTo,
-                      value: openTo,
-                      span: 12,
-                      accent: true,
-                  },
-              ]
-            : []),
-        {
-            id: "email",
-            label: record.email,
-            value: record.emailNote,
-            span: 6,
-            spanSm: 1,
-        },
-        availability?.updatedAt
-            ? {
-                  id: "updated",
-                  label: record.updated,
-                  value: (
-                      <time dateTime={availability.updatedAt}>
-                          {availability.updatedAt}
-                      </time>
-                  ),
-                  data: true,
-                  span: 6,
-                  spanSm: 1,
-              }
-            : { id: "blank", blank: true, span: 6, spanSm: 1 },
-    ];
-}
-
 /**
  * Comms · Contact (G4): the routes by intent, the message form and the
- * other places to find the owner. Everything but the form renders without
- * JavaScript; the form needs it for BotID, so without it the page offers
- * LinkedIn instead. There is no public email address or phone number.
- * Ported from the mockup's contact.html (§ 05); its 30-second review
- * checklist and "reply time" are left out: neither has content yet.
+ * profiles. Everything but the form renders without JavaScript; the form
+ * needs it for BotID, so without it the page offers LinkedIn instead.
+ * Ported from the mockup's contact.html (§ 05).
  */
 export default async function ContactPage() {
     const profile = await getProfile();
     const routes = contactRoutes(profile);
-    const profiles = getProfileLinks(profile);
+    const profiles = profileRows(profile);
 
     return (
-        <div data-page="contact" className={styles.page}>
+        <div data-page="contact">
             <ContactPageJsonLd profile={profile} />
-            <PageHead
-                className={`shell ${styles.head}`}
-                ornament="record"
-                num={copy.num}
-                themed={copy.themed}
-                plain={copy.plain}
-                title={copy.title}
-                meta={copy.meta(routes.length)}
-                intro={copy.intro}
-            >
-                {/* Acquisition of signal: the 404's loss of signal, reversed.
-                    Decorative and static. */}
-                <figure className={styles.aos} aria-hidden="true">
+            <div className="head-band">
+                <StaticStars variant="band" />
+                <PageHead
+                    className="shell"
+                    split
+                    ornament="record"
+                    num={copy.num}
+                    themed={copy.themed}
+                    plain={copy.plain}
+                    intro={copy.intro}
+                >
+                    {/* Acquisition of signal: the carrier locks. Drawn in
+                        ink with one accent mark; decorative and static. */}
                     <svg
-                        className={styles.aosTrace}
+                        className={styles.aos}
                         viewBox="0 0 640 96"
                         preserveAspectRatio="none"
+                        aria-hidden="true"
                         focusable="false"
                     >
                         <path className={styles.aosFloor} d="M0 60H640" />
@@ -141,12 +87,8 @@ export default async function ContactPage() {
                             r="4.5"
                         />
                     </svg>
-                    <figcaption className={styles.aosCaption}>
-                        <span className={styles.aosKey}>{copy.aosKey}</span>
-                        <span>{copy.aosCaption}</span>
-                    </figcaption>
-                </figure>
-            </PageHead>
+                </PageHead>
+            </div>
 
             <ContactDesk topics={routes.map((route) => route.topic)}>
                 <section
@@ -154,15 +96,15 @@ export default async function ContactPage() {
                     aria-labelledby="contact-routes-h"
                 >
                     <div className="shell">
-                        <SectionTag
-                            num={`${copy.num}.1`}
-                            meta={copy.routesMeta}
-                        >
+                        <SectionTag num={`${copy.num}.1`}>
                             <h2
                                 className="section-tag__h"
                                 id="contact-routes-h"
                             >
-                                {copy.routesTitle}
+                                <Pair
+                                    themed={copy.routesThemed}
+                                    plain={copy.routesPlain}
+                                />
                             </h2>
                         </SectionTag>
                         <div className={styles.routes}>
@@ -172,23 +114,26 @@ export default async function ContactPage() {
                 </section>
 
                 <section
-                    className={`section ${styles.message}`}
+                    className="section"
                     id="message"
                     data-contact-message
                     aria-labelledby="contact-message-h"
                 >
-                    <div className={`shell grid ${styles.messageGrid}`}>
-                        <div className={`g-rail ${styles.messageRail}`}>
+                    <div className="shell grid">
+                        <div className="g-rail">
                             <SectionTag num={`${copy.num}.2`}>
                                 <h2
                                     className="section-tag__h"
                                     id="contact-message-h"
                                 >
-                                    {copy.messageTitle}
+                                    <Pair
+                                        themed={copy.messageThemed}
+                                        plain={copy.messagePlain}
+                                    />
                                 </h2>
                             </SectionTag>
                         </div>
-                        <div className={`g-main ${styles.messageMain}`}>
+                        <div className="g-main">
                             <div className="js-only">
                                 <ContactForm topics={topicOptions(routes)} />
                             </div>
@@ -197,84 +142,39 @@ export default async function ContactPage() {
                                 className={styles.noScript}
                             />
                         </div>
-                        <div className={`g-rail ${styles.messageRecord}`}>
-                            <TitleBlock
-                                cells={recordCells(profile)}
-                                blankLabel={copy.record.blank}
-                            />
-                        </div>
                     </div>
                 </section>
             </ContactDesk>
 
-            <section
-                className={`section ${styles.elsewhere}`}
-                aria-labelledby="contact-else-h"
-            >
-                <div className="shell grid">
-                    <div className="g-rail">
-                        <SectionTag num={`${copy.num}.3`}>
-                            <h2 className="section-tag__h" id="contact-else-h">
-                                <Pair
-                                    themed={copy.elsewhereThemed}
-                                    plain={copy.elsewherePlain}
-                                />
-                            </h2>
-                        </SectionTag>
+            {profiles.length ? (
+                <section
+                    className={`section ${styles.elsewhere}`}
+                    aria-labelledby="contact-else-h"
+                >
+                    <div className="shell grid">
+                        <div className="g-rail">
+                            <SectionTag num={`${copy.num}.3`}>
+                                <h2
+                                    className="section-tag__h"
+                                    id="contact-else-h"
+                                >
+                                    <Pair
+                                        themed={copy.elsewhereThemed}
+                                        plain={copy.elsewherePlain}
+                                    />
+                                </h2>
+                            </SectionTag>
+                        </div>
+                        <div className="g-main">
+                            <RouteList
+                                items={profiles}
+                                columns={2}
+                                labelledBy="contact-else-h"
+                            />
+                        </div>
                     </div>
-                    <div className="g-main">
-                        <p className={styles.elsewhereLede}>
-                            {copy.elsewhereLede}
-                        </p>
-                        <ul className={styles.elsewhereList} role="list">
-                            {[
-                                ...profiles.map((link) => ({
-                                    key: link._key,
-                                    label: link.label,
-                                    url: link.url,
-                                    host: host(link.url),
-                                    external: true,
-                                })),
-                                {
-                                    key: "rss",
-                                    label: copy.rss,
-                                    url: siteRoutes.feed,
-                                    host: `${host(siteConfig.url)}${siteRoutes.feed}`,
-                                    external: false,
-                                },
-                            ].map((link) => (
-                                <li key={link.key}>
-                                    <a
-                                        className={styles.elsewhereLink}
-                                        href={link.url}
-                                        {...(link.external
-                                            ? {
-                                                  target: "_blank",
-                                                  rel: "noopener noreferrer",
-                                              }
-                                            : {})}
-                                    >
-                                        <span className={styles.elsewhereLabel}>
-                                            {link.label}
-                                        </span>
-                                        <span className={styles.elsewhereHost}>
-                                            {link.host}
-                                        </span>
-                                        <Icon
-                                            name={
-                                                link.external
-                                                    ? "external"
-                                                    : "rss"
-                                            }
-                                            className={styles.elsewhereIcon}
-                                        />
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            </section>
+                </section>
+            ) : null}
         </div>
     );
 }

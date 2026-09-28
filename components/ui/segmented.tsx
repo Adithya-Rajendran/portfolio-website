@@ -29,10 +29,13 @@ export default function Segmented({
     value,
     defaultValue,
     onChange,
+    legendClassName,
     className,
 }: {
-    /** The group's name for assistive technology (visually hidden). */
-    legend: string;
+    /** The group's name: read by assistive technology only, unless
+     *  `legendClassName` sets it as a visible label (a form field's). */
+    legend: React.ReactNode;
+    legendClassName?: string;
     name: string;
     options: readonly SegmentedOption[];
     value?: string;
@@ -42,7 +45,15 @@ export default function Segmented({
 }) {
     return (
         <fieldset className={className ? `seg ${className}` : "seg"}>
-            <legend className="sr-only">{legend}</legend>
+            <legend
+                className={
+                    legendClassName
+                        ? `seg__legend ${legendClassName}`
+                        : "sr-only"
+                }
+            >
+                {legend}
+            </legend>
             {options.map((option) => (
                 <label className="seg__opt" key={option.value}>
                     <input

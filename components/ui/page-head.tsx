@@ -6,8 +6,8 @@ import type { OrnamentName } from "@/components/ui/icon";
  * One page head per page (the mockup's `.page-head`): the tag row, the
  * themed title as the page's only h1 with its plain name, and an optional
  * serif intro. The plain name is read after a colon: "Flight Log: Blog".
- * A page with its own title ("Let’s talk.") names both under it, "Comms ·
- * Contact", read after the title's own full stop when it has one.
+ * A page with its own title (a tag page's tag) names both under it,
+ * "Subsystem · Tag", read after the title's own full stop when it has one.
  * `split` sets the title on the left half and the intro and actions on
  * the right from 960px (`.page-head--split`). `figure` is a decorative
  * drawing beside the head (`.page-head--figure`): at the title's right on

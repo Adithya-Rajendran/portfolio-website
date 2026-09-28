@@ -68,25 +68,18 @@ export const contactCopy = {
     num: "05",
     themed: "Comms",
     plain: "Contact",
-    title: "Let’s talk.",
     intro: "An idea, a question, or an opportunity. I’d like to hear from you.",
-    /** The page-head meta: "3 routes · one form · no public email". */
-    meta: (routes: number) =>
-        `${routes} ${routes === 1 ? "route" : "routes"} · one form · no public email`,
-    aosKey: "AOS",
-    aosCaption: "Acquisition of signal · carrier locked",
-    routesTitle: "Routes",
-    routesMeta: "Pick the one that fits · it sets the topic below",
-    messageTitle: "Message",
+    routesThemed: "Routes",
+    routesPlain: "Topics",
+    messageThemed: "Uplink",
+    messagePlain: "Message",
     elsewhereThemed: "Elsewhere",
     elsewherePlain: "Profiles",
-    elsewhereLede: "Or find me elsewhere.",
-    rss: "RSS feed",
     openTo: "Open to",
     include: "Include",
     links: {
         resumePdf: "Résumé (PDF)",
-        cv: "Experience and CV",
+        cv: "Experience & CV",
         rss: "RSS",
     },
     topics: {
@@ -115,20 +108,8 @@ export const contactCopy = {
             title: "Hello",
             subject: "Hello",
             cta: "Say hello",
-            template:
-                "Anything at all. If it is about an entry in the Flight Log, say which one.",
+            template: "A question, feedback on an entry, or anything else.",
         },
-    },
-    record: {
-        channel: "Channel",
-        channelValue: "This form",
-        channelNote: (max: number) =>
-            `Your email and a message of up to ${max.toLocaleString("en-US")} characters`,
-        email: "Email",
-        emailNote: "Not published",
-        openTo: "Open to",
-        updated: "Updated",
-        blank: "Intentionally left blank",
     },
     form: {
         topicLegend: "Topic",
@@ -144,7 +125,6 @@ export const contactCopy = {
         countFull: "Character limit reached.",
         send: "Send message",
         sending: "Sending…",
-        note: "Delivered with Resend after an invisible bot check.",
         errors: {
             emailMissing: "Enter your email address, so I can reply.",
             emailInvalid: "Enter an email address like you@example.com.",
@@ -152,7 +132,7 @@ export const contactCopy = {
             messageLong: (max: number) =>
                 `Shorten the message to ${max.toLocaleString("en-US")} characters or fewer.`,
         },
-        successTag: "Signal acquired",
+        successTag: "Sent",
         successTitle: "Message sent. Thanks for getting in touch.",
         logTopic: "Topic",
         logFrom: "From",
@@ -162,10 +142,10 @@ export const contactCopy = {
         again: "Write another message",
     },
     noScript: {
-        title: "The form needs JavaScript.",
-        body: "It runs an invisible bot check before anything is sent.",
+        title: "This form requires JavaScript.",
+        body: "You can also reach me on LinkedIn.",
         linkedIn: "Message me on LinkedIn",
-        profiles: "Write to me through one of the profiles below instead.",
+        profiles: "You can also reach me through the profiles below.",
     },
 } as const;
 
