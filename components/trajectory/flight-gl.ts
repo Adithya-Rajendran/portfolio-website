@@ -657,6 +657,13 @@ export function mountFlight(
         let x = left ? at.x - gap - w : at.x + gap;
         let y = at.y - h / 2;
         let align = left ? "right" : "left";
+        // A large world on a narrow stage leaves no room either side: the
+        // label goes under it instead of over it.
+        if (at.x - gap - w < minLabelX() && at.x + gap + w > W - 12) {
+            x = at.x - w / 2;
+            y = at.y + gap;
+            align = "center";
+        }
         if (radial > 0) {
             let vx = at.x - sun.x;
             let vy = at.y - sun.y;

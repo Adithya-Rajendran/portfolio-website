@@ -102,6 +102,7 @@ const stages: [string, Stage][] = [
     ["phone", stageFrame(390, 780, false)],
 ];
 const D2R = Math.PI / 180;
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const turn = (a: Pose, b: Pose) => {
     const u = viewAxes(a).fwd;
     const v = viewAxes(b).fwd;
@@ -158,18 +159,18 @@ describe("the chase camera", () => {
     );
 
     it.each(stages)(
-        "turns evenly between chapters, with no whip and no roll (%s)",
+        "turns between chapters without a whip, and never rolls (%s)",
         (_, stage) => {
             const poses = track(stage);
             const steps = poses
                 .slice(1)
                 .map((x, i) => turn(x.pose, poses[i].pose));
-            const median = [...steps].sort((a, b) => a - b)[
-                Math.floor(steps.length / 2)
-            ];
+            // The holds are still, so the moves between them do the
+            // turning: at most 0.5° per 1/4000 of progress outside the
+            // finale's crane.
             steps.forEach((step, i) => {
                 if (poses[i + 1].frame.segment.kind !== "plan")
-                    expect(step).toBeLessThanOrEqual(2.5 * median);
+                    expect(step).toBeLessThanOrEqual(0.5);
             });
             // Never more than 120° in any 0.05 of progress.
             const window = STEPS / 20;
@@ -261,6 +262,44 @@ describe("the chase camera", () => {
             });
         },
     );
+
+    it.each(stages)(
+        "keeps the Sun out of frame until the finale (%s)",
+        (_, stage) => {
+            for (const { frame, pose } of track(stage)) {
+                if (frame.segment.kind === "plan") continue;
+                const { fwd } = viewAxes(pose);
+                const toSun = pose.eye.map((v) => -v) as Vec3;
+                const cos =
+                    (fwd[0] * toSun[0] +
+                        fwd[1] * toSun[1] +
+                        fwd[2] * toSun[2]) /
+                    Math.hypot(...toSun);
+                expect(Math.acos(cos) / D2R).toBeGreaterThan(45);
+            }
+        },
+    );
+
+    it("pushes in on the flyby's world as the ship skims its limb", () => {
+        const stage = stageFrame(1440, 828, true);
+        const seg = paced.segments.find((s) => s.kind === "flyby")!;
+        const w = flown.worlds[seg.chapter];
+        // Around closest approach the world is large and a bright
+        // gibbous, and the ship passes within a quarter radius of its limb.
+        let closest = Infinity;
+        for (let u = 0.4; u <= 0.6; u += 0.005) {
+            const frame = frameAt(paced, lerp(seg.p0, seg.p1, u));
+            const pose = flown.pose(frame, stage);
+            const c = screenOf(pose, stage, flown.worldAt(w, frame.t));
+            const s = screenOf(pose, stage, flown.shipAt(frame.p));
+            const R = (w.radius * stage.kpx) / c.depth;
+            expect(R).toBeGreaterThan(95);
+            expect(flown.phaseAngle(pose, w, frame.t)).toBeLessThan(63);
+            const off = Math.abs(Math.hypot(s.x - c.x, s.y - c.y) - R) / R;
+            closest = Math.min(closest, off);
+        }
+        expect(closest).toBeLessThan(0.25);
+    });
 
     it("uses one projection for the lens and the tests", () => {
         const stage = stageFrame(1440, 828, true);
