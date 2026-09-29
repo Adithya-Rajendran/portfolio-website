@@ -44,7 +44,7 @@ export default async function TrajectoryPage() {
                     meta={
                         first ? (
                             <span className="data">
-                                {Math.floor(first.start)}
+                                {first.year}
                                 {current ? " – present" : null}
                             </span>
                         ) : undefined

@@ -76,4 +76,53 @@ describe("trajectory", () => {
         const g = frameAt(route, route.rest[2]);
         expect(missionDate(g.t, data, g)).toMatch(/^[A-Z][a-z]{2} \d{4}$/);
     });
+
+    it("flies an entry whose start is a placeholder, and never dates it", () => {
+        // The live record's shape: no short names or employment, and the
+        // degree's start stored equal to its end.
+        const live = trajectoryData(
+            cvEntries([
+                {
+                    _key: "ms",
+                    _type: "timelineEntry",
+                    kind: "education",
+                    title: "MS Engineering (Interdisciplinary)",
+                    organization: "San José State University",
+                    isCurrent: true,
+                    startDate: "2026-08-01",
+                },
+                {
+                    _key: "intern",
+                    _type: "timelineEntry",
+                    kind: "work",
+                    title: "Cybersecurity Analyst Intern",
+                    organization: "Technical Consulting & Research, Inc. (TCR)",
+                    startDate: "2023-12-01",
+                    endDate: "2024-05-01",
+                },
+                {
+                    _key: "bs",
+                    _type: "timelineEntry",
+                    kind: "education",
+                    title: "Bachelor of Science, Computer Science",
+                    organization: "University of California, Santa Cruz",
+                    startDate: "2023-06-01",
+                    endDate: "2023-06-01",
+                },
+            ] as never).all,
+            null,
+            "2026-09-29",
+        );
+        expect(live.chapters.map((c) => c.id)).toEqual(["bs", "intern", "ms"]);
+        const [bs, intern] = live.chapters;
+        expect(bs.startKnown).toBe(false);
+        expect(bs.year).toBe("2023");
+        expect(intern.flyby).toBe(true);
+        expect(intern.label).toBe("Internship");
+        const route = buildRoute(live);
+        for (const p of [0, 0.05, route.rest[0]]) {
+            const f = frameAt(route, p);
+            expect(missionDate(f.t, live, f)).toBe("Jun 2023");
+        }
+    });
 });

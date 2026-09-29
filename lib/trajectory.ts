@@ -42,6 +42,11 @@ export interface Chapter {
     end: number;
     /** Only the start year is known: never print a month for it. */
     startYearOnly: boolean;
+    /** The start is not recorded: the chapter is still flown, over a
+     *  nominal span, but no date before its end is ever printed. */
+    startKnown: boolean;
+    /** The rail's year: the start's, else the end's. */
+    year: string;
     /** The CV row on /resume. */
     href: string;
 }
@@ -68,40 +73,68 @@ export function splitTitle(title: string): [string, string | null] {
     return [match[1], note.charAt(0).toUpperCase() + note.slice(1)];
 }
 
+/** The span given to an entry whose start is not recorded, in years. */
+const NOMINAL_SPAN = 1.5;
+/** The shortest leg an entry is flown for, in years. */
+const MIN_SPAN = 0.25;
+const INTERN = /\bintern(ship)?\b/i;
+
 export function trajectoryData(
     entries: readonly CvEntry[],
     availability: Availability | null | undefined,
     todayIso: string,
 ): TrajectoryData {
     const today = todayYear(todayIso);
+    // Every dated entry is flown. One whose start is missing, or not before
+    // its end (a placeholder), gets a nominal span that ends on its end.
     const placed = entries
         .map((entry) => {
             const o = entry.orbit;
-            const start = decimalYear(o.startDate, o.startPrecision);
             const end = entry.current
                 ? today
                 : decimalYear(o.endDate, o.endPrecision);
-            return { entry, start, end };
+            const recorded = decimalYear(o.startDate, o.startPrecision);
+            const startKnown =
+                recorded !== null && end !== null && recorded < end;
+            const start = startKnown
+                ? recorded
+                : end !== null
+                  ? end - NOMINAL_SPAN
+                  : null;
+            return { entry, start, end, startKnown };
         })
         .filter(
-            (x): x is { entry: CvEntry; start: number; end: number } =>
-                x.start !== null && x.end !== null && x.end > x.start,
+            (
+                x,
+            ): x is {
+                entry: CvEntry;
+                start: number;
+                end: number;
+                startKnown: boolean;
+            } => x.start !== null && x.end !== null,
         )
         .sort((a, b) => a.start - b.start);
 
     const chapters: Chapter[] = [];
-    for (const { entry, start, end } of placed) {
-        // Overlapping entries are flown one after another.
-        const from = Math.max(start, chapters.at(-1)?.end ?? start);
-        if (end <= from) continue;
+    for (const { entry, start, end, startKnown } of placed) {
+        // Overlapping entries are flown one after another; an entry wholly
+        // inside the one before it still gets a short leg of its own.
+        const prevEnd = chapters.at(-1)?.end ?? start;
+        const from = Math.max(start, prevEnd);
+        const until = end > from ? end : from + MIN_SPAN;
         const [title, note] = splitTitle(entry.title);
+        const flyby = INTERN.test(entry.employment ?? entry.title);
         chapters.push({
             id: entry.id,
             label:
                 entry.employment ??
-                (entry.kind === "education" ? "Education" : "Work"),
+                (flyby
+                    ? "Internship"
+                    : entry.kind === "education"
+                      ? "Education"
+                      : "Work"),
             kind: entry.kind,
-            flyby: /intern/i.test(entry.employment ?? ""),
+            flyby,
             title,
             note,
             organization: entry.organization,
@@ -112,10 +145,12 @@ export function trajectoryData(
             line: entry.summary ?? entry.highlights[0] ?? null,
             burn: entry.burn,
             start: from,
-            end,
+            end: until,
             startYearOnly:
                 entry.orbit.startPrecision === "year" ||
                 /^\d{4}$/.test(entry.orbit.startDate ?? ""),
+            startKnown: startKnown && from === start,
+            year: String(Math.floor(startKnown ? from : end)),
             href: `/resume#${entry.anchor}`,
         });
     }
@@ -190,7 +225,7 @@ export function buildRoute(data: TrajectoryData): Route {
                 chapter: i,
                 from: i - 1,
                 t0: prev.end,
-                t1: chapter.start,
+                t1: chapter.startKnown ? chapter.start : prev.end,
                 w: 0.65,
             });
         }
@@ -290,13 +325,18 @@ export function missionDate(
     data: TrajectoryData,
     frame: Frame,
 ): string {
-    const year = Math.floor(t + 1e-6);
     const chapter = data.chapters[frame.segment.chapter];
+    const held =
+        frame.segment.kind === "coast" || frame.segment.kind === "flyby";
+    // Never print a date the record doesn't hold: an unrecorded start shows
+    // the chapter's end throughout.
+    const at = chapter && held && !chapter.startKnown ? chapter.end : t;
+    const year = Math.floor(at + 1e-6);
     if (
         chapter?.startYearOnly &&
         (frame.segment.kind === "coast" || frame.segment.kind === "flyby")
     )
         return String(year);
-    const month = Math.min(11, Math.max(0, Math.floor((t - year) * 12)));
+    const month = Math.min(11, Math.max(0, Math.floor((at - year) * 12)));
     return `${MONTHS[month]} ${year}`;
 }

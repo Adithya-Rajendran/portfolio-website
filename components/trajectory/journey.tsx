@@ -276,9 +276,7 @@ export default function Journey({
                         <div className={styles.inner}>
                             <div className={styles.hud} aria-hidden="true">
                                 <span className={styles.date} data-date>
-                                    {first
-                                        ? String(Math.floor(first.start))
-                                        : null}
+                                    {first?.year}
                                 </span>
                                 <span
                                     className={`label ${styles.phase}`}
@@ -397,7 +395,7 @@ export default function Journey({
                                                 }
                                             >
                                                 <span className={styles.year}>
-                                                    {Math.floor(chapter.start)}
+                                                    {chapter.year}
                                                 </span>
                                                 <span className={styles.name}>
                                                     {chapter.orgLabel}
