@@ -467,9 +467,11 @@ export const crewCopy = {
 export const trajectoryCopy = {
     tag: "Trajectory",
     title: "Experience",
-    metaTitle: "Trajectory",
+    /** Plain names in the title and description; "Trajectory" is only the
+     *  page head's tag. */
+    metaTitle: "Experience",
     description:
-        "The career so far, flown as a route from the first orbit to the next.",
+        "Education and work in order, each linked to its full entry on the CV.",
     heading: "The route",
     rail: "Chapters",
     play: "Play",
@@ -480,11 +482,12 @@ export const trajectoryCopy = {
     openTo: "Open to",
     next: "Next",
     contact: "Contact",
+    /** The readout's phase; the plan leg has none (its readout is
+     *  `next`, as on the rail). */
     phases: {
         coast: "Orbit",
         flyby: "Flyby",
         transfer: "Transfer",
-        plan: "Planned",
     },
     close: "The full record",
 } as const;

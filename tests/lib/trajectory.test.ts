@@ -77,6 +77,59 @@ describe("trajectory", () => {
         expect(missionDate(g.t, data, g)).toMatch(/^[A-Z][a-z]{2} \d{4}$/);
     });
 
+    it("never prints a month between a year-only end and the next start", () => {
+        const route = buildRoute(data);
+        const ucsc = data.chapters[0];
+        expect(ucsc.endYearOnly).toBe(true);
+        expect(data.chapters[1].endYearOnly).toBe(false);
+        // The transfer out of UC Santa Cruz (2019–2023) into TCR (Dec 2023).
+        const transfer = route.segments[1];
+        expect(transfer.kind).toBe("transfer");
+        for (let k = 0; k <= 20; k++) {
+            const p = transfer.p0 + ((transfer.p1 - transfer.p0) * k) / 20;
+            const f = frameAt(route, p);
+            if (f.segment !== transfer) continue;
+            expect(missionDate(f.t, data, f)).toBe("2023");
+        }
+        const arrived = frameAt(route, route.rest[1]);
+        expect(missionDate(arrived.t, data, arrived)).toMatch(/ 202[34]$/);
+        // Across the whole route, a month is printed only where the record
+        // holds one: never in 2019–2023 (UCSC's years).
+        for (let k = 0; k <= 400; k++) {
+            const f = frameAt(route, k / 400);
+            const printed = missionDate(f.t, data, f);
+            if (/^[A-Z]/.test(printed))
+                expect(printed).not.toMatch(/ (2019|2020|2021|2022)$/);
+            if (/ 2023$/.test(printed)) expect(printed).toBe("Dec 2023");
+        }
+    });
+
+    it("holds a month-dated start's chapter to the year in a year-only end's year", () => {
+        const one = trajectoryData(
+            cvEntries([
+                {
+                    _key: "a",
+                    _type: "timelineEntry",
+                    kind: "work",
+                    title: "Engineer",
+                    organization: "Example Org",
+                    startDate: "2020-09-01",
+                    endDate: "2022-01-01",
+                    endPrecision: "year",
+                },
+            ] as never).all,
+            null,
+            "2026-09-29",
+        );
+        const route = buildRoute(one);
+        const late = frameAt(route, 0.99);
+        expect(missionDate(late.t, one, late)).toBe("2022");
+        const early = frameAt(route, 0.05);
+        expect(missionDate(early.t, one, early)).toMatch(
+            /^[A-Z][a-z]{2} 2020$/,
+        );
+    });
+
     it("flies an entry whose start is a placeholder, and never dates it", () => {
         // The live record's shape: no short names or employment, and the
         // degree's start stored equal to its end.

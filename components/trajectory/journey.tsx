@@ -24,11 +24,14 @@ import styles from "./journey.module.css";
  * plain HTML and changes as the progress crosses chapters.
  *
  * - **Play** scrolls the page itself at a steady pace; any wheel, touch,
- *   key or click takes over again.
+ *   key or click (other than Play's own press), or a scroll it didn't make,
+ *   takes over again.
  * - **The chapters** jump to a chapter (a smooth scroll).
  * - **Still** (reduced motion, or the site's Pause motion): nothing pins;
  *   the scene holds one frame and the chapters pick it.
  * - **Without JavaScript** the chapters are a list and no scene is drawn.
+ * - **Screen readers** hear the chapter when it changes (a polite live
+ *   region), and focus in a card that leaves moves to its rail button.
  *
  * The scene is the renderer's (`createScene`): an SVG plot, a voyage, a 3D
  * flight. It gets the route and draws a frame; the record is shared.
@@ -63,6 +66,9 @@ function motionAllowed(): boolean {
 }
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
+/** Quiet time before the live region names the chapter on show, so a
+ *  scrub across several chapters is one announcement, not a list. */
+const ANNOUNCE_MS = 700;
 
 interface Controls {
     toggle(): void;
@@ -92,6 +98,7 @@ export default function Journey({
         const host = root.querySelector<HTMLElement>("[data-scene]")!;
         const dateEl = root.querySelector<HTMLElement>("[data-date]")!;
         const phaseEl = root.querySelector<HTMLElement>("[data-phase]")!;
+        const liveEl = root.querySelector<HTMLElement>("[data-announce]")!;
         const cards = [...root.querySelectorAll<HTMLElement>("[data-card]")];
         const rail = [...root.querySelectorAll<HTMLElement>("[data-go]")];
         const scene = createScene(host, data, route);
@@ -100,6 +107,9 @@ export default function Journey({
         let moving = motionAllowed();
         let still = 1;
         let lastCard = -1;
+        /** The card the live region last named (the first is not said). */
+        let spoken = -1;
+        let speak = 0;
         let top = 0;
         let span = 1;
         let queued = 0;
@@ -117,6 +127,7 @@ export default function Journey({
             moving ? clamp((window.scrollY - top) / span) : still;
         const phaseOf = (f: Frame) => {
             const kind = f.segment.kind;
+            if (kind === "plan") return "";
             if (kind === "transfer")
                 return (
                     data.chapters[f.segment.chapter]?.burn ??
@@ -124,12 +135,41 @@ export default function Journey({
                 );
             return copy.phases[kind];
         };
+        // The plan leg is not dated: the owner is open to roles, nothing is
+        // scheduled. Its readout is the rail's "Next".
+        const dateOf = (f: Frame) =>
+            f.segment.kind === "plan" ? copy.next : missionDate(f.t, data, f);
+        /** "Title, Organization, dates", or "Open to: …" for the plan. */
+        const said = (card: number) => {
+            const c = data.chapters[card];
+            if (c)
+                return [c.title, c.organization, c.dates]
+                    .filter(Boolean)
+                    .join(", ");
+            return data.planned
+                ? `${copy.openTo}: ${data.planned.lines.join(", ")}`
+                : "";
+        };
+        const announce = () => {
+            speak = 0;
+            if (lastCard === spoken) return;
+            spoken = lastCard;
+            liveEl.textContent = said(lastCard);
+        };
         const draw = () => {
             queued = 0;
             const f = frameAt(route, progress());
-            dateEl.textContent = missionDate(f.t, data, f);
+            dateEl.textContent = dateOf(f);
             phaseEl.textContent = phaseOf(f);
             if (f.card !== lastCard) {
+                // Focus in the card that leaves would fall to <body> when the
+                // card hides: hand it to the new chapter's rail button.
+                const held = document.activeElement;
+                if (
+                    held instanceof HTMLElement &&
+                    cards[lastCard]?.contains(held)
+                )
+                    rail[f.card]?.focus({ preventScroll: true });
                 cards.forEach((card, i) => {
                     if (i === f.card) card.dataset.on = "";
                     else delete card.dataset.on;
@@ -142,7 +182,15 @@ export default function Journey({
                     else button.removeAttribute("aria-current");
                 });
                 lastCard = f.card;
+                if (spoken < 0) spoken = f.card;
+                else {
+                    clearTimeout(speak);
+                    speak = window.setTimeout(announce, ANNOUNCE_MS);
+                }
             }
+            // Still mode's frame is picked here, not on the server: until
+            // now its record is held back (the CSS), so nothing swaps.
+            if (root.dataset.ready === undefined) root.dataset.ready = "";
             scene.render(f);
         };
         const request = () => {
@@ -163,6 +211,9 @@ export default function Journey({
         };
         const step = (now: number) => {
             if (!auto) return;
+            // Someone else moved the page (keys, the scrollbar, find in
+            // page): yield to them rather than snap back.
+            if (Math.abs(window.scrollY - auto.y) > 2) return stop();
             const dt = Math.min(64, now - auto.last);
             auto.last = now;
             const kind = frameAt(route, progress()).segment.kind;
@@ -203,15 +254,20 @@ export default function Journey({
             },
         };
 
+        // Any input takes over from Play except Play's own press (a pointer
+        // or touch on it, or Enter or Space while it has focus): that press
+        // toggles it. Other keys stop it wherever the focus is.
         const takeOver = (event: Event) => {
-            if (
-                auto &&
-                !(
-                    event.target instanceof Element &&
-                    event.target.closest("[data-play]")
-                )
-            )
-                stop();
+            if (!auto) return;
+            const onPlay =
+                event.target instanceof Element &&
+                event.target.closest("[data-play]");
+            const press =
+                event.type === "pointerdown" ||
+                event.type === "touchstart" ||
+                (event instanceof KeyboardEvent &&
+                    (event.key === "Enter" || event.key === " "));
+            if (!(onPlay && press)) stop();
         };
         const mode = () => {
             moving = motionAllowed();
@@ -244,6 +300,7 @@ export default function Journey({
         return () => {
             stop();
             cancelAnimationFrame(queued);
+            clearTimeout(speak);
             inputs.forEach((type) =>
                 window.removeEventListener(type, takeOver),
             );
@@ -336,13 +393,15 @@ export default function Journey({
                                                 {chapter.line}
                                             </p>
                                         ) : null}
-                                        <LinkArrow
-                                            className={styles.entry}
-                                            href={chapter.href}
-                                            prefetch={false}
-                                        >
-                                            {copy.entry}
-                                        </LinkArrow>
+                                        <div className={styles.act}>
+                                            <LinkArrow
+                                                className={styles.entry}
+                                                href={chapter.href}
+                                                prefetch={false}
+                                            >
+                                                {copy.entry}
+                                            </LinkArrow>
+                                        </div>
                                     </article>
                                 ))}
                                 {data.planned ? (
@@ -365,20 +424,22 @@ export default function Journey({
                                                     .join(" · ")}
                                             </p>
                                         ) : null}
-                                        <a
-                                            className={buttonClass({
-                                                variant: "primary",
-                                                size: "sm",
-                                                className: styles.cta,
-                                            })}
-                                            href={data.planned.href}
-                                        >
-                                            {data.planned.cta ?? copy.contact}
-                                            <Icon
-                                                name="arrow"
-                                                className="icon--nudge"
-                                            />
-                                        </a>
+                                        <div className={styles.ask}>
+                                            <a
+                                                className={buttonClass({
+                                                    variant: "primary",
+                                                    size: "sm",
+                                                })}
+                                                href={data.planned.href}
+                                            >
+                                                {data.planned.cta ??
+                                                    copy.contact}
+                                                <Icon
+                                                    name="arrow"
+                                                    className="icon--nudge"
+                                                />
+                                            </a>
+                                        </div>
                                     </article>
                                 ) : null}
                             </div>
@@ -437,17 +498,23 @@ export default function Journey({
                                         className: styles.play,
                                     })}
                                     data-play
-                                    aria-pressed={playing}
                                     onClick={() => controls.current?.toggle()}
                                 >
                                     <Icon name={playing ? "pause" : "play"} />
                                     {playing ? copy.pause : copy.play}
                                 </button>
                             </div>
+                            <p
+                                className="sr-only"
+                                aria-live="polite"
+                                data-announce
+                            />
                         </div>
+                        {figure ? (
+                            <p className={styles.figure}>{figure}</p>
+                        ) : null}
                     </div>
                 </div>
-                {figure ? <p className={styles.figure}>{figure}</p> : null}
             </div>
         </section>
     );

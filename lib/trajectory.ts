@@ -42,6 +42,8 @@ export interface Chapter {
     end: number;
     /** Only the start year is known: never print a month for it. */
     startYearOnly: boolean;
+    /** Only the end year is known: never print a month in that year. */
+    endYearOnly: boolean;
     /** The start is not recorded: the chapter is still flown, over a
      *  nominal span, but no date before its end is ever printed. */
     startKnown: boolean;
@@ -149,6 +151,10 @@ export function trajectoryData(
             startYearOnly:
                 entry.orbit.startPrecision === "year" ||
                 /^\d{4}$/.test(entry.orbit.startDate ?? ""),
+            endYearOnly:
+                !entry.current &&
+                (entry.orbit.endPrecision === "year" ||
+                    /^\d{4}$/.test(entry.orbit.endDate ?? "")),
             startKnown: startKnown && from === start,
             year: String(Math.floor(startKnown ? from : end)),
             href: `/resume#${entry.anchor}`,
@@ -318,25 +324,36 @@ const MONTHS = [
     "Dec",
 ];
 
-/** The mission date for the readout: "Mar 2024", or "2021" while the
- *  chapter's start is known only to the year. */
+/** The mission date for the readout: "Mar 2024", or "2021" where the
+ *  record holds only the year. A year-only bound never gets a month: not
+ *  while its chapter is held (a year-only start holds the whole chapter to
+ *  years), and not in a transfer's run through that year. */
 export function missionDate(
     t: number,
     data: TrajectoryData,
     frame: Frame,
 ): string {
-    const chapter = data.chapters[frame.segment.chapter];
-    const held =
-        frame.segment.kind === "coast" || frame.segment.kind === "flyby";
+    const { segment } = frame;
+    const chapter = data.chapters[segment.chapter];
+    const from =
+        segment.from === null ? undefined : data.chapters[segment.from];
+    const held = segment.kind === "coast" || segment.kind === "flyby";
     // Never print a date the record doesn't hold: an unrecorded start shows
     // the chapter's end throughout.
     const at = chapter && held && !chapter.startKnown ? chapter.end : t;
     const year = Math.floor(at + 1e-6);
-    if (
-        chapter?.startYearOnly &&
-        (frame.segment.kind === "coast" || frame.segment.kind === "flyby")
-    )
-        return String(year);
+    const yearOf = (v: number) => Math.floor(v + 1e-6);
+    const yearOnly = held
+        ? Boolean(
+              chapter?.startYearOnly ||
+              (chapter?.endYearOnly && year >= yearOf(chapter.end)),
+          )
+        : segment.kind === "transfer" &&
+          Boolean(
+              (from?.endYearOnly && year <= yearOf(from.end)) ||
+              (chapter?.startYearOnly && year >= yearOf(chapter.start)),
+          );
+    if (yearOnly) return String(year);
     const month = Math.min(11, Math.max(0, Math.floor((at - year) * 12)));
     return `${MONTHS[month]} ${year}`;
 }
