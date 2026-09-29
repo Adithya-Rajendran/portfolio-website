@@ -193,6 +193,7 @@ describe("warm lists", () => {
             "/blog/archive",
             "/portfolio",
             "/resume",
+            "/resume/trajectory",
             "/about",
             "/contact",
             "/feed.xml",
