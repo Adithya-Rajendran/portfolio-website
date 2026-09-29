@@ -613,6 +613,17 @@ function metaPost(post: PostWithBody): PostMeta {
 }
 
 /**
+ * The short names proposed for the owner to set in Sanity
+ * (`design/impl-log/phase-4-profile-copy.json`): the leading words of each
+ * project's own title. The Gmail project has none, so its title leads.
+ */
+const FIXTURE_PROJECT_NAMES: Partial<Record<string, string>> = {
+    homelab: "Homelab",
+    "kubernetes-cluster": "Kubernetes Cluster",
+    "personal-website": "Personal Website",
+};
+
+/**
  * The owner's four résumé projects, from the drafts the seed migration
  * writes (`migrations/seed-resume-projects/data.ts`), so fixture builds show
  * the real missions with their published ids (`project-<slug>`). The seeds
@@ -628,6 +639,9 @@ function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
         _updatedAt: "2026-09-28T00:00:00Z",
         designation: seed.designation,
         title: seed.title,
+        ...(FIXTURE_PROJECT_NAMES[seed.slug]
+            ? { name: FIXTURE_PROJECT_NAMES[seed.slug] }
+            : {}),
         slug: seed.slug,
         summary: seed.summary,
         status: seed.status,
@@ -700,6 +714,7 @@ export const FIXTURE_PROJECTS: ProjectWithBody[] = [
         _updatedAt: "2026-07-11T00:00:00Z",
         designation: 5,
         title: "Fixture flagship mission",
+        name: "Fixture Flagship",
         slug: "fixture-flagship-mission",
         summary:
             "A fixture project that fills every mission field the site reads.",

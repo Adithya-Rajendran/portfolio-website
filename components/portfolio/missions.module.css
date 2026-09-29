@@ -81,6 +81,23 @@
     text-decoration-thickness: 1px;
     text-underline-offset: 0.12em;
 }
+/* Without a short name, the title is the heading, in sentence case. */
+.stageHeading {
+    max-width: 22ch;
+    margin-top: var(--s-5);
+    font: 300 var(--step-4) / 1.08 var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+}
+.stageHeading a {
+    text-decoration: none;
+}
+.stageHeading a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.12em;
+}
 .stageTitle {
     max-width: 44ch;
     margin-top: var(--s-4);

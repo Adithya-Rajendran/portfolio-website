@@ -269,6 +269,7 @@ export type Project = {
     _rev: string;
     designation: number;
     title: string;
+    name?: string;
     slug: Slug;
     summary: string;
     types: Array<"research" | "hardware" | "software" | "infrastructure">;
@@ -677,6 +678,39 @@ export type PROFILE_QUERY_RESULT =
           _id: "profile";
           _updatedAt: string;
           name: null;
+          headline: null;
+          tagline: null;
+          introduction: null;
+          bio: null;
+          availability: null;
+          launch: null;
+          focusAreas: null;
+          workSummary: null;
+          writingDescription: null;
+          contactInvitation: null;
+          projectsIntro: null;
+          contactIntro: null;
+          contactRoutes: null;
+          seoDescription: null;
+          featuredPostId: null;
+          startHereIds: null;
+          location: null;
+          portrait: null;
+          resumeUrl: null;
+          resumeUploadedAt: null;
+          resumeNote: null;
+          socialLinks: null;
+          currentCuriosities: null;
+          curiositiesUpdatedAt: null;
+          timeline: null;
+          skillGroups: null;
+          credentials: null;
+          talksAndPapers: null;
+      }
+    | {
+          _id: "profile";
+          _updatedAt: string;
+          name: string | null;
           headline: null;
           tagline: null;
           introduction: null;
@@ -1288,12 +1322,13 @@ export type POST_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
 
 // Source: lib/sanity-client.ts
 // Variable: PROJECT_LIST_QUERY
-// Query: *[    _type == "project" && defined(slug.current)] | order(coalesce(endDate, startDate, _createdAt) desc){    _id,    _updatedAt,    designation,    title,    "slug": slug.current,    summary,    status,    statusNote,    types,    featured,    myRole,    startDate,    endDate,    datePrecision,    datesApproximate,    technologies,    highlights,    parameters[]{_key, label, value},    cover{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    coverPortrait{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    links[]{_key, _type, label, url, kind},    "hasModel": defined(model)}
+// Query: *[    _type == "project" && defined(slug.current)] | order(coalesce(endDate, startDate, _createdAt) desc){    _id,    _updatedAt,    designation,    title,    name,    "slug": slug.current,    summary,    status,    statusNote,    types,    featured,    myRole,    startDate,    endDate,    datePrecision,    datesApproximate,    technologies,    highlights,    parameters[]{_key, label, value},    cover{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    coverPortrait{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    links[]{_key, _type, label, url, kind},    "hasModel": defined(model)}
 export type PROJECT_LIST_QUERY_RESULT = Array<{
     _id: string;
     _updatedAt: string;
     designation: number;
     title: string;
+    name: string | null;
     slug: string;
     summary: string;
     status:
@@ -1362,12 +1397,13 @@ export type PROJECT_LIST_QUERY_RESULT = Array<{
 
 // Source: lib/sanity-client.ts
 // Variable: PROJECT_BY_SLUG_QUERY
-// Query: *[    _type == "project" && slug.current == $slug][0]{    _id,    _updatedAt,    designation,    title,    "slug": slug.current,    summary,    status,    statusNote,    types,    featured,    myRole,    startDate,    endDate,    datePrecision,    datesApproximate,    technologies,    highlights,    parameters[]{_key, label, value},    cover{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    coverPortrait{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    links[]{_key, _type, label, url, kind},    "hasModel": defined(model),    brief{problem, approach, outcome},    results[]{_key, metric, value, note},    lessons,    next,    model{        kind,        procedural,        "fileUrl": file.asset->url,        poster{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},        title,        alt,        realWorld{dimension, value, unit},        hotspots[]{            _key, label, title, body, part,            position{x, y, z},            anchor{heading, "postId": post._ref}        }    },    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
+// Query: *[    _type == "project" && slug.current == $slug][0]{    _id,    _updatedAt,    designation,    title,    name,    "slug": slug.current,    summary,    status,    statusNote,    types,    featured,    myRole,    startDate,    endDate,    datePrecision,    datesApproximate,    technologies,    highlights,    parameters[]{_key, label, value},    cover{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    coverPortrait{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    links[]{_key, _type, label, url, kind},    "hasModel": defined(model),    brief{problem, approach, outcome},    results[]{_key, metric, value, note},    lessons,    next,    model{        kind,        procedural,        "fileUrl": file.asset->url,        poster{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},        title,        alt,        realWorld{dimension, value, unit},        hotspots[]{            _key, label, title, body, part,            position{x, y, z},            anchor{heading, "postId": post._ref}        }    },    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type PROJECT_BY_SLUG_QUERY_RESULT = {
     _id: string;
     _updatedAt: string;
     designation: number;
     title: string;
+    name: string | null;
     slug: string;
     summary: string;
     status:
@@ -1624,8 +1660,8 @@ declare global {
         '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_META_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n].slug.current': POST_SLUGS_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n]{"slug": slug.current, "updatedAt": _updatedAt}': POST_SLUGS_WITH_DATES_QUERY_RESULT;
-        '*[\n    _type == "project" && defined(slug.current)\n] | order(coalesce(endDate, startDate, _createdAt) desc){\n    _id,\n    _updatedAt,\n    designation,\n    title,\n    "slug": slug.current,\n    summary,\n    status,\n    statusNote,\n    types,\n    featured,\n    myRole,\n    startDate,\n    endDate,\n    datePrecision,\n    datesApproximate,\n    technologies,\n    highlights,\n    parameters[]{_key, label, value},\n    cover{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    coverPortrait{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    links[]{_key, _type, label, url, kind},\n    "hasModel": defined(model)\n}': PROJECT_LIST_QUERY_RESULT;
-        '*[\n    _type == "project" && slug.current == $slug\n][0]{\n    _id,\n    _updatedAt,\n    designation,\n    title,\n    "slug": slug.current,\n    summary,\n    status,\n    statusNote,\n    types,\n    featured,\n    myRole,\n    startDate,\n    endDate,\n    datePrecision,\n    datesApproximate,\n    technologies,\n    highlights,\n    parameters[]{_key, label, value},\n    cover{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    coverPortrait{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    links[]{_key, _type, label, url, kind},\n    "hasModel": defined(model),\n    brief{problem, approach, outcome},\n    results[]{_key, metric, value, note},\n    lessons,\n    next,\n    model{\n        kind,\n        procedural,\n        "fileUrl": file.asset->url,\n        poster{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n        title,\n        alt,\n        realWorld{dimension, value, unit},\n        hotspots[]{\n            _key, label, title, body, part,\n            position{x, y, z},\n            anchor{heading, "postId": post._ref}\n        }\n    },\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': PROJECT_BY_SLUG_QUERY_RESULT;
+        '*[\n    _type == "project" && defined(slug.current)\n] | order(coalesce(endDate, startDate, _createdAt) desc){\n    _id,\n    _updatedAt,\n    designation,\n    title,\n    name,\n    "slug": slug.current,\n    summary,\n    status,\n    statusNote,\n    types,\n    featured,\n    myRole,\n    startDate,\n    endDate,\n    datePrecision,\n    datesApproximate,\n    technologies,\n    highlights,\n    parameters[]{_key, label, value},\n    cover{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    coverPortrait{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    links[]{_key, _type, label, url, kind},\n    "hasModel": defined(model)\n}': PROJECT_LIST_QUERY_RESULT;
+        '*[\n    _type == "project" && slug.current == $slug\n][0]{\n    _id,\n    _updatedAt,\n    designation,\n    title,\n    name,\n    "slug": slug.current,\n    summary,\n    status,\n    statusNote,\n    types,\n    featured,\n    myRole,\n    startDate,\n    endDate,\n    datePrecision,\n    datesApproximate,\n    technologies,\n    highlights,\n    parameters[]{_key, label, value},\n    cover{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    coverPortrait{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    links[]{_key, _type, label, url, kind},\n    "hasModel": defined(model),\n    brief{problem, approach, outcome},\n    results[]{_key, metric, value, note},\n    lessons,\n    next,\n    model{\n        kind,\n        procedural,\n        "fileUrl": file.asset->url,\n        poster{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n        title,\n        alt,\n        realWorld{dimension, value, unit},\n        hotspots[]{\n            _key, label, title, body, part,\n            position{x, y, z},\n            anchor{heading, "postId": post._ref}\n        }\n    },\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': PROJECT_BY_SLUG_QUERY_RESULT;
         '*[_type == "project" && defined(slug.current)].slug.current': PROJECT_SLUGS_QUERY_RESULT;
         '*[\n    _type == "project" && defined(slug.current)\n]{"slug": slug.current, "updatedAt": _updatedAt}': PROJECT_SLUGS_WITH_DATES_QUERY_RESULT;
         '{\n    "posts": *[\n        _type == "post" && defined(publishedAt) && publishedAt <= $today\n    ]{"slug": slug.current, tags},\n    "projectSlugs": *[_type == "project" && defined(slug.current)].slug.current\n}': WARM_LISTS_QUERY_RESULT;

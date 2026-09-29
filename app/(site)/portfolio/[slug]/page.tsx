@@ -25,7 +25,7 @@ import { contentsHeadings, extractHeadings } from "@/lib/headings";
 import { logEntries } from "@/lib/log-index";
 import {
     adjacentMissions,
-    essayAdds,
+    essayShown,
     headStats,
     missionCallouts,
     missionEntries,
@@ -211,16 +211,14 @@ export default async function ProjectPage({
     const hasNotes = results.some((row) => row.note?.trim());
     const lessons = (project.lessons ?? []).filter((line) => line.trim());
     const nextSteps = (project.next ?? []).filter((line) => line.trim());
-    const hasEssay = project.body?.length > 0;
+    // The essay (Case study) only when it says more than the card and the
+    // brief; a note shows it on the same terms.
+    const hasEssay = project.body?.length > 0 && essayShown(project);
     const contents = headings.length ? contentsHeadings(headings) : [];
     const writeUp = writeUpHref(mission, project, original);
 
-    // The short note: the highlights that add to the summary, and the
-    // essay only when it says more than both.
+    // The short note: the highlights that add to the summary.
     const lines = noteLines(mission.summary, mission.highlights);
-    const noteEssay =
-        hasEssay &&
-        essayAdds(project.body, [mission.summary, ...mission.highlights]);
 
     const essay = (
         <DocSection
@@ -270,7 +268,7 @@ export default async function ProjectPage({
                     label={copy.plain}
                     href={siteRoutes.portfolio}
                     code={mission.designation}
-                    name={mission.name}
+                    name={mission.label}
                 />
 
                 {layout === "note" ? (
@@ -291,20 +289,26 @@ export default async function ProjectPage({
                     >
                         <div className={styles.headCopy}>
                             <MissionLine mission={mission} />
-                            <h1
-                                className={styles.title}
-                                style={
-                                    {
-                                        "--chars": mission.nameChars,
-                                    } as CSSProperties
-                                }
-                            >
-                                {mission.name}
-                                <span className="sr-only">: </span>
-                                <span className={styles.dek}>
+                            {mission.name ? (
+                                <h1
+                                    className={styles.title}
+                                    style={
+                                        {
+                                            "--chars": mission.nameChars,
+                                        } as CSSProperties
+                                    }
+                                >
+                                    {mission.name}
+                                    <span className="sr-only">: </span>
+                                    <span className={styles.dek}>
+                                        {mission.title}
+                                    </span>
+                                </h1>
+                            ) : (
+                                <h1 className={styles.noteTitle}>
                                     {mission.title}
-                                </span>
-                            </h1>
+                                </h1>
+                            )}
                             {mission.summary ? (
                                 <p className={styles.summary}>
                                     {mission.summary}
@@ -353,7 +357,6 @@ export default async function ProjectPage({
                                 ) : (
                                     <Plate
                                         image={cover}
-                                        label="Pl. I"
                                         caption={cover?.caption}
                                         sizes="(min-width: 60rem) 36vw, 100vw"
                                         priority
@@ -383,7 +386,7 @@ export default async function ProjectPage({
 
             {layout === "note" ? (
                 <>
-                    {noteEssay ? essay : null}
+                    {hasEssay ? essay : null}
                     {related.length ? (
                         <DocSection id="related" title={copy.related}>
                             <LogIndex entries={related} level={3} />
@@ -418,7 +421,7 @@ export default async function ProjectPage({
                                         <span className="caption__num">
                                             {copy.table}
                                         </span>
-                                        {copy.resultsCaption(mission.name)}
+                                        {copy.resultsCaption(mission.title)}
                                     </caption>
                                     <thead>
                                         <tr>
@@ -559,7 +562,7 @@ export default async function ProjectPage({
                                 ? {
                                       href: previous.href,
                                       label: copy.previousFile,
-                                      title: previous.name,
+                                      title: previous.label,
                                   }
                                 : null
                         }
@@ -569,7 +572,7 @@ export default async function ProjectPage({
                                 ? {
                                       href: next.href,
                                       label: copy.nextFile,
-                                      title: next.name,
+                                      title: next.label,
                                   }
                                 : null
                         }

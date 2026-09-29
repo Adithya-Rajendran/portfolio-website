@@ -184,7 +184,7 @@ export default defineType({
             type: "number",
             group: "editorial",
             description:
-                "Printed as MSN-01 to MSN-99 on project pages, tiles and the CV. After the featured slots, it orders the projects on the site (the last one is the least prominent on the home page) and in the Studio. New projects take the next free number. Keep it once published, so links and printed CVs stay right.",
+                "Printed as MSN-01 to MSN-99 in the project page's breadcrumb only. After the featured slots, it orders the projects on the site (the last one is the least prominent) and the project pages' previous / next links, and it orders the Studio. New projects take the next free number. Keep it once published, so links stay right.",
             validation: (Rule) =>
                 Rule.required()
                     .integer()
@@ -200,6 +200,15 @@ export default defineType({
             type: "string",
             group: "editorial",
             validation: (Rule) => Rule.required().max(100),
+        }),
+        defineField({
+            name: "name",
+            title: "Short Name",
+            type: "string",
+            group: "editorial",
+            description:
+                "Optional. One to three words set in capitals above the title on the project's page and its card, for example “Homelab”; also the name in the page's breadcrumb and the previous / next links. Leave blank to lead with the title alone.",
+            validation: (Rule) => Rule.max(40),
         }),
         defineField({
             name: "slug",
@@ -223,7 +232,7 @@ export default defineType({
             type: "array",
             group: "editorial",
             description:
-                "One to three. Shown on mission tiles and the title block, and used to filter Missions.",
+                "One to three. Shown on the project's line (on its page, card and home row) and on the CV.",
             // The member's list types the stored values; the field's list
             // draws the checkboxes.
             of: [
@@ -282,7 +291,7 @@ export default defineType({
             type: "string",
             group: "details",
             description:
-                "Shown with a symbol and a label on tiles and the mission title block (● Active, ■ Complete, ‖ Paused, ○ Archived, ◌ Planned, × Stopped).",
+                "Shown with a symbol and a label on the project's line, its row and the CV (● Active, ■ Complete, ‖ Paused, ○ Archived, ◌ Planned, × Stopped).",
             options: { list: [...PROJECT_STATUSES], layout: "radio" },
             validation: (Rule) => Rule.required(),
         }),
@@ -292,7 +301,7 @@ export default defineType({
             type: "string",
             group: "details",
             description:
-                "Optional. One line on where things stand, shown in the title block and on tiles.",
+                "Optional. One line on where things stand, shown as Status in the facts on the project's page.",
             validation: (Rule) => Rule.max(140),
         }),
         defineField({
@@ -301,7 +310,7 @@ export default defineType({
             type: "string",
             group: "details",
             description:
-                "Optional. For example “Personal project”. Shown in the title block and on CV mission rows.",
+                "Optional. For example “Personal project”. Shown as Role in the facts on the project's page and on the CV.",
             validation: (Rule) => Rule.max(60),
         }),
         defineField({
@@ -374,7 +383,7 @@ export default defineType({
             type: "array",
             group: "details",
             description:
-                "Up to six short facts for the row under the mission header, for example “Nodes · 3”. Only values stated in a source.",
+                "Up to six short facts, for example “Nodes · 3”. A value that starts with a number is a stat in the project page's head, unless the project has Results; a named value is listed in the page's facts, or left out when Technologies already names it. Only values stated in a source.",
             of: [
                 defineArrayMember({
                     name: "parameter",
@@ -418,7 +427,7 @@ export default defineType({
             type: "object",
             group: "brief",
             description:
-                "Optional. The Brief module on the mission page: the problem, the approach and the outcome, a few sentences each.",
+                "Optional. The Problem, approach and outcome section on the project's page, a few sentences each. Say what the summary and highlights do not: a brief that only restates them does not give the project a full page.",
             fields: [
                 defineField({
                     name: "problem",
@@ -449,7 +458,7 @@ export default defineType({
             type: "array",
             group: "brief",
             description:
-                "Optional. Measured results for the results table on the mission page.",
+                "Optional. Measured results for the Results table on the project's page, each with a note giving its context (the data, the split, what was not compared).",
             of: [
                 defineArrayMember({
                     name: "result",
@@ -769,6 +778,8 @@ export default defineType({
             title: "Project Essay",
             type: "contentBody",
             group: "content",
+            description:
+                "The Case study on the project's page. When it only restates the summary, highlights and brief, the page leaves it out.",
             validation: (Rule) => Rule.required().min(1),
         }),
     ],

@@ -328,6 +328,10 @@ export const missionsCopy = {
         links: "Links",
     },
     callouts: "Parts of the build",
+    /** A callout whose section is in a post: the mark, and its words for
+     *  screen readers ("in A Homelab Built to Be Rebuilt"). */
+    calloutWriteUp: "Write-up",
+    calloutIn: (title: string) => `in ${title}`,
     briefTitle: "Problem, approach and outcome",
     brief: {
         problem: "Problem",

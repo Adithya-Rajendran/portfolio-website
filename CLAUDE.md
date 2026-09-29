@@ -136,8 +136,11 @@ only live in comments or commit messages.
   words each project once (`toMission`) for `/portfolio`, the mission files
   and the home page's projects (the stage and its rows), and finds each
   one's write-up from the list data (`originalEntries`; `writeUpHref` is
-  where "Read the write-up" goes). A mission's name, set in capitals on the stage
-  and the file, comes from its slug (`homelab` → Homelab); the order
+  where "Read the write-up" goes). A mission's short name (`project.name`,
+  "Homelab"), set in capitals over its title on the stage and the file, is
+  the owner's, never derived from the slug: without one the title is the
+  heading, in sentence case, and the crumb, pager and share card use it
+  (`Mission.label`); the order
   (`missionOrder`) is the featured slots, then the mission number, then
   the list query's, and `missionTiers` splits it into the flagship, the
   next ones with room of their own (two tiles on `/portfolio`, two rows on
@@ -148,17 +151,26 @@ only live in comments or commit messages.
   page: its head's stats (`headStats`) unless it has a results table,
   which carries them with their notes; the index has no counts, register
   or card stats. `missionLayout` picks the page's layout: the full file
-  where there is evidence (a brief, results, lessons or next steps,
-  callouts, a photograph, an essay in sections), otherwise the short note
-  (title, summary, the highlights that add to it via `noteLines`, the
-  essay only when it says more via `essayAdds`, the facts and links). A mission's Flight Log entries are
+  where there is evidence (a brief that adds to the card, `briefAdds`;
+  results, lessons or next steps, callouts, a photograph, an essay in
+  sections), otherwise the short note (title, summary, the highlights that
+  add to it via `noteLines`, the facts and links). Either shows the essay
+  (Case study) only when it says more than the summary, highlights and
+  brief (`essayShown`: a heading, a non-text block or eight content words
+  they lack, counted by stem in `newWords`), and "Read the write-up" goes to
+  the original entry, else to that essay, else is absent. A mission's Flight Log entries are
   derived (`missionEntries`): the posts that reference it, and the posts
   its links, its essay and its model's callouts point at; the original
   entry is the first linked one, else the oldest referencing one. Links to
   the site's own posts are entries, never external links. The 3D viewer's
   server part (`components/viewer/viewer-figure.tsx`) is the model's
   poster as a plate, and its callouts are numbered rows linked to their
-  sections; PR 15 mounts the drawing in its `data-viewer` slot. The file
+  sections (a post's marked "Write-up", its title for screen readers);
+  PR 15 mounts the drawing in its `data-viewer` slot, and with it the
+  model's description (`model.alt`), which describes the drawing, not the
+  photograph. A lone photograph outside the long read (the stage, a tile,
+  a project's head) carries no plate number: `Plate`'s `label` is
+  optional, and Pl. I… number the long read's plates only. The file
   reuses `PostReader`, so its in-page links resolve inside the visible
   file. The old `/portfolio` fragments (`#experience`, `#skills`,
   `#certifications`, `#engineering-writing`, `#contact`) are link rows
@@ -477,7 +489,8 @@ deployment require an authenticated Sanity CLI session.
   describes no real work. The fixture profile holds only the owner's
   published values, plus the Open To lines and Site copy from
   `design/impl-log/phase-4-profile-copy.json`: a field the real profile
-  leaves empty stays empty.
+  leaves empty stays empty. The fixture projects' short names come from
+  the same file (none for the Gmail project, whose title leads).
 - Content migrations (`migrations/<name>/index.ts`) are run only by the owner,
   from an authenticated CLI (`migrations/README.md` has the commands, from
   the backup to publishing); never from CI or an agent session. Keep their

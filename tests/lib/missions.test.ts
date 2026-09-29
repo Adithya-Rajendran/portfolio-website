@@ -5,15 +5,17 @@ import { isQuantity, splitUnit } from "@/lib/metrics";
 import {
     adjacentMissions,
     bodyLinks,
+    briefAdds,
     essayAdds,
+    essayShown,
     headStats,
     inStack,
     missionCallouts,
     missionEntries,
     missionLayout,
-    missionName,
     missionOrder,
     missionTiers,
+    newWords,
     noteLines,
     originalEntries,
     resultRows,
@@ -59,20 +61,13 @@ const POST_IDS = new Map([
     ["id-homelab", "my-homelab"],
 ]);
 
-describe("missionName", () => {
-    it("names a mission by its slug's words", () => {
-        expect(missionName("homelab")).toBe("Homelab");
-        expect(missionName("kubernetes-cluster")).toBe("Kubernetes Cluster");
-        expect(missionName("gmail-spam-filter")).toBe("Gmail Spam Filter");
-    });
-});
-
 describe("toMission", () => {
     it("words a project for the missions pages", () => {
         const mission = toMission(
             project({
                 designation: 3,
                 slug: "kubernetes-cluster",
+                name: " Kubernetes Cluster ",
                 status: "completed",
                 types: ["infrastructure"],
                 startDate: "2024-01-01",
@@ -90,6 +85,7 @@ describe("toMission", () => {
         expect(mission).toMatchObject({
             designation: "MSN-03",
             name: "Kubernetes Cluster",
+            label: "Kubernetes Cluster",
             nameChars: 10,
             href: "/portfolio/kubernetes-cluster",
             statusValue: "complete",
@@ -100,6 +96,21 @@ describe("toMission", () => {
             stats: [{ id: "a", label: "Nodes", value: "3" }],
             specs: [],
         });
+    });
+
+    it("leads with the title when the owner has given no short name", () => {
+        const mission = toMission(
+            project({
+                slug: "gmail-spam-filter",
+                title: "Experimental Gmail spam classifier",
+                name: " ",
+            }),
+            SITE,
+        );
+        // Never a name made from the slug ("Gmail Spam Filter").
+        expect(mission.name).toBeNull();
+        expect(mission.label).toBe("Experimental Gmail spam classifier");
+        expect(mission.nameChars).toBe("Experimental".length);
     });
 
     it("leaves unknown values empty rather than guessing", () => {
@@ -430,7 +441,8 @@ describe("missionCallouts", () => {
                 title: "Tier 0",
                 body: "Three Pis.",
                 href: "/blog/my-homelab#tier-0",
-                entry: "LOG 003",
+                // The post's title: the callout is marked as its write-up.
+                entry: "my-homelab",
             },
             {
                 id: "b",
@@ -614,6 +626,7 @@ describe("the short project note", () => {
         const lines = [kubernetes.summary, ...(kubernetes.highlights ?? [])];
         // "I built …" restates "Built …".
         expect(essayAdds(kubernetes.body, lines)).toBe(false);
+        // A sentence or two more is still a restatement…
         expect(
             essayAdds(
                 body(
@@ -622,11 +635,67 @@ describe("the short project note", () => {
                 ),
                 ["Built a cluster"],
             ),
+        ).toBe(false);
+        // …eight new words are not.
+        expect(
+            essayAdds(
+                body(
+                    block("a", "I built a cluster."),
+                    block(
+                        "b",
+                        "Upgrades drained each node while etcd snapshots went to object storage nightly.",
+                    ),
+                ),
+                ["Built a cluster"],
+            ),
         ).toBe(true);
         expect(
             essayAdds(body({ _type: "image", _key: "i" }), ["Built it."]),
         ).toBe(true);
         expect(essayAdds(null, ["Built it."])).toBe(false);
+    });
+
+    it("counts new words by stem, so a plural or a tense is not new", () => {
+        expect(
+            newWords(["Published pages, cached."], ["publishes a page cache"]),
+        ).toBe(0);
+        expect(
+            newWords(["The source code is on GitHub."], ["Built a site."]),
+        ).toBe(3);
+    });
+
+    it("gives a brief that restates the card no page of its own, and drops an essay that restates the brief", () => {
+        const website = FIXTURE_PROJECTS.find(
+            (item) => item.slug === "personal-website",
+        )!;
+        // Its approach says what the card does not, so the brief stays…
+        expect(briefAdds(website)).toBe(true);
+        expect(missionLayout(website)).toBe("file");
+        // …but a brief of the card's own words is no evidence.
+        expect(
+            briefAdds({
+                ...website,
+                brief: {
+                    problem: website.brief?.problem,
+                    outcome: website.brief?.outcome,
+                },
+            }),
+        ).toBe(false);
+        // The two-sentence essay repeats the approach: no Case study and
+        // no Read the write-up pointing at it.
+        expect(essayShown(website)).toBe(false);
+        expect(
+            writeUpHref({ href: "/portfolio/personal-website" }, website, null),
+        ).toBeNull();
+        // The homelab's and the Gmail project's essays add to theirs.
+        for (const slug of ["homelab", "gmail-spam-filter"]) {
+            expect(
+                essayShown(
+                    FIXTURE_PROJECTS.find((item) => item.slug === slug)!,
+                ),
+                slug,
+            ).toBe(true);
+        }
     });
 
     it("sends Read the write-up to the entry, else to a file's own essay", () => {
@@ -655,6 +724,7 @@ describe("buildMission", () => {
                 slug: "gmail-spam-filter",
                 designation: 1,
                 title: "Gmail spam detection with machine learning",
+                name: "Gmail Classifier",
                 technologies: ["Gmail API"],
                 links: [
                     {
@@ -672,7 +742,7 @@ describe("buildMission", () => {
             "@context": "https://schema.org",
             "@type": "CreativeWork",
             name: "Gmail spam detection with machine learning",
-            alternateName: "Gmail Spam Filter",
+            alternateName: "Gmail Classifier",
             identifier: "MSN-01",
             url: `${SITE}/portfolio/gmail-spam-filter`,
             description: "What it is.",

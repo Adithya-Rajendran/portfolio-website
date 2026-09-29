@@ -291,7 +291,7 @@ export function buildMission(
         "@context": "https://schema.org",
         "@type": "CreativeWork",
         name: mission.title,
-        alternateName: mission.name,
+        ...(mission.name ? { alternateName: mission.name } : {}),
         identifier: mission.designation,
         url: `${siteConfig.url}${mission.href}`,
         ...(mission.summary ? { description: mission.summary } : {}),

@@ -248,6 +248,8 @@ export type ProjectListItem = {
     /** The mission number: 2 prints as MSN-02. */
     designation: number;
     title: string;
+    /** The optional short name set in capitals ("Homelab"). */
+    name?: string | null;
     slug: string;
     summary: string;
     status: ProjectStatus;
@@ -472,6 +474,7 @@ const projectListFields = `
     _updatedAt,
     designation,
     title,
+    name,
     "slug": slug.current,
     summary,
     status,

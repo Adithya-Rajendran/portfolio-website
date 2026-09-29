@@ -11,7 +11,8 @@ import styles from "./missions.module.css";
 
 /**
  * The flagship (contract §4 and §9): the mission's line (type, status,
- * dates), its name in capitals, its title, its summary, which leads, and
+ * dates), the owner's short name in capitals over its title (else the
+ * title alone as the heading), its summary, which leads, and
  * its stack in seven columns, beside its photograph as a plate in five.
  * Without a photograph the copy takes the full width. Shared by
  * /portfolio and the home page. No stats and no mission number: numbers
@@ -44,13 +45,25 @@ export default function MissionStage({
         >
             <div className={styles.stageCopy}>
                 <MissionLine mission={mission} />
-                <Heading
-                    className={styles.stageName}
-                    style={{ "--chars": mission.nameChars } as CSSProperties}
-                >
-                    <Link href={mission.href}>{mission.name}</Link>
-                </Heading>
-                <p className={styles.stageTitle}>{mission.title}</p>
+                {mission.name ? (
+                    <>
+                        <Heading
+                            className={styles.stageName}
+                            style={
+                                {
+                                    "--chars": mission.nameChars,
+                                } as CSSProperties
+                            }
+                        >
+                            <Link href={mission.href}>{mission.name}</Link>
+                        </Heading>
+                        <p className={styles.stageTitle}>{mission.title}</p>
+                    </>
+                ) : (
+                    <Heading className={styles.stageHeading}>
+                        <Link href={mission.href}>{mission.title}</Link>
+                    </Heading>
+                )}
                 {mission.summary ? (
                     <p className={styles.stageSummary}>{mission.summary}</p>
                 ) : null}
@@ -73,7 +86,6 @@ export default function MissionStage({
                 <Plate
                     className={styles.stagePlate}
                     image={plate}
-                    label="Pl. I"
                     caption={caption}
                     ratio="4 / 5"
                     focus="50% 40%"

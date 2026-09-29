@@ -1,6 +1,5 @@
 import type { Page } from "@playwright/test";
 import { missionsCopy as copy } from "@/lib/copy";
-import { missionName } from "@/lib/missions";
 import { expect, test } from "./support/test";
 import { sitemapPages } from "./support/routes";
 
@@ -83,14 +82,27 @@ test("every project page has its crumb, title, close and pager", async ({
     for (const path of paths) {
         await test.step(path, async () => {
             await page.goto(path);
-            const name = missionName(path.split("/").pop()!);
-            // The crumb names the project, with its number as its one
-            // quiet identifier.
+            // The crumb names the project by the owner's short name, else
+            // its title, with its number as its one quiet identifier; a
+            // file's heading leads with the same words.
             await expect(main(page).getByText(/^MSN-\d{2}$/)).toHaveCount(1);
-            await expect(main(page).getByText(name).first()).toBeVisible();
-            await expect(
-                main(page).getByRole("heading", { level: 1 }),
-            ).toHaveCount(1);
+            const heading = main(page).getByRole("heading", { level: 1 });
+            await expect(heading).toHaveCount(1);
+            const crumb = (
+                await main(page).locator(".crumb-row__item").textContent()
+            )
+                ?.replace(/\/|MSN-\d{2}/g, "")
+                .trim();
+            expect(crumb).toBeTruthy();
+            const layout = await main(page)
+                .locator("[data-page='mission']")
+                .getAttribute("data-layout");
+            if (layout === "file") {
+                const title = (await heading.textContent())?.trim() ?? "";
+                expect(title.startsWith(crumb!), `${title} / ${crumb}`).toBe(
+                    true,
+                );
+            }
             const pager = main(page).getByRole("navigation", {
                 name: copy.pagerLabel,
             });

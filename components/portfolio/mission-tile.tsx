@@ -15,30 +15,27 @@ export function MissionTiles({ children }: { children: React.ReactNode }) {
 
 /**
  * A mission as a tile (contract §4): text first. Its line (type, status,
- * dates), its name (the link to its file, stretched over the tile), its
- * title, its summary and its stack, under a hairline. Numbers stay on
- * the file, beside their notes. A cover adds a 3:2 plate on top; a
- * mission without one is not given a stand-in.
+ * dates), its heading (the link to its file, stretched over the tile:
+ * the owner's short name over the title, else the title alone), its
+ * summary and its stack, under a hairline. Numbers stay on the file,
+ * beside their notes. A cover adds a 3:2 plate on top; a mission without
+ * one is not given a stand-in.
  */
 export default function MissionTile({
     mission,
     cover,
-    plate,
     as: Heading = "h3",
 }: {
     mission: Mission;
     cover?: SanityImageValue | null;
-    /** The cover's plate number: "Pl. II". */
-    plate?: string;
     as?: "h2" | "h3";
 }) {
     return (
         <article className={styles.tile}>
-            {cover?.asset && plate ? (
+            {cover?.asset ? (
                 <Plate
                     className={styles.tilePlate}
                     image={cover}
-                    label={plate}
                     caption={cover.caption}
                     ratio="3 / 2"
                     sizes="(min-width: 60rem) 30vw, 100vw"
@@ -51,10 +48,12 @@ export default function MissionTile({
                 style={{ "--chars": mission.nameChars } as CSSProperties}
             >
                 <Link className="stretch" href={mission.href}>
-                    {mission.name}
+                    {mission.label}
                 </Link>
             </Heading>
-            <p className={styles.tileTitle}>{mission.title}</p>
+            {mission.name ? (
+                <p className={styles.tileTitle}>{mission.title}</p>
+            ) : null}
             {mission.summary ? (
                 <p className={styles.tileSummary}>{mission.summary}</p>
             ) : null}

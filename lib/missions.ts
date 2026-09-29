@@ -49,9 +49,13 @@ export interface Mission {
     number: number;
     /** "MSN-02". */
     designation: string;
-    /** The vehicle name, from the slug: "Kubernetes Cluster". */
-    name: string;
-    /** Its longest word, so the uppercase name can be sized to fit. */
+    /** The owner's short name, set in capitals above the title
+     *  ("Homelab"); null when the project has none, and the title leads. */
+    name: string | null;
+    /** The name, else the title: the crumb's and the pager's words. */
+    label: string;
+    /** The longest word of the heading (the name, else the title), so a
+     *  name in capitals can be sized to fit. */
     nameChars: number;
     title: string;
     summary: string;
@@ -94,19 +98,6 @@ export function missionStatusValue(status: ProjectStatus): StatusValue {
 /** "infrastructure" → "Infrastructure". */
 export function typeTitle(type: ProjectType): string {
     return PROJECT_TYPES.find((option) => option.value === type)?.title ?? type;
-}
-
-/**
- * The mission's short name, from its slug: "kubernetes-cluster" →
- * "Kubernetes Cluster". Mission names are set in capitals (the vehicle
- * treatment), so the slug's words are the name the owner already chose.
- */
-export function missionName(slug: string): string {
-    return slug
-        .split("-")
-        .filter(Boolean)
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
 }
 
 const LINK_SHORT: Partial<Record<string, string>> = {
@@ -266,50 +257,155 @@ function blockTexts(body: ContentBody | null | undefined): (string | null)[] {
     });
 }
 
+/** Short words that carry no content of their own. */
+const STOP_WORDS = new Set(
+    (
+        "about across after all also and any are because been before being " +
+        "between both but can could does each for from had has have her here " +
+        "his how into its it’s more most not now off onto only other our out " +
+        "over own per same she should since some such than that the their " +
+        "them then there these they this those through too under until upon " +
+        "using very via was were what when where which while who why will " +
+        "with within without would you your"
+    ).split(" "),
+);
+
+/** "published" and "publishes" → "publish"; "pages" → "pag". */
+function stem(word: string): string {
+    for (const suffix of ["ing", "ed", "es", "s"]) {
+        if (word.endsWith(suffix) && word.length - suffix.length >= 3) {
+            return word.slice(0, -suffix.length);
+        }
+    }
+    return word;
+}
+
+/** The distinct content words of some text, stemmed. */
+function contentWords(texts: readonly (string | null | undefined)[]) {
+    const words = new Set<string>();
+    for (const text of texts) {
+        for (const word of (text ?? "")
+            .toLowerCase()
+            .split(/[^\p{L}\p{N}]+/u)) {
+            if (word.length >= 3 && !STOP_WORDS.has(word))
+                words.add(stem(word));
+        }
+    }
+    return words;
+}
+
 /**
- * Whether an essay says anything its summary and highlights do not: a
- * paragraph that is not one of them restated, or anything that is not a
- * paragraph. A note leaves out an essay that only repeats them.
+ * How many content words `texts` has that `known` does not, a word
+ * matching when one stem starts with the other ("page" and "pages").
+ * What a reader would learn from `texts` after reading `known`.
+ */
+export function newWords(
+    texts: readonly (string | null | undefined)[],
+    known: readonly (string | null | undefined)[],
+): number {
+    const seen = [...contentWords(known)];
+    let count = 0;
+    for (const word of contentWords(texts)) {
+        if (!seen.some((k) => k.startsWith(word) || word.startsWith(k))) {
+            count += 1;
+        }
+    }
+    return count;
+}
+
+/** New words that make an essay more than a restatement of its card. */
+const ESSAY_ADDS = 8;
+/** New words that make a brief's row more than a restatement. */
+const BRIEF_ADDS = 4;
+
+/**
+ * Whether an essay says anything its summary, highlights and brief do
+ * not: a section heading, anything that is not a paragraph (a photograph,
+ * a listing, a callout), or at least eight content words they lack. A
+ * page leaves out an essay that only restates them.
  */
 export function essayAdds(
     body: ContentBody | null | undefined,
     lines: readonly string[],
 ): boolean {
-    const known = new Set(lines.map(comparable).filter(Boolean));
-    return blockTexts(body).some((text) => {
-        if (text === null) return true;
-        const value = comparable(text);
-        return value !== "" && !known.has(value);
+    const blocks = body ?? [];
+    const structured = blocks.some((block) => {
+        const node = block as { _type?: string; style?: string };
+        return (
+            node._type !== "block" || /^h[2-4]$/.test(node.style ?? "normal")
+        );
     });
+    if (structured) return true;
+    return newWords(blockTexts(blocks), lines) >= ESSAY_ADDS;
+}
+
+type LayoutSource = Pick<
+    ProjectWithBody,
+    | "summary"
+    | "highlights"
+    | "brief"
+    | "results"
+    | "lessons"
+    | "next"
+    | "model"
+    | "cover"
+    | "body"
+>;
+
+/** A brief's rows, in order, trimmed; empty rows left out. */
+function briefRows(brief: LayoutSource["brief"]): string[] {
+    return [brief?.problem, brief?.approach, brief?.outcome]
+        .map((text) => text?.trim() ?? "")
+        .filter(Boolean);
+}
+
+/** What a project's card already says: its summary and highlights. */
+function cardLines(project: Pick<LayoutSource, "summary" | "highlights">) {
+    return [project.summary ?? "", ...(project.highlights ?? [])];
+}
+
+/**
+ * Whether the brief adds to the card: a row with at least four content
+ * words the summary and highlights lack. A brief that only restates them
+ * is not evidence of its own.
+ */
+export function briefAdds(
+    project: Pick<LayoutSource, "summary" | "highlights" | "brief">,
+): boolean {
+    const known = cardLines(project);
+    return briefRows(project.brief).some(
+        (row) => newWords([row], known) >= BRIEF_ADDS,
+    );
+}
+
+/**
+ * Whether a project's page shows its essay (the Case study): when it has
+ * one that says more than the summary, the highlights and the brief.
+ */
+export function essayShown(project: LayoutSource): boolean {
+    return essayAdds(project.body, [
+        ...cardLines(project),
+        ...briefRows(project.brief),
+    ]);
 }
 
 export type MissionLayout = "file" | "note";
 
 /**
  * How a project's page is laid out (contract §9). The full file where
- * there is evidence to lay out: a brief, results, lessons or next steps,
- * the model's callouts, a photograph, or an essay in sections. Otherwise
- * a short project note: the title, the summary, the highlights, the stack
- * and the links, with no empty sections.
+ * there is evidence to lay out: a brief that adds to the card, results,
+ * lessons or next steps, the model's callouts, a photograph, or an essay
+ * in sections. Otherwise a short project note: the title, the summary,
+ * the highlights, the stack and the links, with no empty sections.
  */
-export function missionLayout(
-    project: Pick<
-        ProjectWithBody,
-        "brief" | "results" | "lessons" | "next" | "model" | "cover" | "body"
-    >,
-): MissionLayout {
-    const brief = [
-        project.brief?.problem,
-        project.brief?.approach,
-        project.brief?.outcome,
-    ].some((text) => text?.trim());
+export function missionLayout(project: LayoutSource): MissionLayout {
     const lines = [...(project.lessons ?? []), ...(project.next ?? [])];
     const callouts = (project.model?.hotspots ?? []).some((hotspot) =>
         hotspot.title?.trim(),
     );
     const plate = Boolean(project.cover?.asset || project.model?.poster?.asset);
     const evidence =
-        brief ||
+        briefAdds(project) ||
         resultRows(project.results).length > 0 ||
         lines.some((line) => line.trim()) ||
         callouts ||
@@ -320,23 +416,24 @@ export function missionLayout(
 
 /**
  * Where "Read the write-up" goes from a project: its original Flight Log
- * entry, else the file's own write-up section (a full file with an
- * essay), else nowhere.
+ * entry, else the file's own write-up section when the file shows its
+ * essay, else nowhere.
  */
 export function writeUpHref(
     mission: Pick<Mission, "href">,
-    project: Parameters<typeof missionLayout>[0] | null | undefined,
+    project: LayoutSource | null | undefined,
     entry: Pick<LogEntry, "slug"> | null | undefined,
 ): string | null {
     if (entry) return `/blog/${entry.slug}`;
-    if (project?.body?.length && missionLayout(project) === "file") {
+    if (project && missionLayout(project) === "file" && essayShown(project)) {
         return `${mission.href}#write-up`;
     }
     return null;
 }
 
 export function toMission(project: ProjectListItem, siteUrl: string): Mission {
-    const name = missionName(project.slug);
+    const name = project.name?.trim() || null;
+    const heading = name ?? project.title;
     const revised = /^\d{4}-\d{2}-\d{2}/.test(project._updatedAt ?? "")
         ? project._updatedAt!.slice(0, 10)
         : null;
@@ -347,7 +444,11 @@ export function toMission(project: ProjectListItem, siteUrl: string): Mission {
         number: project.designation,
         designation: formatMissionDesignation(project.designation),
         name,
-        nameChars: Math.max(...name.split(" ").map((word) => word.length), 1),
+        label: heading,
+        nameChars: Math.max(
+            ...heading.split(/\s+/).map((word) => word.length),
+            1,
+        ),
         title: project.title,
         summary: project.summary?.trim() ?? "",
         status: project.status,
@@ -565,7 +666,7 @@ export interface Callout {
     body: string | null;
     /** The section it explains: `/blog/<slug>#<heading>` or `#<heading>`. */
     href: string | null;
-    /** "LOG 003" when the section is in a Flight Log entry. */
+    /** The entry's title when the section is in a post (the write-up). */
     entry: string | null;
 }
 
@@ -610,7 +711,7 @@ export function missionCallouts({
                 title: hotspot.title.trim(),
                 body: hotspot.body?.trim() || null,
                 href,
-                entry: href && entry ? entry.designation : null,
+                entry: href && entry ? entry.title : null,
             };
         });
 }

@@ -12,9 +12,10 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * A mission file's share card: the mission's name in capitals, its title,
- * and MSN-0n · type · status underneath. Published content only; an
- * unknown slug gets the section's name.
+ * A mission file's share card: the owner's short name for the project in
+ * capitals over its title (else the title alone), and MSN-0n · type ·
+ * status underneath. Published content only; an unknown slug gets the
+ * section's name.
  */
 export default async function Image({
     params,
@@ -27,9 +28,9 @@ export default async function Image({
     return new ImageResponse(
         <OgCard
             tag={copy.themed}
-            title={mission?.name ?? copy.plain}
-            upper={Boolean(mission)}
-            subtitle={mission?.title}
+            title={mission?.label ?? copy.plain}
+            upper={Boolean(mission?.name)}
+            subtitle={mission?.name ? mission.title : undefined}
             footerLeft={
                 mission
                     ? [
