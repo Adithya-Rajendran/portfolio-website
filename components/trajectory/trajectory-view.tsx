@@ -1,18 +1,17 @@
 "use client";
 
 import type { TrajectoryData } from "@/lib/trajectory";
-import Journey, { type CreateScene } from "./journey";
+import Journey from "./journey";
+import { createPlotScene } from "./plot-scene";
 
-/**
- * The renderer for /resume/trajectory. The base draws no scene: each
- * option branch (plot, voyage, flight) replaces this file with its own.
- */
-const createScene: CreateScene = () => ({
-    resize() {},
-    render() {},
-    dispose() {},
-});
-
+/** Option A · Plot: the route as a line-art mission plot. */
 export default function TrajectoryView({ data }: { data: TrajectoryData }) {
-    return <Journey data={data} createScene={createScene} />;
+    const first = data.chapters[0];
+    const current = data.chapters.some((chapter) => chapter.current);
+    const figure = first
+        ? `Fig. 1 · Trajectory, ${Math.floor(first.start)}${current ? " – present" : ""} · not to scale`
+        : undefined;
+    return (
+        <Journey data={data} createScene={createPlotScene} figure={figure} />
+    );
 }
