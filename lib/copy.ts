@@ -462,3 +462,29 @@ export const crewCopy = {
     links: "Links",
     updated: "Updated",
 } as const;
+
+/** The flight through the timeline on /resume/trajectory. */
+export const trajectoryCopy = {
+    tag: "Trajectory",
+    title: "Experience",
+    metaTitle: "Trajectory",
+    description:
+        "The career so far, flown as a route from the first orbit to the next.",
+    heading: "The route",
+    rail: "Chapters",
+    play: "Play",
+    pause: "Pause",
+    list: "List view",
+    entry: "Full entry",
+    current: "Current",
+    openTo: "Open to",
+    next: "Next",
+    contact: "Contact",
+    phases: {
+        coast: "Orbit",
+        flyby: "Flyby",
+        transfer: "Transfer",
+        plan: "Planned",
+    },
+    close: "The full record",
+} as const;

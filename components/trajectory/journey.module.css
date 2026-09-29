@@ -1,0 +1,350 @@
+/*
+ * The flight's stage and record. Three layouts, chosen before first paint
+ * from the attributes the theme boot script sets on <html>:
+ * - no JavaScript: the chapters as a list, no scene;
+ * - still (reduced motion or Pause motion): a stage one screen tall, one
+ *   card at a time, picked from the chapters;
+ * - flight: the section is tall and the stage sticks under the header.
+ */
+
+.journey {
+    position: relative;
+    --stage-h: min(calc(100svh - var(--header-h)), 56rem);
+}
+
+.stage {
+    position: relative;
+}
+
+.scene {
+    display: none;
+}
+
+.panel {
+    position: relative;
+}
+
+.grid {
+    display: grid;
+}
+
+.inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-6);
+}
+
+.hud,
+.controls,
+.figure {
+    display: none;
+}
+
+.cards {
+    display: grid;
+    gap: var(--space-block);
+    padding-block: var(--space-block);
+}
+
+.card {
+    max-width: 40rem;
+}
+
+.tagRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-4);
+    margin: 0;
+}
+
+.title {
+    font: 300 var(--step-3) / var(--lh-heading) var(--font-display);
+    letter-spacing: -0.01em;
+    margin: var(--s-3) 0 var(--s-2);
+    text-wrap: balance;
+}
+
+.org {
+    font: 400 var(--step-0) / 1.4 var(--font-display);
+    margin: 0;
+}
+
+.note {
+    font: 400 var(--step--1) / 1.45 var(--font-display);
+    color: var(--ink-2);
+    margin: var(--s-1) 0 0;
+}
+
+.dates {
+    margin: var(--s-3) 0 0;
+}
+
+.line {
+    font: 400 var(--step--1) / 1.55 var(--font-display);
+    color: var(--ink-2);
+    margin: var(--s-4) 0 0;
+    max-width: 42ch;
+}
+
+.entry {
+    margin-top: var(--s-4);
+}
+
+.cta {
+    margin-top: var(--s-5);
+}
+
+/* ---- with JavaScript: a stage ---------------------------------------- */
+
+:global(html[data-js]) .stage {
+    height: var(--stage-h);
+    overflow: hidden;
+}
+
+:global(html[data-js]) .scene {
+    display: block;
+    position: absolute;
+    inset: 0;
+}
+
+:global(html[data-js]) .panel {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+:global(html[data-js]) .grid {
+    height: 100%;
+    grid-template-columns: minmax(0, 27rem) 1fr;
+    align-items: center;
+}
+
+:global(html[data-js]) .inner {
+    pointer-events: auto;
+}
+
+:global(html[data-js]) .hud {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-4);
+    border-top: var(--rule-hair) solid var(--rule-2);
+    padding-top: var(--s-3);
+}
+
+.date {
+    font: 300 var(--step-4) / 1 var(--font-display);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+.phase {
+    margin-left: auto;
+    color: var(--ink-3);
+    text-align: right;
+}
+
+:global(html[data-js]) .cards {
+    padding: 0;
+    gap: 0;
+}
+
+:global(html[data-js]) .card {
+    grid-area: 1 / 1;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition:
+        opacity 0.45s ease,
+        transform 0.45s ease,
+        visibility 0s linear 0.45s;
+}
+
+:global(html[data-js]) .card[data-on] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition:
+        opacity 0.45s ease 0.08s,
+        transform 0.45s ease 0.08s,
+        visibility 0s;
+}
+
+:global(html[data-js]) .controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-5);
+}
+
+.rail {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    border-left: var(--rule-hair) solid var(--rule-2);
+}
+
+.rail button {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3.4rem 1fr;
+    align-items: baseline;
+    gap: var(--s-3);
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 0 6px 18px;
+    background: none;
+    border: 0;
+    color: var(--ink-3);
+    text-align: left;
+    cursor: pointer;
+}
+
+.rail button::before {
+    content: "";
+    position: absolute;
+    left: -4px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    margin-top: -3.5px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: var(--rule-hair) solid var(--rule-2);
+}
+
+.rail button:hover {
+    color: var(--ink-1);
+}
+
+.rail button[data-past] {
+    color: var(--ink-2);
+}
+
+.rail button[data-past]::before {
+    background: var(--ink-2);
+    border-color: var(--ink-2);
+}
+
+.rail button[aria-current="step"] {
+    color: var(--ink-1);
+}
+
+.rail button[aria-current="step"]::before {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.year {
+    font: 400 12px / 1 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.name {
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
+}
+
+.figure {
+    position: absolute;
+    right: var(--margin);
+    bottom: var(--s-5);
+    margin: 0;
+    font: 400 12px / 1.4 var(--font-mono);
+    color: var(--ink-3);
+    pointer-events: none;
+}
+
+:global(html[data-js]) .figure {
+    display: block;
+}
+
+/* ---- flight: pinned and scrubbed ------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+    :global(html[data-js][data-motion="full"]) .journey {
+        height: calc((100 + var(--len)) * 1vh);
+        height: calc((100 + var(--len)) * 1svh);
+    }
+    :global(html[data-js][data-motion="full"]) .stage {
+        position: sticky;
+        top: var(--header-h);
+        height: calc(100vh - var(--header-h));
+        height: calc(100svh - var(--header-h));
+    }
+}
+
+:global(html[data-motion="reduced"]) .play {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .play {
+        display: none;
+    }
+    :global(html[data-js]) .card,
+    :global(html[data-js]) .card[data-on] {
+        transition: none;
+        transform: none;
+    }
+}
+
+/* ---- phones and small tablets: the scene above, the record below ------ */
+
+@media (max-width: 959.98px) {
+    :global(html[data-js]) .grid {
+        grid-template-columns: 1fr;
+        align-items: end;
+        padding-bottom: var(--s-4);
+    }
+    :global(html[data-js]) .inner {
+        gap: var(--s-4);
+    }
+    .date {
+        font-size: 1.75rem;
+    }
+    :global(html[data-js]) .title {
+        font-size: 1.5rem;
+        margin: var(--s-2) 0 var(--s-1);
+    }
+    :global(html[data-js]) .line {
+        margin-top: var(--s-2);
+    }
+    :global(html[data-js]) .dates {
+        margin-top: var(--s-2);
+    }
+    :global(html[data-js]) .entry {
+        display: none;
+    }
+    :global(html[data-js]) .controls {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: var(--s-3);
+    }
+    .rail {
+        display: flex;
+        border-left: 0;
+        border-top: var(--rule-hair) solid var(--rule-2);
+    }
+    .rail li {
+        flex: 1;
+    }
+    .rail button {
+        display: block;
+        min-height: 44px;
+        padding: 14px 0 4px;
+    }
+    .rail button::before {
+        left: 0;
+        top: -4px;
+        margin-top: 0;
+    }
+    .name {
+        display: none;
+    }
+    .figure {
+        display: none !important;
+    }
+}
