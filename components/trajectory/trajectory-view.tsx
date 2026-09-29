@@ -2,13 +2,15 @@
 
 import { trajectoryCopy as copy } from "@/lib/copy";
 import type { TrajectoryData } from "@/lib/trajectory";
+import { FLIGHT_PACING } from "./flight-pacing";
 import { createFlightScene } from "./flight-scene";
 import Journey from "./journey";
 
 /**
  * The renderer for /resume/trajectory, option C · Flight: a chase-camera
- * flight through a 3D solar system (flight-scene.ts). The figure line
- * carries the textures' credit (public/images/trajectory/README.md).
+ * flight through a 3D solar system (flight-scene.ts), paced for its camera
+ * moves (FLIGHT_PACING). The figure line carries the textures' credit
+ * (public/images/trajectory/README.md).
  */
 export default function TrajectoryView({ data }: { data: TrajectoryData }) {
     const first = data.chapters[0];
@@ -25,6 +27,11 @@ export default function TrajectoryView({ data }: { data: TrajectoryData }) {
         "Textures: Solar System Scope, CC BY 4.0",
     ].join(" · ");
     return (
-        <Journey data={data} createScene={createFlightScene} figure={figure} />
+        <Journey
+            data={data}
+            createScene={createFlightScene}
+            figure={figure}
+            pacing={FLIGHT_PACING}
+        />
     );
 }

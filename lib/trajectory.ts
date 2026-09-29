@@ -219,7 +219,23 @@ export interface Frame {
     card: number;
 }
 
-export function buildRoute(data: TrajectoryData): Route {
+/** A renderer's pacing. The defaults are every renderer's route. */
+export interface RouteOptions {
+    /** A transfer's weight. */
+    transfer?: number;
+    /** The plan's weight. */
+    plan?: number;
+    /** Extra weight on the first chapter, for an opening move. */
+    open?: number;
+    /** Where the first card settles, as a share of its chapter (0: the
+     *  route's start). */
+    restFirst?: number;
+}
+
+export function buildRoute(
+    data: TrajectoryData,
+    { transfer = 0.65, plan = 1.3, open = 0, restFirst = 0 }: RouteOptions = {},
+): Route {
     const segments: Segment[] = [];
     const add = (s: Omit<Segment, "p0" | "p1">) =>
         segments.push({ ...s, p0: 0, p1: 0 });
@@ -232,7 +248,7 @@ export function buildRoute(data: TrajectoryData): Route {
                 from: i - 1,
                 t0: prev.end,
                 t1: chapter.startKnown ? chapter.start : prev.end,
-                w: 0.65,
+                w: transfer,
             });
         }
         const years = chapter.end - chapter.start;
@@ -243,10 +259,11 @@ export function buildRoute(data: TrajectoryData): Route {
             t0: chapter.start,
             t1: chapter.end,
             // Longer chapters get a little more scroll, within limits.
-            w: Math.min(
-                1.5,
-                Math.max(chapter.flyby ? 0.9 : 1, 0.8 + years * 0.18),
-            ),
+            w:
+                Math.min(
+                    1.5,
+                    Math.max(chapter.flyby ? 0.9 : 1, 0.8 + years * 0.18),
+                ) + (i === 0 ? open : 0),
         });
     });
     if (data.planned && data.chapters.length) {
@@ -256,7 +273,7 @@ export function buildRoute(data: TrajectoryData): Route {
             from: data.chapters.length - 1,
             t0: data.today,
             t1: data.today,
-            w: 1.3,
+            w: plan,
         });
     }
     const weight = segments.reduce((sum, s) => sum + s.w, 0) || 1;
@@ -272,7 +289,7 @@ export function buildRoute(data: TrajectoryData): Route {
             (seg) => seg.kind !== "transfer" && seg.chapter === card,
         );
         if (!s) return 1;
-        if (card === 0) return 0;
+        if (card === 0) return s.p0 + (s.p1 - s.p0) * restFirst;
         return s.kind === "plan" ? 1 : s.p0 + (s.p1 - s.p0) * 0.55;
     });
     const lastFlown = [...segments].reverse().find((s) => s.kind !== "plan");

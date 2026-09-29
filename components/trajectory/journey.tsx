@@ -11,6 +11,7 @@ import {
     missionDate,
     type Frame,
     type Route,
+    type RouteOptions,
     type TrajectoryData,
 } from "@/lib/trajectory";
 import styles from "./journey.module.css";
@@ -52,10 +53,21 @@ export type CreateScene = (
     route: Route,
 ) => Scene;
 
+/** A renderer's pacing: its route's weights, how fast Play runs through a
+ *  transfer (relative to the rest), and Play's whole run in milliseconds.
+ *  Keep it at module scope, so it has a stable identity. */
+export interface Pacing {
+    route?: RouteOptions;
+    transferRate?: number;
+    duration?: number;
+}
+
 /** Scroll per unit of route weight, in svh. */
 const UNIT = 52;
-/** Play's pace: the whole route, in milliseconds. */
+/** Play's pace: the whole route, in milliseconds, and how much faster it
+ *  runs through a transfer. */
 const DURATION = 26000;
+const TRANSFER_RATE = 1.7;
 const REDUCE = "(prefers-reduced-motion: reduce)";
 
 function motionAllowed(): boolean {
@@ -80,13 +92,21 @@ export default function Journey({
     createScene,
     figure,
     className,
+    pacing,
 }: {
     data: TrajectoryData;
     createScene: CreateScene;
     figure?: string;
     className?: string;
+    pacing?: Pacing;
 }) {
-    const route = useMemo(() => buildRoute(data), [data]);
+    const routeOptions = pacing?.route;
+    const transferRate = pacing?.transferRate ?? TRANSFER_RATE;
+    const duration = pacing?.duration ?? DURATION;
+    const route = useMemo(
+        () => buildRoute(data, routeOptions),
+        [data, routeOptions],
+    );
     const section = useRef<HTMLElement>(null);
     const controls = useRef<Controls | null>(null);
     const [playing, setPlaying] = useState(false);
@@ -219,8 +239,8 @@ export default function Journey({
             const kind = frameAt(route, progress()).segment.kind;
             const before = window.scrollY < top - 1;
             const rate =
-                (span / DURATION) *
-                (before ? 2.4 : kind === "transfer" ? 1.7 : 1);
+                (span / duration) *
+                (before ? 2.4 : kind === "transfer" ? transferRate : 1);
             auto.y = Math.min(top + span, auto.y + rate * dt);
             window.scrollTo({ top: auto.y, behavior: "instant" });
             if (auto.y >= top + span) return stop();
@@ -312,7 +332,7 @@ export default function Journey({
             controls.current = null;
             scene.dispose();
         };
-    }, [data, route, createScene]);
+    }, [data, route, createScene, transferRate, duration]);
 
     const first = data.chapters[0];
     return (

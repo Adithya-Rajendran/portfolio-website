@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { FLIGHT_PACING } from "@/components/trajectory/flight-route";
 import { cvEntries } from "@/lib/cv";
 import { FIXTURE_PROFILE as fixtureProfile } from "@/lib/fixtures";
 import {
@@ -67,6 +68,44 @@ describe("trajectory", () => {
         expect(frameAt(route, 0).card).toBe(0);
         expect(frameAt(route, 1).card).toBe(4);
         expect(route.rest).toHaveLength(5);
+    });
+
+    it("paces a renderer's route by its options, and every other by default", () => {
+        const route = buildRoute(data);
+        expect(buildRoute(data, {})).toEqual(route);
+        expect(
+            buildRoute(data, {
+                transfer: 0.65,
+                plan: 1.3,
+                open: 0,
+                restFirst: 0,
+            }),
+        ).toEqual(route);
+
+        // The 3D flight: longer transfers and finale, within 600svh.
+        const flight = buildRoute(data, FLIGHT_PACING.route);
+        const weights = (kind: string) =>
+            flight.segments.filter((s) => s.kind === kind).map((s) => s.w);
+        expect(weights("transfer")).toEqual([0.95, 0.95, 0.95]);
+        expect(weights("plan")).toEqual([2]);
+        expect(100 + flight.weight * 52).toBeLessThanOrEqual(600);
+        expect(flight.segments.map((s) => s.kind)).toEqual(
+            route.segments.map((s) => s.kind),
+        );
+        expect(flight.segments.at(-1)!.p1).toBeCloseTo(1);
+        // Every card still settles on its own chapter.
+        flight.rest.forEach((p, card) =>
+            expect(frameAt(flight, p).card).toBe(card),
+        );
+
+        // An opening move and a first card that settles into its chapter.
+        const opened = buildRoute(data, { open: 0.35, restFirst: 0.6 });
+        expect(opened.segments[0].w).toBeCloseTo(route.segments[0].w + 0.35);
+        const first = opened.segments[0];
+        expect(opened.rest[0]).toBeCloseTo(
+            first.p0 + (first.p1 - first.p0) * 0.6,
+        );
+        expect(frameAt(opened, opened.rest[0]).card).toBe(0);
     });
 
     it("prints a year-only start without a month", () => {

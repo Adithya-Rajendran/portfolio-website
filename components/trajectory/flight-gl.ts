@@ -39,8 +39,11 @@ import {
     RING,
     buildFlight,
     onPlane,
+    screenOf,
     smoothstep,
-    type Layout,
+    stageFrame,
+    type Pose,
+    type Stage,
     type Vec3,
     type World,
     type WorldKind,
@@ -182,8 +185,8 @@ export function mountFlight(
     let last: Frame | null = null;
     let W = 1;
     let H = 1;
-    let layout: Layout = { kpx: 1, halfW: 1, halfH: 1 };
-    let lens = { x: 0, y: 0 };
+    /** The lens, the subject's box and the framing (flight-route.ts). */
+    let stage: Stage = stageFrame(1, 1, true);
     let wideLayout = true;
 
     /* ---- light, Sun and stars ------------------------------------------ */
@@ -602,6 +605,7 @@ export function mountFlight(
     const v = new Vector3();
     const forward = new Vector3();
     const eyeV = new Vector3();
+    let view: Pose | null = null;
     const coastStart = plan.worlds.map(
         (w) =>
             route.segments.find(
@@ -611,22 +615,20 @@ export function mountFlight(
             )?.p0 ?? 0,
     );
 
+    /** A point on the stage for the frame's pose: the same projection
+     *  the camera renders with (flight-route.ts screenOf). */
     const project = (p: Vec3) => {
-        v.set(p[0], p[1], p[2]).project(camera);
-        const depth = eyeV
-            .set(p[0], p[1], p[2])
-            .sub(camera.position)
-            .dot(forward);
+        const s = view ? screenOf(view, stage, p) : { x: -W, y: -H, depth: 0 };
         return {
-            x: (v.x + 1) * 0.5 * W,
-            y: (1 - v.y) * 0.5 * H,
-            depth,
+            x: s.x,
+            y: s.y,
+            depth: s.depth,
             on:
-                depth > camera.near &&
-                v.x > -1.2 &&
-                v.x < 1.2 &&
-                v.y > -1.2 &&
-                v.y < 1.2,
+                s.depth > camera.near &&
+                s.x > -0.1 * W &&
+                s.x < 1.1 * W &&
+                s.y > -0.1 * H &&
+                s.y < 1.1 * H,
         };
     };
     const minLabelX = () => (wideLayout ? W * 0.37 : 8);
@@ -649,7 +651,7 @@ export function mountFlight(
         el.style.opacity = alpha > 0.01 ? alpha.toFixed(3) : "0";
         el.dataset.state = state;
         if (alpha <= 0.01) return;
-        let left = !wideLayout && at.x > lens.x + 4;
+        let left = !wideLayout && at.x > stage.lens.x + 4;
         if (!left && at.x + gap + w > W - 12) left = true;
         else if (left && at.x - gap - w < minLabelX()) left = false;
         let x = left ? at.x - gap - w : at.x + gap;
@@ -701,7 +703,8 @@ export function mountFlight(
         if (disposed) return;
         const { p, t, card } = frame;
         const kind = frame.segment.kind;
-        const pose = plan.pose(frame, layout);
+        const pose = plan.pose(frame, stage);
+        view = pose;
 
         // Camera: the pose, then the lens shifted so the target sits at the
         // subject's centre (the right of the stage, or its upper part).
@@ -717,8 +720,8 @@ export function mountFlight(
         camera.far = reach * 4 + 3400;
         camera.updateProjectionMatrix();
         const pm = camera.projectionMatrix.elements;
-        pm[8] = -((2 * lens.x) / W - 1);
-        pm[9] = -(1 - (2 * lens.y) / H);
+        pm[8] = -((2 * stage.lens.x) / W - 1);
+        pm[9] = -(1 - (2 * stage.lens.y) / H);
         camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
         camera.updateMatrixWorld();
         camera.getWorldDirection(forward);
@@ -765,7 +768,7 @@ export function mountFlight(
             plannedOrbit.material.opacity =
                 (palette.light ? 0.7 : 0.6) * (0.45 + 0.55 * pose.overview);
             // Fine, even dashes on screen at any distance.
-            const px = reach / layout.kpx;
+            const px = reach / stage.kpx;
             plannedOrbit.material.dashSize = 3 * px;
             plannedOrbit.material.gapSize = 5 * px;
         }
@@ -788,7 +791,7 @@ export function mountFlight(
             planOn = kind === "plan" ? smoothstep(0.18, 0.72, frame.u) : 0;
             const n = plan.planned.path.length - 1;
             drawTo(plannedLeg, Math.round(planOn * n), null);
-            const px = reach / layout.kpx;
+            const px = reach / stage.kpx;
             plannedLeg.material.dashSize = 9 * px;
             plannedLeg.material.gapSize = 6 * px;
         }
@@ -803,7 +806,7 @@ export function mountFlight(
             0.1,
             eyeV.copy(ship.position).sub(camera.position).dot(forward),
         );
-        ship.scale.setScalar((SHIP_PX * shipDepth) / layout.kpx);
+        ship.scale.setScalar((SHIP_PX * shipDepth) / stage.kpx);
         ship.visible = pose.overview < 0.55;
 
         // Labels: the worlds flown and the one approached; on phones only
@@ -825,11 +828,11 @@ export function mountFlight(
                 alpha = smoothstep(0.1, 0.6, frame.u) * 0.85;
             if (!wideLayout && i !== world) alpha = 0;
             if (!at.on) alpha = 0;
-            const gap = (b.w.radius * layout.kpx) / Math.max(0.1, at.depth);
+            const gap = (b.w.radius * stage.kpx) / Math.max(0.1, at.depth);
             const ringGap = b.w.kind === "saturn" ? gap * RING.outer : gap;
             // In the overview a label also clears the world's parking loop.
             const loopGap =
-                (b.w.park * layout.kpx * radial) / Math.max(0.1, at.depth);
+                (b.w.park * stage.kpx * radial) / Math.max(0.1, at.depth);
             const small = 1 - smoothstep(3, 7, gap);
             mark(rings[i], at, alpha * small);
             place(
@@ -876,20 +879,9 @@ export function mountFlight(
                 Math.min(MAX_DPR, window.devicePixelRatio || 1),
             );
             renderer.setSize(W, H, false);
+            stage = stageFrame(W, H, wide);
             camera.aspect = W / H;
-            camera.fov = wide ? 38 : 44;
-            const kpx = H / 2 / Math.tan((camera.fov * Math.PI) / 360);
-            if (wide) {
-                lens = { x: W * 0.65, y: H * 0.5 };
-                layout = {
-                    kpx,
-                    halfW: Math.min(W - lens.x - 44, W * 0.3),
-                    halfH: H * 0.41,
-                };
-            } else {
-                lens = { x: W * 0.5, y: H * 0.29 };
-                layout = { kpx, halfW: W * 0.46, halfH: H * 0.25 };
-            }
+            camera.fov = stage.fov;
             for (const m of lineMaterials) m.resolution.set(W, H);
             measureLabels();
             if (last) draw(last);
