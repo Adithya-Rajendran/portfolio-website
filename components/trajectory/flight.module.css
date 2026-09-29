@@ -1,0 +1,239 @@
+/*
+ * Option C · Flight: the 3D scene's layers inside the journey's stage.
+ * Bottom to top: the WebGL canvas, the still poster shown until the
+ * renderer and its textures are in, a scrim that keeps the record's text
+ * legible over the scene, and the HTML labels projected from the worlds.
+ */
+
+.host {
+    background: var(--bg);
+    overflow: hidden;
+}
+
+.host > canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity var(--dur-6) var(--ease-dock);
+}
+
+.host[data-ready] > canvas {
+    opacity: 1;
+}
+
+/* ---- the poster: a glow and a static orbit hint at the subject -------- */
+
+.poster {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at 65% 50%,
+        color-mix(in oklab, var(--ink-1) 14%, transparent) 0,
+        color-mix(in oklab, var(--ink-1) 4%, transparent) 9%,
+        transparent 26%
+    );
+    transition: opacity var(--dur-6) var(--ease-dock);
+}
+
+.host[data-ready] > .poster {
+    opacity: 0;
+}
+
+.hint {
+    position: absolute;
+    left: 65%;
+    top: 50%;
+    width: min(60%, 56rem);
+    transform: translate(-50%, -50%);
+    overflow: visible;
+    fill: none;
+    stroke: var(--ink-3);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    opacity: 0.55;
+}
+
+.hint ellipse {
+    vector-effect: non-scaling-stroke;
+}
+
+.hintPlan {
+    stroke-dasharray: 4 5;
+}
+
+.hintSun {
+    fill: var(--ink-1);
+    stroke: none;
+}
+
+/* ---- the scrim under the record --------------------------------------- */
+
+.scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /* An eased ramp (a smoothstep in 3% steps, so no bands show) that
+       holds the record's column and clears past the middle. */
+    background: linear-gradient(
+        90deg,
+        color-mix(in oklab, var(--bg) 96%, transparent) 0%,
+        color-mix(in oklab, var(--bg) 96%, transparent) 24%,
+        color-mix(in oklab, var(--bg) 93.9%, transparent) 27%,
+        color-mix(in oklab, var(--bg) 88.1%, transparent) 30%,
+        color-mix(in oklab, var(--bg) 79.4%, transparent) 33%,
+        color-mix(in oklab, var(--bg) 68.5%, transparent) 36%,
+        color-mix(in oklab, var(--bg) 56.4%, transparent) 39%,
+        color-mix(in oklab, var(--bg) 43.9%, transparent) 42%,
+        color-mix(in oklab, var(--bg) 31.4%, transparent) 45%,
+        color-mix(in oklab, var(--bg) 20%, transparent) 48%,
+        color-mix(in oklab, var(--bg) 10.6%, transparent) 51%,
+        color-mix(in oklab, var(--bg) 3.8%, transparent) 54%,
+        transparent 58%
+    );
+}
+
+/* ---- labels ------------------------------------------------------------ */
+
+.labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    gap: 3px;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.name {
+    display: -webkit-box;
+    max-width: 17em;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font: 400 10px / 1.35 var(--font-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    text-wrap: balance;
+    color: var(--ink-2);
+}
+
+.name,
+.dates {
+    /* A map label's halo: legible where it crosses an orbit or a trail. */
+    text-shadow:
+        0 0 2px var(--bg),
+        0 0 4px var(--bg),
+        0 0 8px var(--bg);
+}
+
+.dates {
+    font: 400 11px / 1.3 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    white-space: nowrap;
+    color: var(--ink-3);
+}
+
+.label[data-state="current"] .name {
+    color: var(--ink-1);
+}
+
+.label[data-state="current"] .dates {
+    color: var(--ink-2);
+}
+
+.label[data-state="future"] .name,
+.label[data-state="plan"] .name {
+    color: var(--ink-3);
+}
+
+/* The ship's "now" mark in the overview, and the planned orbit's end. */
+.now,
+.target,
+.world {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.now::before,
+.target::before,
+.world::before {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.now::before {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--bg);
+}
+
+.world::before {
+    width: 11px;
+    height: 11px;
+    border: var(--rule-hair) solid var(--ink-3);
+}
+
+.target::before {
+    width: 9px;
+    height: 9px;
+    border: var(--rule-hair) solid var(--ink-2);
+    background: var(--bg);
+}
+
+@media (max-width: 959.98px) {
+    .poster {
+        background: radial-gradient(
+            circle at 50% 29%,
+            color-mix(in oklab, var(--ink-1) 14%, transparent) 0,
+            color-mix(in oklab, var(--ink-1) 4%, transparent) 12%,
+            transparent 34%
+        );
+    }
+    .hint {
+        left: 50%;
+        top: 29%;
+        width: 94%;
+    }
+    .scrim {
+        background: linear-gradient(
+            0deg,
+            color-mix(in oklab, var(--bg) 96%, transparent) 0%,
+            color-mix(in oklab, var(--bg) 96%, transparent) 30%,
+            color-mix(in oklab, var(--bg) 93.9%, transparent) 33%,
+            color-mix(in oklab, var(--bg) 88.1%, transparent) 36%,
+            color-mix(in oklab, var(--bg) 79.4%, transparent) 39%,
+            color-mix(in oklab, var(--bg) 68.5%, transparent) 42%,
+            color-mix(in oklab, var(--bg) 56.4%, transparent) 45%,
+            color-mix(in oklab, var(--bg) 43.9%, transparent) 48%,
+            color-mix(in oklab, var(--bg) 31.4%, transparent) 51%,
+            color-mix(in oklab, var(--bg) 20%, transparent) 54%,
+            color-mix(in oklab, var(--bg) 10.6%, transparent) 57%,
+            color-mix(in oklab, var(--bg) 3.8%, transparent) 60%,
+            transparent 64%
+        );
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .host > canvas,
+    .poster {
+        transition: none;
+    }
+}

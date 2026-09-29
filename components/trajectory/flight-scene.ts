@@ -1,0 +1,85 @@
+import { trajectoryCopy as copy } from "@/lib/copy";
+import type { Frame } from "@/lib/trajectory";
+import type { FlightGL } from "./flight-gl";
+import type { CreateScene } from "./journey";
+import styles from "./flight.module.css";
+
+/**
+ * Option C · Flight: the timeline as a chase-camera flight through a
+ * heliocentric 3D scene (flight-route.ts places it, flight-gl.ts draws it
+ * with three.js). This part is small and synchronous: it shows a still
+ * poster at once, then imports the renderer and three.js as one lazy
+ * chunk, so the page never waits for WebGL. Without WebGL the poster
+ * stays.
+ */
+
+const POSTER = `<svg class="${styles.hint}" viewBox="-500 -210 1000 420" aria-hidden="true" focusable="false">
+<ellipse rx="112" ry="44"/><ellipse rx="176" ry="70"/><ellipse rx="252" ry="100"/><ellipse rx="340" ry="136"/>
+<ellipse class="${styles.hintPlan}" rx="450" ry="180"/><circle class="${styles.hintSun}" r="3.5"/></svg>`;
+
+export const createFlightScene: CreateScene = (host, data, route) => {
+    host.classList.add(styles.host);
+    const poster = document.createElement("div");
+    poster.className = styles.poster;
+    poster.innerHTML = POSTER;
+    const scrim = document.createElement("div");
+    scrim.className = styles.scrim;
+    const layer = document.createElement("div");
+    layer.className = styles.labels;
+    host.append(poster, scrim, layer);
+
+    let gl: FlightGL | null = null;
+    let disposed = false;
+    let size: [number, number, boolean] | null = null;
+    let last: Frame | null = null;
+
+    import("./flight-gl")
+        .then(({ mountFlight }) => {
+            if (disposed) return;
+            gl = mountFlight(host, data, route, {
+                labels: layer,
+                classes: {
+                    label: styles.label,
+                    name: styles.name,
+                    dates: styles.dates,
+                    now: styles.now,
+                    target: styles.target,
+                    world: styles.world,
+                },
+                openTo: copy.openTo,
+                ready: () => {
+                    host.dataset.ready = "";
+                },
+            });
+            if (!gl) return;
+            if (size) gl.resize(...size);
+            if (last) gl.render(last);
+        })
+        .catch(() => {
+            // The chunk failed to load (offline): the poster stays.
+        });
+
+    return {
+        resize(width, height, wide) {
+            size = [width, height, wide];
+            gl?.resize(width, height, wide);
+        },
+        render(frame) {
+            last = frame;
+            gl?.render(frame);
+        },
+        theme() {
+            gl?.theme();
+        },
+        dispose() {
+            disposed = true;
+            gl?.dispose();
+            gl = null;
+            poster.remove();
+            scrim.remove();
+            layer.remove();
+            host.classList.remove(styles.host);
+            delete host.dataset.ready;
+        },
+    };
+};
