@@ -32,10 +32,17 @@ async function expectCompletePage(page: Page, path: string, status = 200) {
     // Below 960px the nav is a popover sheet, which opens without
     // JavaScript (popovertarget).
     const menu = banner.getByRole("button", { name: "Menu" });
-    if (await menu.isVisible()) await menu.click();
+    if (await menu.isVisible()) {
+        // Contact is in the bar as well, so the form is one tap away.
+        await expect(
+            banner.getByRole("link", { name: "Contact", exact: true }),
+        ).toBeVisible();
+        await menu.click();
+    }
+    const nav = banner.getByRole("navigation", { name: "Main" });
     for (const item of primaryNavigation) {
         await expect(
-            banner.getByRole("link", { name: item.plain, exact: true }),
+            nav.getByRole("link", { name: item.plain, exact: true }),
         ).toBeVisible();
     }
     // Controls that need JavaScript are not shown: no dead buttons.

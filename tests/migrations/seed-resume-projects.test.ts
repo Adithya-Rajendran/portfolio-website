@@ -191,7 +191,7 @@ describe("seed-resume-projects drafts", () => {
         ]);
     });
 
-    it("records the owner's statuses and estimated years", () => {
+    it("records the owner's statuses, his estimated years and the repository's months", () => {
         const byStatus = Object.fromEntries(
             plan.drafts.map((draft) => [draft.slug.current, draft.status]),
         );
@@ -208,7 +208,8 @@ describe("seed-resume-projects drafts", () => {
             draft.datePrecision ?? null,
         ]);
         expect(years).toEqual([
-            ["gmail-spam-filter", "c. 2023", "year"],
+            // December 2022 to August 2025, from the repository.
+            ["gmail-spam-filter", "2022–2025", "month"],
             // No start date is published for the homelab or the website.
             ["homelab", null, null],
             ["kubernetes-cluster", "c. 2024–2025", "year"],
@@ -276,10 +277,28 @@ describe("seed-resume-projects drafts", () => {
         ]);
     });
 
-    it("seeds only measured values as results", () => {
+    it("seeds the notebook's evaluation as the only results, and no homelab measurements", () => {
         expect(
-            draftFor(plan, "homelab").results?.map((result) => result.value),
-        ).toEqual(["195.1 W", "3", "0.4 ms", "1"]);
+            plan.drafts.map((draft) => [
+                draft.slug.current,
+                draft.results?.map((result) => result.value) ?? [],
+            ]),
+        ).toEqual([
+            ["gmail-spam-filter", ["99.55%", "15 of 3,462", "20 of 4,369"]],
+            ["homelab", []],
+            ["kubernetes-cluster", []],
+            ["personal-website", []],
+        ]);
+        // The accuracy carries its limits.
+        expect(draftFor(plan, "gmail-spam-filter").results?.[0].note).toMatch(
+            /one stratified 80\/20 split.*no baseline comparison/,
+        );
+        // Nothing the résumé does not state: no wattage, capacity or
+        // latency anywhere in the homelab draft.
+        expect(JSON.stringify(draftFor(plan, "homelab"))).not.toMatch(
+            /\b\d[\d.]*\s?(?:W|TB|ms)\b/,
+        );
+        expect(draftFor(plan, "homelab").parameters).toBeUndefined();
     });
 
     it("warns, without blocking publishing, when another mission holds its featured slot", async () => {

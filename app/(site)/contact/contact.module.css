@@ -1,22 +1,27 @@
 /*
- * Comms · Contact (/contact): the carrier trace in the page head, the
- * no-JavaScript note and the profiles' place. The head, the sections
- * (DocSection) and the profile rows are shared (styles/components.css);
- * the routes and the form have their own modules beside their components.
+ * Comms · Contact (/contact): the availability and the carrier trace in
+ * the page head, the desk (the form, the routes beside it from 960px),
+ * the no-JavaScript note and the profiles' place. The head, the section
+ * heads and the profile rows are shared (styles/components.css); the
+ * routes and the form have their own modules beside their components.
  */
+
+.openTo {
+    margin-top: var(--s-5);
+}
 
 /* ---- The acquisition-of-signal trace, under the intro ------------------ */
 /* Ink strokes and one accent mark (contract §3). */
 .aos {
     display: block;
     width: 100%;
-    height: 56px;
-    margin-top: var(--s-6);
+    height: 48px;
+    margin-top: var(--s-5);
     overflow: visible;
 }
 @media (min-width: 60rem) {
     .aos {
-        height: 80px;
+        height: 56px;
     }
 }
 .aos path {
@@ -38,6 +43,38 @@
 }
 .aosAcq {
     fill: var(--accent);
+}
+
+/* ---- The desk: the form first, the routes beside it --------------------- */
+.desk {
+    padding-top: var(--s-6);
+}
+.desk :global(.doc-section__tag) {
+    margin-bottom: var(--s-6);
+}
+.deskGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-8) var(--gutter);
+}
+@media (min-width: 60rem) {
+    .deskGrid {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        align-items: start;
+    }
+    .form {
+        grid-column: 1 / span 7;
+    }
+    .routes {
+        grid-column: 9 / -1;
+    }
+}
+.routesTitle {
+    margin-bottom: var(--s-3);
+    color: var(--ink-2);
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
 }
 
 /* ---- Message: without JavaScript, the way to LinkedIn ------------------- */

@@ -1,22 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { FIXTURE_PROJECTS } from "@/lib/fixtures";
 import { logEntries, type LogSource } from "@/lib/log-index";
-import { isQuantity, sameValue, splitUnit } from "@/lib/metrics";
+import { isQuantity, splitUnit } from "@/lib/metrics";
 import {
     adjacentMissions,
     bodyLinks,
-    cardStats,
+    essayAdds,
+    headStats,
     inStack,
     missionCallouts,
     missionEntries,
+    missionLayout,
     missionName,
     missionOrder,
+    missionTiers,
+    noteLines,
     originalEntries,
     resultRows,
     sitePostSlug,
     splitParameters,
-    statusTally,
     toMission,
+    writeUpHref,
 } from "@/lib/missions";
 import type { ContentBody, ProjectListItem } from "@/lib/sanity-client";
 import { buildMission } from "@/lib/structured-data";
@@ -222,16 +226,40 @@ describe("missionOrder and adjacentMissions", () => {
     });
 });
 
-describe("statusTally", () => {
-    const missions = FIXTURE_PROJECTS.slice(0, 4).map((item) =>
-        toMission(item, SITE),
-    );
+describe("missionTiers", () => {
+    type Project = { slug: string; featured?: number };
 
-    it("counts the missions under each status", () => {
-        expect(statusTally(missions)).toEqual([
-            { value: "active", label: "Active", count: 2 },
-            { value: "complete", label: "Complete", count: 2 },
+    it("stages the flagship, gives the next ones room and lists the rest last", () => {
+        const ordered = missionOrder(
+            FIXTURE_PROJECTS.slice(0, 4).map((item) => ({
+                slug: item.slug,
+                featured: item.featured,
+                designation: item.designation,
+            })),
+        );
+        const { flagship, rows, also } = missionTiers(ordered, 2);
+        expect(flagship?.slug).toBe("homelab");
+        expect(rows.map((item) => item.slug)).toEqual([
+            "gmail-spam-filter",
+            "kubernetes-cluster",
         ]);
+        // The owner's last project is the least prominent.
+        expect(also.map((item) => item.slug)).toEqual(["personal-website"]);
+    });
+
+    it("stages the first project when none is featured", () => {
+        const { flagship, rows, also } = missionTiers<Project>(
+            [{ slug: "a" }, { slug: "b" }],
+            2,
+        );
+        expect(flagship?.slug).toBe("a");
+        expect(rows.map((item) => item.slug)).toEqual(["b"]);
+        expect(also).toEqual([]);
+        expect(missionTiers([], 2)).toEqual({
+            flagship: null,
+            rows: [],
+            also: [],
+        });
     });
 });
 
@@ -467,12 +495,6 @@ describe("isQuantity", () => {
         ])
             expect(isQuantity(value), value).toBe(false);
     });
-
-    it("compares values without case or spaces", () => {
-        expect(sameValue("90 %", "90%")).toBe(true);
-        expect(sameValue("Zero", "zero")).toBe(true);
-        expect(sameValue("3", "3 × Pi 5")).toBe(false);
-    });
 });
 
 describe("splitParameters", () => {
@@ -514,22 +536,115 @@ describe("splitParameters", () => {
         expect(inStack("", stack)).toBe(false);
     });
 
-    it("shows a card's stats only in twos or more", () => {
-        const one = { stats: [param("a", "Accuracy", "90%")] };
-        const two = {
-            stats: [param("a", "Nodes", "3"), param("b", "Downtime", "Zero")],
-        };
-        expect(cardStats(one)).toEqual([]);
-        expect(cardStats(two)).toHaveLength(2);
+    it("keeps the results that have a metric and a value", () => {
+        expect(
+            resultRows([
+                { metric: "Accuracy", value: "99.55%" },
+                { metric: " ", value: "1" },
+                { metric: "Spam missed", value: "" },
+            ]),
+        ).toEqual([{ metric: "Accuracy", value: "99.55%" }]);
+        expect(resultRows(null)).toEqual([]);
     });
 
-    it("leaves out results that only repeat the stats", () => {
-        const stats = [param("a", "Spam-detection accuracy", "90%")];
-        expect(resultRows([{ value: "90 %" }], stats)).toEqual([]);
+    it("sets no stats in a head that has a results table", () => {
+        const mission = { stats: [param("a", "Held-out accuracy", "99.55%")] };
+        expect(headStats(mission, [])).toEqual(mission.stats);
+        expect(headStats(mission, [{ metric: "Accuracy" }])).toEqual([]);
+    });
+});
+
+describe("the short project note", () => {
+    const block = (key: string, text: string) => ({
+        _type: "block",
+        _key: key,
+        style: "normal",
+        markDefs: [],
+        children: [{ _type: "span", _key: `${key}s`, text, marks: [] }],
+    });
+    const body = (...blocks: object[]) => blocks as unknown as ContentBody;
+    const kubernetes = FIXTURE_PROJECTS.find(
+        (item) => item.slug === "kubernetes-cluster",
+    )!;
+
+    it("lays out a project with evidence as a file, and one without as a note", () => {
+        const layouts = Object.fromEntries(
+            FIXTURE_PROJECTS.slice(0, 4).map((item) => [
+                item.slug,
+                missionLayout(item),
+            ]),
+        );
+        expect(layouts).toEqual({
+            // Results with their note.
+            "gmail-spam-filter": "file",
+            // The brief, the lessons and the rack's callouts.
+            homelab: "file",
+            // The summary, two highlights and an essay that restates them.
+            "kubernetes-cluster": "note",
+            // The brief.
+            "personal-website": "file",
+        });
         expect(
-            resultRows([{ value: "90%" }, { value: "0.4 ms" }], stats),
-        ).toHaveLength(2);
-        expect(resultRows([{ value: "100%" }], [])).toHaveLength(1);
+            missionLayout({
+                ...kubernetes,
+                body: body({
+                    _type: "block",
+                    _key: "h",
+                    style: "h2",
+                    markDefs: [],
+                    children: [{ _type: "span", _key: "hs", text: "Setup" }],
+                }),
+            }),
+        ).toBe("file");
+        expect(missionLayout({ ...kubernetes, lessons: [" "], next: [] })).toBe(
+            "note",
+        );
+    });
+
+    it("leaves out a highlight that only repeats the summary", () => {
+        expect(
+            noteLines(kubernetes.summary, kubernetes.highlights ?? []),
+        ).toEqual([
+            "Applied CIS Level 1 hardening and integrated Okta OIDC authentication with NFS persistent storage.",
+        ]);
+        expect(noteLines("Something else.", ["A line."])).toEqual(["A line."]);
+    });
+
+    it("keeps an essay only when it says more than the summary and highlights", () => {
+        const lines = [kubernetes.summary, ...(kubernetes.highlights ?? [])];
+        // "I built …" restates "Built …".
+        expect(essayAdds(kubernetes.body, lines)).toBe(false);
+        expect(
+            essayAdds(
+                body(
+                    block("a", "I built a cluster."),
+                    block("b", "It ran for a year."),
+                ),
+                ["Built a cluster"],
+            ),
+        ).toBe(true);
+        expect(
+            essayAdds(body({ _type: "image", _key: "i" }), ["Built it."]),
+        ).toBe(true);
+        expect(essayAdds(null, ["Built it."])).toBe(false);
+    });
+
+    it("sends Read the write-up to the entry, else to a file's own essay", () => {
+        const homelab = FIXTURE_PROJECTS.find(
+            (item) => item.slug === "homelab",
+        )!;
+        const mission = { href: "/portfolio/homelab" };
+        expect(writeUpHref(mission, homelab, { slug: "my-homelab" })).toBe(
+            "/blog/my-homelab",
+        );
+        expect(writeUpHref(mission, homelab, null)).toBe(
+            "/portfolio/homelab#write-up",
+        );
+        // A note has no write-up section.
+        expect(
+            writeUpHref({ href: "/portfolio/k" }, kubernetes, null),
+        ).toBeNull();
+        expect(writeUpHref(mission, null, null)).toBeNull();
     });
 });
 

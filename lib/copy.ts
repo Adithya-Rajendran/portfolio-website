@@ -226,10 +226,14 @@ export const cvCopy = {
     /** The share card and metadata when the profile has no summary. */
     description: "Experience, education and skills.",
     viewLegend: "View",
+    /** The CV list first; the orbit map is the optional view. */
     views: [
-        { value: "map", label: "Orbit map" },
-        { value: "list", label: "CV list" },
+        { value: "list", label: "List" },
+        { value: "map", label: "Map" },
     ],
+    /** Without JavaScript, the link that opens the map. */
+    showMap: "Show the map",
+    contact: "Contact",
     download: "Download CV (PDF)",
     openPdf: "Open PDF",
     print: "Print CV",
@@ -238,7 +242,6 @@ export const cvCopy = {
     copied: "Link copied",
     announceCopied: "Link to the CV copied.",
     openTo: "Open to",
-    writeAboutRole: "Write about a role",
     /** The sections' plain names, on screen and on paper. */
     map: "Timeline",
     figure: "Fig. 1",
@@ -298,46 +301,31 @@ export const directoryCopy = {
 } as const;
 
 /**
- * Projects (themed Missions; G5, G6): the /portfolio index and the
- * mission files. UI copy only: the page's introduction (`projectsIntro`), names, titles,
- * summaries, parameters, briefs, results and lessons are the owner's.
+ * Projects (themed Missions; G5): the /portfolio index and the project
+ * pages (the file and the short note). UI copy only: the page's
+ * introduction (`projectsIntro`), names, titles, summaries, highlights,
+ * parameters, briefs, results and lessons are the owner's.
  */
 export const missionsCopy = {
     themed: "Missions",
     plain: "Projects",
-    tallyLabel: "Projects by status",
     experience: "Experience & CV",
     flagship: "Featured project",
     more: "More projects",
-    register: "All projects",
-    /** The register's caption. */
-    table: "Table 1",
-    registerCaption: "Every project by code, status and dates.",
-    columns: {
-        code: "Code",
-        mission: "Mission",
-        type: "Type",
-        status: "Status",
-        dates: "Dates",
-        links: "Links",
-    },
-    fileColumn: "File",
+    /** The least prominent projects, under the tiles. */
+    also: "Also",
     directory: "Related pages",
     openFile: "View the project",
     readWriteUp: "Read the write-up",
     stack: "Stack",
-    /** The project file. */
+    /** A project page's share-card alt. */
     file: "Project",
-    originalEntry: (designation: string) => `Original entry · ${designation}`,
-    parameters: "Parameters",
-    record: {
-        mission: "Mission",
+    /** The facts under a project's head (and a note's links). */
+    facts: {
         status: "Status",
-        type: "Type",
-        dates: "Dates",
-        role: "Role",
         stack: "Stack",
-        revision: "Revision",
+        role: "Role",
+        links: "Links",
     },
     callouts: "Parts of the build",
     briefTitle: "Problem, approach and outcome",
@@ -350,6 +338,8 @@ export const missionsCopy = {
     contents: "Contents",
     contentsLabel: "On this page",
     results: "Results",
+    /** The results table's number: "Table 1". */
+    table: "Table 1",
     resultsCaption: (name: string) => `${name} results`,
     resultColumns: { metric: "Metric", value: "Value", note: "Note" },
     debrief: "Lessons and next steps",

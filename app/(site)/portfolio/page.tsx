@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import MissionRegister from "@/components/portfolio/mission-register";
+import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import MissionStage from "@/components/portfolio/mission-stage";
 import MissionTile, { MissionTiles } from "@/components/portfolio/mission-tile";
 import StaticStars from "@/components/sky/static-stars";
-import { LinkArrow, Status } from "@/components/ui/marks";
+import { LinkArrow } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
 import RouteList from "@/components/ui/route-list";
 import SectionTag from "@/components/ui/section-tag";
@@ -13,10 +13,10 @@ import { directoryRows } from "@/lib/directory";
 import { logEntries } from "@/lib/log-index";
 import {
     missionOrder,
+    missionTiers,
     originalEntries,
-    statusTally,
     toMission,
-    type Mission,
+    writeUpHref,
 } from "@/lib/missions";
 import { siteRoutes } from "@/lib/navigation";
 import {
@@ -52,15 +52,19 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
+/** How many projects after the flagship get a tile; the rest are rows. */
+const TILES = 2;
+
 /**
  * Projects (/portfolio; themed Missions): the page head with the owner's
  * introduction (`projectsIntro`, left out when empty), the flagship on its
- * stage, the other missions as text-first tiles, the register of every
- * mission (Table 1), and the pages that the old sections of this page
- * moved to, each still
+ * stage, the next two as text-first tiles and the rest as compact rows, so
+ * the owner's last project is the least prominent (`missionTiers`), then
+ * the pages that the old sections of this page moved to, each still
  * answering its old fragment (#experience, #skills, #certifications,
- * #engineering-writing, #contact; #projects is the tiles). Everything is
- * server-rendered and static.
+ * #engineering-writing, #contact; #projects is the tiles). Only what the
+ * owner published is shown: no counts, no register, no numbers without
+ * their notes. Everything is server-rendered and static.
  */
 export default async function Portfolio() {
     const [profile, projects, posts] = await Promise.all([
@@ -69,31 +73,23 @@ export default async function Portfolio() {
         getAllPosts(),
     ]);
     const ordered = missionOrder(projects);
-    const missions = ordered.map((project) =>
-        toMission(project, siteConfig.url),
-    );
-    const flagshipIndex = ordered.findIndex(
-        (project) => project.featured === 1,
-    );
-    const lead = flagshipIndex >= 0 ? flagshipIndex : 0;
-    const flagship: Mission | undefined = missions[lead];
-    const others = missions.filter((_, index) => index !== lead);
+    const mission = (project: (typeof ordered)[number]) =>
+        toMission(project, siteConfig.url);
+    const tiers = missionTiers(ordered, TILES);
+    const flagship = tiers.flagship ? mission(tiers.flagship) : null;
+    const tiles = tiers.rows.map(mission);
+    const rest = tiers.also.map(mission);
     const detail = flagship ? await getProjectBySlug(flagship.slug) : null;
     const cover = detail?.cover?.asset ? detail.cover : null;
     const poster = detail?.model?.poster?.asset ? detail.model.poster : null;
-
     const originals = originalEntries(
         ordered,
         posts,
         logEntries(posts),
         siteConfig.url,
     );
-    const writeUp = (mission: Mission) => {
-        const entry = originals.get(mission.id);
-        return entry ? `/blog/${entry.slug}` : `${mission.href}#write-up`;
-    };
+    const others = tiles.length + rest.length > 0;
 
-    const tally = statusTally(missions);
     const rows = directoryRows(
         ["experience", "skills", "certifications", "writing", "contact"],
         { profile, posts: posts.filter((post) => post.slug).length },
@@ -112,19 +108,7 @@ export default async function Portfolio() {
                     title={copy.plain}
                     intro={profile?.projectsIntro?.trim() || null}
                 >
-                    <div className={styles.headMeta}>
-                        {tally.length ? (
-                            <p className={styles.tally}>
-                                <span className="sr-only">
-                                    {copy.tallyLabel}:{" "}
-                                </span>
-                                {tally.map((item) => (
-                                    <Status key={item.value} value={item.value}>
-                                        {item.count} {item.label}
-                                    </Status>
-                                ))}
-                            </p>
-                        ) : null}
+                    <div className="cluster page-head__actions">
                         <LinkArrow href={siteRoutes.resume}>
                             {copy.experience}
                         </LinkArrow>
@@ -135,7 +119,7 @@ export default async function Portfolio() {
             {flagship ? (
                 <section
                     className={`section ${styles.first}`}
-                    id={others.length ? undefined : "projects"}
+                    id={others ? undefined : "projects"}
                     aria-labelledby="msn-flagship-h"
                 >
                     <div className="shell">
@@ -152,14 +136,18 @@ export default async function Portfolio() {
                                     ? cover.caption
                                     : detail?.model?.title?.trim() || null
                             }
-                            writeUp={writeUp(flagship)}
+                            writeUp={writeUpHref(
+                                flagship,
+                                detail,
+                                originals.get(flagship.id),
+                            )}
                             priority
                         />
                     </div>
                 </section>
             ) : null}
 
-            {others.length ? (
+            {others ? (
                 <section
                     className="section"
                     id="projects"
@@ -171,37 +159,26 @@ export default async function Portfolio() {
                                 {copy.more}
                             </h2>
                         </SectionTag>
-                        <MissionTiles>
-                            {others.map((mission) => (
-                                <MissionTile
-                                    key={mission.id}
-                                    mission={mission}
-                                />
-                            ))}
-                        </MissionTiles>
-                    </div>
-                </section>
-            ) : null}
-
-            {missions.length ? (
-                <section
-                    className="section"
-                    id="register"
-                    aria-labelledby="msn-register-h"
-                >
-                    <div className="shell">
-                        <SectionTag className={styles.tag}>
-                            <h2 className="section-tag__h" id="msn-register-h">
-                                {copy.register}
-                            </h2>
-                        </SectionTag>
-                        <MissionRegister
-                            missions={[...missions].sort(
-                                (a, b) => a.number - b.number,
-                            )}
-                            entries={originals}
-                            captionId="msn-register-cap"
-                        />
+                        {tiles.length ? (
+                            <MissionTiles>
+                                {tiles.map((item) => (
+                                    <MissionTile key={item.id} mission={item} />
+                                ))}
+                            </MissionTiles>
+                        ) : null}
+                        {rest.length ? (
+                            <div className={styles.rest}>
+                                <p className={styles.restLabel}>{copy.also}</p>
+                                <MissionRows quiet>
+                                    {rest.map((item) => (
+                                        <MissionRow
+                                            key={item.id}
+                                            mission={item}
+                                        />
+                                    ))}
+                                </MissionRows>
+                            </div>
+                        ) : null}
                     </div>
                 </section>
             ) : null}

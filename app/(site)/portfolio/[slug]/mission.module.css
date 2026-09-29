@@ -1,10 +1,11 @@
 /*
- * A mission file (/portfolio/[slug]; G5, G6): the crumb, the head (copy
- * 7/12 beside the plate 5/12, or the full width without one), the title
- * block, then numbered sections on the rail + main grid and the close.
- * Shared parts (stats, plates, the title block, tables, link rows, the
- * pager) are styled in styles/components.css; the mission line and the
- * callouts in their components' modules.
+ * A project page (/portfolio/[slug]; G5): the crumb, then either the file
+ * (the head, copy 7/12 beside the plate 5/12 or the full width without
+ * one, its facts, then the sections on the rail + main grid) or the short
+ * note (title, summary, highlights and facts in one column), and the
+ * close. Shared parts (stats, plates, key/value lists, tables, link rows,
+ * the pager) are styled in styles/components.css; the mission line and
+ * the callouts in their components' modules.
  */
 .page {
     padding-bottom: var(--space-section);
@@ -64,6 +65,40 @@
 .metrics {
     margin-top: var(--s-7);
 }
+/* The facts: the stack, the role, named parameters (and a note's links). */
+.facts {
+    max-width: var(--measure-index);
+    margin-top: var(--s-7);
+}
+.facts :global(.data) {
+    font-size: 0.8125rem;
+    line-height: 1.7;
+}
+.factLinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.factLinks a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    min-height: 32px;
+    color: var(--ink-1);
+    text-decoration-color: var(--rule-2);
+    text-underline-offset: 0.2em;
+}
+.factLinks a:hover {
+    color: var(--accent-text);
+    text-decoration-color: var(--accent);
+}
+.factLinks :global(.icon) {
+    width: 14px;
+    height: 14px;
+}
 @media (min-width: 60rem) {
     .head {
         grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -85,8 +120,28 @@
     }
 }
 
-.record {
-    margin-top: var(--space-block);
+/* ---- The short note: one column, no sections --------------------------- */
+.noteHead {
+    max-width: var(--measure-index);
+    padding-top: var(--s-7);
+}
+.noteTitle {
+    max-width: 22ch;
+    color: var(--ink-1);
+    margin-top: var(--s-5);
+    font: 300 var(--step-5) / 1.04 var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+}
+.noteBody {
+    max-width: var(--measure-index);
+    margin-top: var(--s-7);
+}
+.noteBody > .facts {
+    margin-top: var(--s-7);
+}
+.noteBody > :first-child {
+    margin-top: 0;
 }
 
 /* ---- Sections (components/ui/doc-section.tsx) -------------------------- */
@@ -158,7 +213,8 @@
     text-transform: uppercase;
 }
 .lessons,
-.next {
+.next,
+.lines {
     margin: 0;
     padding: 0;
     border-bottom: var(--rule-hair) solid var(--rule-1);
@@ -167,7 +223,8 @@
 /* One list style for both columns, like the callouts: only the mark
    tells them apart. */
 .lessons li,
-.next li {
+.next li,
+.lines li {
     position: relative;
     padding: var(--s-4) 0 var(--s-4) var(--s-6);
     border-top: var(--rule-hair) solid var(--rule-1);
@@ -175,7 +232,8 @@
     font: 400 var(--step-0) / 1.55 var(--font-display);
     text-wrap: pretty;
 }
-.lessons li::before {
+.lessons li::before,
+.lines li::before {
     content: "";
     position: absolute;
     left: 0;

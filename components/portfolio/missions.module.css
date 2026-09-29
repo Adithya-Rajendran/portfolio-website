@@ -1,12 +1,11 @@
 /*
- * Missions (G5, G6): the mission line, the flagship stage, the tiles and
- * the register, shared by /portfolio, the mission files and the home
- * page's stage. Ported from the mockup's site.css 4.12 and
+ * Missions (G5, G6): the mission line, the flagship stage and the tiles,
+ * shared by /portfolio, the mission files and the home page's stage. Ported from the mockup's site.css 4.12 and
  * missions.css, held to the unified contract: one accent, hairlines, no
  * boxes; mission names in capitals only on the flagship and the file.
  */
 
-/* ---- The line: MSN-02 · TYPE · ● Status · dates, never wrapped -------- */
+/* ---- The line: TYPE · ● Status · dates, never wrapped ----------------- */
 .lineBox {
     min-width: 0;
     container-type: inline-size;
@@ -18,13 +17,6 @@
     gap: var(--s-4);
     overflow: hidden;
     white-space: nowrap;
-}
-.code {
-    flex: none;
-    color: var(--ink-2);
-    font: 400 0.8125rem / 1 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
-    letter-spacing: 0.02em;
 }
 .type {
     min-width: 0;
@@ -103,9 +95,6 @@
     font: 300 var(--step-1) / 1.5 var(--font-long);
     text-wrap: pretty;
 }
-.stageMetrics {
-    margin-top: var(--s-6);
-}
 .stageCopy > .stack {
     margin-top: var(--s-5);
 }
@@ -131,8 +120,8 @@
 }
 
 /* ---- Tiles: text first, a hairline on top, the whole tile one link ---- */
-/* The row of tiles: one column on phones, two from 600px, three from
-   960px (MissionTiles; /portfolio's more projects). */
+/* The row of tiles: one column on phones, two from 600px
+   (MissionTiles; /portfolio's more projects). */
 .tiles {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -141,11 +130,6 @@
 @media (min-width: 37.5rem) {
     .tiles {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-@media (min-width: 60rem) {
-    .tiles {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 .tile {
@@ -190,9 +174,6 @@
     font: 300 var(--step-0) / 1.55 var(--font-long);
     text-wrap: pretty;
 }
-.tileMetrics {
-    margin-block: var(--s-3) var(--s-2);
-}
 .tileArrow {
     position: absolute;
     top: calc(var(--s-5) + 0.1rem);
@@ -207,84 +188,88 @@
     color: var(--accent-text);
 }
 
-/* ---- Table 1, the register -------------------------------------------- */
-.register {
-    max-width: var(--measure-index);
-}
-.colType,
-.colDates,
-.colStatus {
-    display: none;
-}
-.regStatusSm {
-    display: block;
-    margin-top: var(--s-2);
-}
-@media (min-width: 37.5rem) {
-    .colType,
-    .colDates,
-    .colStatus {
-        display: table-cell;
-    }
-    .regStatusSm {
-        display: none;
-    }
-}
-.regCode {
-    color: var(--ink-2);
-    font-size: 0.8125rem;
-}
-.regMission {
-    min-width: 9rem;
-}
-.regName {
-    font: 400 var(--step-1) / 1.2 var(--font-display);
-    text-decoration: none;
-}
-.regName:hover {
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-underline-offset: 0.18em;
-}
-.regTitle {
-    display: block;
-    margin-top: 0.3rem;
-    color: var(--ink-2);
-    font: 400 var(--step--1) / 1.4 var(--font-display);
-}
-.regType {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.9 var(--font-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-.register :global(.status) {
-    padding-top: 0.35rem;
-}
-.regLinks {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 var(--s-3);
+/* ---- Rows: a project in a line or two (MissionRow) --------------------- */
+/* A card is a hairline on top; the title's link covers the row. */
+.rows {
+    display: grid;
+    gap: var(--s-5) var(--gutter);
     margin: 0;
     padding: 0;
     list-style: none;
 }
-.regLinks a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-    color: var(--ink-1);
-    text-decoration-color: var(--rule-2);
-    text-underline-offset: 0.2em;
-    white-space: nowrap;
-}
-.regLinks a:hover {
-    color: var(--accent-text);
-    text-decoration-color: var(--accent);
-}
-@media (max-width: 37.49rem) {
-    .regName {
-        font-size: var(--step-0);
+@media (min-width: 60rem) {
+    .rows {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+}
+.row {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: var(--s-2);
+    padding: var(--s-4) var(--s-7) 0 0;
+    border-top: var(--rule-hair) solid var(--rule-2);
+    transition: border-color var(--dur-hover) var(--ease-dock);
+}
+.rowLine {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-1) var(--s-4);
+}
+.rowDates {
+    color: var(--ink-2);
+    font: 400 0.8125rem / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+}
+.rowTitle {
+    margin-top: var(--s-1);
+    font: 400 var(--step-2) / 1.2 var(--font-display);
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+}
+.rowTitle a {
+    text-decoration: none;
+}
+.rowSummary {
+    max-width: 60ch;
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.5 var(--font-long);
+    text-wrap: pretty;
+}
+.rowArrow {
+    position: absolute;
+    top: var(--s-4);
+    right: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--ink-3);
+    transition:
+        transform var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock);
+}
+.row:hover {
+    border-top-color: var(--accent);
+}
+/* Quiet rows: a step smaller, the hairline in the quieter rule. */
+.rowsQuiet .row {
+    border-top-color: var(--rule-1);
+}
+.rowsQuiet .row:hover {
+    border-top-color: var(--accent);
+}
+.rowsQuiet .rowTitle {
+    font-size: var(--step-1);
+}
+.rowsQuiet .rowSummary {
+    font-size: var(--step--1);
+}
+.row:hover .rowTitle a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.16em;
+}
+.row:hover .rowArrow {
+    color: var(--accent-text);
+    transform: translateX(4px);
 }

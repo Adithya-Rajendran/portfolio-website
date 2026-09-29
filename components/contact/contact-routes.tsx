@@ -2,30 +2,35 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { buttonClass } from "@/components/ui/button";
 import type { ContactRoute } from "@/lib/contact";
-import { contactCopy as copy } from "@/lib/copy";
 import { contactHref } from "@/lib/navigation";
 import RouteWriteLink from "./route-write-link";
 import styles from "./contact-routes.module.css";
 
 /**
- * The contact routes (G4) as numbered rows. On /contact (`onPage`) each
- * row carries its topic's fragment id (`#hiring`), and its button
+ * The contact routes (G4) as short hairline rows beside the form: each
+ * route's title, the owner's own line where there is one (Research: the
+ * invitation), its button and its links. On /contact (`onPage`) each row
+ * carries its topic's fragment id (`#hiring`), and its button
  * (RouteWriteLink) links to that fragment, which ContactDesk turns into
- * "pick this topic and go to the form"; without JavaScript it links to the
+ * "pick this topic in the form"; without JavaScript it links to the
  * message section instead, which then offers LinkedIn. Anywhere else the
- * button links to the route on /contact. Titles, prompts, the Open To line and the research invitation are the
- * profile's words (lib/contact.ts).
- * Ported from the mockup's `DF.render.routes`.
+ * button links to the route on /contact. Titles and lines are the
+ * profile's words (lib/contact.ts); what to write is only ever the
+ * form's optional placeholder.
  */
 export default function ContactRoutes({
     routes,
     onPage = false,
+    titleAs: Title = "h3",
+    labelledBy,
 }: {
     routes: readonly ContactRoute[];
     onPage?: boolean;
+    titleAs?: "h3" | "h4";
+    labelledBy?: string;
 }) {
     return (
-        <ol className={styles.routes} role="list">
+        <ul className={styles.routes} role="list" aria-labelledby={labelledBy}>
             {routes.map((route) => (
                 <li
                     key={route.topic}
@@ -33,48 +38,33 @@ export default function ContactRoutes({
                     className={styles.route}
                     data-topic={route.topic}
                 >
-                    <span className={styles.num} aria-hidden="true">
-                        {route.num}
-                    </span>
-                    <h3 className={styles.title}>{route.title}</h3>
-                    {route.openTo ? (
-                        <p className={styles.lede}>
-                            <span className={styles.key}>{copy.openTo}</span>
-                            {route.openTo}
-                        </p>
-                    ) : null}
+                    <Title className={styles.title}>{route.title}</Title>
                     {route.body ? (
                         <p className={styles.body}>{route.body}</p>
                     ) : null}
-                    {!route.prompt ? null : (
-                        <p className={styles.template}>
-                            <span className={styles.key}>{copy.include}</span>
-                            {route.prompt}
-                        </p>
+                    {onPage ? (
+                        <RouteWriteLink
+                            className={buttonClass({
+                                size: "sm",
+                                className: styles.write,
+                            })}
+                            topic={route.topic}
+                        >
+                            {route.cta}
+                            <Icon name="arrow" className="icon--nudge" />
+                        </RouteWriteLink>
+                    ) : (
+                        <Link
+                            className={buttonClass({
+                                size: "sm",
+                                className: styles.write,
+                            })}
+                            href={contactHref(route.topic)}
+                        >
+                            {route.cta}
+                            <Icon name="arrow" className="icon--nudge" />
+                        </Link>
                     )}
-                    <div className={styles.actions}>
-                        {onPage ? (
-                            <RouteWriteLink
-                                className={buttonClass({
-                                    className: styles.write,
-                                })}
-                                topic={route.topic}
-                            >
-                                {route.cta}
-                                <Icon name="arrow" className="icon--nudge" />
-                            </RouteWriteLink>
-                        ) : (
-                            <Link
-                                className={buttonClass({
-                                    className: styles.write,
-                                })}
-                                href={contactHref(route.topic)}
-                            >
-                                {route.cta}
-                                <Icon name="arrow" className="icon--nudge" />
-                            </Link>
-                        )}
-                    </div>
                     {route.links.length ? (
                         <ul className={styles.links} role="list">
                             {route.links.map((link) => (
@@ -99,6 +89,6 @@ export default function ContactRoutes({
                     ) : null}
                 </li>
             ))}
-        </ol>
+        </ul>
     );
 }

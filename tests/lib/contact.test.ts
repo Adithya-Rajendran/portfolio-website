@@ -41,16 +41,15 @@ const topicsOf = (profile: ProfileData | null) =>
 describe("contact routes", () => {
     it("shows Hiring, Research and Hello for the published profile, with Consulting off", () => {
         const routes = contactRoutes(FIXTURE_PROFILE);
-        expect(routes.map((route) => [route.num, route.topic])).toEqual([
-            ["01", "hiring"],
-            ["02", "research"],
-            ["03", "hello"],
+        expect(routes.map((route) => route.topic)).toEqual([
+            "hiring",
+            "research",
+            "hello",
         ]);
-        // Facts are the profile's own words, printed as written.
-        expect(routes[0].openTo).toBe(
-            "Summer 2027 internships · Full-time opportunities in 2028",
-        );
+        // Facts are the profile's own words, printed as written; what the
+        // owner is open to is the page head's, not a route's.
         expect(routes[1].body).toBe(FIXTURE_PROFILE.contactInvitation);
+        expect(routes[0]).not.toHaveProperty("openTo");
     });
 
     it("words each route with the profile's title and prompt", () => {
@@ -96,18 +95,6 @@ describe("contact routes", () => {
         expect(contactRoutes(null).some((route) => "prompt" in route)).toBe(
             false,
         );
-    });
-
-    it("prints the older single Open To line while there are no lines", () => {
-        const [hiring] = contactRoutes(
-            profileOf({
-                availability: availabilityOf({
-                    seeking: [],
-                    openTo: "Research internships",
-                }),
-            }),
-        );
-        expect(hiring.openTo).toBe("Research internships");
     });
 
     it("hides Consulting until availability.consultingOpen is on", () => {

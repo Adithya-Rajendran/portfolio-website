@@ -14,8 +14,9 @@ import { orbitCopy as copy } from "@/lib/copy";
  *   sky, or Escape to release). Earlier and Later step through them.
  * - **A CV row** lights its orbit while the pointer is over it; its "Show
  *   on map" pins the orbit and brings the map into view.
- * - **The view switch** (Orbit map | CV list) hides or shows the map, and
- *   **Print CV** opens the print dialog.
+ * - **The view switch** (List | Map) shows the map above the CV or hides
+ *   it; the list is the default, and `#orbit-map` in the address opens
+ *   the map. **Print CV** opens the print dialog.
  *
  * Lookups stay inside this page's root: Cache Components keeps other
  * visited pages mounted but hidden, and they can hold the same ids. When
@@ -276,6 +277,16 @@ export default function OrbitInteraction() {
             const input = event.target as HTMLInputElement;
             if (input.name === "cv-view" && input.checked) setView(input.value);
         }
+        // A link to the map (`/resume#orbit-map`) opens the Map view.
+        const mapSection = root.querySelector<HTMLElement>("#orbit-map");
+        function onHash() {
+            if (window.location.hash !== "#orbit-map" || !mapSection) return;
+            if (root!.offsetParent === null) return;
+            setView("map");
+            reveal(mapSection);
+        }
+        onHash();
+        window.addEventListener("hashchange", onHash);
 
         root.addEventListener("pointerover", onOver);
         root.addEventListener("pointerout", onOut);
@@ -292,6 +303,7 @@ export default function OrbitInteraction() {
             root.removeEventListener("focusout", onBlur);
             root.removeEventListener("keydown", onKey);
             root.removeEventListener("change", onChange);
+            window.removeEventListener("hashchange", onHash);
             state.preview = null;
             state.row = null;
             sync();

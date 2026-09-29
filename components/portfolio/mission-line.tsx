@@ -3,21 +3,16 @@ import type { Mission } from "@/lib/missions";
 import styles from "./missions.module.css";
 
 /**
- * A mission's one metadata line (contract §11): MSN-02 · TYPE · ● Status
- * · dates. It never wraps: where it would, the type is dropped first. A
- * value that is not set is simply absent. `code={false}` leaves the
- * mission number out (the home page, where it would mean nothing yet).
+ * A mission's one metadata line (contract §11): TYPE · ● Status · dates.
+ * It never wraps: where it would, the type is dropped first. A value that
+ * is not set is simply absent. The mission number is not on it: it is the
+ * file's quiet identifier, in the file's crumb.
  */
 export default function MissionLine({
     mission,
-    code = true,
     className,
 }: {
-    code?: boolean;
-    mission: Pick<
-        Mission,
-        "designation" | "types" | "statusValue" | "statusLabel" | "dates"
-    >;
+    mission: Pick<Mission, "types" | "statusValue" | "statusLabel" | "dates">;
     className?: string;
 }) {
     return (
@@ -27,9 +22,6 @@ export default function MissionLine({
             }
         >
             <p className={styles.line}>
-                {code ? (
-                    <span className={styles.code}>{mission.designation}</span>
-                ) : null}
                 {mission.types.length ? (
                     <span className={styles.type}>
                         {mission.types.join(" · ")}

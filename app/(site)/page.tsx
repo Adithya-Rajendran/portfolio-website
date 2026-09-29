@@ -1,10 +1,11 @@
 import Link from "next/link";
 import LogIndex from "@/components/blogs/log-index";
 import Hero, { preloadHeroPhoto } from "@/components/home/hero";
+import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import MissionStage from "@/components/portfolio/mission-stage";
 import { ButtonLink } from "@/components/ui/button";
-import { Icon, type OrnamentName } from "@/components/ui/icon";
-import { LinkArrow, Status } from "@/components/ui/marks";
+import type { OrnamentName } from "@/components/ui/icon";
+import { LinkArrow } from "@/components/ui/marks";
 import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
 import { homeCopy as copy } from "@/lib/copy";
@@ -15,6 +16,7 @@ import {
     missionOrder,
     originalEntries,
     toMission,
+    writeUpHref,
     type Mission,
 } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
@@ -60,32 +62,6 @@ function Act({
                 <div className={styles.content}>{children}</div>
             </div>
         </section>
-    );
-}
-
-/** A project after the flagship: its status and dates, its title (the
- *  link to its file, over the whole row) and its summary. */
-function ProjectRow({ mission }: { mission: Mission }) {
-    return (
-        <li className={styles.project}>
-            <p className={styles.projectLine}>
-                <Status value={mission.statusValue}>
-                    {mission.statusLabel}
-                </Status>
-                {mission.dates ? (
-                    <span className={styles.projectDates}>{mission.dates}</span>
-                ) : null}
-            </p>
-            <h3 className={styles.projectTitle}>
-                <Link className="stretch" href={mission.href}>
-                    {mission.title}
-                </Link>
-            </h3>
-            {mission.summary ? (
-                <p className={styles.projectSummary}>{mission.summary}</p>
-            ) : null}
-            <Icon name="arrow" className={styles.projectArrow} />
-        </li>
     );
 }
 
@@ -166,22 +142,14 @@ export default async function Home() {
                                 ? cover.caption
                                 : detail?.model?.title?.trim() || null
                         }
-                        writeUp={
-                            flagshipEntry
-                                ? `/blog/${flagshipEntry.slug}`
-                                : detail?.body?.length
-                                  ? `${flagship.href}#write-up`
-                                  : null
-                        }
-                        stats={false}
-                        code={false}
+                        writeUp={writeUpHref(flagship, detail, flagshipEntry)}
                     />
                     {rows.length ? (
-                        <ul className={styles.projects} role="list">
+                        <MissionRows className={styles.projects}>
                             {rows.map((row) => (
-                                <ProjectRow key={row.id} mission={row} />
+                                <MissionRow key={row.id} mission={row} />
                             ))}
-                        </ul>
+                        </MissionRows>
                     ) : null}
                     {also.length ? (
                         <p className={styles.also}>

@@ -6,7 +6,6 @@ import {
     cvEntry,
     cvProjects,
     cvTalks,
-    formatDuration,
 } from "@/lib/cv";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import type {
@@ -24,7 +23,7 @@ const entry = (fields: Partial<TimelineEntry>): TimelineEntry => ({
 });
 
 describe("timeline rows", () => {
-    it("words a finished role's months and length", () => {
+    it("words a finished role's months, and derives no length from them", () => {
         const row = cvEntry(
             entry({
                 startDate: "2024-05-01",
@@ -36,11 +35,13 @@ describe("timeline rows", () => {
         expect(row).toMatchObject({
             dates: "May 2024 – Jul 2026",
             years: "2024–2026",
-            duration: "2 yr 3 mo",
             current: false,
             location: "Remote",
             expected: null,
         });
+        // The dates are the résumé's; a "2 yr 3 mo" would be a derived
+        // figure it does not state.
+        expect(row).not.toHaveProperty("duration");
     });
 
     it("words the current entry as running to the present, with its expected end", () => {
@@ -55,7 +56,6 @@ describe("timeline rows", () => {
         expect(row).toMatchObject({
             dates: "Aug 2026 – present",
             years: "Since 2026",
-            duration: null,
             current: true,
             expected: "Expected 2028",
         });
@@ -68,7 +68,6 @@ describe("timeline rows", () => {
         expect(row).toMatchObject({
             dates: "Jun 2023",
             years: "2023",
-            duration: null,
         });
         expect(
             cvEntry(entry({ startDate: null, isCurrent: true })).dates,
@@ -82,7 +81,6 @@ describe("timeline rows", () => {
         expect(cvEntry(ucsc)).toMatchObject({
             dates: "2019–2023",
             years: "2019–2023",
-            duration: null,
             orgLabel: "UCSC",
         });
     });
@@ -106,13 +104,6 @@ describe("timeline rows", () => {
             "TCR",
         ]);
         expect(cvEntries(null).all).toEqual([]);
-    });
-
-    it("counts both months in a length", () => {
-        expect(formatDuration(6)).toBe("6 mo");
-        expect(formatDuration(12)).toBe("1 yr");
-        expect(formatDuration(27)).toBe("2 yr 3 mo");
-        expect(formatDuration(0)).toBeNull();
     });
 });
 

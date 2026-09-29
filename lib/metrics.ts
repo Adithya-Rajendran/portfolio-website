@@ -25,10 +25,3 @@ export function isQuantity(value: string): boolean {
     const text = value.trim();
     return /^[−-]?\.?\d/.test(text) || NUMBER_WORD.test(text);
 }
-
-/** "90 %" and "90%" are the same value; so are "Zero" and "zero". */
-export function sameValue(a: string, b: string): boolean {
-    const norm = (value: string) =>
-        value.trim().toLowerCase().replace(/\s+/g, "");
-    return norm(a) === norm(b);
-}

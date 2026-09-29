@@ -17,6 +17,10 @@ test("the menu sheet opens, traps nothing behind it and closes", async ({
     const banner = page.getByRole("banner");
     const menu = banner.getByRole("button", { name: "Menu" });
     await expect(banner.getByRole("link", { name: "CV" })).toBeVisible();
+    // Contact is in the bar too, so the form is one tap away on a phone.
+    await expect(
+        banner.getByRole("link", { name: "Contact", exact: true }),
+    ).toHaveAttribute("href", "/contact");
     await menu.click();
 
     const close = banner.getByRole("button", { name: "Close" });
@@ -59,6 +63,12 @@ test("the current section is marked in the nav", async ({ page }) => {
 test("the nav names every section plainly", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
+    // From 960px Contact is the nav's own link, not repeated in the bar.
+    await expect(
+        page
+            .getByRole("banner")
+            .getByRole("link", { name: "Contact", exact: true }),
+    ).toHaveCount(1);
     const nav = page.getByRole("navigation", { name: "Main" });
     await expect(nav.getByRole("link")).toHaveText([
         "Projects",

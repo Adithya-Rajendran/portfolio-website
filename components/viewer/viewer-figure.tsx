@@ -14,12 +14,10 @@ import styles from "./viewer.module.css";
  */
 export default function ViewerFigure({
     model,
-    designation,
     className,
     priority = false,
 }: {
     model: ProjectModel;
-    designation: string;
     className?: string;
     priority?: boolean;
 }) {
@@ -34,7 +32,6 @@ export default function ViewerFigure({
             <Plate
                 image={model.poster}
                 label="Pl. I"
-                tag={designation}
                 caption={model.title?.trim() || null}
                 ratio="4 / 5"
                 focus="50% 40%"

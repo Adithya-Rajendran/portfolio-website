@@ -17,7 +17,8 @@ import type {
  * so /resume, its print and About agree.
  * Dates follow the site's rules: a year-only date prints the year alone,
  * an unknown start is omitted with its "– present", and nothing is
- * estimated in words.
+ * estimated in words. The dates are printed as the résumé gives them;
+ * no length of time is derived from them.
  */
 
 export interface CvEntry {
@@ -38,8 +39,6 @@ export interface CvEntry {
     dates: string | null;
     /** The map label's years: "2024–2026", "Since 2026", "2023". */
     years: string | null;
-    /** "2 yr 3 mo", for a finished entry with known months. */
-    duration: string | null;
     current: boolean;
     /** "Expected 2028". */
     expected: string | null;
@@ -50,26 +49,9 @@ export interface CvEntry {
     orbit: OrbitEntry;
 }
 
-const MONTH_INDEX = /^(\d{4})-(\d{2})/;
-
-function monthIndex(iso: string): number | null {
-    const match = MONTH_INDEX.exec(iso);
-    return match ? Number(match[1]) * 12 + Number(match[2]) - 1 : null;
-}
-
 /** A fragment-safe id from a Sanity key. */
 export function cvAnchor(key: string): string {
     return `cv-${key.replace(/[^A-Za-z0-9_-]/g, "-")}`;
-}
-
-/** "2 yr 3 mo" for the months from start to end, both counted. */
-export function formatDuration(months: number): string | null {
-    if (!Number.isFinite(months) || months < 1) return null;
-    const years = Math.floor(months / 12);
-    const rest = months % 12;
-    return [years ? `${years} yr` : "", rest ? `${rest} mo` : ""]
-        .filter(Boolean)
-        .join(" ");
 }
 
 /**
@@ -112,19 +94,6 @@ export function cvEntry(entry: TimelineEntry): CvEntry {
         years = startYear === endYear ? endYear : `${startYear}–${endYear}`;
     else years = endYear ?? startYear;
 
-    let duration: string | null = null;
-    if (
-        known &&
-        !current &&
-        entry.endDate &&
-        entry.startPrecision !== "year" &&
-        entry.endPrecision !== "year"
-    ) {
-        const a = monthIndex(entry.startDate!);
-        const b = monthIndex(entry.endDate);
-        if (a !== null && b !== null) duration = formatDuration(b - a + 1);
-    }
-
     const employment =
         entry.employment && entry.employment !== "degree"
             ? (EMPLOYMENT_TYPES.find((type) => type.value === entry.employment)
@@ -143,7 +112,6 @@ export function cvEntry(entry: TimelineEntry): CvEntry {
         employment,
         dates,
         years,
-        duration,
         current,
         expected:
             current && entry.expectedEndYear

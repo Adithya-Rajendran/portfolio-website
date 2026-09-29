@@ -626,9 +626,6 @@ export default function OrbitMap({
                                         {entry.dates ? (
                                             <span>{entry.dates}</span>
                                         ) : null}
-                                        {entry.duration ? (
-                                            <span>{entry.duration}</span>
-                                        ) : null}
                                         {entry.expected ? (
                                             <span>{entry.expected}</span>
                                         ) : null}

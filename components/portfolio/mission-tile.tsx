@@ -2,24 +2,23 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
 import { Icon } from "@/components/ui/icon";
-import Metrics from "@/components/ui/metrics";
 import Plate from "@/components/ui/plate";
 import { missionsCopy as copy } from "@/lib/copy";
-import { cardStats, type Mission } from "@/lib/missions";
+import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
 
-/** The row of tiles: 1, 2 or 3 across (/portfolio and the home act). */
+/** The row of tiles: one on phones, then two across (/portfolio). */
 export function MissionTiles({ children }: { children: React.ReactNode }) {
     return <div className={styles.tiles}>{children}</div>;
 }
 
 /**
- * A mission as a tile (contract §4): text first. Its line, its name in
- * capitals (the link to its file, stretched over the tile), its title, its
- * summary, its stats (two to four quantities, or none) and its stack,
- * under a hairline. A cover adds
- * a 3:2 plate on top; a mission without one is not given a stand-in.
+ * A mission as a tile (contract §4): text first. Its line (type, status,
+ * dates), its name (the link to its file, stretched over the tile), its
+ * title, its summary and its stack, under a hairline. Numbers stay on
+ * the file, beside their notes. A cover adds a 3:2 plate on top; a
+ * mission without one is not given a stand-in.
  */
 export default function MissionTile({
     mission,
@@ -40,7 +39,6 @@ export default function MissionTile({
                     className={styles.tilePlate}
                     image={cover}
                     label={plate}
-                    tag={mission.designation}
                     caption={cover.caption}
                     ratio="3 / 2"
                     sizes="(min-width: 60rem) 30vw, 100vw"
@@ -60,12 +58,6 @@ export default function MissionTile({
             {mission.summary ? (
                 <p className={styles.tileSummary}>{mission.summary}</p>
             ) : null}
-            <Metrics
-                className={styles.tileMetrics}
-                items={cardStats(mission)}
-                columns={2}
-                size="sm"
-            />
             <MissionStack items={mission.technologies} label={copy.stack} />
             <Icon name="arrow" className={styles.tileArrow} />
         </article>

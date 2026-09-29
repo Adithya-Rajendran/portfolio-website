@@ -27,7 +27,8 @@ function scrollBehavior(): ScrollBehavior {
 /**
  * Keeps /contact's routes and form on one topic. The fragment picks it on
  * arrival and on `hashchange` (`/contact#hiring`), a route's button picks
- * it and scrolls to the form, and a topic picked in the form lights its
+ * it and brings the form into view when it is not, and a topic picked in
+ * the form lights its
  * route and updates the fragment, so the address can be shared. The chosen
  * topic is this element's `data-topic`, which the route styles read.
  * Lookups stay inside this element, never the document: Cache Components
@@ -84,7 +85,18 @@ export default function ContactDesk({
         const message = root.current?.querySelector<HTMLElement>(
             "[data-contact-message]",
         );
-        message?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+        // Beside the form (from 960px) the field is already in view; on a
+        // phone the routes follow the form, so bring it back.
+        const field = message?.querySelector<HTMLElement>(
+            'input[type="email"]',
+        );
+        const box = (field ?? message)?.getBoundingClientRect();
+        if (box && (box.top < 0 || box.bottom > window.innerHeight)) {
+            message?.scrollIntoView({
+                behavior: scrollBehavior(),
+                block: "start",
+            });
+        }
         // From the keyboard, carry on into the form; a mouse user clicks
         // the field they want.
         if (event.detail === 0) {

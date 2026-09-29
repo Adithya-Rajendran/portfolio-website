@@ -5,15 +5,15 @@
  * the tests share it. The topics, when each route shows and the buttons
  * are fixed here and in lib/copy.ts; every word about the owner is the
  * profile's, printed as written: each route's title and prompt
- * (`contactRoutes`), what the owner is open to (`availability`) and the
- * research invitation (`contactInvitation`).
+ * (`contactRoutes`) and the research invitation (`contactInvitation`).
+ * Whether Hiring shows follows `availability.status`.
  *
  * There is no public email address or phone number: the form is the only
  * channel, with LinkedIn as the alternative when JavaScript is off.
  */
 import { contactCopy } from "@/lib/copy";
 import { siteRoutes } from "@/lib/navigation";
-import { availabilityLine, getProfileLink } from "@/lib/profile-content";
+import { getProfileLink } from "@/lib/profile-content";
 import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import type { ProfileData } from "@/lib/sanity-client";
 
@@ -61,16 +61,13 @@ export interface ContactRouteLink {
 
 export interface ContactRoute {
     topic: ContactTopic;
-    /** "01": numbered among the routes shown. */
-    num: string;
     /** The profile's title for the route, else the topic's name. */
     title: string;
-    /** The availability line, printed as written (Hiring only). */
-    openTo?: string;
     /** The owner's own sentence (Research: `contactInvitation`). */
     body?: string;
-    /** What to include (the profile's prompt); also the message
-     *  placeholder for this topic. Absent when the profile has none. */
+    /** An optional prompt (the profile's): the message field's
+     *  placeholder once this topic is chosen. Absent when the profile has
+     *  none. */
     prompt?: string;
     /** The button that picks this topic. */
     cta: string;
@@ -80,8 +77,9 @@ export interface ContactRoute {
 /**
  * The routes to show, from the profile, each titled and prompted in the
  * profile's words (`contactRoutes`; a route without a title takes its
- * topic's name, and one without a prompt has none):
- * - Hiring, unless availability is Closed, with its Open To line;
+ * topic's name, and one without a prompt has none). What the owner is
+ * open to is the page head's (`availabilityLine`), not a route's:
+ * - Hiring, unless availability is Closed;
  * - Research & collaboration, when the profile has a contact invitation
  *   (the owner's own words are its body);
  * - Consulting, only while `availability.consultingOpen` is on (off by
@@ -92,7 +90,7 @@ export function contactRoutes(profile: ProfileData | null): ContactRoute[] {
     const availability = profile?.availability;
     const invitation = profile?.contactInvitation?.trim();
     const linkedIn = getProfileLink(profile, "linkedin");
-    const shown: Omit<ContactRoute, "num">[] = [];
+    const shown: ContactRoute[] = [];
     const route = (topic: ContactTopic) => {
         const words = profile?.contactRoutes?.[topic];
         const prompt = words?.prompt?.trim();
@@ -105,10 +103,8 @@ export function contactRoutes(profile: ProfileData | null): ContactRoute[] {
     };
 
     if (availability?.status !== "closed") {
-        const openTo = availabilityLine(availability);
         shown.push({
             ...route("hiring"),
-            ...(openTo ? { openTo } : {}),
             links: [
                 ...(profile?.resumeUrl
                     ? [
@@ -145,16 +141,12 @@ export function contactRoutes(profile: ProfileData | null): ContactRoute[] {
         ],
     });
 
-    return shown.map((item, index) => ({
-        ...item,
-        num: String(index + 1).padStart(2, "0"),
-    }));
+    return shown;
 }
 
 /** A topic as the form offers it: one radio per route shown. */
 export interface TopicOption {
     value: ContactTopic;
-    num: string;
     label: string;
     /** What to include: the message placeholder for this topic. */
     prompt?: string;
@@ -163,7 +155,6 @@ export interface TopicOption {
 export function topicOptions(routes: readonly ContactRoute[]): TopicOption[] {
     return routes.map((route) => ({
         value: route.topic,
-        num: route.num,
         label: route.title,
         ...(route.prompt ? { prompt: route.prompt } : {}),
     }));

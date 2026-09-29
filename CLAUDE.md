@@ -94,8 +94,13 @@ only live in comments or commit messages.
   (60rem). Its SVG masks need document-unique ids, so each page passes its
   own `idPrefix`. `OrbitInteraction` is event delegation on the page root
   (`data-orbit-id`, `data-orbit-row`, `data-orbit-show`…): it renders
-  nothing and keeps state in attributes. `lib/cv.ts` words the rows'
-  dates. The print is the only paper artefact: two sheets on the named
+  nothing and keeps state in attributes. `/resume` opens on the CV list
+  (`data-view="list"`, server-rendered, so also without JavaScript); the
+  map is the optional Map view, opened by the view switch, a row's "Show
+  on map" or `#orbit-map` (without JavaScript a link to that fragment and
+  CSS `:target`, since `history.replaceState` does not update `:target`).
+  `lib/cv.ts` words the rows' dates as the résumé gives them and derives
+  no length of time from them. The print is the only paper artefact: two sheets on the named
   page `cv` (`styles/print.css`), sheet 2 breaking before its control
   line. `[data-print="only"]` forces `display: block !important` from a
   layer, which no unlayered rule overrides, so a print-only part that
@@ -130,12 +135,23 @@ only live in comments or commit messages.
 - **Missions** (G5, G6). `lib/missions.ts` is pure and unit-tested: it
   words each project once (`toMission`) for `/portfolio`, the mission files
   and the home page's projects (the stage and its rows), and finds each
-  one's write-up from the list data (`originalEntries`). A mission's name, set in capitals on the stage
+  one's write-up from the list data (`originalEntries`; `writeUpHref` is
+  where "Read the write-up" goes). A mission's name, set in capitals on the stage
   and the file, comes from its slug (`homelab` → Homelab); the order
   (`missionOrder`) is the featured slots, then the mission number, then
-  the list query's; the register and the files' previous / next go by
-  mission number. The mission number (MSN-02) is the project file's quiet
-  identifier; the home page prints none (`MissionStage code={false}`). A mission's Flight Log entries are
+  the list query's, and `missionTiers` splits it into the flagship, the
+  next ones with room of their own (two tiles on `/portfolio`, two rows on
+  home) and the rest, least prominent; the files' previous / next go by
+  mission number. The mission number (MSN-02) is the project page's quiet
+  identifier, in its crumb only: `MissionLine`, the stage, the tiles, the
+  plates and the home page print none. Numbers appear only on a project
+  page: its head's stats (`headStats`) unless it has a results table,
+  which carries them with their notes; the index has no counts, register
+  or card stats. `missionLayout` picks the page's layout: the full file
+  where there is evidence (a brief, results, lessons or next steps,
+  callouts, a photograph, an essay in sections), otherwise the short note
+  (title, summary, the highlights that add to it via `noteLines`, the
+  essay only when it says more via `essayAdds`, the facts and links). A mission's Flight Log entries are
   derived (`missionEntries`): the posts that reference it, and the posts
   its links, its essay and its model's callouts point at; the original
   entry is the first linked one, else the oldest referencing one. Links to
@@ -356,7 +372,12 @@ only live in comments or commit messages.
   shows only while `availability.consultingOpen` is on, and the topic's
   name prefixes the email subject. Each route's title and prompt are the
   profile's (`contactRoutes`, Studio group Site copy); a route without a
-  title takes its topic's name, and one without a prompt shows none. `sendEmail` sends a topic whose route is not
+  title takes its topic's name. A prompt is only the message field's
+  optional placeholder once its topic is chosen; the page gives no
+  "include" instructions. The page is the head (the introduction and
+  `Availability`), then the form first with the routes beside it as short
+  rows (below it on phones), then the profiles. Contact is one click from
+  every page: the nav from 960px, and a link in the header bar below it. `sendEmail` sends a topic whose route is not
   shown (a crafted POST) as a hello, and treats Resend's returned
   `{ error }` as a failure: Resend 6 does not throw on API errors. A `"use server"` module may export only async
   functions (anything else reaches the client as a server reference), so
@@ -446,7 +467,10 @@ deployment require an authenticated Sanity CLI session.
   given. Project dates the owner estimated set
   `datesApproximate` and print with "c." ("c. 2024–2025").
 - The owner's four résumé projects are drafted, with the source of every
-  value, in `migrations/seed-resume-projects/data.ts`. The seed migration
+  value, in `migrations/seed-resume-projects/data.ts`, which follows the
+  owner's published corrections (2026-09-29: the Gmail project's notebook
+  evaluation and dates, the homelab without measurements the résumé does
+  not state). The seed migration
   writes them as Studio drafts, and `lib/fixtures.ts` lists the same four
   (without images, and without links to posts that are not fixtures). Any
   other fixture project, and every fixture post, is named as a fixture and
@@ -489,10 +513,12 @@ deployment require an authenticated Sanity CLI session.
   overlapping), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, Pause motion, the stored
   theme on an unknown post or project URL), `chrome`
-  (the menu sheet's focus, `inert` and closing; the current nav section;
-  the header and footer naming every section plainly),
-  `contact` (routes pick the form's topic by click and by fragment, the
-  message field's prompt matching its route's, field
+  (the menu sheet's focus, `inert` and closing; Contact in the bar on a
+  phone; the current nav section; the header and footer naming every
+  section plainly),
+  `contact` (routes pick the form's topic by click and by fragment, a
+  route's prompt only as the message field's placeholder, the form in the
+  first viewport at 1440, field
   checks, a refused send keeps the draft and its stale alert clears after
   leaving and returning, Consulting hidden while off, no email address or
   phone number, the no-JavaScript LinkedIn alternative; sends only on the
@@ -512,15 +538,19 @@ deployment require an authenticated Sanity CLI session.
   fixture build also the wide listing and highlighted line, footnotes and
   margin notes, the caution callout and revisions, their RSS output, and
   in-page links landing in the visible entry after a client-side
-  navigation), `orbit` (a CV row lights its orbit and back, a click pins
-  a record and a second click or Escape releases it, Earlier and Later,
-  "Show on map", the view switch, every orbit labelled on a phone, and
-  without JavaScript the labels as links to their rows), `print` (the CV
+  navigation), `orbit` (the page opening on the CV list with Contact in
+  the first viewport, the Map view from the switch, "Show on map" and
+  `#orbit-map`, a CV row lighting its orbit and back, a click pinning
+  a record and a second click or Escape releasing it, Earlier and Later,
+  every orbit labelled on a phone, and without JavaScript the list, the
+  map from its link and the labels as links to their rows), `print` (the CV
   on two sheets on A4 and on Letter, without the map, chrome or
   controls), `missions` (every old `/portfolio` fragment still answers
-  and leads on, the register lists every mission, each mission file has
-  its head, record, pager and no stand-in text, Read the write-up lands
-  on the write-up; on the fixture build a filled mission shows every
+  and leads on, the index links every project with no counts, register or
+  mission numbers, each project page has its crumb, title, close and
+  pager and no title block, revision or stand-in text, a thin project is
+  a short note, Read the write-up lands on the write-up or the original
+  entry; on the fixture build a filled mission shows every
   module with its callouts linked to their sections, and a planned one
   none of them), `home` (the hero's name, availability and quick links,
   Projects · CV · Contact, in the first viewport at 1280×800 and 390×844

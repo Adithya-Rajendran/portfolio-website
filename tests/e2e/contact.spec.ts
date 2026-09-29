@@ -61,25 +61,41 @@ test("/comms redirects to the contact page", async ({ page }) => {
     await expect(page).toHaveURL(/\/contact$/);
 });
 
-test("a route's fragment picks its topic on arrival", async ({ page }) => {
+test("a route's fragment picks its topic on arrival, and its prompt is only the field's placeholder", async ({
+    page,
+}, testInfo) => {
     await page.goto("/contact#hello");
     await expect(
         topicRadio(page, await routeTitle(page, "hello")),
     ).toBeChecked();
-    // The message field prompts with the route's own prompt, or the
-    // field's plain one when the route has none.
+    // The message field suggests what to write with the route's own
+    // prompt (the profile's), or its plain one when the route has none;
+    // the page gives no instructions besides.
     const message = page.getByRole("textbox", { name: form.messageLabel });
-    const route = routeRow(page, "hello");
-    const prompted =
-        (await route.getByText(contactCopy.include, { exact: true }).count()) >
-        0;
     const placeholder = (await message.getAttribute("placeholder")) ?? "";
-    if (prompted) {
-        expect(placeholder).not.toBe(form.messagePlaceholder);
-        await expect(route).toContainText(placeholder);
-    } else {
-        expect(placeholder).toBe(form.messagePlaceholder);
+    expect(placeholder.length).toBeGreaterThan(0);
+    if (testInfo.project.name === "fixture") {
+        expect(placeholder).toBe(
+            FIXTURE_PROFILE.contactRoutes?.hello?.prompt ??
+                form.messagePlaceholder,
+        );
     }
+    if (placeholder !== form.messagePlaceholder) {
+        await expect(routeRow(page, "hello")).not.toContainText(placeholder);
+    }
+    await expect(page.getByRole("main")).not.toContainText(/\bInclude\b/);
+});
+
+test("the form comes first, in the first viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/contact");
+    for (const field of [form.emailLabel, form.messageLabel]) {
+        await expect(
+            page.getByRole("textbox", { name: field }),
+        ).toBeInViewport();
+    }
+    // The routes are short rows: no numbers.
+    await expect(routeRow(page, "hello")).not.toContainText(/^0\d/);
 });
 
 test("a route's button picks its topic and brings the form into view", async ({

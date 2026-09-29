@@ -278,7 +278,7 @@ export default function ContactForm({
                     className="textarea"
                     id={ids.message}
                     name="message"
-                    rows={7}
+                    rows={5}
                     maxLength={MESSAGE_MAX_LENGTH}
                     placeholder={prompt ?? copy.messagePlaceholder}
                     required

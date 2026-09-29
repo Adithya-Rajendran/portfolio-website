@@ -1,10 +1,15 @@
 /*
- * Contact routes (G4): numbered rows by intent, each with its line, what to
- * include, the button that picks its topic, and secondary links. Ported
- * from the mockup's site.css "Contact routes (graft 4)" and contact.css
- * "Routes". `.desk` is ContactDesk's root: the route whose topic is chosen
- * stays lit (a data attribute React owns, not a :has() rule).
+ * Contact routes (G4): short hairline rows beside the form, each with its
+ * title, the owner's line where there is one, the button that picks its
+ * topic and its secondary links. `.desk` is ContactDesk's root: the page's
+ * grid (the form, then the routes beside it from 960px), and the route
+ * whose topic is chosen stays lit (a data attribute React owns, not a
+ * :has() rule).
  */
+.desk {
+    display: block;
+}
+
 .routes {
     margin: 0;
     padding: 0;
@@ -15,14 +20,11 @@
 .route {
     position: relative;
     display: grid;
-    grid-template-columns: 2.5rem minmax(0, 1fr);
-    column-gap: var(--s-4);
+    justify-items: start;
     row-gap: var(--s-3);
-    padding-block: var(--s-5);
+    padding: var(--s-4) 0 var(--s-5);
     border-top: var(--rule-hair) solid var(--rule-1);
-    transition:
-        border-color var(--dur-hover) var(--ease-dock),
-        background-color var(--dur-hover) var(--ease-dock);
+    transition: border-color var(--dur-hover) var(--ease-dock);
 }
 .route:hover,
 .route:focus-within {
@@ -36,17 +38,6 @@
 .desk[data-topic="consulting"] .route[data-topic="consulting"],
 .desk[data-topic="hello"] .route[data-topic="hello"] {
     border-top-color: var(--accent);
-    background: linear-gradient(to bottom, var(--accent-wash), transparent 70%);
-}
-.desk[data-topic="hiring"] .route[data-topic="hiring"] .num::after,
-.desk[data-topic="research"] .route[data-topic="research"] .num::after,
-.desk[data-topic="consulting"] .route[data-topic="consulting"] .num::after,
-.desk[data-topic="hello"] .route[data-topic="hello"] .num::after {
-    content: "●";
-    display: block;
-    margin-top: var(--s-1);
-    color: var(--accent);
-    font-size: 0.625rem;
 }
 .desk[data-topic="hiring"] .route[data-topic="hiring"] .write,
 .desk[data-topic="research"] .route[data-topic="research"] .write,
@@ -55,45 +46,16 @@
     border-color: var(--ink-1);
 }
 
-.num {
-    grid-row: 1 / span 5;
-    color: var(--ink-3);
-    font: 400 0.8125rem / 1.9 var(--font-mono);
-}
-.route > :not(.num) {
-    grid-column: 2;
-}
 .title {
     margin: 0;
-    font: 300 var(--step-3) / 1.08 var(--font-display);
-    letter-spacing: -0.01em;
-}
-.lede {
-    color: var(--ink-1);
-    font: 400 var(--step--1) / 1.45 var(--font-display);
-}
-.key {
-    margin-right: 0.5em;
-    color: var(--ink-3);
-    font: var(--label-2);
-    letter-spacing: var(--track-label-2);
-    text-transform: uppercase;
+    font: 400 var(--step-1) / 1.25 var(--font-display);
+    letter-spacing: -0.003em;
 }
 .body {
     max-width: 52ch;
     color: var(--ink-2);
     font: 300 var(--step-0) / 1.55 var(--font-long);
-}
-.template {
-    max-width: 52ch;
-    color: var(--ink-2);
-    font: 400 var(--step--1) / 1.5 var(--font-display);
-}
-.actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--s-3) var(--s-5);
+    text-wrap: pretty;
 }
 /* A long label wraps inside the column on the narrowest phones. */
 .write {
@@ -110,7 +72,7 @@
 .links {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--s-2) var(--s-5);
+    gap: 0 var(--s-5);
     margin: 0;
     padding: 0;
     font: 400 var(--step--1) / 1.4 var(--font-display);
@@ -131,30 +93,4 @@
 .links svg {
     width: 14px;
     height: 14px;
-}
-
-@media (min-width: 60rem) {
-    .route {
-        grid-template-columns: 3rem minmax(0, 5fr) minmax(0, 4fr);
-        column-gap: var(--gutter);
-        align-items: start;
-    }
-    .route > .title,
-    .route > .lede,
-    .route > .body,
-    .route > .template {
-        grid-column: 2;
-    }
-    .route > .actions,
-    .route > .links {
-        grid-column: 3;
-    }
-    .route > .actions {
-        grid-row: 1;
-        padding-top: 0.2rem;
-    }
-    .route > .links {
-        grid-row: 2 / span 3;
-        align-self: start;
-    }
 }

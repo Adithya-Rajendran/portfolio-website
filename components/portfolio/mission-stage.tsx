@@ -3,20 +3,20 @@ import Link from "next/link";
 import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
 import { ButtonLink } from "@/components/ui/button";
 import { LinkArrow } from "@/components/ui/marks";
-import Metrics from "@/components/ui/metrics";
 import Plate from "@/components/ui/plate";
 import { missionsCopy as copy } from "@/lib/copy";
-import { cardStats, type Mission } from "@/lib/missions";
+import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
 
 /**
- * The flagship (contract §4 and §9): the mission's line, its name in
- * capitals, its title and summary, its quantities as stats and its stack
- * in seven columns, beside its photograph as a plate in five. Without a
- * photograph the copy takes the full width and the stats go four across.
- * Shared by /portfolio and the home page, which leaves out the stats and
- * the mission number (`stats`, `code`): there the summary leads.
+ * The flagship (contract §4 and §9): the mission's line (type, status,
+ * dates), its name in capitals, its title, its summary, which leads, and
+ * its stack in seven columns, beside its photograph as a plate in five.
+ * Without a photograph the copy takes the full width. Shared by
+ * /portfolio and the home page. No stats and no mission number: numbers
+ * stay on the file beside their notes, and the number is the file's own
+ * identifier.
  */
 export default function MissionStage({
     mission,
@@ -25,11 +25,7 @@ export default function MissionStage({
     writeUp,
     as: Heading = "h3",
     priority = false,
-    stats = true,
-    code = true,
 }: {
-    stats?: boolean;
-    code?: boolean;
     mission: Mission;
     /** The cover, or the model's poster. */
     image?: SanityImageValue | null;
@@ -47,7 +43,7 @@ export default function MissionStage({
             }
         >
             <div className={styles.stageCopy}>
-                <MissionLine mission={mission} code={code} />
+                <MissionLine mission={mission} />
                 <Heading
                     className={styles.stageName}
                     style={{ "--chars": mission.nameChars } as CSSProperties}
@@ -57,13 +53,6 @@ export default function MissionStage({
                 <p className={styles.stageTitle}>{mission.title}</p>
                 {mission.summary ? (
                     <p className={styles.stageSummary}>{mission.summary}</p>
-                ) : null}
-                {stats ? (
-                    <Metrics
-                        className={styles.stageMetrics}
-                        items={cardStats(mission)}
-                        columns={plate ? 2 : 4}
-                    />
                 ) : null}
                 <MissionStack items={mission.technologies} label={copy.stack} />
                 <div className={`cluster ${styles.stageActions}`}>
@@ -85,7 +74,6 @@ export default function MissionStage({
                     className={styles.stagePlate}
                     image={plate}
                     label="Pl. I"
-                    tag={code ? mission.designation : undefined}
                     caption={caption}
                     ratio="4 / 5"
                     focus="50% 40%"

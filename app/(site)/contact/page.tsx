@@ -5,15 +5,17 @@ import ContactNoScript from "@/components/contact/contact-no-script";
 import ContactRoutes from "@/components/contact/contact-routes";
 import { ContactPageJsonLd } from "@/components/json-ld";
 import StaticStars from "@/components/sky/static-stars";
+import Availability from "@/components/ui/availability";
 import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
 import RouteList from "@/components/ui/route-list";
+import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
 import { contactRoutes, topicOptions } from "@/lib/contact";
 import { contactCopy as copy } from "@/lib/copy";
 import { profileRows } from "@/lib/directory";
 import { siteRoutes } from "@/lib/navigation";
-import { getProfileLink } from "@/lib/profile-content";
+import { availabilityLine, getProfileLink } from "@/lib/profile-content";
 import { getProfile } from "@/lib/sanity-client";
 import styles from "./contact.module.css";
 
@@ -39,17 +41,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Contact (themed Comms, G4): the routes by intent, the message form and the
- * profiles. The introduction and every route's words are the profile's
- * (Site copy); an empty one is left out. Everything but the form renders
- * without JavaScript; the form
- * needs it for BotID, so without it the page offers LinkedIn instead.
- * Ported from the mockup's contact.html (§ 05).
+ * Contact (themed Comms, G4): the introduction and what the owner is open
+ * to, then the message form first, with the routes by intent beside it as
+ * short rows (each picks the form's topic; its prompt is only the message
+ * field's optional placeholder), then the profiles. The introduction,
+ * the availability and every route's words are the profile's; an empty
+ * one is left out. Everything but the form renders without JavaScript;
+ * the form needs it for BotID, so without it the page offers LinkedIn
+ * instead. There is no email address or phone number.
  */
 export default async function ContactPage() {
     const profile = await getProfile();
     const routes = contactRoutes(profile);
     const profiles = profileRows(profile);
+    const openTo = availabilityLine(profile?.availability);
 
     return (
         <div data-page="contact">
@@ -64,6 +69,13 @@ export default async function ContactPage() {
                     title={copy.plain}
                     intro={profile?.contactIntro?.trim() || null}
                 >
+                    {openTo ? (
+                        <Availability
+                            className={styles.openTo}
+                            label={copy.openTo}
+                            text={openTo}
+                        />
+                    ) : null}
                     {/* Acquisition of signal: the carrier locks. Drawn in
                         ink with one accent mark; decorative and static. */}
                     <svg
@@ -93,29 +105,53 @@ export default async function ContactPage() {
             </div>
 
             <ContactDesk topics={routes.map((route) => route.topic)}>
-                <DocSection
-                    className="section--tight"
-                    headingId="contact-routes-h"
-                    title={copy.routes}
-                    wide
-                >
-                    <ContactRoutes routes={routes} onPage />
-                </DocSection>
-
-                <DocSection
+                <section
+                    className={`section ${styles.desk}`}
                     id="message"
-                    headingId="contact-message-h"
-                    data={{ "data-contact-message": true }}
-                    title={copy.message}
+                    aria-labelledby="contact-message-h"
+                    data-contact-message
                 >
-                    <div className="js-only">
-                        <ContactForm topics={topicOptions(routes)} />
+                    <div className="shell">
+                        <SectionTag className="doc-section__tag">
+                            <h2
+                                className="section-tag__h"
+                                id="contact-message-h"
+                            >
+                                {copy.message}
+                            </h2>
+                        </SectionTag>
+                        <div className={styles.deskGrid}>
+                            <div className={styles.form}>
+                                <div className="js-only">
+                                    <ContactForm
+                                        topics={topicOptions(routes)}
+                                    />
+                                </div>
+                                <ContactNoScript
+                                    linkedIn={getProfileLink(
+                                        profile,
+                                        "linkedin",
+                                    )}
+                                    className={styles.noScript}
+                                />
+                            </div>
+                            <div className={styles.routes}>
+                                <h3
+                                    className={styles.routesTitle}
+                                    id="contact-routes-h"
+                                >
+                                    {copy.routes}
+                                </h3>
+                                <ContactRoutes
+                                    routes={routes}
+                                    onPage
+                                    titleAs="h4"
+                                    labelledBy="contact-routes-h"
+                                />
+                            </div>
+                        </div>
                     </div>
-                    <ContactNoScript
-                        linkedIn={getProfileLink(profile, "linkedin")}
-                        className={styles.noScript}
-                    />
-                </DocSection>
+                </section>
             </ContactDesk>
 
             {profiles.length ? (

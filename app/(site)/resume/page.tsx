@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import LogIndex from "@/components/blogs/log-index";
 import { CvItem, CvList } from "@/components/cv/cv-list";
 import OrbitInteraction from "@/components/orbit/orbit-interaction";
 import OrbitMap from "@/components/orbit/orbit-map";
 import ResumeShareAction from "@/components/resume/resume-share-action";
 import StaticStars from "@/components/sky/static-stars";
+import Availability from "@/components/ui/availability";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import {
     LinkArrow,
     Rev,
     Status,
+    Updated,
     type StatusValue,
 } from "@/components/ui/marks";
 import DocSection from "@/components/ui/doc-section";
@@ -142,15 +145,17 @@ function SheetHead({
 }
 
 /**
- * Trajectory · Experience / CV (G2, G3): the profile's timeline as a
- * time-scaled orbit map with a record panel, then the CV itself
- * (education, experience, projects, writing and talks, skills,
- * certifications), downloadable as the owner's PDF and printable as a
- * two-sheet controlled document. Everything is server-rendered: without
- * JavaScript the map's labels link to the CV rows; with it,
- * `OrbitInteraction` previews, pins and cross-lights map and list, and
- * runs the view switch and Print. There is no email address or phone
- * number, on screen or on paper.
+ * Trajectory · Experience / CV (G2, G3): the CV first, as a list a hiring
+ * reader can scan (education, experience, projects, writing and talks,
+ * skills, certifications), under the head with what the owner is open to,
+ * the PDF and the way to get in touch. The time-scaled orbit map with its
+ * record panel is the optional Map view. The PDF is downloadable and the
+ * page prints as a two-sheet controlled document. Everything is
+ * server-rendered: without JavaScript the list shows and the map opens
+ * from its link (`#orbit-map`), its labels linking to the CV rows; with
+ * it, `OrbitInteraction` runs the view switch, previews, pins and
+ * cross-lights map and list, and runs Print. There is no email address
+ * or phone number, on screen or on paper.
  */
 export default async function ResumePage() {
     const [profile, projects, posts, today] = await Promise.all([
@@ -161,6 +166,8 @@ export default async function ResumePage() {
     ]);
     const name = profile?.name || siteConfig.author;
     const hasPdf = Boolean(resolveResumeAssetUrl(profile?.resumeUrl, "view"));
+    // The résumé's upload date: "Updated …" on screen, the revision on
+    // paper.
     const rev =
         hasPdf && /^\d{4}-\d{2}-\d{2}/.test(profile?.resumeUploadedAt ?? "")
             ? profile!.resumeUploadedAt!.slice(0, 10)
@@ -223,12 +230,7 @@ export default async function ResumePage() {
                     : undefined
             }
             dates={entry.dates}
-            meta={[
-                entry.location,
-                entry.duration,
-                entry.expected,
-                entry.employment,
-            ]}
+            meta={[entry.location, entry.expected, entry.employment]}
             status={
                 entry.current ? (
                     <Status value="active">{copy.current}</Status>
@@ -258,7 +260,7 @@ export default async function ResumePage() {
     );
 
     return (
-        <div data-page="resume" data-view="map" className={styles.page}>
+        <div data-page="resume" data-view="list" className={styles.page}>
             <OrbitInteraction />
 
             <div className={`head-band ${styles.band}`}>
@@ -269,59 +271,84 @@ export default async function ResumePage() {
                     ornament="orbit"
                     tag={copy.themed}
                     title={copy.title}
-                    meta={rev ? <Rev date={rev} /> : undefined}
+                    meta={rev ? <Updated date={rev} /> : undefined}
                     intro={summary}
                 >
-                    {hasPdf ? (
-                        <div className="cluster page-head__actions">
-                            <a
-                                className={buttonClass({
-                                    variant: "primary",
-                                    size: "sm",
-                                })}
-                                href="/resume/download"
-                            >
-                                <Icon name="download" />
-                                {copy.download}
-                            </a>
-                            <a
-                                className={buttonClass({ size: "sm" })}
-                                href={siteRoutes.resumePdf}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {copy.openPdf}
-                                <Icon name="external" />
-                            </a>
-                        </div>
+                    {openTo ? (
+                        <Availability
+                            className={styles.openTo}
+                            label={copy.openTo}
+                            text={openTo}
+                        />
                     ) : null}
+                    <div className="cluster page-head__actions">
+                        {hasPdf ? (
+                            <>
+                                <a
+                                    className={buttonClass({
+                                        variant: "primary",
+                                        size: "sm",
+                                    })}
+                                    href="/resume/download"
+                                >
+                                    <Icon name="download" />
+                                    {copy.download}
+                                </a>
+                                <a
+                                    className={buttonClass({ size: "sm" })}
+                                    href={siteRoutes.resumePdf}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {copy.openPdf}
+                                    <Icon name="external" />
+                                </a>
+                            </>
+                        ) : null}
+                        <Link
+                            className={buttonClass({
+                                variant: hasPdf ? "default" : "primary",
+                                size: "sm",
+                            })}
+                            href={
+                                openTo
+                                    ? contactHref("hiring")
+                                    : siteRoutes.contact
+                            }
+                        >
+                            {copy.contact}
+                            <Icon name="arrow" className="icon--nudge" />
+                        </Link>
+                    </div>
                     {profile?.resumeNote?.trim() ? (
                         <p className={styles.note}>
                             {profile.resumeNote.trim()}
                         </p>
                     ) : null}
-                    {openTo ? (
-                        <div className={styles.openTo}>
-                            <Status value="active">{copy.openTo}</Status>
-                            <p className={styles.openToText}>{openTo}</p>
-                            <LinkArrow href={contactHref("hiring")}>
-                                {copy.writeAboutRole}
-                            </LinkArrow>
-                        </div>
-                    ) : null}
                 </PageHead>
 
-                <div className={`shell js-only ${styles.toolbar}`}>
+                <div className={`shell ${styles.toolbar}`}>
                     {model ? (
-                        <Segmented
-                            legend={copy.viewLegend}
-                            name="cv-view"
-                            options={copy.views}
-                            defaultValue="map"
-                            className={styles.switch}
-                        />
+                        <>
+                            <Segmented
+                                legend={copy.viewLegend}
+                                name="cv-view"
+                                options={copy.views}
+                                defaultValue="list"
+                                className={`js-only ${styles.switch}`}
+                            />
+                            {/* Without JavaScript the map opens from its
+                                fragment (CSS :target). */}
+                            <LinkArrow
+                                className="nojs-only"
+                                href="#orbit-map"
+                                prefetch={false}
+                            >
+                                {copy.showMap}
+                            </LinkArrow>
+                        </>
                     ) : null}
-                    <div className={`cluster ${styles.tools}`}>
+                    <div className={`cluster js-only ${styles.tools}`}>
                         <Button
                             size="sm"
                             variant="quiet"
@@ -374,6 +401,7 @@ export default async function ResumePage() {
                 <span className={styles.mastLinks}>
                     {[
                         `${hostOf(siteConfig.url)}${siteRoutes.resume}`,
+                        `${hostOf(siteConfig.url)}${siteRoutes.contact}`,
                         linkedIn ? hostOf(linkedIn.url) : null,
                         gitHub ? hostOf(gitHub.url) : null,
                     ]
@@ -428,7 +456,6 @@ export default async function ResumePage() {
                                 <CvItem
                                     key={mission.id}
                                     anchor={`cv-${mission.slug}`}
-                                    code={mission.designation}
                                     dates={mission.years}
                                     status={
                                         <Status

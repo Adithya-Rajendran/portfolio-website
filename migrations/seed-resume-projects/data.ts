@@ -6,10 +6,17 @@
  * - Résumé: the résumé PDF served at /resume/view (uploaded 2026-09-24).
  * - Homelab post: "A Homelab Built to Be Rebuilt" (/blog/my-homelab).
  * - Owner: the owner's answers of 2026-09-28. The Gmail filter and the
- *   Kubernetes cluster are done, with dates he estimated (c. 2023 and
+ *   Kubernetes cluster are done (the cluster with years he estimated,
  *   c. 2024–2025); the homelab and this website are active; the ASUS Ascent
  *   in the rack is the NVIDIA DGX Spark of "Sharing the DGX Spark GPU with
  *   MicroK8s" (/blog/kubernetes-on-the-nvidia-dgx-spark).
+ * - Published: the owner's corrections, as published on 2026-09-29. The
+ *   Gmail project is described as the experiment it is, with the training
+ *   notebook's evaluation on one held-out split in place of the résumé's
+ *   "90%" (github.com/Adithya-Rajendran/Gmail-Filter, train-model.ipynb),
+ *   and dated from the repository (December 2022 to August 2025). The
+ *   homelab leads with rebuildability and shows no measurements that are
+ *   not on the résumé.
  * - Repo: this repository (package.json, README.md, CLAUDE.md).
  * - Rack drawing: design/shared/rack.js, the schematic 12U rack read from the
  *   homelab post's rack photo, whose parts `lib/viewer/registry.ts` lists.
@@ -115,11 +122,15 @@ const RACK_PHOTO: SeedImage = {
     alt: "Server rack with three Minisforum MS-01 systems and an ASUS Ascent.",
 };
 
-// Résumé bullets, verbatim.
-const GMAIL_BULLETS = [
-    "Built a Gmail API integration to fetch and classify incoming messages using a multilayer perceptron (MLP), achieving 90% spam-detection accuracy.",
-    "Tuned the classifier architecture to reduce false positives and improve classification speed.",
+// Published (2026-09-29): the Gmail project's corrected highlights.
+const GMAIL_HIGHLIGHTS = [
+    "Built a Python service on the Gmail API that fetches incoming mail and applies allowlists, wildcard blocklists and a quarantine label.",
+    "Added a TF-IDF and multilayer-perceptron classifier trained on the CEAS-08 corpus: 99.55% accuracy on one stratified, held-out split of 7,831 messages.",
 ];
+const GMAIL_NOTEBOOK =
+    "https://github.com/Adithya-Rajendran/Gmail-Filter/blob/main/train-model.ipynb";
+
+// Résumé bullets, verbatim.
 const HOMELAB_BULLETS = [
     "Built a personal cloud environment spanning bare-metal provisioning, networking, storage, and secure application deployment.",
     "Segmented traffic with VLANs and policy-based firewall rules; configured link aggregation for redundancy and jumbo frames for Ceph replication.",
@@ -135,37 +146,51 @@ const WEBSITE_BULLETS = [
 
 export const SEED_PROJECTS: readonly SeedProject[] = [
     {
-        // Résumé, project 1.
+        // Résumé, project 1, as the owner corrected and published it
+        // (2026-09-29): an experiment, with the notebook's evaluation.
         slug: "gmail-spam-filter",
         designation: 1,
-        title: "Gmail spam detection with machine learning",
-        summary: GMAIL_BULLETS[0],
+        title: "Experimental Gmail spam classifier",
+        summary:
+            "A Python service on the Gmail API that filters incoming mail with allowlists, blocklists and a quarantine label, extended in 2025 with a TF-IDF and multilayer-perceptron classifier trained on the CEAS-08 email corpus.",
         types: ["software"],
-        // Owner: done, around 2023 (his estimate, printed "c. 2023").
+        // Published: done; the repository runs from December 2022 (the
+        // first version) to August 2025 (the classifier).
         status: "completed",
         dates: {
-            start: "2023-01-01",
-            end: "2023-12-31",
-            precision: "year",
-            approximate: true,
+            start: "2022-12-01",
+            end: "2025-08-31",
+            precision: "month",
+            approximate: false,
         },
-        technologies: ["Gmail API", "Multilayer perceptron (MLP)"],
-        highlights: GMAIL_BULLETS,
-        parameters: [
-            {
-                key: "accuracy",
-                label: "Spam-detection accuracy",
-                value: "90%",
-            },
-            { key: "classifier", label: "Classifier", value: "MLP" },
-            { key: "source", label: "Mail source", value: "Gmail API" },
+        technologies: [
+            "Python",
+            "Gmail API",
+            "scikit-learn",
+            "TF-IDF",
+            "MLP",
+            "Docker",
         ],
+        highlights: GMAIL_HIGHLIGHTS,
+        parameters: [
+            { key: "accuracy", label: "Held-out accuracy", value: "99.55%" },
+            { key: "test", label: "Test messages", value: "7,831" },
+            { key: "fp", label: "False positives", value: "15" },
+        ],
+        // The training notebook's evaluation, with its limits in the note.
         results: [
             {
                 key: "accuracy",
-                metric: "Spam-detection accuracy",
-                value: "90%",
+                metric: "Held-out accuracy",
+                value: "99.55%",
+                note: "CEAS-08, one stratified 80/20 split (31,323 training / 7,831 test messages), no fixed random seed, no baseline comparison.",
             },
+            {
+                key: "fp",
+                metric: "Legitimate mail marked as spam",
+                value: "15 of 3,462",
+            },
+            { key: "fn", metric: "Spam missed", value: "20 of 4,369" },
         ],
         links: [
             {
@@ -177,12 +202,15 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
         ],
         body: [
             [
-                "I built a Gmail API integration that fetches incoming messages and classifies them with a multilayer perceptron (MLP), achieving 90% spam-detection accuracy.",
+                "The first version, built in December 2022, is a Python service on the Gmail API. It fetches incoming mail and sorts it with allowlists, wildcard blocklists and a quarantine label, and runs in Docker.",
             ],
             [
-                "I tuned the classifier architecture to reduce false positives and improve classification speed. The code is on ",
-                ["GitHub", "https://github.com/Adithya-Rajendran/Gmail-Filter"],
-                ".",
+                "In August 2025 I added a machine-learning classifier: TF-IDF features over the 5,000 most frequent terms, feeding a multilayer perceptron with two hidden layers of 100 and 50 units, trained on the CEAS-08 email corpus. On one stratified 80/20 split it classified 99.55% of the 7,831 held-out messages correctly, marking 15 of 3,462 legitimate messages as spam and missing 20 of 4,369 spam messages.",
+            ],
+            [
+                "That result comes from a single split of a public corpus, without a fixed random seed or a baseline model, so it describes this experiment rather than performance on a live inbox. The ",
+                ["training notebook", GMAIL_NOTEBOOK],
+                " records the full evaluation.",
             ],
         ],
     },
@@ -192,7 +220,9 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
         slug: "homelab",
         designation: 2,
         title: "Homelab with segmented networks and high availability",
-        summary: HOMELAB_BULLETS[0],
+        // Published (2026-09-29): the summary leads with rebuildability.
+        summary:
+            "A personal cloud built to be rebuilt: bare-metal provisioning over PXE, segmented networking, and storage kept outside the cluster, so the lab can be wiped and redeployed without losing data.",
         types: ["infrastructure"],
         // Homelab post: "Today, that lab runs a Canonical OpenStack cluster."
         status: "active",
@@ -209,13 +239,8 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
             "PXE",
         ],
         highlights: HOMELAB_BULLETS,
-        // Only values the homelab post states.
-        parameters: [
-            { key: "power", label: "Rack power, measured", value: "195.1 W" },
-            { key: "openstack", label: "OpenStack nodes", value: "3 × MS-01" },
-            { key: "by-hand", label: "Installed by hand", value: "3 × Pi 5" },
-            { key: "nas", label: "NAS storage", value: "12 TB" },
-        ],
+        // No parameters or results: the résumé states no measurements for
+        // the homelab, and the site shows none that it does not.
         links: [
             {
                 key: "write-up",
@@ -231,34 +256,8 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
             approach:
                 "A three-tier bootstrap chain. Three Raspberry Pi 5s, the only machines installed by hand, run MAAS and Landscape on Ubuntu Core with MicroCloud. MAAS provisions a Dell Inspiron, which hosts the Juju controller, and three Minisforum MS-01s over PXE.",
             outcome:
-                "The lab runs Canonical OpenStack, hyperconverged across the three MS-01s, and the x86 tier can be rebuilt without a USB stick. The 12 TB NAS stays outside Ceph so its data survives a redeployment, and the rack idles at around 200 W.",
+                "The lab runs Canonical OpenStack, hyperconverged across the three MS-01s. The x86 tier can be rebuilt over PXE without a USB stick, and the NAS stays outside Ceph, so its data survives a full redeployment.",
         },
-        results: [
-            {
-                key: "power",
-                metric: "Power at the wall",
-                value: "195.1 W",
-                note: "With the rack running normally, not while every CPU is under benchmark load.",
-            },
-            {
-                key: "by-hand",
-                metric: "Machines installed by hand",
-                value: "3",
-                note: "The Raspberry Pi 5s. MAAS provisions the rest of the chain over PXE.",
-            },
-            {
-                key: "ceph-latency",
-                metric: "Ceph traffic latency",
-                value: "0.4 ms",
-                note: "On the direct path; 7 ms when the traffic took the gateway instead.",
-            },
-            {
-                key: "ceph-quorum",
-                metric: "Ceph monitor hosts that can fail",
-                value: "1",
-                note: "Three nodes give the Ceph monitor layer enough quorum.",
-            },
-        ],
         // Quoted from the homelab post.
         lessons: [
             "Most of the failures in this lab have started at Layer 2.",
@@ -318,8 +317,8 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
                 {
                     key: "power",
                     label: "5",
-                    title: "Two hundred watts",
-                    body: "195.1 W with the rack running normally, not while every CPU is under benchmark load. The whole rack idles at around 200 W.",
+                    title: "Power",
+                    body: "The rack's power distribution for every tier.",
                     part: "power",
                     heading: "two-hundred-watts",
                 },
@@ -332,12 +331,12 @@ export const SEED_PROJECTS: readonly SeedProject[] = [
                 "Today the lab runs a Canonical OpenStack cluster. Three Raspberry Pi 5s, the only machines installed by hand, run MAAS, which provisions a Dell Inspiron and three Minisforum MS-01s over PXE, so the x86 tier can be rebuilt without plugging in a USB stick.",
             ],
             [
-                "A self-built 12 TB NAS stays outside the cluster and out of Ceph, so its data survives a full redeployment. The AI/ML tier is an NVIDIA Jetson Nano and an NVIDIA DGX Spark: the ASUS Ascent in the rack, described in ",
+                "The NAS stays outside the cluster and out of Ceph, so its data survives a full redeployment. The AI/ML tier is an NVIDIA Jetson Nano and an NVIDIA DGX Spark: the ASUS Ascent in the rack, described in ",
                 ["Sharing the DGX Spark GPU with MicroK8s", DGX_SPARK_POST_URL],
                 ".",
             ],
             [
-                "The whole rack idles at around 200 W. The full write-up is ",
+                "The full write-up, including where the network has failed and what that taught me, is ",
                 ["A Homelab Built to Be Rebuilt", "/blog/my-homelab"],
                 ".",
             ],

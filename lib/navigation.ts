@@ -91,6 +91,13 @@ export const homeRoute = {
 /** The recruiter shortcut in the header bar, at every width. */
 export const cvLink = { href: siteRoutes.resume, label: "CV" } as const;
 
+/** Contact in the header bar below 960px, where the nav is in the menu
+ *  sheet: the form is one click from every page at every width. */
+export const contactLink = {
+    href: siteRoutes.contact,
+    label: "Contact",
+} as const;
+
 /** Extra links in the menu sheet (< 960px). */
 export const sheetLinks = [
     { href: siteRoutes.resumePdf, label: "Résumé (PDF)" },

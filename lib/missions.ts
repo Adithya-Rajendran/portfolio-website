@@ -1,8 +1,9 @@
 import type { StatusValue } from "@/components/ui/marks";
 import { hostOf } from "@/lib/cv";
 import { formatMissionDesignation } from "@/lib/designations";
+import { extractHeadings } from "@/lib/headings";
 import type { LogEntry } from "@/lib/log-index";
-import { isQuantity, sameValue } from "@/lib/metrics";
+import { isQuantity } from "@/lib/metrics";
 import { formatProjectYears, projectStatusLabel } from "@/lib/project-content";
 import {
     PROJECT_TYPES,
@@ -14,6 +15,7 @@ import type {
     ExternalLink,
     ModelHotspot,
     ProjectListItem,
+    ProjectWithBody,
 } from "@/lib/sanity-client";
 
 /**
@@ -199,22 +201,138 @@ export function splitParameters(
     };
 }
 
-/** A card's stats (the tiles and the stage): two or more, or none. */
-export function cardStats(mission: Pick<Mission, "stats">) {
-    return mission.stats.length >= 2 ? mission.stats : [];
+/**
+ * The results table's rows: those with a metric and a value. Each keeps
+ * its note, the context a number needs (the split, the corpus, what was
+ * not compared).
+ */
+export function resultRows<T extends { metric?: string; value?: string }>(
+    rows: readonly T[] | null | undefined,
+): T[] {
+    return (rows ?? []).filter(
+        (row) => row.metric?.trim() && row.value?.trim(),
+    );
 }
 
 /**
- * The results table's rows, unless every row repeats a stat the file
- * already shows: then the table is left out.
+ * The stats a mission file sets in its head: its quantities, unless the
+ * file has a results table, which carries the numbers with their notes.
+ * A number is shown in one place, with its context where it has one.
  */
-export function resultRows<T extends { value: string }>(
-    rows: readonly T[],
-    stats: readonly Pick<MissionParameter, "value">[],
-): T[] {
-    const repeats = (row: T) =>
-        stats.some((stat) => sameValue(stat.value, row.value));
-    return rows.every(repeats) ? [] : [...rows];
+export function headStats(
+    mission: Pick<Mission, "stats">,
+    results: readonly unknown[],
+): MissionParameter[] {
+    return results.length ? [] : mission.stats;
+}
+
+/** Text compared for sameness: case, a leading "I" and punctuation aside,
+ *  so "I built a cluster." restates "Built a cluster". */
+function comparable(text: string): string {
+    return text
+        .toLowerCase()
+        .replace(/^\s*i\s+/, "")
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim();
+}
+
+/**
+ * A short project note's lines (contract §9): the highlights, less any
+ * that only repeat the summary word for word.
+ */
+export function noteLines(
+    summary: string,
+    highlights: readonly string[],
+): string[] {
+    const lead = comparable(summary);
+    return highlights.filter((line) => comparable(line) !== lead);
+}
+
+/** The plain text of each block of a Portable Text body; null for a block
+ *  that is not text (an image, a listing, a callout). */
+function blockTexts(body: ContentBody | null | undefined): (string | null)[] {
+    return (body ?? []).map((block) => {
+        const node = block as { _type?: string; children?: unknown };
+        if (node._type !== "block" || !Array.isArray(node.children)) {
+            return null;
+        }
+        return node.children
+            .map((child) =>
+                typeof (child as { text?: unknown }).text === "string"
+                    ? (child as { text: string }).text
+                    : "",
+            )
+            .join("");
+    });
+}
+
+/**
+ * Whether an essay says anything its summary and highlights do not: a
+ * paragraph that is not one of them restated, or anything that is not a
+ * paragraph. A note leaves out an essay that only repeats them.
+ */
+export function essayAdds(
+    body: ContentBody | null | undefined,
+    lines: readonly string[],
+): boolean {
+    const known = new Set(lines.map(comparable).filter(Boolean));
+    return blockTexts(body).some((text) => {
+        if (text === null) return true;
+        const value = comparable(text);
+        return value !== "" && !known.has(value);
+    });
+}
+
+export type MissionLayout = "file" | "note";
+
+/**
+ * How a project's page is laid out (contract §9). The full file where
+ * there is evidence to lay out: a brief, results, lessons or next steps,
+ * the model's callouts, a photograph, or an essay in sections. Otherwise
+ * a short project note: the title, the summary, the highlights, the stack
+ * and the links, with no empty sections.
+ */
+export function missionLayout(
+    project: Pick<
+        ProjectWithBody,
+        "brief" | "results" | "lessons" | "next" | "model" | "cover" | "body"
+    >,
+): MissionLayout {
+    const brief = [
+        project.brief?.problem,
+        project.brief?.approach,
+        project.brief?.outcome,
+    ].some((text) => text?.trim());
+    const lines = [...(project.lessons ?? []), ...(project.next ?? [])];
+    const callouts = (project.model?.hotspots ?? []).some((hotspot) =>
+        hotspot.title?.trim(),
+    );
+    const plate = Boolean(project.cover?.asset || project.model?.poster?.asset);
+    const evidence =
+        brief ||
+        resultRows(project.results).length > 0 ||
+        lines.some((line) => line.trim()) ||
+        callouts ||
+        plate ||
+        extractHeadings(project).length > 0;
+    return evidence ? "file" : "note";
+}
+
+/**
+ * Where "Read the write-up" goes from a project: its original Flight Log
+ * entry, else the file's own write-up section (a full file with an
+ * essay), else nowhere.
+ */
+export function writeUpHref(
+    mission: Pick<Mission, "href">,
+    project: Parameters<typeof missionLayout>[0] | null | undefined,
+    entry: Pick<LogEntry, "slug"> | null | undefined,
+): string | null {
+    if (entry) return `/blog/${entry.slug}`;
+    if (project?.body?.length && missionLayout(project) === "file") {
+        return `${mission.href}#write-up`;
+    }
+    return null;
 }
 
 export function toMission(project: ProjectListItem, siteUrl: string): Mission {
@@ -281,7 +399,30 @@ export function missionOrder<
         .map(({ project }) => project);
 }
 
-/** By mission number: the register and the files' previous / next. */
+/**
+ * Projects in tiers, from `missionOrder`: the flagship (featured slot 1,
+ * else the first), the next `rows` given room of their own, and the rest,
+ * shown least prominently, so the owner's last project is the quietest.
+ * The home page and /portfolio both read it.
+ */
+export function missionTiers<T extends { featured?: number | null }>(
+    ordered: readonly T[],
+    rows: number,
+): { flagship: T | null; rows: T[]; also: T[] } {
+    if (!ordered.length) return { flagship: null, rows: [], also: [] };
+    const lead = Math.max(
+        0,
+        ordered.findIndex((project) => project.featured === 1),
+    );
+    const rest = ordered.filter((_, index) => index !== lead);
+    return {
+        flagship: ordered[lead],
+        rows: rest.slice(0, rows),
+        also: rest.slice(rows),
+    };
+}
+
+/** By mission number: the files' previous / next. */
 export function byDesignation<T extends { number: number }>(
     missions: readonly T[],
 ): T[] {
@@ -299,35 +440,6 @@ export function adjacentMissions<T extends { slug: string; number: number }>(
         previous: ordered[index - 1] ?? null,
         next: ordered[index + 1] ?? null,
     };
-}
-
-const TALLY_ORDER: StatusValue[] = [
-    "active",
-    "complete",
-    "paused",
-    "planned",
-    "stopped",
-    "archived",
-];
-
-/** ● 2 Active ■ 2 Complete: how many missions carry each status. */
-export function statusTally(
-    missions: readonly Pick<Mission, "statusValue" | "statusLabel">[],
-): { value: StatusValue; label: string; count: number }[] {
-    return TALLY_ORDER.flatMap((value) => {
-        const matching = missions.filter(
-            (mission) => mission.statusValue === value,
-        );
-        return matching.length
-            ? [
-                  {
-                      value,
-                      label: matching[0].statusLabel,
-                      count: matching.length,
-                  },
-              ]
-            : [];
-    });
 }
 
 /** Every `contentLink` href in a Portable Text body, nested ones too. */

@@ -11,13 +11,11 @@ import { ButtonLink, buttonClass } from "@/components/ui/button";
 import CrumbRow from "@/components/ui/crumb-row";
 import DocSection from "@/components/ui/doc-section";
 import { Icon } from "@/components/ui/icon";
-import { Rev, Status } from "@/components/ui/marks";
 import Metrics from "@/components/ui/metrics";
 import Pager from "@/components/ui/pager";
 import Plate from "@/components/ui/plate";
 import RouteList from "@/components/ui/route-list";
-import Specs from "@/components/ui/specs";
-import TitleBlock, { type TitleBlockCell } from "@/components/ui/title-block";
+import Specs, { type SpecItem } from "@/components/ui/specs";
 import ViewerFigure, {
     ViewerCallouts,
 } from "@/components/viewer/viewer-figure";
@@ -27,12 +25,16 @@ import { contentsHeadings, extractHeadings } from "@/lib/headings";
 import { logEntries } from "@/lib/log-index";
 import {
     adjacentMissions,
+    essayAdds,
+    headStats,
     missionCallouts,
     missionEntries,
+    missionLayout,
+    noteLines,
     resultRows,
     toMission,
+    writeUpHref,
     type Mission,
-    type MissionParameter,
 } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
 import {
@@ -75,123 +77,83 @@ export async function generateMetadata({
     };
 }
 
-/** The drawing's title block (G6): the mission's record, set cells only. */
-function recordCells(mission: Mission): TitleBlockCell[] {
-    const r = copy.record;
-    const first: TitleBlockCell[] = [
-        {
-            id: "mission",
-            label: r.mission,
-            value: (
-                <>
-                    <span className="data">{mission.designation}</span> ·{" "}
-                    {mission.name}
-                </>
-            ),
-            accent: true,
-        },
-        {
-            id: "status",
-            label: r.status,
-            value: (
-                <Status value={mission.statusValue}>
-                    {mission.statusLabel}
-                </Status>
-            ),
-            note: mission.statusNote,
-            spanSm: 1,
-        },
-        ...(mission.types.length
+/**
+ * The facts under a head: the status note, the stack, the owner's role,
+ * the named parameters the stack does not list and, on a note, the links.
+ * Each row only when set.
+ */
+function factRows(mission: Mission, links: boolean): SpecItem[] {
+    const f = copy.facts;
+    return [
+        ...(mission.statusNote
+            ? [{ id: "status", term: f.status, value: mission.statusNote }]
+            : []),
+        ...(mission.technologies.length
             ? [
                   {
-                      id: "type",
-                      label: r.type,
-                      value: mission.types.join(" · "),
-                      spanSm: 1 as const,
+                      id: "stack",
+                      term: f.stack,
+                      value: (
+                          <span className="data">
+                              {mission.technologies.join(" · ")}
+                          </span>
+                      ),
                   },
               ]
             : []),
-        ...(mission.dates
+        ...(mission.role
+            ? [{ id: "role", term: f.role, value: mission.role }]
+            : []),
+        ...mission.specs.map((spec) => ({
+            id: `spec-${spec.id}`,
+            term: spec.label,
+            value: spec.value,
+        })),
+        ...(links && mission.links.length
             ? [
                   {
-                      id: "dates",
-                      label: r.dates,
-                      value: mission.dates,
-                      data: true,
+                      id: "links",
+                      term: f.links,
+                      value: (
+                          <ul className={styles.factLinks} role="list">
+                              {mission.links.map((link) => (
+                                  <li key={link.id}>
+                                      <a
+                                          href={link.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                      >
+                                          {link.label}
+                                          <Icon name="external" />
+                                      </a>
+                                  </li>
+                              ))}
+                          </ul>
+                      ),
                   },
               ]
             : []),
     ];
-    // Named parameters the stack does not list ("Feed · RSS") are cells of
-    // the second row, before the stack; more than the row holds take a row
-    // of their own.
-    const specs: TitleBlockCell[] = mission.specs.map(
-        (spec: MissionParameter) => ({
-            id: `spec-${spec.id}`,
-            label: spec.label,
-            value: spec.value,
-        }),
-    );
-    const role: TitleBlockCell[] = mission.role
-        ? [{ id: "role", label: r.role, value: mission.role }]
-        : [];
-    const stack: TitleBlockCell[] = mission.technologies.length
-        ? [
-              {
-                  id: "stack",
-                  label: r.stack,
-                  value: mission.technologies.join(" · "),
-              },
-          ]
-        : [];
-    const revision: TitleBlockCell[] = mission.revised
-        ? [
-              {
-                  id: "revision",
-                  label: r.revision,
-                  value: <Rev date={mission.revised} />,
-              },
-          ]
-        : [];
-    const inline = role.length + specs.length + revision.length <= 3;
-    const second = [...role, ...(inline ? specs : []), ...stack, ...revision];
-    const own = inline ? [] : specs;
-
-    // Each row fills the twelve columns: the mission and the stack take
-    // what the short cells leave.
-    const firstSpans = first.length === 4 ? [4, 2, 3, 3] : [5, 3, 4];
-    first.forEach((cell, index) => {
-        cell.span = first.length === 2 ? [7, 5][index] : firstSpans[index];
-    });
-    fillRow(own);
-    if (stack.length) {
-        const fixed = second.length - 1;
-        second.forEach((cell) => {
-            cell.span = cell.id === "stack" ? 12 - fixed * 3 : 3;
-        });
-    } else {
-        fillRow(second);
-    }
-    return [...first, ...own, ...second];
-}
-
-/** Spans that fill one row of twelve columns, the first cells widest. */
-function fillRow(cells: TitleBlockCell[]) {
-    const base = Math.floor(12 / Math.max(cells.length, 1));
-    const extra = 12 - base * cells.length;
-    cells.forEach((cell, index) => {
-        cell.span = base + (index < extra ? 1 : 0);
-    });
 }
 
 /**
- * A mission file (G5, G6): the crumb, the head (line, name, title,
- * summary, the way to the write-up and its original entry, the stats)
- * beside the photograph, the title block, then the callouts, the brief,
- * the write-up, the results, the debrief, the links and the related
- * entries, each only when the owner has published it, and the way to get
- * in touch and to the neighbouring files. Server-rendered; PostReader
- * keeps in-page links inside this file while another is still mounted.
+ * A project's page (G5, contract §9), in one of two layouts
+ * (`missionLayout`):
+ *
+ * - **The file**, where there is evidence to lay out: the crumb (with the
+ *   mission number, the file's quiet identifier), the head (line, name,
+ *   title, summary, the way to the write-up, stats only when there is no
+ *   results table, the facts) beside the photograph, then the brief, the
+ *   results with their notes, the lessons and next steps, the model's
+ *   callouts, the write-up, the links and the related entries, each only
+ *   when the owner has published it.
+ * - **The short note**, for a project with little more than its card:
+ *   the title, the summary, the highlights that add to it, the essay only
+ *   when it says more, and the facts with the links. No empty sections.
+ *
+ * Both close with the way to get in touch and to the neighbouring
+ * projects. Server-rendered; PostReader keeps in-page links inside this
+ * page while another is still mounted.
  */
 export default async function ProjectPage({
     params,
@@ -234,6 +196,7 @@ export default async function ProjectPage({
     const model = project.model?.poster?.asset ? project.model : null;
     const cover = project.cover?.asset ? project.cover : null;
     const hasPlate = Boolean(model || cover);
+    const layout = missionLayout(project);
     const brief = [
         ["problem", project.brief?.problem],
         ["approach", project.brief?.approach],
@@ -241,22 +204,56 @@ export default async function ProjectPage({
     ].filter((row): row is [keyof typeof copy.brief, string] =>
         Boolean(row[1]?.trim()),
     );
-    // The results, unless each one repeats a stat in the head; the note
-    // column only when a row has a note.
-    const results = resultRows(
-        (project.results ?? []).filter(
-            (row) => row.metric?.trim() && row.value?.trim(),
-        ),
-        mission.stats,
-    );
+    // The results carry their numbers with their notes, so the head sets
+    // no stats beside them; the note column only when a row has a note.
+    const results = resultRows(project.results);
+    const stats = headStats(mission, results);
     const hasNotes = results.some((row) => row.note?.trim());
     const lessons = (project.lessons ?? []).filter((line) => line.trim());
     const nextSteps = (project.next ?? []).filter((line) => line.trim());
     const hasEssay = project.body?.length > 0;
     const contents = headings.length ? contentsHeadings(headings) : [];
+    const writeUp = writeUpHref(mission, project, original);
+
+    // The short note: the highlights that add to the summary, and the
+    // essay only when it says more than both.
+    const lines = noteLines(mission.summary, mission.highlights);
+    const noteEssay =
+        hasEssay &&
+        essayAdds(project.body, [mission.summary, ...mission.highlights]);
+
+    const essay = (
+        <DocSection
+            id="write-up"
+            title={copy.writeUp}
+            prose
+            rail={
+                contents.length > 1 ? (
+                    <nav
+                        className={styles.contents}
+                        aria-label={copy.contentsLabel}
+                        data-contents
+                    >
+                        <p className={styles.contentsTitle}>{copy.contents}</p>
+                        <ol role="list">
+                            {contents.map((heading) => (
+                                <li key={heading.id}>
+                                    <a href={`#${heading.id}`}>
+                                        {heading.text}
+                                    </a>
+                                </li>
+                            ))}
+                        </ol>
+                    </nav>
+                ) : undefined
+            }
+        >
+            <ProjectEssay project={project} />
+        </DocSection>
+    );
 
     return (
-        <div data-page="mission" className={styles.page}>
+        <div data-page="mission" data-layout={layout} className={styles.page}>
             <BreadcrumbJsonLd
                 items={[
                     { name: "Home", path: "/" },
@@ -272,254 +269,272 @@ export default async function ProjectPage({
                     ornament="pulsar"
                     label={copy.plain}
                     href={siteRoutes.portfolio}
+                    code={mission.designation}
                     name={mission.name}
                 />
 
-                <header
-                    className={
-                        hasPlate
-                            ? styles.head
-                            : `${styles.head} ${styles.headText}`
-                    }
-                >
-                    <div className={styles.headCopy}>
+                {layout === "note" ? (
+                    <header className={styles.noteHead}>
                         <MissionLine mission={mission} />
-                        <h1
-                            className={styles.title}
-                            style={
-                                {
-                                    "--chars": mission.nameChars,
-                                } as CSSProperties
-                            }
-                        >
-                            {mission.name}
-                            <span className="sr-only">: </span>
-                            <span className={styles.dek}>{mission.title}</span>
-                        </h1>
+                        <h1 className={styles.noteTitle}>{mission.title}</h1>
                         {mission.summary ? (
                             <p className={styles.summary}>{mission.summary}</p>
                         ) : null}
-                        {hasEssay || original ? (
-                            <div className={`cluster ${styles.actions}`}>
-                                {hasEssay ? (
-                                    <a
-                                        className={buttonClass({
-                                            variant: "primary",
-                                        })}
-                                        href="#write-up"
-                                    >
-                                        {copy.readWriteUp}
-                                        <Icon name="arrow-down" />
-                                    </a>
-                                ) : null}
-                                {original ? (
-                                    <ButtonLink
-                                        href={`/blog/${original.slug}`}
-                                        icon="arrow"
-                                        iconAt="end"
-                                    >
-                                        {copy.originalEntry(
-                                            original.designation,
-                                        )}
-                                    </ButtonLink>
-                                ) : null}
+                    </header>
+                ) : (
+                    <header
+                        className={
+                            hasPlate
+                                ? styles.head
+                                : `${styles.head} ${styles.headText}`
+                        }
+                    >
+                        <div className={styles.headCopy}>
+                            <MissionLine mission={mission} />
+                            <h1
+                                className={styles.title}
+                                style={
+                                    {
+                                        "--chars": mission.nameChars,
+                                    } as CSSProperties
+                                }
+                            >
+                                {mission.name}
+                                <span className="sr-only">: </span>
+                                <span className={styles.dek}>
+                                    {mission.title}
+                                </span>
+                            </h1>
+                            {mission.summary ? (
+                                <p className={styles.summary}>
+                                    {mission.summary}
+                                </p>
+                            ) : null}
+                            {writeUp ? (
+                                <div className={`cluster ${styles.actions}`}>
+                                    {writeUp.startsWith("#") ||
+                                    writeUp.startsWith(`${mission.href}#`) ? (
+                                        <a
+                                            className={buttonClass({
+                                                variant: "primary",
+                                            })}
+                                            href="#write-up"
+                                        >
+                                            {copy.readWriteUp}
+                                            <Icon name="arrow-down" />
+                                        </a>
+                                    ) : (
+                                        <ButtonLink
+                                            variant="primary"
+                                            href={writeUp}
+                                            icon="arrow"
+                                            iconAt="end"
+                                        >
+                                            {copy.readWriteUp}
+                                        </ButtonLink>
+                                    )}
+                                </div>
+                            ) : null}
+                            <Metrics
+                                className={styles.metrics}
+                                items={stats}
+                                columns={hasPlate ? 2 : 4}
+                                size={hasPlate ? "lg" : "md"}
+                            />
+                            <Specs
+                                className={styles.facts}
+                                items={factRows(mission, false)}
+                            />
+                        </div>
+                        {hasPlate ? (
+                            <div className={styles.headMedia}>
+                                {model ? (
+                                    <ViewerFigure model={model} priority />
+                                ) : (
+                                    <Plate
+                                        image={cover}
+                                        label="Pl. I"
+                                        caption={cover?.caption}
+                                        sizes="(min-width: 60rem) 36vw, 100vw"
+                                        priority
+                                    />
+                                )}
                             </div>
                         ) : null}
-                        <Metrics
-                            className={styles.metrics}
-                            items={mission.stats}
-                            columns={hasPlate ? 2 : 4}
-                            size={hasPlate ? "lg" : "md"}
+                    </header>
+                )}
+
+                {layout === "note" ? (
+                    <div className={styles.noteBody}>
+                        {lines.length ? (
+                            <ul className={styles.lines} role="list">
+                                {lines.map((line) => (
+                                    <li key={line}>{line}</li>
+                                ))}
+                            </ul>
+                        ) : null}
+                        <Specs
+                            className={styles.facts}
+                            items={factRows(mission, true)}
                         />
                     </div>
-                    {hasPlate ? (
-                        <div className={styles.headMedia}>
-                            {model ? (
-                                <ViewerFigure
-                                    model={model}
-                                    designation={mission.designation}
-                                    priority
-                                />
-                            ) : (
-                                <Plate
-                                    image={cover}
-                                    label="Pl. I"
-                                    tag={mission.designation}
-                                    caption={cover?.caption}
-                                    sizes="(min-width: 60rem) 36vw, 100vw"
-                                    priority
-                                />
-                            )}
-                        </div>
-                    ) : null}
-                </header>
-
-                <TitleBlock
-                    className={styles.record}
-                    cells={recordCells(mission)}
-                />
+                ) : null}
             </div>
 
-            {callouts.length ? (
-                <DocSection
-                    id="callouts"
-                    title={project.model?.title?.trim() || copy.callouts}
-                >
-                    <ViewerCallouts
-                        callouts={callouts}
-                        labelledBy="callouts-h"
-                    />
-                </DocSection>
-            ) : null}
+            {layout === "note" ? (
+                <>
+                    {noteEssay ? essay : null}
+                    {related.length ? (
+                        <DocSection id="related" title={copy.related}>
+                            <LogIndex entries={related} level={3} />
+                        </DocSection>
+                    ) : null}
+                </>
+            ) : (
+                <>
+                    {brief.length ? (
+                        <DocSection id="brief" title={copy.briefTitle}>
+                            <Specs
+                                className={`specs--read ${styles.brief}`}
+                                items={brief.map(([key, text]) => ({
+                                    id: key,
+                                    term: copy.brief[key],
+                                    value: text.trim(),
+                                }))}
+                            />
+                        </DocSection>
+                    ) : null}
 
-            {brief.length ? (
-                <DocSection id="brief" title={copy.briefTitle}>
-                    <Specs
-                        className={`specs--read ${styles.brief}`}
-                        items={brief.map(([key, text]) => ({
-                            id: key,
-                            term: copy.brief[key],
-                            value: text.trim(),
-                        }))}
-                    />
-                </DocSection>
-            ) : null}
-
-            {hasEssay ? (
-                <DocSection
-                    id="write-up"
-                    title={copy.writeUp}
-                    prose
-                    rail={
-                        contents.length > 1 ? (
-                            <nav
-                                className={styles.contents}
-                                aria-label={copy.contentsLabel}
-                                data-contents
+                    {results.length ? (
+                        <DocSection id="results" title={copy.results}>
+                            <div
+                                className={`table-wrap ${styles.results}`}
+                                role="region"
+                                aria-labelledby="results-cap"
+                                tabIndex={0}
                             >
-                                <p className={styles.contentsTitle}>
-                                    {copy.contents}
-                                </p>
-                                <ol role="list">
-                                    {contents.map((heading) => (
-                                        <li key={heading.id}>
-                                            <a href={`#${heading.id}`}>
-                                                {heading.text}
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </nav>
-                        ) : undefined
-                    }
-                >
-                    <ProjectEssay project={project} />
-                </DocSection>
-            ) : null}
-
-            {results.length ? (
-                <DocSection id="results" title={copy.results}>
-                    <div
-                        className={`table-wrap ${styles.results}`}
-                        role="region"
-                        aria-labelledby="results-cap"
-                        tabIndex={0}
-                    >
-                        <table className="table">
-                            <caption id="results-cap">
-                                <span className="caption__num">
-                                    {copy.table}
-                                </span>
-                                {copy.resultsCaption(mission.name)}
-                            </caption>
-                            <thead>
-                                <tr>
-                                    <th scope="col">
-                                        {copy.resultColumns.metric}
-                                    </th>
-                                    <th scope="col" className="num">
-                                        {copy.resultColumns.value}
-                                    </th>
-                                    {hasNotes ? (
-                                        <th scope="col">
-                                            {copy.resultColumns.note}
-                                        </th>
-                                    ) : null}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {results.map((row) => (
-                                    <tr key={row._key}>
-                                        <th scope="row">{row.metric}</th>
-                                        <td className={`num ${styles.value}`}>
-                                            {row.value}
-                                        </td>
-                                        {hasNotes ? (
-                                            <td className={styles.note}>
-                                                {row.note}
-                                            </td>
-                                        ) : null}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </DocSection>
-            ) : null}
-
-            {lessons.length || nextSteps.length ? (
-                <DocSection id="debrief" title={copy.debrief}>
-                    <div className={styles.debrief}>
-                        {lessons.length ? (
-                            <div>
-                                <h3 className={styles.subhead}>
-                                    {copy.lessons}
-                                </h3>
-                                <ul className={styles.lessons} role="list">
-                                    {lessons.map((line) => (
-                                        <li key={line}>{line}</li>
-                                    ))}
-                                </ul>
+                                <table className="table">
+                                    <caption id="results-cap">
+                                        <span className="caption__num">
+                                            {copy.table}
+                                        </span>
+                                        {copy.resultsCaption(mission.name)}
+                                    </caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">
+                                                {copy.resultColumns.metric}
+                                            </th>
+                                            <th scope="col" className="num">
+                                                {copy.resultColumns.value}
+                                            </th>
+                                            {hasNotes ? (
+                                                <th scope="col">
+                                                    {copy.resultColumns.note}
+                                                </th>
+                                            ) : null}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {results.map((row) => (
+                                            <tr key={row._key}>
+                                                <th scope="row">
+                                                    {row.metric}
+                                                </th>
+                                                <td
+                                                    className={`num ${styles.value}`}
+                                                >
+                                                    {row.value}
+                                                </td>
+                                                {hasNotes ? (
+                                                    <td className={styles.note}>
+                                                        {row.note}
+                                                    </td>
+                                                ) : null}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                        ) : null}
-                        {nextSteps.length ? (
-                            <div>
-                                <h3 className={styles.subhead}>
-                                    {copy.nextSteps}
-                                </h3>
-                                <ul className={styles.next} role="list">
-                                    {nextSteps.map((line) => (
-                                        <li key={line}>{line}</li>
-                                    ))}
-                                </ul>
+                        </DocSection>
+                    ) : null}
+
+                    {lessons.length || nextSteps.length ? (
+                        <DocSection id="debrief" title={copy.debrief}>
+                            <div className={styles.debrief}>
+                                {lessons.length ? (
+                                    <div>
+                                        <h3 className={styles.subhead}>
+                                            {copy.lessons}
+                                        </h3>
+                                        <ul
+                                            className={styles.lessons}
+                                            role="list"
+                                        >
+                                            {lessons.map((line) => (
+                                                <li key={line}>{line}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ) : null}
+                                {nextSteps.length ? (
+                                    <div>
+                                        <h3 className={styles.subhead}>
+                                            {copy.nextSteps}
+                                        </h3>
+                                        <ul className={styles.next} role="list">
+                                            {nextSteps.map((line) => (
+                                                <li key={line}>{line}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ) : null}
                             </div>
-                        ) : null}
-                    </div>
-                </DocSection>
-            ) : null}
+                        </DocSection>
+                    ) : null}
 
-            {mission.links.length ? (
-                <DocSection id="links" title={copy.links}>
-                    <RouteList
-                        labelledBy="links-h"
-                        columns={2}
-                        items={mission.links.map((link, index) => ({
-                            key: link.id,
-                            href: link.url,
-                            num: String(index + 1).padStart(2, "0"),
-                            plain: link.label,
-                            blurb: link.host === link.label ? null : link.host,
-                            external: true,
-                        }))}
-                    />
-                </DocSection>
-            ) : null}
+                    {callouts.length ? (
+                        <DocSection
+                            id="callouts"
+                            title={
+                                project.model?.title?.trim() || copy.callouts
+                            }
+                        >
+                            <ViewerCallouts
+                                callouts={callouts}
+                                labelledBy="callouts-h"
+                            />
+                        </DocSection>
+                    ) : null}
 
-            {related.length ? (
-                <DocSection id="related" title={copy.related}>
-                    <LogIndex entries={related} level={3} />
-                </DocSection>
-            ) : null}
+                    {hasEssay ? essay : null}
+
+                    {mission.links.length ? (
+                        <DocSection id="links" title={copy.links}>
+                            <RouteList
+                                labelledBy="links-h"
+                                columns={2}
+                                items={mission.links.map((link) => ({
+                                    key: link.id,
+                                    href: link.url,
+                                    plain: link.label,
+                                    blurb:
+                                        link.host === link.label
+                                            ? null
+                                            : link.host,
+                                    external: true,
+                                }))}
+                            />
+                        </DocSection>
+                    ) : null}
+
+                    {related.length ? (
+                        <DocSection id="related" title={copy.related}>
+                            <LogIndex entries={related} level={3} />
+                        </DocSection>
+                    ) : null}
+                </>
+            )}
 
             <section
                 className="section"
@@ -543,7 +558,7 @@ export default async function ProjectPage({
                             previous
                                 ? {
                                       href: previous.href,
-                                      label: `${copy.previousFile} · ${previous.designation}`,
+                                      label: copy.previousFile,
                                       title: previous.name,
                                   }
                                 : null
@@ -553,7 +568,7 @@ export default async function ProjectPage({
                             next
                                 ? {
                                       href: next.href,
-                                      label: `${copy.nextFile} · ${next.designation}`,
+                                      label: copy.nextFile,
                                       title: next.name,
                                   }
                                 : null
