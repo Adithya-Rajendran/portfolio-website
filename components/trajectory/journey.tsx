@@ -219,10 +219,17 @@ export default function Journey({
             lastCard = -1;
             resize();
         };
+        // Re-read colours once the theme attribute has actually changed:
+        // under a view transition the swap lands after "themechange".
         const retheme = () => {
             scene.theme?.();
             request();
         };
+        const themeWatch = new MutationObserver(retheme);
+        themeWatch.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["data-theme"],
+        });
         const inputs = ["wheel", "touchstart", "keydown", "pointerdown"];
         inputs.forEach((type) =>
             window.addEventListener(type, takeOver, { passive: true }),
@@ -230,7 +237,6 @@ export default function Journey({
         window.addEventListener("scroll", request, { passive: true });
         window.addEventListener("resize", resize);
         document.addEventListener("motionchange", mode);
-        document.addEventListener("themechange", retheme);
         reduce.addEventListener("change", mode);
         mode();
         document.fonts?.ready.then(resize);
@@ -244,7 +250,7 @@ export default function Journey({
             window.removeEventListener("scroll", request);
             window.removeEventListener("resize", resize);
             document.removeEventListener("motionchange", mode);
-            document.removeEventListener("themechange", retheme);
+            themeWatch.disconnect();
             reduce.removeEventListener("change", mode);
             controls.current = null;
             scene.dispose();
