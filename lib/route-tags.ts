@@ -68,6 +68,11 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         tags: [profile, project, post],
     },
     {
+        path: "/resume/trajectory",
+        file: "app/(site)/resume/trajectory/page.tsx",
+        tags: [profile],
+    },
+    {
         path: "/about",
         file: "app/(site)/about/page.tsx",
         tags: [profile, post, project],
