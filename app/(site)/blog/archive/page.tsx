@@ -6,7 +6,7 @@ import { ButtonLink } from "@/components/ui/button";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { logCopy } from "@/lib/copy";
-import { logEntries } from "@/lib/log-index";
+import { logEntries, offersFilters } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import { getWritingDescription } from "@/lib/profile-content";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
@@ -36,9 +36,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Archive: every entry by year in the writing index,
- * with the tag chips and a search over titles, standfirsts and tags. The
- * whole list is server-rendered; only the search needs JavaScript.
+ * Archive: every entry by year in the writing index, with a search over
+ * titles, standfirsts and tags, and the tag chips once a tag gathers two
+ * or more entries (`offersFilters`, as on /blog). The whole list is
+ * server-rendered; only the search needs JavaScript.
  */
 export default async function ArchivePage() {
     const entries = logEntries(await getAllPosts());
@@ -72,7 +73,9 @@ export default async function ArchivePage() {
             <section className={`section ${styles.index}`}>
                 <div className={`shell ${styles.indexInner}`}>
                     <ArchiveList entries={entries}>
-                        <TagChips tags={tags} total={entries.length} />
+                        {offersFilters(tags) ? (
+                            <TagChips tags={tags} total={entries.length} />
+                        ) : null}
                     </ArchiveList>
                 </div>
             </section>

@@ -98,9 +98,12 @@ only live in comments or commit messages.
   (`data-orbit-id`, `data-orbit-row`, `data-orbit-show`…): it renders
   nothing and keeps state in attributes. `/resume` opens on the CV list
   (`data-view="list"`, server-rendered, so also without JavaScript); the
-  map is the optional Map view, opened by the view switch, a row's "Show
-  on map" or `#orbit-map` (without JavaScript a link to that fragment and
-  CSS `:target`, since `history.replaceState` does not update `:target`).
+  map is the optional Timeline view (List | Timeline, named as its
+  section is), opened by the view switch or `#orbit-map` (without
+  JavaScript a link to that fragment and CSS `:target`, since
+  `history.replaceState` does not update `:target`); only in that view do
+  the rows show their orbit numbers and "Show on timeline", which pins a
+  row's orbit.
   `lib/cv.ts` words the rows' dates as the résumé gives them and derives
   no length of time from them. The print is the only paper artefact: two sheets on the named
   page `cv` (`styles/print.css`), sheet 2 breaking before its control
@@ -553,8 +556,8 @@ deployment require an authenticated Sanity CLI session.
   entry in the first viewport at 1280×800 and 390×844 in both themes,
   entries newest first in the same order on the archive and tag pages, no
   LOG numbers and no chart on the index, "Updated" only after a revision,
-  the tag chips and the search only once a tag gathers two entries, their
-  counts, 404 for an unknown or malformed tag, the archive's search and
+  the tag chips (on the index and the archive) only once a tag gathers
+  two entries, their counts, the archive's link always in the head, 404 for an unknown or malformed tag, the archive's search and
   its no-JavaScript list, and the prefetch budget on `/blog`), `post`
   (every entry's first paragraph in the first viewport at 1280×800 and
   390×844 in both themes, a 60–75 character measure, code comments at
@@ -566,8 +569,8 @@ deployment require an authenticated Sanity CLI session.
   margin notes, the caution callout and revisions, their RSS output, and
   in-page links landing in the visible entry after a client-side
   navigation), `orbit` (the page opening on the CV list with Contact in
-  the first viewport, the Map view from the switch, "Show on map" and
-  `#orbit-map`, a CV row lighting its orbit and back, a click pinning
+  the first viewport and no per-row map buttons, the Timeline view from
+  the switch and `#orbit-map`, "Show on timeline" pinning a row's orbit, a CV row lighting its orbit and back, a click pinning
   a record and a second click or Escape releasing it, Earlier and Later,
   every orbit labelled on a phone, and without JavaScript the list, the
   map from its link and the labels as links to their rows), `print` (the CV

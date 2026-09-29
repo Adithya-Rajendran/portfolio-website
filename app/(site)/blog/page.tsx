@@ -37,10 +37,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Writing (/blog; themed Flight Log, G8): the page head with the owner's
- * description of his writing and the ways to follow it (RSS, LinkedIn),
- * then every entry in the scannable index, grouped by year. The tag chips
- * and the search appear once a tag gathers two or more entries
- * (`offersFilters`); until then the list is short enough to read whole.
+ * description of his writing, the ways to follow it (RSS, LinkedIn) and
+ * the way to the searchable archive, then every entry in the scannable
+ * index, grouped by year. The tag chips appear once a tag gathers two or
+ * more entries (`offersFilters`); until then the list is short enough to
+ * read whole.
  * Everything is server-rendered links, so the page is complete without
  * JavaScript. Ported from the mockup's log.html.
  */
@@ -83,15 +84,13 @@ export default async function WritingPage() {
                                 <Icon name="external" />
                             </a>
                         ) : null}
-                        {filters ? (
-                            <ButtonLink
-                                size="sm"
-                                icon="search"
-                                href="/blog/archive"
-                            >
-                                {copy.search}
-                            </ButtonLink>
-                        ) : null}
+                        <ButtonLink
+                            size="sm"
+                            icon="search"
+                            href="/blog/archive"
+                        >
+                            {copy.search}
+                        </ButtonLink>
                     </div>
                 </PageHead>
             </div>

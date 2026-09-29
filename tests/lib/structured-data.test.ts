@@ -363,7 +363,7 @@ describe("buildBlog", () => {
         const blog = buildBlog();
         expect(blog["@context"]).toBe("https://schema.org");
         expect(blog["@type"]).toBe("Blog");
-        expect(blog.name).toBe(`${siteConfig.author} — Blog`);
+        expect(blog.name).toBe(`${siteConfig.author} — Writing`);
         expect(blog.url).toBe(`${siteConfig.url}/blog`);
         expect(blog).not.toHaveProperty("description");
     });

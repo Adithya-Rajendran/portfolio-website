@@ -124,7 +124,8 @@ export const logCopy = {
     plain: "Writing",
     rss: "RSS",
     linkedIn: "Follow on LinkedIn",
-    search: "Search entries",
+    /** The way to the archive and its search, always in the head. */
+    search: "Search the archive",
     tags: "Tags",
     all: "All",
     /** "5 min read", the words after the number for assistive tech. */
@@ -196,7 +197,7 @@ export const postCopy = {
     /** Starts with the visible label, for voice control (WCAG 2.5.3). */
     copyLinkLabel: "Copy link to this entry",
     linkCopied: "Link copied",
-    allEntries: "All entries",
+    allEntries: "All writing",
     after: "After this entry",
     projects: (count: number) =>
         count === 1 ? "Related project" : "Related projects",
@@ -226,13 +227,14 @@ export const cvCopy = {
     /** The share card and metadata when the profile has no summary. */
     description: "Experience, education and skills.",
     viewLegend: "View",
-    /** The CV list first; the orbit map is the optional view. */
+    /** The CV list first; the orbit map (the Timeline) is the optional
+     *  view, named as its section is. */
     views: [
         { value: "list", label: "List" },
-        { value: "map", label: "Map" },
+        { value: "map", label: "Timeline" },
     ],
-    /** Without JavaScript, the link that opens the map. */
-    showMap: "Show the map",
+    /** Without JavaScript, the link that opens the Timeline. */
+    showMap: "Show the timeline",
     contact: "Contact",
     download: "Download CV (PDF)",
     openPdf: "Open PDF",
@@ -258,7 +260,8 @@ export const cvCopy = {
     skills: "Skills",
     skillsLabel: "Skills",
     certifications: "Certifications",
-    showOnMap: "Show on map",
+    /** A row's button in the Timeline view: its orbit, pinned. */
+    showOnMap: "Show on timeline",
     stack: "Stack",
     links: "Links",
     current: "Current",

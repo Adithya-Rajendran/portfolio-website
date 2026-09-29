@@ -53,7 +53,7 @@ describe("renderFeedXml — channel", () => {
     it("describes the channel by its title when the profile has no description", () => {
         for (const description of [undefined, null, "  "]) {
             expect(renderFeedXml([], description)).toContain(
-                "<description>Adithya Rajendran — Blog</description>",
+                "<description>Adithya Rajendran — Writing</description>",
             );
         }
     });

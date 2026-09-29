@@ -3,10 +3,11 @@ import { cvCopy, orbitCopy } from "@/lib/copy";
 import { expect, test } from "./support/test";
 
 /**
- * The Trajectory orbit map (G2, plan §6.2 PR 11), the optional Map view
- * of /resume: the page opens on the CV list with the map hidden; the view
- * switch, "Show on map" and a link to `#orbit-map` open it. In the Map
- * view a CV row lights its orbit and an orbit lights its row; a click
+ * The Trajectory orbit map (G2, plan §6.2 PR 11), the optional Timeline
+ * view of /resume: the page opens on the CV list with the map hidden and
+ * no per-row map buttons; the view switch (List | Timeline) and a link to
+ * `#orbit-map` open it. In the Timeline view "Show on timeline" pins a
+ * row's orbit, a CV row lights its orbit and an orbit lights its row; a click
  * pins an orbit's record in the panel, a second click, empty sky or
  * Escape releases it, and Earlier and Later step through the records.
  * Without JavaScript the list shows, the map opens from its link, and
@@ -20,7 +21,8 @@ function main(page: Page) {
     return page.getByRole("main");
 }
 
-/** The CV rows that stand for an orbit: they offer "Show on map". */
+/** The CV rows that stand for an orbit: in the Timeline view they offer
+ *  "Show on timeline". */
 function orbitRows(page: Page): Locator {
     return main(page)
         .getByRole("listitem")
@@ -146,11 +148,16 @@ test.describe("with a pointer at 1440px", () => {
         await expect(panelTitle(page)).toHaveText(first);
     });
 
-    test("Show on map opens the map, pins the row's orbit and brings it into view", async ({
+    test("Show on timeline pins the row's orbit and brings it into view", async ({
         page,
     }) => {
         await page.goto("/resume");
         await expect(mapHeading(page)).toBeHidden();
+        // The list carries no per-row map buttons.
+        await expect(
+            main(page).getByRole("button", { name: cvCopy.showOnMap }),
+        ).toHaveCount(0);
+        await openMap(page);
         const row = orbitRows(page).last();
         const title = await rowTitle(row);
         await row.getByRole("button", { name: cvCopy.showOnMap }).click();
@@ -169,7 +176,14 @@ test.describe("with a pointer at 1440px", () => {
             .getByRole("radio", { name: cvCopy.views[0].label })
             .check({ force: true });
         await expect(mapHeading(page)).toBeHidden();
-        await expect(orbitRows(page).first()).toBeVisible();
+        await expect(
+            main(page).getByRole("heading", {
+                level: 2,
+                name: cvCopy.experience,
+                exact: true,
+            }),
+        ).toBeVisible();
+        await expect(orbitRows(page)).toHaveCount(0);
 
         await page.goto("/resume#orbit-map");
         await expect(mapHeading(page)).toBeVisible();

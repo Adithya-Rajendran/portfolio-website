@@ -237,7 +237,7 @@ export function buildBlog(profile: ProfileData | null = null) {
     return {
         "@context": "https://schema.org",
         "@type": "Blog",
-        name: `${siteConfig.author} — Blog`,
+        name: `${siteConfig.author} — Writing`,
         url: `${siteConfig.url}/blog`,
         ...optional("description", getWritingDescription(profile)),
         author: {

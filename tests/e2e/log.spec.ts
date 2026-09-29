@@ -134,7 +134,9 @@ test("the revised fixture entry shows its revision date", async ({
     ]);
 });
 
-test("tag chips appear once a tag gathers two entries", async ({ page }) => {
+test("tag chips appear once a tag gathers two entries; the archive is always one click away", async ({
+    page,
+}) => {
     await page.goto("/blog");
     const index = await rows(page);
     const counts = new Map<string, number>();
@@ -143,11 +145,18 @@ test("tag chips appear once a tag gathers two entries", async ({ page }) => {
     }
     const shared = [...counts.values()].some((count) => count >= 2);
     const chips = page.getByRole("group", { name: logCopy.tags });
+    await expect(chips).toHaveCount(shared ? 1 : 0);
     const search = page
         .getByRole("main")
         .getByRole("link", { name: logCopy.search });
-    await expect(chips).toHaveCount(shared ? 1 : 0);
-    await expect(search).toHaveCount(shared ? 1 : 0);
+    await expect(search).toHaveAttribute("href", "/blog/archive");
+
+    // The archive keeps its search and applies the same rule to its chips.
+    await search.click();
+    await expect(page).toHaveURL(/\/blog\/archive$/);
+    await expect(page.getByRole("group", { name: logCopy.tags })).toHaveCount(
+        shared ? 1 : 0,
+    );
 });
 
 test("tag chips show their counts and open their tag page", async ({

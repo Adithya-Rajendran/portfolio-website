@@ -217,8 +217,9 @@
             font-size: 7pt;
         }
         /* Sheet 2 runs compact: what follows a title (a project's type, a
-           talk's venue, a credential's issuer) shares its line, and a
-           project's stack and links share one. */
+           talk's venue, a credential's issuer) shares its line. A
+           project's stack and links keep a line each, so no separator is
+           left hanging where the stack wraps. */
         [data-page="resume"]
             :is(#projects, #writing, #certifications)
             :is(.cv-item__title, .cv-item__sub) {
@@ -227,24 +228,6 @@
         [data-page="resume"]
             :is(#projects, #writing, #certifications)
             .cv-item__sub::before {
-            content: " · ";
-            color: var(--ink-3);
-        }
-        [data-page="resume"] #projects .cv-item__facts {
-            display: inline;
-        }
-        [data-page="resume"]
-            #projects
-            .cv-item__lines
-            + .cv-item__facts::before {
-            content: "";
-            display: block;
-            margin-top: 0.6mm;
-        }
-        [data-page="resume"]
-            #projects
-            .cv-item__facts
-            + .cv-item__facts::before {
             content: " · ";
             color: var(--ink-3);
         }

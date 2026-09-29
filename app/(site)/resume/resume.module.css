@@ -52,9 +52,10 @@
 
 /* ---- The orbit map (Timeline): the optional Map view ------------------- */
 /* The list is the default view (`data-view="list"`, also without
-   JavaScript); the Map view shows the map above it. Without JavaScript
-   the map opens from its fragment. The rows' orbit numbers only mean
-   something beside the map. */
+   JavaScript); the Timeline view shows the map above it. Without
+   JavaScript the map opens from its fragment. The rows' orbit numbers
+   and their "Show on timeline" buttons only mean something beside the
+   map. */
 .map {
     padding-block: var(--space-block);
 }
@@ -64,7 +65,8 @@
 :global(html:not([data-js])) .page .map:target {
     display: block;
 }
-.page[data-view="list"] [data-orbit-row] :global(.cv-item__code) {
+.page[data-view="list"] [data-orbit-row] :global(.cv-item__code),
+.page[data-view="list"] [data-orbit-show] {
     display: none;
 }
 

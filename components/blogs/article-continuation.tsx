@@ -7,7 +7,7 @@ import Pager, { type PagerLink } from "@/components/ui/pager";
 import SectionTag from "@/components/ui/section-tag";
 import { postCopy as copy } from "@/lib/copy";
 import { formatMissionDesignation } from "@/lib/designations";
-import type { LogEntry } from "@/lib/log-index";
+import { formatEntryDate, type LogEntry } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import { formatProjectYears, projectStatusLabel } from "@/lib/project-content";
 import { PROJECT_TYPES, type ProjectStatus } from "@/lib/project-fields";
@@ -79,7 +79,7 @@ function pagerLink(
         title: entry.title,
         meta:
             [
-                entry.publishedAt,
+                formatEntryDate(entry.publishedAt),
                 entry.readMinutes ? `${entry.readMinutes} min` : null,
             ]
                 .filter(Boolean)

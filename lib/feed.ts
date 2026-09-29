@@ -23,7 +23,8 @@ export type FeedPost = Pick<
     Partial<Pick<PostWithBody, "changelog">>;
 
 export const FEED_PATH = "/feed.xml";
-export const FEED_TITLE = `${siteConfig.author} — Blog`;
+/** The section's plain name, as the nav names it. */
+export const FEED_TITLE = `${siteConfig.author} — Writing`;
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 const XML_ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;

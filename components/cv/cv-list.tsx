@@ -129,7 +129,10 @@ export function CvItem({
                             <span className="cv-item__key">{skillsLabel}</span>
                         ) : null}
                         <span className="cv-item__skills">
-                            {skills.join(" · ")}
+                            {/* A no-break space keeps each dot with the
+                                item before it, so a wrapped line never
+                                starts with one. */}
+                            {skills.join("\u00a0· ")}
                         </span>
                     </p>
                 ) : null}
