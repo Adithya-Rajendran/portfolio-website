@@ -1,0 +1,292 @@
+/*
+ * The voyage's layers inside the journey's scene host, back to front: the
+ * photograph (Void only), the canvas (stars, orbits, trail, worlds, ship),
+ * the HTML labels, the veil that keeps the record legible, and the time
+ * ruler. The scene sets the custom properties below on resize and moves
+ * the layers with transforms only.
+ */
+
+.host {
+    overflow: hidden;
+    --ruler-y: 0px;
+    --ruler-from: 0px;
+    --veil-solid: 0px;
+    --veil-clear: 0px;
+    --gap: 10px;
+}
+
+.backdrop {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.photo {
+    position: absolute;
+    left: 0;
+    top: 0;
+    max-width: none;
+    opacity: 0;
+    transition: opacity 0.9s ease;
+    will-change: transform;
+}
+
+.photo[data-loaded] {
+    opacity: 0.42;
+}
+
+/* A vignette: the photograph falls away toward the edges and the record. */
+.backdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        120% 95% at 66% 42%,
+        transparent 35%,
+        color-mix(in oklab, var(--bg) 70%, transparent) 78%,
+        var(--bg) 100%
+    );
+}
+
+/* Flight Manual drops the photograph: paper, ink stars and plates. */
+:global(html[data-theme="manual"]) .backdrop {
+    display: none;
+}
+
+.canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    max-width: 12.5rem;
+    padding-left: 9px;
+    border-left: var(--rule-hair) solid var(--rule-2);
+    will-change: transform;
+}
+
+.label[hidden] {
+    display: none;
+}
+
+/* The leader from the label to the planet's limb. */
+.label::after {
+    content: "";
+    position: absolute;
+    left: calc(-1 * var(--rule-hair));
+    height: var(--gap);
+    border-left: var(--rule-hair) solid var(--rule-2);
+}
+
+.label[data-side="above"]::after {
+    top: 100%;
+}
+
+.label[data-side="below"]::after {
+    bottom: 100%;
+}
+
+.label[data-flip] {
+    padding: 0 9px 0 0;
+    border-left: 0;
+    border-right: var(--rule-hair) solid var(--rule-2);
+    text-align: right;
+}
+
+.label[data-flip]::after {
+    left: auto;
+    right: calc(-1 * var(--rule-hair));
+}
+
+.label,
+.tick {
+    text-shadow:
+        0 0 3px var(--bg),
+        0 0 8px var(--bg);
+}
+
+.org {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    font: 400 10px / 1.55 var(--font-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+}
+
+.dates {
+    display: block;
+    margin-top: 2px;
+    font: 400 11px / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    color: var(--ink-3);
+    white-space: nowrap;
+}
+
+.label[data-on] .org {
+    color: var(--ink-1);
+}
+
+.label[data-on] .dates {
+    color: var(--ink-2);
+}
+
+.tick {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font: 400 11px / 1 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    color: var(--ink-2);
+    white-space: nowrap;
+    will-change: transform;
+}
+
+.tick[hidden] {
+    display: none;
+}
+
+/* Keeps the record legible over the scene: the left column on wide
+   layouts, the bottom on phones, and a floor under the ruler. */
+.veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            90deg,
+            var(--bg) 0,
+            color-mix(in oklab, var(--bg) 88%, transparent)
+                calc(var(--margin) + 21rem),
+            color-mix(in oklab, var(--bg) 52%, transparent)
+                calc(var(--margin) + 28rem),
+            transparent calc(var(--margin) + 38rem)
+        ),
+        linear-gradient(
+            0deg,
+            color-mix(in oklab, var(--bg) 78%, transparent) 0,
+            transparent 10rem
+        );
+}
+
+.ruler {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--ruler-y);
+    height: 36px;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent var(--ruler-from),
+        #000 calc(var(--ruler-from) + 72px),
+        #000 calc(100% - 48px),
+        transparent
+    );
+    mask-image: linear-gradient(
+        90deg,
+        transparent var(--ruler-from),
+        #000 calc(var(--ruler-from) + 72px),
+        #000 calc(100% - 48px),
+        transparent
+    );
+}
+
+.track {
+    position: absolute;
+    left: 0;
+    top: 0;
+    overflow: visible;
+    will-change: transform;
+}
+
+.track text {
+    font: 400 11px var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    fill: var(--ink-3);
+}
+
+.base {
+    stroke: var(--rule-2);
+}
+
+.minor {
+    stroke: var(--rule-2);
+}
+
+.year {
+    stroke: var(--ink-3);
+}
+
+.span {
+    fill: var(--ink-3);
+    opacity: 0.7;
+}
+
+.spanOn {
+    fill: var(--ink-1);
+}
+
+.spanNow {
+    fill: var(--accent);
+}
+
+.spanPlan {
+    stroke: var(--ink-3);
+    stroke-dasharray: 3 4;
+}
+
+.now {
+    stroke: var(--accent);
+}
+
+/* The date on show: a caret over the ruler. */
+.playhead {
+    position: absolute;
+    left: 0;
+    top: -9px;
+    width: 0;
+    height: 22px;
+    border-left: var(--rule-hair) solid var(--ink-1);
+    will-change: transform;
+}
+
+.playhead::before {
+    content: "";
+    position: absolute;
+    left: -4.5px;
+    top: -1px;
+    border: 4px solid transparent;
+    border-top: 5px solid var(--ink-1);
+}
+
+@media (max-width: 959.98px) {
+    .veil {
+        background: linear-gradient(
+            0deg,
+            var(--bg) var(--veil-solid),
+            transparent var(--veil-clear)
+        );
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .photo {
+        transition: none;
+    }
+}

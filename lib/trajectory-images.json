@@ -1,0 +1,57 @@
+{
+    "earth": {
+        "src": "/images/trajectory/earth-v1.webp",
+        "width": 520,
+        "height": 520,
+        "body": {
+            "cx": 0.5,
+            "cy": 0.5,
+            "rx": 0.4903,
+            "ry": 0.4903
+        }
+    },
+    "mars": {
+        "src": "/images/trajectory/mars-v1.webp",
+        "width": 400,
+        "height": 400,
+        "body": {
+            "cx": 0.5,
+            "cy": 0.5,
+            "rx": 0.4899,
+            "ry": 0.4899
+        }
+    },
+    "jupiter": {
+        "src": "/images/trajectory/jupiter-v1.webp",
+        "width": 620,
+        "height": 588,
+        "body": {
+            "cx": 0.5,
+            "cy": 0.5003,
+            "rx": 0.49,
+            "ry": 0.4897
+        }
+    },
+    "saturn": {
+        "src": "/images/trajectory/saturn-v1.webp",
+        "width": 1000,
+        "height": 416,
+        "body": {
+            "cx": 0.5,
+            "cy": 0.5001,
+            "rx": 0.2206,
+            "ry": 0.4766
+        },
+        "rings": {
+            "cx": 0.5,
+            "cy": 0.5001,
+            "rx": 0.4902,
+            "ry": 0.3051
+        }
+    },
+    "backdrop": {
+        "src": "/images/trajectory/backdrop-v1.webp",
+        "width": 2000,
+        "height": 1158
+    }
+}
