@@ -15,7 +15,7 @@ export default defineType({
             title: "Title",
             type: "string",
             description:
-                "The route's heading on Contact and the home page, and its topic in the form. Leave blank to use the topic's name.",
+                "The route's heading on Contact, and its topic in the form. Leave blank to use the topic's name.",
             validation: (Rule) => Rule.max(60),
         }),
         defineField({

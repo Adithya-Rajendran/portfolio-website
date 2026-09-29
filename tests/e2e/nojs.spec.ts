@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { cvLink, pairName, primaryNavigation } from "@/lib/navigation";
+import { cvLink, primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 import { MISSING_PAGES, STATIC_PAGES, contentPages } from "./support/routes";
 
@@ -35,7 +35,7 @@ async function expectCompletePage(page: Page, path: string, status = 200) {
     if (await menu.isVisible()) await menu.click();
     for (const item of primaryNavigation) {
         await expect(
-            banner.getByRole("link", { name: pairName(item), exact: true }),
+            banner.getByRole("link", { name: item.plain, exact: true }),
         ).toBeVisible();
     }
     // Controls that need JavaScript are not shown: no dead buttons.

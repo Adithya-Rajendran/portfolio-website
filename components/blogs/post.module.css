@@ -1,6 +1,6 @@
 /*
- * A Flight Log entry (G1, the paper-grade post): one grid holding the crumb
- * row, the head and the text, with the "In this entry" rail beside them;
+ * An entry (G1, the paper-grade post): one grid holding the crumb row, the
+ * head and the text, with the contents rail beside them;
  * then the end matter and what comes after. The text itself is styled by
  * styles/prose.css. Ported from the mockup's writing.css "POST.HTML". No
  * ambient motion on a reading page.
@@ -64,28 +64,15 @@
     }
 }
 
-/* ---- Crumb row: § 01 · Flight Log / Blog / LOG nnn -------------------- */
-/* The row itself is the shared CrumbRow (.crumb-row in components.css).
-   On phones the meta line under the crumb already starts with LOG nnn:
-   the crumb keeps § 01 and the log's name. */
-@media (max-width: 37.49rem) {
-    .crumb :global(.crumb-row__item) {
-        display: none;
-    }
-}
+/* ---- Crumb row: Writing / LOG nnn ------------------------------------ */
+/* The row itself is the shared CrumbRow (.crumb-row in components.css). */
 
-/* ---- Head: LOG · date · read · Updated · tags → title → standfirst ---- */
+/* ---- Head: date · read · Updated · tags → title → standfirst ---------- */
 .meta {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: var(--s-2) var(--s-4);
-}
-.metaLog {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-label);
-    letter-spacing: var(--track-label);
-    white-space: nowrap;
 }
 .metaData {
     color: var(--ink-2);
@@ -111,58 +98,8 @@
     text-wrap: pretty;
 }
 
-/* ---- The record and the contents: the rail (≥ 960) or a box --------- */
-.railTitle {
-    margin-bottom: var(--s-4);
-    padding-top: 0.35rem;
-}
-.record {
-    display: grid;
-    margin: 0;
-    border-bottom: var(--rule-hair) solid var(--rule-1);
-}
-.record > div {
-    display: grid;
-    grid-template-columns: 5.25rem minmax(0, 1fr);
-    align-items: baseline;
-    gap: var(--s-3);
-    padding: 0.55rem 0;
-    border-top: var(--rule-hair) solid var(--rule-1);
-}
-.record dt {
-    color: var(--ink-3);
-    font: var(--label-2);
-    letter-spacing: var(--track-label-2);
-    text-transform: uppercase;
-}
-.record dd {
-    min-width: 0;
-    margin: 0;
-    color: var(--ink-1);
-    font: 400 var(--step--1) / 1.45 var(--font-display);
-}
-.record dd:global(.data),
-.record dd :global(.data) {
-    font-size: 0.8125rem;
-}
-.recordOf {
-    color: var(--ink-3);
-}
-.recordMissions {
-    display: grid;
-    gap: var(--s-1);
-}
-.recordMission {
-    text-decoration-color: var(--rule-2);
-}
-.recordMission:hover {
-    text-decoration-color: var(--accent);
-}
-.recordMission :global(.data) {
-    color: var(--ink-2);
-}
+/* ---- The contents: the rail (≥ 960) or a box ---------------------- */
 .contents {
-    margin-top: var(--s-7);
     font: 400 var(--step--1) / 1.4 var(--font-display);
 }
 .contentsTitle {
@@ -245,16 +182,8 @@
     border-color: var(--ink-1);
     background: var(--surface-1);
 }
-.boxCount {
-    margin-left: auto;
-    color: var(--ink-2);
-    font-size: 0.75rem;
-}
 .boxBody {
-    padding-top: var(--s-5);
-}
-.boxBody .contents {
-    margin-top: var(--s-6);
+    padding-top: var(--s-4);
 }
 
 /* ---- The text ------------------------------------------------------- */

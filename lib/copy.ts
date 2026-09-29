@@ -1,7 +1,10 @@
 /**
- * Interface microcopy: the documentation wit of the Flight Manual grafts
- * (G7) and the chrome's fixed labels. UI copy only: nothing here states a
- * fact about the owner, which always comes from the Sanity profile.
+ * Interface microcopy: the chrome's fixed labels, section names, button
+ * verbs and form mechanics. UI copy only: nothing here states a fact
+ * about the owner, which always comes from the Sanity profile. Every
+ * name a reader has to understand is plain (Projects, Writing,
+ * Experience, About, Contact); a section's themed name (`themed`) is only
+ * the small tag above its page's title.
  */
 
 export const chromeCopy = {
@@ -19,53 +22,47 @@ export const chromeCopy = {
     backToTop: "Back to top",
 } as const;
 
-/** The theme choices in the footer and the menu sheet, themed over plain. */
+/** The theme choices in the footer and the menu sheet: Void, Flight
+ *  Manual and the screen's own setting, by their plain names. */
 export const themeOptions = [
-    { value: "void", label: "Void", sub: "Dark" },
-    { value: "manual", label: "Manual", sub: "Light" },
-    { value: "auto", label: "Auto", sub: "System" },
+    { value: "void", label: "Dark" },
+    { value: "manual", label: "Light" },
+    { value: "auto", label: "System" },
 ] as const;
 
 /** Loss of Signal: the 404 (G7). */
 export const lossOfSignalCopy = {
-    tag: "LOS · 404",
-    themed: "Loss of Signal",
-    plain: "Page not found",
+    tag: "Loss of signal · 404",
+    title: "Page not found",
     lead: "The page you requested could not be found. It may have moved or no longer exists.",
     home: "Home",
     requested: "Requested",
-    returnThemed: "Directory",
-    returnPlain: "Site sections",
+    sections: "Site sections",
     report: "Found a broken link?",
     reportLink: "Let me know",
 } as const;
 
 /** The error page: the same instrument, a different fault. */
 export const errorCopy = {
-    tag: "ERR · 500",
-    themed: "Telemetry fault",
-    plain: "Page error",
+    tag: "Telemetry fault · 500",
+    title: "Page error",
     lead: "This page failed to load. Please try again.",
     retry: "Try again",
 } as const;
 
 /**
- * Comms (G4): the contact page, its routes and the form. UI copy only: the
- * page's introduction, each route's title and prompt, what the owner is
+ * Contact (themed Comms, G4): the contact page, its routes and the form.
+ * UI copy only: the page's introduction, each route's title and prompt, what the owner is
  * open to and the research invitation are the profile's (Site copy and
  * Status). A topic's `name` is the email subject's prefix and the route's
  * title when the profile gives none; its `cta` is the route's button.
  */
 export const contactCopy = {
-    num: "05",
     themed: "Comms",
     plain: "Contact",
-    routesThemed: "Routes",
-    routesPlain: "Topics",
-    messageThemed: "Uplink",
-    messagePlain: "Message",
-    elsewhereThemed: "Elsewhere",
-    elsewherePlain: "Profiles",
+    routes: "Topics",
+    message: "Message",
+    elsewhere: "Profiles",
     openTo: "Open to",
     include: "Include",
     links: {
@@ -118,51 +115,28 @@ export const contactCopy = {
 } as const;
 
 /**
- * The Flight Log (G8): the index, the archive and the tag pages. The intro
- * is the owner's own writing description from the profile; everything here
- * is UI copy.
+ * Writing (the Flight Log, G8): the index, the archive and the tag pages.
+ * The intro is the owner's own writing description from the profile;
+ * everything here is UI copy.
  */
 export const logCopy = {
-    num: "01",
     themed: "Flight Log",
-    plain: "Blog",
-    follow: "RSS & follow",
+    plain: "Writing",
+    rss: "RSS",
+    linkedIn: "Follow on LinkedIn",
     search: "Search entries",
-    indexThemed: "Index",
-    indexPlain: "All entries",
     tags: "Tags",
     all: "All",
-    /** Column heads of the log index. */
-    columns: {
-        entry: "Entry",
-        filed: "Filed",
-        title: "Title · standfirst",
-        read: "Read",
-    },
+    /** "5 min read", the words after the number for assistive tech. */
     read: (minutes: number) => `${minutes} min`,
     readSuffix: " read",
+    updated: "Updated",
     tagList: "Tags",
     empty: "No entries yet.",
-    chart: {
-        num: "Fig. 1",
-        /** "Entries by date, Mar 2026 to today". */
-        what: (from: string) => `Entries by date, ${from} to today`,
-        key: "Height = reading time",
-        now: "Now",
-    },
-    downlinkThemed: "Downlink",
-    downlinkPlain: "Follow",
-    feedLabel: "RSS feed",
-    feedNote: "Every new entry, in any feed reader.",
-    feedAction: "Open the feed",
-    linkedInLabel: "LinkedIn",
-    linkedInAction: "Follow on LinkedIn",
     archive: {
-        themed: "Archive",
-        plain: "All entries",
         title: "Archive",
-        intro: "Every Flight Log entry by year. Search titles, standfirsts and tags.",
-        searchLabel: "Search the Flight Log",
+        intro: "Every article by year. Search titles, standfirsts and tags.",
+        searchLabel: "Search the writing",
         searchPlaceholder: "A title, a word or a tag",
         /** "2 of 3 entries" while a search is on. */
         count: (shown: number, entries: string) =>
@@ -173,38 +147,23 @@ export const logCopy = {
         clear: "Clear search",
     },
     tag: {
-        themed: "Subsystem",
-        plain: "Tag",
-        /** "Entries tagged homelab." */
-        intro: (tag: string) => `Flight Log entries tagged ${tag}.`,
+        /** "Articles tagged homelab." */
+        intro: (tag: string) => `Articles tagged ${tag}.`,
     },
-    back: "Flight Log index",
+    back: "All writing",
 } as const;
 
 /**
- * A Flight Log entry (G1, the paper-grade post). UI copy only: the title,
+ * An entry (G1, the paper-grade post). UI copy only: the title,
  * standfirst, text, captions, notes and changelog are the owner's.
  */
 export const postCopy = {
-    num: "01",
     themed: "Flight Log",
-    plain: "Blog",
+    plain: "Writing",
     /** "7 min read". */
     read: (minutes: number) => `${minutes} min read`,
     updated: "Updated",
     tags: "Tags",
-    record: {
-        title: "In this entry",
-        entry: "Entry",
-        of: "of",
-        filed: "Filed",
-        length: "Length",
-        minutes: (minutes: number) => `${minutes} min`,
-        inside: "Inside",
-        mission: "Mission",
-        missions: "Missions",
-        revised: "Revised",
-    },
     contents: "Contents",
     /** The contents' landmark name (plan §4.5). */
     contentsLabel: "On this page",
@@ -239,32 +198,31 @@ export const postCopy = {
     linkCopied: "Link copied",
     allEntries: "All entries",
     after: "After this entry",
-    missionThemed: "Mission file",
-    missionPlain: (count: number) =>
+    projects: (count: number) =>
         count === 1 ? "Related project" : "Related projects",
-    pagerThemed: "Keep reading",
-    pagerPlain: "Previous and next",
+    pager: "Previous and next",
     previous: "Previous entry",
     next: "Next entry",
-    relatedThemed: "Same subsystem",
-    relatedPlain: "Related entries",
-    crewThemed: "Crew",
-    crewPlain: "Author",
+    related: "Related entries",
+    author: "Author",
     writtenBy: "Written by",
     rss: "RSS",
-    /** The print masthead: "Flight Log · LOG 003". */
-    printKicker: (designation: string) => `Flight Log · ${designation}`,
+    /** The print masthead: "Writing · LOG 003". */
+    printKicker: (designation?: string) =>
+        designation ? `Writing · ${designation}` : "Writing",
     printFiled: "Filed",
 } as const;
 
 /**
- * Trajectory · Experience / CV (G2, G3): /resume, its print and the
+ * Experience & CV (themed Trajectory; G2, G3): /resume, its print and the
  * orbit map. UI copy only: roles, dates and the summary are the owner's.
  */
 export const cvCopy = {
-    num: "03",
     themed: "Trajectory",
-    plain: "Experience / CV",
+    /** The page's name in titles and share cards. */
+    plain: "Experience & CV",
+    /** The h1, as the nav names it: the actions under it say CV. */
+    title: "Experience",
     /** The share card and metadata when the profile has no summary. */
     description: "Experience, education and skills.",
     viewLegend: "View",
@@ -281,24 +239,22 @@ export const cvCopy = {
     announceCopied: "Link to the CV copied.",
     openTo: "Open to",
     writeAboutRole: "Write about a role",
-    /** The sections, each a themed / plain pair; paper prints the plain
-     *  name. */
-    map: { themed: "Orbit map", plain: "Timeline" },
+    /** The sections' plain names, on screen and on paper. */
+    map: "Timeline",
     figure: "Fig. 1",
-    education: { themed: "Training", plain: "Education" },
-    experience: { themed: "Flight record", plain: "Experience" },
-    projects: { themed: "Missions", plain: "Projects" },
+    education: "Education",
+    experience: "Experience",
+    projects: "Projects",
     allProjects: "All projects",
     writing: {
-        themed: "Flight Log",
-        plain: "Writing",
-        plainWithTalks: "Writing & talks",
+        title: "Writing",
+        withTalks: "Writing & talks",
         talks: "Talks",
     },
-    flightLog: "Flight Log",
-    skills: { themed: "Capabilities", plain: "Skills" },
+    allWriting: "All writing",
+    skills: "Skills",
     skillsLabel: "Skills",
-    certifications: { themed: "Qualifications", plain: "Certifications" },
+    certifications: "Certifications",
     showOnMap: "Show on map",
     stack: "Stack",
     links: "Links",
@@ -311,59 +267,49 @@ export const cvCopy = {
 
 /**
  * Link rows to the site's other sections (lib/directory.ts): /portfolio's
- * Directory and the Crew File's Elsewhere. Each row is a themed / plain
- * pair and one line about where it leads.
+ * related pages and the About page's. Each row is the destination's plain
+ * name and one line about where it leads.
  */
 export const directoryCopy = {
     experience: {
-        themed: "Trajectory",
         plain: "Experience",
-        blurb: "Roles and education, on the orbit map and as a CV.",
+        blurb: "Roles and education, on a timeline and as a CV.",
     },
     skills: {
-        themed: "Trajectory",
         plain: "Skills",
         blurb: "Skills by area.",
     },
     certifications: {
-        themed: "Trajectory",
         plain: "Certifications",
         blurb: "Certifications and their status.",
     },
     missions: {
-        themed: "Missions",
         plain: "Projects",
         blurb: "Projects and case studies.",
     },
     writing: {
-        themed: "Flight Log",
-        plain: "Blog",
+        plain: "Writing",
         blurb: "Articles and technical notes.",
     },
     contact: {
-        themed: "Comms",
         plain: "Contact",
         blurb: "Send a message about a project or a role.",
     },
 } as const;
 
 /**
- * Missions · Projects (G5, G6): the /portfolio index and the mission files.
- * UI copy only: the page's introduction (`projectsIntro`), names, titles,
+ * Projects (themed Missions; G5, G6): the /portfolio index and the
+ * mission files. UI copy only: the page's introduction (`projectsIntro`), names, titles,
  * summaries, parameters, briefs, results and lessons are the owner's.
  */
 export const missionsCopy = {
-    num: "02",
     themed: "Missions",
     plain: "Projects",
     tallyLabel: "Projects by status",
     experience: "Experience & CV",
-    flagshipThemed: "Flagship",
-    flagshipPlain: "Featured project",
-    moreThemed: "Also flown",
-    morePlain: "More projects",
-    registerThemed: "Register",
-    registerPlain: "All projects",
+    flagship: "Featured project",
+    more: "More projects",
+    register: "All projects",
     /** The register's caption. */
     table: "Table 1",
     registerCaption: "Every project by code, status and dates.",
@@ -375,15 +321,13 @@ export const missionsCopy = {
         dates: "Dates",
         links: "Links",
     },
-    file: "File",
-    directoryThemed: "Directory",
-    directoryPlain: "Related pages",
-    openFile: "Open the mission file",
+    fileColumn: "File",
+    directory: "Related pages",
+    openFile: "View the project",
     readWriteUp: "Read the write-up",
     stack: "Stack",
-    /** The mission file. */
-    fileThemed: "Mission file",
-    filePlain: "Project",
+    /** The project file. */
+    file: "Project",
     originalEntry: (designation: string) => `Original entry · ${designation}`,
     parameters: "Parameters",
     record: {
@@ -395,37 +339,30 @@ export const missionsCopy = {
         stack: "Stack",
         revision: "Revision",
     },
-    calloutsThemed: "Callouts",
-    calloutsPlain: "Parts of the build",
-    briefThemed: "Brief",
-    briefPlain: "Problem, approach and outcome",
+    callouts: "Parts of the build",
+    briefTitle: "Problem, approach and outcome",
     brief: {
         problem: "Problem",
         approach: "Approach",
         outcome: "Outcome",
     },
-    writeUpThemed: "Write-up",
-    writeUpPlain: "Case study",
+    writeUp: "Case study",
     contents: "Contents",
     contentsLabel: "On this page",
-    resultsThemed: "Results",
-    resultsPlain: "Outcomes",
+    results: "Results",
     resultsCaption: (name: string) => `${name} results`,
     resultColumns: { metric: "Metric", value: "Value", note: "Note" },
-    debriefThemed: "Debrief",
-    debriefPlain: "Lessons and next steps",
+    debrief: "Lessons and next steps",
     lessons: "Lessons",
     nextSteps: "Next steps",
-    linksThemed: "Links",
-    linksPlain: "Code and references",
-    relatedThemed: "Flight Log",
-    relatedPlain: "Related entries",
+    links: "Code and references",
+    related: "Related writing",
     question: "Questions about this project?",
     getInTouch: "Get in touch",
-    pagerLabel: "More mission files",
-    previousFile: "Previous file",
-    nextFile: "Next file",
-    all: "All missions",
+    pagerLabel: "More projects",
+    previousFile: "Previous project",
+    nextFile: "Next project",
+    all: "All projects",
 } as const;
 
 /** The orbit map's labels, key and record panel (G2). */
@@ -453,63 +390,41 @@ export const orbitCopy = {
 } as const;
 
 /**
- * The home page (§ 00): the hero and its acts. UI copy only: the name,
- * the headline, the tagline, the roles, the questions, the missions and
- * the entries are the owner's.
+ * The home page: the hero and its sections. UI copy only: the name, the
+ * headline, what the owner is open to, the interests statement, the
+ * projects and the entries are the owner's.
  */
 export const homeCopy = {
-    /** The hero's quick links, CV first. */
+    /** The hero's quick links. */
     routesLabel: "Start here",
-    cv: "Experience & CV",
-    work: "Selected work",
-    blog: "Read the blog",
-    now: "Now",
+    projects: "Projects",
+    cv: "CV",
+    contact: "Contact",
     openTo: "Open to",
-    updated: "Updated",
-    nowAct: {
-        themed: "Now",
-        plain: "Current focus",
-        current: "Current",
-    },
-    missionsAct: {
-        themed: "Missions",
-        plain: "Projects",
-        title: "Selected work",
+    projectsAct: {
+        title: "Selected projects",
         all: "All projects",
+        /** The projects past the first three, as one line of links. */
+        also: "Also",
     },
-    logAct: {
-        themed: "Flight Log",
-        plain: "Blog",
+    writingAct: {
         title: "Latest writing",
-        all: "All entries",
-        rss: "RSS",
-        linkedIn: "Follow on LinkedIn",
+        all: "All writing",
     },
-    trajectoryAct: {
-        themed: "Trajectory",
-        plain: "Experience",
-        title: "Experience and education",
-        all: "Experience & CV",
-        resume: "Résumé (PDF)",
+    interestsAct: {
+        title: "Research interests",
+        now: "Current focus",
     },
-    crewAct: {
-        themed: "Crew File",
-        plain: "About",
-        title: "Background",
-        all: "About",
-    },
-    commsAct: {
-        themed: "Comms",
-        plain: "Contact",
+    contactAct: {
         title: "Let’s talk.",
-        all: "Contact",
-        profiles: "Profiles",
+        role: "Write about a role",
+        message: "Send a message",
     },
 } as const;
 
 /**
  * The Now list's groups, by `currentCuriosities[].kind` (lib/crew.ts
- * `nowGroups`): the home Now act and the Crew File.
+ * `nowGroups`): the About page's Current focus.
  */
 export const nowKinds = {
     question: "Open questions",
@@ -519,35 +434,29 @@ export const nowKinds = {
 } as const;
 
 /**
- * Crew File · About (/about, § 04): the page head, its sections and the
+ * About (/about; themed Crew File): the page head, its sections and the
  * close. UI copy only: the headline, the biography, the Now list, the
  * entries and the talks are the owner's.
  */
 export const aboutCopy = {
-    num: "04",
     themed: "Crew File",
     plain: "About",
     /** The metadata and share card when the profile has no headline. */
     description: "Background and interests.",
     experience: "Experience & CV",
-    bioThemed: "Biography",
-    bioPlain: "Background",
-    nowThemed: "Now",
-    nowPlain: "Current focus",
+    bio: "Background",
+    now: "Current focus",
     updated: "Updated",
-    writingThemed: "Flight Log",
-    writingPlain: "Writing",
-    writingAndTalksPlain: "Writing & talks",
-    talksThemed: "Talks",
-    talksPlain: "Talks and papers",
-    allEntries: "All entries",
-    elsewhereThemed: "Elsewhere",
-    elsewherePlain: "Related pages",
+    writing: "Writing",
+    writingAndTalks: "Writing & talks",
+    talks: "Talks and papers",
+    allEntries: "All writing",
+    elsewhere: "Related pages",
     ask: "Interested in working together?",
     getInTouch: "Get in touch",
 } as const;
 
-/** The crew record (G6): the home Crew act and /about. */
+/** The crew record (G6): /about. */
 export const crewCopy = {
     recordLabel: "Profile record",
     name: "Name",

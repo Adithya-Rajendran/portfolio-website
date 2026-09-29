@@ -4,11 +4,10 @@ import {
     entriesTagged,
     entryCount,
     logEntries,
-    monthLabel,
+    offersFilters,
     type LogSource,
 } from "@/lib/log-index";
 import { groupPostsByYear } from "@/lib/tags";
-import { transmissions } from "@/lib/transmissions";
 
 /** The owner's three published posts, as the list query returns them. */
 const POSTS: LogSource[] = [
@@ -76,6 +75,45 @@ describe("logEntries", () => {
     });
 });
 
+describe("revisions", () => {
+    it("carries a revision only when the owner set one after filing", () => {
+        const [revised, same, none, earlier] = logEntries([
+            { ...POSTS[0], revisedAt: "2026-07-02T10:00:00Z" },
+            { ...POSTS[1], revisedAt: "2026-03-26" },
+            POSTS[2],
+            {
+                ...POSTS[2],
+                _id: "early",
+                slug: "early",
+                publishedAt: "2026-03-01",
+                revisedAt: "2026-02-01",
+            },
+        ]);
+        expect(revised.revisedAt).toBe("2026-07-02");
+        expect(same.revisedAt).toBeNull();
+        expect(none.revisedAt).toBeNull();
+        expect(earlier.revisedAt).toBeNull();
+    });
+});
+
+describe("offersFilters", () => {
+    it("offers the tag filters once a tag gathers two entries", () => {
+        expect(
+            offersFilters([
+                { tag: "homelab", count: 1 },
+                { tag: "linux", count: 1 },
+            ]),
+        ).toBe(false);
+        expect(
+            offersFilters([
+                { tag: "kubernetes", count: 2 },
+                { tag: "linux", count: 1 },
+            ]),
+        ).toBe(true);
+        expect(offersFilters([])).toBe(false);
+    });
+});
+
 describe("the year groups", () => {
     it("groups entries by the year they were filed, newest year first", () => {
         const entries = logEntries([
@@ -104,109 +142,9 @@ describe("the year groups", () => {
 });
 
 describe("labels", () => {
-    it("prints months and counts", () => {
-        expect(monthLabel("2026-03-06")).toBe("Mar 2026");
-        expect(monthLabel("")).toBe("");
+    it("prints counts", () => {
         expect(entryCount(1)).toBe("1 entry");
         expect(entryCount(3)).toBe("3 entries");
-    });
-});
-
-describe("transmissions", () => {
-    const chart = transmissions(logEntries(POSTS), "2026-09-28")!;
-
-    it("runs from the first month to a few days past today", () => {
-        expect(chart.from).toBe("Mar 2026");
-        expect(chart.ticks[0]).toMatchObject({
-            x: 0,
-            label: "Mar 2026",
-            year: true,
-        });
-        expect(chart.ticks.map((tick) => tick.label)).toEqual([
-            "Mar 2026",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-        ]);
-        expect(chart.ticks.filter((tick) => tick.minor)).toHaveLength(3);
-        // 211 of 215 days: the mockup's 98.14 %.
-        expect(chart.now).toBe(98.14);
-        expect(chart.entries).toBe(3);
-        expect(chart.words).toBe(2863);
-    });
-
-    it("places each entry by date, tallest for the longest read", () => {
-        expect(
-            chart.marks.map(({ number, x, h, latest }) => ({
-                number,
-                x,
-                h,
-                latest,
-            })),
-        ).toEqual([
-            { number: "003", x: 13.49, h: 1, latest: true },
-            { number: "002", x: 11.63, h: 0.56, latest: false },
-            { number: "001", x: 2.33, h: 0.34, latest: false },
-        ]);
-    });
-
-    it("sets a label to the left when the next entry is close", () => {
-        expect(chart.marks.map((mark) => mark.labelLeft)).toEqual([
-            false,
-            true,
-            false,
-        ]);
-    });
-
-    it("opens a tip to the left right of the middle", () => {
-        expect(chart.marks.map((mark) => mark.tipLeft)).toEqual([
-            false,
-            false,
-            false,
-        ]);
-        const late = transmissions(
-            logEntries([{ ...POSTS[0], publishedAt: "2026-08-30" }, POSTS[2]]),
-            "2026-09-28",
-        )!;
-        expect(late.marks.map((mark) => mark.tipLeft)).toEqual([true, false]);
-    });
-
-    it("draws full-height marks when every read is as long", () => {
-        const even = transmissions(
-            logEntries(POSTS.map((post) => ({ ...post, wordCount: 100 }))),
-            "2026-09-28",
-        )!;
-        expect(even.marks.map((mark) => mark.h)).toEqual([1, 1, 1]);
-    });
-
-    it("ticks only years over a long span", () => {
-        const long = transmissions(
-            logEntries([{ ...POSTS[2], publishedAt: "2023-11-02" }, POSTS[0]]),
-            "2026-09-28",
-        )!;
-        expect(long.ticks.map((tick) => tick.label)).toEqual([
-            "Nov 2023",
-            "Jan 2024",
-            "Jan 2025",
-            "Jan 2026",
-        ]);
-        expect(long.ticks.every((tick) => tick.year && !tick.minor)).toBe(true);
-    });
-
-    it("keeps an entry filed after the cached today on the axis", () => {
-        const ahead = transmissions(logEntries(POSTS), "2026-03-29")!;
-        expect(Math.max(...ahead.marks.map((mark) => mark.x))).toBeLessThan(
-            100,
-        );
-        expect(ahead.now).toBeLessThan(ahead.marks[0].x);
-    });
-
-    it("is empty without a dated entry", () => {
-        expect(transmissions([], "2026-09-28")).toBeNull();
-        expect(transmissions(logEntries(POSTS), "today")).toBeNull();
     });
 });
 

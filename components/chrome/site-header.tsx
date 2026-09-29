@@ -11,9 +11,9 @@ import { cvLink, sheetLinks } from "@/lib/navigation";
 const PANEL_ID = "site-nav";
 
 /**
- * The header, a Server Component: brand and patch, the five nav pairs, the
- * CV link (at every width) and the theme switch (from 960px) are in the
- * static HTML. Below 960px the nav is a popover sheet that opens without
+ * The header, a Server Component: brand and patch, the five sections by
+ * their plain names, the CV link (at every width) and the theme switch
+ * (from 960px) are in the static HTML. Below 960px the nav is a popover sheet that opens without
  * JavaScript, with the PDF, the feed and the three-way theme choice;
  * where the Popover API is missing, a fallback Menu link jumps to the
  * footer's nav. Only the current-section mark needs the pathname

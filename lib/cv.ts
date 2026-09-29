@@ -14,7 +14,7 @@ import type {
 /**
  * The Trajectory CV (G2, G3) as display-ready rows: the profile's timeline,
  * projects, talks and credentials with their dates already worded. Pure,
- * so /resume, its print and (from PR 13) the home Trajectory act agree.
+ * so /resume, its print and About agree.
  * Dates follow the site's rules: a year-only date prints the year alone,
  * an unknown start is omitted with its "– present", and nothing is
  * estimated in words.

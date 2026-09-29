@@ -64,31 +64,6 @@
         letter-spacing: 0;
     }
 
-    /* Themed + plain name pair. Assistive tech hears "Flight Log, Blog". */
-    .pair {
-        display: inline-flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        column-gap: 0.6em;
-        row-gap: 0.1em;
-    }
-    .pair__themed {
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
-        letter-spacing: var(--track-label);
-        text-transform: uppercase;
-        color: var(--ink-1);
-    }
-    .pair__plain {
-        font: 400 var(--step--1) / 1.3 var(--font-display);
-        color: var(--ink-2);
-        letter-spacing: 0.01em;
-    }
-    .pair__plain::before {
-        content: "/" / "";
-        margin-right: 0.6em;
-        color: var(--ink-3);
-    }
-
     /* ===== Icons, ornaments, the patch (inline sprite) ================= */
     .df-sprite {
         position: absolute;
@@ -252,29 +227,15 @@
     }
     .nav__link {
         position: relative;
-        display: grid;
-        grid-template-columns: auto;
-        grid-template-rows: auto auto;
-        align-items: baseline;
+        display: inline-flex;
+        align-items: center;
         min-height: 44px;
-        align-content: center;
         padding-block: var(--s-1);
         color: var(--ink-1);
-        text-decoration: none;
-    }
-    .nav__themed {
-        grid-row: 1;
-        grid-column: 1;
         font: 500 0.75rem / 1.2 var(--font-display);
         letter-spacing: 0.16em;
         text-transform: uppercase;
-        white-space: nowrap;
-    }
-    .nav__plain {
-        grid-row: 2;
-        grid-column: 1;
-        font: 400 0.8125rem / 1.3 var(--font-display);
-        color: var(--ink-2);
+        text-decoration: none;
         white-space: nowrap;
     }
     .nav__link::after {
@@ -291,9 +252,6 @@
     }
     .nav__link:hover::after {
         transform: scaleX(0.35);
-    }
-    .nav__link:hover .nav__plain {
-        color: var(--ink-1);
     }
     .nav__link[aria-current]::after {
         transform: scaleX(1);
@@ -476,14 +434,10 @@
             border-bottom: var(--rule-hair) solid var(--rule-1);
         }
         .nav__link {
+            display: flex;
             padding-block: var(--s-4);
             min-height: 64px;
-        }
-        .nav__themed {
             font-size: 1rem;
-        }
-        .nav__plain {
-            font-size: 0.9375rem;
         }
         .nav__link::after {
             bottom: -1px;
@@ -758,8 +712,10 @@
     }
 
     /* ===== Section head and page head (site.css 4.6, 4.27) ============= */
-    /* <div class="section-tag"> ornament · number · h2 or pair · meta </div>:
-       the number and meta stay out of the heading's name. */
+    /* <div class="section-tag"> ornament · h2 or tag · meta </div>: the
+       meta stays out of the heading's name. The row's own face is the
+       tier-1 label (a page head's themed tag, the crumb); a section's
+       plain name is a real heading in Jost. */
     .section-tag {
         display: flex;
         flex-wrap: wrap;
@@ -778,20 +734,14 @@
         min-width: var(--s-6);
         background: var(--rule-1);
     }
-    .section-tag__num {
-        color: var(--ink-3);
-        font-family: var(--font-mono);
-        font-size: 0.8125rem;
-        letter-spacing: 0.04em;
-    }
     .section-tag__h {
         display: inline-flex;
         min-width: 0;
         margin: 0;
-        color: inherit;
-        font: inherit;
-        letter-spacing: inherit;
-        text-transform: inherit;
+        color: var(--ink-1);
+        font: 400 var(--step-1) / 1.25 var(--font-display);
+        letter-spacing: -0.003em;
+        text-transform: none;
     }
     .section-tag__meta {
         order: 3;
@@ -813,35 +763,21 @@
             white-space: normal;
         }
     }
-    /* A section mark set in the serif, so it reads as § and not a letter.
-       Roman, not italic like the mockup's: the chrome sets no italic, so
-       Newsreader's italic file loads only on pages whose text uses it. */
-    .sect {
-        margin-right: 0.18em;
-        color: var(--ink-3);
-        font-family: var(--font-long);
-        font-size: 1.15em;
-        letter-spacing: 0;
-    }
 
-    /* One page head per page: tag row, the themed h1 with its plain name,
-       then a serif intro. */
+    /* One page head per page: the tag row with the section's small themed
+       tag, the plain h1, then a serif intro. */
     .page-head {
         position: relative;
         padding-top: clamp(2.5rem, 1rem + 4vw, 4.5rem);
         padding-bottom: var(--space-block);
     }
+    .page-head__tag {
+        color: var(--ink-2);
+    }
     .page-head__title {
         margin-top: var(--s-4);
         font: 300 var(--step-6) / 0.98 var(--font-display);
         letter-spacing: -0.02em;
-    }
-    .page-head__plain {
-        display: block;
-        margin-top: var(--s-3);
-        color: var(--ink-2);
-        font: 400 var(--step-1) / 1.3 var(--font-display);
-        letter-spacing: 0;
     }
     .page-head__intro {
         max-width: 52ch;
@@ -956,10 +892,13 @@
         display: inline-flex;
         align-items: center;
         min-height: 36px;
+        color: var(--ink-1);
+        font: 500 0.75rem / 1.2 var(--font-display);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
         text-decoration: none;
     }
-    .site-footer__nav a:hover .pair__themed,
-    .site-footer__nav a[aria-current] .pair__themed {
+    .site-footer__nav a:hover {
         color: var(--accent-text);
     }
     .site-footer__links a {
@@ -1564,36 +1503,6 @@
             background: none;
         }
     }
-    /* Side by side (the home Trajectory act): the rows become columns
-       under one hairline, two from 600px and four from 960px, the mono
-       column over the title. */
-    .cv-list--grid {
-        max-width: none;
-        border-bottom: 0;
-    }
-    @media (min-width: 37.5rem) {
-        .cv-list--grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            column-gap: var(--gutter);
-        }
-        .cv-list--grid > .cv-item {
-            grid-template-columns: minmax(0, 1fr);
-            align-content: start;
-            padding: var(--s-4) var(--s-3) var(--s-5) 0;
-        }
-        .cv-list--grid .cv-item__aside {
-            flex-direction: row;
-            flex-wrap: wrap;
-            align-items: baseline;
-            padding-top: 0;
-        }
-    }
-    @media (min-width: 60rem) {
-        .cv-list--grid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-    }
     .cv-list--grid .cv-item__title {
         font: 400 var(--step-1) / 1.25 var(--font-display);
     }
@@ -1820,9 +1729,13 @@
 
     /* ===== Crumb row (contract §1; components/ui/crumb-row.tsx) ======== */
     .crumb-row__home {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        color: var(--ink-1);
         text-decoration: none;
     }
-    .crumb-row__home:hover .pair__themed {
+    .crumb-row__home:hover {
         text-decoration: underline;
         text-decoration-color: var(--accent);
         text-underline-offset: 0.3em;

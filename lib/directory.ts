@@ -5,10 +5,10 @@ import { getProfileLinks } from "@/lib/profile-content";
 import type { ProfileData } from "@/lib/sanity-client";
 
 /**
- * Link rows to the site's other sections (`RouteList`): /portfolio's
- * Directory and the Crew File's Elsewhere. Pure: a row whose destination
- * has nothing to show is left out, and the rows are numbered as they
- * appear.
+ * Link rows to the site's other sections (`RouteList`): the related pages
+ * on /portfolio and /about. Pure: a row whose destination has nothing to
+ * show is left out. Each row is its destination's plain name and one
+ * line about it; the rows carry no numbers.
  */
 
 export type DirectoryRow =
@@ -46,8 +46,6 @@ export interface DirectoryItem {
     key: DirectoryRow;
     id?: string;
     href: string;
-    num: string;
-    themed: string;
     plain: string;
     blurb: string;
 }
@@ -92,13 +90,12 @@ export function directoryRows(
 ): DirectoryItem[] {
     return rows
         .filter((row) => hasContent(row, content))
-        .map((row, index) => ({
+        .map((row) => ({
             key: row,
             ...(anchors && PORTFOLIO_ANCHORS[row]
                 ? { id: PORTFOLIO_ANCHORS[row] }
                 : {}),
             href: HREFS[row],
-            num: String(index + 1).padStart(2, "0"),
             ...copy[row],
         }));
 }
@@ -114,8 +111,8 @@ export interface ProfileRow {
 }
 
 /**
- * The owner's profiles as plain link rows: the home Comms act and
- * /contact's Elsewhere. Web addresses only.
+ * The owner's profiles as plain link rows: /contact's Profiles. Web
+ * addresses only.
  */
 export function profileRows(profile: ProfileData | null): ProfileRow[] {
     return getProfileLinks(profile)

@@ -1,8 +1,10 @@
 /**
  * The site's navigation, the one source for the header, the menu sheet,
  * the footer, the 404's link rows and (from PR 16) the console's page
- * list. Themed names are labels only: URLs keep their plain words (plan
- * §2.1). Keep this module free of imports.
+ * list. Every section is named by its plain label (Projects, Writing,
+ * Experience, About, Contact); its themed name is a secondary tag on its
+ * own page. URLs keep their words (plan §2.1). Keep this module free of
+ * imports.
  */
 
 /** Canonical public routes shared by navigation and content. */
@@ -21,73 +23,67 @@ export const siteRoutes = {
 
 export interface NavItem {
     /** Stable id, also the section a page belongs to. */
-    id: "log" | "missions" | "trajectory" | "crew" | "comms";
-    /** The site as one numbered document: § 01 … § 05 (page heads and the
-     *  404's link rows; the header nav carries no numbers). */
-    num: string;
+    id: "missions" | "log" | "trajectory" | "crew" | "comms";
     href: string;
     /** The path whose pages are this section (aria-current). */
     section: string;
-    themed: string;
+    /** The label a reader sees and hears, everywhere the section is named
+     *  (the header, the menu sheet, the footer, page titles). */
     plain: string;
+    /** The section's themed name: only a small secondary tag, above its
+     *  page's title and on its share card (contract §6). */
+    themed: string;
     /** One line for the 404's link rows. */
     blurb: string;
 }
 
-/** The five themed + plain pairs, in site order. */
+/** The five sections, in site order: the work first. */
 export const primaryNavigation: readonly NavItem[] = [
     {
-        id: "log",
-        num: "01",
-        href: siteRoutes.blog,
-        section: "/blog",
-        themed: "Flight Log",
-        plain: "Blog",
-        blurb: "Articles and technical notes.",
-    },
-    {
         id: "missions",
-        num: "02",
         href: siteRoutes.portfolio,
         section: "/portfolio",
-        themed: "Missions",
         plain: "Projects",
+        themed: "Missions",
         blurb: "Projects and case studies.",
     },
     {
+        id: "log",
+        href: siteRoutes.blog,
+        section: "/blog",
+        plain: "Writing",
+        themed: "Flight Log",
+        blurb: "Articles and technical notes.",
+    },
+    {
         id: "trajectory",
-        num: "03",
         href: siteRoutes.resume,
         section: "/resume",
-        themed: "Trajectory",
         plain: "Experience",
+        themed: "Trajectory",
         blurb: "Experience, education and CV.",
     },
     {
         id: "crew",
-        num: "04",
         href: siteRoutes.about,
         section: "/about",
-        themed: "Crew File",
         plain: "About",
+        themed: "Crew File",
         blurb: "Background and interests.",
     },
     {
         id: "comms",
-        num: "05",
         href: siteRoutes.contact,
         section: "/contact",
-        themed: "Comms",
         plain: "Contact",
+        themed: "Comms",
         blurb: "Send a message.",
     },
 ];
 
 /** The home page as a link row (the 404). */
 export const homeRoute = {
-    num: "00",
     href: siteRoutes.home,
-    themed: "Launch",
     plain: "Home",
     blurb: "Overview and latest work.",
 } as const;
@@ -114,11 +110,6 @@ export const footerLinks = [
  */
 export function contactHref(topic?: string): string {
     return topic ? `${siteRoutes.contact}#${topic}` : siteRoutes.contact;
-}
-
-/** The accessible name of a pair: "Flight Log, Blog". */
-export function pairName(item: { themed: string; plain: string }): string {
-    return `${item.themed}, ${item.plain}`;
 }
 
 /**

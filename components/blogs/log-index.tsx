@@ -1,46 +1,55 @@
 import LogRow from "@/components/blogs/log-row";
-import { logCopy as copy } from "@/lib/copy";
 import type { LogEntry } from "@/lib/log-index";
 import { groupPostsByYear } from "@/lib/tags";
 import styles from "./log-index.module.css";
 
 /**
- * The scannable Flight Log index (G8): a column head and one row per entry
- * on shared tracks, grouped by year, newest first. The year heads the
- * Entry column of its group, so a group costs no extra row on a wide
- * screen. The column names are drawn for sighted readers only; each row
- * carries its own values. Directive-free: the archive's client search
- * renders it too.
+ * The scannable writing index (G8): one row per entry on shared tracks,
+ * newest first, grouped by year under the year's heading. `grouped={false}`
+ * lists the entries without year heads (the home page's latest three,
+ * whose dates carry their year). Directive-free: the archive's client
+ * search renders it too.
  *
- * `level` is the year's heading level; entry titles sit one below it.
+ * `level` is the year's heading level; entry titles sit one below it
+ * (and at `level` when the list is not grouped).
  */
 export default function LogIndex({
     entries,
     level = 3,
+    grouped = true,
     matchTag,
     className,
 }: {
     entries: readonly LogEntry[];
     level?: 2 | 3;
+    grouped?: boolean;
     matchTag?: string;
     className?: string;
 }) {
     const Year = level === 2 ? "h2" : "h3";
     const titleAs = level === 2 ? "h3" : "h4";
+    const classes = className ? `${styles.index} ${className}` : styles.index;
+    if (!grouped) {
+        return (
+            <div className={classes}>
+                <ol className={styles.list} role="list">
+                    {entries.map((entry) => (
+                        <LogRow
+                            key={entry.slug}
+                            entry={entry}
+                            titleAs={level === 2 ? "h2" : "h3"}
+                            matchTag={matchTag}
+                        />
+                    ))}
+                </ol>
+            </div>
+        );
+    }
     return (
-        <div
-            className={
-                className ? `${styles.index} ${className}` : styles.index
-            }
-        >
+        <div className={classes}>
             {groupPostsByYear([...entries]).map((group) => (
                 <div className={styles.group} key={group.year}>
-                    <div className={styles.head}>
-                        <Year className={styles.year}>{group.year}</Year>
-                        <span aria-hidden="true">{copy.columns.filed}</span>
-                        <span aria-hidden="true">{copy.columns.title}</span>
-                        <span aria-hidden="true">{copy.columns.read}</span>
-                    </div>
+                    <Year className={styles.year}>{group.year}</Year>
                     <ol className={styles.list} role="list">
                         {group.posts.map((entry) => (
                             <LogRow

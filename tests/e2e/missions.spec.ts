@@ -44,7 +44,7 @@ test("/portfolio still answers every old fragment", async ({ page }) => {
     await page.goto("/portfolio#projects");
     await expect(main(page).locator("#projects")).toBeInViewport();
     await expect(
-        main(page).getByRole("heading", { name: new RegExp(copy.morePlain) }),
+        main(page).getByRole("heading", { name: copy.more, exact: true }),
     ).toBeInViewport();
 
     await page.goto("/portfolio#skills");
@@ -106,9 +106,7 @@ test("Read the write-up lands on the write-up", async ({ page }) => {
     await main(page).getByRole("link", { name: copy.readWriteUp }).click();
     await expect(page).toHaveURL(/#write-up$/);
     await expect(
-        main(page).getByRole("heading", {
-            name: new RegExp(copy.writeUpThemed),
-        }),
+        main(page).getByRole("heading", { name: copy.writeUp, exact: true }),
     ).toBeInViewport();
 });
 
@@ -123,27 +121,29 @@ test("the pages show no email address or phone number", async ({ page }) => {
 const FIXTURE_ONLY =
     "Only the fixture missions are known to fill or skip each module.";
 
+/** The mission file's modules, by their sections' ids. */
+const MODULES = [
+    "callouts",
+    "brief",
+    "write-up",
+    "results",
+    "debrief",
+    "links",
+    "related",
+];
+
 test.describe("on the fixture build", () => {
     test("a filled mission shows every module, its callouts linked", async ({
         page,
     }, testInfo) => {
         test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
         await page.goto("/portfolio/fixture-flagship-mission");
-        for (const themed of [
-            copy.calloutsThemed,
-            copy.briefThemed,
-            copy.writeUpThemed,
-            copy.resultsThemed,
-            copy.debriefThemed,
-            copy.linksThemed,
-            copy.relatedPlain,
-        ]) {
+        for (const id of MODULES) {
             await expect(
-                main(page).getByRole("heading", {
-                    level: 2,
-                    name: new RegExp(themed),
-                }),
-                themed,
+                main(page)
+                    .getByRole("region")
+                    .and(main(page).locator(`#${id}`)),
+                id,
             ).toHaveCount(1);
         }
         await expect(
@@ -169,21 +169,8 @@ test.describe("on the fixture build", () => {
     }, testInfo) => {
         test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
         await page.goto("/portfolio/fixture-planned-mission");
-        for (const themed of [
-            copy.calloutsThemed,
-            copy.briefThemed,
-            copy.resultsThemed,
-            copy.debriefThemed,
-            copy.linksThemed,
-            copy.relatedPlain,
-        ]) {
-            await expect(
-                main(page).getByRole("heading", {
-                    level: 2,
-                    name: new RegExp(themed),
-                }),
-                themed,
-            ).toHaveCount(0);
+        for (const id of MODULES.filter((module) => module !== "write-up")) {
+            await expect(main(page).locator(`#${id}`), id).toHaveCount(0);
         }
         await expect(
             main(page)

@@ -1,17 +1,18 @@
 import Link from "next/link";
 import CrumbRow from "@/components/ui/crumb-row";
-import { Rev } from "@/components/ui/marks";
+import { Updated } from "@/components/ui/marks";
 import { postCopy as copy } from "@/lib/copy";
 import { formatEntryDate } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import styles from "./post.module.css";
 
 /**
- * The top of an entry (G1): the crumb row (§ 01 · Flight Log / Blog / LOG
- * nnn, as a mission file's), then LOG nnn · date · read time · Updated ·
- * tags, the title and the standfirst. Kept short, so the first paragraph
- * reaches the first screen. Ported from the mockup's post.html
- * (`.post-crumbrow`, `.post-head`).
+ * The top of an entry (G1): the crumb row (Writing / LOG nnn: the section
+ * and the entry's one quiet identifier, as a project file's), then date ·
+ * read time · Updated (only after a revision) · tags, the title and the
+ * standfirst. Kept short, so the first paragraph reaches the first
+ * screen. Ported from the mockup's post.html (`.post-crumbrow`,
+ * `.post-head`).
  */
 export function PostCrumb({
     designation,
@@ -26,9 +27,7 @@ export function PostCrumb({
                 className ? `${styles.crumb} ${className}` : styles.crumb
             }
             ornament="wave"
-            num={copy.num}
-            themed={copy.themed}
-            plain={copy.plain}
+            label={copy.plain}
             href={siteRoutes.blog}
             code={designation}
         />
@@ -38,7 +37,6 @@ export function PostCrumb({
 export function PostHead({
     title,
     description,
-    designation,
     publishedAt,
     revisedAt,
     readMinutes,
@@ -47,7 +45,6 @@ export function PostHead({
 }: {
     title: string;
     description?: string | null;
-    designation?: string;
     publishedAt?: string | null;
     revisedAt?: string | null;
     readMinutes: number | null;
@@ -58,9 +55,6 @@ export function PostHead({
     return (
         <header className={className}>
             <div className={styles.meta}>
-                {designation ? (
-                    <span className={styles.metaLog}>{designation}</span>
-                ) : null}
                 {filed ? (
                     <time className={styles.metaData} dateTime={filed}>
                         {formatEntryDate(filed)}
@@ -72,7 +66,12 @@ export function PostHead({
                     </span>
                 ) : null}
                 {revisedAt ? (
-                    <Rev date={revisedAt.slice(0, 10)} label={copy.updated} />
+                    <span className={styles.metaData}>
+                        <Updated
+                            date={revisedAt.slice(0, 10)}
+                            label={copy.updated}
+                        />
+                    </span>
                 ) : null}
                 {tags.length > 0 ? (
                     <ul

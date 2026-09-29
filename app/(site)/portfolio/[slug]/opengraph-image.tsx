@@ -5,7 +5,7 @@ import { toMission } from "@/lib/missions";
 import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
 import { getProjectBySlug } from "@/lib/sanity-client";
 
-export const alt = `${copy.fileThemed} — ${siteConfig.author}`;
+export const alt = `${copy.file} — ${siteConfig.author}`;
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
@@ -26,10 +26,8 @@ export default async function Image({
     const mission = project ? toMission(project, siteConfig.url) : null;
     return new ImageResponse(
         <OgCard
-            num={copy.num}
-            themed={copy.themed}
-            plain={copy.plain}
-            title={mission?.name ?? copy.themed}
+            tag={copy.themed}
+            title={mission?.name ?? copy.plain}
             upper={Boolean(mission)}
             subtitle={mission?.title}
             footerLeft={

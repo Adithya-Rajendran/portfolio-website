@@ -33,7 +33,7 @@ test("paper leaves off the map, the chrome and the controls", async ({
     await page.emulateMedia({ media: "print" });
     const main = page.getByRole("main");
     await expect(
-        main.getByRole("heading", { name: cvCopy.map.themed }),
+        main.getByRole("heading", { name: cvCopy.map, exact: true }),
     ).toBeHidden();
     await expect(page.getByRole("banner")).toBeHidden();
     await expect(page.getByRole("contentinfo")).toBeHidden();
@@ -43,7 +43,7 @@ test("paper leaves off the map, the chrome and the controls", async ({
         await expect(main.getByText(cvCopy.sheet(sheet, 2))).toBeVisible();
     }
     await expect(
-        main.getByRole("heading", { name: cvCopy.experience.plain }),
+        main.getByRole("heading", { name: cvCopy.experience, exact: true }),
     ).toBeVisible();
     const html = await page.content();
     expect(html).not.toMatch(/mailto:|tel:/i);

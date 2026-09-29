@@ -5,11 +5,11 @@ import { contentPages, isPostPage } from "./support/routes";
 import { THEMES, storeTheme } from "./support/theme";
 
 /**
- * A Flight Log entry (G1, plan §6.2 PR 10): the first paragraph reaches the
- * first screen, the text keeps a 60–75 character measure, code comments stay
- * readable, the "In this entry" record counts what the text holds, listings
- * copy, footnotes sit in the margin and in the notes, the phone's record box
- * works, and in-page links land in the visible entry after a client-side
+ * An entry (G1, plan §6.2 PR 10): the first paragraph reaches the first
+ * screen, the text keeps a 60–75 character measure, code comments stay
+ * readable, the rail lists the sections and repeats no record, listings
+ * copy, footnotes sit in the margin and in the notes, the phone's contents
+ * box works, and in-page links land in the visible entry after a client-side
  * navigation (Cache Components keeps the previous entry mounted, hidden).
  * The fixture-only tests read the fixture posts in lib/fixtures.ts.
  */
@@ -182,7 +182,7 @@ test("code comments are at least 4.5:1 on their listing in both themes", async (
     expect(checked, "comments found").toBeGreaterThan(0);
 });
 
-test("“In this entry” counts what the text holds", async ({
+test("the rail lists the sections and repeats no record", async ({
     page,
     request,
 }, testInfo) => {
@@ -190,27 +190,15 @@ test("“In this entry” counts what the text holds", async ({
     for (const path of await postPaths(request, testInfo)) {
         await page.goto(path);
         const text = body(page);
-        const counts = {
-            section: await text.locator(":scope > h2").count(),
-            subsection: await text.locator(":scope > :is(h3, h4)").count(),
-            plate: await text.locator(".plate.photo--real").count(),
-            figure: await text.locator(".plate.photo--drawing").count(),
-            listing: await text.locator(".listing").count(),
-            note: await text.locator("sup.fnref").count(),
-        };
         const rail = page.getByRole("navigation", {
             name: postCopy.contentsLabel,
         });
-        const record = page.locator('[data-page="post"] dl').first();
-        const inside = await record
-            .locator("div", { hasText: postCopy.record.inside })
-            .locator("dd")
-            .allTextContents();
-        const expected = Object.entries(counts)
-            .filter(([, count]) => count > 0)
-            .map(([noun, count]) => `${count} ${noun}${count === 1 ? "" : "s"}`)
-            .join(" · ");
-        expect(inside.join(""), path).toBe(expected);
+        // The date and read time are the head's alone: no record box, no
+        // word count.
+        await expect(page.getByText("In this entry")).toHaveCount(0);
+        await expect(
+            page.getByRole("main").getByText(/\b[\d,]+ words\b/),
+        ).toHaveCount(0);
         // The contents list every section (the top heading level), in
         // order; there are none without a heading.
         let headings: string[] = [];
@@ -276,7 +264,7 @@ test("a listing is numbered, named and copies its code", async ({
     expect(copied.replace(/\s+$/, "")).toBe(shown);
 });
 
-test("on a phone an entry's LOG number is printed once above its title", async ({
+test("an entry's LOG number is printed once above its title, in the crumb", async ({
     page,
     request,
 }, testInfo) => {
@@ -297,12 +285,11 @@ test("on a phone an entry's LOG number is printed once above its title", async (
                     el.getBoundingClientRect().bottom <= top,
             ).length;
         });
-        // From 600px the crumb also carries it, after the section.
-        expect(above, `${path} at ${width}px`).toBe(width < 600 ? 1 : 2);
+        expect(above, `${path} at ${width}px`).toBe(1);
     }
 });
 
-test("the phone's record box opens, and a contents link closes it", async ({
+test("the phone's contents box opens, and a contents link closes it", async ({
     page,
     request,
 }, testInfo) => {
@@ -316,7 +303,7 @@ test("the phone's record box opens, and a contents link closes it", async ({
     const box = page.locator("[data-entry-box]");
     await expect(box).not.toHaveAttribute("open", "");
     const summary = box.locator("summary");
-    await expect(summary).toContainText(postCopy.record.title);
+    await expect(summary).toContainText(postCopy.contents);
     await summary.click();
     await expect(box).toHaveAttribute("open", "");
     const link = page
@@ -352,7 +339,7 @@ test("printing an entry keeps the text and drops the rail and actions", async ({
     const [path] = await postPaths(request, testInfo);
     await page.goto(path);
     await page.emulateMedia({ media: "print" });
-    await expect(page.getByText(/^Flight Log · LOG \d{3}$/)).toBeVisible();
+    await expect(page.getByText(/^Writing · LOG \d{3}$/)).toBeVisible();
     await expect(
         page.getByRole("navigation", { name: postCopy.contentsLabel }),
     ).toBeHidden();

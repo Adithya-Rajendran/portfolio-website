@@ -1,94 +1,148 @@
 /*
- * Home (§ 00): the hero (components/home/hero.module.css), then the acts.
- * Each act is a full-width tag row, a display statement and its content
- * on the shared grid, with the section rhythm between acts: one idea per
- * viewport at 1440. Everything else is a shared component: the mission
- * stage and tiles, the log index, the orbit map, the CV rows, the title
- * block, the contact routes and the link rows.
+ * Home: the hero (components/home/hero.module.css), then the sections.
+ * Each is a full-width tag row (the plain h2 and a link to its page) and
+ * its content on the shared grid, at a tighter rhythm than a document
+ * page, so the whole page reads in a few screens. Everything else is a
+ * shared component: the mission stage and the writing index.
  */
 .act {
+    --home-gap: clamp(3.5rem, 2rem + 4vw, 6rem);
+    padding-block: 0 var(--home-gap);
     scroll-margin-top: var(--header-h);
 }
-/* Flight Manual draws the planet to the hero's foot, so the first act
-   follows it at a block's distance instead of a section's. */
+/* The first section after the hero opens with the same gap. */
+:global([data-drift-zone]) + .act {
+    padding-top: var(--home-gap);
+}
+/* Flight Manual draws the planet to the hero's foot, so the first section
+   follows it at a block's distance instead. */
 :global([data-theme="manual"]) :global([data-drift-zone]) + .act {
     padding-top: var(--s-8);
 }
-.statement {
-    max-width: 22ch;
-    margin-top: var(--s-6);
-    text-wrap: balance;
-}
 .content {
-    margin-top: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
-}
-.after {
     margin-top: var(--s-6);
-    --cluster: var(--s-3);
 }
 
-/* ---- Now: the current role in the rail, the questions beside it ------- */
-.now {
-    align-items: start;
+/* ---- Projects: the stage, two rows, then one line of the rest --------- */
+.projects {
+    display: grid;
+    gap: var(--s-5) var(--gutter);
+    margin: var(--space-block) 0 0;
+    padding: 0;
+    list-style: none;
 }
-.nowRail {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+@media (min-width: 60rem) {
+    .projects {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+/* A card is a hairline on top; the title's link covers the row. */
+.project {
+    position: relative;
+    display: grid;
+    align-content: start;
     gap: var(--s-2);
-    padding-top: var(--s-4);
+    padding: var(--s-4) var(--s-7) 0 0;
     border-top: var(--rule-hair) solid var(--rule-2);
+    transition: border-color var(--dur-hover) var(--ease-dock);
 }
-.nowTitle {
-    margin-top: var(--s-2);
-    color: var(--ink-1);
-    font: 400 var(--step-1) / 1.3 var(--font-display);
-    text-wrap: balance;
+.projectLine {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-1) var(--s-4);
 }
-.nowOrg {
+.projectDates {
     color: var(--ink-2);
-    font: 400 var(--step-0) / 1.4 var(--font-display);
-}
-.nowDates {
-    color: var(--ink-2);
-    font: 400 0.8125rem / 1.5 var(--font-mono);
+    font: 400 0.8125rem / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
 }
-.subhead {
-    margin-bottom: var(--s-4);
+.projectTitle {
+    margin-top: var(--s-1);
+    font: 400 var(--step-2) / 1.2 var(--font-display);
+    letter-spacing: -0.005em;
+    text-wrap: balance;
 }
-.nowGroup + .nowGroup {
-    margin-top: var(--s-8);
+.projectTitle a {
+    text-decoration: none;
 }
-
-/* ---- Missions: the stage, then the tiles ------------------------------ */
-.tiles {
-    margin-top: var(--space-block);
-}
-
-/* ---- Trajectory: the compact map over the roles ----------------------- */
-.map {
-    margin-bottom: var(--s-7);
-}
-
-/* ---- Crew: the biography's first paragraph (the record is /about's) --- */
-.bio {
+.projectSummary {
     max-width: 60ch;
     color: var(--ink-2);
-    font: 300 var(--step-1) / 1.55 var(--font-long);
+    font: 400 var(--step-0) / 1.5 var(--font-long);
     text-wrap: pretty;
 }
-
-/* ---- Comms: the routes, then the profiles ----------------------------- */
-.profiles {
-    margin-top: var(--s-8);
+.projectArrow {
+    position: absolute;
+    top: var(--s-4);
+    right: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--ink-3);
+    transition:
+        transform var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock);
 }
-.profiles > h3 {
-    margin-bottom: var(--s-4);
+.project:hover {
+    border-top-color: var(--accent);
+}
+.project:hover .projectTitle a {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.16em;
+}
+.project:hover .projectArrow {
+    color: var(--accent-text);
+    transform: translateX(4px);
+}
+.also {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-1) var(--s-3);
+    margin-top: var(--s-6);
+    padding-top: var(--s-3);
+    border-top: var(--rule-hair) solid var(--rule-1);
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.5 var(--font-display);
+}
+.alsoLabel {
+    color: var(--ink-2);
+    font: var(--label-2);
+    letter-spacing: var(--track-label-2);
+    text-transform: uppercase;
+}
+.also a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--ink-1);
+    text-decoration-color: var(--rule-2);
+    text-underline-offset: 0.25em;
+}
+.also a:hover {
+    color: var(--accent-text);
+    text-decoration-color: var(--accent);
 }
 
-@media (max-width: 59.99rem) {
-    .nowRail {
-        margin-bottom: var(--s-4);
-    }
+/* ---- Research interests: the owner's one statement -------------------- */
+.interests {
+    max-width: 30ch;
+    color: var(--ink-1);
+    font: 300 var(--step-3) / 1.25 var(--font-long);
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+}
+
+/* ---- The close: the statement and the ways in ------------------------ */
+.closeInner {
+    display: grid;
+    justify-items: start;
+    gap: var(--s-4);
+    padding-top: var(--s-6);
+    border-top: var(--rule-hair) solid var(--rule-2);
+}
+.closeActions {
+    --cluster: var(--s-3);
+    margin-top: var(--s-3);
 }

@@ -1,14 +1,14 @@
 /*
- * The scannable Flight Log index (G8) and its rows. Ported from the
- * mockup's site.css 4.10 (Post row) and 4.27 (Scannable log index), with
- * the year groups the plan adds: the year heads the Entry column of its
- * group. Below 960px the tracks fold into a stacked row.
+ * The scannable writing index (G8) and its rows. Ported from the mockup's
+ * site.css 4.10 (Post row) and 4.27 (Scannable log index), with the year
+ * groups the plan adds: the year heads its group. Below 960px the tracks
+ * fold into a stacked row.
  */
 /* As wide as the mockup's index beside its preview plate (8 of 12
    columns at 1440px), so the read time and arrow stay by the standfirst,
    which stops at 62ch, instead of drifting to the page's far edge. */
 .index {
-    --log-cols: 6.5rem 7rem minmax(0, 1fr) 4.5rem 1.5rem;
+    --log-cols: 7.5rem minmax(0, 1fr) 4.5rem 1.5rem;
     min-width: 0;
     max-width: var(--measure-index);
 }
@@ -16,38 +16,14 @@
     margin-top: var(--s-7);
 }
 
-/* ---- Column head: the year, then the column names ---------------------- */
-.head {
-    display: flex;
-    align-items: baseline;
-    padding-bottom: var(--s-2);
-    color: var(--ink-3);
-    font: var(--label-2);
-    letter-spacing: var(--track-label-2);
-    text-transform: uppercase;
-}
-.head > span {
-    display: none;
-}
+/* ---- The year over its group ------------------------------------------ */
 .year {
     margin: 0;
+    padding-bottom: var(--s-2);
     color: var(--ink-1);
     font: 400 var(--label-size) / 1.35 var(--font-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
-}
-@media (min-width: 60rem) {
-    .head {
-        display: grid;
-        grid-template-columns: var(--log-cols);
-        column-gap: var(--gutter);
-    }
-    .head > span {
-        display: block;
-    }
-    .head > span:last-child {
-        text-align: right;
-    }
 }
 
 /* ---- Rows --------------------------------------------------------------- */
@@ -74,13 +50,8 @@
     align-items: baseline;
     gap: 0.25rem 1rem;
 }
-.log {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-label);
-    letter-spacing: var(--track-label);
-    white-space: nowrap;
-}
 .date,
+.updated,
 .read {
     color: var(--ink-2);
     font: 400 0.8125rem / 1.4 var(--font-mono);
@@ -125,9 +96,6 @@
     border-top-color: var(--accent);
     background: linear-gradient(to right, var(--surface-1), transparent 80%);
 }
-.row:hover .log {
-    color: var(--accent-text);
-}
 .row:hover .title a {
     text-decoration: underline;
     text-decoration-color: var(--accent);
@@ -143,21 +111,27 @@
     .meta {
         display: contents;
     }
-    .log {
+    .date {
         grid-column: 1;
         grid-row: 1;
     }
-    .date {
-        grid-column: 2;
-        grid-row: 1;
+    /* Under the filing date, in the same column: "Updated" over its
+       date when the two do not fit on one line. */
+    .updated {
+        grid-column: 1;
+        grid-row: 2;
+        white-space: normal;
+    }
+    .updated time {
+        white-space: nowrap;
     }
     .read {
-        grid-column: 4;
+        grid-column: 3;
         grid-row: 1;
         text-align: right;
     }
     .row > :not(.meta):not(.arrow) {
-        grid-column: 3;
+        grid-column: 2;
     }
     .title {
         grid-row: 1;
@@ -167,7 +141,7 @@
     }
     .arrow {
         display: block;
-        grid-column: 5;
+        grid-column: 4;
         grid-row: 1;
         align-self: center;
         justify-self: end;

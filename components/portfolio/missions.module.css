@@ -1,7 +1,7 @@
 /*
  * Missions (G5, G6): the mission line, the flagship stage, the tiles and
- * the register, shared by /portfolio, the mission files and (from PR 13)
- * the home Missions act. Ported from the mockup's site.css 4.12 and
+ * the register, shared by /portfolio, the mission files and the home
+ * page's stage. Ported from the mockup's site.css 4.12 and
  * missions.css, held to the unified contract: one accent, hairlines, no
  * boxes; mission names in capitals only on the flagship and the file.
  */
@@ -132,7 +132,7 @@
 
 /* ---- Tiles: text first, a hairline on top, the whole tile one link ---- */
 /* The row of tiles: one column on phones, two from 600px, three from
-   960px (MissionTiles; /portfolio § 02.2 and the home Missions act). */
+   960px (MissionTiles; /portfolio's more projects). */
 .tiles {
     display: grid;
     grid-template-columns: minmax(0, 1fr);

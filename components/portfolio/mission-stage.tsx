@@ -15,7 +15,8 @@ import styles from "./missions.module.css";
  * capitals, its title and summary, its quantities as stats and its stack
  * in seven columns, beside its photograph as a plate in five. Without a
  * photograph the copy takes the full width and the stats go four across.
- * Shared by /portfolio (§ 02.1) and, from PR 13, the home Missions act.
+ * Shared by /portfolio and the home page, which leaves out the stats and
+ * the mission number (`stats`, `code`): there the summary leads.
  */
 export default function MissionStage({
     mission,
@@ -24,7 +25,11 @@ export default function MissionStage({
     writeUp,
     as: Heading = "h3",
     priority = false,
+    stats = true,
+    code = true,
 }: {
+    stats?: boolean;
+    code?: boolean;
     mission: Mission;
     /** The cover, or the model's poster. */
     image?: SanityImageValue | null;
@@ -42,7 +47,7 @@ export default function MissionStage({
             }
         >
             <div className={styles.stageCopy}>
-                <MissionLine mission={mission} />
+                <MissionLine mission={mission} code={code} />
                 <Heading
                     className={styles.stageName}
                     style={{ "--chars": mission.nameChars } as CSSProperties}
@@ -53,11 +58,13 @@ export default function MissionStage({
                 {mission.summary ? (
                     <p className={styles.stageSummary}>{mission.summary}</p>
                 ) : null}
-                <Metrics
-                    className={styles.stageMetrics}
-                    items={cardStats(mission)}
-                    columns={plate ? 2 : 4}
-                />
+                {stats ? (
+                    <Metrics
+                        className={styles.stageMetrics}
+                        items={cardStats(mission)}
+                        columns={plate ? 2 : 4}
+                    />
+                ) : null}
                 <MissionStack items={mission.technologies} label={copy.stack} />
                 <div className={`cluster ${styles.stageActions}`}>
                     <ButtonLink
@@ -78,7 +85,7 @@ export default function MissionStage({
                     className={styles.stagePlate}
                     image={plate}
                     label="Pl. I"
-                    tag={mission.designation}
+                    tag={code ? mission.designation : undefined}
                     caption={caption}
                     ratio="4 / 5"
                     focus="50% 40%"

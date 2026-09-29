@@ -59,7 +59,7 @@
     }
 }
 
-/* ---- § 03.1 The orbit map; hidden by the CV list view ------------------- */
+/* ---- The orbit map (Timeline); hidden by the CV list view --------------- */
 .map {
     padding-block: var(--space-block);
 }
@@ -203,8 +203,8 @@
     .cv :global(.doc-section__body) {
         display: block;
     }
-    /* The section head on paper: the number and the plain name over a
-       rule, no themed name. */
+    /* The section head on paper: the plain name in capitals over a
+       rule. */
     .cv :global(.doc-section__tag) {
         margin-bottom: 1.3mm;
         padding: 0 0 0.7mm;
@@ -213,18 +213,14 @@
         letter-spacing: 0.14em;
         break-after: avoid;
     }
-    .cv :global(.doc-section__tag)::after,
-    .cv :global(.pair__themed),
-    .cv :global(.pair__plain)::before {
+    .cv :global(.doc-section__tag)::after {
         display: none;
     }
-    .cv :global(.pair__plain) {
+    .cv :global(.doc-section__tag .section-tag__h) {
         color: var(--ink-1);
         font: inherit;
         letter-spacing: inherit;
-    }
-    .cv :global(.doc-section__tag .section-tag__num) {
-        font-size: 7pt;
+        text-transform: inherit;
     }
     .after {
         display: none;

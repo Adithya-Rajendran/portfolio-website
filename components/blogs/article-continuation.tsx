@@ -4,7 +4,6 @@ import { buttonClass } from "@/components/ui/button";
 import { Icon, Patch } from "@/components/ui/icon";
 import { Status, type StatusValue } from "@/components/ui/marks";
 import Pager, { type PagerLink } from "@/components/ui/pager";
-import Pair from "@/components/ui/pair";
 import SectionTag from "@/components/ui/section-tag";
 import { postCopy as copy } from "@/lib/copy";
 import { formatMissionDesignation } from "@/lib/designations";
@@ -90,22 +89,18 @@ function pagerLink(
 
 function Block({
     id,
-    num,
-    themed,
-    plain,
+    title,
     children,
 }: {
     id: string;
-    num: string;
-    themed: string;
-    plain: string;
+    title: string;
     children: React.ReactNode;
 }) {
     return (
         <div className={styles.endSection}>
-            <SectionTag num={num}>
+            <SectionTag>
                 <h2 className="section-tag__h" id={id}>
-                    <Pair themed={themed} plain={plain} />
+                    {title}
                 </h2>
             </SectionTag>
             {children}
@@ -132,14 +127,6 @@ export default function ArticleContinuation({
     };
     className?: string;
 }) {
-    // § 01.1, 01.2 …: the blocks shown, numbered in order.
-    const shown = [
-        missions.length > 0 ? "mission" : null,
-        previous || next ? "pager" : null,
-        related.length > 0 ? "related" : null,
-        "author",
-    ].filter(Boolean);
-    const num = (block: string) => `${copy.num}.${shown.indexOf(block) + 1}`;
     return (
         <section
             className={className}
@@ -150,9 +137,7 @@ export default function ArticleContinuation({
                 {missions.length > 0 ? (
                     <Block
                         id="entry-mission"
-                        num={num("mission")}
-                        themed={copy.missionThemed}
-                        plain={copy.missionPlain(missions.length)}
+                        title={copy.projects(missions.length)}
                     >
                         <div className={styles.msns}>
                             {missions.map((project) => (
@@ -165,36 +150,21 @@ export default function ArticleContinuation({
                     </Block>
                 ) : null}
                 {previous || next ? (
-                    <Block
-                        id="entry-pager"
-                        num={num("pager")}
-                        themed={copy.pagerThemed}
-                        plain={copy.pagerPlain}
-                    >
+                    <Block id="entry-pager" title={copy.pager}>
                         <Pager
                             className={styles.pager}
-                            label={copy.pagerPlain}
+                            label={copy.pager}
                             previous={pagerLink(previous, "previous")}
                             next={pagerLink(next, "next")}
                         />
                     </Block>
                 ) : null}
                 {related.length > 0 ? (
-                    <Block
-                        id="entry-related"
-                        num={num("related")}
-                        themed={copy.relatedThemed}
-                        plain={copy.relatedPlain}
-                    >
+                    <Block id="entry-related" title={copy.related}>
                         <LogIndex entries={related} level={3} />
                     </Block>
                 ) : null}
-                <Block
-                    id="entry-author"
-                    num={num("author")}
-                    themed={copy.crewThemed}
-                    plain={copy.crewPlain}
-                >
+                <Block id="entry-author" title={copy.author}>
                     <div className={styles.by}>
                         <Patch mark className={styles.byPatch} />
                         <div>

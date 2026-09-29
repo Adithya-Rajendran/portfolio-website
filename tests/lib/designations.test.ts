@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
     formatLogDesignation,
-    formatLogNumber,
     formatMissionDesignation,
     logNumbers,
 } from "@/lib/designations";
@@ -29,7 +28,6 @@ describe("formatLogDesignation", () => {
     it("pads to three digits", () => {
         expect(formatLogDesignation(1)).toBe("LOG 001");
         expect(formatLogDesignation(42)).toBe("LOG 042");
-        expect(formatLogNumber(3)).toBe("003");
     });
 
     it("keeps every digit past 999", () => {

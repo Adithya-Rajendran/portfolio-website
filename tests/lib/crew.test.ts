@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
     crewRecord,
-    currentEntry,
-    firstParagraph,
     nowGroups,
     openTo,
     previousRole,
     questions,
-    roleLine,
     taglineOf,
 } from "@/lib/crew";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
@@ -30,7 +27,7 @@ const profile = (fields: Partial<ProfileData>): ProfileData => ({
     ...fields,
 });
 
-describe("the current and previous roles", () => {
+describe("the previous role", () => {
     const timeline = [
         entry({
             _key: "study",
@@ -56,20 +53,13 @@ describe("the current and previous roles", () => {
         }),
     ];
 
-    it("finds the entry the owner is in now", () => {
-        const now = currentEntry(timeline);
-        expect(now?.id).toBe("study");
-        expect(roleLine(now!)).toBe("MS Engineering · A University");
-        expect(currentEntry([timeline[1]])).toBeNull();
-    });
-
     it("takes the finished role that ended last as Previously", () => {
         expect(previousRole(timeline)?.id).toBe("last");
         expect(previousRole([timeline[0]])).toBeNull();
     });
 });
 
-describe("the hero's lines", () => {
+describe("the home page's lines", () => {
     it("uses the tagline, else the introduction's first sentence", () => {
         expect(taglineOf(profile({ tagline: "  One line.  " }))).toBe(
             "One line.",
@@ -106,13 +96,6 @@ describe("the hero's lines", () => {
                 }),
             ),
         ).toBeNull();
-    });
-
-    it("takes the biography's first paragraph", () => {
-        expect(firstParagraph("First.\n\nSecond.")).toBe("First.");
-        expect(firstParagraph("\n\n  Only.  ")).toBe("Only.");
-        expect(firstParagraph("")).toBeNull();
-        expect(firstParagraph(null)).toBeNull();
     });
 });
 
@@ -189,7 +172,7 @@ describe("nowGroups", () => {
         expect(nowGroups([{ _key: "x", title: "" }])).toEqual([]);
     });
 
-    it("matches the home page's questions when every item is a question", () => {
+    it("matches the plain questions when every item is a question", () => {
         const items = FIXTURE_PROFILE.currentCuriosities;
         expect(nowGroups(items)).toEqual([
             { kind: "question", items: questions(items) },

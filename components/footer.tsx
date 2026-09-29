@@ -1,20 +1,20 @@
 import Link from "next/link";
 import MotionToggle from "@/components/chrome/motion-toggle";
 import ThemeChoice from "@/components/chrome/theme-choice";
-import Pair from "@/components/ui/pair";
 import { Patch } from "@/components/ui/icon";
 import { getToday } from "@/lib/clock";
 import { chromeCopy } from "@/lib/copy";
 import { siteConfig } from "@/lib/config";
-import { footerLinks, pairName, primaryNavigation } from "@/lib/navigation";
+import { footerLinks, primaryNavigation } from "@/lib/navigation";
 import { getProfile } from "@/lib/sanity-client";
 import { getProfileLink } from "@/lib/profile-content";
 
 /**
  * The footer (contract §6): the patch, the name and the profile's
- * headline, the nav pairs (also the menu's fallback target without the
- * Popover API), plain links, the theme choice and Pause motion (on home
- * the hero carries it, beside the starfield), then the strip: the
+ * headline, the sections by their plain names (also the menu's fallback
+ * target without the Popover API), plain links, the theme choice and
+ * Pause motion (on home the hero carries it, beside the starfield), then
+ * the strip: the
  * copyright and Back to top. No date: a revision belongs to the document
  * it revises (a mission file, the CV), not to every page. Reads only
  * cached data (the profile and a day-cached "today"), so it is part of
@@ -46,15 +46,7 @@ export default async function Footer() {
                         <ul role="list">
                             {primaryNavigation.map((item) => (
                                 <li key={item.id}>
-                                    <Link
-                                        href={item.href}
-                                        aria-label={pairName(item)}
-                                    >
-                                        <Pair
-                                            themed={item.themed}
-                                            plain={item.plain}
-                                        />
-                                    </Link>
+                                    <Link href={item.href}>{item.plain}</Link>
                                 </li>
                             ))}
                         </ul>

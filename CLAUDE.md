@@ -37,7 +37,7 @@ only live in comments or commit messages.
       defined there and nowhere else; orange text is `var(--accent-text)`,
       `--accent` is for fills and marks.
     - `styles/base.css`, `layout.css`, `components.css` (the shared design
-      system: header, footer, buttons, pairs, section tags, photographs and
+      system: header, footer, buttons, section tags, photographs and
       plates…), `prose.css` (the long read under `.prose`: listings and the
       Shiki token colours, plates, callouts, footnotes and margin notes,
       the notes list, and their print rules), `los.css` (Loss of Signal)
@@ -107,8 +107,8 @@ only live in comments or commit messages.
   (`export const prefetch = "partial"` in `blog/[slug]` and
   `blog/tags/[tag]`, which keeps the 404), so the links to them on a page
   share one prefetched App Shell and the entry loads on the click. Links
-  that repeat another link on the page (the chart's marks) pass
-  `prefetch={false}`. A first view stays within 8 page prefetches
+  that repeat another link on the page pass `prefetch={false}`. A first
+  view stays within 8 page prefetches
   (`tests/e2e/log.spec.ts`); each distinct URL also fetches its small route
   tree (`/_tree`), which the byte report lists apart.
 - **The long read** (G1). `lib/prose.ts` `indexProse(body)` numbers a
@@ -116,9 +116,10 @@ only live in comments or commit messages.
   plates and figures (Pl. I for photographs, Fig. 1 for diagrams, plots
   and screenshots; a post's cover is the lead plate) and footnotes (in
   reading order, written onto a copy of the body's markDefs). The post
-  page, the project essay, the "In this entry" record
-  (`lib/entry-counts.ts`) and the RSS feed (`lib/feed.ts`) all read it, so
-  they agree; render `index.body`, not `post.body`. The renderers are
+  page, the project essay and the RSS feed (`lib/feed.ts`) all read it,
+  so they agree; render `index.body`, not `post.body`. An entry's rail is
+  its contents only: the date, the read time and any revision are the
+  head's, and no record box repeats them or counts its words. The renderers are
   `components/blogs/portable-text-components.tsx` and
   `components/prose/`; a new `contentBody` type lands with its web and
   feed renderer in the same change. `components/blogs/post-reader.tsx`
@@ -128,11 +129,13 @@ only live in comments or commit messages.
   `headerMode`) get `html[data-header="solid"]` from RouteMarker.
 - **Missions** (G5, G6). `lib/missions.ts` is pure and unit-tested: it
   words each project once (`toMission`) for `/portfolio`, the mission files
-  and the home Missions act (the stage and `MissionTiles`), and finds each
+  and the home page's projects (the stage and its rows), and finds each
   one's write-up from the list data (`originalEntries`). A mission's name, set in capitals on the stage
-  and the file, comes from its slug (`homelab` → Homelab); the order is the
-  featured slots, then the list query's; the register and the files'
-  previous / next go by mission number. A mission's Flight Log entries are
+  and the file, comes from its slug (`homelab` → Homelab); the order
+  (`missionOrder`) is the featured slots, then the mission number, then
+  the list query's; the register and the files' previous / next go by
+  mission number. The mission number (MSN-02) is the project file's quiet
+  identifier; the home page prints none (`MissionStage code={false}`). A mission's Flight Log entries are
   derived (`missionEntries`): the posts that reference it, and the posts
   its links, its essay and its model's callouts point at; the original
   entry is the first linked one, else the oldest referencing one. Links to
@@ -157,33 +160,47 @@ only live in comments or commit messages.
   has drawn: it runs at about 30 fps only while the hero is on screen, the
   tab is visible, the theme is Void and motion is allowed, keeps stars off
   `[data-clear]` text, reports `data-state` (`running` | `stopped`) and
-  stops in its effect cleanup, because a visited page stays mounted. The
-  acts come and go with their content (`lib/home.ts`), numbered as they
-  appear; the Now and Crew acts read `lib/crew.ts` (the current role, the
-  tagline or the introduction's first sentence, availability, the Now
-  list by kind and the biography's first paragraph), which the Crew File
-  shares; the record (`CrewRecord`) is the Crew File's alone. In Flight
-  Manual the hero draws the planet's parallels under the limb and has no
-  foot row; on home the footer leaves Pause motion to the hero.
-- **The Crew File** (`/about`, plan §6.2 row 14, contract §9). The patch
-  is the identity mark (a `PageHead` `figure`; the site shows no
-  portrait), then the record (`CrewRecord`), and numbered
-  `DocSection`s (`components/ui/doc-section.tsx`, the one section head:
-  also the mission files, `/contact`, `/blog`'s Downlink and the CV on
-  `/resume`): the biography, the Now list grouped by
-  `currentCuriosities[].kind` (`nowGroups`; the home Now act groups the
-  same way), the latest entries and any talks, and the related pages
-  (`lib/directory.ts`, shared with `/portfolio`'s Directory), each only
-  when it has content, then the close (`components/ui/ask.tsx`). Its
-  section ids are prefixed (`crew-…`) because a visited home page, still
-  mounted, has a `#now`. No page carries the old design: there is no
+  stops in its effect cleanup, because a visited page stays mounted. Over
+  it: the name, the profile's headline, the availability line (only when
+  set) and Projects · CV · Contact. Then the sections, each only with
+  content (`lib/home.ts`, unnumbered): the strongest project on its stage
+  (featured slot 1, led by its summary, no stats and no mission number),
+  the next two as rows and any others as one line (`homeProjects`); the
+  latest three entries; the owner's one-line research interests
+  (`taglineOf`: the tagline, else the introduction's first sentence) with
+  a link to About's current focus; and the contact close. The page stays
+  under about 4,500 px at 1440 and 7,000 px at 390 (`home.spec.ts`). In
+  Flight Manual the hero draws the planet's parallels under the limb and
+  has no foot row; on home the footer leaves Pause motion to the hero.
+- **About** (`/about`, themed Crew File; plan §6.2 row 14, contract §9).
+  The patch is the identity mark (a `PageHead` `figure`; the site shows
+  no portrait), then the record (`CrewRecord`), and `DocSection`s
+  (`components/ui/doc-section.tsx`, the one section head: also the
+  mission files, `/contact` and the CV on `/resume`): the biography, the
+  Now list grouped by `currentCuriosities[].kind` (`nowGroups`), the
+  latest entries and any talks, and the related pages
+  (`lib/directory.ts`, shared with `/portfolio`'s related pages), each
+  only when it has content, then the close (`components/ui/ask.tsx`). Its
+  section ids are prefixed (`crew-…`, and the home page's `home-…`)
+  because a visited page, still mounted, can own the same fragment. No page carries the old design: there is no
   legacy stylesheet, token, class or icon library left, and
   `tests/e2e/crew.spec.ts` checks every static page for one.
 - **LOG numbers** are derived, never stored: `logNumbers` in
   `lib/designations.ts` numbers published posts by `publishedAt`, oldest
   first (LOG 001), ties by document id. Number the whole list, then filter
   (`logEntries` in `lib/log-index.ts`), so a tag page keeps each entry's
-  number. A post back-dated before an existing one renumbers those after it.
+  number. A post back-dated before an existing one renumbers those after
+  it. The number is an entry's quiet identifier on its own page (the
+  crumb, the plates, the end mark, the pager); the lists print the date
+  instead, with "Updated …" only after a real `revisedAt`.
+- **Heads and names** (contract §1, §6). Every section is named by its
+  plain label, Projects · Writing · Experience · About · Contact
+  (`lib/navigation.ts`), in the header, the menu sheet, the footer, page
+  titles, breadcrumbs and buttons. A section's themed name (Missions,
+  Flight Log, Trajectory, Crew File, Comms) is only the small tag above
+  its page's h1 (`PageHead tag`) and on its share card (`OgCard tag`).
+  Section heads (`SectionTag`, `DocSection title`) are the plain name as
+  a Jost h2; nothing is numbered (no § numbers).
 
 ## Layout: the `(site)` route group
 
@@ -472,22 +489,26 @@ deployment require an authenticated Sanity CLI session.
   overlapping), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, Pause motion, the stored
   theme on an unknown post or project URL), `chrome`
-  (the menu sheet's focus, `inert` and closing; the current nav section),
+  (the menu sheet's focus, `inert` and closing; the current nav section;
+  the header and footer naming every section plainly),
   `contact` (routes pick the form's topic by click and by fragment, the
   message field's prompt matching its route's, field
   checks, a refused send keeps the draft and its stale alert clears after
   leaving and returning, Consulting hidden while off, no email address or
   phone number, the no-JavaScript LinkedIn alternative; sends only on the
   fixture build, which has no Resend credentials), `log` (the first
-  entry in the first viewport at 1280×800 and 390×844 in both themes, LOG
-  numbers that count up from the oldest entry and hold on the archive and
-  tag pages, tag chips and their counts, 404 for an unknown or malformed
-  tag, the archive's search and its no-JavaScript list, the chart's marks,
-  and the prefetch budget on `/blog`), `post` (every entry's first
-  paragraph in the first viewport at 1280×800 and 390×844 in both themes,
-  a 60–75 character measure, code comments at 4.5:1 or more, the "In this
-  entry" counts against the text, Copy on a listing, the phone's record
-  box, the solid header, print, BlogPosting and BreadcrumbList; on the
+  entry in the first viewport at 1280×800 and 390×844 in both themes,
+  entries newest first in the same order on the archive and tag pages, no
+  LOG numbers and no chart on the index, "Updated" only after a revision,
+  the tag chips and the search only once a tag gathers two entries, their
+  counts, 404 for an unknown or malformed tag, the archive's search and
+  its no-JavaScript list, and the prefetch budget on `/blog`), `post`
+  (every entry's first paragraph in the first viewport at 1280×800 and
+  390×844 in both themes, a 60–75 character measure, code comments at
+  4.5:1 or more, the rail listing the sections with no record box or word
+  count, the LOG number once above the title, Copy on a listing, the
+  phone's contents box, the solid header, print, BlogPosting and
+  BreadcrumbList; on the
   fixture build also the wide listing and highlighted line, footnotes and
   margin notes, the caution callout and revisions, their RSS output, and
   in-page links landing in the visible entry after a client-side
@@ -501,16 +522,17 @@ deployment require an authenticated Sanity CLI session.
   its head, record, pager and no stand-in text, Read the write-up lands
   on the write-up; on the fixture build a filled mission shows every
   module with its callouts linked to their sections, and a planned one
-  none of them), `home` (the hero's name, status line and quick links,
-  CV first, in the first viewport at 1280×800 and 390×844 with and
-  without JavaScript; the starfield `running` only on screen, in a
-  visible tab, in Void and with motion allowed; the credit, and the drawn
-  limb in Flight Manual; the acts numbered in order with their section
-  links; an orbit label leading to its row; no gap wording and no old
-  artwork), `crew` (the Crew File's head with the patch and no portrait,
-  its record, the sections numbered in order with their links, Get in
-  touch, no gap wording; and no page keeping the old design's roots,
-  classes or tokens),
+  none of them), `home` (the hero's name, availability and quick links,
+  Projects · CV · Contact, in the first viewport at 1280×800 and 390×844
+  with and without JavaScript; the starfield `running` only on screen, in
+  a visible tab, in Void and with motion allowed; the credit, and the
+  drawn limb in Flight Manual; the sections in order, unnumbered and
+  without themed names, with their links; the flagship without stats or
+  mission number; the page's height at 1440 and 390; no gap wording and
+  no old artwork), `crew` (About's plain title with the patch and no
+  portrait, its record, the sections by their plain names with their
+  links, Get in touch, no gap wording; and no page keeping the old
+  design's roots, classes or tokens),
   `budgets` (the brotli byte report, printed,
   not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio

@@ -10,18 +10,11 @@ import type {
 } from "@/lib/sanity-client";
 
 /**
- * The owner as the home page and the Crew File (/about) present them:
- * the current role, the tagline, the availability line, the questions
- * and the Now list by kind, and the record (G6). Pure and derived from the profile only:
- * a value the profile leaves empty is left out, never filled in.
+ * The owner as the home page and About (/about) present him: the
+ * interests statement, the availability line, the questions and the Now
+ * list by kind, and the record (G6). Pure and derived from the profile
+ * only: a value the profile leaves empty is left out, never filled in.
  */
-
-/** The first current entry in the owner's order: the "Now" role. */
-export function currentEntry(
-    timeline: readonly TimelineEntry[] | null | undefined,
-): CvEntry | null {
-    return cvEntries(timeline).all.find((entry) => entry.current) ?? null;
-}
 
 /** The finished role that ended last: the record's "Previously". */
 export function previousRole(
@@ -40,13 +33,9 @@ export function previousRole(
     return ended.length ? cvEntries([ended[0]]).all[0] : null;
 }
 
-/** "MS Engineering (Interdisciplinary) · San José State University". */
-export function roleLine(entry: Pick<CvEntry, "title" | "organization">) {
-    return `${entry.title} · ${entry.organization}`;
-}
-
 /**
- * The hero's intent line: the tagline, or else the introduction's first
+ * The owner's one-line statement of what he is exploring, the home page's
+ * Research interests: the tagline, or else the introduction's first
  * sentence (plan §3.2).
  */
 export function taglineOf(profile: ProfileData | null): string | null {
@@ -75,15 +64,6 @@ export function openTo(profile: ProfileData | null): {
         text,
         updated: date ? { date, label: formatEntryDate(date) } : null,
     };
-}
-
-/** The first paragraph of the biography (paragraphs are blank-line apart). */
-export function firstParagraph(bio: string | null | undefined): string | null {
-    const first = (bio ?? "")
-        .split(/\n\s*\n/)
-        .map((part) => part.trim())
-        .find(Boolean);
-    return first ?? null;
 }
 
 export interface Question {

@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import type { ContactTopic } from "@/lib/contact";
 import { contactCopy } from "@/lib/copy";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
-import { pairName, primaryNavigation } from "@/lib/navigation";
+import { primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 
 /**
@@ -37,25 +37,22 @@ async function routeTitle(page: Page, topic: ContactTopic): Promise<string> {
     ).trim();
 }
 
-test("Comms in the header opens the contact page", async ({ page }) => {
+test("Contact in the header opens the contact page", async ({ page }) => {
     await page.goto("/");
     const comms = primaryNavigation.find((item) => item.id === "comms")!;
     await page
         .getByRole("navigation", { name: "Main" })
-        .getByRole("link", { name: pairName(comms) })
+        .getByRole("link", { name: comms.plain, exact: true })
         .click();
     await expect(page).toHaveURL(/\/contact$/);
-    // The themed name, then the plain one (contract §1).
+    // The plain name is the title; the themed one only a small tag.
     await expect(
-        page.getByRole("heading", {
-            level: 1,
-            name: /^Comms\s*:\s*Contact$/,
-        }),
+        page.getByRole("heading", { level: 1, name: "Contact", exact: true }),
     ).toBeVisible();
     await expect(
         page
             .getByRole("navigation", { name: "Main" })
-            .getByRole("link", { name: pairName(comms) }),
+            .getByRole("link", { name: comms.plain, exact: true }),
     ).toHaveAttribute("aria-current", "page");
 });
 
@@ -163,13 +160,9 @@ test("a refused send says why and keeps the message", async ({
     // Away and back: Cache Components keeps the page mounted but hidden,
     // so the stale alert goes and the draft stays.
     const nav = page.getByRole("navigation", { name: "Main" });
-    await nav
-        .getByRole("link", { name: pairName(primaryNavigation[0]) })
-        .click();
+    await nav.getByRole("link", { name: "Writing", exact: true }).click();
     await expect(page).toHaveURL(/\/blog$/);
-    await nav
-        .getByRole("link", { name: pairName(primaryNavigation[4]) })
-        .click();
+    await nav.getByRole("link", { name: "Contact", exact: true }).click();
     await expect(page).toHaveURL(/\/contact$/);
     await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
     await expect(
@@ -206,13 +199,13 @@ test("the page shows no email address or phone number", async ({ request }) => {
     ).toEqual([]);
 });
 
-test("/portfolio#contact still answers, with the way to Comms", async ({
+test("/portfolio#contact still answers, with the way to Contact", async ({
     page,
 }) => {
     await page.goto("/portfolio#contact");
     const row = page.locator("#contact");
     await expect(row).toBeInViewport();
-    const link = row.getByRole("link", { name: /^Comms\s*,\s*Contact\b/ });
+    const link = row.getByRole("link", { name: /^Contact\b/ });
     await expect(link).toHaveAttribute("href", "/contact");
     await link.click();
     await expect(page).toHaveURL(/\/contact$/);

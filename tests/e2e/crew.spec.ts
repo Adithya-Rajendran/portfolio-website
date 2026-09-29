@@ -3,21 +3,23 @@ import { expect, test } from "./support/test";
 import { STATIC_PAGES } from "./support/routes";
 
 /**
- * Crew File · About (plan §6.2 PR 14, contract §9): the head with the
- * patch as the identity mark and no portrait, the profile record, the
- * numbered sections (biography, the Now list by kind, writing, related
- * pages) and the way to get in touch; the page names no gap. And the old
- * design is gone from every page: no legacy root, class or token.
+ * About (themed Crew File; plan §6.2 PR 14, contract §9): the head with
+ * the patch as the identity mark and no portrait, the profile record, the
+ * sections by their plain names (background, the Now list by kind,
+ * writing, related pages) and the way to get in touch; the page names no
+ * gap. And the old design is gone from every page: no legacy root, class
+ * or token.
  */
 
-test("the Crew File opens on its head, the patch and the record", async ({
-    page,
-}) => {
+test("About opens on its head, the patch and the record", async ({ page }) => {
     await page.goto("/about");
     const main = page.getByRole("main");
     const h1 = main.getByRole("heading", { level: 1 });
-    await expect(h1).toContainText(copy.themed);
-    await expect(h1).toContainText(copy.plain);
+    // The plain name is the title; the themed one is the small tag.
+    await expect(h1).toHaveText(copy.plain);
+    await expect(
+        main.getByText(copy.themed, { exact: true }).first(),
+    ).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("data-header", "solid");
 
     // The patch is the identity mark: decorative, and no portrait.
@@ -38,19 +40,16 @@ test("the Crew File opens on its head, the patch and the record", async ({
     ).toHaveAttribute("href", "/resume");
 });
 
-test("the sections are numbered in order and lead on", async ({ page }) => {
+test("the sections name themselves plainly and lead on", async ({ page }) => {
     await page.goto("/about");
     const main = page.getByRole("main");
-    const numbers = await main
-        .locator("section .section-tag__num")
-        .allTextContents();
-    expect(numbers.length).toBeGreaterThan(0);
-    expect(numbers).toEqual(numbers.map((_, i) => `§04.${i + 1}`));
+    // No section numbers: a heading's words are its name.
+    await expect(main.getByText(/^§\s?\d/)).toHaveCount(0);
 
-    const bio = main.getByRole("region", { name: /Biography/ });
+    const bio = main.getByRole("region", { name: copy.bio, exact: true });
     await expect(bio.locator("p").first()).toBeVisible();
 
-    const now = main.getByRole("region", { name: /Now/ });
+    const now = main.getByRole("region", { name: copy.now, exact: true });
     if (await now.count()) {
         await expect(now.getByRole("heading", { level: 3 }).first()).toHaveText(
             new RegExp(`^(${Object.values(nowKinds).join("|")})$`, "i"),
@@ -58,16 +57,14 @@ test("the sections are numbered in order and lead on", async ({ page }) => {
         await expect(now.getByRole("listitem").first()).toBeVisible();
     }
 
-    const writing = main.getByRole("region", { name: /Flight Log|Talks/ });
+    const writing = main.getByRole("region", { name: /^(Writing|Talks)/ });
     if (await writing.count()) {
         const all = writing.getByRole("link", { name: copy.allEntries });
         if (await all.count())
             await expect(all).toHaveAttribute("href", "/blog");
     }
 
-    const related = main.getByRole("navigation", {
-        name: new RegExp(copy.elsewhereThemed),
-    });
+    const related = main.getByRole("navigation", { name: copy.elsewhere });
     for (const link of await related.getByRole("link").all()) {
         await expect(link).toHaveAttribute(
             "href",
@@ -81,7 +78,7 @@ test("the sections are numbered in order and lead on", async ({ page }) => {
     await expect(page).toHaveURL(/\/contact#hello$/);
 });
 
-test("the Crew File names no gap and shows no email", async ({ page }) => {
+test("About names no gap and shows no email", async ({ page }) => {
     await page.goto("/about");
     const text = (await page.getByRole("main").innerText()).toLowerCase();
     for (const phrase of [

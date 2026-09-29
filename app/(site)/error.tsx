@@ -25,8 +25,7 @@ export default function Error({
         <LossOfSignal
             page="error"
             tag={copy.tag}
-            themed={copy.themed}
-            plain={copy.plain}
+            title={copy.title}
             lead={copy.lead}
             actions={
                 <>

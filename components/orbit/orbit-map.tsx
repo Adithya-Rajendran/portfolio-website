@@ -20,8 +20,8 @@ import styles from "./orbit.module.css";
  * stretches. Each role or degree is an ink orbit across its dates; only
  * today and the arc flown on the current orbit are orange.
  *
- * `full` adds the record panel beside the map (the entry shown by default
- * is the current one), the caption and the key. Without JavaScript the
+ * The record panel sits beside the map (the entry shown by default is the
+ * current one), over the caption and the key. Without JavaScript the
  * labels are links to the CV rows and the panel shows the current entry;
  * with it, `OrbitInteraction` previews on hover, pins on click and lights
  * the matching CV row. The SVGs are hidden from assistive technology: the
@@ -475,7 +475,6 @@ export default function OrbitMap({
     entries,
     planned = null,
     idPrefix,
-    size = "full",
     figure,
 }: {
     model: OrbitModel;
@@ -483,12 +482,10 @@ export default function OrbitMap({
     planned?: PlannedRecord | null;
     /** Unique per page: the SVG masks need document-unique ids. */
     idPrefix: string;
-    size?: "full" | "compact";
     /** "Fig. 1". */
     figure?: string;
 }) {
-    const full = size === "full";
-    const panelId = full ? `${idPrefix}-record` : null;
+    const panelId = `${idPrefix}-record`;
     const byId = new Map(entries.map((entry) => [entry.id, entry]));
     const labels = new Map(
         model.orbits.flatMap((orbit) => {
@@ -521,12 +518,10 @@ export default function OrbitMap({
             data-orbit-map
             data-orbit-default={current.id}
         >
-            {full ? (
-                <p className={`js-only ${styles.hint}`}>
-                    <span className={styles.hintDot} aria-hidden="true" />
-                    {copy.hint}
-                </p>
-            ) : null}
+            <p className={`js-only ${styles.hint}`}>
+                <span className={styles.hintDot} aria-hidden="true" />
+                {copy.hint}
+            </p>
             <Plot
                 model={model}
                 projection={horizontalMap(model)}
@@ -545,42 +540,34 @@ export default function OrbitMap({
                 panelId={panelId}
                 planned={plannedShown}
             />
-            {full ? (
-                <>
-                    <figcaption className="caption caption--plate">
-                        {figure ? (
-                            <span className="caption__num">{figure}</span>
-                        ) : null}
-                        <span className="caption__body">{copy.caption}</span>
-                    </figcaption>
-                    <ul className={styles.key} role="list">
-                        <li>
-                            <KeyIcon kind="orbit" />
-                            {copy.key.orbit}
-                        </li>
-                        <li>
-                            <KeyIcon kind="current" />
-                            {copy.key.current}
-                        </li>
-                        {model.transfers.length ? (
-                            <li>
-                                <KeyIcon kind="burn" />
-                                {copy.key.burn}
-                            </li>
-                        ) : null}
-                        {plannedShown ? (
-                            <li>
-                                <KeyIcon kind="planned" />
-                                {copy.key.planned}
-                            </li>
-                        ) : null}
-                    </ul>
-                </>
-            ) : null}
+            <figcaption className="caption caption--plate">
+                {figure ? <span className="caption__num">{figure}</span> : null}
+                <span className="caption__body">{copy.caption}</span>
+            </figcaption>
+            <ul className={styles.key} role="list">
+                <li>
+                    <KeyIcon kind="orbit" />
+                    {copy.key.orbit}
+                </li>
+                <li>
+                    <KeyIcon kind="current" />
+                    {copy.key.current}
+                </li>
+                {model.transfers.length ? (
+                    <li>
+                        <KeyIcon kind="burn" />
+                        {copy.key.burn}
+                    </li>
+                ) : null}
+                {plannedShown ? (
+                    <li>
+                        <KeyIcon kind="planned" />
+                        {copy.key.planned}
+                    </li>
+                ) : null}
+            </ul>
         </figure>
     );
-
-    if (!full || !panelId) return map;
 
     return (
         <div className={styles.layout}>

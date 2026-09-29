@@ -130,7 +130,8 @@ test.describe("with a pointer at 1440px", () => {
     }) => {
         await page.goto("/resume");
         const map = main(page).getByRole("heading", {
-            name: cvCopy.map.themed,
+            name: cvCopy.map,
+            exact: true,
         });
         await expect(map).toBeVisible();
         await page
@@ -164,7 +165,10 @@ test.describe("without JavaScript", () => {
     }) => {
         await page.goto("/resume");
         await expect(
-            main(page).getByRole("heading", { name: cvCopy.map.themed }),
+            main(page).getByRole("heading", {
+                name: cvCopy.map,
+                exact: true,
+            }),
         ).toBeVisible();
         const labels = main(page).getByRole("link", { name: DESIGNATION });
         expect(await labels.count()).toBeGreaterThan(0);

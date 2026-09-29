@@ -13,32 +13,19 @@ import styles from "./contact-routes.module.css";
  * (RouteWriteLink) links to that fragment, which ContactDesk turns into
  * "pick this topic and go to the form"; without JavaScript it links to the
  * message section instead, which then offers LinkedIn. Anywhere else the
- * button links to the route on /contact. `grid` sets the routes side by
- * side from 960px, without their "Include" prompt (the home Comms act).
- * Titles, prompts, the Open To line and the research invitation are the
+ * button links to the route on /contact. Titles, prompts, the Open To line and the research invitation are the
  * profile's words (lib/contact.ts).
  * Ported from the mockup's `DF.render.routes`.
  */
 export default function ContactRoutes({
     routes,
     onPage = false,
-    layout = "rows",
 }: {
     routes: readonly ContactRoute[];
     onPage?: boolean;
-    layout?: "rows" | "grid";
 }) {
-    const grid = layout === "grid";
     return (
-        <ol
-            className={grid ? `${styles.routes} ${styles.grid}` : styles.routes}
-            role="list"
-            style={
-                grid
-                    ? ({ "--routes": routes.length } as React.CSSProperties)
-                    : undefined
-            }
-        >
+        <ol className={styles.routes} role="list">
             {routes.map((route) => (
                 <li
                     key={route.topic}
@@ -59,7 +46,7 @@ export default function ContactRoutes({
                     {route.body ? (
                         <p className={styles.body}>{route.body}</p>
                     ) : null}
-                    {grid || !route.prompt ? null : (
+                    {!route.prompt ? null : (
                         <p className={styles.template}>
                             <span className={styles.key}>{copy.include}</span>
                             {route.prompt}

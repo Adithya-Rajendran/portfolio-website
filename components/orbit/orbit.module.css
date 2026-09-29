@@ -4,8 +4,8 @@
  * §5). Every word is HTML over the SVG, positioned by the server:
  * horizontally in percent of the plot (`--x`) and pixels from its top, so
  * the time axis stretches with the column while the levels, the type and
- * the marks keep their size. Ported from the mockup's trajectory.css
- * (§ 03.1) in the unified system's colours.
+ * the marks keep their size. Ported from the mockup's trajectory.css in
+ * the unified system's colours.
  */
 
 /* ---- Layout: the map beside its record (≥ 75rem), else above it -------- */

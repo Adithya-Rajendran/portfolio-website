@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const description =
         profile?.contactInvitation?.trim() || profile?.contactIntro?.trim();
     const described = description ? { description } : {};
-    const title = `${copy.themed} · ${copy.plain}`;
+    const title = copy.plain;
     const url = `${siteConfig.url}${siteRoutes.contact}`;
     return {
         title,
@@ -39,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Comms · Contact (G4): the routes by intent, the message form and the
+ * Contact (themed Comms, G4): the routes by intent, the message form and the
  * profiles. The introduction and every route's words are the profile's
  * (Site copy); an empty one is left out. Everything but the form renders
  * without JavaScript; the form
@@ -60,9 +60,8 @@ export default async function ContactPage() {
                     className="shell"
                     split
                     ornament="record"
-                    num={copy.num}
-                    themed={copy.themed}
-                    plain={copy.plain}
+                    tag={copy.themed}
+                    title={copy.plain}
                     intro={profile?.contactIntro?.trim() || null}
                 >
                     {/* Acquisition of signal: the carrier locks. Drawn in
@@ -97,9 +96,7 @@ export default async function ContactPage() {
                 <DocSection
                     className="section--tight"
                     headingId="contact-routes-h"
-                    num={`${copy.num}.1`}
-                    themed={copy.routesThemed}
-                    plain={copy.routesPlain}
+                    title={copy.routes}
                     wide
                 >
                     <ContactRoutes routes={routes} onPage />
@@ -109,9 +106,7 @@ export default async function ContactPage() {
                     id="message"
                     headingId="contact-message-h"
                     data={{ "data-contact-message": true }}
-                    num={`${copy.num}.2`}
-                    themed={copy.messageThemed}
-                    plain={copy.messagePlain}
+                    title={copy.message}
                 >
                     <div className="js-only">
                         <ContactForm topics={topicOptions(routes)} />
@@ -127,9 +122,7 @@ export default async function ContactPage() {
                 <DocSection
                     className={styles.elsewhere}
                     headingId="contact-else-h"
-                    num={`${copy.num}.3`}
-                    themed={copy.elsewhereThemed}
-                    plain={copy.elsewherePlain}
+                    title={copy.elsewhere}
                 >
                     <RouteList
                         items={profiles}

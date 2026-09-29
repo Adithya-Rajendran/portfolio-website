@@ -6,7 +6,7 @@ import { formatEntryDate, logEntries } from "@/lib/log-index";
 import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
 import { getAllPosts, getPostMeta } from "@/lib/sanity-client";
 
-export const alt = `${copy.themed} entry — ${siteConfig.author}`;
+export const alt = `${copy.plain} — ${siteConfig.author}`;
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
@@ -47,10 +47,8 @@ export default async function Image({
 
     return new ImageResponse(
         <OgCard
-            num={copy.num}
-            themed={copy.themed}
-            plain={copy.plain}
-            title={post?.title ?? copy.themed}
+            tag={copy.themed}
+            title={post?.title ?? copy.plain}
             subtitle={standfirst(post?.description) || undefined}
             footerLeft={footerLeft || siteConfig.author}
             footerRight={`${domain}/blog`}

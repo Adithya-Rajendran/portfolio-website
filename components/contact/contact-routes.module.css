@@ -158,32 +158,3 @@
         align-self: start;
     }
 }
-
-/* Side by side (the home Comms act): one column per route from 960px,
-   the number over the title, then the line and the links; the buttons
-   line up along the foot. */
-@media (min-width: 60rem) {
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(var(--routes, 3), minmax(0, 1fr));
-        column-gap: var(--gutter);
-        border-bottom: 0;
-    }
-    .grid .route {
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-3);
-        padding-bottom: 0;
-    }
-    .grid .route > .num {
-        font-size: 0.75rem;
-    }
-    .grid .route > .links {
-        order: 1;
-    }
-    .grid .route > .actions {
-        order: 2;
-        margin-top: auto;
-        padding-top: var(--s-3);
-    }
-}

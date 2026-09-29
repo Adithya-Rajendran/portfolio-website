@@ -1,7 +1,6 @@
 import Link from "next/link";
 import StaticStars from "@/components/sky/static-stars";
 import PageHead from "@/components/ui/page-head";
-import Pair from "@/components/ui/pair";
 import RouteList, { type RouteItem } from "@/components/ui/route-list";
 import SectionTag from "@/components/ui/section-tag";
 import RequestedPath from "@/components/los/requested-path";
@@ -19,8 +18,6 @@ const TRACE = carrierTrace();
 const ROUTES: RouteItem[] = [homeRoute, ...primaryNavigation].map((route) => ({
     key: route.href,
     href: route.href,
-    num: route.num,
-    themed: route.themed,
     plain: route.plain,
     blurb: route.blurb,
 }));
@@ -37,18 +34,16 @@ const ROUTES: RouteItem[] = [homeRoute, ...primaryNavigation].map((route) => ({
 export default function LossOfSignal({
     page,
     tag,
-    themed,
-    plain,
+    title,
     lead,
     actions,
     showRequested = false,
 }: {
     /** The root element's `data-page`. */
     page: string;
-    /** The tag row's designation: "LOS · 404". */
+    /** The tag row's designation: "Loss of signal · 404". */
     tag: string;
-    themed: string;
-    plain: string;
+    title: string;
     lead: string;
     actions: React.ReactNode;
     showRequested?: boolean;
@@ -62,10 +57,8 @@ export default function LossOfSignal({
                     className="shell"
                     split
                     ornament="dot"
-                    num={tag}
-                    sect={false}
-                    themed={themed}
-                    plain={plain}
+                    tag={tag}
+                    title={title}
                     intro={lead}
                 >
                     <div className="cluster page-head__actions">{actions}</div>
@@ -134,10 +127,7 @@ export default function LossOfSignal({
                 <div className="shell">
                     <SectionTag ornament="orbit">
                         <h2 className="section-tag__h" id="los-return-h">
-                            <Pair
-                                themed={copy.returnThemed}
-                                plain={copy.returnPlain}
-                            />
+                            {copy.sections}
                         </h2>
                     </SectionTag>
                     <RouteList

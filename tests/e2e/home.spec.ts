@@ -5,13 +5,14 @@ import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
 
 /**
- * Home (plan §6.2 PR 13, contract §9): the hero's name, role, status line
- * and quick links (CV first) are in the first viewport with and without
- * JavaScript; the starfield drifts only while it may (on screen, in a
- * visible tab, in Void, with motion allowed) and reports `stopped`
- * otherwise; the photograph is credited and Flight Manual draws the limb
- * instead; the acts are numbered in order and link to their sections; and
- * the page says nothing about what is missing.
+ * Home (plan §6.2 PR 13, contract §9): the hero's name, headline, what the
+ * owner is open to and the quick links (Projects · CV · Contact) are in
+ * the first viewport with and without JavaScript; the starfield drifts
+ * only while it may (on screen, in a visible tab, in Void, with motion
+ * allowed) and reports `stopped` otherwise; the photograph is credited
+ * and Flight Manual draws the limb instead; the sections follow in order,
+ * unnumbered, and lead to their pages; the flagship shows no stats; the
+ * page stays short; and it says nothing about what is missing.
  */
 
 function hero(page: Page) {
@@ -30,15 +31,24 @@ async function firstViewport(page: Page) {
         ratio: 1,
     });
     const links = main.getByRole("navigation", { name: copy.routesLabel });
-    const first = links.getByRole("link").first();
-    await expect(first).toHaveText(copy.cv);
-    await expect(first).toHaveAttribute("href", "/resume");
+    await expect(links.getByRole("link")).toHaveText([
+        copy.projects,
+        copy.cv,
+        copy.contact,
+    ]);
+    expect(
+        await links
+            .getByRole("link")
+            .evaluateAll((items) =>
+                items.map((item) => item.getAttribute("href")),
+            ),
+    ).toEqual(["/portfolio", "/resume", "/contact"]);
     for (const link of await links.getByRole("link").all()) {
         await expect(link).toBeInViewport({ ratio: 1 });
     }
-    // The status line: the current role, when the profile has one.
-    const now = hero(page).getByText(copy.now, { exact: true });
-    if (await now.count()) await expect(now).toBeInViewport({ ratio: 1 });
+    // What the owner is open to, when the profile says.
+    const open = hero(page).getByText(copy.openTo, { exact: true });
+    if (await open.count()) await expect(open).toBeInViewport({ ratio: 1 });
 }
 
 for (const [width, height] of [
@@ -75,7 +85,10 @@ test("the starfield drifts only while it may", async ({ page }) => {
     await expect(stars).toHaveAttribute("data-state", "running");
 
     // Offscreen.
-    await page.getByRole("main").locator("#comms").scrollIntoViewIfNeeded();
+    await page
+        .getByRole("main")
+        .locator("#home-contact")
+        .scrollIntoViewIfNeeded();
     await expect(stars).toHaveAttribute("data-state", "stopped");
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(stars).toHaveAttribute("data-state", "running");
@@ -148,58 +161,69 @@ test("the photograph is credited in Void; Manual draws the limb", async ({
     await expect(starfield(page)).toBeHidden();
 });
 
-test("the acts are numbered in order and lead to their sections", async ({
+test("the sections follow the hero in order and lead to their pages", async ({
     page,
 }) => {
     await page.goto("/");
     const main = page.getByRole("main");
-    const acts = main.locator("section[id]").filter({
-        has: page.locator(".section-tag"),
-    });
-    const numbers = await acts.locator(".section-tag__num").allTextContents();
-    expect(numbers.length).toBeGreaterThan(0);
-    expect(numbers).toEqual(numbers.map((_, i) => `§00.${i + 1}`));
-
-    const leads: [act: string, name: string, href: string][] = [
-        ["missions", copy.missionsAct.all, "/portfolio"],
-        ["log", copy.logAct.all, "/blog"],
-        ["trajectory", copy.trajectoryAct.all, "/resume"],
-        ["crew", copy.crewAct.all, "/about"],
-        ["comms", copy.commsAct.all, "/contact"],
+    const ids = await main
+        .locator("section[id^='home-']")
+        .evaluateAll((sections) => sections.map((section) => section.id));
+    const order = [
+        "home-projects",
+        "home-writing",
+        "home-interests",
+        "home-contact",
     ];
-    for (const [act, name, href] of leads) {
-        const section = main.locator(`section#${act}`);
-        if (!(await section.count())) continue;
-        await expect(
-            section.getByRole("link", { name, exact: true }),
-        ).toHaveAttribute("href", href);
+    expect(ids).toEqual(order.filter((id) => ids.includes(id)));
+    expect(ids.at(-1)).toBe("home-contact");
+    // No section numbers, and no themed section names to decode.
+    await expect(main.getByText(/^§\s?\d/)).toHaveCount(0);
+    for (const themed of ["Missions", "Flight Log", "Trajectory", "Comms"]) {
+        await expect(main.getByText(themed, { exact: true })).toHaveCount(0);
     }
 
-    // Selected work ↓ lands on the Missions act.
-    await main.getByRole("link", { name: copy.work }).click();
-    await expect(main.locator("#missions")).toBeInViewport();
+    const leads: [section: string, name: string, href: string][] = [
+        ["home-projects", copy.projectsAct.all, "/portfolio"],
+        ["home-writing", copy.writingAct.all, "/blog"],
+        ["home-interests", copy.interestsAct.now, "/about#crew-now"],
+        ["home-contact", copy.contactAct.message, "/contact"],
+    ];
+    for (const [id, name, href] of leads) {
+        const section = main.locator(`section#${id}`);
+        if (!(await section.count())) continue;
+        const link = section.getByRole("link", { name, exact: true });
+        if (id === "home-interests" && !(await link.count())) continue;
+        await expect(link).toHaveAttribute("href", href);
+    }
 });
 
-test("an orbit's label leads to its row, and the row lights the orbit", async ({
+test("the strongest project leads with its summary and no stats", async ({
     page,
 }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
-    const trajectory = page.getByRole("main").locator("#trajectory");
-    const label = trajectory.locator("a[data-orbit-to]:visible").first();
-    const target = (await label.getAttribute("data-orbit-to"))!;
-    await label.click();
-    const row = trajectory.locator(`#${target}`);
-    await expect(row).toBeInViewport();
-    await expect(page).toHaveURL(new RegExp(`#${target}$`));
-
-    const id = (await row.getAttribute("data-orbit-row"))!;
-    await page.mouse.move(0, 0);
-    await row.hover();
-    await expect(
-        trajectory.locator(`path[data-orbit-id="${id}"]:visible`).first(),
-    ).toHaveAttribute("data-hl", "");
+    const projects = page.getByRole("main").locator("section#home-projects");
+    if (!(await projects.count())) return;
+    await expect(projects.getByRole("article").first()).toBeVisible();
+    // Stats are the project file's; the home page shows none, and no
+    // mission number.
+    await expect(projects.getByRole("definition")).toHaveCount(0);
+    await expect(projects.getByText(/^MSN-\d+$/)).toHaveCount(0);
 });
+
+for (const [width, limit] of [
+    [1440, 4500],
+    [390, 7000],
+]) {
+    test(`the home page stays short at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto("/");
+        const height = await page.evaluate(
+            () => document.documentElement.scrollHeight,
+        );
+        expect(height).toBeLessThanOrEqual(limit);
+    });
+}
 
 test("the home page names no gap and uses no old artwork", async ({ page }) => {
     const requested: string[] = [];

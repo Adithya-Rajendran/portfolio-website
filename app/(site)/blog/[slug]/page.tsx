@@ -5,17 +5,12 @@ import ArticleContinuation from "@/components/blogs/article-continuation";
 import EndMatter from "@/components/blogs/end-matter";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
 import { PostCrumb, PostHead } from "@/components/blogs/post-head";
-import {
-    PostBox,
-    PostRail,
-    type EntryRecord,
-} from "@/components/blogs/post-rail";
+import { PostBox, PostRail } from "@/components/blogs/post-rail";
 import PostReader from "@/components/blogs/post-reader";
 import styles from "@/components/blogs/post.module.css";
 import { BlogPostJsonLd, BreadcrumbJsonLd } from "@/components/json-ld";
 import { siteConfig } from "@/lib/config";
 import { postCopy as copy } from "@/lib/copy";
-import { entryCounts } from "@/lib/entry-counts";
 import {
     contentsHeadings,
     extractHeadings,
@@ -82,11 +77,11 @@ function coverUrl(cover: Parameters<typeof urlForImage>[0] | null | undefined) {
 }
 
 /**
- * A Flight Log entry (G1, the paper-grade post). One grid: the crumb row,
- * the head (LOG nnn · date · read time · tags, the title, the standfirst)
- * in the reading column with the first paragraph in the first screen, the
- * sticky "In this entry" rail beside it (the record and the contents; a
- * closed box above the text on phones), the text at a 68ch measure with
+ * An entry (G1, the paper-grade post). One grid: the crumb row (Writing /
+ * LOG nnn), the head (date · read time · Updated · tags, the title, the
+ * standfirst) in the reading column with the first paragraph in the first
+ * screen, the sticky contents beside it (a closed box above the text on
+ * phones), the text at a 68ch measure with
  * numbered listings, plates, callouts and margin notes, then the end
  * matter (notes, revisions, the end mark) and what comes after (the
  * mission, previous and next, related entries, the author). No ambient
@@ -127,7 +122,6 @@ export default async function BlogPostPage({
         headingIds: headingIdsByKey(headings),
         plateTag: designation,
     });
-    const counts = entryCounts(post.body, index);
     const contents = contentsHeadings(headings);
     const readMinutes =
         post.wordCount > 0 ? readingTimeFromWordCount(post.wordCount) : null;
@@ -144,20 +138,6 @@ export default async function BlogPostPage({
     const url = `${siteConfig.url}/blog/${slug}`;
     const filed = post.publishedAt?.slice(0, 10);
     const revised = post.revisedAt?.slice(0, 10) ?? null;
-    const record: EntryRecord = {
-        designation,
-        total: entries.length,
-        filed,
-        revised,
-        words: post.wordCount,
-        readMinutes,
-        counts,
-        missions: missions.map((project) => ({
-            slug: project.slug,
-            designation: project.designation,
-            title: project.title,
-        })),
-    };
 
     return (
         <div data-page="post" className={styles.page}>
@@ -174,18 +154,13 @@ export default async function BlogPostPage({
             <BreadcrumbJsonLd
                 items={[
                     { name: "Home", path: siteRoutes.home },
-                    {
-                        name: `${copy.themed} · ${copy.plain}`,
-                        path: siteRoutes.blog,
-                    },
+                    { name: copy.plain, path: siteRoutes.blog },
                     { name: post.title, path: `/blog/${slug}` },
                 ]}
             />
 
             <div className={`shell ${styles.printHead}`} data-print="only">
-                <p className="label">
-                    {copy.printKicker(designation ?? copy.themed)}
-                </p>
+                <p className="label">{copy.printKicker(designation)}</p>
                 <p className="data">
                     {[
                         url.replace(/^https?:\/\//, ""),
@@ -208,23 +183,14 @@ export default async function BlogPostPage({
                     className={styles.head}
                     title={post.title}
                     description={post.description}
-                    designation={designation}
                     publishedAt={post.publishedAt}
                     revisedAt={revised}
                     readMinutes={readMinutes}
                     tags={tags}
                 />
-                <PostRail
-                    className={styles.rail}
-                    record={record}
-                    headings={contents}
-                />
+                <PostRail className={styles.rail} headings={contents} />
                 <div className={styles.main}>
-                    <PostBox
-                        className={styles.box}
-                        record={record}
-                        headings={contents}
-                    />
+                    <PostBox className={styles.box} headings={contents} />
                     <div className={`prose ${styles.body}`}>
                         <PortableText
                             value={

@@ -7,7 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { logCopy } from "@/lib/copy";
-import { entriesTagged, logEntries } from "@/lib/log-index";
+import { entriesTagged, logEntries, offersFilters } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import { getAllPosts } from "@/lib/sanity-client";
 import { collectTags, TAG_PATTERN } from "@/lib/tags";
@@ -24,15 +24,16 @@ export const prefetch = "partial";
 const copy = logCopy.tag;
 
 /**
- * Data section: the tag's entries in the log index, with every tag's chip.
- * An unknown tag has no entries and answers 404. Entries keep the LOG
- * numbers they have on the index, because they are numbered before
- * filtering.
+ * Data section: the tag's entries in the writing index, with every tag's
+ * chip and the search once the index offers them (`offersFilters`). An
+ * unknown tag has no entries and answers 404.
  */
 async function TagEntries({ tag }: { tag: string }) {
     const all = logEntries(await getAllPosts());
     const entries = entriesTagged(all, tag);
     if (entries.length === 0) notFound();
+    const tags = collectTags(all);
+    const filters = offersFilters(tags);
 
     return (
         <>
@@ -42,9 +43,7 @@ async function TagEntries({ tag }: { tag: string }) {
                     className="shell"
                     split
                     ornament="wave"
-                    num={logCopy.num}
-                    themed={copy.themed}
-                    plain={copy.plain}
+                    tag={logCopy.themed}
                     title={tag}
                     intro={copy.intro(tag)}
                 >
@@ -57,13 +56,15 @@ async function TagEntries({ tag }: { tag: string }) {
                         >
                             {logCopy.back}
                         </ButtonLink>
-                        <ButtonLink
-                            size="sm"
-                            icon="search"
-                            href="/blog/archive"
-                        >
-                            {logCopy.search}
-                        </ButtonLink>
+                        {filters ? (
+                            <ButtonLink
+                                size="sm"
+                                icon="search"
+                                href="/blog/archive"
+                            >
+                                {logCopy.search}
+                            </ButtonLink>
+                        ) : null}
                     </div>
                 </PageHead>
             </div>
@@ -73,11 +74,13 @@ async function TagEntries({ tag }: { tag: string }) {
                 aria-label={copy.intro(tag)}
             >
                 <div className={`shell ${styles.indexInner}`}>
-                    <TagChips
-                        tags={collectTags(all)}
-                        total={all.length}
-                        current={tag}
-                    />
+                    {filters ? (
+                        <TagChips
+                            tags={tags}
+                            total={all.length}
+                            current={tag}
+                        />
+                    ) : null}
                     <LogIndex entries={entries} level={2} matchTag={tag} />
                 </div>
             </section>
@@ -100,7 +103,7 @@ export async function generateStaticParams() {
 }
 
 /**
- * Subsystem · Tag: one tag's Flight Log entries. Validates the route param
+ * A tag's page: one tag's entries. Validates the route param
  * before handing off to the data section.
  */
 export default async function TagPage({
@@ -131,7 +134,7 @@ export async function generateMetadata({
         return;
     }
     const description = copy.intro(tag);
-    const title = `${tag} · ${logCopy.themed}`;
+    const title = `${tag} · ${logCopy.plain}`;
     return {
         title,
         description,

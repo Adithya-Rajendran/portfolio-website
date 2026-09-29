@@ -16,11 +16,6 @@ export function formatLogDesignation(number: number): string {
     return `LOG ${String(number).padStart(3, "0")}`;
 }
 
-/** 3 → "003": the short form on the transmissions chart. */
-export function formatLogNumber(number: number): string {
-    return String(number).padStart(3, "0");
-}
-
 interface Filed {
     slug: string;
     publishedAt?: string | null;

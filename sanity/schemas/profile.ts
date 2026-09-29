@@ -46,7 +46,7 @@ export default defineType({
             type: "string",
             group: "identity",
             description:
-                "Your current role or studies. Shown above your name on the home page, in the footer, as the About introduction, on the printed CV, beside your name on posts, and on the home and About sharing images.",
+                "Your current role or studies, in one line. Shown under your name on the home page, in the footer, as the About introduction, on the printed CV, beside your name on posts, and on the home and About sharing images.",
             validation: (Rule) => Rule.required().max(140),
         }),
         defineField({
@@ -55,7 +55,7 @@ export default defineType({
             type: "string",
             group: "identity",
             description:
-                "One line under your name on the home page. Leave blank to use the first sentence of the Introduction.",
+                "One sentence on what you are exploring: the Research interests statement on the home page. Leave blank to use the first sentence of the Introduction.",
             validation: (Rule) => Rule.max(120),
         }),
         defineField({
@@ -65,7 +65,7 @@ export default defineType({
             rows: 4,
             group: "identity",
             description:
-                "A short personal introduction. Its first sentence is the line under your name on the home page when there is no Tagline; it is also the search description of About, and of the site when Site Search Description is empty.",
+                "A short personal introduction. Its first sentence is the home page's Research interests statement when there is no Tagline; it is also the search description of About, and of the site when Site Search Description is empty.",
             validation: (Rule) => Rule.required().max(500),
         }),
         defineField({
@@ -74,7 +74,7 @@ export default defineType({
             type: "object",
             group: "status",
             description:
-                "What you are open to right now. Shown in the home page's status line, the About record, the CV (on screen and printed), the first route on Contact and the home page, the Contact sharing image, and as the planned orbit on the Trajectory map.",
+                "What you are open to right now. Shown under your name and in the closing call to contact on the home page, the About record, the CV (on screen and printed), the Hiring route on Contact, the Contact sharing image, and as the planned orbit on the Trajectory map.",
             fields: [
                 defineField({
                     name: "status",
@@ -234,7 +234,7 @@ export default defineType({
             rows: 3,
             group: ["writing", "copy"],
             description:
-                "Describe the conversations or opportunities you welcome. The text of the Research route on Contact and the home page, and Contact's search description. Leave blank to hide that route.",
+                "Describe the conversations or opportunities you welcome. The text of the Research route on Contact, and Contact's search description. Leave blank to hide that route.",
             validation: (Rule) => Rule.max(300),
         }),
         defineField({
@@ -244,7 +244,7 @@ export default defineType({
             rows: 2,
             group: "copy",
             description:
-                "One sentence under the Missions / Projects heading (/portfolio), also its search description and sharing image. Leave blank to show none.",
+                "One sentence under the Projects heading (/portfolio), also its search description and sharing image. Leave blank to show none.",
             validation: (Rule) => Rule.max(200),
         }),
         defineField({
@@ -254,7 +254,7 @@ export default defineType({
             rows: 2,
             group: "copy",
             description:
-                "One sentence under the Comms / Contact heading (/contact), also its sharing image when you are not open to anything. Leave blank to show none.",
+                "One sentence under the Contact heading (/contact), also its sharing image when you are not open to anything. Leave blank to show none.",
             validation: (Rule) => Rule.max(200),
         }),
         defineField({
@@ -263,7 +263,7 @@ export default defineType({
             type: "object",
             group: "copy",
             description:
-                "The words of each route on Contact and the home page. When each route shows is set elsewhere: Hiring unless your availability is Closed, Research with a Contact Invitation, Consulting with Open to Consulting on, and Hello always.",
+                "The words of each route on Contact. When each route shows is set elsewhere: Hiring unless your availability is Closed, Research with a Contact Invitation, Consulting with Open to Consulting on, and Hello always.",
             options: { collapsible: true, collapsed: false },
             fields: [
                 defineField({

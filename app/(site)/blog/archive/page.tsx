@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const description = getWritingDescription(profile);
     const described = description ? { description } : {};
     const name = profile?.name || siteConfig.author;
-    const title = `${copy.title} · ${logCopy.themed}`;
+    const title = `${copy.title} · ${logCopy.plain}`;
     const url = `${siteConfig.url}/blog/archive`;
     return {
         title,
@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Archive · All entries: every Flight Log entry by year in the log index,
+ * Archive: every entry by year in the writing index,
  * with the tag chips and a search over titles, standfirsts and tags. The
  * whole list is server-rendered; only the search needs JavaScript.
  */
@@ -52,9 +52,7 @@ export default async function ArchivePage() {
                     className="shell"
                     split
                     ornament="wave"
-                    num={logCopy.num}
-                    themed={copy.themed}
-                    plain={copy.plain}
+                    tag={logCopy.themed}
                     title={copy.title}
                     intro={copy.intro}
                 >
@@ -71,10 +69,7 @@ export default async function ArchivePage() {
                 </PageHead>
             </div>
 
-            <section
-                className={`section ${styles.index}`}
-                aria-label={copy.plain}
-            >
+            <section className={`section ${styles.index}`}>
                 <div className={`shell ${styles.indexInner}`}>
                     <ArchiveList entries={entries}>
                         <TagChips tags={tags} total={entries.length} />

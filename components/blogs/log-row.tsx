@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { logCopy as copy } from "@/lib/copy";
-import type { LogEntry } from "@/lib/log-index";
+import { formatEntryDate, type LogEntry } from "@/lib/log-index";
 import styles from "./log-index.module.css";
 
-type TitleTag = "h3" | "h4";
+type TitleTag = "h2" | "h3" | "h4";
 
 /**
- * One Flight Log entry on the index's shared tracks: LOG nnn · filed ·
- * title, standfirst and tags · read time. The title's link is stretched
+ * One entry on the index's shared tracks: the date it was filed (and
+ * "Updated …" only when the owner set a revision date) · the title,
+ * standfirst and tags · the read time. The title's link is stretched
  * over the whole row, so the row is one big target; the tag links stay
- * clickable above it. Ported from the mockup's `DF.render.postRow(p,
- * {index: true})` (site.css 4.10 Post row, 4.27 Scannable log index).
+ * clickable above it. Ported from the mockup's post row (site.css 4.10,
+ * 4.27).
  */
 export default function LogRow({
     entry,
@@ -26,11 +27,18 @@ export default function LogRow({
     return (
         <li className={styles.row} data-slug={entry.slug}>
             <div className={styles.meta}>
-                <span className={styles.log}>{entry.designation}</span>
                 {entry.publishedAt ? (
                     <time className={styles.date} dateTime={entry.publishedAt}>
-                        {entry.publishedAt}
+                        {formatEntryDate(entry.publishedAt)}
                     </time>
+                ) : null}
+                {entry.revisedAt ? (
+                    <span className={styles.updated}>
+                        {copy.updated}{" "}
+                        <time dateTime={entry.revisedAt}>
+                            {formatEntryDate(entry.revisedAt)}
+                        </time>
+                    </span>
                 ) : null}
                 {entry.readMinutes ? (
                     <span className={styles.read}>

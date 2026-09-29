@@ -1,14 +1,15 @@
 import type { PostListItem } from "@/lib/sanity-client";
 import { readingTimeFromWordCount } from "@/components/blogs/utils";
 import { formatLogDesignation, logNumbers } from "@/lib/designations";
-import { TAG_PATTERN } from "@/lib/tags";
+import { TAG_PATTERN, type TagCount } from "@/lib/tags";
 
 /**
- * The Flight Log index (G8): one row per published entry on shared column
- * tracks (LOG nnn · filed · title and standfirst · read time · tags),
- * grouped by year (`groupPostsByYear` in lib/tags.ts). Pure, so the index page, the tag pages, the archive and
- * (from PR 13) the home Flight Log act derive the same rows and the same
- * LOG numbers.
+ * The writing index (G8): one row per published entry on shared column
+ * tracks (date and any revision · title, standfirst and tags · read
+ * time), grouped by year (`groupPostsByYear` in lib/tags.ts). Pure, so
+ * /blog, the tag pages, the archive, the home page and About derive the
+ * same rows. Each entry keeps its derived LOG number, the quiet
+ * identifier its own page prints.
  */
 
 export interface LogEntry {
@@ -18,6 +19,9 @@ export interface LogEntry {
     dek: string;
     /** The date it was filed (published), `YYYY-MM-DD`; "" if unknown. */
     publishedAt: string;
+    /** The last substantive revision (`revisedAt`), `YYYY-MM-DD`, only
+     *  when the owner set one after the filing date; otherwise null. */
+    revisedAt: string | null;
     /** Minutes at 200 words a minute; null when the body has no words. */
     readMinutes: number | null;
     wordCount: number;
@@ -32,7 +36,9 @@ export interface LogEntry {
 export type LogSource = Pick<
     PostListItem,
     "slug" | "title" | "description" | "publishedAt" | "tags" | "wordCount"
-> & { _id?: string | null };
+> & { _id?: string | null; revisedAt?: string | null };
+
+const DATE = /^\d{4}-\d{2}-\d{2}/;
 
 /**
  * Every entry with a slug, newest first (by number, so posts filed on the
@@ -46,13 +52,21 @@ export function logEntries(posts: readonly LogSource[]): LogEntry[] {
         .map((post) => {
             const number = numbers.get(post.slug)!;
             const wordCount = post.wordCount ?? 0;
+            const publishedAt = DATE.test(post.publishedAt ?? "")
+                ? post.publishedAt.slice(0, 10)
+                : "";
+            const revised = DATE.test(post.revisedAt ?? "")
+                ? post.revisedAt!.slice(0, 10)
+                : null;
             return {
                 slug: post.slug,
                 title: post.title || "",
                 dek: post.description || "",
-                publishedAt: /^\d{4}-\d{2}-\d{2}/.test(post.publishedAt ?? "")
-                    ? post.publishedAt.slice(0, 10)
-                    : "",
+                publishedAt,
+                revisedAt:
+                    revised && (!publishedAt || revised > publishedAt)
+                        ? revised
+                        : null,
                 readMinutes:
                     wordCount > 0 ? readingTimeFromWordCount(wordCount) : null,
                 wordCount,
@@ -62,6 +76,15 @@ export function logEntries(posts: readonly LogSource[]): LogEntry[] {
             };
         })
         .sort((a, b) => b.number - a.number);
+}
+
+/**
+ * Whether the index offers its tag filters and search: only once a tag
+ * gathers two or more entries. Until then every entry is on one short
+ * list, and a filter would only narrow it to the entry already in view.
+ */
+export function offersFilters(tags: readonly TagCount[]): boolean {
+    return tags.some((tag) => tag.count >= 2);
 }
 
 /** Entries that carry the exact tag. */
@@ -86,13 +109,6 @@ const MONTHS = [
     "Nov",
     "Dec",
 ];
-
-/** "2026-03-06" → "Mar 2026". */
-export function monthLabel(date: string): string {
-    const match = /^(\d{4})-(\d{2})/.exec(date);
-    if (!match) return "";
-    return `${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
-}
 
 /** "2026-03-30" → "30 Mar 2026": the post head's date. */
 export function formatEntryDate(date: string | null | undefined): string {

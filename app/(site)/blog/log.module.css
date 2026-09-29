@@ -1,48 +1,19 @@
 /*
- * Flight Log pages (/blog, /blog/archive, /blog/tags/[tag]): the chart's
- * place, the index section and the Downlink (the head is the shared split
- * head over a band of stars). Ported from the
- * mockup's writing.css "LOG.HTML · § 01". The index, its rows, the chips
- * and the chart have their own modules beside their components.
+ * Writing pages (/blog, /blog/archive, /blog/tags/[tag]): the index
+ * section under the shared split head over a band of stars. Ported from
+ * the mockup's writing.css "LOG.HTML". The index, its rows and the chips
+ * have their own modules beside their components.
  */
 
-/* One column whose order changes below 960px: there the chart follows the
-   index, so the first entries reach the first viewport (plan §6.2 PR 9).
-   The chart holds no focusable element, so the focus order is unchanged.
-   The head band keeps its place first (order 0). */
 .page {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
 }
-.index {
-    order: 1;
-}
-.chart {
-    order: 2;
-}
-.downlink {
-    order: 3;
-}
 
-/* ---- Page head: the shared split head (.page-head--split) -------------- */
-@media (min-width: 60rem) {
-    .chart {
-        order: 0;
-        padding-top: var(--s-4);
-    }
-}
-
-/* ---- § 01.1 Index --------------------------------------------------------- */
+/* ---- The index ------------------------------------------------------------ */
 .index {
     padding-top: var(--s-5);
-    padding-bottom: var(--s-8);
-}
-/* From 960px /blog's chart comes first, and the index keeps a block's
-   distance from it, as a section does from a page head elsewhere. */
-@media (min-width: 60rem) {
-    .chart + .index {
-        padding-top: var(--space-block);
-    }
+    padding-bottom: var(--s-9);
 }
 .indexInner {
     display: grid;
@@ -66,37 +37,4 @@
 }
 .emptyTitle {
     font: 300 var(--step-3) / 1.1 var(--font-display);
-}
-
-/* ---- § 01.2 Downlink (DocSection) ----------------------------------------- */
-.downlink {
-    padding-top: var(--s-7);
-}
-.downGrid {
-    display: grid;
-    gap: var(--s-6) var(--gutter);
-}
-@media (min-width: 37.5rem) {
-    .downGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-.downItem {
-    display: grid;
-    align-content: start;
-    gap: var(--s-3);
-    padding-top: var(--s-4);
-    border-top: var(--rule-hair) solid var(--rule-2);
-}
-.downUrl {
-    color: var(--ink-1);
-    font-size: 0.875rem;
-    overflow-wrap: anywhere;
-}
-.downNote {
-    color: var(--ink-2);
-    font: 400 var(--step--1) / 1.5 var(--font-text);
-}
-.downItem > :global(.cluster) {
-    margin-top: var(--s-2);
 }

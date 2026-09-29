@@ -203,7 +203,4 @@ html[data-motion="reduced"] *::after {
     .seg__input:checked + .seg__box::before {
         background: SelectedItemText;
     }
-    .nav__link[aria-current] .nav__plain {
-        color: SelectedItemText;
-    }
 }

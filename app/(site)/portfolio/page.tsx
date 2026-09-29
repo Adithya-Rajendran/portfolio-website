@@ -5,7 +5,6 @@ import MissionTile, { MissionTiles } from "@/components/portfolio/mission-tile";
 import StaticStars from "@/components/sky/static-stars";
 import { LinkArrow, Status } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
-import Pair from "@/components/ui/pair";
 import RouteList from "@/components/ui/route-list";
 import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
@@ -29,7 +28,7 @@ import {
 import styles from "./portfolio.module.css";
 
 const canonicalUrl = `${siteConfig.url}${siteRoutes.portfolio}`;
-const title = `${copy.themed} · ${copy.plain}`;
+const title = copy.plain;
 
 export async function generateMetadata(): Promise<Metadata> {
     const profile = await getProfile();
@@ -54,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Missions · Projects (§ 02): the page head with the owner's
+ * Projects (/portfolio; themed Missions): the page head with the owner's
  * introduction (`projectsIntro`, left out when empty), the flagship on its
  * stage, the other missions as text-first tiles, the register of every
  * mission (Table 1), and the pages that the old sections of this page
@@ -100,13 +99,6 @@ export default async function Portfolio() {
         { profile, posts: posts.filter((post) => post.slug).length },
         { anchors: true },
     );
-    const sections = [
-        flagship ? "flagship" : null,
-        others.length ? "more" : null,
-        missions.length ? "register" : null,
-        rows.length ? "directory" : null,
-    ].filter(Boolean);
-    const num = (id: string) => `${copy.num}.${sections.indexOf(id) + 1}`;
 
     return (
         <div data-page="missions" className={styles.page}>
@@ -116,9 +108,8 @@ export default async function Portfolio() {
                     className="shell"
                     split
                     ornament="pulsar"
-                    num={copy.num}
-                    themed={copy.themed}
-                    plain={copy.plain}
+                    tag={copy.themed}
+                    title={copy.plain}
                     intro={profile?.projectsIntro?.trim() || null}
                 >
                     <div className={styles.headMeta}>
@@ -148,16 +139,9 @@ export default async function Portfolio() {
                     aria-labelledby="msn-flagship-h"
                 >
                     <div className="shell">
-                        <SectionTag
-                            className={styles.tag}
-                            ornament="star"
-                            num={num("flagship")}
-                        >
+                        <SectionTag className={styles.tag} ornament="star">
                             <h2 className="section-tag__h" id="msn-flagship-h">
-                                <Pair
-                                    themed={copy.flagshipThemed}
-                                    plain={copy.flagshipPlain}
-                                />
+                                {copy.flagship}
                             </h2>
                         </SectionTag>
                         <MissionStage
@@ -182,12 +166,9 @@ export default async function Portfolio() {
                     aria-labelledby="msn-more-h"
                 >
                     <div className="shell">
-                        <SectionTag className={styles.tag} num={num("more")}>
+                        <SectionTag className={styles.tag}>
                             <h2 className="section-tag__h" id="msn-more-h">
-                                <Pair
-                                    themed={copy.moreThemed}
-                                    plain={copy.morePlain}
-                                />
+                                {copy.more}
                             </h2>
                         </SectionTag>
                         <MissionTiles>
@@ -209,15 +190,9 @@ export default async function Portfolio() {
                     aria-labelledby="msn-register-h"
                 >
                     <div className="shell">
-                        <SectionTag
-                            className={styles.tag}
-                            num={num("register")}
-                        >
+                        <SectionTag className={styles.tag}>
                             <h2 className="section-tag__h" id="msn-register-h">
-                                <Pair
-                                    themed={copy.registerThemed}
-                                    plain={copy.registerPlain}
-                                />
+                                {copy.register}
                             </h2>
                         </SectionTag>
                         <MissionRegister
@@ -234,15 +209,9 @@ export default async function Portfolio() {
             {rows.length ? (
                 <section className="section" aria-labelledby="msn-dir-h">
                     <div className="shell">
-                        <SectionTag
-                            className={styles.tag}
-                            num={num("directory")}
-                        >
+                        <SectionTag className={styles.tag}>
                             <h2 className="section-tag__h" id="msn-dir-h">
-                                <Pair
-                                    themed={copy.directoryThemed}
-                                    plain={copy.directoryPlain}
-                                />
+                                {copy.directory}
                             </h2>
                         </SectionTag>
                         <RouteList

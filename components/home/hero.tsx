@@ -8,17 +8,19 @@ import { Icon } from "@/components/ui/icon";
 import { Status } from "@/components/ui/marks";
 import { homeCopy as copy } from "@/lib/copy";
 import sunrise from "@/lib/hero-sunrise.json";
+import { siteRoutes } from "@/lib/navigation";
 import styles from "./hero.module.css";
 
 /**
- * The home hero (§ 00, contract §9): the only full-bleed image on the
- * site. NASA's orbital sunrise (ISS072-E-30246) is screen-blended over the
+ * The home hero (contract §9): the only full-bleed image on the site.
+ * NASA's orbital sunrise (ISS072-E-30246) is screen-blended over the
  * drifting starfield in Void; under it, and alone in Flight Manual and in
  * print, the same limb is drawn as SVG from the circles fitted to the
  * photograph (lib/hero-sunrise.json), so the first paint is right before
  * the photograph arrives, and without it. Centred over the black above
- * the limb: the headline, the name (the page's h1), the tagline, the
- * status line and three quick links, CV first. At the foot, the credit
+ * the limb: the name (the page's h1), the profile's one-line headline,
+ * what the owner is open to (the profile's availability, only when set)
+ * and three quick links: Projects, CV, Contact. At the foot, the credit
  * and Pause motion. Everything is server-rendered; the starfield and the
  * motion control are the only islands.
  */
@@ -167,31 +169,20 @@ function Photo() {
     );
 }
 
-export interface HeroStatus {
-    /** The current role: "MS Engineering (Interdisciplinary) · San José
-     *  State University". */
-    now: string | null;
-    openTo: string | null;
-    /** `YYYY-MM-DD` and its words ("24 Sep 2026"). */
-    updated: { date: string; label: string } | null;
-}
-
 export default function Hero({
     name,
     headline,
-    tagline,
-    status,
-    routes,
+    openTo,
+    projects,
 }: {
     name: string;
     headline: string | null;
-    tagline: string | null;
-    status: HeroStatus;
-    /** Which quick links have somewhere to go. */
-    routes: { cv: boolean; work: boolean; blog: boolean };
+    /** The availability line: "Summer 2027 internships · …". */
+    openTo: string | null;
+    /** Whether there are projects to link to. */
+    projects: boolean;
 }) {
     const words = name.split(/\s+/).filter(Boolean);
-    const hasStatus = Boolean(status.now || status.openTo || status.updated);
     return (
         <section
             className={styles.hero}
@@ -210,11 +201,6 @@ export default function Hero({
 
             <div className={`shell ${styles.frame}`}>
                 <div className={styles.centre}>
-                    {headline ? (
-                        <p className={styles.headline} data-clear>
-                            {headline}
-                        </p>
-                    ) : null}
                     <h1 className={styles.name} id="hero-name" data-clear>
                         {words.map((word, index) => (
                             <span key={`${word}-${index}`}>
@@ -223,72 +209,37 @@ export default function Hero({
                             </span>
                         ))}
                     </h1>
-                    {tagline ? (
-                        <p className={styles.tagline} data-clear>
-                            {tagline}
+                    {headline ? (
+                        <p className={styles.headline} data-clear>
+                            {headline}
                         </p>
                     ) : null}
-                    {hasStatus ? (
+                    {openTo ? (
                         <p className={styles.status} data-clear>
-                            {status.now ? (
-                                <span className={styles.statusNow}>
-                                    <Status value="active">{copy.now}</Status>{" "}
-                                    <span>{status.now}</span>
-                                </span>
-                            ) : null}
-                            {status.openTo ? (
-                                <span className={styles.statusOpen}>
-                                    <span className={styles.statusKey}>
-                                        {copy.openTo}
-                                    </span>{" "}
-                                    {status.openTo}
-                                </span>
-                            ) : null}
-                            {status.updated ? (
-                                <span className={styles.statusUpdated}>
-                                    {copy.updated}{" "}
-                                    <time dateTime={status.updated.date}>
-                                        {status.updated.label}
-                                    </time>
-                                </span>
-                            ) : null}
+                            <Status value="active">{copy.openTo}</Status>{" "}
+                            <span className={styles.openTo}>{openTo}</span>
                         </p>
                     ) : null}
-                    {routes.cv || routes.work || routes.blog ? (
-                        <nav
-                            className={styles.routes}
-                            aria-label={copy.routesLabel}
-                            data-clear
-                        >
-                            {routes.cv ? (
-                                <Link className="btn" href="/resume">
-                                    <span>{copy.cv}</span>
-                                    <Icon
-                                        name="arrow"
-                                        className="icon--nudge"
-                                    />
-                                </Link>
-                            ) : null}
-                            {routes.work ? (
-                                <a className="btn" href="#missions">
-                                    <span>{copy.work}</span>
-                                    <Icon
-                                        name="arrow-down"
-                                        className="icon--nudge"
-                                    />
-                                </a>
-                            ) : null}
-                            {routes.blog ? (
-                                <Link className="btn" href="/blog">
-                                    <span>{copy.blog}</span>
-                                    <Icon
-                                        name="arrow"
-                                        className="icon--nudge"
-                                    />
-                                </Link>
-                            ) : null}
-                        </nav>
-                    ) : null}
+                    <nav
+                        className={styles.routes}
+                        aria-label={copy.routesLabel}
+                        data-clear
+                    >
+                        {projects ? (
+                            <Link className="btn" href={siteRoutes.portfolio}>
+                                <span>{copy.projects}</span>
+                                <Icon name="arrow" className="icon--nudge" />
+                            </Link>
+                        ) : null}
+                        <Link className="btn" href={siteRoutes.resume}>
+                            <span>{copy.cv}</span>
+                            <Icon name="arrow" className="icon--nudge" />
+                        </Link>
+                        <Link className="btn" href={siteRoutes.contact}>
+                            <span>{copy.contact}</span>
+                            <Icon name="arrow" className="icon--nudge" />
+                        </Link>
+                    </nav>
                 </div>
 
                 <div className={styles.foot}>

@@ -13,7 +13,7 @@ import { useEffect, useRef } from "react";
  *   first one in the document, which may be hidden. Contents, footnote
  *   and back links are resolved inside this entry's root instead
  *   (plan §2.3 rule 4), and the address still gains the fragment.
- * - Closes the phone's "In this entry" box after a contents link.
+ * - Closes the phone's contents box after a contents link.
  *
  * Renders nothing. Without JavaScript the links are plain fragments,
  * which is right there: without JavaScript only one page is loaded.

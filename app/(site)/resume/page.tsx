@@ -44,7 +44,7 @@ import {
 import styles from "./resume.module.css";
 
 const canonicalUrl = `${siteConfig.url}${siteRoutes.resume}`;
-const title = `${copy.themed} · ${copy.plain}`;
+const title = copy.plain;
 
 function summaryOf(profile: ProfileData | null): string | null {
     return profile?.workSummary?.trim() || null;
@@ -83,22 +83,18 @@ const PROJECT_STATUS: Record<ProjectStatus, StatusValue> = {
 
 /**
  * A CV section: the shared section head (DocSection: the full-width tag
- * row with its themed / plain pair), then the rows in the main column. On
- * paper the head prints its plain name only.
+ * row with its plain name), then the rows in the main column. On paper
+ * the head prints the same name in capitals over a rule.
  */
 function CvSection({
     id,
-    num,
-    themed,
-    plain,
+    title,
     after,
     print = true,
     children,
 }: {
     id: string;
-    num: string;
-    themed: string;
-    plain: React.ReactNode;
+    title: React.ReactNode;
     after?: React.ReactNode;
     /** False leaves the section off the paper. */
     print?: boolean;
@@ -108,9 +104,7 @@ function CvSection({
         <DocSection
             className={`section--tight ${styles.cv}`}
             id={id}
-            num={num}
-            themed={themed}
-            plain={plain}
+            title={title}
             data={{ "data-print": print ? undefined : "hide" }}
         >
             {children}
@@ -194,8 +188,7 @@ export default async function ResumePage() {
     const linkedIn = getProfileLink(profile, "linkedin");
     const gitHub = getProfileLink(profile, "github");
 
-    // Sections are numbered in the order they appear; an empty one is
-    // absent, and so is its number. Paper: education and experience on
+    // An empty section is absent. Paper: education and experience on
     // sheet 1, the rest on sheet 2.
     const present = {
         education: timeline.education.length > 0,
@@ -208,8 +201,6 @@ export default async function ResumePage() {
     const order = (Object.keys(present) as (keyof typeof present)[]).filter(
         (id) => present[id],
     );
-    const numOf = (id: keyof typeof present) =>
-        `${copy.num}.${order.indexOf(id) + (model ? 2 : 1)}`;
     const sheetOne = present.education || present.experience;
     // Paper leaves the Flight Log off: writing prints only with talks.
     const sheetTwo = order.some(
@@ -276,9 +267,8 @@ export default async function ResumePage() {
                     className="shell"
                     split
                     ornament="orbit"
-                    num={copy.num}
-                    themed={copy.themed}
-                    plain={copy.plain}
+                    tag={copy.themed}
+                    title={copy.title}
                     meta={rev ? <Rev date={rev} /> : undefined}
                     intro={summary}
                 >
@@ -354,9 +344,7 @@ export default async function ResumePage() {
                     id="orbit-map"
                     headingId="cv-map-h"
                     data={{ "data-print": "hide" }}
-                    num={`${copy.num}.1`}
-                    themed={copy.map.themed}
-                    plain={copy.map.plain}
+                    title={copy.map}
                     wide
                 >
                     <OrbitMap
@@ -405,23 +393,13 @@ export default async function ResumePage() {
 
             <div className={styles.cvBody}>
                 {timeline.education.length ? (
-                    <CvSection
-                        id="education"
-                        num={numOf("education")}
-                        themed={copy.education.themed}
-                        plain={copy.education.plain}
-                    >
+                    <CvSection id="education" title={copy.education}>
                         <CvList>{timeline.education.map(roleRow)}</CvList>
                     </CvSection>
                 ) : null}
 
                 {timeline.experience.length ? (
-                    <CvSection
-                        id="experience"
-                        num={numOf("experience")}
-                        themed={copy.experience.themed}
-                        plain={copy.experience.plain}
-                    >
+                    <CvSection id="experience" title={copy.experience}>
                         <CvList>{timeline.experience.map(roleRow)}</CvList>
                     </CvSection>
                 ) : null}
@@ -438,9 +416,7 @@ export default async function ResumePage() {
                 {missions.length ? (
                     <CvSection
                         id="projects"
-                        num={numOf("projects")}
-                        themed={copy.projects.themed}
-                        plain={copy.projects.plain}
+                        title={copy.projects}
                         after={
                             <LinkArrow href={siteRoutes.portfolio}>
                                 {copy.allProjects}
@@ -484,13 +460,11 @@ export default async function ResumePage() {
                 {writing.length || talks.length ? (
                     <CvSection
                         id="writing"
-                        num={numOf("writing")}
-                        themed={copy.writing.themed}
-                        plain={
+                        title={
                             writing.length && talks.length ? (
                                 <>
                                     <span data-print="hide">
-                                        {copy.writing.plainWithTalks}
+                                        {copy.writing.withTalks}
                                     </span>
                                     <span data-print="only">
                                         {copy.writing.talks}
@@ -499,14 +473,14 @@ export default async function ResumePage() {
                             ) : talks.length ? (
                                 copy.writing.talks
                             ) : (
-                                copy.writing.plain
+                                copy.writing.title
                             )
                         }
                         print={talks.length > 0}
                         after={
                             writing.length ? (
                                 <LinkArrow href={siteRoutes.blog}>
-                                    {copy.flightLog}
+                                    {copy.allWriting}
                                 </LinkArrow>
                             ) : null
                         }
@@ -540,12 +514,7 @@ export default async function ResumePage() {
                 ) : null}
 
                 {skills.length ? (
-                    <CvSection
-                        id="skills"
-                        num={numOf("skills")}
-                        themed={copy.skills.themed}
-                        plain={copy.skills.plain}
-                    >
+                    <CvSection id="skills" title={copy.skills}>
                         <Specs
                             className={styles.skills}
                             items={skills.map((group) => ({
@@ -558,12 +527,7 @@ export default async function ResumePage() {
                 ) : null}
 
                 {credentials.length ? (
-                    <CvSection
-                        id="certifications"
-                        num={numOf("certifications")}
-                        themed={copy.certifications.themed}
-                        plain={copy.certifications.plain}
-                    >
+                    <CvSection id="certifications" title={copy.certifications}>
                         <CvList>
                             {credentials.map((credential) => (
                                 <CvItem

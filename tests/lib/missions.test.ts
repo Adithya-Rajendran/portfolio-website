@@ -176,14 +176,29 @@ describe("sitePostSlug", () => {
 });
 
 describe("missionOrder and adjacentMissions", () => {
-    it("puts the featured slots first, then keeps the list's order", () => {
+    it("puts the featured slots first, then goes by mission number", () => {
         const order = missionOrder([
-            { slug: "a" },
-            { slug: "b", featured: 2 },
-            { slug: "c" },
-            { slug: "d", featured: 1 },
+            { slug: "a", designation: 4 },
+            { slug: "b", featured: 2, designation: 5 },
+            { slug: "c", designation: 1 },
+            { slug: "d", featured: 1, designation: 2 },
+            { slug: "e" },
         ]);
-        expect(order.map((item) => item.slug)).toEqual(["d", "b", "a", "c"]);
+        expect(order.map((item) => item.slug)).toEqual([
+            "d",
+            "b",
+            "c",
+            "a",
+            "e",
+        ]);
+    });
+
+    it("keeps the list's order between missions without a number", () => {
+        const order = missionOrder<{ slug: string; featured?: number }>([
+            { slug: "a" },
+            { slug: "b" },
+        ]);
+        expect(order.map((item) => item.slug)).toEqual(["a", "b"]);
     });
 
     it("pages through the files by mission number", () => {

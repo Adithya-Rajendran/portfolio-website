@@ -18,7 +18,7 @@ import type {
 
 /**
  * Missions (G5, G6): the projects as the /portfolio index, the mission
- * files and (from PR 13) the home Missions act read them. Pure, so every
+ * files and the home page read them. Pure, so every
  * place agrees on the order, the names, the status marks, the dates and
  * which Flight Log entries belong to a mission. Everything here is derived
  * from what the owner published; a value that is not set stays empty.
@@ -261,15 +261,23 @@ export function toMission(project: ProjectListItem, siteUrl: string): Mission {
 
 /**
  * The order missions are shown in: the featured slots first (1 is the
- * flagship), then the rest as the list query returns them (newest first).
+ * flagship), then the rest by the owner's mission number, so the order
+ * is his and a newly edited project does not jump ahead; the list
+ * query's order breaks any tie.
  */
-export function missionOrder<T extends { featured?: number | null }>(
-    projects: readonly T[],
-): T[] {
+export function missionOrder<
+    T extends { featured?: number | null; designation?: number | null },
+>(projects: readonly T[]): T[] {
     const slot = (project: T) => project.featured ?? Infinity;
+    const number = (project: T) => project.designation ?? Infinity;
     return projects
         .map((project, index) => ({ project, index }))
-        .sort((a, b) => slot(a.project) - slot(b.project) || a.index - b.index)
+        .sort(
+            (a, b) =>
+                slot(a.project) - slot(b.project) ||
+                number(a.project) - number(b.project) ||
+                a.index - b.index,
+        )
         .map(({ project }) => project);
 }
 

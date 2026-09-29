@@ -91,7 +91,7 @@ export default function MissionRegister({
                                     <ul className={styles.regLinks} role="list">
                                         <li>
                                             <Link href={mission.href}>
-                                                {copy.file}
+                                                {copy.fileColumn}
                                                 <span className="sr-only">
                                                     {" "}
                                                     · {mission.name}

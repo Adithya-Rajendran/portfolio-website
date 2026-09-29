@@ -2,7 +2,6 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ReactElement } from "react";
 import { starLayout } from "@/lib/sky/stars";
-import type { TransmissionsChart } from "@/lib/transmissions";
 
 /**
  * The Deep Field share card (plan §2.9): the void, a seeded scatter of
@@ -81,106 +80,26 @@ const label = {
 };
 const mono = { fontFamily: "DM Mono", fontSize: 20 };
 
-/** Fig. 1 drawn for the card: the same marks as the page, no labels. */
-function Strip({ chart }: { chart: TransmissionsChart }) {
-    const width = WIDTH - 2 * PAD_X;
-    const height = 84;
-    return (
-        <div
-            style={{
-                display: "flex",
-                position: "relative",
-                width,
-                height,
-                borderBottom: `1px solid ${VOID.rule2}`,
-            }}
-        >
-            {chart.marks.map((mark) => {
-                const h = Math.round(mark.h * height * 0.82);
-                const left = Math.round((mark.x / 100) * width);
-                const colour = mark.latest ? VOID.accent : VOID.ink3;
-                return (
-                    <div
-                        key={mark.slug}
-                        style={{
-                            display: "flex",
-                            position: "absolute",
-                            left,
-                            bottom: 0,
-                            width: 2,
-                            height: h,
-                            background: colour,
-                        }}
-                    >
-                        <div
-                            style={{
-                                position: "absolute",
-                                left: -5,
-                                top: -5,
-                                width: 12,
-                                height: 12,
-                                borderRadius: 6,
-                                background: mark.latest
-                                    ? VOID.accent
-                                    : VOID.ink1,
-                            }}
-                        />
-                        {mark.latest ? (
-                            <div
-                                style={{
-                                    ...mono,
-                                    position: "absolute",
-                                    left: 14,
-                                    top: -12,
-                                    fontSize: 18,
-                                    color: VOID.accentText,
-                                }}
-                            >
-                                {mark.number}
-                            </div>
-                        ) : null}
-                    </div>
-                );
-            })}
-            <div
-                style={{
-                    position: "absolute",
-                    left: Math.round((chart.now / 100) * width),
-                    top: 0,
-                    bottom: 0,
-                    width: 0,
-                    borderLeft: `1px dashed ${VOID.rule2}`,
-                }}
-            />
-        </div>
-    );
-}
-
 /**
- * A page's card: the kicker (the § number and the themed / plain pair),
- * the title with its plain name, one line from the page, and a footer of
- * data. `chart` adds the transmissions strip (the Flight Log); `upper`
- * sets the title in capitals (a mission's name, the vehicle treatment).
+ * A page's card: the patch and one orange rule with the section's small
+ * themed tag, the page's plain title, one line from the page, and a
+ * footer of data. `upper` sets the title in capitals (a project's name or
+ * the owner's, the vehicle treatment).
  */
 export function OgCard({
-    num,
-    themed,
-    plain,
+    tag,
     title,
     subtitle,
     footerLeft,
     footerRight,
-    chart,
     upper = false,
 }: {
-    num: string;
-    themed: string;
-    plain: string;
+    /** The section's themed name: a small label beside the patch. */
+    tag?: string;
     title: string;
     subtitle?: string;
     footerLeft?: string;
     footerRight: string;
-    chart?: TransmissionsChart | null;
     upper?: boolean;
 }): ReactElement {
     return (
@@ -233,28 +152,9 @@ export function OgCard({
                             background: VOID.accent,
                         }}
                     />
-                    <span
-                        style={{
-                            ...mono,
-                            fontSize: 21,
-                            color: VOID.accentText,
-                        }}
-                    >
-                        {`§${num}`}
-                    </span>
-                    <span>{themed}</span>
-                    <span style={{ color: VOID.ink3 }}>/</span>
-                    <span
-                        style={{
-                            fontFamily: "Jost",
-                            fontSize: 24,
-                            letterSpacing: "0.01em",
-                            textTransform: "none",
-                            color: VOID.ink2,
-                        }}
-                    >
-                        {plain}
-                    </span>
+                    {tag ? (
+                        <span style={{ color: VOID.ink2 }}>{tag}</span>
+                    ) : null}
                 </div>
             </div>
 
@@ -294,16 +194,13 @@ export function OgCard({
                 ) : null}
             </div>
 
-            {chart ? <Strip chart={chart} /> : null}
-
             <div
                 style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginTop: chart ? 20 : 0,
-                    paddingTop: chart ? 0 : 22,
-                    borderTop: chart ? "none" : `1px solid ${VOID.rule2}`,
+                    paddingTop: 22,
+                    borderTop: `1px solid ${VOID.rule2}`,
                     ...mono,
                     color: VOID.ink2,
                 }}

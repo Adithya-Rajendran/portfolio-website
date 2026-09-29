@@ -20,8 +20,8 @@ import {
  * with the ids the contents and the Studio's callout anchors use. Styles
  * live in styles/prose.css, under `.prose`.
  *
- * Every number comes from `indexProse` (lib/prose.ts), which also feeds the
- * "In this entry" record and the RSS feed, so they agree. Pass its `body`
+ * Every number comes from `indexProse` (lib/prose.ts), which also feeds
+ * the RSS feed, so they agree. Pass its `body`
  * (the footnotes are numbered there) to <PortableText>.
  */
 export interface ProseContext {

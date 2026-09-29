@@ -43,8 +43,7 @@ export default function GlobalNotFound() {
                     <LossOfSignal
                         page="not-found"
                         tag={copy.tag}
-                        themed={copy.themed}
-                        plain={copy.plain}
+                        title={copy.title}
                         lead={copy.lead}
                         actions={<NotFoundActions />}
                         showRequested

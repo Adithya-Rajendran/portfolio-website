@@ -5,7 +5,7 @@ import RouteMarker from "@/components/chrome/route-marker";
 import { primaryNavigation } from "@/lib/navigation";
 
 /**
- * The five nav pairs as list items. Only the current-section mark needs
+ * The five nav links as list items. Only the current-section mark needs
  * the pathname, which can suspend under Cache Components, so each link is
  * its own small client island in a leaf Suspense whose fallback is the
  * same link unmarked. One boundary per link, not one for the list: React

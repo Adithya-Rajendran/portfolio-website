@@ -255,25 +255,12 @@ export default async function ProjectPage({
     const hasEssay = project.body?.length > 0;
     const contents = headings.length ? contentsHeadings(headings) : [];
 
-    // Sections are numbered in the order they appear; an empty one is
-    // absent, and so is its number.
-    const present = [
-        callouts.length ? "callouts" : null,
-        brief.length ? "brief" : null,
-        hasEssay ? "write-up" : null,
-        results.length ? "results" : null,
-        lessons.length || nextSteps.length ? "debrief" : null,
-        mission.links.length ? "links" : null,
-        related.length ? "related" : null,
-    ].filter(Boolean);
-    const num = (id: string) => `${copy.num}.${present.indexOf(id) + 1}`;
-
     return (
         <div data-page="mission" className={styles.page}>
             <BreadcrumbJsonLd
                 items={[
                     { name: "Home", path: "/" },
-                    { name: copy.themed, path: siteRoutes.portfolio },
+                    { name: copy.plain, path: siteRoutes.portfolio },
                     { name: project.title, path: mission.href },
                 ]}
             />
@@ -283,9 +270,7 @@ export default async function ProjectPage({
                 <CrumbRow
                     className={styles.crumb}
                     ornament="pulsar"
-                    num={copy.num}
-                    themed={copy.themed}
-                    plain={copy.plain}
+                    label={copy.plain}
                     href={siteRoutes.portfolio}
                     name={mission.name}
                 />
@@ -378,9 +363,7 @@ export default async function ProjectPage({
             {callouts.length ? (
                 <DocSection
                     id="callouts"
-                    num={num("callouts")}
-                    themed={copy.calloutsThemed}
-                    plain={project.model?.title?.trim() || copy.calloutsPlain}
+                    title={project.model?.title?.trim() || copy.callouts}
                 >
                     <ViewerCallouts
                         callouts={callouts}
@@ -390,12 +373,7 @@ export default async function ProjectPage({
             ) : null}
 
             {brief.length ? (
-                <DocSection
-                    id="brief"
-                    num={num("brief")}
-                    themed={copy.briefThemed}
-                    plain={copy.briefPlain}
-                >
+                <DocSection id="brief" title={copy.briefTitle}>
                     <Specs
                         className={`specs--read ${styles.brief}`}
                         items={brief.map(([key, text]) => ({
@@ -410,9 +388,7 @@ export default async function ProjectPage({
             {hasEssay ? (
                 <DocSection
                     id="write-up"
-                    num={num("write-up")}
-                    themed={copy.writeUpThemed}
-                    plain={copy.writeUpPlain}
+                    title={copy.writeUp}
                     prose
                     rail={
                         contents.length > 1 ? (
@@ -442,12 +418,7 @@ export default async function ProjectPage({
             ) : null}
 
             {results.length ? (
-                <DocSection
-                    id="results"
-                    num={num("results")}
-                    themed={copy.resultsThemed}
-                    plain={copy.resultsPlain}
-                >
+                <DocSection id="results" title={copy.results}>
                     <div
                         className={`table-wrap ${styles.results}`}
                         role="region"
@@ -497,12 +468,7 @@ export default async function ProjectPage({
             ) : null}
 
             {lessons.length || nextSteps.length ? (
-                <DocSection
-                    id="debrief"
-                    num={num("debrief")}
-                    themed={copy.debriefThemed}
-                    plain={copy.debriefPlain}
-                >
+                <DocSection id="debrief" title={copy.debrief}>
                     <div className={styles.debrief}>
                         {lessons.length ? (
                             <div>
@@ -533,12 +499,7 @@ export default async function ProjectPage({
             ) : null}
 
             {mission.links.length ? (
-                <DocSection
-                    id="links"
-                    num={num("links")}
-                    themed={copy.linksThemed}
-                    plain={copy.linksPlain}
-                >
+                <DocSection id="links" title={copy.links}>
                     <RouteList
                         labelledBy="links-h"
                         columns={2}
@@ -555,12 +516,7 @@ export default async function ProjectPage({
             ) : null}
 
             {related.length ? (
-                <DocSection
-                    id="related"
-                    num={num("related")}
-                    themed={copy.relatedThemed}
-                    plain={copy.relatedPlain}
-                >
+                <DocSection id="related" title={copy.related}>
                     <LogIndex entries={related} level={3} />
                 </DocSection>
             ) : null}

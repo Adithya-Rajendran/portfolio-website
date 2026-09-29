@@ -7,20 +7,18 @@ import { getProfile } from "@/lib/sanity-client";
 
 const copy = logCopy.archive;
 
-export const alt = `${copy.title} · ${logCopy.themed} — ${siteConfig.author}`;
+export const alt = `${copy.title} · ${logCopy.plain} — ${siteConfig.author}`;
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
 const domain = new URL(siteConfig.url).hostname;
 
-/** The archive's share card: the Flight Log card without the chart. */
+/** The archive's share card: the Writing card with its own title. */
 export default async function Image() {
     const profile = await getProfile();
     return new ImageResponse(
         <OgCard
-            num={logCopy.num}
-            themed={copy.themed}
-            plain={copy.plain}
+            tag={logCopy.themed}
             title={copy.title}
             subtitle={getWritingDescription(profile) ?? undefined}
             footerLeft={profile?.name || siteConfig.author}

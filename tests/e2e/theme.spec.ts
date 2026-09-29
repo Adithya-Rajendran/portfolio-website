@@ -71,18 +71,18 @@ test("the header switch's choice persists across reloads and pages", async ({
     // The switch now offers the way back, and the footer shows the choice.
     await expect(headerSwitch(page, "dark")).toBeVisible();
     await expect(
-        footerChoice(page).getByRole("radio", { name: /Manual/ }),
+        footerChoice(page).getByRole("radio", { name: "Light" }),
     ).toBeChecked();
 
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expect(
-        footerChoice(page).getByRole("radio", { name: /Manual/ }),
+        footerChoice(page).getByRole("radio", { name: "Light" }),
     ).toBeChecked();
 
     await page
         .getByRole("banner")
-        .getByRole("link", { name: /^Missions/ })
+        .getByRole("link", { name: "Projects", exact: true })
         .click();
     await expect(page).toHaveURL(/\/portfolio$/);
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
@@ -96,7 +96,7 @@ test("the header switch's choice persists across reloads and pages", async ({
 test("Auto follows the OS colour scheme as it changes", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/");
-    await footerChoice(page).getByRole("radio", { name: /Auto/ }).check();
+    await footerChoice(page).getByRole("radio", { name: "System" }).check();
     await expect(html(page)).toHaveAttribute("data-theme", "void");
     await page.emulateMedia({ colorScheme: "light" });
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
@@ -105,7 +105,7 @@ test("Auto follows the OS colour scheme as it changes", async ({ page }) => {
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expect(
-        footerChoice(page).getByRole("radio", { name: /Auto/ }),
+        footerChoice(page).getByRole("radio", { name: "System" }),
     ).toBeChecked();
 });
 
@@ -117,7 +117,7 @@ test("a choice made in another tab applies here", async ({ page, context }) => {
     await expect(html(other)).toHaveAttribute("data-theme", "manual");
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expect(
-        footerChoice(page).getByRole("radio", { name: /Manual/ }),
+        footerChoice(page).getByRole("radio", { name: "Light" }),
     ).toBeChecked();
 });
 

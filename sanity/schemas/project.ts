@@ -184,7 +184,7 @@ export default defineType({
             type: "number",
             group: "editorial",
             description:
-                "Printed as MSN-01 to MSN-99 on mission pages, tiles and the CV, and orders Missions in the Studio. New projects take the next free number. Keep it once published, so links and printed CVs stay right.",
+                "Printed as MSN-01 to MSN-99 on project pages, tiles and the CV. After the featured slots, it orders the projects on the site (the last one is the least prominent on the home page) and in the Studio. New projects take the next free number. Keep it once published, so links and printed CVs stay right.",
             validation: (Rule) =>
                 Rule.required()
                     .integer()
@@ -241,7 +241,7 @@ export default defineType({
             type: "number",
             group: "editorial",
             description:
-                "Optional. 1 puts this mission on the photographic stage of the home page and Missions; 2 and 3 feature it next to that. Leave empty for the rest. Each slot holds one mission.",
+                "Optional. 1 puts this project on the photographic stage of the home page and Projects; 2 and 3 come right after it (on the home page, the two rows under it). Leave empty for the rest, which follow by Mission Number. Each slot holds one project.",
             options: { list: [1, 2, 3] },
             validation: (Rule) => [
                 Rule.integer().min(1).max(3),

@@ -28,7 +28,7 @@ import {
 import styles from "./about.module.css";
 
 const canonicalUrl = `${siteConfig.url}${siteRoutes.about}`;
-const title = `${copy.themed} · ${copy.plain}`;
+const title = copy.plain;
 
 function descriptionOf(profile: ProfileData | null): string {
     return (
@@ -72,11 +72,11 @@ function paragraphsOf(bio: string | null | undefined): string[] {
 const ENTRIES = 3;
 
 /**
- * Crew File · About (§ 04, plan §6.2 row 14): the head with the patch as
+ * About (themed Crew File; plan §6.2 row 14): the head with the patch as
  * the identity mark (there is no portrait), the profile record (G6), then
  * the biography, the Now list by kind, the latest writing and any talks,
  * the related pages, and the way to get in touch. A section with nothing
- * to show is absent, and the sections are numbered as they appear.
+ * to show is absent; the sections are titled by their plain names.
  * Everything is server-rendered and static; there are no islands.
  */
 export default async function AboutPage() {
@@ -98,14 +98,6 @@ export default async function AboutPage() {
         { profile, projects: projects.length },
     );
 
-    const present = [
-        paragraphs.length ? "bio" : null,
-        groups.length ? "now" : null,
-        entries.length || talks.length ? "writing" : null,
-        related.length ? "elsewhere" : null,
-    ].filter(Boolean);
-    const num = (id: string) => `${copy.num}.${present.indexOf(id) + 1}`;
-
     return (
         <div data-page="about">
             <ProfilePageJsonLd />
@@ -114,9 +106,8 @@ export default async function AboutPage() {
                 <PageHead
                     className="shell"
                     ornament="hydrogen"
-                    num={copy.num}
-                    themed={copy.themed}
-                    plain={copy.plain}
+                    tag={copy.themed}
+                    title={copy.plain}
                     intro={headline}
                     figure={<Patch />}
                 >
@@ -133,13 +124,7 @@ export default async function AboutPage() {
             </div>
 
             {paragraphs.length ? (
-                <DocSection
-                    id="crew-bio"
-                    num={num("bio")}
-                    themed={copy.bioThemed}
-                    plain={copy.bioPlain}
-                    prose
-                >
+                <DocSection id="crew-bio" title={copy.bio} prose>
                     <div className="prose">
                         {paragraphs.map((paragraph, index) => (
                             <p key={index}>{paragraph}</p>
@@ -151,9 +136,7 @@ export default async function AboutPage() {
             {groups.length ? (
                 <DocSection
                     id="crew-now"
-                    num={num("now")}
-                    themed={copy.nowThemed}
-                    plain={copy.nowPlain}
+                    title={copy.now}
                     meta={
                         nowDate ? (
                             <Updated label={copy.updated} date={nowDate} />
@@ -180,16 +163,12 @@ export default async function AboutPage() {
             {entries.length || talks.length ? (
                 <DocSection
                     id="crew-writing"
-                    num={num("writing")}
-                    themed={
-                        entries.length ? copy.writingThemed : copy.talksThemed
-                    }
-                    plain={
+                    title={
                         entries.length && talks.length
-                            ? copy.writingAndTalksPlain
+                            ? copy.writingAndTalks
                             : entries.length
-                              ? copy.writingPlain
-                              : copy.talksPlain
+                              ? copy.writing
+                              : copy.talks
                     }
                     meta={
                         entries.length ? (
@@ -224,12 +203,7 @@ export default async function AboutPage() {
             ) : null}
 
             {related.length ? (
-                <DocSection
-                    id="crew-elsewhere"
-                    num={num("elsewhere")}
-                    themed={copy.elsewhereThemed}
-                    plain={copy.elsewherePlain}
-                >
+                <DocSection id="crew-elsewhere" title={copy.elsewhere}>
                     <RouteList
                         items={related}
                         columns={2}

@@ -9,8 +9,7 @@ import type { CvLink } from "@/lib/cv";
  * organization, a serif line and the facts. A row linked to the orbit map
  * (`orbit`) lights its orbit on hover, and the map lights the row; a row
  * with an `href` is one big link, its other links still live.
- * Directive-free: /resume renders it, and the home Trajectory act from
- * PR 13.
+ * Directive-free: /resume and About render it.
  */
 
 export function CvList({

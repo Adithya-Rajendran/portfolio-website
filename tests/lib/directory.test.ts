@@ -3,22 +3,24 @@ import { directoryRows, profileRows } from "@/lib/directory";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 
 describe("directoryRows", () => {
-    it("leads to each section that has something to show, numbered in order", () => {
+    it("leads to each section that has something to show, by its plain name", () => {
         const rows = directoryRows(
             ["experience", "skills", "certifications", "missions", "contact"],
             { profile: FIXTURE_PROFILE, projects: 4 },
         );
-        expect(rows.map((row) => [row.num, row.key, row.href])).toEqual([
-            ["01", "experience", "/resume#experience"],
-            ["02", "skills", "/resume#skills"],
-            ["03", "certifications", "/resume#certifications"],
-            ["04", "missions", "/portfolio"],
-            ["05", "contact", "/contact"],
+        expect(rows.map((row) => [row.key, row.href])).toEqual([
+            ["experience", "/resume#experience"],
+            ["skills", "/resume#skills"],
+            ["certifications", "/resume#certifications"],
+            ["missions", "/portfolio"],
+            ["contact", "/contact"],
         ]);
         expect(rows.every((row) => row.id === undefined)).toBe(true);
-        expect(rows[3]).toMatchObject({
-            themed: "Missions",
+        expect(rows[3]).toEqual({
+            key: "missions",
+            href: "/portfolio",
             plain: "Projects",
+            blurb: "Projects and case studies.",
         });
     });
 
@@ -35,9 +37,7 @@ describe("directoryRows", () => {
                 projects: 0,
             },
         );
-        expect(rows.map((row) => [row.num, row.key])).toEqual([
-            ["01", "experience"],
-        ]);
+        expect(rows.map((row) => row.key)).toEqual(["experience"]);
         expect(directoryRows(["experience"], { profile: null })).toEqual([]);
     });
 

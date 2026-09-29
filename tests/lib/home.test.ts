@@ -2,45 +2,57 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import sunrise from "@/lib/hero-sunrise.json";
-import { actNumber, homeActs } from "@/lib/home";
+import { HOME_PROJECT_ROWS, homeActs, homeProjects } from "@/lib/home";
 
-describe("the home acts", () => {
-    it("shows every act that has something to show, in order", () => {
-        const acts = homeActs({
-            now: true,
-            missions: 4,
-            entries: 3,
-            roles: 4,
-            profile: true,
-        });
-        expect(acts).toEqual([
-            "now",
-            "missions",
-            "log",
-            "trajectory",
-            "crew",
-            "comms",
-        ]);
-        expect(acts.map((act) => actNumber(acts, act))).toEqual([
-            "00.1",
-            "00.2",
-            "00.3",
-            "00.4",
-            "00.5",
-            "00.6",
+describe("the home sections", () => {
+    it("shows every section that has something to show, in order", () => {
+        expect(homeActs({ projects: 4, entries: 3, interests: true })).toEqual([
+            "projects",
+            "writing",
+            "interests",
+            "contact",
         ]);
     });
 
-    it("leaves an empty act out and numbers the rest without a gap", () => {
-        const acts = homeActs({
-            now: false,
-            missions: 0,
-            entries: 2,
-            roles: 0,
-            profile: false,
+    it("leaves an empty section out and always closes on contact", () => {
+        expect(homeActs({ projects: 0, entries: 2, interests: false })).toEqual(
+            ["writing", "contact"],
+        );
+    });
+});
+
+type Project = { slug: string; featured?: number };
+
+describe("the home projects", () => {
+    it("stages the flagship, gives the next ones rows and lists the rest", () => {
+        const { flagship, rows, also } = homeProjects<Project>([
+            { slug: "gmail" },
+            { slug: "homelab", featured: 1 },
+            { slug: "kubernetes" },
+            { slug: "website" },
+        ]);
+        expect(HOME_PROJECT_ROWS).toBe(2);
+        expect(flagship?.slug).toBe("homelab");
+        expect(rows.map((project) => project.slug)).toEqual([
+            "gmail",
+            "kubernetes",
+        ]);
+        expect(also.map((project) => project.slug)).toEqual(["website"]);
+    });
+
+    it("stages the first project when none is featured", () => {
+        const { flagship, rows, also } = homeProjects<Project>([
+            { slug: "a" },
+            { slug: "b" },
+        ]);
+        expect(flagship?.slug).toBe("a");
+        expect(rows.map((project) => project.slug)).toEqual(["b"]);
+        expect(also).toEqual([]);
+        expect(homeProjects([])).toEqual({
+            flagship: null,
+            rows: [],
+            also: [],
         });
-        expect(acts).toEqual(["log", "comms"]);
-        expect(actNumber(acts, "comms")).toBe("00.2");
     });
 });
 
