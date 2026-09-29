@@ -1,22 +1,17 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
-import { buttonClass } from "@/components/ui/button";
 import type { ContactRoute } from "@/lib/contact";
-import { contactHref } from "@/lib/navigation";
-import RouteWriteLink from "./route-write-link";
 import styles from "./contact-routes.module.css";
 
 /**
  * The contact routes (G4) as short hairline rows beside the form: each
  * route's title, the owner's own line where there is one (Research: the
- * invitation), its button and its links. On /contact (`onPage`) each row
- * carries its topic's fragment id (`#hiring`), and its button
- * (RouteWriteLink) links to that fragment, which ContactDesk turns into
- * "pick this topic in the form"; without JavaScript it links to the
- * message section instead, which then offers LinkedIn. Anywhere else the
- * button links to the route on /contact. Titles and lines are the
- * profile's words (lib/contact.ts); what to write is only ever the
- * form's optional placeholder.
+ * invitation) and its links. The form's Topic radios are the one control
+ * that picks a topic; a row lights while its topic is chosen. On /contact
+ * (`onPage`) each row carries its topic's fragment id (`#hiring`), which
+ * ContactDesk turns into "pick this topic" on arrival. Titles and lines
+ * are the profile's words (lib/contact.ts); what to write is only ever
+ * the form's optional placeholder.
  */
 export default function ContactRoutes({
     routes,
@@ -42,29 +37,6 @@ export default function ContactRoutes({
                     {route.body ? (
                         <p className={styles.body}>{route.body}</p>
                     ) : null}
-                    {onPage ? (
-                        <RouteWriteLink
-                            className={buttonClass({
-                                size: "sm",
-                                className: styles.write,
-                            })}
-                            topic={route.topic}
-                        >
-                            {route.cta}
-                            <Icon name="arrow" className="icon--nudge" />
-                        </RouteWriteLink>
-                    ) : (
-                        <Link
-                            className={buttonClass({
-                                size: "sm",
-                                className: styles.write,
-                            })}
-                            href={contactHref(route.topic)}
-                        >
-                            {route.cta}
-                            <Icon name="arrow" className="icon--nudge" />
-                        </Link>
-                    )}
                     {route.links.length ? (
                         <ul className={styles.links} role="list">
                             {route.links.map((link) => (

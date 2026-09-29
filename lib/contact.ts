@@ -2,18 +2,18 @@
  * Comms (G4, plan §2.5.6): contact routes by intent, not by channel. Each
  * route is a topic the form can send, so the message arrives with its
  * subject already sorted. Pure: the page, the form, the server action and
- * the tests share it. The topics, when each route shows and the buttons
- * are fixed here and in lib/copy.ts; every word about the owner is the
- * profile's, printed as written: each route's title and prompt
- * (`contactRoutes`) and the research invitation (`contactInvitation`).
- * Whether Hiring shows follows `availability.status`.
+ * the tests share it. The topics and when each route shows are fixed
+ * here and in lib/copy.ts; every word about the owner is the profile's,
+ * printed as written: each route's title and prompt (`contactRoutes`) and
+ * the research invitation (`contactInvitation`). Hiring shows while the
+ * profile says what the owner is open to (`availabilityLine`).
  *
  * There is no public email address or phone number: the form is the only
  * channel, with LinkedIn as the alternative when JavaScript is off.
  */
 import { contactCopy } from "@/lib/copy";
 import { siteRoutes } from "@/lib/navigation";
-import { getProfileLink } from "@/lib/profile-content";
+import { availabilityLine, getProfileLink } from "@/lib/profile-content";
 import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import type { ProfileData } from "@/lib/sanity-client";
 
@@ -69,8 +69,6 @@ export interface ContactRoute {
      *  placeholder once this topic is chosen. Absent when the profile has
      *  none. */
     prompt?: string;
-    /** The button that picks this topic. */
-    cta: string;
     links: ContactRouteLink[];
 }
 
@@ -79,7 +77,8 @@ export interface ContactRoute {
  * profile's words (`contactRoutes`; a route without a title takes its
  * topic's name, and one without a prompt has none). What the owner is
  * open to is the page head's (`availabilityLine`), not a route's:
- * - Hiring, unless availability is Closed;
+ * - Hiring, while the profile says what the owner is open to (the same
+ *   line the head shows; unset or Closed shows none);
  * - Research & collaboration, when the profile has a contact invitation
  *   (the owner's own words are its body);
  * - Consulting, only while `availability.consultingOpen` is on (off by
@@ -98,11 +97,10 @@ export function contactRoutes(profile: ProfileData | null): ContactRoute[] {
             topic,
             title: words?.title?.trim() || contactCopy.topics[topic].name,
             ...(prompt ? { prompt } : {}),
-            cta: contactCopy.topics[topic].cta,
         };
     };
 
-    if (availability?.status !== "closed") {
+    if (availabilityLine(availability)) {
         shown.push({
             ...route("hiring"),
             links: [

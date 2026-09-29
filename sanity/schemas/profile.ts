@@ -74,7 +74,7 @@ export default defineType({
             type: "object",
             group: "status",
             description:
-                "What you are open to right now. Shown under your name and in the closing call to contact on the home page, the About record, the CV (on screen and printed), the Hiring route on Contact, the Contact sharing image, and as the planned orbit on the Trajectory map.",
+                "What you are open to right now. The Open To lines are shown under your name on the home page and its sharing image, in the About record, on the CV (on screen and printed), on Contact and its sharing image, and as the planned orbit on the CV's Timeline. While they are shown, Contact offers the Hiring route.",
             fields: [
                 defineField({
                     name: "status",
@@ -138,6 +138,14 @@ export default defineType({
                         "Optional. Where the planned orbit begins on the Trajectory map. It only places the drawing and is never printed; the Open To lines are what readers see.",
                 }),
                 defineField({
+                    name: "cta",
+                    title: "Contact Button",
+                    type: "string",
+                    description:
+                        "Optional. The button that answers the Open To lines, for example “Write about a role”. It closes the home page and the planned orbit's record on the CV's Timeline, and opens Contact on the Hiring route. Leave blank for no button.",
+                    validation: (Rule) => Rule.max(40),
+                }),
+                defineField({
                     name: "consultingOpen",
                     title: "Open to Consulting",
                     type: "boolean",
@@ -150,8 +158,7 @@ export default defineType({
                     title: "Updated On",
                     type: "date",
                     description:
-                        "When you last confirmed this status. Printed as “Updated” next to it.",
-                    validation: (Rule) => Rule.required(),
+                        "Optional. When you last confirmed this status, for your own records; the site does not print it.",
                 }),
             ],
         }),
@@ -161,7 +168,7 @@ export default defineType({
             type: "object",
             group: "status",
             description:
-                "Where your story starts: the mission clock in the footer counts from this date, and it labels the origin of the Trajectory map.",
+                "Optional. Where your story starts. Stored for later use: the site does not show it at present.",
             fields: [
                 defineField({
                     name: "date",
@@ -209,7 +216,7 @@ export default defineType({
         }),
         defineField({
             name: "workSummary",
-            title: "Homepage Work Summary",
+            title: "Experience Introduction",
             type: "text",
             rows: 3,
             group: ["writing", "copy"],
@@ -254,7 +261,7 @@ export default defineType({
             rows: 2,
             group: "copy",
             description:
-                "One sentence under the Contact heading (/contact), also its sharing image when you are not open to anything. Leave blank to show none.",
+                "One sentence under the Contact heading (/contact), also on its sharing image. Leave blank to show none.",
             validation: (Rule) => Rule.max(200),
         }),
         defineField({
@@ -263,7 +270,7 @@ export default defineType({
             type: "object",
             group: "copy",
             description:
-                "The words of each route on Contact. When each route shows is set elsewhere: Hiring unless your availability is Closed, Research with a Contact Invitation, Consulting with Open to Consulting on, and Hello always.",
+                "The words of each route on Contact. When each route shows is set elsewhere: Hiring while your availability has Open To lines (and is not Closed), Research with a Contact Invitation, Consulting with Open to Consulting on, and Hello always.",
             options: { collapsible: true, collapsed: false },
             fields: [
                 defineField({
@@ -305,7 +312,7 @@ export default defineType({
             group: "writing",
             to: [{ type: "post" }],
             description:
-                "Choose the homepage's Start here article. Until it is published, or when no post is selected, the newest published post is shown.",
+                "Stored for later use: the site does not show a featured post at present (the home page lists the three latest posts).",
         }),
         defineField({
             name: "startHere",
@@ -313,7 +320,7 @@ export default defineType({
             type: "array",
             group: "writing",
             description:
-                "Up to three posts for new readers, shown on the home page and at the end of each post. The Featured Homepage Post, when set, keeps the first place.",
+                "Up to three posts for new readers. Stored for later use: the site does not show them at present.",
             of: [
                 defineArrayMember({
                     type: "reference",

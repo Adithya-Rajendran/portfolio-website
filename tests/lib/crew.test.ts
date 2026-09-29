@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
     crewRecord,
     nowGroups,
-    openTo,
     previousRole,
     questions,
     taglineOf,
@@ -77,25 +76,6 @@ describe("the home page's lines", () => {
         );
         expect(taglineOf(profile({ introduction: "" }))).toBeNull();
         expect(taglineOf(null)).toBeNull();
-    });
-
-    it("says what the owner is open to only while availability is set", () => {
-        expect(openTo(FIXTURE_PROFILE)).toEqual({
-            text: "Summer 2027 internships · Full-time opportunities in 2028",
-            updated: { date: "2026-09-24", label: "24 Sep 2026" },
-        });
-        expect(openTo(profile({ availability: null }))).toBeNull();
-        expect(
-            openTo(
-                profile({
-                    availability: {
-                        status: "closed",
-                        seeking: [{ _key: "a", label: "Anything" }],
-                        updatedAt: "2026-01-01",
-                    },
-                }),
-            ),
-        ).toBeNull();
     });
 });
 

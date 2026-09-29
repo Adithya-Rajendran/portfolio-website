@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { chromeCopy, homeCopy as copy } from "@/lib/copy";
+import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import sunrise from "@/lib/hero-sunrise.json";
 import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
@@ -196,6 +197,25 @@ test("the sections follow the hero in order and lead to their pages", async ({
         if (id === "home-interests" && !(await link.count())) continue;
         await expect(link).toHaveAttribute("href", href);
     }
+});
+
+test("the close answers what the owner is open to only in the profile's words", async ({
+    page,
+}, testInfo) => {
+    await page.goto("/");
+    const close = page.getByRole("main").locator("section#home-contact");
+    const answer = close.locator('a[href="/contact#hiring"]');
+    const open = await hero(page)
+        .getByText(copy.openTo, { exact: true })
+        .count();
+    // No Open To line, nothing to answer; and never a built-in "role".
+    if (!open) await expect(answer).toHaveCount(0);
+    if (testInfo.project.name === "fixture") {
+        await expect(answer).toHaveText(FIXTURE_PROFILE.availability!.cta!);
+    }
+    await expect(
+        close.getByRole("link", { name: copy.contactAct.message }),
+    ).toHaveAttribute("href", "/contact");
 });
 
 test("the strongest project leads with its summary and no stats", async ({

@@ -52,32 +52,27 @@ describe("contact routes", () => {
         expect(routes[0]).not.toHaveProperty("openTo");
     });
 
-    it("words each route with the profile's title and prompt", () => {
+    it("words each route with the profile's title and prompt, and gives it no button", () => {
         const routes = contactRoutes(FIXTURE_PROFILE);
-        expect(
-            routes.map((route) => [route.title, route.prompt, route.cta]),
-        ).toEqual([
+        expect(routes.map((route) => [route.title, route.prompt])).toEqual([
             [
                 "Internships & roles",
                 FIXTURE_PROFILE.contactRoutes?.hiring?.prompt,
-                "Write about a role",
             ],
             [
                 "Research & collaboration",
                 FIXTURE_PROFILE.contactRoutes?.research?.prompt,
-                "Start a conversation",
             ],
-            [
-                "Hello",
-                FIXTURE_PROFILE.contactRoutes?.hello?.prompt,
-                "Say hello",
-            ],
+            ["Hello", FIXTURE_PROFILE.contactRoutes?.hello?.prompt],
         ]);
+        // The form's topic is the one control: no route carries a button.
+        expect(routes.some((route) => "cta" in route)).toBe(false);
     });
 
     it("names a route by its topic without a title, and leaves out an empty prompt", () => {
         const [hiring, hello] = contactRoutes(
             profileOf({
+                availability: availabilityOf(),
                 contactRoutes: {
                     hiring: { title: "  ", prompt: "The role." },
                     hello: { title: "Hi", prompt: " " },
@@ -87,9 +82,8 @@ describe("contact routes", () => {
         expect(hiring).toMatchObject({ title: "Hiring", prompt: "The role." });
         expect(hello.title).toBe("Hi");
         expect(hello).not.toHaveProperty("prompt");
-        // No profile: the topics' names, and no prompts.
+        // No profile: the topic's name, and no prompt.
         expect(contactRoutes(null).map((route) => route.title)).toEqual([
-            "Hiring",
             "Hello",
         ]);
         expect(contactRoutes(null).some((route) => "prompt" in route)).toBe(
@@ -116,40 +110,48 @@ describe("contact routes", () => {
         ).toEqual(["hiring", "consulting", "hello"]);
     });
 
-    it("hides Hiring while availability is Closed, and its line when there is none", () => {
+    it("shows Hiring only while the profile says what the owner is open to", () => {
         expect(
             topicsOf(
                 profileOf({
-                    availability: availabilityOf({
-                        status: "closed",
-                        seeking: null,
-                    }),
+                    availability: availabilityOf({ status: "closed" }),
                 }),
             ),
         ).toEqual(["hello"]);
-        // No availability yet: the route stays, without an Open To line.
-        const [hiring] = contactRoutes(profileOf());
+        // No availability, or a status with no Open To line: no Hiring,
+        // as on the home page and the CV.
+        expect(topicsOf(profileOf())).toEqual(["hello"]);
+        expect(
+            topicsOf(
+                profileOf({
+                    availability: availabilityOf({ seeking: [] }),
+                }),
+            ),
+        ).toEqual(["hello"]);
+        const [hiring] = contactRoutes(
+            profileOf({ availability: availabilityOf() }),
+        );
         expect(hiring.topic).toBe("hiring");
         expect(hiring).not.toHaveProperty("openTo");
     });
 
     it("shows Research only with the owner's invitation", () => {
         expect(topicsOf(profileOf({ contactInvitation: "  " }))).toEqual([
-            "hiring",
             "hello",
         ]);
         expect(
             topicsOf(profileOf({ contactInvitation: "Working on vision?" })),
-        ).toEqual(["hiring", "research", "hello"]);
+        ).toEqual(["research", "hello"]);
     });
 
-    it("keeps Hiring and Hello without a profile", () => {
-        expect(topicsOf(null)).toEqual(["hiring", "hello"]);
+    it("keeps Hello without a profile", () => {
+        expect(topicsOf(null)).toEqual(["hello"]);
     });
 
     it("links the résumé PDF only when one is uploaded, and LinkedIn from the profile", () => {
         const withPdf = contactRoutes(
             profileOf({
+                availability: availabilityOf(),
                 resumeUrl: "https://cdn.sanity.io/files/x/y/cv.pdf",
                 socialLinks: [
                     {
@@ -173,7 +175,9 @@ describe("contact routes", () => {
             },
         ]);
         expect(
-            contactRoutes(profileOf())[0].links.map((link) => link.href),
+            contactRoutes(
+                profileOf({ availability: availabilityOf() }),
+            )[0].links.map((link) => link.href),
         ).toEqual(["/resume"]);
     });
 

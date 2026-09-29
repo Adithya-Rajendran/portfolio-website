@@ -52,10 +52,11 @@ export const errorCopy = {
 
 /**
  * Contact (themed Comms, G4): the contact page, its routes and the form.
- * UI copy only: the page's introduction, each route's title and prompt, what the owner is
- * open to and the research invitation are the profile's (Site copy and
- * Status). A topic's `name` is the email subject's prefix and the route's
- * title when the profile gives none; its `cta` is the route's button.
+ * UI copy only: the page's introduction, each route's title and prompt,
+ * what the owner is open to, the button that answers it and the research
+ * invitation are the profile's (Site copy and Status). A topic's `name`
+ * is the email subject's prefix and the route's title when the profile
+ * gives none.
  */
 export const contactCopy = {
     themed: "Comms",
@@ -64,17 +65,16 @@ export const contactCopy = {
     message: "Message",
     elsewhere: "Profiles",
     openTo: "Open to",
-    include: "Include",
     links: {
         resumePdf: "Résumé (PDF)",
         cv: "Experience & CV",
         rss: "RSS",
     },
     topics: {
-        hiring: { name: "Hiring", cta: "Write about a role" },
-        research: { name: "Research", cta: "Start a conversation" },
-        consulting: { name: "Consulting", cta: "Describe the project" },
-        hello: { name: "Hello", cta: "Say hello" },
+        hiring: { name: "Hiring" },
+        research: { name: "Research" },
+        consulting: { name: "Consulting" },
+        hello: { name: "Hello" },
     },
     form: {
         topicLegend: "Topic",
@@ -296,7 +296,7 @@ export const directoryCopy = {
     },
     contact: {
         plain: "Contact",
-        blurb: "Send a message about a project or a role.",
+        blurb: "Send a message.",
     },
 } as const;
 
@@ -378,15 +378,14 @@ export const orbitCopy = {
     earlier: "Earlier",
     later: "Later",
     fullRecord: "Full record",
-    writeAboutRole: "Write about a role",
     pinned: "Selected",
     showing: "Showing",
 } as const;
 
 /**
  * The home page: the hero and its sections. UI copy only: the name, the
- * headline, what the owner is open to, the interests statement, the
- * projects and the entries are the owner's.
+ * headline, what the owner is open to and the button that answers it,
+ * the interests statement, the projects and the entries are the owner's.
  */
 export const homeCopy = {
     /** The hero's quick links. */
@@ -411,7 +410,6 @@ export const homeCopy = {
     },
     contactAct: {
         title: "Let’s talk.",
-        role: "Write about a role",
         message: "Send a message",
     },
 } as const;
@@ -446,7 +444,7 @@ export const aboutCopy = {
     talks: "Talks and papers",
     allEntries: "All writing",
     elsewhere: "Related pages",
-    ask: "Interested in working together?",
+    ask: "Questions or ideas?",
     getInTouch: "Get in touch",
 } as const;
 

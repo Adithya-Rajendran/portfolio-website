@@ -2670,6 +2670,13 @@
               },
               "optional": true
             },
+            "cta": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
             "consultingOpen": {
               "type": "objectAttribute",
               "value": {
@@ -2682,7 +2689,7 @@
               "value": {
                 "type": "string"
               },
-              "optional": false
+              "optional": true
             }
           }
         },

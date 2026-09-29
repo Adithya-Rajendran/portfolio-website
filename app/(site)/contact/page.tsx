@@ -42,9 +42,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Contact (themed Comms, G4): the introduction and what the owner is open
- * to, then the message form first, with the routes by intent beside it as
- * short rows (each picks the form's topic; its prompt is only the message
- * field's optional placeholder), then the profiles. The introduction,
+ * to, then the message form first, whole in the first viewport at
+ * 1440×900 (the carrier trace is its section's rule), with the routes by
+ * intent beside it as short rows (the form's Topic is the one control
+ * that picks one; a route's prompt is only the message field's optional
+ * placeholder), then the profiles. The introduction,
  * the availability and every route's words are the profile's; an empty
  * one is left out. Everything but the form renders without JavaScript;
  * the form needs it for BotID, so without it the page offers LinkedIn
@@ -76,31 +78,6 @@ export default async function ContactPage() {
                             text={openTo}
                         />
                     ) : null}
-                    {/* Acquisition of signal: the carrier locks. Drawn in
-                        ink with one accent mark; decorative and static. */}
-                    <svg
-                        className={styles.aos}
-                        viewBox="0 0 640 96"
-                        preserveAspectRatio="none"
-                        aria-hidden="true"
-                        focusable="false"
-                    >
-                        <path className={styles.aosFloor} d="M0 60H640" />
-                        <path
-                            className={styles.aosNoise}
-                            d="M0 60h40l3-2 3 3 4-1 3 2 5-3 3 2 4-1 3 1h24l2-3 3 4 3-2 4 1 3-1 4 2 3-1h30l3-2 3 3 4-2 3 1 4-1 3 2h40"
-                        />
-                        <path
-                            className={styles.aosLock}
-                            d="M232 60C240 60 244 52 252 52S264 68 272 68 284 42 292 42 304 78 312 78 324 34 332 34 344 86 352 86 364 30 372 30 384 90 392 90 404 30 412 30 424 90 432 90 444 30 452 30 464 90 472 90 484 30 492 30 504 90 512 90 524 30 532 30 544 90 552 90 564 30 572 30 584 90 592 90 604 30 612 30 624 90 632 90 640 60 640 60"
-                        />
-                        <circle
-                            className={styles.aosAcq}
-                            cx="232"
-                            cy="60"
-                            r="4.5"
-                        />
-                    </svg>
                 </PageHead>
             </div>
 
@@ -112,13 +89,44 @@ export default async function ContactPage() {
                     data-contact-message
                 >
                     <div className="shell">
-                        <SectionTag className="doc-section__tag">
+                        <SectionTag
+                            className={`doc-section__tag ${styles.messageTag}`}
+                        >
                             <h2
                                 className="section-tag__h"
                                 id="contact-message-h"
                             >
                                 {copy.message}
                             </h2>
+                            {/* Acquisition of signal: the carrier locks,
+                                drawn as this row's rule in ink with one
+                                accent mark; decorative and static. */}
+                            <svg
+                                className={styles.aos}
+                                viewBox="0 0 640 96"
+                                preserveAspectRatio="none"
+                                aria-hidden="true"
+                                focusable="false"
+                            >
+                                <path
+                                    className={styles.aosFloor}
+                                    d="M0 60H640"
+                                />
+                                <path
+                                    className={styles.aosNoise}
+                                    d="M0 60h40l3-2 3 3 4-1 3 2 5-3 3 2 4-1 3 1h24l2-3 3 4 3-2 4 1 3-1 4 2 3-1h30l3-2 3 3 4-2 3 1 4-1 3 2h40"
+                                />
+                                <path
+                                    className={styles.aosLock}
+                                    d="M232 60C240 60 244 52 252 52S264 68 272 68 284 42 292 42 304 78 312 78 324 34 332 34 344 86 352 86 364 30 372 30 384 90 392 90 404 30 412 30 424 90 432 90 444 30 452 30 464 90 472 90 484 30 492 30 504 90 512 90 524 30 532 30 544 90 552 90 564 30 572 30 584 90 592 90 604 30 612 30 624 90 632 90 640 60 640 60"
+                                />
+                                <circle
+                                    className={styles.aosAcq}
+                                    cx="232"
+                                    cy="60"
+                                    r="4.5"
+                                />
+                            </svg>
                         </SectionTag>
                         <div className={styles.deskGrid}>
                             <div className={styles.form}>

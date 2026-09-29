@@ -32,6 +32,8 @@ export interface PlannedRecord {
     /** The availability line, as the owner wrote it. */
     text: string;
     href: string;
+    /** The profile's button that answers it; no link without one. */
+    cta: string | null;
 }
 
 const pct = (x: number, width: number) =>
@@ -715,13 +717,15 @@ export default function OrbitMap({
                                     <span aria-hidden="true">←</span>
                                     {copy.earlier}
                                 </Button>
-                                <a
-                                    className={`link-arrow ${styles.recFull}`}
-                                    href={plannedShown.href}
-                                >
-                                    {copy.writeAboutRole}
-                                    <Icon name="arrow" />
-                                </a>
+                                {plannedShown.cta ? (
+                                    <a
+                                        className={`link-arrow ${styles.recFull}`}
+                                        href={plannedShown.href}
+                                    >
+                                        {plannedShown.cta}
+                                        <Icon name="arrow" />
+                                    </a>
+                                ) : null}
                             </div>
                         </article>
                     ) : null}

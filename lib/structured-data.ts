@@ -135,15 +135,22 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
     };
 }
 
-export function buildProfilePage(
-    input: PersonEntityInput & { dateModified: string },
-) {
+/**
+ * About as a schema.org ProfilePage. Its dates are the profile document's
+ * own (`_createdAt`, `_updatedAt`); a date the document does not carry is
+ * left out, never assumed.
+ */
+export function buildProfilePage(input: PersonEntityInput) {
     const credentials = buildHasCredential(input.profile?.credentials);
+    const day = (value: string | null | undefined) =>
+        /^\d{4}-\d{2}-\d{2}/.exec(value ?? "")?.[0];
+    const created = day(input.profile?._createdAt);
+    const modified = day(input.profile?._updatedAt);
 
     return {
         "@type": "ProfilePage",
-        dateCreated: "2024-01-01",
-        dateModified: input.dateModified,
+        ...(created ? { dateCreated: created } : {}),
+        ...(modified ? { dateModified: modified } : {}),
         mainEntity: {
             ...buildPersonEntity(input),
             ...(credentials.length > 0 ? { hasCredential: credentials } : {}),

@@ -6,11 +6,13 @@ import { primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 
 /**
- * Comms (G4, plan §2.5.6): the routes pick the form's topic by click and
- * by fragment, the form checks its fields and keeps what was written when
- * a send is refused, Consulting stays hidden while it is off, and without
- * JavaScript the routes and the LinkedIn alternative stand in for the form.
- * Nothing on the page is an email address or a phone number.
+ * Comms (G4, plan §2.5.6): the form's topic is the one topic control (a
+ * route's fragment picks it on arrival), the whole form is in the first
+ * viewport, Hiring shows only beside what the owner is open to, the form
+ * checks its fields and keeps what was written when a send is refused,
+ * Consulting stays hidden while it is off, and without JavaScript the
+ * routes and the LinkedIn alternative stand in for the form. Nothing on
+ * the page is an email address or a phone number.
  *
  * The fixture build has no Resend credentials, so a send is refused there
  * ("not configured") without leaving the machine. A preview deployment has
@@ -20,6 +22,11 @@ import { expect, test } from "./support/test";
  * specs read them from the page and fit fixture and real content alike.
  */
 const { form, topics } = contactCopy;
+
+/** The route rows beside the form. */
+function routeRows(page: Page) {
+    return page.getByRole("main").locator("li[data-topic]");
+}
 
 function topicRadio(page: Page, title: string) {
     return page.getByRole("radio", { name: title });
@@ -86,7 +93,7 @@ test("a route's fragment picks its topic on arrival, and its prompt is only the 
     await expect(page.getByRole("main")).not.toContainText(/\bInclude\b/);
 });
 
-test("the form comes first, in the first viewport", async ({ page }) => {
+test("the form comes first, whole, in the first viewport", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/contact");
     for (const field of [form.emailLabel, form.messageLabel]) {
@@ -94,33 +101,40 @@ test("the form comes first, in the first viewport", async ({ page }) => {
             page.getByRole("textbox", { name: field }),
         ).toBeInViewport();
     }
+    await expect(page.getByRole("button", { name: form.send })).toBeInViewport({
+        ratio: 1,
+    });
     // The routes are short rows: no numbers.
     await expect(routeRow(page, "hello")).not.toContainText(/^0\d/);
 });
 
-test("a route's button picks its topic and brings the form into view", async ({
+test("the form's topic is the one topic control, and follows through to the address", async ({
     page,
 }) => {
     await page.goto("/contact");
+    // The routes beside the form describe the topics; they carry no
+    // buttons or links that pick one.
+    await expect(routeRows(page).getByRole("button")).toHaveCount(0);
+    await expect(routeRows(page).locator('a[href^="#"]')).toHaveCount(0);
+
     const hello = topicRadio(page, await routeTitle(page, "hello"));
-    const hiring = topicRadio(page, await routeTitle(page, "hiring"));
     await expect(hello).not.toBeChecked();
-    // Hydrated, the button links to its route's fragment, so a new tab or
-    // a copied link keeps the topic.
-    const write = page.getByRole("link", { name: topics.hello.cta });
-    await expect(write).toHaveAttribute("href", "#hello");
-    await write.click();
+    await hello.click();
     await expect(hello).toBeChecked();
     await expect(page).toHaveURL(/\/contact#hello$/);
-    await expect(
-        page.getByRole("textbox", { name: form.emailLabel }),
-    ).toBeInViewport();
+    // Every route shown is a topic in the form, and no other.
+    await expect(page.getByRole("main").getByRole("radio")).toHaveCount(
+        await routeRows(page).count(),
+    );
+});
 
-    // Picking another topic in the form follows through to the address.
-    await hiring.click();
-    await expect(hiring).toBeChecked();
-    await expect(hello).not.toBeChecked();
-    await expect(page).toHaveURL(/\/contact#hiring$/);
+test("Hiring shows only beside what the owner is open to", async ({ page }) => {
+    await page.goto("/contact");
+    const open = await page
+        .getByRole("main")
+        .getByText(contactCopy.openTo, { exact: true })
+        .count();
+    await expect(routeRow(page, "hiring")).toHaveCount(open ? 1 : 0);
 });
 
 test("the form points out what is missing before it sends", async ({
@@ -200,9 +214,6 @@ test("Consulting stays hidden while it is off", async ({ page }, testInfo) => {
         0,
     );
     await expect(topicRadio(page, consulting)).toHaveCount(0);
-    await expect(
-        page.getByRole("link", { name: topics.consulting.cta }),
-    ).toHaveCount(0);
 });
 
 test("the page shows no email address or phone number", async ({ request }) => {
@@ -250,9 +261,8 @@ test.describe("without JavaScript", () => {
             "href",
             /^https:\/\/www\.linkedin\.com\//,
         );
-        // A route's button still leads to the message section.
-        await page.getByRole("link", { name: topics.hello.cta }).click();
-        await expect(page).toHaveURL(/\/contact#message$/);
-        await expect(linkedIn).toBeInViewport();
+        // The fragment still lights its route.
+        await page.goto("/contact#hello");
+        await expect(routeRow(page, "hello")).toBeInViewport();
     });
 });

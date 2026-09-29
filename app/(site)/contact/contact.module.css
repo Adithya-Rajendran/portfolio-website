@@ -1,27 +1,33 @@
 /*
- * Comms · Contact (/contact): the availability and the carrier trace in
- * the page head, the desk (the form, the routes beside it from 960px),
+ * Comms · Contact (/contact): the availability in the page head, the
+ * desk (the carrier trace as its tag row's rule, the form, the routes
+ * beside it from 960px),
  * the no-JavaScript note and the profiles' place. The head, the section
  * heads and the profile rows are shared (styles/components.css); the
  * routes and the form have their own modules beside their components.
  */
 
 .openTo {
-    margin-top: var(--s-5);
+    margin-top: var(--s-4);
 }
 
-/* ---- The acquisition-of-signal trace, under the intro ------------------ */
-/* Ink strokes and one accent mark (contract §3). */
+/* ---- The acquisition-of-signal trace: the Message row's rule ----------- */
+/* Ink strokes and one accent mark (contract §3), in place of the tag
+   row's hairline, so the form keeps its place in the first viewport. */
+.messageTag::after {
+    display: none;
+}
 .aos {
-    display: block;
-    width: 100%;
-    height: 48px;
-    margin-top: var(--s-5);
+    flex: 1;
+    min-width: var(--s-8);
+    height: 32px;
     overflow: visible;
 }
-@media (min-width: 60rem) {
+@media (max-width: 37.49rem) {
     .aos {
-        height: 56px;
+        order: 4;
+        flex-basis: 100%;
+        height: 28px;
     }
 }
 .aos path {
@@ -47,10 +53,10 @@
 
 /* ---- The desk: the form first, the routes beside it --------------------- */
 .desk {
-    padding-top: var(--s-6);
+    padding-top: var(--s-5);
 }
 .desk :global(.doc-section__tag) {
-    margin-bottom: var(--s-6);
+    margin-bottom: var(--s-5);
 }
 .deskGrid {
     display: grid;

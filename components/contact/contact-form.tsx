@@ -291,7 +291,9 @@ export default function ContactForm({
                             : ids.messageHint
                     }
                 />
-                <p className="field__hint" id={ids.messageHint}>
+                {/* The counter above shows the limit; the hint says it to
+                    assistive tech, as the field's description. */}
+                <p className="sr-only" id={ids.messageHint}>
                     {copy.messageHint(MESSAGE_MAX_LENGTH)}
                 </p>
                 {errors.message ? (

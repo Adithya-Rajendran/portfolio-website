@@ -82,14 +82,16 @@ const mono = { fontFamily: "DM Mono", fontSize: 20 };
 
 /**
  * A page's card: the patch and one orange rule with the section's small
- * themed tag, the page's plain title, one line from the page, and a
- * footer of data. `upper` sets the title in capitals (a project's name or
- * the owner's, the vehicle treatment).
+ * themed tag, the page's plain title, one line from the page, an optional
+ * status line (● OPEN TO and the owner's words) and a footer of data.
+ * `upper` sets the title in capitals (a project's name or the owner's,
+ * the vehicle treatment).
  */
 export function OgCard({
     tag,
     title,
     subtitle,
+    status,
     footerLeft,
     footerRight,
     upper = false,
@@ -98,6 +100,8 @@ export function OgCard({
     tag?: string;
     title: string;
     subtitle?: string;
+    /** A keyed line under the subtitle: "Open to" and the profile's line. */
+    status?: { label: string; text: string };
     footerLeft?: string;
     footerRight: string;
     upper?: boolean;
@@ -169,7 +173,8 @@ export function OgCard({
                 <div
                     style={{
                         display: "flex",
-                        fontSize: title.length > 24 ? 84 : 124,
+                        // A status line takes room: the name steps down.
+                        fontSize: title.length > 24 ? 84 : status ? 96 : 124,
                         fontWeight: 300,
                         lineHeight: 1,
                         letterSpacing: upper ? "0.04em" : "-0.02em",
@@ -190,6 +195,48 @@ export function OgCard({
                         }}
                     >
                         {subtitle}
+                    </div>
+                ) : null}
+                {status ? (
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 16,
+                            marginTop: 30,
+                            maxWidth: 1040,
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: 10,
+                                height: 10,
+                                flex: "none",
+                                borderRadius: 5,
+                                background: VOID.accent,
+                            }}
+                        />
+                        <span
+                            style={{
+                                display: "flex",
+                                flex: "none",
+                                ...label,
+                                fontSize: 15,
+                                color: VOID.ink2,
+                            }}
+                        >
+                            {status.label}
+                        </span>
+                        <span
+                            style={{
+                                display: "flex",
+                                fontSize: status.text.length > 64 ? 24 : 28,
+                                lineHeight: 1.3,
+                                color: VOID.ink1,
+                            }}
+                        >
+                            {status.text}
+                        </span>
                     </div>
                 ) : null}
             </div>

@@ -223,10 +223,14 @@ describe("buildProfilePage", () => {
             ],
         });
         const page = buildProfilePage({
-            profile,
-            dateModified: "2026-07-11",
+            profile: {
+                ...profile,
+                _createdAt: "2025-02-03T10:00:00Z",
+                _updatedAt: "2026-07-11T08:00:00Z",
+            },
         });
 
+        expect(page.dateCreated).toBe("2025-02-03");
         expect(page.dateModified).toBe("2026-07-11");
         expect(page.mainEntity.hasCredential).toHaveLength(2);
         expect(page.mainEntity.hasCredential?.[0]).toMatchObject({
@@ -244,9 +248,14 @@ describe("buildProfilePage", () => {
     it("omits credentials when Profile has none", () => {
         const page = buildProfilePage({
             profile: profileOf({ credentials: [] }),
-            dateModified: "2026-07-11",
         });
         expect(page.mainEntity).not.toHaveProperty("hasCredential");
+    });
+
+    it("leaves out a date the profile document does not carry", () => {
+        const page = buildProfilePage({ profile: profileOf() });
+        expect(page).not.toHaveProperty("dateCreated");
+        expect(page).not.toHaveProperty("dateModified");
     });
 });
 

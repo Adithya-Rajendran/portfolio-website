@@ -1,7 +1,7 @@
 /*
  * Contact routes (G4): short hairline rows beside the form, each with its
- * title, the owner's line where there is one, the button that picks its
- * topic and its secondary links. `.desk` is ContactDesk's root: the page's
+ * title, the owner's line where there is one and its secondary links.
+ * `.desk` is ContactDesk's root: the page's
  * grid (the form, then the routes beside it from 960px), and the route
  * whose topic is chosen stays lit (a data attribute React owns, not a
  * :has() rule).
@@ -26,7 +26,6 @@
     border-top: var(--rule-hair) solid var(--rule-1);
     transition: border-color var(--dur-hover) var(--ease-dock);
 }
-.route:hover,
 .route:focus-within {
     border-top-color: var(--accent);
 }
@@ -39,13 +38,6 @@
 .desk[data-topic="hello"] .route[data-topic="hello"] {
     border-top-color: var(--accent);
 }
-.desk[data-topic="hiring"] .route[data-topic="hiring"] .write,
-.desk[data-topic="research"] .route[data-topic="research"] .write,
-.desk[data-topic="consulting"] .route[data-topic="consulting"] .write,
-.desk[data-topic="hello"] .route[data-topic="hello"] .write {
-    border-color: var(--ink-1);
-}
-
 .title {
     margin: 0;
     font: 400 var(--step-1) / 1.25 var(--font-display);
@@ -56,18 +48,6 @@
     color: var(--ink-2);
     font: 300 var(--step-0) / 1.55 var(--font-long);
     text-wrap: pretty;
-}
-/* A long label wraps inside the column on the narrowest phones. */
-.write {
-    max-width: 100%;
-}
-@media (max-width: 37.49rem) {
-    .write {
-        padding-block: 0.75rem;
-        white-space: normal;
-        line-height: 1.3;
-        text-align: start;
-    }
 }
 .links {
     display: flex;

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { topicFromHash, type ContactTopic } from "@/lib/contact";
 import styles from "./contact-routes.module.css";
 
@@ -16,23 +16,12 @@ export function useDeskTopic(): DeskTopic | null {
     return useContext(DeskContext);
 }
 
-/** Smooth only where spatial motion is allowed (plan §4.4). */
-function scrollBehavior(): ScrollBehavior {
-    const full =
-        document.documentElement.dataset.motion === "full" &&
-        !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    return full ? "smooth" : "auto";
-}
-
 /**
  * Keeps /contact's routes and form on one topic. The fragment picks it on
- * arrival and on `hashchange` (`/contact#hiring`), a route's button picks
- * it and brings the form into view when it is not, and a topic picked in
- * the form lights its
- * route and updates the fragment, so the address can be shared. The chosen
- * topic is this element's `data-topic`, which the route styles read.
- * Lookups stay inside this element, never the document: Cache Components
- * keeps other visited pages mounted but hidden.
+ * arrival and on `hashchange` (`/contact#hiring`, the home page's and the
+ * CV's links), and a topic picked in the form lights its route and
+ * updates the fragment, so the address can be shared. The chosen topic is
+ * this element's `data-topic`, which the route styles read.
  */
 export default function ContactDesk({
     topics,
@@ -43,7 +32,6 @@ export default function ContactDesk({
     children: React.ReactNode;
 }) {
     const [topic, setTopic] = useState<ContactTopic | null>(null);
-    const root = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fromHash = () => {
@@ -62,61 +50,9 @@ export default function ContactDesk({
         window.history.replaceState(null, "", `#${next}`);
     }
 
-    function onClick(event: React.MouseEvent<HTMLDivElement>) {
-        if (
-            event.defaultPrevented ||
-            event.button !== 0 ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.shiftKey ||
-            event.altKey
-        ) {
-            return;
-        }
-        const link = (event.target as Element).closest<HTMLAnchorElement>(
-            "a[data-contact-topic]",
-        );
-        const picked = link
-            ? topicFromHash(link.dataset.contactTopic ?? "", topics)
-            : null;
-        if (!picked) return;
-        event.preventDefault();
-        chooseTopic(picked);
-        const message = root.current?.querySelector<HTMLElement>(
-            "[data-contact-message]",
-        );
-        // Beside the form (from 960px) the field is already in view; on a
-        // phone the routes follow the form, so bring it back.
-        const field = message?.querySelector<HTMLElement>(
-            'input[type="email"]',
-        );
-        const box = (field ?? message)?.getBoundingClientRect();
-        if (box && (box.top < 0 || box.bottom > window.innerHeight)) {
-            message?.scrollIntoView({
-                behavior: scrollBehavior(),
-                block: "start",
-            });
-        }
-        // From the keyboard, carry on into the form; a mouse user clicks
-        // the field they want.
-        if (event.detail === 0) {
-            message
-                ?.querySelector<HTMLInputElement>('input[type="email"]')
-                ?.focus({ preventScroll: true });
-        }
-    }
-
     return (
         <DeskContext value={{ topic, chooseTopic }}>
-            {/* Clicks on the routes' buttons bubble here. The buttons are
-                real links (Enter activates them too), so the handler only
-                improves on them. */}
-            <div
-                ref={root}
-                className={styles.desk}
-                data-topic={topic ?? undefined}
-                onClick={onClick}
-            >
+            <div className={styles.desk} data-topic={topic ?? undefined}>
                 {children}
             </div>
         </DeskContext>

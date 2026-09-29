@@ -12,10 +12,10 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * The Comms share card: the page's themed name, and the availability line
- * as written in the profile when there is one, else the page's
- * introduction from the profile, else no subtitle. It never shows an email
- * address or phone number (there is none to show).
+ * The Comms share card: the page's name over its introduction from the
+ * profile, and the availability line as written in the profile, each only
+ * when set. It never shows an email address or phone number (there is
+ * none to show).
  */
 export default async function Image() {
     const profile = await getProfile();
@@ -24,11 +24,8 @@ export default async function Image() {
         <OgCard
             tag={copy.themed}
             title={copy.plain}
-            subtitle={
-                openTo
-                    ? `${copy.openTo}: ${openTo}`
-                    : profile?.contactIntro?.trim() || undefined
-            }
+            subtitle={profile?.contactIntro?.trim() || undefined}
+            status={openTo ? { label: copy.openTo, text: openTo } : undefined}
             footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/contact`}
         />,

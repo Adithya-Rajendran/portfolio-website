@@ -81,6 +81,8 @@ only live in comments or commit messages.
 - **Share images.** Every page draws the Deep Field card
   (`lib/og-card.tsx`, which also exports the routes' `OG_SIZE` and
   `OG_CONTENT_TYPE`); `/`'s card stands in for any page without its own.
+  The home and `/contact` cards add the availability line as a keyed
+  status line (● Open to …) when the profile has one.
   Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
@@ -196,7 +198,9 @@ only live in comments or commit messages.
   the next two as rows and any others as one line (`homeProjects`); the
   latest three entries; the owner's one-line research interests
   (`taglineOf`: the tagline, else the introduction's first sentence) with
-  a link to About's current focus; and the contact close. The page stays
+  a link to About's current focus; and the contact close (the profile's
+  `availability.cta` → `/contact#hiring` while there is an Open To line,
+  and Send a message). The page stays
   under about 4,500 px at 1440 and 7,000 px at 390 (`home.spec.ts`). In
   Flight Manual the hero draws the planet's parallels under the limb and
   has no foot row; on home the footer leaves Pause motion to the hero.
@@ -380,15 +384,23 @@ only live in comments or commit messages.
   from `onSubmit`, so React never resets its controlled fields. It needs
   JavaScript for BotID, so its wrapper is `.js-only` and a `<noscript>`
   block offers LinkedIn instead. The routes and topics (`hiring`,
-  `research`, `consulting`, `hello`) live in `lib/contact.ts`: Consulting
-  shows only while `availability.consultingOpen` is on, and the topic's
-  name prefixes the email subject. Each route's title and prompt are the
-  profile's (`contactRoutes`, Studio group Site copy); a route without a
-  title takes its topic's name. A prompt is only the message field's
-  optional placeholder once its topic is chosen; the page gives no
-  "include" instructions. The page is the head (the introduction and
-  `Availability`), then the form first with the routes beside it as short
-  rows (below it on phones), then the profiles. Contact is one click from
+  `research`, `consulting`, `hello`) live in `lib/contact.ts`: Hiring
+  shows only while `availabilityLine` has a line (as on home and the CV),
+  Consulting only while `availability.consultingOpen` is on, and the
+  topic's name prefixes the email subject. Each route's title and prompt
+  are the profile's (`contactRoutes`, Studio group Site copy); a route
+  without a title takes its topic's name. A prompt is only the message
+  field's optional placeholder once its topic is chosen; the page gives
+  no "include" instructions. The page is the head (the introduction and
+  `Availability`), then the form first, whole in the first viewport at
+  1440×900 (the carrier trace is the Message row's rule; the character
+  limit is the counter, and the hint is for screen readers), with the
+  routes beside it as short rows (below it on phones), then the profiles.
+  The form's Topic radios are the one topic control: the route rows carry
+  no buttons, and a fragment (`#hiring`) picks its topic on arrival.
+  The only words about the owner's situation on a button are the
+  profile's (`availability.cta`: the home close and the planned orbit's
+  record); code keeps neutral verbs ("Send a message", "Get in touch"). Contact is one click from
   every page: the nav from 960px, and a link in the header bar below it. `sendEmail` sends a topic whose route is not
   shown (a crafted POST) as a hello, and treats Resend's returned
   `{ error }` as a failure: Resend 6 does not throw on API errors. A `"use server"` module may export only async
@@ -458,9 +470,10 @@ deployment require an authenticated Sanity CLI session.
   check this in `pnpm typecheck`.
 - Profile copy. Every visitor-facing string that describes the owner or
   changes over time comes from the profile (headline, tagline and
-  introduction, availability, the Now list, focus areas, the biography,
-  the page introductions `workSummary`, `writingDescription`,
-  `projectsIntro` and `contactIntro`, and the contact routes' words);
+  introduction, availability and its button `availability.cta`, the Now
+  list, focus areas, the biography, the page introductions `workSummary`,
+  `writingDescription`, `projectsIntro` and `contactIntro`, the contact
+  routes' words, and each project's short name `project.name`);
   `lib/copy.ts` holds only structural labels (names, section titles,
   button verbs, form mechanics). When a profile value is empty its
   element is left out, never replaced by wording in code; the RSS
@@ -529,9 +542,10 @@ deployment require an authenticated Sanity CLI session.
   (the menu sheet's focus, `inert` and closing; Contact in the bar on a
   phone; the current nav section; the header and footer naming every
   section plainly),
-  `contact` (routes pick the form's topic by click and by fragment, a
-  route's prompt only as the message field's placeholder, the form in the
-  first viewport at 1440, field
+  `contact` (the form's Topic is the one topic control and a fragment
+  picks it, a route's prompt only as the message field's placeholder,
+  the whole form in the first viewport at 1440×900, Hiring only beside an
+  Open To line, field
   checks, a refused send keeps the draft and its stale alert clears after
   leaving and returning, Consulting hidden while off, no email address or
   phone number, the no-JavaScript LinkedIn alternative; sends only on the
@@ -570,8 +584,10 @@ deployment require an authenticated Sanity CLI session.
   with and without JavaScript; the starfield `running` only on screen, in
   a visible tab, in Void and with motion allowed; the credit, and the
   drawn limb in Flight Manual; the sections in order, unnumbered and
-  without themed names, with their links; the flagship without stats or
-  mission number; the page's height at 1440 and 390; no gap wording and
+  without themed names, with their links; the close's button only in
+  the profile's words and only beside an Open To line; the flagship
+  without stats or mission number; the page's height at 1440 and 390; no
+  gap wording and
   no old artwork), `crew` (About's plain title with the patch and no
   portrait, its record, the sections by their plain names with their
   links, Get in touch, no gap wording; and no page keeping the old

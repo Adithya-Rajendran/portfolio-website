@@ -133,6 +133,8 @@ export const FIXTURE_PROFILE: ProfileData = {
         ],
         // Summer 2027, approximated for placing the planned orbit only.
         from: "2027-06-01",
+        // The former built-in button, now the profile's.
+        cta: "Write about a role",
         consultingOpen: false,
         updatedAt: "2026-09-24",
     },
@@ -274,16 +276,14 @@ export const FIXTURE_PROFILE: ProfileData = {
             },
             summary:
                 "Systems engineering, customer problem-solving, and technical communication across private-cloud deployments.",
+            // The résumé's six lines, verbatim (phase-4-profile-copy.json).
             highlights: [
-                "Designed and led large-scale private-cloud deployments using OpenStack, Kubernetes, and Ceph.",
-                "Diagnosed issues from the Linux kernel and network switches through to applications, contributing patches where needed.",
-                "Led customer discovery calls and tailored technical demonstrations, helping clients evaluate approaches against their business goals.",
-                "Automated deployment and operations tasks with Python, Terraform, and Bash to reduce manual work and errors.",
-                "Worked with engineering and support teams on custom solutions to improve performance and resolve recurring customer issues.",
-                "Created CIS and DISA STIG tailoring files to support customers’ CMMC and HIPAA compliance work.",
-                "Documented root causes and fixes in the knowledge base to help resolve similar incidents faster.",
-                "Helped define statements of work, aligning sales, support, and engineering on the scope of each engagement.",
-                "Brought customer use cases and technical challenges to product and engineering teams to inform the roadmap.",
+                "Led customer engagements from discovery and architecture through deployment of highly available OpenStack, Kubernetes, and Ceph private clouds across multiple racks.",
+                "Diagnosed failures from Linux kernels and networking through application layers; provided bug fixes and documented root causes and solutions.",
+                "Automated deployments and operations with Python, Terraform, and Bash, improving repeatability and reducing manual errors.",
+                "Delivered technical demonstrations and explained trade-offs to customers; aligned statements of work across sales, support, and engineering.",
+                "Created CIS and DISA-STIG tailoring files for FedRAMP, CMMC, and HIPAA requirements.",
+                "Mentored new field engineers in troubleshooting and customer engagement; shared field feedback and customer requirements with product and engineering teams.",
             ],
             // Only terms named in the highlights above.
             skills: [

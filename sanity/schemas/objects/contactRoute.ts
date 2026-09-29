@@ -15,7 +15,7 @@ export default defineType({
             title: "Title",
             type: "string",
             description:
-                "The route's heading on Contact, and its topic in the form. Leave blank to use the topic's name.",
+                "The route's heading beside the form on Contact, and its topic in the form. Leave blank to use the topic's name.",
             validation: (Rule) => Rule.max(60),
         }),
         defineField({
@@ -24,7 +24,7 @@ export default defineType({
             type: "text",
             rows: 2,
             description:
-                "What to include in a message on this topic. Shown under the route on Contact, and in the empty message field once the topic is chosen. Leave blank for no prompt.",
+                "What to include in a message on this topic, shown in the empty message field once the topic is chosen. Leave blank for the field's plain prompt.",
             validation: (Rule) => Rule.max(200),
         }),
     ],

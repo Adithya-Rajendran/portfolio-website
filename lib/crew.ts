@@ -47,25 +47,6 @@ export function taglineOf(profile: ProfileData | null): string | null {
     return (match ? match[0] : intro).trim();
 }
 
-/**
- * What the owner is open to (`availabilityLine`: the Open To lines joined
- * with " · "), and when that was last confirmed: nothing while
- * availability is unset or Closed.
- */
-export function openTo(profile: ProfileData | null): {
-    text: string;
-    updated: { date: string; label: string } | null;
-} | null {
-    const availability = profile?.availability;
-    const text = availabilityLine(availability);
-    if (!text) return null;
-    const date = /^\d{4}-\d{2}-\d{2}/.exec(availability?.updatedAt ?? "")?.[0];
-    return {
-        text,
-        updated: date ? { date, label: formatEntryDate(date) } : null,
-    };
-}
-
 export interface Question {
     id: string;
     /** "Q1". */
@@ -207,7 +188,7 @@ export function crewRecord(profile: ProfileData | null): RecordCell[] {
     );
     const previously = previousRole(profile.timeline);
     const focus = (profile.focusAreas ?? []).filter((item) => item?.trim());
-    const open = openTo(profile);
+    const open = availabilityLine(profile.availability);
     const links = (profile.socialLinks ?? [])
         .filter((link): link is ExternalLink =>
             Boolean(link?.label && /^https?:\/\//.test(link.url ?? "")),
@@ -248,7 +229,7 @@ export function crewRecord(profile: ProfileData | null): RecordCell[] {
         ...(focus.length
             ? [{ id: "focus" as const, value: focus.join(" · ") }]
             : []),
-        ...(open ? [{ id: "openTo" as const, value: open.text }] : []),
+        ...(open ? [{ id: "openTo" as const, value: open }] : []),
         ...(links.length ? [{ id: "links" as const, value: "", links }] : []),
     ];
     const firstSpans = share(first.length, 12);

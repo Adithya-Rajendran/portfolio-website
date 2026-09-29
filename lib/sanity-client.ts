@@ -121,8 +121,11 @@ export type Availability = {
     openTo?: string | null;
     /** Places the planned orbit only; never printed. */
     from?: string | null;
+    /** The button that answers the Open To lines ("Write about a role"). */
+    cta?: string | null;
     consultingOpen?: boolean | null;
-    updatedAt: string;
+    /** For the owner's records; never printed. */
+    updatedAt?: string | null;
 };
 
 export type Launch = {
@@ -160,6 +163,7 @@ export type TalkOrPaper = {
 
 export type ProfileData = {
     _id: string;
+    _createdAt?: string;
     _updatedAt?: string;
     name: string;
     headline: string;
@@ -338,6 +342,7 @@ const contentBodyProjection = `body[]{
 
 export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     _id,
+    _createdAt,
     _updatedAt,
     name,
     headline,
@@ -345,7 +350,7 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     introduction,
     bio,
     availability{
-        status, "seeking": seeking[]{_key, label}, openTo, from,
+        status, "seeking": seeking[]{_key, label}, openTo, from, cta,
         consultingOpen, updatedAt
     },
     launch{date, precision, event},

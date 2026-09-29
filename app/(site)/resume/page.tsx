@@ -23,7 +23,6 @@ import Specs from "@/components/ui/specs";
 import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
 import { cvCopy as copy, orbitCopy } from "@/lib/copy";
-import { openTo as openToOf } from "@/lib/crew";
 import {
     cvCredentials,
     cvEntries,
@@ -35,7 +34,7 @@ import {
 import { logEntries } from "@/lib/log-index";
 import { contactHref, siteRoutes } from "@/lib/navigation";
 import { orbitModel } from "@/lib/orbit/geometry";
-import { getProfileLink } from "@/lib/profile-content";
+import { availabilityLine, getProfileLink } from "@/lib/profile-content";
 import type { ProjectStatus } from "@/lib/project-fields";
 import { resolveResumeAssetUrl } from "@/lib/resume";
 import {
@@ -174,7 +173,7 @@ export default async function ResumePage() {
             : null;
     const summary = summaryOf(profile);
     const availability = profile?.availability;
-    const openTo = openToOf(profile)?.text ?? null;
+    const openTo = availabilityLine(availability);
 
     const timeline = cvEntries(profile?.timeline);
     const model = orbitModel({
@@ -382,6 +381,7 @@ export default async function ResumePage() {
                                 ? {
                                       text: openTo,
                                       href: contactHref("hiring"),
+                                      cta: availability?.cta?.trim() || null,
                                   }
                                 : null
                         }

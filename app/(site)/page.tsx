@@ -9,7 +9,7 @@ import { LinkArrow } from "@/components/ui/marks";
 import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
 import { homeCopy as copy } from "@/lib/copy";
-import { openTo, questions, taglineOf } from "@/lib/crew";
+import { questions, taglineOf } from "@/lib/crew";
 import { homeActs, homeProjects, type HomeAct } from "@/lib/home";
 import { logEntries } from "@/lib/log-index";
 import {
@@ -20,6 +20,7 @@ import {
     type Mission,
 } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
+import { availabilityLine } from "@/lib/profile-content";
 import {
     getAllPosts,
     getAllProjects,
@@ -70,8 +71,9 @@ function Act({
  * Projects · CV · Contact), then, each only with content, the strongest
  * project on its stage with the next two as rows and any others as one
  * line, the latest three entries, the owner's research interests in one
- * statement, and the contact close (Write about a role while the owner is
- * open to one, and Send a message). Everything is server-rendered; the
+ * statement, and the contact close (the profile's button that answers
+ * what the owner is open to, while both are set, and Send a message).
+ * Everything is server-rendered; the
  * starfield and Pause motion are the only islands.
  */
 export default async function Home() {
@@ -82,7 +84,9 @@ export default async function Home() {
         getAllProjects(),
     ]);
     const name = profile?.name?.trim() || siteConfig.author;
-    const open = openTo(profile);
+    const open = availabilityLine(profile?.availability);
+    // The button that answers the Open To line: the profile's words.
+    const answer = open ? profile?.availability?.cta?.trim() || null : null;
 
     // Projects: the flagship on its stage (led by its summary; no stats),
     // two rows, then any others as one line.
@@ -119,7 +123,7 @@ export default async function Home() {
             <Hero
                 name={name}
                 headline={profile?.headline?.trim() || null}
-                openTo={open?.text ?? null}
+                openTo={open}
                 projects={ordered.length > 0}
             />
 
@@ -212,18 +216,18 @@ export default async function Home() {
                             {copy.contactAct.title}
                         </h2>
                         <div className={`cluster ${styles.closeActions}`}>
-                            {open ? (
+                            {answer ? (
                                 <ButtonLink
                                     variant="primary"
                                     href={contactHref("hiring")}
                                     icon="arrow"
                                     iconAt="end"
                                 >
-                                    {copy.contactAct.role}
+                                    {answer}
                                 </ButtonLink>
                             ) : null}
                             <ButtonLink
-                                variant={open ? undefined : "primary"}
+                                variant={answer ? undefined : "primary"}
                                 href={siteRoutes.contact}
                                 icon="arrow"
                                 iconAt="end"

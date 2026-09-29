@@ -40,7 +40,11 @@ vi.mock("@/lib/sanity-client", () => ({
 
 /** A profile whose page shows all four routes. */
 const EVERY_ROUTE = {
-    availability: { status: "open", consultingOpen: true },
+    availability: {
+        status: "open",
+        seeking: [{ _key: "a", label: "Summer 2027 internships" }],
+        consultingOpen: true,
+    },
     contactInvitation: "Write about research.",
 };
 
@@ -395,20 +399,24 @@ describe("sendEmail — topic", () => {
             );
         }
 
-        // Hiring shows unless availability is Closed.
-        getProfileMock.mockResolvedValue({
-            availability: { status: "closed" },
-        });
-        resendSendMock.mockClear();
-        await expect(
-            sendEmail(
-                formDataOf({
-                    senderEmail: "a@example.com",
-                    message: "hi",
-                    topic: "hiring",
-                }),
-            ),
-        ).resolves.toMatchObject({ topic: "hello" });
+        // Hiring shows only while the profile says what the owner is open
+        // to: not while availability is Closed, nor without an Open To line.
+        for (const availability of [
+            { status: "closed" },
+            { status: "open", consultingOpen: false },
+        ]) {
+            getProfileMock.mockResolvedValue({ availability });
+            resendSendMock.mockClear();
+            await expect(
+                sendEmail(
+                    formDataOf({
+                        senderEmail: "a@example.com",
+                        message: "hi",
+                        topic: "hiring",
+                    }),
+                ),
+            ).resolves.toMatchObject({ topic: "hello" });
+        }
     });
 
     it("still sends, as a hello, when the profile cannot be read", async () => {
