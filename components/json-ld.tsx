@@ -60,12 +60,13 @@ export async function PersonJsonLd() {
 
 export async function WebSiteJsonLd() {
     const profile = await getProfile();
+    const description = getProfileDescription(profile);
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "WebSite",
         name: siteConfig.author,
         url: siteConfig.url,
-        description: getProfileDescription(profile),
+        ...(description ? { description } : {}),
         author: {
             "@type": "Person",
             name: siteConfig.author,

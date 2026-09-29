@@ -73,6 +73,12 @@ export type Callout = {
     }>;
 };
 
+export type ContactRoute = {
+    _type: "contactRoute";
+    title?: string;
+    prompt?: string;
+};
+
 export type ProjectReference = {
     _ref: string;
     _type: "reference";
@@ -397,6 +403,11 @@ export type Profile = {
     introduction: string;
     availability?: {
         status: "open" | "selective" | "closed";
+        seeking?: Array<{
+            label: string;
+            _type: "opening";
+            _key: string;
+        }>;
         openTo?: string;
         from?: string;
         consultingOpen?: boolean;
@@ -411,6 +422,14 @@ export type Profile = {
     workSummary?: string;
     writingDescription?: string;
     contactInvitation?: string;
+    projectsIntro?: string;
+    contactIntro?: string;
+    contactRoutes?: {
+        hiring?: ContactRoute;
+        research?: ContactRoute;
+        consulting?: ContactRoute;
+        hello?: ContactRoute;
+    };
     seoDescription?: string;
     featuredPost?: PostReference;
     startHere?: Array<
@@ -616,6 +635,7 @@ export type AllSanitySchemaTypes =
     | SanityImageAssetReference
     | Gallery
     | Callout
+    | ContactRoute
     | ProjectReference
     | TalkOrPaper
     | Credential
@@ -651,7 +671,7 @@ export type DUE_POSTS_QUERY_RESULT = Array<string>;
 
 // Source: lib/sanity-client.ts
 // Variable: PROFILE_QUERY
-// Query: *[_id == "profile"][0]{    _id,    _updatedAt,    name,    headline,    tagline,    introduction,    bio,    availability{status, openTo, from, consultingOpen, updatedAt},    launch{date, precision, event},    focusAreas,    workSummary,    writingDescription,    contactInvitation,    seoDescription,    "featuredPostId": featuredPost._ref,    "startHereIds": startHere[]._ref,    location,    portrait,    "resumeUrl": resume.asset->url,    "resumeUploadedAt": resume.asset->_createdAt,    resumeNote,    socialLinks[]{_key, _type, label, url, kind},    currentCuriosities[]{        _key, _type, kind, title, note, url,        "projectId": project._ref,        "postId": post._ref    },    curiositiesUpdatedAt,    timeline[]{        _key, _type, kind, title, organization, orgShort, orgUrl, employment,        location, startDate, startPrecision, endDate, endPrecision,        isCurrent, expectedEndYear,        summary, highlights, skills, logo, burn{label, note}    },    skillGroups[]{_key, _type, title, skills},    credentials[]{        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,        credentialId, verificationUrl, badge,        "lifecycleStatus": select(            lifetime == true => "lifetime",            defined(expiresOn) && expiresOn < $today => "expired",            "active"        )    },    talksAndPapers[]{        _key, _type, title, kind, venue, date, authors,        links[]{_key, _type, label, url, kind},        abstract,        "projectId": project._ref    }}
+// Query: *[_id == "profile"][0]{    _id,    _updatedAt,    name,    headline,    tagline,    introduction,    bio,    availability{        status, "seeking": seeking[]{_key, label}, openTo, from,        consultingOpen, updatedAt    },    launch{date, precision, event},    focusAreas,    workSummary,    writingDescription,    contactInvitation,    projectsIntro,    contactIntro,    contactRoutes{        hiring{title, prompt},        research{title, prompt},        consulting{title, prompt},        hello{title, prompt}    },    seoDescription,    "featuredPostId": featuredPost._ref,    "startHereIds": startHere[]._ref,    location,    portrait,    "resumeUrl": resume.asset->url,    "resumeUploadedAt": resume.asset->_createdAt,    resumeNote,    socialLinks[]{_key, _type, label, url, kind},    currentCuriosities[]{        _key, _type, kind, title, note, url,        "projectId": project._ref,        "postId": post._ref    },    curiositiesUpdatedAt,    timeline[]{        _key, _type, kind, title, organization, orgShort, orgUrl, employment,        location, startDate, startPrecision, endDate, endPrecision,        isCurrent, expectedEndYear,        summary, highlights, skills, logo, burn{label, note}    },    skillGroups[]{_key, _type, title, skills},    credentials[]{        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,        credentialId, verificationUrl, badge,        "lifecycleStatus": select(            lifetime == true => "lifetime",            defined(expiresOn) && expiresOn < $today => "expired",            "active"        )    },    talksAndPapers[]{        _key, _type, title, kind, venue, date, authors,        links[]{_key, _type, label, url, kind},        abstract,        "projectId": project._ref    }}
 export type PROFILE_QUERY_RESULT =
     | {
           _id: "profile";
@@ -667,6 +687,9 @@ export type PROFILE_QUERY_RESULT =
           workSummary: null;
           writingDescription: null;
           contactInvitation: null;
+          projectsIntro: null;
+          contactIntro: null;
+          contactRoutes: null;
           seoDescription: null;
           featuredPostId: null;
           startHereIds: null;
@@ -693,6 +716,10 @@ export type PROFILE_QUERY_RESULT =
           bio: string;
           availability: {
               status: "closed" | "open" | "selective";
+              seeking: Array<{
+                  _key: string;
+                  label: string;
+              }> | null;
               openTo: string | null;
               from: string | null;
               consultingOpen: boolean | null;
@@ -707,6 +734,26 @@ export type PROFILE_QUERY_RESULT =
           workSummary: string | null;
           writingDescription: string | null;
           contactInvitation: string | null;
+          projectsIntro: string | null;
+          contactIntro: string | null;
+          contactRoutes: {
+              hiring: {
+                  title: string | null;
+                  prompt: string | null;
+              } | null;
+              research: {
+                  title: string | null;
+                  prompt: string | null;
+              } | null;
+              consulting: {
+                  title: string | null;
+                  prompt: string | null;
+              } | null;
+              hello: {
+                  title: string | null;
+                  prompt: string | null;
+              } | null;
+          } | null;
           seoDescription: string | null;
           featuredPostId: string | null;
           startHereIds: Array<string> | null;
@@ -1569,7 +1616,7 @@ export type WARM_LISTS_QUERY_RESULT = {
 declare global {
     interface SanityQueries {
         '*[\n    _type == "post" &&\n    defined(publishedAt) &&\n    publishedAt == $today\n].slug.current': DUE_POSTS_QUERY_RESULT;
-        '*[_id == "profile"][0]{\n    _id,\n    _updatedAt,\n    name,\n    headline,\n    tagline,\n    introduction,\n    bio,\n    availability{status, openTo, from, consultingOpen, updatedAt},\n    launch{date, precision, event},\n    focusAreas,\n    workSummary,\n    writingDescription,\n    contactInvitation,\n    seoDescription,\n    "featuredPostId": featuredPost._ref,\n    "startHereIds": startHere[]._ref,\n    location,\n    portrait,\n    "resumeUrl": resume.asset->url,\n    "resumeUploadedAt": resume.asset->_createdAt,\n    resumeNote,\n    socialLinks[]{_key, _type, label, url, kind},\n    currentCuriosities[]{\n        _key, _type, kind, title, note, url,\n        "projectId": project._ref,\n        "postId": post._ref\n    },\n    curiositiesUpdatedAt,\n    timeline[]{\n        _key, _type, kind, title, organization, orgShort, orgUrl, employment,\n        location, startDate, startPrecision, endDate, endPrecision,\n        isCurrent, expectedEndYear,\n        summary, highlights, skills, logo, burn{label, note}\n    },\n    skillGroups[]{_key, _type, title, skills},\n    credentials[]{\n        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,\n        credentialId, verificationUrl, badge,\n        "lifecycleStatus": select(\n            lifetime == true => "lifetime",\n            defined(expiresOn) && expiresOn < $today => "expired",\n            "active"\n        )\n    },\n    talksAndPapers[]{\n        _key, _type, title, kind, venue, date, authors,\n        links[]{_key, _type, label, url, kind},\n        abstract,\n        "projectId": project._ref\n    }\n}': PROFILE_QUERY_RESULT;
+        '*[_id == "profile"][0]{\n    _id,\n    _updatedAt,\n    name,\n    headline,\n    tagline,\n    introduction,\n    bio,\n    availability{\n        status, "seeking": seeking[]{_key, label}, openTo, from,\n        consultingOpen, updatedAt\n    },\n    launch{date, precision, event},\n    focusAreas,\n    workSummary,\n    writingDescription,\n    contactInvitation,\n    projectsIntro,\n    contactIntro,\n    contactRoutes{\n        hiring{title, prompt},\n        research{title, prompt},\n        consulting{title, prompt},\n        hello{title, prompt}\n    },\n    seoDescription,\n    "featuredPostId": featuredPost._ref,\n    "startHereIds": startHere[]._ref,\n    location,\n    portrait,\n    "resumeUrl": resume.asset->url,\n    "resumeUploadedAt": resume.asset->_createdAt,\n    resumeNote,\n    socialLinks[]{_key, _type, label, url, kind},\n    currentCuriosities[]{\n        _key, _type, kind, title, note, url,\n        "projectId": project._ref,\n        "postId": post._ref\n    },\n    curiositiesUpdatedAt,\n    timeline[]{\n        _key, _type, kind, title, organization, orgShort, orgUrl, employment,\n        location, startDate, startPrecision, endDate, endPrecision,\n        isCurrent, expectedEndYear,\n        summary, highlights, skills, logo, burn{label, note}\n    },\n    skillGroups[]{_key, _type, title, skills},\n    credentials[]{\n        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,\n        credentialId, verificationUrl, badge,\n        "lifecycleStatus": select(\n            lifetime == true => "lifetime",\n            defined(expiresOn) && expiresOn < $today => "expired",\n            "active"\n        )\n    },\n    talksAndPapers[]{\n        _key, _type, title, kind, venue, date, authors,\n        links[]{_key, _type, label, url, kind},\n        abstract,\n        "projectId": project._ref\n    }\n}': PROFILE_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_LIST_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today &&\n    references($projectId)\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POSTS_BY_PROJECT_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " ")),\n    changelog[]{_key, date, kind, note},\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': RECENT_POSTS_QUERY_RESULT;

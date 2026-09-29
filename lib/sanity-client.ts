@@ -107,8 +107,17 @@ export type CredentialListItem = {
     lifecycleStatus: "active" | "lifetime" | "expired";
 };
 
+/** One line of what the owner is open to: "Summer 2027 internships". */
+export type Opening = {
+    _key: string;
+    label: string;
+};
+
 export type Availability = {
     status: AvailabilityStatus;
+    /** One line per opening, printed as written and joined with " · ". */
+    seeking?: Opening[] | null;
+    /** The older single line; shown only while `seeking` is empty. */
     openTo?: string | null;
     /** Places the planned orbit only; never printed. */
     from?: string | null;
@@ -121,6 +130,19 @@ export type Launch = {
     /** Missing means an exact date; `year` means print the year alone. */
     precision?: DatePrecision | null;
     event: string;
+};
+
+/** The words of one contact route (Profile → Site copy). */
+export type ContactRouteCopy = {
+    title?: string | null;
+    prompt?: string | null;
+};
+
+export type ContactRoutesCopy = {
+    hiring?: ContactRouteCopy | null;
+    research?: ContactRouteCopy | null;
+    consulting?: ContactRouteCopy | null;
+    hello?: ContactRouteCopy | null;
 };
 
 export type TalkOrPaper = {
@@ -150,6 +172,11 @@ export type ProfileData = {
     workSummary?: string | null;
     writingDescription?: string | null;
     contactInvitation?: string | null;
+    /** The /portfolio introduction. */
+    projectsIntro?: string | null;
+    /** The /contact introduction. */
+    contactIntro?: string | null;
+    contactRoutes?: ContactRoutesCopy | null;
     seoDescription?: string | null;
     featuredPostId?: string | null;
     startHereIds?: string[] | null;
@@ -315,12 +342,23 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     tagline,
     introduction,
     bio,
-    availability{status, openTo, from, consultingOpen, updatedAt},
+    availability{
+        status, "seeking": seeking[]{_key, label}, openTo, from,
+        consultingOpen, updatedAt
+    },
     launch{date, precision, event},
     focusAreas,
     workSummary,
     writingDescription,
     contactInvitation,
+    projectsIntro,
+    contactIntro,
+    contactRoutes{
+        hiring{title, prompt},
+        research{title, prompt},
+        consulting{title, prompt},
+        hello{title, prompt}
+    },
     seoDescription,
     "featuredPostId": featuredPost._ref,
     "startHereIds": startHere[]._ref,

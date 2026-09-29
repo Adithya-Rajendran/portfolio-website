@@ -89,13 +89,19 @@ export function listValuesOnly<Rule>(rule: Rule): Rule {
     return rule;
 }
 
-/** `availability.openTo` is required unless the status is `closed`. */
-export function checkAvailabilityOpenTo(
+/**
+ * What you are open to is required unless the status is `closed`: one or
+ * more `availability.seeking` lines, or the older single `openTo` line.
+ */
+export function checkAvailabilitySeeking(
     status: string | undefined,
+    seeking: readonly { label?: string }[] | undefined,
     openTo: string | undefined,
 ): true | string {
-    if (!status || status === "closed" || openTo?.trim()) return true;
-    return "Say what you are open to, or set the status to Closed.";
+    if (!status || status === "closed") return true;
+    if (seeking?.some((line) => line?.label?.trim())) return true;
+    if (openTo?.trim()) return true;
+    return "Add what you are open to, or set the status to Closed.";
 }
 
 /**

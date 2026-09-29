@@ -336,8 +336,10 @@ only live in comments or commit messages.
   JavaScript for BotID, so its wrapper is `.js-only` and a `<noscript>`
   block offers LinkedIn instead. The routes and topics (`hiring`,
   `research`, `consulting`, `hello`) live in `lib/contact.ts`: Consulting
-  shows only while `availability.consultingOpen` is on, and the topic
-  prefixes the email subject. `sendEmail` sends a topic whose route is not
+  shows only while `availability.consultingOpen` is on, and the topic's
+  name prefixes the email subject. Each route's title and prompt are the
+  profile's (`contactRoutes`, Studio group Site copy); a route without a
+  title takes its topic's name, and one without a prompt shows none. `sendEmail` sends a topic whose route is not
   shown (a crafted POST) as a hello, and treats Resend's returned
   `{ error }` as a failure: Resend 6 does not throw on API errors. A `"use server"` module may export only async
   functions (anything else reaches the client as a server reference), so
@@ -404,6 +406,20 @@ deployment require an authenticated Sanity CLI session.
   `PostWithBody`, `PostMeta`, `ProjectListItem` and `ProjectWithBody`;
   `tests/lib/profile-fields.test.ts` and `tests/lib/project-fields.test.ts`
   check this in `pnpm typecheck`.
+- Profile copy. Every visitor-facing string that describes the owner or
+  changes over time comes from the profile (headline, tagline and
+  introduction, availability, the Now list, focus areas, the biography,
+  the page introductions `workSummary`, `writingDescription`,
+  `projectsIntro` and `contactIntro`, and the contact routes' words);
+  `lib/copy.ts` holds only structural labels (names, section titles,
+  button verbs, form mechanics). When a profile value is empty its
+  element is left out, never replaced by wording in code; the RSS
+  channel, which must have a description, uses the feed's title.
+  `design/impl-log/phase-4-copy-audit.md` classifies every string.
+  Availability is `availability.seeking[]` (one line per opening, joined
+  with " · " by `availabilityLine` in `lib/profile-content.ts`); the older
+  single `openTo` line is deprecated and read only while that list is
+  empty.
 - Real content only. A date known only to the year is stored as any day in
   that year with precision `year` (`timelineEntry.startPrecision` and
   `endPrecision`, `profile.launch.precision`, `project.datePrecision`), and
@@ -418,7 +434,9 @@ deployment require an authenticated Sanity CLI session.
   (without images, and without links to posts that are not fixtures). Any
   other fixture project, and every fixture post, is named as a fixture and
   describes no real work. The fixture profile holds only the owner's
-  published values: a field the real profile leaves empty stays empty.
+  published values, plus the Open To lines and Site copy from
+  `design/impl-log/phase-4-profile-copy.json`: a field the real profile
+  leaves empty stays empty.
 - Content migrations (`migrations/<name>/index.ts`) are run only by the owner,
   from an authenticated CLI (`migrations/README.md` has the commands, from
   the backup to publishing); never from CI or an agent session. Keep their
@@ -455,7 +473,8 @@ deployment require an authenticated Sanity CLI session.
   reloads, pages and tabs, Auto following the OS, Pause motion, the stored
   theme on an unknown post or project URL), `chrome`
   (the menu sheet's focus, `inert` and closing; the current nav section),
-  `contact` (routes pick the form's topic by click and by fragment, field
+  `contact` (routes pick the form's topic by click and by fragment, the
+  message field's prompt matching its route's, field
   checks, a refused send keeps the draft and its stale alert clears after
   leaving and returning, Consulting hidden while off, no email address or
   phone number, the no-JavaScript LinkedIn alternative; sends only on the

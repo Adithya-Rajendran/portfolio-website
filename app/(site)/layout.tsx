@@ -8,8 +8,9 @@ import { FEED_PATH, FEED_TITLE } from "@/lib/feed";
 export async function generateMetadata(): Promise<Metadata> {
     const profile = await getProfile();
     const description = getProfileDescription(profile);
+    const described = description ? { description } : {};
     return {
-        description,
+        ...described,
         alternates: {
             canonical: siteConfig.url,
             types: {
@@ -29,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
         category: "technology",
         openGraph: {
             title: siteConfig.title,
-            description,
+            ...described,
             url: siteConfig.url,
             siteName: "Adithya Rajendran",
             locale: "en_US",
@@ -38,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
         twitter: {
             card: "summary_large_image",
             title: siteConfig.title,
-            description,
+            ...described,
         },
         verification: {
             google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,

@@ -293,15 +293,6 @@ export function adjacentMissions<T extends { slug: string; number: number }>(
     };
 }
 
-/** "infrastructure and software": the index's dek, in display order. */
-export function typeList(missions: readonly Pick<Mission, "types">[]): string {
-    const types = [
-        ...new Set(missions.flatMap((mission) => mission.types)),
-    ].map((type) => type.toLowerCase());
-    if (types.length < 2) return types.join("");
-    return `${types.slice(0, -1).join(", ")} and ${types[types.length - 1]}`;
-}
-
 const TALLY_ORDER: StatusValue[] = [
     "active",
     "complete",

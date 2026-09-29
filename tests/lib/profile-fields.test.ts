@@ -2,26 +2,38 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import { formatTimelineDate } from "@/lib/profile-content";
 import {
-    checkAvailabilityOpenTo,
+    checkAvailabilitySeeking,
     checkTimelineRange,
 } from "@/lib/profile-fields";
 import type { ProfileData } from "@/lib/sanity-client";
 import type { PROFILE_QUERY_RESULT } from "@/sanity.types";
 
 describe("profile schema rules", () => {
-    it("requires Open To unless availability is closed", () => {
-        expect(checkAvailabilityOpenTo("open", undefined)).toEqual(
+    it("requires an Open To line unless availability is closed", () => {
+        expect(checkAvailabilitySeeking("open", undefined, undefined)).toEqual(
             expect.any(String),
         );
-        expect(checkAvailabilityOpenTo("selective", "   ")).toEqual(
-            expect.any(String),
-        );
-        expect(checkAvailabilityOpenTo("open", "Summer 2027 internships")).toBe(
+        expect(
+            checkAvailabilitySeeking("selective", [{ label: "  " }], "   "),
+        ).toEqual(expect.any(String));
+        expect(
+            checkAvailabilitySeeking(
+                "open",
+                [{ label: "Summer 2027 internships" }],
+                undefined,
+            ),
+        ).toBe(true);
+        // The older single line still counts while the list is empty.
+        expect(
+            checkAvailabilitySeeking("open", [], "Summer 2027 internships"),
+        ).toBe(true);
+        expect(checkAvailabilitySeeking("closed", undefined, undefined)).toBe(
             true,
         );
-        expect(checkAvailabilityOpenTo("closed", undefined)).toBe(true);
         // Status has its own required rule; do not double-report.
-        expect(checkAvailabilityOpenTo(undefined, undefined)).toBe(true);
+        expect(checkAvailabilitySeeking(undefined, undefined, undefined)).toBe(
+            true,
+        );
     });
 
     it("warns when a timeline entry starts and ends on the same date", () => {
@@ -69,10 +81,14 @@ describe("fixture profile", () => {
         ).toBe(true);
     });
 
-    it("uses the résumé's availability line", () => {
-        expect(FIXTURE_PROFILE.availability?.openTo).toBe(
-            "Summer 2027 internships · Full-time opportunities in 2028",
-        );
+    it("uses the résumé's availability line, one opening per line", () => {
+        expect(
+            FIXTURE_PROFILE.availability?.seeking?.map((line) => line.label),
+        ).toEqual([
+            "Summer 2027 internships",
+            "Full-time opportunities in 2028",
+        ]);
+        expect(FIXTURE_PROFILE.availability?.openTo).toBeUndefined();
         expect(FIXTURE_PROFILE.availability?.consultingOpen).toBe(false);
     });
 

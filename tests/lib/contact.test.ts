@@ -26,7 +26,10 @@ function profileOf(overrides: Partial<ProfileData> = {}): ProfileData {
 function availabilityOf(overrides: Partial<Availability> = {}): Availability {
     return {
         status: "open",
-        openTo: "Summer 2027 internships · Full-time opportunities in 2028",
+        seeking: [
+            { _key: "a", label: "Summer 2027 internships" },
+            { _key: "b", label: "Full-time opportunities in 2028" },
+        ],
         updatedAt: "2026-09-24",
         ...overrides,
     };
@@ -44,8 +47,67 @@ describe("contact routes", () => {
             ["03", "hello"],
         ]);
         // Facts are the profile's own words, printed as written.
-        expect(routes[0].openTo).toBe(FIXTURE_PROFILE.availability?.openTo);
+        expect(routes[0].openTo).toBe(
+            "Summer 2027 internships · Full-time opportunities in 2028",
+        );
         expect(routes[1].body).toBe(FIXTURE_PROFILE.contactInvitation);
+    });
+
+    it("words each route with the profile's title and prompt", () => {
+        const routes = contactRoutes(FIXTURE_PROFILE);
+        expect(
+            routes.map((route) => [route.title, route.prompt, route.cta]),
+        ).toEqual([
+            [
+                "Internships & roles",
+                FIXTURE_PROFILE.contactRoutes?.hiring?.prompt,
+                "Write about a role",
+            ],
+            [
+                "Research & collaboration",
+                FIXTURE_PROFILE.contactRoutes?.research?.prompt,
+                "Start a conversation",
+            ],
+            [
+                "Hello",
+                FIXTURE_PROFILE.contactRoutes?.hello?.prompt,
+                "Say hello",
+            ],
+        ]);
+    });
+
+    it("names a route by its topic without a title, and leaves out an empty prompt", () => {
+        const [hiring, hello] = contactRoutes(
+            profileOf({
+                contactRoutes: {
+                    hiring: { title: "  ", prompt: "The role." },
+                    hello: { title: "Hi", prompt: " " },
+                },
+            }),
+        );
+        expect(hiring).toMatchObject({ title: "Hiring", prompt: "The role." });
+        expect(hello.title).toBe("Hi");
+        expect(hello).not.toHaveProperty("prompt");
+        // No profile: the topics' names, and no prompts.
+        expect(contactRoutes(null).map((route) => route.title)).toEqual([
+            "Hiring",
+            "Hello",
+        ]);
+        expect(contactRoutes(null).some((route) => "prompt" in route)).toBe(
+            false,
+        );
+    });
+
+    it("prints the older single Open To line while there are no lines", () => {
+        const [hiring] = contactRoutes(
+            profileOf({
+                availability: availabilityOf({
+                    seeking: [],
+                    openTo: "Research internships",
+                }),
+            }),
+        );
+        expect(hiring.openTo).toBe("Research internships");
     });
 
     it("hides Consulting until availability.consultingOpen is on", () => {
@@ -73,7 +135,7 @@ describe("contact routes", () => {
                 profileOf({
                     availability: availabilityOf({
                         status: "closed",
-                        openTo: null,
+                        seeking: null,
                     }),
                 }),
             ),
@@ -140,15 +202,20 @@ describe("contact routes", () => {
         expect(text).not.toMatch(/mailto:|tel:|@[a-z0-9-]+\./i);
     });
 
-    it("offers one topic per route, with its template", () => {
+    it("offers one topic per route, with its prompt", () => {
         const options = topicOptions(contactRoutes(FIXTURE_PROFILE));
         expect(options.map((option) => option.label)).toEqual([
             "Internships & roles",
             "Research & collaboration",
             "Hello",
         ]);
-        expect(options.every((option) => option.template.length > 0)).toBe(
-            true,
+        expect(options.map((option) => option.prompt)).toEqual([
+            FIXTURE_PROFILE.contactRoutes?.hiring?.prompt,
+            FIXTURE_PROFILE.contactRoutes?.research?.prompt,
+            FIXTURE_PROFILE.contactRoutes?.hello?.prompt,
+        ]);
+        expect(topicOptions(contactRoutes(null))[0]).not.toHaveProperty(
+            "prompt",
         );
     });
 });

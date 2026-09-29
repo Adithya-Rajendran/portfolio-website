@@ -100,7 +100,7 @@ describe("the hero's lines", () => {
                 profile({
                     availability: {
                         status: "closed",
-                        openTo: "Anything",
+                        seeking: [{ _key: "a", label: "Anything" }],
                         updatedAt: "2026-01-01",
                     },
                 }),

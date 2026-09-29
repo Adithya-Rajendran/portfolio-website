@@ -22,7 +22,7 @@ export default async function Image() {
             themed={copy.themed}
             plain={copy.plain}
             title={copy.title}
-            subtitle={getWritingDescription(profile)}
+            subtitle={getWritingDescription(profile) ?? undefined}
             footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/blog/archive`}
         />,

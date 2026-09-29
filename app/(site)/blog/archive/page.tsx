@@ -18,18 +18,19 @@ const copy = logCopy.archive;
 export async function generateMetadata(): Promise<Metadata> {
     const profile = await getProfile();
     const description = getWritingDescription(profile);
+    const described = description ? { description } : {};
     const name = profile?.name || siteConfig.author;
     const title = `${copy.title} · ${logCopy.themed}`;
     const url = `${siteConfig.url}/blog/archive`;
     return {
         title,
-        description,
+        ...described,
         alternates: { canonical: url },
-        openGraph: { title: `${title} | ${name}`, description, url },
+        openGraph: { title: `${title} | ${name}`, ...described, url },
         twitter: {
             card: "summary_large_image",
             title: `${title} | ${name}`,
-            description,
+            ...described,
         },
     };
 }

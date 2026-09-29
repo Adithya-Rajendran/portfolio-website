@@ -17,7 +17,6 @@ import {
     originalEntries,
     statusTally,
     toMission,
-    typeList,
     type Mission,
 } from "@/lib/missions";
 import { siteRoutes } from "@/lib/navigation";
@@ -33,35 +32,33 @@ const canonicalUrl = `${siteConfig.url}${siteRoutes.portfolio}`;
 const title = `${copy.themed} · ${copy.plain}`;
 
 export async function generateMetadata(): Promise<Metadata> {
-    const [profile, projects] = await Promise.all([
-        getProfile(),
-        getAllProjects(),
-    ]);
+    const profile = await getProfile();
     const name = profile?.name || siteConfig.author;
-    const description = copy.dek(
-        typeList(projects.map((project) => toMission(project, siteConfig.url))),
-    );
+    const description = profile?.projectsIntro?.trim();
+    const described = description ? { description } : {};
     return {
         title,
-        description,
+        ...described,
         alternates: { canonical: canonicalUrl },
         openGraph: {
             title: `${title} | ${name}`,
-            description,
+            ...described,
             url: canonicalUrl,
         },
         twitter: {
             card: "summary_large_image",
             title: `${title} | ${name}`,
-            description,
+            ...described,
         },
     };
 }
 
 /**
- * Missions · Projects (§ 02): the flagship on its stage, the other
- * missions as text-first tiles, the register of every mission (Table 1),
- * and the pages that the old sections of this page moved to, each still
+ * Missions · Projects (§ 02): the page head with the owner's
+ * introduction (`projectsIntro`, left out when empty), the flagship on its
+ * stage, the other missions as text-first tiles, the register of every
+ * mission (Table 1), and the pages that the old sections of this page
+ * moved to, each still
  * answering its old fragment (#experience, #skills, #certifications,
  * #engineering-writing, #contact; #projects is the tiles). Everything is
  * server-rendered and static.
@@ -122,7 +119,7 @@ export default async function Portfolio() {
                     num={copy.num}
                     themed={copy.themed}
                     plain={copy.plain}
-                    intro={copy.dek(typeList(missions))}
+                    intro={profile?.projectsIntro?.trim() || null}
                 >
                     <div className={styles.headMeta}>
                         {tally.length ? (

@@ -17,7 +17,6 @@ import {
     splitParameters,
     statusTally,
     toMission,
-    typeList,
 } from "@/lib/missions";
 import type { ContentBody, ProjectListItem } from "@/lib/sanity-client";
 import { buildMission } from "@/lib/structured-data";
@@ -208,16 +207,10 @@ describe("missionOrder and adjacentMissions", () => {
     });
 });
 
-describe("typeList and statusTally", () => {
+describe("statusTally", () => {
     const missions = FIXTURE_PROJECTS.slice(0, 4).map((item) =>
         toMission(item, SITE),
     );
-
-    it("lists the types in the order they appear", () => {
-        expect(typeList(missions)).toBe("software and infrastructure");
-        expect(typeList([])).toBe("");
-        expect(typeList([{ types: ["Research"] }])).toBe("research");
-    });
 
     it("counts the missions under each status", () => {
         expect(statusTally(missions)).toEqual([

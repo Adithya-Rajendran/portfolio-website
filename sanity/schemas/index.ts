@@ -1,6 +1,7 @@
 import callout from "./objects/callout";
 import contentBody from "./objects/contentBody";
 import contentLink from "./objects/contentLink";
+import contactRoute from "./objects/contactRoute";
 import credential from "./objects/credential";
 import curiosity from "./objects/curiosity";
 import externalLink from "./objects/externalLink";
@@ -27,6 +28,7 @@ export const schemaTypes = [
     skillGroup,
     credential,
     talkOrPaper,
+    contactRoute,
     callout,
     gallery,
     mediaEmbed,

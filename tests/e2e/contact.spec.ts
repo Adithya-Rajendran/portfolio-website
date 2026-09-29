@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
+import type { ContactTopic } from "@/lib/contact";
 import { contactCopy } from "@/lib/copy";
+import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import { pairName, primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 
@@ -13,11 +15,26 @@ import { expect, test } from "./support/test";
  * The fixture build has no Resend credentials, so a send is refused there
  * ("not configured") without leaving the machine. A preview deployment has
  * real credentials, so no test sends from it.
+ *
+ * Route titles and prompts are the profile's words (Site copy), so the
+ * specs read them from the page and fit fixture and real content alike.
  */
 const { form, topics } = contactCopy;
 
 function topicRadio(page: Page, title: string) {
     return page.getByRole("radio", { name: title });
+}
+
+/** A route's row on /contact: `li#hello`. */
+function routeRow(page: Page, topic: ContactTopic) {
+    return page.locator(`li#${topic}`);
+}
+
+/** A route's title as the page prints it. */
+async function routeTitle(page: Page, topic: ContactTopic): Promise<string> {
+    return (
+        await routeRow(page, topic).getByRole("heading").innerText()
+    ).trim();
 }
 
 test("Comms in the header opens the contact page", async ({ page }) => {
@@ -49,17 +66,31 @@ test("/comms redirects to the contact page", async ({ page }) => {
 
 test("a route's fragment picks its topic on arrival", async ({ page }) => {
     await page.goto("/contact#hello");
-    await expect(topicRadio(page, topics.hello.title)).toBeChecked();
     await expect(
-        page.getByRole("textbox", { name: form.messageLabel }),
-    ).toHaveAttribute("placeholder", topics.hello.template);
+        topicRadio(page, await routeTitle(page, "hello")),
+    ).toBeChecked();
+    // The message field prompts with the route's own prompt, or the
+    // field's plain one when the route has none.
+    const message = page.getByRole("textbox", { name: form.messageLabel });
+    const route = routeRow(page, "hello");
+    const prompted =
+        (await route.getByText(contactCopy.include, { exact: true }).count()) >
+        0;
+    const placeholder = (await message.getAttribute("placeholder")) ?? "";
+    if (prompted) {
+        expect(placeholder).not.toBe(form.messagePlaceholder);
+        await expect(route).toContainText(placeholder);
+    } else {
+        expect(placeholder).toBe(form.messagePlaceholder);
+    }
 });
 
 test("a route's button picks its topic and brings the form into view", async ({
     page,
 }) => {
     await page.goto("/contact");
-    const hello = topicRadio(page, topics.hello.title);
+    const hello = topicRadio(page, await routeTitle(page, "hello"));
+    const hiring = topicRadio(page, await routeTitle(page, "hiring"));
     await expect(hello).not.toBeChecked();
     // Hydrated, the button links to its route's fragment, so a new tab or
     // a copied link keeps the topic.
@@ -73,8 +104,8 @@ test("a route's button picks its topic and brings the form into view", async ({
     ).toBeInViewport();
 
     // Picking another topic in the form follows through to the address.
-    await topicRadio(page, topics.hiring.title).click();
-    await expect(topicRadio(page, topics.hiring.title)).toBeChecked();
+    await hiring.click();
+    await expect(hiring).toBeChecked();
     await expect(hello).not.toBeChecked();
     await expect(page).toHaveURL(/\/contact#hiring$/);
 });
@@ -110,6 +141,7 @@ test("a refused send says why and keeps the message", async ({
         "A deployment has Resend credentials: this would send a real email.",
     );
     await page.goto("/contact#hiring");
+    const hiring = topicRadio(page, await routeTitle(page, "hiring"));
     await page
         .getByRole("textbox", { name: form.emailLabel })
         .fill("reader@example.com");
@@ -126,7 +158,7 @@ test("a refused send says why and keeps the message", async ({
     await expect(
         page.getByRole("textbox", { name: form.messageLabel }),
     ).toHaveValue("A message from the browser tests.");
-    await expect(topicRadio(page, topics.hiring.title)).toBeChecked();
+    await expect(hiring).toBeChecked();
 
     // Away and back: Cache Components keeps the page mounted but hidden,
     // so the stale alert goes and the draft stays.
@@ -151,10 +183,14 @@ test("Consulting stays hidden while it is off", async ({ page }, testInfo) => {
         "Only the fixture profile is known to have consulting off.",
     );
     await page.goto("/contact");
-    await expect(
-        page.getByRole("heading", { name: topics.consulting.title }),
-    ).toHaveCount(0);
-    await expect(topicRadio(page, topics.consulting.title)).toHaveCount(0);
+    const consulting =
+        FIXTURE_PROFILE.contactRoutes?.consulting?.title ??
+        topics.consulting.name;
+    await expect(routeRow(page, "consulting")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: consulting })).toHaveCount(
+        0,
+    );
+    await expect(topicRadio(page, consulting)).toHaveCount(0);
     await expect(
         page.getByRole("link", { name: topics.consulting.cta }),
     ).toHaveCount(0);
@@ -193,7 +229,7 @@ test.describe("without JavaScript", () => {
     }) => {
         await page.goto("/contact");
         await expect(
-            page.getByRole("heading", { name: topics.hello.title }),
+            routeRow(page, "hello").getByRole("heading"),
         ).toBeVisible();
         await expect(page.getByRole("textbox")).toHaveCount(0);
         await expect(page.getByRole("radio")).toHaveCount(0);

@@ -20,6 +20,7 @@ import Specs from "@/components/ui/specs";
 import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
 import { cvCopy as copy, orbitCopy } from "@/lib/copy";
+import { openTo as openToOf } from "@/lib/crew";
 import {
     cvCredentials,
     cvEntries,
@@ -172,10 +173,7 @@ export default async function ResumePage() {
             : null;
     const summary = summaryOf(profile);
     const availability = profile?.availability;
-    const openTo =
-        availability && availability.status !== "closed"
-            ? availability.openTo?.trim() || null
-            : null;
+    const openTo = openToOf(profile)?.text ?? null;
 
     const timeline = cvEntries(profile?.timeline);
     const model = orbitModel({

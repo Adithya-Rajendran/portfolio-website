@@ -2,16 +2,18 @@
  * Comms (G4, plan §2.5.6): contact routes by intent, not by channel. Each
  * route is a topic the form can send, so the message arrives with its
  * subject already sorted. Pure: the page, the form, the server action and
- * the tests share it. Route titles, buttons and "Include" templates are UI
- * copy (lib/copy.ts); the only facts are the profile's own fields
- * (`availability.openTo`, `contactInvitation`), printed as written.
+ * the tests share it. The topics, when each route shows and the buttons
+ * are fixed here and in lib/copy.ts; every word about the owner is the
+ * profile's, printed as written: each route's title and prompt
+ * (`contactRoutes`), what the owner is open to (`availability`) and the
+ * research invitation (`contactInvitation`).
  *
  * There is no public email address or phone number: the form is the only
  * channel, with LinkedIn as the alternative when JavaScript is off.
  */
 import { contactCopy } from "@/lib/copy";
 import { siteRoutes } from "@/lib/navigation";
-import { getProfileLink } from "@/lib/profile-content";
+import { availabilityLine, getProfileLink } from "@/lib/profile-content";
 import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import type { ProfileData } from "@/lib/sanity-client";
 
@@ -47,7 +49,7 @@ export const INITIAL_CONTACT_FORM_STATE: ContactFormState = { status: "idle" };
 
 /** The email subject: "[Hiring] Contact Form for My Website". */
 export function contactSubject(topic: ContactTopic): string {
-    return `[${contactCopy.topics[topic].subject}] Contact Form for My Website`;
+    return `[${contactCopy.topics[topic].name}] Contact Form for My Website`;
 }
 
 export interface ContactRouteLink {
@@ -61,20 +63,24 @@ export interface ContactRoute {
     topic: ContactTopic;
     /** "01": numbered among the routes shown. */
     num: string;
+    /** The profile's title for the route, else the topic's name. */
     title: string;
     /** The availability line, printed as written (Hiring only). */
     openTo?: string;
     /** The owner's own sentence (Research: `contactInvitation`). */
     body?: string;
-    /** What to include; also the message placeholder for this topic. */
-    template: string;
+    /** What to include (the profile's prompt); also the message
+     *  placeholder for this topic. Absent when the profile has none. */
+    prompt?: string;
     /** The button that picks this topic. */
     cta: string;
     links: ContactRouteLink[];
 }
 
 /**
- * The routes to show, from the profile:
+ * The routes to show, from the profile, each titled and prompted in the
+ * profile's words (`contactRoutes`; a route without a title takes its
+ * topic's name, and one without a prompt has none):
  * - Hiring, unless availability is Closed, with its Open To line;
  * - Research & collaboration, when the profile has a contact invitation
  *   (the owner's own words are its body);
@@ -87,15 +93,19 @@ export function contactRoutes(profile: ProfileData | null): ContactRoute[] {
     const invitation = profile?.contactInvitation?.trim();
     const linkedIn = getProfileLink(profile, "linkedin");
     const shown: Omit<ContactRoute, "num">[] = [];
-    const route = (topic: ContactTopic) => ({
-        topic,
-        title: contactCopy.topics[topic].title,
-        template: contactCopy.topics[topic].template,
-        cta: contactCopy.topics[topic].cta,
-    });
+    const route = (topic: ContactTopic) => {
+        const words = profile?.contactRoutes?.[topic];
+        const prompt = words?.prompt?.trim();
+        return {
+            topic,
+            title: words?.title?.trim() || contactCopy.topics[topic].name,
+            ...(prompt ? { prompt } : {}),
+            cta: contactCopy.topics[topic].cta,
+        };
+    };
 
     if (availability?.status !== "closed") {
-        const openTo = availability?.openTo?.trim();
+        const openTo = availabilityLine(availability);
         shown.push({
             ...route("hiring"),
             ...(openTo ? { openTo } : {}),
@@ -147,7 +157,7 @@ export interface TopicOption {
     num: string;
     label: string;
     /** What to include: the message placeholder for this topic. */
-    template: string;
+    prompt?: string;
 }
 
 export function topicOptions(routes: readonly ContactRoute[]): TopicOption[] {
@@ -155,7 +165,7 @@ export function topicOptions(routes: readonly ContactRoute[]): TopicOption[] {
         value: route.topic,
         num: route.num,
         label: route.title,
-        template: route.template,
+        ...(route.prompt ? { prompt: route.prompt } : {}),
     }));
 }
 

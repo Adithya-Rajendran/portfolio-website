@@ -107,7 +107,7 @@ export default function ContactForm({
         messageHint: `${id}-message-hint`,
         messageError: `${id}-message-error`,
     };
-    const template = topics.find((option) => option.value === topic)?.template;
+    const prompt = topics.find((option) => option.value === topic)?.prompt;
 
     function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -180,7 +180,7 @@ export default function ContactForm({
                         <dt>{copy.logTopic}</dt>
                         <dd>
                             {route?.label ??
-                                contactCopy.topics[shown.topic].title}
+                                contactCopy.topics[shown.topic].name}
                         </dd>
                     </div>
                     {sent ? (
@@ -280,7 +280,7 @@ export default function ContactForm({
                     name="message"
                     rows={7}
                     maxLength={MESSAGE_MAX_LENGTH}
-                    placeholder={template ?? copy.messagePlaceholder}
+                    placeholder={prompt ?? copy.messagePlaceholder}
                     required
                     value={message}
                     onChange={(event) => onMessage(event.target.value)}

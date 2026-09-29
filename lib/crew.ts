@@ -1,5 +1,6 @@
 import { cvEntries, hostOf, type CvEntry } from "@/lib/cv";
 import { formatEntryDate } from "@/lib/log-index";
+import { availabilityLine } from "@/lib/profile-content";
 import { CURIOSITY_KINDS, type CuriosityKind } from "@/lib/profile-fields";
 import type {
     CuriosityItem,
@@ -58,18 +59,16 @@ export function taglineOf(profile: ProfileData | null): string | null {
 }
 
 /**
- * What the owner is open to, and when that was last confirmed: nothing
- * while availability is unset or Closed.
+ * What the owner is open to (`availabilityLine`: the Open To lines joined
+ * with " · "), and when that was last confirmed: nothing while
+ * availability is unset or Closed.
  */
 export function openTo(profile: ProfileData | null): {
     text: string;
     updated: { date: string; label: string } | null;
 } | null {
     const availability = profile?.availability;
-    const text =
-        availability && availability.status !== "closed"
-            ? availability.openTo?.trim()
-            : "";
+    const text = availabilityLine(availability);
     if (!text) return null;
     const date = /^\d{4}-\d{2}-\d{2}/.exec(availability?.updatedAt ?? "")?.[0];
     return {

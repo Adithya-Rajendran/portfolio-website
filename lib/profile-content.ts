@@ -1,6 +1,7 @@
-import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/config";
 import type { TimelineDatePrecision } from "@/lib/profile-fields";
 import type {
+    Availability,
     ExternalLink,
     PostListItem,
     ProfileData,
@@ -46,16 +47,41 @@ export function getProfileLink(
     });
 }
 
-export function getProfileDescription(profile: ProfileData | null): string {
+/**
+ * The site's search description: the profile's own words, or nothing (the
+ * metadata then leaves the description out rather than invent one).
+ */
+export function getProfileDescription(
+    profile: ProfileData | null,
+): string | null {
     return (
-        profile?.seoDescription?.trim() ||
-        profile?.introduction?.trim() ||
-        siteConfig.description
+        profile?.seoDescription?.trim() || profile?.introduction?.trim() || null
     );
 }
 
-export function getWritingDescription(profile: ProfileData | null): string {
-    return profile?.writingDescription?.trim() || BLOG_DESCRIPTION;
+/** The owner's description of his writing, or nothing. */
+export function getWritingDescription(
+    profile: ProfileData | null,
+): string | null {
+    return profile?.writingDescription?.trim() || null;
+}
+
+/**
+ * What the owner is open to, as one line: the `seeking` lines as written,
+ * joined with " · " ("Summer 2027 internships · Full-time opportunities in
+ * 2028"), or the older single `openTo` line while that list is empty.
+ * Nothing while availability is unset or Closed.
+ */
+export function availabilityLine(
+    availability: Availability | null | undefined,
+): string | null {
+    if (!availability || availability.status === "closed") return null;
+    const lines = (availability.seeking ?? [])
+        .map((opening) => opening?.label?.trim())
+        .filter((line): line is string => Boolean(line));
+    return lines.length
+        ? lines.join(" · ")
+        : availability.openTo?.trim() || null;
 }
 
 /**

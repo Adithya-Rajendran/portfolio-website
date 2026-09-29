@@ -1,10 +1,18 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
 import {
     AVAILABILITY_STATUSES,
-    checkAvailabilityOpenTo,
+    checkAvailabilitySeeking,
     DATE_PRECISIONS,
     listValuesOnly,
 } from "@/lib/profile-fields";
+
+type AvailabilityParent =
+    | {
+          status?: string;
+          seeking?: { label?: string }[];
+          openTo?: string;
+      }
+    | undefined;
 
 export default defineType({
     name: "profile",
@@ -14,6 +22,7 @@ export default defineType({
         { name: "identity", title: "Identity", default: true },
         { name: "status", title: "Status" },
         { name: "writing", title: "Homepage & Writing" },
+        { name: "copy", title: "Site copy" },
         { name: "about", title: "About" },
         { name: "now", title: "Right Now" },
         { name: "portfolio", title: "Portfolio" },
@@ -37,7 +46,7 @@ export default defineType({
             type: "string",
             group: "identity",
             description:
-                "Your current role or studies. Used on the homepage, About, Work, and social sharing images.",
+                "Your current role or studies. Shown above your name on the home page, in the footer, as the About introduction, on the printed CV, beside your name on posts, and on the home and About sharing images.",
             validation: (Rule) => Rule.required().max(140),
         }),
         defineField({
@@ -56,7 +65,7 @@ export default defineType({
             rows: 4,
             group: "identity",
             description:
-                "A short personal introduction for the homepage, About, and Work. Keep it concise enough to read at a glance.",
+                "A short personal introduction. Its first sentence is the line under your name on the home page when there is no Tagline; it is also the search description of About, and of the site when Site Search Description is empty.",
             validation: (Rule) => Rule.required().max(500),
         }),
         defineField({
@@ -65,7 +74,7 @@ export default defineType({
             type: "object",
             group: "status",
             description:
-                "What you are open to right now. Shown in the home status line, the Hiring route on Contact, the CV and the planned orbit on the Trajectory map.",
+                "What you are open to right now. Shown in the home page's status line, the About record, the CV (on screen and printed), the first route on Contact and the home page, the Contact sharing image, and as the planned orbit on the Trajectory map.",
             fields: [
                 defineField({
                     name: "status",
@@ -79,28 +88,54 @@ export default defineType({
                     validation: (Rule) => Rule.required(),
                 }),
                 defineField({
-                    name: "openTo",
+                    name: "seeking",
                     title: "Open To",
-                    type: "string",
+                    type: "array",
                     description:
-                        "Printed as written, for example the line from your résumé header. Required unless the status is Closed.",
+                        "One line for each kind of role you are looking for and when, printed as written: for example “Summer 2027 internships” and “Full-time opportunities in 2028”. The site joins them with a dot. Required unless the status is Closed.",
+                    of: [
+                        defineArrayMember({
+                            type: "object",
+                            name: "opening",
+                            title: "Opening",
+                            fields: [
+                                defineField({
+                                    name: "label",
+                                    title: "Line",
+                                    type: "string",
+                                    validation: (Rule) =>
+                                        Rule.required().max(80),
+                                }),
+                            ],
+                            preview: { select: { title: "label" } },
+                        }),
+                    ],
                     validation: (Rule) =>
-                        Rule.max(140).custom((openTo, context) =>
-                            checkAvailabilityOpenTo(
-                                (
-                                    context.parent as
-                                        { status?: string } | undefined
-                                )?.status,
-                                openTo,
-                            ),
-                        ),
+                        Rule.max(4).custom((seeking, context) => {
+                            const parent = context.parent as AvailabilityParent;
+                            return checkAvailabilitySeeking(
+                                parent?.status,
+                                seeking as { label?: string }[] | undefined,
+                                parent?.openTo,
+                            );
+                        }),
+                }),
+                defineField({
+                    name: "openTo",
+                    title: "Open To (single line)",
+                    type: "string",
+                    deprecated: {
+                        reason: "Use Open To above, one line per opening. This line is shown only while that list is empty.",
+                    },
+                    hidden: ({ value }) => !value,
+                    validation: (Rule) => Rule.max(140),
                 }),
                 defineField({
                     name: "from",
                     title: "Planned Orbit Starts",
                     type: "date",
                     description:
-                        "Optional. Where the planned orbit begins on the Trajectory map. It only places the drawing and is never printed; Open To is what readers see.",
+                        "Optional. Where the planned orbit begins on the Trajectory map. It only places the drawing and is never printed; the Open To lines are what readers see.",
                 }),
                 defineField({
                     name: "consultingOpen",
@@ -162,7 +197,7 @@ export default defineType({
             type: "array",
             group: "writing",
             description:
-                "Short topics shown above the homepage headline and used in search metadata. These are interests, not claims of expertise.",
+                "Short topics shown as Focus in the About record and used in search metadata. These are interests, not claims of expertise.",
             of: [
                 defineArrayMember({
                     type: "string",
@@ -177,9 +212,9 @@ export default defineType({
             title: "Homepage Work Summary",
             type: "text",
             rows: 3,
-            group: "writing",
+            group: ["writing", "copy"],
             description:
-                "Connect your current direction with the experience behind it. Appears beside the homepage Work and Résumé links.",
+                "Connect your current direction with the experience behind it. The introduction of Experience & CV (/resume), and its search description and sharing image.",
             validation: (Rule) => Rule.max(500),
         }),
         defineField({
@@ -187,9 +222,9 @@ export default defineType({
             title: "Writing Introduction",
             type: "text",
             rows: 3,
-            group: "writing",
+            group: ["writing", "copy"],
             description:
-                "What readers will find in your notebook. Also used for writing search results, social sharing, and the RSS feed.",
+                "What readers will find in your notebook. The introduction of the Blog (/blog), and its search description, sharing images and RSS feed.",
             validation: (Rule) => Rule.max(300),
         }),
         defineField({
@@ -197,10 +232,61 @@ export default defineType({
             title: "Contact Invitation",
             type: "text",
             rows: 3,
-            group: "writing",
+            group: ["writing", "copy"],
             description:
-                "Describe the conversations or opportunities you welcome. Shown below the homepage follow links and as the Research & collaboration route on Contact. Leave blank to hide both.",
+                "Describe the conversations or opportunities you welcome. The text of the Research route on Contact and the home page, and Contact's search description. Leave blank to hide that route.",
             validation: (Rule) => Rule.max(300),
+        }),
+        defineField({
+            name: "projectsIntro",
+            title: "Projects Introduction",
+            type: "text",
+            rows: 2,
+            group: "copy",
+            description:
+                "One sentence under the Missions / Projects heading (/portfolio), also its search description and sharing image. Leave blank to show none.",
+            validation: (Rule) => Rule.max(200),
+        }),
+        defineField({
+            name: "contactIntro",
+            title: "Contact Introduction",
+            type: "text",
+            rows: 2,
+            group: "copy",
+            description:
+                "One sentence under the Comms / Contact heading (/contact), also its sharing image when you are not open to anything. Leave blank to show none.",
+            validation: (Rule) => Rule.max(200),
+        }),
+        defineField({
+            name: "contactRoutes",
+            title: "Contact Routes",
+            type: "object",
+            group: "copy",
+            description:
+                "The words of each route on Contact and the home page. When each route shows is set elsewhere: Hiring unless your availability is Closed, Research with a Contact Invitation, Consulting with Open to Consulting on, and Hello always.",
+            options: { collapsible: true, collapsed: false },
+            fields: [
+                defineField({
+                    name: "hiring",
+                    title: "Hiring",
+                    type: "contactRoute",
+                }),
+                defineField({
+                    name: "research",
+                    title: "Research",
+                    type: "contactRoute",
+                }),
+                defineField({
+                    name: "consulting",
+                    title: "Consulting",
+                    type: "contactRoute",
+                }),
+                defineField({
+                    name: "hello",
+                    title: "Hello",
+                    type: "contactRoute",
+                }),
+            ],
         }),
         defineField({
             name: "seoDescription",

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CONTACT_TOPICS } from "@/lib/contact";
 import profile from "@/sanity/schemas/profile";
 import timelineEntry from "@/sanity/schemas/objects/timelineEntry";
 
@@ -14,6 +15,7 @@ describe("profile schema groups", () => {
             "Identity",
             "Status",
             "Homepage & Writing",
+            "Site copy",
             "About",
             "Right Now",
             "Portfolio",
@@ -23,6 +25,17 @@ describe("profile schema groups", () => {
         expect(fieldsInGroup("talks")).toEqual(["talksAndPapers"]);
     });
 
+    it("gathers every page introduction and the contact routes under Site copy", () => {
+        expect(fieldsInGroup("copy")).toEqual([
+            "workSummary",
+            "writingDescription",
+            "contactInvitation",
+            "projectsIntro",
+            "contactIntro",
+            "contactRoutes",
+        ]);
+    });
+
     it("assigns every field to a group that exists", () => {
         const names = new Set(profile.groups?.map((group) => group.name));
         for (const field of profile.fields) {
@@ -30,6 +43,40 @@ describe("profile schema groups", () => {
                 expect(names, `${field.name} → ${group}`).toContain(group);
             }
         }
+    });
+});
+
+describe("profile copy fields", () => {
+    type Field = {
+        name: string;
+        type: string;
+        fields?: Field[];
+        of?: { name?: string; fields?: Field[] }[];
+        validation?: unknown;
+    };
+    const fields = profile.fields as unknown as Field[];
+    const field = (name: string) => fields.find((item) => item.name === name);
+
+    it("words one route per contact topic, in route order", () => {
+        const routes = field("contactRoutes");
+        expect(routes?.fields?.map((item) => item.name)).toEqual([
+            ...CONTACT_TOPICS,
+        ]);
+        expect(
+            routes?.fields?.every((item) => item.type === "contactRoute"),
+        ).toBe(true);
+    });
+
+    it("keeps availability as one line per opening", () => {
+        const availability = field("availability");
+        const seeking = availability?.fields?.find(
+            (item) => item.name === "seeking",
+        );
+        expect(seeking?.type).toBe("array");
+        expect(seeking?.of?.[0]?.name).toBe("opening");
+        expect(seeking?.of?.[0]?.fields?.map((item) => item.name)).toEqual([
+            "label",
+        ]);
     });
 });
 

@@ -363,6 +363,36 @@
     }
   },
   {
+    "name": "contactRoute",
+    "type": "type",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "contactRoute"
+          }
+        },
+        "title": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "prompt": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        }
+      }
+    }
+  },
+  {
     "type": "type",
     "name": "project.reference",
     "value": {
@@ -2582,6 +2612,43 @@
               },
               "optional": false
             },
+            "seeking": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "array",
+                "of": {
+                  "type": "object",
+                  "attributes": {
+                    "label": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    },
+                    "_type": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string",
+                        "value": "opening"
+                      }
+                    }
+                  },
+                  "rest": {
+                    "type": "object",
+                    "attributes": {
+                      "_key": {
+                        "type": "objectAttribute",
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "optional": true
+            },
             "openTo": {
               "type": "objectAttribute",
               "value": {
@@ -2686,6 +2753,61 @@
         "type": "objectAttribute",
         "value": {
           "type": "string"
+        },
+        "optional": true
+      },
+      "projectsIntro": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "contactIntro": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "contactRoutes": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "hiring": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "contactRoute"
+              },
+              "optional": true
+            },
+            "research": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "contactRoute"
+              },
+              "optional": true
+            },
+            "consulting": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "contactRoute"
+              },
+              "optional": true
+            },
+            "hello": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "contactRoute"
+              },
+              "optional": true
+            }
+          }
         },
         "optional": true
       },

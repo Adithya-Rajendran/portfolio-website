@@ -7,7 +7,7 @@ import {
     buildPersonEntity,
     buildProfilePage,
 } from "@/lib/structured-data";
-import { BLOG_DESCRIPTION, siteConfig, socialProfiles } from "@/lib/config";
+import { siteConfig, socialProfiles } from "@/lib/config";
 import type { CredentialListItem, ProfileData } from "@/lib/sanity-client";
 
 function profileOf(overrides: Partial<ProfileData> = {}): ProfileData {
@@ -49,7 +49,8 @@ describe("buildPersonEntity", () => {
         expect(person).not.toHaveProperty("knowsAbout");
         expect(person).not.toHaveProperty("homeLocation");
         expect(person).not.toHaveProperty("image");
-        expect(person.description).toBe(siteConfig.description);
+        // Nothing describes the owner until the Profile does.
+        expect(person).not.toHaveProperty("description");
         expect(person.sameAs).toEqual(socialProfiles);
     });
 
@@ -355,7 +356,7 @@ describe("buildBlog", () => {
         expect(blog["@type"]).toBe("Blog");
         expect(blog.name).toBe(`${siteConfig.author} — Blog`);
         expect(blog.url).toBe(`${siteConfig.url}/blog`);
-        expect(blog.description).toBe(BLOG_DESCRIPTION);
+        expect(blog).not.toHaveProperty("description");
     });
 });
 
@@ -405,11 +406,14 @@ describe("buildContactPage", () => {
         expect(json).not.toMatch(/mailto:|tel:/);
     });
 
-    it("falls back to the page's own line without a profile", () => {
+    it("uses the page's introduction without an invitation, and nothing without either", () => {
+        expect(
+            buildContactPage(
+                profileOf({ contactIntro: "An idea or a question." }),
+            ).description,
+        ).toBe("An idea or a question.");
         const page = buildContactPage();
-        expect(page.description).toBe(
-            "An idea, a question, or an opportunity. I’d like to hear from you.",
-        );
+        expect(page).not.toHaveProperty("description");
         expect(page.about.sameAs).toEqual(socialProfiles);
     });
 });

@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { siteConfig } from "@/lib/config";
 import { contactCopy as copy } from "@/lib/copy";
 import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
+import { availabilityLine } from "@/lib/profile-content";
 import { getProfile } from "@/lib/sanity-client";
 
 export const alt = `${copy.themed} · ${copy.plain} — ${siteConfig.author}`;
@@ -12,21 +13,24 @@ const domain = new URL(siteConfig.url).hostname;
 
 /**
  * The Comms share card: the page's themed name, and the availability line
- * as written in the profile when there is one, else the page's intro. It
- * never shows an email address or phone number (there is none to show).
+ * as written in the profile when there is one, else the page's
+ * introduction from the profile, else no subtitle. It never shows an email
+ * address or phone number (there is none to show).
  */
 export default async function Image() {
     const profile = await getProfile();
-    const availability = profile?.availability;
-    const openTo =
-        availability?.status !== "closed" ? availability?.openTo?.trim() : "";
+    const openTo = availabilityLine(profile?.availability);
     return new ImageResponse(
         <OgCard
             num={copy.num}
             themed={copy.themed}
             plain={copy.plain}
             title={copy.themed}
-            subtitle={openTo ? `${copy.openTo}: ${openTo}` : copy.intro}
+            subtitle={
+                openTo
+                    ? `${copy.openTo}: ${openTo}`
+                    : profile?.contactIntro?.trim() || undefined
+            }
             footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/contact`}
         />,

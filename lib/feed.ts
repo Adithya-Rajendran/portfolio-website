@@ -3,7 +3,7 @@ import {
     uriLooksSafe,
     type PortableTextHtmlComponents,
 } from "@portabletext/to-html";
-import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/config";
 import { urlForImage } from "@/lib/sanity-image";
 import { changeKindTitle } from "@/lib/post-fields";
 import {
@@ -293,9 +293,13 @@ function renderPostHtml(post: FeedPost): string {
     );
 }
 
+/**
+ * The feed. RSS requires a channel description: the owner's description
+ * of his writing, or the feed's own title when the profile has none.
+ */
 export function renderFeedXml(
     posts: FeedPost[],
-    description = BLOG_DESCRIPTION,
+    description?: string | null,
 ): string {
     const feedUrl = `${siteConfig.url}${FEED_PATH}`;
     const publishable = posts.filter(
@@ -325,7 +329,7 @@ export function renderFeedXml(
     const channelLines = [
         `<title>${escapeXml(FEED_TITLE)}</title>`,
         `<link>${escapeXml(`${siteConfig.url}/blog`)}</link>`,
-        `<description>${escapeXml(description)}</description>`,
+        `<description>${escapeXml(description?.trim() || FEED_TITLE)}</description>`,
         `<language>en-us</language>`,
         ...(lastBuildDate
             ? [`<lastBuildDate>${lastBuildDate}</lastBuildDate>`]

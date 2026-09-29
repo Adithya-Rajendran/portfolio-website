@@ -20,25 +20,29 @@ import styles from "./contact.module.css";
 export async function generateMetadata(): Promise<Metadata> {
     const profile = await getProfile();
     const name = profile?.name || siteConfig.author;
-    const description = profile?.contactInvitation?.trim() || copy.intro;
+    const description =
+        profile?.contactInvitation?.trim() || profile?.contactIntro?.trim();
+    const described = description ? { description } : {};
     const title = `${copy.themed} · ${copy.plain}`;
     const url = `${siteConfig.url}${siteRoutes.contact}`;
     return {
         title,
-        description,
+        ...described,
         alternates: { canonical: url },
-        openGraph: { title: `${title} | ${name}`, description, url },
+        openGraph: { title: `${title} | ${name}`, ...described, url },
         twitter: {
             card: "summary_large_image",
             title: `${title} | ${name}`,
-            description,
+            ...described,
         },
     };
 }
 
 /**
  * Comms · Contact (G4): the routes by intent, the message form and the
- * profiles. Everything but the form renders without JavaScript; the form
+ * profiles. The introduction and every route's words are the profile's
+ * (Site copy); an empty one is left out. Everything but the form renders
+ * without JavaScript; the form
  * needs it for BotID, so without it the page offers LinkedIn instead.
  * Ported from the mockup's contact.html (§ 05).
  */
@@ -59,7 +63,7 @@ export default async function ContactPage() {
                     num={copy.num}
                     themed={copy.themed}
                     plain={copy.plain}
-                    intro={copy.intro}
+                    intro={profile?.contactIntro?.trim() || null}
                 >
                     {/* Acquisition of signal: the carrier locks. Drawn in
                         ink with one accent mark; decorative and static. */}

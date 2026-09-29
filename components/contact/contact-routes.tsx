@@ -14,7 +14,9 @@ import styles from "./contact-routes.module.css";
  * "pick this topic and go to the form"; without JavaScript it links to the
  * message section instead, which then offers LinkedIn. Anywhere else the
  * button links to the route on /contact. `grid` sets the routes side by
- * side from 960px, without their "Include" guidance (the home Comms act).
+ * side from 960px, without their "Include" prompt (the home Comms act).
+ * Titles, prompts, the Open To line and the research invitation are the
+ * profile's words (lib/contact.ts).
  * Ported from the mockup's `DF.render.routes`.
  */
 export default function ContactRoutes({
@@ -57,10 +59,10 @@ export default function ContactRoutes({
                     {route.body ? (
                         <p className={styles.body}>{route.body}</p>
                     ) : null}
-                    {grid ? null : (
+                    {grid || !route.prompt ? null : (
                         <p className={styles.template}>
                             <span className={styles.key}>{copy.include}</span>
-                            {route.template}
+                            {route.prompt}
                         </p>
                     )}
                     <div className={styles.actions}>

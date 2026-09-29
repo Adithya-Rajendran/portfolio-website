@@ -50,6 +50,13 @@ describe("renderFeedXml — channel", () => {
             "<description>Robotics &amp; &lt;AI&gt;</description>",
         );
     });
+    it("describes the channel by its title when the profile has no description", () => {
+        for (const description of [undefined, null, "  "]) {
+            expect(renderFeedXml([], description)).toContain(
+                "<description>Adithya Rajendran — Blog</description>",
+            );
+        }
+    });
     it("renders a valid empty channel when there are no posts (CI fallback path)", () => {
         const xml = renderFeedXml([]);
 

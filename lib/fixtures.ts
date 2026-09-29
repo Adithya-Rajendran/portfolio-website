@@ -97,7 +97,11 @@ function footnotedTextBlock(
  * The fixture profile carries only the owner's real published values (Sanity
  * and the résumé, recorded in design/shared/content-real.md), including every
  * field the redesign adds, so fixture builds exercise them without inventing
- * facts. A field the published profile leaves empty (location) stays empty.
+ * facts. The Open To lines and the Site copy (page introductions and contact
+ * routes) are the values in design/impl-log/phase-4-profile-copy.json: the
+ * résumé's header line and the site's former built-in wording, which the
+ * owner's profile takes on. A field the published profile leaves empty
+ * (location) stays empty.
  * The UC Santa Cruz years are known only to the year (2019 – 2023), so both
  * dates are stored with year precision and printed without a month.
  */
@@ -119,8 +123,14 @@ export const FIXTURE_PROFILE: ProfileData = {
     ].join("\n\n"),
     availability: {
         status: "open",
-        // The résumé header line, printed as written.
-        openTo: "Summer 2027 internships · Full-time opportunities in 2028",
+        // The résumé header line, one opening per line, printed as written.
+        seeking: [
+            { _key: "internships-2027", label: "Summer 2027 internships" },
+            {
+                _key: "full-time-2028",
+                label: "Full-time opportunities in 2028",
+            },
+        ],
         // Summer 2027, approximated for placing the planned orbit only.
         from: "2027-06-01",
         consultingOpen: false,
@@ -130,6 +140,33 @@ export const FIXTURE_PROFILE: ProfileData = {
     // route on /contact and the homepage's closing invitation.
     contactInvitation:
         "Working on robotic vision, physical AI, or a related engineering problem? I’d welcome a conversation about research, collaboration, or opportunities to contribute.",
+    // profile.writingDescription as published: the Flight Log's
+    // introduction, share cards and feed.
+    writingDescription:
+        "Notes from my homelab and systems work, with robotic vision and AI questions I want to explore next.",
+    // Site copy (phase-4-profile-copy.json): the /portfolio and /contact
+    // introductions and the contact routes' titles and prompts.
+    projectsIntro: "Selected projects in infrastructure and software.",
+    contactIntro:
+        "An idea, a question, or an opportunity. I’d like to hear from you.",
+    contactRoutes: {
+        hiring: {
+            title: "Internships & roles",
+            prompt: "The role and the team, where it is based, the dates, and a link to the posting.",
+        },
+        research: {
+            title: "Research & collaboration",
+            prompt: "The problem, what has been tried so far, and where you think I could help.",
+        },
+        consulting: {
+            title: "Consulting",
+            prompt: "What needs to be designed, built or reviewed, and by when.",
+        },
+        hello: {
+            title: "Hello",
+            prompt: "A question, feedback on an entry, or anything else.",
+        },
+    },
     // The plan's default launch (open question 8): the UC Santa Cruz start.
     launch: {
         date: "2019-01-01",

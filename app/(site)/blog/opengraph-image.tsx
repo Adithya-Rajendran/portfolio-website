@@ -32,7 +32,7 @@ export default async function Image() {
             themed={copy.themed}
             plain={copy.plain}
             title={copy.themed}
-            subtitle={getWritingDescription(profile)}
+            subtitle={getWritingDescription(profile) ?? undefined}
             chart={transmissions(entries, today)}
             footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/blog`}

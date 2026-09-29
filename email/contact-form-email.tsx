@@ -26,7 +26,7 @@ export default function ContactFormEmail({
     senderEmail,
     topic,
 }: ContactFormEmailProps) {
-    const route = contactCopy.topics[topic].title;
+    const route = contactCopy.topics[topic].name;
     return (
         <Html>
             <Head />

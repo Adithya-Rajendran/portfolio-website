@@ -50,16 +50,16 @@ export const errorCopy = {
 } as const;
 
 /**
- * Comms (G4): the contact page, its routes and the form. The heading, the
- * intro, the field labels and the success line are the live form's own
- * words. Route titles, buttons and "Include" templates are UI copy; the
- * facts on the page (availability, the invitation) come from the profile.
+ * Comms (G4): the contact page, its routes and the form. UI copy only: the
+ * page's introduction, each route's title and prompt, what the owner is
+ * open to and the research invitation are the profile's (Site copy and
+ * Status). A topic's `name` is the email subject's prefix and the route's
+ * title when the profile gives none; its `cta` is the route's button.
  */
 export const contactCopy = {
     num: "05",
     themed: "Comms",
     plain: "Contact",
-    intro: "An idea, a question, or an opportunity. I’d like to hear from you.",
     routesThemed: "Routes",
     routesPlain: "Topics",
     messageThemed: "Uplink",
@@ -74,33 +74,10 @@ export const contactCopy = {
         rss: "RSS",
     },
     topics: {
-        hiring: {
-            title: "Internships & roles",
-            subject: "Hiring",
-            cta: "Write about a role",
-            template:
-                "The role and the team, where it is based, the dates, and a link to the posting.",
-        },
-        research: {
-            title: "Research & collaboration",
-            subject: "Research",
-            cta: "Start a conversation",
-            template:
-                "The problem, what has been tried so far, and where you think I could help.",
-        },
-        consulting: {
-            title: "Consulting",
-            subject: "Consulting",
-            cta: "Describe the project",
-            template:
-                "What needs to be designed, built or reviewed, and by when.",
-        },
-        hello: {
-            title: "Hello",
-            subject: "Hello",
-            cta: "Say hello",
-            template: "A question, feedback on an entry, or anything else.",
-        },
+        hiring: { name: "Hiring", cta: "Write about a role" },
+        research: { name: "Research", cta: "Start a conversation" },
+        consulting: { name: "Consulting", cta: "Describe the project" },
+        hello: { name: "Hello", cta: "Say hello" },
     },
     form: {
         topicLegend: "Topic",
@@ -372,16 +349,13 @@ export const directoryCopy = {
 
 /**
  * Missions · Projects (G5, G6): the /portfolio index and the mission files.
- * UI copy only: names, titles, summaries, parameters, briefs, results and
- * lessons are the owner's.
+ * UI copy only: the page's introduction (`projectsIntro`), names, titles,
+ * summaries, parameters, briefs, results and lessons are the owner's.
  */
 export const missionsCopy = {
     num: "02",
     themed: "Missions",
     plain: "Projects",
-    /** "Selected projects in infrastructure and software." */
-    dek: (types: string) =>
-        types ? `Selected projects in ${types}.` : "Selected projects.",
     tallyLabel: "Projects by status",
     experience: "Experience & CV",
     flagshipThemed: "Flagship",

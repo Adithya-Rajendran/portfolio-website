@@ -4,7 +4,6 @@
  * exercise without React or a Sanity connection.
  */
 import { siteConfig } from "@/lib/config";
-import { contactCopy } from "@/lib/copy";
 import {
     getProfileDescription,
     getProfileLinks,
@@ -18,6 +17,14 @@ import type {
     ProfileData,
     TimelineEntry,
 } from "@/lib/sanity-client";
+
+/** `{ [key]: value }` when there is a value, else nothing to spread. */
+function optional<Key extends string>(
+    key: Key,
+    value: string | null | undefined,
+): Partial<Record<Key, string>> {
+    return value ? ({ [key]: value } as Record<Key, string>) : {};
+}
 
 export interface PersonEntityInput {
     profile: ProfileData | null;
@@ -103,7 +110,7 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
         alternateName: "Adithya",
         url: siteConfig.url,
         ...(imageUrl ? { image: imageUrl } : {}),
-        description: getProfileDescription(profile),
+        ...optional("description", getProfileDescription(profile)),
         ...(activeWork
             ? {
                   jobTitle: activeWork.title,
@@ -225,7 +232,7 @@ export function buildBlog(profile: ProfileData | null = null) {
         "@type": "Blog",
         name: `${siteConfig.author} — Blog`,
         url: `${siteConfig.url}/blog`,
-        description: getWritingDescription(profile),
+        ...optional("description", getWritingDescription(profile)),
         author: {
             "@type": "Person",
             name: siteConfig.author,
@@ -245,7 +252,10 @@ export function buildContactPage(profile: ProfileData | null = null) {
         "@type": "ContactPage",
         name: `Contact ${profile?.name || siteConfig.author}`,
         url: `${siteConfig.url}/contact`,
-        description: profile?.contactInvitation?.trim() || contactCopy.intro,
+        ...optional(
+            "description",
+            profile?.contactInvitation?.trim() || profile?.contactIntro?.trim(),
+        ),
         about: {
             "@type": "Person",
             name: profile?.name || siteConfig.author,
