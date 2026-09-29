@@ -106,8 +106,11 @@ export default function Journey({
         let auto: { last: number; y: number; raf: number } | null = null;
 
         const measure = () => {
+            // The stage sticks under the header: the pin starts when the
+            // section's top reaches it, not the viewport's top.
             const box = root.getBoundingClientRect();
-            top = box.top + window.scrollY;
+            const pin = parseFloat(getComputedStyle(stage).top) || 0;
+            top = box.top + window.scrollY - pin;
             span = Math.max(1, root.offsetHeight - stage.offsetHeight);
         };
         const progress = () =>
