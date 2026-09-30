@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { sitePostSlug } from "@/lib/cv";
 import { FIXTURE_PROJECTS } from "@/lib/fixtures";
 import { logEntries, type LogSource } from "@/lib/log-index";
 import { isQuantity, splitUnit } from "@/lib/metrics";
@@ -19,7 +20,6 @@ import {
     noteLines,
     originalEntries,
     resultRows,
-    sitePostSlug,
     splitParameters,
     stackSaid,
     toMission,

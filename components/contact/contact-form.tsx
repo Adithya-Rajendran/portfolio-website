@@ -81,11 +81,11 @@ async function send(
  *   refuses is shown under that field.
  * - A send that did not go says so under Send, with the text kept and
  *   the ways on: Try again, Copy message, LinkedIn.
- * - A sent message shows "Message received." and the reply address, with
- *   Change back to the filled form. Cache Components keeps a visited page
- *   mounted but hidden, so that panel and a refused send's alert are reset
- *   when the page is hidden (docs: preserving-ui-state, Forms), while an
- *   unsent draft is kept.
+ * - A sent message shows "Message received." and Write another message,
+ *   and promises nothing (no reply address, no reply time). Cache
+ *   Components keeps a visited page mounted but hidden, so that panel and
+ *   a refused send's alert are reset when the page is hidden (docs:
+ *   preserving-ui-state, Forms), while an unsent draft is kept.
  */
 export default function ContactForm({
     topics,
@@ -105,9 +105,9 @@ export default function ContactForm({
         send,
         INITIAL_CONTACT_FORM_STATE,
     );
-    // A result the reader has moved past (Change, "Write another message",
-    // an edit after a refused field, or the page was hidden) is shown as
-    // the idle form.
+    // A result the reader has moved past ("Write another message", an edit
+    // after a refused field, or the page was hidden) is shown as the idle
+    // form.
     const [dismissed, setDismissed] = useState<ContactFormState>(
         INITIAL_CONTACT_FORM_STATE,
     );
@@ -201,13 +201,6 @@ export default function ContactForm({
         startTransition(() => dispatch(data));
     }
 
-    function change() {
-        // Back to the filled form, the address first: a draft again.
-        setDismissed(state);
-        setDraft(getDraft());
-        requestAnimationFrame(() => emailRef.current?.focus());
-    }
-
     function writeAnother() {
         setDismissed(state);
         setDraft(EMPTY_DRAFT);
@@ -225,17 +218,6 @@ export default function ContactForm({
                 >
                     {copy.successTitle}
                 </h3>
-                <p className={styles.replies}>
-                    {copy.repliesTo} <strong>{senderEmail.trim()}</strong>.{" "}
-                    <button
-                        type="button"
-                        className={styles.change}
-                        aria-label={copy.changeLabel}
-                        onClick={change}
-                    >
-                        {copy.change}
-                    </button>
-                </p>
                 <p className={styles.again}>
                     <Button size="sm" onClick={writeAnother}>
                         {copy.again}

@@ -13,7 +13,7 @@ import { expect, test } from "./support/test";
  * each error under its field; a send that does not go (refused, or lost
  * on the network) stays on the page with the text kept and the ways on,
  * and the draft survives a reload; a sent message says "Message
- * received." with the reply address; the 404's report arrives with the
+ * received." and promises nothing; the 404's report arrives with the
  * missed address; Consulting stays hidden while it is off, and without
  * JavaScript the routes and the LinkedIn alternative stand in for the
  * form. Nothing on the page is an email address or a phone number.
@@ -293,7 +293,7 @@ test("a send lost on the network stays on the page, keeps the text and tries aga
     await expect(message).toHaveValue("A message the network drops.");
 });
 
-test("a sent message is received in place, with the reply address and the way back", async ({
+test("a sent message is received in place, promising nothing, with the way back", async ({
     page,
 }, testInfo) => {
     test.skip(
@@ -308,19 +308,16 @@ test("a sent message is received in place, with the reply address and the way ba
     await page.getByRole("button", { name: form.send }).click();
     const received = page.getByRole("heading", { name: form.successTitle });
     await expect(received).toBeFocused();
-    await expect(page.getByRole("main")).toContainText(
-        `${form.repliesTo} reader@example.com.`,
+    // No reply promise: the address the reader typed is not repeated,
+    // and nothing offers to change it.
+    await expect(page.getByRole("main")).not.toContainText(
+        "reader@example.com",
     );
+    await expect(
+        page.getByRole("main").getByRole("button", { name: /change/i }),
+    ).toHaveCount(0);
 
-    // Change: back to the filled form, the address first.
-    await page.getByRole("button", { name: form.changeLabel }).click();
-    await expect(email).toBeFocused();
-    await expect(email).toHaveValue("reader@example.com");
-    await expect(message).toHaveValue("A message that arrives.");
-
-    // Sent again, then a fresh form; a sent message is no draft.
-    await page.getByRole("button", { name: form.send }).click();
-    await expect(received).toBeFocused();
+    // A fresh form; a sent message is no draft.
     await page.getByRole("button", { name: form.again }).click();
     await expect(email).toBeFocused();
     await expect(email).toHaveValue("");

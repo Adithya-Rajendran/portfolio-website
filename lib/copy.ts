@@ -94,7 +94,7 @@ export const contactCopy = {
         sending: "Sending…",
         /** Under their field, from the form or the server. */
         errors: {
-            emailMissing: "Enter your email address, so I can reply.",
+            emailMissing: "Enter your email address.",
             emailInvalid: "Enter an email address like you@example.com.",
             emailDomain:
                 "The domain after the @ does not receive email. Check the address.",
@@ -119,12 +119,8 @@ export const contactCopy = {
         announceCopyFailed: "Copying failed",
         /** The message a report from the 404's "Let me know" starts with. */
         brokenLink: (path: string) => `Broken link: ${path}`,
+        /** A sent message promises nothing: no reply address, no time. */
         successTitle: "Message received.",
-        /** "Replies go to you@example.com." */
-        repliesTo: "Replies go to",
-        change: "Change",
-        /** Starts with the visible word, for voice control (WCAG 2.5.3). */
-        changeLabel: "Change the reply address",
         again: "Write another message",
     },
     /** The alternative to the form: beside a failed send, and without

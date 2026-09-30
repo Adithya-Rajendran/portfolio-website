@@ -193,12 +193,35 @@ describe("crewRecord", () => {
             span: 4,
             spanSm: 2,
         });
-        expect(cells[1].note).toBe(
-            "San José State University · Aug 2026 – present · Expected 2028",
-        );
+        // The facts in whole parts, so a wrapped line never ends on a dot.
+        expect(cells[1]).toMatchObject({
+            facts: [
+                "San José State University",
+                "Aug 2026 – present",
+                "Expected 2028",
+            ],
+            note: null,
+        });
         expect(cells[2]).toMatchObject({
             value: "Field Software Engineer I",
-            note: "Canonical Ltd (Ubuntu) · May 2024 – Jul 2026",
+            facts: ["Canonical Ltd (Ubuntu)", "May 2024 – Jul 2026"],
+        });
+        // A title's long parenthetical is its own quiet line, as on
+        // /resume.
+        const promoted = crewRecord({
+            ...FIXTURE_PROFILE,
+            timeline: FIXTURE_PROFILE.timeline?.map((entry) =>
+                entry.title === "Field Software Engineer I"
+                    ? {
+                          ...entry,
+                          title: "Field Software Engineer I (promoted from Associate Field Engineer after the first year)",
+                      }
+                    : entry,
+            ),
+        }).find((cell) => cell.id === "previously");
+        expect(promoted).toMatchObject({
+            value: "Field Software Engineer I",
+            note: "Promoted from Associate Field Engineer after the first year",
         });
     });
 

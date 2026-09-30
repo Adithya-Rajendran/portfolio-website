@@ -41,8 +41,10 @@ test("About opens on its head, the patch and the record", async ({ page }) => {
     ).toHaveCount(0);
     await expect(record.locator(".titleblock__cell--accent")).toHaveCount(0);
 
-    // The header carries Experience and CV; the head repeats neither.
+    // The header carries Experience and CV; the head repeats neither,
+    // and it has no dek: the record states the headline's facts.
     await expect(main.locator(".page-head__actions")).toHaveCount(0);
+    await expect(main.locator(".page-head__intro")).toHaveCount(0);
 });
 
 test("the sections name themselves plainly and lead on", async ({ page }) => {

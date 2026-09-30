@@ -63,7 +63,8 @@ function paragraphsOf(bio: string | null | undefined): string[] {
 
 /**
  * About (themed Crew File; plan §6.2 row 14): the head with the patch as
- * the identity mark (there is no portrait), the profile record (G6), then
+ * the identity mark (there is no portrait) and no dek (the record under it
+ * states what the headline would), the profile record (G6), then
  * the biography, the Now list by kind (a kind's label only when there is
  * more than one), and the way to get in touch. The writing, the talks and
  * the other sections have their own pages, one click away in the nav. A
@@ -77,7 +78,6 @@ export default async function AboutPage() {
         getAllPosts(),
         getAllProjects(),
     ]);
-    const headline = profile?.headline?.trim() || null;
     const paragraphs = paragraphsOf(profile?.bio);
     const groups = nowGroups(profile?.currentCuriosities, posts, projects);
     const nowDate = /^\d{4}-\d{2}-\d{2}/.exec(
@@ -92,7 +92,6 @@ export default async function AboutPage() {
                 ornament="hydrogen"
                 tag={copy.themed}
                 title={copy.plain}
-                intro={headline}
                 figure={<Patch />}
             />
 

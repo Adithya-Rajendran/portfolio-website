@@ -30,7 +30,8 @@ export default function NotFoundActions() {
 
 /**
  * The link rows: Projects, Writing and Contact, less the section the 404's
- * primary already offers. The error page (`missed` false) keeps all three.
+ * primary already offers, in as many columns as there are rows. The error
+ * page (`missed` false) keeps all three.
  */
 export function LostRoutes({
     missed,
@@ -41,18 +42,18 @@ export function LostRoutes({
 }) {
     const path = useRequestedPath();
     const offered = missed ? lostSection(path)?.id : undefined;
+    const routes = lostRoutes.filter((route) => route.id !== offered);
     return (
         <RouteList
             className="los-routes"
-            items={lostRoutes
-                .filter((route) => route.id !== offered)
-                .map((route) => ({
-                    key: route.href,
-                    href: route.href,
-                    plain: route.plain,
-                    blurb: route.blurb,
-                }))}
-            columns={3}
+            items={routes.map((route) => ({
+                key: route.href,
+                href: route.href,
+                plain: route.plain,
+                blurb: route.blurb,
+            }))}
+            // As many columns as rows: two rows leave no empty third.
+            columns={routes.length === 2 ? 2 : 3}
             labelledBy={labelledBy}
         />
     );

@@ -9,7 +9,8 @@ import type { CvLink } from "@/lib/cv";
  * organization, a quiet note (a title's parenthetical, `splitTitle`), a
  * serif line and the facts. A row linked to the orbit map
  * (`orbit`) lights its orbit on hover, and the map lights the row; a row
- * with an `href` is one big link, its other links still live.
+ * with an `href` is one big link, its other links still live; a link to
+ * one of the site's posts (`/blog/…`) opens in place.
  * Directive-free: /resume and About render it.
  */
 
@@ -149,14 +150,22 @@ export function CvItem({
                         <span className="cv-item__links">
                             {links.map((link) => (
                                 <span className="cv-item__link" key={link.url}>
-                                    <a
-                                        href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {link.label}
-                                        <Icon name="external" />
-                                    </a>
+                                    {/* One of the site's posts opens in
+                                        place: no outbound mark. */}
+                                    {link.url.startsWith("/") ? (
+                                        <Link href={link.url}>
+                                            {link.label}
+                                        </Link>
+                                    ) : (
+                                        <a
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            {link.label}
+                                            <Icon name="external" />
+                                        </a>
+                                    )}
                                     {link.host.toLowerCase() !==
                                     link.label.toLowerCase() ? (
                                         <span

@@ -120,28 +120,36 @@ describe("projects, talks and credentials", () => {
         ...fields,
     });
 
+    const SITE = {
+        url: "https://adithya-rajendran.com",
+        posts: new Set(["gpu"]),
+    };
+
     it("orders projects by mission number and keeps http links only", () => {
-        const rows = cvProjects([
-            project({ _id: "b", designation: 3, slug: "b" }),
-            project({
-                _id: "a",
-                designation: 1,
-                slug: "a",
-                status: "completed",
-                startDate: "2023-01-01",
-                endDate: "2023-12-31",
-                datesApproximate: true,
-                highlights: ["Built it."],
-                links: [
-                    {
-                        _key: "r",
-                        label: "GitHub repository",
-                        url: "https://github.com/x/y",
-                    },
-                    { _key: "m", label: "Mail", url: "mailto:a@b.c" },
-                ],
-            }),
-        ]);
+        const rows = cvProjects(
+            [
+                project({ _id: "b", designation: 3, slug: "b" }),
+                project({
+                    _id: "a",
+                    designation: 1,
+                    slug: "a",
+                    status: "completed",
+                    startDate: "2023-01-01",
+                    endDate: "2023-12-31",
+                    datesApproximate: true,
+                    highlights: ["Built it."],
+                    links: [
+                        {
+                            _key: "r",
+                            label: "GitHub repository",
+                            url: "https://github.com/x/y",
+                        },
+                        { _key: "m", label: "Mail", url: "mailto:a@b.c" },
+                    ],
+                }),
+            ],
+            SITE,
+        );
         expect(rows.map((row) => row.designation)).toEqual([
             "MSN-01",
             "MSN-03",
@@ -166,8 +174,52 @@ describe("projects, talks and credentials", () => {
         });
         // Without dates, only an active project says Ongoing.
         expect(
-            cvProjects([project({ status: "planned" })])[0].years,
+            cvProjects([project({ status: "planned" })], SITE)[0].years,
         ).toBeNull();
+    });
+
+    it("links the site's own posts in place and leaves out its address", () => {
+        const [row] = cvProjects(
+            [
+                project({
+                    links: [
+                        {
+                            _key: "p",
+                            label: "The write-up",
+                            url: "https://www.adithya-rajendran.com/blog/gpu/",
+                        },
+                        {
+                            _key: "u",
+                            label: "An unpublished post",
+                            url: "https://adithya-rajendran.com/blog/draft",
+                        },
+                        {
+                            _key: "s",
+                            label: "adithya-rajendran.com",
+                            url: "https://adithya-rajendran.com",
+                        },
+                        {
+                            _key: "r",
+                            label: "GitHub repository",
+                            url: "https://github.com/x/y",
+                        },
+                    ],
+                }),
+            ],
+            SITE,
+        );
+        expect(row.links).toEqual([
+            {
+                label: "The write-up",
+                url: "/blog/gpu",
+                host: "adithya-rajendran.com/blog/gpu",
+            },
+            {
+                label: "GitHub repository",
+                url: "https://github.com/x/y",
+                host: "github.com/x/y",
+            },
+        ]);
     });
 
     it("keeps a talk without a date undated", () => {
@@ -183,25 +235,60 @@ describe("projects, talks and credentials", () => {
         ]);
     });
 
-    it("keeps current credentials as rows and expired ones as prior lines", () => {
+    it("lists every credential as the same plain row, current ones first", () => {
         const { current, prior } = cvCredentials(
             FIXTURE_PROFILE.credentials as CredentialListItem[],
         );
-        expect(current.map((row) => [row.title, row.statusLabel])).toEqual([
-            ["MTA: Security Fundamentals", "No expiry"],
+        // As the résumé lists them: the span (or the issue date without
+        // an expiry), the name and the issuer, linked when the record has
+        // a page; no status, never "Expired" or "No expiry".
+        expect(current).toEqual([
+            {
+                id: "credential-mta-security",
+                title: "MTA: Security Fundamentals",
+                issuer: "Microsoft",
+                url: "https://www.credly.com/badges/b0889cff-2fbc-46c0-b16e-f631fefb024b",
+                dates: "May 2018",
+            },
         ]);
-        expect(current[0].meta).toBe("Issued May 2018");
-        // As the résumé lists them: the name and the span, never "Expired".
         expect(prior).toEqual([
             {
                 id: "credential-aws-saa",
                 title: "AWS Certified Solutions Architect – Associate",
+                issuer: "AWS",
+                url: "https://www.credly.com/badges/80207866-2bf2-41a0-8c92-991295e79063/",
                 dates: "Sep 2023 – Sep 2026",
             },
             {
                 id: "credential-security-plus",
                 title: "CompTIA Security+",
+                issuer: "CompTIA",
+                url: "https://www.credly.com/badges/78c2780d-63dc-4c2b-a6df-72138c469271",
                 dates: "Aug 2022 – Aug 2025",
+            },
+        ]);
+        // A current credential with an expiry shows its span; one without
+        // a page is not linked.
+        expect(
+            cvCredentials([
+                {
+                    _key: "k",
+                    title: " A current one ",
+                    issuer: "Issuer",
+                    issuedOn: "2025-01-01",
+                    expiresOn: "2028-01-01",
+                    lifetime: false,
+                    lifecycleStatus: "active",
+                    verificationUrl: "javascript:alert(1)",
+                },
+            ]).current,
+        ).toEqual([
+            {
+                id: "k",
+                title: "A current one",
+                issuer: "Issuer",
+                url: null,
+                dates: "Jan 2025 – Jan 2028",
             },
         ]);
         expect(cvCredentials(null)).toEqual({ current: [], prior: [] });

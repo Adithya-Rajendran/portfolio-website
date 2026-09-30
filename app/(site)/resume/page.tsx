@@ -21,6 +21,7 @@ import {
     cvProjects,
     cvTalks,
     hostOf,
+    type CvCredential,
     type CvEntry,
 } from "@/lib/cv";
 import { formatEntryDate, logEntries } from "@/lib/log-index";
@@ -66,7 +67,8 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-/** The latest entries Writing & talks lists; /blog has them all. */
+/** The latest entries Writing & talks lists; /blog has them all, and
+ *  All writing shows only when it has more. */
 const WRITING_ROWS = 3;
 
 /**
@@ -148,7 +150,7 @@ function Unbroken({ items }: { items: readonly string[] }) {
 
 /**
  * A short list on the CV's columns: a date in the mono column, then a
- * line (the latest writing, prior certifications).
+ * line (the latest writing, the certifications).
  */
 function PlainRows({
     rows,
@@ -169,6 +171,45 @@ function PlainRows({
             ))}
         </ol>
     );
+}
+
+/**
+ * A credential's plain row: the span (or the issue date), then the name,
+ * linked to its verification page when the record has one, and the
+ * issuer. The outbound mark and the issuer are kept on the name's last
+ * word, so a wrapped line never starts with the mark or a dot.
+ */
+function credentialRow(credential: CvCredential) {
+    const at = credential.title.lastIndexOf(" ") + 1;
+    return {
+        id: credential.id,
+        date: credential.dates,
+        line: (
+            <>
+                {credential.url ? (
+                    <a
+                        href={credential.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        {credential.title.slice(0, at)}
+                        <span className={styles.whole}>
+                            {credential.title.slice(at)}
+                            <Icon name="external" />
+                        </span>
+                    </a>
+                ) : (
+                    credential.title
+                )}
+                {credential.issuer ? (
+                    <span className={styles.rowAside}>
+                        {"\u00a0·\u00a0"}
+                        {credential.issuer}
+                    </span>
+                ) : null}
+            </>
+        ),
+    };
 }
 
 /**
@@ -213,8 +254,12 @@ export default async function ResumePage() {
     const numbers = new Map(
         model?.orbits.map((orbit) => [orbit.id, orbit.number]) ?? [],
     );
-    const missions = cvProjects(projects);
-    const writing = logEntries(posts).slice(0, WRITING_ROWS);
+    const entries = logEntries(posts);
+    const writing = entries.slice(0, WRITING_ROWS);
+    const missions = cvProjects(projects, {
+        url: siteConfig.url,
+        posts: new Set(entries.map((entry) => entry.slug)),
+    });
     const talks = cvTalks(profile?.talksAndPapers);
     const skills = (profile?.skillGroups ?? []).filter(
         (group) => group.title && group.skills?.length,
@@ -504,7 +549,7 @@ export default async function ResumePage() {
                         }
                         print={talks.length > 0}
                         after={
-                            writing.length ? (
+                            entries.length > writing.length ? (
                                 <LinkArrow href={siteRoutes.blog}>
                                     {copy.allWriting}
                                 </LinkArrow>
@@ -512,8 +557,9 @@ export default async function ResumePage() {
                         }
                     >
                         {/* The latest entries, compact: the date and the
-                            linked title (/blog has the rest). Paper lists
-                            talks, not the Flight Log (plan §2.5.5). */}
+                            linked title; All writing only when /blog has
+                            more. Paper lists talks, not the Flight Log
+                            (plan §2.5.5). */}
                         {writing.length ? (
                             <div data-print="hide">
                                 <PlainRows
@@ -569,9 +615,9 @@ export default async function ResumePage() {
                     </CvSection>
                 ) : null}
 
-                {/* The current credentials as rows; the expired ones as
-                    the résumé lists them, Prior certifications: plain
-                    lines, on screen and on paper. */}
+                {/* Every credential the same plain row: the current
+                    ones, then Prior certifications, as the résumé lists
+                    them, on screen and on paper. */}
                 {credentials.current.length || credentials.prior.length ? (
                     <CvSection
                         id="certifications"
@@ -582,26 +628,9 @@ export default async function ResumePage() {
                         }
                     >
                         {credentials.current.length ? (
-                            <CvList>
-                                {credentials.current.map((credential) => (
-                                    <CvItem
-                                        key={credential.id}
-                                        status={
-                                            <Status value={credential.status}>
-                                                {credential.statusLabel}
-                                            </Status>
-                                        }
-                                        title={credential.title}
-                                        href={credential.url ?? undefined}
-                                        sub={[
-                                            credential.issuer,
-                                            credential.meta,
-                                        ]
-                                            .filter(Boolean)
-                                            .join(" · ")}
-                                    />
-                                ))}
-                            </CvList>
+                            <PlainRows
+                                rows={credentials.current.map(credentialRow)}
+                            />
                         ) : null}
                         {credentials.current.length &&
                         credentials.prior.length ? (
@@ -611,11 +640,7 @@ export default async function ResumePage() {
                         ) : null}
                         {credentials.prior.length ? (
                             <PlainRows
-                                rows={credentials.prior.map((credential) => ({
-                                    id: credential.id,
-                                    date: credential.dates,
-                                    line: credential.title,
-                                }))}
+                                rows={credentials.prior.map(credentialRow)}
                             />
                         ) : null}
                     </CvSection>

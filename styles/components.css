@@ -462,22 +462,6 @@
             gap: var(--s-5);
             margin-top: var(--s-6);
         }
-        .nav__utility {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--s-2) var(--s-5);
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        .nav__utility a {
-            display: inline-flex;
-            align-items: center;
-            min-height: 44px;
-            font: 500 0.8125rem / 1 var(--font-display);
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-        }
         @supports not selector(:popover-open) {
             .nav-toggle[popovertarget] {
                 display: none;
@@ -946,8 +930,8 @@
             display: none;
         }
     }
-    /* The strip keeps the label face (the type voice, D2, decides it) in
-       sentence case, untracked. */
+    /* The strip is set as every other label (the type voice, D2, decides
+       the face): capitals, tracked, from sentence-case markup. */
     .site-footer__base {
         display: flex;
         flex-wrap: wrap;
@@ -957,6 +941,8 @@
         margin-top: var(--s-7);
         color: var(--ink-2);
         font: 400 var(--label-size) / 1.6 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
     }
     .site-footer__base a {
         display: inline-flex;

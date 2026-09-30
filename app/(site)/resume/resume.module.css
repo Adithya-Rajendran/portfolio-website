@@ -91,7 +91,7 @@
 }
 
 /* Plain rows on the CV's columns: the date in the mono column, then one
-   line (a linked title, or a credential's name). */
+   line (a linked title, or a credential's name and issuer). */
 .rows {
     max-width: var(--measure-index);
     margin: 0;
@@ -127,6 +127,19 @@
     color: var(--accent-text);
     text-decoration-color: var(--accent);
 }
+/* A credential's verification page leaves the site: the outbound mark
+   of the CV's other links. */
+.row a :global(.icon) {
+    width: 0.7em;
+    height: 0.7em;
+    margin-left: 0.3em;
+    color: var(--ink-3);
+    vertical-align: 0.05em;
+}
+/* What follows the line's name: a credential's issuer. */
+.rowAside {
+    color: var(--ink-2);
+}
 
 /* Prior certifications, under the current ones. */
 .subhead {
@@ -135,7 +148,8 @@
     font: 400 var(--step-0) / 1.4 var(--font-display);
 }
 
-/* An address or an opening on the masthead, never split. */
+/* An address or an opening on the masthead, or a credential's last word
+   with its outbound mark, never split. */
 .whole {
     white-space: nowrap;
 }
@@ -292,6 +306,12 @@
     }
     .rowDate {
         font-size: 7pt;
+    }
+    .row a {
+        text-decoration: none;
+    }
+    .row a :global(.icon) {
+        display: none;
     }
     .subhead {
         margin: 1.2mm 0 0.6mm;

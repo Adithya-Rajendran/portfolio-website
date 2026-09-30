@@ -141,11 +141,17 @@ only live in comments or commit messages.
   the organisation (`CvItem note`). Project rows carry no status or
   stack: the dates, else "Ongoing" for an active project, then the type,
   the lines and the links (every project is listed, so no "All
-  projects"). Writing & talks is the latest three entries as plain rows
-  (date · linked title) and All writing, then the talks. Certifications
-  are the current ones as rows, then Prior certifications: the expired
-  ones as plain lines with their span ("Sep 2023 – Sep 2026",
-  `cvCredentials().prior`), on screen and on paper, never "Expired".
+  projects"). A link to the site itself is never an external link
+  (`cvProjects` with `siteUrlOf`/`sitePostSlug` in lib/cv.ts): one to a
+  published post opens it in place (`/blog/<slug>`, no ↗ or new tab; its
+  address still prints), and the site's own address is left out.
+  Writing & talks is the latest three entries as plain rows (date ·
+  linked title), with All writing only when /blog has more, then the
+  talks. Every credential is the same plain row (`cvCredentials`): the
+  span ("Sep 2023 – Sep 2026"), or the issue date without an expiry,
+  then the name, linked to its verification page when the record has
+  one, and the issuer; the current ones, then Prior certifications, on
+  screen and on paper, with no status ("Expired", "No expiry").
   The print is the only paper artefact: two sheets on the named
   page `cv` (`styles/print.css`), sheet 2 breaking before its control
   line; the masthead keeps each address and opening whole (`Unbroken`),
@@ -347,10 +353,13 @@ only live in comments or commit messages.
   hero and the footer alike.
 - **About** (`/about`, themed Crew File; plan §6.2 row 14, contract §9).
   The patch is the identity mark (a `PageHead` `figure`; the site shows
-  no portrait; the head has no actions: the header carries Experience and
-  CV), then the record (`CrewRecord`: one hairline title block, Name in
-  ink, Studying, Previously, Focus, Links; no Open To, edit date or
-  accent cell), and `DocSection`s (`components/ui/doc-section.tsx`, the
+  no portrait; the head has no actions, the header carrying Experience
+  and CV, and no dek, the record stating the headline's facts), then the
+  record (`CrewRecord`: one hairline title block, Name in ink, Studying,
+  Previously, Focus, Links; no Open To, edit date or accent cell). A role
+  is set as on /resume: the title, then the organization and the dates as
+  whole parts (`OpenToItems`, so no line ends on a dot), then the
+  title's parenthetical (`splitTitle`). Then `DocSection`s (`components/ui/doc-section.tsx`, the
   one section head: also the mission files, `/contact` and the CV on
   `/resume`): the biography and the Now list grouped by
   `currentCuriosities[].kind` (`nowGroups`; a kind's label only when there
@@ -414,7 +423,8 @@ only live in comments or commit messages.
 - Navigation labels and URLs come from `lib/navigation.ts` (header, menu
   sheet, footer and the 404). Below 960px the header nav is a native
   `popover` sheet, so it opens without JavaScript; `MenuButton` adds focus,
-  `inert` and the Tab loop.
+  `inert` and the Tab loop. The sheet holds the five sections and the
+  theme choice only (the feed is in the footer).
 - Never wrap page content in `<Suspense fallback={children}>`, and keep
   anything that must work without JavaScript out of Suspense: in a long
   page React streams a completed boundary holding more than ~500 bytes as
@@ -447,7 +457,8 @@ only live in comments or commit messages.
   (`useRequestedPath`, server snapshot `null`): the Requested line, the
   primary (`lostSection` in lib/navigation.ts: "All writing" under
   `/blog/`, "All projects" under `/portfolio/`, else Home), the rows
-  without the section the primary offers (`lostRoutes`), and Let me know,
+  without the section the primary offers (`lostRoutes`), in as many
+  columns as rows, and Let me know,
   which carries the address to the form (`reportHref`:
   `/contact?broken=…#hello`). Without JavaScript it is Home, the three
   rows and `/contact#hello`.
@@ -595,8 +606,8 @@ only live in comments or commit messages.
   the route's error page), is the failure under Send: "The message could
   not be sent. Your text is still here." (or the reason: too many, not
   verified), with Try again, Copy message and Message me on LinkedIn. A
-  sent message is "Message received." (focused), "Replies go to {email}."
-  with Change back to the filled form, and Write another message; no
+  sent message is "Message received." (focused) and Write another
+  message, and promises nothing: no reply address, no reply time, no
   auto-reply.
 - **Sanity webhook** — `app/api/revalidate/route.ts` requires
   `SANITY_REVALIDATE_SECRET`; if unset, the route 404s on every request
@@ -754,7 +765,7 @@ deployment require an authenticated Sanity CLI session.
   message and LinkedIn, its stale alert clearing after leaving and
   returning; a send the network drops staying on the page, Try again
   sending again and the draft surviving a reload; "Message received."
-  focused with the reply address, Change and a fresh form; the 404's
+  focused, promising nothing, and a fresh form; the 404's
   report arriving with its address, Consulting hidden while off, no email
   address or phone number, the no-JavaScript LinkedIn alternative; sends
   only on the fixture build, which has no Resend credentials, a sent one
@@ -784,7 +795,9 @@ deployment require an authenticated Sanity CLI session.
   in-page links landing in the visible entry after a client-side
   navigation), `orbit` (the page opening on the CV list with Contact and
   Timeline in 3D in the first viewport, no Open PDF, Print or Share, and
-  no per-row map buttons, the Timeline view from
+  no per-row map buttons; no project link opening the site's own
+  address in a new tab, and every credential one plain row with no
+  status and no heading of its own; the Timeline view from
   the switch and `#orbit-map`, "Show on timeline" pinning a row's orbit, a CV row lighting its orbit and back, a click pinning
   a record and a second click or Escape releasing it, Earlier and Later,
   every orbit labelled on a phone, and without JavaScript the list, the
@@ -823,7 +836,7 @@ deployment require an authenticated Sanity CLI session.
   primary at most; the flagship without stats or mission number, its
   title in sentence case over four stack items at most; the page's height
   at 1440 and 390; no gap wording and no old artwork), `crew` (About's
-  plain title with the patch and no portrait or head actions, its record
+  plain title with the patch and no portrait, head actions or dek, its record
   without Open To, an edit date or an accent cell, the sections by their
   plain names, no question numbers, no writing index or related pages,
   Send a message, no gap wording; and no page keeping the old design's

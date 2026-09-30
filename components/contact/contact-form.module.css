@@ -82,7 +82,7 @@
     margin-inline-start: -0.85rem;
 }
 
-/* ---- Received: the heading, the reply address, the way back ------------ */
+/* ---- Received: the heading and the way back ---------------------------- */
 /* Under the section's own hairline: no rule of its own. */
 .received {
     max-width: 46rem;
@@ -98,30 +98,6 @@
 .receivedTitle:focus-visible {
     outline: var(--rule-strong) solid var(--focus);
     outline-offset: 4px;
-}
-.replies {
-    margin-top: var(--s-4);
-    color: var(--ink-2);
-    font: 400 var(--step-1) / 1.5 var(--font-long);
-}
-.replies strong {
-    overflow-wrap: anywhere;
-    color: var(--ink-1);
-    font-weight: 400;
-}
-/* Change: a button set as the sentence's link. */
-.change {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--ink-1);
-    font: inherit;
-    text-decoration: underline 1px var(--accent);
-    text-underline-offset: 0.22em;
-    cursor: pointer;
-}
-.change:hover {
-    text-decoration-thickness: 2px;
 }
 .again {
     margin-top: var(--s-5);

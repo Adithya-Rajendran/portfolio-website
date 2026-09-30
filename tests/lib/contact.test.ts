@@ -244,7 +244,7 @@ describe("contact form checks", () => {
     it("asks for an email address and a message", () => {
         expect(validateContactFields({ senderEmail: "", message: "" })).toEqual(
             {
-                senderEmail: "Enter your email address, so I can reply.",
+                senderEmail: "Enter your email address.",
                 message: "Write a message before sending.",
             },
         );

@@ -1,5 +1,6 @@
 import { cvEntries, hostOf, type CvEntry } from "@/lib/cv";
 import { CURIOSITY_KINDS, type CuriosityKind } from "@/lib/profile-fields";
+import { splitTitle } from "@/lib/trajectory";
 import type {
     CuriosityItem,
     ExternalLink,
@@ -139,7 +140,11 @@ export function nowGroups(
 export interface RecordCell {
     id: "name" | "studying" | "previously" | "focus" | "links";
     value: string;
-    /** A second line: the organization and the dates. */
+    /** The quieter line under the value, in parts each kept whole: the
+     *  organization, the dates. */
+    facts?: string[];
+    /** A title's long parenthetical as its own quiet line ("Promoted
+     *  from …", `splitTitle`), as on /resume. */
     note?: string | null;
     links?: { label: string; url: string; host: string }[];
     span: number;
@@ -178,31 +183,24 @@ export function crewRecord(profile: ProfileData | null): RecordCell[] {
             url: link.url,
             host: hostOf(link.url),
         }));
-    const when = (entry: CvEntry) =>
-        [entry.organization, entry.dates, entry.expected]
-            .filter(Boolean)
-            .join(" · ");
+    // A role as /resume and the flight set it: the title, then the
+    // organization and the dates, then the title's parenthetical.
+    const role = (id: "studying" | "previously", entry: CvEntry) => {
+        const [title, note] = splitTitle(entry.title);
+        return {
+            id,
+            value: title,
+            facts: [entry.organization, entry.dates, entry.expected].filter(
+                (part): part is string => Boolean(part),
+            ),
+            note,
+        };
+    };
 
     const first: Omit<RecordCell, "span" | "spanSm">[] = [
         { id: "name", value: profile.name.trim() },
-        ...(studying
-            ? [
-                  {
-                      id: "studying" as const,
-                      value: studying.title,
-                      note: when(studying),
-                  },
-              ]
-            : []),
-        ...(previously
-            ? [
-                  {
-                      id: "previously" as const,
-                      value: previously.title,
-                      note: when(previously),
-                  },
-              ]
-            : []),
+        ...(studying ? [role("studying", studying)] : []),
+        ...(previously ? [role("previously", previously)] : []),
     ];
     const second: Omit<RecordCell, "span" | "spanSm">[] = [
         ...(focus.length

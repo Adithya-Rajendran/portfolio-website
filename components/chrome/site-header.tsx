@@ -6,7 +6,7 @@ import ThemeSwitch from "@/components/chrome/theme-switch";
 import { Icon, Patch } from "@/components/ui/icon";
 import { chromeCopy } from "@/lib/copy";
 import { siteConfig } from "@/lib/config";
-import { contactLink, cvLink, sheetLinks } from "@/lib/navigation";
+import { contactLink, cvLink } from "@/lib/navigation";
 
 const PANEL_ID = "site-nav";
 
@@ -15,7 +15,8 @@ const PANEL_ID = "site-nav";
  * their plain names, the CV link (at every width), Contact in the bar
  * below 960px (where the nav is in the sheet) and the theme switch (from
  * 960px) are in the static HTML. Below 960px the nav is a popover sheet that opens without
- * JavaScript, with the feed and the three-way theme choice;
+ * JavaScript, with the three-way theme choice (the feed is in the
+ * footer);
  * where the Popover API is missing, a fallback Menu link jumps to the
  * footer's nav. Only the current-section mark needs the pathname
  * (components/chrome/nav-links.tsx). Search arrives with the console
@@ -43,13 +44,6 @@ export default function SiteHeader() {
                         </ul>
                         {/* Shown only inside the menu sheet (< 960px). */}
                         <div className="nav__sheet-extra">
-                            <ul className="nav__utility" role="list">
-                                {sheetLinks.map(({ href, label }) => (
-                                    <li key={href}>
-                                        <a href={href}>{label}</a>
-                                    </li>
-                                ))}
-                            </ul>
                             <ThemeChoice instance="sheet" />
                         </div>
                     </div>

@@ -1,4 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
+import { siteConfig } from "@/lib/config";
 import { cvCopy, orbitCopy } from "@/lib/copy";
 import { expect, test } from "./support/test";
 
@@ -11,8 +12,10 @@ import { expect, test } from "./support/test";
  * pins an orbit's record in the panel, a second click, empty sky or
  * Escape releases it, and Earlier and Later step through the records.
  * Without JavaScript the list shows, the map opens from its link, and
- * each label links to its CV row. Rows are found by their content, so
- * the spec fits fixture and real content alike.
+ * each label links to its CV row. A project row's link to one of the
+ * site's posts opens in place, and every credential is the same plain
+ * row. Rows are found by their content, so the spec fits fixture and
+ * real content alike.
  */
 
 const DESIGNATION = /^Orbit \d{2}/;
@@ -215,6 +218,34 @@ test("the head offers the CV and the way to get in touch, in the first viewport"
     for (const name of [/open pdf/i, /print/i, /share/i]) {
         await expect(main(page).getByRole("link", { name })).toHaveCount(0);
         await expect(main(page).getByRole("button", { name })).toHaveCount(0);
+    }
+});
+
+test("the CV links the site in place and lists every credential alike", async ({
+    page,
+}) => {
+    await page.goto("/resume");
+    // A link to the site itself is never an external link: a post opens
+    // in place, and the site's own address is left out.
+    const site = new URL(siteConfig.url).hostname.replace(/^www\./, "");
+    const outbound = main(page).locator("#projects a[target='_blank']");
+    for (const href of await outbound.evaluateAll((links) =>
+        links.map((link) => (link as HTMLAnchorElement).href),
+    )) {
+        expect(new URL(href).hostname.replace(/^www\./, ""), href).not.toBe(
+            site,
+        );
+    }
+    // Every credential is the same plain row: no status label, and no
+    // credential set as a heading of its own (only Prior certifications).
+    const certifications = main(page).locator("#certifications");
+    if (await certifications.count()) {
+        await expect(certifications).not.toContainText(/no expiry|expired/i);
+        await expect(
+            certifications
+                .getByRole("heading", { level: 3 })
+                .filter({ hasNotText: cvCopy.priorCertifications }),
+        ).toHaveCount(0);
     }
 });
 

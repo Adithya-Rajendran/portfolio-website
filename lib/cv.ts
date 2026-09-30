@@ -151,6 +151,7 @@ export function cvEntries(
 
 export interface CvLink {
     label: string;
+    /** An address off the site, or `/blog/<slug>` for one of its posts. */
     url: string;
     /** "github.com/…": printed after the link on paper. */
     host: string;
@@ -164,6 +165,31 @@ export function hostOf(url: string): string {
         .replace(/\/$/, "");
 }
 
+/** A URL on this site (relative, or on its own host), parsed; else null. */
+export function siteUrlOf(url: string, siteUrl: string): URL | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url, siteUrl);
+    } catch {
+        return null;
+    }
+    const site = new URL(siteUrl);
+    const host = (value: string) => value.replace(/^www\./, "");
+    return host(parsed.hostname) === host(site.hostname) ? parsed : null;
+}
+
+/**
+ * The slug of a Flight Log entry a URL points at on this site
+ * (`/blog/<slug>`, relative or on the site's own host), or null.
+ */
+export function sitePostSlug(url: string, siteUrl: string): string | null {
+    const parsed = siteUrlOf(url, siteUrl);
+    if (!parsed) return null;
+    const match = /^\/blog\/([a-z0-9][a-z0-9-]*)\/?$/.exec(parsed.pathname);
+    if (!match || match[1] === "archive") return null;
+    return match[1];
+}
+
 function httpLinks(
     links: readonly { label: string; url: string }[] | null | undefined,
 ): CvLink[] {
@@ -174,6 +200,31 @@ function httpLinks(
             url: link.url,
             host: hostOf(link.url),
         }));
+}
+
+/**
+ * A project's links on the CV. A link to the site itself is never an
+ * external link: one to a published post opens it in place
+ * (`/blog/<slug>`, its address still printed on paper), and any other
+ * (the site's own address, an unpublished post) is left out.
+ */
+function projectLinks(
+    links: readonly { label: string; url: string }[] | null | undefined,
+    site: { url: string; posts: ReadonlySet<string> },
+): CvLink[] {
+    return httpLinks(links).flatMap((link) => {
+        if (!siteUrlOf(link.url, site.url)) return [link];
+        const slug = sitePostSlug(link.url, site.url);
+        return slug && site.posts.has(slug)
+            ? [
+                  {
+                      ...link,
+                      url: `/blog/${slug}`,
+                      host: hostOf(`${site.url}/blog/${slug}`),
+                  },
+              ]
+            : [];
+    });
 }
 
 export interface CvProject {
@@ -195,6 +246,12 @@ export interface CvProject {
 
 export function cvProjects(
     projects: readonly ProjectListItem[] | null | undefined,
+    site: {
+        /** The site's address, `siteConfig.url`. */
+        url: string;
+        /** The published posts' slugs. */
+        posts: ReadonlySet<string>;
+    },
 ): CvProject[] {
     return [...(projects ?? [])]
         .filter((project) => project.slug && project.title)
@@ -226,7 +283,7 @@ export function cvProjects(
                     : project.summary?.trim()
                       ? [project.summary.trim()]
                       : [],
-                links: httpLinks(project.links),
+                links: projectLinks(project.links, site),
             };
         });
 }
@@ -259,81 +316,48 @@ export function cvTalks(
         }));
 }
 
-export type CredentialStatus = CredentialListItem["lifecycleStatus"];
-
+/**
+ * A credential as one plain row, as the résumé lists it: the span it is
+ * held ("Sep 2023 – Sep 2026"), or its issue date when it has no expiry,
+ * then its name, linked to its verification page when the record has
+ * one, and the issuer.
+ */
 export interface CvCredential {
     id: string;
     title: string;
-    issuer: string;
+    issuer: string | null;
     url: string | null;
-    status: Exclude<CredentialStatus, "expired">;
-    /** "Active", "No expiry". */
-    statusLabel: string;
-    /** "Issued Sep 2023 · Expires Sep 2026". */
-    meta: string;
-}
-
-/** An expired credential, as the résumé lists it: its name and the span
- *  it was held, on one plain line ("Sep 2023 – Sep 2026"). */
-export interface CvPriorCredential {
-    id: string;
-    title: string;
+    /** "Sep 2023 – Sep 2026"; "May 2018" without an expiry. */
     dates: string | null;
 }
 
-const CREDENTIAL_LABELS: Record<CvCredential["status"], string> = {
-    active: "Active",
-    lifetime: "No expiry",
-};
-
 /**
- * The credentials in the owner's order: the current ones (active or
- * without expiry) as CV rows, and the expired ones as Prior
- * certifications, as on the résumé. Nothing is labelled "Expired".
+ * The credentials in the owner's order, every one the same plain row:
+ * the current ones (active or without expiry), then the expired ones as
+ * Prior certifications, as on the résumé. No status is labelled, never
+ * "Expired" or "No expiry".
  */
 export function cvCredentials(
     credentials: readonly CredentialListItem[] | null | undefined,
-): { current: CvCredential[]; prior: CvPriorCredential[] } {
-    const listed = (credentials ?? []).filter((credential) =>
-        credential.title?.trim(),
-    );
+): { current: CvCredential[]; prior: CvCredential[] } {
     const current: CvCredential[] = [];
-    const prior: CvPriorCredential[] = [];
-    for (const credential of listed) {
-        const title = credential.title.trim();
+    const prior: CvCredential[] = [];
+    for (const credential of credentials ?? []) {
+        if (!credential.title?.trim()) continue;
         const issued = formatTimelineDate(credential.issuedOn);
-        const status = credential.lifecycleStatus;
-        if (status === "expired") {
-            const ended = formatTimelineDate(credential.expiresOn);
-            prior.push({
-                id: credential._key,
-                title,
-                dates:
-                    issued && ended
-                        ? `${issued} – ${ended}`
-                        : (ended ?? issued),
-            });
-            continue;
-        }
-        const expires = credential.lifetime
+        const ended = credential.lifetime
             ? null
             : formatTimelineDate(credential.expiresOn);
-        current.push({
+        const row: CvCredential = {
             id: credential._key,
-            title,
-            issuer: credential.issuer,
+            title: credential.title.trim(),
+            issuer: credential.issuer?.trim() || null,
             url: /^https?:\/\//.test(credential.verificationUrl ?? "")
                 ? credential.verificationUrl!
                 : null,
-            status,
-            statusLabel: CREDENTIAL_LABELS[status],
-            meta: [
-                issued ? `Issued ${issued}` : null,
-                expires ? `Expires ${expires}` : null,
-            ]
-                .filter(Boolean)
-                .join(" · "),
-        });
+            dates: issued && ended ? `${issued} – ${ended}` : (issued ?? ended),
+        };
+        (credential.lifecycleStatus === "expired" ? prior : current).push(row);
     }
     return { current, prior };
 }

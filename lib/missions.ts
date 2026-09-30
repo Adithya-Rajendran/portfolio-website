@@ -1,5 +1,5 @@
 import type { StatusValue } from "@/components/ui/marks";
-import { hostOf } from "@/lib/cv";
+import { hostOf, siteUrlOf, sitePostSlug } from "@/lib/cv";
 import { formatMissionDesignation } from "@/lib/designations";
 import { extractHeadings } from "@/lib/headings";
 import type { LogEntry } from "@/lib/log-index";
@@ -96,31 +96,6 @@ export function missionStatusValue(status: ProjectStatus): StatusValue {
 /** "infrastructure" → "Infrastructure". */
 export function typeTitle(type: ProjectType): string {
     return PROJECT_TYPES.find((option) => option.value === type)?.title ?? type;
-}
-
-/** A URL on this site (relative, or on its own host), parsed; else null. */
-function siteUrlOf(url: string, siteUrl: string): URL | null {
-    let parsed: URL;
-    try {
-        parsed = new URL(url, siteUrl);
-    } catch {
-        return null;
-    }
-    const site = new URL(siteUrl);
-    const host = (value: string) => value.replace(/^www\./, "");
-    return host(parsed.hostname) === host(site.hostname) ? parsed : null;
-}
-
-/**
- * The slug of a Flight Log entry a URL points at on this site
- * (`/blog/<slug>`, relative or on the site's own host), or null.
- */
-export function sitePostSlug(url: string, siteUrl: string): string | null {
-    const parsed = siteUrlOf(url, siteUrl);
-    if (!parsed) return null;
-    const match = /^\/blog\/([a-z0-9][a-z0-9-]*)\/?$/.exec(parsed.pathname);
-    if (!match || match[1] === "archive") return null;
-    return match[1];
 }
 
 /** The links that lead off the site: a link to the site itself (a post,

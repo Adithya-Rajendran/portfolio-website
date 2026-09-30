@@ -1,3 +1,4 @@
+import { OpenToItems } from "@/components/ui/availability";
 import TitleBlock, { type TitleBlockCell } from "@/components/ui/title-block";
 import { Icon } from "@/components/ui/icon";
 import { crewCopy as copy } from "@/lib/copy";
@@ -14,9 +15,11 @@ const LABELS = {
 
 /**
  * The owner's record as one hairline title block (G6) on About: Name,
- * Studying, Previously, Focus, Links, all in ink. The cells and their
- * spans come from `crewRecord` (lib/crew.ts); a value the profile leaves
- * empty has no cell. Returns nothing without a profile.
+ * Studying, Previously, Focus, Links, all in ink. A role is its title,
+ * then the organization and the dates, then the title's parenthetical,
+ * as on /resume. The cells and their spans come from `crewRecord`
+ * (lib/crew.ts); a value the profile leaves empty has no cell. Returns
+ * nothing without a profile.
  */
 export default function CrewRecord({
     profile,
@@ -30,7 +33,16 @@ export default function CrewRecord({
         label: LABELS[cell.id],
         span: cell.span,
         spanSm: cell.spanSm,
-        note: cell.note,
+        // The facts each kept whole, so no line ends on a dot; then a
+        // title's parenthetical.
+        notes: [
+            cell.facts?.length ? (
+                <span className="open-to">
+                    <OpenToItems text={cell.facts.join(" · ")} />
+                </span>
+            ) : null,
+            cell.note,
+        ].filter(Boolean),
         value: cell.links ? (
             <span className="titleblock__links">
                 {cell.links.map((link) => (

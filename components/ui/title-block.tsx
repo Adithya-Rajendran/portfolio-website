@@ -11,8 +11,8 @@ export interface TitleBlockCell {
     id: string;
     label: string;
     value: React.ReactNode;
-    /** A second, quieter line under the value. */
-    note?: React.ReactNode;
+    /** Quieter lines under the value, one `dd` each. */
+    notes?: readonly React.ReactNode[];
     /** Columns of 12 from 960px. */
     span?: number;
     /** Columns of 2 on phones. */
@@ -41,7 +41,9 @@ export default function TitleBlock({
                 >
                     <dt>{cell.label}</dt>
                     <dd>{cell.value}</dd>
-                    {cell.note ? <dd>{cell.note}</dd> : null}
+                    {cell.notes?.map((note, index) => (
+                        <dd key={index}>{note}</dd>
+                    ))}
                 </div>
             ))}
         </dl>
