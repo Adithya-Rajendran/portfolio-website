@@ -107,15 +107,20 @@
 }
 
 /* A map label: a knockout backing, so a line passing under it breaks
-   rather than striking the text, and a leader to its world. */
+   rather than striking the text, and a leader to its world. The backing
+   reaches a few pixels past the text and feathers out, so over the sky it
+   reads as a soft plate, not a box. */
 .label {
+    --knockout: color-mix(in oklab, var(--bg) 80%, transparent);
     position: absolute;
     left: 0;
     top: 0;
     display: grid;
     gap: 3px;
     padding: 1px 4px;
-    background: color-mix(in oklab, var(--bg) 80%, transparent);
+    border-radius: 4px;
+    background: var(--knockout);
+    box-shadow: 0 0 8px 6px var(--knockout);
     opacity: 0;
     will-change: transform, opacity;
 }

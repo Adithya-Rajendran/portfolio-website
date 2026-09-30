@@ -194,6 +194,10 @@ const POLE_TIP = 11 * D2R;
  *  chase camera, so the ring opens to it at about 28–31° through the
  *  chapter's hold, its lit face toward the camera. */
 const RING_TIP = -4 * D2R;
+/** Earth's turn at the start of the flight: with its axis leaning to the
+ *  Sun, the Americas' night lights lie under the sunrise's limb, and its
+ *  first chapter's rest shows them by day. */
+const EARTH_SPIN = 240 * D2R;
 
 /** Earth's Moon: its radius and distance (scene units), its turn per
  *  year of mission time, and its orbit against the Sun (the angle from
@@ -790,18 +794,21 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         }
         // The axis leans mostly sideways and a little toward the chase
         // camera, so a ring opens to it; a ringed world's leans toward the
-        // Sun, so the face of the ring the camera sees is the lit one.
+        // Sun, so the face of the ring the camera sees is the lit one, and
+        // so does Earth's, so the sunrise looks over its northern lands
+        // rather than its polar night.
         const mid = angleAt(w, (chapter.start + chapter.end) / 2, epoch);
         const out = onPlane(w.plane, 1, mid);
         const back = scale(tangentOn(w.plane, mid), -1);
         const ringed = kind === "saturn";
+        const sunward = ringed || kind === "earth";
         const toward = Math.min(
             1,
             Math.sin(ringed ? RING_TIP : POLE_TIP) / Math.sin(w.tilt),
         );
         const lean = add(
             scale(back, toward),
-            scale(out, (ringed ? -1 : 1) * Math.sqrt(1 - toward * toward)),
+            scale(out, (sunward ? -1 : 1) * Math.sqrt(1 - toward * toward)),
         );
         w.pole = unit(
             add(
@@ -1742,7 +1749,9 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         mapSides,
         chaseSides,
         flownGap,
-        spinAt: (w, p) => p * TAU * (1.1 + 0.25 * w.chapter) + w.chapter,
+        spinAt: (w, p) =>
+            p * TAU * (1.1 + 0.25 * w.chapter) +
+            (w.kind === "earth" ? EARTH_SPIN : w.chapter),
         moon,
         belt,
         pose,

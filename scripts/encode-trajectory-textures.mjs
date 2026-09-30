@@ -10,7 +10,7 @@ import { join } from "node:path";
 // public/images/trajectory/README.md. Downloads each source once into the
 // OS temp directory, then writes public/images/trajectory/*.webp with sharp
 // (the encoder installed with Next.js). Run from any directory with:
-//   node scripts/encode-trajectory-textures.mjs
+//   node scripts/encode-trajectory-textures.mjs [file.webp …]
 // /public images are cached immutably: rename a file when re-encoding it.
 
 const require = createRequire(import.meta.url);
@@ -33,7 +33,9 @@ const NASA = "https://eoimages.gsfc.nasa.gov/images/imagerecords/";
  * - `water`: 1 where the day map is ocean (b > r + 18 and b ≥ g), as a
  *   two-level mask;
  * - `gain`: brightened by this factor before encoding, so the faint sky
- *   keeps its detail through WebP (the renderer divides it back out).
+ *   keeps its detail through WebP (the renderer divides it back out);
+ * - `destar`: the sky's point stars taken out (a median this many pixels
+ *   wide at 4096 across), leaving the Milky Way's glow.
  */
 const MAPS = [
     { out: "earth-2k.webp", src: SSS + "2k_earth_daymap.jpg", w: 2048, q: 74 },
@@ -83,13 +85,6 @@ const MAPS = [
         grey: true,
     },
     {
-        out: "earth-night-1k.webp",
-        src: NASA + "144000/144897/BlackMarble_2016_01deg_gray.jpg",
-        w: 1024,
-        q: 70,
-        grey: true,
-    },
-    {
         out: "earth-water-1k.webp",
         src: SSS + "2k_earth_daymap.jpg",
         w: 1024,
@@ -98,18 +93,20 @@ const MAPS = [
     },
     { out: "moon-1k.webp", src: SSS + "2k_moon.jpg", w: 1024, q: 45 },
     {
-        out: "milky-way-4k.webp",
+        out: "milky-way-band-4k.webp",
         src: SSS + "8k_stars_milky_way.jpg",
         w: 4096,
         q: 85,
         gain: 4,
+        destar: 7,
     },
     {
-        out: "milky-way-2k.webp",
+        out: "milky-way-band-2k.webp",
         src: SSS + "8k_stars_milky_way.jpg",
         w: 2048,
         q: 85,
         gain: 4,
+        destar: 7,
     },
 ];
 
@@ -149,6 +146,21 @@ async function water(input, w, h) {
     return sharp(soft).threshold(128);
 }
 
+/**
+ * The sky without its point stars: a median filter this many pixels wide
+ * at 4096 across, which keeps the Milky Way's glow and its dust lanes.
+ * Magnified on screen the photograph's stars would read as soft blobs;
+ * the seeded stars the renderer draws in front carry the sky's points.
+ */
+async function destar(input, size) {
+    const band = await sharp(input)
+        .resize(4096, 2048, { fit: "fill", kernel: "lanczos3" })
+        .median(size)
+        .png()
+        .toBuffer();
+    return sharp(band);
+}
+
 /** A zonal strip: every row averaged across longitude. */
 async function zonal(input, w, h) {
     const row = await sharp(input)
@@ -158,9 +170,12 @@ async function zonal(input, w, h) {
     return sharp(row).resize(w, h, { fit: "fill", kernel: "nearest" });
 }
 
+// Named files only, if any are given.
+const only = process.argv.slice(2);
 await mkdir(outDir, { recursive: true });
 let total = 0;
 for (const map of MAPS) {
+    if (only.length && !only.includes(map.out)) continue;
     const input = await source(map.src);
     const target = new URL(map.out, outDir);
     const h = map.h ?? map.w / 2;
@@ -168,7 +183,9 @@ for (const map of MAPS) {
         ? await water(input, map.w, h)
         : map.zonal
           ? await zonal(input, map.w, h)
-          : sharp(input);
+          : map.destar
+            ? await destar(input, map.destar)
+            : sharp(input);
     if (map.grey) image = image.greyscale();
     if (map.blur) image = image.blur(map.blur);
     if (!map.water && !map.zonal)

@@ -39,6 +39,7 @@ import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import type { Frame, Route, TrajectoryData } from "@/lib/trajectory";
 import {
+    MAX_DISCS,
     asteroidBelt,
     atmosphere,
     makePlate,
@@ -119,7 +120,7 @@ export interface FlightHooks {
 }
 
 /** The maps: 2k on a wide screen, 1k (and the smaller sky) on a phone,
- *  where the worlds are drawn small. */
+ *  where the worlds are drawn small; the night lights at 2k on both. */
 const MAPS = "/images/trajectory/";
 const mapsFor = (small: boolean) => {
     const k = small ? "1k" : "2k";
@@ -132,18 +133,23 @@ const mapsFor = (small: boolean) => {
         } satisfies Record<WorldKind, string>,
         ring: "saturn-ring-1k.webp",
         clouds: `earth-clouds-${k}.webp`,
-        night: `earth-night-${k}.webp`,
+        // The sunrise shows the night lights large on any screen.
+        night: "earth-night-2k.webp",
         water: "earth-water-1k.webp",
         moon: "moon-1k.webp",
-        sky: small ? "milky-way-2k.webp" : "milky-way-4k.webp",
+        sky: small ? "milky-way-band-2k.webp" : "milky-way-band-4k.webp",
     };
 };
 /** Each world's shading: its wrap lighting (a softer terminator on the
- *  worlds with thick air), and Flight Manual's tone gain, which brings
- *  each world's lit side up to about the paper. */
-const LOOK: Record<WorldKind | "moon", { wrap: number; print: number }> = {
+ *  worlds with thick air; Mars's thin air a short dusk), and Flight
+ *  Manual's tone gain, which brings each world's lit side up to about
+ *  the paper. */
+const LOOK: Record<
+    WorldKind | "moon",
+    { wrap: number; soft?: number; print: number }
+> = {
     earth: { wrap: 0.05, print: 4.0 },
-    mars: { wrap: 0, print: 1.8 },
+    mars: { wrap: 0.06, soft: 0.4, print: 1.8 },
     jupiter: { wrap: 0.1, print: 1.4 },
     saturn: { wrap: 0.1, print: 1.3 },
     moon: { wrap: 0, print: 2.0 },
@@ -162,15 +168,24 @@ const MANUAL_AMBIENT = 0.2;
  *  the print has none). */
 const OCEAN_GLINT = new Color(0.1, 0.105, 0.12);
 /** Earth's night lights: a neutral warm white, never orange. */
-const CITY_LIGHTS = new Color(1, 0.93, 0.82).multiplyScalar(1.2);
+const CITY_LIGHTS = new Color(1, 0.93, 0.82).multiplyScalar(0.9);
 /** Earthlight on the Moon's night side: faint, a little blue. */
 const EARTHSHINE = new Color(0.5, 0.56, 0.66).multiplyScalar(0.12);
 /** The wings' slate (under 8% chroma), a material colour. */
 const WING_SLATE = "#8b929e";
 /** The plume's pale blue-white in Void. */
 const PLUME = "#dfe8ff";
-/** The Milky Way's brightness (of the file's fourfold gain). */
+/** The Milky Way's brightness (of the file's fourfold gain), how far it
+ *  sits back in the map, so the route leads, and how much further while
+ *  the camera cranes, so its core comes in behind the map gradually
+ *  rather than sweeping in at once. */
 const SKY_GAIN = 0.32;
+const SKY_MAP_DIM = 0.45;
+const SKY_CRANE_DIP = 0.3;
+/** The sky fades in over this many pixels below the stage's top. */
+const SKY_FEATHER = 110;
+/** The belt's grains fade out this many pixels from a world's disc. */
+const BELT_CLEAR = 6;
 /** The sky's turn (degrees): the galaxy's plane lies 60° to the
  *  ecliptic, as it does; its turn about the ecliptic pole and the
  *  galactic centre's place along the band are set so the band crosses
@@ -200,8 +215,6 @@ const SATURN_CLEAR = 2;
 /** On a wide stage the lines fade out under the record's scrim, between
  *  these shares of the width (gone before the record's text column). */
 const LINE_MASK = [0.3, 0.46];
-/** Worlds whose discs the orbits keep clear of (the rest are ignored). */
-const MAX_DISCS = 8;
 /** Lines fade out from this far outside the caption's box to this far
  *  (pixels), and labels stay this far above it. */
 const CAPTION_CLEAR = [22, 6];
@@ -487,7 +500,9 @@ export function mountFlight(
                 GALAXY.core * deg,
             ),
         );
-    const galaxy = milkyWay(load(maps.sky, false, false));
+    // The sky's photograph is fetched only once Void shows it.
+    const galaxy = milkyWay();
+    let skyMap: Texture | null = null;
     const stars = starField(6000, plate);
     sky.add(galaxy.mesh, stars.points);
     scene.add(sky);
@@ -710,7 +725,11 @@ export function mountFlight(
                 emissive: CITY_LIGHTS,
                 emissiveMap: load(maps.night),
             });
-            shadeGlobe(material, plate, { ...look, earth: true });
+            shadeGlobe(material, plate, {
+                ...look,
+                earth: true,
+                keep: { box: keepOut, soft: keepSoft },
+            });
         } else {
             material = new MeshLambertMaterial({ map });
             shadeGlobe(material, plate, { ...look, ring: shadow ?? undefined });
@@ -793,7 +812,10 @@ export function mountFlight(
     const belt = plan.belt
         ? asteroidBelt(plan.belt.mid, plan.belt.half, 3000, plate)
         : null;
-    if (belt) scene.add(belt.points);
+    if (belt) {
+        belt.material.uniforms.uDiscs = discs;
+        scene.add(belt.points);
+    }
 
     /* ---- the ship --------------------------------------------------------- */
 
@@ -933,6 +955,12 @@ export function mountFlight(
         // ink dots.
         const ink = palette.ink1.clone().convertLinearToSRGB();
         galaxy.mesh.visible = !light;
+        if (!light && !skyMap)
+            galaxy.material.uniforms.map.value = skyMap = load(
+                maps.sky,
+                false,
+                false,
+            );
         for (const [dots, limit, alpha] of [
             [stars, 0.72, 0.5],
             [belt, 0, 0.32],
@@ -1216,9 +1244,13 @@ export function mountFlight(
             }
         }
         if (belt) belt.material.uniforms.uLevel.value = 1 - pose.open;
-        // The Milky Way sits back a little in the map, so the route leads.
+        // The Milky Way sits back in the map, so the route leads, and dips
+        // while the camera cranes (SKY_CRANE_DIP).
         galaxy.material.uniforms.uGain.value =
-            SKY_GAIN * (1 - 0.3 * pose.overview);
+            SKY_GAIN *
+            (1 -
+                SKY_MAP_DIM * pose.overview -
+                SKY_CRANE_DIP * Math.sin(Math.PI * pose.overview) ** 2);
         // The Moon beside Earth as drawn, while it is a disc at all.
         if (moon && plan.moon && earthBody) {
             const e = plan.worldAt(earthBody.w, t);
@@ -1526,13 +1558,17 @@ export function mountFlight(
             camera.aspect = W / H;
             camera.fov = stage.fov;
             for (const m of lineMaterials) m.resolution.set(W, H);
+            const dpr = renderer.getPixelRatio();
+            // The sky fades in below the stage's top edge.
+            const feather = [H * dpr, SKY_FEATHER * dpr] as const;
+            galaxy.material.uniforms.uFeather.value.set(...feather);
+            stars.material.uniforms.uFeather.value.set(...feather);
             for (const dots of [stars, belt])
-                if (dots)
-                    dots.material.uniforms.uDpr.value =
-                        renderer.getPixelRatio();
+                if (dots) dots.material.uniforms.uDpr.value = dpr;
+            if (belt)
+                belt.material.uniforms.uDiscClear.value = BELT_CLEAR * dpr;
             // No line under the record: on a wide stage they fade out
             // under its scrim; on a phone above its top edge.
-            const dpr = renderer.getPixelRatio();
             safe = labelSafe(stage, wide ? undefined : record);
             // Nor through the caption: lines fade out round it and labels
             // keep above it.

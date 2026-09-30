@@ -17,7 +17,9 @@ import {
     ShaderChunk,
     ShaderMaterial,
     SphereGeometry,
+    Vector2,
     Vector3,
+    Vector4,
     type Texture,
 } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
@@ -54,6 +56,9 @@ export const makePlate = (): Plate => ({
 const AIR = new Color(0.32, 0.55, 1.0);
 const AIR_WARM = new Color(1.0, 0.94, 0.86);
 
+/** The most worlds whose discs the lines and the belt keep clear of. */
+export const MAX_DISCS = 8;
+
 /* ---- the globes ------------------------------------------------------------ */
 
 export interface RingShadow {
@@ -67,10 +72,17 @@ export interface RingShadow {
 export interface GlobeLook {
     /** Wrap lighting: how far past the terminator the light reaches. */
     wrap: number;
+    /** A soft terminator: the light comes in gradually over this much of
+     *  its range rather than from a hard edge (a thin air's dusk). */
+    soft?: number;
     /** Flight Manual: the lit tone's gain before the ink-to-paper curve. */
     print: number;
     /** Earth: city lights on the night side only, and haze at the limb. */
     earth?: boolean;
+    /** Earth: a box on the stage its night lights keep off, fading out
+     *  over twice `soft` (device pixels): the figure's caption, which the
+     *  sunrise's night side lies under. */
+    keep?: { box: { value: Vector4 }; soft: { value: number } };
     /** A faint limb darkening and a thin rim on the day side (Void). */
     limb?: { dark: number; rim: Color };
     /** Saturn: the ring's shadow on the globe. */
@@ -94,9 +106,11 @@ float mu0 = saturate( dot( geometryNormal, directLight.direction ) );
 float dotNL = 2.0 * mu0 / ( mu0 + saturate( dot( geometryNormal, geometryViewDir ) ) + 1e-3 );
 #else
 float dotNL = saturate( ( dot( geometryNormal, directLight.direction ) + uWrap ) / ( 1.0 + uWrap ) );
+if ( uSoft > 0.0 ) dotNL *= smoothstep( 0.0, uSoft, dotNL );
 #endif`;
 const GLOBE_PARS = /* glsl */ `
 uniform float uWrap;
+uniform float uSoft;
 uniform float uPrint;
 uniform float uPrintGain;
 uniform vec3 uPaper;
@@ -105,6 +119,8 @@ varying vec3 vGlobeP;
 varying vec3 vGlobeN;
 #ifdef GLOBE_EARTH
 uniform vec3 uAir;
+uniform vec4 uKeep;
+uniform float uKeepSoft;
 #endif
 #ifdef GLOBE_LIMB
 uniform float uLimbDark;
@@ -117,11 +133,20 @@ uniform vec3 uRingN;
 uniform vec2 uRingR;
 #endif
 `;
-/** City lights only where the Sun has set (the Sun is at the origin). */
+/** City lights only where the Sun has set (the Sun is at the origin);
+ *  on paper neither they nor the Moon's earthshine print. */
 const GLOBE_NIGHT = /* glsl */ `
 #ifdef GLOBE_EARTH
 totalEmissiveRadiance *= (1.0 - smoothstep(-0.12, 0.12,
     dot(normalize(vGlobeN), normalize(-vGlobeP)))) * (1.0 - uPrint);
+{
+    vec2 kept = max(uKeep.xy - gl_FragCoord.xy, gl_FragCoord.xy - uKeep.zw);
+    totalEmissiveRadiance *= smoothstep(0.0, 2.0 * uKeepSoft,
+        max(kept.x, kept.y));
+}
+#endif
+#ifdef GLOBE_LUNAR
+totalEmissiveRadiance *= 1.0 - uPrint;
 #endif
 `;
 /** The ring's shadow: where the ray toward the Sun crosses the ring. */
@@ -161,6 +186,12 @@ const GLOBE_FINISH = /* glsl */ `
         float lum = dot(outgoingLight, luma) * uPrintGain;
         float light = dot(outgoingLight / max(diffuseColor.rgb, vec3(0.02)), luma);
         float tone = clamp(pow(mix(lum, light, 0.35), 0.7), 0.0, 1.0);
+#ifdef GLOBE_LUNAR
+        // The Moon prints its phase, a little fuller than it is so that
+        // its crescent reads at the plate's size: paper where it is lit,
+        // a screen of ink across its night side.
+        tone = mix(min(tone, 0.22), 1.0, smoothstep(-0.42, -0.22, nl));
+#endif
         outgoingLight = mix(uInk, uPaper, 0.28 + 0.72 * tone);
 #ifdef GLOBE_SHELL
         diffuseColor.a *= smoothstep(0.1, 0.3, nv);
@@ -200,8 +231,11 @@ export function shadeGlobe(
     const uniforms = {
         ...plate,
         uWrap: { value: look.wrap },
+        uSoft: { value: look.soft ?? 0 },
         uPrintGain: { value: look.print },
         uAir: { value: AIR },
+        uKeep: look.keep?.box ?? { value: new Vector4(-1e4, -1e4, -9e3, -9e3) },
+        uKeepSoft: look.keep?.soft ?? { value: 1 },
         uLimbDark: { value: look.limb?.dark ?? 0 },
         uRim: { value: look.limb?.rim ?? new Color() },
         uRingMap: look.ring?.map ?? { value: null },
@@ -377,26 +411,36 @@ void main() {
 
 /* ---- the sky ---------------------------------------------------------------- */
 
+/** The sky fades in below the stage's top edge (uFeather: that edge and
+ *  the fade's height, device pixels), so it meets the page above it, or
+ *  the header, without a hard edge. */
+const SKY_FEATHER = "smoothstep(0.0, uFeather.y, uFeather.x - gl_FragCoord.y)";
+
 /**
  * The Milky Way: Solar System Scope's sky, in galactic coordinates, on
  * the inside of a sphere that moves with the camera (so it has no
- * parallax), drawn first and added to the page's black. The file was
- * brightened fourfold before encoding (keeping its faint detail); here it
- * is dimmed back and floored, so the sky away from the band stays within
- * a few levels of the page's black. Display-referred: no colour
- * conversion, no tone mapping. Void only.
+ * parallax), added to the page's black where no world covers it (it
+ * draws after them, depth-tested). The file was brightened fourfold
+ * before encoding (keeping its faint detail); here it is dimmed back and
+ * floored, so the sky away from the band stays within a few levels of
+ * the page's black. The file has no point stars of its own (magnified,
+ * they read as soft blobs): the seeded stars in front carry the sky's
+ * points. Display-referred: no colour conversion, no tone mapping. Void
+ * only.
  */
-export function milkyWay(map: Texture) {
+export function milkyWay() {
     const geometry = new SphereGeometry(1800, 64, 32);
     // Seen from inside, unmirrored.
     geometry.scale(-1, 1, 1);
-    // Opaque, so it draws first (renderOrder), yet added to the black.
     const material = new ShaderMaterial({
-        depthTest: false,
         depthWrite: false,
         blending: AdditiveBlending,
         toneMapped: false,
-        uniforms: { map: { value: map }, uGain: { value: 0.3 } },
+        uniforms: {
+            map: { value: null as Texture | null },
+            uGain: { value: 0.3 },
+            uFeather: { value: new Vector2(1, 1) },
+        },
         vertexShader: /* glsl */ `
 varying vec2 vUv;
 void main() {
@@ -406,16 +450,19 @@ void main() {
         fragmentShader: /* glsl */ `
 uniform sampler2D map;
 uniform float uGain;
+uniform vec2 uFeather;
 varying vec2 vUv;
 void main() {
     vec3 c = texture2D(map, vUv).rgb;
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
     c = mix(vec3(l), c, 0.55);
-    gl_FragColor = vec4(max(c - 0.03, 0.0) * uGain, 1.0);
+    gl_FragColor = vec4(max(c - 0.03, 0.0) * uGain * ${SKY_FEATHER}, 1.0);
 }`,
     });
     const mesh = new Mesh(geometry, material);
-    mesh.renderOrder = -10;
+    // Opaque, yet added to the black: after the worlds, so the pixels
+    // they cover are skipped.
+    mesh.renderOrder = 10;
     mesh.frustumCulled = false;
     return { mesh, material };
 }
@@ -463,14 +510,36 @@ void main() {
     if (uPrint > 0.5) vA = bright >= uInkLimit ? uInkAlpha : 0.0;
     vA *= uLevel;
 }`;
+/** DOT_SKY: the stars fade in below the stage's top (SKY_FEATHER).
+ *  DOT_CLEAR: the belt's grains keep off every world's disc on screen
+ *  (uDiscs: x, y, radius, device pixels, as the orbits do), so none
+ *  speckles a globe it passes in front of. */
 const DOT_FRAGMENT = /* glsl */ `
 uniform float uPrint;
 uniform vec3 uInk;
+#ifdef DOT_SKY
+uniform vec2 uFeather;
+#endif
+#ifdef DOT_CLEAR
+uniform vec3 uDiscs[${MAX_DISCS}];
+uniform float uDiscClear;
+#endif
 varying vec3 vTint;
 varying float vA;
 void main() {
     float r = length(gl_PointCoord - 0.5) * 2.0;
     float a = vA * (1.0 - smoothstep(0.4, 1.0, r));
+#ifdef DOT_SKY
+    a *= ${SKY_FEATHER};
+#endif
+#ifdef DOT_CLEAR
+    for (int i = 0; i < ${MAX_DISCS}; i++) {
+        vec3 d = uDiscs[i];
+        if (d.z > 0.0)
+            a *= smoothstep(d.z, d.z + uDiscClear,
+                distance(gl_FragCoord.xy, d.xy));
+    }
+#endif
     if (a < 0.004) discard;
     gl_FragColor = vec4(uPrint > 0.5 ? uInk : vTint, a);
 }`;
@@ -481,7 +550,7 @@ function dots(
     bright: number[],
     tint: number[],
     plate: Plate,
-    phase: boolean,
+    kind: "sky" | "belt",
 ) {
     const geometry = new BufferGeometry();
     geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
@@ -493,9 +562,20 @@ function dots(
         depthWrite: false,
         blending: AdditiveBlending,
         toneMapped: false,
-        defines: phase ? { DOT_PHASE: "" } : {},
+        defines:
+            kind === "belt"
+                ? { DOT_PHASE: "", DOT_CLEAR: "" }
+                : { DOT_SKY: "" },
         uniforms: {
             uDpr: { value: 1 },
+            uFeather: { value: new Vector2(1, 1) },
+            uDiscs: {
+                value: Array.from(
+                    { length: MAX_DISCS },
+                    () => new Vector3(0, 0, -1),
+                ),
+            },
+            uDiscClear: { value: 6 },
             uPrint: plate.uPrint,
             // Display-referred ink (set by the theme).
             uInk: { value: new Color() },
@@ -550,7 +630,7 @@ export function starField(count: number, plate: Plate, seed = 19) {
         c.copy(blue).lerp(warm, 0.5 + (random() - random()) * 0.5);
         tint.push(c.r, c.g, c.b);
     }
-    const field = dots(positions, size, bright, tint, plate, false);
+    const field = dots(positions, size, bright, tint, plate, "sky");
     // First among the see-through layers: behind every world and line.
     field.points.renderOrder = -9;
     return field;
@@ -589,7 +669,7 @@ export function asteroidBelt(
         const g = 0.72 + 0.1 * random();
         tint.push(g, g * 0.98, g * 0.95);
     }
-    return dots(positions, size, bright, tint, plate, true);
+    return dots(positions, size, bright, tint, plate, "belt");
 }
 
 /* ---- the spacecraft --------------------------------------------------------- */
