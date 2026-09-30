@@ -226,15 +226,8 @@ test("the page shows no email address or phone number", async ({ request }) => {
     ).toEqual([]);
 });
 
-test("/portfolio#contact still answers, with the way to Contact", async ({
-    page,
-}) => {
+test("/portfolio#contact is sent on to the form", async ({ page }) => {
     await page.goto("/portfolio#contact");
-    const row = page.locator("#contact");
-    await expect(row).toBeInViewport();
-    const link = row.getByRole("link", { name: /^Contact\b/ });
-    await expect(link).toHaveAttribute("href", "/contact");
-    await link.click();
     await expect(page).toHaveURL(/\/contact$/);
     await expect(
         page.getByRole("textbox", { name: form.emailLabel }),

@@ -4,12 +4,10 @@
  * one, its facts, then the sections on the rail + main grid) or the short
  * note (title, summary, highlights and facts in one column), and the
  * close. Shared parts (stats, plates, key/value lists, tables, link rows,
- * the pager) are styled in styles/components.css; the mission line and
- * the callouts in their components' modules.
+ * the pager) are styled in styles/components.css; the mission line, the
+ * stack and the callouts in their components' modules. The close is the
+ * last section, so its own padding ends the page.
  */
-.page {
-    padding-bottom: var(--space-section);
-}
 
 .crumb {
     padding-top: clamp(1.75rem, 1rem + 2.2vw, 3rem);
@@ -24,31 +22,17 @@
 }
 .headCopy {
     min-width: 0;
-    container-type: inline-size;
 }
 .headMedia {
     min-width: 0;
 }
-/* The name in capitals (the vehicle treatment), sized so its longest word
-   always fits the column (`--chars`, set from the name). */
+/* The title is the heading, in sentence case, on both layouts. */
 .title {
+    max-width: 22ch;
     margin-top: var(--s-5);
-    margin-right: -0.04em;
-    font: 300 min(var(--step-5), calc(100cqi / (var(--chars, 8) * 0.74))) / 0.98
-        var(--font-display);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    text-wrap: balance;
-}
-.dek {
-    display: block;
-    max-width: 36ch;
-    margin-top: var(--s-5);
-    margin-right: 0;
     color: var(--ink-1);
-    font: 400 var(--step-2) / 1.3 var(--font-long);
-    letter-spacing: 0;
-    text-transform: none;
+    font: 300 var(--step-5) / 1.04 var(--font-display);
+    letter-spacing: -0.015em;
     text-wrap: balance;
 }
 .summary {
@@ -58,9 +42,9 @@
     font: 400 var(--step-1) / 1.5 var(--font-long);
     text-wrap: pretty;
 }
+/* The quiet way to the original entry. */
 .actions {
-    --cluster: var(--s-3);
-    margin-top: var(--s-6);
+    margin-top: var(--s-5);
 }
 .metrics {
     margin-top: var(--s-7);
@@ -69,10 +53,6 @@
 .facts {
     max-width: var(--measure-index);
     margin-top: var(--s-7);
-}
-.facts :global(.data) {
-    font-size: 0.8125rem;
-    line-height: 1.7;
 }
 .factLinks {
     display: flex;
@@ -114,8 +94,7 @@
     .headText .headCopy {
         grid-column: 1 / -1;
     }
-    .headText .summary,
-    .headText .dek {
+    .headText .summary {
         max-width: 48ch;
     }
 }
@@ -124,14 +103,6 @@
 .noteHead {
     max-width: var(--measure-index);
     padding-top: var(--s-7);
-}
-.noteTitle {
-    max-width: 22ch;
-    color: var(--ink-1);
-    margin-top: var(--s-5);
-    font: 300 var(--step-5) / 1.04 var(--font-display);
-    letter-spacing: -0.015em;
-    text-wrap: balance;
 }
 .noteBody {
     max-width: var(--measure-index);
@@ -192,6 +163,36 @@
 .note {
     max-width: 44ch;
     color: var(--ink-2);
+}
+/* Phones: each note moves under its row, across the full width; the row
+   keeps one hairline, and the Note column's head is for screen readers. */
+@media (max-width: 37.49rem) {
+    .results tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .results tbody tr {
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .results tbody :is(th, td) {
+        border-bottom: 0;
+    }
+    .results td.note {
+        grid-column: 1 / -1;
+        max-width: none;
+        padding-top: 0;
+    }
+    .results td.note:empty {
+        display: none;
+    }
+    .results th.noteCol {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
 }
 
 .debrief {

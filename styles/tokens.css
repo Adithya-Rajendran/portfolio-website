@@ -162,7 +162,6 @@
         --on-accent: #050507; /* 6.5:1 on accent */
         --focus: var(--accent);
         --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
-        --glass: color-mix(in oklab, var(--bg) 94%, transparent);
         --limb-fill: #070709;
         --star-rgb: 236 232 223;
         --plate-bg: transparent;
@@ -191,7 +190,6 @@
         --on-accent: #17150f; /*  4.75:1 on accent */
         --focus: var(--accent-text);
         --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
-        --glass: color-mix(in oklab, var(--bg) 96%, transparent);
         --limb-fill: var(--bg);
         --star-rgb: 23 21 15;
         --plate-bg: var(--surface-1);

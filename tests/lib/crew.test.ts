@@ -80,7 +80,7 @@ describe("the home page's lines", () => {
 });
 
 describe("questions", () => {
-    it("numbers the questions and links the ones that point somewhere", () => {
+    it("lists the questions unnumbered and links the ones that point somewhere", () => {
         const rows = questions(
             [
                 { _key: "a", title: "Plain?", note: " A note. " },
@@ -94,34 +94,39 @@ describe("questions", () => {
             [{ _id: "x1", slug: "a-project" }],
         );
         expect(
-            rows.map(({ num, href, external, note }) => ({
-                num,
+            rows.map(({ title, href, external, note }) => ({
+                title,
                 href,
                 external,
                 note,
             })),
         ).toEqual([
-            { num: "Q1", href: null, external: false, note: "A note." },
-            { num: "Q2", href: "/blog/a-post", external: false, note: null },
+            { title: "Plain?", href: null, external: false, note: "A note." },
             {
-                num: "Q3",
+                title: "About a post?",
+                href: "/blog/a-post",
+                external: false,
+                note: null,
+            },
+            {
+                title: "About a project?",
                 href: "/portfolio/a-project",
                 external: false,
                 note: null,
             },
             {
-                num: "Q4",
+                title: "Out there?",
                 href: "https://example.com",
                 external: true,
                 note: null,
             },
-            { num: "Q5", href: null, external: false, note: null },
+            { title: "Unpublished?", href: null, external: false, note: null },
         ]);
     });
 });
 
 describe("nowGroups", () => {
-    it("groups the Now list by kind, questions first, each numbered from one", () => {
+    it("groups the Now list by kind, questions first", () => {
         const groups = nowGroups(
             [
                 { _key: "r1", kind: "reading", title: "A book" },
@@ -137,12 +142,12 @@ describe("nowGroups", () => {
         expect(
             groups.map((group) => [
                 group.kind,
-                group.items.map((item) => `${item.num} ${item.title}`),
+                group.items.map((item) => item.title),
             ]),
         ).toEqual([
-            ["question", ["Q1 Why?", "Q2 How?"]],
-            ["building", ["01 A rig"]],
-            ["reading", ["01 A book", "02 A paper"]],
+            ["question", ["Why?", "How?"]],
+            ["building", ["A rig"]],
+            ["reading", ["A book", "A paper"]],
         ]);
         expect(groups[1].items[0].href).toBe("/blog/a-post");
     });
@@ -163,13 +168,12 @@ describe("nowGroups", () => {
 describe("crewRecord", () => {
     it("draws the owner's record on two rows of twelve columns", () => {
         const cells = crewRecord(FIXTURE_PROFILE);
+        // No Open To (the hero's and the heads') and no edit date.
         expect(cells.map((cell) => [cell.id, cell.span])).toEqual([
             ["name", 4],
             ["studying", 4],
             ["previously", 4],
-            ["openTo", 5],
-            ["links", 5],
-            ["updated", 2],
+            ["links", 12],
         ]);
         expect(
             crewRecord({
@@ -180,14 +184,14 @@ describe("crewRecord", () => {
             ["name", 4],
             ["studying", 4],
             ["previously", 4],
-            ["focus", 3],
-            ["openTo", 3],
-            ["links", 4],
-            ["updated", 2],
+            ["focus", 6],
+            ["links", 6],
         ]);
-        expect(cells[0]).toMatchObject({
+        expect(cells[0]).toEqual({
+            id: "name",
             value: "Adithya Rajendran",
-            accent: true,
+            span: 4,
+            spanSm: 2,
         });
         expect(cells[1].note).toBe(
             "San José State University · Aug 2026 – present · Expected 2028",
@@ -195,10 +199,6 @@ describe("crewRecord", () => {
         expect(cells[2]).toMatchObject({
             value: "Field Software Engineer I",
             note: "Canonical Ltd (Ubuntu) · May 2024 – Jul 2026",
-        });
-        expect(cells.find((cell) => cell.id === "updated")).toMatchObject({
-            value: "11 Jul 2026",
-            date: "2026-07-11",
         });
     });
 

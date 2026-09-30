@@ -2,30 +2,22 @@ import { missionTiers } from "@/lib/missions";
 
 /**
  * The home page's sections (contract §9), in reading order: the strongest
- * project and the others, the latest writing, the owner's research
- * interests and the contact close. A section with nothing to show is
- * absent; nothing is numbered. Pure; the page passes what it found.
+ * project and the others, the latest writing, and the close (the owner's
+ * tagline and the ways to get in touch). A section with nothing to show
+ * is absent; nothing is numbered. Pure; the page passes what it found.
  */
 
-export const HOME_ACTS = [
-    "projects",
-    "writing",
-    "interests",
-    "contact",
-] as const;
+export const HOME_ACTS = ["projects", "writing", "contact"] as const;
 export type HomeAct = (typeof HOME_ACTS)[number];
 
 export function homeActs(content: {
     projects: number;
     entries: number;
-    /** The owner's interests statement is set. */
-    interests: boolean;
 }): HomeAct[] {
     const shown: Record<HomeAct, boolean> = {
         projects: content.projects > 0,
         writing: content.entries > 0,
-        interests: content.interests,
-        // The contact close: the form always takes a message.
+        // The close: the form always takes a message.
         contact: true,
     };
     return HOME_ACTS.filter((act) => shown[act]);

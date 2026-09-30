@@ -38,14 +38,21 @@ export default function MissionLine({
     );
 }
 
-/** The stack as a quiet mono list. */
+/** How many stack items a card (the stage, a tile) lists, in the
+ *  owner's order; the project's page lists them all. */
+export const CARD_STACK = 4;
+
+/** The stack as a quiet mono list, each item kept whole; `max` lists the
+ *  first ones only. */
 export function MissionStack({
     items,
     label,
+    max,
     className,
 }: {
     items: readonly string[];
     label: string;
+    max?: number;
     className?: string;
 }) {
     if (!items.length) return null;
@@ -57,7 +64,7 @@ export function MissionStack({
             aria-label={label}
             role="list"
         >
-            {items.map((item) => (
+            {items.slice(0, max).map((item) => (
                 <li key={item}>{item}</li>
             ))}
         </ul>

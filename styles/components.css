@@ -12,10 +12,6 @@
         letter-spacing: var(--track-display);
         text-wrap: balance;
     }
-    .t-h1 {
-        font: 300 var(--step-5) / 1.04 var(--font-display);
-        letter-spacing: -0.012em;
-    }
     .t-h2 {
         font: 400 var(--step-3) / 1.12 var(--font-display);
         letter-spacing: -0.008em;
@@ -364,6 +360,18 @@
             display: none;
         }
     }
+    /* On home the hero names the owner: the wordmark steps aside while the
+       hero is in view (html[data-hero], set by the starfield's observer;
+       without JavaScript it stays). */
+    .brand__name {
+        transition:
+            opacity var(--dur-hover) var(--ease-dock),
+            visibility var(--dur-hover);
+    }
+    html[data-hero] .brand__name {
+        visibility: hidden;
+        opacity: 0;
+    }
     @media (min-width: 60rem) and (max-width: 74.99rem) {
         .site-header__inner {
             gap: var(--s-4);
@@ -492,10 +500,28 @@
     /* Pause motion (WCAG 2.2.2): in the footer and the home hero. Its
        label names the action; under the OS reduce-motion setting a plain
        note replaces it. On home the hero's control, beside the starfield,
-       is the one shown (html[data-route] is set by RouteMarker). */
+       is the one shown (html[data-route] is set by RouteMarker). Unboxed:
+       the icon and the label in ink-2, sentence case, a 44px target. */
     .motion-ctl {
         display: inline-flex;
         align-items: center;
+    }
+    .motion-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        color: var(--ink-2);
+        font: 400 var(--step--1) / 1.2 var(--font-display);
+        white-space: nowrap;
+        transition: color var(--dur-hover) var(--ease-dock);
+    }
+    .motion-toggle:hover {
+        color: var(--ink-1);
+    }
+    .motion-toggle .icon {
+        width: 16px;
+        height: 16px;
     }
     html:not([data-motion="reduced"]) .motion-toggle__off,
     html[data-motion="reduced"] .motion-toggle__on {
@@ -1072,13 +1098,6 @@
         color: var(--ink-2);
         font-size: 0.8125rem;
     }
-    .titleblock__cell > dd.titleblock__v--data {
-        font-family: var(--font-mono);
-        font-variant-numeric: tabular-nums slashed-zero;
-    }
-    .titleblock__cell--accent {
-        box-shadow: inset 0 2px 0 var(--accent);
-    }
     @media (min-width: 60rem) {
         .titleblock {
             grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -1120,8 +1139,8 @@
     }
 
     /* ===== Question rows (components/crew/questions.tsx) =============== */
-    /* The owner's current questions: a mono number in ink, the question,
-       the note in the serif, on the log index's hairlines. */
+    /* The owner's current questions: the question, the note in the serif,
+       on the log index's hairlines. */
     .q-list {
         max-width: var(--measure-index);
         margin: 0;
@@ -1131,20 +1150,11 @@
     }
     .q-item {
         display: grid;
-        grid-template-columns: 2.75rem minmax(0, 1fr);
-        column-gap: var(--s-4);
         row-gap: var(--s-2);
         padding-block: var(--s-4) var(--s-5);
         border-top: var(--rule-hair) solid var(--rule-1);
     }
-    .q-item__num {
-        grid-row: 1 / span 2;
-        color: var(--ink-3);
-        font: 400 0.8125rem / 1.9 var(--font-mono);
-        font-variant-numeric: tabular-nums slashed-zero;
-    }
     .q-item__title {
-        grid-column: 2;
         color: var(--ink-1);
         font: 400 var(--step-1) / 1.3 var(--font-display);
         text-wrap: balance;
@@ -1163,7 +1173,6 @@
         color: var(--ink-3);
     }
     .q-item__note {
-        grid-column: 2;
         max-width: 60ch;
         color: var(--ink-2);
         font: 400 var(--step-0) / 1.55 var(--font-long);
@@ -1664,35 +1673,20 @@
     }
 
     /* ===== Tables (site.css 4.14) ======================================= */
-    /* <div class="table-wrap" role="region" tabindex="0"
-         aria-labelledby="…"><table class="table"><caption>…</caption> */
+    /* <div class="table-wrap"><table class="table" aria-labelledby="…">:
+       the table is named by its section's heading, with no caption
+       repeating it, and its section is the region (a project's Results). */
     /* Positioned, so an absolutely placed descendant (a visually hidden
        label) scrolls with the table instead of widening the page. */
     .table-wrap {
         position: relative;
         overflow-x: auto;
     }
-    .table-wrap:focus-visible {
-        outline-offset: 4px;
-    }
     .table {
         width: 100%;
         border-collapse: collapse;
         font: 400 var(--step--1) / 1.45 var(--font-text);
         font-variant-numeric: tabular-nums lining-nums;
-    }
-    .table caption {
-        max-width: 60ch;
-        padding-bottom: var(--s-4);
-        caption-side: top;
-        color: var(--ink-2);
-        font: 400 var(--step--1) / 1.5 var(--font-text);
-        text-align: left;
-    }
-    .table caption .caption__num {
-        display: inline-block;
-        margin-right: var(--s-3);
-        line-height: 1.5;
     }
     .table th,
     .table td {
@@ -1865,10 +1859,6 @@
         font: 400 var(--step-1) / 1.25 var(--font-display);
         text-wrap: balance;
     }
-    .pager__title--upper {
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
     .pager__item:hover .pager__title {
         text-decoration: underline;
         text-decoration-color: var(--accent);
@@ -2024,8 +2014,8 @@
     }
 
     /* ===== Close (contract §1; components/ui/ask.tsx) ================== */
-    /* One question and its action, between a meaningful rule and a quiet
-       one. */
+    /* One question and its action in one row, between a meaningful rule
+       and a quiet one; the question at a section head's size. */
     .ask {
         display: flex;
         flex-wrap: wrap;
@@ -2037,7 +2027,7 @@
         border-bottom: var(--rule-hair) solid var(--rule-1);
     }
     .ask__title {
-        font: 400 var(--step-4) / 1.05 var(--font-display);
-        letter-spacing: -0.014em;
+        font: 400 var(--step-1) / 1.25 var(--font-display);
+        letter-spacing: -0.003em;
     }
 }

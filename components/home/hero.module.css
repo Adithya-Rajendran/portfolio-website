@@ -209,14 +209,15 @@
 .word {
     display: inline-block;
 }
-/* The profile's headline: one plain line under the name. */
+/* The profile's headline: one plain line under the name, its parts kept
+   whole (.open-to). */
 .headline {
+    justify-content: center;
     max-width: 44rem;
     margin-top: var(--s-5);
     color: var(--ink-1);
     font: 400 var(--step-1) / 1.4 var(--font-display);
     letter-spacing: 0.005em;
-    text-wrap: balance;
 }
 /* What the owner is open to: the active status mark, then the line. */
 .status {
@@ -234,20 +235,19 @@
 .openTo {
     justify-content: center;
 }
+/* One action and one quiet link: CV, a hairline button over the
+   photograph (no fill), and the way down to the projects. */
 .routes {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-    gap: var(--s-3);
+    gap: var(--s-3) var(--s-6);
     margin-top: var(--s-7);
 }
-.routes :global(.btn) {
-    background: var(--glass);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-}
-.routes :global(.btn):hover {
-    background: var(--surface-1);
+/* The link points down the page, so its arrow nudges down. */
+.down:hover :global(.icon) {
+    transform: translateY(3px);
 }
 
 .foot {
@@ -262,10 +262,10 @@
     font: 400 var(--label-size) / 1.5 var(--font-mono);
     letter-spacing: 0.02em;
 }
+/* A 44px target around one line (two on phones). */
 .credit a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
+    display: inline-block;
+    padding-block: calc((44px - 1.5em) / 2);
     color: inherit;
     text-decoration-color: var(--rule-2);
     text-underline-offset: 0.3em;
@@ -274,23 +274,27 @@
     color: var(--ink-1);
     text-decoration-color: var(--accent);
 }
+/* The frame's NASA ID, kept whole: on a line of its own on phones. */
+.creditId {
+    white-space: nowrap;
+}
 .motion {
     margin-left: auto;
-}
-.motion :global(.motion-toggle) {
-    background: var(--glass);
 }
 /* No photograph and nothing drifting in Flight Manual. */
 :global([data-theme="manual"]) .foot {
     display: none;
 }
 
-/* ---- Phones: the name on two lines, the links in one row ------------- */
+/* ---- Phones: the name on two lines; the headline, the Open To line and
+   the credit stack their parts -------------------------------------------- */
 @media (max-width: 37.49rem) {
     .frame {
         padding-top: var(--s-5);
     }
     .headline {
+        flex-direction: column;
+        align-items: center;
         max-width: 22rem;
         font-size: var(--step-0);
     }
@@ -304,64 +308,44 @@
     .word {
         display: block;
     }
-    /* The openings stack under the label, one a line, with no dot:
-       centred lines cannot clip a dot at their start as the heads' ragged
-       lines do. */
+    /* The openings stack under the label, and the headline's parts under
+       each other, one a line, with no dot: centred lines cannot clip a
+       dot at their start as the heads' ragged lines do. */
     .openTo {
         flex: 1 0 100%;
         flex-direction: column;
         align-items: center;
     }
-    .openTo :global(.open-to__sep) {
+    :is(.openTo, .headline) :global(.open-to__sep) {
         display: none;
+    }
+    :is(.openTo, .headline) :global(.open-to__item) {
+        margin-left: 0;
+        padding-left: 0;
     }
     .routes {
-        display: grid;
-        grid-auto-columns: minmax(0, 1fr);
-        grid-auto-flow: column;
-        gap: var(--s-2);
-        width: 100%;
-        max-width: 24rem;
         margin-top: var(--s-6);
     }
-    .routes :global(.btn) {
-        justify-content: center;
-        padding-inline: 0.6rem;
-    }
-    /* Three short words across: the arrows would crowd them. */
-    .routes :global(.btn .icon) {
-        display: none;
-    }
-    /* The credit and Pause motion share one line. */
+    /* The credit (its frame ID on a line of its own) and Pause motion
+       share one row. */
     .foot {
         flex-wrap: nowrap;
         align-items: center;
         column-gap: var(--s-3);
     }
-    .motion :global(.motion-toggle) {
-        gap: 0.5rem;
-        padding-inline: 0.7rem;
-        font-size: var(--label-size);
-        letter-spacing: 0.1em;
+    .creditSep {
+        display: none;
+    }
+    .creditId {
+        display: block;
     }
     .motion :global(.motion-ctl__os) {
-        white-space: nowrap;
-    }
-}
-@media (min-width: 24rem) and (max-width: 37.49rem) {
-    .credit {
         white-space: nowrap;
     }
 }
 @media (max-width: 23.99rem) {
     .name {
         font-size: 2.15rem;
-        letter-spacing: 0.08em;
-    }
-    .routes :global(.btn) {
-        gap: 0.4rem;
-        padding-inline: 0.6rem;
-        font-size: 0.75rem;
         letter-spacing: 0.08em;
     }
 }

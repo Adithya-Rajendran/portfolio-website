@@ -36,8 +36,11 @@ const LOOK: Record<Magnitude, { r: number; alpha: number }> = {
  * "full"]`, no OS reduce-motion setting): otherwise it holds a still
  * frame. Stars fade out around the zone's text (`[data-clear]`), measured
  * again on resize and once the fonts have loaded. `data-state` reports
- * `running` or `stopped` for tests. Cache Components hides a visited page
- * instead of unmounting it, so the effect's cleanup stops the loop.
+ * `running` or `stopped` for tests. The same observer, in both themes,
+ * sets `html[data-hero]` while the zone is on screen, so the header's
+ * wordmark steps aside while the hero names the owner. Cache Components
+ * hides a visited page instead of unmounting it, so the effect's cleanup
+ * stops the loop and clears the attribute.
  */
 export default function Starfield({ className }: { className?: string }) {
     const ref = useRef<HTMLCanvasElement>(null);
@@ -162,6 +165,7 @@ export default function Starfield({ className }: { className?: string }) {
         resize.observe(zone);
         const visible = new IntersectionObserver(([entry]) => {
             onScreen = entry?.isIntersecting ?? true;
+            root.toggleAttribute("data-hero", onScreen);
             update();
         });
         visible.observe(zone);
@@ -178,6 +182,7 @@ export default function Starfield({ className }: { className?: string }) {
         return () => {
             cancelled = true;
             stop();
+            root.removeAttribute("data-hero");
             resize.disconnect();
             visible.disconnect();
             prefs.disconnect();

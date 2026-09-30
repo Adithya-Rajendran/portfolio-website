@@ -21,6 +21,7 @@ import {
     resultRows,
     sitePostSlug,
     splitParameters,
+    stackSaid,
     toMission,
     writeUpHref,
 } from "@/lib/missions";
@@ -86,7 +87,6 @@ describe("toMission", () => {
             designation: "MSN-03",
             name: "Kubernetes Cluster",
             label: "Kubernetes Cluster",
-            nameChars: 10,
             href: "/portfolio/kubernetes-cluster",
             statusValue: "complete",
             statusLabel: "Complete",
@@ -110,7 +110,6 @@ describe("toMission", () => {
         // Never a name made from the slug ("Gmail Spam Filter").
         expect(mission.name).toBeNull();
         expect(mission.label).toBe("Experimental Gmail spam classifier");
-        expect(mission.nameChars).toBe("Experimental".length);
     });
 
     it("leaves unknown values empty rather than guessing", () => {
@@ -121,7 +120,7 @@ describe("toMission", () => {
         expect(mission.revised).toBeNull();
     });
 
-    it("keeps external links and names them for the register", () => {
+    it("keeps the links that leave the site, marking the repositories", () => {
         const mission = toMission(
             project({
                 links: [
@@ -144,6 +143,12 @@ describe("toMission", () => {
                         kind: "article",
                     },
                     {
+                        _key: "self",
+                        label: "adithya-rajendran.com",
+                        url: "https://www.adithya-rajendran.com",
+                        kind: "other",
+                    },
+                    {
                         _key: "mail",
                         label: "Mail",
                         url: "mailto:someone@example.com",
@@ -157,14 +162,14 @@ describe("toMission", () => {
                 id: "repo",
                 label: "GitHub repository",
                 url: "https://github.com/owner/repo",
-                short: "Code",
+                code: true,
                 host: "github.com/owner/repo",
             },
             {
                 id: "site",
                 label: "example.com",
                 url: "https://example.com",
-                short: "example.com",
+                code: false,
                 host: "example.com",
             },
         ]);
@@ -401,9 +406,9 @@ describe("bodyLinks", () => {
 });
 
 describe("missionCallouts", () => {
-    it("links each callout to its section, in a post or in the essay", () => {
-        const callouts = missionCallouts({
-            hotspots: [
+    it("lists each callout as a plain row: the part and what it does", () => {
+        expect(
+            missionCallouts([
                 {
                     _key: "a",
                     label: "1",
@@ -411,64 +416,14 @@ describe("missionCallouts", () => {
                     body: "Three Pis.",
                     anchor: { heading: "tier-0", postId: "id-homelab" },
                 },
-                {
-                    _key: "b",
-                    label: "2",
-                    title: "In the essay",
-                    anchor: { heading: "own-section" },
-                },
-                {
-                    _key: "c",
-                    label: "3",
-                    title: "An unpublished post",
-                    anchor: { heading: "x", postId: "id-draft" },
-                },
-                {
-                    _key: "d",
-                    label: "4",
-                    title: "A missing essay heading",
-                    anchor: { heading: "nowhere" },
-                },
-            ],
-            entries: ENTRIES,
-            postIds: POST_IDS,
-            essayHeadings: new Set(["own-section"]),
-        });
-        expect(callouts).toEqual([
-            {
-                id: "a",
-                label: "1",
-                title: "Tier 0",
-                body: "Three Pis.",
-                href: "/blog/my-homelab#tier-0",
-                // The post's title: the callout is marked as its write-up.
-                entry: "my-homelab",
-            },
-            {
-                id: "b",
-                label: "2",
-                title: "In the essay",
-                body: null,
-                href: "#own-section",
-                entry: null,
-            },
-            {
-                id: "c",
-                label: "3",
-                title: "An unpublished post",
-                body: null,
-                href: null,
-                entry: null,
-            },
-            {
-                id: "d",
-                label: "4",
-                title: "A missing essay heading",
-                body: null,
-                href: null,
-                entry: null,
-            },
+                { _key: "b", label: "2", title: "In the essay", body: " " },
+                { _key: "c", label: "3", title: "  " },
+            ]),
+        ).toEqual([
+            { id: "a", title: "Tier 0", body: "Three Pis." },
+            { id: "b", title: "In the essay", body: null },
         ]);
+        expect(missionCallouts(null)).toEqual([]);
     });
 });
 
@@ -529,6 +484,26 @@ describe("splitParameters", () => {
         );
         expect(stats.map((item) => item.id)).toEqual(["a", "b"]);
         expect(specs.map((item) => item.id)).toEqual(["e"]);
+    });
+
+    it("leaves out a spec the card's text already names", () => {
+        const { specs } = splitParameters(
+            [param("e", "Feed", "RSS"), param("f", "Region", "us-west")],
+            ["Next.js", "Sanity"],
+            ["Publishes articles, with a searchable archive and RSS feed."],
+        );
+        expect(specs.map((item) => item.id)).toEqual(["f"]);
+    });
+
+    it("finds a stack the page's words already name in full", () => {
+        const stack = ["Kubernetes", "NFS", "Okta OIDC", "CIS Level 1"];
+        const words = [
+            "Kubernetes cluster with NFS and OIDC",
+            "Applied CIS Level 1 hardening and integrated Okta OIDC authentication with NFS persistent storage.",
+        ];
+        expect(stackSaid(stack, words)).toBe(true);
+        expect(stackSaid(stack, words.slice(0, 1))).toBe(false);
+        expect(stackSaid([], words)).toBe(false);
     });
 
     it("finds a name in the stack by its parts or a whole word", () => {

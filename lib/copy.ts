@@ -272,38 +272,6 @@ export const cvCopy = {
 } as const;
 
 /**
- * Link rows to the site's other sections (lib/directory.ts): /portfolio's
- * related pages and the About page's. Each row is the destination's plain
- * name and one line about where it leads.
- */
-export const directoryCopy = {
-    experience: {
-        plain: "Experience",
-        blurb: "Roles and education, on a timeline and as a CV.",
-    },
-    skills: {
-        plain: "Skills",
-        blurb: "Skills by area.",
-    },
-    certifications: {
-        plain: "Certifications",
-        blurb: "Certifications and their status.",
-    },
-    missions: {
-        plain: "Projects",
-        blurb: "Projects and case studies.",
-    },
-    writing: {
-        plain: "Writing",
-        blurb: "Articles and technical notes.",
-    },
-    contact: {
-        plain: "Contact",
-        blurb: "Send a message.",
-    },
-} as const;
-
-/**
  * Projects (themed Missions; G5): the /portfolio index and the project
  * pages (the file and the short note). UI copy only: the page's
  * introduction (`projectsIntro`), names, titles, summaries, highlights,
@@ -312,29 +280,26 @@ export const directoryCopy = {
 export const missionsCopy = {
     themed: "Missions",
     plain: "Projects",
-    experience: "Experience & CV",
+    /** The flagship's section, named for screen readers. */
     flagship: "Featured project",
     more: "More projects",
     /** The least prominent projects, under the tiles. */
     also: "Also",
-    directory: "Related pages",
     openFile: "View the project",
     readWriteUp: "Read the write-up",
     stack: "Stack",
     /** A project page's share-card alt. */
     file: "Project",
-    /** The facts under a project's head (and a note's links). */
+    /** The facts under a project's head: the repositories are Code, the
+     *  other links (two in all, or a note's) Links. */
     facts: {
         status: "Status",
         stack: "Stack",
+        code: "Code",
         role: "Role",
         links: "Links",
     },
     callouts: "Parts of the build",
-    /** A callout whose section is in a post: the mark, and its words for
-     *  screen readers ("in A Homelab Built to Be Rebuilt"). */
-    calloutWriteUp: "Write-up",
-    calloutIn: (title: string) => `in ${title}`,
     briefTitle: "Problem, approach and outcome",
     brief: {
         problem: "Problem",
@@ -345,21 +310,18 @@ export const missionsCopy = {
     contents: "Contents",
     contentsLabel: "On this page",
     results: "Results",
-    /** The results table's number: "Table 1". */
-    table: "Table 1",
-    resultsCaption: (name: string) => `${name} results`,
     resultColumns: { metric: "Metric", value: "Value", note: "Note" },
     debrief: "Lessons and next steps",
     lessons: "Lessons",
     nextSteps: "Next steps",
-    links: "Code and references",
+    /** The links past the facts' two, as a section. */
+    references: "References",
     related: "Related writing",
     question: "Questions about this project?",
-    getInTouch: "Get in touch",
+    message: "Send a message",
     pagerLabel: "More projects",
     previousFile: "Previous project",
     nextFile: "Next project",
-    all: "All projects",
 } as const;
 
 /** The orbit map's labels, key and record panel (G2). */
@@ -388,14 +350,14 @@ export const orbitCopy = {
 /**
  * The home page: the hero and its sections. UI copy only: the name, the
  * headline, what the owner is open to and the button that answers it,
- * the interests statement, the projects and the entries are the owner's.
+ * the tagline that heads the close, the projects and the entries are the
+ * owner's.
  */
 export const homeCopy = {
-    /** The hero's quick links. */
+    /** The hero's action (CV) and its quiet link down to the projects
+     *  (the section's title). */
     routesLabel: "Start here",
-    projects: "Projects",
     cv: "CV",
-    contact: "Contact",
     openTo: "Open to",
     projectsAct: {
         title: "Selected projects",
@@ -407,12 +369,11 @@ export const homeCopy = {
         title: "Latest writing",
         all: "All writing",
     },
-    interestsAct: {
-        title: "Research interests",
-        now: "Current focus",
-    },
+    /** The close: the owner's tagline is its heading (`title` names it
+     *  for screen readers when the profile has none). */
     contactAct: {
-        title: "Let’s talk.",
+        title: "Contact",
+        now: "Current focus",
         message: "Send a message",
     },
 } as const;
@@ -430,25 +391,19 @@ export const nowKinds = {
 
 /**
  * About (/about; themed Crew File): the page head, its sections and the
- * close. UI copy only: the headline, the biography, the Now list, the
- * entries and the talks are the owner's.
+ * close. UI copy only: the headline, the biography and the Now list are
+ * the owner's.
  */
 export const aboutCopy = {
     themed: "Crew File",
     plain: "About",
     /** The metadata and share card when the profile has no headline. */
     description: "Background and interests.",
-    experience: "Experience & CV",
     bio: "Background",
     now: "Current focus",
     updated: "Updated",
-    writing: "Writing",
-    writingAndTalks: "Writing & talks",
-    talks: "Talks and papers",
-    allEntries: "All writing",
-    elsewhere: "Related pages",
     ask: "Questions or ideas?",
-    getInTouch: "Get in touch",
+    message: "Send a message",
 } as const;
 
 /** The crew record (G6): /about. */
@@ -458,9 +413,7 @@ export const crewCopy = {
     studying: "Studying",
     previously: "Previously",
     focus: "Focus",
-    openTo: "Open to",
     links: "Links",
-    updated: "Updated",
 } as const;
 
 /** The flight through the timeline on /resume/trajectory. */

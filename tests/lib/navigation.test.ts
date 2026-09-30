@@ -3,6 +3,7 @@ import {
     contactHref,
     cvLink,
     headerMode,
+    movedFragment,
     navCurrent,
     primaryNavigation,
 } from "@/lib/navigation";
@@ -77,5 +78,29 @@ describe("headerMode", () => {
         ]) {
             expect(headerMode(path), String(path)).toBeUndefined();
         }
+    });
+});
+
+describe("movedFragment", () => {
+    it("sends the old /portfolio sections to their pages", () => {
+        expect(movedFragment("/portfolio", "#experience")).toBe(
+            "/resume#experience",
+        );
+        expect(movedFragment("/portfolio/", "#skills")).toBe("/resume#skills");
+        expect(movedFragment("/portfolio", "#certifications")).toBe(
+            "/resume#certifications",
+        );
+        expect(movedFragment("/portfolio", "#engineering-writing")).toBe(
+            "/blog",
+        );
+        expect(movedFragment("/portfolio", "#contact")).toBe("/contact");
+    });
+
+    it("leaves every other address alone", () => {
+        expect(movedFragment("/portfolio", "#projects")).toBeNull();
+        expect(movedFragment("/portfolio", "")).toBeNull();
+        expect(movedFragment("/resume", "#experience")).toBeNull();
+        expect(movedFragment("/portfolio/homelab", "#contact")).toBeNull();
+        expect(movedFragment(null, "#contact")).toBeNull();
     });
 });

@@ -6,18 +6,18 @@ import { HOME_PROJECT_ROWS, homeActs, homeProjects } from "@/lib/home";
 
 describe("the home sections", () => {
     it("shows every section that has something to show, in order", () => {
-        expect(homeActs({ projects: 4, entries: 3, interests: true })).toEqual([
+        expect(homeActs({ projects: 4, entries: 3 })).toEqual([
             "projects",
             "writing",
-            "interests",
             "contact",
         ]);
     });
 
     it("leaves an empty section out and always closes on contact", () => {
-        expect(homeActs({ projects: 0, entries: 2, interests: false })).toEqual(
-            ["writing", "contact"],
-        );
+        expect(homeActs({ projects: 0, entries: 2 })).toEqual([
+            "writing",
+            "contact",
+        ]);
     });
 });
 
@@ -59,6 +59,7 @@ describe("the home projects", () => {
 describe("the hero photograph", () => {
     it("is credited, and every encode it lists is in public/", () => {
         expect(sunrise.credit).toBe("Photo: NASA / Expedition 72");
+        expect(sunrise.id).toBe("ISS072-E-30246");
         expect(sunrise.source).toBe(
             "https://images.nasa.gov/details/iss072e030246",
         );

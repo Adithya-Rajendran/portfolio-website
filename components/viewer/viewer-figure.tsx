@@ -1,7 +1,4 @@
-import Link from "next/link";
-import { Icon } from "@/components/ui/icon";
 import Plate from "@/components/ui/plate";
-import { missionsCopy as copy } from "@/lib/copy";
 import type { Callout } from "@/lib/missions";
 import type { ProjectModel } from "@/lib/sanity-client";
 import styles from "./viewer.module.css";
@@ -45,11 +42,10 @@ export default function ViewerFigure({
 }
 
 /**
- * The model's callouts as numbered rows (G5): the balloon's numeral, the
- * part and what it does, each row linked to the section that explains it
- * (in a post, marked "Write-up" and named by the post's title for screen
- * readers, or in this file's own write-up). The same list labels the
- * balloons once the drawing is live.
+ * The model's callouts as plain hairline rows (G5): the part and what it
+ * does. Until the drawing lands (PR 15) there is nothing to number or
+ * point at, so the rows carry no balloon and no link; the write-up is
+ * linked once, in the head.
  */
 export function ViewerCallouts({
     callouts,
@@ -60,50 +56,19 @@ export function ViewerCallouts({
 }) {
     if (!callouts.length) return null;
     return (
-        <ol
+        <ul
             className={styles.callouts}
             aria-labelledby={labelledBy}
             role="list"
         >
             {callouts.map((callout) => (
-                <li
-                    key={callout.id}
-                    className={
-                        callout.href
-                            ? `${styles.callout} ${styles.calloutLinked}`
-                            : styles.callout
-                    }
-                >
-                    <span className={styles.balloon} aria-hidden="true">
-                        {callout.label}
-                    </span>
-                    <div className={styles.calloutBody}>
-                        <p className={styles.calloutTitle}>
-                            {callout.href ? (
-                                <Link className="stretch" href={callout.href}>
-                                    {callout.title}
-                                    {callout.entry ? (
-                                        <span className="sr-only">
-                                            {`, ${copy.calloutIn(callout.entry)}`}
-                                        </span>
-                                    ) : null}
-                                </Link>
-                            ) : (
-                                callout.title
-                            )}
-                        </p>
-                        {callout.body ? (
-                            <p className={styles.calloutText}>{callout.body}</p>
-                        ) : null}
-                    </div>
-                    {callout.href ? (
-                        <span className={styles.calloutRef} aria-hidden="true">
-                            {callout.entry ? copy.calloutWriteUp : null}
-                            <Icon name="arrow" />
-                        </span>
+                <li key={callout.id} className={styles.callout}>
+                    <p className={styles.calloutTitle}>{callout.title}</p>
+                    {callout.body ? (
+                        <p className={styles.calloutText}>{callout.body}</p>
                     ) : null}
                 </li>
             ))}
-        </ol>
+        </ul>
     );
 }

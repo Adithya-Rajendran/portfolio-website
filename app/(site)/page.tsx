@@ -13,13 +13,7 @@ import { homeCopy as copy } from "@/lib/copy";
 import { questions, taglineOf } from "@/lib/crew";
 import { homeActs, homeProjects, type HomeAct } from "@/lib/home";
 import { logEntries } from "@/lib/log-index";
-import {
-    missionOrder,
-    originalEntries,
-    toMission,
-    writeUpHref,
-    type Mission,
-} from "@/lib/missions";
+import { missionOrder, toMission } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
 import { availabilityLine } from "@/lib/profile-content";
 import {
@@ -88,14 +82,14 @@ function Act({
 }
 
 /**
- * Home: the hero (the name, the profile's headline and availability, and
- * Projects · CV · Contact), then, each only with content, the strongest
- * project on its stage with the next two as rows and any others as one
- * line, the latest three entries, the owner's research interests in one
- * statement, and the contact close (the profile's button that answers
- * what the owner is open to, while both are set, and Send a message).
- * Everything is server-rendered; the
- * starfield and Pause motion are the only islands.
+ * Home: the hero (the name, the profile's headline and availability, CV
+ * and the way down to the projects), then, each only with content, the
+ * strongest project on its stage with the next two as rows and any
+ * others as one line, and the latest three entries; then the close: the
+ * owner's tagline as its heading with the way to his current focus, the
+ * profile's button that answers what the owner is open to (the one
+ * primary, while both are set) and Send a message. Everything is
+ * server-rendered; the starfield and Pause motion are the only islands.
  */
 export default async function Home() {
     preloadHeroPhoto();
@@ -121,22 +115,18 @@ export default async function Home() {
     const detail = flagship ? await getProjectBySlug(flagship.slug) : null;
     const cover = detail?.cover?.asset ? detail.cover : null;
     const poster = detail?.model?.poster?.asset ? detail.model.poster : null;
-    const entries = logEntries(posts);
-    const originals = originalEntries(ordered, posts, entries, siteConfig.url);
-    const flagshipEntry = flagship ? originals.get(flagship.id) : undefined;
+    // Writing: the latest three entries. (The stage leads to the project
+    // alone: its page links the write-up, and the entries are listed here.)
+    const latest = logEntries(posts).slice(0, 3);
 
-    // Writing: the latest three entries.
-    const latest = entries.slice(0, 3);
-
-    // Interests: the owner's one-line statement, and the way to his
-    // current questions on About.
-    const interests = taglineOf(profile);
+    // The close: the owner's one-line statement of what he is exploring,
+    // and the way to his current questions on About.
+    const tagline = taglineOf(profile);
     const asked = questions(profile?.currentCuriosities).length > 0;
 
     const acts = homeActs({
         projects: ordered.length,
         entries: latest.length,
-        interests: Boolean(interests),
     });
 
     return (
@@ -167,7 +157,6 @@ export default async function Home() {
                                 ? cover.caption
                                 : detail?.model?.title?.trim() || null
                         }
-                        writeUp={writeUpHref(flagship, detail, flagshipEntry)}
                     />
                     {rows.length ? (
                         <MissionRows className={styles.projects}>
@@ -205,24 +194,12 @@ export default async function Home() {
                         </LinkArrow>
                     }
                 >
-                    <LogIndex entries={latest} level={3} grouped={false} />
-                </Act>
-            ) : null}
-
-            {acts.includes("interests") && interests ? (
-                <Act
-                    id="interests"
-                    ornament="limb"
-                    title={copy.interestsAct.title}
-                    meta={
-                        asked ? (
-                            <LinkArrow href={`${siteRoutes.about}#crew-now`}>
-                                {copy.interestsAct.now}
-                            </LinkArrow>
-                        ) : undefined
-                    }
-                >
-                    <p className={styles.interests}>{interests}</p>
+                    <LogIndex
+                        entries={latest}
+                        level={3}
+                        grouped={false}
+                        tags={false}
+                    />
                 </Act>
             ) : null}
 
@@ -232,10 +209,18 @@ export default async function Home() {
                 aria-labelledby="home-contact-h"
             >
                 <div className="shell">
-                    <div className={styles.closeInner}>
-                        <h2 className="t-h1" id="home-contact-h">
-                            {copy.contactAct.title}
+                    <div className={styles.close}>
+                        <h2
+                            className={tagline ? styles.tagline : "sr-only"}
+                            id="home-contact-h"
+                        >
+                            {tagline ?? copy.contactAct.title}
                         </h2>
+                        {asked ? (
+                            <LinkArrow href={`${siteRoutes.about}#crew-now`}>
+                                {copy.contactAct.now}
+                            </LinkArrow>
+                        ) : null}
                         <div className={`cluster ${styles.closeActions}`}>
                             {answer ? (
                                 <ButtonLink
@@ -247,14 +232,9 @@ export default async function Home() {
                                     {answer}
                                 </ButtonLink>
                             ) : null}
-                            <ButtonLink
-                                variant={answer ? undefined : "primary"}
-                                href={siteRoutes.contact}
-                                icon="arrow"
-                                iconAt="end"
-                            >
+                            <LinkArrow href={siteRoutes.contact}>
                                 {copy.contactAct.message}
-                            </ButtonLink>
+                            </LinkArrow>
                         </div>
                     </div>
                 </div>

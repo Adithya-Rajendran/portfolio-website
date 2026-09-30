@@ -82,7 +82,7 @@ const label = {
  * words) and a footer of data in one size on every card: the author and
  * the item's facts on the left, its address on the right, on a line of
  * its own when the two do not fit one. `upper` sets the title in capitals
- * (a project's name or the owner's, the vehicle treatment).
+ * (the owner's name, leading a section's card).
  */
 export function OgCard({
     tag,

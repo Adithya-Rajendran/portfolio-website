@@ -6,16 +6,13 @@ import { Icon } from "@/components/ui/icon";
  * numbered hairline row per destination, its themed name over its plain
  * name (or the plain name alone), one line about it and an arrow; the
  * whole row is the link. Rows without numbers (profile links) drop the
- * number column. A row can carry an `id`, so an old fragment
- * (`/portfolio#skills`) still lands on the row that leads to it.
+ * number column.
  */
 
 export interface RouteItem {
     /** Stable React key. */
     key: string;
     href: string;
-    /** The fragment the row answers to on its page. */
-    id?: string;
     num?: string;
     themed?: string;
     plain: string;
@@ -89,7 +86,7 @@ export default function RouteList({
                         </>
                     );
                     return (
-                        <li key={item.key} id={item.id}>
+                        <li key={item.key}>
                             {item.external ? (
                                 <a
                                     className="route-row"

@@ -9,15 +9,14 @@ const LABELS = {
     studying: copy.studying,
     previously: copy.previously,
     focus: copy.focus,
-    openTo: copy.openTo,
     links: copy.links,
-    updated: copy.updated,
 } as const;
 
 /**
- * The owner's record as a title block (G6) on About. The cells and their spans come from
- * `crewRecord` (lib/crew.ts); a value the profile leaves empty has no
- * cell. Returns nothing without a profile.
+ * The owner's record as one hairline title block (G6) on About: Name,
+ * Studying, Previously, Focus, Links, all in ink. The cells and their
+ * spans come from `crewRecord` (lib/crew.ts); a value the profile leaves
+ * empty has no cell. Returns nothing without a profile.
  */
 export default function CrewRecord({
     profile,
@@ -31,8 +30,6 @@ export default function CrewRecord({
         label: LABELS[cell.id],
         span: cell.span,
         spanSm: cell.spanSm,
-        accent: cell.accent,
-        data: Boolean(cell.date),
         note: cell.note,
         value: cell.links ? (
             <span className="titleblock__links">
@@ -48,8 +45,6 @@ export default function CrewRecord({
                     </a>
                 ))}
             </span>
-        ) : cell.date ? (
-            <time dateTime={cell.date}>{cell.value}</time>
         ) : (
             cell.value
         ),

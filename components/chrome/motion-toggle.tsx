@@ -5,18 +5,20 @@ import { chromeCopy } from "@/lib/copy";
 import { getMotionPref, setMotionPref } from "@/lib/prefs";
 
 /**
- * Pause motion / Resume motion (WCAG 2.2.2), in the footer, the menu
- * sheet and the home hero (beside the drifting starfield). One button whose label names the action; CSS picks the label
- * from `html[data-motion]`, so nothing re-renders. Under the OS
- * reduce-motion setting a plain note replaces it. Hidden without
- * JavaScript, when nothing moves anyway (no `data-motion`).
+ * Pause motion / Resume motion (WCAG 2.2.2), in the footer and the home
+ * hero (beside the drifting starfield): an unboxed control, the icon and
+ * its label in sentence case, on a 44px target. One button whose label
+ * names the action; CSS picks the label from `html[data-motion]`, so
+ * nothing re-renders. Under the OS reduce-motion setting a plain note
+ * replaces it. Hidden without JavaScript, when nothing moves anyway (no
+ * `data-motion`).
  */
 export default function MotionToggle({ className }: { className?: string }) {
     return (
         <span className={className ? `motion-ctl ${className}` : "motion-ctl"}>
             <button
                 type="button"
-                className="btn btn--sm motion-toggle"
+                className="motion-toggle"
                 onClick={() =>
                     setMotionPref(
                         getMotionPref() === "reduced" ? "full" : "reduced",

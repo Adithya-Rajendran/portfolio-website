@@ -3,12 +3,14 @@ import { expect, test } from "./support/test";
 import { STATIC_PAGES } from "./support/routes";
 
 /**
- * About (themed Crew File; plan §6.2 PR 14, contract §9): the head with
- * the patch as the identity mark and no portrait, the profile record, the
- * sections by their plain names (background, the Now list by kind,
- * writing, related pages) and the way to get in touch; the page names no
- * gap. And the old design is gone from every page: no legacy root, class
- * or token.
+ * About (themed Crew File; plan §6.2 PR 14, contract §9; premium WS2):
+ * the head with the patch as the identity mark and no portrait, the
+ * profile record (Name, Studying, Previously, Focus, Links: no Open To or
+ * edit date, no accent cell), the sections by their plain names
+ * (background, the Now list by kind) and the way to get in touch; no
+ * writing index or related pages repeating other pages, and no question
+ * numbers; the page names no gap. And the old design is gone from every
+ * page: no legacy root, class or token.
  */
 
 test("About opens on its head, the patch and the record", async ({ page }) => {
@@ -34,10 +36,13 @@ test("About opens on its head, the patch and the record", async ({ page }) => {
     await expect(
         record.getByText(crewCopy.name, { exact: true }),
     ).toBeVisible();
-
     await expect(
-        main.getByRole("link", { name: copy.experience }),
-    ).toHaveAttribute("href", "/resume");
+        record.getByRole("term").filter({ hasText: /^(Open to|Updated)$/i }),
+    ).toHaveCount(0);
+    await expect(record.locator(".titleblock__cell--accent")).toHaveCount(0);
+
+    // The header carries Experience and CV; the head repeats neither.
+    await expect(main.locator(".page-head__actions")).toHaveCount(0);
 });
 
 test("the sections name themselves plainly and lead on", async ({ page }) => {
@@ -51,28 +56,26 @@ test("the sections name themselves plainly and lead on", async ({ page }) => {
 
     const now = main.getByRole("region", { name: copy.now, exact: true });
     if (await now.count()) {
-        await expect(now.getByRole("heading", { level: 3 }).first()).toHaveText(
-            new RegExp(`^(${Object.values(nowKinds).join("|")})$`, "i"),
-        );
+        // A kind's label only when there is more than one kind.
+        const kinds = now.getByRole("heading", { level: 3 });
+        if (await kinds.count()) {
+            expect(await kinds.count()).toBeGreaterThan(1);
+            await expect(kinds.first()).toHaveText(
+                new RegExp(`^(${Object.values(nowKinds).join("|")})$`, "i"),
+            );
+        }
         await expect(now.getByRole("listitem").first()).toBeVisible();
+        // A question's words are its name: no Q1, Q2.
+        await expect(now.getByText(/^Q\d+$/)).toHaveCount(0);
     }
 
-    const writing = main.getByRole("region", { name: /^(Writing|Talks)/ });
-    if (await writing.count()) {
-        const all = writing.getByRole("link", { name: copy.allEntries });
-        if (await all.count())
-            await expect(all).toHaveAttribute("href", "/blog");
-    }
+    // The writing and the other sections have pages of their own.
+    await expect(
+        main.getByRole("region", { name: /^(Writing|Talks)/ }),
+    ).toHaveCount(0);
+    await expect(main.getByRole("navigation")).toHaveCount(0);
 
-    const related = main.getByRole("navigation", { name: copy.elsewhere });
-    for (const link of await related.getByRole("link").all()) {
-        await expect(link).toHaveAttribute(
-            "href",
-            /^\/(resume#(experience|skills|certifications)|portfolio)$/,
-        );
-    }
-
-    const touch = main.getByRole("link", { name: copy.getInTouch });
+    const touch = main.getByRole("link", { name: copy.message });
     await expect(touch).toHaveAttribute("href", "/contact#hello");
     await touch.click();
     await expect(page).toHaveURL(/\/contact#hello$/);

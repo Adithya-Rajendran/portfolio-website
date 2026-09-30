@@ -1,8 +1,9 @@
 /**
- * A page's close (contract §1): one question as the h2 and the way to act
- * on it, between a meaningful rule above and a quiet one below. The
- * mission files ("Questions about this project?") and the Crew File use
- * it; the action is a default button, never a second primary.
+ * A page's close (contract §1): one question as the h2, at a section
+ * head's size, and the way to act on it (Send a message), in one row
+ * between a meaningful rule above and a quiet one below. The mission
+ * files ("Questions about this project?") and About use it; the action is
+ * a default button, never a second primary.
  */
 export default function Ask({
     id,

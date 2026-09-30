@@ -1,6 +1,8 @@
-import type { CSSProperties } from "react";
 import Link from "next/link";
-import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
+import MissionLine, {
+    CARD_STACK,
+    MissionStack,
+} from "@/components/portfolio/mission-line";
 import { ButtonLink } from "@/components/ui/button";
 import { LinkArrow } from "@/components/ui/marks";
 import Plate from "@/components/ui/plate";
@@ -11,13 +13,13 @@ import styles from "./missions.module.css";
 
 /**
  * The flagship (contract §4 and §9): the mission's line (type, status,
- * dates), the owner's short name in capitals over its title (else the
- * title alone as the heading), its summary, which leads, and
- * its stack in seven columns, beside its photograph as a plate in five.
- * Without a photograph the copy takes the full width. Shared by
- * /portfolio and the home page. No stats and no mission number: numbers
- * stay on the file beside their notes, and the number is the file's own
- * identifier.
+ * dates), its title as the heading, in sentence case, its summary, which
+ * leads, its first four stack items, one primary (View the project) and
+ * the quiet way to the write-up, in seven columns, top-aligned with its
+ * photograph as a plate in five. Without a photograph the copy takes the
+ * full width. Shared by /portfolio and the home page. No stats and no
+ * mission number: numbers stay on the file beside their notes, and the
+ * number is the file's own identifier.
  */
 export default function MissionStage({
     mission,
@@ -45,29 +47,17 @@ export default function MissionStage({
         >
             <div className={styles.stageCopy}>
                 <MissionLine mission={mission} />
-                {mission.name ? (
-                    <>
-                        <Heading
-                            className={styles.stageName}
-                            style={
-                                {
-                                    "--chars": mission.nameChars,
-                                } as CSSProperties
-                            }
-                        >
-                            <Link href={mission.href}>{mission.name}</Link>
-                        </Heading>
-                        <p className={styles.stageTitle}>{mission.title}</p>
-                    </>
-                ) : (
-                    <Heading className={styles.stageHeading}>
-                        <Link href={mission.href}>{mission.title}</Link>
-                    </Heading>
-                )}
+                <Heading className={styles.stageHeading}>
+                    <Link href={mission.href}>{mission.title}</Link>
+                </Heading>
                 {mission.summary ? (
                     <p className={styles.stageSummary}>{mission.summary}</p>
                 ) : null}
-                <MissionStack items={mission.technologies} label={copy.stack} />
+                <MissionStack
+                    items={mission.technologies}
+                    label={copy.stack}
+                    max={CARD_STACK}
+                />
                 <div className={`cluster ${styles.stageActions}`}>
                     <ButtonLink
                         variant="primary"

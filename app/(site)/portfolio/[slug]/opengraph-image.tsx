@@ -12,9 +12,8 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * A project's share card: the owner's short name for the project in
- * capitals over its title (else the title alone), signed "Adithya
- * Rajendran · type · status" over its own address. Its alt is the page's
+ * A project's share card: its title, in sentence case as on the page,
+ * signed "Adithya Rajendran · type · status" over its own address. Its alt is the page's
  * (the project's metadata, lib/site-metadata.ts). Published content only;
  * an unknown slug gets the section's name.
  */
@@ -29,9 +28,7 @@ export default async function Image({
     return new ImageResponse(
         <OgCard
             tag={copy.plain}
-            title={mission?.label ?? copy.plain}
-            upper={Boolean(mission?.name)}
-            subtitle={mission?.name ? mission.title : undefined}
+            title={mission?.title ?? copy.plain}
             footerLeft={[
                 siteConfig.author,
                 ...(mission?.types ?? []),

@@ -1,16 +1,16 @@
-import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import LogIndex from "@/components/blogs/log-index";
 import PostReader from "@/components/blogs/post-reader";
 import { BreadcrumbJsonLd, MissionJsonLd } from "@/components/json-ld";
-import MissionLine from "@/components/portfolio/mission-line";
+import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
 import ProjectEssay from "@/components/portfolio/project-essay";
 import Ask from "@/components/ui/ask";
-import { ButtonLink, buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import CrumbRow from "@/components/ui/crumb-row";
 import DocSection from "@/components/ui/doc-section";
 import { Icon } from "@/components/ui/icon";
+import { LinkArrow } from "@/components/ui/marks";
 import Metrics from "@/components/ui/metrics";
 import Pager from "@/components/ui/pager";
 import Plate from "@/components/ui/plate";
@@ -32,9 +32,11 @@ import {
     missionLayout,
     noteLines,
     resultRows,
+    stackSaid,
     toMission,
     writeUpHref,
     type Mission,
+    type MissionLink,
 } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
 import {
@@ -85,29 +87,63 @@ export async function generateMetadata({
     };
 }
 
+/** How many links the facts carry before they get a section of their
+ *  own ("References"). */
+const FACT_LINKS = 2;
+
+/** Links in a facts row, each with its outbound mark. */
+function FactLinks({ links }: { links: readonly MissionLink[] }) {
+    return (
+        <ul className={styles.factLinks} role="list">
+            {links.map((link) => (
+                <li key={link.id}>
+                    <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        {link.label}
+                        <Icon name="external" />
+                    </a>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
 /**
- * The facts under a head: the status note, the stack, the owner's role,
- * the named parameters the stack does not list and, on a note, the links.
+ * The facts under a head: the status note, the stack (unless the words
+ * on the page already name every item), the repositories (Code), the
+ * owner's role, the named parameters the stack and the card do not name
+ * and, while there are no more than two links in all, the other links.
  * Each row only when set.
  */
-function factRows(mission: Mission, links: boolean): SpecItem[] {
+function factRows(
+    mission: Mission,
+    { stack, links }: { stack: boolean; links: MissionLink[] },
+): SpecItem[] {
     const f = copy.facts;
+    const code = mission.links.filter((link) => link.code);
     return [
         ...(mission.statusNote
             ? [{ id: "status", term: f.status, value: mission.statusNote }]
             : []),
-        ...(mission.technologies.length
+        ...(stack && mission.technologies.length
             ? [
                   {
                       id: "stack",
                       term: f.stack,
                       value: (
-                          <span className="data">
-                              {mission.technologies.join(" · ")}
-                          </span>
+                          <MissionStack
+                              items={mission.technologies}
+                              label={f.stack}
+                          />
                       ),
                   },
               ]
+            : []),
+        ...(code.length
+            ? [{ id: "code", term: f.code, value: <FactLinks links={code} /> }]
             : []),
         ...(mission.role
             ? [{ id: "role", term: f.role, value: mission.role }]
@@ -117,27 +153,12 @@ function factRows(mission: Mission, links: boolean): SpecItem[] {
             term: spec.label,
             value: spec.value,
         })),
-        ...(links && mission.links.length
+        ...(links.length
             ? [
                   {
                       id: "links",
                       term: f.links,
-                      value: (
-                          <ul className={styles.factLinks} role="list">
-                              {mission.links.map((link) => (
-                                  <li key={link.id}>
-                                      <a
-                                          href={link.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                      >
-                                          {link.label}
-                                          <Icon name="external" />
-                                      </a>
-                                  </li>
-                              ))}
-                          </ul>
-                      ),
+                      value: <FactLinks links={links} />,
                   },
               ]
             : []),
@@ -149,18 +170,21 @@ function factRows(mission: Mission, links: boolean): SpecItem[] {
  * (`missionLayout`):
  *
  * - **The file**, where there is evidence to lay out: the crumb (with the
- *   mission number, the file's quiet identifier), the head (line, name,
- *   title, summary, the way to the write-up, stats only when there is no
- *   results table, the facts) beside the photograph, then the brief, the
- *   results with their notes, the lessons and next steps, the model's
- *   callouts, the write-up, the links and the related entries, each only
- *   when the owner has published it.
+ *   mission number, the file's quiet identifier), the head (line, title,
+ *   summary, the quiet way to the original entry, stats only when there
+ *   is no results table, the facts with the code) beside the photograph,
+ *   then the brief, the results with their notes, the lessons and next
+ *   steps, the parts of the build, the write-up, the references (past
+ *   two links) and the related entries, each only when the owner has
+ *   published it.
  * - **The short note**, for a project with little more than its card:
  *   the title, the summary, the highlights that add to it, the essay only
  *   when it says more, and the facts with the links. No empty sections.
  *
- * Both close with the way to get in touch and to the neighbouring
- * projects. Server-rendered; PostReader keeps in-page links inside this
+ * The title is the heading, in sentence case; the owner's short name is
+ * the crumb's and the pager's. Both close with one question and Send a
+ * message, then the neighbouring projects (the crumb, and the footer
+ * under the pager, lead back to all of them). Server-rendered; PostReader keeps in-page links inside this
  * page while another is still mounted.
  */
 export default async function ProjectPage({
@@ -190,12 +214,7 @@ export default async function ProjectPage({
         hotspots: project.model?.hotspots,
         siteUrl: siteConfig.url,
     });
-    const callouts = missionCallouts({
-        hotspots: project.model?.hotspots,
-        entries,
-        postIds,
-        essayHeadings: new Set(headings.map((heading) => heading.id)),
-    });
+    const callouts = missionCallouts(project.model?.hotspots);
     const { previous, next } = adjacentMissions(
         projects.map((item) => toMission(item, siteConfig.url)),
         slug,
@@ -223,10 +242,27 @@ export default async function ProjectPage({
     // brief; a note shows it on the same terms.
     const hasEssay = project.body?.length > 0 && essayShown(project);
     const contents = headings.length ? contentsHeadings(headings) : [];
-    const writeUp = writeUpHref(mission, project, original);
+    // The head links the original entry quietly; the file's own write-up
+    // is already on the page, so nothing points down to it.
+    const writeUp = writeUpHref(mission, null, original);
 
     // The short note: the highlights that add to the summary.
     const lines = noteLines(mission.summary, mission.highlights);
+    // The links: the repositories are the facts' Code row; the rest join
+    // the facts while there are two links or fewer (always on a note),
+    // else they are the References section.
+    const others = mission.links.filter((link) => !link.code);
+    const folded =
+        layout === "note" || mission.links.length <= FACT_LINKS ? others : [];
+    const references = folded.length ? [] : others;
+    const facts = factRows(mission, {
+        stack: !stackSaid(mission.technologies, [
+            mission.title,
+            mission.summary,
+            ...(layout === "note" ? lines : []),
+        ]),
+        links: folded,
+    });
 
     const essay = (
         <DocSection
@@ -259,7 +295,7 @@ export default async function ProjectPage({
     );
 
     return (
-        <div data-page="mission" data-layout={layout} className={styles.page}>
+        <div data-page="mission" data-layout={layout}>
             <BreadcrumbJsonLd
                 items={[
                     { name: "Home", path: "/" },
@@ -282,7 +318,7 @@ export default async function ProjectPage({
                 {layout === "note" ? (
                     <header className={styles.noteHead}>
                         <MissionLine mission={mission} />
-                        <h1 className={styles.noteTitle}>{mission.title}</h1>
+                        <h1 className={styles.title}>{mission.title}</h1>
                         {mission.summary ? (
                             <p className={styles.summary}>{mission.summary}</p>
                         ) : null}
@@ -297,55 +333,18 @@ export default async function ProjectPage({
                     >
                         <div className={styles.headCopy}>
                             <MissionLine mission={mission} />
-                            {mission.name ? (
-                                <h1
-                                    className={styles.title}
-                                    style={
-                                        {
-                                            "--chars": mission.nameChars,
-                                        } as CSSProperties
-                                    }
-                                >
-                                    {mission.name}
-                                    <span className="sr-only">: </span>
-                                    <span className={styles.dek}>
-                                        {mission.title}
-                                    </span>
-                                </h1>
-                            ) : (
-                                <h1 className={styles.noteTitle}>
-                                    {mission.title}
-                                </h1>
-                            )}
+                            <h1 className={styles.title}>{mission.title}</h1>
                             {mission.summary ? (
                                 <p className={styles.summary}>
                                     {mission.summary}
                                 </p>
                             ) : null}
                             {writeUp ? (
-                                <div className={`cluster ${styles.actions}`}>
-                                    {writeUp.startsWith("#") ||
-                                    writeUp.startsWith(`${mission.href}#`) ? (
-                                        <a
-                                            className={buttonClass({
-                                                variant: "primary",
-                                            })}
-                                            href="#write-up"
-                                        >
-                                            {copy.readWriteUp}
-                                            <Icon name="arrow-down" />
-                                        </a>
-                                    ) : (
-                                        <ButtonLink
-                                            variant="primary"
-                                            href={writeUp}
-                                            icon="arrow"
-                                            iconAt="end"
-                                        >
-                                            {copy.readWriteUp}
-                                        </ButtonLink>
-                                    )}
-                                </div>
+                                <p className={styles.actions}>
+                                    <LinkArrow href={writeUp}>
+                                        {copy.readWriteUp}
+                                    </LinkArrow>
+                                </p>
                             ) : null}
                             <Metrics
                                 className={styles.metrics}
@@ -353,10 +352,7 @@ export default async function ProjectPage({
                                 columns={hasPlate ? 2 : 4}
                                 size={hasPlate ? "lg" : "md"}
                             />
-                            <Specs
-                                className={styles.facts}
-                                items={factRows(mission, false)}
-                            />
+                            <Specs className={styles.facts} items={facts} />
                         </div>
                         {hasPlate ? (
                             <div className={styles.headMedia}>
@@ -384,10 +380,7 @@ export default async function ProjectPage({
                                 ))}
                             </ul>
                         ) : null}
-                        <Specs
-                            className={styles.facts}
-                            items={factRows(mission, true)}
-                        />
+                        <Specs className={styles.facts} items={facts} />
                     </div>
                 ) : null}
             </div>
@@ -397,7 +390,12 @@ export default async function ProjectPage({
                     {hasEssay ? essay : null}
                     {related.length ? (
                         <DocSection id="related" title={copy.related}>
-                            <LogIndex entries={related} level={3} />
+                            <LogIndex
+                                entries={related}
+                                level={3}
+                                grouped={false}
+                                tags={false}
+                            />
                         </DocSection>
                     ) : null}
                 </>
@@ -418,19 +416,14 @@ export default async function ProjectPage({
 
                     {results.length ? (
                         <DocSection id="results" title={copy.results}>
-                            <div
-                                className={`table-wrap ${styles.results}`}
-                                role="region"
-                                aria-labelledby="results-cap"
-                                tabIndex={0}
-                            >
-                                <table className="table">
-                                    <caption id="results-cap">
-                                        <span className="caption__num">
-                                            {copy.table}
-                                        </span>
-                                        {copy.resultsCaption(mission.title)}
-                                    </caption>
+                            {/* The section is the region; the table is
+                                named by its heading, and reflows on phones
+                                instead of scrolling. */}
+                            <div className={`table-wrap ${styles.results}`}>
+                                <table
+                                    className="table"
+                                    aria-labelledby="results-h"
+                                >
                                     <thead>
                                         <tr>
                                             <th scope="col">
@@ -440,7 +433,10 @@ export default async function ProjectPage({
                                                 {copy.resultColumns.value}
                                             </th>
                                             {hasNotes ? (
-                                                <th scope="col">
+                                                <th
+                                                    scope="col"
+                                                    className={styles.noteCol}
+                                                >
                                                     {copy.resultColumns.note}
                                                 </th>
                                             ) : null}
@@ -505,12 +501,7 @@ export default async function ProjectPage({
                     ) : null}
 
                     {callouts.length ? (
-                        <DocSection
-                            id="callouts"
-                            title={
-                                project.model?.title?.trim() || copy.callouts
-                            }
-                        >
+                        <DocSection id="callouts" title={copy.callouts}>
                             <ViewerCallouts
                                 callouts={callouts}
                                 labelledBy="callouts-h"
@@ -520,12 +511,12 @@ export default async function ProjectPage({
 
                     {hasEssay ? essay : null}
 
-                    {mission.links.length ? (
-                        <DocSection id="links" title={copy.links}>
+                    {references.length ? (
+                        <DocSection id="links" title={copy.references}>
                             <RouteList
                                 labelledBy="links-h"
                                 columns={2}
-                                items={mission.links.map((link) => ({
+                                items={references.map((link) => ({
                                     key: link.id,
                                     href: link.url,
                                     plain: link.label,
@@ -541,7 +532,12 @@ export default async function ProjectPage({
 
                     {related.length ? (
                         <DocSection id="related" title={copy.related}>
-                            <LogIndex entries={related} level={3} />
+                            <LogIndex
+                                entries={related}
+                                level={3}
+                                grouped={false}
+                                tags={false}
+                            />
                         </DocSection>
                     ) : null}
                 </>
@@ -559,7 +555,7 @@ export default async function ProjectPage({
                             icon="arrow"
                             iconAt="end"
                         >
-                            {copy.getInTouch}
+                            {copy.message}
                         </ButtonLink>
                     </Ask>
                     <Pager
@@ -574,7 +570,6 @@ export default async function ProjectPage({
                                   }
                                 : null
                         }
-                        all={{ href: siteRoutes.portfolio, label: copy.all }}
                         next={
                             next
                                 ? {

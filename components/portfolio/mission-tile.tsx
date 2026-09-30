@@ -1,6 +1,8 @@
-import type { CSSProperties } from "react";
 import Link from "next/link";
-import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
+import MissionLine, {
+    CARD_STACK,
+    MissionStack,
+} from "@/components/portfolio/mission-line";
 import { Icon } from "@/components/ui/icon";
 import Plate from "@/components/ui/plate";
 import { missionsCopy as copy } from "@/lib/copy";
@@ -15,11 +17,10 @@ export function MissionTiles({ children }: { children: React.ReactNode }) {
 
 /**
  * A mission as a tile (contract §4): text first. Its line (type, status,
- * dates), its heading (the link to its file, stretched over the tile:
- * the owner's short name over the title, else the title alone), its
- * summary and its stack, under a hairline. Numbers stay on the file,
- * beside their notes. A cover adds a 3:2 plate on top; a mission without
- * one is not given a stand-in.
+ * dates), its title as the heading (the link to its file, stretched over
+ * the tile), its summary and its first four stack items, under a
+ * hairline. Numbers stay on the file, beside their notes. A cover adds a
+ * 3:2 plate on top; a mission without one is not given a stand-in.
  */
 export default function MissionTile({
     mission,
@@ -43,21 +44,19 @@ export default function MissionTile({
                 />
             ) : null}
             <MissionLine mission={mission} />
-            <Heading
-                className={styles.tileName}
-                style={{ "--chars": mission.nameChars } as CSSProperties}
-            >
+            <Heading className={styles.tileName}>
                 <Link className="stretch" href={mission.href}>
-                    {mission.label}
+                    {mission.title}
                 </Link>
             </Heading>
-            {mission.name ? (
-                <p className={styles.tileTitle}>{mission.title}</p>
-            ) : null}
             {mission.summary ? (
                 <p className={styles.tileSummary}>{mission.summary}</p>
             ) : null}
-            <MissionStack items={mission.technologies} label={copy.stack} />
+            <MissionStack
+                items={mission.technologies}
+                label={copy.stack}
+                max={CARD_STACK}
+            />
             <Icon name="arrow" className={styles.tileArrow} />
         </article>
     );

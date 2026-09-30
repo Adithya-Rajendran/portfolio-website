@@ -6,15 +6,18 @@ import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
 
 /**
- * Home (plan §6.2 PR 13, contract §9): the hero's name, headline, what the
- * owner is open to and the quick links (Projects · CV · Contact) are in
- * the first viewport with and without JavaScript; the starfield drifts
- * only while it may (on screen, in a visible tab, in Void, with motion
- * allowed) and reports `stopped` otherwise; the stars are the hero's
- * alone, and Void's; the photograph is credited and Flight Manual draws
- * the limb instead; the sections follow in order,
- * unnumbered, and lead to their pages; the flagship shows no stats; the
- * page stays short; and it says nothing about what is missing.
+ * Home (plan §6.2 PR 13, contract §9; premium WS2): the hero's name,
+ * headline, what the owner is open to and its one action (CV) with the
+ * quiet link down to the projects are in the first viewport with and
+ * without JavaScript; the header's wordmark steps aside while the hero
+ * names the owner; the starfield drifts only while it may (on screen, in
+ * a visible tab, in Void, with motion allowed) and reports `stopped`
+ * otherwise; the stars are the hero's alone, and Void's; the photograph is
+ * credited with its frame ID and Flight Manual draws the limb instead;
+ * the sections follow in order, unnumbered, and lead to their pages; the
+ * flagship shows no stats and at most four stack items; the close is the
+ * owner's tagline with one primary; the page stays short; and it says
+ * nothing about what is missing.
  */
 
 function hero(page: Page) {
@@ -32,11 +35,11 @@ async function firstViewport(page: Page) {
     await expect(main.getByRole("heading", { level: 1 })).toBeInViewport({
         ratio: 1,
     });
+    // One action (CV) and one quiet link down to the projects.
     const links = main.getByRole("navigation", { name: copy.routesLabel });
     await expect(links.getByRole("link")).toHaveText([
-        copy.projects,
         copy.cv,
-        copy.contact,
+        copy.projectsAct.title,
     ]);
     expect(
         await links
@@ -44,10 +47,10 @@ async function firstViewport(page: Page) {
             .evaluateAll((items) =>
                 items.map((item) => item.getAttribute("href")),
             ),
-    ).toEqual(["/portfolio", "/resume", "/contact"]);
-    for (const link of await links.getByRole("link").all()) {
-        await expect(link).toBeInViewport({ ratio: 1 });
-    }
+    ).toEqual(["/resume", "#home-projects"]);
+    await expect(links.getByRole("link", { name: copy.cv })).toBeInViewport({
+        ratio: 1,
+    });
     // What the owner is open to, when the profile says.
     const open = hero(page).getByText(copy.openTo, { exact: true });
     if (await open.count()) await expect(open).toBeInViewport({ ratio: 1 });
@@ -63,6 +66,22 @@ for (const [width, height] of [
         await page.setViewportSize({ width, height });
         await page.goto("/");
         await firstViewport(page);
+        // The headline's and the Open To line's parts each keep one line,
+        // so no line starts or ends on a dot.
+        const wrapped = await hero(page)
+            .locator(".open-to__item")
+            .evaluateAll((items) =>
+                items
+                    .filter((item) => {
+                        const box = item.getBoundingClientRect();
+                        const line = parseFloat(
+                            getComputedStyle(item).lineHeight,
+                        );
+                        return box.height > line * 1.5;
+                    })
+                    .map((item) => item.textContent),
+            );
+        expect(wrapped).toHaveLength(0);
     });
 
     test.describe(`without JavaScript at ${width}×${height}`, () => {
@@ -80,6 +99,27 @@ for (const [width, height] of [
         });
     });
 }
+
+test("the header's wordmark steps aside while the hero names the owner", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const wordmark = page.getByRole("banner").locator(".brand__name");
+    await expect(page.locator("html")).toHaveAttribute("data-hero", "");
+    await expect(wordmark).toBeHidden();
+    await page
+        .getByRole("main")
+        .locator("#home-writing")
+        .scrollIntoViewIfNeeded();
+    await expect(page.locator("html")).not.toHaveAttribute("data-hero");
+    await expect(wordmark).toBeVisible();
+    // Another page keeps it.
+    await page.getByRole("banner").getByRole("link", { name: "About" }).click();
+    await expect(page).toHaveURL(/\/about$/);
+    await expect(page.locator("html")).not.toHaveAttribute("data-hero");
+    await expect(wordmark).toBeVisible();
+});
 
 test("the starfield drifts only while it may", async ({ page }) => {
     await page.goto("/");
@@ -149,6 +189,7 @@ test("the photograph is credited in Void; Manual draws the limb", async ({
     await page.goto("/");
     const credit = hero(page).getByRole("link", { name: sunrise.credit });
     await expect(credit).toBeVisible();
+    await expect(credit).toContainText(sunrise.id);
     await expect(credit).toHaveAttribute("href", sunrise.source);
     const photo = hero(page).locator("picture img");
     await expect(photo).toHaveAttribute("alt", "");
@@ -186,12 +227,7 @@ test("the sections follow the hero in order and lead to their pages", async ({
     const ids = await main
         .locator("section[id^='home-']")
         .evaluateAll((sections) => sections.map((section) => section.id));
-    const order = [
-        "home-projects",
-        "home-writing",
-        "home-interests",
-        "home-contact",
-    ];
+    const order = ["home-projects", "home-writing", "home-contact"];
     expect(ids).toEqual(order.filter((id) => ids.includes(id)));
     expect(ids.at(-1)).toBe("home-contact");
     // No section numbers, and no themed section names to decode.
@@ -203,16 +239,22 @@ test("the sections follow the hero in order and lead to their pages", async ({
     const leads: [section: string, name: string, href: string][] = [
         ["home-projects", copy.projectsAct.all, "/portfolio"],
         ["home-writing", copy.writingAct.all, "/blog"],
-        ["home-interests", copy.interestsAct.now, "/about#crew-now"],
+        ["home-contact", copy.contactAct.now, "/about#crew-now"],
         ["home-contact", copy.contactAct.message, "/contact"],
     ];
     for (const [id, name, href] of leads) {
         const section = main.locator(`section#${id}`);
         if (!(await section.count())) continue;
         const link = section.getByRole("link", { name, exact: true });
-        if (id === "home-interests" && !(await link.count())) continue;
+        if (name === copy.contactAct.now && !(await link.count())) continue;
         await expect(link).toHaveAttribute("href", href);
     }
+    // The latest writing lists no tags.
+    await expect(
+        main
+            .locator("section#home-writing")
+            .getByRole("list", { name: "Tags" }),
+    ).toHaveCount(0);
 });
 
 test("the close answers what the owner is open to only in the profile's words", async ({
@@ -228,10 +270,16 @@ test("the close answers what the owner is open to only in the profile's words", 
     if (!open) await expect(answer).toHaveCount(0);
     if (testInfo.project.name === "fixture") {
         await expect(answer).toHaveText(FIXTURE_PROFILE.availability!.cta!);
+        // The owner's tagline heads the close.
+        await expect(close.getByRole("heading", { level: 2 })).toHaveText(
+            FIXTURE_PROFILE.tagline!,
+        );
     }
     await expect(
         close.getByRole("link", { name: copy.contactAct.message }),
     ).toHaveAttribute("href", "/contact");
+    // One primary at most: the profile's answer, never Send a message.
+    await expect(close.locator(".btn--primary")).toHaveCount(open ? 1 : 0);
 });
 
 test("the strongest project leads with its summary and no stats", async ({
@@ -245,6 +293,16 @@ test("the strongest project leads with its summary and no stats", async ({
     // mission number.
     await expect(projects.getByRole("definition")).toHaveCount(0);
     await expect(projects.getByText(/^MSN-\d+$/)).toHaveCount(0);
+    // The title is the heading, in sentence case, over at most four stack
+    // items.
+    const stage = projects.getByRole("article").first();
+    await expect(stage.getByRole("heading", { level: 3 })).toHaveCSS(
+        "text-transform",
+        "none",
+    );
+    expect(
+        await stage.getByRole("list", { name: "Stack" }).locator("li").count(),
+    ).toBeLessThanOrEqual(4);
 });
 
 for (const [width, limit] of [

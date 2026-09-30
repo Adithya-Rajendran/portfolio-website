@@ -2,8 +2,9 @@
  * Home: the hero (components/home/hero.module.css), then the sections.
  * Each is a full-width tag row (the plain h2 and a link to its page) and
  * its content on the shared grid, at a tighter rhythm than a document
- * page, so the whole page reads in a few screens. Everything else is a
- * shared component: the mission stage and the writing index.
+ * page, so the whole page reads in a few screens; the close is headed by
+ * the owner's tagline instead. Everything else is a shared component:
+ * the mission stage and the writing index.
  */
 .act {
     --home-gap: clamp(3.5rem, 2rem + 4vw, 6rem);
@@ -21,6 +22,15 @@
 }
 .content {
     margin-top: var(--s-6);
+}
+/* Phones: the link to a section's page stays on its heading's line (the
+   hairline runs under both), rather than a full row of its own. */
+@media (max-width: 37.49rem) {
+    .act :global(.section-tag__meta) {
+        order: 1;
+        flex-basis: auto;
+        margin-left: auto;
+    }
 }
 
 /* ---- Projects: the stage, two rows (MissionRows), then one line of the
@@ -58,24 +68,23 @@
     text-decoration-color: var(--accent);
 }
 
-/* ---- Research interests: the owner's one statement -------------------- */
-.interests {
-    max-width: 30ch;
-    color: var(--ink-1);
-    font: 400 var(--step-3) / 1.25 var(--font-long);
-    letter-spacing: -0.005em;
-    text-wrap: balance;
-}
-
-/* ---- The close: the statement and the ways in ------------------------ */
-.closeInner {
+/* ---- The close: the owner's statement, the way to his current focus,
+   then the one primary and Send a message ------------------------------- */
+.close {
     display: grid;
     justify-items: start;
     gap: var(--s-4);
     padding-top: var(--s-6);
     border-top: var(--rule-hair) solid var(--rule-2);
 }
+.tagline {
+    max-width: 30ch;
+    color: var(--ink-1);
+    font: 400 var(--step-3) / 1.25 var(--font-long);
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+}
 .closeActions {
-    --cluster: var(--s-3);
-    margin-top: var(--s-3);
+    --cluster: var(--s-4) var(--s-6);
+    margin-top: var(--s-5);
 }

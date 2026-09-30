@@ -14,8 +14,7 @@ export const siteRoutes = {
     portfolio: "/portfolio",
     resume: "/resume",
     about: "/about",
-    /** Comms: the contact routes and the form. /portfolio#contact still
-     *  answers, with a link here, for links shared before it existed. */
+    /** Comms: the contact routes and the form. */
     contact: "/contact",
     resumePdf: "/resume/view",
     feed: "/feed.xml",
@@ -153,4 +152,28 @@ export function headerMode(
         return "solid";
     }
     return undefined;
+}
+
+/** The old single-page portfolio's sections, and where each lives now. */
+const PORTFOLIO_FRAGMENTS: Readonly<Record<string, string>> = {
+    "#experience": `${siteRoutes.resume}#experience`,
+    "#skills": `${siteRoutes.resume}#skills`,
+    "#certifications": `${siteRoutes.resume}#certifications`,
+    "#engineering-writing": siteRoutes.blog,
+    "#contact": siteRoutes.contact,
+};
+
+/**
+ * Where an old /portfolio fragment now lives, so a link shared before the
+ * redesign (`/portfolio#skills`) is sent on: RouteMarker does it on the
+ * client, since a server never sees the fragment. Null for any other
+ * address (`#projects` is still the tiles).
+ */
+export function movedFragment(
+    pathname: string | null | undefined,
+    hash: string,
+): string | null {
+    const path = pathname?.replace(/\/+$/, "");
+    if (path !== siteRoutes.portfolio) return null;
+    return PORTFOLIO_FRAGMENTS[hash] ?? null;
 }

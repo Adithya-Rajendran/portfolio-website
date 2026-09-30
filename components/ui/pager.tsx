@@ -22,7 +22,6 @@ export default function Pager({
     next,
     all,
     label,
-    upper = false,
     className,
 }: {
     previous?: PagerLink | null;
@@ -30,8 +29,6 @@ export default function Pager({
     all?: { href: string; label: string } | null;
     /** The landmark's name. */
     label: string;
-    /** Titles in capitals: mission names. */
-    upper?: boolean;
     className?: string;
 }) {
     if (!previous && !next && !all) return null;
@@ -42,13 +39,7 @@ export default function Pager({
             rel={side === "next" ? "next" : "prev"}
         >
             <span className="pager__label">{link.label}</span>
-            <span
-                className={
-                    upper ? "pager__title pager__title--upper" : "pager__title"
-                }
-            >
-                {link.title}
-            </span>
+            <span className="pager__title">{link.title}</span>
             {link.meta ? (
                 <span className="pager__meta">{link.meta}</span>
             ) : null}

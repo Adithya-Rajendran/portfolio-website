@@ -6,7 +6,7 @@ import StaticStars from "@/components/sky/static-stars";
 import Starfield from "@/components/sky/starfield";
 import { OpenToItems } from "@/components/ui/availability";
 import { Icon } from "@/components/ui/icon";
-import { Status } from "@/components/ui/marks";
+import { LinkArrow, Status } from "@/components/ui/marks";
 import { homeCopy as copy } from "@/lib/copy";
 import sunrise from "@/lib/hero-sunrise.json";
 import { siteRoutes } from "@/lib/navigation";
@@ -20,10 +20,14 @@ import styles from "./hero.module.css";
  * photograph (lib/hero-sunrise.json), so the first paint is right before
  * the photograph arrives, and without it. Centred over the black above
  * the limb: the name (the page's h1), the profile's one-line headline,
- * what the owner is open to (the profile's availability, only when set)
- * and three quick links: Projects, CV, Contact. At the foot, the credit
- * and Pause motion. Everything is server-rendered; the starfield and the
- * motion control are the only islands.
+ * what the owner is open to (the profile's availability, only when set),
+ * one action (CV, a hairline button over the photograph) and one quiet
+ * link down to the selected projects. The headline's and the Open To
+ * line's parts are kept whole, and stack on phones. At the foot, the
+ * credit with the frame's NASA ID, and Pause motion. The header's
+ * wordmark steps aside while the hero, which names the owner, is in view
+ * (the starfield sets `html[data-hero]`). Everything is server-rendered;
+ * the starfield and the motion control are the only islands.
  */
 
 type Crop = "desktop" | "mobile";
@@ -180,7 +184,7 @@ export default function Hero({
     headline: string | null;
     /** The availability line: "Summer 2027 internships · …". */
     openTo: string | null;
-    /** Whether there are projects to link to. */
+    /** Whether there are projects to link down to. */
     projects: boolean;
 }) {
     const words = name.split(/\s+/).filter(Boolean);
@@ -211,8 +215,8 @@ export default function Hero({
                         ))}
                     </h1>
                     {headline ? (
-                        <p className={styles.headline} data-clear>
-                            {headline}
+                        <p className={`open-to ${styles.headline}`} data-clear>
+                            <OpenToItems text={headline} />
                         </p>
                     ) : null}
                     {openTo ? (
@@ -228,20 +232,19 @@ export default function Hero({
                         aria-label={copy.routesLabel}
                         data-clear
                     >
-                        {projects ? (
-                            <Link className="btn" href={siteRoutes.portfolio}>
-                                <span>{copy.projects}</span>
-                                <Icon name="arrow" className="icon--nudge" />
-                            </Link>
-                        ) : null}
                         <Link className="btn" href={siteRoutes.resume}>
                             <span>{copy.cv}</span>
                             <Icon name="arrow" className="icon--nudge" />
                         </Link>
-                        <Link className="btn" href={siteRoutes.contact}>
-                            <span>{copy.contact}</span>
-                            <Icon name="arrow" className="icon--nudge" />
-                        </Link>
+                        {projects ? (
+                            <LinkArrow
+                                className={styles.down}
+                                href="#home-projects"
+                                icon="arrow-down"
+                            >
+                                {copy.projectsAct.title}
+                            </LinkArrow>
+                        ) : null}
                     </nav>
                 </div>
 
@@ -252,7 +255,11 @@ export default function Hero({
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            {sunrise.credit}
+                            {sunrise.credit}{" "}
+                            <span className={styles.creditSep}>· </span>
+                            <span className={styles.creditId}>
+                                {sunrise.id}
+                            </span>
                         </a>
                     </p>
                     <MotionToggle className={styles.motion} />

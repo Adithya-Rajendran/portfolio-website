@@ -11,18 +11,22 @@ import styles from "./log-index.module.css";
  * search renders it too.
  *
  * `level` is the year's heading level; entry titles sit one below it
- * (and at `level` when the list is not grouped).
+ * (and at `level` when the list is not grouped). `tags={false}` leaves
+ * the rows' tags out where a few entries are listed beside other work
+ * (the home page, a project's related writing).
  */
 export default function LogIndex({
     entries,
     level = 3,
     grouped = true,
+    tags = true,
     matchTag,
     className,
 }: {
     entries: readonly LogEntry[];
     level?: 2 | 3;
     grouped?: boolean;
+    tags?: boolean;
     matchTag?: string;
     className?: string;
 }) {
@@ -38,6 +42,7 @@ export default function LogIndex({
                             key={entry.slug}
                             entry={entry}
                             titleAs={level === 2 ? "h2" : "h3"}
+                            tags={tags}
                             matchTag={matchTag}
                         />
                     ))}
@@ -56,6 +61,7 @@ export default function LogIndex({
                                 key={entry.slug}
                                 entry={entry}
                                 titleAs={titleAs}
+                                tags={tags}
                                 matchTag={matchTag}
                             />
                         ))}

@@ -1,19 +1,12 @@
 /*
- * Projects (/portfolio; themed Missions): the head band, then full-width
- * section tags over the flagship, the tiles and rows, and the related
- * pages. The missions' own parts are styled in
- * components/portfolio/missions.module.css; the head, the stats, the
- * table and the link rows are shared (styles/components.css).
+ * Projects (/portfolio; themed Missions): the head, then the flagship, the
+ * tiles and the quiet rows, their sections named for screen readers
+ * only. The missions' own parts are styled in
+ * components/portfolio/missions.module.css; the head is shared
+ * (styles/components.css). The last section's own padding ends the page.
  */
-.page {
-    padding-bottom: var(--space-section);
-}
-
 .first {
     padding-top: var(--space-block);
-}
-.tag {
-    margin-bottom: var(--s-7);
 }
 /* The least prominent projects: quiet rows under the tiles. */
 .rest {

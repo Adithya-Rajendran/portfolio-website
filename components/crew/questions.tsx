@@ -3,10 +3,10 @@ import { Icon } from "@/components/ui/icon";
 import type { Question } from "@/lib/crew";
 
 /**
- * The owner's current questions as numbered hairline rows (the log
- * index's grammar): a mono number in ink, the question, and the owner's
- * note under it in the serif. A question that points somewhere links
- * there. About's current focus.
+ * The owner's current questions as hairline rows (the log index's
+ * grammar): the question, and the owner's note under it in the serif;
+ * unnumbered, since a question's words are its name. A question that
+ * points somewhere links there. About's current focus.
  */
 export default function Questions({
     items,
@@ -20,9 +20,6 @@ export default function Questions({
         <ol className="q-list" role="list" aria-labelledby={labelledBy}>
             {items.map((item) => (
                 <li className="q-item" key={item.id}>
-                    <span className="q-item__num" aria-hidden="true">
-                        {item.num}
-                    </span>
                     <p className="q-item__title">
                         {item.href && item.external ? (
                             <a

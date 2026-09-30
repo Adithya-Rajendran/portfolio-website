@@ -17,10 +17,6 @@ export interface TitleBlockCell {
     span?: number;
     /** Columns of 2 on phones. */
     spanSm?: 1 | 2;
-    /** An orange rule on top: the cell that matters most. */
-    accent?: boolean;
-    /** Set the value in DM Mono (dates, numbers). */
-    data?: boolean;
 }
 
 export default function TitleBlock({
@@ -35,11 +31,7 @@ export default function TitleBlock({
             {cells.map((cell) => (
                 <div
                     key={cell.id}
-                    className={
-                        cell.accent
-                            ? "titleblock__cell titleblock__cell--accent"
-                            : "titleblock__cell"
-                    }
+                    className="titleblock__cell"
                     style={
                         {
                             "--span": cell.span ?? 3,
@@ -48,13 +40,7 @@ export default function TitleBlock({
                     }
                 >
                     <dt>{cell.label}</dt>
-                    <dd
-                        className={
-                            cell.data ? "titleblock__v--data" : undefined
-                        }
-                    >
-                        {cell.value}
-                    </dd>
+                    <dd>{cell.value}</dd>
                     {cell.note ? <dd>{cell.note}</dd> : null}
                 </div>
             ))}

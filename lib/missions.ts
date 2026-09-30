@@ -30,8 +30,8 @@ export interface MissionLink {
     id: string;
     label: string;
     url: string;
-    /** "Code", "Docs"…: the register's short name for the link. */
-    short: string;
+    /** A repository: the head's Code row carries it. */
+    code: boolean;
     /** "github.com/…". */
     host: string;
 }
@@ -49,14 +49,11 @@ export interface Mission {
     number: number;
     /** "MSN-02". */
     designation: string;
-    /** The owner's short name, set in capitals above the title
-     *  ("Homelab"); null when the project has none, and the title leads. */
+    /** The owner's short name ("Homelab"); null when the project has
+     *  none. The title is always the heading. */
     name: string | null;
     /** The name, else the title: the crumb's and the pager's words. */
     label: string;
-    /** The longest word of the heading (the name, else the title), so a
-     *  name in capitals can be sized to fit. */
-    nameChars: number;
     title: string;
     summary: string;
     status: ProjectStatus;
@@ -72,9 +69,10 @@ export interface Mission {
     highlights: string[];
     /** The parameters that are quantities: the mission's stats. */
     stats: MissionParameter[];
-    /** The named parameters the stack does not already list. */
+    /** The named parameters the stack and the card do not already name. */
     specs: MissionParameter[];
-    /** External links; links to this site's own posts are entries instead. */
+    /** External links; links to this site's own pages are left out (its
+     *  posts are entries instead). */
     links: MissionLink[];
     featured: number | null;
     /** `YYYY-MM-DD` of the last edit. */
@@ -100,22 +98,8 @@ export function typeTitle(type: ProjectType): string {
     return PROJECT_TYPES.find((option) => option.value === type)?.title ?? type;
 }
 
-const LINK_SHORT: Partial<Record<string, string>> = {
-    repo: "Code",
-    docs: "Docs",
-    paper: "Paper",
-    video: "Video",
-    dataset: "Data",
-    demo: "Demo",
-    article: "Article",
-    profile: "Profile",
-};
-
-/**
- * The slug of a Flight Log entry a URL points at on this site
- * (`/blog/<slug>`, relative or on the site's own host), or null.
- */
-export function sitePostSlug(url: string, siteUrl: string): string | null {
+/** A URL on this site (relative, or on its own host), parsed; else null. */
+function siteUrlOf(url: string, siteUrl: string): URL | null {
     let parsed: URL;
     try {
         parsed = new URL(url, siteUrl);
@@ -124,12 +108,23 @@ export function sitePostSlug(url: string, siteUrl: string): string | null {
     }
     const site = new URL(siteUrl);
     const host = (value: string) => value.replace(/^www\./, "");
-    if (host(parsed.hostname) !== host(site.hostname)) return null;
+    return host(parsed.hostname) === host(site.hostname) ? parsed : null;
+}
+
+/**
+ * The slug of a Flight Log entry a URL points at on this site
+ * (`/blog/<slug>`, relative or on the site's own host), or null.
+ */
+export function sitePostSlug(url: string, siteUrl: string): string | null {
+    const parsed = siteUrlOf(url, siteUrl);
+    if (!parsed) return null;
     const match = /^\/blog\/([a-z0-9][a-z0-9-]*)\/?$/.exec(parsed.pathname);
     if (!match || match[1] === "archive") return null;
     return match[1];
 }
 
+/** The links that lead off the site: a link to the site itself (a post,
+ *  or the site's own address) is never an external link. */
 function externalLinks(
     links: readonly ExternalLink[] | null | undefined,
     siteUrl: string,
@@ -139,13 +134,13 @@ function externalLinks(
             (link) =>
                 /^https?:\/\//.test(link.url) &&
                 link.label?.trim() &&
-                !sitePostSlug(link.url, siteUrl),
+                !siteUrlOf(link.url, siteUrl),
         )
         .map((link) => ({
             id: link._key,
             label: link.label.trim(),
             url: link.url,
-            short: (link.kind && LINK_SHORT[link.kind]) || link.label.trim(),
+            code: link.kind === "repo",
             host: hostOf(link.url),
         }));
 }
@@ -176,20 +171,39 @@ export function inStack(value: string, technologies: readonly string[]) {
 /**
  * A mission's parameters as a spec sheet reads them (contract §11): the
  * quantities are its stats ("195.1 W", "3 × MS-01", "Zero"); a named value
- * ("Okta OIDC") is a spec, or nothing when the stack already lists it, so
- * a name is never set as a stat or repeated under the stack.
+ * ("Okta OIDC") is a spec, or nothing when the stack or the card's text
+ * (`said`: the summary and highlights) already names it ("Feed: RSS"
+ * beside "…and RSS feed"), so a name is never set as a stat or said twice.
  */
 export function splitParameters(
     parameters: readonly MissionParameter[],
     technologies: readonly string[],
+    said: readonly string[] = [],
 ): { stats: MissionParameter[]; specs: MissionParameter[] } {
     return {
         stats: parameters.filter((item) => isQuantity(item.value)),
         specs: parameters.filter(
             (item) =>
-                !isQuantity(item.value) && !inStack(item.value, technologies),
+                !isQuantity(item.value) &&
+                !inStack(item.value, [...technologies, ...said]),
         ),
     };
+}
+
+/**
+ * Whether the words already on the page (the title, the summary, the
+ * lines shown) name every item of the stack, so a Stack row would only
+ * repeat them (the Kubernetes note: "…with NFS and OIDC", "…CIS Level 1
+ * hardening and … Okta OIDC").
+ */
+export function stackSaid(
+    technologies: readonly string[],
+    texts: readonly string[],
+): boolean {
+    return (
+        technologies.length > 0 &&
+        technologies.every((item) => inStack(item, texts))
+    );
 }
 
 /**
@@ -433,7 +447,8 @@ export function writeUpHref(
 
 export function toMission(project: ProjectListItem, siteUrl: string): Mission {
     const name = project.name?.trim() || null;
-    const heading = name ?? project.title;
+    const summary = project.summary?.trim() ?? "";
+    const highlights = (project.highlights ?? []).filter((line) => line.trim());
     const revised = /^\d{4}-\d{2}-\d{2}/.test(project._updatedAt ?? "")
         ? project._updatedAt!.slice(0, 10)
         : null;
@@ -444,13 +459,9 @@ export function toMission(project: ProjectListItem, siteUrl: string): Mission {
         number: project.designation,
         designation: formatMissionDesignation(project.designation),
         name,
-        label: heading,
-        nameChars: Math.max(
-            ...heading.split(/\s+/).map((word) => word.length),
-            1,
-        ),
+        label: name ?? project.title,
         title: project.title,
-        summary: project.summary?.trim() ?? "",
+        summary,
         status: project.status,
         statusValue: missionStatusValue(project.status),
         statusLabel: projectStatusLabel(project.status),
@@ -461,7 +472,7 @@ export function toMission(project: ProjectListItem, siteUrl: string): Mission {
         technologies: (project.technologies ?? []).filter((item) =>
             item.trim(),
         ),
-        highlights: (project.highlights ?? []).filter((line) => line.trim()),
+        highlights,
         ...splitParameters(
             (project.parameters ?? [])
                 .filter((item) => item.label?.trim() && item.value?.trim())
@@ -471,6 +482,7 @@ export function toMission(project: ProjectListItem, siteUrl: string): Mission {
                     value: item.value.trim(),
                 })),
             project.technologies ?? [],
+            [summary, ...highlights],
         ),
         links: externalLinks(project.links, siteUrl),
         featured: project.featured ?? null,
@@ -660,58 +672,24 @@ export function originalEntries(
 
 export interface Callout {
     id: string;
-    /** The balloon's label: "1". */
-    label: string;
     title: string;
     body: string | null;
-    /** The section it explains: `/blog/<slug>#<heading>` or `#<heading>`. */
-    href: string | null;
-    /** The entry's title when the section is in a post (the write-up). */
-    entry: string | null;
 }
 
 /**
- * A model's callouts as numbered rows, each linked to the section that
- * explains it: a heading in a published post, or one in this project's
- * essay. A callout whose section is not published keeps its text only.
+ * A model's callouts as plain rows: the part and what it does. Until the
+ * drawing lands (PR 15) there are no balloons to number, and the rows do
+ * not link on: the write-up is linked once, in the head. A callout's
+ * anchor still ties its post to the mission (`missionEntries`).
  */
-export function missionCallouts({
-    hotspots,
-    entries,
-    postIds,
-    essayHeadings,
-}: {
-    hotspots: readonly ModelHotspot[] | null | undefined;
-    entries: readonly LogEntry[];
-    postIds: ReadonlyMap<string, string>;
-    essayHeadings: ReadonlySet<string>;
-}): Callout[] {
-    const bySlug = new Map(entries.map((entry) => [entry.slug, entry]));
+export function missionCallouts(
+    hotspots: readonly ModelHotspot[] | null | undefined,
+): Callout[] {
     return (hotspots ?? [])
         .filter((hotspot) => hotspot.title?.trim())
-        .map((hotspot) => {
-            const heading = hotspot.anchor?.heading?.trim() ?? "";
-            const postSlug = hotspot.anchor?.postId
-                ? postIds.get(hotspot.anchor.postId)
-                : undefined;
-            const entry = postSlug ? bySlug.get(postSlug) : undefined;
-            let href: string | null = null;
-            if (heading && entry) {
-                href = `/blog/${entry.slug}#${heading}`;
-            } else if (
-                heading &&
-                !hotspot.anchor?.postId &&
-                essayHeadings.has(heading)
-            ) {
-                href = `#${heading}`;
-            }
-            return {
-                id: hotspot._key,
-                label: hotspot.label?.trim() || "",
-                title: hotspot.title.trim(),
-                body: hotspot.body?.trim() || null,
-                href,
-                entry: href && entry ? entry.title : null,
-            };
-        });
+        .map((hotspot) => ({
+            id: hotspot._key,
+            title: hotspot.title.trim(),
+            body: hotspot.body?.trim() || null,
+        }));
 }

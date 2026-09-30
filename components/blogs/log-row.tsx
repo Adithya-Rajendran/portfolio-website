@@ -17,10 +17,13 @@ type TitleTag = "h2" | "h3" | "h4";
 export default function LogRow({
     entry,
     titleAs: Title = "h3",
+    tags = true,
     matchTag,
 }: {
     entry: LogEntry;
     titleAs?: TitleTag;
+    /** Whether the row lists its tags. */
+    tags?: boolean;
     /** The tag page's tag, marked in the row's tags. */
     matchTag?: string;
 }) {
@@ -53,7 +56,7 @@ export default function LogRow({
                 </Link>
             </Title>
             {entry.dek ? <p className={styles.dek}>{entry.dek}</p> : null}
-            {entry.tags.length > 0 ? (
+            {tags && entry.tags.length > 0 ? (
                 <ul className={`tags ${styles.tags}`} aria-label={copy.tagList}>
                     {entry.tags.map((tag) => (
                         <li key={tag}>

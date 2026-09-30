@@ -163,16 +163,23 @@ only live in comments or commit messages.
   words each project once (`toMission`) for `/portfolio`, the mission files
   and the home page's projects (the stage and its rows), and finds each
   one's write-up from the list data (`originalEntries`; `writeUpHref` is
-  where "Read the write-up" goes). A mission's short name (`project.name`,
-  "Homelab"), set in capitals over its title on the stage and the file, is
-  the owner's, never derived from the slug: without one the title is the
-  heading, in sentence case, and the crumb, pager and share card use it
-  (`Mission.label`); the order
+  where "Read the write-up" goes). A project's title is its heading
+  everywhere (the stage, a tile, the file's h1 and its share card), in
+  sentence case: no project name is set in capitals. Its short name
+  (`project.name`, "Homelab") is the owner's, never derived from the
+  slug, and is the crumb's and the pager's words (`Mission.label`, else
+  the title); the order
   (`missionOrder`) is the featured slots, then the mission number, then
   the list query's, and `missionTiers` splits it into the flagship, the
   next ones with room of their own (two tiles on `/portfolio`, two rows on
   home) and the rest, least prominent; the files' previous / next go by
-  mission number. The mission number (MSN-02) is the project page's quiet
+  mission number (the pager has no "All projects": the crumb leads back).
+  `/portfolio` is the head, then the tiers with their section names for
+  screen readers only (no visible "Featured project" or "More projects"
+  row, no "Experience & CV" link and no related pages); the stage's copy
+  is top-aligned with its plate, and a card (the stage, a tile) lists the
+  first four stack items (`CARD_STACK`); every stack item is kept whole
+  (`MissionStack`). The mission number (MSN-02) is the project page's quiet
   identifier, in its crumb only: `MissionLine`, the stage, the tiles, the
   plates and the home page print none. Numbers appear only on a project
   page: its head's stats (`headStats`) unless it has a results table,
@@ -184,17 +191,30 @@ only live in comments or commit messages.
   add to it via `noteLines`, the facts and links). Either shows the essay
   (Case study) only when it says more than the summary, highlights and
   brief (`essayShown`: a heading, a non-text block or eight content words
-  they lack, counted by stem in `newWords`), and "Read the write-up" goes to
-  the original entry, else to that essay, else is absent. A mission's Flight Log entries are
+  they lack, counted by stem in `newWords`). On the stage "Read the
+  write-up" (a quiet link) goes to the original entry, else to that
+  essay; in a file's head it is a quiet link to the original entry only
+  (nothing points down to the page's own essay). The head's facts
+  (`factRows`): the Stack row (left out when the page's words already name
+  every item, `stackSaid`: the Kubernetes note), Code (the repositories,
+  `MissionLink.code`), Role, the named parameters the stack and the card's
+  text do not name (`splitParameters`: "Feed: RSS" beside "…RSS feed"), and
+  the other links while there are two links or fewer in all (else they
+  are the References section). A link to the site itself (a post, or its
+  own address) is never an external link. The results table is named by
+  its "Results" heading (`aria-labelledby`, no caption), and on phones each
+  note moves under its row. A mission's Flight Log entries are
   derived (`missionEntries`): the posts that reference it, and the posts
   its links, its essay and its model's callouts point at; the original
   entry is the first linked one, else the oldest referencing one. Links to
-  the site's own posts are entries, never external links. The 3D viewer's
-  server part (`components/viewer/viewer-figure.tsx`) is the model's
-  poster as a plate, and its callouts are numbered rows linked to their
-  sections (a post's marked "Write-up", its title for screen readers);
-  PR 15 mounts the drawing in its `data-viewer` slot, and with it the
-  model's description (`model.alt`), which describes the drawing, not the
+  the site's own posts are entries, never external links; Related writing
+  lists them flat, without tags. The 3D viewer's server part
+  (`components/viewer/viewer-figure.tsx`) is the model's poster as a
+  plate, and its callouts are plain hairline rows under "Parts of the
+  build" (the part and what it does: no balloon, number or link until the
+  drawing lands; the write-up is linked once, in the head); PR 15 mounts
+  the drawing in its `data-viewer` slot, and with it the model's
+  description (`model.alt`), which describes the drawing, not the
   photograph. A lone photograph outside the long read (the stage, a tile,
   a project's head) carries no plate number: `Plate`'s `label` is
   optional, and Pl. I… number the long read's plates only. Every
@@ -203,10 +223,14 @@ only live in comments or commit messages.
   inside the hairline in Flight Manual; nothing on the photograph (no
   number, feather, glow, crop marks or sepia) and no hover of its own.
   The file
-  reuses `PostReader`, so its in-page links resolve inside the visible
-  file. The old `/portfolio` fragments (`#experience`, `#skills`,
-  `#certifications`, `#engineering-writing`, `#contact`) are link rows
-  (`RouteList`) carrying those ids; `#projects` is the tiles.
+  closes with one row, "Questions about this project?" at a section
+  head's size and Send a message (`Ask`), then the pager; the close is
+  the last section, so its own padding ends the page. The file reuses
+  `PostReader`, so its in-page links resolve inside the visible file.
+  The old `/portfolio` fragments (`#experience`, `#skills`,
+  `#certifications`, `#engineering-writing`, `#contact`) are sent on to
+  the pages those sections moved to by RouteMarker on the client
+  (`movedFragment` in `lib/navigation.ts`); `#projects` is the tiles.
 - **The home page** (plan §6.2 row 13, contract §9). The hero
   (`components/home/hero.tsx`) is NASA's orbital sunrise, pre-encoded by
   `node scripts/generate-hero-sunrise.mjs` from `assets/artwork/` into
@@ -222,29 +246,46 @@ only live in comments or commit messages.
   has drawn: it runs at about 30 fps only while the hero is on screen, the
   tab is visible, the theme is Void and motion is allowed, keeps stars off
   `[data-clear]` text, reports `data-state` (`running` | `stopped`) and
-  stops in its effect cleanup, because a visited page stays mounted. Over
-  it: the name, the profile's headline, the availability line (only when
-  set) and Projects · CV · Contact. Then the sections, each only with
-  content (`lib/home.ts`, unnumbered): the strongest project on its stage
-  (featured slot 1, led by its summary, no stats and no mission number),
-  the next two as rows and any others as one line (`homeProjects`); the
-  latest three entries; the owner's one-line research interests
-  (`taglineOf`: the tagline, else the introduction's first sentence) with
-  a link to About's current focus; and the contact close (the profile's
-  `availability.cta` → `/contact#hiring` while there is an Open To line,
-  and Send a message). The page stays
-  under about 4,500 px at 1440 and 7,000 px at 390 (`home.spec.ts`). In
-  Flight Manual the hero draws the planet's parallels under the limb and
-  has no foot row; on home the footer leaves Pause motion to the hero.
+  stops in its effect cleanup, because a visited page stays mounted. Its
+  observer also sets `html[data-hero]` while the hero is on screen (in
+  both themes; the cleanup clears it), and the header's wordmark steps
+  aside meanwhile, since the hero names the owner; without JavaScript it
+  stays. Over it: the name, the profile's headline and the availability
+  line (only when set), each split into parts kept whole (`OpenToItems`)
+  that stack on phones, then one action (CV, the hairline `.btn`, no
+  fill or blur) and one quiet link down to the projects (`#home-projects`,
+  the sprite's `arrow-down`). The foot: the credit with the frame's ID
+  ("Photo: NASA / Expedition 72 · ISS072-E-30246", `id` in
+  `lib/hero-sunrise.json`) and Pause motion. Then the sections, each only
+  with content (`lib/home.ts`, unnumbered): the strongest project on its
+  stage (featured slot 1, led by its summary, no stats, mission number or
+  write-up link: its page links the write-up), the next two as rows and
+  any others as one line (`homeProjects`); the latest three entries,
+  without tags; and the close, headed by the owner's one-line statement
+  (`taglineOf`: the tagline, else the introduction's first sentence;
+  "Contact" for screen readers without one) with a quiet link to About's
+  current focus, the profile's `availability.cta` → `/contact#hiring` as
+  the one primary while there is an Open To line, and Send a message as
+  a quiet link. On phones a section's link stays on its heading's line.
+  The page stays under about 4,500 px at 1440 and 7,000 px at 390
+  (`home.spec.ts`). In Flight Manual the hero draws the planet's
+  parallels under the limb and has no foot row; on home the footer leaves
+  Pause motion to the hero. Pause motion is an unboxed control (the icon
+  and "Pause motion" in ink-2, sentence case, a 44px target), in the
+  hero and the footer alike.
 - **About** (`/about`, themed Crew File; plan §6.2 row 14, contract §9).
   The patch is the identity mark (a `PageHead` `figure`; the site shows
-  no portrait), then the record (`CrewRecord`), and `DocSection`s
-  (`components/ui/doc-section.tsx`, the one section head: also the
-  mission files, `/contact` and the CV on `/resume`): the biography, the
-  Now list grouped by `currentCuriosities[].kind` (`nowGroups`), the
-  latest entries and any talks, and the related pages
-  (`lib/directory.ts`, shared with `/portfolio`'s related pages), each
-  only when it has content, then the close (`components/ui/ask.tsx`). Its
+  no portrait; the head has no actions: the header carries Experience and
+  CV), then the record (`CrewRecord`: one hairline title block, Name in
+  ink, Studying, Previously, Focus, Links; no Open To, edit date or
+  accent cell), and `DocSection`s (`components/ui/doc-section.tsx`, the
+  one section head: also the mission files, `/contact` and the CV on
+  `/resume`): the biography and the Now list grouped by
+  `currentCuriosities[].kind` (`nowGroups`; a kind's label only when there
+  are two or more, and no Q1… numbers), each only when it has content,
+  then the close (`components/ui/ask.tsx`: "Questions or ideas?", Send a
+  message). The writing, the talks and the other sections are one click
+  away in the nav, not repeated here. Its
   section ids are prefixed (`crew-…`, and the home page's `home-…`)
   because a visited page, still mounted, can own the same fragment. No page carries the old design: there is no
   legacy stylesheet, token, class or icon library left, and
@@ -413,7 +454,7 @@ only live in comments or commit messages.
   server action verifies the challenge with `checkBotId()` from
   `botid/server`.
 - **The contact form** (`components/contact/contact-form.tsx`) is on
-  `/contact` (`/portfolio#contact` is a link row to it) and dispatches `sendEmailAction`
+  `/contact` (`/portfolio#contact` is sent on to it) and dispatches `sendEmailAction`
   from `onSubmit`, so React never resets its controlled fields. It needs
   JavaScript for BotID, so its wrapper is `.js-only` and a `<noscript>`
   block offers LinkedIn instead. The routes and topics (`hiring`,
@@ -433,7 +474,7 @@ only live in comments or commit messages.
   no buttons, and a fragment (`#hiring`) picks its topic on arrival.
   The only words about the owner's situation on a button are the
   profile's (`availability.cta`: the home close and the planned orbit's
-  record); code keeps neutral verbs ("Send a message", "Get in touch"). Contact is one click from
+  record); code keeps a neutral verb ("Send a message"). Contact is one click from
   every page: the nav from 960px, and a link in the header bar below it. `sendEmail` sends a topic whose route is not
   shown (a crafted POST) as a hello, and treats Resend's returned
   `{ error }` as a failure: Resend 6 does not throw on API errors. A `"use server"` module may export only async
@@ -613,27 +654,35 @@ deployment require an authenticated Sanity CLI session.
   every orbit labelled on a phone, and without JavaScript the list, the
   map from its link and the labels as links to their rows), `print` (the CV
   on two sheets on A4 and on Letter, without the map, chrome or
-  controls), `missions` (every old `/portfolio` fragment still answers
-  and leads on, the index links every project with no counts, register or
-  mission numbers, each project page has its crumb, title, close and
-  pager and no title block, revision or stand-in text, a thin project is
-  a short note, Read the write-up lands on the write-up or the original
-  entry; on the fixture build a filled mission shows every
-  module with its callouts linked to their sections, and a planned one
-  none of them), `home` (the hero's name, availability and quick links,
-  Projects · CV · Contact, in the first viewport at 1280×800 and 390×844
-  with and without JavaScript; the starfield `running` only on screen, in
-  a visible tab, in Void and with motion allowed; the stars in the hero
-  only, and not on paper; the credit, and the
-  drawn limb in Flight Manual; the sections in order, unnumbered and
-  without themed names, with their links; the close's button only in
-  the profile's words and only beside an Open To line; the flagship
-  without stats or mission number; the page's height at 1440 and 390; no
-  gap wording and
-  no old artwork), `crew` (About's plain title with the patch and no
-  portrait, its record, the sections by their plain names with their
-  links, Get in touch, no gap wording; and no page keeping the old
-  design's roots, classes or tokens),
+  controls), `missions` (every old `/portfolio` fragment sent on to its
+  page, the index links every project with no counts, register, mission
+  numbers or related pages, titles in sentence case and four stack items
+  at most on a card, the flagship's title and View the project in the
+  first viewport at 1440×900, each project page has its crumb, its title
+  as the heading, close and pager and no title block, revision, "Table 1",
+  jump to its own write-up or stand-in text, a stack item never split, a
+  thin project is a short note (the Kubernetes note without a Stack row),
+  Read the write-up lands on the original entry; on the fixture build a
+  filled mission shows every module, its repository in the facts and its
+  callouts as plain rows, and a planned one none of them), `home` (the
+  hero's name, availability, CV and the quiet link down to the projects
+  in the first viewport at 1280×800 and 390×844 with and without
+  JavaScript, each part of the headline and the Open To line on one line;
+  the header's wordmark hidden while the hero is in view; the starfield
+  `running` only on screen, in a visible tab, in Void and with motion
+  allowed; the stars in the hero only, and not on paper; the credit with
+  its frame ID, and the drawn limb in Flight Manual; the sections in
+  order, unnumbered and without themed names, with their links, and the
+  latest writing without tags; the close headed by the tagline, its
+  button only in the profile's words and only beside an Open To line, one
+  primary at most; the flagship without stats or mission number, its
+  title in sentence case over four stack items at most; the page's height
+  at 1440 and 390; no gap wording and no old artwork), `crew` (About's
+  plain title with the patch and no portrait or head actions, its record
+  without Open To, an edit date or an accent cell, the sections by their
+  plain names, no question numbers, no writing index or related pages,
+  Send a message, no gap wording; and no page keeping the old design's
+  roots, classes or tokens),
   `budgets` (the brotli byte report, printed,
   not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio

@@ -13,15 +13,19 @@ import { formatEntryDate } from "@/lib/log-index";
 export function LinkArrow({
     children,
     className,
+    icon = "arrow",
     ...props
-}: ComponentProps<typeof Link>) {
+}: ComponentProps<typeof Link> & {
+    /** "arrow-down" for a link further down the page. */
+    icon?: "arrow" | "arrow-down";
+}) {
     return (
         <Link
             className={className ? `link-arrow ${className}` : "link-arrow"}
             {...props}
         >
             {children}
-            <Icon name="arrow" />
+            <Icon name={icon} />
         </Link>
     );
 }

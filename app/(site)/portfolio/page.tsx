@@ -2,13 +2,9 @@ import type { Metadata } from "next";
 import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import MissionStage from "@/components/portfolio/mission-stage";
 import MissionTile, { MissionTiles } from "@/components/portfolio/mission-tile";
-import { LinkArrow } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
-import RouteList from "@/components/ui/route-list";
-import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
 import { missionsCopy as copy } from "@/lib/copy";
-import { directoryRows } from "@/lib/directory";
 import { logEntries } from "@/lib/log-index";
 import {
     missionOrder,
@@ -57,13 +53,13 @@ const TILES = 2;
 /**
  * Projects (/portfolio; themed Missions): the page head with the owner's
  * introduction (`projectsIntro`, left out when empty), the flagship on its
- * stage, the next two as text-first tiles and the rest as compact rows, so
- * the owner's last project is the least prominent (`missionTiers`), then
- * the pages that the old sections of this page moved to, each still
- * answering its old fragment (#experience, #skills, #certifications,
- * #engineering-writing, #contact; #projects is the tiles). Only what the
- * owner published is shown: no counts, no register, no numbers without
- * their notes. Everything is server-rendered and static.
+ * stage, the next two as text-first tiles and the rest as compact rows,
+ * so the owner's last project is the least prominent (`missionTiers`);
+ * the tiers' sections are named for screen readers only, since the page
+ * title already says what they are; #projects is the tiles. The old sections' fragments (#experience…) are sent on by
+ * RouteMarker. Only what the owner published is shown: no counts, no
+ * register, no numbers without their notes. Everything is server-rendered
+ * and static.
  */
 export default async function Portfolio() {
     const [profile, projects, posts] = await Promise.all([
@@ -89,14 +85,8 @@ export default async function Portfolio() {
     );
     const others = tiles.length + rest.length > 0;
 
-    const rows = directoryRows(
-        ["experience", "skills", "certifications", "writing", "contact"],
-        { profile, posts: posts.filter((post) => post.slug).length },
-        { anchors: true },
-    );
-
     return (
-        <div data-page="missions" className={styles.page}>
+        <div data-page="missions">
             <PageHead
                 className="shell"
                 split
@@ -104,13 +94,7 @@ export default async function Portfolio() {
                 tag={copy.themed}
                 title={copy.plain}
                 intro={profile?.projectsIntro?.trim() || null}
-            >
-                <div className="cluster page-head__actions">
-                    <LinkArrow href={siteRoutes.resume}>
-                        {copy.experience}
-                    </LinkArrow>
-                </div>
-            </PageHead>
+            />
 
             {flagship ? (
                 <section
@@ -119,11 +103,9 @@ export default async function Portfolio() {
                     aria-labelledby="msn-flagship-h"
                 >
                     <div className="shell">
-                        <SectionTag className={styles.tag} ornament="star">
-                            <h2 className="section-tag__h" id="msn-flagship-h">
-                                {copy.flagship}
-                            </h2>
-                        </SectionTag>
+                        <h2 className="sr-only" id="msn-flagship-h">
+                            {copy.flagship}
+                        </h2>
                         <MissionStage
                             mission={flagship}
                             image={cover ?? poster}
@@ -150,11 +132,9 @@ export default async function Portfolio() {
                     aria-labelledby="msn-more-h"
                 >
                     <div className="shell">
-                        <SectionTag className={styles.tag}>
-                            <h2 className="section-tag__h" id="msn-more-h">
-                                {copy.more}
-                            </h2>
-                        </SectionTag>
+                        <h2 className="sr-only" id="msn-more-h">
+                            {copy.more}
+                        </h2>
                         {tiles.length ? (
                             <MissionTiles>
                                 {tiles.map((item) => (
@@ -175,23 +155,6 @@ export default async function Portfolio() {
                                 </MissionRows>
                             </div>
                         ) : null}
-                    </div>
-                </section>
-            ) : null}
-
-            {rows.length ? (
-                <section className="section" aria-labelledby="msn-dir-h">
-                    <div className="shell">
-                        <SectionTag className={styles.tag}>
-                            <h2 className="section-tag__h" id="msn-dir-h">
-                                {copy.directory}
-                            </h2>
-                        </SectionTag>
-                        <RouteList
-                            items={rows}
-                            columns={3}
-                            labelledBy="msn-dir-h"
-                        />
                     </div>
                 </section>
             ) : null}

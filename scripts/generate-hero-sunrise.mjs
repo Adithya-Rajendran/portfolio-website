@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 // and writes public/images/hero-sunrise-v1/ (a 21:9 desktop crop and a
 // 9:16 mobile crop, AVIF and WebP, each carrying the credit in its XMP)
 // plus lib/hero-sunrise.json (the sources, a tiny preview per crop, the
-// credit and the limb geometry in each crop's pixels). Uses the encoder
+// credit and frame ID, and the limb geometry in each crop's pixels). Uses the encoder
 // installed with Next.js. Run from any directory with:
 //   node scripts/generate-hero-sunrise.mjs
 // /public images are cached immutably: bump VERSION on every re-encode.
@@ -66,6 +66,8 @@ function grain(width, height, seed = 72) {
 const round = (value) => Math.round(value * 10) / 10;
 const manifest = {
     credit: spec.credit,
+    // The frame's NASA ID, printed after the credit.
+    id: spec.id,
     source: spec.source,
     title: spec.title,
 };
