@@ -784,12 +784,14 @@
         font: 300 var(--step-6) / 0.98 var(--font-display);
         letter-spacing: -0.02em;
     }
+    /* Set ragged, as prose: a balanced break can split a phrase ("or an /
+       opportunity") where a full first line would not. */
     .page-head__intro {
         max-width: 52ch;
         margin-top: var(--s-6);
         color: var(--ink-2);
         font: 400 var(--step-1) / 1.5 var(--font-long);
-        text-wrap: balance;
+        text-wrap: pretty;
     }
 
     /* ===== Captions, plates, revision marks (site.css 4.8, 4.27) ====== */
@@ -923,6 +925,8 @@
             display: none;
         }
     }
+    /* The strip keeps the label face (the type voice, D2, decides it) in
+       sentence case, untracked. */
     .site-footer__base {
         display: flex;
         flex-wrap: wrap;
@@ -931,7 +935,7 @@
         gap: var(--s-3) var(--s-6);
         margin-top: var(--s-7);
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.6 var(--font-text);
+        font: 400 var(--label-size) / 1.6 var(--font-label);
     }
     .site-footer__base a {
         display: inline-flex;
@@ -1922,6 +1926,28 @@
         color: var(--ink-1);
         font: 400 var(--step-1) / 1.35 var(--font-display);
         text-wrap: balance;
+    }
+    /* An Open To line (here and in the home hero): each opening whole, a
+       dot between two on one line. The dot sits in the gap before an
+       opening, so where the line wraps it lands left of the line's start,
+       outside the box, and is clipped: a wrapped line reads as a list. */
+    .open-to {
+        --open-to-gap: 0.9em;
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: var(--open-to-gap);
+        overflow: hidden;
+    }
+    .open-to__item + .open-to__item {
+        position: relative;
+        margin-left: calc(-1 * var(--open-to-gap));
+        padding-left: var(--open-to-gap);
+    }
+    .open-to__sep {
+        position: absolute;
+        left: 0;
+        width: var(--open-to-gap);
+        text-align: center;
     }
 
     /* ===== Page head: actions and a figure (contract §1) =============== */

@@ -4,6 +4,7 @@ import { preload } from "react-dom";
 import MotionToggle from "@/components/chrome/motion-toggle";
 import StaticStars from "@/components/sky/static-stars";
 import Starfield from "@/components/sky/starfield";
+import { OpenToItems } from "@/components/ui/availability";
 import { Icon } from "@/components/ui/icon";
 import { Status } from "@/components/ui/marks";
 import { homeCopy as copy } from "@/lib/copy";
@@ -217,17 +218,8 @@ export default function Hero({
                     {openTo ? (
                         <p className={styles.status} data-clear>
                             <Status value="active">{copy.openTo}</Status>{" "}
-                            <span className={styles.openTo}>
-                                {/* Each opening stays on one line; the
-                                    line breaks only at a separator. */}
-                                {openTo.split(" · ").map((item, index) => (
-                                    <span key={`${item}-${index}`}>
-                                        {index ? " · " : null}
-                                        <span className={styles.item}>
-                                            {item}
-                                        </span>
-                                    </span>
-                                ))}
+                            <span className={`open-to ${styles.openTo}`}>
+                                <OpenToItems text={openTo} />
                             </span>
                         </p>
                     ) : null}

@@ -46,12 +46,9 @@
     font: 400 0.75rem / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums;
 }
+/* Near the limit the count itself turns: no mark beside it. */
 .count[data-near] {
     color: var(--accent-text);
-}
-.count[data-near]::before {
-    content: "▲ ";
-    font-size: 0.625rem;
 }
 
 .alert {

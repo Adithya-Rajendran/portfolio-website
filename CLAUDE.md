@@ -80,19 +80,22 @@ only live in comments or commit messages.
   writes the sprite symbol (`lib/patch.json`), the share card's patch
   (`assets/patch.svg`, the emblem on a void disc), `app/icon.svg`,
   `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
-  The favicon is not the patch: a heavy AR monogram (stroke 14/200) on
-  the void disc, with nothing finer that 16 px would lose (no lettering,
-  stars, orbit, parallels or sun), and a `prefers-color-scheme` edge for
-  dark tab strips; the ICO holds 16, 32 and 48 px PNGs. The apple icon is
-  the emblem without the ring's lettering.
+  The favicon is the patch reduced to what 16 px keeps: a heavy AR
+  monogram (stroke 14/200) over the patch's orange sun, which keeps its
+  orange at every size, on the void disc; no lettering, stars, orbit or
+  parallels; and a `prefers-color-scheme` edge for dark tab strips. The
+  ICO holds 16, 32 and 48 px PNGs. The apple icon is the emblem without
+  the ring's lettering.
 - **Share images.** Every page draws the Deep Field card
   (`lib/og-card.tsx`, which re-exports the routes' `OG_SIZE` and
   `OG_CONTENT_TYPE` from `lib/site-metadata.ts`); `/`'s card stands in for
   any page without its own. Every card names the author: a section's card
   leads with the name in capitals, tagged with the section's plain name;
   a post's or project's card signs its footer ("Adithya Rajendran · 30
-  Mar 2026 · 7 min read", or the type and status) over the item's own
-  address, which steps down in size to keep one line. No LOG or MSN
+  Mar 2026 · 7 min read", or the type and status) beside the item's own
+  address. The footer is one size (DM Mono 20 px) on every card: the
+  address takes a line of its own, at the right, when the two do not fit
+  one. No LOG or MSN
   code, no orange dash and no stars (they are the home hero's alone). The home and `/contact` cards add the
   availability line as a keyed status line (● Open to …) when the
   profile has one. A route's `alt` export is one string, so a post, a
@@ -512,7 +515,11 @@ deployment require an authenticated Sanity CLI session.
   Availability is `availability.seeking[]` (one line per opening, joined
   with " · " by `availabilityLine` in `lib/profile-content.ts`); the older
   single `openTo` line is deprecated and read only while that list is
-  empty.
+  empty. On the page the line is split back into its openings
+  (`OpenToItems` in `components/ui/availability.tsx`, `.open-to`), each
+  kept whole: where it wraps, the dot falls at the line's start and is
+  clipped, so no line starts or ends on a separator; the hero, centred,
+  stacks them on phones.
 - Real content only. A date known only to the year is stored as any day in
   that year with precision `year` (`timelineEntry.startPrecision` and
   `endPrecision`, `profile.launch.precision`, `project.datePrecision`), and
@@ -567,8 +574,9 @@ deployment require an authenticated Sanity CLI session.
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
   Flight Manual, every page in full, and both kinds of 404), `layout` (no
   sideways scroll at 320–1920 px, the header's parts fit without
-  overlapping, and no visible text under 12 px on home, every post and
-  project, `/resume` and `/contact` at 1440 and 390), `theme` (no flash of the wrong theme, persistence across
+  overlapping, and no visible text under 12 px, generated text included,
+  on home, every post and project, `/resume` and `/contact` (with the
+  message counter near its limit) at 1440 and 390), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, Pause motion, the stored
   theme on an unknown post or project URL), `chrome`
   (the menu sheet's focus, `inert` and closing; Contact in the bar on a

@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ReactElement } from "react";
-import { OG_SIZE } from "@/lib/site-metadata";
 
 export { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/site-metadata";
 
@@ -68,7 +67,6 @@ const VOID = {
     accentText: "#ff7a45",
 } as const;
 
-const { width: WIDTH } = OG_SIZE;
 const PAD_X = 80;
 
 const label = {
@@ -77,15 +75,14 @@ const label = {
     letterSpacing: "0.16em",
     textTransform: "uppercase" as const,
 };
-/** DM Mono's advance, in em: the footer steps down to keep one line. */
-const MONO_ADVANCE = 0.6;
 
 /**
  * A page's card: the patch with the section's small tag, the title, one
  * line from the page, an optional status line (● OPEN TO and the owner's
- * words) and a footer of data: the author and the item's facts on the
- * left, its address on the right. `upper` sets the title in capitals (a
- * project's name or the owner's, the vehicle treatment).
+ * words) and a footer of data in one size on every card: the author and
+ * the item's facts on the left, its address on the right, on a line of
+ * its own when the two do not fit one. `upper` sets the title in capitals
+ * (a project's name or the owner's, the vehicle treatment).
  */
 export function OgCard({
     tag,
@@ -106,11 +103,6 @@ export function OgCard({
     footerRight: string;
     upper?: boolean;
 }): ReactElement {
-    const footerChars = (footerLeft?.length ?? 0) + footerRight.length + 3;
-    const footerSize = Math.min(
-        20,
-        Math.floor((WIDTH - 2 * PAD_X) / (footerChars * MONO_ADVANCE)),
-    );
     // The name in capitals keeps one line at 96 px; a long title wraps.
     const titleSize =
         title.length > 24
@@ -224,17 +216,23 @@ export function OgCard({
             <div
                 style={{
                     display: "flex",
-                    justifyContent: "space-between",
+                    flexWrap: "wrap",
                     alignItems: "center",
+                    rowGap: 8,
+                    columnGap: 32,
                     paddingTop: 22,
                     borderTop: `1px solid ${VOID.rule2}`,
                     fontFamily: "DM Mono",
-                    fontSize: footerSize,
+                    fontSize: 20,
                     color: VOID.ink2,
                 }}
             >
-                <span style={{ display: "flex" }}>{footerLeft ?? ""}</span>
-                <span style={{ display: "flex" }}>{footerRight}</span>
+                {footerLeft ? (
+                    <span style={{ display: "flex" }}>{footerLeft}</span>
+                ) : null}
+                <span style={{ display: "flex", marginLeft: "auto" }}>
+                    {footerRight}
+                </span>
             </div>
         </div>
     );

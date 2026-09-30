@@ -96,10 +96,26 @@ test("the header fits from 320 to 1920 px", async ({ page }) => {
     }
 });
 
-/** Visible text set under 12 px: its size and its first words. */
+/**
+ * Visible text set under 12 px, the page's own and the text a stylesheet
+ * generates (`::before`, `::after`: a mark or a counter): its size and its
+ * first words.
+ */
 async function textUnderFloor(page: Page): Promise<string[]> {
     return page.evaluate(() => {
         const found: string[] = [];
+        const shown = (element: Element) => {
+            const box = element.getBoundingClientRect();
+            // Visually hidden text (sr-only) is clipped to a pixel.
+            return (
+                element.checkVisibility({
+                    opacityProperty: true,
+                    visibilityProperty: true,
+                }) &&
+                box.width > 1 &&
+                box.height > 1
+            );
+        };
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
@@ -107,16 +123,22 @@ async function textUnderFloor(page: Page): Promise<string[]> {
         for (let node = walker.nextNode(); node; node = walker.nextNode()) {
             const element = node.parentElement;
             const text = node.textContent?.trim();
-            if (!element || !text) continue;
-            const shown = element.checkVisibility({
-                opacityProperty: true,
-                visibilityProperty: true,
-            });
-            const box = element.getBoundingClientRect();
-            // Visually hidden text (sr-only) is clipped to a pixel.
-            if (!shown || box.width <= 1 || box.height <= 1) continue;
+            if (!element || !text || !shown(element)) continue;
             const size = parseFloat(getComputedStyle(element).fontSize);
             if (size < 12) found.push(`${size}px "${text.slice(0, 40)}"`);
+        }
+        for (const element of document.body.querySelectorAll("*")) {
+            for (const pseudo of ["::before", "::after"]) {
+                const style = getComputedStyle(element, pseudo);
+                // A quoted string with a visible character, or a counter;
+                // an empty string only draws a rule or a shape.
+                const words = /^"((?:[^"\\]|\\.)*)"/.exec(style.content)?.[1];
+                const text = words?.trim() || /counter/.test(style.content);
+                if (!text || !shown(element)) continue;
+                const size = parseFloat(style.fontSize);
+                if (size < 12)
+                    found.push(`${size}px ${pseudo} ${style.content}`);
+            }
         }
         return found;
     });
@@ -138,6 +160,13 @@ test("no visible text is under 12 px on home, the posts, the projects, the CV an
     for (const path of paths) {
         await page.goto(path);
         await page.waitForLoadState("networkidle");
+        if (path === "/contact") {
+            // The counter's near-limit state, 40 characters from the end.
+            await page
+                .locator('textarea[name="message"]')
+                .fill("a".repeat(960));
+            await expect(page.locator("[data-near]")).toHaveCount(1);
+        }
         for (const width of [1440, 390]) {
             await page.setViewportSize({ width, height: 900 });
             expect(await textUnderFloor(page), `${path} at ${width}px`).toEqual(

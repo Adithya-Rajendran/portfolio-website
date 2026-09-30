@@ -18,8 +18,9 @@ import { fileURLToPath } from "node:url";
  *                         band hidden by --patch-band: none
  *   assets/patch.svg      the share card's patch (lib/og-card.tsx): ring
  *                         and emblem on a void disc
- *   app/icon.svg          the favicon: a heavy AR on the void disc, with a
- *                         prefers-color-scheme edge for dark tab strips
+ *   app/icon.svg          the favicon: a heavy AR over the orange sun on the
+ *                         void disc, with a prefers-color-scheme edge for
+ *                         dark tab strips
  *   app/apple-icon.png    180 × 180, the emblem on the void, no lettering
  *   app/favicon.ico       16, 32 and 48 px PNGs of the favicon
  *
@@ -151,14 +152,15 @@ const card = standalone("c-", { band: false, disc: true });
 const apple = standalone("a-", { band: false, disc: false });
 
 /**
- * The favicon: the monogram alone, heavy enough for 16 px (a stroke of
- * 14/200), on the void disc. Nothing finer survives that size: no
- * lettering, stars, orbit or parallels, and the sun shrinks to a speck
- * that only costs the letters room. Under a dark scheme a half-ink edge
- * outlines the disc, so it reads on a dark tab strip too.
+ * The favicon: the monogram, heavy enough for 16 px (a stroke of 14/200),
+ * over the patch's orange sun cresting a flat horizon, on the void disc.
+ * The sun keeps its orange at every size, as on the patch: at 16 px it is
+ * a mark about 4 × 2 px under the letters. Nothing finer survives that
+ * size: no lettering, stars, orbit or parallels. Under a dark scheme a
+ * half-ink edge outlines the disc, so it reads on a dark tab strip too.
  */
 const FAV_SCALE = 2.05;
-const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><style>.edge{display:none}@media (prefers-color-scheme:dark){.edge{display:inline}}</style><circle cx="100" cy="100" r="98" fill="${VOID}"/><circle class="edge" cx="100" cy="100" r="95" fill="none" stroke="${INK}" stroke-width="6" stroke-opacity=".5"/><path transform="translate(100 100) scale(${FAV_SCALE}) translate(-100 -96)" d="${MONO_A}${MONO_R}" fill="none" stroke="${INK}" stroke-width="${f2(14 / FAV_SCALE)}" stroke-linecap="square" stroke-linejoin="miter"/></svg>\n`;
+const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><style>.edge{display:none}@media (prefers-color-scheme:dark){.edge{display:inline}}</style><clipPath id="horizon"><rect width="200" height="186"/></clipPath><circle cx="100" cy="100" r="98" fill="${VOID}"/><circle class="edge" cx="100" cy="100" r="95" fill="none" stroke="${INK}" stroke-width="6" stroke-opacity=".5"/><circle cx="100" cy="190" r="26" fill="${SUN}" clip-path="url(#horizon)"/><path transform="translate(100 92) scale(${FAV_SCALE}) translate(-100 -96)" d="${MONO_A}${MONO_R}" fill="none" stroke="${INK}" stroke-width="${f2(14 / FAV_SCALE)}" stroke-linecap="square" stroke-linejoin="miter"/></svg>\n`;
 
 /** PNG-in-ICO: a 6-byte header, a 16-byte entry per image, then the PNGs. */
 function ico(pngs) {
