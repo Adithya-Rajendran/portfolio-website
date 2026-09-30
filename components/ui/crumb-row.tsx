@@ -6,7 +6,8 @@ import { Ornament, type OrnamentName } from "@/components/ui/icon";
  * section's plain name as a link back to its index, then the item itself
  * (its quiet identifier and its name) and an optional meta at the end of
  * the hairline. Used above a post and a project file, whose own title is
- * the page's h1.
+ * the page's h1; on the flight (/resume/trajectory) the name is the h1
+ * (`heading`), the page's whole head.
  */
 export default function CrumbRow({
     ornament,
@@ -14,6 +15,7 @@ export default function CrumbRow({
     href,
     code,
     name,
+    heading = false,
     meta,
     metaClassName,
     className,
@@ -27,13 +29,16 @@ export default function CrumbRow({
     code?: string;
     /** The item's short name. */
     name?: string;
+    /** The name is the page's h1, small, in the crumb's line. */
+    heading?: boolean;
     meta?: React.ReactNode;
     metaClassName?: string;
     className?: string;
 }) {
+    const Row = heading ? "div" : "p";
     return (
         <div className={className} data-print="hide">
-            <p className="section-tag crumb-row">
+            <Row className="section-tag crumb-row">
                 {ornament ? <Ornament name={ornament} /> : null}
                 <Link className="crumb-row__home" href={href}>
                     {label}
@@ -46,7 +51,11 @@ export default function CrumbRow({
                         {code ? (
                             <span className="crumb-row__code">{code}</span>
                         ) : null}
-                        {name ? <span>{name}</span> : null}
+                        {name && heading ? (
+                            <h1 className="crumb-row__title">{name}</h1>
+                        ) : name ? (
+                            <span>{name}</span>
+                        ) : null}
                     </span>
                 ) : null}
                 {meta ? (
@@ -60,7 +69,7 @@ export default function CrumbRow({
                         {meta}
                     </span>
                 ) : null}
-            </p>
+            </Row>
         </div>
     );
 }

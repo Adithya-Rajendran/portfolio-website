@@ -1,12 +1,19 @@
 import type { Page } from "@playwright/test";
+import { siteConfig } from "@/lib/config";
+import { trajectoryCopy as copy } from "@/lib/copy";
 import { axeViolations } from "./support/axe";
 import { expect, test } from "./support/test";
 import { THEMES, storeTheme } from "./support/theme";
 
 /**
- * /resume/trajectory's record panel (components/trajectory/journey.tsx):
- * it fits the pinned stage on short laptop screens, it never moves while
- * the flight is scrubbed (a long burn label included), Play gives way to
+ * /resume/trajectory (components/trajectory/journey.tsx): one crumb line
+ * for a head (Experience / Timeline, and Skip to the list), with the rail
+ * and Play in the first viewport at 1440×900; its own address and share
+ * card. The record fits the pinned stage on short laptop screens and
+ * never moves while the flight is scrubbed (a long burn label included);
+ * the card's one readout ticks; the scene names the worlds by their
+ * organisation only, at holds and in the finale, never through a
+ * transfer; a still flight opens on the latest chapter. Play gives way to
  * any key, a phone keeps each chapter's name and full entry, and axe finds
  * nothing in either theme (the route is not in the sitemap, so a11y.spec's
  * page list does not reach it). The 3D scene draws in both themes,
@@ -38,14 +45,14 @@ async function panel(page: Page) {
         const box = (el: Element) => el.getBoundingClientRect();
         const section = document.querySelector("[data-journey]")!;
         const stage = box(section.querySelector("[data-stage]")!);
-        const hud = box(section.querySelector("[data-date]")!.parentElement!);
+        const record = box(section.querySelector("[data-record]")!);
         const play = box(section.querySelector("[data-play]")!);
         return {
             stageTop: stage.top,
             stageBottom: stage.bottom,
-            hudTop: hud.top,
-            hudOffset: hud.top - stage.top,
-            hudHeight: hud.height,
+            recordTop: record.top,
+            recordOffset: record.top - stage.top,
+            recordHeight: record.height,
             playBottom: play.bottom,
         };
     });
@@ -70,16 +77,147 @@ for (const [width, height] of [
         }
         for (const f of frames) {
             expect(f.playBottom).toBeLessThanOrEqual(f.stageBottom - 16);
-            expect(f.hudTop).toBeGreaterThanOrEqual(f.stageTop + 16);
-            expect(Math.abs(f.hudOffset - frames[0].hudOffset)).toBeLessThan(
-                1.5,
-            );
-            expect(Math.abs(f.hudHeight - frames[0].hudHeight)).toBeLessThan(
-                1.5,
-            );
+            expect(f.recordTop).toBeGreaterThanOrEqual(f.stageTop + 16);
+            expect(
+                Math.abs(f.recordOffset - frames[0].recordOffset),
+            ).toBeLessThan(1.5);
+            expect(
+                Math.abs(f.recordHeight - frames[0].recordHeight),
+            ).toBeLessThan(1.5);
         }
     });
 }
+
+test("the head is one crumb line, with the rail and Play in view", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(PATH);
+    const main = page.getByRole("main");
+    await expect(
+        main.getByRole("heading", { level: 1, name: copy.title, exact: true }),
+    ).toBeVisible();
+    await expect(
+        main.getByRole("link", { name: copy.section, exact: true }),
+    ).toHaveAttribute("href", "/resume");
+    const skip = main.getByRole("link", { name: copy.skip });
+    await expect(skip).toBeInViewport();
+    await expect(skip).toHaveAttribute("href", "/resume");
+    await expect(
+        main.getByRole("list", { name: copy.rail }).getByRole("button").last(),
+    ).toBeInViewport();
+    await expect(
+        main.getByRole("button", { name: copy.play, exact: true }),
+    ).toBeInViewport();
+});
+
+test("the flight has its own address and share card", async ({
+    page,
+    request,
+}) => {
+    await page.goto(PATH);
+    const url = `${siteConfig.url}${PATH}`;
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        "href",
+        url,
+    );
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+        "content",
+        url,
+    );
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+        "content",
+        `${copy.title} | ${siteConfig.author}`,
+    );
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+        "content",
+        `${copy.title} by ${siteConfig.author}`,
+    );
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+        "content",
+        /noindex/,
+    );
+    const image = await page
+        .locator('meta[property="og:image"]')
+        .getAttribute("content");
+    const { pathname } = new URL(image!);
+    expect(pathname).toMatch(new RegExp(`^${PATH}/opengraph-image-`));
+    const response = await request.get(pathname);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toMatch(/^image\//);
+});
+
+/** The scene's labels on show (opacity above zero), by their text. */
+function labelsShown(page: Page) {
+    return page.evaluate(() =>
+        [
+            ...document.querySelectorAll<HTMLElement>(
+                "[data-journey] [data-scene] div[data-state]",
+            ),
+        ]
+            .filter((el) => parseFloat(el.style.opacity || "0") > 0.01)
+            .map((el) => el.textContent ?? ""),
+    );
+}
+
+test("the readout ticks under the title; labels name worlds at holds only", async ({
+    page,
+}) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(PATH);
+    await expect(page.locator("[data-journey] [data-scene]")).toHaveAttribute(
+        "data-ready",
+        "",
+        { timeout: 20_000 },
+    );
+    const holds = new Set<string>([copy.phases.coast, copy.phases.flyby]);
+    let transfers = 0;
+    let previous = "";
+    for (let p = 0.1; p < 0.8; p += 0.02) {
+        await seek(page, p);
+        const stamp = page.locator(
+            "[data-journey] [data-card][data-on] [data-stamp]",
+        );
+        // The plan's card has no readout: the flown route is over.
+        if (!(await stamp.count())) break;
+        const readout = (await stamp.textContent()) ?? "";
+        // "May 2024 · Transfer": the date, then the phase.
+        expect(readout, `P ${p.toFixed(2)}`).toMatch(/^(\w{3} )?\d{4} · \S/);
+        const phase = readout.split(" · ").slice(1).join(" · ");
+        const shown = await labelsShown(page);
+        // A world is named by its organisation alone: no dates.
+        expect(shown.join(" "), `P ${p.toFixed(2)}`).not.toMatch(/\d/);
+        // Well into a transfer (its first sample may still hold the
+        // fading label of the world left behind), no label shows.
+        if (!holds.has(phase) && !holds.has(previous)) {
+            transfers += 1;
+            expect(shown, `P ${p.toFixed(2)} (${readout})`).toEqual([]);
+        }
+        previous = phase;
+    }
+    expect(transfers).toBeGreaterThan(0);
+});
+
+test("a still flight opens on the latest chapter, the ask last on the rail", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(PATH);
+    const rail = page.getByRole("list", { name: copy.rail });
+    const buttons = rail.getByRole("button");
+    const count = await buttons.count();
+    // The last stop, when set, is what the owner is open to; the latest
+    // chapter is the one before it.
+    const asks = (await buttons.last().textContent())?.includes(copy.openTo);
+    await expect(buttons.nth(asks ? count - 2 : count - 1)).toHaveAttribute(
+        "aria-current",
+        "step",
+    );
+    await expect(
+        page.locator("[data-journey] [data-card][data-on] h3"),
+    ).not.toHaveText(copy.openTo);
+});
 
 test("any key but Play's own press stops Play", async ({ page }) => {
     await page.goto(PATH);
@@ -170,8 +308,11 @@ async function sceneSpread(page: Page) {
 
 /** A drawn scene's spread is above this in every frame and theme
  *  (15–41 at 1440×900 on SwiftShader); the poster alone is about 7 and
- *  the bare stage 0. */
+ *  the bare stage 0. Flight Manual's opening frame is the poster's own
+ *  picture (the limb in ink under the ☉, no city lights on paper), so
+ *  there the frames checked start once the chase has begun. */
 const DRAWN = 10;
+const FRAMES = { void: [0, 0.5, 1], manual: [0.15, 0.5, 1] } as const;
 
 for (const theme of THEMES) {
     test(`the flight draws in ${theme}, survives a lost context and a return`, async ({
@@ -187,7 +328,7 @@ for (const theme of THEMES) {
         });
         // The canvas's fade in.
         await page.waitForTimeout(900);
-        for (const p of [0, 0.5, 1]) {
+        for (const p of FRAMES[theme]) {
             await seek(page, p);
             expect(await sceneSpread(page), `P ${p}`).toBeGreaterThan(DRAWN);
         }

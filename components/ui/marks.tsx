@@ -37,7 +37,6 @@ export type StatusValue =
     | "archived"
     | "planned"
     | "stopped"
-    | "expired"
     | "lifetime";
 
 /**

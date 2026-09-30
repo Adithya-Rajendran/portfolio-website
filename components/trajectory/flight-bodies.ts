@@ -147,9 +147,8 @@ uniform vec2 uRingR;
 /** Earth's night lights: from the finer map inside its window, feathered
  *  into the global one over its last few texels (sampled either way, so
  *  the mipmaps hold), only where the Sun has set (the Sun is at the
- *  origin) and clear of the caption. On paper they print as ink at the
- *  sunrise (globeCity), and neither they nor the Moon's earthshine
- *  shine. */
+ *  origin) and clear of the caption. Light added to the black: on paper
+ *  neither they nor the Moon's earthshine print. */
 const GLOBE_EMISSIVE = /* glsl */ `
 #ifdef GLOBE_EARTH
 {
@@ -174,8 +173,6 @@ totalEmissiveRadiance *= 1.0 - smoothstep(-0.12, 0.12,
     totalEmissiveRadiance *= smoothstep(0.0, 2.0 * uKeepSoft,
         max(kept.x, kept.y));
 }
-float globeCity = 0.85 * smoothstep(0.03, 0.45,
-    dot(totalEmissiveRadiance, vec3(1.0 / 3.0)));
 totalEmissiveRadiance *= 1.0 - uPrint;
 #endif
 #ifdef GLOBE_LUNAR
@@ -228,13 +225,10 @@ const GLOBE_FINISH = /* glsl */ `
         tone = mix(tone, max(tone, 0.78), uOpen);
 #else
         // At the sunrise the night side prints as paper: the globe is its
-        // ink limb, and Earth's lands its lights in ink.
+        // ink limb.
         tone = mix(tone, 1.0, uOpen);
 #endif
         outgoingLight = mix(uInk, uPaper, 0.28 + 0.72 * tone);
-#ifdef GLOBE_EARTH
-        outgoingLight = mix(outgoingLight, uInk, globeCity * uOpen);
-#endif
 #ifdef GLOBE_SHELL
         diffuseColor.a *= smoothstep(0.1, 0.3, nv);
 #endif

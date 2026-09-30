@@ -6,7 +6,8 @@ import type { CvLink } from "@/lib/cv";
  * The CV rows (contract §4, `.cv-list > .cv-item` in
  * styles/components.css): the log index's grammar, a mono column (a
  * designation, the dates, the place and a status) beside the title, its
- * organization, a serif line and the facts. A row linked to the orbit map
+ * organization, a quiet note (a title's parenthetical, `splitTitle`), a
+ * serif line and the facts. A row linked to the orbit map
  * (`orbit`) lights its orbit on hover, and the map lights the row; a row
  * with an `href` is one big link, its other links still live.
  * Directive-free: /resume and About render it.
@@ -41,6 +42,7 @@ export function CvItem({
     titleAs: Title = "h3",
     href,
     sub,
+    note,
     dek,
     lines,
     skills,
@@ -66,6 +68,8 @@ export function CvItem({
      *  verification page (opened in a new tab). */
     href?: string;
     sub?: React.ReactNode;
+    /** A quiet line under the organization: "Promoted from …". */
+    note?: string | null;
     dek?: string | null;
     lines?: readonly string[];
     skills?: readonly string[];
@@ -115,6 +119,7 @@ export function CvItem({
                     )}
                 </Title>
                 {sub ? <p className="cv-item__sub">{sub}</p> : null}
+                {note ? <p className="cv-item__note">{note}</p> : null}
                 {dek ? <p className="cv-item__dek">{dek}</p> : null}
                 {lines?.length ? (
                     <ul className="cv-item__lines" role="list">

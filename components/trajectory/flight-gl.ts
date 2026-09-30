@@ -117,7 +117,6 @@ export interface FlightHooks {
     classes: {
         label: string;
         name: string;
-        dates: string;
         now: string;
         target: string;
         world: string;
@@ -879,26 +878,22 @@ export function mountFlight(
 
     /* ---- labels ----------------------------------------------------------- */
 
-    const makeLabel = (name: string, dates: string | null) => {
+    // A world's label is its organisation's name alone: the card beside
+    // the scene carries the dates.
+    const makeLabel = (name: string) => {
         const el = document.createElement("div");
         el.className = hooks.classes.label;
         const b = document.createElement("b");
         b.className = hooks.classes.name;
         b.textContent = name;
         el.append(b);
-        if (dates) {
-            const s = document.createElement("span");
-            s.className = hooks.classes.dates;
-            s.textContent = dates;
-            el.append(s);
-        }
         // The leader: a hairline from the world's limb to the label.
         const leader = document.createElement("i");
         leader.className = hooks.classes.leader;
         hooks.labels.append(leader, el);
         return { el, leader, w: 0, h: 0, state: "" };
     };
-    const labels = data.chapters.map((c) => makeLabel(c.orgLabel, c.dates));
+    const labels = data.chapters.map((c) => makeLabel(c.orgLabel));
     // A hollow ring on each world where it is only a few pixels wide.
     const rings = data.chapters.map(() => {
         const el = document.createElement("div");
@@ -906,7 +901,7 @@ export function mountFlight(
         hooks.labels.append(el);
         return el;
     });
-    const openLabel = plan.planned ? makeLabel(hooks.openTo, null) : null;
+    const openLabel = plan.planned ? makeLabel(hooks.openTo) : null;
     const nowMark = document.createElement("div");
     nowMark.className = hooks.classes.now;
     const targetMark = document.createElement("div");
@@ -1471,11 +1466,12 @@ export function mountFlight(
             plannedLeg.material.gapSize = 6 * px;
         }
 
-        // Labels: on the chase the world held and, through a transfer, the
-        // one ahead; the one left behind fades as the ship leaves, by
-        // progress, before the view swings away from it. The map names
-        // every world where it has the room (mapNamesAll); a phone, or a
-        // narrow window beside the record, names only the world held.
+        // Labels: only at a hold and in the finale, never through a
+        // transfer. The world left behind fades as the ship leaves, by
+        // progress, before the view swings away from it; the world ahead
+        // is named as its hold begins. The map names every world where it
+        // has the room (mapNamesAll); a phone, or a narrow window beside
+        // the record, names only the world held.
         const radial = smoothstep(0.35, 0.85, pose.overview);
         const away = (at: { x: number; y: number }) => {
             const n = Math.hypot(at.x - sunAt.x, at.y - sunAt.y) || 1;
@@ -1487,24 +1483,22 @@ export function mountFlight(
             const visited = p >= coastStart[i] - 1e-6;
             const state =
                 i === world ? "current" : visited ? "visited" : "future";
-            // The world ahead is named once the view has it on the stage.
-            let alpha =
-                i === into
-                    ? smoothstep(0.35, 0.6, frame.u)
-                    : state !== "future"
-                      ? 1
-                      : 0;
-            if (i === from) alpha *= 1 - smoothstep(0.05, 0.25, frame.u);
-            if (
-                i !== world &&
-                i !== into &&
-                (kind !== "plan" || !mapNamesAll(stage))
-            )
-                alpha = 0;
+            let alpha = 0;
+            if (kind === "transfer")
+                alpha = i === from ? 1 - smoothstep(0, 0.12, frame.u) : 0;
+            else if (i === world)
+                alpha =
+                    kind === "plan" || i === 0
+                        ? 1
+                        : smoothstep(0, 0.12, frame.u);
             // The map's other labels come in as it settles, not as their
             // worlds sweep in through the crane.
-            if (kind === "plan" && i !== world)
-                alpha *= smoothstep(0.4, 0.6, frame.u);
+            else if (
+                kind === "plan" &&
+                mapNamesAll(stage) &&
+                state !== "future"
+            )
+                alpha = smoothstep(0.4, 0.6, frame.u);
             // Gone once its world leaves the safe area.
             alpha *= 1 - smoothstep(-16, 8, overflow(pointBox(at)));
             // At the sunrise the first world is its limb: named only as

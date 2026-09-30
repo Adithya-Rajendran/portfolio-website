@@ -2,8 +2,8 @@ import { formatMissionDesignation } from "@/lib/designations";
 import { decimalYear, type OrbitEntry } from "@/lib/orbit/geometry";
 import { formatTimelineDate } from "@/lib/profile-content";
 import { EMPLOYMENT_TYPES, TALK_KINDS } from "@/lib/profile-fields";
-import { formatProjectYears, projectStatusLabel } from "@/lib/project-content";
-import { PROJECT_TYPES, type ProjectStatus } from "@/lib/project-fields";
+import { formatProjectYears } from "@/lib/project-content";
+import { PROJECT_TYPES } from "@/lib/project-fields";
 import type {
     CredentialListItem,
     ProjectListItem,
@@ -182,16 +182,14 @@ export interface CvProject {
     /** "MSN-02". */
     designation: string;
     title: string;
-    status: ProjectStatus;
-    statusLabel: string;
-    /** "c. 2024–2025"; null when the project has no dates. */
+    /** "c. 2024–2025"; "Ongoing" for an active project without dates;
+     *  otherwise null. */
     years: string | null;
     /** "Infrastructure · Software". */
     types: string | null;
     role: string | null;
     /** The highlights, or the summary when there are none. */
     lines: string[];
-    technologies: string[];
     links: CvLink[];
 }
 
@@ -218,9 +216,9 @@ export function cvProjects(
                 slug: project.slug,
                 designation: formatMissionDesignation(project.designation),
                 title: project.title,
-                status: project.status,
-                statusLabel: projectStatusLabel(project.status),
-                years: formatProjectYears(project),
+                years:
+                    formatProjectYears(project) ??
+                    (project.status === "active" ? "Ongoing" : null),
                 types: types || null,
                 role: project.myRole?.trim() || null,
                 lines: highlights.length
@@ -228,7 +226,6 @@ export function cvProjects(
                     : project.summary?.trim()
                       ? [project.summary.trim()]
                       : [],
-                technologies: project.technologies ?? [],
                 links: httpLinks(project.links),
             };
         });
@@ -269,60 +266,74 @@ export interface CvCredential {
     title: string;
     issuer: string;
     url: string | null;
-    status: CredentialStatus;
-    /** "Active", "No expiry", "Expired". */
+    status: Exclude<CredentialStatus, "expired">;
+    /** "Active", "No expiry". */
     statusLabel: string;
-    /** "Issued Sep 2023 · Expired Sep 2026". */
+    /** "Issued Sep 2023 · Expires Sep 2026". */
     meta: string;
 }
 
-const CREDENTIAL_LABELS: Record<CredentialStatus, string> = {
+/** An expired credential, as the résumé lists it: its name and the span
+ *  it was held, on one plain line ("Sep 2023 – Sep 2026"). */
+export interface CvPriorCredential {
+    id: string;
+    title: string;
+    dates: string | null;
+}
+
+const CREDENTIAL_LABELS: Record<CvCredential["status"], string> = {
     active: "Active",
     lifetime: "No expiry",
-    expired: "Expired",
-};
-const CREDENTIAL_ORDER: Record<CredentialStatus, number> = {
-    active: 0,
-    lifetime: 1,
-    expired: 2,
 };
 
-/** Current credentials first, then expired ones, each in the owner's order. */
+/**
+ * The credentials in the owner's order: the current ones (active or
+ * without expiry) as CV rows, and the expired ones as Prior
+ * certifications, as on the résumé. Nothing is labelled "Expired".
+ */
 export function cvCredentials(
     credentials: readonly CredentialListItem[] | null | undefined,
-): CvCredential[] {
-    return (credentials ?? [])
-        .filter((credential) => credential.title?.trim())
-        .map((credential, index) => ({ credential, index }))
-        .sort(
-            (a, b) =>
-                CREDENTIAL_ORDER[a.credential.lifecycleStatus] -
-                    CREDENTIAL_ORDER[b.credential.lifecycleStatus] ||
-                a.index - b.index,
-        )
-        .map(({ credential }) => {
-            const issued = formatTimelineDate(credential.issuedOn);
-            const expires = credential.lifetime
-                ? null
-                : formatTimelineDate(credential.expiresOn);
-            const expired = credential.lifecycleStatus === "expired";
-            return {
+): { current: CvCredential[]; prior: CvPriorCredential[] } {
+    const listed = (credentials ?? []).filter((credential) =>
+        credential.title?.trim(),
+    );
+    const current: CvCredential[] = [];
+    const prior: CvPriorCredential[] = [];
+    for (const credential of listed) {
+        const title = credential.title.trim();
+        const issued = formatTimelineDate(credential.issuedOn);
+        const status = credential.lifecycleStatus;
+        if (status === "expired") {
+            const ended = formatTimelineDate(credential.expiresOn);
+            prior.push({
                 id: credential._key,
-                title: credential.title.trim(),
-                issuer: credential.issuer,
-                url: /^https?:\/\//.test(credential.verificationUrl ?? "")
-                    ? credential.verificationUrl!
-                    : null,
-                status: credential.lifecycleStatus,
-                statusLabel: CREDENTIAL_LABELS[credential.lifecycleStatus],
-                meta: [
-                    issued ? `Issued ${issued}` : null,
-                    expires
-                        ? `${expired ? "Expired" : "Expires"} ${expires}`
-                        : null,
-                ]
-                    .filter(Boolean)
-                    .join(" · "),
-            };
+                title,
+                dates:
+                    issued && ended
+                        ? `${issued} – ${ended}`
+                        : (ended ?? issued),
+            });
+            continue;
+        }
+        const expires = credential.lifetime
+            ? null
+            : formatTimelineDate(credential.expiresOn);
+        current.push({
+            id: credential._key,
+            title,
+            issuer: credential.issuer,
+            url: /^https?:\/\//.test(credential.verificationUrl ?? "")
+                ? credential.verificationUrl!
+                : null,
+            status,
+            statusLabel: CREDENTIAL_LABELS[status],
+            meta: [
+                issued ? `Issued ${issued}` : null,
+                expires ? `Expires ${expires}` : null,
+            ]
+                .filter(Boolean)
+                .join(" · "),
         });
+    }
+    return { current, prior };
 }

@@ -147,7 +147,6 @@ describe("projects, talks and credentials", () => {
             "MSN-03",
         ]);
         expect(rows[0]).toMatchObject({
-            statusLabel: "Complete",
             years: "c. 2023",
             types: "Infrastructure",
             lines: ["Built it."],
@@ -159,8 +158,16 @@ describe("projects, talks and credentials", () => {
                 },
             ],
         });
-        // No highlights: the summary stands in; no dates: none printed.
-        expect(rows[1]).toMatchObject({ lines: ["A summary."], years: null });
+        // No highlights: the summary stands in; no dates on an active
+        // project: "Ongoing".
+        expect(rows[1]).toMatchObject({
+            lines: ["A summary."],
+            years: "Ongoing",
+        });
+        // Without dates, only an active project says Ongoing.
+        expect(
+            cvProjects([project({ status: "planned" })])[0].years,
+        ).toBeNull();
     });
 
     it("keeps a talk without a date undated", () => {
@@ -176,16 +183,27 @@ describe("projects, talks and credentials", () => {
         ]);
     });
 
-    it("lists current credentials first and words expiry", () => {
-        const rows = cvCredentials(
+    it("keeps current credentials as rows and expired ones as prior lines", () => {
+        const { current, prior } = cvCredentials(
             FIXTURE_PROFILE.credentials as CredentialListItem[],
         );
-        expect(rows.map((row) => [row.title, row.statusLabel])).toEqual([
+        expect(current.map((row) => [row.title, row.statusLabel])).toEqual([
             ["MTA: Security Fundamentals", "No expiry"],
-            ["AWS Certified Solutions Architect – Associate", "Expired"],
-            ["CompTIA Security+", "Expired"],
         ]);
-        expect(rows[0].meta).toBe("Issued May 2018");
-        expect(rows[1].meta).toBe("Issued Sep 2023 · Expired Sep 2026");
+        expect(current[0].meta).toBe("Issued May 2018");
+        // As the résumé lists them: the name and the span, never "Expired".
+        expect(prior).toEqual([
+            {
+                id: "credential-aws-saa",
+                title: "AWS Certified Solutions Architect – Associate",
+                dates: "Sep 2023 – Sep 2026",
+            },
+            {
+                id: "credential-security-plus",
+                title: "CompTIA Security+",
+                dates: "Aug 2022 – Aug 2025",
+            },
+        ]);
+        expect(cvCredentials(null)).toEqual({ current: [], prior: [] });
     });
 });

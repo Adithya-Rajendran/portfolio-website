@@ -29,13 +29,11 @@ export const createFlightScene: CreateScene = (host, data, route) => {
     let gl: FlightGL | null = null;
     let disposed = false;
     let size: [number, number, boolean, number?, Box?, number?] | null = null;
-    // The record's date row (its rule): on a phone nothing is drawn below
-    // its top edge; on a wide stage the scene keeps right of its right
-    // edge (the record column's). Measured here, where layout reads
-    // belong.
+    // The record (its column): on a phone nothing is drawn below its top
+    // edge; on a wide stage the scene keeps right of its right edge.
+    // Measured here, where layout reads belong.
     const recordEdge = (edge: "top" | "right") => {
-        const row =
-            host.parentElement?.querySelector("[data-date]")?.parentElement;
+        const row = host.parentElement?.querySelector("[data-record]");
         if (!row) return undefined;
         const h = host.getBoundingClientRect();
         const r = row.getBoundingClientRect();
@@ -77,7 +75,6 @@ export const createFlightScene: CreateScene = (host, data, route) => {
                 classes: {
                     label: styles.label,
                     name: styles.name,
-                    dates: styles.dates,
                     now: styles.now,
                     target: styles.target,
                     world: styles.world,

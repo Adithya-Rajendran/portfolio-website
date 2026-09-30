@@ -16,7 +16,7 @@ import { orbitCopy as copy } from "@/lib/copy";
  *   on map" pins the orbit and brings the map into view.
  * - **The view switch** (List | Map) shows the map above the CV or hides
  *   it; the list is the default, and `#orbit-map` in the address opens
- *   the map. **Print CV** opens the print dialog.
+ *   the map.
  *
  * Lookups stay inside this page's root: Cache Components keeps other
  * visited pages mounted but hidden, and they can hold the same ids. When
@@ -163,12 +163,6 @@ export default function OrbitInteraction() {
         function onClick(event: MouseEvent) {
             if (event.defaultPrevented || event.button !== 0) return;
             const target = event.target as Element;
-
-            const print = target.closest("[data-cv-print]");
-            if (print) {
-                window.print();
-                return;
-            }
 
             const step = target.closest<HTMLElement>("[data-orbit-step]");
             if (step) {

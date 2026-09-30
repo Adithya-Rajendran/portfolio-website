@@ -179,6 +179,10 @@ const nextConfig = {
                 // others so every share image answers there.
                 ["/contact/opengraph-image", "/contact/opengraph-image-upzrkl"],
                 [
+                    "/resume/trajectory/opengraph-image",
+                    "/resume/trajectory/opengraph-image-hha09c",
+                ],
+                [
                     "/portfolio/:slug/opengraph-image",
                     "/portfolio/:slug/opengraph-image-ysfoa1",
                 ],

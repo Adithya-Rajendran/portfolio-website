@@ -1,9 +1,10 @@
 /*
- * Trajectory · Experience / CV (/resume): the page head, the tool row,
+ * Trajectory · Experience / CV (/resume): the page head, the view row,
  * the orbit map's section and the CV sections (DocSection: the shared
  * section head, then the rows). The map, the CV rows and the key/value
  * list have their own styles (components/orbit/orbit.module.css;
- * `.cv-list` and `.specs` in styles/components.css). On paper the page is
+ * `.cv-list` and `.specs` in styles/components.css); the plain rows (the
+ * latest writing, prior certifications) are here. On paper the page is
  * the controlled document (G3): the print rules close this file and
  * styles/print.css.
  */
@@ -11,7 +12,7 @@
     position: relative;
 }
 
-/* ---- The head band: the shared split head, then the tool row ------------ */
+/* ---- The head band: the shared split head, then the view row ------------ */
 .band {
     padding-bottom: var(--s-5);
 }
@@ -25,19 +26,15 @@
     margin-top: var(--s-5);
 }
 
-/* ---- Tools: the view switch, Print and Share (JavaScript only); without
-   it, the link that opens the map ---------------------------------------- */
+/* ---- Views: List | Timeline (JavaScript only; without it, the link that
+   opens the map), and beside them the flight, Timeline in 3D ------------ */
 .toolbar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--s-3) var(--s-5);
+    gap: var(--s-3) var(--s-6);
     padding-top: var(--s-4);
     border-top: var(--rule-hair) solid var(--rule-1);
-}
-.tools {
-    --cluster: var(--s-2);
 }
 @media (max-width: 37.49rem) {
     .switch {
@@ -91,6 +88,56 @@
 }
 .skills {
     max-width: var(--measure-index);
+}
+
+/* Plain rows on the CV's columns: the date in the mono column, then one
+   line (a linked title, or a credential's name). */
+.rows {
+    max-width: var(--measure-index);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-1) var(--gutter);
+    padding-block: var(--s-3);
+    border-top: var(--rule-hair) solid var(--rule-1);
+    color: var(--ink-1);
+    font: 400 var(--step-0) / 1.45 var(--font-display);
+}
+@media (min-width: 37.5rem) {
+    .row {
+        grid-template-columns: 11rem minmax(0, 1fr);
+        align-items: baseline;
+    }
+}
+.rowDate {
+    color: var(--ink-2);
+    font: 400 0.8125rem / 1.5 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+}
+.row a {
+    color: var(--ink-1);
+    text-decoration-color: var(--rule-2);
+    text-underline-offset: 0.18em;
+}
+.row a:hover {
+    color: var(--accent-text);
+    text-decoration-color: var(--accent);
+}
+
+/* Prior certifications, under the current ones. */
+.subhead {
+    margin: var(--s-6) 0 var(--s-3);
+    color: var(--ink-1);
+    font: 400 var(--step-0) / 1.4 var(--font-display);
+}
+
+/* An address or an opening on the masthead, never split. */
+.whole {
+    white-space: nowrap;
 }
 
 /* Print-only parts: the masthead and the sheet heads. */
@@ -234,5 +281,21 @@
     }
     .skills {
         max-width: none;
+    }
+    .row {
+        grid-template-columns: 31mm minmax(0, 1fr);
+        column-gap: 4.5mm;
+        padding: 0 0 0.6mm;
+        border: 0;
+        font: 400 8.4pt / 1.35 var(--font-display);
+        break-inside: avoid;
+    }
+    .rowDate {
+        font-size: 7pt;
+    }
+    .subhead {
+        margin: 1.2mm 0 0.6mm;
+        font: 500 8.4pt / 1.3 var(--font-display);
+        break-after: avoid;
     }
 }

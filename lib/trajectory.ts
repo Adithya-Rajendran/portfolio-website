@@ -21,8 +21,6 @@ import type { Availability } from "@/lib/sanity-client";
 
 export interface Chapter {
     id: string;
-    /** The card's small label: "Education", "Internship", "Work"… */
-    label: string;
     kind: "work" | "education";
     flyby: boolean;
     title: string;
@@ -128,13 +126,6 @@ export function trajectoryData(
         const flyby = INTERN.test(entry.employment ?? entry.title);
         chapters.push({
             id: entry.id,
-            label:
-                entry.employment ??
-                (flyby
-                    ? "Internship"
-                    : entry.kind === "education"
-                      ? "Education"
-                      : "Work"),
             kind: entry.kind,
             flyby,
             title,

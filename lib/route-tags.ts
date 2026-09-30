@@ -173,6 +173,11 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
     },
 
     // No content tags: never warmed.
+    {
+        path: "/resume/trajectory/opengraph-image-hha09c",
+        file: "app/(site)/resume/trajectory/opengraph-image.tsx",
+        tags: [],
+    },
     { path: "/robots.txt", file: "app/robots.ts", tags: [] },
     { path: "/icon.svg", file: "app/icon.svg", tags: [] },
     { path: "/apple-icon.png", file: "app/apple-icon.png", tags: [] },

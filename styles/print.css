@@ -149,6 +149,10 @@
             color: var(--ink-1);
             font: 400 8.6pt / 1.35 var(--font-display);
         }
+        [data-page="resume"] .cv-item__note {
+            margin-top: 0.2mm;
+            font: 400 7.8pt / 1.35 var(--font-display);
+        }
         [data-page="resume"] .cv-item__dek {
             max-width: none;
             margin-top: 0.6mm;

@@ -1,26 +1,44 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import TrajectoryView from "@/components/trajectory/trajectory-view";
-import { buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
+import CrumbRow from "@/components/ui/crumb-row";
 import { LinkArrow } from "@/components/ui/marks";
-import PageHead from "@/components/ui/page-head";
 import { getToday } from "@/lib/clock";
+import { siteConfig } from "@/lib/config";
 import { trajectoryCopy as copy } from "@/lib/copy";
 import { cvEntries } from "@/lib/cv";
 import { siteRoutes } from "@/lib/navigation";
 import { getProfile } from "@/lib/sanity-client";
 import { trajectoryData } from "@/lib/trajectory";
+import styles from "./trajectory.module.css";
 
+const canonicalUrl = `${siteConfig.url}${siteRoutes.trajectory}`;
+
+/** Its own address and card (opengraph-image.tsx); still unlisted. */
 export const metadata: Metadata = {
-    title: copy.metaTitle,
+    title: copy.title,
     description: copy.description,
+    alternates: { canonical: canonicalUrl },
     robots: { index: false },
+    openGraph: {
+        title: `${copy.title} | ${siteConfig.author}`,
+        description: copy.description,
+        url: canonicalUrl,
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: `${copy.title} | ${siteConfig.author}`,
+        description: copy.description,
+    },
 };
 
 /**
- * Experience, flown: the profile's timeline as a route the page scrolls
- * through (components/trajectory/journey.tsx), then the way back to the
- * list. The CV on /resume stays the complete record.
+ * Experience, flown: one crumb line (Experience / Timeline, the page's
+ * small h1, and Skip to the list), then the profile's timeline as a route
+ * the page scrolls through (components/trajectory/journey.tsx), and after
+ * the stage the profile's button and the one way back to the list. The
+ * CV on /resume stays the complete record.
  */
 export default async function TrajectoryPage() {
     const [profile, today] = await Promise.all([getProfile(), getToday()]);
@@ -29,36 +47,37 @@ export default async function TrajectoryPage() {
         profile?.availability,
         today,
     );
-    const first = data.chapters[0];
-    const current = data.chapters.some((chapter) => chapter.current);
     return (
         <div data-page="trajectory">
-            <PageHead
-                className="shell"
+            <CrumbRow
+                className={`shell ${styles.head}`}
                 ornament="orbit"
-                tag={copy.tag}
-                title={copy.title}
+                label={copy.section}
+                href={siteRoutes.resume}
+                name={copy.title}
+                heading
                 meta={
-                    first ? (
-                        <span className="data">
-                            {first.year}
-                            {current ? " – present" : null}
-                        </span>
-                    ) : undefined
+                    <LinkArrow href={siteRoutes.resume} prefetch={false}>
+                        {copy.skip}
+                    </LinkArrow>
                 }
-            >
-                <div className="cluster page-head__actions">
-                    <Link
-                        className={buttonClass({ size: "sm" })}
-                        href={siteRoutes.resume}
-                    >
-                        {copy.list}
-                    </Link>
-                </div>
-            </PageHead>
+                metaClassName={styles.skip}
+            />
             {data.chapters.length ? <TrajectoryView data={data} /> : null}
-            <div className="shell section--tight">
-                <LinkArrow href={siteRoutes.resume}>{copy.close}</LinkArrow>
+            <div className={`shell cluster ${styles.close}`}>
+                {data.planned?.cta ? (
+                    <ButtonLink
+                        variant="primary"
+                        href={data.planned.href}
+                        icon="arrow"
+                        iconAt="end"
+                    >
+                        {data.planned.cta}
+                    </ButtonLink>
+                ) : null}
+                <LinkArrow href={siteRoutes.resume} prefetch={false}>
+                    {copy.close}
+                </LinkArrow>
             </div>
         </div>
     );

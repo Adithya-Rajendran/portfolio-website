@@ -5,7 +5,9 @@ import { expect, test } from "./support/test";
  * The printed CV (G3, plan §6.2 PR 11): /resume prints as a controlled
  * document of two sheets on both A4 and Letter, each opening with its
  * control line, with the orbit map, the chrome and the controls left off
- * the paper, and no email address or phone number on it.
+ * the paper, and no email address or phone number on it. Expired
+ * credentials print as Prior certifications, never "Expired", and no
+ * masthead address or opening splits across a line.
  */
 
 /** Pages in a PDF, from its page tree's count. */
@@ -47,4 +49,36 @@ test("paper leaves off the map, the chrome and the controls", async ({
     ).toBeVisible();
     const html = await page.content();
     expect(html).not.toMatch(/mailto:|tel:/i);
+});
+
+test("paper lists prior certifications and keeps each address whole", async ({
+    page,
+}) => {
+    // About the printed width of A4 and Letter inside the page margins.
+    await page.setViewportSize({ width: 700, height: 1000 });
+    await page.goto("/resume");
+    await page.emulateMedia({ media: "print" });
+    const main = page.getByRole("main");
+    await expect(main.getByText(/expired/i)).toHaveCount(0);
+    const prior = main.getByRole("heading", {
+        name: cvCopy.priorCertifications,
+        exact: true,
+    });
+    // The fixture profile holds two expired credentials.
+    if (await prior.count()) await expect(prior).toBeVisible();
+    // Each address and opening on the masthead is one unbroken line.
+    const parts = main.locator(
+        "header[data-print] span > span:not(:empty, .rev)",
+    );
+    expect(await parts.count()).toBeGreaterThan(1);
+    for (const part of await parts.all()) {
+        const lines = await part.evaluate((el) => {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            return new Set(
+                [...range.getClientRects()].map((r) => Math.round(r.top)),
+            ).size;
+        });
+        expect(lines, (await part.textContent()) ?? "").toBe(1);
+    }
 });

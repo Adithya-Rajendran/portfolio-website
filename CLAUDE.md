@@ -130,13 +130,50 @@ only live in comments or commit messages.
   JavaScript a link to that fragment and CSS `:target`, since
   `history.replaceState` does not update `:target`); only in that view do
   the rows show their orbit numbers and "Show on timeline", which pins a
-  row's orbit.
+  row's orbit. Beside the views, one quiet link, "Timeline in 3D", goes
+  to the flight (`siteRoutes.trajectory`). The head carries Download CV
+  (PDF) as the primary and Contact: no Open PDF, Print or Share (the
+  browser's Print prints the CV).
   `lib/cv.ts` words the rows' dates as the résumé gives them and derives
-  no length of time from them. The print is the only paper artefact: two sheets on the named
+  no length of time from them. A role's long parenthetical ("Field
+  Software Engineer I (promoted from …)") is split by `splitTitle`
+  (lib/trajectory.ts): the title, then the words as a quiet note under
+  the organisation (`CvItem note`). Project rows carry no status or
+  stack: the dates, else "Ongoing" for an active project, then the type,
+  the lines and the links (every project is listed, so no "All
+  projects"). Writing & talks is the latest three entries as plain rows
+  (date · linked title) and All writing, then the talks. Certifications
+  are the current ones as rows, then Prior certifications: the expired
+  ones as plain lines with their span ("Sep 2023 – Sep 2026",
+  `cvCredentials().prior`), on screen and on paper, never "Expired".
+  The print is the only paper artefact: two sheets on the named
   page `cv` (`styles/print.css`), sheet 2 breaking before its control
-  line. `[data-print="only"]` forces `display: block !important` from a
+  line; the masthead keeps each address and opening whole (`Unbroken`),
+  and the site's address stays on it. `[data-print="only"]` forces
+  `display: block !important` from a
   layer, which no unlayered rule overrides, so a print-only part that
   needs another display sits inside a print-only container instead.
+- **The flight** (`/resume/trajectory`, noindex, reached from `/resume`).
+  The head is one crumb line (`CrumbRow heading`: Experience, linking to
+  `/resume`, / the small h1 Timeline, and "Skip to the list"), so the
+  pinned stage starts just under the header and its rail and Play show in
+  the first viewport at 1440×900. The page has its own canonical,
+  `og:url`, "Timeline | Adithya Rajendran" and share card (tag
+  Trajectory, title Timeline). `components/trajectory/journey.tsx` is the
+  record: each card is the title, one DM Mono readout under it (the
+  chapter's dates as written; in flight the date, ticking, and the phase,
+  "May 2024 · Transfer"), "● Current" on the current chapter, the
+  organisation, a note and a line, and Full entry; no big date, kind
+  label or readout on the plan's card, which states Open to with a quiet
+  Contact (the profile's button follows the stage, with the one way back,
+  "The full record"). The scene (`flight-gl.ts`) names each world by its
+  organisation alone (DM Mono 12px), only at a hold and in the finale:
+  the world left behind fades as the ship leaves, the next is named as
+  its hold begins, and nothing is named through a transfer. Flight
+  Manual prints no city lights. A still flight (reduced motion, Pause
+  motion) opens on the whole system with the latest chapter's card; the
+  ask stays the rail's last stop. The figure line is "Not to scale ·
+  Maps: NASA, Solar System Scope (CC BY 4.0)".
 - **Prefetching** (plan §4.6 rule 8). The app-wide `partialPrefetching`
   flag is off: in Next.js 16.3.4 it made the first request for an unknown
   post or tag slug answer 200 instead of 404 on `next start`. The two
@@ -700,14 +737,21 @@ deployment require an authenticated Sanity CLI session.
   margin notes, the caution callout as a quiet note and revisions, their
   RSS output, and
   in-page links landing in the visible entry after a client-side
-  navigation), `orbit` (the page opening on the CV list with Contact in
-  the first viewport and no per-row map buttons, the Timeline view from
+  navigation), `orbit` (the page opening on the CV list with Contact and
+  Timeline in 3D in the first viewport, no Open PDF, Print or Share, and
+  no per-row map buttons, the Timeline view from
   the switch and `#orbit-map`, "Show on timeline" pinning a row's orbit, a CV row lighting its orbit and back, a click pinning
   a record and a second click or Escape releasing it, Earlier and Later,
   every orbit labelled on a phone, and without JavaScript the list, the
   map from its link and the labels as links to their rows), `print` (the CV
   on two sheets on A4 and on Letter, without the map, chrome or
-  controls), `missions` (every old `/portfolio` fragment sent on to its
+  controls; Prior certifications and never "Expired"; each masthead
+  address and opening on one line), `trajectory` (the flight's crumb head
+  with the rail and Play in the first viewport, its own canonical and
+  card, the record holding still while scrubbed, one readout ticking
+  under the title, the worlds named without dates and never mid-transfer,
+  a still flight opening on the latest chapter, axe in both themes, and
+  the scene drawing, surviving a lost context and a return), `missions` (every old `/portfolio` fragment sent on to its
   page, the index links every project with no counts, register, mission
   numbers or related pages, titles in sentence case and four stack items
   at most on a card, the flagship's title and View the project in the

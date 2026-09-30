@@ -212,7 +212,6 @@ describe("trajectory", () => {
         expect(bs.startKnown).toBe(false);
         expect(bs.year).toBe("2023");
         expect(intern.flyby).toBe(true);
-        expect(intern.label).toBe("Internship");
         const route = buildRoute(live);
         for (const p of [0, 0.05, route.rest[0]]) {
             const f = frameAt(route, p);

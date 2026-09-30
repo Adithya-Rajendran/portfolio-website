@@ -197,7 +197,8 @@
     opacity: 0;
 }
 
-/* A map label: a knockout backing, so a line passing under it breaks
+/* A map label: the organisation's name alone (the card carries the
+   dates), on a knockout backing, so a line passing under it breaks
    rather than striking the text, and a leader to its world. The backing
    reaches a few pixels past the text and feathers out, so over the sky it
    reads as a soft plate, not a box. */
@@ -240,26 +241,15 @@
     overflow: hidden;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    font: 400 10px / 1.35 var(--font-label);
-    letter-spacing: var(--track-label);
+    font: 400 12px / 1.35 var(--font-mono);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     text-wrap: balance;
     color: var(--ink-2);
 }
 
-.dates {
-    font: 400 11px / 1.3 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
-    white-space: nowrap;
-    color: var(--ink-3);
-}
-
 .label[data-state="current"] .name {
     color: var(--ink-1);
-}
-
-.label[data-state="current"] .dates {
-    color: var(--ink-2);
 }
 
 .label[data-state="future"] .name,

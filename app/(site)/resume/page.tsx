@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import LogIndex from "@/components/blogs/log-index";
+import { Fragment } from "react";
 import { CvItem, CvList } from "@/components/cv/cv-list";
 import OrbitInteraction from "@/components/orbit/orbit-interaction";
 import OrbitMap from "@/components/orbit/orbit-map";
-import ResumeShareAction from "@/components/resume/resume-share-action";
 import Availability from "@/components/ui/availability";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import {
-    LinkArrow,
-    Rev,
-    Status,
-    Updated,
-    type StatusValue,
-} from "@/components/ui/marks";
+import { LinkArrow, Rev, Status, Updated } from "@/components/ui/marks";
 import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
 import Segmented from "@/components/ui/segmented";
@@ -30,11 +23,10 @@ import {
     hostOf,
     type CvEntry,
 } from "@/lib/cv";
-import { logEntries } from "@/lib/log-index";
+import { formatEntryDate, logEntries } from "@/lib/log-index";
 import { contactHref, siteRoutes } from "@/lib/navigation";
 import { orbitModel } from "@/lib/orbit/geometry";
 import { availabilityLine, getProfileLink } from "@/lib/profile-content";
-import type { ProjectStatus } from "@/lib/project-fields";
 import { resolveResumeAssetUrl } from "@/lib/resume";
 import {
     getAllPosts,
@@ -42,6 +34,7 @@ import {
     getProfile,
     type ProfileData,
 } from "@/lib/sanity-client";
+import { splitTitle } from "@/lib/trajectory";
 import styles from "./resume.module.css";
 
 const canonicalUrl = `${siteConfig.url}${siteRoutes.resume}`;
@@ -73,14 +66,8 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-const PROJECT_STATUS: Record<ProjectStatus, StatusValue> = {
-    active: "active",
-    completed: "complete",
-    paused: "paused",
-    archived: "archived",
-    planned: "planned",
-    stopped: "stopped",
-};
+/** The latest entries Writing & talks lists; /blog has them all. */
+const WRITING_ROWS = 3;
 
 /**
  * A CV section: the shared section head (DocSection: the full-width tag
@@ -143,17 +130,60 @@ function SheetHead({
 }
 
 /**
+ * Items on one line where they fit, each kept whole: a wrapped line never
+ * breaks inside an address or an opening, and never starts with a
+ * separator (the dot stays with the item before it).
+ */
+function Unbroken({ items }: { items: readonly string[] }) {
+    return items.map((item, index) => (
+        <Fragment key={item}>
+            {index ? " " : null}
+            <span className={styles.whole}>
+                {item}
+                {index < items.length - 1 ? "\u00a0·" : null}
+            </span>
+        </Fragment>
+    ));
+}
+
+/**
+ * A short list on the CV's columns: a date in the mono column, then a
+ * line (the latest writing, prior certifications).
+ */
+function PlainRows({
+    rows,
+}: {
+    rows: readonly {
+        id: string;
+        date: React.ReactNode;
+        line: React.ReactNode;
+    }[];
+}) {
+    return (
+        <ol className={styles.rows} role="list">
+            {rows.map((row) => (
+                <li className={styles.row} key={row.id}>
+                    <span className={styles.rowDate}>{row.date}</span>
+                    <span>{row.line}</span>
+                </li>
+            ))}
+        </ol>
+    );
+}
+
+/**
  * Trajectory · Experience / CV (G2, G3): the CV first, as a list a hiring
  * reader can scan (education, experience, projects, writing and talks,
  * skills, certifications), under the head with what the owner is open to,
  * the PDF and the way to get in touch. The time-scaled orbit map with its
- * record panel is the optional Map view. The PDF is downloadable and the
- * page prints as a two-sheet controlled document. Everything is
- * server-rendered: without JavaScript the list shows and the map opens
- * from its link (`#orbit-map`), its labels linking to the CV rows; with
- * it, `OrbitInteraction` runs the view switch, previews, pins and
- * cross-lights map and list, and runs Print. There is no email address
- * or phone number, on screen or on paper.
+ * record panel is the optional Timeline view, and the flight
+ * (/resume/trajectory) is one quiet link beside it. The PDF is
+ * downloadable, and the browser's Print gives the two-sheet controlled
+ * document. Everything is server-rendered: without JavaScript the list
+ * shows and the map opens from its link (`#orbit-map`), its labels
+ * linking to the CV rows; with it, `OrbitInteraction` runs the view
+ * switch, previews, pins and cross-lights map and list. There is no
+ * email address or phone number, on screen or on paper.
  */
 export default async function ResumePage() {
     const [profile, projects, posts, today] = await Promise.all([
@@ -184,7 +214,7 @@ export default async function ResumePage() {
         model?.orbits.map((orbit) => [orbit.id, orbit.number]) ?? [],
     );
     const missions = cvProjects(projects);
-    const writing = logEntries(posts);
+    const writing = logEntries(posts).slice(0, WRITING_ROWS);
     const talks = cvTalks(profile?.talksAndPapers);
     const skills = (profile?.skillGroups ?? []).filter(
         (group) => group.title && group.skills?.length,
@@ -201,7 +231,8 @@ export default async function ResumePage() {
         projects: missions.length > 0,
         writing: writing.length + talks.length > 0,
         skills: skills.length > 0,
-        certifications: credentials.length > 0,
+        certifications:
+            credentials.current.length + credentials.prior.length > 0,
     };
     const order = (Object.keys(present) as (keyof typeof present)[]).filter(
         (id) => present[id],
@@ -216,46 +247,52 @@ export default async function ResumePage() {
     );
     const sheets = sheetOne && sheetTwo ? 2 : 1;
 
-    const roleRow = (entry: CvEntry) => (
-        <CvItem
-            key={entry.id}
-            anchor={entry.anchor}
-            orbit={model ? entry.id : undefined}
-            current={entry.current}
-            code={
-                numbers.has(entry.id)
-                    ? orbitCopy.designation(numbers.get(entry.id)!)
-                    : undefined
-            }
-            dates={entry.dates}
-            meta={[entry.location, entry.expected, entry.employment]}
-            status={
-                entry.current ? (
-                    <Status value="active">{copy.current}</Status>
-                ) : null
-            }
-            title={entry.title}
-            sub={entry.organization}
-            dek={entry.summary}
-            lines={entry.highlights}
-            skills={entry.skills}
-            skillsLabel={copy.skillsLabel}
-            actions={
-                model ? (
-                    <Button
-                        size="sm"
-                        variant="quiet"
-                        icon="arrow-up"
-                        className="js-only"
-                        data-orbit-show={entry.id}
-                        data-print="hide"
-                    >
-                        {copy.showOnMap}
-                    </Button>
-                ) : null
-            }
-        />
-    );
+    const roleRow = (entry: CvEntry) => {
+        // "Field Software Engineer I (promoted from …)": the title, and
+        // the promotion as a quiet line under it, word for word.
+        const [title, note] = splitTitle(entry.title);
+        return (
+            <CvItem
+                key={entry.id}
+                anchor={entry.anchor}
+                orbit={model ? entry.id : undefined}
+                current={entry.current}
+                code={
+                    numbers.has(entry.id)
+                        ? orbitCopy.designation(numbers.get(entry.id)!)
+                        : undefined
+                }
+                dates={entry.dates}
+                meta={[entry.location, entry.expected, entry.employment]}
+                status={
+                    entry.current ? (
+                        <Status value="active">{copy.current}</Status>
+                    ) : null
+                }
+                title={title}
+                sub={entry.organization}
+                note={note}
+                dek={entry.summary}
+                lines={entry.highlights}
+                skills={entry.skills}
+                skillsLabel={copy.skillsLabel}
+                actions={
+                    model ? (
+                        <Button
+                            size="sm"
+                            variant="quiet"
+                            icon="arrow-up"
+                            className="js-only"
+                            data-orbit-show={entry.id}
+                            data-print="hide"
+                        >
+                            {copy.showOnMap}
+                        </Button>
+                    ) : null
+                }
+            />
+        );
+    };
 
     return (
         <div data-page="resume" data-view="list" className={styles.page}>
@@ -280,27 +317,16 @@ export default async function ResumePage() {
                     ) : null}
                     <div className="cluster page-head__actions">
                         {hasPdf ? (
-                            <>
-                                <a
-                                    className={buttonClass({
-                                        variant: "primary",
-                                        size: "sm",
-                                    })}
-                                    href="/resume/download"
-                                >
-                                    <Icon name="download" />
-                                    {copy.download}
-                                </a>
-                                <a
-                                    className={buttonClass({ size: "sm" })}
-                                    href={siteRoutes.resumePdf}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    {copy.openPdf}
-                                    <Icon name="external" />
-                                </a>
-                            </>
+                            <a
+                                className={buttonClass({
+                                    variant: "primary",
+                                    size: "sm",
+                                })}
+                                href="/resume/download"
+                            >
+                                <Icon name="download" />
+                                {copy.download}
+                            </a>
                         ) : null}
                         <Link
                             className={buttonClass({
@@ -345,20 +371,12 @@ export default async function ResumePage() {
                             </LinkArrow>
                         </>
                     ) : null}
-                    <div className={`cluster js-only ${styles.tools}`}>
-                        <Button
-                            size="sm"
-                            variant="quiet"
-                            icon="print"
-                            data-cv-print
-                        >
-                            {copy.print}
-                        </Button>
-                        <ResumeShareAction
-                            canonicalUrl={canonicalUrl}
-                            title={`${name} · ${copy.documentTitle}`}
-                        />
-                    </div>
+                    {/* The flight: the timeline in 3D, on its own page. */}
+                    {timeline.all.length ? (
+                        <LinkArrow href={siteRoutes.trajectory}>
+                            {copy.flight}
+                        </LinkArrow>
+                    ) : null}
                 </div>
             </div>
 
@@ -397,19 +415,19 @@ export default async function ResumePage() {
                     <span className={styles.mastRole}>{profile.headline}</span>
                 ) : null}
                 <span className={styles.mastLinks}>
-                    {[
-                        `${hostOf(siteConfig.url)}${siteRoutes.resume}`,
-                        `${hostOf(siteConfig.url)}${siteRoutes.contact}`,
-                        linkedIn ? hostOf(linkedIn.url) : null,
-                        gitHub ? hostOf(gitHub.url) : null,
-                    ]
-                        .filter(Boolean)
-                        .join(" · ")}
+                    <Unbroken
+                        items={[
+                            `${hostOf(siteConfig.url)}${siteRoutes.resume}`,
+                            `${hostOf(siteConfig.url)}${siteRoutes.contact}`,
+                            ...(linkedIn ? [hostOf(linkedIn.url)] : []),
+                            ...(gitHub ? [hostOf(gitHub.url)] : []),
+                        ]}
+                    />
                 </span>
                 {openTo ? (
                     <span className={styles.mastOpen}>
                         <span className={styles.mastKey}>{copy.openTo}</span>
-                        {openTo}
+                        <Unbroken items={openTo.split(" · ")} />
                     </span>
                 ) : null}
                 {summary ? (
@@ -439,31 +457,16 @@ export default async function ResumePage() {
                     </div>
                 ) : null}
 
+                {/* Every project is here; the header's Projects is
+                    one click away. */}
                 {missions.length ? (
-                    <CvSection
-                        id="projects"
-                        title={copy.projects}
-                        after={
-                            <LinkArrow href={siteRoutes.portfolio}>
-                                {copy.allProjects}
-                            </LinkArrow>
-                        }
-                    >
+                    <CvSection id="projects" title={copy.projects}>
                         <CvList>
                             {missions.map((mission) => (
                                 <CvItem
                                     key={mission.id}
                                     anchor={`cv-${mission.slug}`}
                                     dates={mission.years}
-                                    status={
-                                        <Status
-                                            value={
-                                                PROJECT_STATUS[mission.status]
-                                            }
-                                        >
-                                            {mission.statusLabel}
-                                        </Status>
-                                    }
                                     title={mission.title}
                                     href={`/portfolio/${mission.slug}`}
                                     sub={
@@ -472,8 +475,6 @@ export default async function ResumePage() {
                                             .join(" · ") || null
                                     }
                                     lines={mission.lines}
-                                    skills={mission.technologies}
-                                    skillsLabel={copy.stack}
                                     links={mission.links}
                                     linksLabel={copy.links}
                                 />
@@ -510,11 +511,28 @@ export default async function ResumePage() {
                             ) : null
                         }
                     >
-                        {/* Paper lists talks, not the Flight Log (plan
-                            §2.5.5). */}
+                        {/* The latest entries, compact: the date and the
+                            linked title (/blog has the rest). Paper lists
+                            talks, not the Flight Log (plan §2.5.5). */}
                         {writing.length ? (
                             <div data-print="hide">
-                                <LogIndex entries={writing} level={3} />
+                                <PlainRows
+                                    rows={writing.map((entry) => ({
+                                        id: entry.slug,
+                                        date: (
+                                            <time dateTime={entry.publishedAt}>
+                                                {formatEntryDate(
+                                                    entry.publishedAt,
+                                                )}
+                                            </time>
+                                        ),
+                                        line: (
+                                            <Link href={`/blog/${entry.slug}`}>
+                                                {entry.title}
+                                            </Link>
+                                        ),
+                                    }))}
+                                />
                             </div>
                         ) : null}
                         {talks.length ? (
@@ -551,25 +569,55 @@ export default async function ResumePage() {
                     </CvSection>
                 ) : null}
 
-                {credentials.length ? (
-                    <CvSection id="certifications" title={copy.certifications}>
-                        <CvList>
-                            {credentials.map((credential) => (
-                                <CvItem
-                                    key={credential.id}
-                                    status={
-                                        <Status value={credential.status}>
-                                            {credential.statusLabel}
-                                        </Status>
-                                    }
-                                    title={credential.title}
-                                    href={credential.url ?? undefined}
-                                    sub={[credential.issuer, credential.meta]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                />
-                            ))}
-                        </CvList>
+                {/* The current credentials as rows; the expired ones as
+                    the résumé lists them, Prior certifications: plain
+                    lines, on screen and on paper. */}
+                {credentials.current.length || credentials.prior.length ? (
+                    <CvSection
+                        id="certifications"
+                        title={
+                            credentials.current.length
+                                ? copy.certifications
+                                : copy.priorCertifications
+                        }
+                    >
+                        {credentials.current.length ? (
+                            <CvList>
+                                {credentials.current.map((credential) => (
+                                    <CvItem
+                                        key={credential.id}
+                                        status={
+                                            <Status value={credential.status}>
+                                                {credential.statusLabel}
+                                            </Status>
+                                        }
+                                        title={credential.title}
+                                        href={credential.url ?? undefined}
+                                        sub={[
+                                            credential.issuer,
+                                            credential.meta,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(" · ")}
+                                    />
+                                ))}
+                            </CvList>
+                        ) : null}
+                        {credentials.current.length &&
+                        credentials.prior.length ? (
+                            <h3 className={styles.subhead}>
+                                {copy.priorCertifications}
+                            </h3>
+                        ) : null}
+                        {credentials.prior.length ? (
+                            <PlainRows
+                                rows={credentials.prior.map((credential) => ({
+                                    id: credential.id,
+                                    date: credential.dates,
+                                    line: credential.title,
+                                }))}
+                            />
+                        ) : null}
                     </CvSection>
                 ) : null}
             </div>

@@ -8,8 +8,8 @@
  *
  * On the stage the record fits by construction: the grid keeps clear of
  * the header rule and the stage's foot, the record is never taller than
- * the grid, and only the card area gives way; the readout and the
- * controls never do. Short screens take a denser step (below).
+ * the grid, and only the card area gives way; the controls never do.
+ * Short screens take a denser step (below).
  */
 
 .journey {
@@ -39,7 +39,6 @@
     gap: var(--s-6);
 }
 
-.hud,
 .controls,
 .figure {
     display: none;
@@ -61,19 +60,27 @@
     padding-top: var(--s-4);
 }
 
-.tagRow {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--s-4);
-    margin: 0;
-}
-
 .title {
     font: 400 var(--step-3) / var(--lh-heading) var(--font-display);
     letter-spacing: -0.01em;
-    margin: var(--s-3) 0 var(--s-2);
+    margin: 0 0 var(--s-2);
     text-wrap: balance;
+}
+
+/* The one readout, under the title: the chapter's dates as written; in
+   flight the date, ticking, and the phase ("May 2024 · Transfer"). DM
+   Mono 13px (`.data` sets the family only), with "● Current" beside it on
+   the current chapter. */
+.stamp {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-1) var(--s-4);
+    margin: 0 0 var(--s-3);
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
 }
 
 .org {
@@ -87,14 +94,6 @@
     margin: var(--s-1) 0 0;
 }
 
-/* Data: DM Mono 13px (`.data` sets the family only). */
-.dates {
-    margin: var(--s-3) 0 0;
-    font-size: 13px;
-    line-height: 1.4;
-    color: var(--ink-2);
-}
-
 .line {
     font: 400 var(--step--1) / 1.55 var(--font-display);
     color: var(--ink-2);
@@ -102,13 +101,9 @@
     max-width: 42ch;
 }
 
-/* The card's action: Full entry, or the Open To card's button. */
+/* The card's action: Full entry, or the Open To card's Contact. */
 .act {
     padding-top: var(--s-4);
-}
-
-.ask {
-    padding-top: var(--s-5);
 }
 
 /* ---- with JavaScript: a stage ---------------------------------------- */
@@ -146,40 +141,10 @@
     min-height: 0;
 }
 
-:global(html[data-js]) .hud {
-    display: flex;
-    flex: none;
-    align-items: baseline;
-    gap: var(--s-4);
-    border-top: var(--rule-hair) solid var(--rule-2);
-    padding-top: var(--s-3);
-}
-
-/* The phase's last line sits on the date's baseline, so a long burn wraps
-   upward, inside the date's height: the record never moves. */
-@supports (align-items: last baseline) {
-    :global(html[data-js]) .hud {
-        align-items: last baseline;
-    }
-}
-
-/* The date is one line, whatever the phase is called. */
-.date {
-    flex: none;
+/* The readout is one line, whatever the phase is called, so the card
+   never grows as it ticks. */
+:global(html[data-js]) .stamp [data-stamp] {
     white-space: nowrap;
-    font: 400 var(--step-4) / 1 var(--font-display);
-    letter-spacing: -0.01em;
-    font-variant-numeric: tabular-nums;
-}
-
-.phase {
-    flex: 0 1 auto;
-    min-width: 0;
-    margin-left: auto;
-    line-height: 1.2;
-    color: var(--ink-3);
-    text-align: right;
-    text-wrap: balance;
 }
 
 /* The cards share one cell (as tall as the tallest), so the rail below
@@ -219,22 +184,17 @@
 
 /* A shorter card keeps its action at the foot of the card area, beside
    the rail, so no dead band opens above the rail. */
-:global(html[data-js]) .act,
-:global(html[data-js]) .ask {
+:global(html[data-js]) .act {
     margin-top: auto;
 }
 
-/* Still mode picks its frame once the script runs; until then the parts
-   of the record that change wait, so nothing swaps on arrival. */
+/* Still mode picks its frame once the script runs, and in flight the
+   readout starts ticking then; until then the parts of the record that
+   change wait, so nothing swaps on arrival. */
 :global(html[data-js]:not([data-motion="full"]))
     .journey:not([data-ready])
     .card[data-on],
-:global(html[data-js]:not([data-motion="full"]))
-    .journey:not([data-ready])
-    .date,
-:global(html[data-js]:not([data-motion="full"]))
-    .journey:not([data-ready])
-    .phase {
+:global(html[data-js]) .journey:not([data-ready]) [data-stamp] {
     visibility: hidden;
 }
 
@@ -382,15 +342,12 @@
     :global(html[data-js]) .inner {
         gap: var(--s-5);
     }
-    .date {
-        font-size: var(--step-3);
-    }
     :global(html[data-js]) .title {
         font-size: var(--step-2);
-        margin: var(--s-2) 0 var(--s-1);
+        margin-bottom: var(--s-1);
     }
-    :global(html[data-js]) .dates {
-        margin-top: var(--s-2);
+    :global(html[data-js]) .stamp {
+        margin-bottom: var(--s-2);
     }
     :global(html[data-js]) .line {
         margin-top: var(--s-2);
@@ -433,12 +390,9 @@
     :global(html[data-js]) .inner {
         gap: var(--s-3);
     }
-    .date {
-        font-size: 1.75rem;
-    }
     :global(html[data-js]) .title {
         font-size: 1.5rem;
-        margin: var(--s-2) 0 var(--s-1);
+        margin-bottom: var(--s-1);
     }
     /* Two lines at most, so the record stays in the stage's lower part. */
     :global(html[data-js]) .line,
@@ -452,7 +406,8 @@
     :global(html[data-js]) .line {
         margin-top: var(--s-2);
     }
-    /* Full entry shares the dates' row, at the panel's edge. */
+    /* Full entry shares the readout's row, at the panel's edge; the
+       organization and the lines follow. */
     :global(html[data-js]) .card {
         max-width: none;
         display: grid;
@@ -463,9 +418,9 @@
     :global(html[data-js]) .card > * {
         grid-column: 1 / -1;
     }
-    :global(html[data-js]) .dates {
+    :global(html[data-js]) .stamp {
         grid-column: 1;
-        margin-top: var(--s-2);
+        margin-bottom: var(--s-2);
         font-size: 12px;
     }
     :global(html[data-js]) .card > .act {
@@ -475,7 +430,7 @@
         margin: 0;
         padding: 0;
     }
-    :global(html[data-js]) .line {
+    :global(html[data-js]) :is(.org, .note, .line) {
         order: 2;
     }
     :global(html[data-js]) .entry {

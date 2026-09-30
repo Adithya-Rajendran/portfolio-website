@@ -207,6 +207,15 @@ test("the head offers the CV and the way to get in touch, in the first viewport"
     // What the owner is open to, when set, sits above it.
     const openTo = main(page).getByText(cvCopy.openTo, { exact: true });
     if (await openTo.count()) await expect(openTo.first()).toBeInViewport();
+    // Beside the views, the flight; no Open PDF, Print or Share (the
+    // browser's Print still prints the CV).
+    const flight = main(page).getByRole("link", { name: cvCopy.flight });
+    await expect(flight).toBeInViewport();
+    await expect(flight).toHaveAttribute("href", "/resume/trajectory");
+    for (const name of [/open pdf/i, /print/i, /share/i]) {
+        await expect(main(page).getByRole("link", { name })).toHaveCount(0);
+        await expect(main(page).getByRole("button", { name })).toHaveCount(0);
+    }
 });
 
 test("on a phone the map runs upwards, with every orbit labelled", async ({

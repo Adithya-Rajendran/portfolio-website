@@ -229,14 +229,10 @@ export const cvCopy = {
     ],
     /** Without JavaScript, the link that opens the Timeline. */
     showMap: "Show the timeline",
+    /** Beside the views: the flight (/resume/trajectory). */
+    flight: "Timeline in 3D",
     contact: "Contact",
     download: "Download CV (PDF)",
-    openPdf: "Open PDF",
-    print: "Print CV",
-    share: "Share",
-    shared: "Shared",
-    copied: "Link copied",
-    announceCopied: "Link to the CV copied.",
     openTo: "Open to",
     /** The sections' plain names, on screen and on paper. */
     map: "Timeline",
@@ -244,7 +240,6 @@ export const cvCopy = {
     education: "Education",
     experience: "Experience",
     projects: "Projects",
-    allProjects: "All projects",
     writing: {
         title: "Writing",
         withTalks: "Writing & talks",
@@ -254,9 +249,10 @@ export const cvCopy = {
     skills: "Skills",
     skillsLabel: "Skills",
     certifications: "Certifications",
+    /** Expired credentials, as the résumé names them. */
+    priorCertifications: "Prior certifications",
     /** A row's button in the Timeline view: its orbit, pinned. */
     showOnMap: "Show on timeline",
-    stack: "Stack",
     links: "Links",
     current: "Current",
     /** The printed document's control marks (G3). */
@@ -412,25 +408,29 @@ export const crewCopy = {
 
 /** The flight through the timeline on /resume/trajectory. */
 export const trajectoryCopy = {
+    /** The share card's small tag. */
     tag: "Trajectory",
-    title: "Experience",
-    /** Plain names in the title and description; "Trajectory" is only the
-     *  page head's tag. */
-    metaTitle: "Experience",
+    /** The crumb: the section, then the page's small h1 (and its title). */
+    section: "Experience",
+    title: "Timeline",
     description:
         "Education and work in order, each linked to its full entry on the CV.",
+    /** In the head: past the flight, to the CV's list. */
+    skip: "Skip to the list",
     heading: "The route",
     rail: "Chapters",
     play: "Play",
     pause: "Pause",
-    list: "List view",
     entry: "Full entry",
     current: "Current",
     openTo: "Open to",
+    /** The rail's last stop: what the owner is open to. */
     next: "Next",
     contact: "Contact",
-    /** The readout's phase; the plan leg has none (its readout is
-     *  `next`, as on the rail). */
+    /** The figure line: what is not to scale, and the maps' credit. */
+    figure: "Not to scale · Maps: NASA, Solar System Scope (CC BY 4.0)",
+    /** The readout's phase, after its date ("May 2024 · Transfer"); the
+     *  plan leg has no readout. */
     phases: {
         coast: "Orbit",
         flyby: "Flyby",

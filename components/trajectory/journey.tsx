@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { OpenToItems } from "@/components/ui/availability";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { LinkArrow, Status } from "@/components/ui/marks";
@@ -21,15 +22,20 @@ import styles from "./journey.module.css";
  * the header while the page scrolls past it, the way Apple's product pages
  * pin a scene and scrub it. Nothing intercepts the wheel: native scroll
  * moves the page, and the scroll position inside the section becomes the
- * route's progress. The record beside the scene (date, card, chapters) is
- * plain HTML and changes as the progress crosses chapters.
+ * route's progress. The record beside the scene (the card and the
+ * chapters) is plain HTML and changes as the progress crosses chapters;
+ * under the card's title one small line reads the date, ticking, and the
+ * phase ("May 2024 · Transfer").
  *
  * - **Play** scrolls the page itself at a steady pace; any wheel, touch,
  *   key or click (other than Play's own press), or a scroll it didn't make,
  *   takes over again.
  * - **The chapters** jump to a chapter (a smooth scroll).
  * - **Still** (reduced motion, or the site's Pause motion): nothing pins;
- *   the scene holds one frame and the chapters pick it.
+ *   the scene holds one frame and the chapters pick it. It opens on the
+ *   whole system (the route's end) with the latest chapter's card; the
+ *   ask stays the rail's last stop. Each card's line keeps its dates as
+ *   written.
  * - **Without JavaScript** the chapters are a list and no scene is drawn.
  * - **Screen readers** hear the chapter when it changes (a polite live
  *   region), and focus in a card that leaves moves to its rail button.
@@ -120,16 +126,24 @@ export default function Journey({
         if (!root) return;
         const stage = root.querySelector<HTMLElement>("[data-stage]")!;
         const host = root.querySelector<HTMLElement>("[data-scene]")!;
-        const dateEl = root.querySelector<HTMLElement>("[data-date]")!;
-        const phaseEl = root.querySelector<HTMLElement>("[data-phase]")!;
         const liveEl = root.querySelector<HTMLElement>("[data-announce]")!;
         const cards = [...root.querySelectorAll<HTMLElement>("[data-card]")];
         const rail = [...root.querySelectorAll<HTMLElement>("[data-go]")];
+        // Each chapter card's readout line, and its dates as written (the
+        // plan card has none).
+        const stamps = cards.map((card) =>
+            card.querySelector<HTMLElement>("[data-stamp]"),
+        );
+        const written = stamps.map((stamp) => stamp?.textContent ?? "");
         const scene = createScene(host, data, route);
         const reduce = window.matchMedia(REDUCE);
 
         let moving = motionAllowed();
+        // A still flight opens on the whole system (the route's end) with
+        // the latest chapter's card, until a chapter is picked.
         let still = 1;
+        let stillCard: number | null =
+            data.chapters.length > 0 ? data.chapters.length - 1 : null;
         let lastCard = -1;
         /** The card the live region last named (the first is not said). */
         let spoken = -1;
@@ -159,10 +173,11 @@ export default function Journey({
                 );
             return copy.phases[kind];
         };
-        // The plan leg is not dated: the owner is open to roles, nothing is
-        // scheduled. Its readout is the rail's "Next".
-        const dateOf = (f: Frame) =>
-            f.segment.kind === "plan" ? copy.next : missionDate(f.t, data, f);
+        /** "May 2024 · Transfer": the mission date and the phase. The plan
+         *  leg is not dated (nothing is scheduled), and its card has no
+         *  readout. */
+        const readout = (f: Frame) =>
+            [missionDate(f.t, data, f), phaseOf(f)].filter(Boolean).join(" · ");
         /** "Title, Organization, dates", or "Open to: …" for the plan. */
         const said = (card: number) => {
             const c = data.chapters[card];
@@ -182,9 +197,13 @@ export default function Journey({
         };
         const draw = () => {
             queued = 0;
-            const f = frameAt(route, progress());
-            dateEl.textContent = dateOf(f);
-            phaseEl.textContent = phaseOf(f);
+            const at = frameAt(route, progress());
+            const f =
+                !moving && stillCard !== null ? { ...at, card: stillCard } : at;
+            // In flight the card's line ticks; a still card keeps its dates.
+            const stamp = stamps[f.card];
+            if (stamp)
+                stamp.textContent = moving ? readout(f) : written[f.card];
             if (f.card !== lastCard) {
                 // Focus in the card that leaves would fall to <body> when the
                 // card hides: hand it to the new chapter's rail button.
@@ -268,6 +287,7 @@ export default function Journey({
                 const at = route.rest[card] ?? 1;
                 if (!moving) {
                     still = at;
+                    stillCard = null;
                     lastCard = -1;
                     request();
                     return;
@@ -338,7 +358,6 @@ export default function Journey({
         };
     }, [data, route, createScene, transferRate, duration]);
 
-    const first = data.chapters[0];
     return (
         <section
             ref={section}
@@ -362,19 +381,7 @@ export default function Journey({
                 </div>
                 <div className={styles.panel}>
                     <div className={`shell ${styles.grid}`}>
-                        <div className={styles.inner}>
-                            <div className={styles.hud} aria-hidden="true">
-                                <span className={styles.date} data-date>
-                                    {first?.year}
-                                </span>
-                                <span
-                                    className={`label ${styles.phase}`}
-                                    data-phase
-                                >
-                                    {copy.phases.coast}
-                                </span>
-                            </div>
-
+                        <div className={styles.inner} data-record>
                             <div className={styles.cards}>
                                 {data.chapters.map((chapter, i) => (
                                     <article
@@ -383,9 +390,17 @@ export default function Journey({
                                         data-card={i}
                                         data-on={i === 0 ? "" : undefined}
                                     >
-                                        <p className={styles.tagRow}>
-                                            <span className="label">
-                                                {chapter.label}
+                                        <h3 className={styles.title}>
+                                            {chapter.title}
+                                        </h3>
+                                        <p className={styles.stamp}>
+                                            <span className="data" data-stamp>
+                                                {[
+                                                    chapter.dates,
+                                                    chapter.expected,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(" · ")}
                                             </span>
                                             {chapter.current ? (
                                                 <Status value="active">
@@ -393,25 +408,12 @@ export default function Journey({
                                                 </Status>
                                             ) : null}
                                         </p>
-                                        <h3 className={styles.title}>
-                                            {chapter.title}
-                                        </h3>
                                         <p className={styles.org}>
                                             {chapter.organization}
                                         </p>
                                         {chapter.note ? (
                                             <p className={styles.note}>
                                                 {chapter.note}
-                                            </p>
-                                        ) : null}
-                                        {chapter.dates ? (
-                                            <p
-                                                className={`data ${styles.dates}`}
-                                            >
-                                                {chapter.dates}
-                                                {chapter.expected
-                                                    ? ` · ${chapter.expected}`
-                                                    : null}
                                             </p>
                                         ) : null}
                                         {chapter.line ? (
@@ -435,36 +437,26 @@ export default function Journey({
                                         className={styles.card}
                                         data-card={data.chapters.length}
                                     >
-                                        <p className={styles.tagRow}>
-                                            <span className="label">
-                                                {copy.openTo}
-                                            </span>
-                                        </p>
+                                        {/* What comes next, as a fact:
+                                            the profile's button follows
+                                            the stage (the page). */}
                                         <h3 className={styles.title}>
-                                            {data.planned.lines[0]}
+                                            {copy.openTo}
                                         </h3>
-                                        {data.planned.lines.length > 1 ? (
-                                            <p className={styles.org}>
-                                                {data.planned.lines
-                                                    .slice(1)
-                                                    .join(" · ")}
-                                            </p>
-                                        ) : null}
-                                        <div className={styles.ask}>
-                                            <a
-                                                className={buttonClass({
-                                                    variant: "primary",
-                                                    size: "sm",
-                                                })}
+                                        <p className={`${styles.org} open-to`}>
+                                            <OpenToItems
+                                                text={data.planned.lines.join(
+                                                    " · ",
+                                                )}
+                                            />
+                                        </p>
+                                        <div className={styles.act}>
+                                            <LinkArrow
                                                 href={data.planned.href}
+                                                prefetch={false}
                                             >
-                                                {data.planned.cta ??
-                                                    copy.contact}
-                                                <Icon
-                                                    name="arrow"
-                                                    className="icon--nudge"
-                                                />
-                                            </a>
+                                                {copy.contact}
+                                            </LinkArrow>
                                         </div>
                                     </article>
                                 ) : null}
