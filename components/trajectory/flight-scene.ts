@@ -9,40 +9,37 @@ import styles from "./flight.module.css";
 /**
  * Option C · Flight: the timeline as a chase-camera flight through a
  * heliocentric 3D scene (flight-route.ts places it, flight-gl.ts draws it
- * with three.js). This part is small and synchronous: it shows a still
- * poster at once, picks the maps for the screen and requests the ones the
- * first frame needs, then imports the renderer and three.js as one lazy
- * chunk, so the page never waits for WebGL and the maps arrive with it.
- * Without WebGL, or while a lost context is away, the poster shows.
+ * with three.js). This part is small and synchronous: it picks the maps
+ * for the screen and requests the ones the first frame needs, then
+ * imports the renderer and three.js as one lazy chunk, so the page never
+ * waits for WebGL and the maps arrive with it. Until the scene draws, and
+ * without WebGL or while a lost context is away, the poster rendered with
+ * the page (trajectory-view.tsx) shows: the canvas goes under it, and it
+ * fades out as the canvas fades in.
  */
-
-const POSTER = `<svg class="${styles.hint}" viewBox="-500 -210 1000 420" aria-hidden="true" focusable="false">
-<ellipse rx="112" ry="44"/><ellipse rx="176" ry="70"/><ellipse rx="252" ry="100"/><ellipse rx="340" ry="136"/>
-<ellipse class="${styles.hintPlan}" rx="450" ry="180"/><circle class="${styles.hintSun}" r="3.5"/></svg>`;
 
 export const createFlightScene: CreateScene = (host, data, route) => {
     host.classList.add(styles.host);
-    const poster = document.createElement("div");
-    poster.className = styles.poster;
-    poster.innerHTML = POSTER;
     const scrim = document.createElement("div");
     scrim.className = styles.scrim;
     const layer = document.createElement("div");
     layer.className = styles.labels;
-    host.append(poster, scrim, layer);
+    host.append(scrim, layer);
 
     let gl: FlightGL | null = null;
     let disposed = false;
-    let size: [number, number, boolean, number?, Box?] | null = null;
-    // On a phone nothing is drawn below the record's top edge (its date
-    // row's rule), measured here, where layout reads belong.
-    const recordTop = () => {
+    let size: [number, number, boolean, number?, Box?, number?] | null = null;
+    // The record's date row (its rule): on a phone nothing is drawn below
+    // its top edge; on a wide stage the scene keeps right of its right
+    // edge (the record column's). Measured here, where layout reads
+    // belong.
+    const recordEdge = (edge: "top" | "right") => {
         const row =
             host.parentElement?.querySelector("[data-date]")?.parentElement;
         if (!row) return undefined;
-        return (
-            row.getBoundingClientRect().top - host.getBoundingClientRect().top
-        );
+        const h = host.getBoundingClientRect();
+        const r = row.getBoundingClientRect();
+        return edge === "top" ? r.top - h.top : r.right - h.left;
     };
     // The figure's caption on a wide stage (the record grid's own
     // paragraph), which no line or label enters.
@@ -66,12 +63,17 @@ export const createFlightScene: CreateScene = (host, data, route) => {
     const images = new Map(
         firstMaps(maps, data.chapters.length).map((f) => [f, requestMap(f)]),
     );
+    // Void's sky too (Flight Manual never shows it): the first frame waits
+    // for it, so its upload never lands mid-scroll.
+    if (document.documentElement.dataset.theme !== "manual")
+        images.set(maps.sky, requestMap(maps.sky));
 
     import("./flight-gl")
         .then(({ mountFlight }) => {
             if (disposed) return;
             gl = mountFlight(host, data, route, {
                 labels: layer,
+                scrim,
                 classes: {
                     label: styles.label,
                     name: styles.name,
@@ -92,9 +94,6 @@ export const createFlightScene: CreateScene = (host, data, route) => {
                 },
             });
             if (!gl) return;
-            // The poster goes under the canvas: the canvas fades in over
-            // it, and fades out to it if the context is lost.
-            host.prepend(poster);
             if (size) gl.resize(...size);
             if (last) gl.render(last);
         })
@@ -104,8 +103,9 @@ export const createFlightScene: CreateScene = (host, data, route) => {
 
     return {
         resize(width, height, wide) {
-            const record = wide ? undefined : recordTop();
-            size = [width, height, wide, record, captionBox()];
+            const record = wide ? undefined : recordEdge("top");
+            const column = wide ? recordEdge("right") : undefined;
+            size = [width, height, wide, record, captionBox(), column];
             // The canvas is cut at the record's top edge (see the CSS).
             if (record === undefined) host.style.removeProperty("--record");
             else host.style.setProperty("--record", `${record.toFixed(1)}px`);
@@ -123,7 +123,6 @@ export const createFlightScene: CreateScene = (host, data, route) => {
             gl?.dispose();
             gl = null;
             images.clear();
-            poster.remove();
             scrim.remove();
             layer.remove();
             host.classList.remove(styles.host);

@@ -21,6 +21,8 @@ const outDir = new URL("public/images/trajectory/", root);
 const cache = join(tmpdir(), "trajectory-textures");
 const SSS = "https://www.solarsystemscope.com/textures/download/";
 const NASA = "https://eoimages.gsfc.nasa.gov/images/imagerecords/";
+/** The sunrise's window: flight-maps.ts NIGHT_WINDOW. */
+const SUNRISE = { lon: [-130, -30], lat: [5, 55] };
 
 /**
  * Each map: its source, its size and how it is encoded.
@@ -36,7 +38,10 @@ const NASA = "https://eoimages.gsfc.nasa.gov/images/imagerecords/";
  * - `gain`: brightened by this factor before encoding, so the faint sky
  *   keeps its detail through WebP (the renderer divides it back out);
  * - `destar`: the sky's point stars taken out (a median this many pixels
- *   wide at 4096 across), leaving the Milky Way's glow.
+ *   wide at 4096 across), leaving the Milky Way's glow;
+ * - `crop`: only this window of an equirectangular source (longitudes and
+ *   latitudes, degrees): the lands the sunrise looks over, which
+ *   components/trajectory/flight-maps.ts's NIGHT_WINDOW names too.
  */
 const MAPS = [
     { out: "earth-2k.webp", src: SSS + "2k_earth_daymap.jpg", w: 2048, q: 74 },
@@ -84,6 +89,22 @@ const MAPS = [
         w: 2048,
         q: 70,
         grey: true,
+    },
+    {
+        out: "earth-night-sunrise-3k.webp",
+        src: NASA + "144000/144897/BlackMarble_2016_3km_gray.jpg",
+        w: 3072,
+        q: 70,
+        grey: true,
+        crop: SUNRISE,
+    },
+    {
+        out: "earth-night-sunrise-2k.webp",
+        src: NASA + "144000/144897/BlackMarble_2016_3km_gray.jpg",
+        w: 2048,
+        q: 70,
+        grey: true,
+        crop: SUNRISE,
     },
     {
         out: "earth-water-1k.webp",
@@ -162,6 +183,21 @@ async function destar(input, size) {
     return sharp(band);
 }
 
+/** An equirectangular source cut to a window of longitudes and
+ *  latitudes (degrees). */
+async function crop(input, { lon, lat }) {
+    const { width, height } = await sharp(input).metadata();
+    const x = (deg) => Math.round(((deg + 180) / 360) * width);
+    const y = (deg) => Math.round(((90 - deg) / 180) * height);
+    const region = {
+        left: x(lon[0]),
+        top: y(lat[1]),
+        width: x(lon[1]) - x(lon[0]),
+        height: y(lat[0]) - y(lat[1]),
+    };
+    return sharp(await sharp(input).extract(region).png().toBuffer());
+}
+
 /** A zonal strip: every row averaged across longitude. */
 async function zonal(input, w, h) {
     const row = await sharp(input)
@@ -186,7 +222,9 @@ for (const map of MAPS) {
           ? await zonal(input, map.w, h)
           : map.destar
             ? await destar(input, map.destar)
-            : sharp(input);
+            : map.crop
+              ? await crop(input, map.crop)
+              : sharp(input);
     if (map.grey) image = image.greyscale();
     if (map.blur) image = image.blur(map.blur);
     if (!map.water && !map.zonal)

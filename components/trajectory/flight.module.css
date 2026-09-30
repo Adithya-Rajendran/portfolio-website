@@ -1,10 +1,10 @@
 /*
  * Option C · Flight: the 3D scene's layers inside the journey's stage.
- * Bottom to top: the still poster, shown until the renderer and its
- * textures are in (and while a lost WebGL context is away), the canvas,
- * which fades in over it, a scrim that keeps the record's text legible
- * over the scene, and the HTML labels projected from the worlds, shown
- * only with the canvas.
+ * Bottom to top: the canvas, the still poster over it (rendered with the
+ * page, shown until the renderer and its textures are in, and while a
+ * lost WebGL context is away; it fades out as the canvas fades in), a
+ * scrim that keeps the record's text legible over the scene, and the
+ * HTML labels projected from the worlds, shown only with the canvas.
  */
 
 .host {
@@ -29,24 +29,84 @@
     opacity: 1;
 }
 
-/* ---- the poster: a glow and a static orbit hint at the subject -------- */
+/* ---- the poster: the opening's sunrise (a hint of orbits when still) -- */
 
 .poster {
     position: absolute;
     inset: 0;
-    background: radial-gradient(
-        circle at 65% 50%,
-        color-mix(in oklab, var(--ink-1) 14%, transparent) 0,
-        color-mix(in oklab, var(--ink-1) 4%, transparent) 9%,
-        transparent 26%
-    );
+    overflow: hidden;
+    container-type: size;
+    pointer-events: none;
+    transition: opacity var(--dur-6) var(--ease-dock);
 }
 
-/* Whole while the canvas fades in over it, then gone; back at once, under
-   the canvas as it fades out, if the context is lost. */
 .host[data-ready] > .poster {
     opacity: 0;
-    transition: opacity 0s var(--dur-6);
+}
+
+.opening {
+    position: absolute;
+    inset: 0;
+}
+
+/* In thousandths of the stage's height about where the Sun rises
+   (--wx, --wy; a phone's --nx, --ny). */
+.sunrise {
+    position: absolute;
+    left: calc(var(--wx) - 200cqh);
+    top: calc(var(--wy) - 50cqh);
+    width: 300cqh;
+    height: 150cqh;
+}
+
+.narrow {
+    display: none;
+}
+
+.globe {
+    fill: var(--bg);
+}
+
+.air,
+.rim {
+    fill: none;
+}
+
+.rim {
+    stroke-width: 1.5px;
+    vector-effect: non-scaling-stroke;
+}
+
+.sunMark {
+    position: absolute;
+    left: calc(var(--wx) - 20px);
+    top: calc(var(--wy) - var(--lift) - 20px);
+    width: 40px;
+    height: 40px;
+    display: none;
+    fill: none;
+    stroke: var(--ink-1);
+    stroke-width: 1.1;
+}
+
+.sunDot {
+    fill: var(--ink-1);
+    stroke: none;
+}
+
+/* Flight Manual: the limb in ink under the printed ☉. */
+:global([data-theme="manual"]) .air,
+:global([data-theme="manual"]) .corona {
+    display: none;
+}
+
+:global([data-theme="manual"]) .rim {
+    stroke: var(--ink-1);
+    stroke-width: 1px;
+}
+
+:global([data-theme="manual"]) .sunMark {
+    display: block;
 }
 
 .hint {
@@ -55,16 +115,25 @@
     top: 50%;
     width: min(60%, 56rem);
     transform: translate(-50%, -50%);
+    display: none;
     overflow: visible;
     fill: none;
     stroke: var(--ink-3);
     stroke-width: 1;
-    vector-effect: non-scaling-stroke;
     opacity: 0.55;
 }
 
 .hint ellipse {
     vector-effect: non-scaling-stroke;
+}
+
+/* A still flight opens on the map. */
+:global(html:not([data-motion="full"])) .opening {
+    display: none;
+}
+
+:global(html:not([data-motion="full"])) .hint {
+    display: block;
 }
 
 .hintPlan {
@@ -79,26 +148,38 @@
 /* ---- the scrim under the record --------------------------------------- */
 
 .scrim {
+    --a: var(--scrim-a, 24%);
+    --s: calc(var(--scrim-b, 58%) - var(--a));
     position: absolute;
     inset: 0;
     pointer-events: none;
-    /* An eased ramp (a smoothstep in 3% steps, so no bands show) that
-       holds the record's column and clears past the middle. */
+    /* An eased ramp (a smoothstep in twelfths, so no bands show) that
+       holds the record's column to --a and clears at --b: on a wide
+       stage the renderer sets them from the column (flight-gl.ts). */
     background: linear-gradient(
-        90deg,
-        color-mix(in oklab, var(--bg) 96%, transparent) 0%,
-        color-mix(in oklab, var(--bg) 96%, transparent) 24%,
-        color-mix(in oklab, var(--bg) 93.9%, transparent) 27%,
-        color-mix(in oklab, var(--bg) 88.1%, transparent) 30%,
-        color-mix(in oklab, var(--bg) 79.4%, transparent) 33%,
-        color-mix(in oklab, var(--bg) 68.5%, transparent) 36%,
-        color-mix(in oklab, var(--bg) 56.4%, transparent) 39%,
-        color-mix(in oklab, var(--bg) 43.9%, transparent) 42%,
-        color-mix(in oklab, var(--bg) 31.4%, transparent) 45%,
-        color-mix(in oklab, var(--bg) 20%, transparent) 48%,
-        color-mix(in oklab, var(--bg) 10.6%, transparent) 51%,
-        color-mix(in oklab, var(--bg) 3.8%, transparent) 54%,
-        transparent 58%
+        var(--to, 90deg),
+        color-mix(in oklab, var(--bg) 96%, transparent) var(--a),
+        color-mix(in oklab, var(--bg) 93.9%, transparent)
+            calc(var(--a) + var(--s) * 0.088),
+        color-mix(in oklab, var(--bg) 88.1%, transparent)
+            calc(var(--a) + var(--s) * 0.176),
+        color-mix(in oklab, var(--bg) 79.4%, transparent)
+            calc(var(--a) + var(--s) * 0.265),
+        color-mix(in oklab, var(--bg) 68.5%, transparent)
+            calc(var(--a) + var(--s) * 0.353),
+        color-mix(in oklab, var(--bg) 56.4%, transparent)
+            calc(var(--a) + var(--s) * 0.441),
+        color-mix(in oklab, var(--bg) 43.9%, transparent)
+            calc(var(--a) + var(--s) * 0.529),
+        color-mix(in oklab, var(--bg) 31.4%, transparent)
+            calc(var(--a) + var(--s) * 0.618),
+        color-mix(in oklab, var(--bg) 20%, transparent)
+            calc(var(--a) + var(--s) * 0.706),
+        color-mix(in oklab, var(--bg) 10.6%, transparent)
+            calc(var(--a) + var(--s) * 0.794),
+        color-mix(in oklab, var(--bg) 3.8%, transparent)
+            calc(var(--a) + var(--s) * 0.882),
+        transparent calc(var(--a) + var(--s))
     );
 }
 
@@ -230,42 +311,43 @@
 }
 
 @media (max-width: 959.98px) {
-    .poster {
-        background: radial-gradient(
-            circle at 50% 29%,
-            color-mix(in oklab, var(--ink-1) 14%, transparent) 0,
-            color-mix(in oklab, var(--ink-1) 4%, transparent) 12%,
-            transparent 34%
-        );
-    }
     .hint {
         left: 50%;
         top: 29%;
         width: 94%;
     }
+    .sunrise {
+        left: calc(var(--nx) - 200cqh);
+        top: calc(var(--ny) - 50cqh);
+    }
+    .sunMark {
+        left: calc(var(--nx) - 20px);
+        top: calc(var(--ny) - var(--lift) - 20px);
+    }
+    .wide {
+        display: none;
+    }
+    .narrow {
+        display: inline;
+    }
+    /* From the foot up, holding the record below the scene. */
     .scrim {
-        background: linear-gradient(
-            0deg,
-            color-mix(in oklab, var(--bg) 96%, transparent) 0%,
-            color-mix(in oklab, var(--bg) 96%, transparent) 30%,
-            color-mix(in oklab, var(--bg) 93.9%, transparent) 33%,
-            color-mix(in oklab, var(--bg) 88.1%, transparent) 36%,
-            color-mix(in oklab, var(--bg) 79.4%, transparent) 39%,
-            color-mix(in oklab, var(--bg) 68.5%, transparent) 42%,
-            color-mix(in oklab, var(--bg) 56.4%, transparent) 45%,
-            color-mix(in oklab, var(--bg) 43.9%, transparent) 48%,
-            color-mix(in oklab, var(--bg) 31.4%, transparent) 51%,
-            color-mix(in oklab, var(--bg) 20%, transparent) 54%,
-            color-mix(in oklab, var(--bg) 10.6%, transparent) 57%,
-            color-mix(in oklab, var(--bg) 3.8%, transparent) 60%,
-            transparent 64%
-        );
+        --to: 0deg;
+        --a: 30%;
+        --s: 34%;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .host > canvas,
+    .poster,
     .labels {
         transition: none;
+    }
+    .opening {
+        display: none;
+    }
+    .hint {
+        display: block;
     }
 }

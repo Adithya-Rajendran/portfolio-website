@@ -35,7 +35,9 @@ import styles from "./journey.module.css";
  *   region), and focus in a card that leaves moves to its rail button.
  *
  * The scene is the renderer's (`createScene`): an SVG plot, a voyage, a 3D
- * flight. It gets the route and draws a frame; the record is shared.
+ * flight. It gets the route and draws a frame; the record is shared. Its
+ * `poster`, if any, is rendered on the server inside the scene's host, so
+ * a still frame shows from the first paint until the scene draws.
  */
 
 export interface Scene {
@@ -93,12 +95,14 @@ export default function Journey({
     figure,
     className,
     pacing,
+    poster,
 }: {
     data: TrajectoryData;
     createScene: CreateScene;
     figure?: string;
     className?: string;
     pacing?: Pacing;
+    poster?: React.ReactNode;
 }) {
     const routeOptions = pacing?.route;
     const transferRate = pacing?.transferRate ?? TRANSFER_RATE;
@@ -353,7 +357,9 @@ export default function Journey({
                 {copy.heading}
             </h2>
             <div className={styles.stage} data-stage>
-                <div className={styles.scene} data-scene aria-hidden="true" />
+                <div className={styles.scene} data-scene aria-hidden="true">
+                    {poster}
+                </div>
                 <div className={styles.panel}>
                     <div className={`shell ${styles.grid}`}>
                         <div className={styles.inner}>

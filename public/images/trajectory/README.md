@@ -5,12 +5,15 @@ The maps for the 3D flight on `/resume/trajectory` (option C · Flight,
 `components/trajectory/flight-maps.ts` picks them: a wide screen loads the
 2k maps and the 4k sky; a phone or a window under 960px loads the 1k maps
 and the 2k sky, with the night lights at 2k (the sunrise magnifies them,
-and at 1k the cities blur into soft blobs). The scene requests the maps its
-first frame needs as it mounts, beside the renderer's code. Flight Manual
-never loads the sky.
+and at 1k the cities blur into soft blobs). The lands the sunrise looks
+over (longitudes 130°W–30°W, latitudes 5°N–55°N: `NIGHT_WINDOW` in
+`flight-maps.ts`) have night lights of their own, finer still: 3k across
+that window on a wide screen, 2k on a phone. The scene requests the maps
+its first frame needs as it mounts, beside the renderer's code. Flight
+Manual never loads the sky.
 
-The page credits them in the figure line under the scene: "Textures: NASA;
-Solar System Scope, CC BY 4.0".
+The page credits them in the figure line under the scene: "Maps: NASA,
+Solar System Scope (CC BY 4.0)".
 
 **Solar System Scope** (by INOVE), <https://www.solarsystemscope.com/textures/>,
 distributed under the **Creative Commons Attribution 4.0 International**
@@ -36,14 +39,16 @@ and re-encoded them as WebP; the changes to each file are listed.
 **NASA** Earth layers, public domain (credit NASA), from NASA's Visible Earth
 and Earth Observatory:
 
-| File                   | Pixels    | Size     | Source file                                                                                                                       | Changes                            |
-| ---------------------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `earth-clouds-2k.webp` | 2048×1024 | 130.9 KB | Blue Marble clouds (id 57747), <https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57747/cloud_combined_2048.jpg>           | Greyscale, softened, thin haze cut |
-| `earth-clouds-1k.webp` | 1024×512  | 29.3 KB  | Blue Marble clouds (id 57747), <https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57747/cloud_combined_2048.jpg>           | Greyscale, softened, thin haze cut |
-| `earth-night-2k.webp`  | 2048×1024 | 35.2 KB  | Black Marble 2016 (id 144897), <https://eoimages.gsfc.nasa.gov/images/imagerecords/144000/144897/BlackMarble_2016_01deg_gray.jpg> | —                                  |
+| File                          | Pixels    | Size     | Source file                                                                                                                       | Changes                            |
+| ----------------------------- | --------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `earth-clouds-2k.webp`        | 2048×1024 | 130.9 KB | Blue Marble clouds (id 57747), <https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57747/cloud_combined_2048.jpg>           | Greyscale, softened, thin haze cut |
+| `earth-clouds-1k.webp`        | 1024×512  | 29.3 KB  | Blue Marble clouds (id 57747), <https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57747/cloud_combined_2048.jpg>           | Greyscale, softened, thin haze cut |
+| `earth-night-2k.webp`         | 2048×1024 | 35.2 KB  | Black Marble 2016 (id 144897), <https://eoimages.gsfc.nasa.gov/images/imagerecords/144000/144897/BlackMarble_2016_01deg_gray.jpg> | —                                  |
+| `earth-night-sunrise-3k.webp` | 3072×1536 | 121.8 KB | Black Marble 2016 (id 144897), <https://eoimages.gsfc.nasa.gov/images/imagerecords/144000/144897/BlackMarble_2016_3km_gray.jpg>   | Cut to 130°W–30°W, 5°N–55°N        |
+| `earth-night-sunrise-2k.webp` | 2048×1024 | 63.5 KB  | Black Marble 2016 (id 144897), <https://eoimages.gsfc.nasa.gov/images/imagerecords/144000/144897/BlackMarble_2016_3km_gray.jpg>   | Cut to 130°W–30°W, 5°N–55°N        |
 
-A wide screen loads 615.9 KB of these in Void (533.1 KB in Flight Manual); a
-phone 258.5 KB. The maps and the
+A wide screen loads 737.7 KB of these in Void (654.9 KB in Flight Manual); a
+phone 322.0 KB. The maps and the
 sky are lossy WebP; the ring, the Saturn strip and the water mask lossless.
 
 `node scripts/encode-trajectory-textures.mjs` downloads the sources and writes

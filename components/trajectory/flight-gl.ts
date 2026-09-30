@@ -60,6 +60,8 @@ import {
     labelGap,
     labelSafe,
     lerp,
+    lineMask,
+    mapNamesAll,
     minWorldPx,
     onPlane,
     pointBox,
@@ -76,7 +78,8 @@ import {
     type World,
     type WorldKind,
 } from "./flight-route";
-import { requestMap, type FlightMaps } from "./flight-maps";
+import { NIGHT_WINDOW, requestMap, type FlightMaps } from "./flight-maps";
+import { SUN_LIFT } from "./flight-opening";
 
 /**
  * The 3D flight's renderer (option C), loaded lazily by flight-scene.ts:
@@ -89,13 +92,16 @@ import { requestMap, type FlightMaps } from "./flight-maps";
 export interface FlightGL {
     /** `record`: on a phone, the record's top edge on the stage (pixels);
      *  nothing is drawn below it. `caption`: the figure's caption on the
-     *  stage (pixels), which no line or label enters. */
+     *  stage (pixels), which no line or label enters. `column`: on a wide
+     *  stage, the record column's right edge (pixels), which the scene
+     *  keeps clear of. */
     resize(
         width: number,
         height: number,
         wide: boolean,
         record?: number,
         caption?: Box,
+        column?: number,
     ): void;
     render(frame: Frame): void;
     theme(): void;
@@ -105,6 +111,9 @@ export interface FlightGL {
 export interface FlightHooks {
     /** The layer the HTML labels go in, and their classes. */
     labels: HTMLElement;
+    /** The scrim under the record, whose ramp follows the record's column
+     *  on a wide stage (--scrim-a: opaque to, --scrim-b: clear from). */
+    scrim: HTMLElement;
     classes: {
         label: string;
         name: string;
@@ -167,8 +176,8 @@ const PLUME = "#dfe8ff";
  *  the camera cranes, so its core comes in behind the map gradually
  *  rather than sweeping in at once. */
 const SKY_GAIN = 0.32;
-const SKY_MAP_DIM = 0.45;
-const SKY_CRANE_DIP = 0.3;
+const SKY_MAP_DIM = 0.8;
+const SKY_CRANE_DIP = 0.15;
 /** The sky fades in over this many pixels below the stage's top. */
 const SKY_FEATHER = 110;
 /** The belt's grains fade out this many pixels from a world's disc. */
@@ -191,16 +200,13 @@ const BANK = 28 * (Math.PI / 180);
 const SUN_LEVEL_MAP = 0.34;
 /** The Sun at the sunrise, pixels: its core's radius, its glow's falloff
  *  and the glow's reach (a share of the stage's height); in Flight
- *  Manual the printed ☉ sits this far higher, clear of the limb. */
-const SUNRISE = { core: 9, halo: 34, reach: 0.42, lift: 34 };
+ *  Manual the printed ☉ sits higher, clear of the limb (SUN_LIFT). */
+const SUNRISE = { core: 9, halo: 34, reach: 0.42 };
 /** No orbit is drawn across a world's disc on screen: the line stops this
  *  many pixels short of the limb, fading in over the second (Saturn's
  *  short of its ring's tips, about twice its radius from the chase). */
 const ORBIT_CLEAR = [5, 14];
 const SATURN_CLEAR = 2;
-/** On a wide stage the lines fade out under the record's scrim, between
- *  these shares of the width (gone before the record's text column). */
-const LINE_MASK = [0.3, 0.46];
 /** Lines fade out from this far outside the caption's box to this far
  *  (pixels), and labels stay this far above it. */
 const CAPTION_CLEAR = [22, 6];
@@ -409,9 +415,10 @@ export function mountFlight(
     // uploads it (at once, not when its world first shows) and never
     // changes a shader. The scene picked the files and requested the first
     // frame's already (flight-maps.ts); each is decoded off the main
-    // thread before it is uploaded. The canvas shows once the worlds'
-    // maps are in (the sky's may follow), or after a few seconds without
-    // them. Their images stay, so a restored context uploads them again.
+    // thread before it is uploaded. The canvas shows once the maps are in
+    // (in Void the sky's too, so its large upload never lands mid-scroll),
+    // or after a few seconds without them. Their images stay, so a
+    // restored context uploads them again.
     const maps = hooks.maps;
     let pending = 0;
     let revealed = false;
@@ -422,7 +429,12 @@ export function mountFlight(
         if (!lost) hooks.ready();
     };
     const revealTimer = window.setTimeout(reveal, 4000);
-    const load = (file: string, colour = true, waits = true) => {
+    const load = (
+        file: string,
+        colour = true,
+        waits = true,
+        then?: () => void,
+    ) => {
         const image = hooks.images.get(file) ?? requestMap(file);
         const texture = new Texture(image);
         texture.colorSpace = colour ? SRGBColorSpace : NoColorSpace;
@@ -437,6 +449,7 @@ export function mountFlight(
             if (ok) {
                 texture.needsUpdate = true;
                 if (!lost) renderer.initTexture(texture);
+                then?.();
                 if (last) draw(last);
             }
             if (!waits || --pending > 0) return;
@@ -639,18 +652,22 @@ export function mountFlight(
             write(index * 6 + 3, head);
         }
     };
-    // In the map the opening loop moves with Earth (plan.carry): its
-    // samples are rewritten as the map rises, in whichever part holds them.
+    // The opening loop is drawn round Earth (plan.carry): its samples are
+    // rewritten as Earth moves, until the chapter ends, in whichever part
+    // holds them.
+    const first = route.segments[0];
     let opening = 0;
     while (
+        first?.kind === "coast" &&
         opening < TRAIL_SAMPLES - 1 &&
-        plan.carry(pOf(opening + 1), 1).some((c) => c !== 0)
+        pOf(opening + 1) < first.p1
     )
         opening++;
-    let carried = 0;
-    const carryOpening = (overview: number) => {
-        if (opening === 0 || overview === carried) return;
-        carried = overview;
+    let carried = NaN;
+    const carryOpening = (t: number) => {
+        const at = Math.min(t, first?.t1 ?? t);
+        if (opening === 0 || at === carried) return;
+        carried = at;
         for (const [part, from] of [
             [past, 0],
             [cur, iCur],
@@ -665,7 +682,7 @@ export function mountFlight(
             if (last < 0) continue;
             for (let j = 0; j <= last; j++) {
                 const k = j + from;
-                const c = plan.carry(pOf(k), overview);
+                const c = plan.carry(pOf(k), at);
                 const q: Vec3 = [
                     samples[k][0] + c[0],
                     samples[k][1] + c[1],
@@ -719,10 +736,23 @@ export function mountFlight(
                 emissive: CITY_LIGHTS,
                 emissiveMap: load(maps.night),
             });
+            // The sunrise's lands from their finer map, once it is in.
+            const area = { value: new Vector4(-1, -1, 1e-3, 1e-3) };
+            const [west, east] = NIGHT_WINDOW.lon;
+            const [south, north] = NIGHT_WINDOW.lat;
+            const fine = load(maps.nightFine, true, true, () =>
+                area.value.set(
+                    (west + 180) / 360,
+                    (south + 90) / 180,
+                    (east - west) / 360,
+                    (north - south) / 180,
+                ),
+            );
             shadeGlobe(material, plate, {
                 ...look,
                 earth: true,
                 keep: { box: keepOut, soft: keepSoft },
+                fine: { map: { value: fine }, window: area },
             });
         } else {
             material = new MeshLambertMaterial({ map });
@@ -809,6 +839,13 @@ export function mountFlight(
     if (belt) {
         belt.material.uniforms.uDiscs = discs;
         scene.add(belt.points);
+    }
+    // The stars and the belt keep off the record and the caption.
+    for (const dots of [stars, belt]) {
+        if (!dots) continue;
+        dots.material.uniforms.uMask = mask;
+        dots.material.uniforms.uKeep = keepOut;
+        dots.material.uniforms.uKeepSoft = keepSoft;
     }
 
     /* ---- the ship --------------------------------------------------------- */
@@ -951,11 +988,7 @@ export function mountFlight(
         const ink = palette.ink1.clone().convertLinearToSRGB();
         galaxy.mesh.visible = !light;
         if (!light && !skyMap)
-            galaxy.material.uniforms.map.value = skyMap = load(
-                maps.sky,
-                false,
-                false,
-            );
+            galaxy.material.uniforms.map.value = skyMap = load(maps.sky, false);
         for (const [dots, limit, alpha] of [
             [stars, 0.72, 0.5],
             [belt, 0, 0.32],
@@ -1182,6 +1215,7 @@ export function mountFlight(
         const kind = frame.segment.kind;
         const pose = plan.pose(frame, stage);
         view = pose;
+        plate.uOpen.value = pose.open;
 
         // Camera: the pose, then the lens shifted so the target sits at the
         // subject's centre (the right of the stage, or its upper part).
@@ -1284,7 +1318,7 @@ export function mountFlight(
             halo = lerp(halo, SUNRISE.halo, rise);
             u.uHalo.value = halo;
             // Flight Manual prints the ☉ just clear of the drawn limb.
-            u.uLift.value = palette.light ? SUNRISE.lift * rise : 0;
+            u.uLift.value = palette.light ? SUN_LIFT * rise : 0;
             const span = (a: number, lo: number, hi: number) =>
                 Math.max(0, Math.min(a + Rmax, hi) - Math.max(a - Rmax, lo)) /
                 (2 * Rmax);
@@ -1409,7 +1443,7 @@ export function mountFlight(
             fadeLen,
             lerp(0.35, 0.6, pose.overview),
         );
-        carryOpening(pose.overview);
+        carryOpening(t);
         const upto = Math.min(p, flown) / flown;
         const idx = upto * (TRAIL_SAMPLES - 1);
         const whole = Math.floor(idx);
@@ -1440,7 +1474,8 @@ export function mountFlight(
         // Labels: on the chase the world held and, through a transfer, the
         // one ahead; the one left behind fades as the ship leaves, by
         // progress, before the view swings away from it. The map names
-        // every world on a wide stage; a phone names only the world held.
+        // every world where it has the room (mapNamesAll); a phone, or a
+        // narrow window beside the record, names only the world held.
         const radial = smoothstep(0.35, 0.85, pose.overview);
         const away = (at: { x: number; y: number }) => {
             const n = Math.hypot(at.x - sunAt.x, at.y - sunAt.y) || 1;
@@ -1460,7 +1495,11 @@ export function mountFlight(
                       ? 1
                       : 0;
             if (i === from) alpha *= 1 - smoothstep(0.05, 0.25, frame.u);
-            if (i !== world && i !== into && (kind !== "plan" || !wideLayout))
+            if (
+                i !== world &&
+                i !== into &&
+                (kind !== "plan" || !mapNamesAll(stage))
+            )
                 alpha = 0;
             // The map's other labels come in as it settles, not as their
             // worlds sweep in through the crane.
@@ -1546,7 +1585,7 @@ export function mountFlight(
     let laidOut = "";
     let sizeArgs: Parameters<FlightGL["resize"]> | null = null;
     function resize(...args: Parameters<FlightGL["resize"]>) {
-        const [width, height, wide, record, caption] = args;
+        const [width, height, wide, record, caption, column] = args;
         // A hidden page has no stage to draw on: keep what is drawn.
         if (!(width >= 1 && height >= 1)) return;
         sizeArgs = args;
@@ -1560,6 +1599,7 @@ export function mountFlight(
             wide,
             record,
             caption && [caption.x0, caption.y0, caption.x1, caption.y1],
+            column,
             // The labels are measured again once the fonts are in.
             document.fonts?.status,
         ].join();
@@ -1572,7 +1612,7 @@ export function mountFlight(
         H = height;
         wideLayout = wide;
         cssDpr = device;
-        stage = stageFrame(W, H, wide);
+        stage = stageFrame(W, H, wide, column);
         camera.aspect = W / H;
         camera.fov = stage.fov;
         for (const m of lineMaterials) m.resolution.set(W, H);
@@ -1600,14 +1640,24 @@ export function mountFlight(
             safe.y1 = Math.min(safe.y1, caption.y0 - pad);
         } else keepOut.value.copy(NOWHERE);
         const top = record ?? stage.box.y1;
-        if (wide)
-            mask.value.set(
-                LINE_MASK[0] * W * dpr,
-                LINE_MASK[1] * W * dpr,
-                -2,
-                -1,
+        if (wide) {
+            const [from, to] = lineMask(stage);
+            mask.value.set(from * dpr, to * dpr, -2, -1);
+            // The scrim holds the record's column and clears past the
+            // room beside it: at 1440 from 24% to 58% of the width.
+            hooks.scrim.style.setProperty(
+                "--scrim-a",
+                `${(stage.record - 0.104 * W).toFixed(1)}px`,
             );
-        else mask.value.set(-2, -1, (H - top + 6) * dpr, (H - top + 28) * dpr);
+            hooks.scrim.style.setProperty(
+                "--scrim-b",
+                `${(stage.clear + 0.12 * W).toFixed(1)}px`,
+            );
+        } else {
+            mask.value.set(-2, -1, (H - top + 6) * dpr, (H - top + 28) * dpr);
+            hooks.scrim.style.removeProperty("--scrim-a");
+            hooks.scrim.style.removeProperty("--scrim-b");
+        }
         measureLabels();
         room = inset(safe, LABEL_FADE);
         sides = plan.mapSides(stage, labels, wide ? openLabel : null, safe);

@@ -39,16 +39,20 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
  * as ink dots.
  */
 
-/** The theme, shared by every surface. Colours are linear. */
+/** The theme, shared by every surface. Colours are linear. `uOpen`: the
+ *  opening (the pose's), 1 at the sunrise, when Flight Manual prints the
+ *  night side as paper. */
 export interface Plate {
     uPrint: { value: number };
     uPaper: { value: Color };
     uInk: { value: Color };
+    uOpen: { value: number };
 }
 export const makePlate = (): Plate => ({
     uPrint: { value: 0 },
     uPaper: { value: new Color() },
     uInk: { value: new Color() },
+    uOpen: { value: 0 },
 });
 
 /** Earth's air, linear: a clear blue, warming toward the Sun at most to
@@ -83,6 +87,10 @@ export interface GlobeLook {
      *  over twice `soft` (device pixels): the figure's caption, which the
      *  sunrise's night side lies under. */
     keep?: { box: { value: Vector4 }; soft: { value: number } };
+    /** Earth: a finer map of the night lights for the lands the sunrise
+     *  looks over, and its window in the global map's UVs (u, v of its
+     *  corner, its width and height; none until the map is in). */
+    fine?: { map: { value: Texture | null }; window: { value: Vector4 } };
     /** A faint limb darkening and a thin rim on the day side (Void). */
     limb?: { dark: number; rim: Color };
     /** Saturn: the ring's shadow on the globe. */
@@ -113,6 +121,7 @@ uniform float uWrap;
 uniform float uSoft;
 uniform float uPrint;
 uniform float uPrintGain;
+uniform float uOpen;
 uniform vec3 uPaper;
 uniform vec3 uInk;
 varying vec3 vGlobeP;
@@ -121,6 +130,8 @@ varying vec3 vGlobeN;
 uniform vec3 uAir;
 uniform vec4 uKeep;
 uniform float uKeepSoft;
+uniform sampler2D uNightFine;
+uniform vec4 uNightWindow;
 #endif
 #ifdef GLOBE_LIMB
 uniform float uLimbDark;
@@ -133,17 +144,39 @@ uniform vec3 uRingN;
 uniform vec2 uRingR;
 #endif
 `;
-/** City lights only where the Sun has set (the Sun is at the origin);
- *  on paper neither they nor the Moon's earthshine print. */
+/** Earth's night lights: from the finer map inside its window, feathered
+ *  into the global one over its last few texels (sampled either way, so
+ *  the mipmaps hold), only where the Sun has set (the Sun is at the
+ *  origin) and clear of the caption. On paper they print as ink at the
+ *  sunrise (globeCity), and neither they nor the Moon's earthshine
+ *  shine. */
+const GLOBE_EMISSIVE = /* glsl */ `
+#ifdef GLOBE_EARTH
+{
+    vec2 fineUv = (vEmissiveMapUv - uNightWindow.xy) / uNightWindow.zw;
+    vec2 edge = min(fineUv, 1.0 - fineUv) * uNightWindow.zw;
+    float fine = smoothstep(0.0, 0.004, min(edge.x, edge.y));
+    totalEmissiveRadiance *= mix(
+        texture2D(emissiveMap, vEmissiveMapUv).rgb,
+        texture2D(uNightFine, clamp(fineUv, 0.0, 1.0)).rgb,
+        fine);
+}
+#else
+#include <emissivemap_fragment>
+#endif
+`;
 const GLOBE_NIGHT = /* glsl */ `
 #ifdef GLOBE_EARTH
-totalEmissiveRadiance *= (1.0 - smoothstep(-0.12, 0.12,
-    dot(normalize(vGlobeN), normalize(-vGlobeP)))) * (1.0 - uPrint);
+totalEmissiveRadiance *= 1.0 - smoothstep(-0.12, 0.12,
+    dot(normalize(vGlobeN), normalize(-vGlobeP)));
 {
     vec2 kept = max(uKeep.xy - gl_FragCoord.xy, gl_FragCoord.xy - uKeep.zw);
     totalEmissiveRadiance *= smoothstep(0.0, 2.0 * uKeepSoft,
         max(kept.x, kept.y));
 }
+float globeCity = 0.85 * smoothstep(0.03, 0.45,
+    dot(totalEmissiveRadiance, vec3(1.0 / 3.0)));
+totalEmissiveRadiance *= 1.0 - uPrint;
 #endif
 #ifdef GLOBE_LUNAR
 totalEmissiveRadiance *= 1.0 - uPrint;
@@ -189,10 +222,19 @@ const GLOBE_FINISH = /* glsl */ `
 #ifdef GLOBE_LUNAR
         // The Moon prints its phase, a little fuller than it is so that
         // its crescent reads at the plate's size: paper where it is lit,
-        // a screen of ink across its night side.
+        // a screen of ink across its night side (a lighter one at the
+        // sunrise).
         tone = mix(min(tone, 0.22), 1.0, smoothstep(-0.42, -0.22, nl));
+        tone = mix(tone, max(tone, 0.78), uOpen);
+#else
+        // At the sunrise the night side prints as paper: the globe is its
+        // ink limb, and Earth's lands its lights in ink.
+        tone = mix(tone, 1.0, uOpen);
 #endif
         outgoingLight = mix(uInk, uPaper, 0.28 + 0.72 * tone);
+#ifdef GLOBE_EARTH
+        outgoingLight = mix(outgoingLight, uInk, globeCity * uOpen);
+#endif
 #ifdef GLOBE_SHELL
         diffuseColor.a *= smoothstep(0.1, 0.3, nv);
 #endif
@@ -236,6 +278,10 @@ export function shadeGlobe(
         uAir: { value: AIR },
         uKeep: look.keep?.box ?? { value: new Vector4(-1e4, -1e4, -9e3, -9e3) },
         uKeepSoft: look.keep?.soft ?? { value: 1 },
+        uNightFine: look.fine?.map ?? { value: null },
+        uNightWindow: look.fine?.window ?? {
+            value: new Vector4(-1, -1, 1e-3, 1e-3),
+        },
         uLimbDark: { value: look.limb?.dark ?? 0 },
         uRim: { value: look.limb?.rim ?? new Color() },
         uRingMap: look.ring?.map ?? { value: null },
@@ -270,7 +316,7 @@ vGlobeN = normalize(mat3(modelMatrix) * objectNormal);`,
             )
             .replace(
                 "#include <emissivemap_fragment>",
-                `#include <emissivemap_fragment>\n${GLOBE_NIGHT}`,
+                `${GLOBE_EMISSIVE}\n${GLOBE_NIGHT}`,
             )
             .replace(
                 "#include <lights_fragment_end>",
@@ -513,10 +559,14 @@ void main() {
 /** DOT_SKY: the stars fade in below the stage's top (SKY_FEATHER).
  *  DOT_CLEAR: the belt's grains keep off every world's disc on screen
  *  (uDiscs: x, y, radius, device pixels, as the orbits do), so none
- *  speckles a globe it passes in front of. */
+ *  speckles a globe it passes in front of. Both keep off the record and
+ *  the caption, as the lines do (uMask, uKeep: flight-gl.ts). */
 const DOT_FRAGMENT = /* glsl */ `
 uniform float uPrint;
 uniform vec3 uInk;
+uniform vec4 uMask;
+uniform vec4 uKeep;
+uniform float uKeepSoft;
 #ifdef DOT_SKY
 uniform vec2 uFeather;
 #endif
@@ -529,6 +579,10 @@ varying float vA;
 void main() {
     float r = length(gl_PointCoord - 0.5) * 2.0;
     float a = vA * (1.0 - smoothstep(0.4, 1.0, r));
+    a *= smoothstep(uMask.x, uMask.y, gl_FragCoord.x)
+        * smoothstep(uMask.z, uMask.w, gl_FragCoord.y);
+    vec2 kept = max(uKeep.xy - gl_FragCoord.xy, gl_FragCoord.xy - uKeep.zw);
+    a *= smoothstep(0.0, uKeepSoft, max(kept.x, kept.y));
 #ifdef DOT_SKY
     a *= ${SKY_FEATHER};
 #endif
@@ -576,6 +630,9 @@ function dots(
                 ),
             },
             uDiscClear: { value: 6 },
+            uMask: { value: new Vector4(-2, -1, -2, -1) },
+            uKeep: { value: new Vector4(-1e4, -1e4, -9e3, -9e3) },
+            uKeepSoft: { value: 1 },
             uPrint: plate.uPrint,
             // Display-referred ink (set by the theme).
             uInk: { value: new Color() },

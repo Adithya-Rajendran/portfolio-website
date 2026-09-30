@@ -3,6 +3,7 @@ import "three/examples/jsm/lines/LineMaterial.js";
 import { describe, expect, it } from "vitest";
 import { patchLineShader } from "@/components/trajectory/flight-gl";
 import { firstMaps, flightMaps } from "@/components/trajectory/flight-maps";
+import { OPEN_LIMB } from "@/components/trajectory/flight-opening";
 import {
     CRANE,
     FLIGHT_PACING,
@@ -10,12 +11,15 @@ import {
     OPEN_SPAN,
     RING,
     buildFlight,
+    smoothstep,
     dist,
     drawingRatio,
     labelBox,
     labelGap,
     labelMinX,
     labelSafe,
+    lineMask,
+    mapNamesAll,
     ringReach,
     roomGap,
     screenOf,
@@ -480,6 +484,58 @@ describe("Saturn's ring", () => {
     );
 });
 
+describe("the poster", () => {
+    it.each([
+        ["wide", stageFrame(1440, 828, true), 4] as const,
+        ["narrow", stageFrame(390, 788, false), 1.5] as const,
+    ])(
+        "draws the limb where the opening shows it (%s)",
+        (at, stage, within) => {
+            // The limb: the circle where the view grazes Earth, projected
+            // over the part of the stage the scene shows.
+            const frame = frameAt(paced, 0);
+            const pose = flown.pose(frame, stage);
+            const w = flown.worlds[0];
+            const c = flown.worldAt(w, frame.t);
+            const d = c.map((v, k) => v - pose.eye[k]) as Vec3;
+            const L = Math.hypot(...d);
+            const u = d.map((v) => v / L) as Vec3;
+            const e1 = [u[2], 0, -u[0]].map(
+                (v) => v / Math.hypot(u[2], u[0]),
+            ) as Vec3;
+            const e2: Vec3 = [
+                u[1] * e1[2] - u[2] * e1[1],
+                u[2] * e1[0] - u[0] * e1[2],
+                u[0] * e1[1] - u[1] * e1[0],
+            ];
+            const back = (w.radius * w.radius) / L;
+            const r = w.radius * Math.sqrt(1 - (w.radius / L) ** 2);
+            const { cx, cy, r: limb } = OPEN_LIMB[at];
+            const k = stage.H / 1000;
+            const lx = pose.lens.x * stage.W;
+            const ly = pose.lens.y * stage.H;
+            let seen = 0;
+            for (let i = 0; i < 720; i++) {
+                const a = (i / 720) * 2 * Math.PI;
+                const q = [0, 1, 2].map(
+                    (j) =>
+                        c[j] -
+                        u[j] * back +
+                        r * (Math.cos(a) * e1[j] + Math.sin(a) * e2[j]),
+                ) as Vec3;
+                const s = screenOf(pose, stage, q);
+                const x0 = stage.wide ? 0.4 * stage.W : 0;
+                if (s.depth <= 0 || s.x < x0 || s.x > stage.W) continue;
+                if (s.y < 0 || s.y > stage.H) continue;
+                seen++;
+                const off = Math.hypot(s.x - lx - cx * k, s.y - ly - cy * k);
+                expect(Math.abs(off - limb * k)).toBeLessThan(within);
+            }
+            expect(seen).toBeGreaterThan(20);
+        },
+    );
+});
+
 describe("the Moon and the belt", () => {
     it("keeps the Moon clear of Earth and the route, in the sunrise and at Earth's rest", () => {
         const moon = flown.moon!;
@@ -606,7 +662,9 @@ describe("the finale", () => {
         const frame = frameAt(paced, 1);
         const trail = flown
             .trail(2400)
-            .map((q, k) => add(q, flown.carry((k / 2399) * paced.flown, 1)));
+            .map((q, k) =>
+                add(q, flown.carry((k / 2399) * paced.flown, frame.t)),
+            );
         flown.worlds.forEach((w, i) => {
             const chapter = data.chapters[i];
             expect(flown.mapAt(w, frame.t, 0)).toEqual(
@@ -625,6 +683,9 @@ describe("the finale", () => {
         ["1280", stageFrame(1280, 648, true)],
         ["1920", stageFrame(1920, 1008, true)],
         ["1024", stageFrame(1024, 680, true)],
+        // The record's 27rem column ends at 480 below 1280.
+        ["1024 (column 480)", stageFrame(1024, 696, true, 480)],
+        ["960 (column 480)", stageFrame(960, 628, true, 480)],
         ["390", stageFrame(390, 780, false)],
         ["360", stageFrame(360, 676, false)],
     ] as [string, Stage][])(
@@ -650,13 +711,19 @@ describe("the finale", () => {
                 ...flown
                     .trail(2400)
                     .map((q, k) =>
-                        at(add(q, flown.carry((k / 2399) * paced.flown, 1))),
+                        at(
+                            add(
+                                q,
+                                flown.carry((k / 2399) * paced.flown, frame.t),
+                            ),
+                        ),
                     ),
                 ...flown.planned!.path.map(at),
             ];
             const sun = at([0, 0, 0]);
-            // On a phone only the current world is labelled.
-            const shown = stage.wide ? [0, 1, 2, 3] : [flown.current];
+            // On a phone, or a narrow window, only the current world is
+            // labelled.
+            const shown = mapNamesAll(stage) ? [0, 1, 2, 3] : [flown.current];
             const boxes = shown.map((i) => {
                 const w = flown.worlds[i];
                 const q = at(flown.mapAt(w, frame.t, 1));
@@ -689,21 +756,35 @@ describe("the finale", () => {
         },
     );
 
-    it("opens the map's route on a loop round Earth", () => {
+    it("draws the opening loop round Earth, on the chase and in the map", () => {
         const first = paced.segments[0];
         const w = flown.worlds[0];
-        const earth = flown.mapAt(w, frameAt(paced, 1).t, 1);
-        // Nothing moves on the chase, or after the loop has left.
-        expect(flown.carry(first.p0, 0)).toEqual([0, 0, 0]);
-        expect(flown.carry(first.p1, 1)).toEqual([0, 0, 0]);
+        const end = frameAt(paced, 1).t;
+        // Drawn where the ship is at its own time, and not moved once the
+        // loop has left.
+        for (const u of [0, 0.3, 0.7, 0.95]) {
+            const p = lerp(first.p0, first.p1, u);
+            expect(flown.carry(p, frameAt(paced, p).t)).toEqual([0, 0, 0]);
+        }
+        expect(flown.carry(first.p1, end)).toEqual([0, 0, 0]);
+        // Mid-chapter, the loop flown so far circles Earth where it is.
+        const now = frameAt(paced, lerp(first.p0, first.p1, 0.7));
+        const here = flown.worldAt(w, now.t);
+        for (let i = 0; i <= 200; i++) {
+            const p = lerp(first.p0, now.p, i / 200);
+            if (frameAt(paced, p).u >= 0.86) continue;
+            const at = add(flown.shipAt(p), flown.carry(p, now.t));
+            expect(dist(at, here) / w.park).toBeCloseTo(1, 6);
+        }
         // In the map the route starts on the loop, which circles Earth at
         // the parking radius (it widens only to leave) at least once.
+        const earth = flown.mapAt(w, end, 1);
         let turned = 0;
         let prev: number | null = null;
         let prevAt: Vec3 | null = null;
         for (let i = 0; i <= 800; i++) {
             const p = lerp(first.p0, first.p1, i / 800);
-            const at = add(flown.shipAt(p), flown.carry(p, 1));
+            const at = add(flown.shipAt(p), flown.carry(p, end));
             const off = [0, 1, 2].map((k) => at[k] - earth[k]) as Vec3;
             if (frameAt(paced, p).u < 0.86)
                 expect(Math.hypot(...off) / w.park).toBeCloseTo(1, 6);
@@ -825,6 +906,41 @@ describe("the labels and the lines", () => {
         expect(ringReach(edge, pole, { x: 0, y: 1 })).toBe(0);
     });
 
+    it("keeps the scene clear of the record's column on a narrow window", () => {
+        // At 1440 the column ends at 496, and the frame is as without it.
+        const at1440 = stageFrame(1440, 828, true, 496);
+        expect(at1440.clear).toBeCloseTo(1440 * 0.46);
+        expect(at1440.lens.x).toBeCloseTo(1440 * 0.65);
+        expect(at1440.map.lens.x).toBeCloseTo(1440 * 0.7);
+        expect(labelMinX(at1440)).toBeCloseTo(1440 * 0.37);
+        expect(lineMask(at1440)[0]).toBeCloseTo(1440 * 0.3, -1);
+        expect(lineMask(at1440)[1]).toBeCloseTo(1440 * 0.46);
+        // At 960 and 1024 it ends at 480, past 0.46 of the width.
+        const end = frameAt(paced, 1);
+        for (const [W, H] of [
+            [960, 628],
+            [1024, 696],
+        ]) {
+            const stage = stageFrame(W, H, true, 480);
+            expect(stage.box.x0).toBeGreaterThanOrEqual(504);
+            expect(stage.map.box.x0).toBeGreaterThanOrEqual(504);
+            expect(labelMinX(stage)).toBeGreaterThanOrEqual(504);
+            // Lines are faint at the column's edge, whole clear of it.
+            const [from, to] = lineMask(stage);
+            expect(smoothstep(from, to, 480)).toBeLessThan(0.25);
+            expect(to).toBe(stage.clear);
+            // The map's worlds, the now mark and the plan's end keep right
+            // of the column.
+            const pose = flown.pose(end, stage);
+            for (const q of [
+                ...flown.worlds.map((w) => flown.mapAt(w, end.t, 1)),
+                flown.shipAt(1),
+                flown.planned!.end,
+            ])
+                expect(screenOf(pose, stage, q).x).toBeGreaterThan(to + 24);
+        }
+    });
+
     it("keeps labels off the caption band and the phone's record", () => {
         const stage = stageFrame(1440, 828, true);
         expect(labelSafe(stage)).toEqual({
@@ -880,9 +996,14 @@ describe("the drawing buffer and the maps", () => {
         const phone = flightMaps(true);
         const wide = flightMaps(false);
         const first = firstMaps(phone, 4);
-        // The night lights stay 2k: the sunrise shows them large.
-        for (const f of first.filter((f) => f !== phone.night))
+        // The night lights stay 2k, and the sunrise's lands finer still:
+        // the sunrise shows them large.
+        for (const f of first.filter(
+            (f) => f !== phone.night && f !== phone.nightFine,
+        ))
             expect(f).not.toMatch(/-2k|-4k/);
+        expect(first).toContain("earth-night-sunrise-2k.webp");
+        expect(firstMaps(wide, 4)).toContain("earth-night-sunrise-3k.webp");
         expect(phone.sky).toBe("milky-way-band-2k.webp");
         expect(wide.sky).toBe("milky-way-band-4k.webp");
         expect(firstMaps(wide, 4)).toContain("earth-2k.webp");

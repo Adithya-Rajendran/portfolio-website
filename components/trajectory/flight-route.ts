@@ -6,6 +6,7 @@ import {
     type TrajectoryData,
 } from "@/lib/trajectory";
 import { worldKinds } from "./flight-maps";
+import { OPEN_LENS } from "./flight-opening";
 
 /**
  * The 3D flight's geometry (option C): pure, without three.js, so the
@@ -188,8 +189,11 @@ const LOOP_TILT = 14 * D2R;
 const FLYBY_SPAN = 17 * D2R;
 const FLYBY_IN = 0.8;
 const FLYBY_OUT = 3.4;
-/** A coast's loop starts and ends this much wider than its parking. */
+/** A coast's loop starts and ends this much wider than its parking; the
+ *  first leaves on a tighter arc (it is drawn round Earth, so its exit
+ *  reads as leaving the planet, and keeps clear of the record). */
 const INSERT = 1.1;
+const DEPART_FIRST = 0.45;
 /** How far a world's axis tips toward the chase camera. */
 const POLE_TIP = 11 * D2R;
 /** A ringed world's leans toward the Sun, tipped this far away from the
@@ -236,6 +240,10 @@ export interface Stage extends Layout {
     fov: number;
     /** Where the camera's target lands on the stage, pixels. */
     lens: { x: number; y: number };
+    /** On a wide stage: the record column's right edge, and the x from
+     *  which the scene is clear of it (pixels; 0 on a phone). */
+    record: number;
+    clear: number;
     /** The subject's box, pixels: right of the record and its scrim, clear
      *  of the header band and the caption on wide; above the record on
      *  phones. */
@@ -252,11 +260,28 @@ export interface Box {
     y1: number;
 }
 
-export function stageFrame(W: number, H: number, wide: boolean): Stage {
+/** The record column's right edge as a share of a wide stage, where it is
+ *  not measured (1440 wide: 64px of margin and 27rem). */
+const RECORD_SHARE = 0.344;
+
+/** A stage `W`×`H` (pixels); on a wide one `record` is the record
+ *  column's right edge, measured when the stage is sized. The scene keeps
+ *  right of 0.46 of the width, or of the record with a margin where the
+ *  column takes more (a narrow window): the subject's box, the map and the
+ *  lens move right with it, and the map shrinks to fit. */
+export function stageFrame(
+    W: number,
+    H: number,
+    wide: boolean,
+    record?: number,
+): Stage {
     const fov = wide ? 38 : 44;
     const kpx = H / 2 / Math.tan((fov * Math.PI) / 360);
     if (wide) {
-        const lens = { x: W * 0.65, y: H * 0.5 };
+        const edge = record ?? W * RECORD_SHARE;
+        const clear = Math.max(W * 0.46, edge + 32);
+        const shift = clear - W * 0.46;
+        const lens = { x: W * 0.65 + shift, y: H * 0.5 };
         return {
             W,
             H,
@@ -264,13 +289,15 @@ export function stageFrame(W: number, H: number, wide: boolean): Stage {
             fov,
             kpx,
             lens,
+            record: edge,
+            clear,
             halfW: Math.min(W - lens.x - 44, W * 0.3),
             halfH: H * 0.41,
-            box: { x0: W * 0.46, y0: 24, x1: W - 16, y1: H - 48 },
+            box: { x0: clear, y0: 24, x1: W - 16, y1: H - 48 },
             // Off the record's scrim, clear of the caption band.
             map: {
-                lens: { x: W * 0.7, y: H * 0.5 },
-                box: { x0: W * 0.46, y0: 24, x1: W - 48, y1: H - 56 },
+                lens: { x: W * 0.7 + shift / 2, y: H * 0.5 },
+                box: { x0: clear, y0: 24, x1: W - 48, y1: H - 56 },
                 fit: 1.06,
             },
         };
@@ -283,6 +310,8 @@ export function stageFrame(W: number, H: number, wide: boolean): Stage {
         fov,
         kpx,
         lens,
+        record: 0,
+        clear: 0,
         halfW: W * 0.46,
         halfH: H * 0.25,
         box: { x0: 12, y0: 16, x1: W - 12, y1: H * 0.55 },
@@ -395,15 +424,29 @@ export function ringReach(
  *  map shows worlds, not empty rings. */
 export const minWorldPx = (stage: Pick<Stage, "wide">) => (stage.wide ? 6 : 5);
 /** Labels keep right of the record on a wide stage. */
-export const labelMinX = (stage: Pick<Stage, "wide" | "W">) =>
-    stage.wide ? stage.W * 0.37 : 8;
+export const labelMinX = (stage: Pick<Stage, "wide" | "W" | "record">) =>
+    stage.wide ? Math.max(stage.W * 0.37, stage.record + 24) : 8;
+
+/** Whether the map names every world: on a wide stage whose map has the
+ *  room (a phone's, or a narrow window's beside the record, names only
+ *  the world held; the record's chapters name the rest). */
+export const mapNamesAll = (stage: Pick<Stage, "wide" | "map">) =>
+    stage.wide && stage.map.box.x1 - stage.map.box.x0 >= 600;
+
+/** On a wide stage the lines fade out toward the record: gone this far
+ *  inside its column's edge (in parts of the room past it), whole from
+ *  where the scene is clear of it (pixels). */
+export function lineMask(stage: Pick<Stage, "record" | "clear">) {
+    const from = stage.record - 0.39 * (stage.clear - stage.record);
+    return [Math.min(from, stage.clear - 24), stage.clear] as const;
+}
 
 /** Where labels and marks may print, pixels: right of the record and
  *  above the caption band on a wide stage; above the record on a phone
  *  (`record` is its top edge, measured when the stage is sized). A label
  *  fades out as it reaches an edge rather than sliding along it. */
 export function labelSafe(
-    stage: Pick<Stage, "W" | "H" | "wide" | "box">,
+    stage: Pick<Stage, "W" | "H" | "wide" | "box" | "record">,
     record?: number,
 ): Box {
     if (stage.wide)
@@ -607,12 +650,13 @@ export interface FlightPlan {
      *  where its chapter ended as the map rises, so each sits on its own
      *  loop of the route there. */
     mapAt(w: World, t: number, overview: number): Vec3;
-    /** How far the route at progress p moves in the map: the first
-     *  coast's loop goes with its world to where the chapter ended, so the
-     *  route opens on a loop round Earth rather than a curl along its
-     *  orbit. Zero elsewhere, and zero with zero slope where the loop
-     *  leaves. */
-    carry(p: number, overview: number): Vec3;
+    /** How far the route at progress p is drawn from where the ship flew
+     *  it, in a frame at mission time t: the first coast's loop is drawn
+     *  round Earth as it is at t (as it was when the chapter ended, from
+     *  then on), so the route opens on a parking loop round the planet
+     *  rather than a curl along its orbit, and the transfer leaves from
+     *  it. Zero elsewhere, and zero where the ship is at t. */
+    carry(p: number, t: number): Vec3;
     /** Whether the ship circles each world (a coast), so its label
      *  stands clear of the loop. */
     looped: boolean[];
@@ -728,12 +772,11 @@ const OVER_TURN = -15 * D2R;
 /** The opening, over this share of the first coast: the page opens low
  *  over Earth's night side, this many of its radii from its centre, with
  *  the Sun this far (radians) below the limb, so only its corona shows
- *  over the atmosphere; the Sun sits at these shares of the stage, where
- *  the home page's sunrise has it. Then the camera rises into the chase. */
-export const OPEN_SPAN = 0.4;
+ *  over the atmosphere; the Sun sits where the home page's sunrise has it
+ *  (OPEN_LENS). Then the camera rises into the chase. */
+export const OPEN_SPAN = 0.6;
 const OPEN_ALT = 1.7;
 const OPEN_DIP = 0.6 * D2R;
-const OPEN_LENS = { wide: { x: 0.69, y: 0.34 }, narrow: { x: 0.56, y: 0.2 } };
 /** The camera's track: samples over the route and the smoothing (a
  *  Gaussian in p). */
 const SAMPLES = 800;
@@ -885,9 +928,9 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                 plan
                     ? 1
                     : 1 +
-                      INSERT *
-                          ((first ? 0 : 1 - smoothstep(0, 0.14, u)) +
-                              (final ? 0 : smoothstep(0.86, 1, u)));
+                      (first ? 0 : INSERT * (1 - smoothstep(0, 0.14, u))) +
+                      (final ? 0 : first ? DEPART_FIRST : INSERT) *
+                          smoothstep(0.86, 1, u);
             // The camera holds on the world, the whole loop in frame, with
             // one slow push; the ship moves, the camera doesn't. The plan
             // keeps the shot the last coast ends on.
@@ -1372,22 +1415,21 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             shipAt((k / (n - 1)) * route.flown),
         );
 
-    // Worlds move to where their chapters ended as the map rises; the
-    // first coast's loop moves with Earth (it has no transfer before it),
-    // letting go over the departure so it joins the route unbent.
+    // Worlds move to where their chapters ended as the map rises. The
+    // first coast's loop is drawn round Earth (it has no transfer before
+    // it): round Earth where it is while the chapter lasts, then where the
+    // chapter left it. The loop leaves its outer point along the orbit, as
+    // Earth moves, so the transfer from it joins without a kink.
     const mapShare = (overview: number) => smoothstep(0.3, 0.8, overview);
     const mapAt = (w: World, t: number, overview: number) =>
         worldAt(w, lerp(t, chapters[w.chapter]?.end ?? t, mapShare(overview)));
     const opening = route.segments[0];
-    const carry = (p: number, overview: number): Vec3 => {
-        const m = mapShare(overview);
-        if (m === 0 || opening?.kind !== "coast" || p >= opening.p1)
-            return [0, 0, 0];
-        const f = frameAt(route, p);
+    const carry = (p: number, t: number): Vec3 => {
+        if (opening?.kind !== "coast" || p >= opening.p1) return [0, 0, 0];
         const w = worlds[0];
-        return scale(
-            sub(mapAt(w, f.t, 1), worldAt(w, f.t)),
-            m * (1 - smoothstep(0.86, 1, f.u)),
+        return sub(
+            worldAt(w, Math.min(t, opening.t1)),
+            worldAt(w, frameAt(route, p).t),
         );
     };
 
@@ -1409,7 +1451,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         const points: { x: number; y: number; k: number }[] = [];
         const n = 1200;
         trail(n).forEach((q, i) => {
-            const c = carry((i / (n - 1)) * route.flown, 1);
+            const c = carry((i / (n - 1)) * route.flown, end.t);
             points.push({ ...at(add(q, c)), k: 1 });
         });
         for (const q of planned?.path ?? []) points.push({ ...at(q), k: 1 });
@@ -1502,9 +1544,11 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
     // chase label keeps clear of it. Only the part near the world counts
     // (the world moves on along its orbit as the ship circles it), and of
     // that only what runs through the label's band across its side: the
-    // route may pass above or below a label beside its world.
+    // route may pass above or below a label beside its world. The first
+    // coast's loop is drawn round Earth (carry), so it is kept as offsets
+    // from Earth's centre.
     const nearPath = worlds.map((w, i) => {
-        const path: Vec3[] = [];
+        const path: { q: Vec3; round: boolean }[] = [];
         route.segments.forEach((s, index) => {
             const next = route.segments[index + 1];
             const span: [number, number] | null =
@@ -1518,10 +1562,16 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                           ? [0.5, 1]
                           : null;
             if (!span) return;
-            for (let k = 0; k <= 160; k++)
+            const round = s === opening && s.kind === "coast";
+            for (let k = 0; k <= 160; k++) {
+                const p = lerp(s.p0, s.p1, lerp(span[0], span[1], k / 160));
+                const q = shipAt(p);
                 path.push(
-                    shipAt(lerp(s.p0, s.p1, lerp(span[0], span[1], k / 160))),
+                    round
+                        ? { q: sub(q, worldAt(w, frameAt(route, p).t)), round }
+                        : { q, round },
                 );
+            }
         });
         return path;
     });
@@ -1534,7 +1584,8 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         const band = (Math.abs(v.y) * size.w + Math.abs(v.x) * size.h) / 2;
         const reach = Math.max(w.park, 2 * w.radius);
         let most = 0;
-        for (const p of path) {
+        for (const { q: from, round } of path) {
+            const p = round ? add(c, from) : from;
             const near = 1 - smoothstep(2.2, 2.8, dist(p, c) / reach);
             if (near <= 0) continue;
             const q = at(p);

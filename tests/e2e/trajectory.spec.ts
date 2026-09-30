@@ -15,6 +15,11 @@ import { THEMES, storeTheme } from "./support/theme";
  */
 const PATH = "/resume/trajectory";
 
+// Every test here draws the 3D flight, which a GPU-less browser renders
+// on the CPU: in order, in one worker, so this file never runs several
+// at once and starves the rest of the suite.
+test.describe.configure({ mode: "default" });
+
 /** Scrolls to progress `p` through the pinned flight. */
 async function seek(page: Page, p: number) {
     await page.evaluate((to) => {

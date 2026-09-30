@@ -10,7 +10,7 @@ import type { Pacing } from "./journey";
  * re-exports it).
  */
 export const FLIGHT_PACING = {
-    route: { transfer: 0.95, plan: 1.8, open: 0.35, restFirst: 0.6 },
+    route: { transfer: 0.95, plan: 1.8, open: 0.35, restFirst: 0.72 },
     transferRate: 1.0,
     duration: 32000,
 } satisfies Pacing;
