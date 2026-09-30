@@ -184,9 +184,10 @@
     box-shadow: 0 0 0 2px var(--bg);
 }
 
+/* Sized round the world's drawn disc (--d, set per frame). */
 .world::before {
-    width: 11px;
-    height: 11px;
+    width: var(--d, 11px);
+    height: var(--d, 11px);
     border: var(--rule-hair) solid var(--ink-3);
 }
 

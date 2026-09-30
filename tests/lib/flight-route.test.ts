@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    CRANE,
     FLIGHT_PACING,
     RING,
     buildFlight,
@@ -8,7 +9,6 @@ import {
     stageFrame,
     viewAxes,
     worldKinds,
-    type Layout,
     type Pose,
     type Stage,
     type Vec3,
@@ -24,8 +24,8 @@ const data = trajectoryData(
 );
 const route = buildRoute(data);
 const flight = buildFlight(data, route);
-const wide: Layout = { kpx: 1137, halfW: 430, halfH: 340 };
-const phone: Layout = { kpx: 1071, halfW: 175, halfH: 180 };
+const wide = stageFrame(1440, 828, true);
+const phone = stageFrame(390, 780, false);
 const STEPS = 4000;
 const ps = Array.from({ length: STEPS + 1 }, (_, i) => i / STEPS);
 
@@ -305,14 +305,128 @@ describe("the chase camera", () => {
         const stage = stageFrame(1440, 828, true);
         const frame = frameAt(paced, 0.5);
         const pose = flown.pose(frame, stage);
-        // The target lands on the lens.
+        // The target lands on the lens: the stage's on the chase, the
+        // map's (further right on a wide stage) in the finale.
         const t = screenOf(pose, stage, pose.target);
         expect(t.x).toBeCloseTo(stage.lens.x, 6);
         expect(t.y).toBeCloseTo(stage.lens.y, 6);
+        const end = flown.pose(frameAt(paced, 1), stage);
+        const m = screenOf(end, stage, end.target);
+        expect(m.x).toBeCloseTo(1440 * 0.7, 6);
+        expect(m.y).toBeCloseTo(828 * 0.5, 6);
         expect(stage.box.x0).toBeCloseTo(1440 * 0.46);
         expect(stageFrame(390, 780, false).box.y1).toBeCloseTo(780 * 0.55);
-        // A layout still frames as before: a Stage is a Layout.
-        const layout: Layout = stage;
-        expect(flown.pose(frame, layout)).toEqual(pose);
+    });
+
+    it("sets the route off on a clean curve, along the first orbit", () => {
+        const w = flown.worlds[0];
+        const a = flown.shipAt(0);
+        const b = flown.shipAt(0.0005);
+        const e0 = flown.worldAt(w, frameAt(paced, 0).t);
+        const e1 = flown.worldAt(w, frameAt(paced, 0.0005).t);
+        const heading = [0, 1, 2].map((k) => e1[k] - e0[k]);
+        const v = [0, 1, 2].map((k) => b[k] - a[k]);
+        const cos =
+            (v[0] * heading[0] + v[1] * heading[1] + v[2] * heading[2]) /
+            (Math.hypot(...v) * Math.hypot(...heading));
+        expect(cos).toBeGreaterThan(0.5);
+    });
+});
+
+/* ---- the finale: one crane, then the map holds --------------------------- */
+
+describe("the finale", () => {
+    const plan = paced.segments.find((s) => s.kind === "plan")!;
+    const azimuth = (pose: Pose) =>
+        Math.atan2(pose.eye[2] - pose.target[2], pose.eye[0] - pose.target[0]);
+    const margin = (stage: Stage, q: { x: number; y: number }) =>
+        Math.min(
+            q.x - stage.box.x0,
+            stage.box.x1 - q.x,
+            q.y - stage.box.y0,
+            stage.box.y1 - q.y,
+        );
+
+    it.each(stages)(
+        "keeps the ship (and then its now mark) in the box, then holds still (%s)",
+        (_, stage) => {
+            let held: Pose | null = null;
+            for (let i = 1; i <= STEPS; i++) {
+                const p = lerp(plan.p0, 1, i / STEPS);
+                const frame = frameAt(paced, p);
+                expect(frame.segment).toBe(plan);
+                const pose = flown.pose(frame, stage);
+                // The now mark is drawn where the ship is.
+                const ship = screenOf(pose, stage, flown.shipAt(p));
+                expect(ship.depth).toBeGreaterThan(0);
+                expect(margin(stage, ship)).toBeGreaterThanOrEqual(0);
+                if (frame.u < CRANE) continue;
+                held ??= pose;
+                expect(pose.eye).toEqual(held.eye);
+                expect(pose.target).toEqual(held.target);
+                expect(pose.overview).toBe(1);
+            }
+            // A rise and pull-back, not a swing round the system.
+            const start = flown.pose(frameAt(paced, plan.p0), stage);
+            const turned = Math.abs(
+                Math.atan2(
+                    Math.sin(azimuth(held!) - azimuth(start)),
+                    Math.cos(azimuth(held!) - azimuth(start)),
+                ),
+            );
+            expect(turned / D2R).toBeLessThanOrEqual(30);
+        },
+    );
+
+    it.each(stages)(
+        "composes the map inside the box, clear of the record (%s)",
+        (name, stage) => {
+            const frame = frameAt(paced, 1);
+            const pose = flown.pose(frame, stage);
+            const need = name === "wide" ? 80 : 24;
+            const marks = [
+                ...flown.worlds.map((w) => flown.mapAt(w, frame.t, 1)),
+                flown.shipAt(1),
+                flown.planned!.end,
+            ];
+            for (const q of marks) {
+                const s = screenOf(pose, stage, q);
+                expect(margin(stage, s)).toBeGreaterThanOrEqual(need);
+                if (name === "wide")
+                    expect(s.x).toBeGreaterThan(stage.W * 0.46);
+                else expect(s.y).toBeLessThan(stage.H * 0.55);
+            }
+            // The map spans the phone's width.
+            if (name === "phone") {
+                const xs = Array.from({ length: 180 }, (_, k) => {
+                    const a = (k / 180) * 2 * Math.PI;
+                    const { ex, ez } = flown.planned!.plane;
+                    const r = flown.planned!.orbit;
+                    const v = [0, 1, 2].map(
+                        (j) => (ex[j] * Math.cos(a) + ez[j] * Math.sin(a)) * r,
+                    ) as Vec3;
+                    return screenOf(pose, stage, v).x;
+                });
+                expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(
+                    0.85 * stage.W,
+                );
+            }
+        },
+    );
+
+    it("sits each world on its own loop in the map", () => {
+        const frame = frameAt(paced, 1);
+        const trail = flown.trail(2400);
+        flown.worlds.forEach((w, i) => {
+            const chapter = data.chapters[i];
+            expect(flown.mapAt(w, frame.t, 0)).toEqual(
+                flown.worldAt(w, frame.t),
+            );
+            const at = flown.mapAt(w, frame.t, 1);
+            expect(at).toEqual(flown.worldAt(w, chapter.end));
+            // Inside the loop the ship flew round it.
+            const near = Math.min(...trail.map((s) => dist(s, at)));
+            expect(near).toBeLessThan(1.25 * w.park);
+        });
     });
 });

@@ -25,7 +25,9 @@ import {
  * backwards retraces the same frames. It holds on a chapter's world while
  * its card is read (the ship loops or passes, the camera doesn't), and
  * moves between chapters: each transfer backs off to a two-shot of the
- * world left behind and the one ahead, then flies to the next world.
+ * world left behind and the one ahead, then flies to the next world. The
+ * finale cranes up to a map of the whole route, centred on the Sun, and
+ * holds there while the planned leg draws.
  */
 
 export type Vec3 = [number, number, number];
@@ -161,8 +163,9 @@ const FIRST_ORBIT = 16;
 const GAP = 6.5;
 const SWEEP = 50 * D2R;
 const LAUNCH = 200 * D2R;
-/** The planned leg's sweep about the Sun. */
-const PLAN_SWEEP = 150 * D2R;
+/** The planned leg's sweep about the Sun: the first of these (degrees)
+ *  whose end sits well inside the map on a wide stage and a phone. */
+const PLAN_SWEEPS = [90, 100, 80, 110, 70, 120, 130];
 /** Mean motion at the first orbit, degrees per year; outer orbits are
  *  slower, by Kepler's third law. */
 const OMEGA0 = 5;
@@ -211,7 +214,17 @@ export interface Stage extends Layout {
     /** The subject's box, pixels: right of the record and its scrim, clear
      *  of the header band and the caption on wide; above the record on
      *  phones. */
-    box: { x0: number; y0: number; x1: number; y1: number };
+    box: Box;
+    /** The finale's map: where its centre lands, the box the outermost
+     *  orbit is fitted into (pixels), and that orbit's share of it. */
+    map: { lens: { x: number; y: number }; box: Box; fit: number };
+}
+
+export interface Box {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
 }
 
 export function stageFrame(W: number, H: number, wide: boolean): Stage {
@@ -229,18 +242,37 @@ export function stageFrame(W: number, H: number, wide: boolean): Stage {
             halfW: Math.min(W - lens.x - 44, W * 0.3),
             halfH: H * 0.41,
             box: { x0: W * 0.46, y0: 24, x1: W - 16, y1: H - 48 },
+            // Off the record's scrim, clear of the caption band.
+            map: {
+                lens: { x: W * 0.7, y: H * 0.5 },
+                box: { x0: W * 0.46, y0: 24, x1: W - 48, y1: H - 56 },
+                fit: 1.06,
+            },
         };
     }
+    const lens = { x: W * 0.5, y: H * 0.29 };
     return {
         W,
         H,
         wide,
         fov,
         kpx,
-        lens: { x: W * 0.5, y: H * 0.29 },
+        lens,
         halfW: W * 0.46,
         halfH: H * 0.25,
         box: { x0: 12, y0: 16, x1: W - 12, y1: H * 0.55 },
+        // The map fills the width above the record; its outermost orbit
+        // may run a little past the sides.
+        map: {
+            lens,
+            box: {
+                x0: lens.x - W * 0.46,
+                y0: lens.y - H * 0.3,
+                x1: lens.x + W * 0.46,
+                y1: lens.y + H * 0.3,
+            },
+            fit: 0.95,
+        },
     };
 }
 
@@ -254,20 +286,23 @@ export function viewAxes(pose: { eye: Vec3; target: Vec3 }) {
 }
 
 /** A point on the stage, in pixels, for a pose: the same projection and
- *  lens shift flight-gl.ts writes into the projection matrix. `depth` is
- *  along the view axis (behind the camera when ≤ 0). */
+ *  lens shift flight-gl.ts writes into the projection matrix (the pose's
+ *  lens, else the stage's). `depth` is along the view axis (behind the
+ *  camera when ≤ 0). */
 export function screenOf(
-    pose: { eye: Vec3; target: Vec3 },
-    stage: Pick<Stage, "kpx" | "lens">,
+    pose: { eye: Vec3; target: Vec3; lens?: { x: number; y: number } },
+    stage: Pick<Stage, "kpx" | "lens" | "W" | "H">,
     point: Vec3,
 ) {
     const { fwd, right, up } = viewAxes(pose);
     const v = sub(point, pose.eye);
     const depth = dot(v, fwd);
     const k = stage.kpx / Math.max(1e-6, Math.abs(depth));
+    const lx = pose.lens ? pose.lens.x * stage.W : stage.lens.x;
+    const ly = pose.lens ? pose.lens.y * stage.H : stage.lens.y;
     return {
-        x: stage.lens.x + dot(v, right) * k,
-        y: stage.lens.y - dot(v, up) * k,
+        x: lx + dot(v, right) * k,
+        y: ly - dot(v, up) * k,
         depth,
     };
 }
@@ -355,10 +390,14 @@ export interface FlightPlan {
     shipAt(p: number): Vec3;
     /** A world's centre at mission time t. */
     worldAt(w: World, t: number): Vec3;
+    /** Where a world is drawn: at mission time t on the chase, moving to
+     *  where its chapter ended as the map rises, so each sits on its own
+     *  loop of the route there. */
+    mapAt(w: World, t: number, overview: number): Vec3;
     /** A world's spin about its axis at progress p (radians). */
     spinAt(w: World, p: number): number;
-    /** The camera at a frame, for a stage laid out as `layout`. */
-    pose(frame: Frame, layout: Layout): Pose;
+    /** The camera at a frame, for a stage. */
+    pose(frame: Frame, stage: Stage): Pose;
     /** The Sun–world–eye angle, degrees: 0 is full, 90 half, 180 new. */
     phaseAngle(pose: Pose, world: World, t: number): number;
     /** Ship positions over [0, route.flown], n samples. */
@@ -368,6 +407,9 @@ export interface FlightPlan {
 export interface Pose {
     eye: Vec3;
     target: Vec3;
+    /** Where the target lands on the stage, as shares of its width and
+     *  height. */
+    lens: { x: number; y: number };
     /** 0 on the chase, 1 in the overview. */
     overview: number;
     /** A transfer's fly-to, 0 (the chase) to 1 (its two-shot); 0
@@ -409,9 +451,13 @@ const REF_SCALE = (() => {
     const s = stageFrame(1440, 828, true);
     return s.kpx / Math.min(s.halfW, s.halfH);
 })();
-const OVER_EL = 54 * D2R;
-/** The overview turns so the ship sits on the near side, to the right. */
-const OVER_AZ = 38 * D2R;
+/** The finale: one crane up to the map over this share of the plan, then
+ *  the camera holds while the planned leg draws. The map looks down at
+ *  this elevation, from within ±30° of the chase's azimuth, so the crane
+ *  is a rise and pull-back rather than a swing round the system. */
+export const CRANE = 0.55;
+const OVER_EL = 56 * D2R;
+const OVER_TURN = -15 * D2R;
 /** The camera's track: samples over the route and the smoothing (a
  *  Gaussian in p). */
 const SAMPLES = 800;
@@ -708,27 +754,6 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         return legs[f.index].at(f.u);
     };
 
-    // The plan: a dashed spiral from the parking loop out to the next orbit.
-    let planned: FlightPlan["planned"] = null;
-    let reach = worlds.at(-1)?.orbit ?? FIRST_ORBIT;
-    const planSeg = route.segments.find((s) => s.kind === "plan");
-    if (planSeg && worlds.length) {
-        const w = worlds[last];
-        const porbit = w.orbit + GAP + 0.9 * (w.park + BODY.saturn.park) + 2;
-        const pplane = plane(
-            INCL[(last + 1) % INCL.length] * D2R,
-            NODE[(last + 1) % NODE.length] * D2R,
-        );
-        const t = planSeg.t0;
-        const A = add(worldAt(w, t), loopAt(w, t, 0));
-        const aA = Math.atan2(A[2], A[0]);
-        const end = onPlane(pplane, porbit, aA + PLAN_SWEEP);
-        const leg = spiral(A, end);
-        const path = Array.from({ length: 241 }, (_, k) => leg.at(k / 240));
-        planned = { orbit: porbit, plane: pplane, path, end };
-        reach = porbit;
-    }
-
     // The camera's track, sampled once and smoothed (a Gaussian in p): the
     // target, the framing radius, the elevation and the azimuth (unwrapped).
     const K = SAMPLES;
@@ -788,37 +813,140 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
     const orbitFrom = (target: Vec3, d: number, az: number, el: number) =>
         add(target, scale(outward(az, el), d));
 
-    const planStart = planSeg ? sample(planSeg.p0) : null;
-    const planShip = planSeg ? shipAt(planSeg.p0) : null;
+    // The finale's map looks down at the Sun from the azimuth the chase
+    // ends on (OVER_TURN within ±30°).
+    const planSeg = route.segments.find((s) => s.kind === "plan");
+    const overAz = (planSeg ? sample(planSeg.p0).az : 0) + OVER_TURN;
+    const sun: Vec3 = [0, 0, 0];
 
-    const pose = (frame: Frame, layout: Layout): Pose => {
-        const half = Math.max(1, Math.min(layout.halfW, layout.halfH));
-        const s = sample(frame.p);
-        const dChase = (s.f * layout.kpx) / half;
-        const target = s.g;
-        const eyeChase = orbitFrom(target, dChase, s.az, s.el);
-        const fly = frame.segment.kind === "transfer" ? flyOf(frame.u) : 0;
-        if (frame.segment.kind !== "plan" || !planStart || !planShip)
-            return { eye: eyeChase, target, overview: 0, fly };
+    // The outermost orbit, which the map frames: the planned one when
+    // there is a plan.
+    let reach = worlds.at(-1)?.orbit ?? FIRST_ORBIT;
+    let outer = worlds.at(-1)?.plane ?? plane(0, 0);
+    const pw = worlds[last];
+    const pplane = plane(
+        INCL[(last + 1) % INCL.length] * D2R,
+        NODE[(last + 1) % NODE.length] * D2R,
+    );
+    if (planSeg && pw) {
+        reach = pw.orbit + GAP + 0.9 * (pw.park + BODY.saturn.park) + 2;
+        outer = pplane;
+    }
+    const rim = Array.from({ length: 96 }, (_, k) =>
+        onPlane(outer, reach, (k / 96) * TAU),
+    );
 
-        // Crane up and out: target to the Sun, distance (in log) to the
-        // whole system, elevation up, azimuth round to the ship's side.
-        const e = smoother(frame.u / 0.78);
-        const fit = reach * 1.1;
-        const el = lerp(s.el, OVER_EL, e);
-        const dOver =
-            Math.max(
-                (fit * layout.kpx) / Math.max(1, layout.halfW),
-                (fit * Math.sin(OVER_EL) * layout.kpx) /
-                    Math.max(1, layout.halfH),
-            ) * 1.04;
-        let azOver = Math.atan2(planShip[2], planShip[0]) + OVER_AZ;
-        azOver += TAU * Math.round((planStart.az - azOver) / TAU);
-        const d = Math.exp(lerp(Math.log(dChase), Math.log(dOver), e));
-        const aim = mix(target, [0, 0, 0], smoother(frame.u / 0.62));
+    /** The map on a stage: as far back as puts the outermost orbit, at
+     *  `fit` of its size, inside the map's box. Each point bounds the
+     *  distance: offset / (d + its depth past the Sun) ≤ the box's side. */
+    const mapShot = (stage: Stage) => {
+        const { lens, box, fit } = stage.map;
+        const out = outward(overAz, OVER_EL);
+        const { fwd, right, up } = viewAxes({ eye: out, target: sun });
+        const k = stage.kpx;
+        let d = 0;
+        for (const q of rim) {
+            const c = dot(q, fwd) * fit;
+            const a = dot(q, right) * fit;
+            const b = dot(q, up) * fit;
+            const side = a > 0 ? box.x1 - lens.x : lens.x - box.x0;
+            const level = b > 0 ? lens.y - box.y0 : box.y1 - lens.y;
+            d = Math.max(
+                d,
+                (Math.abs(a) * k) / Math.max(1, side) - c,
+                (Math.abs(b) * k) / Math.max(1, level) - c,
+            );
+        }
         return {
-            eye: orbitFrom(aim, d, lerp(s.az, azOver, e), el),
-            target: aim,
+            eye: scale(out, d),
+            target: sun,
+            lens: { x: lens.x / stage.W, y: lens.y / stage.H },
+            d,
+        };
+    };
+
+    // The plan: a dashed spiral from the parking loop out to the planned
+    // orbit, ending where it reads in the map on a wide stage and a phone:
+    // well inside the frame, clear of the Sun, heading into the picture.
+    let planned: FlightPlan["planned"] = null;
+    if (planSeg && pw) {
+        const t = planSeg.t0;
+        const A = add(worldAt(pw, t), loopAt(pw, t, 0));
+        const aA = Math.atan2(A[2], A[0]);
+        const refs = [stageFrame(1440, 828, true), stageFrame(390, 780, false)];
+        const reads = (deg: number) =>
+            refs.every((stage) => {
+                const shot = mapShot(stage);
+                const a = aA + deg * D2R;
+                const at = screenOf(shot, stage, onPlane(pplane, reach, a));
+                const on = screenOf(
+                    shot,
+                    stage,
+                    add(onPlane(pplane, reach, a), tangentOn(pplane, a)),
+                );
+                const s = screenOf(shot, stage, sun);
+                const m = stage.wide ? 80 : 24;
+                const inside = (x: number, y: number, m: number) =>
+                    x >= stage.box.x0 + m &&
+                    x <= stage.box.x1 - m &&
+                    y >= stage.box.y0 + m &&
+                    y <= stage.box.y1 - m;
+                // 40px further along the leg is still in the picture.
+                const n = Math.hypot(on.x - at.x, on.y - at.y) || 1;
+                return (
+                    inside(at.x, at.y, m) &&
+                    inside(
+                        at.x + ((on.x - at.x) / n) * 40,
+                        at.y + ((on.y - at.y) / n) * 40,
+                        m / 2,
+                    ) &&
+                    Math.hypot(at.x - s.x, at.y - s.y) > 60
+                );
+            });
+        const sweep = PLAN_SWEEPS.find(reads) ?? PLAN_SWEEPS[0];
+        const end = onPlane(pplane, reach, aA + sweep * D2R);
+        const leg = spiral(A, end);
+        const path = Array.from({ length: 241 }, (_, k) => leg.at(k / 240));
+        planned = { orbit: reach, plane: pplane, path, end };
+    }
+
+    const pose = (frame: Frame, stage: Stage): Pose => {
+        const half = Math.max(1, Math.min(stage.halfW, stage.halfH));
+        const s = sample(frame.p);
+        const dChase = (s.f * stage.kpx) / half;
+        const lens = { x: stage.lens.x / stage.W, y: stage.lens.y / stage.H };
+        const fly = frame.segment.kind === "transfer" ? flyOf(frame.u) : 0;
+        if (frame.segment.kind !== "plan")
+            return {
+                eye: orbitFrom(s.g, dChase, s.az, s.el),
+                target: s.g,
+                lens,
+                overview: 0,
+                fly,
+            };
+
+        // One crane: distance (in log), elevation, azimuth and lens move
+        // together. The target leaves the ship's world for the Sun only as
+        // fast as the frame widens, so the shot's subject grows from the
+        // ship and its world to the whole system and always holds the
+        // ship. Then the camera holds while the planned leg draws.
+        const map = mapShot(stage);
+        const e = smoother(frame.u / CRANE);
+        const d = Math.exp(lerp(Math.log(dChase), Math.log(map.d), e));
+        const k = map.d > dChase ? (d - dChase) / (map.d - dChase) : e;
+        const target = mix(s.g, sun, k);
+        return {
+            eye: orbitFrom(
+                target,
+                d,
+                lerp(s.az, overAz, e),
+                lerp(s.el, OVER_EL, e),
+            ),
+            target,
+            lens: {
+                x: lerp(lens.x, map.lens.x, e),
+                y: lerp(lens.y, map.lens.y, e),
+            },
             overview: e,
             fly: 0,
         };
@@ -867,6 +995,13 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             let score = Math.abs(wrapPi(Math.atan2(y, x) - restAim));
             if (z > 0) score += 4;
             if (Math.hypot(x, y) < REST_CLEAR * w.radius) score += 4;
+            // The route opens on a clean curve: the first coast sets off
+            // along its world's orbit, not backward into a hook.
+            if (seg.chapter === 0) {
+                const v = sub(leg.at(0.01), leg.at(0));
+                const along = tangentOn(w.plane, angleAt(w, seg.t0, epoch));
+                if (dot(v, along) < 0.5 * Math.hypot(...v)) score += 4;
+            }
             if (w.kind === "saturn") {
                 // Behind the ring: the sight line toward the camera
                 // crosses the ring plane inside the ring.
@@ -913,6 +1048,15 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         epoch,
         shipAt,
         worldAt,
+        mapAt: (w, t, overview) =>
+            worldAt(
+                w,
+                lerp(
+                    t,
+                    chapters[w.chapter]?.end ?? t,
+                    smoothstep(0.3, 0.8, overview),
+                ),
+            ),
         spinAt: (w, p) => p * TAU * (1.1 + 0.25 * w.chapter) + w.chapter,
         pose,
         phaseAngle,

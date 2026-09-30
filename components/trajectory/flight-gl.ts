@@ -15,6 +15,7 @@ import {
     NormalBlending,
     Object3D,
     PerspectiveCamera,
+    PlaneGeometry,
     PointLight,
     Points,
     PointsMaterial,
@@ -36,6 +37,7 @@ import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import type { Frame, Route, TrajectoryData } from "@/lib/trajectory";
 import {
+    CRANE,
     RING,
     buildFlight,
     onPlane,
@@ -99,6 +101,9 @@ const MAX_DPR = 1.75;
 const TRAIL_SAMPLES = 2400;
 /** The ship stays about this many pixels long at any distance. */
 const SHIP_PX = 21;
+/** No world is drawn smaller than this radius, pixels (wide, phones). */
+const MIN_PX = 6;
+const MIN_PX_PHONE = 5;
 
 function seeded(seed: number) {
     let a = seed | 0;
@@ -151,6 +156,61 @@ void main() {
     gl_FragColor = vec4(color * rim * day * strength, 1.0);
 }`;
 
+/**
+ * The Sun: one camera-facing quad at its centre, sized in pixels, so it
+ * is depth-tested there (a world in front hides it) and never culled.
+ * Void: a limb-darkened disc of warm white with a windowed corona,
+ * dithered so its falloff doesn't band. Flight Manual: the printed ☉, a
+ * ring, a centre dot and sixteen ray ticks in ink.
+ */
+const SUN_VERTEX = /* glsl */ `
+uniform float uExtent;
+uniform float uKpx;
+varying vec2 vPx;
+void main() {
+    vPx = position.xy * uExtent;
+    vec4 mv = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+    mv.xy += vPx * (-mv.z / uKpx);
+    gl_Position = projectionMatrix * mv;
+}`;
+const SUN_FRAGMENT = /* glsl */ `
+uniform float uR;
+uniform float uRmax;
+uniform float uCorona;
+uniform float uPrint;
+uniform vec3 uInk;
+varying vec2 vPx;
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+void main() {
+    float r = length(vPx);
+    if (uPrint > 0.5) {
+        float ring = 1.0 - smoothstep(0.1, 1.1, abs(r - uR));
+        float centre = 1.0 - smoothstep(0.6, 1.6, r);
+        float slot = 6.2831853 / 16.0;
+        float a = atan(vPx.y, vPx.x);
+        float off = abs(fract(a / slot + 0.5) - 0.5) * slot * r;
+        float ray = (1.0 - smoothstep(0.2, 0.9, off))
+            * smoothstep(uR + 3.5, uR + 4.5, r)
+            * (1.0 - smoothstep(uR + 8.5, uR + 9.5, r));
+        gl_FragColor = vec4(uInk, max(max(ring, centre), ray));
+        return;
+    }
+    float x = min(r / uR, 1.0);
+    float mu = sqrt(1.0 - x * x);
+    float limb = 1.0 - 0.6 * (1.0 - mu) - 0.12 * (1.0 - mu) * (1.0 - mu);
+    float disc = 1.0 - smoothstep(uR - 0.8, uR + 0.8, r);
+    float rr = max(r, uR);
+    float corona = (1.6 * exp(-(rr - uR) / (0.35 * uR))
+        + 0.4 * (uR / rr) * (uR / rr))
+        * (1.0 - smoothstep(0.55 * uRmax, uRmax, r)) * uCorona;
+    vec3 c = vec3(1.0, 0.975, 0.94) * 2.6 * limb * disc
+        + vec3(1.0, 0.94, 0.86) * corona * (1.0 - disc);
+    c += (hash(gl_FragCoord.xy) - 0.5) / 255.0 * step(r, uRmax);
+    gl_FragColor = vec4(max(c, 0.0), 1.0);
+}`;
+
 export function mountFlight(
     host: HTMLElement,
     data: TrajectoryData,
@@ -195,10 +255,26 @@ export function mountFlight(
     const ambient = new AmbientLight(0xffffff, 0.12);
     scene.add(sunLight, ambient);
 
-    const sunCore = new Mesh(
-        new SphereGeometry(1.5, 48, 24),
-        new MeshBasicMaterial({ color: 0xfff6ea }),
-    );
+    const sunMaterial = new ShaderMaterial({
+        vertexShader: SUN_VERTEX,
+        fragmentShader: SUN_FRAGMENT,
+        uniforms: {
+            uExtent: { value: 1 },
+            uKpx: { value: 1 },
+            uR: { value: 1 },
+            uRmax: { value: 1 },
+            uCorona: { value: 1 },
+            uPrint: { value: 0 },
+            uInk: { value: new Color() },
+        },
+        blending: AdditiveBlending,
+        transparent: true,
+        depthWrite: false,
+        toneMapped: false,
+    });
+    const sunDisc = new Mesh(new PlaneGeometry(2, 2), sunMaterial);
+    sunDisc.frustumCulled = false;
+    scene.add(sunDisc);
     const glowTexture = radial([
         [0, "rgba(255,253,248,1)"],
         [0.06, "rgba(255,248,236,0.92)"],
@@ -208,26 +284,6 @@ export function mountFlight(
         [1, "rgba(255,230,210,0)"],
     ]);
     textures.push(glowTexture);
-    const glow = new Sprite(
-        new SpriteMaterial({
-            map: glowTexture,
-            blending: AdditiveBlending,
-            depthWrite: false,
-            transparent: true,
-        }),
-    );
-    glow.scale.setScalar(24);
-    const halo = new Sprite(
-        new SpriteMaterial({
-            map: glowTexture,
-            blending: AdditiveBlending,
-            depthWrite: false,
-            transparent: true,
-            opacity: 0.22,
-        }),
-    );
-    halo.scale.setScalar(64);
-    scene.add(sunCore, halo, glow);
 
     const dotTexture = radial(
         [
@@ -453,7 +509,8 @@ export function mountFlight(
             tilt.add(new Mesh(geometry, material));
         }
         scene.add(tilt);
-        return { w, tilt, globe };
+        /** Its radius on the stage, true and as drawn (pixels). */
+        return { w, tilt, globe, px: 1, drawn: 1 };
     });
 
     /* ---- the ship --------------------------------------------------------- */
@@ -461,18 +518,20 @@ export function mountFlight(
     const ship = new Group();
     const hull = new ConeGeometry(0.26, 1, 20, 1);
     hull.rotateX(Math.PI / 2);
-    const shipMaterial = new MeshLambertMaterial({ color: 0xffffff });
+    const shipMaterial = new MeshLambertMaterial({
+        color: 0xffffff,
+        transparent: true,
+    });
     const shipMesh = new Mesh(hull, shipMaterial);
     ship.add(shipMesh);
-    const beacon = new Sprite(
-        new SpriteMaterial({
-            map: glowTexture,
-            blending: AdditiveBlending,
-            depthWrite: false,
-            transparent: true,
-            opacity: 0.55,
-        }),
-    );
+    const beaconMaterial = new SpriteMaterial({
+        map: glowTexture,
+        blending: AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+        opacity: 0.55,
+    });
+    const beacon = new Sprite(beaconMaterial);
     beacon.scale.setScalar(1.3);
     ship.add(beacon);
     scene.add(ship);
@@ -541,24 +600,13 @@ export function mountFlight(
         palette.light = light;
         renderer.setClearColor(bg, 1);
 
-        // Void: a white-hot Sun with an additive glow. Flight Manual: paper,
-        // so the glow becomes a faint ink wash and the worlds a little
-        // brighter on their night side, like a printed plate.
-        const glowMat = glow.material as SpriteMaterial;
-        const haloMat = halo.material as SpriteMaterial;
-        glowMat.blending = light ? NormalBlending : AdditiveBlending;
-        haloMat.blending = light ? NormalBlending : AdditiveBlending;
-        glowMat.color.set(light ? palette.ink3 : 0xffffff);
-        haloMat.color.set(light ? palette.ink3 : 0xffffff);
-        glowMat.opacity = light ? 0.5 : 1;
-        haloMat.opacity = light ? 0 : 0.16;
-        halo.visible = !light;
+        // Void: a star, added to the black. Flight Manual: the printed ☉
+        // in ink on paper, with no wash; the worlds a little brighter on
+        // their night side, like a printed plate.
+        sunMaterial.blending = light ? NormalBlending : AdditiveBlending;
+        sunMaterial.uniforms.uPrint.value = light ? 1 : 0;
+        sunMaterial.uniforms.uInk.value.copy(palette.ink1);
         beacon.visible = !light;
-        glowMat.needsUpdate = haloMat.needsUpdate = true;
-        // On paper the Sun is the paper itself, ringed by its ink wash.
-        (sunCore.material as MeshBasicMaterial).color.set(
-            light ? bg : 0xfff6ea,
-        );
         ambient.intensity = light ? 0.5 : 0.05;
         sunLight.intensity = light ? 3.1 : 3.3;
         const starColor = new Color(
@@ -727,18 +775,51 @@ export function mountFlight(
         camera.far = reach * 4 + 3400;
         camera.updateProjectionMatrix();
         const pm = camera.projectionMatrix.elements;
-        pm[8] = -((2 * stage.lens.x) / W - 1);
-        pm[9] = -(1 - (2 * stage.lens.y) / H);
+        pm[8] = -(2 * pose.lens.x - 1);
+        pm[9] = -(1 - 2 * pose.lens.y);
         camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
         camera.updateMatrixWorld();
         camera.getWorldDirection(forward);
         stars.position.copy(camera.position);
 
-        // Worlds at mission time t.
+        // Worlds at mission time t, moving to where their chapters ended as
+        // the map rises. None is drawn under a few pixels in radius (Saturn
+        // with its ring), so the map shows worlds, not empty rings.
+        const minPx = wideLayout ? MIN_PX : MIN_PX_PHONE;
         for (const b of bodies) {
-            const at = plan.worldAt(b.w, t);
+            const at = plan.mapAt(b.w, t, pose.overview);
             b.tilt.position.set(...at);
             b.globe.rotation.y = plan.spinAt(b.w, p);
+            const depth = eyeV
+                .set(...at)
+                .sub(camera.position)
+                .dot(forward);
+            b.px = (b.w.radius * stage.kpx) / Math.max(1e-3, depth);
+            b.drawn = Math.max(b.px, minPx);
+            b.tilt.scale.setScalar(depth > 0 ? b.drawn / b.px : 1);
+        }
+
+        // The Sun, sized in pixels at its depth. Its corona reaches at most
+        // 90px and comes in with the share of it on the stage, so it never
+        // steps in; in the map it is fainter and the core at most 6px.
+        const sunAt = project([0, 0, 0]);
+        sunDisc.visible = sunAt.depth > camera.near;
+        if (sunDisc.visible) {
+            const u = sunMaterial.uniforms;
+            let R = (1.5 * stage.kpx) / sunAt.depth;
+            R -= pose.overview * Math.max(0, R - 6);
+            const Rmax = Math.min(0.35 * H, 8 * R, 90);
+            const span = (a: number, lo: number, hi: number) =>
+                Math.max(0, Math.min(a + Rmax, hi) - Math.max(a - Rmax, lo)) /
+                (2 * Rmax);
+            u.uR.value = R;
+            u.uRmax.value = Rmax;
+            u.uCorona.value =
+                span(sunAt.x, 0, W) *
+                span(sunAt.y, 0, H) *
+                (1 - 0.6 * pose.overview);
+            u.uExtent.value = palette.light ? R + 10 : Math.max(Rmax, R + 2);
+            u.uKpx.value = stage.kpx;
         }
         if (rims.length) {
             const earth = bodies.find((b) => b.w.kind === "earth");
@@ -793,9 +874,10 @@ export function mountFlight(
             drawTo(past, iCur, null);
             if (cur) drawTo(cur, whole - iCur + 1, head);
         }
+        // The planned leg draws out once the map has settled.
         let planOn = 0;
         if (plannedLeg && plan.planned) {
-            planOn = kind === "plan" ? smoothstep(0.18, 0.72, frame.u) : 0;
+            planOn = kind === "plan" ? smoothstep(CRANE, 0.85, frame.u) : 0;
             const n = plan.planned.path.length - 1;
             drawTo(plannedLeg, Math.round(planOn * n), null);
             const px = reach / stage.kpx;
@@ -813,19 +895,26 @@ export function mountFlight(
             0.1,
             eyeV.copy(ship.position).sub(camera.position).dot(forward),
         );
-        ship.scale.setScalar((SHIP_PX * shipDepth) / stage.kpx);
-        ship.visible = pose.overview < 0.55;
+        // Through the crane the ship shrinks, then hands over to the now
+        // mark, which has come in first: one of them is always on screen.
+        const shipFade = 1 - smoothstep(0.6, 0.8, pose.overview);
+        ship.scale.setScalar(
+            (SHIP_PX * (1 - 0.4 * pose.overview) * shipDepth) / stage.kpx,
+        );
+        shipMaterial.opacity = shipFade;
+        beaconMaterial.opacity = 0.55 * shipFade;
+        ship.visible = shipFade > 0.001;
 
         // Labels: the worlds flown and the one approached; on phones only
         // the current world.
         const seg = frame.segment;
         const world = Math.min(card, labels.length - 1);
         const radial = smoothstep(0.35, 0.85, pose.overview);
-        const sun = project([0, 0, 0]);
+        const sun = sunAt;
         const shipOnScreen = ship.visible ? project(ship3) : null;
         labels.forEach((label, i) => {
             const b = bodies[i];
-            const at = project(plan.worldAt(b.w, t));
+            const at = project(b.tilt.position.toArray() as Vec3);
             let alpha = 0;
             let state = "future";
             if (i === card) state = "current";
@@ -835,12 +924,18 @@ export function mountFlight(
                 alpha = smoothstep(0.1, 0.6, frame.u) * 0.85;
             if (!wideLayout && i !== world) alpha = 0;
             if (!at.on) alpha = 0;
-            const gap = (b.w.radius * stage.kpx) / Math.max(0.1, at.depth);
+            const gap = b.drawn;
             const ringGap = b.w.kind === "saturn" ? gap * RING.outer : gap;
             // In the overview a label also clears the world's parking loop.
             const loopGap =
                 (b.w.park * stage.kpx * radial) / Math.max(0.1, at.depth);
-            const small = 1 - smoothstep(3, 7, gap);
+            // A hairline ring round a world drawn at its smallest.
+            const small = 1 - smoothstep(3, 7, b.px);
+            if (alpha * small > 0.01)
+                rings[i].style.setProperty(
+                    "--d",
+                    `${(2 * gap + 7).toFixed(1)}px`,
+                );
             mark(rings[i], at, alpha * small);
             place(
                 label,
@@ -855,23 +950,25 @@ export function mountFlight(
         });
         if (openLabel && plan.planned) {
             const at = project(plan.planned.end);
-            const a =
-                at.on && wideLayout
-                    ? smoothstep(0.62, 0.85, frame.u) *
-                      (kind === "plan" ? 1 : 0)
-                    : 0;
-            place(openLabel, at, 12, a, "plan", radial, sun);
-            mark(
-                targetMark,
+            // The planned orbit's end and its label come in as the leg
+            // reaches them.
+            const on = kind === "plan" ? smoothstep(0.78, 0.9, frame.u) : 0;
+            place(
+                openLabel,
                 at,
-                kind === "plan" ? smoothstep(0.62, 0.85, frame.u) : 0,
+                12,
+                at.on && wideLayout ? on : 0,
+                "plan",
+                radial,
+                sun,
             );
+            mark(targetMark, at, on);
         }
         const shipAt = project(ship3);
         mark(
             nowMark,
             shipAt,
-            kind === "plan" ? smoothstep(0.35, 0.6, pose.overview) : 0,
+            kind === "plan" ? smoothstep(0.45, 0.65, pose.overview) : 0,
         );
 
         renderer.render(scene, camera);
