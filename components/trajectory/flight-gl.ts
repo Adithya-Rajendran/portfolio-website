@@ -123,7 +123,7 @@ export interface FlightHooks {
         world: string;
         leader: string;
     };
-    /** The planned orbit's label ("Open to"). */
+    /** The planned orbit's label ("Future"). */
     openTo: string;
     /** The maps this screen loads (flight-maps.ts), and those already
      *  requested, by file. */

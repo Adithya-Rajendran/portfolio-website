@@ -162,7 +162,7 @@ export default function Journey({
         // The plan leg is not dated: the owner is open to roles, nothing is
         // scheduled. Its readout is the rail's "Next".
         const dateOf = (f: Frame) =>
-            f.segment.kind === "plan" ? copy.next : missionDate(f.t, data, f);
+            f.segment.kind === "plan" ? copy.future : missionDate(f.t, data, f);
         /** "Title, Organization, dates", or "Open to: …" for the plan. */
         const said = (card: number) => {
             const c = data.chapters[card];
@@ -508,10 +508,10 @@ export default function Journey({
                                                 }
                                             >
                                                 <span className={styles.year}>
-                                                    {copy.next}
+                                                    {copy.future}
                                                 </span>
-                                                <span className={styles.name}>
-                                                    {copy.openTo}
+                                                <span className="sr-only">
+                                                    {` ${data.planned.lines[0]}`}
                                                 </span>
                                             </button>
                                         </li>

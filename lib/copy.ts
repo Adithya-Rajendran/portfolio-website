@@ -480,10 +480,12 @@ export const trajectoryCopy = {
     entry: "Full entry",
     current: "Current",
     openTo: "Open to",
-    next: "Next",
+    /** The plan leg: the rail's last stop, the readout and the planned
+     *  orbit's label in the scene. */
+    future: "Future",
     contact: "Contact",
     /** The readout's phase; the plan leg has none (its readout is
-     *  `next`, as on the rail). */
+     *  `future`, as on the rail). */
     phases: {
         coast: "Orbit",
         flyby: "Flyby",

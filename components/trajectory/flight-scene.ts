@@ -83,7 +83,7 @@ export const createFlightScene: CreateScene = (host, data, route) => {
                     world: styles.world,
                     leader: styles.leader,
                 },
-                openTo: copy.openTo,
+                openTo: copy.future,
                 maps,
                 images,
                 ready: () => {
