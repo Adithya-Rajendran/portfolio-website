@@ -93,6 +93,24 @@ afterEach(() => {
     vi.clearAllMocks();
 });
 
+describe("sendEmail — configuration", () => {
+    it("answers an unconfigured server with the plain failure line", async () => {
+        const key = process.env.RESEND_API_KEY;
+        delete process.env.RESEND_API_KEY;
+        try {
+            const sendEmail = await importSendEmail();
+            const result = await sendEmail(
+                formDataOf({ senderEmail: "a@example.com", message: "hi" }),
+            );
+            expect(result).toEqual({ error: "The message could not be sent." });
+            expect(checkBotIdMock).not.toHaveBeenCalled();
+            expect(resendSendMock).not.toHaveBeenCalled();
+        } finally {
+            process.env.RESEND_API_KEY = key;
+        }
+    });
+});
+
 describe("sendEmail — BotID", () => {
     it("blocks requests flagged as bots", async () => {
         withIp("10.0.0.1");
@@ -103,8 +121,9 @@ describe("sendEmail — BotID", () => {
             formDataOf({ senderEmail: "a@example.com", message: "hi" }),
         );
 
-        expect(result).toHaveProperty("error");
-        expect((result as { error: string }).error).toMatch(/verification/i);
+        expect(result).toEqual({
+            error: "The message could not be verified. Reload the page, then try again.",
+        });
         expect(resendSendMock).not.toHaveBeenCalled();
         // BotID is checked first — schema validation shouldn't even run.
         expect(resolveMxMock).not.toHaveBeenCalled();
@@ -120,7 +139,11 @@ describe("sendEmail — schema validation", () => {
             formDataOf({ senderEmail: "not-an-email", message: "hello" }),
         );
 
-        expect(result).toHaveProperty("error");
+        // A field problem, in the form's words, for under its field.
+        expect(result).toEqual({
+            error: "Enter an email address like you@example.com.",
+            field: "senderEmail",
+        });
         expect(resendSendMock).not.toHaveBeenCalled();
         expect(resolveMxMock).not.toHaveBeenCalled();
     });
@@ -133,7 +156,10 @@ describe("sendEmail — schema validation", () => {
             formDataOf({ senderEmail: "a@example.com", message: "" }),
         );
 
-        expect(result).toHaveProperty("error");
+        expect(result).toEqual({
+            error: "Write a message before sending.",
+            field: "message",
+        });
         expect(resendSendMock).not.toHaveBeenCalled();
     });
 
@@ -148,7 +174,10 @@ describe("sendEmail — schema validation", () => {
             }),
         );
 
-        expect(result).toHaveProperty("error");
+        expect(result).toEqual({
+            error: "Shorten the message to 1,000 characters or fewer.",
+            field: "message",
+        });
         expect(resendSendMock).not.toHaveBeenCalled();
     });
 
@@ -177,8 +206,9 @@ describe("sendEmail — Vercel WAF rate limit", () => {
             formDataOf({ senderEmail: "a@example.com", message: "hi" }),
         );
 
-        expect(result).toHaveProperty("error");
-        expect((result as { error: string }).error).toMatch(/exceeded/i);
+        expect(result).toEqual({
+            error: "Too many messages were sent in a short time. Try again in a few minutes.",
+        });
         expect(resendSendMock).not.toHaveBeenCalled();
     });
 
@@ -210,7 +240,8 @@ describe("sendEmail — DNS / MX validation", () => {
         );
 
         expect(result).toEqual({
-            error: "The email domain does not appear to exist. Please check your email address.",
+            error: "The domain after the @ does not receive email. Check the address.",
+            field: "senderEmail",
         });
         expect(resendSendMock).not.toHaveBeenCalled();
     });
@@ -276,9 +307,7 @@ describe("sendEmail — happy path and Resend integration", () => {
             }),
         );
 
-        expect(result).toEqual({
-            error: "Failed to send the email. Please try again later.",
-        });
+        expect(result).toEqual({ error: "The message could not be sent." });
         expect((result as { error: string }).error).not.toContain("re_abc123");
     });
 
@@ -308,7 +337,7 @@ describe("sendEmail — happy path and Resend integration", () => {
         expect(resendSendMock).toHaveBeenCalledTimes(1);
         expect(result).toEqual({
             status: "error",
-            message: "Failed to send the email. Please try again later.",
+            message: "The message could not be sent.",
         });
     });
 
@@ -467,12 +496,12 @@ describe("sendEmail — topic", () => {
             }),
         );
 
-        expect((result as { error: string }).error).toMatch(/verification/i);
+        expect((result as { error: string }).error).toMatch(/verified/i);
         expect(checkRateLimitMock).not.toHaveBeenCalled();
         expect(resendSendMock).not.toHaveBeenCalled();
     });
 
-    it("reports the topic sent to the form", async () => {
+    it("reports a sent message, a field to fix, or a send that did not go", async () => {
         withIp("10.0.4.5");
         const { sendEmailAction } = await import("@/actions/sendEmail");
         const { INITIAL_CONTACT_FORM_STATE } = await import("@/lib/contact");
@@ -486,7 +515,7 @@ describe("sendEmail — topic", () => {
                     topic: "research",
                 }),
             ),
-        ).resolves.toEqual({ status: "success", topic: "research" });
+        ).resolves.toEqual({ status: "success" });
         await expect(
             sendEmailAction(
                 INITIAL_CONTACT_FORM_STATE,
@@ -497,8 +526,20 @@ describe("sendEmail — topic", () => {
                 }),
             ),
         ).resolves.toEqual({
+            status: "invalid",
+            field: "message",
+            message: "Write a message before sending.",
+        });
+        checkRateLimitMock.mockResolvedValue({ rateLimited: true });
+        await expect(
+            sendEmailAction(
+                INITIAL_CONTACT_FORM_STATE,
+                formDataOf({ senderEmail: "a@example.com", message: "hi" }),
+            ),
+        ).resolves.toEqual({
             status: "error",
-            message: "Message cannot be empty",
+            message:
+                "Too many messages were sent in a short time. Try again in a few minutes.",
         });
     });
 });

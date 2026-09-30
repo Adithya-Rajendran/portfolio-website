@@ -29,8 +29,10 @@ function routeFiles(dir = "app"): string[] {
  * The URL Next.js serves a file at, from Next's own helpers: route groups
  * vanish, metadata routes gain their extension and, inside a group, a
  * stable hash suffix. Code files drop their extension; static files keep it.
+ * A file in public/ is served at its own path.
  */
 function builtPath(file: string): string {
+    if (file.startsWith("public/")) return file.slice("public".length);
     const page = `/${file.replace(/^app\//, "").replace(/\.[jt]sx?$/, "")}`;
     const route = normalizeMetadataPageToRoute(
         normalizeMetadataRoute(page),
@@ -51,7 +53,9 @@ describe("route table", () => {
         expect(new Set(files).size).toBe(files.length);
         // A new page, handler or share image fails here until its route
         // and tags are added to lib/route-tags.ts.
-        expect([...files].sort()).toEqual(routeFiles().sort());
+        expect(files.filter((file) => file.startsWith("app/")).sort()).toEqual(
+            routeFiles().sort(),
+        );
     });
 
     it("uses the URL Next.js builds for each file", () => {
@@ -130,6 +134,7 @@ describe("route table", () => {
         );
         for (const path of [
             "/robots.txt",
+            "/.well-known/security.txt",
             "/icon.svg",
             "/apple-icon.png",
             "/favicon.ico",

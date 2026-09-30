@@ -438,6 +438,19 @@ only live in comments or commit messages.
   `test.fail` in `tests/e2e/nojs.spec.ts`). React renders the head's boot
   script into that document, where it never runs, so `SiteShell`'s
   `ThemeBootFallback` runs it once when `html[data-js]` is missing.
+- **Loss of Signal** (`components/los/`, the 404 and the error page):
+  the page head (tag "Loss of signal · 404", or "Error · 500" with Try
+  again), a carrier trace shown already drawn (nothing on the page
+  animates), then three rows, Projects · Writing · Contact, and "Found a
+  broken link? Let me know". The 404 is one prerendered page for every
+  address, so what follows the missed address is read on the client
+  (`useRequestedPath`, server snapshot `null`): the Requested line, the
+  primary (`lostSection` in lib/navigation.ts: "All writing" under
+  `/blog/`, "All projects" under `/portfolio/`, else Home), the rows
+  without the section the primary offers (`lostRoutes`), and Let me know,
+  which carries the address to the form (`reportHref`:
+  `/contact?broken=…#hello`). Without JavaScript it is Home, the three
+  rows and `/contact#hello`.
 - Metadata image routes inside a route group get a stable `-<hash>` URL
   suffix from Next.js (`/about/opengraph-image-1ycygp`; `next build` prints
   them). Anything that requests them directly, like the warm lists
@@ -468,8 +481,8 @@ only live in comments or commit messages.
        cache revalidation.
 - `lib/route-tags.ts` is the route → tag table: every URL the app serves
   (pages, share images at their built URL, the feed, the sitemap, the CV
-  redirects, icons, API routes and the Studio) with the tags of the content
-  it shows. `warm(tag)` in `actions/warmCache.ts` requests every route
+  redirects, icons, `/.well-known/security.txt`, API routes and the
+  Studio) with the tags of the content it shows. `warm(tag)` in `actions/warmCache.ts` requests every route
   listed under a tag, expanding `[slug]` and `[tag]` from the published
   post and project lists; `warmBlogCache`, `warmProfileCache` and
   `warmProjectCache` are its wrappers. Those lists come from
@@ -525,8 +538,12 @@ only live in comments or commit messages.
 
 - **Resend** — transactional email for the contact form. Env:
   `RESEND_API_KEY` and `CONTACT_FORM_TO_EMAIL`. `actions/sendEmail.ts`
-  no-ops with a friendly error if its required vars are missing rather than
-  throwing at module load.
+  answers with the form's plain failure line ("The message could not be
+  sent.") if its required vars are missing rather than throwing at module
+  load.
+- **`security.txt`** (`public/.well-known/security.txt`, RFC 9116): Contact
+  is the `/contact` form, never an address; `Expires` must stay within a
+  year, so renew it yearly (the smoke spec fails once it lapses).
 - **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
   `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in
   the Vercel dashboard (Firewall → Rate Limit). If the rule is absent,
@@ -550,9 +567,10 @@ only live in comments or commit messages.
   field's optional placeholder once its topic is chosen; the page gives
   no "include" instructions. The page is the head (the introduction and
   `Availability`), then the form first, whole in the first viewport at
-  1440×900 (the carrier trace is the Message row's rule; the character
-  limit is the counter, and the hint is for screen readers), with the
-  routes beside it as short rows (below it on phones), then the profiles.
+  1440×900 under the Message section's plain hairline (the limit is the
+  field's hint, for screen readers; the counter shows only when 100
+  characters or fewer are left), with the routes beside it as short rows
+  (below it on phones), then the profiles.
   The form's Topic radios are the one topic control: the route rows carry
   no buttons, and a fragment (`#hiring`) picks its topic on arrival.
   The only words about the owner's situation on a button are the
@@ -563,8 +581,23 @@ only live in comments or commit messages.
   `{ error }` as a failure: Resend 6 does not throw on API errors. A `"use server"` module may export only async
   functions (anything else reaches the client as a server reference), so
   the form's state type and initial value live in `lib/contact.ts` too.
-  `/contact` reads its fragment (`#hiring`) on the client, never
-  `searchParams`.
+  `/contact` reads its fragment (`#hiring`) and a broken link's report
+  (`?broken=`, `reportedMessage`) on the client, never `searchParams`.
+  The fields are the draft (`components/contact/contact-draft.ts`, read
+  through `useSyncExternalStore`): kept in sessionStorage inside
+  try/catch, restored on reload, forgotten once sent; a report starts the
+  message only when no draft is waiting, and its query leaves the address
+  bar. The email is checked when the reader leaves it filled, and every
+  field (an empty one too) from the first submit (`shownErrors`). The
+  server's words (lib/copy.ts `contactCopy.form`) are plain: a field
+  problem comes back with its field (`invalid`, under that field); any
+  other refusal, and a send the network loses (caught in the form, never
+  the route's error page), is the failure under Send: "The message could
+  not be sent. Your text is still here." (or the reason: too many, not
+  verified), with Try again, Copy message and Message me on LinkedIn. A
+  sent message is "Message received." (focused), "Replies go to {email}."
+  with Change back to the filled form, and Write another message; no
+  auto-reply.
 - **Sanity webhook** — `app/api/revalidate/route.ts` requires
   `SANITY_REVALIDATE_SECRET`; if unset, the route 404s on every request
   and cache invalidation is silently disabled.
@@ -693,9 +726,13 @@ deployment require an authenticated Sanity CLI session.
   violations; share images, and a post's, a project's and home's image
   alt in their own words; feed, icons, headers, redirects, the Studio
   without chrome; the feed's four aliases answering 301, every writing
-  page naming the feed, and the feed as a plain page in a browser), `nojs` (complete pages without JavaScript: header, nav
+  page naming the feed, and the feed as a plain page in a browser; each
+  404's primary following the missed address, its rows without that
+  section and nothing animating; `security.txt` pointing to the form,
+  unexpired), `nojs` (complete pages without JavaScript: header, nav
   through the popover menu, footer, Void with no motion and no theme
-  controls, no hidden streamed segments, nothing rendered twice), `a11y`
+  controls, no hidden streamed segments, nothing rendered twice; the 404's
+  Home, three rows and plain report), `a11y`
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
   Flight Manual, every page in full, and both kinds of 404), `layout` (no
   sideways scroll at 320–1920 px, the header's parts fit without
@@ -711,11 +748,17 @@ deployment require an authenticated Sanity CLI session.
   `contact` (the form's Topic is the one topic control and a fragment
   picks it, a route's prompt only as the message field's placeholder,
   the whole form in the first viewport at 1440×900, Hiring only beside an
-  Open To line, field
-  checks, a refused send keeps the draft and its stale alert clears after
-  leaving and returning, Consulting hidden while off, no email address or
-  phone number, the no-JavaScript LinkedIn alternative; sends only on the
-  fixture build, which has no Resend credentials), `log` (the first
+  Open To line, the email checked on leaving it and every field from the
+  first submit, each error under its field, the counter only near the
+  limit; a refused send under Send with the text kept and Try again, Copy
+  message and LinkedIn, its stale alert clearing after leaving and
+  returning; a send the network drops staying on the page, Try again
+  sending again and the draft surviving a reload; "Message received."
+  focused with the reply address, Change and a fresh form; the 404's
+  report arriving with its address, Consulting hidden while off, no email
+  address or phone number, the no-JavaScript LinkedIn alternative; sends
+  only on the fixture build, which has no Resend credentials, a sent one
+  being its refusal answered as sent), `log` (the first
   entry in the first viewport at 1280×800 and 390×844 in both themes,
   entries newest first in the same order on the archive and tag pages, no
   LOG numbers and no chart on the index, "Updated" only after a revision,

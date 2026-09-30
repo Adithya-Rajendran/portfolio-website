@@ -1,10 +1,8 @@
-import Link from "next/link";
 import PageHead from "@/components/ui/page-head";
-import RouteList, { type RouteItem } from "@/components/ui/route-list";
 import SectionTag from "@/components/ui/section-tag";
+import { LostRoutes, ReportLink } from "@/components/los/not-found-actions";
 import RequestedPath from "@/components/los/requested-path";
 import { lossOfSignalCopy } from "@/lib/copy";
-import { contactHref, homeRoute, primaryNavigation } from "@/lib/navigation";
 import {
     TRACE_AXIS,
     TRACE_HEIGHT,
@@ -14,21 +12,17 @@ import {
 } from "@/lib/sky/trace";
 
 const TRACE = carrierTrace();
-const ROUTES: RouteItem[] = [homeRoute, ...primaryNavigation].map((route) => ({
-    key: route.href,
-    href: route.href,
-    plain: route.plain,
-    blurb: route.blurb,
-}));
 
 /**
  * Loss of Signal (G7): the 404 and, with other words and actions, the
- * error page. The shared page head, then a carrier
- * trace that drops out (ink, one accent mark where it is lost, no words),
- * then the site's sections as link rows over an engraved horizon (an ink
- * limb and the sun as its one accent). Everything renders without
- * JavaScript; only the requested address needs it. Directive-free, so the
- * client error boundary can render it too.
+ * error page. The shared page head, then a carrier trace that drops out,
+ * shown already drawn (ink, no words), then three sections as link rows
+ * (Projects, Writing, Contact) over an engraved horizon (an ink limb and
+ * the sun as its one accent). Everything renders without JavaScript; on
+ * the 404 (`missed`) the requested address, the primary it picks, the
+ * rows that leave that section out and the report that carries the
+ * address need it. Directive-free, so the client error boundary can
+ * render it too.
  */
 export default function LossOfSignal({
     page,
@@ -36,7 +30,7 @@ export default function LossOfSignal({
     title,
     lead,
     actions,
-    showRequested = false,
+    missed = false,
 }: {
     /** The root element's `data-page`. */
     page: string;
@@ -45,7 +39,8 @@ export default function LossOfSignal({
     title: string;
     lead: string;
     actions: React.ReactNode;
-    showRequested?: boolean;
+    /** The 404: the page follows the address that was missed. */
+    missed?: boolean;
 }) {
     const copy = lossOfSignalCopy;
     return (
@@ -59,9 +54,7 @@ export default function LossOfSignal({
                 intro={lead}
             >
                 <div className="cluster page-head__actions">{actions}</div>
-                {showRequested ? (
-                    <RequestedPath label={copy.requested} />
-                ) : null}
+                {missed ? <RequestedPath label={copy.requested} /> : null}
             </PageHead>
 
             <div className="shell" aria-hidden="true">
@@ -126,18 +119,9 @@ export default function LossOfSignal({
                             {copy.sections}
                         </h2>
                     </SectionTag>
-                    <RouteList
-                        className="los-routes"
-                        items={ROUTES}
-                        columns={3}
-                        labelledBy="los-return-h"
-                    />
+                    <LostRoutes missed={missed} labelledBy="los-return-h" />
                     <p className="los-report">
-                        {copy.report}{" "}
-                        <Link href={contactHref("hello")}>
-                            {copy.reportLink}
-                        </Link>
-                        .
+                        {copy.report} <ReportLink missed={missed} />.
                     </p>
                 </div>
             </section>

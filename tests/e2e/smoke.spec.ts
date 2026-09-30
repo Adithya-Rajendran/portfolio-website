@@ -1,5 +1,7 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { siteConfig } from "@/lib/config";
+import { lossOfSignalCopy } from "@/lib/copy";
+import { lostRoutes } from "@/lib/navigation";
 import {
     expandRoute,
     ROUTE_TAGS,
@@ -127,6 +129,33 @@ test.describe("pages", () => {
             await expectHealthyPage(page, pageErrors, path, 404);
             await expect(page.getByRole("banner")).toBeVisible();
             await expect(page.getByRole("contentinfo")).toBeVisible();
+
+            // The one action follows the missed address, and the rows
+            // (Projects, Writing, Contact) leave out the section it offers.
+            const [primary, href] = {
+                unmatched: ["Home", "/"],
+                post: ["All writing", "/blog"],
+                tag: ["All writing", "/blog"],
+                project: ["All projects", "/portfolio"],
+            }[kind as keyof typeof MISSING_PAGES];
+            const main = page.getByRole("main");
+            await expect(
+                main.getByRole("link", { name: primary, exact: true }),
+            ).toHaveAttribute("href", href);
+            const rows = main
+                .getByRole("navigation", { name: lossOfSignalCopy.sections })
+                .getByRole("link");
+            await expect(rows).toHaveCount(kind === "unmatched" ? 3 : 2);
+            for (const item of lostRoutes) {
+                await expect(
+                    rows.filter({ hasText: item.plain }),
+                    item.plain,
+                ).toHaveCount(item.href === href ? 0 : 1);
+            }
+            // The trace is drawn already: nothing on the page moves.
+            expect(
+                await page.evaluate(() => document.getAnimations().length),
+            ).toBe(0);
         });
     }
 });
@@ -147,6 +176,25 @@ test.describe("routes and headers", () => {
             expect(response.headers()["content-type"], path).toMatch(type);
             if (body) expect(await response.text(), path).toMatch(body);
         }
+    });
+
+    test("security.txt points to the contact form, before it expires", async ({
+        request,
+    }) => {
+        const response = await request.get("/.well-known/security.txt");
+        expect(response.status()).toBe(200);
+        expect(response.headers()["content-type"]).toMatch(/text\/plain/);
+        const text = await response.text();
+        expect(text).toMatch(
+            new RegExp(`^Contact: ${siteConfig.url}/contact$`, "m"),
+        );
+        expect(text).toMatch(/^Preferred-Languages: en$/m);
+        // No address or number: the form is the only channel.
+        expect(text).not.toMatch(/mailto:|tel:|@/);
+        // RFC 9116: Expires is required, within a year. Renew it yearly.
+        const expires = Date.parse(/^Expires: (\S+)$/m.exec(text)?.[1] ?? "");
+        expect(expires - Date.now()).toBeGreaterThan(0);
+        expect(expires - Date.now()).toBeLessThan(366 * 24 * 3600 * 1000);
     });
 
     test("the feed's usual addresses answer 301 to /feed.xml", async ({

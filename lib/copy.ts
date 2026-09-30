@@ -36,6 +36,8 @@ export const lossOfSignalCopy = {
     title: "Page not found",
     lead: "The page you requested could not be found. It may have moved or no longer exists.",
     home: "Home",
+    /** The primary for a missed address under a section's index. */
+    index: { missions: "All projects", log: "All writing" },
     requested: "Requested",
     sections: "Site sections",
     report: "Found a broken link?",
@@ -44,7 +46,7 @@ export const lossOfSignalCopy = {
 
 /** The error page: the same instrument, a different fault. */
 export const errorCopy = {
-    tag: "Telemetry fault · 500",
+    tag: "Error · 500",
     title: "Page error",
     lead: "This page failed to load. Please try again.",
     retry: "Try again",
@@ -90,26 +92,47 @@ export const contactCopy = {
         countFull: "Character limit reached.",
         send: "Send message",
         sending: "Sending…",
+        /** Under their field, from the form or the server. */
         errors: {
             emailMissing: "Enter your email address, so I can reply.",
             emailInvalid: "Enter an email address like you@example.com.",
+            emailDomain:
+                "The domain after the @ does not receive email. Check the address.",
             messageMissing: "Write a message before sending.",
             messageLong: (max: number) =>
                 `Shorten the message to ${max.toLocaleString("en-US")} characters or fewer.`,
         },
-        successTag: "Sent",
-        successTitle: "Message sent. Thanks for getting in touch.",
-        logTopic: "Topic",
-        logFrom: "From",
-        logLength: "Length",
-        logLengthValue: (length: number, max: number) =>
-            `${length.toLocaleString("en-US")} / ${max.toLocaleString("en-US")} characters`,
+        /** A send that did not go, under Send; `kept` follows each. */
+        failures: {
+            unsent: "The message could not be sent.",
+            unverified:
+                "The message could not be verified. Reload the page, then try again.",
+            tooMany:
+                "Too many messages were sent in a short time. Try again in a few minutes.",
+        },
+        kept: "Your text is still here.",
+        retry: "Try again",
+        copyMessage: "Copy message",
+        copied: "Copied",
+        copyFailed: "Copy failed",
+        announceCopied: "Message copied",
+        announceCopyFailed: "Copying failed",
+        /** The message a report from the 404's "Let me know" starts with. */
+        brokenLink: (path: string) => `Broken link: ${path}`,
+        successTitle: "Message received.",
+        /** "Replies go to you@example.com." */
+        repliesTo: "Replies go to",
+        change: "Change",
+        /** Starts with the visible word, for voice control (WCAG 2.5.3). */
+        changeLabel: "Change the reply address",
         again: "Write another message",
     },
+    /** The alternative to the form: beside a failed send, and without
+     *  JavaScript. */
+    linkedIn: "Message me on LinkedIn",
     noScript: {
         title: "This form requires JavaScript.",
         body: "You can also reach me on LinkedIn.",
-        linkedIn: "Message me on LinkedIn",
         profiles: "You can also reach me through the profiles below.",
     },
 } as const;

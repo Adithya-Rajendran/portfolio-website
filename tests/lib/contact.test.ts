@@ -5,6 +5,8 @@ import {
     contactSubject,
     isContactTopic,
     remainingNotice,
+    reportedMessage,
+    shownErrors,
     topicFromHash,
     topicOptions,
     validateContactFields,
@@ -269,6 +271,37 @@ describe("contact form checks", () => {
                 message: "x",
             }).senderEmail,
         ).toBeDefined();
+    });
+
+    it("checks the email when it is left filled, and every field from the first submit", () => {
+        const empty = { senderEmail: "", message: "" };
+        const malformed = { senderEmail: "you@example", message: "" };
+        // Before anything: no errors, however the fields stand.
+        expect(shownErrors(malformed, "none")).toEqual({});
+        // The email left filled: its shape only, never an empty field.
+        expect(shownErrors(malformed, "email")).toEqual({
+            senderEmail: "Enter an email address like you@example.com.",
+        });
+        expect(shownErrors(empty, "email")).toEqual({});
+        // From the first submit: every rule.
+        expect(shownErrors(empty, "all")).toEqual(validateContactFields(empty));
+    });
+
+    it("starts a broken link's report with its address, and nothing else", () => {
+        expect(reportedMessage("?broken=%2Fblog%2Fno-such-post")).toBe(
+            "Broken link: /blog/no-such-post",
+        );
+        // Only a path on this site: a crafted link cannot write the message.
+        for (const search of [
+            "",
+            "?broken=",
+            "?broken=https%3A%2F%2Fexample.com",
+            "?broken=%2F%2Fexample.com",
+            "?broken=Hello%20there",
+            `?broken=%2F${"a".repeat(301)}`,
+        ]) {
+            expect(reportedMessage(search), search).toBeNull();
+        }
     });
 
     it("announces the characters left once per band", () => {

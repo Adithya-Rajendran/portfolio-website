@@ -1,8 +1,9 @@
 /*
- * The contact form: the topic, the counter, the send row and the "Sent"
- * panel. The fields and the topic's segmented control are shared (.field,
- * .input, .textarea and .seg in styles/components.css). Ported from the
- * mockup's contact.css "Form" and "Success".
+ * The contact form: the topic, the counter, the send row, a send that did
+ * not go and "Message received.". The fields and the topic's segmented
+ * control are shared (.field, .input, .textarea and .seg in
+ * styles/components.css). Ported from the mockup's contact.css "Form" and
+ * "Success".
  */
 /* Fields 24px apart: with the page head's two-line intro, the whole form
    still fits the first viewport at 1440 × 900. */
@@ -41,25 +42,12 @@
     justify-content: space-between;
     gap: var(--s-2) var(--s-4);
 }
+/* Shown only near the limit, where the count itself turns: no mark
+   beside it. */
 .count {
-    color: var(--ink-2);
+    color: var(--accent-text);
     font: 400 0.75rem / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums;
-}
-/* Near the limit the count itself turns: no mark beside it. */
-.count[data-near] {
-    color: var(--accent-text);
-}
-
-.alert {
-    padding: var(--s-3) var(--s-4);
-    border-left: var(--rule-strong) solid var(--accent);
-    background: var(--surface-1);
-    color: var(--ink-1);
-    font: 400 var(--step--1) / 1.5 var(--font-text);
-}
-.alertIcon {
-    color: var(--accent-text);
 }
 
 .actions {
@@ -72,107 +60,69 @@
     cursor: progress;
 }
 
-/* ---- Success: the carrier locks, in ink with one accent mark ----------- */
-.signal {
-    max-width: 46rem;
-    padding-top: var(--s-4);
-    border-top: var(--rule-hair) solid var(--rule-2);
+/* ---- A send that did not go: under Send, the text kept, the ways on ---- */
+.failure {
+    display: grid;
+    gap: var(--s-2);
+    padding: var(--s-3) var(--s-4);
+    border-left: var(--rule-strong) solid var(--accent);
+    background: var(--surface-1);
 }
-.trace {
-    display: block;
-    width: 100%;
-    height: 64px;
-    overflow: visible;
-}
-.floor {
-    fill: none;
-    stroke: var(--rule-1);
-    stroke-width: 1;
-    vector-effect: non-scaling-stroke;
-}
-.wave {
-    fill: none;
-    stroke: var(--ink-1);
-    stroke-width: 1.25;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-}
-.acq {
-    fill: var(--accent);
-}
-/* The carrier locks once, only where spatial motion is allowed. */
-@media (prefers-reduced-motion: no-preference) {
-    :global(html[data-motion="full"]) .wave {
-        stroke-dasharray: 1 1;
-        animation: lock 1.1s var(--ease-insert) both;
-    }
-}
-@keyframes lock {
-    from {
-        stroke-dashoffset: 1;
-    }
-    to {
-        stroke-dashoffset: 0;
-    }
-}
-.signalKey {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6em;
-    margin-top: var(--s-4);
+.failureText {
     color: var(--ink-1);
-    font: 400 var(--label-size) / 1.4 var(--font-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
+    font: 400 var(--step--1) / 1.5 var(--font-text);
 }
-.dot {
-    width: 7px;
-    height: 7px;
-    border-radius: var(--radius-round);
-    background: var(--accent);
+.failureIcon {
+    color: var(--accent-text);
 }
-.signalTitle {
-    margin-top: var(--s-3);
+/* The first control's label lines up with the text above; each control
+   is already a 44px target, so wrapped rows need no gap. */
+.recover {
+    row-gap: 0;
+    margin-inline-start: -0.85rem;
+}
+
+/* ---- Received: the heading, the reply address, the way back ------------ */
+/* Under the section's own hairline: no rule of its own. */
+.received {
+    max-width: 46rem;
+}
+.receivedTitle {
     color: var(--ink-1);
     font: 400 var(--step-4) / 1.08 var(--font-display);
     letter-spacing: -0.012em;
 }
-.signalTitle:focus {
+.receivedTitle:focus {
     outline: none;
 }
-.signalTitle:focus-visible {
+.receivedTitle:focus-visible {
     outline: var(--rule-strong) solid var(--focus);
     outline-offset: 4px;
 }
-.log {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 var(--gutter);
-    margin: var(--s-5) 0 0;
-    border-top: var(--rule-hair) solid var(--rule-1);
+.replies {
+    margin-top: var(--s-4);
+    color: var(--ink-2);
+    font: 400 var(--step-1) / 1.5 var(--font-long);
 }
-.log > div {
-    min-width: 0;
-    padding-block: var(--s-3);
-    border-bottom: var(--rule-hair) solid var(--rule-1);
-}
-.log dt {
-    color: var(--ink-3);
-    font: var(--label-2);
-    letter-spacing: var(--track-label-2);
-    text-transform: uppercase;
-}
-.log dd {
-    margin: 0.2rem 0 0;
+.replies strong {
     overflow-wrap: anywhere;
     color: var(--ink-1);
-    font: 400 0.875rem / 1.4 var(--font-mono);
+    font-weight: 400;
+}
+/* Change: a button set as the sentence's link. */
+.change {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink-1);
+    font: inherit;
+    text-decoration: underline 1px var(--accent);
+    text-underline-offset: 0.22em;
+    cursor: pointer;
+}
+.change:hover {
+    text-decoration-thickness: 2px;
 }
 .again {
     margin-top: var(--s-5);
-}
-@media (max-width: 37.49rem) {
-    .log {
-        grid-template-columns: minmax(0, 1fr);
-    }
 }

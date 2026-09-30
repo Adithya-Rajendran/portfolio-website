@@ -21,7 +21,7 @@ export default function NotFound() {
             title={copy.title}
             lead={copy.lead}
             actions={<NotFoundActions />}
-            showRequested
+            missed
         />
     );
 }

@@ -3,9 +3,12 @@ import {
     contactHref,
     cvLink,
     headerMode,
+    lostRoutes,
+    lostSection,
     movedFragment,
     navCurrent,
     primaryNavigation,
+    reportHref,
 } from "@/lib/navigation";
 
 describe("site navigation", () => {
@@ -53,6 +56,35 @@ describe("site navigation", () => {
         expect(navCurrent("/portfolio", comms)).toBeUndefined();
         expect(navCurrent("/contact", comms)).toBe("page");
         expect(navCurrent(undefined, log)).toBeUndefined();
+    });
+});
+
+describe("the 404's ways on", () => {
+    it("offers a missed address its section's index, else nothing", () => {
+        expect(lostSection("/blog/no-such-post")?.plain).toBe("Writing");
+        expect(lostSection("/blog/tags/no-such-tag")?.plain).toBe("Writing");
+        expect(lostSection("/portfolio/no-such-project")?.plain).toBe(
+            "Projects",
+        );
+        // Anywhere else, or on the server (no address), the primary is Home.
+        for (const path of ["/nowhere", "/blogroll", "/resume/x", null]) {
+            expect(lostSection(path), String(path)).toBeUndefined();
+        }
+    });
+
+    it("lists Projects, Writing and Contact as its rows", () => {
+        expect(lostRoutes.map((item) => item.plain)).toEqual([
+            "Projects",
+            "Writing",
+            "Contact",
+        ]);
+    });
+
+    it("reports a broken link to Hello with its address", () => {
+        expect(reportHref("/blog/no such")).toBe(
+            "/contact?broken=%2Fblog%2Fno%20such#hello",
+        );
+        expect(reportHref(null)).toBe("/contact#hello");
     });
 });
 

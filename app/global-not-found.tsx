@@ -46,7 +46,7 @@ export default function GlobalNotFound() {
                         title={copy.title}
                         lead={copy.lead}
                         actions={<NotFoundActions />}
-                        showRequested
+                        missed
                     />
                 </SiteShell>
             </body>

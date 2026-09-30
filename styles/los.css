@@ -68,7 +68,7 @@
     }
 
     /* ---- The carrier trace: a strip chart that drops out ------------------ */
-    /* Ink only, no words (contract §3, §8). */
+    /* Ink only, no words (contract §3, §8), already drawn: it never moves. */
     .los-trace {
         display: block;
         width: 100%;
@@ -105,27 +105,6 @@
     .los-los-line {
         stroke: var(--ink-2);
         stroke-width: 1;
-    }
-    /* Drawn once, like a recorder pen: full motion only, static otherwise. */
-    @media (prefers-reduced-motion: no-preference) {
-        html[data-motion="full"] .los-signal {
-            clip-path: inset(0 100% 0 0);
-            animation: trace-draw 2.6s linear 0.25s forwards;
-        }
-        html[data-motion="full"] :is(.los-dead, .los-los-line) {
-            opacity: 0;
-            animation: trace-in 0.5s var(--ease-dock) 2.85s forwards;
-        }
-    }
-    @keyframes trace-draw {
-        to {
-            clip-path: inset(0 0 0 0);
-        }
-    }
-    @keyframes trace-in {
-        to {
-            opacity: 1;
-        }
     }
 
     /* ---- The site's sections over an engraved horizon ---------------------- */

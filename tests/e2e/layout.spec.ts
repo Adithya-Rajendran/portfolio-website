@@ -161,11 +161,12 @@ test("no visible text is under 12 px on home, the posts, the projects, the CV an
         await page.goto(path);
         await page.waitForLoadState("networkidle");
         if (path === "/contact") {
-            // The counter's near-limit state, 40 characters from the end.
+            // The counter, shown only near the limit: 40 characters from
+            // the end.
             await page
                 .locator('textarea[name="message"]')
                 .fill("a".repeat(960));
-            await expect(page.locator("[data-near]")).toHaveCount(1);
+            await expect(page.getByText("960 / 1000")).toBeVisible();
         }
         for (const width of [1440, 390]) {
             await page.setViewportSize({ width, height: 900 });

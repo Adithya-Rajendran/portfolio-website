@@ -1,10 +1,10 @@
 /**
  * The site's navigation, the one source for the header, the menu sheet,
- * the footer, the 404's link rows and (from PR 16) the console's page
- * list. Every section is named by its plain label (Projects, Writing,
- * Experience, About, Contact); its themed name is a secondary tag on its
- * own page. URLs keep their words (plan §2.1). Keep this module free of
- * imports.
+ * the footer, the 404's primary and link rows and (from PR 16) the
+ * console's page list. Every section is named by its plain label
+ * (Projects, Writing, Experience, About, Contact); its themed name is a
+ * secondary tag on its own page. URLs keep their words (plan §2.1). Keep
+ * this module free of imports.
  */
 
 /** Canonical public routes shared by navigation and content. */
@@ -84,12 +84,29 @@ export const primaryNavigation: readonly NavItem[] = [
     },
 ];
 
-/** The home page as a link row (the 404). */
-export const homeRoute = {
-    href: siteRoutes.home,
-    plain: "Home",
-    blurb: "Overview and latest work.",
-} as const;
+/** The 404's link rows: the work, the writing and the form. */
+export const lostRoutes: readonly NavItem[] = primaryNavigation.filter(
+    (item) =>
+        item.id === "missions" || item.id === "log" || item.id === "comms",
+);
+
+/** A section whose pages sit under an index: Projects, Writing. */
+export type IndexedSection = NavItem & { id: "missions" | "log" };
+
+/**
+ * The section whose index a missed address falls under ("/blog/…" is
+ * Writing's, "/portfolio/…" Projects'): the 404 offers that index as its
+ * primary and leaves the section out of its rows. Any other address, or
+ * none (on the server), has none: the primary is Home.
+ */
+export function lostSection(path: string | null): IndexedSection | undefined {
+    if (!path) return undefined;
+    return primaryNavigation.find(
+        (item): item is IndexedSection =>
+            (item.id === "missions" || item.id === "log") &&
+            path.startsWith(`${item.section}/`),
+    );
+}
 
 /** The recruiter shortcut in the header bar, at every width. */
 export const cvLink = { href: siteRoutes.resume, label: "CV" } as const;
@@ -118,6 +135,20 @@ export const footerLinks = [
  */
 export function contactHref(topic?: string): string {
     return topic ? `${siteRoutes.contact}#${topic}` : siteRoutes.contact;
+}
+
+/** The query that carries a broken link's address to the form. */
+export const REPORT_PARAM = "broken";
+
+/**
+ * The 404's "Let me know": Hello, with the missed address for the form to
+ * write into the message ("/contact?broken=%2Fblog%2Fx#hello"; lib/contact.ts
+ * `reportedMessage`). Without the address, Hello alone.
+ */
+export function reportHref(path: string | null): string {
+    return path
+        ? `${siteRoutes.contact}?${REPORT_PARAM}=${encodeURIComponent(path)}#hello`
+        : contactHref("hello");
 }
 
 /**

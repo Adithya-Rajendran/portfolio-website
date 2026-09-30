@@ -9,10 +9,11 @@
  * profile says what the owner is open to (`availabilityLine`).
  *
  * There is no public email address or phone number: the form is the only
- * channel, with LinkedIn as the alternative when JavaScript is off.
+ * channel, with LinkedIn as the alternative when JavaScript is off or a
+ * send does not go.
  */
 import { contactCopy } from "@/lib/copy";
-import { siteRoutes } from "@/lib/navigation";
+import { REPORT_PARAM, siteRoutes } from "@/lib/navigation";
 import { availabilityLine, getProfileLink } from "@/lib/profile-content";
 import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import type { ProfileData } from "@/lib/sanity-client";
@@ -37,12 +38,15 @@ export function isContactTopic(value: unknown): value is ContactTopic {
 }
 
 /**
- * The form's state after each send (`sendEmailAction`). The fields are
- * controlled and never reset by React, so an error needs no echo of them.
+ * The form's state after each send (`sendEmailAction`): sent; a field the
+ * server refused (`invalid`, shown under that field); or not sent
+ * (`error`, under Send, with the ways on). The fields are controlled and
+ * never reset by React, so no state echoes them.
  */
 export type ContactFormState =
     | { status: "idle" }
-    | { status: "success"; topic: ContactTopic }
+    | { status: "success" }
+    | { status: "invalid"; field: keyof ContactFields; message: string }
     | { status: "error"; message: string };
 
 export const INITIAL_CONTACT_FORM_STATE: ContactFormState = { status: "idle" };
@@ -201,6 +205,38 @@ export function validateContactFields({
         errors.message = copy.messageLong(MESSAGE_MAX_LENGTH);
     }
     return errors;
+}
+
+/**
+ * When the form shows its checks: none at first; the email's shape once
+ * the reader leaves a filled email field (`email`); every rule, an empty
+ * field included, from the first submit (`all`).
+ */
+export type ContactChecks = "none" | "email" | "all";
+
+/** The errors to show beside the fields, for the checks in force. */
+export function shownErrors(
+    fields: ContactFields,
+    checks: ContactChecks,
+): ContactFieldErrors {
+    if (checks === "none") return {};
+    const found = validateContactFields(fields);
+    if (checks === "all") return found;
+    return fields.senderEmail.trim() && found.senderEmail
+        ? { senderEmail: found.senderEmail }
+        : {};
+}
+
+/**
+ * The message a broken link's report starts with (the 404's "Let me
+ * know", `reportHref`): the missed address, when the query names a path
+ * on this site. Anything else is ignored, so a crafted link cannot write
+ * the message. The form reads it on the client, never `searchParams`.
+ */
+export function reportedMessage(search: string): string | null {
+    const path = new URLSearchParams(search).get(REPORT_PARAM);
+    if (!path || !/^\/(?!\/)\S{0,300}$/.test(path)) return null;
+    return contactCopy.form.brokenLink(path);
 }
 
 /**

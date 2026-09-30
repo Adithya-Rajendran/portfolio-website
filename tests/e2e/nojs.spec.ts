@@ -117,3 +117,23 @@ for (const width of [1440, 390]) {
         }
     });
 }
+
+test("the 404 offers Home, three sections and the report without JavaScript", async ({
+    page,
+}) => {
+    // The server never knows the missed address: Home, every row, and the
+    // report to Hello without it.
+    await page.goto(MISSING_PAGES.unmatched);
+    const main = page.getByRole("main");
+    await expect(
+        main.getByRole("link", { name: "Home", exact: true }),
+    ).toHaveAttribute("href", "/");
+    await expect(
+        main
+            .getByRole("navigation", { name: "Site sections" })
+            .getByRole("link"),
+    ).toHaveCount(3);
+    await expect(
+        main.getByRole("link", { name: "Let me know" }),
+    ).toHaveAttribute("href", "/contact#hello");
+});

@@ -30,7 +30,7 @@ export default function ContactNoScript({
                             href={linkedIn.url}
                             rel="noopener noreferrer"
                         >
-                            {copy.linkedIn}
+                            {contactCopy.linkedIn}
                             <Icon name="external" />
                         </a>
                     </p>
