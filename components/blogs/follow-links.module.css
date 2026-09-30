@@ -1,0 +1,9 @@
+/*
+ * "Follow: RSS · LinkedIn" (components/blogs/follow-links.tsx): the
+ * entry's closing note's size and colour, so it reads as a line of text,
+ * not a control.
+ */
+.follow {
+    color: var(--ink-2);
+    font: 400 var(--step--1) / 1.5 var(--font-text);
+}

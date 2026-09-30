@@ -66,6 +66,29 @@ describe("logEntries", () => {
         expect(tagged.map((entry) => entry.designation)).toEqual(["LOG 002"]);
     });
 
+    it("shows a tag only once it gathers two entries, counted across the whole log", () => {
+        // The owner's posts: six tags, one entry each, so none links.
+        expect(logEntries(POSTS).map((entry) => entry.tagLinks)).toEqual([
+            [],
+            [],
+            [],
+        ]);
+        const entries = logEntries([
+            POSTS[0],
+            { ...POSTS[1], tags: ["linux", "homelab"] },
+            POSTS[2],
+        ]);
+        expect(entries.map((entry) => entry.tagLinks)).toEqual([
+            ["homelab"],
+            ["homelab"],
+            [],
+        ]);
+        // A filtered list keeps what the whole log links.
+        expect(entriesTagged(entries, "linux")[0].tagLinks).toEqual([
+            "homelab",
+        ]);
+    });
+
     it("drops tags that are not a valid tag page and has no read time for an empty body", () => {
         const [entry] = logEntries([
             { ...POSTS[0], tags: ["homelab", "Not A Tag"], wordCount: 0 },

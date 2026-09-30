@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CopyButton from "@/components/blogs/copy-button";
+import FollowLinks from "@/components/blogs/follow-links";
 import Footnotes from "@/components/prose/footnotes";
 import { Ornament } from "@/components/ui/icon";
 import { LinkArrow, Rev } from "@/components/ui/marks";
@@ -7,28 +8,30 @@ import { postCopy as copy } from "@/lib/copy";
 import { contactHref, siteRoutes } from "@/lib/navigation";
 import { changeKindTitle } from "@/lib/post-fields";
 import type { NoteInfo } from "@/lib/prose";
-import type { PostChange } from "@/lib/sanity-client";
+import type { ExternalLink, PostChange } from "@/lib/sanity-client";
 import styles from "./post.module.css";
 
 /**
  * The end of an entry (G1, G7): the numbered notes, the revisions (each
  * dated with a revision mark; corrections are errata), the end mark, and
  * what to do next: reply through Comms (the contact form's Hello route,
- * no email address), copy the link, or go back to the index. A post gets
- * a revision entry only for a real change the owner recorded.
+ * no email address), follow the writing (one quiet line), copy the link,
+ * or go back to the index. The entry's LOG number is the crumb's alone.
+ * A post gets a revision entry only for a real change the owner recorded.
  */
 export default function EndMatter({
     notes,
     changelog,
-    designation,
     url,
+    linkedIn,
     className,
 }: {
     notes: readonly NoteInfo[];
     changelog: readonly PostChange[];
-    designation?: string;
     /** The entry's canonical address, for Copy link. */
     url: string;
+    /** The owner's LinkedIn, the follow line's second link. */
+    linkedIn?: ExternalLink | null;
     className?: string;
 }) {
     const revisions = [...changelog]
@@ -71,13 +74,14 @@ export default function EndMatter({
             ) : null}
             <div className={styles.endmark}>
                 <Ornament name="limb" />
-                <p className="label">{copy.end(designation)}</p>
+                <p className="label">{copy.end}</p>
             </div>
             <div className={styles.actions} data-print="hide">
                 <p className={styles.actionsNote}>
                     {copy.question}{" "}
                     <Link href={contactHref("hello")}>{copy.reply}</Link>.
                 </p>
+                <FollowLinks linkedIn={linkedIn} />
                 <div className={`cluster ${styles.actionsRow}`}>
                     <CopyButton
                         text={url}

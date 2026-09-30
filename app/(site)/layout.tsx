@@ -3,7 +3,7 @@ import SiteShell from "@/components/chrome/site-shell";
 import { siteConfig } from "@/lib/config";
 import { getProfile } from "@/lib/sanity-client";
 import { getProfileDescription } from "@/lib/profile-content";
-import { FEED_PATH, FEED_TITLE } from "@/lib/feed";
+import { feedAlternates } from "@/lib/feed";
 import { siteOpenGraph } from "@/lib/site-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -12,12 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const described = description ? { description } : {};
     return {
         ...described,
-        alternates: {
-            canonical: siteConfig.url,
-            types: {
-                "application/rss+xml": [{ url: FEED_PATH, title: FEED_TITLE }],
-            },
-        },
+        alternates: feedAlternates(siteConfig.url),
         keywords: [
             siteConfig.author,
             "Personal website",

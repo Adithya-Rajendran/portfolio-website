@@ -11,6 +11,8 @@
 export const siteRoutes = {
     home: "/",
     blog: "/blog",
+    /** Every entry with a search: a quiet link at the end of /blog. */
+    archive: "/blog/archive",
     portfolio: "/portfolio",
     resume: "/resume",
     about: "/about",

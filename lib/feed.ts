@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
     toHTML,
     uriLooksSafe,
@@ -25,6 +26,23 @@ export type FeedPost = Pick<
 export const FEED_PATH = "/feed.xml";
 /** The section's plain name, as the nav names it. */
 export const FEED_TITLE = `${siteConfig.author} — Writing`;
+/** The stylesheet a browser shows the feed with (public/feed.xsl). */
+export const FEED_STYLESHEET = "/feed.xsl";
+
+/**
+ * A page's `alternates`: its canonical address and the feed, so a reader's
+ * app finds the feed from it. A page's `alternates` replaces the layout's
+ * whole, so the site layout and every writing route (/blog, the archive,
+ * the tag pages and each entry) name both through this one helper.
+ */
+export function feedAlternates(canonical: string): Metadata["alternates"] {
+    return {
+        canonical,
+        types: {
+            "application/rss+xml": [{ url: FEED_PATH, title: FEED_TITLE }],
+        },
+    };
+}
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 const XML_ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
@@ -296,7 +314,9 @@ function renderPostHtml(post: FeedPost): string {
 
 /**
  * The feed. RSS requires a channel description: the owner's description
- * of his writing, or the feed's own title when the profile has none.
+ * of his writing, or the feed's own title when the profile has none. A
+ * browser shows it through public/feed.xsl, as a plain page; a feed
+ * reader ignores the stylesheet.
  */
 export function renderFeedXml(
     posts: FeedPost[],
@@ -340,6 +360,7 @@ export function renderFeedXml(
     ];
 
     return `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="${FEED_STYLESHEET}"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         ${channelLines.join("\n        ")}

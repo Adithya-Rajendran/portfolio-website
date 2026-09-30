@@ -3,9 +3,10 @@
  * (components/blogs/portable-text-components.tsx) under `.prose`, on the
  * post page and in the project essay. Newsreader at a 68-character measure,
  * numbered listings with the one Shiki theme's colours, plates and figures,
- * callouts, footnotes with margin notes, and the notes list. A page decides
- * the column around it (components/blogs/post.module.css for posts).
- * Ported from d-deep-field-plus site.css 4.15–4.17 and writing.css.
+ * quiet notes (a quotation and a callout share one rule), footnotes with
+ * margin notes, and the notes list. A page decides the column around it
+ * (components/blogs/post.module.css for posts). Ported from
+ * d-deep-field-plus site.css 4.15–4.17 and writing.css.
  */
 
 @layer components {
@@ -13,10 +14,9 @@
        18–20px (CSS `ch` counts the wide "0", so it reads 52ch). */
     .prose {
         --prose-measure: 36rem;
-        counter-reset: prose-h2;
         color: var(--ink-1);
         font: 400 var(--step-long) / var(--lh-long) var(--font-long);
-        font-optical-sizing: auto;
+        font-variant-numeric: proportional-nums;
         text-wrap: pretty;
         hanging-punctuation: first;
         hyphenate-limit-chars: 8 4 4;
@@ -40,9 +40,8 @@
 
     /* ---- Headings ---------------------------------------------------- */
     .prose h2 {
-        counter-increment: prose-h2;
         margin-top: 2.4em;
-        font: 400 var(--step-3) / 1.12 var(--font-display);
+        font: 400 var(--step-2) / 1.15 var(--font-display);
         letter-spacing: -0.01em;
         scroll-margin-top: calc(var(--header-h) + var(--s-5));
     }
@@ -90,21 +89,23 @@
     }
     .prose :not(pre) > code {
         padding: 0.08em 0.32em;
-        border: var(--rule-hair) solid var(--rule-1);
         background: var(--surface-1);
         font-size: 0.86em;
         font-variant-ligatures: none;
         white-space: break-spaces;
     }
-    /* The owner's asides: a quiet note, not a pull quote. */
-    .prose blockquote {
+    /* The owner's asides: a quiet note, not a pull quote. A callout is
+       the same note with a bold lead-in (below). */
+    .prose blockquote,
+    .callout {
         margin-block: var(--s-6);
         padding: var(--s-1) 0 var(--s-1) var(--s-5);
         border-left: var(--rule-strong) solid var(--rule-2);
         color: var(--ink-2);
         font: 400 var(--step-0) / 1.6 var(--font-long);
     }
-    .prose blockquote strong {
+    .prose blockquote strong,
+    .callout strong {
         color: var(--ink-1);
     }
 
@@ -131,13 +132,14 @@
         --code-token-deleted: var(--ink-2);
         --code-token-changed: var(--ink-1);
         margin-block: var(--space-block);
-        border: var(--rule-hair) solid var(--rule-1);
         background: var(--surface-1);
         font: 400 0.8125rem / 1.62 var(--font-mono);
     }
     .prose > .listing--wide {
         max-width: min(100%, 60rem);
     }
+    /* LISTING n and the file name, then the language and Copy at the
+       right, in the listing's own mono. */
     .listing__bar {
         display: flex;
         flex-wrap: wrap;
@@ -145,7 +147,6 @@
         gap: 0 var(--s-4);
         min-height: 44px;
         padding: 0 var(--s-2) 0 var(--s-5);
-        border-bottom: var(--rule-hair) solid var(--rule-1);
     }
     .listing__num {
         color: var(--ink-1);
@@ -154,28 +155,26 @@
         text-transform: uppercase;
     }
     .listing__lang {
+        margin-left: auto;
         color: var(--ink-2);
-        font: 400 0.75rem / 1 var(--font-mono);
+        font: 400 0.8125rem / 1 var(--font-mono);
     }
     .listing__file {
         min-width: 0;
         overflow: hidden;
         color: var(--ink-2);
-        font: 400 0.75rem / 1 var(--font-mono);
+        font: 400 0.8125rem / 1 var(--font-mono);
         text-overflow: ellipsis;
         white-space: nowrap;
-    }
-    .listing__meta {
-        margin-right: auto;
-        color: var(--ink-3);
-        font: 400 0.75rem / 1 var(--font-mono);
     }
     .listing .copy__btn {
         --btn-h: 40px;
         gap: 0.45rem;
         padding-inline: 0.6rem;
         color: var(--ink-2);
-        font-size: var(--label-size);
+        font: 400 0.8125rem / 1 var(--font-mono);
+        letter-spacing: 0;
+        text-transform: none;
     }
     .listing .copy__btn .icon {
         width: 15px;
@@ -188,7 +187,6 @@
     /* The scroll box is the focusable, labelled region. */
     .listing__code {
         overflow-x: auto;
-        border-left: var(--rule-strong) solid var(--rule-2);
         scrollbar-width: thin;
         scrollbar-color: var(--rule-2) transparent;
     }
@@ -199,7 +197,7 @@
         margin: 0;
         width: max-content;
         min-width: 100%;
-        padding: var(--s-5) var(--s-5) var(--s-5) 0;
+        padding: var(--s-2) var(--s-5) var(--s-5) 0;
         background: transparent !important;
         color: var(--code-foreground);
         font: inherit;
@@ -213,7 +211,7 @@
     .listing__code .line {
         display: inline-block;
         min-width: 100%;
-        padding-left: calc(var(--s-5) - var(--rule-strong));
+        padding-left: var(--s-5);
     }
     .listing__code span[style*="--code-token-comment"] {
         font-style: italic;
@@ -332,82 +330,16 @@
     }
 
     /* ---- Callouts ---------------------------------------------------- */
-    .callout {
-        position: relative;
-        margin-block: var(--space-block);
-        padding: var(--s-5) var(--s-5) var(--s-5) var(--s-7);
-        border: var(--rule-hair) solid var(--rule-1);
-        background: var(--surface-1);
-        font: 400 var(--step-0) / 1.55 var(--font-text);
-    }
-    .callout::before {
-        content: "";
-        position: absolute;
-        left: var(--s-5);
-        top: calc(var(--s-5) + 0.3rem);
-        width: 7px;
-        height: 7px;
-        border-radius: var(--radius-round);
-        background: var(--accent);
-    }
-    .callout[data-tone="tip"]::before {
-        border: var(--rule-hair) solid var(--accent);
-        background: transparent;
-    }
-    .callout[data-tone="warning"] {
-        border-left: var(--rule-strong) solid var(--accent);
-    }
-    /* Caution, the advisory box: an orange frame and a hatched band. */
-    .callout[data-tone="caution"] {
-        border-color: var(--accent);
-        padding-top: calc(var(--s-5) + 6px);
-    }
-    .callout[data-tone="caution"]::before {
-        width: 0;
-        height: 0;
-        border-radius: 0;
-        border-left: 5px solid transparent;
-        border-right: 5px solid transparent;
-        border-bottom: 9px solid var(--accent);
-        background: none;
-        top: calc(var(--s-5) + 6px + 0.2rem);
-    }
-    .callout[data-tone="caution"]::after {
-        content: "";
-        position: absolute;
-        inset: 0 0 auto;
-        height: 6px;
-        background: repeating-linear-gradient(
-            -45deg,
-            var(--accent) 0 3px,
-            transparent 3px 8px
-        );
-    }
+    /* The quotation's note (above), led by its tone and title in bold:
+       "Caution: Back up first". No colour, frame or band: the words say
+       it. */
     .callout > * + * {
         margin-top: var(--s-3);
-    }
-    .callout__tone {
-        color: var(--ink-1);
-        font: 400 var(--label-size) / 1.6 var(--font-label);
-        letter-spacing: var(--track-label);
-        text-transform: uppercase;
-    }
-    .callout:is([data-tone="warning"], [data-tone="caution"]) .callout__tone {
-        color: var(--accent-text);
-    }
-    .callout__title {
-        margin-top: var(--s-1);
-        font: 500 var(--step-0) / 1.35 var(--font-display);
     }
     @media (forced-colors: active) {
         .listing__code .line-highlight::before {
             forced-color-adjust: none;
             background: Highlight;
-        }
-        .callout::before,
-        .callout::after {
-            forced-color-adjust: none;
-            background: CanvasText;
         }
     }
 
@@ -534,8 +466,9 @@
         .copy {
             display: none !important;
         }
+        /* Paper drops the fill: hairlines above and below instead. */
         .listing {
-            border-color: var(--rule-2);
+            border-block: 1px solid var(--rule-2);
             break-inside: auto;
         }
         .listing__bar {

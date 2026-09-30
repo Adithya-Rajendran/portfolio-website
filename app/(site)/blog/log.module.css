@@ -28,6 +28,10 @@
         row-gap: var(--s-4);
     }
 }
+/* The archive, after the last entry: a quiet link, not a head action. */
+.archive {
+    justify-self: start;
+}
 .empty {
     display: grid;
     justify-items: start;

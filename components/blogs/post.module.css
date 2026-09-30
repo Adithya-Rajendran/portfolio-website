@@ -187,36 +187,16 @@
 }
 
 /* ---- The text ------------------------------------------------------- */
-/* Section numbers: 01 above each h2, in the margin on wide screens. */
-.body > h2::before {
-    content: counter(prose-h2, decimal-leading-zero);
-    display: block;
-    margin-bottom: 0.6rem;
-    color: var(--ink-3);
-    font: 400 0.8125rem / 1 var(--font-mono);
-    letter-spacing: 0.04em;
-}
+/* The headings carry their names only: the contents rail numbers them. */
 @media (min-width: 60rem) {
-    .body > h2 {
-        position: relative;
-    }
-    .body > h2::before {
-        position: absolute;
-        right: calc(100% + 1.25rem);
-        top: 0.7em;
-        margin: 0;
-    }
     .body > :is(ul, ol) {
         padding-left: 0;
     }
 }
-/* The first line of the entry in small capitals. */
-.body > p:first-of-type::first-line {
-    font-variant-caps: all-small-caps;
-    letter-spacing: 0.04em;
-}
 
 /* ---- End matter: notes, revisions, the end mark, the actions -------- */
+/* End of entry, then one line each for the question and the follow links,
+   then Copy link and All writing. */
 .after {
     max-width: 36rem;
     margin-top: var(--s-8);
@@ -298,8 +278,10 @@
 }
 
 /* ---- After this entry: aligned to the reading column --------------- */
+/* The pager first (names only, no heading), then the project and the
+   related entries under their section heads. */
 .endSec {
-    padding-top: var(--s-9);
+    padding-top: var(--s-8);
 }
 .end {
     display: grid;
@@ -316,101 +298,8 @@
     margin-bottom: var(--s-5);
 }
 
-.msns {
-    display: grid;
-    gap: var(--s-5) var(--gutter);
-}
-.msn {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: var(--s-3);
-    max-width: 44rem;
-    padding: var(--s-5) var(--s-7) var(--s-5) var(--s-5);
-    border: var(--rule-hair) solid var(--rule-1);
-    background: var(--plate-bg);
-    transition: border-color var(--dur-hover) var(--ease-dock);
-}
-.msn:hover {
-    border-color: var(--rule-2);
-}
-.msn:focus-within {
-    border-color: var(--accent);
-}
-.msnHead {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--s-2) var(--s-4);
-    color: var(--ink-2);
-    font: var(--label-2);
-    letter-spacing: var(--track-label-2);
-    text-transform: uppercase;
-}
-.msnCode {
-    color: var(--ink-2);
-    font: 400 0.8125rem / 1.4 var(--font-mono);
-    letter-spacing: 0.02em;
-}
-.msnTitle {
-    font: 400 var(--step-3) / 1.05 var(--font-display);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-.msnTitle a {
-    text-decoration: none;
-}
-.msn:hover .msnTitle a {
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.16em;
-}
-.msnSummary {
-    max-width: 52ch;
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.45 var(--font-display);
-}
-.msnArrow {
-    position: absolute;
-    top: var(--s-5);
-    right: var(--s-5);
-    color: var(--ink-3);
-    transition:
-        transform var(--dur-hover) var(--ease-dock),
-        color var(--dur-hover) var(--ease-dock);
-}
-.msn:hover .msnArrow {
-    color: var(--accent-text);
-}
-
 .pager {
     max-width: 56rem;
-}
-
-.by {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--s-5);
-    max-width: 44rem;
-}
-.byPatch {
-    flex: none;
-    width: 56px;
-    height: 56px;
-}
-.byName {
-    font: 500 var(--step-0) / 1.35 var(--font-display);
-}
-.byLine {
-    max-width: 40ch;
-    margin-top: var(--s-2);
-    color: var(--ink-2);
-    font: 400 var(--step-1) / 1.45 var(--font-long);
-}
-.byLinks {
-    --cluster: var(--s-3);
-    margin-top: var(--s-4);
 }
 
 /* ---- Print: one column, a masthead, no rail or actions -------------- */
@@ -442,11 +331,6 @@
     }
     .dek {
         font-size: 12pt;
-    }
-    .body > h2::before {
-        position: static;
-        display: inline;
-        margin-right: 0.6em;
     }
     .after {
         max-width: none;

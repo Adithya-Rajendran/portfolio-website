@@ -11,6 +11,7 @@ import styles from "@/components/blogs/post.module.css";
 import { BlogPostJsonLd, BreadcrumbJsonLd } from "@/components/json-ld";
 import { siteConfig } from "@/lib/config";
 import { postCopy as copy } from "@/lib/copy";
+import { feedAlternates } from "@/lib/feed";
 import {
     contentsHeadings,
     extractHeadings,
@@ -79,16 +80,17 @@ function coverUrl(cover: Parameters<typeof urlForImage>[0] | null | undefined) {
 
 /**
  * An entry (G1, the paper-grade post). One grid: the crumb row (Writing /
- * LOG nnn), the head (date · read time · Updated · tags, the title, the
- * standfirst) in the reading column with the first paragraph in the first
- * screen, the sticky contents beside it (a closed box above the text on
- * phones), the text at a 68ch measure with
- * numbered listings, plates, callouts and margin notes, then the end
- * matter (notes, revisions, the end mark) and what comes after (the
- * mission, previous and next, related entries, the author). No ambient
- * motion. Everything is server-rendered; PostReader marks the current
- * section and keeps in-page links inside the visible entry, and the Copy
- * buttons need JavaScript. Ported from the mockup's post.html.
+ * LOG nnn, the number's one place), the head (date · read time · Updated
+ * · the tags that link, the title, the standfirst) in the reading column
+ * with the first paragraph in the first screen, the sticky contents
+ * beside it (a closed box above the text on phones), the text at a 68ch
+ * measure with numbered listings, plates, quiet notes and margin notes,
+ * then the end matter (notes, revisions, the end mark, a question, the
+ * follow line, Copy link and All writing) and what comes after (previous
+ * and next, the project, related entries). The footer carries the author.
+ * No ambient motion. Everything is server-rendered; PostReader marks the
+ * current section and keeps in-page links inside the visible entry, and
+ * the Copy buttons need JavaScript. Ported from the mockup's post.html.
  */
 export default async function BlogPostPage({
     params,
@@ -126,6 +128,7 @@ export default async function BlogPostPage({
     const readMinutes =
         post.wordCount > 0 ? readingTimeFromWordCount(post.wordCount) : null;
     const tags = (post.tags ?? []).filter((tag) => TAG_PATTERN.test(tag));
+    const linkedIn = getProfileLink(profile, "linkedin");
     const missions = (post.projectIds ?? [])
         .map((id) => projects.find((project) => project._id === id))
         .filter((project) => project !== undefined);
@@ -186,7 +189,7 @@ export default async function BlogPostPage({
                     publishedAt={post.publishedAt}
                     revisedAt={revised}
                     readMinutes={readMinutes}
-                    tags={tags}
+                    tags={entry?.tagLinks ?? []}
                 />
                 <PostRail className={styles.rail} headings={contents} />
                 <div className={styles.main}>
@@ -225,8 +228,8 @@ export default async function BlogPostPage({
                         className={styles.after}
                         notes={index.notes}
                         changelog={post.changelog ?? []}
-                        designation={designation}
                         url={url}
+                        linkedIn={linkedIn}
                     />
                 </div>
             </article>
@@ -237,11 +240,6 @@ export default async function BlogPostPage({
                 previous={previous}
                 next={next}
                 related={related}
-                author={{
-                    name: profile?.name || siteConfig.author,
-                    headline: profile?.headline,
-                    linkedIn: getProfileLink(profile, "linkedin"),
-                }}
             />
             <PostReader />
         </div>
@@ -263,9 +261,7 @@ export async function generateMetadata({
         title: post.title,
         description: post.description,
         ...(post.tags && post.tags.length > 0 && { keywords: post.tags }),
-        alternates: {
-            canonical: url,
-        },
+        alternates: feedAlternates(url),
         openGraph: {
             title: post.title,
             description: post.description,

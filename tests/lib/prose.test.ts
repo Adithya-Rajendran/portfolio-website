@@ -78,26 +78,36 @@ describe("listings", () => {
         );
     });
 
-    it("counts lines without the trailing blank ones", () => {
+    it("measures the longest line, tabs counted as four", () => {
         const { listings } = indexProse([
-            code("a", "one\ntwo\nthree\n\n"),
-            code("b", ""),
+            code("a", `short\n${"x".repeat(LISTING_MEASURE)}\n\n`),
+            code("tabs", `\t\t${"x".repeat(9)}`),
+            code("empty", ""),
         ]);
-        expect(listings.a.lines).toBe(3);
-        expect(listings.b.lines).toBe(0);
+        expect(listings.a.longest).toBe(64);
+        expect(listings.tabs.longest).toBe(17);
+        expect(listings.empty.longest).toBe(0);
     });
 
-    it("breaks out wide only past the 72-column measure, tabs counted as four", () => {
-        const at = "x".repeat(LISTING_MEASURE);
-        const past = "x".repeat(LISTING_MEASURE + 1);
+    it("keeps every listing at the measure while each fits its 64 columns", () => {
         const { listings } = indexProse([
-            code("at", `short\n${at}`),
-            code("past", past),
+            code("at", `short\n${"x".repeat(LISTING_MEASURE)}`),
+            code("short", "echo 1"),
+        ]);
+        expect(LISTING_MEASURE).toBe(64);
+        expect(listings.at.wide).toBe(false);
+        expect(listings.short.wide).toBe(false);
+    });
+
+    it("breaks every listing out wide once one is past the measure, so they share one width", () => {
+        const { listings } = indexProse([
+            code("short", "echo 1"),
+            paragraph("p", ["Between."]),
             code("tabs", `\t\t${"x".repeat(LISTING_MEASURE - 7)}`),
         ]);
-        expect(listings.at).toMatchObject({ longest: 72, wide: false });
-        expect(listings.past).toMatchObject({ longest: 73, wide: true });
-        expect(listings.tabs).toMatchObject({ longest: 73, wide: true });
+        expect(listings.tabs.longest).toBe(LISTING_MEASURE + 1);
+        expect(listings.tabs.wide).toBe(true);
+        expect(listings.short.wide).toBe(true);
     });
 
     it("names languages for people", () => {

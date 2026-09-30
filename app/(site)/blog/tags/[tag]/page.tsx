@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import LogIndex from "@/components/blogs/log-index";
 import TagChips from "@/components/blogs/tag-chips";
-import { ButtonLink } from "@/components/ui/button";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { logCopy } from "@/lib/copy";
+import { feedAlternates } from "@/lib/feed";
 import { entriesTagged, logEntries, offersFilters } from "@/lib/log-index";
-import { siteRoutes } from "@/lib/navigation";
 import { getAllPosts } from "@/lib/sanity-client";
-import { collectTags, TAG_PATTERN } from "@/lib/tags";
+import { collectTags, TAG_PATTERN, tagLabel } from "@/lib/tags";
 import styles from "../../log.module.css";
 
 /**
@@ -23,9 +22,11 @@ export const prefetch = "partial";
 const copy = logCopy.tag;
 
 /**
- * Data section: the tag's entries in the writing index, with every tag's
- * chip and the search once the index offers them (`offersFilters`). An
- * unknown tag has no entries and answers 404.
+ * Data section: the head (the tag in words as the h1, "GPU computing";
+ * no dek restating it, and no actions: the header's Writing leads back,
+ * as does the "All" chip once there are chips), then the tag's entries in
+ * the writing index, with the chips once the index offers them
+ * (`offersFilters`). An unknown tag has no entries and answers 404.
  */
 async function TagEntries({ tag }: { tag: string }) {
     const all = logEntries(await getAllPosts());
@@ -41,34 +42,10 @@ async function TagEntries({ tag }: { tag: string }) {
                 split
                 ornament="wave"
                 tag={logCopy.themed}
-                title={tag}
-                intro={copy.intro(tag)}
-            >
-                <div className="cluster page-head__actions">
-                    <ButtonLink
-                        size="sm"
-                        icon="arrow"
-                        iconAt="end"
-                        href={siteRoutes.blog}
-                    >
-                        {logCopy.back}
-                    </ButtonLink>
-                    {filters ? (
-                        <ButtonLink
-                            size="sm"
-                            icon="search"
-                            href="/blog/archive"
-                        >
-                            {logCopy.search}
-                        </ButtonLink>
-                    ) : null}
-                </div>
-            </PageHead>
+                title={tagLabel(tag)}
+            />
 
-            <section
-                className={`section ${styles.index}`}
-                aria-label={copy.intro(tag)}
-            >
+            <section className={`section ${styles.index}`}>
                 <div className={`shell ${styles.indexInner}`}>
                     {filters ? (
                         <TagChips
@@ -129,14 +106,12 @@ export async function generateMetadata({
     if (!TAG_PATTERN.test(tag)) {
         return;
     }
-    const description = copy.intro(tag);
-    const title = `${tag} · ${logCopy.plain}`;
+    const description = copy.description(tagLabel(tag));
+    const title = `${tagLabel(tag)} · ${logCopy.plain}`;
     return {
         title,
         description,
-        alternates: {
-            canonical: `${siteConfig.url}/blog/tags/${tag}`,
-        },
+        alternates: feedAlternates(`${siteConfig.url}/blog/tags/${tag}`),
         openGraph: {
             title: `${title} | ${siteConfig.author}`,
             description,

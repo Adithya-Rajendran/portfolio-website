@@ -1,15 +1,18 @@
 import type { Page } from "@playwright/test";
 import { logCopy } from "@/lib/copy";
+import { tagLabel } from "@/lib/tags";
 import { expect, test, prepareContext } from "./support/test";
 import { THEMES, storeTheme } from "./support/theme";
 
 /**
  * Writing (/blog, G8, plan §6.2 PR 9): the first entries sit in the first
  * viewport, newest first in the same order on every list, "Updated" only
- * on an entry the owner revised, no chart, the tag chips (once a tag
- * gathers two entries) count and open their pages, the archive searches,
- * and the index stays within the prefetch budget (plan §4.6 rule 8,
- * §7.1).
+ * on an entry the owner revised, no chart, a tag only once it gathers two
+ * entries (on a row and as a chip, with no "#"), a year head only across
+ * two years, a quiet head (one follow line, no search) and the archive
+ * linked after the index, the chips count and open their pages, a tag
+ * page's h1 in words, the archive searches, and the index stays within
+ * the prefetch budget (plan §4.6 rule 8, §7.1; premium WS3).
  */
 
 const FIXTURE_ONLY = "Reads the fixture posts (lib/fixtures.ts).";
@@ -26,16 +29,14 @@ function entryRows(page: Page) {
 async function rows(page: Page) {
     const out: {
         href: string;
+        title: string;
         filed: string;
         updated: string | null;
         tags: string[];
     }[] = [];
     for (const item of await entryRows(page).all()) {
-        const href =
-            (await item
-                .getByRole("heading")
-                .getByRole("link")
-                .getAttribute("href")) ?? "";
+        const link = item.getByRole("heading").getByRole("link");
+        const href = (await link.getAttribute("href")) ?? "";
         const times = await item
             .locator("time")
             .evaluateAll((nodes) =>
@@ -48,6 +49,7 @@ async function rows(page: Page) {
             .allTextContents();
         out.push({
             href,
+            title: (await link.textContent()) ?? "",
             filed: times[0] ?? "",
             updated: (await updated.count())
                 ? ((await updated.locator("time").getAttribute("datetime")) ??
@@ -105,12 +107,65 @@ test("entries are newest first, in the same order on every list", async ({
         index.map((row) => row.href),
     );
 
-    const tag = index[0].tags[0];
-    await page.goto(`/blog/tags/${tag}`);
-    const tagged = (await rows(page)).map((row) => row.href);
-    expect(tagged).toEqual(
-        index.filter((row) => row.tags.includes(tag)).map((row) => row.href),
+    // A tag shows only once it gathers two entries: none may yet.
+    const tag = index.find((row) => row.tags.length)?.tags[0];
+    if (tag) {
+        await page.goto(`/blog/tags/${tag}`);
+        const tagged = (await rows(page)).map((row) => row.href);
+        expect(tagged).toEqual(
+            index
+                .filter((row) => row.tags.includes(tag))
+                .map((row) => row.href),
+        );
+    }
+});
+
+test("a tag shows only once it gathers two entries, a year only across two, and the head stays quiet", async ({
+    page,
+}) => {
+    await page.goto("/blog");
+    const main = page.getByRole("main");
+    const index = await rows(page);
+    const counts = new Map<string, number>();
+    for (const row of index) {
+        for (const tag of row.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+    for (const [tag, count] of counts) {
+        expect(count, `#${tag} on the rows`).toBeGreaterThanOrEqual(2);
+    }
+    // No "#" before a tag, on a row or a chip.
+    await expect(main.getByText(/^#/)).toHaveCount(0);
+    expect(
+        await main
+            .locator(".tag")
+            .evaluateAll((tags) =>
+                tags.map((tag) => getComputedStyle(tag, "::before").content),
+            ),
+    ).not.toContain('"#"');
+    // A year head only where the entries span two years.
+    const years = new Set(index.map((row) => row.filed.slice(0, 4)));
+    await expect(main.getByRole("heading", { name: /^\d{4}$/ })).toHaveCount(
+        years.size > 1 ? years.size : 0,
     );
+    // The head: the follow line as text links, no search and no boxes.
+    await expect(main.getByRole("searchbox")).toHaveCount(0);
+    await expect(main.getByRole("link", { name: /search/i })).toHaveCount(0);
+    const follow = main.getByText(new RegExp(`^${logCopy.follow}`));
+    await expect(follow).toBeVisible();
+    await expect(
+        follow.getByRole("link", { name: logCopy.rss, exact: true }),
+    ).toHaveAttribute("href", "/feed.xml");
+    await expect(main.locator(".page-head .btn")).toHaveCount(0);
+
+    // A tag page names its tag in words, with no dek restating it.
+    const tag = [...counts.keys()][0];
+    if (tag) {
+        await page.goto(`/blog/tags/${tag}`);
+        await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+            tagLabel(tag),
+        );
+        await expect(page.locator(".page-head__intro:visible")).toHaveCount(0);
+    }
 });
 
 test("an entry shows Updated only after a revision", async ({ page }) => {
@@ -134,7 +189,7 @@ test("the revised fixture entry shows its revision date", async ({
     ]);
 });
 
-test("tag chips appear once a tag gathers two entries; the archive is always one click away", async ({
+test("tag chips appear once a tag gathers two entries; the archive is linked after the index", async ({
     page,
 }) => {
     await page.goto("/blog");
@@ -146,13 +201,17 @@ test("tag chips appear once a tag gathers two entries; the archive is always one
     const shared = [...counts.values()].some((count) => count >= 2);
     const chips = page.getByRole("group", { name: logCopy.tags });
     await expect(chips).toHaveCount(shared ? 1 : 0);
-    const search = page
+    const archive = page
         .getByRole("main")
-        .getByRole("link", { name: logCopy.search });
-    await expect(search).toHaveAttribute("href", "/blog/archive");
+        .getByRole("link", { name: logCopy.archive.title, exact: true });
+    await expect(archive).toHaveAttribute("href", "/blog/archive");
+    // A quiet link after the last entry, not a head action.
+    const last = (await entryRows(page).last().boundingBox())!;
+    const link = (await archive.boundingBox())!;
+    expect(link.y).toBeGreaterThanOrEqual(last.y + last.height);
 
     // The archive keeps its search and applies the same rule to its chips.
-    await search.click();
+    await archive.click();
     await expect(page).toHaveURL(/\/blog\/archive$/);
     await expect(page.getByRole("group", { name: logCopy.tags })).toHaveCount(
         shared ? 1 : 0,
@@ -176,16 +235,17 @@ test("tag chips show their counts and open their tag page", async ({
 
     const chip = chips.getByRole("link").nth(1);
     const name = (await chip.getAttribute("href"))!.split("/").pop()!;
-    // Named "notes, 2 entries", drawn "#notes 2".
+    // Named "notes, 2 entries", drawn "notes 2".
     const count = Number(/(\d+)\s*$/.exec(await chip.innerText())?.[1]);
     await expect(chip).toHaveAccessibleName(
         `${name}, ${count} ${count === 1 ? "entry" : "entries"}`,
     );
-    expect(count).toBeGreaterThan(0);
+    // Only a tag that links has a chip.
+    expect(count).toBeGreaterThanOrEqual(2);
     await chip.click();
     await expect(page).toHaveURL(new RegExp(`/blog/tags/${name}$`));
     await expect(
-        page.getByRole("heading", { level: 1, name: new RegExp(`^${name}`) }),
+        page.getByRole("heading", { level: 1, name: tagLabel(name) }),
     ).toBeVisible();
     const tagged = await rows(page);
     expect(tagged).toHaveLength(count);
@@ -214,12 +274,18 @@ test("the archive searches titles, standfirsts and tags", async ({ page }) => {
         name: logCopy.archive.searchLabel,
     });
 
-    const tag = all[all.length - 1].tags[0];
-    const expected = all.filter((row) => row.tags.includes(tag)).length;
-    await search.fill(tag);
-    await expect(status).toContainText(`${expected} of ${all.length}`);
+    // The last entry's first tag, or, while no tag links (each gathers
+    // one entry), the first word of its title.
+    const last = all[all.length - 1];
+    const term = last.tags[0] ?? last.title.trim().split(/\s+/)[0];
+    await search.fill(term);
+    await expect(status).toContainText(` of ${all.length}`);
     // Every row shown matches, by tag or by text.
-    expect((await rows(page)).length).toBeGreaterThanOrEqual(expected);
+    const found = await rows(page);
+    expect(found.map((row) => row.href)).toContain(last.href);
+    expect(found.length).toBeGreaterThanOrEqual(
+        all.filter((row) => row.tags.includes(term)).length,
+    );
 
     await search.fill("e2e-matches-nothing");
     await expect(
@@ -277,10 +343,16 @@ test("the index stays within the prefetch budget", async ({
         const at = `at ${viewport.width}px`;
         expect(pages.length, `page prefetches ${at}`).toBeGreaterThan(0);
         expect(pages.length, `page prefetches ${at}`).toBeLessThanOrEqual(8);
+        // One shared App Shell for every tag page (none while no tag
+        // links: a tag shows once it gathers two entries).
+        const tagLinks = await page
+            .getByRole("main")
+            .locator('a[href^="/blog/tags/"]')
+            .count();
         expect(
             pages.filter((segment) => segment.includes("/blog/tags/")),
             `tag page prefetches ${at}`,
-        ).toHaveLength(1);
+        ).toHaveLength(tagLinks ? 1 : 0);
         await context.close();
     }
 });

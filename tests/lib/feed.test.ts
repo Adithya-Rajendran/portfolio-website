@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderFeedXml, type FeedPost } from "@/lib/feed";
+import { feedAlternates, renderFeedXml, type FeedPost } from "@/lib/feed";
 
 type Body = NonNullable<FeedPost["body"]>;
 
@@ -68,6 +68,24 @@ describe("renderFeedXml — channel", () => {
         expect(xml).toContain("<language>en-us</language>");
         expect(xml).not.toContain("<item>");
         expect(xml).not.toContain("<lastBuildDate>");
+    });
+
+    it("names the stylesheet a browser shows it with, before the rss root", () => {
+        const xml = renderFeedXml([]);
+        expect(xml).toMatch(
+            /^<\?xml [^\n]+\n<\?xml-stylesheet type="text\/xsl" href="\/feed\.xsl"\?>\n<rss /,
+        );
+    });
+
+    it("names the feed in every page's alternates beside its canonical address", () => {
+        expect(feedAlternates("https://adithya-rajendran.com/blog")).toEqual({
+            canonical: "https://adithya-rajendran.com/blog",
+            types: {
+                "application/rss+xml": [
+                    { url: "/feed.xml", title: "Adithya Rajendran — Writing" },
+                ],
+            },
+        });
     });
 
     it("includes an atom:link self reference to the feed URL", () => {

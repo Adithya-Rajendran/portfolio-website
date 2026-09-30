@@ -682,11 +682,6 @@
         text-decoration: none;
         white-space: nowrap;
     }
-    .tag::before {
-        content: "#";
-        margin-right: 0.08em;
-        color: var(--ink-3);
-    }
     a.tag {
         position: relative;
         z-index: 2;

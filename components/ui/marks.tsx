@@ -4,8 +4,8 @@ import { Icon } from "@/components/ui/icon";
 import { formatEntryDate } from "@/lib/log-index";
 
 /**
- * Small marks of the design system: the arrow link, status, revision mark,
- * tags and chips (the mockup's site.css 4.4–4.5, 4.27).
+ * Small marks of the design system: the arrow link, status, revision mark
+ * and chips (the mockup's site.css 4.4–4.5, 4.27).
  * Directive-free, so server and client components can both render them.
  */
 
@@ -97,28 +97,6 @@ export function Updated({
         <span className="updated">
             {label} <time dateTime={date}>{formatEntryDate(date)}</time>
         </span>
-    );
-}
-
-/** Topic tags as links: "#homelab". */
-export function Tags({
-    tags,
-    href,
-}: {
-    tags: readonly string[];
-    href: (tag: string) => string;
-}) {
-    if (!tags.length) return null;
-    return (
-        <ul className="tags" role="list">
-            {tags.map((tag) => (
-                <li key={tag}>
-                    <Link className="tag" href={href(tag)}>
-                        {tag}
-                    </Link>
-                </li>
-            ))}
-        </ul>
     );
 }
 

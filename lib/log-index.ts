@@ -1,12 +1,18 @@
 import type { PostListItem } from "@/lib/sanity-client";
 import { readingTimeFromWordCount } from "@/components/blogs/utils";
 import { formatLogDesignation, logNumbers } from "@/lib/designations";
-import { TAG_PATTERN, type TagCount } from "@/lib/tags";
+import {
+    collectTags,
+    linkedTags,
+    TAG_PATTERN,
+    type TagCount,
+} from "@/lib/tags";
 
 /**
  * The writing index (G8): one row per published entry on shared column
- * tracks (date and any revision · title, standfirst and tags · read
- * time), grouped by year (`groupPostsByYear` in lib/tags.ts). Pure, so
+ * tracks (date and any revision · title, standfirst and the tags that
+ * link · read time), grouped by year (`groupPostsByYear` in lib/tags.ts)
+ * when the entries span more than one. Pure, so
  * /blog, the tag pages, the archive, the home page and About derive the
  * same rows. Each entry keeps its derived LOG number, the quiet
  * identifier its own page prints.
@@ -27,6 +33,9 @@ export interface LogEntry {
     wordCount: number;
     /** Slug-safe tags only, so every one is a working tag page. */
     tags: string[];
+    /** The tags its row and its head show: the ones that link, gathering
+     *  two or more entries across the whole log (`linkedTags`). */
+    tagLinks: string[];
     /** 1 is the oldest entry. */
     number: number;
     /** "LOG 003". */
@@ -47,7 +56,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}/;
  */
 export function logEntries(posts: readonly LogSource[]): LogEntry[] {
     const numbers = logNumbers(posts);
-    return posts
+    const entries = posts
         .filter((post) => post.slug && numbers.has(post.slug))
         .map((post) => {
             const number = numbers.get(post.slug)!;
@@ -71,20 +80,29 @@ export function logEntries(posts: readonly LogSource[]): LogEntry[] {
                     wordCount > 0 ? readingTimeFromWordCount(wordCount) : null,
                 wordCount,
                 tags: (post.tags ?? []).filter((tag) => TAG_PATTERN.test(tag)),
+                tagLinks: [] as string[],
                 number,
                 designation: formatLogDesignation(number),
             };
         })
         .sort((a, b) => b.number - a.number);
+    const linked = new Set(
+        linkedTags(collectTags(entries)).map(({ tag }) => tag),
+    );
+    for (const entry of entries) {
+        entry.tagLinks = entry.tags.filter((tag) => linked.has(tag));
+    }
+    return entries;
 }
 
 /**
- * Whether the index offers its tag filters and search: only once a tag
- * gathers two or more entries. Until then every entry is on one short
- * list, and a filter would only narrow it to the entry already in view.
+ * Whether the writing pages offer their tag chips: only once a tag
+ * gathers two or more entries (`linkedTags`). Until then every entry is
+ * on one short list, and a filter would only narrow it to the entry
+ * already in view.
  */
 export function offersFilters(tags: readonly TagCount[]): boolean {
-    return tags.some((tag) => tag.count >= 2);
+    return linkedTags(tags).length > 0;
 }
 
 /** Entries that carry the exact tag. */

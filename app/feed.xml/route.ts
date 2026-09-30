@@ -21,11 +21,17 @@ async function getFeedXml(): Promise<string> {
     return renderFeedXml(posts, getWritingDescription(profile));
 }
 
+/**
+ * Served as `application/xml`, which every browser displays (through
+ * public/feed.xsl, a plain page) where some download `application/rss+xml`.
+ * Feed readers read the document, not the type; the pages still announce
+ * the feed as `application/rss+xml` (`feedAlternates` in lib/feed.ts).
+ */
 export async function GET() {
     const xml = await getFeedXml();
     return new Response(xml, {
         headers: {
-            "Content-Type": "application/rss+xml; charset=utf-8",
+            "Content-Type": "application/xml; charset=utf-8",
         },
     });
 }

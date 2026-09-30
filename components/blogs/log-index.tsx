@@ -5,10 +5,10 @@ import styles from "./log-index.module.css";
 
 /**
  * The scannable writing index (G8): one row per entry on shared tracks,
- * newest first, grouped by year under the year's heading. `grouped={false}`
- * lists the entries without year heads (the home page's latest three,
- * whose dates carry their year). Directive-free: the archive's client
- * search renders it too.
+ * newest first, grouped by year under the year's heading once the entries
+ * span two years (while they share one, each date already says it).
+ * `grouped={false}` never groups them (the home page's latest three).
+ * Directive-free: the archive's client search renders it too.
  *
  * `level` is the year's heading level; entry titles sit one below it
  * (and at `level` when the list is not grouped). `tags={false}` leaves
@@ -33,7 +33,8 @@ export default function LogIndex({
     const Year = level === 2 ? "h2" : "h3";
     const titleAs = level === 2 ? "h3" : "h4";
     const classes = className ? `${styles.index} ${className}` : styles.index;
-    if (!grouped) {
+    const years = groupPostsByYear([...entries]);
+    if (!grouped || years.length < 2) {
         return (
             <div className={classes}>
                 <ol className={styles.list} role="list">
@@ -52,7 +53,7 @@ export default function LogIndex({
     }
     return (
         <div className={classes}>
-            {groupPostsByYear([...entries]).map((group) => (
+            {years.map((group) => (
                 <div className={styles.group} key={group.year}>
                     <Year className={styles.year}>{group.year}</Year>
                     <ol className={styles.list} role="list">

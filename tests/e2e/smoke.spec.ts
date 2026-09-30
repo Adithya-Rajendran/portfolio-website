@@ -149,6 +149,65 @@ test.describe("routes and headers", () => {
         }
     });
 
+    test("the feed's usual addresses answer 301 to /feed.xml", async ({
+        request,
+        baseURL,
+    }) => {
+        // 301, not 308: feed readers move a subscription on a 301.
+        for (const from of ["/rss.xml", "/rss", "/feed", "/atom.xml"]) {
+            const response = await request.get(from, { maxRedirects: 0 });
+            expect(response.status(), from).toBe(301);
+            const location = response.headers().location ?? "";
+            expect(new URL(location, baseURL).pathname, from).toBe("/feed.xml");
+        }
+    });
+
+    test("every writing page names the feed", async ({ request }, testInfo) => {
+        // A page's alternates replace the layout's whole, so each route
+        // names the feed itself (feedAlternates in lib/feed.ts): the
+        // index, the archive, and every post and tag page listed.
+        const listed = (await contentPages(request, testInfo)).filter((path) =>
+            path.startsWith("/blog/"),
+        );
+        expect(listed.some(isPostPage), "posts in the sitemap").toBe(true);
+        for (const path of ["/", "/blog", "/blog/archive", ...listed]) {
+            const html = await (await request.get(path)).text();
+            const links = html.match(/<link [^>]*rel="alternate"[^>]*>/g) ?? [];
+            expect(
+                links.filter(
+                    (link) =>
+                        link.includes('type="application/rss+xml"') &&
+                        /href="[^"]*\/feed\.xml"/.test(link),
+                ),
+                path,
+            ).toHaveLength(1);
+        }
+    });
+
+    test("in a browser, the feed is a plain page listing the entries", async ({
+        page,
+        request,
+    }) => {
+        const xml = await (await request.get("/feed.xml")).text();
+        const items = (xml.match(/<item>/g) ?? []).length;
+        expect(items).toBeGreaterThan(0);
+        await page.goto("/feed.xml");
+        await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+            `${siteConfig.author} — Writing`,
+        );
+        await expect(
+            page.getByText("Copy this page’s address into a feed reader."),
+        ).toBeVisible();
+        await expect(page.getByRole("heading", { level: 2 })).toHaveCount(
+            items,
+        );
+        const first = page.getByRole("heading", { level: 2 }).getByRole("link");
+        await expect(first.first()).toHaveAttribute(
+            "href",
+            new RegExp(`^${siteConfig.url}/blog/[a-z0-9-]+$`),
+        );
+    });
+
     test("every URL the route table lists answers", async ({ request }) => {
         // actions/warmCache.ts requests these paths (lib/route-tags.ts)
         // after a change; a 404 here means the table has drifted from the

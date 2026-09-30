@@ -10,9 +10,6 @@
     gap: var(--s-3) var(--s-4);
     min-width: 0;
 }
-.label {
-    flex: none;
-}
 .chips {
     display: flex;
     flex-wrap: wrap;
@@ -24,13 +21,6 @@
 .chip {
     padding: 0 0.75rem;
     font-size: 0.8125rem;
-}
-.hash {
-    margin-right: -0.35rem;
-    color: var(--ink-3);
-}
-.chip[aria-current] .hash {
-    color: inherit;
 }
 
 @media (max-width: 37.49rem) {

@@ -147,6 +147,13 @@ const nextConfig = {
                 destination: "/contact",
                 permanent: true,
             },
+            // The feed's usual guesses. 301, not 308: feed readers are old
+            // HTTP clients, and some only move a subscription on a 301.
+            ...["/rss.xml", "/rss", "/feed", "/atom.xml"].map((source) => ({
+                source,
+                destination: "/feed.xml",
+                statusCode: 301,
+            })),
             // Share images moved into the app/(site) route group, which
             // gives each one a stable hash suffix (lib/route-tags.ts). Links
             // shared before the move keep their preview image. The archive

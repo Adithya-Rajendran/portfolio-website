@@ -149,14 +149,31 @@ only live in comments or commit messages.
   (`tests/e2e/log.spec.ts`); each distinct URL also fetches its small route
   tree (`/_tree`), which the byte report lists apart.
 - **The long read** (G1). `lib/prose.ts` `indexProse(body)` numbers a
-  Portable Text body once: listings (LISTING n, wide past 72 columns),
-  plates and figures (Pl. I for photographs, Fig. 1 for diagrams, plots
-  and screenshots; a post's cover is the lead plate) and footnotes (in
-  reading order, written onto a copy of the body's markDefs). The post
-  page, the project essay and the RSS feed (`lib/feed.ts`) all read it,
-  so they agree; render `index.body`, not `post.body`. An entry's rail is
-  its contents only: the date, the read time and any revision are the
-  head's, and no record box repeats them or counts its words. The renderers are
+  Portable Text body once: listings (LISTING n; one width per body, all
+  wide once any line passes `LISTING_MEASURE`, the 64 columns of 13px
+  mono the measure fits), plates and figures (Pl. I for photographs,
+  Fig. 1 for diagrams, plots and screenshots; a post's cover is the lead
+  plate) and footnotes (in reading order, written onto a copy of the
+  body's markDefs). The post page, the project essay and the RSS feed
+  (`lib/feed.ts`) all read it, so they agree; render `index.body`, not
+  `post.body`. An entry's rail is its contents only: the date, the read
+  time and any revision are the head's, and no record box repeats them or
+  counts its words. The text has one numbering per thing: no margin
+  number beside an h2 (the rail numbers the contents), no line count on
+  a listing (its bar is LISTING n and the file name, then the language
+  and Copy at the right, in the listing's mono), and the LOG number in
+  the crumb only. A listing is one treatment (the surface fill; hairlines
+  above and below on paper); a callout is the quotation's quiet note (the
+  ink rule) led by its tone and title in bold ("Caution: Back up first",
+  `calloutHeading`), with no colour, frame or band; inline code has no
+  box. Prose h2 are `--step-2` (32px at most), the leading 1.52
+  (`--lh-long`), figures proportional. The entry closes once, in its
+  own column: End of entry, "Questions about this entry? Send a
+  message.", "Follow: RSS · LinkedIn" (`FollowLinks`, also /blog's head),
+  Copy link and All writing; then the pager by name only (no heading, no
+  LOG number, date or read time), the project it belongs to (the shared
+  `MissionRow`) and related entries. There is no Author block: the
+  footer carries the name. The renderers are
   `components/blogs/portable-text-components.tsx` and
   `components/prose/`; a new `contentBody` type lands with its web and
   feed renderer in the same change. `components/blogs/post-reader.tsx`
@@ -164,6 +181,15 @@ only live in comments or commit messages.
   contents) inside the visible entry, because a hidden, still-mounted
   entry can hold the same ids. Reading pages (lib/navigation.ts
   `headerMode`) get `html[data-header="solid"]` from RouteMarker.
+  Every writing route names the feed through `feedAlternates` (lib/feed.ts:
+  a page's `alternates` replaces the layout's whole). `/feed.xml` is
+  served as `application/xml`, so a browser displays it through
+  `public/feed.xsl` (a plain page in the Void's colours and system fonts:
+  the title, "Copy this page's address into a feed reader.", the posts);
+  browsers are retiring XSLT, and without it the feed shows as XML, as it
+  did before. `/rss.xml`, `/rss`, `/feed` and `/atom.xml` answer 301 to it
+  (next.config.mjs; 301 because old feed readers move a subscription on
+  it).
 - **Missions** (G5, G6). `lib/missions.ts` is pure and unit-tested: it
   words each project once (`toMission`) for `/portfolio`, the mission files
   and the home page's projects (the stage and its rows), and finds each
@@ -302,10 +328,21 @@ only live in comments or commit messages.
   first (LOG 001), ties by document id. Number the whole list, then filter
   (`logEntries` in `lib/log-index.ts`), so a tag page keeps each entry's
   number. A post back-dated before an existing one renumbers those after
-  it. The number is an entry's quiet identifier on its own page (the
-  crumb, the end mark, the pager; never on a plate or a share card); the
+  it. The number is an entry's quiet identifier on its own page, in the
+  crumb only (and the print masthead, where the crumb does not print):
+  never the end mark, the pager, a plate or a share card; the
   lists print the date instead, with "Updated …" only after a real
   `revisedAt`.
+- **Writing's lists** (G8, `/blog`, the archive, a tag page). The index
+  is the head (the writing description and the follow line; no search
+  and no boxed buttons), the rows, then a quiet "Archive" link. A tag
+  shows only when it links: once it gathers two entries
+  (`linkedTags`/`TAG_LINK_MIN` in lib/tags.ts, `LogEntry.tagLinks`), on a
+  row, an entry's head, the chips and the sitemap, and never with a "#";
+  a one-entry tag's page still answers. A list groups by year only when
+  its entries span two (`LogIndex`). A tag page's h1 is the tag in words
+  (`tagLabel`: "GPU computing"), with no dek; the archive and tag heads
+  carry no actions (the header's Writing leads back).
 - **Heads and names** (contract §1, §6). Every section is named by its
   plain label, Projects · Writing · Experience · About · Contact
   (`lib/navigation.ts`), in the header, the menu sheet, the footer, page
@@ -616,7 +653,8 @@ deployment require an authenticated Sanity CLI session.
   `h1` and one `main`, no console errors, uncaught exceptions or CSP
   violations; share images, and a post's, a project's and home's image
   alt in their own words; feed, icons, headers, redirects, the Studio
-  without chrome), `nojs` (complete pages without JavaScript: header, nav
+  without chrome; the feed's four aliases answering 301, every writing
+  page naming the feed, and the feed as a plain page in a browser), `nojs` (complete pages without JavaScript: header, nav
   through the popover menu, footer, Void with no motion and no theme
   controls, no hidden streamed segments, nothing rendered twice), `a11y`
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
@@ -642,17 +680,25 @@ deployment require an authenticated Sanity CLI session.
   entry in the first viewport at 1280×800 and 390×844 in both themes,
   entries newest first in the same order on the archive and tag pages, no
   LOG numbers and no chart on the index, "Updated" only after a revision,
-  the tag chips (on the index and the archive) only once a tag gathers
-  two entries, their counts, the archive's link always in the head, 404 for an unknown or malformed tag, the archive's search and
+  a tag (on a row or a chip, never with "#") only once it gathers two
+  entries, a year head only across two years, the head's follow line
+  with no search or boxes, the chips' counts, the archive linked after
+  the index, a tag page's h1 in words with no dek, 404 for an unknown or
+  malformed tag, the archive's search and
   its no-JavaScript list, and the prefetch budget on `/blog`), `post`
   (every entry's first paragraph in the first viewport at 1280×800 and
   390×844 in both themes, a 60–75 character measure, code comments at
   4.5:1 or more, the rail listing the sections with no record box or word
-  count, the LOG number once above the title, Copy on a listing, the
+  count, the LOG number once, above the title, and nowhere else; no h2
+  margin number or listing line count, h2 at 32px or less and a 1.52
+  leading; the close (End of entry, the follow line, no Author block or
+  pager heading, the pager by name), Copy on a listing, the
   phone's contents box, the solid header, print, BlogPosting and
   BreadcrumbList; on the
-  fixture build also the wide listing and highlighted line, footnotes and
-  margin notes, the caution callout and revisions, their RSS output, and
+  fixture build also the listings at one width with no line cut and the
+  highlighted line, footnotes and
+  margin notes, the caution callout as a quiet note and revisions, their
+  RSS output, and
   in-page links landing in the visible entry after a client-side
   navigation), `orbit` (the page opening on the CV list with Contact in
   the first viewport and no per-row map buttons, the Timeline view from

@@ -4,8 +4,8 @@ import Listing from "@/components/prose/listing";
 import { postCopy as copy } from "@/lib/copy";
 import { resolveLinkMark } from "@/lib/content-links";
 import { classifyMediaEmbed } from "@/lib/media-embed";
-import { calloutToneTitle } from "@/lib/post-fields";
 import {
+    calloutHeading,
     hasImageAsset,
     type NumberedFootnote,
     type ProseIndex,
@@ -16,7 +16,8 @@ import {
  * and the project essay. They emit the final markup on the server (plan
  * §4.1: no client pass): numbered listings with a Copy button, numbered
  * plates and figures, callouts (`div[role=note]`, never an `aside` inside
- * `main`), footnotes as raised numbers with a margin copy, and headings
+ * `main`: the quotation's quiet note, led by its tone and title in bold),
+ * footnotes as raised numbers with a margin copy, and headings
  * with the ids the contents and the Studio's callout anchors use. Styles
  * live in styles/prose.css, under `.prose`.
  *
@@ -156,18 +157,14 @@ export function createPortableTextComponents({
                 const title =
                     typeof value?.title === "string" ? value.title.trim() : "";
                 if (!body.length && !title) return null;
-                const tone =
-                    typeof value?.tone === "string" ? value.tone : "note";
                 // A note, not a landmark: an <aside> inside <main> is a
-                // complementary landmark that is not top-level.
+                // complementary landmark that is not top-level. The tone is
+                // said in words, as the feed says it: "Caution: …".
                 return (
-                    <div className="callout" data-tone={tone} role="note">
-                        <p className="callout__tone">
-                            {calloutToneTitle(tone)}
+                    <div className="callout" role="note">
+                        <p>
+                            <strong>{calloutHeading(value ?? {})}</strong>
                         </p>
-                        {title ? (
-                            <p className="callout__title">{title}</p>
-                        ) : null}
                         {body.length > 0 ? (
                             <PortableText
                                 value={body}

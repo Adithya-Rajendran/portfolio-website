@@ -8,7 +8,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { MetadataRoute } from "next";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { siteConfig } from "@/lib/config";
-import { collectTags } from "@/lib/tags";
+import { collectTags, linkedTags } from "@/lib/tags";
 
 const BASE_URL = siteConfig.url;
 
@@ -27,7 +27,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         getAllPosts(),
         getAllProjectSlugsWithDates(),
     ]);
-    const tags = collectTags(posts);
+    // Only the tag pages the site links to: a tag with one entry is not
+    // shown anywhere (lib/tags.ts `linkedTags`), though its page answers.
+    const tags = linkedTags(collectTags(posts));
 
     const validDate = (value?: string) => {
         if (!value) return undefined;

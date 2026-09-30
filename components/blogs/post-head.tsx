@@ -9,7 +9,8 @@ import styles from "./post.module.css";
 /**
  * The top of an entry (G1): the crumb row (Writing / LOG nnn: the section
  * and the entry's one quiet identifier, as a project file's), then date ·
- * read time · Updated (only after a revision) · tags, the title and the
+ * read time · Updated (only after a revision) · the tags that link (two
+ * or more entries each; `LogEntry.tagLinks`), the title and the
  * standfirst. Kept short, so the first paragraph reaches the first
  * screen. Ported from the mockup's post.html (`.post-crumbrow`,
  * `.post-head`).
@@ -48,6 +49,7 @@ export function PostHead({
     publishedAt?: string | null;
     revisedAt?: string | null;
     readMinutes: number | null;
+    /** The tags that link: a tag with one entry is not shown. */
     tags: readonly string[];
     className?: string;
 }) {

@@ -14,8 +14,9 @@ type Option<Value extends string> = {
 type ValueOf<List extends readonly Option<string>[]> = List[number]["value"];
 
 /**
- * A callout's tone. `caution` is the advisory box: something that can
- * break a reader's setup or cost them data.
+ * A callout's tone, said in words at the start of the note ("Caution: …",
+ * never a colour). `caution` is the advisory: something that can break a
+ * reader's setup or cost them data.
  */
 export const CALLOUT_TONES = [
     { title: "Note", value: "note" },
@@ -25,7 +26,7 @@ export const CALLOUT_TONES = [
 ] as const satisfies readonly Option<string>[];
 export type CalloutTone = ValueOf<typeof CALLOUT_TONES>;
 
-/** The label printed above a callout with no title of its own. */
+/** The tone's word, which leads a callout (and its title, if any). */
 export function calloutToneTitle(tone: unknown): string {
     return (
         CALLOUT_TONES.find((option) => option.value === tone)?.title ?? "Note"

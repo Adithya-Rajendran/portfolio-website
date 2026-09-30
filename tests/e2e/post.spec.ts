@@ -11,7 +11,10 @@ import { THEMES, storeTheme } from "./support/theme";
  * copy, footnotes sit in the margin and in the notes, the phone's contents
  * box works, and in-page links land in the visible entry after a client-side
  * navigation (Cache Components keeps the previous entry mounted, hidden).
- * The fixture-only tests read the fixture posts in lib/fixtures.ts.
+ * Premium WS3: one numbering per thing (LOG in the crumb only, no margin
+ * numbers or line counts), the type (h2 at 32px or less, leading 1.52),
+ * the listings at one width, and one close (no Author block). The
+ * fixture-only tests read the fixture posts in lib/fixtures.ts.
  */
 
 const FIXTURE_POST = "/blog/fixture-post-code-and-links";
@@ -264,28 +267,103 @@ test("a listing is numbered, named and copies its code", async ({
     expect(copied.replace(/\s+$/, "")).toBe(shown);
 });
 
-test("an entry's LOG number is printed once above its title, in the crumb", async ({
+test("an entry's LOG number is printed once, above its title, in the crumb", async ({
     page,
     request,
 }, testInfo) => {
-    const [path] = await postPaths(request, testInfo);
-    for (const width of [390, 1280]) {
-        await page.setViewportSize({ width, height: 844 });
+    for (const path of await postPaths(request, testInfo)) {
+        for (const width of [390, 1280]) {
+            await page.setViewportSize({ width, height: 844 });
+            await page.goto(path);
+            const title = page.locator('[data-page="post"]:visible h1');
+            await expect(title).toBeVisible();
+            const above = await title.evaluate((h1) => {
+                const top = h1.getBoundingClientRect().top;
+                return [
+                    ...h1.closest("[data-page]")!.querySelectorAll("span, p"),
+                ].filter(
+                    (el) =>
+                        /^LOG \d{3}$/.test(el.textContent?.trim() ?? "") &&
+                        el.checkVisibility() &&
+                        el.getBoundingClientRect().bottom <= top,
+                ).length;
+            });
+            expect(above, `${path} at ${width}px`).toBe(1);
+            // Nowhere else: not the end mark, the pager or a plate.
+            const text = await page
+                .locator('[data-page="post"]:visible')
+                .innerText();
+            expect(
+                text.match(/LOG \d{3}/g) ?? [],
+                `${path} at ${width}px`,
+            ).toHaveLength(1);
+        }
+    }
+});
+
+test("one numbering per thing, and the text's type", async ({
+    page,
+    request,
+}, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    for (const path of await postPaths(request, testInfo)) {
         await page.goto(path);
-        const title = page.locator('[data-page="post"]:visible h1');
-        await expect(title).toBeVisible();
-        const above = await title.evaluate((h1) => {
-            const top = h1.getBoundingClientRect().top;
-            return [
-                ...h1.closest("[data-page]")!.querySelectorAll("span, p"),
-            ].filter(
-                (el) =>
-                    /^LOG \d{3}$/.test(el.textContent?.trim() ?? "") &&
-                    el.checkVisibility() &&
-                    el.getBoundingClientRect().bottom <= top,
-            ).length;
+        const text = body(page);
+        // The headings carry their names: no margin number before an h2.
+        const h2 = await text.locator(":scope > h2").evaluateAll((headings) =>
+            headings.map((heading) => ({
+                before: getComputedStyle(heading, "::before").content,
+                size: parseFloat(getComputedStyle(heading).fontSize),
+            })),
+        );
+        for (const { before, size } of h2) {
+            expect(["none", "normal"], path).toContain(before);
+            expect(size, `${path} h2`).toBeLessThanOrEqual(32);
+        }
+        const leading = await text.evaluate((prose) => {
+            const style = getComputedStyle(prose);
+            return parseFloat(style.lineHeight) / parseFloat(style.fontSize);
         });
-        expect(above, `${path} at ${width}px`).toBe(1);
+        expect(leading, path).toBeCloseTo(1.52, 2);
+        // A listing's bar names its language and Copy, never a line count.
+        const bars = await page
+            .locator('[data-page="post"]:visible .listing__bar')
+            .allInnerTexts();
+        for (const bar of bars) expect(bar, path).not.toMatch(/\blines?\b/);
+    }
+});
+
+test("the entry closes once: the end mark, a question, the follow line, then the pager by name", async ({
+    page,
+    request,
+}, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    for (const path of await postPaths(request, testInfo)) {
+        await page.goto(path);
+        const main = page.getByRole("main");
+        await expect(main.getByText(/^End of entry$/)).toBeVisible();
+        // No Author block (the footer carries the name) and no heading
+        // over the pager.
+        for (const name of ["Author", postCopy.pager]) {
+            await expect(
+                main.getByRole("heading", { name, exact: true }),
+            ).toHaveCount(0);
+        }
+        await expect(main.getByText(/^Written by/)).toHaveCount(0);
+        const follow = main.getByText(/^Follow:/);
+        await expect(follow).toBeVisible();
+        await expect(
+            follow.getByRole("link", { name: "RSS", exact: true }),
+        ).toHaveAttribute("href", "/feed.xml");
+        await expect(main.locator(".btn", { hasText: /^RSS$/ })).toHaveCount(0);
+        // The pager names the entries: no LOG number, date or read time.
+        const pager = main.getByRole("navigation", { name: postCopy.pager });
+        for (const link of await pager.getByRole("link").all()) {
+            await expect(link).toContainText(
+                new RegExp(`^(${postCopy.previous}|${postCopy.next})`),
+            );
+            await expect(link).not.toContainText(/LOG|\d{4}|\bmin\b/);
+        }
     }
 });
 
@@ -350,12 +428,12 @@ test("printing an entry keeps the text and drops the rail and actions", async ({
     await expect(body(page).locator(":scope > p").first()).toBeVisible();
 });
 
-test("a listing past the measure breaks out wide; a highlighted line is marked", async ({
+test("one listing past the measure takes every listing wide; a highlighted line is marked", async ({
     page,
 }, testInfo) => {
     test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
     await page.goto(FIXTURE_POST);
-    const narrow = page.locator(".listing").filter({
+    const short = page.locator(".listing").filter({
         has: page.getByRole("region", { name: "Listing 1, Bash, fixture.sh" }),
     });
     const wide = page.locator(".listing").filter({
@@ -363,9 +441,19 @@ test("a listing past the measure breaks out wide; a highlighted line is marked",
             name: "Listing 2, Bash, fixture-wide.sh",
         }),
     });
-    const narrowBox = await narrow.boundingBox();
+    const text = await body(page).locator(":scope > p").first().boundingBox();
+    const shortBox = await short.boundingBox();
     const wideBox = await wide.boundingBox();
-    expect(wideBox!.width).toBeGreaterThan(narrowBox!.width + 100);
+    // One width per entry, wider than the text, and no line cut.
+    expect(shortBox!.width).toBe(wideBox!.width);
+    expect(wideBox!.width).toBeGreaterThan(text!.width + 100);
+    for (const listing of await page
+        .locator('[data-page="post"]:visible .listing__code')
+        .all()) {
+        expect(
+            await listing.evaluate((el) => el.scrollWidth <= el.clientWidth),
+        ).toBe(true);
+    }
     await expect(wide.locator(".line-highlight")).toHaveCount(1);
     await expect(wide.locator(".line-highlight")).toContainText(
         "A fixture comment",
@@ -421,10 +509,14 @@ test("a caution callout, the revisions and the end mark", async ({
 }, testInfo) => {
     test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
     await page.goto(FIXTURE_POST);
+    // A quiet note led by its tone and title in bold: no frame or band.
     const caution = page
         .getByRole("note")
         .filter({ hasText: "Fixture caution" });
-    await expect(caution).toContainText("Caution");
+    await expect(caution.locator("strong").first()).toHaveText(
+        "Caution: Fixture caution",
+    );
+    await expect(caution).toHaveCSS("border-top-width", "0px");
     const revisions = page.getByRole("region", {
         name: postCopy.revisions.title,
     });
@@ -433,7 +525,7 @@ test("a caution callout, the revisions and the end mark", async ({
         /Rev 2026-06-30.*Correction.*Fixture correction/,
         /Rev 2026-07-02.*Update.*Fixture update/,
     ]);
-    await expect(page.getByText(/^End of entry LOG \d{3}$/)).toBeVisible();
+    await expect(page.getByText(/^End of entry$/)).toBeVisible();
     await expect(
         page.getByRole("link", { name: postCopy.reply }),
     ).toHaveAttribute("href", "/contact#hello");
@@ -469,7 +561,7 @@ test("after a client-side navigation, the skip link and a contents link land in 
         "Needs two fixture entries that share a heading id.",
     );
     await page.goto(FIXTURE_QUOTE);
-    await page.getByRole("link", { name: /^Next entry · LOG \d{3}/ }).click();
+    await page.getByRole("link", { name: /^Next entry/ }).click();
     await expect(page).toHaveURL(new RegExp(`${FIXTURE_POST}$`));
     const title = page.getByRole("heading", {
         level: 1,

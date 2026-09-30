@@ -123,9 +123,8 @@ export const logCopy = {
     themed: "Flight Log",
     plain: "Writing",
     rss: "RSS",
-    linkedIn: "Follow on LinkedIn",
-    /** The way to the archive and its search, always in the head. */
-    search: "Search the archive",
+    /** "Follow: RSS · LinkedIn", in /blog's head and after an entry. */
+    follow: "Follow:",
     tags: "Tags",
     all: "All",
     /** "5 min read", the words after the number for assistive tech. */
@@ -135,8 +134,8 @@ export const logCopy = {
     tagList: "Tags",
     empty: "No entries yet.",
     archive: {
+        /** The page's name, and the quiet link at the end of /blog. */
         title: "Archive",
-        intro: "Every article by year. Search titles, standfirsts and tags.",
         searchLabel: "Search the writing",
         searchPlaceholder: "A title, a word or a tag",
         /** "2 of 3 entries" while a search is on. */
@@ -148,10 +147,9 @@ export const logCopy = {
         clear: "Clear search",
     },
     tag: {
-        /** "Articles tagged homelab." */
-        intro: (tag: string) => `Articles tagged ${tag}.`,
+        /** The metadata description: "Articles tagged GPU computing." */
+        description: (label: string) => `Articles tagged ${label}.`,
     },
-    back: "All writing",
 } as const;
 
 /**
@@ -170,7 +168,6 @@ export const postCopy = {
     contentsLabel: "On this page",
     listing: {
         num: (number: number) => `Listing ${number}`,
-        lines: (lines: number) => `${lines} ${lines === 1 ? "line" : "lines"}`,
         copy: "Copy",
         copyLabel: (number: number) => `Copy listing ${number}`,
         copied: "Copied",
@@ -188,9 +185,8 @@ export const postCopy = {
         /** "△ Rev 2026-07-02 · Correction". */
         rev: "Rev",
     },
-    /** "End of entry LOG 003". */
-    end: (designation?: string) =>
-        designation ? `End of entry ${designation}` : "End of entry",
+    /** The end mark: the LOG number is the crumb's alone. */
+    end: "End of entry",
     question: "Questions about this entry?",
     reply: "Send a message",
     copyLink: "Copy link",
@@ -201,13 +197,11 @@ export const postCopy = {
     after: "After this entry",
     projects: (count: number) =>
         count === 1 ? "Related project" : "Related projects",
+    /** The pager's landmark name (it has no visible heading). */
     pager: "Previous and next",
     previous: "Previous entry",
     next: "Next entry",
     related: "Related entries",
-    author: "Author",
-    writtenBy: "Written by",
-    rss: "RSS",
     /** The print masthead: "Writing · LOG 003". */
     printKicker: (designation?: string) =>
         designation ? `Writing · ${designation}` : "Writing",

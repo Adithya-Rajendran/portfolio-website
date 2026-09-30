@@ -9,7 +9,8 @@ type TitleTag = "h2" | "h3" | "h4";
 /**
  * One entry on the index's shared tracks: the date it was filed (and
  * "Updated …" only when the owner set a revision date) · the title,
- * standfirst and tags · the read time. The title's link is stretched
+ * standfirst and the tags that link (two or more entries each,
+ * `LogEntry.tagLinks`) · the read time. The title's link is stretched
  * over the whole row, so the row is one big target; the tag links stay
  * clickable above it. Ported from the mockup's post row (site.css 4.10,
  * 4.27).
@@ -56,9 +57,9 @@ export default function LogRow({
                 </Link>
             </Title>
             {entry.dek ? <p className={styles.dek}>{entry.dek}</p> : null}
-            {tags && entry.tags.length > 0 ? (
+            {tags && entry.tagLinks.length > 0 ? (
                 <ul className={`tags ${styles.tags}`} aria-label={copy.tagList}>
-                    {entry.tags.map((tag) => (
+                    {entry.tagLinks.map((tag) => (
                         <li key={tag}>
                             <Link
                                 className={

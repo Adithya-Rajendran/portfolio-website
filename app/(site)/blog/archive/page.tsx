@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import ArchiveList from "@/components/blogs/archive-list";
 import TagChips from "@/components/blogs/tag-chips";
-import { ButtonLink } from "@/components/ui/button";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { logCopy } from "@/lib/copy";
+import { feedAlternates } from "@/lib/feed";
 import { logEntries, offersFilters } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import { getWritingDescription } from "@/lib/profile-content";
@@ -20,11 +20,11 @@ export async function generateMetadata(): Promise<Metadata> {
     const described = description ? { description } : {};
     const name = profile?.name || siteConfig.author;
     const title = `${copy.title} · ${logCopy.plain}`;
-    const url = `${siteConfig.url}/blog/archive`;
+    const url = `${siteConfig.url}${siteRoutes.archive}`;
     return {
         title,
         ...described,
-        alternates: { canonical: url },
+        alternates: feedAlternates(url),
         openGraph: { title: `${title} | ${name}`, ...described, url },
         twitter: {
             card: "summary_large_image",
@@ -35,10 +35,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Archive: every entry by year in the writing index, with a search over
- * titles, standfirsts and tags, and the tag chips once a tag gathers two
- * or more entries (`offersFilters`, as on /blog). The whole list is
- * server-rendered; only the search needs JavaScript.
+ * Archive: every entry in the writing index (by year once the entries
+ * span two), with a search over titles, standfirsts and tags, and the tag
+ * chips once a tag gathers two or more entries (`offersFilters`, as on
+ * /blog). The head is the title alone: the search explains itself, and
+ * the header's Writing leads back. The whole list is server-rendered;
+ * only the search needs JavaScript.
  */
 export default async function ArchivePage() {
     const entries = logEntries(await getAllPosts());
@@ -52,19 +54,7 @@ export default async function ArchivePage() {
                 ornament="wave"
                 tag={logCopy.themed}
                 title={copy.title}
-                intro={copy.intro}
-            >
-                <div className="cluster page-head__actions">
-                    <ButtonLink
-                        size="sm"
-                        icon="arrow"
-                        iconAt="end"
-                        href={siteRoutes.blog}
-                    >
-                        {logCopy.back}
-                    </ButtonLink>
-                </div>
-            </PageHead>
+            />
 
             <section className={`section ${styles.index}`}>
                 <div className={`shell ${styles.indexInner}`}>
