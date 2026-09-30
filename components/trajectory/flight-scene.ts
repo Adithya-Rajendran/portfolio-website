@@ -1,6 +1,7 @@
 import { trajectoryCopy as copy } from "@/lib/copy";
 import type { Frame } from "@/lib/trajectory";
 import type { FlightGL } from "./flight-gl";
+import { firstMaps, flightMaps, requestMap } from "./flight-maps";
 import type { Box } from "./flight-route";
 import type { CreateScene } from "./journey";
 import styles from "./flight.module.css";
@@ -9,9 +10,10 @@ import styles from "./flight.module.css";
  * Option C · Flight: the timeline as a chase-camera flight through a
  * heliocentric 3D scene (flight-route.ts places it, flight-gl.ts draws it
  * with three.js). This part is small and synchronous: it shows a still
- * poster at once, then imports the renderer and three.js as one lazy
- * chunk, so the page never waits for WebGL. Without WebGL the poster
- * stays.
+ * poster at once, picks the maps for the screen and requests the ones the
+ * first frame needs, then imports the renderer and three.js as one lazy
+ * chunk, so the page never waits for WebGL and the maps arrive with it.
+ * Without WebGL, or while a lost context is away, the poster shows.
  */
 
 const POSTER = `<svg class="${styles.hint}" viewBox="-500 -210 1000 420" aria-hidden="true" focusable="false">
@@ -59,6 +61,11 @@ export const createFlightScene: CreateScene = (host, data, route) => {
         };
     };
     let last: Frame | null = null;
+    // Phones and narrow windows take the smaller maps (flight-maps.ts).
+    const maps = flightMaps(!window.matchMedia("(min-width: 960px)").matches);
+    const images = new Map(
+        firstMaps(maps, data.chapters.length).map((f) => [f, requestMap(f)]),
+    );
 
     import("./flight-gl")
         .then(({ mountFlight }) => {
@@ -75,11 +82,19 @@ export const createFlightScene: CreateScene = (host, data, route) => {
                     leader: styles.leader,
                 },
                 openTo: copy.openTo,
+                maps,
+                images,
                 ready: () => {
                     host.dataset.ready = "";
                 },
+                lost: () => {
+                    delete host.dataset.ready;
+                },
             });
             if (!gl) return;
+            // The poster goes under the canvas: the canvas fades in over
+            // it, and fades out to it if the context is lost.
+            host.prepend(poster);
             if (size) gl.resize(...size);
             if (last) gl.render(last);
         })
@@ -107,6 +122,7 @@ export const createFlightScene: CreateScene = (host, data, route) => {
             disposed = true;
             gl?.dispose();
             gl = null;
+            images.clear();
             poster.remove();
             scrim.remove();
             layer.remove();

@@ -1,9 +1,12 @@
 # Trajectory textures
 
 The maps for the 3D flight on `/resume/trajectory` (option C · Flight,
-`components/trajectory/flight-gl.ts` and `flight-bodies.ts`). A wide screen
-loads the 2k maps and the 4k sky; a phone loads the 1k maps and the 2k sky,
-with the night lights at 2k (the sunrise shows them large). Flight Manual
+`components/trajectory/flight-gl.ts` and `flight-bodies.ts`).
+`components/trajectory/flight-maps.ts` picks them: a wide screen loads the
+2k maps and the 4k sky; a phone or a window under 960px loads the 1k maps
+and the 2k sky, with the night lights at 2k (the sunrise magnifies them,
+and at 1k the cities blur into soft blobs). The scene requests the maps its
+first frame needs as it mounts, beside the renderer's code. Flight Manual
 never loads the sky.
 
 The page credits them in the figure line under the scene: "Textures: NASA;

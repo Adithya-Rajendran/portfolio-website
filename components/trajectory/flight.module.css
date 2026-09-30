@@ -1,8 +1,10 @@
 /*
  * Option C · Flight: the 3D scene's layers inside the journey's stage.
- * Bottom to top: the WebGL canvas, the still poster shown until the
- * renderer and its textures are in, a scrim that keeps the record's text
- * legible over the scene, and the HTML labels projected from the worlds.
+ * Bottom to top: the still poster, shown until the renderer and its
+ * textures are in (and while a lost WebGL context is away), the canvas,
+ * which fades in over it, a scrim that keeps the record's text legible
+ * over the scene, and the HTML labels projected from the worlds, shown
+ * only with the canvas.
  */
 
 .host {
@@ -38,11 +40,13 @@
         color-mix(in oklab, var(--ink-1) 4%, transparent) 9%,
         transparent 26%
     );
-    transition: opacity var(--dur-6) var(--ease-dock);
 }
 
+/* Whole while the canvas fades in over it, then gone; back at once, under
+   the canvas as it fades out, if the context is lost. */
 .host[data-ready] > .poster {
     opacity: 0;
+    transition: opacity 0s var(--dur-6);
 }
 
 .hint {
@@ -104,6 +108,12 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
+    transition: opacity var(--dur-6) var(--ease-dock);
+}
+
+/* No label before its world is drawn, nor over a lost scene. */
+.host:not([data-ready]) > .labels {
+    opacity: 0;
 }
 
 /* A map label: a knockout backing, so a line passing under it breaks
@@ -255,7 +265,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .host > canvas,
-    .poster {
+    .labels {
         transition: none;
     }
 }

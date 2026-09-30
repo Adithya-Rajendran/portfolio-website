@@ -2,6 +2,7 @@ import { ShaderLib } from "three";
 import "three/examples/jsm/lines/LineMaterial.js";
 import { describe, expect, it } from "vitest";
 import { patchLineShader } from "@/components/trajectory/flight-gl";
+import { firstMaps, flightMaps } from "@/components/trajectory/flight-maps";
 import {
     CRANE,
     FLIGHT_PACING,
@@ -10,6 +11,7 @@ import {
     RING,
     buildFlight,
     dist,
+    drawingRatio,
     labelBox,
     labelGap,
     labelMinX,
@@ -851,5 +853,43 @@ describe("the labels and the lines", () => {
         expect(patched.fragment).toContain("uKeep");
         expect(patched.fragment).toContain("uDiscs");
         expect(patchLineShader("void main() {}", fragmentShader)).toBeNull();
+    });
+});
+
+/* ---- the engine: the drawing buffer and the maps ------------------------ */
+
+describe("the drawing buffer and the maps", () => {
+    it("keeps the drawing buffer within the 1.75 cap and a pixel budget", () => {
+        const pixels = (w: number, h: number, wide: boolean, device: number) =>
+            w * h * drawingRatio(w, h, wide, device) ** 2;
+        // 1440×900 at 1 (a 72px header): one pixel per CSS pixel.
+        expect(drawingRatio(1440, 828, true, 1)).toBe(1);
+        // A 14" laptop, 1512×945 at 2: about 3 MP, not 4.
+        expect(drawingRatio(1512, 873, true, 2)).toBeGreaterThan(1.4);
+        expect(pixels(1512, 873, true, 2)).toBeLessThanOrEqual(3.0e6);
+        // 2560×1440 at 1.5: never under one pixel per CSS pixel.
+        expect(drawingRatio(2560, 1368, true, 1.5)).toBe(1);
+        // A phone, 390×844 at 3: the cap, within its 1.4 MP.
+        expect(drawingRatio(390, 788, false, 3)).toBe(1.75);
+        expect(pixels(390, 788, false, 3)).toBeLessThanOrEqual(1.4e6);
+        // Zoomed out below one device pixel per CSS pixel: one.
+        expect(drawingRatio(1440, 828, true, 0.8)).toBe(1);
+    });
+
+    it("gives a phone the smaller maps, and waits only for the worlds shown", () => {
+        const phone = flightMaps(true);
+        const wide = flightMaps(false);
+        const first = firstMaps(phone, 4);
+        // The night lights stay 2k: the sunrise shows them large.
+        for (const f of first.filter((f) => f !== phone.night))
+            expect(f).not.toMatch(/-2k|-4k/);
+        expect(phone.sky).toBe("milky-way-band-2k.webp");
+        expect(wide.sky).toBe("milky-way-band-4k.webp");
+        expect(firstMaps(wide, 4)).toContain("earth-2k.webp");
+        expect(first).toEqual(
+            expect.arrayContaining(["saturn-ring-1k.webp", "moon-1k.webp"]),
+        );
+        // Two chapters: Earth and Saturn, no Mars or Jupiter.
+        expect(firstMaps(phone, 2).join()).not.toMatch(/mars|jupiter/);
     });
 });

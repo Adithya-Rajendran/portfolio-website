@@ -9,7 +9,9 @@ import { THEMES, storeTheme } from "./support/theme";
  * the flight is scrubbed (a long burn label included), Play gives way to
  * any key, a phone keeps each chapter's name and full entry, and axe finds
  * nothing in either theme (the route is not in the sitemap, so a11y.spec's
- * page list does not reach it).
+ * page list does not reach it). The 3D scene draws in both themes,
+ * survives a lost WebGL context, and leaves one canvas and no errors
+ * after the route is left and shown again.
  */
 const PATH = "/resume/trajectory";
 
@@ -121,4 +123,109 @@ for (const theme of THEMES) {
             expect(await axeViolations(page, PATH)).toEqual([]);
         });
     }
+}
+
+/** The luminance spread (standard deviation, of 255) of the stage right of
+ *  the record, clear of the caption: a drawn scene has worlds, lines and
+ *  stars; the bare paper or black has none. Read in the page from a
+ *  screenshot, so the compositor's frame is what counts. */
+async function sceneSpread(page: Page) {
+    const clip = await page.evaluate(() => {
+        const stage = document
+            .querySelector("[data-journey] [data-stage]")!
+            .getBoundingClientRect();
+        return {
+            x: stage.left + stage.width * 0.55,
+            y: stage.top + 24,
+            width: stage.width * 0.45 - 16,
+            height: stage.height - 88,
+        };
+    });
+    const png = (await page.screenshot({ clip })).toString("base64");
+    return page.evaluate(async (data) => {
+        const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+        const image = await createImageBitmap(
+            new Blob([bytes], { type: "image/png" }),
+        );
+        const canvas = new OffscreenCanvas(image.width, image.height);
+        const context = canvas.getContext("2d")!;
+        context.drawImage(image, 0, 0);
+        const px = context.getImageData(0, 0, image.width, image.height).data;
+        let sum = 0;
+        let squares = 0;
+        for (let i = 0; i < px.length; i += 4) {
+            const y = 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2];
+            sum += y;
+            squares += y * y;
+        }
+        const n = px.length / 4;
+        return Math.sqrt(Math.max(0, squares / n - (sum / n) ** 2));
+    }, png);
+}
+
+/** A drawn scene's spread is above this in every frame and theme
+ *  (15–41 at 1440×900 on SwiftShader); the poster alone is about 7 and
+ *  the bare stage 0. */
+const DRAWN = 10;
+
+for (const theme of THEMES) {
+    test(`the flight draws in ${theme}, survives a lost context and a return`, async ({
+        page,
+        pageErrors,
+    }) => {
+        test.setTimeout(90_000);
+        await storeTheme(page, theme);
+        await page.goto(PATH);
+        const scene = page.locator("[data-journey] [data-scene]");
+        await expect(scene).toHaveAttribute("data-ready", "", {
+            timeout: 20_000,
+        });
+        // The canvas's fade in.
+        await page.waitForTimeout(900);
+        for (const p of [0, 0.5, 1]) {
+            await seek(page, p);
+            expect(await sceneSpread(page), `P ${p}`).toBeGreaterThan(DRAWN);
+        }
+
+        // A lost context hides the canvas and the labels (the poster
+        // shows); restored, the scene is back without a scroll.
+        await page.evaluate(() => {
+            const canvas = document.querySelector<HTMLCanvasElement>(
+                "[data-scene] > canvas",
+            )!;
+            const lose = canvas
+                .getContext("webgl2")!
+                .getExtension("WEBGL_lose_context")!;
+            Object.assign(window, { lose });
+            lose.loseContext();
+        });
+        await expect(scene).not.toHaveAttribute("data-ready");
+        await page.evaluate(() =>
+            (
+                window as unknown as { lose: WEBGL_lose_context }
+            ).lose.restoreContext(),
+        );
+        await expect(scene).toHaveAttribute("data-ready", "");
+        await page.waitForTimeout(900);
+        expect(await sceneSpread(page), "restored").toBeGreaterThan(DRAWN);
+
+        // Away and back, twice: one canvas, drawn again.
+        for (let i = 0; i < 2; i++) {
+            await page
+                .getByRole("banner")
+                .getByRole("link", { name: "Experience", exact: true })
+                .click();
+            await expect(page).toHaveURL(/\/resume$/);
+            await page.goBack();
+            await expect(page).toHaveURL(new RegExp(`${PATH}$`));
+            await expect(scene).toHaveAttribute("data-ready", "", {
+                timeout: 20_000,
+            });
+        }
+        expect(await page.locator("[data-scene] > canvas").count()).toBe(1);
+        await seek(page, 0.5);
+        await page.waitForTimeout(900);
+        expect(await sceneSpread(page), "returned").toBeGreaterThan(DRAWN);
+        expect(await pageErrors.drain(page)).toEqual([]);
+    });
 }

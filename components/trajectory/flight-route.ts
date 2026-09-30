@@ -5,6 +5,7 @@ import {
     type Segment,
     type TrajectoryData,
 } from "@/lib/trajectory";
+import { worldKinds } from "./flight-maps";
 
 /**
  * The 3D flight's geometry (option C): pure, without three.js, so the
@@ -86,6 +87,7 @@ const wrapPi = (a: number) => a - TAU * Math.ceil((a - Math.PI) / TAU);
 /* ---- pacing ---------------------------------------------------------------- */
 
 export { FLIGHT_PACING } from "./flight-pacing";
+export { worldKinds };
 
 /* ---- orbital planes ------------------------------------------------------ */
 
@@ -214,17 +216,6 @@ const MOON = {
  *  orbits it lies between. */
 const BELT_HALF = 0.15;
 
-/** Earth for the first chapter, Saturn (with its ring) for the last, and
- *  Mars and Jupiter between. */
-export function worldKinds(count: number): WorldKind[] {
-    const inner: WorldKind[] = ["earth", "mars", "jupiter"];
-    return Array.from({ length: count }, (_, i) => {
-        if (count > 1 && i === count - 1) return "saturn";
-        if (i < 3) return inner[i];
-        return (i - 3) % 2 ? "jupiter" : "mars";
-    });
-}
-
 /* ---- the stage ------------------------------------------------------------- */
 
 export interface Layout {
@@ -308,6 +299,28 @@ export function stageFrame(W: number, H: number, wide: boolean): Stage {
             fit: 0.95,
         },
     };
+}
+
+/** The drawing buffer's pixel budget: about what a laptop's integrated
+ *  GPU fills at a steady frame on a wide stage, less on a phone. */
+export const PIXEL_BUDGET = { wide: 3.0e6, phone: 1.4e6 };
+/** WebGL's device pixel ratio cap (the brief's). */
+export const MAX_DPR = 1.75;
+
+/** The drawing buffer's pixel ratio for a stage `width`×`height` (CSS
+ *  pixels) on a screen of `device` pixel ratio: the device's, at most
+ *  MAX_DPR and within the pixel budget, but never under one pixel per CSS
+ *  pixel. Rounded down to a hundredth, so it is stable across calls. */
+export function drawingRatio(
+    width: number,
+    height: number,
+    wide: boolean,
+    device: number,
+): number {
+    const budget = wide ? PIXEL_BUDGET.wide : PIXEL_BUDGET.phone;
+    const fit = Math.sqrt(budget / Math.max(1, width * height));
+    const ratio = Math.min(MAX_DPR, device || 1, fit);
+    return Math.max(1, Math.floor(ratio * 100) / 100);
 }
 
 /** The camera's axes for a pose: forward, right and up, with world-up

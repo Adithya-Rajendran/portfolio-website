@@ -59,7 +59,7 @@ function total(page: PageBytes, kind: Kind, field: "raw" | "br" = "br") {
 
 test("byte report", async ({ browser, request, baseURL }, testInfo) => {
     const posts = (await contentPages(request, testInfo)).filter(isPostPage);
-    const paths = [...STATIC_PAGES, ...posts.slice(0, 1)];
+    const paths = [...STATIC_PAGES, ...posts.slice(0, 1), "/resume/trajectory"];
     test.setTimeout(30_000 + paths.length * 15_000);
     const origin = new URL(baseURL ?? "").origin;
     const pages: PageBytes[] = [];

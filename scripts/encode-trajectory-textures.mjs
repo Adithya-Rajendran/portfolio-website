@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 // The maps for the 3D flight on /resume/trajectory
-// (components/trajectory/flight-gl.ts): Solar System Scope's
+// (components/trajectory/flight-maps.ts picks them per screen, flight-gl.ts
+// draws them): Solar System Scope's
 // equirectangular textures (CC BY 4.0) and NASA's Earth layers (public
 // domain), credited in the figure line and in
 // public/images/trajectory/README.md. Downloads each source once into the

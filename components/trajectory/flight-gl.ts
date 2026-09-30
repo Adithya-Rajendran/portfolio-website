@@ -26,13 +26,12 @@ import {
     SRGBColorSpace,
     Sprite,
     SpriteMaterial,
-    TextureLoader,
+    Texture,
     Vector2,
     Vector3,
     Vector4,
     WebGLRenderer,
     type Material,
-    type Texture,
 } from "three";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
@@ -55,6 +54,7 @@ import {
     LABEL_FADE,
     RING,
     buildFlight,
+    drawingRatio,
     inset,
     labelBox,
     labelGap,
@@ -76,6 +76,7 @@ import {
     type World,
     type WorldKind,
 } from "./flight-route";
+import { requestMap, type FlightMaps } from "./flight-maps";
 
 /**
  * The 3D flight's renderer (option C), loaded lazily by flight-scene.ts:
@@ -115,31 +116,17 @@ export interface FlightHooks {
     };
     /** The planned orbit's label ("Open to"). */
     openTo: string;
-    /** The first frame is on screen with its textures (or without them). */
+    /** The maps this screen loads (flight-maps.ts), and those already
+     *  requested, by file. */
+    maps: FlightMaps;
+    images: Map<string, HTMLImageElement>;
+    /** The first frame is on screen with its textures (or without them),
+     *  or is back after a lost context. */
     ready(): void;
+    /** The WebGL context is lost: nothing is drawn until it returns. */
+    lost(): void;
 }
 
-/** The maps: 2k on a wide screen, 1k (and the smaller sky) on a phone,
- *  where the worlds are drawn small; the night lights at 2k on both. */
-const MAPS = "/images/trajectory/";
-const mapsFor = (small: boolean) => {
-    const k = small ? "1k" : "2k";
-    return {
-        world: {
-            earth: `earth-${k}.webp`,
-            mars: `mars-${k}.webp`,
-            jupiter: `jupiter-${k}.webp`,
-            saturn: "saturn-strip-v1.webp",
-        } satisfies Record<WorldKind, string>,
-        ring: "saturn-ring-1k.webp",
-        clouds: `earth-clouds-${k}.webp`,
-        // The sunrise shows the night lights large on any screen.
-        night: "earth-night-2k.webp",
-        water: "earth-water-1k.webp",
-        moon: "moon-1k.webp",
-        sky: small ? "milky-way-band-2k.webp" : "milky-way-band-4k.webp",
-    };
-};
 /** Each world's shading: its wrap lighting (a softer terminator on the
  *  worlds with thick air; Mars's thin air a short dusk), and Flight
  *  Manual's tone gain, which brings each world's lit side up to about
@@ -191,7 +178,6 @@ const BELT_CLEAR = 6;
  *  galactic centre's place along the band are set so the band crosses
  *  the sunrise, the belt, Jupiter and the map, its core behind the map. */
 const GALAXY = { tilt: 60, turn: 330, core: 110 };
-const MAX_DPR = 1.75;
 const TRAIL_SAMPLES = 2400;
 /** The craft's span on screen, pixels: on a wide stage a share of its
  *  height within these bounds, on a phone a set size. It narrows through
@@ -393,7 +379,6 @@ export function mountFlight(
         return null;
     }
     renderer.outputColorSpace = SRGBColorSpace;
-    renderer.setPixelRatio(Math.min(MAX_DPR, window.devicePixelRatio || 1));
     host.prepend(canvas);
 
     const plan = buildFlight(data, route);
@@ -403,6 +388,10 @@ export function mountFlight(
     const textures: Texture[] = [];
     const lineMaterials: LineMaterial[] = [];
     let disposed = false;
+    /** The context is lost (the GPU reset, or a phone reclaimed it from
+     *  a background tab); `everLost`: at any time since the mount. */
+    let lost = false;
+    let everLost = false;
     let last: Frame | null = null;
     let W = 1;
     let H = 1;
@@ -418,42 +407,47 @@ export function mountFlight(
 
     // Each map is set on its material from the start, so its arrival only
     // uploads it (at once, not when its world first shows) and never
-    // changes a shader. The canvas shows once the worlds' maps are in
-    // (the sky's may follow), or after a few seconds without them.
-    const maps = mapsFor(!window.matchMedia("(min-width: 960px)").matches);
-    const loader = new TextureLoader();
+    // changes a shader. The scene picked the files and requested the first
+    // frame's already (flight-maps.ts); each is decoded off the main
+    // thread before it is uploaded. The canvas shows once the worlds'
+    // maps are in (the sky's may follow), or after a few seconds without
+    // them. Their images stay, so a restored context uploads them again.
+    const maps = hooks.maps;
     let pending = 0;
     let revealed = false;
     const reveal = () => {
         if (revealed || disposed) return;
         revealed = true;
-        hooks.ready();
+        // A context lost before the reveal shows the scene on its return.
+        if (!lost) hooks.ready();
     };
     const revealTimer = window.setTimeout(reveal, 4000);
     const load = (file: string, colour = true, waits = true) => {
+        const image = hooks.images.get(file) ?? requestMap(file);
+        const texture = new Texture(image);
+        texture.colorSpace = colour ? SRGBColorSpace : NoColorSpace;
+        texture.anisotropy = Math.min(
+            8,
+            renderer.capabilities.getMaxAnisotropy(),
+        );
+        textures.push(texture);
         if (waits) pending++;
-        const done = () => {
-            if (disposed || !waits || --pending > 0) return;
+        const done = (ok: boolean) => {
+            if (disposed) return;
+            if (ok) {
+                texture.needsUpdate = true;
+                if (!lost) renderer.initTexture(texture);
+                if (last) draw(last);
+            }
+            if (!waits || --pending > 0) return;
             warm();
             reveal();
         };
-        const texture = loader.load(
-            MAPS + file,
-            (t) => {
-                if (disposed) return;
-                t.anisotropy = Math.min(
-                    8,
-                    renderer.capabilities.getMaxAnisotropy(),
-                );
-                renderer.initTexture(t);
-                done();
-                if (last) draw(last);
-            },
-            undefined,
-            done,
+        image.decode().then(
+            () => done(true),
+            // A decode can be refused (memory) where the image loaded.
+            () => done(image.complete && image.naturalWidth > 0),
         );
-        texture.colorSpace = colour ? SRGBColorSpace : NoColorSpace;
-        textures.push(texture);
         return texture;
     };
 
@@ -903,6 +897,7 @@ export function mountFlight(
      *  its object first shows mid-scroll (once the maps are in, and for
      *  each theme). */
     const warm = () => {
+        if (lost) return;
         const kept: [Object3D, boolean, boolean][] = [];
         scene.traverse((o) => {
             kept.push([o, o.visible, o.frustumCulled]);
@@ -1010,6 +1005,7 @@ export function mountFlight(
         }
         // Every program for this theme (and its tone map), compiled now
         // rather than when its object first shows mid-scroll.
+        if (lost) return;
         renderer.compile(scene, camera);
         warm();
     };
@@ -1181,7 +1177,7 @@ export function mountFlight(
     };
 
     function draw(frame: Frame) {
-        if (disposed) return;
+        if (disposed || lost) return;
         const { p, t, card } = frame;
         const kind = frame.segment.kind;
         const pose = plan.pose(frame, stage);
@@ -1544,71 +1540,119 @@ export function mountFlight(
         renderer.render(scene, camera);
     }
 
+    /** The last layout, as a key: a resize that changes none of it
+     *  (a phone's toolbar coming and going resizes the window, not the
+     *  stage) re-makes nothing and draws nothing. */
+    let laidOut = "";
+    let sizeArgs: Parameters<FlightGL["resize"]> | null = null;
+    function resize(...args: Parameters<FlightGL["resize"]>) {
+        const [width, height, wide, record, caption] = args;
+        // A hidden page has no stage to draw on: keep what is drawn.
+        if (!(width >= 1 && height >= 1)) return;
+        sizeArgs = args;
+        const device = window.devicePixelRatio || 1;
+        const dpr = drawingRatio(width, height, wide, device);
+        const key = [
+            width,
+            height,
+            dpr,
+            device,
+            wide,
+            record,
+            caption && [caption.x0, caption.y0, caption.x1, caption.y1],
+            // The labels are measured again once the fonts are in.
+            document.fonts?.status,
+        ].join();
+        if (key === laidOut) return;
+        laidOut = key;
+        // One allocation, and only when the drawing buffer changes.
+        if (width !== W || height !== H || dpr !== renderer.getPixelRatio())
+            renderer.setDrawingBufferSize(width, height, dpr);
+        W = width;
+        H = height;
+        wideLayout = wide;
+        cssDpr = device;
+        stage = stageFrame(W, H, wide);
+        camera.aspect = W / H;
+        camera.fov = stage.fov;
+        for (const m of lineMaterials) m.resolution.set(W, H);
+        // The sky fades in below the stage's top edge.
+        const feather = [H * dpr, SKY_FEATHER * dpr] as const;
+        galaxy.material.uniforms.uFeather.value.set(...feather);
+        stars.material.uniforms.uFeather.value.set(...feather);
+        for (const dots of [stars, belt])
+            if (dots) dots.material.uniforms.uDpr.value = dpr;
+        if (belt) belt.material.uniforms.uDiscClear.value = BELT_CLEAR * dpr;
+        // No line under the record: on a wide stage they fade out
+        // under its scrim; on a phone above its top edge.
+        safe = labelSafe(stage, wide ? undefined : record);
+        // Nor through the caption: lines fade out round it and labels
+        // keep above it.
+        if (caption) {
+            const [soft, pad] = CAPTION_CLEAR;
+            keepOut.value.set(
+                (caption.x0 - pad) * dpr,
+                (H - caption.y1 - pad) * dpr,
+                (caption.x1 + pad) * dpr,
+                (H - caption.y0 + pad) * dpr,
+            );
+            keepSoft.value = (soft - pad) * dpr;
+            safe.y1 = Math.min(safe.y1, caption.y0 - pad);
+        } else keepOut.value.copy(NOWHERE);
+        const top = record ?? stage.box.y1;
+        if (wide)
+            mask.value.set(
+                LINE_MASK[0] * W * dpr,
+                LINE_MASK[1] * W * dpr,
+                -2,
+                -1,
+            );
+        else mask.value.set(-2, -1, (H - top + 6) * dpr, (H - top + 28) * dpr);
+        measureLabels();
+        room = inset(safe, LABEL_FADE);
+        sides = plan.mapSides(stage, labels, wide ? openLabel : null, safe);
+        chase = plan.chaseSides(stage, labels, safe, wide ? sides : undefined);
+        if (last) draw(last);
+    }
+    // The device pixel ratio changes without a resize when the window
+    // moves to another screen: watched for the ratio in use.
+    let ratioQuery: MediaQueryList | null = null;
+    const watchRatio = () => {
+        ratioQuery?.removeEventListener("change", onRatio);
+        ratioQuery = window.matchMedia(
+            `(resolution: ${window.devicePixelRatio || 1}dppx)`,
+        );
+        ratioQuery.addEventListener("change", onRatio);
+    };
+    function onRatio() {
+        watchRatio();
+        if (sizeArgs) resize(...sizeArgs);
+    }
+    watchRatio();
+
+    // A lost context (a GPU reset, or a phone reclaiming a background
+    // tab's) hides the canvas and the labels, and the poster shows. On its
+    // return three.js makes its objects again; the theme's colours, the
+    // programs and the maps follow, and the last frame is drawn without a
+    // scroll.
+    const onLost = (event: Event) => {
+        event.preventDefault();
+        if (disposed) return;
+        lost = everLost = true;
+        hooks.lost();
+    };
+    const onRestored = () => {
+        if (disposed) return;
+        lost = false;
+        applyTheme();
+        if (last) draw(last);
+        if (revealed) hooks.ready();
+    };
+    canvas.addEventListener("webglcontextlost", onLost);
+    canvas.addEventListener("webglcontextrestored", onRestored);
+
     return {
-        resize(width, height, wide, record, caption) {
-            W = Math.max(1, width);
-            H = Math.max(1, height);
-            wideLayout = wide;
-            cssDpr = window.devicePixelRatio || 1;
-            renderer.setPixelRatio(
-                Math.min(MAX_DPR, window.devicePixelRatio || 1),
-            );
-            renderer.setSize(W, H, false);
-            stage = stageFrame(W, H, wide);
-            camera.aspect = W / H;
-            camera.fov = stage.fov;
-            for (const m of lineMaterials) m.resolution.set(W, H);
-            const dpr = renderer.getPixelRatio();
-            // The sky fades in below the stage's top edge.
-            const feather = [H * dpr, SKY_FEATHER * dpr] as const;
-            galaxy.material.uniforms.uFeather.value.set(...feather);
-            stars.material.uniforms.uFeather.value.set(...feather);
-            for (const dots of [stars, belt])
-                if (dots) dots.material.uniforms.uDpr.value = dpr;
-            if (belt)
-                belt.material.uniforms.uDiscClear.value = BELT_CLEAR * dpr;
-            // No line under the record: on a wide stage they fade out
-            // under its scrim; on a phone above its top edge.
-            safe = labelSafe(stage, wide ? undefined : record);
-            // Nor through the caption: lines fade out round it and labels
-            // keep above it.
-            if (caption) {
-                const [soft, pad] = CAPTION_CLEAR;
-                keepOut.value.set(
-                    (caption.x0 - pad) * dpr,
-                    (H - caption.y1 - pad) * dpr,
-                    (caption.x1 + pad) * dpr,
-                    (H - caption.y0 + pad) * dpr,
-                );
-                keepSoft.value = (soft - pad) * dpr;
-                safe.y1 = Math.min(safe.y1, caption.y0 - pad);
-            } else keepOut.value.copy(NOWHERE);
-            const top = record ?? stage.box.y1;
-            if (wide)
-                mask.value.set(
-                    LINE_MASK[0] * W * dpr,
-                    LINE_MASK[1] * W * dpr,
-                    -2,
-                    -1,
-                );
-            else
-                mask.value.set(
-                    -2,
-                    -1,
-                    (H - top + 6) * dpr,
-                    (H - top + 28) * dpr,
-                );
-            measureLabels();
-            room = inset(safe, LABEL_FADE);
-            sides = plan.mapSides(stage, labels, wide ? openLabel : null, safe);
-            chase = plan.chaseSides(
-                stage,
-                labels,
-                safe,
-                wide ? sides : undefined,
-            );
-            if (last) draw(last);
-        },
+        resize,
         render(frame) {
             last = frame;
             draw(frame);
@@ -1621,18 +1665,27 @@ export function mountFlight(
             disposed = true;
             window.clearTimeout(revealTimer);
             themeWatch.disconnect();
-            scene.traverse((object: Object3D) => {
-                const mesh = object as Mesh;
-                mesh.geometry?.dispose();
-                const material = mesh.material as
-                    Material | Material[] | undefined;
-                if (Array.isArray(material))
-                    material.forEach((m) => m.dispose());
-                else material?.dispose();
-            });
-            for (const t of textures) t.dispose();
-            renderer.dispose();
-            renderer.forceContextLoss();
+            ratioQuery?.removeEventListener("change", onRatio);
+            canvas.removeEventListener("webglcontextlost", onLost);
+            canvas.removeEventListener("webglcontextrestored", onRestored);
+            // After a loss, three.js's objects from before it belong to a
+            // context that is gone (deleting them only logs errors); losing
+            // the context below frees everything the GPU holds anyway.
+            if (!everLost) {
+                scene.traverse((object: Object3D) => {
+                    const mesh = object as Mesh;
+                    mesh.geometry?.dispose();
+                    const material = mesh.material as
+                        Material | Material[] | undefined;
+                    if (Array.isArray(material))
+                        material.forEach((m) => m.dispose());
+                    else material?.dispose();
+                });
+                for (const t of textures) t.dispose();
+                renderer.dispose();
+            }
+            if (!renderer.getContext().isContextLost())
+                renderer.forceContextLoss();
             canvas.remove();
             hooks.labels.replaceChildren();
         },
