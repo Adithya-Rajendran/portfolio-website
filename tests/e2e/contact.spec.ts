@@ -10,7 +10,8 @@ import { expect, test } from "./support/test";
  * route's fragment picks it on arrival), the whole form is in the first
  * viewport, Hiring shows only beside what the owner is open to, the form
  * checks the email on leaving it and every field from the first submit,
- * each error under its field; a send that does not go (refused, or lost
+ * each error under its field, in ink with its cross, the field marked by
+ * one 2px orange rule (premium D1); a send that does not go (refused, or lost
  * on the network) stays on the page with the text kept and the ways on,
  * and the draft survives a reload; a sent message says "Message
  * received." and promises nothing; the 404's report arrives with the
@@ -199,6 +200,25 @@ test("the form checks the email on leaving it, and every field from the first su
         const under = (await page.getByText(error).boundingBox())!;
         expect(under.y).toBeGreaterThanOrEqual(box.y + box.height);
         expect(under.y - (box.y + box.height)).toBeLessThan(24);
+        // The words are ink with the cross; the field carries the one
+        // orange mark, a 2px rule at its start.
+        const [accent, ink] = await page.evaluate(() =>
+            ["--accent", "--ink-1"].map((token) => {
+                const probe = document.createElement("span");
+                probe.style.color = `var(${token})`;
+                document.body.append(probe);
+                const colour = getComputedStyle(probe).color;
+                probe.remove();
+                return colour;
+            }),
+        );
+        const words = page.locator(".field__error").filter({ hasText: error });
+        await expect(words).toHaveCSS("color", ink);
+        await expect(words.locator(".icon")).toBeVisible();
+        await expect(field).toHaveCSS(
+            "box-shadow",
+            `${accent} 2px 0px 0px 0px inset`,
+        );
     }
 
     await email.fill("you@example.com");

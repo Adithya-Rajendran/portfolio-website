@@ -34,8 +34,18 @@ only live in comments or commit messages.
     - `styles/tokens.css` (layer `theme`) holds every design token: both
       themes (Void on `:root`/`[data-theme="void"]`, Flight Manual on
       `[data-theme="manual"]`), type scale, space, motion. Colours are
-      defined there and nowhere else; orange text is `var(--accent-text)`,
-      `--accent` is for fills and marks.
+      defined there and nowhere else. `--accent`, International Orange,
+      means "now" (premium D1): the Open To, Active and Current status
+      dots, the flight's flown path and its now mark, a contents' current
+      section, the one 2px rule on an invalid field, and `--focus`; the
+      patch's and the hero's suns are identity marks (`data-identity`).
+      It is never text, a fill, a link rule, a hover or an error's words:
+      those are ink, the primary button an ink-1 fill with a `--bg`
+      label. A viewport carries two orange marks at most
+      (`tests/e2e/accent.spec.ts`). Type (premium D2): a page sets six
+      sizes at most, 13px (`--label-size`, every label, control and
+      datum) the smallest, then `--step-0` (UI text) and the heads; see
+      the fonts note below.
     - `styles/base.css`, `layout.css`, `components.css` (the shared design
       system: header, footer, buttons, section tags, photographs and
       plates…), `prose.css` (the long read under `.prose`: listings and the
@@ -67,7 +77,14 @@ only live in comments or commit messages.
   `undefined`). Spatial motion runs
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
-  (their variables on `<html>`); italic Newsreader is its own family,
+  (their variables on `<html>`), each with one job: Jost for display
+  (page and item titles and the hero's name at 350), headings, UI text
+  and the controls' one caps voice (the nav, buttons, arrow links and
+  segmented boxes: 500, 13px, 0.10em); Newsreader for reading; DM Mono
+  for data and every label (`.label`, `--font-label`: caps, 13px,
+  0.08em, ink-2); Michroma in two places only, the header's wordmark and
+  a page head's themed tag (`--font-mark`). There are no glyph
+  ornaments. Italic Newsreader is its own family,
   `var(--font-long-italic)`, so it is not preloaded. DM Mono's regular is
   preloaded with Jost and Newsreader's roman: its fallback sets lowercase
   about a fifth narrower, so a wrapped mono line in the first viewport (a
@@ -102,8 +119,9 @@ only live in comments or commit messages.
   address takes a line of its own, at the right, when the two do not fit
   one. No LOG or MSN
   code, no orange dash and no stars (they are the home hero's alone). The home and `/contact` cards add the
-  availability line as a keyed status line (● Open to …) when the
-  profile has one. A route's `alt` export is one string, so a post, a
+  availability line as a keyed status line (● Open to …, the key in DM
+  Mono caps; the section's tag beside the patch is the card's one
+  Michroma) when the profile has one. A route's `alt` export is one string, so a post, a
   project and home name their card in their own metadata
   (`shareImage` in `lib/site-metadata.ts`, the built URL from
   `lib/route-tags.ts`): "<title> by Adithya Rajendran", and home's from
@@ -175,7 +193,7 @@ only live in comments or commit messages.
   "The full record"). On a phone Full entry shares the readout's row;
   the plan's card has no readout, so its Contact stays under the
   openings. The scene (`flight-gl.ts`) names each world by its
-  organisation alone (DM Mono 12px), only at a hold and in the finale:
+  organisation alone (DM Mono 13px caps), only at a hold and in the finale:
   the world left behind fades as the ship leaves, the next is named as
   its hold begins, and nothing is named through a transfer. Flight
   Manual prints no city lights. A still flight (reduced motion, Pause
@@ -749,7 +767,13 @@ deployment require an authenticated Sanity CLI session.
   sideways scroll at 320–1920 px, the header's parts fit without
   overlapping, and no visible text under 12 px, generated text included,
   on home, every post and project, `/resume` and `/contact` (with the
-  message counter near its limit) at 1440 and 390), `theme` (no flash of the wrong theme, persistence across
+  message counter near its limit) at 1440 and 390; on home, every post
+  and project and `/resume`, six font sizes at most, and every caps line
+  a label, a control, the hero's name or Michroma's two places), `accent`
+  (two orange marks at most in the first viewport of home, `/portfolio`,
+  Homelab, a post, `/resume`, the flight, `/contact` and `/about`, at 1440
+  and 390 in both themes, identity marks and focus aside; the primary an
+  ink fill, the nav's bar and the header's CV ink), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, Pause motion, the stored
   theme on an unknown post or project URL), `chrome`
   (the menu sheet's focus, `inert` and closing; Contact in the bar on a
@@ -760,7 +784,8 @@ deployment require an authenticated Sanity CLI session.
   picks it, a route's prompt only as the message field's placeholder,
   the whole form in the first viewport at 1440×900, Hiring only beside an
   Open To line, the email checked on leaving it and every field from the
-  first submit, each error under its field, the counter only near the
+  first submit, each error under its field (the words in ink with their
+  cross, the field's one 2px orange rule), the counter only near the
   limit; a refused send under Send with the text kept and Try again, Copy
   message and LinkedIn, its stale alert clearing after leaving and
   returning; a send the network drops staying on the page, Try again
@@ -825,7 +850,8 @@ deployment require an authenticated Sanity CLI session.
   hero's name, availability, CV and the quiet link down to the projects
   in the first viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
-  the header's wordmark hidden only while the hero's name is in view: back
+  the name at 350, tracked 0.11–0.12em, on one line at 1440 and 1,400px
+  wide at most at 1920; the header's wordmark hidden only while the hero's name is in view: back
   at 400px down and after the quiet link to the projects; the starfield
   `running` only on screen, in a visible tab, in Void and with motion
   allowed; the stars in the hero only, and not on paper; the credit with

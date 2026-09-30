@@ -47,12 +47,12 @@
     padding-top: var(--s-3);
     border-top: var(--rule-hair) solid var(--rule-1);
     color: var(--ink-2);
-    font: 400 var(--step--1) / 1.5 var(--font-display);
+    font: 400 var(--step-0) / 1.5 var(--font-display);
 }
 .alsoLabel {
     color: var(--ink-2);
-    font: var(--label-2);
-    letter-spacing: var(--track-label-2);
+    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+    letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
 .also a {
@@ -60,16 +60,12 @@
     align-items: center;
     min-height: 44px;
     color: var(--ink-1);
-    text-decoration-color: var(--rule-2);
     text-underline-offset: 0.25em;
-}
-.also a:hover {
-    color: var(--accent-text);
-    text-decoration-color: var(--accent);
 }
 
 /* ---- The close: the owner's statement, the way to his current focus,
-   then the one primary and Send a message ------------------------------- */
+   then the one primary and Send a message. The statement shares the
+   rows' step, so the page keeps to six sizes. ------------------------- */
 .close {
     display: grid;
     justify-items: start;
@@ -80,7 +76,7 @@
 .tagline {
     max-width: 30ch;
     color: var(--ink-1);
-    font: 400 var(--step-3) / 1.25 var(--font-long);
+    font: 400 var(--step-2) / 1.3 var(--font-long);
     letter-spacing: -0.005em;
     text-wrap: balance;
 }

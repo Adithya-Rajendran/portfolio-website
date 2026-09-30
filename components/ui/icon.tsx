@@ -24,16 +24,6 @@ export type IconName =
     | "share"
     | "theme";
 
-export type OrnamentName =
-    | "pulsar"
-    | "hydrogen"
-    | "record"
-    | "orbit"
-    | "limb"
-    | "wave"
-    | "dot"
-    | "star";
-
 export function Icon({
     name,
     className,
@@ -52,16 +42,11 @@ export function Icon({
     );
 }
 
-/** A Golden Record ornament beside a section tag. */
-export function Ornament({ name }: { name: OrnamentName }) {
-    return (
-        <svg className="ornament" aria-hidden="true" focusable="false">
-            <use href={`#o-${name}`} />
-        </svg>
-    );
-}
-
-/** The AR mission patch. `mark` drops the lettered band (32–63 px). */
+/**
+ * The AR mission patch. `mark` drops the lettered band (32–63 px). Its
+ * orange sun is an identity mark (`data-identity`), outside the accent's
+ * budget of two "now" marks a viewport.
+ */
 export function Patch({
     className,
     mark = false,
@@ -78,6 +63,7 @@ export function Patch({
             viewBox="0 0 200 200"
             aria-hidden="true"
             focusable="false"
+            data-identity
         >
             <use href="#ar-patch" />
         </svg>

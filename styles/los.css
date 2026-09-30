@@ -63,7 +63,7 @@
         border: var(--rule-hair) solid var(--rule-1);
         background: var(--surface-1);
         color: var(--ink-1);
-        font-size: 0.9375rem;
+        font-size: var(--label-size);
         overflow-wrap: anywhere;
     }
 
@@ -108,7 +108,7 @@
     }
 
     /* ---- The site's sections over an engraved horizon ---------------------- */
-    /* An ink limb; the sun is the one accent (contract §3). */
+    /* Drawn in ink, the sun included: nothing here is "now" (contract §3). */
     .los-return {
         position: relative;
         isolation: isolate;
@@ -146,7 +146,7 @@
         stroke-dasharray: 1.5 5;
     }
     .los-sun {
-        fill: var(--accent);
+        fill: var(--ink-1);
     }
     .los-path {
         fill: none;
@@ -170,6 +170,6 @@
     .los-report {
         margin-top: var(--s-6);
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.5 var(--font-text);
+        font: 400 var(--step-0) / 1.5 var(--font-text);
     }
 }

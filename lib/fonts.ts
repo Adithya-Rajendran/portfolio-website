@@ -6,11 +6,12 @@ import { DM_Mono, Jost, Michroma, Newsreader } from "next/font/google";
  * and styles/tokens.css builds the font stacks from them. Each variable
  * already carries a metric-matched fallback face (adjustFontFallback).
  *
- * Jost (the name, navigation and every UI label), Newsreader's roman (the
- * long read, whose first paragraph is a post's largest paint) and DM
- * Mono's regular are the preloaded files. Newsreader's italic, DM Mono's
- * medium and Michroma load when text first uses them. Jost's italic is
- * never loaded.
+ * Jost (the name, the headings, the UI and the controls), Newsreader's
+ * roman (the long read, whose first paragraph is a post's largest paint)
+ * and DM Mono's regular (the data and every label) are the preloaded
+ * files. Newsreader's italic, DM Mono's medium and Michroma load when text
+ * first uses them; Michroma sets two things only, the header's wordmark
+ * and a page head's themed tag. Jost's italic is never loaded.
  */
 export const jost = Jost({
     subsets: ["latin"],

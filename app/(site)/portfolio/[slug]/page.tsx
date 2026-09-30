@@ -308,7 +308,6 @@ export default async function ProjectPage({
             <div className="shell">
                 <CrumbRow
                     className={styles.crumb}
-                    ornament="pulsar"
                     label={copy.plain}
                     href={siteRoutes.portfolio}
                     code={mission.designation}

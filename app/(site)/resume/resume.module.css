@@ -20,7 +20,7 @@
     max-width: 52ch;
     margin-top: var(--s-4);
     color: var(--ink-2);
-    font: 400 0.8125rem / 1.5 var(--font-mono);
+    font: 400 var(--label-size) / 1.5 var(--font-mono);
 }
 .openTo {
     margin-top: var(--s-5);
@@ -115,17 +115,12 @@
 }
 .rowDate {
     color: var(--ink-2);
-    font: 400 0.8125rem / 1.5 var(--font-mono);
+    font: 400 var(--label-size) / 1.5 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
 }
 .row a {
     color: var(--ink-1);
-    text-decoration-color: var(--rule-2);
     text-underline-offset: 0.18em;
-}
-.row a:hover {
-    color: var(--accent-text);
-    text-decoration-color: var(--accent);
 }
 /* A credential's verification page leaves the site: the outbound mark
    of the CV's other links. */
@@ -217,8 +212,8 @@
         break-before: page;
     }
     .mastName {
-        font: 300 21pt / 1 var(--font-display);
-        letter-spacing: 0.12em;
+        font: var(--weight-display) 21pt / 1 var(--font-display);
+        letter-spacing: 0.115em;
         text-transform: uppercase;
     }
     .mastRole {
@@ -240,8 +235,8 @@
         gap: 1.2mm;
         margin-right: 2mm;
         color: var(--ink-1);
-        font: 400 6pt / 1 var(--font-label);
-        letter-spacing: 0.14em;
+        font: 400 6.4pt / 1 var(--font-label);
+        letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .mastKey::before {

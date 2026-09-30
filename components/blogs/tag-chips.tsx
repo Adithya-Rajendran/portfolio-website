@@ -12,8 +12,8 @@ export const ALL_ENTRIES = "*";
  * The Flight Log's tag chips with their counts (G8): "All" and one chip
  * per tag that links (two or more entries, `linkedTags`), each a link to
  * its page, so they work without JavaScript and open in a new tab. The
- * chip for the page you are on is current (a filled chip with a dot and
- * an orange underline, not colour alone). Ported from the mockup's
+ * chip for the page you are on is current (a filled chip with a dot,
+ * not colour alone). Ported from the mockup's
  * log.html `.log-filter`. The group is named "Tags" for assistive tech
  * only: tag names with their counts need no printed label. Each chip is
  * named "notes, 2 entries" (the count's flex item would otherwise be read

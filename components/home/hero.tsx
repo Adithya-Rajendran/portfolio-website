@@ -69,10 +69,10 @@ const PARALLELS: Record<Crop, readonly number[]> = {
 /**
  * The limb drawn on the photograph's own geometry: the night side (which
  * hides the stars behind the planet), the top of the atmosphere and the
- * surface under it as hairlines, the planet's parallels, and the sun as
- * the one orange mark. The viewBox is the crop's largest encode, and
- * `xMidYMax slice` matches the photograph's `object-fit: cover` anchored
- * to the bottom.
+ * surface under it as hairlines, the planet's parallels, and the sun, an
+ * identity mark (`data-identity`: orange, outside the accent's budget).
+ * The viewBox is the crop's largest encode, and `xMidYMax slice` matches
+ * the photograph's `object-fit: cover` anchored to the bottom.
  */
 function Alignment({ crop }: { crop: Crop }) {
     const { width, height, limb, surface, sun } = sunrise[crop];
@@ -126,6 +126,7 @@ function Alignment({ crop }: { crop: Crop }) {
                 cx={sun.x}
                 cy={sun.y}
                 r={5.5 * unit}
+                data-identity
             />
         </svg>
     );

@@ -17,8 +17,8 @@ const TRACE = carrierTrace();
  * Loss of Signal (G7): the 404 and, with other words and actions, the
  * error page. The shared page head, then a carrier trace that drops out,
  * shown already drawn (ink, no words), then three sections as link rows
- * (Projects, Writing, Contact) over an engraved horizon (an ink limb and
- * the sun as its one accent). Everything renders without JavaScript; on
+ * (Projects, Writing, Contact) over an engraved horizon (drawn in ink,
+ * its sun included). Everything renders without JavaScript; on
  * the 404 (`missed`) the requested address, the primary it picks, the
  * rows that leave that section out and the report that carries the
  * address need it. Directive-free, so the client error boundary can
@@ -48,7 +48,6 @@ export default function LossOfSignal({
             <PageHead
                 className="shell"
                 split
-                ornament="dot"
                 tag={tag}
                 title={title}
                 intro={lead}
@@ -114,7 +113,7 @@ export default function LossOfSignal({
                     <path className="los-tick" d="M1052 182 L1084 212" />
                 </svg>
                 <div className="shell">
-                    <SectionTag ornament="orbit">
+                    <SectionTag>
                         <h2 className="section-tag__h" id="los-return-h">
                             {copy.sections}
                         </h2>

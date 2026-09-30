@@ -27,7 +27,6 @@ export function PostCrumb({
             className={
                 className ? `${styles.crumb} ${className}` : styles.crumb
             }
-            ornament="wave"
             label={copy.plain}
             href={siteRoutes.blog}
             code={designation}

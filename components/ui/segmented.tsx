@@ -2,7 +2,7 @@ import type { ChangeEvent } from "react";
 
 /**
  * A segmented control (contract §4): a radio group drawn as joined
- * hairline boxes, the chosen one filled with an orange dot (the theme
+ * hairline boxes, the chosen one filled with an ink dot (the theme
  * toggle's grammar, `.seg` in styles/components.css). Each option can show
  * a plain name under its label ("VOID / Dark").
  *

@@ -61,12 +61,7 @@
     }
 
     /* ---- Text -------------------------------------------------------- */
-    .prose a {
-        text-decoration-color: var(--accent);
-    }
-    .prose a:visited {
-        text-decoration-color: var(--ink-3);
-    }
+    /* Links keep the site's hairline (styles/base.css). */
     .prose strong {
         font-weight: 600;
     }
@@ -85,14 +80,20 @@
     .prose li::marker {
         color: var(--ink-3);
         font-family: var(--font-mono);
-        font-size: 0.85em;
+        font-size: var(--step-0);
     }
+    /* Inline code takes the UI text's step (17px beside the text's 20px
+       at 1440), not a fraction of its line: the page keeps to its six
+       sizes. In a heading it is the heading's size. */
     .prose :not(pre) > code {
         padding: 0.08em 0.32em;
         background: var(--surface-1);
-        font-size: 0.86em;
+        font-size: var(--step-0);
         font-variant-ligatures: none;
         white-space: break-spaces;
+    }
+    .prose :is(h2, h3, h4) code {
+        font-size: inherit;
     }
     /* The owner's asides: a quiet note, not a pull quote. A callout is
        the same note with a bold lead-in (below). */
@@ -133,7 +134,7 @@
         --code-token-changed: var(--ink-1);
         margin-block: var(--space-block);
         background: var(--surface-1);
-        font: 400 0.8125rem / 1.62 var(--font-mono);
+        font: 400 var(--label-size) / 1.62 var(--font-mono);
     }
     .prose > .listing--wide {
         max-width: min(100%, 60rem);
@@ -149,7 +150,7 @@
         padding: 0 var(--s-2) 0 var(--s-5);
     }
     .listing__num {
-        color: var(--ink-1);
+        color: var(--ink-2);
         font: 400 var(--label-size) / 1 var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -157,13 +158,13 @@
     .listing__lang {
         margin-left: auto;
         color: var(--ink-2);
-        font: 400 0.8125rem / 1 var(--font-mono);
+        font: 400 var(--label-size) / 1 var(--font-mono);
     }
     .listing__file {
         min-width: 0;
         overflow: hidden;
         color: var(--ink-2);
-        font: 400 0.8125rem / 1 var(--font-mono);
+        font: 400 var(--label-size) / 1 var(--font-mono);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -172,7 +173,7 @@
         gap: 0.45rem;
         padding-inline: 0.6rem;
         color: var(--ink-2);
-        font: 400 0.8125rem / 1 var(--font-mono);
+        font: 400 var(--label-size) / 1 var(--font-mono);
         letter-spacing: 0;
         text-transform: none;
     }
@@ -225,11 +226,12 @@
         text-decoration-thickness: 1px;
         text-underline-offset: 0.2em;
     }
-    /* Highlighted lines (the Studio's `highlightedLines`): a wash and a
-       mark in the gutter, so the line is not told apart by colour alone. */
+    /* Highlighted lines (the Studio's `highlightedLines`): a lit surface
+       and an ink mark in the gutter, so the line is not told apart by its
+       fill alone. */
     .listing__code .line-highlight {
         position: relative;
-        background: color-mix(in oklab, var(--accent) 10%, var(--surface-1));
+        background: var(--surface-2);
     }
     .listing__code .line-highlight::before {
         content: "";
@@ -238,7 +240,7 @@
         top: 0;
         bottom: 0;
         width: 0.35rem;
-        background: var(--accent);
+        background: var(--ink-2);
     }
 
     /* ---- Plates and figures (components/prose/figure-plate.tsx) ------ */
@@ -316,14 +318,14 @@
         gap: var(--s-1);
         padding: var(--s-4) var(--s-5);
         border: var(--rule-hair) solid var(--rule-1);
-        font: 400 var(--step--1) / 1.5 var(--font-text);
+        font: 400 var(--step-0) / 1.5 var(--font-text);
     }
     .media-link a {
         font: 500 var(--step-0) / 1.35 var(--font-display);
     }
     .media-link__host {
         color: var(--ink-3);
-        font: 400 0.75rem / 1.4 var(--font-mono);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
     }
     .media-link__caption {
         color: var(--ink-2);
@@ -349,7 +351,7 @@
     }
     .fnref a {
         padding: 0 0.15em;
-        color: var(--accent-text);
+        color: var(--ink-1);
         font: 400 var(--label-size) / 1 var(--font-mono);
         text-decoration: none;
     }
@@ -365,8 +367,8 @@
         text-decoration: underline;
     }
     .fnref:target {
-        background: var(--accent-wash);
-        outline: 0.2em solid var(--accent-wash);
+        background: var(--surface-2);
+        outline: 0.2em solid var(--surface-2);
     }
     /* The margin copy of a note (≥ 1280px): floated into the space right
        of the measure, beside the line that cites it. Decorative; the
@@ -385,7 +387,7 @@
             padding-left: var(--s-4);
             border-left: var(--rule-hair) solid var(--rule-1);
             color: var(--ink-2);
-            font: 400 var(--step--1) / 1.5 var(--font-text);
+            font: 400 var(--step-0) / 1.5 var(--font-text);
             text-indent: 0;
             hyphens: manual;
         }
@@ -395,8 +397,8 @@
         }
     }
     .sidenote__n {
-        color: var(--accent-text);
-        font: 400 0.75rem / 1.95 var(--font-mono);
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.8 var(--font-mono);
     }
 
     /* The numbered notes at the end (components/prose/footnotes.tsx). */
@@ -405,11 +407,11 @@
         padding-top: var(--s-5);
         border-top: var(--rule-hair) solid var(--rule-2);
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.55 var(--font-text);
+        font: 400 var(--step-0) / 1.55 var(--font-text);
     }
     .notes__title {
         margin-bottom: var(--s-4);
-        color: var(--ink-1);
+        color: var(--ink-2);
         font: 400 var(--label-size) / 1 var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -428,8 +430,8 @@
         margin-top: var(--s-3);
     }
     .notes__n {
-        color: var(--accent-text);
-        font: 400 0.8125rem / 1.9 var(--font-mono);
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.9 var(--font-mono);
     }
     .notes__text {
         margin: 0;
@@ -448,8 +450,8 @@
         height: 14px;
     }
     .notes__item:target {
-        background: var(--accent-wash);
-        outline: 0.3em solid var(--accent-wash);
+        background: var(--surface-2);
+        outline: 0.3em solid var(--surface-2);
     }
 }
 

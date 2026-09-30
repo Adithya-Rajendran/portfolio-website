@@ -59,11 +59,12 @@
                     }
                     a {
                         color: inherit;
-                        text-decoration-color: #ff5a1f;
+                        text-decoration-color: #8f8a80;
                         text-decoration-thickness: 1px;
                         text-underline-offset: 0.22em;
                     }
                     a:hover {
+                        text-decoration-color: #ece8df;
                         text-decoration-thickness: 2px;
                     }
                     a:focus-visible {

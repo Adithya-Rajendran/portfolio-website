@@ -42,11 +42,10 @@
     justify-content: space-between;
     gap: var(--s-2) var(--s-4);
 }
-/* Shown only near the limit, where the count itself turns: no mark
-   beside it. */
+/* Shown only near the limit, in ink: its appearing is the signal. */
 .count {
-    color: var(--accent-text);
-    font: 400 0.75rem / 1.4 var(--font-mono);
+    color: var(--ink-1);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums;
 }
 
@@ -65,15 +64,12 @@
     display: grid;
     gap: var(--s-2);
     padding: var(--s-3) var(--s-4);
-    border-left: var(--rule-strong) solid var(--accent);
+    border-left: var(--rule-strong) solid var(--ink-1);
     background: var(--surface-1);
 }
 .failureText {
     color: var(--ink-1);
-    font: 400 var(--step--1) / 1.5 var(--font-text);
-}
-.failureIcon {
-    color: var(--accent-text);
+    font: 400 var(--step-0) / 1.5 var(--font-text);
 }
 /* The first control's label lines up with the text above; each control
    is already a 44px target, so wrapped rows need no gap. */

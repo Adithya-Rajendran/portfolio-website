@@ -76,7 +76,7 @@
 }
 .metaData {
     color: var(--ink-2);
-    font: 400 0.8125rem / 1.4 var(--font-mono);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
     white-space: nowrap;
 }
@@ -86,8 +86,8 @@
 .title {
     max-width: 21ch;
     margin-top: var(--s-4);
-    font: 300 var(--step-5) / 1.04 var(--font-display);
-    letter-spacing: -0.014em;
+    font: var(--weight-display) var(--step-5) / 1.04 var(--font-display);
+    letter-spacing: var(--track-display);
     text-wrap: balance;
 }
 .dek {
@@ -100,7 +100,7 @@
 
 /* ---- The contents: the rail (≥ 960) or a box ---------------------- */
 .contents {
-    font: 400 var(--step--1) / 1.4 var(--font-display);
+    font: 400 var(--step-0) / 1.4 var(--font-display);
 }
 .contentsTitle {
     margin-bottom: var(--s-3);
@@ -136,11 +136,12 @@
 .contentsList a::before {
     content: counter(contents, decimal-leading-zero);
     color: var(--ink-3);
-    font: 400 0.75rem / 1.6 var(--font-mono);
+    font: 400 var(--label-size) / 1.6 var(--font-mono);
 }
 .contentsList a:hover {
     color: var(--ink-1);
 }
+/* The current section: the contents' one "now" mark, in orange. */
 .contentsList a[aria-current] {
     border-left-color: var(--accent);
     color: var(--ink-1);
@@ -172,7 +173,7 @@
     flex: none;
     width: 1rem;
     color: var(--ink-2);
-    font: 400 1.25rem / 1 var(--font-display);
+    font: 400 var(--step-1) / 1 var(--font-display);
     text-align: center;
 }
 .box[open] > .boxSummary::after {
@@ -213,7 +214,7 @@
 }
 .endTitle {
     margin-bottom: var(--s-4);
-    color: var(--ink-1);
+    color: var(--ink-2);
     font: 400 var(--label-size) / 1 var(--font-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
@@ -238,8 +239,8 @@
 }
 .revisionKind {
     color: var(--ink-2);
-    font: var(--label-2);
-    letter-spacing: var(--track-label-2);
+    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+    letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
 .revision[data-kind="correction"] .revisionKind {
@@ -248,7 +249,7 @@
 .revisionNote {
     margin-top: var(--s-1);
     color: var(--ink-2);
-    font: 400 var(--step--1) / 1.55 var(--font-text);
+    font: 400 var(--step-0) / 1.55 var(--font-text);
 }
 .endmark {
     display: flex;
@@ -261,9 +262,6 @@
     height: var(--rule-hair);
     background: var(--rule-1);
 }
-.endmark :global(.label) {
-    color: var(--ink-1);
-}
 .actions {
     display: grid;
     gap: var(--s-4);
@@ -271,7 +269,7 @@
 }
 .actionsNote {
     color: var(--ink-2);
-    font: 400 var(--step--1) / 1.5 var(--font-text);
+    font: 400 var(--step-0) / 1.5 var(--font-text);
 }
 .actionsRow {
     --cluster: var(--s-3) var(--s-5);

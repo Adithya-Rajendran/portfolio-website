@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Ornament, type OrnamentName } from "@/components/ui/icon";
 
 /**
  * The item head's crumb row (contract §1, extracted from the post's): the
@@ -10,7 +9,6 @@ import { Ornament, type OrnamentName } from "@/components/ui/icon";
  * (`heading`), the page's whole head.
  */
 export default function CrumbRow({
-    ornament,
     label,
     href,
     code,
@@ -20,7 +18,6 @@ export default function CrumbRow({
     metaClassName,
     className,
 }: {
-    ornament?: OrnamentName;
     /** The section's plain name: "Writing". */
     label: string;
     /** The section's index. */
@@ -39,7 +36,6 @@ export default function CrumbRow({
     return (
         <div className={className} data-print="hide">
             <Row className="section-tag crumb-row">
-                {ornament ? <Ornament name={ornament} /> : null}
                 <Link className="crumb-row__home" href={href}>
                     {label}
                 </Link>

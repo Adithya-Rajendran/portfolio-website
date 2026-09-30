@@ -5,7 +5,6 @@ import Hero, { preloadHeroPhoto } from "@/components/home/hero";
 import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import MissionStage from "@/components/portfolio/mission-stage";
 import { ButtonLink } from "@/components/ui/button";
-import type { OrnamentName } from "@/components/ui/icon";
 import { LinkArrow } from "@/components/ui/marks";
 import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
@@ -45,20 +44,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * One section of the home page (contract §1, §9): the tag row (an
- * ornament, the plain h2, a hairline and one link to the section's page),
+ * One section of the home page (contract §1, §9): the tag row (the
+ * plain h2, a hairline and one link to the section's page),
  * then its content. The ids are prefixed, because a visited page that
  * stays mounted can own the same fragment (/portfolio's #projects).
  */
 function Act({
     id,
-    ornament,
     title,
     meta,
     children,
 }: {
     id: HomeAct;
-    ornament: OrnamentName;
     title: string;
     meta?: React.ReactNode;
     children: React.ReactNode;
@@ -70,7 +67,7 @@ function Act({
             aria-labelledby={`home-${id}-h`}
         >
             <div className="shell">
-                <SectionTag ornament={ornament} meta={meta}>
+                <SectionTag meta={meta}>
                     <h2 className="section-tag__h" id={`home-${id}-h`}>
                         {title}
                     </h2>
@@ -141,7 +138,6 @@ export default async function Home() {
             {acts.includes("projects") && flagship ? (
                 <Act
                     id="projects"
-                    ornament="pulsar"
                     title={copy.projectsAct.title}
                     meta={
                         <LinkArrow href={siteRoutes.portfolio}>
@@ -186,7 +182,6 @@ export default async function Home() {
             {acts.includes("writing") ? (
                 <Act
                     id="writing"
-                    ornament="wave"
                     title={copy.writingAct.title}
                     meta={
                         <LinkArrow href={siteRoutes.blog}>

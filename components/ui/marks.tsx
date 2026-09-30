@@ -9,7 +9,7 @@ import { formatEntryDate } from "@/lib/log-index";
  * Directive-free, so server and client components can both render them.
  */
 
-/** "All entries →": a caps link with an orange rule and a nudging arrow. */
+/** "All entries →": a caps link on an ink hairline, with a nudging arrow. */
 export function LinkArrow({
     children,
     className,

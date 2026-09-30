@@ -89,7 +89,6 @@ export default async function AboutPage() {
             <ProfilePageJsonLd />
             <PageHead
                 className="shell"
-                ornament="hydrogen"
                 tag={copy.themed}
                 title={copy.plain}
                 figure={<Patch />}
@@ -128,7 +127,7 @@ export default async function AboutPage() {
                         groups.map((group) => (
                             <div className={styles.group} key={group.kind}>
                                 <h3
-                                    className={`label label--ink ${styles.groupTitle}`}
+                                    className={`label ${styles.groupTitle}`}
                                     id={`crew-now-${group.kind}-h`}
                                 >
                                     {nowKinds[group.kind]}

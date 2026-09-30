@@ -90,7 +90,6 @@ export default async function Portfolio() {
             <PageHead
                 className="shell"
                 split
-                ornament="pulsar"
                 tag={copy.themed}
                 title={copy.plain}
                 intro={profile?.projectsIntro?.trim() || null}

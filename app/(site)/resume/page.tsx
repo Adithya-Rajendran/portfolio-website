@@ -347,7 +347,6 @@ export default async function ResumePage() {
                 <PageHead
                     className="shell"
                     split
-                    ornament="orbit"
                     tag={copy.themed}
                     title={copy.title}
                     meta={rev ? <Updated date={rev} /> : undefined}

@@ -27,7 +27,7 @@
     transition: border-color var(--dur-hover) var(--ease-dock);
 }
 .route:focus-within {
-    border-top-color: var(--accent);
+    border-top-color: var(--ink-1);
 }
 
 /* Lit: the chosen topic with JavaScript; the fragment's route without. */
@@ -36,7 +36,7 @@
 .desk[data-topic="research"] .route[data-topic="research"],
 .desk[data-topic="consulting"] .route[data-topic="consulting"],
 .desk[data-topic="hello"] .route[data-topic="hello"] {
-    border-top-color: var(--accent);
+    border-top-color: var(--ink-1);
 }
 .title {
     margin: 0;
@@ -55,7 +55,7 @@
     gap: 0 var(--s-5);
     margin: 0;
     padding: 0;
-    font: 400 var(--step--1) / 1.4 var(--font-display);
+    font: 400 var(--step-0) / 1.4 var(--font-display);
     list-style: none;
 }
 .links a {
@@ -64,11 +64,9 @@
     gap: 0.35em;
     min-height: 44px;
     color: var(--ink-2);
-    text-decoration-color: var(--rule-2);
 }
 .links a:hover {
     color: var(--ink-1);
-    text-decoration-color: var(--accent);
 }
 .links svg {
     width: 14px;

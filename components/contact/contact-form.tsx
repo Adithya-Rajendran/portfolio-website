@@ -353,10 +353,7 @@ export default function ContactForm({
             {shown.status === "error" ? (
                 <div ref={failureRef} className={styles.failure}>
                     <p className={styles.failureText} role="alert">
-                        <Icon
-                            name="close"
-                            className={`icon--sm ${styles.failureIcon}`}
-                        />{" "}
+                        <Icon name="close" className="icon--sm" />{" "}
                         {shown.message} {copy.kept}
                     </p>
                     <div className={`cluster ${styles.recover}`}>

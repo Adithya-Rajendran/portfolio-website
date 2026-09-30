@@ -14,6 +14,7 @@ import { storeTheme } from "./support/theme";
  * a visible tab, in Void, with motion allowed) and reports `stopped`
  * otherwise; the stars are the hero's alone, and Void's; the photograph is
  * credited with its frame ID and Flight Manual draws the limb instead;
+ * the name keeps one line at 1440 and spans 1,400px at most at 1920;
  * the sections follow in order, unnumbered, and lead to their pages; the
  * flagship shows no stats and at most four stack items; the close is the
  * owner's tagline with one primary; the page stays short; and it says
@@ -99,6 +100,39 @@ for (const [width, height] of [
         });
     });
 }
+
+test("the hero's name keeps one line at 1440 and 1,400px at most at 1920", async ({
+    page,
+}) => {
+    await page.goto("/");
+    const name = page.locator("#hero-name");
+    // The display weight, tracked wide (premium D2).
+    await expect(name).toHaveCSS("font-weight", "350");
+    const tracking = await name.evaluate((heading) => {
+        const style = getComputedStyle(heading);
+        return parseFloat(style.letterSpacing) / parseFloat(style.fontSize);
+    });
+    expect(tracking).toBeGreaterThanOrEqual(0.11);
+    expect(tracking).toBeLessThanOrEqual(0.12);
+    const measure = () =>
+        name.evaluate((heading) => {
+            const range = document.createRange();
+            range.selectNodeContents(heading);
+            const lines = new Set(
+                [...range.getClientRects()].map((rect) => Math.round(rect.top)),
+            );
+            return {
+                width: range.getBoundingClientRect().width,
+                lines: lines.size,
+            };
+        });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    expect((await measure()).lines).toBe(1);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const wide = await measure();
+    expect(wide.lines).toBe(1);
+    expect(wide.width).toBeLessThanOrEqual(1400);
+});
 
 test("the header's wordmark steps aside while the hero names the owner", async ({
     page,

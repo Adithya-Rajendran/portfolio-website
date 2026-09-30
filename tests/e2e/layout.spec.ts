@@ -11,8 +11,12 @@ import {
  * No page scrolls sideways from 320 to 1920 px (plan §7.2), and the header
  * fits at every width: its parts stay inside the viewport without
  * overlapping. `body` clips horizontal overflow, which would hide a
- * sideways scroll, so the body's own scroll width is measured too. And no
- * visible text is set under 12 px (the type floor, contract §2).
+ * sideways scroll, so the body's own scroll width is measured too. No
+ * visible text is set under 12 px (the type floor, contract §2). And the
+ * type voice (premium D2): home, the posts, the projects and the CV set
+ * six sizes at most; every caps line is a label (DM Mono 13px, 0.08em),
+ * a control (Jost 500 13px, 0.10em), the hero's name, or one of Michroma's
+ * two places, the header's wordmark and a page head's themed tag.
  */
 const WIDTHS = [320, 390, 600, 960, 1024, 1280, 1440, 1920];
 
@@ -173,6 +177,98 @@ test("no visible text is under 12 px on home, the posts, the projects, the CV an
             expect(await textUnderFloor(page), `${path} at ${width}px`).toEqual(
                 [],
             );
+        }
+    }
+});
+
+/**
+ * The page's visible text: its distinct sizes, and each caps line that is
+ * not a label, a control, the hero's name or Michroma's two places.
+ */
+async function typeVoice(
+    page: Page,
+): Promise<{ sizes: number[]; offVoice: string[] }> {
+    return page.evaluate(() => {
+        const sizes = new Set<number>();
+        const offVoice: string[] = [];
+        const shown = (element: Element) => {
+            const box = element.getBoundingClientRect();
+            return (
+                element.checkVisibility({
+                    opacityProperty: true,
+                    visibilityProperty: true,
+                }) &&
+                box.width > 1 &&
+                box.height > 1
+            );
+        };
+        const near = (a: number, b: number) => Math.abs(a - b) < 0.006;
+        const seen = new Set<Element>();
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+        );
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            const element = node.parentElement;
+            const text = node.textContent?.trim();
+            if (!element || !text || seen.has(element) || !shown(element)) {
+                continue;
+            }
+            seen.add(element);
+            const style = getComputedStyle(element);
+            const size = parseFloat(style.fontSize);
+            sizes.add(Math.round(size * 2) / 2);
+            const family = style.fontFamily;
+            const tracking = parseFloat(style.letterSpacing) / size || 0;
+            const name = `${element.className || element.tagName} "${text.slice(0, 30)}"`;
+            if (/Michroma/.test(family)) {
+                if (!element.closest(".brand__name, .page-head__tag")) {
+                    offVoice.push(`Michroma: ${name}`);
+                }
+                continue;
+            }
+            if (style.textTransform !== "uppercase") continue;
+            const label =
+                /DM Mono/.test(family) && size === 13 && near(tracking, 0.08);
+            const control =
+                /Jost/.test(family) &&
+                style.fontWeight === "500" &&
+                size === 13 &&
+                near(tracking, 0.1);
+            if (!label && !control && !element.closest("#hero-name")) {
+                offVoice.push(
+                    `${family.split(",")[0]} ${style.fontWeight} ${size}px ${tracking.toFixed(3)}em: ${name}`,
+                );
+            }
+        }
+        return { sizes: [...sizes].sort((a, b) => a - b), offVoice };
+    });
+}
+
+test("home, the posts, the projects and the CV keep to six sizes and one caps voice", async ({
+    page,
+    request,
+}, testInfo) => {
+    const content = await contentPages(request, testInfo);
+    const paths = [
+        "/",
+        "/resume",
+        ...content.filter(
+            (path) => isPostPage(path) || /^\/portfolio\/[^/]+$/.test(path),
+        ),
+    ];
+    test.setTimeout(30_000 + paths.length * 6_000);
+    for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        for (const path of paths) {
+            await page.goto(path);
+            await page.waitForLoadState("networkidle");
+            const { sizes, offVoice } = await typeVoice(page);
+            expect(
+                sizes.length,
+                `${path} at ${width}px sets ${sizes.join(", ")} px`,
+            ).toBeLessThanOrEqual(6);
+            expect(offVoice, `${path} at ${width}px`).toEqual([]);
         }
     }
 });

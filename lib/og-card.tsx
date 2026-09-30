@@ -8,7 +8,8 @@ export { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/site-metadata";
  * The Deep Field share card (plan §2.9): the void, the patch
  * (assets/patch.svg, written by scripts/generate-patch.mjs; no stars:
  * they are the home hero's alone), Jost for the title, Michroma for the
- * tier-1 labels and DM Mono for the data. Every card names the author:
+ * section's tag (as on the page head) and DM Mono for the labels and the
+ * data. Every card names the author:
  * a section's card leads with the name, an item's card signs its footer.
  * Satori reads static TTF copies (assets/fonts/og/, each with its OFL
  * licence), read once at module scope so the image prerenders (docs:
@@ -64,12 +65,12 @@ const VOID = {
     rule1: "#1f1f25",
     rule2: "#67635c",
     accent: "#ff5a1f",
-    accentText: "#ff7a45",
 } as const;
 
 const PAD_X = 80;
 
-const label = {
+/** The section's themed tag, set as on the page head. */
+const tagStyle = {
     fontFamily: "Michroma",
     fontSize: 17,
     letterSpacing: "0.16em",
@@ -128,7 +129,11 @@ export function OgCard({
                 <img src={PATCH} width={76} height={76} alt="" />
                 {tag ? (
                     <span
-                        style={{ display: "flex", ...label, color: VOID.ink2 }}
+                        style={{
+                            display: "flex",
+                            ...tagStyle,
+                            color: VOID.ink2,
+                        }}
                     >
                         {tag}
                     </span>
@@ -192,8 +197,10 @@ export function OgCard({
                             style={{
                                 display: "flex",
                                 flex: "none",
-                                ...label,
-                                fontSize: 15,
+                                fontFamily: "DM Mono",
+                                fontSize: 17,
+                                letterSpacing: "0.08em",
+                                textTransform: "uppercase",
                                 color: VOID.ink2,
                             }}
                         >

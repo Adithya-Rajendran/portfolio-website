@@ -28,7 +28,7 @@ function Contents({
             data-contents
         >
             {titled ? (
-                <p className={`label label--ink ${styles.contentsTitle}`}>
+                <p className={`label ${styles.contentsTitle}`}>
                     {copy.contents}
                 </p>
             ) : null}
@@ -71,7 +71,7 @@ export function PostBox({
     return (
         <details className={className} data-print="hide" data-entry-box>
             <summary className={styles.boxSummary}>
-                <span className="label label--ink">{copy.contents}</span>
+                <span className="label">{copy.contents}</span>
             </summary>
             <div className={styles.boxBody}>
                 <Contents headings={headings} titled={false} />

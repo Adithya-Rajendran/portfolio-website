@@ -51,7 +51,6 @@ export default async function TrajectoryPage() {
         <div data-page="trajectory">
             <CrumbRow
                 className={`shell ${styles.head}`}
-                ornament="orbit"
                 label={copy.section}
                 href={siteRoutes.resume}
                 name={copy.title}

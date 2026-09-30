@@ -134,7 +134,7 @@
 }
 
 /* Flight Manual: no photograph; the limb is drawn in ink with the
-   planet's parallels under it, the sun is the one orange mark. The photo
+   planet's parallels under it, the sun the orange identity mark. The photo
    box runs to the hero's foot, which has nothing to credit or pause. */
 :global([data-theme="manual"]) .img {
     display: none;
@@ -198,11 +198,14 @@
     padding-bottom: var(--limb-clear);
     text-align: center;
 }
+/* The one set piece in capitals: the display weight, tracked wide, at
+   most 7rem (one line at 1440, within 1,400px at 1920). */
 .name {
-    margin: 0 -0.13em 0 0;
+    margin: 0 -0.115em 0 0;
     color: var(--ink-1);
-    font: 300 clamp(2.3rem, 0.2rem + 6.55vw, 8.25rem) / 1 var(--font-display);
-    letter-spacing: 0.13em;
+    font: var(--weight-display) clamp(2.3rem, 0.2rem + 6.55vw, 7rem) / 1
+        var(--font-display);
+    letter-spacing: 0.115em;
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -229,7 +232,7 @@
     max-width: 52rem;
     margin-top: var(--s-4);
     color: var(--ink-2);
-    font: 400 var(--step--1) / 1.45 var(--font-display);
+    font: 400 var(--step-0) / 1.45 var(--font-display);
 }
 /* The Open To line (.open-to): its openings, centred. */
 .openTo {
@@ -244,6 +247,13 @@
     justify-content: center;
     gap: var(--s-3) var(--s-6);
     margin-top: var(--s-7);
+}
+/* Over the photograph the CV stays a hairline, and fills with ink on
+   hover: no fill at rest. */
+.routes :global(.btn):hover {
+    border-color: var(--ink-1);
+    background: var(--ink-1);
+    color: var(--bg);
 }
 /* The link points down the page, so its arrow nudges down. */
 .down:hover :global(.icon) {
@@ -267,12 +277,10 @@
     display: inline-block;
     padding-block: calc((44px - 1.5em) / 2);
     color: inherit;
-    text-decoration-color: var(--rule-2);
     text-underline-offset: 0.3em;
 }
 .credit a:hover {
     color: var(--ink-1);
-    text-decoration-color: var(--accent);
 }
 /* The frame's NASA ID, kept whole: on a line of its own on phones. */
 .creditId {
@@ -299,9 +307,7 @@
         font-size: var(--step-0);
     }
     .name {
-        margin-right: -0.1em;
         font-size: clamp(2.3rem, 11.4vw, 3.4rem);
-        letter-spacing: 0.1em;
         line-height: 1.02;
         white-space: normal;
     }
@@ -346,7 +352,6 @@
 @media (max-width: 23.99rem) {
     .name {
         font-size: 2.15rem;
-        letter-spacing: 0.08em;
     }
 }
 

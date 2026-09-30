@@ -3,9 +3,9 @@ import type { ComponentProps } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 
 /**
- * Buttons (the mockup's `.btn`): a hairline box, Jost caps, radius 0.
- * `primary` is the orange fill with dark ink (white on orange is never
- * used), `quiet` drops the box. Links that look like buttons stay real
+ * Buttons (the mockup's `.btn`): a hairline box, the controls' Jost caps,
+ * radius 0. `primary` is an ink fill with a label in the page's colour,
+ * `quiet` drops the box. Links that look like buttons stay real
  * links (<ButtonLink>), so middle-click and "open in new tab" work.
  */
 

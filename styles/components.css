@@ -7,11 +7,6 @@
  */
 @layer components {
     /* ===== Typography roles (site.css 4.1) ============================ */
-    .t-display {
-        font: 300 var(--step-6) / var(--lh-display) var(--font-display);
-        letter-spacing: var(--track-display);
-        text-wrap: balance;
-    }
     .t-h2 {
         font: 400 var(--step-3) / 1.12 var(--font-display);
         letter-spacing: -0.008em;
@@ -28,7 +23,7 @@
         font: 400 var(--step-0) / var(--lh-body) var(--font-text);
     }
     .t-small {
-        font: 400 var(--step--1) / 1.5 var(--font-text);
+        font: 400 var(--step-0) / 1.5 var(--font-text);
         color: var(--ink-2);
     }
     .t-muted {
@@ -38,19 +33,12 @@
         color: var(--ink-3);
     }
 
-    /* Tier-1 micro label: Michroma caps, tracked. */
+    /* The one label voice (contract §2): DM Mono caps, tracked, ink-2. */
     .label {
         font: 400 var(--label-size) / var(--lh-label) var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
         color: var(--ink-2);
-    }
-    .label--ui {
-        font: var(--label-2);
-        letter-spacing: var(--track-label-2);
-    }
-    .label--ink {
-        color: var(--ink-1);
     }
 
     /* Dates, metrics, codes. */
@@ -60,7 +48,7 @@
         letter-spacing: 0;
     }
 
-    /* ===== Icons, ornaments, the patch (inline sprite) ================= */
+    /* ===== Icons and the patch (inline sprite) ========================= */
     .df-sprite {
         position: absolute;
         width: 0;
@@ -84,17 +72,7 @@
         height: 1em;
         vertical-align: -0.14em;
     }
-    .ornament {
-        display: inline-block;
-        width: 22px;
-        height: 22px;
-        color: var(--ink-2);
-        flex: none;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 1.1;
-        stroke-linecap: round;
-    }
+    /* The patch's sun is an identity mark: orange at every size. */
     .patch {
         display: block;
         width: 96px;
@@ -125,7 +103,8 @@
         background: var(--ink-1);
         flex: none;
     }
-    /* The label stays ink; the dot carries the orange (contract §3). */
+    /* Active (Open to, Current): the label in ink, the dot the orange
+       "now" mark (contract §3). */
     .status[data-status="active"] {
         color: var(--ink-1);
     }
@@ -204,9 +183,10 @@
         height: 36px;
         --patch-band: none;
     }
+    /* The wordmark: one of the two places Michroma is set. */
     .brand__name {
-        font: 400 var(--label-size) / 1 var(--font-label);
-        letter-spacing: 0.24em;
+        font: 400 var(--label-size) / 1 var(--font-mark);
+        letter-spacing: 0.22em;
         text-transform: uppercase;
         white-space: nowrap;
     }
@@ -229,12 +209,13 @@
         min-height: 44px;
         padding-block: var(--s-1);
         color: var(--ink-1);
-        font: 500 0.75rem / 1.2 var(--font-display);
-        letter-spacing: 0.16em;
+        font: 500 var(--label-size) / 1.2 var(--font-display);
+        letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
         white-space: nowrap;
     }
+    /* The current section: a 2px ink bar (a third of it on hover). */
     .nav__link::after {
         content: "";
         position: absolute;
@@ -242,7 +223,7 @@
         right: 0;
         bottom: -2px;
         height: var(--rule-strong);
-        background: var(--accent);
+        background: var(--ink-1);
         transform: scaleX(0);
         transform-origin: left center;
         transition: transform var(--dur-3) var(--ease-transfer);
@@ -261,23 +242,19 @@
         flex: none;
     }
 
-    /* CV: the recruiter shortcut, visible at every width. */
+    /* CV: the recruiter shortcut, visible at every width, on the links'
+       hairline. */
     .header-cv {
         display: inline-flex;
         align-items: center;
         min-height: 44px;
         padding: 0 0.35rem;
         color: var(--ink-1);
-        font: 500 0.75rem / 1 var(--font-display);
-        letter-spacing: 0.14em;
+        font: 500 var(--label-size) / 1 var(--font-display);
+        letter-spacing: var(--track-control);
         text-transform: uppercase;
-        text-decoration: underline;
-        text-decoration-color: var(--accent);
         text-underline-offset: 0.55em;
         white-space: nowrap;
-    }
-    .header-cv:hover {
-        color: var(--accent-text);
     }
     /* Contact in the bar only where the nav is in the sheet (< 960px). */
     @media (min-width: 60rem) {
@@ -300,8 +277,8 @@
         background: transparent;
         border: var(--rule-hair) solid var(--rule-2);
         color: var(--ink-1);
-        font: 500 0.75rem / 1 var(--font-display);
-        letter-spacing: 0.14em;
+        font: 500 var(--label-size) / 1 var(--font-display);
+        letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
         transition:
@@ -450,7 +427,7 @@
             display: flex;
             padding-block: var(--s-4);
             min-height: 64px;
-            font-size: 1rem;
+            font-size: var(--step-0);
         }
         .nav__link::after {
             bottom: -1px;
@@ -496,7 +473,7 @@
         gap: 0.5rem;
         min-height: 44px;
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.2 var(--font-display);
+        font: 400 var(--step-0) / 1.2 var(--font-display);
         white-space: nowrap;
         transition: color var(--dur-hover) var(--ease-dock);
     }
@@ -545,8 +522,8 @@
         border-radius: 0;
         background: transparent;
         color: var(--ink-1);
-        font: 500 0.8125rem / 1 var(--font-display);
-        letter-spacing: 0.14em;
+        font: 500 var(--label-size) / 1 var(--font-display);
+        letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
         white-space: nowrap;
@@ -578,19 +555,18 @@
         background: transparent;
         border-color: var(--rule-2);
     }
-    /* Orange fill with dark ink: white on orange is never used. */
+    /* The primary: an ink fill with a label in the page's colour (APCA
+       Lc 90 and more in both themes). */
     .btn--primary {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: var(--on-accent);
-    }
-    .btn--primary:hover {
         background: var(--ink-1);
         border-color: var(--ink-1);
         color: var(--bg);
     }
+    .btn--primary:hover,
     .btn--primary:active {
         background: var(--ink-2);
+        border-color: var(--ink-2);
+        color: var(--bg);
     }
     .btn--quiet {
         border-color: transparent;
@@ -599,26 +575,31 @@
     .btn--quiet:hover {
         background: transparent;
         border-color: transparent;
-        color: var(--accent-text);
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.45em;
     }
     .btn--sm {
         --btn-h: 44px;
         padding: 0 0.85rem;
-        font-size: 0.75rem;
     }
 
-    /* "All entries →" */
+    /* "All entries →": the controls' caps on the links' hairline, which
+       turns ink-1 and 2px on hover while the arrow nudges. */
     .link-arrow {
         display: inline-flex;
         align-items: center;
         gap: 0.55em;
         min-height: 44px;
-        border-bottom: var(--rule-hair) solid var(--accent);
+        border-bottom: var(--rule-hair) solid var(--ink-3);
         color: var(--ink-1);
-        font: 500 0.8125rem / 1.2 var(--font-display);
-        letter-spacing: 0.14em;
+        font: 500 var(--label-size) / 1.2 var(--font-display);
+        letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            box-shadow var(--dur-hover) var(--ease-dock);
     }
     .link-arrow .icon {
         width: 15px;
@@ -626,7 +607,8 @@
         transition: transform var(--dur-hover) var(--ease-dock);
     }
     .link-arrow:hover {
-        color: var(--accent-text);
+        border-bottom-color: var(--ink-1);
+        box-shadow: 0 1px 0 var(--ink-1);
     }
     .link-arrow:hover .icon {
         transform: translateX(4px);
@@ -637,7 +619,6 @@
     }
     .link-quiet:hover {
         text-decoration: underline;
-        text-decoration-color: var(--accent);
     }
 
     /* Stretched link: the whole card is clickable, the title is the link. */
@@ -662,7 +643,7 @@
     }
     .tag {
         color: var(--ink-2);
-        font: 400 0.8125rem / 1.4 var(--font-mono);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
         text-decoration: none;
         white-space: nowrap;
     }
@@ -673,7 +654,6 @@
     a.tag:hover {
         color: var(--ink-1);
         text-decoration: underline;
-        text-decoration-color: var(--accent);
     }
 
     .chip {
@@ -686,7 +666,7 @@
         border-radius: 0;
         background: transparent;
         color: var(--ink-2);
-        font: 400 0.8125rem / 1 var(--font-mono);
+        font: 400 var(--label-size) / 1 var(--font-mono);
         text-decoration: none;
         cursor: pointer;
         transition:
@@ -698,14 +678,13 @@
         color: var(--ink-1);
         border-color: var(--ink-1);
     }
-    /* Selected: a filled surface, an orange underline and a leading dot
-       (shape, not colour alone). */
+    /* Selected: a filled surface and a leading dot (shape, not colour
+       alone). */
     .chip[aria-pressed="true"],
     .chip[aria-current] {
         color: var(--ink-1);
         background: var(--surface-2);
         border-color: var(--ink-2);
-        box-shadow: inset 0 -2px 0 var(--accent);
     }
     .chip[aria-pressed="true"]::before,
     .chip[aria-current]::before {
@@ -714,7 +693,7 @@
         width: 6px;
         height: 6px;
         border-radius: var(--radius-round);
-        background: var(--accent);
+        background: var(--ink-1);
     }
     .chip__count {
         color: var(--ink-2);
@@ -722,10 +701,10 @@
     }
 
     /* ===== Section head and page head (site.css 4.6, 4.27) ============= */
-    /* <div class="section-tag"> ornament · h2 or tag · meta </div>: the
-       meta stays out of the heading's name. The row's own face is the
-       tier-1 label (a page head's themed tag, the crumb); a section's
-       plain name is a real heading in Jost. */
+    /* <div class="section-tag"> h2 or tag · meta </div>: the meta stays
+       out of the heading's name. The row's own face is the label (the
+       crumb); a section's plain name is a real heading in Jost, and a
+       page head's themed tag is set in Michroma. */
     .section-tag {
         display: flex;
         flex-wrap: wrap;
@@ -756,7 +735,7 @@
     .section-tag__meta {
         order: 3;
         color: var(--ink-2);
-        font: 400 0.75rem / 1.4 var(--font-mono);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
         letter-spacing: 0;
         text-transform: none;
         white-space: nowrap;
@@ -781,13 +760,16 @@
         padding-top: clamp(2.5rem, 1rem + 4vw, 4.5rem);
         padding-bottom: var(--space-block);
     }
+    /* The section's themed tag: the other place Michroma is set. */
     .page-head__tag {
         color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-mark);
+        letter-spacing: 0.16em;
     }
     .page-head__title {
         margin-top: var(--s-4);
-        font: 300 var(--step-6) / 0.98 var(--font-display);
-        letter-spacing: -0.02em;
+        font: var(--weight-display) var(--step-6) / 0.98 var(--font-display);
+        letter-spacing: var(--track-display);
     }
     /* Set ragged, as prose: a balanced break can split a phrase ("or an /
        opportunity") where a full first line would not. */
@@ -806,7 +788,7 @@
         max-width: 60ch;
         margin-top: var(--s-3);
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.5 var(--font-text);
+        font: 400 var(--step-0) / 1.5 var(--font-text);
     }
     .caption--plate {
         padding-top: var(--s-3);
@@ -814,7 +796,7 @@
     }
     .caption__num {
         flex: none;
-        color: var(--ink-1);
+        color: var(--ink-2);
         font: 400 var(--label-size) / 1.9 var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -826,17 +808,16 @@
         display: block;
         margin-top: 0.3rem;
         color: var(--ink-3);
-        font: 400 0.75rem / 1.45 var(--font-mono);
+        font: 400 var(--label-size) / 1.45 var(--font-mono);
     }
 
-    /* A hollow orange triangle and a date: document control and dated
-       "Updated" stamps. */
+    /* A hollow triangle and a date: document control and dated revisions. */
     .rev {
         display: inline-flex;
         align-items: center;
         gap: 0.5em;
         color: var(--ink-2);
-        font: 400 0.75rem / 1.2 var(--font-mono);
+        font: 400 var(--label-size) / 1.2 var(--font-mono);
         letter-spacing: 0.02em;
         white-space: nowrap;
     }
@@ -844,7 +825,7 @@
         flex: none;
         width: 0.8em;
         height: 0.72em;
-        background: var(--accent);
+        background: var(--ink-2);
         clip-path: polygon(
             50% 0,
             100% 100%,
@@ -873,7 +854,7 @@
         padding-block: var(--space-block) var(--s-7);
         border-top: var(--rule-hair) solid var(--rule-1);
         color: var(--ink-2);
-        font-size: var(--step--1);
+        font-size: var(--step-0);
     }
     .site-footer__grid {
         display: grid;
@@ -899,23 +880,21 @@
         align-items: center;
         min-height: 36px;
         color: var(--ink-1);
-        font: 500 0.75rem / 1.2 var(--font-display);
-        letter-spacing: 0.16em;
+        font: 500 var(--label-size) / 1.2 var(--font-display);
+        letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
     }
     .site-footer__nav a:hover {
-        color: var(--accent-text);
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.45em;
     }
     .site-footer__links a {
         display: inline-flex;
         align-items: center;
         min-height: 36px;
         color: var(--ink-1);
-        text-decoration-color: var(--rule-2);
-    }
-    .site-footer__links a:hover {
-        text-decoration-color: var(--accent);
     }
     .site-footer__controls {
         grid-column: 1 / -1;
@@ -930,8 +909,8 @@
             display: none;
         }
     }
-    /* The strip is set as every other label (the type voice, D2, decides
-       the face): capitals, tracked, from sentence-case markup. */
+    /* The strip is set as every other label: DM Mono capitals, tracked,
+       from sentence-case markup. */
     .site-footer__base {
         display: flex;
         flex-wrap: wrap;
@@ -980,25 +959,26 @@
 
     /* ===== Forms (site.css 4.18) ======================================= */
     /* A label over its control; errors are rendered only when present
-       (the control carries aria-invalid and points at the message). */
+       (the control carries aria-invalid and points at the message): the
+       words in ink with the cross, and one 2px orange rule on the field. */
     .field {
         display: flex;
         flex-direction: column;
         gap: var(--s-2);
     }
     .field__label {
-        color: var(--ink-1);
-        font: var(--label-2);
-        letter-spacing: var(--track-label-2);
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .field__hint {
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.45 var(--font-text);
+        font: 400 var(--step-0) / 1.45 var(--font-text);
     }
     .field__error {
-        color: var(--accent-text);
-        font: 500 var(--step--1) / 1.45 var(--font-text);
+        color: var(--ink-1);
+        font: 500 var(--step-0) / 1.45 var(--font-text);
     }
     .input,
     .textarea {
@@ -1039,8 +1019,7 @@
     }
     .input[aria-invalid="true"],
     .textarea[aria-invalid="true"] {
-        border-color: var(--accent-text);
-        box-shadow: inset 3px 0 0 var(--accent);
+        box-shadow: inset var(--rule-strong) 0 0 var(--accent);
     }
     .input:disabled,
     .textarea:disabled {
@@ -1071,7 +1050,7 @@
         border-bottom: var(--rule-hair) solid var(--rule-1);
     }
     .titleblock__cell > dt {
-        color: var(--ink-3);
+        color: var(--ink-2);
         font: 400 var(--label-size) / 1.3 var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -1080,11 +1059,11 @@
         margin: 0;
         overflow-wrap: break-word;
         color: var(--ink-1);
-        font: 400 var(--step--1) / 1.45 var(--font-display);
+        font: 400 var(--step-0) / 1.45 var(--font-display);
     }
     .titleblock__cell > dd + dd {
         color: var(--ink-2);
-        font-size: 0.8125rem;
+        font-size: var(--label-size);
     }
     @media (min-width: 60rem) {
         .titleblock {
@@ -1106,12 +1085,7 @@
         gap: 0.3em;
         min-height: 32px;
         color: var(--ink-1);
-        text-decoration-color: var(--rule-2);
         text-underline-offset: 0.18em;
-    }
-    .titleblock__links a:hover {
-        color: var(--accent-text);
-        text-decoration-color: var(--accent);
     }
     .titleblock__links .icon {
         width: 0.85em;
@@ -1148,11 +1122,7 @@
         text-wrap: balance;
     }
     .q-item__title a {
-        text-decoration-color: var(--rule-2);
         text-underline-offset: 0.16em;
-    }
-    .q-item__title a:hover {
-        text-decoration-color: var(--accent);
     }
     .q-item__title .icon {
         width: 0.7em;
@@ -1169,7 +1139,7 @@
 
     /* ===== Segmented control (contract §4; the theme toggle's grammar) == */
     /* A radio group of joined hairline boxes; the chosen one is filled,
-       with an orange dot (shape, not colour alone).
+       with an ink dot (shape, not colour alone).
        components/ui/segmented.tsx */
     .seg {
         display: inline-flex;
@@ -1212,8 +1182,8 @@
         padding: 0 0.9rem;
         border: var(--rule-hair) solid var(--rule-2);
         color: var(--ink-2);
-        font: 500 0.75rem / 1.15 var(--font-display);
-        letter-spacing: 0.14em;
+        font: 500 var(--label-size) / 1.15 var(--font-display);
+        letter-spacing: var(--track-control);
         text-transform: uppercase;
         white-space: nowrap;
         transition:
@@ -1241,7 +1211,7 @@
     .seg__sub {
         grid-column: 2;
         color: var(--ink-2);
-        font: 400 0.75rem / 1.15 var(--font-display);
+        font: 400 var(--label-size) / 1.15 var(--font-display);
         letter-spacing: 0.01em;
         text-transform: none;
     }
@@ -1256,7 +1226,7 @@
         color: var(--ink-1);
     }
     .seg__input:checked + .seg__box::before {
-        background: var(--accent);
+        background: var(--ink-1);
         box-shadow: none;
     }
     .seg__input:focus-visible + .seg__box {
@@ -1266,8 +1236,8 @@
     }
 
     /* ===== Key/value list (site.css 4.9) =============================== */
-    /* components/ui/specs.tsx: tier-2 labels in a rail beside their
-       values, one hairline across each row; stacked on phones. */
+    /* components/ui/specs.tsx: labels in a rail beside their values, one
+       hairline across each row; stacked on phones. */
     .specs {
         margin: 0;
         border-bottom: var(--rule-hair) solid var(--rule-1);
@@ -1287,8 +1257,8 @@
     .specs dt {
         padding-top: 0.2rem;
         color: var(--ink-2);
-        font: var(--label-2);
-        letter-spacing: var(--track-label-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .specs dd {
@@ -1332,7 +1302,7 @@
         align-items: baseline;
         gap: var(--s-1) var(--s-4);
         color: var(--ink-2);
-        font: 400 0.8125rem / 1.5 var(--font-mono);
+        font: 400 var(--label-size) / 1.5 var(--font-mono);
         font-variant-numeric: tabular-nums slashed-zero;
     }
     @media (min-width: 37.5rem) {
@@ -1381,7 +1351,7 @@
     .cv-item__note {
         margin-top: var(--s-1);
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.45 var(--font-display);
+        font: 400 var(--step-0) / 1.45 var(--font-display);
     }
     .cv-item__dek {
         max-width: 60ch;
@@ -1421,7 +1391,7 @@
         max-width: 68ch;
         margin-top: var(--s-3);
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.5 var(--font-display);
+        font: 400 var(--step-0) / 1.5 var(--font-display);
     }
     @media (min-width: 37.5rem) {
         .cv-item__facts {
@@ -1430,15 +1400,15 @@
     }
     .cv-item__key {
         padding-top: 0.15rem;
-        color: var(--ink-3);
-        font: var(--label-2);
-        letter-spacing: var(--track-label-2);
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .cv-item__skills {
         grid-column: -2;
         font-family: var(--font-mono);
-        font-size: 0.8125rem;
+        font-size: var(--label-size);
     }
     .cv-item__links {
         grid-column: -2;
@@ -1454,12 +1424,7 @@
         gap: 0.3em;
         min-height: 32px;
         color: var(--ink-1);
-        text-decoration-color: var(--rule-2);
         text-underline-offset: 0.18em;
-    }
-    .cv-item__link a:hover {
-        color: var(--accent-text);
-        text-decoration-color: var(--accent);
     }
     .cv-item__link .icon {
         width: 0.9em;
@@ -1468,40 +1433,29 @@
     .cv-item__url {
         margin-left: 0.4em;
         color: var(--ink-2);
-        font: 400 0.75rem / 1.4 var(--font-mono);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
     }
     .cv-item__actions {
         position: relative;
         z-index: 2;
         margin-top: var(--s-3);
     }
-    /* Lit: the log row's hover (a warm rule and a lit surface), from the
-       pointer or from the orbit map. */
+    /* Lit: the log row's hover (an ink rule and the title underlined),
+       from the pointer or from the orbit map. */
     .cv-item:hover,
     .cv-item[data-hl] {
-        border-top-color: var(--accent);
-        background: linear-gradient(
-            to right,
-            var(--surface-1),
-            transparent 80%
-        );
+        border-top-color: var(--ink-1);
     }
     .cv-item:hover .cv-item__title a {
         text-decoration: underline;
-        text-decoration-color: var(--accent);
+        text-decoration-thickness: 2px;
         text-underline-offset: 0.16em;
-    }
-    @media (forced-colors: active) {
-        .cv-item:hover,
-        .cv-item[data-hl] {
-            background: none;
-        }
     }
     .cv-list--grid .cv-item__title {
         font: 400 var(--step-1) / 1.25 var(--font-display);
     }
     .cv-list--grid .cv-item__sub {
-        font-size: var(--step--1);
+        font-size: var(--step-0);
     }
 
     /* ===== Photographs and plates (site.css 4.26, 4.27) ================= */
@@ -1589,7 +1543,7 @@
     }
     .crumb-row__home:hover {
         text-decoration: underline;
-        text-decoration-color: var(--accent);
+        text-decoration-thickness: 2px;
         text-underline-offset: 0.3em;
     }
     .crumb-row__item {
@@ -1597,14 +1551,14 @@
         align-items: baseline;
         gap: 0.6em;
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.3 var(--font-display);
+        font: 400 var(--step-0) / 1.3 var(--font-display);
         letter-spacing: 0;
         text-transform: none;
     }
     .crumb-row__sep {
         margin-right: 0.15em;
         color: var(--ink-3);
-        font: 400 0.8125rem / 1 var(--font-mono);
+        font: 400 var(--label-size) / 1 var(--font-mono);
     }
     /* A name that is the page's h1 (the flight's head): the crumb's size,
        in ink. */
@@ -1616,7 +1570,7 @@
     /* The identifier never splits ("MSN-/01"): the name beside it wraps. */
     .crumb-row__code {
         color: var(--ink-2);
-        font: 400 0.8125rem / 1 var(--font-mono);
+        font: 400 var(--label-size) / 1 var(--font-mono);
         letter-spacing: 0.02em;
         white-space: nowrap;
     }
@@ -1648,8 +1602,8 @@
     }
     .metric > dt {
         color: var(--ink-2);
-        font: var(--label-2);
-        letter-spacing: var(--track-label-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .metric > dd {
@@ -1662,9 +1616,11 @@
         overflow-wrap: break-word;
         text-wrap: balance;
     }
+    /* The unit a head's step, not a fraction of the value: the page
+       keeps to its six sizes. */
     .metric__unit {
         color: var(--ink-2);
-        font-size: max(0.6em, var(--label-size));
+        font-size: var(--step-1);
         letter-spacing: 0;
     }
     .metrics--lg {
@@ -1687,7 +1643,7 @@
     .table {
         width: 100%;
         border-collapse: collapse;
-        font: 400 var(--step--1) / 1.45 var(--font-text);
+        font: 400 var(--step-0) / 1.45 var(--font-text);
         font-variant-numeric: tabular-nums lining-nums;
     }
     .table th,
@@ -1701,8 +1657,8 @@
         padding-block: var(--s-3);
         border-bottom-color: var(--rule-2);
         color: var(--ink-2);
-        font: var(--label-2);
-        letter-spacing: var(--track-label-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
         text-transform: uppercase;
         vertical-align: bottom;
         white-space: nowrap;
@@ -1774,7 +1730,7 @@
         grid-column: 1;
         padding-top: 0.1rem;
         color: var(--ink-3);
-        font: 400 0.8125rem / 1.4 var(--font-mono);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
     }
     .route-row__name {
         grid-row: 1;
@@ -1797,7 +1753,7 @@
         grid-row: 2;
         grid-column: 2;
         color: var(--ink-2);
-        font: 400 var(--step--1) / 1.45 var(--font-text);
+        font: 400 var(--step-0) / 1.45 var(--font-text);
     }
     .route-row__arrow {
         grid-row: 1 / span 2;
@@ -1819,16 +1775,16 @@
         grid-column: 2;
     }
     .route-row:hover {
-        border-top-color: var(--accent);
+        border-top-color: var(--ink-1);
     }
     .route-row:hover .route-row__plain {
         text-decoration: underline;
-        text-decoration-color: var(--accent);
+        text-decoration-thickness: 2px;
         text-underline-offset: 0.2em;
     }
     .route-row:hover .route-row__arrow {
         transform: translateX(4px);
-        color: var(--accent-text);
+        color: var(--ink-1);
     }
 
     /* ===== Pager (contract §4; components/ui/pager.tsx) ================ */
@@ -1849,7 +1805,7 @@
         transition: border-color var(--dur-hover) var(--ease-dock);
     }
     .pager__item:hover {
-        border-top-color: var(--accent);
+        border-top-color: var(--ink-1);
     }
     .pager__label {
         color: var(--ink-2);
@@ -1863,13 +1819,12 @@
     }
     .pager__item:hover .pager__title {
         text-decoration: underline;
-        text-decoration-color: var(--accent);
-        text-decoration-thickness: 1px;
+        text-decoration-thickness: 2px;
         text-underline-offset: 0.18em;
     }
     .pager__meta {
         color: var(--ink-3);
-        font: 400 0.75rem / 1.4 var(--font-mono);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
     }
     .pager__all {
         justify-self: start;

@@ -25,14 +25,9 @@
             --rule-1: #d5cdbd;
             --rule-2: #7a7468;
             --accent: #e4501b;
-            --accent-text: #a13a0d;
-            --on-accent: #17150f;
             --plate-bg: transparent;
             --plate-border: #d5cdbd;
             --limb-fill: #ffffff;
-            --sun-core: #e4501b;
-            --scrim: transparent;
-            --accent-wash: #fbe3d8;
             --star-rgb: 23 21 15;
             --photo-treatment: grayscale(1) contrast(1.04);
             --photo-treatment-real: grayscale(1) contrast(1.04);
@@ -128,7 +123,7 @@
         }
         [data-page="resume"] .status {
             gap: 1.2mm;
-            font-size: 5.8pt;
+            font-size: 6.4pt;
         }
         [data-page="resume"] .status::before {
             width: 1.5mm;
@@ -187,8 +182,8 @@
             margin-right: 1.6mm;
             padding: 0;
             color: var(--ink-1);
-            font: 400 5.8pt / 1 var(--font-label);
-            letter-spacing: 0.14em;
+            font: 400 6.4pt / 1 var(--font-label);
+            letter-spacing: var(--track-label);
         }
         [data-page="resume"] .cv-item__skills {
             font-size: 7.2pt;
@@ -245,8 +240,8 @@
             margin-right: 1.8mm;
             padding: 0;
             color: var(--ink-1);
-            font: 400 5.8pt / 1.7 var(--font-label);
-            letter-spacing: 0.14em;
+            font: 400 6.4pt / 1.7 var(--font-label);
+            letter-spacing: var(--track-label);
         }
         [data-page="resume"] .specs dd {
             display: inline;

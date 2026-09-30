@@ -58,7 +58,6 @@ export default async function WritingPage() {
             <PageHead
                 className="shell"
                 split
-                ornament="wave"
                 tag={copy.themed}
                 title={copy.plain}
                 intro={getWritingDescription(profile)}

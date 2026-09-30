@@ -65,7 +65,6 @@ export default async function ContactPage() {
             <PageHead
                 className="shell"
                 split
-                ornament="record"
                 tag={copy.themed}
                 title={copy.plain}
                 intro={profile?.contactIntro?.trim() || null}

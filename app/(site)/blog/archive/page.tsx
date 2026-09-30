@@ -51,7 +51,6 @@ export default async function ArchivePage() {
             <PageHead
                 className="shell"
                 split
-                ornament="wave"
                 tag={logCopy.themed}
                 title={copy.title}
             />

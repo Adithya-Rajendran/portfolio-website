@@ -38,7 +38,7 @@
     gap: var(--s-3);
     margin-bottom: var(--s-4);
     color: var(--ink-2);
-    font: 400 var(--step--1) / 1.4 var(--font-display);
+    font: 400 var(--step-0) / 1.4 var(--font-display);
 }
 .hintDot {
     flex: none;
@@ -297,7 +297,7 @@
 }
 .nodeYears {
     color: var(--ink-2);
-    font: 400 0.75rem / 1.4 var(--font-mono);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
     white-space: nowrap;
 }
@@ -320,12 +320,12 @@
 .nodePlanned:hover {
     border-style: dashed;
 }
-/* Pinned: a filled label with an orange edge and dot (shape, not colour
+/* Pinned: a filled label with an ink edge and dot (shape, not colour
    alone). */
 .node[aria-pressed="true"] {
     border-color: var(--ink-2);
     background: var(--ground);
-    box-shadow: inset 2px 0 0 var(--accent);
+    box-shadow: inset 2px 0 0 var(--ink-1);
 }
 .node[aria-pressed="true"] .nodeCode::before {
     content: "";
@@ -334,7 +334,7 @@
     height: 6px;
     margin-right: 6px;
     border-radius: var(--radius-round);
-    background: var(--accent);
+    background: var(--ink-1);
     vertical-align: 1px;
 }
 .node:focus-visible {
@@ -358,8 +358,8 @@ span.node {
     padding: 0;
     list-style: none;
     color: var(--ink-2);
-    font: var(--label-2);
-    letter-spacing: var(--track-label-2);
+    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+    letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
 .key li {
@@ -473,7 +473,7 @@ span.node {
     position: relative;
     padding-left: 1.2rem;
     color: var(--ink-1);
-    font: 400 var(--step--1) / 1.5 var(--font-display);
+    font: 400 var(--step-0) / 1.5 var(--font-display);
 }
 .recLines li + li {
     margin-top: var(--s-2);
@@ -493,7 +493,7 @@ span.node {
     gap: var(--s-2);
     margin-top: var(--s-4);
     color: var(--ink-2);
-    font: 400 0.75rem / 1.4 var(--font-mono);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
 }
 .recBurnMark {
     flex: none;

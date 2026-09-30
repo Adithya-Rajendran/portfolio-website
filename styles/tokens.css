@@ -12,10 +12,11 @@
 @layer theme {
     :root {
         /* ---- families ------------------------------------------------
-           Jost        display, headings, UI, tier-2 labels
-           Michroma    tier-1 labels only (section tags, plates, status)
-           Newsreader  long reading, deks, the intent line
-           DM Mono     dates, codes, listings, metrics                  */
+           Jost        display, headings, UI and the controls' caps
+           Newsreader  long reading, deks, summaries
+           DM Mono     dates, codes, listings, metrics and every label
+           Michroma    the header wordmark and the page head's themed tag
+                       only (--font-mark)                               */
         --font-display:
             var(--font-jost), "Futura", "Century Gothic", "Avenir Next",
             system-ui, sans-serif;
@@ -25,42 +26,40 @@
         /* Newsreader's italic is a separate family (lib/fonts.ts): italic
            serif text sets this with font-style: italic. */
         --font-long-italic: var(--font-newsreader-italic), var(--font-long);
-        --font-label: var(--font-michroma), "Eurostile", var(--font-display);
         --font-mono:
             var(--font-dm-mono), ui-monospace, "SFMono-Regular", Menlo,
             Consolas, monospace;
-        /* ---- label tiers ---------------------------------------------
-           1  Michroma caps 12px   section tags, plate numbers, status
-           2  Jost 500 caps 12px   metric labels, dl terms, form labels
-           3  DM Mono 12px         counts and dates in meta lines      */
-        --label-2: 500 0.75rem/1.35 var(--font-display);
-        --track-label-2: 0.08em;
+        --font-label: var(--font-mono);
+        --font-mark: var(--font-michroma), "Eurostile", var(--font-display);
 
-        /* ---- fluid type scale (360 → 1440 px) ---------------------- */
-        --step--2: clamp(0.75rem, 0.729rem + 0.093vw, 0.8125rem);
-        /* Jost UI text: 15px on a phone, 17px at 1440. */
-        --step--1: clamp(0.9375rem, 0.896rem + 0.185vw, 1.0625rem);
-        --step-0: clamp(1rem, 0.958rem + 0.185vw, 1.125rem);
+        /* ---- type: six sizes a page at most ------------------------
+           The small size (--label-size, 13px) sets every label, control
+           and datum; --step-0 the UI text, summaries and captions (16px
+           on a phone, 17px at 1440); the steps above it the heads and
+           the display. Nothing is set under 13px. Fluid 360 → 1440 px. */
+        --label-size: 0.8125rem;
+        --step-0: clamp(1rem, 0.979rem + 0.093vw, 1.0625rem);
         --step-1: clamp(1.2rem, 1.1rem + 0.444vw, 1.5rem);
         --step-2: clamp(1.44rem, 1.254rem + 0.828vw, 2rem);
         --step-3: clamp(1.728rem, 1.416rem + 1.388vw, 2.665rem);
         --step-4: clamp(2.074rem, 1.581rem + 2.19vw, 3.552rem);
         --step-5: clamp(2.488rem, 1.739rem + 3.328vw, 4.735rem);
         --step-6: clamp(2.75rem, 1.877rem + 4.927vw, 6.312rem);
-        --step-7: clamp(3.2rem, 1.973rem + 7.156vw, 8.413rem);
         --step-long: clamp(1.125rem, 1.083rem + 0.185vw, 1.25rem);
-        /* The smallest text on the site: nothing is set under 12px. */
-        --label-size: 0.75rem;
 
-        --lh-display: 1.02;
         --lh-heading: 1.14;
         --lh-body: 1.55;
         --lh-long: 1.52;
         --lh-label: 1.4;
 
-        --track-caps: 0.12em;
-        --track-label: 0.16em;
-        --track-display: -0.018em;
+        /* Labels: DM Mono caps, 0.08em, ink-2. Controls (the nav, the
+           buttons, the arrow links, segmented boxes): Jost 500 caps,
+           0.10em. Display (the page and item titles, 64px and up at
+           1440): Jost 350, tracked in. */
+        --track-label: 0.08em;
+        --track-control: 0.1em;
+        --weight-display: 350;
+        --track-display: -0.02em;
 
         /* ---- space: 4px base --------------------------------------- */
         --s-1: 0.25rem;
@@ -157,11 +156,12 @@
         --ink-3: #8f8a80; /*  5.93:1: non-essential metadata only */
         --rule-1: #1f1f25; /* decorative hairlines */
         --rule-2: #67635c; /*  3.3:1: input borders, rules with meaning */
-        --accent: #ff5a1f; /* the one orange: fills and marks (6.5:1) */
-        --accent-text: #ff7a45; /* 7.9:1: orange as text */
-        --on-accent: #050507; /* 6.5:1 on accent */
+        /* International Orange means "now": the Open To, Active and
+           Current dots, the flight's flown path and its now mark, the
+           contents' current bar; and focus. The patch's and the hero's
+           suns are identity marks. Never text, a fill, a link or a hover. */
+        --accent: #ff5a1f; /* 6.5:1 */
         --focus: var(--accent);
-        --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
         --limb-fill: #070709;
         --star-rgb: 236 232 223;
         --plate-bg: transparent;
@@ -185,11 +185,8 @@
         --ink-3: #5a554c; /*  6.34:1 */
         --rule-1: #d5cdbd;
         --rule-2: #7a7468; /*  3.98:1 */
-        --accent: #e4501b; /* fills, rules, marks only (3.3:1 on paper) */
-        --accent-text: #a13a0d; /* burnt orange for text: 5.76:1 */
-        --on-accent: #17150f; /*  4.75:1 on accent */
-        --focus: var(--accent-text);
-        --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
+        --accent: #e4501b; /* marks only: 3.3:1 on paper */
+        --focus: #a13a0d; /* burnt orange: 5.76:1 */
         --limb-fill: var(--bg);
         --star-rgb: 23 21 15;
         --plate-bg: var(--surface-1);

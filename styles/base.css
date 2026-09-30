@@ -12,8 +12,8 @@
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
         scroll-padding-top: calc(var(--header-h) + var(--s-5));
-        accent-color: var(--accent);
-        caret-color: var(--accent);
+        accent-color: var(--ink-1);
+        caret-color: var(--focus);
         scrollbar-color: var(--rule-2) var(--bg);
     }
 
@@ -50,17 +50,21 @@
         text-wrap: pretty;
     }
 
+    /* One hover grammar, site-wide (contract §3): an ink-3 hairline that
+       turns ink-1 and 2px, in 150ms; an arrow beside it nudges 4px. */
     a {
         color: inherit;
         text-decoration-line: underline;
-        text-decoration-color: var(--accent);
+        text-decoration-color: var(--ink-3);
         text-decoration-thickness: 1px;
         text-underline-offset: 0.22em;
         transition:
+            text-decoration-color var(--dur-hover) var(--ease-dock),
             text-decoration-thickness var(--dur-hover) var(--ease-dock),
             color var(--dur-hover) var(--ease-dock);
     }
     a:hover {
+        text-decoration-color: var(--ink-1);
         text-decoration-thickness: 2px;
     }
 
@@ -82,12 +86,12 @@
     }
 
     ::selection {
-        background: var(--accent);
-        color: var(--on-accent);
+        background: var(--ink-1);
+        color: var(--bg);
     }
 
     small {
-        font-size: var(--step--1);
+        font-size: var(--label-size);
     }
     abbr[title] {
         text-decoration: underline dotted var(--ink-3);
@@ -109,16 +113,15 @@
         z-index: var(--z-skip);
         transform: translateY(-120%);
         padding: var(--s-3) var(--s-4);
-        background: var(--accent);
-        color: var(--on-accent);
-        font: 500 var(--step--1) / 1 var(--font-display);
-        letter-spacing: var(--track-caps);
+        background: var(--ink-1);
+        color: var(--bg);
+        font: 500 var(--label-size) / 1 var(--font-display);
+        letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
     }
     .skip-link:focus-visible {
         transform: translateY(var(--s-3));
-        outline-color: var(--ink-1);
     }
 
     :target {

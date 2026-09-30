@@ -28,7 +28,7 @@
 }
 .count {
     color: var(--ink-2);
-    font: 400 0.75rem / 1.4 var(--font-mono);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
 }
 .empty {
     display: grid;

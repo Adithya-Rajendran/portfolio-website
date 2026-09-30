@@ -40,7 +40,6 @@ async function TagEntries({ tag }: { tag: string }) {
             <PageHead
                 className="shell"
                 split
-                ornament="wave"
                 tag={logCopy.themed}
                 title={tagLabel(tag)}
             />

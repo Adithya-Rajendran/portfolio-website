@@ -1,6 +1,6 @@
 /**
  * A key/value list (contract §4, the mockup's site.css 4.9 `dl.specs`):
- * tier-2 labels in a rail beside their values, one hairline across each
+ * labels in a rail beside their values, one hairline across each
  * row (`dl > div` rows, which HTML allows).
  * Skills on /resume; a mission's specifications from PR 12.
  */

@@ -2,7 +2,6 @@ import Link from "next/link";
 import CopyButton from "@/components/blogs/copy-button";
 import FollowLinks from "@/components/blogs/follow-links";
 import Footnotes from "@/components/prose/footnotes";
-import { Ornament } from "@/components/ui/icon";
 import { LinkArrow, Rev } from "@/components/ui/marks";
 import { postCopy as copy } from "@/lib/copy";
 import { contactHref, siteRoutes } from "@/lib/navigation";
@@ -73,7 +72,6 @@ export default function EndMatter({
                 </section>
             ) : null}
             <div className={styles.endmark}>
-                <Ornament name="limb" />
                 <p className="label">{copy.end}</p>
             </div>
             <div className={styles.actions} data-print="hide">

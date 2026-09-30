@@ -20,7 +20,7 @@
 .year {
     margin: 0;
     padding-bottom: var(--s-2);
-    color: var(--ink-1);
+    color: var(--ink-2);
     font: 400 var(--label-size) / 1.35 var(--font-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
@@ -54,7 +54,7 @@
 .updated,
 .read {
     color: var(--ink-2);
-    font: 400 0.8125rem / 1.4 var(--font-mono);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
     white-space: nowrap;
 }
@@ -76,26 +76,24 @@
 .tags {
     margin-top: var(--s-1);
 }
-/* The tag the page is filtered by: ink, with an accent underline. */
+/* The tag the page is filtered by: ink, underlined. */
 .match {
     color: var(--ink-1);
     text-decoration: underline;
-    text-decoration-color: var(--accent);
     text-underline-offset: 0.25em;
 }
 .arrow {
     display: none;
 }
 
-/* Hover: a warm rule, a lit surface, the title underlined and the arrow
-   nudged. The whole row is the title's link. */
+/* Hover: an ink rule, the title underlined and the arrow nudged. The
+   whole row is the title's link. */
 .row:hover {
-    border-top-color: var(--accent);
-    background: linear-gradient(to right, var(--surface-1), transparent 80%);
+    border-top-color: var(--ink-1);
 }
 .row:hover .title a {
     text-decoration: underline;
-    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
     text-underline-offset: 0.16em;
 }
 
@@ -150,16 +148,11 @@
             color var(--dur-hover) var(--ease-dock);
     }
     .row:hover .arrow {
-        color: var(--accent-text);
+        color: var(--ink-1);
         transform: translateX(4px);
     }
 }
 
-@media (forced-colors: active) {
-    .row:hover {
-        background: none;
-    }
-}
 @media print {
     .row {
         break-inside: avoid;

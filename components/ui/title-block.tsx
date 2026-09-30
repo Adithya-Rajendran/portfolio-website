@@ -1,7 +1,7 @@
 /**
  * The drawing title block (G6), set in the dark: a hairline grid of cells,
- * each a Michroma key over its value (the mockup's `.titleblock`, site.css
- * "Title block (graft 6)"). 12 internal columns from 960px (`span`), 2 on
+ * each a label (DM Mono caps) over its value (the mockup's `.titleblock`,
+ * site.css "Title block (graft 6)"). 12 internal columns from 960px (`span`), 2 on
  * phones (`spanSm`). A value that is not known is not a cell: callers
  * leave it out, and the row's other cells take the width.
  */

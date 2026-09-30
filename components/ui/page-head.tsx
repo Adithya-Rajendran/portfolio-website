@@ -1,9 +1,8 @@
 import SectionTag from "@/components/ui/section-tag";
-import type { OrnamentName } from "@/components/ui/icon";
 
 /**
- * One page head per page (the mockup's `.page-head`): the tag row (an
- * ornament, the section's small themed tag, a hairline and an optional
+ * One page head per page (the mockup's `.page-head`): the tag row (the
+ * section's small themed tag, in Michroma, a hairline and an optional
  * meta), the plain title as the page's only h1, and an optional serif
  * intro. The tag is secondary: the title alone names the page ("Writing",
  * not "Flight Log"). `split` sets the title on the left half and the
@@ -13,7 +12,6 @@ import type { OrnamentName } from "@/components/ui/icon";
  * in children, wrapped in `.page-head__actions`.
  */
 export default function PageHead({
-    ornament,
     tag,
     title,
     titleId,
@@ -24,7 +22,6 @@ export default function PageHead({
     className,
     children,
 }: {
-    ornament?: OrnamentName;
     /** The section's themed name, or a designation ("Loss of signal ·
      *  404"): a small label above the title. */
     tag?: string;
@@ -50,7 +47,7 @@ export default function PageHead({
                 .filter(Boolean)
                 .join(" ")}
         >
-            <SectionTag as="p" ornament={ornament} meta={meta}>
+            <SectionTag as="p" meta={meta}>
                 {tag ? <span className="page-head__tag">{tag}</span> : null}
             </SectionTag>
             <h1 className="page-head__title" id={titleId}>

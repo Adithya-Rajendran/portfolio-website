@@ -46,8 +46,6 @@
     --color-rule-1: var(--rule-1);
     --color-rule-2: var(--rule-2);
     --color-accent: var(--accent);
-    --color-accent-text: var(--accent-text);
-    --color-on-accent: var(--on-accent);
     --font-sans: var(--font-display);
     --font-serif: var(--font-long);
 }

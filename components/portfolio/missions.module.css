@@ -1,8 +1,10 @@
 /*
  * Missions (G5, G6): the mission line, the flagship stage and the tiles,
  * shared by /portfolio, the mission files and the home page's stage. Ported from the mockup's site.css 4.12 and
- * missions.css, held to the unified contract: one accent, hairlines, no
- * boxes; a project's title is its heading, in sentence case.
+ * missions.css, held to the unified contract: orange only on the Active
+ * dot, hairlines, no boxes; a project's title is its heading, in
+ * sentence case. Hover is the site's one grammar: an ink rule, the title
+ * underlined, the arrow nudged.
  */
 
 /* ---- The line: TYPE · ● Status · dates, never wrapped ----------------- */
@@ -30,7 +32,7 @@
 .dates {
     flex: none;
     color: var(--ink-1);
-    font: 400 0.8125rem / 1 var(--font-mono);
+    font: 400 var(--label-size) / 1 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
 }
 /* Where the line would wrap, the type goes first. */
@@ -47,7 +49,7 @@
     margin: 0;
     padding: 0;
     color: var(--ink-2);
-    font: 400 0.8125rem / 1.5 var(--font-mono);
+    font: 400 var(--label-size) / 1.5 var(--font-mono);
     list-style: none;
 }
 /* An item never splits across lines ("Canonical OpenStack"). */
@@ -77,8 +79,7 @@
 }
 .stageHeading a:hover {
     text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 1px;
+    text-decoration-thickness: 2px;
     text-underline-offset: 0.12em;
 }
 .stageSummary {
@@ -136,7 +137,7 @@
     transition: border-color var(--dur-hover) var(--ease-dock);
 }
 .tile:hover {
-    border-top-color: var(--accent);
+    border-top-color: var(--ink-1);
 }
 .tilePlate {
     margin-bottom: var(--s-3);
@@ -153,8 +154,7 @@
 }
 .tile:hover .tileName a {
     text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 1px;
+    text-decoration-thickness: 2px;
     text-underline-offset: 0.14em;
 }
 .tileSummary {
@@ -174,7 +174,7 @@
 }
 .tile:hover .tileArrow {
     transform: translateX(4px);
-    color: var(--accent-text);
+    color: var(--ink-1);
 }
 
 /* ---- Rows: a project in a line or two (MissionRow) --------------------- */
@@ -208,7 +208,7 @@
 }
 .rowDates {
     color: var(--ink-2);
-    font: 400 0.8125rem / 1.4 var(--font-mono);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
 }
 .rowTitle {
@@ -238,27 +238,24 @@
         color var(--dur-hover) var(--ease-dock);
 }
 .row:hover {
-    border-top-color: var(--accent);
+    border-top-color: var(--ink-1);
 }
 /* Quiet rows: a step smaller, the hairline in the quieter rule. */
 .rowsQuiet .row {
     border-top-color: var(--rule-1);
 }
 .rowsQuiet .row:hover {
-    border-top-color: var(--accent);
+    border-top-color: var(--ink-1);
 }
 .rowsQuiet .rowTitle {
     font-size: var(--step-1);
 }
-.rowsQuiet .rowSummary {
-    font-size: var(--step--1);
-}
 .row:hover .rowTitle a {
     text-decoration: underline;
-    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
     text-underline-offset: 0.16em;
 }
 .row:hover .rowArrow {
-    color: var(--accent-text);
+    color: var(--ink-1);
     transform: translateX(4px);
 }
