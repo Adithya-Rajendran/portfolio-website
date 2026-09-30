@@ -5,6 +5,9 @@ import {
     RING,
     buildFlight,
     dist,
+    labelBox,
+    labelGap,
+    labelMinX,
     screenOf,
     stageFrame,
     viewAxes,
@@ -103,6 +106,7 @@ const stages: [string, Stage][] = [
 ];
 const D2R = Math.PI / 180;
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const turn = (a: Pose, b: Pose) => {
     const u = viewAxes(a).fwd;
     const v = viewAxes(b).fwd;
@@ -318,18 +322,20 @@ describe("the chase camera", () => {
         expect(stageFrame(390, 780, false).box.y1).toBeCloseTo(780 * 0.55);
     });
 
-    it("sets the route off on a clean curve, along the first orbit", () => {
-        const w = flown.worlds[0];
-        const a = flown.shipAt(0);
-        const b = flown.shipAt(0.0005);
-        const e0 = flown.worldAt(w, frameAt(paced, 0).t);
-        const e1 = flown.worldAt(w, frameAt(paced, 0.0005).t);
-        const heading = [0, 1, 2].map((k) => e1[k] - e0[k]);
-        const v = [0, 1, 2].map((k) => b[k] - a[k]);
-        const cos =
-            (v[0] * heading[0] + v[1] * heading[1] + v[2] * heading[2]) /
-            (Math.hypot(...v) * Math.hypot(...heading));
-        expect(cos).toBeGreaterThan(0.5);
+    it("rests each chapter's ship below and right of its world", () => {
+        for (const [, stage] of stages)
+            paced.segments.forEach((seg) => {
+                if (seg.kind !== "coast") return;
+                const p = paced.rest[seg.chapter];
+                const frame = frameAt(paced, p);
+                const pose = flown.pose(frame, stage);
+                const w = flown.worlds[seg.chapter];
+                const c = screenOf(pose, stage, flown.worldAt(w, frame.t));
+                const s = screenOf(pose, stage, flown.shipAt(p));
+                // The rest aim is 35° below the horizontal, on the right.
+                const angle = Math.atan2(c.y - s.y, s.x - c.x) / D2R;
+                expect(Math.abs(angle + 35)).toBeLessThan(20);
+            });
     });
 });
 
@@ -416,7 +422,9 @@ describe("the finale", () => {
 
     it("sits each world on its own loop in the map", () => {
         const frame = frameAt(paced, 1);
-        const trail = flown.trail(2400);
+        const trail = flown
+            .trail(2400)
+            .map((q, k) => add(q, flown.carry((k / 2399) * paced.flown, 1)));
         flown.worlds.forEach((w, i) => {
             const chapter = data.chapters[i];
             expect(flown.mapAt(w, frame.t, 0)).toEqual(
@@ -428,5 +436,105 @@ describe("the finale", () => {
             const near = Math.min(...trail.map((s) => dist(s, at)));
             expect(near).toBeLessThan(1.25 * w.park);
         });
+    });
+
+    it.each([
+        ["1440", stageFrame(1440, 828, true)],
+        ["1280", stageFrame(1280, 648, true)],
+        ["1920", stageFrame(1920, 1008, true)],
+        ["1024", stageFrame(1024, 680, true)],
+        ["390", stageFrame(390, 780, false)],
+        ["360", stageFrame(360, 676, false)],
+    ] as [string, Stage][])(
+        "keeps the map's labels off the route, the Sun and each other (%s)",
+        (_, stage) => {
+            // The labels as the page sets them: a name over its dates.
+            const sizes = [
+                { w: 63, h: 31 },
+                { w: 133, h: 31 },
+                { w: 133, h: 31 },
+                { w: 126, h: 31 },
+            ];
+            const open = { w: 75, h: 14 };
+            const sides = flown.mapSides(
+                stage,
+                sizes,
+                stage.wide ? open : null,
+            );
+            const frame = frameAt(paced, 1);
+            const pose = flown.pose(frame, stage);
+            const at = (q: Vec3) => screenOf(pose, stage, q);
+            const route = [
+                ...flown
+                    .trail(2400)
+                    .map((q, k) =>
+                        at(add(q, flown.carry((k / 2399) * paced.flown, 1))),
+                    ),
+                ...flown.planned!.path.map(at),
+            ];
+            const sun = at([0, 0, 0]);
+            // On a phone only the current world is labelled.
+            const shown = stage.wide ? [0, 1, 2, 3] : [flown.current];
+            const boxes = shown.map((i) => {
+                const w = flown.worlds[i];
+                const q = at(flown.mapAt(w, frame.t, 1));
+                const side = sides[i];
+                const gap = labelGap(stage, w, q.depth, 1) * side.reach;
+                return labelBox(q, side, gap, sizes[i]);
+            });
+            boxes.forEach((r, n) => {
+                const under = route.filter(
+                    (m) => m.x > r.x0 && m.x < r.x1 && m.y > r.y0 && m.y < r.y1,
+                );
+                expect(under).toEqual([]);
+                expect(r.x0).toBeGreaterThanOrEqual(labelMinX(stage));
+                expect(r.x1).toBeLessThanOrEqual(stage.W - 12);
+                expect(r.y0).toBeGreaterThanOrEqual(8);
+                expect(r.y1).toBeLessThanOrEqual(
+                    stage.wide ? stage.H - 48 : stage.box.y1,
+                );
+                const dx = Math.max(r.x0 - sun.x, 0, sun.x - r.x1);
+                const dy = Math.max(r.y0 - sun.y, 0, sun.y - r.y1);
+                expect(Math.hypot(dx, dy)).toBeGreaterThanOrEqual(24);
+                for (const o of boxes.slice(n + 1))
+                    expect(
+                        r.x1 < o.x0 ||
+                            o.x1 < r.x0 ||
+                            r.y1 < o.y0 ||
+                            o.y1 < r.y0,
+                    ).toBe(true);
+            });
+        },
+    );
+
+    it("opens the map's route on a loop round Earth", () => {
+        const first = paced.segments[0];
+        const w = flown.worlds[0];
+        const earth = flown.mapAt(w, frameAt(paced, 1).t, 1);
+        // Nothing moves on the chase, or after the loop has left.
+        expect(flown.carry(first.p0, 0)).toEqual([0, 0, 0]);
+        expect(flown.carry(first.p1, 1)).toEqual([0, 0, 0]);
+        // In the map the route starts on the loop, which circles Earth at
+        // the parking radius (it widens only to leave) at least once.
+        let turned = 0;
+        let prev: number | null = null;
+        let prevAt: Vec3 | null = null;
+        for (let i = 0; i <= 800; i++) {
+            const p = lerp(first.p0, first.p1, i / 800);
+            const at = add(flown.shipAt(p), flown.carry(p, 1));
+            const off = [0, 1, 2].map((k) => at[k] - earth[k]) as Vec3;
+            if (frameAt(paced, p).u < 0.86)
+                expect(Math.hypot(...off) / w.park).toBeCloseTo(1, 6);
+            const a = Math.atan2(off[2], off[0]);
+            if (prev !== null)
+                turned += Math.atan2(Math.sin(a - prev), Math.cos(a - prev));
+            prev = a;
+            // Continuous, and it meets the transfer where the ship leaves.
+            if (prevAt) expect(dist(at, prevAt)).toBeLessThan(0.1 * w.park);
+            prevAt = at;
+        }
+        expect(Math.abs(turned) / D2R).toBeGreaterThanOrEqual(360);
+        const out = flown.shipAt(first.p1 + 1e-4);
+        expect(dist(out, prevAt!)).toBeLessThan(0.1 * w.park);
     });
 });

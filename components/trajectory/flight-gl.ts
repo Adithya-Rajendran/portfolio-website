@@ -40,10 +40,15 @@ import {
     CRANE,
     RING,
     buildFlight,
+    labelBox,
+    labelGap,
+    labelMinX,
+    minWorldPx,
     onPlane,
     screenOf,
     smoothstep,
     stageFrame,
+    type LabelSide,
     type Pose,
     type Stage,
     type Vec3,
@@ -101,9 +106,10 @@ const MAX_DPR = 1.75;
 const TRAIL_SAMPLES = 2400;
 /** The ship stays about this many pixels long at any distance. */
 const SHIP_PX = 21;
-/** No world is drawn smaller than this radius, pixels (wide, phones). */
-const MIN_PX = 6;
-const MIN_PX_PHONE = 5;
+/** The Sun's brightness in the map: its core no brighter than the labels
+ *  (0.88 of white, from 2.6 over the limb darkening), so the route and
+ *  the now mark lead. */
+const SUN_LEVEL_MAP = 0.34;
 
 function seeded(seed: number) {
     let a = seed | 0;
@@ -177,6 +183,7 @@ const SUN_FRAGMENT = /* glsl */ `
 uniform float uR;
 uniform float uRmax;
 uniform float uCorona;
+uniform float uLevel;
 uniform float uPrint;
 uniform vec3 uInk;
 varying vec2 vPx;
@@ -205,8 +212,8 @@ void main() {
     float corona = (1.6 * exp(-(rr - uR) / (0.35 * uR))
         + 0.4 * (uR / rr) * (uR / rr))
         * (1.0 - smoothstep(0.55 * uRmax, uRmax, r)) * uCorona;
-    vec3 c = vec3(1.0, 0.975, 0.94) * 2.6 * limb * disc
-        + vec3(1.0, 0.94, 0.86) * corona * (1.0 - disc);
+    vec3 c = (vec3(1.0, 0.975, 0.94) * 2.6 * limb * disc
+        + vec3(1.0, 0.94, 0.86) * corona * (1.0 - disc)) * uLevel;
     c += (hash(gl_FragCoord.xy) - 0.5) / 255.0 * step(r, uRmax);
     gl_FragColor = vec4(max(c, 0.0), 1.0);
 }`;
@@ -264,6 +271,7 @@ export function mountFlight(
             uR: { value: 1 },
             uRmax: { value: 1 },
             uCorona: { value: 1 },
+            uLevel: { value: 1 },
             uPrint: { value: 0 },
             uInk: { value: new Color() },
         },
@@ -410,6 +418,49 @@ export function mountFlight(
                 ) as Vec3,
             });
             write(index * 6 + 3, head);
+        }
+    };
+    // In the map the opening loop moves with Earth (plan.carry): its
+    // samples are rewritten as the map rises, in whichever part holds them.
+    const pOf = (k: number) => (k / (TRAIL_SAMPLES - 1)) * flown;
+    let opening = 0;
+    while (
+        opening < TRAIL_SAMPLES - 1 &&
+        plan.carry(pOf(opening + 1), 1).some((c) => c !== 0)
+    )
+        opening++;
+    let carried = 0;
+    const carryOpening = (overview: number) => {
+        if (opening === 0 || overview === carried) return;
+        carried = overview;
+        for (const [part, from] of [
+            [past, 0],
+            [cur, iCur],
+        ] as const) {
+            if (!part) continue;
+            const start = part.geometry.attributes
+                .instanceStart as InterleavedBufferAttribute;
+            const buffer = start.data;
+            const array = buffer.array as Float32Array;
+            const head = heads.get(part.geometry);
+            const last = Math.min(opening - from, start.count);
+            if (last < 0) continue;
+            for (let j = 0; j <= last; j++) {
+                const k = j + from;
+                const c = plan.carry(pOf(k), overview);
+                const q: Vec3 = [
+                    samples[k][0] + c[0],
+                    samples[k][1] + c[1],
+                    samples[k][2] + c[2],
+                ];
+                if (j < start.count) array.set(q, j * 6);
+                if (j === 0) continue;
+                // The segment before ends here, unless it ends on the ship.
+                if (head?.index === j - 1) head.saved = q;
+                else array.set(q, (j - 1) * 6 + 3);
+            }
+            buffer.addUpdateRange(0, (last + 1) * 6);
+            buffer.needsUpdate = true;
         }
     };
 
@@ -654,6 +705,11 @@ export function mountFlight(
     const forward = new Vector3();
     const eyeV = new Vector3();
     let view: Pose | null = null;
+    const looped = plan.worlds.map((w) =>
+        route.segments.some(
+            (s) => s.chapter === w.chapter && s.kind === "coast",
+        ),
+    );
     const coastStart = plan.worlds.map(
         (w) =>
             route.segments.find(
@@ -679,11 +735,11 @@ export function mountFlight(
                 s.y < 1.1 * H,
         };
     };
-    const minLabelX = () => (wideLayout ? W * 0.37 : 8);
+    const minLabelX = () => labelMinX(stage);
     /**
      * A label beside its world: on the chase to the right (away from the
-     * record), unless it would leave the stage; in the overview outward
-     * from the Sun, clear of the orbits inside. `radial` blends the two.
+     * record), unless it would leave the stage; in the overview toward
+     * `side`, a direction on the stage. `radial` blends the two.
      */
     const place = (
         label: { el: HTMLElement; w: number; h: number },
@@ -692,7 +748,7 @@ export function mountFlight(
         alpha: number,
         state: string,
         radial: number,
-        sun: { x: number; y: number },
+        side: LabelSide,
         avoid: { x: number; y: number; on: boolean } | null = null,
     ) => {
         const { el, w, h } = label;
@@ -713,18 +769,17 @@ export function mountFlight(
             align = "center";
         }
         if (radial > 0) {
-            let vx = at.x - sun.x;
-            let vy = at.y - sun.y;
-            const n = Math.hypot(vx, vy) || 1;
-            vx /= n;
-            vy /= n;
-            const rx = at.x + vx * gap + (-0.5 + 0.5 * vx) * w;
-            const ry = at.y + vy * gap + (-0.5 + 0.5 * vy) * h;
-            x += (rx - x) * radial;
-            y += (ry - y) * radial;
+            const reach = 1 + (side.reach - 1) * radial;
+            const r = labelBox(at, side, gap * reach, label);
+            x += (r.x0 - x) * radial;
+            y += (r.y0 - y) * radial;
             if (radial > 0.5)
                 align =
-                    Math.abs(vx) < 0.45 ? "center" : vx < 0 ? "right" : "left";
+                    Math.abs(side.x) < 0.45
+                        ? "center"
+                        : side.x < 0
+                          ? "right"
+                          : "left";
         }
         x = Math.min(W - 12 - w, Math.max(minLabelX(), x));
         // Step off the ship rather than print over it.
@@ -743,6 +798,7 @@ export function mountFlight(
         el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
         el.style.textAlign = align;
     };
+    let sides: LabelSide[] = [];
     const mark = (
         el: HTMLElement,
         at: { x: number; y: number; on: boolean },
@@ -785,7 +841,7 @@ export function mountFlight(
         // Worlds at mission time t, moving to where their chapters ended as
         // the map rises. None is drawn under a few pixels in radius (Saturn
         // with its ring), so the map shows worlds, not empty rings.
-        const minPx = wideLayout ? MIN_PX : MIN_PX_PHONE;
+        const minPx = minWorldPx(stage);
         for (const b of bodies) {
             const at = plan.mapAt(b.w, t, pose.overview);
             b.tilt.position.set(...at);
@@ -801,7 +857,8 @@ export function mountFlight(
 
         // The Sun, sized in pixels at its depth. Its corona reaches at most
         // 90px and comes in with the share of it on the stage, so it never
-        // steps in; in the map it is fainter and the core at most 6px.
+        // steps in; in the map it is fainter, the core at most 6px and no
+        // brighter than the labels.
         const sunAt = project([0, 0, 0]);
         sunDisc.visible = sunAt.depth > camera.near;
         if (sunDisc.visible) {
@@ -814,6 +871,7 @@ export function mountFlight(
                 (2 * Rmax);
             u.uR.value = R;
             u.uRmax.value = Rmax;
+            u.uLevel.value = 1 + (SUN_LEVEL_MAP - 1) * pose.overview;
             u.uCorona.value =
                 span(sunAt.x, 0, W) *
                 span(sunAt.y, 0, H) *
@@ -862,6 +920,7 @@ export function mountFlight(
         }
 
         // The trail to the ship; the planned leg draws out in the plan.
+        carryOpening(pose.overview);
         const ship3 = plan.shipAt(p);
         const upto = Math.min(p, flown) / flown;
         const idx = upto * (TRAIL_SAMPLES - 1);
@@ -910,7 +969,11 @@ export function mountFlight(
         const seg = frame.segment;
         const world = Math.min(card, labels.length - 1);
         const radial = smoothstep(0.35, 0.85, pose.overview);
-        const sun = sunAt;
+        const away = (at: { x: number; y: number }): LabelSide => {
+            const n = Math.hypot(at.x - sunAt.x, at.y - sunAt.y) || 1;
+            const x = (at.x - sunAt.x) / n;
+            return { x, y: (at.y - sunAt.y) / n, reach: 1 };
+        };
         const shipOnScreen = ship.visible ? project(ship3) : null;
         labels.forEach((label, i) => {
             const b = bodies[i];
@@ -924,27 +987,24 @@ export function mountFlight(
                 alpha = smoothstep(0.1, 0.6, frame.u) * 0.85;
             if (!wideLayout && i !== world) alpha = 0;
             if (!at.on) alpha = 0;
-            const gap = b.drawn;
-            const ringGap = b.w.kind === "saturn" ? gap * RING.outer : gap;
-            // In the overview a label also clears the world's parking loop.
-            const loopGap =
-                (b.w.park * stage.kpx * radial) / Math.max(0.1, at.depth);
-            // A hairline ring round a world drawn at its smallest.
-            const small = 1 - smoothstep(3, 7, b.px);
+            // A hairline ring round a world drawn at its smallest; in the
+            // map a world its loop circles needs none.
+            const small =
+                (1 - smoothstep(3, 7, b.px)) * (looped[i] ? 1 - radial : 1);
             if (alpha * small > 0.01)
                 rings[i].style.setProperty(
                     "--d",
-                    `${(2 * gap + 7).toFixed(1)}px`,
+                    `${(2 * b.drawn + 7).toFixed(1)}px`,
                 );
             mark(rings[i], at, alpha * small);
             place(
                 label,
                 at,
-                Math.min(W * 0.3, Math.max(ringGap, loopGap, 6 * small)) + 9,
+                labelGap(stage, b.w, at.depth, radial),
                 alpha,
                 state,
                 radial,
-                sun,
+                sides[i] ?? away(at),
                 shipOnScreen,
             );
         });
@@ -960,7 +1020,7 @@ export function mountFlight(
                 at.on && wideLayout ? on : 0,
                 "plan",
                 radial,
-                sun,
+                away(at),
             );
             mark(targetMark, at, on);
         }
@@ -988,6 +1048,7 @@ export function mountFlight(
             camera.fov = stage.fov;
             for (const m of lineMaterials) m.resolution.set(W, H);
             measureLabels();
+            sides = plan.mapSides(stage, labels, wide ? openLabel : null);
             if (last) draw(last);
         },
         render(frame) {

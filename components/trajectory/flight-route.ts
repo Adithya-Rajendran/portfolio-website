@@ -307,6 +307,57 @@ export function screenOf(
     };
 }
 
+/* ---- labels ---------------------------------------------------------------- */
+
+/** No world is drawn smaller than this radius on the stage, pixels, so the
+ *  map shows worlds, not empty rings. */
+export const minWorldPx = (stage: Pick<Stage, "wide">) => (stage.wide ? 6 : 5);
+/** Labels keep right of the record on a wide stage. */
+export const labelMinX = (stage: Pick<Stage, "wide" | "W">) =>
+    stage.wide ? stage.W * 0.37 : 8;
+
+/** How far a label stands off its world's centre, pixels: past the world
+ *  as drawn (Saturn's ring included), and in the overview (radial 1) past
+ *  its loop. `depth` is the world's, along the view axis. */
+export function labelGap(
+    stage: Stage,
+    w: World,
+    depth: number,
+    radial: number,
+) {
+    const px = (w.radius * stage.kpx) / Math.max(1e-3, depth);
+    const drawn = Math.max(px, minWorldPx(stage));
+    const ring = w.kind === "saturn" ? drawn * RING.outer : drawn;
+    const loop = (w.park * stage.kpx * radial) / Math.max(0.1, depth);
+    const small = 1 - smoothstep(3, 7, px);
+    return Math.min(stage.W * 0.3, Math.max(ring, loop, 6 * small)) + 9;
+}
+
+export interface LabelSize {
+    w: number;
+    h: number;
+}
+/** A label's side in the map: a direction on the stage, and how many of
+ *  its gaps it stands off. */
+export interface LabelSide {
+    x: number;
+    y: number;
+    reach: number;
+}
+
+/** A label's box `gap` pixels off `at` toward direction v: the edge or
+ *  corner nearest the world faces it. */
+export function labelBox(
+    at: { x: number; y: number },
+    v: { x: number; y: number },
+    gap: number,
+    size: LabelSize,
+): Box {
+    const x0 = at.x + v.x * gap + (-0.5 + 0.5 * v.x) * size.w;
+    const y0 = at.y + v.y * gap + (-0.5 + 0.5 * v.y) * size.h;
+    return { x0, y0, x1: x0 + size.w, y1: y0 + size.h };
+}
+
 /* ---- legs ------------------------------------------------------------------ */
 
 /** The camera at one moment: the point it looks at, the radius of the
@@ -394,6 +445,20 @@ export interface FlightPlan {
      *  where its chapter ended as the map rises, so each sits on its own
      *  loop of the route there. */
     mapAt(w: World, t: number, overview: number): Vec3;
+    /** How far the route at progress p moves in the map: the first
+     *  coast's loop goes with its world to where the chapter ended, so the
+     *  route opens on a loop round Earth rather than a curl along its
+     *  orbit. Zero elsewhere, and zero with zero slope where the loop
+     *  leaves. */
+    carry(p: number, overview: number): Vec3;
+    /** Each world's label side in the map on a stage, for labels of these
+     *  sizes (the "Open to" label's too, which keeps outward): chosen once
+     *  at the map's pose, so no label changes side as the map rises. */
+    mapSides(
+        stage: Stage,
+        sizes: LabelSize[],
+        open: LabelSize | null,
+    ): LabelSide[];
     /** A world's spin about its axis at progress p (radians). */
     spinAt(w: World, p: number): number;
     /** The camera at a frame, for a stage. */
@@ -995,13 +1060,6 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             let score = Math.abs(wrapPi(Math.atan2(y, x) - restAim));
             if (z > 0) score += 4;
             if (Math.hypot(x, y) < REST_CLEAR * w.radius) score += 4;
-            // The route opens on a clean curve: the first coast sets off
-            // along its world's orbit, not backward into a hook.
-            if (seg.chapter === 0) {
-                const v = sub(leg.at(0.01), leg.at(0));
-                const along = tangentOn(w.plane, angleAt(w, seg.t0, epoch));
-                if (dot(v, along) < 0.5 * Math.hypot(...v)) score += 4;
-            }
             if (w.kind === "saturn") {
                 // Behind the ring: the sight line toward the camera
                 // crosses the ring plane inside the ring.
@@ -1032,6 +1090,130 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             shipAt((k / (n - 1)) * route.flown),
         );
 
+    // Worlds move to where their chapters ended as the map rises; the
+    // first coast's loop moves with Earth (it has no transfer before it),
+    // letting go over the departure so it joins the route unbent.
+    const mapShare = (overview: number) => smoothstep(0.3, 0.8, overview);
+    const mapAt = (w: World, t: number, overview: number) =>
+        worldAt(w, lerp(t, chapters[w.chapter]?.end ?? t, mapShare(overview)));
+    const opening = route.segments[0];
+    const carry = (p: number, overview: number): Vec3 => {
+        const m = mapShare(overview);
+        if (m === 0 || opening?.kind !== "coast" || p >= opening.p1)
+            return [0, 0, 0];
+        const f = frameAt(route, p);
+        const w = worlds[0];
+        return scale(
+            sub(mapAt(w, f.t, 1), worldAt(w, f.t)),
+            m * (1 - smoothstep(0.86, 1, f.u)),
+        );
+    };
+
+    // Each label takes the side of its world with the least drawn under
+    // it at the map's pose: of eight directions from outward (away from
+    // the Sun), at one gap or one and a half, the box covering the least
+    // of the route and the marks (an orbit counts for less), inside the
+    // stage, clear of the Sun and of the labels placed before it, the
+    // current world's first.
+    const mapSides = (
+        stage: Stage,
+        sizes: LabelSize[],
+        open: LabelSize | null,
+    ): LabelSide[] => {
+        const end = frameAt(route, 1);
+        const view = pose(end, stage);
+        const at = (q: Vec3) => screenOf(view, stage, q);
+        const points: { x: number; y: number; k: number }[] = [];
+        const n = 1200;
+        trail(n).forEach((q, i) => {
+            const c = carry((i / (n - 1)) * route.flown, 1);
+            points.push({ ...at(add(q, c)), k: 1 });
+        });
+        for (const q of planned?.path ?? []) points.push({ ...at(q), k: 1 });
+        for (const w of worlds)
+            for (let j = 0; j < 240; j++)
+                points.push({
+                    ...at(onPlane(w.plane, w.orbit, (j / 240) * TAU)),
+                    k: 0.15,
+                });
+        const places = worlds.map((w) => at(mapAt(w, end.t, 1)));
+        for (const q of [...places, at(shipAt(1))])
+            points.push({ ...q, k: 20 });
+        const s = at(sun);
+        const outward = (q: { x: number; y: number }) =>
+            Math.atan2(q.y - s.y, q.x - s.x);
+        const taken: Box[] = [];
+        if (open && planned) {
+            const q = at(planned.end);
+            const a = outward(q);
+            taken.push(
+                labelBox(q, { x: Math.cos(a), y: Math.sin(a) }, 12, open),
+            );
+        }
+        const bottom = stage.wide ? stage.H - 48 : stage.box.y1;
+        const order = worlds
+            .map((_, i) => i)
+            .sort((a, b) =>
+                a === lastCurrent ? -1 : b === lastCurrent ? 1 : a - b,
+            );
+        const sides: LabelSide[] = [];
+        for (const i of order) {
+            const size = sizes[i];
+            if (!size) continue;
+            const q = places[i];
+            const gap = labelGap(stage, worlds[i], q.depth, 1);
+            const near = 1.5 * gap + size.w + size.h;
+            const around = points.filter(
+                (m) => Math.abs(m.x - q.x) < near && Math.abs(m.y - q.y) < near,
+            );
+            let best: LabelSide = { x: 1, y: 0, reach: 1 };
+            let bestBox: Box | null = null;
+            let bestScore = Infinity;
+            let tried = 0;
+            for (const reach of [1, 1.5])
+                for (const step of [0, 1, -1, 2, -2, 3, -3, 4]) {
+                    const a = outward(q) + (step * Math.PI) / 4;
+                    const v = { x: Math.cos(a), y: Math.sin(a) };
+                    const r = labelBox(q, v, gap * reach, size);
+                    let score = 0.1 * tried++;
+                    for (const m of around)
+                        if (
+                            m.x > r.x0 - 3 &&
+                            m.x < r.x1 + 3 &&
+                            m.y > r.y0 - 3 &&
+                            m.y < r.y1 + 3
+                        )
+                            score += m.k;
+                    if (
+                        r.x0 < labelMinX(stage) ||
+                        r.x1 > stage.W - 12 ||
+                        r.y0 < 8 ||
+                        r.y1 > bottom
+                    )
+                        score += 100;
+                    const dx = Math.max(r.x0 - s.x, 0, s.x - r.x1);
+                    const dy = Math.max(r.y0 - s.y, 0, s.y - r.y1);
+                    if (Math.hypot(dx, dy) < 24) score += 20;
+                    for (const t of taken)
+                        if (
+                            r.x0 < t.x1 + 6 &&
+                            r.x1 > t.x0 - 6 &&
+                            r.y0 < t.y1 + 4 &&
+                            r.y1 > t.y0 - 4
+                        )
+                            score += 50;
+                    if (score < bestScore) {
+                        bestScore = score;
+                        best = { ...v, reach };
+                        bestBox = r;
+                    }
+                }
+            sides[i] = best;
+            if (bestBox) taken.push(bestBox);
+        }
+        return sides;
+    };
+
     const curSeg =
         lastCurrent < 0
             ? null
@@ -1048,15 +1230,9 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         epoch,
         shipAt,
         worldAt,
-        mapAt: (w, t, overview) =>
-            worldAt(
-                w,
-                lerp(
-                    t,
-                    chapters[w.chapter]?.end ?? t,
-                    smoothstep(0.3, 0.8, overview),
-                ),
-            ),
+        mapAt,
+        carry,
+        mapSides,
         spinAt: (w, p) => p * TAU * (1.1 + 0.25 * w.chapter) + w.chapter,
         pose,
         phaseAngle,
