@@ -24,7 +24,7 @@ export default function TrajectoryView({ data }: { data: TrajectoryData }) {
         "Fig. 1",
         span ? `${copy.tag}, ${span}` : copy.tag,
         "not to scale",
-        "Textures: Solar System Scope, CC BY 4.0",
+        "Textures: NASA; Solar System Scope, CC BY 4.0",
     ].join(" · ");
     return (
         <Journey

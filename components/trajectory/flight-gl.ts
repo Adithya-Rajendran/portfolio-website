@@ -1,25 +1,24 @@
 import {
     AdditiveBlending,
     AmbientLight,
-    BufferGeometry,
     CanvasTexture,
     Color,
-    ConeGeometry,
-    DoubleSide,
-    Float32BufferAttribute,
+    Euler,
     Group,
     InstancedBufferAttribute,
     type InterleavedBufferAttribute,
     Mesh,
-    MeshBasicMaterial,
     MeshLambertMaterial,
+    MeshPhongMaterial,
+    NeutralToneMapping,
+    NoColorSpace,
+    NoToneMapping,
     NormalBlending,
     Object3D,
     PerspectiveCamera,
     PlaneGeometry,
     PointLight,
-    Points,
-    PointsMaterial,
+    Quaternion,
     RingGeometry,
     Scene,
     ShaderMaterial,
@@ -39,6 +38,17 @@ import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import type { Frame, Route, TrajectoryData } from "@/lib/trajectory";
+import {
+    asteroidBelt,
+    atmosphere,
+    makePlate,
+    milkyWay,
+    ringMaterial,
+    shadeGlobe,
+    spacecraft,
+    starField,
+    type RingShadow,
+} from "./flight-bodies";
 import {
     CRANE,
     LABEL_FADE,
@@ -108,28 +118,80 @@ export interface FlightHooks {
     ready(): void;
 }
 
-const TEXTURE: Record<WorldKind, string> = {
-    earth: "/images/trajectory/earth-2k.webp",
-    mars: "/images/trajectory/mars-2k.webp",
-    jupiter: "/images/trajectory/jupiter-2k.webp",
-    saturn: "/images/trajectory/saturn-1k.webp",
+/** The maps: 2k on a wide screen, 1k (and the smaller sky) on a phone,
+ *  where the worlds are drawn small. */
+const MAPS = "/images/trajectory/";
+const mapsFor = (small: boolean) => {
+    const k = small ? "1k" : "2k";
+    return {
+        world: {
+            earth: `earth-${k}.webp`,
+            mars: `mars-${k}.webp`,
+            jupiter: `jupiter-${k}.webp`,
+            saturn: "saturn-strip-v1.webp",
+        } satisfies Record<WorldKind, string>,
+        ring: "saturn-ring-1k.webp",
+        clouds: `earth-clouds-${k}.webp`,
+        night: `earth-night-${k}.webp`,
+        water: "earth-water-1k.webp",
+        moon: "moon-1k.webp",
+        sky: small ? "milky-way-2k.webp" : "milky-way-4k.webp",
+    };
 };
-const RING_TEXTURE = "/images/trajectory/saturn-ring-1k.webp";
-/** Until a map arrives, a world is its average colour. */
-const TINT: Record<WorldKind, string> = {
-    earth: "#5d6b82",
-    mars: "#9a6446",
-    jupiter: "#a8927a",
-    saturn: "#c4b18d",
+/** Each world's shading: its wrap lighting (a softer terminator on the
+ *  worlds with thick air), and Flight Manual's tone gain, which brings
+ *  each world's lit side up to about the paper. */
+const LOOK: Record<WorldKind | "moon", { wrap: number; print: number }> = {
+    earth: { wrap: 0.05, print: 4.0 },
+    mars: { wrap: 0, print: 1.8 },
+    jupiter: { wrap: 0.1, print: 1.4 },
+    saturn: { wrap: 0.1, print: 1.3 },
+    moon: { wrap: 0, print: 2.0 },
 };
+/** A faint limb darkening and a thin rim on the day side (Void only):
+ *  neutral on the gas giants, a dusty warm white on Mars. */
+const LIMB: Partial<Record<WorldKind, { dark: number; rim: Color }>> = {
+    jupiter: { dark: 0.28, rim: new Color(0.16, 0.16, 0.17) },
+    saturn: { dark: 0.24, rim: new Color(0.15, 0.15, 0.15) },
+    mars: { dark: 0, rim: new Color(0.1, 0.09, 0.08) },
+};
+/** Flight Manual's ambient light: a night side's detail stays faint
+ *  under the print's screen of ink. */
+const MANUAL_AMBIENT = 0.2;
+/** Earth's oceans' glint: a soft silver patch, not a hot spot (Void;
+ *  the print has none). */
+const OCEAN_GLINT = new Color(0.1, 0.105, 0.12);
+/** Earth's night lights: a neutral warm white, never orange. */
+const CITY_LIGHTS = new Color(1, 0.93, 0.82).multiplyScalar(1.2);
+/** Earthlight on the Moon's night side: faint, a little blue. */
+const EARTHSHINE = new Color(0.5, 0.56, 0.66).multiplyScalar(0.12);
+/** The wings' slate (under 8% chroma), a material colour. */
+const WING_SLATE = "#8b929e";
+/** The plume's pale blue-white in Void. */
+const PLUME = "#dfe8ff";
+/** The Milky Way's brightness (of the file's fourfold gain). */
+const SKY_GAIN = 0.32;
+/** The sky's turn (degrees): the galaxy's plane lies 60° to the
+ *  ecliptic, as it does; its turn about the ecliptic pole and the
+ *  galactic centre's place along the band are set so the band crosses
+ *  the sunrise, the belt, Jupiter and the map, its core behind the map. */
+const GALAXY = { tilt: 60, turn: 330, core: 110 };
 const MAX_DPR = 1.75;
 const TRAIL_SAMPLES = 2400;
-/** The ship stays about this many pixels long at any distance. */
-const SHIP_PX = 21;
+/** The craft's span on screen, pixels: on a wide stage a share of its
+ *  height within these bounds, on a phone a set size. It narrows through
+ *  a transfer's fly-to, so it never outsizes the worlds. */
+const SHIP_SPAN = { share: 0.031, min: 26, max: 34, phone: 22, fly: 0.35 };
+/** The craft banks this far (radians) to turn its wings to the Sun. */
+const BANK = 28 * (Math.PI / 180);
 /** The Sun's brightness in the map: its core no brighter than the labels
  *  (0.88 of white, from 2.6 over the limb darkening), so the route and
  *  the now mark lead. */
 const SUN_LEVEL_MAP = 0.34;
+/** The Sun at the sunrise, pixels: its core's radius, its glow's falloff
+ *  and the glow's reach (a share of the stage's height); in Flight
+ *  Manual the printed ☉ sits this far higher, clear of the limb. */
+const SUNRISE = { core: 9, halo: 34, reach: 0.42, lift: 34 };
 /** No orbit is drawn across a world's disc on screen: the line stops this
  *  many pixels short of the limb, fading in over the second (Saturn's
  *  short of its ring's tips, about twice its radius from the chase). */
@@ -218,16 +280,6 @@ ${LINE_FRAGMENT_AT}`,
     };
 }
 
-function seeded(seed: number) {
-    let a = seed | 0;
-    return () => {
-        a = (a + 0x6d2b79f5) | 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
-
 function radial(stops: [number, string][], size = 256) {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = size;
@@ -248,47 +300,29 @@ function radial(stops: [number, string][], size = 256) {
     return texture;
 }
 
-const RIM_VERTEX = /* glsl */ `
-varying vec3 vNormal;
-varying vec3 vView;
-void main() {
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    vNormal = normalize(normalMatrix * normal);
-    vView = normalize(-mv.xyz);
-    gl_Position = projectionMatrix * mv;
-}`;
-const RIM_FRAGMENT = /* glsl */ `
-uniform vec3 color;
-uniform vec3 sun;
-uniform float strength;
-varying vec3 vNormal;
-varying vec3 vView;
-void main() {
-    float rim = pow(1.0 - max(dot(vNormal, vView), 0.0), 3.2);
-    float day = smoothstep(-0.25, 0.55, dot(vNormal, sun));
-    gl_FragColor = vec4(color * rim * day * strength, 1.0);
-}`;
-
 /**
  * The Sun: one camera-facing quad at its centre, sized in pixels, so it
  * is depth-tested there (a world in front hides it) and never culled.
  * Void: a limb-darkened disc of warm white with a windowed corona,
- * dithered so its falloff doesn't band. Flight Manual: the printed ☉, a
+ * dithered so its falloff doesn't band; at the sunrise a small core in a
+ * wide glow, rising over Earth's limb. Flight Manual: the printed ☉, a
  * ring, a centre dot and sixteen ray ticks in ink.
  */
 const SUN_VERTEX = /* glsl */ `
 uniform float uExtent;
 uniform float uKpx;
+uniform float uLift;
 varying vec2 vPx;
 void main() {
     vPx = position.xy * uExtent;
     vec4 mv = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
-    mv.xy += vPx * (-mv.z / uKpx);
+    mv.xy += (vPx + vec2(0.0, uLift)) * (-mv.z / uKpx);
     gl_Position = projectionMatrix * mv;
 }`;
 const SUN_FRAGMENT = /* glsl */ `
 uniform float uR;
 uniform float uRmax;
+uniform float uHalo;
 uniform float uCorona;
 uniform float uLevel;
 uniform float uPrint;
@@ -316,7 +350,7 @@ void main() {
     float limb = 1.0 - 0.6 * (1.0 - mu) - 0.12 * (1.0 - mu) * (1.0 - mu);
     float disc = 1.0 - smoothstep(uR - 0.8, uR + 0.8, r);
     float rr = max(r, uR);
-    float corona = (1.6 * exp(-(rr - uR) / (0.35 * uR))
+    float corona = (1.6 * exp(-(rr - uR) / uHalo)
         + 0.4 * (uR / rr) * (uR / rr))
         * (1.0 - smoothstep(0.55 * uRmax, uRmax, r)) * uCorona;
     vec3 c = (vec3(1.0, 0.975, 0.94) * 2.6 * limb * disc
@@ -367,10 +401,54 @@ export function mountFlight(
     let stage: Stage = stageFrame(1, 1, true);
     let wideLayout = true;
 
-    /* ---- light, Sun and stars ------------------------------------------ */
+    /* ---- maps --------------------------------------------------------------- */
 
+    // Each map is set on its material from the start, so its arrival only
+    // uploads it (at once, not when its world first shows) and never
+    // changes a shader. The canvas shows once the worlds' maps are in
+    // (the sky's may follow), or after a few seconds without them.
+    const maps = mapsFor(!window.matchMedia("(min-width: 960px)").matches);
+    const loader = new TextureLoader();
+    let pending = 0;
+    let revealed = false;
+    const reveal = () => {
+        if (revealed || disposed) return;
+        revealed = true;
+        hooks.ready();
+    };
+    const revealTimer = window.setTimeout(reveal, 4000);
+    const load = (file: string, colour = true, waits = true) => {
+        if (waits) pending++;
+        const done = () => {
+            if (disposed || !waits || --pending > 0) return;
+            warm();
+            reveal();
+        };
+        const texture = loader.load(
+            MAPS + file,
+            (t) => {
+                if (disposed) return;
+                t.anisotropy = Math.min(
+                    8,
+                    renderer.capabilities.getMaxAnisotropy(),
+                );
+                renderer.initTexture(t);
+                done();
+                if (last) draw(last);
+            },
+            undefined,
+            done,
+        );
+        texture.colorSpace = colour ? SRGBColorSpace : NoColorSpace;
+        textures.push(texture);
+        return texture;
+    };
+
+    /* ---- light, Sun and sky -------------------------------------------------- */
+
+    const plate = makePlate();
     const sunLight = new PointLight(0xffffff, 3.3, 0, 0);
-    const ambient = new AmbientLight(0xffffff, 0.12);
+    const ambient = new AmbientLight(0xffffff, 0.012);
     scene.add(sunLight, ambient);
 
     const sunMaterial = new ShaderMaterial({
@@ -379,8 +457,10 @@ export function mountFlight(
         uniforms: {
             uExtent: { value: 1 },
             uKpx: { value: 1 },
+            uLift: { value: 0 },
             uR: { value: 1 },
             uRmax: { value: 1 },
+            uHalo: { value: 1 },
             uCorona: { value: 1 },
             uLevel: { value: 1 },
             uPrint: { value: 0 },
@@ -394,58 +474,23 @@ export function mountFlight(
     const sunDisc = new Mesh(new PlaneGeometry(2, 2), sunMaterial);
     sunDisc.frustumCulled = false;
     scene.add(sunDisc);
-    const glowTexture = radial([
-        [0, "rgba(255,253,248,1)"],
-        [0.06, "rgba(255,248,236,0.92)"],
-        [0.16, "rgba(255,238,218,0.36)"],
-        [0.34, "rgba(255,232,210,0.1)"],
-        [0.6, "rgba(255,230,210,0.025)"],
-        [1, "rgba(255,230,210,0)"],
-    ]);
-    textures.push(glowTexture);
 
-    const dotTexture = radial(
-        [
-            [0, "rgba(255,255,255,1)"],
-            [0.45, "rgba(255,255,255,0.85)"],
-            [1, "rgba(255,255,255,0)"],
-        ],
-        32,
-    );
-    textures.push(dotTexture);
-    const stars = new Group();
-    const random = seeded(19);
-    const starLayers = [
-        { count: 2600, size: 1, alpha: 0.34 },
-        { count: 700, size: 1.5, alpha: 0.55 },
-        { count: 110, size: 2.3, alpha: 0.85 },
-    ].map(({ count, size, alpha }) => {
-        const positions = new Float32Array(count * 3);
-        for (let i = 0; i < count; i++) {
-            // Uniform on the sphere, a little denser near the ecliptic.
-            const z = (random() * 2 - 1) * (0.55 + 0.45 * random());
-            const a = random() * Math.PI * 2;
-            const r = Math.sqrt(1 - z * z) * 1500;
-            positions.set([Math.cos(a) * r, z * 1500, Math.sin(a) * r], i * 3);
-        }
-        const geometry = new BufferGeometry();
-        geometry.setAttribute(
-            "position",
-            new Float32BufferAttribute(positions, 3),
+    // The sky moves with the camera, turned so the galaxy's plane lies
+    // across the ecliptic: the Milky Way, and the stars in front of it.
+    const sky = new Group();
+    const deg = Math.PI / 180;
+    sky.quaternion
+        .setFromEuler(new Euler(GALAXY.tilt * deg, GALAXY.turn * deg, 0, "YXZ"))
+        .multiply(
+            new Quaternion().setFromAxisAngle(
+                new Vector3(0, 1, 0),
+                GALAXY.core * deg,
+            ),
         );
-        const material = new PointsMaterial({
-            size,
-            sizeAttenuation: false,
-            map: dotTexture,
-            transparent: true,
-            depthWrite: false,
-            opacity: alpha,
-        });
-        const points = new Points(geometry, material);
-        stars.add(points);
-        return { material, alpha };
-    });
-    scene.add(stars);
+    const galaxy = milkyWay(load(maps.sky, false, false));
+    const stars = starField(6000, plate);
+    sky.add(galaxy.mesh, stars.points);
+    scene.add(sky);
 
     /* ---- lines ------------------------------------------------------------ */
 
@@ -470,10 +515,12 @@ export function mountFlight(
     ): { line: Line2; material: LineMaterial; geometry: LineGeometry } => {
         const geometry = new LineGeometry();
         geometry.setPositions(points.flat());
+        // Ink and accent exactly as the tokens: never tone-mapped.
         const material = new LineMaterial({
             linewidth: width,
             transparent: true,
             depthWrite: false,
+            toneMapped: false,
             dashed,
             dashSize: 1,
             gapSize: 0.8,
@@ -628,75 +675,73 @@ export function mountFlight(
 
     /* ---- worlds ---------------------------------------------------------- */
 
-    const loader = new TextureLoader();
-    let pending = 0;
-    let revealed = false;
-    const reveal = () => {
-        if (revealed || disposed) return;
-        revealed = true;
-        hooks.ready();
-    };
-    const revealTimer = window.setTimeout(reveal, 4000);
-    const load = (url: string, onLoad: (texture: Texture) => void) => {
-        pending++;
-        const texture = loader.load(
-            url,
-            (t) => {
-                if (disposed) return;
-                t.colorSpace = SRGBColorSpace;
-                t.anisotropy = Math.min(
-                    8,
-                    renderer.capabilities.getMaxAnisotropy(),
-                );
-                onLoad(t);
-                pending--;
-                if (last) draw(last);
-                if (pending === 0) reveal();
-            },
-            undefined,
-            () => {
-                pending--;
-                if (pending === 0) reveal();
-            },
-        );
-        textures.push(texture);
-    };
-
-    const sunDir = new Vector3();
-    const rims: ShaderMaterial[] = [];
+    // Each world lit with a soft terminator and shaded for the theme; Earth
+    // with its oceans' glint, city lights on its night side, clouds and
+    // air; Saturn with its lit ring, each shadowing the other.
+    const ringShadows: { shadow: RingShadow; radius: { value: number } }[] = [];
+    let earthMaterial: MeshPhongMaterial | null = null;
+    let clouds: Mesh | null = null;
+    let cloudMaterial: MeshLambertMaterial | null = null;
+    let air: ReturnType<typeof atmosphere> | null = null;
     const bodies = plan.worlds.map((w) => {
         const tilt = new Group();
         tilt.quaternion.setFromUnitVectors(
             new Vector3(0, 1, 0),
             new Vector3(...w.pole),
         );
-        const material = new MeshLambertMaterial({ color: TINT[w.kind] });
-        const globe = new Mesh(new SphereGeometry(w.radius, 72, 36), material);
-        tilt.add(globe);
-        load(TEXTURE[w.kind], (t) => {
-            material.map = t;
-            material.color.set(0xffffff);
-            material.needsUpdate = true;
-        });
+        const look = { ...LOOK[w.kind], limb: LIMB[w.kind], outline: true };
+        const map = load(maps.world[w.kind]);
+        const shadow: RingShadow | null =
+            w.kind === "saturn"
+                ? {
+                      map: { value: load(maps.ring) },
+                      centre: { value: new Vector3() },
+                      pole: { value: new Vector3(...w.pole) },
+                      radii: { value: [0, 1] },
+                  }
+                : null;
+        let material: MeshLambertMaterial | MeshPhongMaterial;
         if (w.kind === "earth") {
-            const rim = new ShaderMaterial({
-                vertexShader: RIM_VERTEX,
-                fragmentShader: RIM_FRAGMENT,
-                uniforms: {
-                    color: { value: new Color(0.55, 0.72, 1) },
-                    sun: { value: new Vector3(1, 0, 0) },
-                    strength: { value: 1.25 },
-                },
-                blending: AdditiveBlending,
+            material = earthMaterial = new MeshPhongMaterial({
+                map,
+                specularMap: load(maps.water, false),
+                specular: OCEAN_GLINT,
+                shininess: 28,
+                emissive: CITY_LIGHTS,
+                emissiveMap: load(maps.night),
+            });
+            shadeGlobe(material, plate, { ...look, earth: true });
+        } else {
+            material = new MeshLambertMaterial({ map });
+            shadeGlobe(material, plate, { ...look, ring: shadow ?? undefined });
+        }
+        const detail = w.kind === "earth" ? 128 : 72;
+        const globe = new Mesh(
+            new SphereGeometry(w.radius, detail, detail / 2),
+            material,
+        );
+        tilt.add(globe);
+        if (w.kind === "earth") {
+            cloudMaterial = new MeshLambertMaterial({
+                alphaMap: load(maps.clouds, false),
                 transparent: true,
                 depthWrite: false,
             });
-            rims.push(rim);
-            tilt.add(
-                new Mesh(new SphereGeometry(w.radius * 1.04, 64, 32), rim),
+            // White: on paper at the plain gain, so they print light only
+            // where the Sun reaches them.
+            shadeGlobe(cloudMaterial, plate, {
+                wrap: 0.05,
+                print: 1.35,
+                shell: true,
+            });
+            clouds = new Mesh(
+                new SphereGeometry(w.radius * 1.006, 96, 48),
+                cloudMaterial,
             );
+            air = atmosphere(w.radius);
+            tilt.add(clouds, air.mesh);
         }
-        if (w.kind === "saturn") {
+        if (shadow) {
             const inner = w.radius * RING.inner;
             const outer = w.radius * RING.outer;
             const geometry = new RingGeometry(inner, outer, 160, 1);
@@ -707,46 +752,76 @@ export function mountFlight(
                 uv.setXY(i, (r - inner) / (outer - inner), 0.5);
             }
             geometry.rotateX(-Math.PI / 2);
-            const material = new MeshBasicMaterial({
-                color: 0xd8d2c6,
-                side: DoubleSide,
-                transparent: true,
-                depthWrite: false,
-                opacity: 0,
-            });
-            load(RING_TEXTURE, (t) => {
-                material.map = t;
-                material.opacity = 1;
-                material.needsUpdate = true;
-            });
-            tilt.add(new Mesh(geometry, material));
+            const radius = { value: w.radius };
+            const band = new Mesh(
+                geometry,
+                ringMaterial(plate, shadow, radius),
+            );
+            // After the globe, whose shadow it takes.
+            band.renderOrder = 1;
+            tilt.add(band);
+            ringShadows.push({ shadow, radius });
         }
         scene.add(tilt);
         /** Its radius on the stage, true and as drawn (pixels). */
         return { w, tilt, globe, px: 1, drawn: 1 };
     });
 
+    // Earth's Moon, turned to show Earth its near side.
+    // Earthshine keeps its night side a faint disc against the sky.
+    const moonMap = plan.moon ? load(maps.moon) : null;
+    const moon = plan.moon
+        ? new Mesh(
+              new SphereGeometry(plan.moon.radius, 48, 24),
+              new MeshLambertMaterial({
+                  map: moonMap,
+                  emissive: EARTHSHINE,
+                  emissiveMap: moonMap,
+              }),
+          )
+        : null;
+    if (moon) {
+        shadeGlobe(moon.material as MeshLambertMaterial, plate, {
+            ...LOOK.moon,
+            lunar: true,
+            outline: true,
+        });
+        scene.add(moon);
+    }
+
+    // The asteroid belt between Mars and Jupiter, which a transfer crosses.
+    const belt = plan.belt
+        ? asteroidBelt(plan.belt.mid, plan.belt.half, 3000, plate)
+        : null;
+    if (belt) scene.add(belt.points);
+
     /* ---- the ship --------------------------------------------------------- */
 
+    // A small spacecraft along its velocity, banked to the Sun, with a
+    // burn out of its engine only as a transfer begins.
+    const craft = spacecraft();
     const ship = new Group();
-    const hull = new ConeGeometry(0.26, 1, 20, 1);
-    hull.rotateX(Math.PI / 2);
-    const shipMaterial = new MeshLambertMaterial({
-        color: 0xffffff,
-        transparent: true,
-    });
-    const shipMesh = new Mesh(hull, shipMaterial);
-    ship.add(shipMesh);
-    const beaconMaterial = new SpriteMaterial({
-        map: glowTexture,
-        blending: AdditiveBlending,
-        depthWrite: false,
-        transparent: true,
-        opacity: 0.55,
-    });
-    const beacon = new Sprite(beaconMaterial);
-    beacon.scale.setScalar(1.3);
-    ship.add(beacon);
+    const nozzleGlow = radial(
+        [
+            [0, "rgba(235,242,255,1)"],
+            [0.2, "rgba(210,225,255,0.45)"],
+            [1, "rgba(200,220,255,0)"],
+        ],
+        64,
+    );
+    textures.push(nozzleGlow);
+    const nozzle = new Sprite(
+        new SpriteMaterial({
+            map: nozzleGlow,
+            blending: AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+            toneMapped: false,
+        }),
+    );
+    nozzle.scale.setScalar(0.55);
+    nozzle.position.z = -0.42;
+    ship.add(craft.craft, nozzle);
     scene.add(ship);
 
     /* ---- labels ----------------------------------------------------------- */
@@ -801,6 +876,26 @@ export function mountFlight(
         accent: new Color(),
         light: false,
     };
+    /** Draws every object once into a single pixel, so each program,
+     *  texture and pipeline the GPU builds on first use is ready before
+     *  its object first shows mid-scroll (once the maps are in, and for
+     *  each theme). */
+    const warm = () => {
+        const kept: [Object3D, boolean, boolean][] = [];
+        scene.traverse((o) => {
+            kept.push([o, o.visible, o.frustumCulled]);
+            o.visible = true;
+            o.frustumCulled = false;
+        });
+        renderer.setScissorTest(true);
+        renderer.setScissor(0, 0, 1, 1);
+        renderer.render(scene, camera);
+        renderer.setScissorTest(false);
+        for (const [o, visible, culled] of kept) {
+            o.visible = visible;
+            o.frustumCulled = culled;
+        }
+    };
     const applyTheme = () => {
         const css = getComputedStyle(root);
         const token = (name: string, fallback: string) =>
@@ -816,27 +911,61 @@ export function mountFlight(
         palette.light = light;
         renderer.setClearColor(bg, 1);
 
+        // Void: the worlds as photographs, their highlights rolled off by
+        // a neutral tone map (never the inks: lines, dots and the Sun set
+        // toneMapped false). Flight Manual: a printed plate on the paper,
+        // with no tone map, so the canvas's paper is the page's.
+        renderer.toneMapping = light ? NoToneMapping : NeutralToneMapping;
+        plate.uPrint.value = light ? 1 : 0;
+        plate.uPaper.value.copy(bg);
+        plate.uInk.value.copy(palette.ink1);
+        ambient.intensity = light ? MANUAL_AMBIENT : 0.012;
+        sunLight.intensity = light ? 3.1 : 2.9;
+
         // Void: a star, added to the black. Flight Manual: the printed ☉
-        // in ink on paper, with no wash; the worlds a little brighter on
-        // their night side, like a printed plate.
+        // in ink on paper, with no wash.
         sunMaterial.blending = light ? NormalBlending : AdditiveBlending;
         sunMaterial.uniforms.uPrint.value = light ? 1 : 0;
         sunMaterial.uniforms.uInk.value.copy(palette.ink1);
-        beacon.visible = !light;
-        ambient.intensity = light ? 0.5 : 0.05;
-        sunLight.intensity = light ? 3.1 : 3.3;
-        const starColor = new Color(
-            `rgb(${token("--star-rgb", "236 232 223").split(/\s+/).join(",")})`,
-        );
-        starLayers.forEach((layer) => {
-            layer.material.color.copy(starColor);
-            layer.material.opacity = layer.alpha * (light ? 0.55 : 1);
-        });
-        shipMaterial.color.copy(palette.ink1);
-        shipMaterial.emissive
-            .copy(light ? palette.ink1 : palette.ink2)
-            .multiplyScalar(light ? 0.6 : 0.55);
-        for (const rim of rims) rim.uniforms.strength.value = light ? 0 : 1.25;
+
+        // Void: the Milky Way and the stars, added to the black. Flight
+        // Manual: no sky photograph; the brightest stars and the belt as
+        // ink dots.
+        const ink = palette.ink1.clone().convertLinearToSRGB();
+        galaxy.mesh.visible = !light;
+        for (const [dots, limit, alpha] of [
+            [stars, 0.72, 0.5],
+            [belt, 0, 0.32],
+        ] as const) {
+            if (!dots) continue;
+            dots.material.blending = light ? NormalBlending : AdditiveBlending;
+            dots.material.uniforms.uInk.value.copy(ink);
+            dots.material.uniforms.uInkLimit.value = limit;
+            dots.material.uniforms.uInkAlpha.value = alpha;
+        }
+
+        // Earth's air and city lights are light added to the black: none
+        // on paper, where the clouds print as a paler screen.
+        if (air) air.mesh.visible = !light;
+        earthMaterial?.specular.copy(OCEAN_GLINT).multiplyScalar(light ? 0 : 1);
+        if (cloudMaterial) cloudMaterial.opacity = light ? 0.55 : 1;
+
+        // The craft: a light hull and slate wings in Void, each with a
+        // floor of its own light so its night side still reads; ink on
+        // paper. The burn: pale blue-white light, or an ink wedge.
+        const dark = palette.ink3.clone().lerp(bg, light ? 0 : 0.55);
+        craft.paint(palette.ink1, palette.ink2, light ? palette.ink1 : dark);
+        craft.body.emissive
+            .copy(light ? palette.ink1 : palette.ink3)
+            .multiplyScalar(light ? 0.5 : 0.1);
+        craft.wing.color.set(light ? palette.ink2 : new Color(WING_SLATE));
+        craft.wing.emissive
+            .copy(craft.wing.color)
+            .multiplyScalar(light ? 0.4 : 0.14);
+        craft.plume.blending = light ? NormalBlending : AdditiveBlending;
+        craft.plume.uniforms.uColor.value.set(light ? palette.ink2 : PLUME);
+        craft.plume.uniforms.uLevel.value = light ? 0.55 : 0.9;
+        nozzle.visible = !light;
         past.material.color.copy(palette.ink2);
         past.material.opacity = light ? 0.9 : 0.8;
         if (cur) {
@@ -851,6 +980,10 @@ export function mountFlight(
             plannedOrbit.material.color.copy(palette.ink3);
             plannedOrbit.material.opacity = light ? 0.7 : 0.6;
         }
+        // Every program for this theme (and its tone map), compiled now
+        // rather than when its object first shows mid-scroll.
+        renderer.compile(scene, camera);
+        warm();
     };
     applyTheme();
     // `themechange` can fire before a view transition swaps the theme, so
@@ -869,6 +1002,7 @@ export function mountFlight(
     const v = new Vector3();
     const forward = new Vector3();
     const eyeV = new Vector3();
+    const sunV = new Vector3();
     let view: Pose | null = null;
     const looped = plan.looped;
     const coastStart = plan.worlds.map(
@@ -1044,7 +1178,7 @@ export function mountFlight(
         camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
         camera.updateMatrixWorld();
         camera.getWorldDirection(forward);
-        stars.position.copy(camera.position);
+        sky.position.copy(camera.position);
 
         // Worlds at mission time t, moving to where their chapters ended as
         // the map rises. None is drawn under a few pixels in radius (Saturn
@@ -1061,6 +1195,45 @@ export function mountFlight(
             b.px = (b.w.radius * stage.kpx) / Math.max(1e-3, depth);
             b.drawn = Math.max(b.px, minPx);
             b.tilt.scale.setScalar(depth > 0 ? b.drawn / b.px : 1);
+            // The sunrise is Earth's alone: the other worlds show once the
+            // camera has risen into the chase (they are behind it then).
+            b.tilt.visible = pose.open === 0 || b.w.kind === "earth";
+        }
+        // Earth's clouds turn a little faster than its ground; its air
+        // and Saturn's ring shadows follow their worlds as drawn.
+        const earthBody = bodies.find((b) => b.w.kind === "earth");
+        if (earthBody && clouds && air) {
+            clouds.rotation.y = earthBody.globe.rotation.y * 1.08 + 0.35;
+            air.centre.copy(earthBody.tilt.position);
+        }
+        for (const b of bodies) {
+            if (b.w.kind !== "saturn") continue;
+            const size = b.w.radius * b.tilt.scale.x;
+            for (const { shadow, radius } of ringShadows) {
+                shadow.centre.value.copy(b.tilt.position);
+                shadow.radii.value = [size * RING.inner, size * RING.outer];
+                radius.value = size;
+            }
+        }
+        if (belt) belt.material.uniforms.uLevel.value = 1 - pose.open;
+        // The Milky Way sits back a little in the map, so the route leads.
+        galaxy.material.uniforms.uGain.value =
+            SKY_GAIN * (1 - 0.3 * pose.overview);
+        // The Moon beside Earth as drawn, while it is a disc at all.
+        if (moon && plan.moon && earthBody) {
+            const e = plan.worldAt(earthBody.w, t);
+            const m = plan.moon.at(t);
+            moon.position
+                .set(m[0] - e[0], m[1] - e[1], m[2] - e[2])
+                .add(earthBody.tilt.position);
+            moon.lookAt(earthBody.tilt.position);
+            moon.rotateY(-Math.PI / 2);
+            const depth = eyeV
+                .copy(moon.position)
+                .sub(camera.position)
+                .dot(forward);
+            moon.visible =
+                (plan.moon.radius * stage.kpx) / Math.max(1e-3, depth) > 1.2;
         }
 
         // The Sun, sized in pixels at its depth. Its corona reaches at most
@@ -1073,7 +1246,17 @@ export function mountFlight(
             const u = sunMaterial.uniforms;
             let R = (1.5 * stage.kpx) / sunAt.depth;
             R -= pose.overview * Math.max(0, R - 6);
-            const Rmax = Math.min(0.35 * H, 8 * R, 90);
+            let Rmax = Math.min(0.35 * H, 8 * R, 90);
+            let halo = 0.35 * R;
+            // At the sunrise: a small core in a wide glow, rising over the
+            // limb (it has left the frame before the chase takes over).
+            const rise = smoothstep(0, 0.05, pose.open);
+            R = lerp(R, SUNRISE.core, rise);
+            Rmax = lerp(Rmax, SUNRISE.reach * H, rise);
+            halo = lerp(halo, SUNRISE.halo, rise);
+            u.uHalo.value = halo;
+            // Flight Manual prints the ☉ just clear of the drawn limb.
+            u.uLift.value = palette.light ? SUNRISE.lift * rise : 0;
             const span = (a: number, lo: number, hi: number) =>
                 Math.max(0, Math.min(a + Rmax, hi) - Math.max(a - Rmax, lo)) /
                 (2 * Rmax);
@@ -1087,18 +1270,6 @@ export function mountFlight(
             u.uExtent.value = palette.light ? R + 10 : Math.max(Rmax, R + 2);
             u.uKpx.value = stage.kpx;
         }
-        if (rims.length) {
-            const earth = bodies.find((b) => b.w.kind === "earth");
-            if (earth) {
-                sunDir
-                    .copy(earth.tilt.position)
-                    .negate()
-                    .normalize()
-                    .transformDirection(camera.matrixWorldInverse);
-                for (const rim of rims) rim.uniforms.sun.value.copy(sunDir);
-            }
-        }
-
         // Orbits: visited in ink-2, the held world's brighter, future dim.
         // Through a transfer the orbit ahead comes up to current as the one
         // left behind settles to visited. Each stops short of every disc.
@@ -1125,7 +1296,9 @@ export function mountFlight(
             const [bright, seen, future] = palette.light
                 ? [0.72, 0.51, 0.32]
                 : [0.53, 0.36, 0.17];
-            o.material.opacity = lerp(visited ? seen : future, bright, held);
+            // At the sunrise the orbits (seen edge-on) are not yet drawn.
+            o.material.opacity =
+                lerp(visited ? seen : future, bright, held) * (1 - pose.open);
         });
         discs.value.forEach((d, i) => {
             const b = bodies[i];
@@ -1137,27 +1310,87 @@ export function mountFlight(
         clear.value.set(ORBIT_CLEAR[0] * dpr, ORBIT_CLEAR[1] * dpr);
         if (plannedOrbit) {
             plannedOrbit.material.opacity =
-                (palette.light ? 0.7 : 0.6) * (0.45 + 0.55 * pose.overview);
+                (palette.light ? 0.7 : 0.6) *
+                (0.45 + 0.55 * pose.overview) *
+                (1 - pose.open);
             // Fine, even dashes on screen at any distance.
             const px = reach / stage.kpx;
             plannedOrbit.material.dashSize = 3 * px;
             plannedOrbit.material.gapSize = 5 * px;
         }
 
-        // The trail to the ship; the planned leg draws out in the plan.
-        // Older legs sit back, less so in the map, where the whole story
-        // reads.
+        // The ship: along its velocity, banked to turn its wings to the
+        // Sun, a set span on screen. Through a transfer's fly-to it narrows
+        // (the worlds are small there); through the crane it shrinks, then
+        // hands over to the now mark, which has come in first: one of them
+        // is always on screen.
+        const ship3 = plan.shipAt(p);
+        const ahead = plan.shipAt(Math.min(1, p + 0.0006));
+        const behind = plan.shipAt(Math.max(0, p - 0.0006));
+        ship.position.set(...ship3);
+        v.set(ahead[0] - behind[0], ahead[1] - behind[1], ahead[2] - behind[2]);
+        if (v.lengthSq() > 1e-10) {
+            v.normalize();
+            ship.lookAt(eyeV.copy(v).add(ship.position));
+            const side = eyeV.set(1, 0, 0).applyQuaternion(ship.quaternion);
+            const sunward = side.dot(
+                sunV.copy(ship.position).negate().normalize(),
+            );
+            ship.rotateZ(BANK * Math.max(-1, Math.min(1, -4 * sunward)));
+        }
+        const shipDepth = Math.max(
+            0.1,
+            eyeV.copy(ship.position).sub(camera.position).dot(forward),
+        );
+        const span = wideLayout
+            ? Math.min(
+                  SHIP_SPAN.max,
+                  Math.max(SHIP_SPAN.min, SHIP_SPAN.share * H),
+              )
+            : SHIP_SPAN.phone;
+        const shipScale =
+            (span *
+                (1 - SHIP_SPAN.fly * pose.fly) *
+                (1 - 0.4 * pose.overview) *
+                shipDepth) /
+            stage.kpx /
+            craft.span;
+        ship.scale.setScalar(shipScale);
+        const shipFade = 1 - smoothstep(0.6, 0.8, pose.overview);
+        craft.body.opacity = shipFade;
+        craft.wing.opacity = shipFade;
+        ship.visible = shipFade > 0.001;
+        // The departure burn: only as a transfer begins, a pure function
+        // of its progress (no flicker), so scrubbing back retraces it.
+        const burn =
+            kind === "transfer"
+                ? smoothstep(0, 0.03, frame.u) *
+                  (1 - smoothstep(0.12, 0.2, frame.u))
+                : 0;
+        craft.plume.uniforms.uEnv.value = burn * shipFade;
+        craft.flame.scale.z = 0.5 + 1.5 * burn;
+        craft.flame.visible = burn > 0.001;
+        nozzle.visible = !palette.light && burn > 0.001;
+        nozzle.material.opacity = 0.8 * burn * shipFade;
+
+        // The trail to the ship's engine; the planned leg draws out in the
+        // plan. Older legs sit back, less so in the map, where the whole
+        // story reads.
         age.value.set(
             Math.min(p, flown),
             fadeLen,
             lerp(0.35, 0.6, pose.overview),
         );
         carryOpening(pose.overview);
-        const ship3 = plan.shipAt(p);
         const upto = Math.min(p, flown) / flown;
         const idx = upto * (TRAIL_SAMPLES - 1);
         const whole = Math.floor(idx);
-        const head: Vec3 = p >= flown ? samples[TRAIL_SAMPLES - 1] : ship3;
+        const nozzleAt: Vec3 = [
+            ship3[0] - v.x * 0.37 * shipScale,
+            ship3[1] - v.y * 0.37 * shipScale,
+            ship3[2] - v.z * 0.37 * shipScale,
+        ];
+        const head: Vec3 = p >= flown ? samples[TRAIL_SAMPLES - 1] : nozzleAt;
         if (whole < iCur) {
             drawTo(past, whole + 1, head);
             if (cur) drawTo(cur, 0, null);
@@ -1175,26 +1408,6 @@ export function mountFlight(
             plannedLeg.material.dashSize = 9 * px;
             plannedLeg.material.gapSize = 6 * px;
         }
-
-        // The ship: along its velocity, kept a few pixels long.
-        const ahead = plan.shipAt(Math.min(1, p + 0.0006));
-        const behind = plan.shipAt(Math.max(0, p - 0.0006));
-        ship.position.set(...ship3);
-        v.set(ahead[0] - behind[0], ahead[1] - behind[1], ahead[2] - behind[2]);
-        if (v.lengthSq() > 1e-10) ship.lookAt(v.add(ship.position));
-        const shipDepth = Math.max(
-            0.1,
-            eyeV.copy(ship.position).sub(camera.position).dot(forward),
-        );
-        // Through the crane the ship shrinks, then hands over to the now
-        // mark, which has come in first: one of them is always on screen.
-        const shipFade = 1 - smoothstep(0.6, 0.8, pose.overview);
-        ship.scale.setScalar(
-            (SHIP_PX * (1 - 0.4 * pose.overview) * shipDepth) / stage.kpx,
-        );
-        shipMaterial.opacity = shipFade;
-        beaconMaterial.opacity = 0.55 * shipFade;
-        ship.visible = shipFade > 0.001;
 
         // Labels: on the chase the world held and, through a transfer, the
         // one ahead; the one left behind fades as the ship leaves, by
@@ -1227,6 +1440,9 @@ export function mountFlight(
                 alpha *= smoothstep(0.4, 0.6, frame.u);
             // Gone once its world leaves the safe area.
             alpha *= 1 - smoothstep(-16, 8, overflow(pointBox(at)));
+            // At the sunrise the first world is its limb: named only as
+            // the camera settles into the chase.
+            if (i === 0) alpha *= smoothstep(0.7, 1, 1 - pose.open);
             // A hairline ring round a world drawn at its smallest; in the
             // map a world its loop circles needs none.
             const small =
@@ -1310,6 +1526,10 @@ export function mountFlight(
             camera.aspect = W / H;
             camera.fov = stage.fov;
             for (const m of lineMaterials) m.resolution.set(W, H);
+            for (const dots of [stars, belt])
+                if (dots)
+                    dots.material.uniforms.uDpr.value =
+                        renderer.getPixelRatio();
             // No line under the record: on a wide stage they fade out
             // under its scrim; on a phone above its top edge.
             const dpr = renderer.getPixelRatio();

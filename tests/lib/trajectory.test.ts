@@ -82,12 +82,14 @@ describe("trajectory", () => {
             }),
         ).toEqual(route);
 
-        // The 3D flight: longer transfers and finale, within 600svh.
+        // The 3D flight: room for its opening, longer transfers and
+        // finale, within 600svh.
         const flight = buildRoute(data, FLIGHT_PACING.route);
         const weights = (kind: string) =>
             flight.segments.filter((s) => s.kind === kind).map((s) => s.w);
         expect(weights("transfer")).toEqual([0.95, 0.95, 0.95]);
-        expect(weights("plan")).toEqual([2]);
+        expect(weights("plan")).toEqual([1.8]);
+        expect(flight.segments[0].w).toBeCloseTo(route.segments[0].w + 0.35);
         expect(100 + flight.weight * 52).toBeLessThanOrEqual(600);
         expect(flight.segments.map((s) => s.kind)).toEqual(
             route.segments.map((s) => s.kind),

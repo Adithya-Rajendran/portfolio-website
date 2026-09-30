@@ -6,6 +6,7 @@ import {
     CRANE,
     FLIGHT_PACING,
     LOOP_CLEAR,
+    OPEN_SPAN,
     RING,
     buildFlight,
     dist,
@@ -134,12 +135,19 @@ const track = (stage: Stage) =>
     });
 
 describe("the chase camera", () => {
-    it("gives transfers and the finale the room their moves need", () => {
+    it("gives the opening, transfers and the finale the room their moves need", () => {
         const kinds = (kind: string) =>
             paced.segments.filter((s) => s.kind === kind).map((s) => s.w);
         expect(kinds("transfer").every((w) => w === 0.95)).toBe(true);
-        expect(kinds("plan")).toEqual([2]);
+        expect(kinds("plan")).toEqual([1.8]);
         expect(100 + paced.weight * 52).toBeLessThanOrEqual(600);
+        // The first card settles after the opening, on Earth's loop.
+        const first = paced.segments[0];
+        const rest = frameAt(paced, paced.rest[0]);
+        expect(rest.index).toBe(0);
+        expect(rest.u).toBeGreaterThan(OPEN_SPAN);
+        expect(flown.pose(rest, stages[0][1]).open).toBe(0);
+        expect(first.kind).toBe("coast");
     });
 
     it.each(stages)(
@@ -148,10 +156,12 @@ describe("the chase camera", () => {
             const poses = track(stage);
             for (const seg of paced.segments) {
                 if (seg.kind !== "coast") continue;
+                // The first coast's hold begins once the opening is over.
+                const from = seg === paced.segments[0] ? OPEN_SPAN : 0.14;
                 const hold = poses.filter(
                     (x) =>
                         x.frame.segment === seg &&
-                        x.frame.u >= 0.14 &&
+                        x.frame.u >= from &&
                         x.frame.u <= 0.86,
                 );
                 expect(hold.length).toBeGreaterThan(50);
@@ -180,9 +190,10 @@ describe("the chase camera", () => {
                 .map((x, i) => turn(x.pose, poses[i].pose));
             // The holds are still, so the moves between them do the
             // turning: at most 0.5° per 1/4000 of progress outside the
-            // finale's crane.
+            // opening's rise and the finale's crane.
             steps.forEach((step, i) => {
-                if (poses[i + 1].frame.segment.kind !== "plan")
+                const { pose, frame } = poses[i + 1];
+                if (frame.segment.kind !== "plan" && pose.open === 0)
                     expect(step).toBeLessThanOrEqual(0.5);
             });
             // Never more than 120° in any 0.05 of progress.
@@ -277,10 +288,10 @@ describe("the chase camera", () => {
     );
 
     it.each(stages)(
-        "keeps the Sun out of frame until the finale (%s)",
+        "keeps the Sun out of frame from the opening until the finale (%s)",
         (_, stage) => {
             for (const { frame, pose } of track(stage)) {
-                if (frame.segment.kind === "plan") continue;
+                if (frame.segment.kind === "plan" || pose.open > 0) continue;
                 const { fwd } = viewAxes(pose);
                 const toSun = pose.eye.map((v) => -v) as Vec3;
                 const cos =
@@ -345,6 +356,166 @@ describe("the chase camera", () => {
                 const angle = Math.atan2(c.y - s.y, s.x - c.x) / D2R;
                 expect(Math.abs(angle + 35)).toBeLessThan(20);
             });
+    });
+});
+
+/* ---- the sunrise, Saturn's ring, the Moon and the belt -------------------- */
+
+const unitOf = (v: Vec3): Vec3 => {
+    const n = Math.hypot(...v) || 1;
+    return [v[0] / n, v[1] / n, v[2] / n];
+};
+const dotOf = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const minus = (a: Vec3, b: Vec3): Vec3 => [
+    a[0] - b[0],
+    a[1] - b[1],
+    a[2] - b[2],
+];
+
+describe("the opening", () => {
+    const first = paced.segments[0];
+
+    it.each(stages)(
+        "opens on the Sun just under Earth's limb, across the subject's box (%s)",
+        (name, stage) => {
+            const frame = frameAt(paced, 0);
+            const pose = flown.pose(frame, stage);
+            expect(pose.open).toBe(1);
+            // Where the home page's sunrise has it on a wide stage.
+            const sun = screenOf(pose, stage, [0, 0, 0]);
+            if (name === "wide") {
+                expect(sun.x / stage.W).toBeCloseTo(0.69, 3);
+                expect(sun.y / stage.H).toBeCloseTo(0.34, 3);
+            }
+            // The Sun's centre is under 1° behind the limb as the eye sees
+            // it, so only its corona shows, and the eye is above the air.
+            const w = flown.worlds[0];
+            const E = flown.worldAt(w, frame.t);
+            const d = dist(pose.eye, E);
+            const apart = Math.acos(
+                dotOf(
+                    unitOf(minus(E, pose.eye)),
+                    unitOf(minus([0, 0, 0], pose.eye)),
+                ),
+            );
+            const radius = Math.asin(w.radius / d);
+            expect(radius - apart).toBeGreaterThan(0);
+            expect(radius - apart).toBeLessThan(1 * D2R);
+            expect(d).toBeGreaterThan(1.5 * w.radius);
+            // The limb crosses the subject's box from side to side.
+            const n = unitOf(minus(pose.eye, E));
+            const centre = add(
+                E,
+                n.map((v) => v * (w.radius ** 2 / d)) as Vec3,
+            );
+            const r = w.radius * Math.sqrt(1 - (w.radius / d) ** 2);
+            const e1 = unitOf([n[2], 0, -n[0]]);
+            const e2: Vec3 = [
+                n[1] * e1[2] - n[2] * e1[1],
+                n[2] * e1[0] - n[0] * e1[2],
+                n[0] * e1[1] - n[1] * e1[0],
+            ];
+            const xs = Array.from({ length: 720 }, (_, k) => {
+                const a = (k / 720) * 2 * Math.PI;
+                return screenOf(
+                    pose,
+                    stage,
+                    add(
+                        centre,
+                        [0, 1, 2].map(
+                            (j) =>
+                                (e1[j] * Math.cos(a) + e2[j] * Math.sin(a)) * r,
+                        ) as Vec3,
+                    ),
+                );
+            })
+                .filter((q) => q.depth > 0 && inBox(stage, q))
+                .map((q) => q.x);
+            const box = stage.box.x1 - stage.box.x0;
+            expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThanOrEqual(
+                0.9 * box,
+            );
+        },
+    );
+
+    it("rises into the chase over a few hundred pixels of scroll", () => {
+        // At 1440×900 the stage is 828px under the header, and the section
+        // 100 + weight × 52 svh tall.
+        const scroll = ((100 + paced.weight * 52) / 100) * 900 - 828;
+        const rise = OPEN_SPAN * (first.p1 - first.p0) * scroll;
+        expect(rise).toBeGreaterThanOrEqual(330);
+        const end = frameAt(
+            paced,
+            first.p0 + OPEN_SPAN * (first.p1 - first.p0),
+        );
+        expect(flown.pose(end, stages[0][1]).open).toBe(0);
+    });
+});
+
+describe("Saturn's ring", () => {
+    it.each(stages)(
+        "opens its lit face to the camera at 25–32° through Saturn's hold (%s)",
+        (_, stage) => {
+            const seg = paced.segments.find(
+                (s) =>
+                    s.kind === "coast" && s.chapter === flown.worlds.length - 1,
+            )!;
+            const w = flown.worlds[seg.chapter];
+            expect(w.kind).toBe("saturn");
+            for (let u = 0.1; u <= 1; u += 0.01) {
+                const frame = frameAt(paced, lerp(seg.p0, seg.p1, u));
+                const pose = flown.pose(frame, stage);
+                const c = flown.worldAt(w, frame.t);
+                const nV = dotOf(w.pole, unitOf(minus(pose.eye, c)));
+                const nL = dotOf(w.pole, unitOf(minus([0, 0, 0], c)));
+                expect(nL).toBeGreaterThan(0);
+                expect(nV).toBeGreaterThan(0);
+                const opening = Math.asin(nV) / D2R;
+                expect(opening).toBeGreaterThanOrEqual(25);
+                expect(opening).toBeLessThanOrEqual(32);
+            }
+        },
+    );
+});
+
+describe("the Moon and the belt", () => {
+    it("keeps the Moon clear of Earth and the route, in the sunrise and at Earth's rest", () => {
+        const moon = flown.moon!;
+        const w = flown.worlds[0];
+        const upto = paced.segments[1].p1;
+        for (let p = 0; p <= upto; p += 0.0005) {
+            const t = frameAt(paced, p).t;
+            const m = moon.at(t);
+            expect(dist(m, flown.worldAt(w, t))).toBeGreaterThan(3 * w.radius);
+            expect(dist(m, flown.shipAt(p))).toBeGreaterThan(4 * moon.radius);
+        }
+        const stage = stages[0][1];
+        for (const p of [0, paced.rest[0]]) {
+            const frame = frameAt(paced, p);
+            const pose = flown.pose(frame, stage);
+            const q = screenOf(pose, stage, moon.at(frame.t));
+            expect(q.depth).toBeGreaterThan(0);
+            expect(inBox(stage, q)).toBe(true);
+            // In front of the sky, not behind Earth's disc.
+            const e = screenOf(pose, stage, flown.worldAt(w, frame.t));
+            const R = (w.radius * stage.kpx) / e.depth;
+            expect(Math.hypot(q.x - e.x, q.y - e.y)).toBeGreaterThan(R);
+        }
+    });
+
+    it("lays the belt between Mars's and Jupiter's orbits, across a transfer", () => {
+        const belt = flown.belt!;
+        const mars = flown.worlds.find((w) => w.kind === "mars")!;
+        const jupiter = flown.worlds.find((w) => w.kind === "jupiter")!;
+        expect(belt.mid - belt.half).toBeGreaterThan(mars.orbit);
+        expect(belt.mid + belt.half).toBeLessThan(jupiter.orbit);
+        const into = paced.segments.find(
+            (s) => s.kind === "transfer" && s.chapter === jupiter.chapter,
+        )!;
+        const r = (p: number) =>
+            Math.hypot(flown.shipAt(p)[0], flown.shipAt(p)[2]);
+        expect(r(into.p0)).toBeLessThan(belt.mid - belt.half);
+        expect(r(into.p1)).toBeGreaterThan(belt.mid + belt.half);
     });
 });
 

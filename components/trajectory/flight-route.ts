@@ -22,12 +22,13 @@ import {
  *   the planned orbit.
  * The camera's track is sampled once over the whole route and smoothed,
  * so every pose is a function of the progress alone and scrubbing
- * backwards retraces the same frames. It holds on a chapter's world while
- * its card is read (the ship loops or passes, the camera doesn't), and
- * moves between chapters: each transfer backs off to a two-shot of the
- * world left behind and the one ahead, then flies to the next world. The
- * finale cranes up to a map of the whole route, centred on the Sun, and
- * holds there while the planned leg draws.
+ * backwards retraces the same frames. It opens low over Earth's night
+ * side at sunrise and rises from there into the chase. It holds on a
+ * chapter's world while its card is read (the ship loops or passes, the
+ * camera doesn't), and moves between chapters: each transfer backs off
+ * to a two-shot of the world left behind and the one ahead, then flies
+ * to the next world. The finale cranes up to a map of the whole route,
+ * centred on the Sun, and holds there while the planned leg draws.
  */
 
 export type Vec3 = [number, number, number];
@@ -68,6 +69,16 @@ export const dist = (a: Vec3, b: Vec3) =>
 const unit = (a: Vec3): Vec3 => {
     const n = Math.hypot(a[0], a[1], a[2]) || 1;
     return [a[0] / n, a[1] / n, a[2] / n];
+};
+/** From unit vector a to unit vector b along the great circle. */
+const slerp = (a: Vec3, b: Vec3, t: number): Vec3 => {
+    const th = Math.acos(Math.min(1, Math.max(-1, dot(a, b))));
+    if (th < 1e-6) return b;
+    const s = Math.sin(th);
+    return add(
+        scale(a, Math.sin((1 - t) * th) / s),
+        scale(b, Math.sin(t * th) / s),
+    );
 };
 /** An angle wrapped into (−π, π]. */
 const wrapPi = (a: number) => a - TAU * Math.ceil((a - Math.PI) / TAU);
@@ -179,6 +190,25 @@ const FLYBY_OUT = 3.4;
 const INSERT = 1.1;
 /** How far a world's axis tips toward the chase camera. */
 const POLE_TIP = 11 * D2R;
+/** A ringed world's leans toward the Sun, tipped this far away from the
+ *  chase camera, so the ring opens to it at about 28–31° through the
+ *  chapter's hold, its lit face toward the camera. */
+const RING_TIP = -4 * D2R;
+
+/** Earth's Moon: its radius and distance (scene units), its turn per
+ *  year of mission time, and its orbit against the Sun (the angle from
+ *  new Moon at the epoch, and the orbit's tilt). Set so it hangs high
+ *  over the sunrise as a crescent, and waxes beside Earth at its rest. */
+const MOON = {
+    radius: 0.13,
+    orbit: 2.4,
+    omega: 10 * D2R,
+    phase: -24 * D2R,
+    incl: -54 * D2R,
+};
+/** The asteroid belt's half-width, as a share of the gap between the
+ *  orbits it lies between. */
+const BELT_HALF = 0.15;
 
 /** Earth for the first chapter, Saturn (with its ring) for the last, and
  *  Mars and Jupiter between. */
@@ -608,6 +638,11 @@ export interface FlightPlan {
     ): number;
     /** A world's spin about its axis at progress p (radians). */
     spinAt(w: World, p: number): number;
+    /** Earth's Moon at mission time t, when the first world is Earth. */
+    moon: { radius: number; at(t: number): Vec3 } | null;
+    /** The asteroid belt between the first Mars and the Jupiter after it:
+     *  its middle radius and half-width about the Sun. */
+    belt: { mid: number; half: number } | null;
     /** The camera at a frame, for a stage. */
     pose(frame: Frame, stage: Stage): Pose;
     /** The Sun–world–eye angle, degrees: 0 is full, 90 half, 180 new. */
@@ -627,6 +662,9 @@ export interface Pose {
     /** A transfer's fly-to, 0 (the chase) to 1 (its two-shot); 0
      *  outside transfers. */
     fly: number;
+    /** The opening: 1 at the sunrise over Earth's limb, 0 once the
+     *  camera has risen into the chase. */
+    open: number;
 }
 
 const CHASE_EL = 19 * D2R;
@@ -670,6 +708,15 @@ const REF_SCALE = (() => {
 export const CRANE = 0.55;
 const OVER_EL = 56 * D2R;
 const OVER_TURN = -15 * D2R;
+/** The opening, over this share of the first coast: the page opens low
+ *  over Earth's night side, this many of its radii from its centre, with
+ *  the Sun this far (radians) below the limb, so only its corona shows
+ *  over the atmosphere; the Sun sits at these shares of the stage, where
+ *  the home page's sunrise has it. Then the camera rises into the chase. */
+export const OPEN_SPAN = 0.4;
+const OPEN_ALT = 1.7;
+const OPEN_DIP = 0.6 * D2R;
+const OPEN_LENS = { wide: { x: 0.69, y: 0.34 }, narrow: { x: 0.56, y: 0.2 } };
 /** The camera's track: samples over the route and the smoothing (a
  *  Gaussian in p). */
 const SAMPLES = 800;
@@ -742,14 +789,19 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             endAngle = angleAt(w, chapter.end, epoch);
         }
         // The axis leans mostly sideways and a little toward the chase
-        // camera, so a ring opens to it.
+        // camera, so a ring opens to it; a ringed world's leans toward the
+        // Sun, so the face of the ring the camera sees is the lit one.
         const mid = angleAt(w, (chapter.start + chapter.end) / 2, epoch);
         const out = onPlane(w.plane, 1, mid);
         const back = scale(tangentOn(w.plane, mid), -1);
-        const toward = Math.min(1, Math.sin(POLE_TIP) / Math.sin(w.tilt));
+        const ringed = kind === "saturn";
+        const toward = Math.min(
+            1,
+            Math.sin(ringed ? RING_TIP : POLE_TIP) / Math.sin(w.tilt),
+        );
         const lean = add(
             scale(back, toward),
-            scale(out, Math.sqrt(1 - toward * toward)),
+            scale(out, (ringed ? -1 : 1) * Math.sqrt(1 - toward * toward)),
         );
         w.pole = unit(
             add(
@@ -1122,12 +1174,73 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         planned = { orbit: reach, plane: pplane, path, end };
     }
 
+    /** The sunrise the page opens on at time t: the eye low over Earth's
+     *  night side, above its orbit, looking at the Sun just below the
+     *  limb; the target is on the horizon under the Sun, where the lens
+     *  puts it. */
+    const earth = worlds[0];
+    const sunrise = (t: number) => {
+        const E = worldAt(earth, t);
+        const S = unit(scale(E, -1));
+        const N = earth.plane.ey;
+        // The Sun and Earth's centre this far apart from the eye: g is
+        // corrected for the Sun's parallax over a few steps.
+        const want = Math.asin(1 / OPEN_ALT) - OPEN_DIP;
+        const eyeAt = (g: number) =>
+            add(
+                E,
+                scale(
+                    add(scale(S, -Math.cos(g)), scale(N, Math.sin(g))),
+                    OPEN_ALT * earth.radius,
+                ),
+            );
+        let g = want;
+        for (let i = 0; i < 4; i++) {
+            const e = eyeAt(g);
+            const apart = Math.acos(dot(unit(scale(e, -1)), unit(sub(E, e))));
+            g += want - apart;
+        }
+        const eye = eyeAt(g);
+        const toSun = unit(scale(eye, -1));
+        const horizon = Math.sqrt(OPEN_ALT ** 2 - 1) * earth.radius;
+        return { eye, target: add(eye, scale(toSun, horizon)) };
+    };
+    const opens = route.segments[0]?.kind === "coast" && !!earth;
+
     const pose = (frame: Frame, stage: Stage): Pose => {
         const half = Math.max(1, Math.min(stage.halfW, stage.halfH));
         const s = sample(frame.p);
         const dChase = (s.f * stage.kpx) / half;
         const lens = { x: stage.lens.x / stage.W, y: stage.lens.y / stage.H };
         const fly = frame.segment.kind === "transfer" ? flyOf(frame.u) : 0;
+        const rise =
+            opens && frame.index === 0 ? smoother(frame.u / OPEN_SPAN) : 1;
+        if (rise < 1) {
+            // From the sunrise, the camera rises into the chase: the
+            // target, the distance (in log) and the direction blend
+            // together, so there is no cut.
+            const o = sunrise(frame.t);
+            const dO = dist(o.eye, o.target);
+            const target = mix(o.target, s.g, rise);
+            const dir = slerp(
+                unit(sub(o.eye, o.target)),
+                outward(s.az, s.el),
+                rise,
+            );
+            const d = Math.exp(lerp(Math.log(dO), Math.log(dChase), rise));
+            const at = stage.wide ? OPEN_LENS.wide : OPEN_LENS.narrow;
+            return {
+                eye: add(target, scale(dir, d)),
+                target,
+                lens: {
+                    x: lerp(at.x, lens.x, rise),
+                    y: lerp(at.y, lens.y, rise),
+                },
+                overview: 0,
+                fly: 0,
+                open: 1 - rise,
+            };
+        }
         if (frame.segment.kind !== "plan")
             return {
                 eye: orbitFrom(s.g, dChase, s.az, s.el),
@@ -1135,6 +1248,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                 lens,
                 overview: 0,
                 fly,
+                open: 0,
             };
 
         // One crane: distance (in log), elevation, azimuth and lens move
@@ -1161,6 +1275,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             },
             overview: e,
             fly: 0,
+            open: 0,
         };
     };
 
@@ -1564,6 +1679,47 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         );
     };
 
+    // The Moon circles Earth slowly in mission time (not to scale), so it
+    // drifts rather than spins as the page scrolls. Its orbit is set
+    // against the Sun (angle 0 is new Moon), so it keeps the same place in
+    // the sunrise and at the first chapter's rest whatever the dates.
+    const moon =
+        earth?.kind === "earth"
+            ? {
+                  radius: MOON.radius,
+                  at: (t: number): Vec3 => {
+                      const E = worldAt(earth, t);
+                      const S = unit(scale(E, -1));
+                      const N = earth.plane.ey;
+                      const side = add(
+                          scale(cross(N, S), Math.cos(MOON.incl)),
+                          scale(N, Math.sin(MOON.incl)),
+                      );
+                      const a = MOON.phase + MOON.omega * (t - epoch);
+                      return add(
+                          E,
+                          scale(
+                              add(
+                                  scale(S, Math.cos(a)),
+                                  scale(side, Math.sin(a)),
+                              ),
+                              MOON.orbit,
+                          ),
+                      );
+                  },
+              }
+            : null;
+    const m = worlds.findIndex(
+        (w, i) => w.kind === "mars" && worlds[i + 1]?.kind === "jupiter",
+    );
+    const belt =
+        m < 0
+            ? null
+            : {
+                  mid: (worlds[m].orbit + worlds[m + 1].orbit) / 2,
+                  half: BELT_HALF * (worlds[m + 1].orbit - worlds[m].orbit),
+              };
+
     const curSeg =
         lastCurrent < 0
             ? null
@@ -1587,6 +1743,8 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         chaseSides,
         flownGap,
         spinAt: (w, p) => p * TAU * (1.1 + 0.25 * w.chapter) + w.chapter,
+        moon,
+        belt,
         pose,
         phaseAngle,
         trail,
