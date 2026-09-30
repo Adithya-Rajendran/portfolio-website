@@ -216,11 +216,18 @@ export default async function Home() {
                         >
                             {tagline ?? copy.contactAct.title}
                         </h2>
-                        {asked ? (
-                            <LinkArrow href={`${siteRoutes.about}#crew-now`}>
-                                {copy.contactAct.now}
+                        <div className={`cluster ${styles.closeLinks}`}>
+                            {asked ? (
+                                <LinkArrow
+                                    href={`${siteRoutes.about}#crew-now`}
+                                >
+                                    {copy.contactAct.now}
+                                </LinkArrow>
+                            ) : null}
+                            <LinkArrow href={siteRoutes.trajectory}>
+                                {copy.contactAct.route}
                             </LinkArrow>
-                        ) : null}
+                        </div>
                         <div className={`cluster ${styles.closeActions}`}>
                             {answer ? (
                                 <ButtonLink

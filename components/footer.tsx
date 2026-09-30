@@ -15,7 +15,8 @@ import { getProfileLink } from "@/lib/profile-content";
  * (CV, RSS, GitHub, LinkedIn), the theme choice (from 960px; below it the
  * menu sheet carries it) and Pause motion (on home the hero carries it,
  * beside the starfield), then the strip: the copyright, the one place
- * the footer names the owner, and Back to top. No date: a revision
+ * the footer names the owner, the colophon (how the site is made, with
+ * its source) and Back to top. No date: a revision
  * belongs to the document it revises (a mission file, the CV), not to
  * every page. Reads only cached data (the profile and a day-cached
  * "today"), so it is part of every page's static shell.
@@ -70,6 +71,17 @@ export default async function Footer() {
                 <div className="site-footer__base">
                     <span>
                         © {today.slice(0, 4)} {name}
+                    </span>
+                    <span className="site-footer__colophon">
+                        {chromeCopy.colophon}
+                        <span aria-hidden="true"> · </span>
+                        <a
+                            href={siteConfig.source}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {chromeCopy.source}
+                        </a>
                     </span>
                     <a href="#top" className="link-quiet">
                         {chromeCopy.backToTop}

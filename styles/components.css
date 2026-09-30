@@ -944,6 +944,13 @@
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
+    /* A sentence, so it is set as one: plain type, not the caps label. */
+    .site-footer__colophon {
+        font: 400 var(--label-size) / 1.6 var(--font-display);
+        letter-spacing: 0;
+        text-transform: none;
+        color: var(--ink-3);
+    }
     .site-footer__base a {
         display: inline-flex;
         align-items: center;

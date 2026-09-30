@@ -10,6 +10,8 @@ export const siteConfig = {
     url: "https://adithya-rajendran.com",
     title: "Adithya Rajendran",
     author: "Adithya Rajendran",
+    /** The site's own source, credited in the footer's colophon. */
+    source: "https://github.com/Adithya-Rajendran/portfolio-website",
     /** Fallback location when the Profile singleton has no value. */
     location: "",
     /** Named profiles consumed by the footer and fallback profile views.

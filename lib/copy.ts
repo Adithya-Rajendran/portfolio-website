@@ -20,6 +20,9 @@ export const chromeCopy = {
     resumeDrift: "Resume motion",
     motionHeldByOs: "Motion reduced",
     backToTop: "Back to top",
+    /** The colophon: how the site is made, and its source. */
+    colophon: "Built with Next.js, Sanity and three.js",
+    source: "Source",
 } as const;
 
 /** The theme choices in the footer and the menu sheet: Void, Flight
@@ -383,6 +386,8 @@ export const homeCopy = {
     contactAct: {
         title: "Contact",
         now: "Current focus",
+        /** The flight on /resume/trajectory. */
+        route: "The route so far",
         message: "Send a message",
     },
 } as const;

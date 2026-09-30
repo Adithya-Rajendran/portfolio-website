@@ -84,6 +84,10 @@
     letter-spacing: -0.005em;
     text-wrap: balance;
 }
+.closeLinks {
+    --cluster: var(--s-2) var(--s-6);
+}
+
 .closeActions {
     --cluster: var(--s-4) var(--s-6);
     margin-top: var(--s-5);

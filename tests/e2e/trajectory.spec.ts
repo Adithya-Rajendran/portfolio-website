@@ -208,9 +208,9 @@ test("a still flight opens on the latest chapter, the ask last on the rail", asy
     const rail = page.getByRole("list", { name: copy.rail });
     const buttons = rail.getByRole("button");
     const count = await buttons.count();
-    // The last stop, when set, is what the owner is open to; the latest
-    // chapter is the one before it.
-    const asks = (await buttons.last().textContent())?.includes(copy.openTo);
+    // The last stop, when set, is the Future (what the owner is open to);
+    // the latest chapter is the one before it.
+    const asks = (await buttons.last().textContent())?.includes(copy.future);
     await expect(buttons.nth(asks ? count - 2 : count - 1)).toHaveAttribute(
         "aria-current",
         "step",
