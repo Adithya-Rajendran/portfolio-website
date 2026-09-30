@@ -187,7 +187,6 @@ const BELT_CLEAR = 6;
  *  galactic centre's place along the band are set so the band crosses
  *  the sunrise, the belt, Jupiter and the map, its core behind the map. */
 const GALAXY = { tilt: 60, turn: 330, core: 110 };
-const TRAIL_SAMPLES = 2400;
 /** The craft's span on screen, pixels: on a wide stage a share of its
  *  height within these bounds, on a phone a set size. It narrows through
  *  a transfer's fly-to, so it never outsizes the worlds. */
@@ -595,23 +594,42 @@ export function mountFlight(
         ? makeLine(plan.planned.path, 1.4, { dashed: true })
         : null;
 
-    // The trail: flown in ink, dimming with age, the current leg in the
-    // accent at full strength. Each is drawn to the sample before the
-    // ship, then one segment to the ship itself.
-    const samples = plan.trail(TRAIL_SAMPLES);
+    // The track and the parking rings, as the ship draws them: flown in
+    // ink, dimming with age, the current leg (the track from its transfer
+    // on, and the rings joined from there) in the accent at full strength.
+    // Each is drawn to the point before the ship, then one segment to the
+    // ship itself; a ring the ship has been round once stays closed.
     const flown = route.flown || 1;
-    const iCur =
-        plan.current < 0
-            ? TRAIL_SAMPLES - 1
-            : Math.round((plan.currentFrom / flown) * (TRAIL_SAMPLES - 1));
-    const pOf = (k: number) => (k / (TRAIL_SAMPLES - 1)) * flown;
-    const past = makeLine(samples.slice(0, iCur + 1), 1.8, {
-        ages: Float32Array.from({ length: Math.max(1, iCur) }, (_, k) =>
-            pOf(k),
-        ),
+    const { track } = plan;
+    const end = track.points.length - 1;
+    const leg = track.ps.findIndex((p) => p >= plan.currentFrom);
+    const iCur = plan.current < 0 || leg < 0 ? end : leg;
+    /** A segment's age: the progress at which the ship ends it. */
+    const agesOf = (ps: number[], to: number) =>
+        Float32Array.from({ length: Math.max(1, to) }, (_, k) => ps[k + 1]);
+    const past = makeLine(track.points.slice(0, iCur + 1), 1.8, {
+        ages: agesOf(track.ps, iCur),
     });
-    const cur =
-        iCur < TRAIL_SAMPLES - 1 ? makeLine(samples.slice(iCur), 2.2) : null;
+    const cur = iCur < end ? makeLine(track.points.slice(iCur), 2.2) : null;
+    const parks = plan.rings.flatMap((ring, world) => {
+        if (!ring) return [];
+        const accent = plan.current >= 0 && ring.ps[0] >= plan.currentFrom;
+        const line = makeLine(ring.points, accent ? 2.2 : 1.8, {
+            ages: accent ? null : agesOf(ring.ps, ring.ps.length - 1),
+        });
+        return [{ ...line, ps: ring.ps, world, accent }];
+    });
+    /** How many of a line's points the ship has reached at progress p. */
+    const reached = (ps: number[], p: number) => {
+        let lo = 0;
+        let hi = ps.length;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (ps[mid] <= p) lo = mid + 1;
+            else hi = mid;
+        }
+        return lo;
+    };
     // A trail segment fades over about one leg of the route.
     const fadeLen =
         flown /
@@ -650,52 +668,6 @@ export function mountFlight(
                 ) as Vec3,
             });
             write(index * 6 + 3, head);
-        }
-    };
-    // The opening loop is drawn round Earth (plan.carry): its samples are
-    // rewritten as Earth moves, until the chapter ends, in whichever part
-    // holds them.
-    const first = route.segments[0];
-    let opening = 0;
-    while (
-        first?.kind === "coast" &&
-        opening < TRAIL_SAMPLES - 1 &&
-        pOf(opening + 1) < first.p1
-    )
-        opening++;
-    let carried = NaN;
-    const carryOpening = (t: number) => {
-        const at = Math.min(t, first?.t1 ?? t);
-        if (opening === 0 || at === carried) return;
-        carried = at;
-        for (const [part, from] of [
-            [past, 0],
-            [cur, iCur],
-        ] as const) {
-            if (!part) continue;
-            const start = part.geometry.attributes
-                .instanceStart as InterleavedBufferAttribute;
-            const buffer = start.data;
-            const array = buffer.array as Float32Array;
-            const head = heads.get(part.geometry);
-            const last = Math.min(opening - from, start.count);
-            if (last < 0) continue;
-            for (let j = 0; j <= last; j++) {
-                const k = j + from;
-                const c = plan.carry(pOf(k), at);
-                const q: Vec3 = [
-                    samples[k][0] + c[0],
-                    samples[k][1] + c[1],
-                    samples[k][2] + c[2],
-                ];
-                if (j < start.count) array.set(q, j * 6);
-                if (j === 0) continue;
-                // The segment before ends here, unless it ends on the ship.
-                if (head?.index === j - 1) head.saved = q;
-                else array.set(q, (j - 1) * 6 + 3);
-            }
-            buffer.addUpdateRange(0, (last + 1) * 6);
-            buffer.needsUpdate = true;
         }
     };
 
@@ -805,6 +777,8 @@ export function mountFlight(
             tilt.add(band);
             ringShadows.push({ shadow, radius });
         }
+        // Each world holds its place through the flight.
+        tilt.position.set(...w.at);
         scene.add(tilt);
         /** Its radius on the stage, true and as drawn (pixels). */
         return { w, tilt, globe, px: 1, drawn: 1 };
@@ -1022,11 +996,14 @@ export function mountFlight(
         craft.plume.uniforms.uColor.value.set(light ? palette.ink2 : PLUME);
         craft.plume.uniforms.uLevel.value = light ? 0.55 : 0.9;
         nozzle.visible = !light;
-        past.material.color.copy(palette.ink2);
-        past.material.opacity = light ? 0.9 : 0.8;
-        if (cur) {
-            cur.material.color.copy(palette.accent);
-            cur.material.opacity = 1;
+        for (const part of [past, ...parks.filter((r) => !r.accent)]) {
+            part.material.color.copy(palette.ink2);
+            part.material.opacity = light ? 0.9 : 0.8;
+        }
+        for (const part of [cur, ...parks.filter((r) => r.accent)]) {
+            if (!part) continue;
+            part.material.color.copy(palette.accent);
+            part.material.opacity = 1;
         }
         if (plannedLeg) {
             plannedLeg.material.color.copy(palette.ink2);
@@ -1238,16 +1215,13 @@ export function mountFlight(
         camera.getWorldDirection(forward);
         sky.position.copy(camera.position);
 
-        // Worlds at mission time t, moving to where their chapters ended as
-        // the map rises. None is drawn under a few pixels in radius (Saturn
-        // with its ring), so the map shows worlds, not empty rings.
+        // No world is drawn under a few pixels in radius (Saturn with its
+        // ring), so the map shows worlds, not empty rings.
         const minPx = minWorldPx(stage);
         for (const b of bodies) {
-            const at = plan.mapAt(b.w, t, pose.overview);
-            b.tilt.position.set(...at);
             b.globe.rotation.y = plan.spinAt(b.w, p);
             const depth = eyeV
-                .set(...at)
+                .copy(b.tilt.position)
                 .sub(camera.position)
                 .dot(forward);
             b.px = (b.w.radius * stage.kpx) / Math.max(1e-3, depth);
@@ -1281,13 +1255,9 @@ export function mountFlight(
             (1 -
                 SKY_MAP_DIM * pose.overview -
                 SKY_CRANE_DIP * Math.sin(Math.PI * pose.overview) ** 2);
-        // The Moon beside Earth as drawn, while it is a disc at all.
+        // The Moon beside Earth, while it is a disc at all.
         if (moon && plan.moon && earthBody) {
-            const e = plan.worldAt(earthBody.w, t);
-            const m = plan.moon.at(t);
-            moon.position
-                .set(m[0] - e[0], m[1] - e[1], m[2] - e[2])
-                .add(earthBody.tilt.position);
+            moon.position.set(...plan.moon.at(t));
             moon.lookAt(earthBody.tilt.position);
             moon.rotateY(-Math.PI / 2);
             const depth = eyeV
@@ -1443,22 +1413,29 @@ export function mountFlight(
             fadeLen,
             lerp(0.35, 0.6, pose.overview),
         );
-        carryOpening(t);
-        const upto = Math.min(p, flown) / flown;
-        const idx = upto * (TRAIL_SAMPLES - 1);
-        const whole = Math.floor(idx);
         const nozzleAt: Vec3 = [
             ship3[0] - v.x * 0.37 * shipScale,
             ship3[1] - v.y * 0.37 * shipScale,
             ship3[2] - v.z * 0.37 * shipScale,
         ];
-        const head: Vec3 = p >= flown ? samples[TRAIL_SAMPLES - 1] : nozzleAt;
-        if (whole < iCur) {
-            drawTo(past, whole + 1, head);
+        // On the track the line runs to the nozzle; on a ring the track
+        // waits at its touch point while the ring draws.
+        const ringNow = plan.ringOf(p);
+        const onTrack = ringNow < 0 && p < flown;
+        const n = reached(track.ps, p);
+        const drawn = onTrack ? n : n - 1;
+        const head = onTrack ? nozzleAt : null;
+        if (drawn <= iCur) {
+            drawTo(past, drawn, head);
             if (cur) drawTo(cur, 0, null);
         } else {
             drawTo(past, iCur, null);
-            if (cur) drawTo(cur, whole - iCur + 1, head);
+            if (cur) drawTo(cur, drawn - iCur, head);
+        }
+        for (const ring of parks) {
+            const k = reached(ring.ps, p);
+            const on = ringNow === ring.world && k < ring.ps.length;
+            drawTo(ring, on ? k : k - 1, on ? nozzleAt : null);
         }
         // The planned leg draws out once the map has settled.
         let planOn = 0;
@@ -1511,7 +1488,7 @@ export function mountFlight(
             // the camera settles into the chase.
             if (i === 0) alpha *= smoothstep(0.7, 1, 1 - pose.open);
             // A hairline ring round a world drawn at its smallest; in the
-            // map a world its loop circles needs none.
+            // map a world with a parking ring needs none.
             const small =
                 (1 - smoothstep(3, 7, b.px)) * (looped[i] ? 1 - radial : 1);
             if (alpha * small > 0.01)
