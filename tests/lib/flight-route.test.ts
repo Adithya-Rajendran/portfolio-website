@@ -5,20 +5,22 @@ import { patchLineShader } from "@/components/trajectory/flight-gl";
 import {
     CRANE,
     FLIGHT_PACING,
-    LABEL_FADE,
+    LOOP_CLEAR,
     RING,
     buildFlight,
     dist,
-    inset,
     labelBox,
     labelGap,
     labelMinX,
     labelSafe,
+    ringReach,
+    roomGap,
     screenOf,
     stageFrame,
-    within,
     viewAxes,
     worldKinds,
+    type Box,
+    type LabelSide,
     type Pose,
     type Stage,
     type Vec3,
@@ -556,48 +558,98 @@ describe("the labels and the lines", () => {
         { w: 134, h: 33 },
     ];
 
-    it("keeps each chase label on one side of its world, away from the Sun", () => {
-        const stage = stageFrame(1440, 828, true);
-        const safe = labelSafe(stage);
-        const chase = flown.chaseSides(stage, sizes, safe);
-        expect(chase).toHaveLength(paced.segments.length);
-        paced.segments.forEach((seg, index) => {
-            if (seg.kind !== "coast" && seg.kind !== "flyby") return;
-            // The held world, at the segment's middle: beside it, the
-            // side away from the Sun (the night side), inside the safe
-            // area with room to spare.
-            const i = seg.chapter;
-            const side = chase[index][i];
-            expect(side.y).toBe(0);
-            const frame = frameAt(paced, (seg.p0 + seg.p1) / 2);
-            const pose = flown.pose(frame, stage);
-            const c = flown.worldAt(flown.worlds[i], frame.t);
-            const q = screenOf(pose, stage, c);
-            const { right } = viewAxes(pose);
-            const sunward = -(
-                c[0] * right[0] +
-                c[1] * right[1] +
-                c[2] * right[2]
-            );
-            expect(Math.sign(side.x)).toBe(-Math.sign(sunward));
-            const gap = labelGap(
-                stage,
-                flown.worlds[i],
-                q.depth,
-                flown.looped[i] ? 1 : 0,
-            );
-            expect(
-                within(
-                    labelBox(q, side, gap, sizes[i]),
-                    inset(safe, LABEL_FADE),
-                ),
-            ).toBe(true);
-        });
+    const boxDistance = (b: Box, q: { x: number; y: number }) =>
+        Math.hypot(
+            Math.max(b.x0 - q.x, 0, q.x - b.x1),
+            Math.max(b.y0 - q.y, 0, q.y - b.y1),
+        );
+    const wides = [stageFrame(1440, 828, true), stageFrame(1024, 624, true)];
+
+    it("keeps each chase label off its world's sunward side, clear of its loop", () => {
+        for (const stage of wides) {
+            const chase = flown.chaseSides(stage, sizes, labelSafe(stage));
+            expect(chase).toHaveLength(paced.segments.length);
+            paced.segments.forEach((seg, index) => {
+                if (seg.kind !== "coast" && seg.kind !== "flyby") return;
+                const i = seg.chapter;
+                const w = flown.worlds[i];
+                const side = chase[index][i];
+                // Away from the Sun, or above or below the world.
+                const mid = frameAt(paced, (seg.p0 + seg.p1) / 2);
+                const c = flown.worldAt(w, mid.t);
+                const { right } = viewAxes(flown.pose(mid, stage));
+                const sunward = -(
+                    c[0] * right[0] +
+                    c[1] * right[1] +
+                    c[2] * right[2]
+                );
+                expect(side.x * Math.sign(sunward)).toBeLessThanOrEqual(0);
+                if (seg.kind !== "coast") return;
+                // Through the held loop, the ship and the loop flown near
+                // the world (the arrival included) stay LOOP_CLEAR off the
+                // label, as flight-gl.ts places it.
+                const from = i === 0 ? seg.p0 : seg.p0 - 0.05;
+                for (let u = 0.14; u <= 0.86; u += 0.02) {
+                    const p = lerp(seg.p0, seg.p1, u);
+                    const frame = frameAt(paced, p);
+                    const pose = flown.pose(frame, stage);
+                    const at = flown.worldAt(w, frame.t);
+                    const q = screenOf(pose, stage, at);
+                    const gap = Math.max(
+                        labelGap(stage, w, q.depth, 1),
+                        flown.flownGap(i, pose, stage, at, side, sizes[i]),
+                    );
+                    const box = labelBox(q, side, gap, sizes[i]);
+                    for (let k = 0; k <= 60; k++) {
+                        const ship = flown.shipAt(lerp(from, p, k / 60));
+                        if (dist(ship, at) > 2.2 * w.park) continue;
+                        expect(
+                            boxDistance(box, screenOf(pose, stage, ship)),
+                        ).toBeGreaterThan(LOOP_CLEAR - 2);
+                    }
+                }
+            });
+        }
         // A phone has no room beside its worlds: always below.
         const small = stageFrame(390, 780, false);
         for (const row of flown.chaseSides(small, sizes, labelSafe(small, 560)))
             for (const side of row)
                 expect(side).toEqual({ x: 0, y: 1, reach: 1 });
+    });
+
+    it("gives each world one side on the chase, turning into the map with the crane", () => {
+        for (const stage of [...wides, stageFrame(1920, 1008, true)]) {
+            const safe = labelSafe(stage);
+            const map = flown.mapSides(stage, sizes, { w: 60, h: 17 }, safe);
+            const chase = flown.chaseSides(stage, sizes, safe, map);
+            const plan = paced.segments.findIndex((s) => s.kind === "plan");
+            flown.worlds.forEach((_, i) => {
+                // From its approach to its departure, one side.
+                const own = chase.filter((_, k) => k !== plan).map((r) => r[i]);
+                for (const side of own) expect(side).toEqual(own[0]);
+            });
+            // The world held into the map turns with the crane.
+            const i = flown.worlds.length - 1;
+            const side = chase[plan][i];
+            expect(side.x * map[i].x + side.y * map[i].y).toBeGreaterThan(-0.2);
+        }
+    });
+
+    it("ends Saturn's leader on its ring as drawn", () => {
+        const pole: Vec3 = [0, 1, 0];
+        // 45° above the ring's plane: its full radius across, less up and
+        // down; edge-on it is a line, so a leader ends on the disc.
+        const above = { eye: [0, 5, 5] as Vec3, target: [0, 0, 0] as Vec3 };
+        expect(ringReach(above, pole, { x: 1, y: 0 })).toBeCloseTo(
+            RING.outer,
+            6,
+        );
+        expect(ringReach(above, pole, { x: 0, y: -1 })).toBeCloseTo(
+            RING.outer * Math.SQRT1_2,
+            6,
+        );
+        const edge = { eye: [0, 0, 5] as Vec3, target: [0, 0, 0] as Vec3 };
+        expect(ringReach(edge, pole, { x: 0, y: 1 })).toBe(0);
     });
 
     it("keeps labels off the caption band and the phone's record", () => {
@@ -609,6 +661,14 @@ describe("the labels and the lines", () => {
             y1: 828 - 54,
         });
         expect(labelSafe(stageFrame(390, 780, false), 560).y1).toBe(552);
+        // A label pushed off its world by the route stops at its room's
+        // edge rather than fading there.
+        const room = { x0: 0, y0: 0, x1: 400, y1: 200 };
+        const size = { w: 50, h: 20 };
+        const at = { x: 100, y: 100 };
+        expect(roomGap(at, { x: 0, y: 1 }, size, room)).toBe(80);
+        expect(roomGap(at, { x: -1, y: 0 }, size, room)).toBe(50);
+        expect(labelBox(at, { x: 0, y: 1 }, 80, size).y1).toBe(room.y1);
     });
 
     it("finds the lines it patches in three.js's line shader", () => {
@@ -617,6 +677,7 @@ describe("the labels and the lines", () => {
         expect(patched).not.toBeNull();
         expect(patched.vertex).toContain("vAge = instanceAge;");
         expect(patched.fragment).toContain("smoothstep(uMask.x, uMask.y");
+        expect(patched.fragment).toContain("uKeep");
         expect(patched.fragment).toContain("uDiscs");
         expect(patchLineShader("void main() {}", fragmentShader)).toBeNull();
     });

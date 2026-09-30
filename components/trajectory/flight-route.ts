@@ -294,17 +294,52 @@ export function screenOf(
     stage: Pick<Stage, "kpx" | "lens" | "W" | "H">,
     point: Vec3,
 ) {
+    return projector(pose, stage)(point);
+}
+
+/** screenOf for many points of one pose: the axes are found once. */
+function projector(
+    pose: { eye: Vec3; target: Vec3; lens?: { x: number; y: number } },
+    stage: Pick<Stage, "kpx" | "lens" | "W" | "H">,
+) {
     const { fwd, right, up } = viewAxes(pose);
-    const v = sub(point, pose.eye);
-    const depth = dot(v, fwd);
-    const k = stage.kpx / Math.max(1e-6, Math.abs(depth));
     const lx = pose.lens ? pose.lens.x * stage.W : stage.lens.x;
     const ly = pose.lens ? pose.lens.y * stage.H : stage.lens.y;
-    return {
-        x: lx + dot(v, right) * k,
-        y: ly - dot(v, up) * k,
-        depth,
+    return (point: Vec3) => {
+        const v = sub(point, pose.eye);
+        const depth = dot(v, fwd);
+        const k = stage.kpx / Math.max(1e-6, Math.abs(depth));
+        return {
+            x: lx + dot(v, right) * k,
+            y: ly - dot(v, up) * k,
+            depth,
+        };
     };
+}
+
+/** How far Saturn's ring reaches from its centre toward direction v on
+ *  the stage, in the planet's radii: where a ray along v leaves the
+ *  ring's outer edge as projected (0 when the ring is edge-on), so a
+ *  leader ends on the ring or, past it, on the disc. */
+export function ringReach(
+    pose: { eye: Vec3; target: Vec3 },
+    pole: Vec3,
+    v: { x: number; y: number },
+) {
+    const { right, up } = viewAxes(pose);
+    const e1 = unit(
+        cross(pole, Math.abs(pole[0]) < 0.9 ? [1, 0, 0] : [0, 0, 1]),
+    );
+    const e2 = cross(pole, e1);
+    // The ring's two radii on the stage (y down), per unit of radius.
+    const ax = dot(e1, right);
+    const ay = -dot(e1, up);
+    const bx = dot(e2, right);
+    const by = -dot(e2, up);
+    const det = ax * by - ay * bx;
+    if (Math.abs(det) < 1e-4) return 0;
+    const m = Math.hypot(by * v.x - bx * v.y, ax * v.y - ay * v.x) / det;
+    return RING.outer / Math.max(1e-6, Math.abs(m));
 }
 
 /* ---- labels ---------------------------------------------------------------- */
@@ -377,9 +412,46 @@ export function labelBox(
     return { x0, y0, x1: x0 + size.w, y1: y0 + size.h };
 }
 
+/** The farthest a label may stand off `at` toward v and keep its box
+ *  inside `room` (pixels; Infinity when v leads to no edge). */
+export function roomGap(
+    at: { x: number; y: number },
+    v: { x: number; y: number },
+    size: LabelSize,
+    room: Box,
+) {
+    let most = Infinity;
+    const axis = (
+        d: number,
+        from: number,
+        lo: number,
+        hi: number,
+        n: number,
+    ) => {
+        // The box spans from + d·gap + (−0.5 + 0.5·d)·n, n long.
+        if (d > 1e-6)
+            most = Math.min(most, (hi - from - (0.5 + 0.5 * d) * n) / d);
+        if (d < -1e-6)
+            most = Math.min(most, (lo - from - (-0.5 + 0.5 * d) * n) / d);
+    };
+    axis(v.x, at.x, room.x0, room.x1, size.w);
+    axis(v.y, at.y, room.y0, room.y1, size.h);
+    return most;
+}
+
 /** A label fades out over this many pixels as it reaches the edge of
  *  the area it may print in. */
 export const LABEL_FADE = 24;
+/** On the chase a label stands this far off the route flown near its
+ *  world, its loop included (pixels): the ship's half-length and glow,
+ *  and a margin. */
+export const LOOP_CLEAR = 30;
+/** A side within this angle of its world's orbit on the stage would lay
+ *  the leader along the orbit line (cosine of 20°). */
+const ALONG_ORBIT = 0.94;
+/** A side beside a world may tilt this much (30°) off the level. */
+const TILT_COS = Math.cos(Math.PI / 6);
+const TILT_SIN = Math.sin(Math.PI / 6);
 
 /** Box `b` shrunk by `m` on every side. */
 export const inset = (b: Box, m: number): Box => ({
@@ -506,13 +578,34 @@ export interface FlightPlan {
         open: LabelSize | null,
         safe?: Box,
     ): LabelSide[];
-    /** Each world's label side on the chase, per segment: of away from
-     *  the Sun on screen, the other side, below and above, the one where
-     *  the label fits well inside `safe` in the most of the segment's
-     *  middle and quarters (the plan: its start), the first on a tie. A
-     *  phone, narrow beside its worlds, always puts it below. Chosen once
-     *  per stage, so a label never changes side mid-segment. */
-    chaseSides(stage: Stage, sizes: LabelSize[], safe: Box): LabelSide[][];
+    /** Each world's label side on the chase, per segment: one per world,
+     *  of away from the Sun on screen (level or tilted 30°), below, above
+     *  and the Sun's side, the one where the label fits well inside
+     *  `safe`, clear of the route flown near the world and of its orbit,
+     *  in the most of the frames it shows in (its approach, hold and
+     *  departure). Into the map (the plan, judged at its start) the `map`
+     *  side or the nearest that fits, so the label turns with the crane.
+     *  A phone, narrow beside its worlds, always puts it below. Chosen
+     *  once per stage, so a label never changes side within its chapter. */
+    chaseSides(
+        stage: Stage,
+        sizes: LabelSize[],
+        safe: Box,
+        map?: LabelSide[],
+    ): LabelSide[][];
+    /** How far off its centre `c` toward direction v a world's label of
+     *  `size` stands on the chase so the route flown near the world (its
+     *  arrival, loop or flyby) keeps LOOP_CLEAR off it: the farthest the
+     *  route reaches that way through the label's band across v, plus
+     *  LOOP_CLEAR (pixels; 0 where nothing runs through the band). */
+    flownGap(
+        i: number,
+        view: Pose,
+        stage: Stage,
+        c: Vec3,
+        v: { x: number; y: number },
+        size: LabelSize,
+    ): number;
     /** A world's spin about its axis at progress p (radians). */
     spinAt(w: World, p: number): number;
     /** The camera at a frame, for a stage. */
@@ -1267,61 +1360,209 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             (s) => s.chapter === w.chapter && s.kind === "coast",
         ),
     );
+    // The route flown near each world while its label shows: its arrival
+    // (the second half of the transfer into it, and a loop's spiral in),
+    // its loop up to the spiral out or its flyby, and for the last world
+    // on through the plan to the crane. It stays drawn, so the world's
+    // chase label keeps clear of it. Only the part near the world counts
+    // (the world moves on along its orbit as the ship circles it), and of
+    // that only what runs through the label's band across its side: the
+    // route may pass above or below a label beside its world.
+    const nearPath = worlds.map((w, i) => {
+        const path: Vec3[] = [];
+        route.segments.forEach((s, index) => {
+            const next = route.segments[index + 1];
+            const span: [number, number] | null =
+                s.kind === "coast" && s.chapter === i
+                    ? [0, 0.86]
+                    : s.kind === "flyby" && s.chapter === i
+                      ? [0, 1]
+                      : s.kind === "plan" && Math.min(s.chapter, last) === i
+                        ? [0, CRANE]
+                        : s.kind === "transfer" && next?.chapter === i
+                          ? [0.5, 1]
+                          : null;
+            if (!span) return;
+            for (let k = 0; k <= 160; k++)
+                path.push(
+                    shipAt(lerp(s.p0, s.p1, lerp(span[0], span[1], k / 160))),
+                );
+        });
+        return path;
+    });
+    const flownGap: FlightPlan["flownGap"] = (i, view, stage, c, v, size) => {
+        const path = nearPath[i];
+        const w = worlds[i];
+        if (!path?.length || !w) return 0;
+        const at = projector(view, stage);
+        const o = at(c);
+        const band = (Math.abs(v.y) * size.w + Math.abs(v.x) * size.h) / 2;
+        const reach = Math.max(w.park, 2 * w.radius);
+        let most = 0;
+        for (const p of path) {
+            const near = 1 - smoothstep(2.2, 2.8, dist(p, c) / reach);
+            if (near <= 0) continue;
+            const q = at(p);
+            if (q.depth <= 0) continue;
+            const dx = q.x - o.x;
+            const dy = q.y - o.y;
+            const across = Math.abs(dx * v.y - dy * v.x);
+            const k = near * (1 - smoothstep(band + 6, band + 30, across));
+            most = Math.max(most, k * (dx * v.x + dy * v.y + LOOP_CLEAR));
+        }
+        return most;
+    };
+    /** A world's label gap on the chase toward v: past its disc (and
+     *  ring, and a loop's radius), and clear of the route flown near it. */
+    const chaseGap = (
+        i: number,
+        view: Pose,
+        stage: Stage,
+        c: Vec3,
+        depth: number,
+        v: { x: number; y: number },
+        size: LabelSize,
+    ) =>
+        Math.max(
+            labelGap(stage, worlds[i], depth, looped[i] ? 1 : 0),
+            flownGap(i, view, stage, c, v, size),
+        );
+
     const chaseSides = (
         stage: Stage,
         sizes: LabelSize[],
         safe: Box,
-    ): LabelSide[][] =>
-        route.segments.map((seg) => {
-            // A phone has no room beside its worlds: always below.
-            if (!stage.wide)
-                return worlds.map(() => ({ x: 0, y: 1, reach: 1 }));
-            // Where the world and the Sun are on screen through the
-            // segment (the plan: at its start, before the crane).
-            const room = inset(safe, LABEL_FADE);
-            const views = (seg.kind === "plan" ? [0.02] : [0.5, 0.2, 0.8]).map(
-                (share) => {
-                    const f = frameAt(route, lerp(seg.p0, seg.p1, share));
-                    return { f, view: pose(f, stage) };
-                },
+        map?: LabelSide[],
+    ): LabelSide[][] => {
+        // A phone has no room beside its worlds: always below.
+        if (!stage.wide)
+            return route.segments.map(() =>
+                worlds.map(() => ({ x: 0, y: 1, reach: 1 })),
             );
-            return worlds.map((w, i) => {
-                const size = sizes[i];
-                const seen = views.map(({ f, view }) => {
-                    const c = worldAt(w, f.t);
-                    const q = screenOf(view, stage, c);
-                    const away = dot(scale(c, -1), viewAxes(view).right) > 0;
-                    const gap = labelGap(stage, w, q.depth, looped[i] ? 1 : 0);
-                    const on = q.depth > 0 && within(pointBox(q), safe);
-                    return { q, gap, on, h: away ? -1 : 1 };
-                });
-                const h = seen[0].h;
-                const sides = [
-                    { x: h, y: 0 },
-                    { x: -h, y: 0 },
-                    { x: 0, y: 1 },
-                    { x: 0, y: -1 },
-                ];
-                // The side that fits in the most of those frames; the
-                // first, away from the Sun, on a tie.
-                let best = sides[0];
-                let most = 0;
-                for (const v of sides) {
-                    const fits = size
-                        ? seen.filter(
-                              (o) =>
-                                  o.on &&
-                                  within(labelBox(o.q, v, o.gap, size), room),
-                          ).length
-                        : 0;
-                    if (fits > most) {
-                        most = fits;
-                        best = v;
-                    }
-                }
-                return { ...best, reach: 1 };
+        const room = inset(safe, LABEL_FADE);
+        /** World i on screen at these shares of a segment: its centre,
+         *  the view, its orbit's direction there, and which side of it is
+         *  away from the Sun. */
+        const look = (index: number, shares: number[], i: number) => {
+            const seg = route.segments[index];
+            const w = worlds[i];
+            return shares.map((share) => {
+                const f = frameAt(route, lerp(seg.p0, seg.p1, share));
+                const view = pose(f, stage);
+                const c = worldAt(w, f.t);
+                const q = screenOf(view, stage, c);
+                const a = angleAt(w, f.t, epoch);
+                const ahead = screenOf(
+                    view,
+                    stage,
+                    onPlane(w.plane, w.orbit, a + 0.01),
+                );
+                const n = Math.hypot(ahead.x - q.x, ahead.y - q.y) || 1;
+                return {
+                    c,
+                    q,
+                    view,
+                    orbit: { x: (ahead.x - q.x) / n, y: (ahead.y - q.y) / n },
+                    on: q.depth > 0 && within(pointBox(q), safe),
+                    away: dot(scale(c, -1), viewAxes(view).right) > 0 ? -1 : 1,
+                };
             });
+        };
+        /** Of away from the Sun (level, then tilted 30° up and down),
+         *  below, above and the Sun's side, the side on which the label
+         *  fits in the most of these frames, clear of the route flown near
+         *  its world and of its orbit; the first on a tie. `toward`: of
+         *  those that fit best, the one nearest that side. */
+        const choose = (
+            i: number,
+            frames: ReturnType<typeof look>,
+            away: number,
+            toward?: { x: number; y: number },
+        ): LabelSide => {
+            const size = sizes[i];
+            if (!size) return { x: away, y: 0, reach: 1 };
+            const beside = (x: number) => [
+                { x, y: 0 },
+                { x: x * TILT_COS, y: -TILT_SIN },
+                { x: x * TILT_COS, y: TILT_SIN },
+            ];
+            const sides = [
+                ...beside(away),
+                { x: 0, y: 1 },
+                { x: 0, y: -1 },
+                ...beside(-away),
+            ];
+            if (toward) {
+                const near = (v: { x: number; y: number }) =>
+                    v.x * toward.x + v.y * toward.y;
+                sides.unshift(toward);
+                sides.sort((a, b) => near(b) - near(a));
+            }
+            /** Inside the room, and neither the leader along the orbit
+             *  nor the orbit through the label. */
+            const fitsAt = (
+                o: ReturnType<typeof look>[number],
+                v: { x: number; y: number },
+            ) => {
+                if (!o.on) return false;
+                const { x: ox, y: oy } = o.orbit;
+                if (Math.abs(ox * v.x + oy * v.y) >= ALONG_ORBIT) return false;
+                const gap = chaseGap(i, o.view, stage, o.c, o.q.depth, v, size);
+                const b = labelBox(o.q, v, gap, size);
+                if (!within(b, room)) return false;
+                const off = [b.x0, b.x1].flatMap((x) =>
+                    [b.y0, b.y1].map(
+                        (y) => ox * (y - o.q.y) - oy * (x - o.q.x),
+                    ),
+                );
+                return Math.min(...off) > 6 || Math.max(...off) < -6;
+            };
+            let best = sides[0];
+            let most = 0;
+            for (const v of sides) {
+                const fits = frames.filter((o) => fitsAt(o, v)).length;
+                if (fits > most) {
+                    most = fits;
+                    best = v;
+                }
+            }
+            return { x: best.x, y: best.y, reach: 1 };
+        };
+        // One side per world for the chase, judged over every frame its
+        // label shows: its approach (flight-gl.ts names it from u 0.35),
+        // its hold (the middle and quarters) and its departure while the
+        // label fades (over the transfer's first quarter). So no label
+        // changes side within its chapter.
+        const own = worlds.map((_, i) => {
+            const frames: ReturnType<typeof look> = [];
+            let away = 0;
+            route.segments.forEach((seg, index) => {
+                if (seg.kind === "transfer" && seg.chapter === i)
+                    frames.push(
+                        ...look(index, [0.4, 0.5, 0.65, 0.8, 0.9, 0.97], i),
+                    );
+                else if (seg.kind === "transfer" && seg.from === i)
+                    frames.push(...look(index, [0.05, 0.12, 0.2], i));
+                else if (seg.kind !== "plan" && seg.chapter === i) {
+                    const held = look(index, [0.5, 0.2, 0.8], i);
+                    away = held[0].away;
+                    frames.push(...held);
+                }
+            });
+            return frames.length ? choose(i, frames, away || -1) : null;
         });
+        // Into the map (judged at the plan's start, before the crane): the
+        // map's side, or the nearest that fits, so it turns with the crane.
+        return route.segments.map((seg, index) =>
+            worlds.map((_, i) => {
+                if (seg.kind === "plan") {
+                    const frames = look(index, [0.02], i);
+                    return choose(i, frames, frames[0].away, map?.[i]);
+                }
+                return own[i] ?? { x: -1, y: 0, reach: 1 };
+            }),
+        );
+    };
 
     const curSeg =
         lastCurrent < 0
@@ -1344,6 +1585,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         looped,
         mapSides,
         chaseSides,
+        flownGap,
         spinAt: (w, p) => p * TAU * (1.1 + 0.25 * w.chapter) + w.chapter,
         pose,
         phaseAngle,

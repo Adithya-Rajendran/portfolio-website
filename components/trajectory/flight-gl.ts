@@ -44,6 +44,7 @@ import {
     LABEL_FADE,
     RING,
     buildFlight,
+    inset,
     labelBox,
     labelGap,
     labelSafe,
@@ -51,6 +52,8 @@ import {
     minWorldPx,
     onPlane,
     pointBox,
+    ringReach,
+    roomGap,
     screenOf,
     smoothstep,
     stageFrame,
@@ -73,8 +76,15 @@ import {
 
 export interface FlightGL {
     /** `record`: on a phone, the record's top edge on the stage (pixels);
-     *  nothing is drawn below it. */
-    resize(width: number, height: number, wide: boolean, record?: number): void;
+     *  nothing is drawn below it. `caption`: the figure's caption on the
+     *  stage (pixels), which no line or label enters. */
+    resize(
+        width: number,
+        height: number,
+        wide: boolean,
+        record?: number,
+        caption?: Box,
+    ): void;
     render(frame: Frame): void;
     theme(): void;
     dispose(): void;
@@ -130,12 +140,19 @@ const SATURN_CLEAR = 2;
 const LINE_MASK = [0.3, 0.46];
 /** Worlds whose discs the orbits keep clear of (the rest are ignored). */
 const MAX_DISCS = 8;
+/** Lines fade out from this far outside the caption's box to this far
+ *  (pixels), and labels stay this far above it. */
+const CAPTION_CLEAR = [22, 6];
+/** A box no line reaches (the keep-out box when there is no caption). */
+const NOWHERE = new Vector4(-1e4, -1e4, -9e3, -9e3);
 
 /**
- * Three extra terms in three.js's line shader (LineMaterial), each a
- * factor on the fragment's alpha:
+ * Extra terms in three.js's line shader (LineMaterial), each a factor on
+ * the fragment's alpha:
  * - a screen mask (uMask: x from, x to, y from, y to, device pixels), so
  *   no line runs under the record;
+ * - a keep-out box (uKeep: x0, y0, x1, y1, device pixels; uKeepSoft: the
+ *   fade outside it), so no line runs through the figure's caption;
  * - LINE_AGE: the flown trail dims with age (uAge: the head's progress,
  *   the fade length, the floor), from a per-segment progress;
  * - LINE_CLEAR: an orbit stops short of every world's disc on screen
@@ -168,6 +185,8 @@ vAge = instanceAge;
         fragment:
             /* glsl */ `
 uniform vec4 uMask;
+uniform vec4 uKeep;
+uniform float uKeepSoft;
 #ifdef LINE_AGE
 uniform vec3 uAge;
 varying float vAge;
@@ -181,6 +200,8 @@ uniform vec2 uClear;
                 LINE_FRAGMENT_AT,
                 /* glsl */ `alpha *= smoothstep(uMask.x, uMask.y, gl_FragCoord.x)
     * smoothstep(uMask.z, uMask.w, gl_FragCoord.y);
+vec2 kept = max(uKeep.xy - gl_FragCoord.xy, gl_FragCoord.xy - uKeep.zw);
+alpha *= smoothstep(0.0, uKeepSoft, max(kept.x, kept.y));
 #ifdef LINE_AGE
 alpha *= mix(uAge.z, 1.0, exp(-max(uAge.x - vAge, 0.0) / uAge.y));
 #endif
@@ -338,6 +359,10 @@ export function mountFlight(
     let last: Frame | null = null;
     let W = 1;
     let H = 1;
+    /** Labels and marks sit on whole device pixels, so their text is
+     *  drawn the same however the page was scrolled to a frame. */
+    let cssDpr = 1;
+    const snap = (v: number) => (Math.round(v * cssDpr) / cssDpr).toFixed(2);
     /** The lens, the subject's box and the framing (flight-route.ts). */
     let stage: Stage = stageFrame(1, 1, true);
     let wideLayout = true;
@@ -427,6 +452,8 @@ export function mountFlight(
     // Shared by the lines: the record's mask, the discs the orbits keep
     // clear of, and the trail's age (set in resize() and draw()).
     const mask = { value: new Vector4(-2, -1, -2, -1) };
+    const keepOut = { value: NOWHERE.clone() };
+    const keepSoft = { value: 1 };
     const discs = {
         value: Array.from({ length: MAX_DISCS }, () => new Vector3(0, 0, -1)),
     };
@@ -459,6 +486,8 @@ export function mountFlight(
             material.vertexShader = patched.vertex;
             material.fragmentShader = patched.fragment;
             material.uniforms.uMask = mask;
+            material.uniforms.uKeep = keepOut;
+            material.uniforms.uKeepSoft = keepSoft;
             if (orbit) {
                 material.defines.LINE_CLEAR = "";
                 material.uniforms.uDiscs = discs;
@@ -869,6 +898,8 @@ export function mountFlight(
      *  out as they reach the record, the caption or the stage's edge. */
     const keep = (b: Box, soft: number) =>
         1 - smoothstep(-soft, 0, overflow(b));
+    /** Where a label sits well clear of the edge of its safe area. */
+    let room: Box = inset(labelSafe(stage), LABEL_FADE);
     const setOpacity = (el: HTMLElement, a: number) => {
         el.style.opacity = a > 0.01 ? a.toFixed(3) : "0";
         return a > 0.01;
@@ -909,9 +940,9 @@ export function mountFlight(
         }
         const length = gap - limb;
         if (setOpacity(leader, a * smoothstep(4, 10, length)))
-            leader.style.transform = `translate3d(${(at.x + side.x * limb).toFixed(1)}px, ${(at.y + side.y * limb).toFixed(1)}px, 0) rotate(${Math.atan2(side.y, side.x).toFixed(4)}rad) scaleX(${length.toFixed(1)})`;
+            leader.style.transform = `translate3d(${snap(at.x + side.x * limb)}px, ${snap(at.y + side.y * limb)}px, 0) rotate(${Math.atan2(side.y, side.x).toFixed(4)}rad) scaleX(${length.toFixed(1)})`;
         if (!setOpacity(el, a)) return;
-        el.style.transform = `translate3d(${box.x0.toFixed(1)}px, ${box.y0.toFixed(1)}px, 0)`;
+        el.style.transform = `translate3d(${snap(box.x0)}px, ${snap(box.y0)}px, 0)`;
         el.style.textAlign =
             Math.abs(side.x) < 0.45 ? "center" : side.x < 0 ? "right" : "left";
     };
@@ -919,41 +950,63 @@ export function mountFlight(
     let chase: LabelSide[][] = [];
     let sides: LabelSide[] = [];
     let safe: Box = labelSafe(stage);
-    const same = (a?: LabelSide, b?: LabelSide) =>
-        !a || !b || (a.x === b.x && a.y === b.y);
-    /** A world's label side at a frame, and a fade: across a segment
-     *  boundary where the side changes, and through the crane where the
-     *  map's side turns away from the chase's, the label fades out and
-     *  back in on its new side; otherwise the side turns with the crane. */
+    /** The direction a share `k` of the way from side a to side b. */
+    const turn = (
+        a: { x: number; y: number },
+        b: { x: number; y: number },
+        k: number,
+    ) => {
+        const x = lerp(a.x, b.x, k);
+        const y = lerp(a.y, b.y, k);
+        const n = Math.hypot(x, y) || 1;
+        return { x: x / n, y: y / n };
+    };
+    const dotOf = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+        a.x * b.x + a.y * b.y;
+    /** A world's label side at a frame, and a fade. A side changes only
+     *  into the map: across that boundary the label turns to its new side
+     *  when that is a right angle away at most, else fades out and back
+     *  in there; through the crane it turns to the map's side, or fades
+     *  across where that is more than about 100° away. `hang`: under its
+     *  world on a phone. */
     const sideAt = (i: number, frame: Frame, radial: number) => {
         const c = chase[frame.index]?.[i] ?? { x: -1, y: 0, reach: 1 };
+        const before = chase[frame.index - 1]?.[i];
+        const after = chase[frame.index + 1]?.[i];
+        let side = { x: c.x, y: c.y };
         let fade = 1;
-        if (!same(chase[frame.index - 1]?.[i], c))
-            fade *= smoothstep(0, 0.08, frame.u);
-        if (!same(chase[frame.index + 1]?.[i], c))
-            fade *= 1 - smoothstep(0.92, 1, frame.u);
+        if (before && (before.x !== c.x || before.y !== c.y)) {
+            if (dotOf(before, c) > -0.05)
+                side = turn(before, c, 0.5 + 0.5 * smoothstep(0, 0.1, frame.u));
+            else fade *= smoothstep(0, 0.1, frame.u);
+        }
+        if (after && (after.x !== c.x || after.y !== c.y)) {
+            if (dotOf(after, c) > -0.05)
+                side = turn(side, after, 0.5 * smoothstep(0.85, 1, frame.u));
+            else fade *= 1 - smoothstep(0.85, 1, frame.u);
+        }
+        const hang = !wideLayout && c.x === 0 ? 1 - radial : 0;
         const m = sides[i] ?? c;
-        if (radial <= 0) return { side: c, reach: 1, fade };
-        if (c.x * m.x + c.y * m.y > 0.3) {
-            const x = lerp(c.x, m.x, radial);
-            const y = lerp(c.y, m.y, radial);
-            const n = Math.hypot(x, y) || 1;
+        if (radial <= 0) return { side, reach: 1, fade, hang };
+        if (dotOf(side, m) > -0.2)
             return {
-                side: { x: x / n, y: y / n },
+                side: turn(side, m, radial),
                 reach: lerp(1, m.reach, radial),
                 fade,
+                hang,
             };
-        }
         return radial < 0.5
             ? {
-                  side: c,
+                  side,
                   reach: 1,
                   fade: fade * (1 - smoothstep(0.1, 0.5, radial)),
+                  hang,
               }
             : {
                   side: m,
                   reach: m.reach,
                   fade: fade * smoothstep(0.5, 0.9, radial),
+                  hang,
               };
     };
     const mark = (
@@ -962,7 +1015,7 @@ export function mountFlight(
         alpha: number,
     ) => {
         if (setOpacity(el, at.on ? alpha * keep(pointBox(at), 8) : 0))
-            el.style.transform = `translate3d(${at.x.toFixed(1)}px, ${at.y.toFixed(1)}px, 0)`;
+            el.style.transform = `translate3d(${snap(at.x)}px, ${snap(at.y)}px, 0)`;
     };
 
     function draw(frame: Frame) {
@@ -1054,9 +1107,8 @@ export function mountFlight(
         const into = seg.kind === "transfer" ? seg.chapter : -1;
         const from = seg.kind === "transfer" ? (seg.from ?? -1) : -1;
         const dpr = renderer.getPixelRatio();
-        const centres = bodies.map((b) =>
-            project(b.tilt.position.toArray() as Vec3),
-        );
+        const positions = bodies.map((b) => b.tilt.position.toArray() as Vec3);
+        const centres = positions.map(project);
         orbits.forEach((o, i) => {
             const visited = p >= coastStart[i] - 1e-6;
             const held =
@@ -1144,9 +1196,10 @@ export function mountFlight(
         beaconMaterial.opacity = 0.55 * shipFade;
         ship.visible = shipFade > 0.001;
 
-        // Labels: the worlds flown and the one approached. Phones name only
-        // the world held and, through a transfer, the one ahead; the one
-        // left behind fades as its card hands over.
+        // Labels: on the chase the world held and, through a transfer, the
+        // one ahead; the one left behind fades as the ship leaves, by
+        // progress, before the view swings away from it. The map names
+        // every world on a wide stage; a phone names only the world held.
         const radial = smoothstep(0.35, 0.85, pose.overview);
         const away = (at: { x: number; y: number }) => {
             const n = Math.hypot(at.x - sunAt.x, at.y - sunAt.y) || 1;
@@ -1158,20 +1211,20 @@ export function mountFlight(
             const visited = p >= coastStart[i] - 1e-6;
             const state =
                 i === world ? "current" : visited ? "visited" : "future";
+            // The world ahead is named once the view has it on the stage.
             let alpha =
-                state !== "future"
-                    ? 1
-                    : i === into
-                      ? smoothstep(0.1, 0.5, frame.u)
+                i === into
+                    ? smoothstep(0.35, 0.6, frame.u)
+                    : state !== "future"
+                      ? 1
                       : 0;
-            if (!wideLayout) {
-                if (i !== world && i !== into) alpha = 0;
-                if (i === from) alpha *= 1 - smoothstep(0.3, 0.5, frame.u);
-            }
+            if (i === from) alpha *= 1 - smoothstep(0.05, 0.25, frame.u);
+            if (i !== world && i !== into && (kind !== "plan" || !wideLayout))
+                alpha = 0;
             // The map's other labels come in as it settles, not as their
             // worlds sweep in through the crane.
             if (kind === "plan" && i !== world)
-                alpha *= smoothstep(0.3, CRANE, frame.u);
+                alpha *= smoothstep(0.4, 0.6, frame.u);
             // Gone once its world leaves the safe area.
             alpha *= 1 - smoothstep(-16, 8, overflow(pointBox(at)));
             // A hairline ring round a world drawn at its smallest; in the
@@ -1184,20 +1237,45 @@ export function mountFlight(
                     `${(2 * b.drawn + 7).toFixed(1)}px`,
                 );
             mark(rings[i], at, alpha * small);
-            const { side, reach, fade } = sideAt(i, frame, radial);
+            const { side, reach, fade, hang } = sideAt(i, frame, radial);
+            if (alpha * fade <= 0.01) {
+                place(label, at, side, 0, 0, 0, state);
+                return;
+            }
+            // Past the disc (and ring), and on the chase clear of the route
+            // flown near the world, so neither the ship nor its trail runs
+            // under the label, as far as its room allows (it never fades
+            // for that); the leader ends on the disc or on Saturn's ring.
+            const flown =
+                radial < 1
+                    ? plan.flownGap(
+                          i,
+                          pose,
+                          stage,
+                          positions[i],
+                          side,
+                          // A phone's label hangs anywhere across its width.
+                          wideLayout ? label : { w: 2 * label.w, h: label.h },
+                      ) *
+                      (1 - radial)
+                    : 0;
+            const gap = Math.max(
+                labelGap(stage, b.w, at.depth, looped[i] ? 1 : radial) * reach,
+                Math.min(flown, roomGap(at, side, label, room)),
+            );
             const ring =
                 b.w.kind === "saturn"
-                    ? lerp(1.1, SATURN_CLEAR, Math.abs(side.x))
+                    ? Math.max(1, ringReach(pose, b.w.pole, side))
                     : 1;
             place(
                 label,
                 at,
                 side,
-                labelGap(stage, b.w, at.depth, looped[i] ? 1 : radial) * reach,
+                gap,
                 b.drawn * ring + 3,
                 alpha * fade,
                 state,
-                wideLayout || side.x !== 0 ? 0 : 1 - radial,
+                hang,
             );
         });
         if (openLabel && plan.planned) {
@@ -1219,10 +1297,11 @@ export function mountFlight(
     }
 
     return {
-        resize(width, height, wide, record) {
+        resize(width, height, wide, record, caption) {
             W = Math.max(1, width);
             H = Math.max(1, height);
             wideLayout = wide;
+            cssDpr = window.devicePixelRatio || 1;
             renderer.setPixelRatio(
                 Math.min(MAX_DPR, window.devicePixelRatio || 1),
             );
@@ -1235,6 +1314,19 @@ export function mountFlight(
             // under its scrim; on a phone above its top edge.
             const dpr = renderer.getPixelRatio();
             safe = labelSafe(stage, wide ? undefined : record);
+            // Nor through the caption: lines fade out round it and labels
+            // keep above it.
+            if (caption) {
+                const [soft, pad] = CAPTION_CLEAR;
+                keepOut.value.set(
+                    (caption.x0 - pad) * dpr,
+                    (H - caption.y1 - pad) * dpr,
+                    (caption.x1 + pad) * dpr,
+                    (H - caption.y0 + pad) * dpr,
+                );
+                keepSoft.value = (soft - pad) * dpr;
+                safe.y1 = Math.min(safe.y1, caption.y0 - pad);
+            } else keepOut.value.copy(NOWHERE);
             const top = record ?? stage.box.y1;
             if (wide)
                 mask.value.set(
@@ -1251,8 +1343,14 @@ export function mountFlight(
                     (H - top + 28) * dpr,
                 );
             measureLabels();
+            room = inset(safe, LABEL_FADE);
             sides = plan.mapSides(stage, labels, wide ? openLabel : null, safe);
-            chase = plan.chaseSides(stage, labels, safe);
+            chase = plan.chaseSides(
+                stage,
+                labels,
+                safe,
+                wide ? sides : undefined,
+            );
             if (last) draw(last);
         },
         render(frame) {

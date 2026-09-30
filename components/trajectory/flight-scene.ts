@@ -1,6 +1,7 @@
 import { trajectoryCopy as copy } from "@/lib/copy";
 import type { Frame } from "@/lib/trajectory";
 import type { FlightGL } from "./flight-gl";
+import type { Box } from "./flight-route";
 import type { CreateScene } from "./journey";
 import styles from "./flight.module.css";
 
@@ -30,7 +31,7 @@ export const createFlightScene: CreateScene = (host, data, route) => {
 
     let gl: FlightGL | null = null;
     let disposed = false;
-    let size: [number, number, boolean, number?] | null = null;
+    let size: [number, number, boolean, number?, Box?] | null = null;
     // On a phone nothing is drawn below the record's top edge (its date
     // row's rule), measured here, where layout reads belong.
     const recordTop = () => {
@@ -40,6 +41,22 @@ export const createFlightScene: CreateScene = (host, data, route) => {
         return (
             row.getBoundingClientRect().top - host.getBoundingClientRect().top
         );
+    };
+    // The figure's caption on a wide stage (the record grid's own
+    // paragraph), which no line or label enters.
+    const captionBox = (): Box | undefined => {
+        const caption = host.parentElement?.querySelector(
+            ":scope > div:not([data-scene]) > div > p",
+        );
+        const r = caption?.getBoundingClientRect();
+        if (!r || r.width === 0) return undefined;
+        const h = host.getBoundingClientRect();
+        return {
+            x0: r.left - h.left,
+            y0: r.top - h.top,
+            x1: r.right - h.left,
+            y1: r.bottom - h.top,
+        };
     };
     let last: Frame | null = null;
 
@@ -73,7 +90,7 @@ export const createFlightScene: CreateScene = (host, data, route) => {
     return {
         resize(width, height, wide) {
             const record = wide ? undefined : recordTop();
-            size = [width, height, wide, record];
+            size = [width, height, wide, record, captionBox()];
             // The canvas is cut at the record's top edge (see the CSS).
             if (record === undefined) host.style.removeProperty("--record");
             else host.style.setProperty("--record", `${record.toFixed(1)}px`);
