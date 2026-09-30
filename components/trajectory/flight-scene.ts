@@ -30,7 +30,17 @@ export const createFlightScene: CreateScene = (host, data, route) => {
 
     let gl: FlightGL | null = null;
     let disposed = false;
-    let size: [number, number, boolean] | null = null;
+    let size: [number, number, boolean, number?] | null = null;
+    // On a phone nothing is drawn below the record's top edge (its date
+    // row's rule), measured here, where layout reads belong.
+    const recordTop = () => {
+        const row =
+            host.parentElement?.querySelector("[data-date]")?.parentElement;
+        if (!row) return undefined;
+        return (
+            row.getBoundingClientRect().top - host.getBoundingClientRect().top
+        );
+    };
     let last: Frame | null = null;
 
     import("./flight-gl")
@@ -45,6 +55,7 @@ export const createFlightScene: CreateScene = (host, data, route) => {
                     now: styles.now,
                     target: styles.target,
                     world: styles.world,
+                    leader: styles.leader,
                 },
                 openTo: copy.openTo,
                 ready: () => {
@@ -61,8 +72,12 @@ export const createFlightScene: CreateScene = (host, data, route) => {
 
     return {
         resize(width, height, wide) {
-            size = [width, height, wide];
-            gl?.resize(width, height, wide);
+            const record = wide ? undefined : recordTop();
+            size = [width, height, wide, record];
+            // The canvas is cut at the record's top edge (see the CSS).
+            if (record === undefined) host.style.removeProperty("--record");
+            else host.style.setProperty("--record", `${record.toFixed(1)}px`);
+            gl?.resize(...size);
         },
         render(frame) {
             last = frame;
@@ -79,6 +94,7 @@ export const createFlightScene: CreateScene = (host, data, route) => {
             scrim.remove();
             layer.remove();
             host.classList.remove(styles.host);
+            host.style.removeProperty("--record");
             delete host.dataset.ready;
         },
     };

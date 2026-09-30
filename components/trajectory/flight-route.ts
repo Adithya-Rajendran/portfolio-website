@@ -316,9 +316,28 @@ export const minWorldPx = (stage: Pick<Stage, "wide">) => (stage.wide ? 6 : 5);
 export const labelMinX = (stage: Pick<Stage, "wide" | "W">) =>
     stage.wide ? stage.W * 0.37 : 8;
 
+/** Where labels and marks may print, pixels: right of the record and
+ *  above the caption band on a wide stage; above the record on a phone
+ *  (`record` is its top edge, measured when the stage is sized). A label
+ *  fades out as it reaches an edge rather than sliding along it. */
+export function labelSafe(
+    stage: Pick<Stage, "W" | "H" | "wide" | "box">,
+    record?: number,
+): Box {
+    if (stage.wide)
+        return {
+            x0: labelMinX(stage),
+            y0: 8,
+            x1: stage.W - 12,
+            y1: stage.H - 54,
+        };
+    return { x0: 8, y0: 8, x1: stage.W - 8, y1: (record ?? stage.box.y1) - 8 };
+}
+
 /** How far a label stands off its world's centre, pixels: past the world
- *  as drawn (Saturn's ring included), and in the overview (radial 1) past
- *  its loop. `depth` is the world's, along the view axis. */
+ *  as drawn (Saturn's ring included) and past `radial` of its parking
+ *  loop (the whole loop for a world the ship circles, else only in the
+ *  overview). `depth` is the world's, along the view axis. */
 export function labelGap(
     stage: Stage,
     w: World,
@@ -357,6 +376,30 @@ export function labelBox(
     const y0 = at.y + v.y * gap + (-0.5 + 0.5 * v.y) * size.h;
     return { x0, y0, x1: x0 + size.w, y1: y0 + size.h };
 }
+
+/** A label fades out over this many pixels as it reaches the edge of
+ *  the area it may print in. */
+export const LABEL_FADE = 24;
+
+/** Box `b` shrunk by `m` on every side. */
+export const inset = (b: Box, m: number): Box => ({
+    x0: b.x0 + m,
+    y0: b.y0 + m,
+    x1: b.x1 - m,
+    y1: b.y1 - m,
+});
+
+/** A point as an empty box. */
+export const pointBox = (q: { x: number; y: number }): Box => ({
+    x0: q.x,
+    y0: q.y,
+    x1: q.x,
+    y1: q.y,
+});
+
+/** Whether box `r` lies within box `b`. */
+export const within = (r: Box, b: Box) =>
+    r.x0 >= b.x0 && r.x1 <= b.x1 && r.y0 >= b.y0 && r.y1 <= b.y1;
 
 /* ---- legs ------------------------------------------------------------------ */
 
@@ -451,6 +494,9 @@ export interface FlightPlan {
      *  orbit. Zero elsewhere, and zero with zero slope where the loop
      *  leaves. */
     carry(p: number, overview: number): Vec3;
+    /** Whether the ship circles each world (a coast), so its label
+     *  stands clear of the loop. */
+    looped: boolean[];
     /** Each world's label side in the map on a stage, for labels of these
      *  sizes (the "Open to" label's too, which keeps outward): chosen once
      *  at the map's pose, so no label changes side as the map rises. */
@@ -458,7 +504,15 @@ export interface FlightPlan {
         stage: Stage,
         sizes: LabelSize[],
         open: LabelSize | null,
+        safe?: Box,
     ): LabelSide[];
+    /** Each world's label side on the chase, per segment: of away from
+     *  the Sun on screen, the other side, below and above, the one where
+     *  the label fits well inside `safe` in the most of the segment's
+     *  middle and quarters (the plan: its start), the first on a tie. A
+     *  phone, narrow beside its worlds, always puts it below. Chosen once
+     *  per stage, so a label never changes side mid-segment. */
+    chaseSides(stage: Stage, sizes: LabelSize[], safe: Box): LabelSide[][];
     /** A world's spin about its axis at progress p (radians). */
     spinAt(w: World, p: number): number;
     /** The camera at a frame, for a stage. */
@@ -1119,6 +1173,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         stage: Stage,
         sizes: LabelSize[],
         open: LabelSize | null,
+        safe: Box = labelSafe(stage),
     ): LabelSide[] => {
         const end = frameAt(route, 1);
         const view = pose(end, stage);
@@ -1150,7 +1205,6 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                 labelBox(q, { x: Math.cos(a), y: Math.sin(a) }, 12, open),
             );
         }
-        const bottom = stage.wide ? stage.H - 48 : stage.box.y1;
         const order = worlds
             .map((_, i) => i)
             .sort((a, b) =>
@@ -1184,13 +1238,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                             m.y < r.y1 + 3
                         )
                             score += m.k;
-                    if (
-                        r.x0 < labelMinX(stage) ||
-                        r.x1 > stage.W - 12 ||
-                        r.y0 < 8 ||
-                        r.y1 > bottom
-                    )
-                        score += 100;
+                    if (!within(r, safe)) score += 100;
                     const dx = Math.max(r.x0 - s.x, 0, s.x - r.x1);
                     const dy = Math.max(r.y0 - s.y, 0, s.y - r.y1);
                     if (Math.hypot(dx, dy) < 24) score += 20;
@@ -1214,6 +1262,67 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         return sides;
     };
 
+    const looped = worlds.map((w) =>
+        route.segments.some(
+            (s) => s.chapter === w.chapter && s.kind === "coast",
+        ),
+    );
+    const chaseSides = (
+        stage: Stage,
+        sizes: LabelSize[],
+        safe: Box,
+    ): LabelSide[][] =>
+        route.segments.map((seg) => {
+            // A phone has no room beside its worlds: always below.
+            if (!stage.wide)
+                return worlds.map(() => ({ x: 0, y: 1, reach: 1 }));
+            // Where the world and the Sun are on screen through the
+            // segment (the plan: at its start, before the crane).
+            const room = inset(safe, LABEL_FADE);
+            const views = (seg.kind === "plan" ? [0.02] : [0.5, 0.2, 0.8]).map(
+                (share) => {
+                    const f = frameAt(route, lerp(seg.p0, seg.p1, share));
+                    return { f, view: pose(f, stage) };
+                },
+            );
+            return worlds.map((w, i) => {
+                const size = sizes[i];
+                const seen = views.map(({ f, view }) => {
+                    const c = worldAt(w, f.t);
+                    const q = screenOf(view, stage, c);
+                    const away = dot(scale(c, -1), viewAxes(view).right) > 0;
+                    const gap = labelGap(stage, w, q.depth, looped[i] ? 1 : 0);
+                    const on = q.depth > 0 && within(pointBox(q), safe);
+                    return { q, gap, on, h: away ? -1 : 1 };
+                });
+                const h = seen[0].h;
+                const sides = [
+                    { x: h, y: 0 },
+                    { x: -h, y: 0 },
+                    { x: 0, y: 1 },
+                    { x: 0, y: -1 },
+                ];
+                // The side that fits in the most of those frames; the
+                // first, away from the Sun, on a tie.
+                let best = sides[0];
+                let most = 0;
+                for (const v of sides) {
+                    const fits = size
+                        ? seen.filter(
+                              (o) =>
+                                  o.on &&
+                                  within(labelBox(o.q, v, o.gap, size), room),
+                          ).length
+                        : 0;
+                    if (fits > most) {
+                        most = fits;
+                        best = v;
+                    }
+                }
+                return { ...best, reach: 1 };
+            });
+        });
+
     const curSeg =
         lastCurrent < 0
             ? null
@@ -1232,7 +1341,9 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         worldAt,
         mapAt,
         carry,
+        looped,
         mapSides,
+        chaseSides,
         spinAt: (w, p) => p * TAU * (1.1 + 0.25 * w.chapter) + w.chapter,
         pose,
         phaseAngle,

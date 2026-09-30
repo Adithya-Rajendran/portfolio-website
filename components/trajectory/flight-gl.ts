@@ -8,6 +8,7 @@ import {
     DoubleSide,
     Float32BufferAttribute,
     Group,
+    InstancedBufferAttribute,
     type InterleavedBufferAttribute,
     Mesh,
     MeshBasicMaterial,
@@ -27,7 +28,9 @@ import {
     Sprite,
     SpriteMaterial,
     TextureLoader,
+    Vector2,
     Vector3,
+    Vector4,
     WebGLRenderer,
     type Material,
     type Texture,
@@ -38,16 +41,20 @@ import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import type { Frame, Route, TrajectoryData } from "@/lib/trajectory";
 import {
     CRANE,
+    LABEL_FADE,
     RING,
     buildFlight,
     labelBox,
     labelGap,
-    labelMinX,
+    labelSafe,
+    lerp,
     minWorldPx,
     onPlane,
+    pointBox,
     screenOf,
     smoothstep,
     stageFrame,
+    type Box,
     type LabelSide,
     type Pose,
     type Stage,
@@ -65,7 +72,9 @@ import {
  */
 
 export interface FlightGL {
-    resize(width: number, height: number, wide: boolean): void;
+    /** `record`: on a phone, the record's top edge on the stage (pixels);
+     *  nothing is drawn below it. */
+    resize(width: number, height: number, wide: boolean, record?: number): void;
     render(frame: Frame): void;
     theme(): void;
     dispose(): void;
@@ -81,6 +90,7 @@ export interface FlightHooks {
         now: string;
         target: string;
         world: string;
+        leader: string;
     };
     /** The planned orbit's label ("Open to"). */
     openTo: string;
@@ -110,6 +120,82 @@ const SHIP_PX = 21;
  *  (0.88 of white, from 2.6 over the limb darkening), so the route and
  *  the now mark lead. */
 const SUN_LEVEL_MAP = 0.34;
+/** No orbit is drawn across a world's disc on screen: the line stops this
+ *  many pixels short of the limb, fading in over the second (Saturn's
+ *  short of its ring's tips, about twice its radius from the chase). */
+const ORBIT_CLEAR = [5, 14];
+const SATURN_CLEAR = 2;
+/** On a wide stage the lines fade out under the record's scrim, between
+ *  these shares of the width (gone before the record's text column). */
+const LINE_MASK = [0.3, 0.46];
+/** Worlds whose discs the orbits keep clear of (the rest are ignored). */
+const MAX_DISCS = 8;
+
+/**
+ * Three extra terms in three.js's line shader (LineMaterial), each a
+ * factor on the fragment's alpha:
+ * - a screen mask (uMask: x from, x to, y from, y to, device pixels), so
+ *   no line runs under the record;
+ * - LINE_AGE: the flown trail dims with age (uAge: the head's progress,
+ *   the fade length, the floor), from a per-segment progress;
+ * - LINE_CLEAR: an orbit stops short of every world's disc on screen
+ *   (uDiscs: x, y, radius, device pixels; uClear: the gap's two edges).
+ * Null when three.js's shader no longer has the lines this patches.
+ */
+const LINE_VERTEX_AT = "vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );";
+const LINE_FRAGMENT_AT = "gl_FragColor = vec4( diffuseColor.rgb, alpha );";
+export function patchLineShader(vertex: string, fragment: string) {
+    if (
+        !vertex.includes(LINE_VERTEX_AT) ||
+        !fragment.includes(LINE_FRAGMENT_AT)
+    )
+        return null;
+    return {
+        vertex:
+            /* glsl */ `
+#ifdef LINE_AGE
+attribute float instanceAge;
+varying float vAge;
+#endif
+` +
+            vertex.replace(
+                LINE_VERTEX_AT,
+                `${LINE_VERTEX_AT}
+#ifdef LINE_AGE
+vAge = instanceAge;
+#endif`,
+            ),
+        fragment:
+            /* glsl */ `
+uniform vec4 uMask;
+#ifdef LINE_AGE
+uniform vec3 uAge;
+varying float vAge;
+#endif
+#ifdef LINE_CLEAR
+uniform vec3 uDiscs[${MAX_DISCS}];
+uniform vec2 uClear;
+#endif
+` +
+            fragment.replace(
+                LINE_FRAGMENT_AT,
+                /* glsl */ `alpha *= smoothstep(uMask.x, uMask.y, gl_FragCoord.x)
+    * smoothstep(uMask.z, uMask.w, gl_FragCoord.y);
+#ifdef LINE_AGE
+alpha *= mix(uAge.z, 1.0, exp(-max(uAge.x - vAge, 0.0) / uAge.y));
+#endif
+#ifdef LINE_CLEAR
+for (int i = 0; i < ${MAX_DISCS}; i++) {
+    vec3 d = uDiscs[i];
+    if (d.z > 0.0)
+        alpha *= smoothstep(d.z + uClear.x, d.z + uClear.y,
+            distance(gl_FragCoord.xy, d.xy));
+}
+#endif
+${LINE_FRAGMENT_AT}`,
+            ),
+    };
+}
 
 function seeded(seed: number) {
     let a = seed | 0;
@@ -338,10 +424,22 @@ export function mountFlight(
 
     /* ---- lines ------------------------------------------------------------ */
 
+    // Shared by the lines: the record's mask, the discs the orbits keep
+    // clear of, and the trail's age (set in resize() and draw()).
+    const mask = { value: new Vector4(-2, -1, -2, -1) };
+    const discs = {
+        value: Array.from({ length: MAX_DISCS }, () => new Vector3(0, 0, -1)),
+    };
+    const clear = { value: new Vector2(...ORBIT_CLEAR) };
+    const age = { value: new Vector3(0, 1, 1) };
     const makeLine = (
         points: Vec3[],
         width: number,
-        dashed = false,
+        {
+            dashed = false,
+            orbit = false,
+            ages = null as Float32Array | null,
+        } = {},
     ): { line: Line2; material: LineMaterial; geometry: LineGeometry } => {
         const geometry = new LineGeometry();
         geometry.setPositions(points.flat());
@@ -353,6 +451,28 @@ export function mountFlight(
             dashSize: 1,
             gapSize: 0.8,
         });
+        const patched = patchLineShader(
+            material.vertexShader,
+            material.fragmentShader,
+        );
+        if (patched) {
+            material.vertexShader = patched.vertex;
+            material.fragmentShader = patched.fragment;
+            material.uniforms.uMask = mask;
+            if (orbit) {
+                material.defines.LINE_CLEAR = "";
+                material.uniforms.uDiscs = discs;
+                material.uniforms.uClear = clear;
+            }
+            if (ages) {
+                material.defines.LINE_AGE = "";
+                material.uniforms.uAge = age;
+                geometry.setAttribute(
+                    "instanceAge",
+                    new InstancedBufferAttribute(ages, 1),
+                );
+            }
+        }
         lineMaterials.push(material);
         const line = new Line2(geometry, material);
         if (dashed) line.computeLineDistances();
@@ -365,25 +485,39 @@ export function mountFlight(
             onPlane(pl, orbit, (k / steps) * Math.PI * 2),
         );
 
-    const orbits = plan.worlds.map((w) => makeLine(ring(w.orbit, w.plane), 1));
+    const orbits = plan.worlds.map((w) =>
+        makeLine(ring(w.orbit, w.plane), 1.2, { orbit: true }),
+    );
     const plannedOrbit = plan.planned
-        ? makeLine(ring(plan.planned.orbit, plan.planned.plane, 512), 1, true)
+        ? makeLine(ring(plan.planned.orbit, plan.planned.plane, 512), 1, {
+              dashed: true,
+          })
         : null;
     const plannedLeg = plan.planned
-        ? makeLine(plan.planned.path, 1.4, true)
+        ? makeLine(plan.planned.path, 1.4, { dashed: true })
         : null;
 
-    // The trail: flown in ink, the current leg in the accent. Each is drawn
-    // to the sample before the ship, then one segment to the ship itself.
+    // The trail: flown in ink, dimming with age, the current leg in the
+    // accent at full strength. Each is drawn to the sample before the
+    // ship, then one segment to the ship itself.
     const samples = plan.trail(TRAIL_SAMPLES);
     const flown = route.flown || 1;
     const iCur =
         plan.current < 0
             ? TRAIL_SAMPLES - 1
             : Math.round((plan.currentFrom / flown) * (TRAIL_SAMPLES - 1));
-    const past = makeLine(samples.slice(0, iCur + 1), 1.4);
+    const pOf = (k: number) => (k / (TRAIL_SAMPLES - 1)) * flown;
+    const past = makeLine(samples.slice(0, iCur + 1), 1.8, {
+        ages: Float32Array.from({ length: Math.max(1, iCur) }, (_, k) =>
+            pOf(k),
+        ),
+    });
     const cur =
-        iCur < TRAIL_SAMPLES - 1 ? makeLine(samples.slice(iCur), 2) : null;
+        iCur < TRAIL_SAMPLES - 1 ? makeLine(samples.slice(iCur), 2.2) : null;
+    // A trail segment fades over about one leg of the route.
+    const fadeLen =
+        flown /
+        Math.max(1, route.segments.filter((s) => s.kind !== "plan").length);
     const heads = new Map<LineGeometry, { index: number; saved: Vec3 }>();
     const drawTo = (
         part: { line: Line2; geometry: LineGeometry },
@@ -422,7 +556,6 @@ export function mountFlight(
     };
     // In the map the opening loop moves with Earth (plan.carry): its
     // samples are rewritten as the map rises, in whichever part holds them.
-    const pOf = (k: number) => (k / (TRAIL_SAMPLES - 1)) * flown;
     let opening = 0;
     while (
         opening < TRAIL_SAMPLES - 1 &&
@@ -602,8 +735,11 @@ export function mountFlight(
             s.textContent = dates;
             el.append(s);
         }
-        hooks.labels.append(el);
-        return { el, w: 0, h: 0 };
+        // The leader: a hairline from the world's limb to the label.
+        const leader = document.createElement("i");
+        leader.className = hooks.classes.leader;
+        hooks.labels.append(leader, el);
+        return { el, leader, w: 0, h: 0, state: "" };
     };
     const labels = data.chapters.map((c) => makeLabel(c.orgLabel, c.dates));
     // A hollow ring on each world where it is only a few pixels wide.
@@ -705,11 +841,7 @@ export function mountFlight(
     const forward = new Vector3();
     const eyeV = new Vector3();
     let view: Pose | null = null;
-    const looped = plan.worlds.map((w) =>
-        route.segments.some(
-            (s) => s.chapter === w.chapter && s.kind === "coast",
-        ),
-    );
+    const looped = plan.looped;
     const coastStart = plan.worlds.map(
         (w) =>
             route.segments.find(
@@ -723,90 +855,113 @@ export function mountFlight(
      *  the camera renders with (flight-route.ts screenOf). */
     const project = (p: Vec3) => {
         const s = view ? screenOf(view, stage, p) : { x: -W, y: -H, depth: 0 };
-        return {
-            x: s.x,
-            y: s.y,
-            depth: s.depth,
-            on:
-                s.depth > camera.near &&
-                s.x > -0.1 * W &&
-                s.x < 1.1 * W &&
-                s.y > -0.1 * H &&
-                s.y < 1.1 * H,
-        };
+        return { x: s.x, y: s.y, depth: s.depth, on: s.depth > camera.near };
     };
-    const minLabelX = () => labelMinX(stage);
+    /** How far a box reaches past the safe area (negative: inside). */
+    const overflow = (b: Box) =>
+        Math.max(
+            safe.x0 - b.x0,
+            b.x1 - safe.x1,
+            safe.y0 - b.y0,
+            b.y1 - safe.y1,
+        );
+    /** 1 well inside the safe area, 0 at its edge: labels and marks fade
+     *  out as they reach the record, the caption or the stage's edge. */
+    const keep = (b: Box, soft: number) =>
+        1 - smoothstep(-soft, 0, overflow(b));
+    const setOpacity = (el: HTMLElement, a: number) => {
+        el.style.opacity = a > 0.01 ? a.toFixed(3) : "0";
+        return a > 0.01;
+    };
     /**
-     * A label beside its world: on the chase to the right (away from the
-     * record), unless it would leave the stage; in the overview toward
-     * `side`, a direction on the stage. `radial` blends the two.
+     * A label `gap` pixels off its world toward `side` (a direction on the
+     * stage), with a leader from `limb` pixels off the centre. Its box
+     * fades as it nears the edge of the safe area; it never slides along
+     * it. Under a world on a phone (`hang` 1) it hangs from the leader at
+     * the share of its width that its world is across the stage, so it
+     * stays on the stage without changing side.
      */
     const place = (
-        label: { el: HTMLElement; w: number; h: number },
-        at: { x: number; y: number },
+        label: ReturnType<typeof makeLabel>,
+        at: { x: number; y: number; on: boolean },
+        side: { x: number; y: number },
         gap: number,
+        limb: number,
         alpha: number,
         state: string,
-        radial: number,
-        side: LabelSide,
-        avoid: { x: number; y: number; on: boolean } | null = null,
+        hang = 0,
     ) => {
-        const { el, w, h } = label;
-        el.style.opacity = alpha > 0.01 ? alpha.toFixed(3) : "0";
-        el.dataset.state = state;
-        if (alpha <= 0.01) return;
-        let left = !wideLayout && at.x > stage.lens.x + 4;
-        if (!left && at.x + gap + w > W - 12) left = true;
-        else if (left && at.x - gap - w < minLabelX()) left = false;
-        let x = left ? at.x - gap - w : at.x + gap;
-        let y = at.y - h / 2;
-        let align = left ? "right" : "left";
-        // A large world on a narrow stage leaves no room either side: the
-        // label goes under it instead of over it.
-        if (at.x - gap - w < minLabelX() && at.x + gap + w > W - 12) {
-            x = at.x - w / 2;
-            y = at.y + gap;
-            align = "center";
+        const { el, leader } = label;
+        const box = labelBox(at, side, gap, label);
+        if (hang > 0) {
+            const x0 = safe.x0 + LABEL_FADE;
+            const x1 = safe.x1 - LABEL_FADE;
+            const share = Math.min(1, Math.max(0, (at.x - x0) / (x1 - x0)));
+            const dx = lerp(box.x0, at.x - share * label.w, hang) - box.x0;
+            box.x0 += dx;
+            box.x1 += dx;
         }
-        if (radial > 0) {
-            const reach = 1 + (side.reach - 1) * radial;
-            const r = labelBox(at, side, gap * reach, label);
-            x += (r.x0 - x) * radial;
-            y += (r.y0 - y) * radial;
-            if (radial > 0.5)
-                align =
-                    Math.abs(side.x) < 0.45
-                        ? "center"
-                        : side.x < 0
-                          ? "right"
-                          : "left";
+        const a = at.on ? alpha * keep(box, LABEL_FADE) : 0;
+        if (label.state !== state) {
+            label.state = state;
+            el.dataset.state = state;
+            leader.dataset.state = state;
         }
-        x = Math.min(W - 12 - w, Math.max(minLabelX(), x));
-        // Step off the ship rather than print over it.
-        if (
-            avoid?.on &&
-            avoid.x > x - 10 &&
-            avoid.x < x + w + 10 &&
-            avoid.y > y - 10 &&
-            avoid.y < y + h + 10
-        ) {
-            const up = avoid.y - 12 - h;
-            const down = avoid.y + 12;
-            y = Math.abs(up - y) < Math.abs(down - y) ? up : down;
-        }
-        y = Math.min(H - 8 - h, Math.max(8, y));
-        el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-        el.style.textAlign = align;
+        const length = gap - limb;
+        if (setOpacity(leader, a * smoothstep(4, 10, length)))
+            leader.style.transform = `translate3d(${(at.x + side.x * limb).toFixed(1)}px, ${(at.y + side.y * limb).toFixed(1)}px, 0) rotate(${Math.atan2(side.y, side.x).toFixed(4)}rad) scaleX(${length.toFixed(1)})`;
+        if (!setOpacity(el, a)) return;
+        el.style.transform = `translate3d(${box.x0.toFixed(1)}px, ${box.y0.toFixed(1)}px, 0)`;
+        el.style.textAlign =
+            Math.abs(side.x) < 0.45 ? "center" : side.x < 0 ? "right" : "left";
     };
+    /** Each world's label side: per chase segment, and in the map. */
+    let chase: LabelSide[][] = [];
     let sides: LabelSide[] = [];
+    let safe: Box = labelSafe(stage);
+    const same = (a?: LabelSide, b?: LabelSide) =>
+        !a || !b || (a.x === b.x && a.y === b.y);
+    /** A world's label side at a frame, and a fade: across a segment
+     *  boundary where the side changes, and through the crane where the
+     *  map's side turns away from the chase's, the label fades out and
+     *  back in on its new side; otherwise the side turns with the crane. */
+    const sideAt = (i: number, frame: Frame, radial: number) => {
+        const c = chase[frame.index]?.[i] ?? { x: -1, y: 0, reach: 1 };
+        let fade = 1;
+        if (!same(chase[frame.index - 1]?.[i], c))
+            fade *= smoothstep(0, 0.08, frame.u);
+        if (!same(chase[frame.index + 1]?.[i], c))
+            fade *= 1 - smoothstep(0.92, 1, frame.u);
+        const m = sides[i] ?? c;
+        if (radial <= 0) return { side: c, reach: 1, fade };
+        if (c.x * m.x + c.y * m.y > 0.3) {
+            const x = lerp(c.x, m.x, radial);
+            const y = lerp(c.y, m.y, radial);
+            const n = Math.hypot(x, y) || 1;
+            return {
+                side: { x: x / n, y: y / n },
+                reach: lerp(1, m.reach, radial),
+                fade,
+            };
+        }
+        return radial < 0.5
+            ? {
+                  side: c,
+                  reach: 1,
+                  fade: fade * (1 - smoothstep(0.1, 0.5, radial)),
+              }
+            : {
+                  side: m,
+                  reach: m.reach,
+                  fade: fade * smoothstep(0.5, 0.9, radial),
+              };
+    };
     const mark = (
         el: HTMLElement,
         at: { x: number; y: number; on: boolean },
         alpha: number,
     ) => {
-        const a = at.on ? alpha : 0;
-        el.style.opacity = a > 0.01 ? String(a) : "0";
-        if (a > 0.01)
+        if (setOpacity(el, at.on ? alpha * keep(pointBox(at), 8) : 0))
             el.style.transform = `translate3d(${at.x.toFixed(1)}px, ${at.y.toFixed(1)}px, 0)`;
     };
 
@@ -891,25 +1046,43 @@ export function mountFlight(
             }
         }
 
-        // Orbits: visited in ink-2, the current one brighter, future dim.
+        // Orbits: visited in ink-2, the held world's brighter, future dim.
+        // Through a transfer the orbit ahead comes up to current as the one
+        // left behind settles to visited. Each stops short of every disc.
+        const seg = frame.segment;
+        const world = Math.min(card, labels.length - 1);
+        const into = seg.kind === "transfer" ? seg.chapter : -1;
+        const from = seg.kind === "transfer" ? (seg.from ?? -1) : -1;
+        const dpr = renderer.getPixelRatio();
+        const centres = bodies.map((b) =>
+            project(b.tilt.position.toArray() as Vec3),
+        );
         orbits.forEach((o, i) => {
-            const isCur = i === card;
             const visited = p >= coastStart[i] - 1e-6;
-            o.material.color.copy(
-                isCur ? palette.ink1 : visited ? palette.ink2 : palette.ink3,
-            );
-            o.material.opacity = palette.light
-                ? isCur
-                    ? 0.85
-                    : visited
-                      ? 0.6
-                      : 0.38
-                : isCur
-                  ? 0.62
-                  : visited
-                    ? 0.42
-                    : 0.2;
+            const held =
+                i === into
+                    ? smoothstep(0.1, 0.5, frame.u)
+                    : i === from
+                      ? 1 - smoothstep(0.5, 0.9, frame.u)
+                      : i === world
+                        ? 1
+                        : 0;
+            o.material.color
+                .copy(visited ? palette.ink2 : palette.ink3)
+                .lerp(palette.ink1, held);
+            const [bright, seen, future] = palette.light
+                ? [0.72, 0.51, 0.32]
+                : [0.53, 0.36, 0.17];
+            o.material.opacity = lerp(visited ? seen : future, bright, held);
         });
+        discs.value.forEach((d, i) => {
+            const b = bodies[i];
+            const at = centres[i];
+            if (!b || !at.on) return d.set(0, 0, -1);
+            const r = b.drawn * (b.w.kind === "saturn" ? SATURN_CLEAR : 1);
+            d.set(at.x * dpr, (H - at.y) * dpr, r * dpr);
+        });
+        clear.value.set(ORBIT_CLEAR[0] * dpr, ORBIT_CLEAR[1] * dpr);
         if (plannedOrbit) {
             plannedOrbit.material.opacity =
                 (palette.light ? 0.7 : 0.6) * (0.45 + 0.55 * pose.overview);
@@ -920,6 +1093,13 @@ export function mountFlight(
         }
 
         // The trail to the ship; the planned leg draws out in the plan.
+        // Older legs sit back, less so in the map, where the whole story
+        // reads.
+        age.value.set(
+            Math.min(p, flown),
+            fadeLen,
+            lerp(0.35, 0.6, pose.overview),
+        );
         carryOpening(pose.overview);
         const ship3 = plan.shipAt(p);
         const upto = Math.min(p, flown) / flown;
@@ -964,29 +1144,36 @@ export function mountFlight(
         beaconMaterial.opacity = 0.55 * shipFade;
         ship.visible = shipFade > 0.001;
 
-        // Labels: the worlds flown and the one approached; on phones only
-        // the current world.
-        const seg = frame.segment;
-        const world = Math.min(card, labels.length - 1);
+        // Labels: the worlds flown and the one approached. Phones name only
+        // the world held and, through a transfer, the one ahead; the one
+        // left behind fades as its card hands over.
         const radial = smoothstep(0.35, 0.85, pose.overview);
-        const away = (at: { x: number; y: number }): LabelSide => {
+        const away = (at: { x: number; y: number }) => {
             const n = Math.hypot(at.x - sunAt.x, at.y - sunAt.y) || 1;
-            const x = (at.x - sunAt.x) / n;
-            return { x, y: (at.y - sunAt.y) / n, reach: 1 };
+            return { x: (at.x - sunAt.x) / n, y: (at.y - sunAt.y) / n };
         };
-        const shipOnScreen = ship.visible ? project(ship3) : null;
         labels.forEach((label, i) => {
             const b = bodies[i];
-            const at = project(b.tilt.position.toArray() as Vec3);
-            let alpha = 0;
-            let state = "future";
-            if (i === card) state = "current";
-            else if (p >= coastStart[i] - 1e-6) state = "visited";
-            if (state !== "future") alpha = 1;
-            else if (seg.kind === "transfer" && seg.chapter === i)
-                alpha = smoothstep(0.1, 0.6, frame.u) * 0.85;
-            if (!wideLayout && i !== world) alpha = 0;
-            if (!at.on) alpha = 0;
+            const at = centres[i];
+            const visited = p >= coastStart[i] - 1e-6;
+            const state =
+                i === world ? "current" : visited ? "visited" : "future";
+            let alpha =
+                state !== "future"
+                    ? 1
+                    : i === into
+                      ? smoothstep(0.1, 0.5, frame.u)
+                      : 0;
+            if (!wideLayout) {
+                if (i !== world && i !== into) alpha = 0;
+                if (i === from) alpha *= 1 - smoothstep(0.3, 0.5, frame.u);
+            }
+            // The map's other labels come in as it settles, not as their
+            // worlds sweep in through the crane.
+            if (kind === "plan" && i !== world)
+                alpha *= smoothstep(0.3, CRANE, frame.u);
+            // Gone once its world leaves the safe area.
+            alpha *= 1 - smoothstep(-16, 8, overflow(pointBox(at)));
             // A hairline ring round a world drawn at its smallest; in the
             // map a world its loop circles needs none.
             const small =
@@ -997,15 +1184,20 @@ export function mountFlight(
                     `${(2 * b.drawn + 7).toFixed(1)}px`,
                 );
             mark(rings[i], at, alpha * small);
+            const { side, reach, fade } = sideAt(i, frame, radial);
+            const ring =
+                b.w.kind === "saturn"
+                    ? lerp(1.1, SATURN_CLEAR, Math.abs(side.x))
+                    : 1;
             place(
                 label,
                 at,
-                labelGap(stage, b.w, at.depth, radial),
-                alpha,
+                side,
+                labelGap(stage, b.w, at.depth, looped[i] ? 1 : radial) * reach,
+                b.drawn * ring + 3,
+                alpha * fade,
                 state,
-                radial,
-                sides[i] ?? away(at),
-                shipOnScreen,
+                wideLayout || side.x !== 0 ? 0 : 1 - radial,
             );
         });
         if (openLabel && plan.planned) {
@@ -1013,15 +1205,7 @@ export function mountFlight(
             // The planned orbit's end and its label come in as the leg
             // reaches them.
             const on = kind === "plan" ? smoothstep(0.78, 0.9, frame.u) : 0;
-            place(
-                openLabel,
-                at,
-                12,
-                at.on && wideLayout ? on : 0,
-                "plan",
-                radial,
-                away(at),
-            );
+            place(openLabel, at, away(at), 12, 12, wideLayout ? on : 0, "plan");
             mark(targetMark, at, on);
         }
         const shipAt = project(ship3);
@@ -1035,7 +1219,7 @@ export function mountFlight(
     }
 
     return {
-        resize(width, height, wide) {
+        resize(width, height, wide, record) {
             W = Math.max(1, width);
             H = Math.max(1, height);
             wideLayout = wide;
@@ -1047,8 +1231,28 @@ export function mountFlight(
             camera.aspect = W / H;
             camera.fov = stage.fov;
             for (const m of lineMaterials) m.resolution.set(W, H);
+            // No line under the record: on a wide stage they fade out
+            // under its scrim; on a phone above its top edge.
+            const dpr = renderer.getPixelRatio();
+            safe = labelSafe(stage, wide ? undefined : record);
+            const top = record ?? stage.box.y1;
+            if (wide)
+                mask.value.set(
+                    LINE_MASK[0] * W * dpr,
+                    LINE_MASK[1] * W * dpr,
+                    -2,
+                    -1,
+                );
+            else
+                mask.value.set(
+                    -2,
+                    -1,
+                    (H - top + 6) * dpr,
+                    (H - top + 28) * dpr,
+                );
             measureLabels();
-            sides = plan.mapSides(stage, labels, wide ? openLabel : null);
+            sides = plan.mapSides(stage, labels, wide ? openLabel : null, safe);
+            chase = plan.chaseSides(stage, labels, safe);
             if (last) draw(last);
         },
         render(frame) {

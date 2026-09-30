@@ -1,15 +1,22 @@
+import { ShaderLib } from "three";
+import "three/examples/jsm/lines/LineMaterial.js";
 import { describe, expect, it } from "vitest";
+import { patchLineShader } from "@/components/trajectory/flight-gl";
 import {
     CRANE,
     FLIGHT_PACING,
+    LABEL_FADE,
     RING,
     buildFlight,
     dist,
+    inset,
     labelBox,
     labelGap,
     labelMinX,
+    labelSafe,
     screenOf,
     stageFrame,
+    within,
     viewAxes,
     worldKinds,
     type Pose,
@@ -536,5 +543,81 @@ describe("the finale", () => {
         expect(Math.abs(turned) / D2R).toBeGreaterThanOrEqual(360);
         const out = flown.shipAt(first.p1 + 1e-4);
         expect(dist(out, prevAt!)).toBeLessThan(0.1 * w.park);
+    });
+});
+
+/* ---- labels and lines ----------------------------------------------------- */
+
+describe("the labels and the lines", () => {
+    const sizes = [
+        { w: 71, h: 33 },
+        { w: 141, h: 33 },
+        { w: 141, h: 33 },
+        { w: 134, h: 33 },
+    ];
+
+    it("keeps each chase label on one side of its world, away from the Sun", () => {
+        const stage = stageFrame(1440, 828, true);
+        const safe = labelSafe(stage);
+        const chase = flown.chaseSides(stage, sizes, safe);
+        expect(chase).toHaveLength(paced.segments.length);
+        paced.segments.forEach((seg, index) => {
+            if (seg.kind !== "coast" && seg.kind !== "flyby") return;
+            // The held world, at the segment's middle: beside it, the
+            // side away from the Sun (the night side), inside the safe
+            // area with room to spare.
+            const i = seg.chapter;
+            const side = chase[index][i];
+            expect(side.y).toBe(0);
+            const frame = frameAt(paced, (seg.p0 + seg.p1) / 2);
+            const pose = flown.pose(frame, stage);
+            const c = flown.worldAt(flown.worlds[i], frame.t);
+            const q = screenOf(pose, stage, c);
+            const { right } = viewAxes(pose);
+            const sunward = -(
+                c[0] * right[0] +
+                c[1] * right[1] +
+                c[2] * right[2]
+            );
+            expect(Math.sign(side.x)).toBe(-Math.sign(sunward));
+            const gap = labelGap(
+                stage,
+                flown.worlds[i],
+                q.depth,
+                flown.looped[i] ? 1 : 0,
+            );
+            expect(
+                within(
+                    labelBox(q, side, gap, sizes[i]),
+                    inset(safe, LABEL_FADE),
+                ),
+            ).toBe(true);
+        });
+        // A phone has no room beside its worlds: always below.
+        const small = stageFrame(390, 780, false);
+        for (const row of flown.chaseSides(small, sizes, labelSafe(small, 560)))
+            for (const side of row)
+                expect(side).toEqual({ x: 0, y: 1, reach: 1 });
+    });
+
+    it("keeps labels off the caption band and the phone's record", () => {
+        const stage = stageFrame(1440, 828, true);
+        expect(labelSafe(stage)).toEqual({
+            x0: labelMinX(stage),
+            y0: 8,
+            x1: 1440 - 12,
+            y1: 828 - 54,
+        });
+        expect(labelSafe(stageFrame(390, 780, false), 560).y1).toBe(552);
+    });
+
+    it("finds the lines it patches in three.js's line shader", () => {
+        const { vertexShader, fragmentShader } = ShaderLib.line;
+        const patched = patchLineShader(vertexShader, fragmentShader)!;
+        expect(patched).not.toBeNull();
+        expect(patched.vertex).toContain("vAge = instanceAge;");
+        expect(patched.fragment).toContain("smoothstep(uMask.x, uMask.y");
+        expect(patched.fragment).toContain("uDiscs");
+        expect(patchLineShader("void main() {}", fragmentShader)).toBeNull();
     });
 });
