@@ -14,9 +14,10 @@ import { THEMES, storeTheme } from "./support/theme";
  * the card's one readout ticks; the scene names the worlds by their
  * organisation only, at holds and in the finale, never through a
  * transfer; a still flight opens on the latest chapter. Play gives way to
- * any key, a phone keeps each chapter's name and full entry, and axe finds
- * nothing in either theme (the route is not in the sitemap, so a11y.spec's
- * page list does not reach it). The 3D scene draws in both themes,
+ * any key, a phone keeps each chapter's name and full entry (and the
+ * plan's Contact under its openings), and axe finds nothing in either
+ * theme (the route is not in the sitemap, so a11y.spec's page list does
+ * not reach it). The 3D scene draws in both themes,
  * survives a lost WebGL context, and leaves one canvas and no errors
  * after the route is left and shown again.
  */
@@ -231,7 +232,9 @@ test("any key but Play's own press stops Play", async ({ page }) => {
     await expect(play).toBeVisible();
 });
 
-test("a phone keeps each chapter's name and full entry", async ({ page }) => {
+test("a phone keeps each chapter's name and full entry, the ask in order", async ({
+    page,
+}) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(PATH);
     await page.waitForLoadState("networkidle");
@@ -245,6 +248,21 @@ test("a phone keeps each chapter's name and full entry", async ({ page }) => {
     await expect(
         page.getByRole("link", { name: "Full entry" }).first(),
     ).toBeVisible();
+    // The plan's card, when set, reads in order: its Contact sits under
+    // the openings, not beside the title (Full entry's place).
+    const plan = page
+        .locator("[data-journey] [data-card]")
+        .filter({ has: page.getByRole("heading", { name: copy.openTo }) });
+    if (await plan.count()) {
+        await seek(page, 1);
+        const openings = await plan.locator(".open-to").boundingBox();
+        const contact = await plan
+            .getByRole("link", { name: copy.contact })
+            .boundingBox();
+        expect(contact!.y).toBeGreaterThanOrEqual(
+            openings!.y + openings!.height - 1,
+        );
+    }
 });
 
 for (const theme of THEMES) {

@@ -407,7 +407,8 @@
         margin-top: var(--s-2);
     }
     /* Full entry shares the readout's row, at the panel's edge; the
-       organization and the lines follow. */
+       organization and the lines follow. The plan's card has no readout,
+       so its Contact stays last, under the openings. */
     :global(html[data-js]) .card {
         max-width: none;
         display: grid;
@@ -423,14 +424,14 @@
         margin-bottom: var(--s-2);
         font-size: 12px;
     }
-    :global(html[data-js]) .card > .act {
+    :global(html[data-js]) .stamp ~ .act {
         grid-column: 2;
         order: 1;
         align-self: baseline;
         margin: 0;
         padding: 0;
     }
-    :global(html[data-js]) :is(.org, .note, .line) {
+    :global(html[data-js]) :is(.org, .note, .line, .act) {
         order: 2;
     }
     :global(html[data-js]) .entry {

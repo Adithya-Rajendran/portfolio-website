@@ -166,7 +166,9 @@ only live in comments or commit messages.
   organisation, a note and a line, and Full entry; no big date, kind
   label or readout on the plan's card, which states Open to with a quiet
   Contact (the profile's button follows the stage, with the one way back,
-  "The full record"). The scene (`flight-gl.ts`) names each world by its
+  "The full record"). On a phone Full entry shares the readout's row;
+  the plan's card has no readout, so its Contact stays under the
+  openings. The scene (`flight-gl.ts`) names each world by its
   organisation alone (DM Mono 12px), only at a hold and in the finale:
   the world left behind fades as the ship leaves, the next is named as
   its hold begins, and nothing is named through a transfer. Flight
@@ -750,7 +752,8 @@ deployment require an authenticated Sanity CLI session.
   with the rail and Play in the first viewport, its own canonical and
   card, the record holding still while scrubbed, one readout ticking
   under the title, the worlds named without dates and never mid-transfer,
-  a still flight opening on the latest chapter, axe in both themes, and
+  a still flight opening on the latest chapter, a phone's cards in
+  reading order, axe in both themes, and
   the scene drawing, surviving a lost context and a return), `missions` (every old `/portfolio` fragment sent on to its
   page, the index links every project with no counts, register, mission
   numbers or related pages, titles in sentence case and four stack items
