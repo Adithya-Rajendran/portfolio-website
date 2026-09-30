@@ -11,17 +11,17 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * The Crew File share card: the page's themed name over the profile's
- * headline, and the name and address.
+ * The About share card: the name, tagged with the section, over the
+ * profile's headline, and the address.
  */
 export default async function Image() {
     const profile = await getProfile();
     return new ImageResponse(
         <OgCard
-            tag={copy.themed}
-            title={copy.plain}
+            tag={copy.plain}
+            title={profile?.name?.trim() || siteConfig.author}
+            upper
             subtitle={profile?.headline?.trim() || copy.description}
-            footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/about`}
         />,
         { ...size, fonts: OG_CARD_FONTS },

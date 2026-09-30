@@ -15,7 +15,7 @@ const PANEL_ID = "site-nav";
  * their plain names, the CV link (at every width), Contact in the bar
  * below 960px (where the nav is in the sheet) and the theme switch (from
  * 960px) are in the static HTML. Below 960px the nav is a popover sheet that opens without
- * JavaScript, with the PDF, the feed and the three-way theme choice;
+ * JavaScript, with the feed and the three-way theme choice;
  * where the Popover API is missing, a fallback Menu link jumps to the
  * footer's nav. Only the current-section mark needs the pathname
  * (components/chrome/nav-links.tsx). Search arrives with the console

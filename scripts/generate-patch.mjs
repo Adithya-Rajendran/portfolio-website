@@ -16,8 +16,11 @@ import { fileURLToPath } from "node:url";
  *                         (components/chrome/svg-sprite.tsx): currentColor
  *                         strokes, the sun from --patch-sun, the lettered
  *                         band hidden by --patch-band: none
- *   app/icon.svg          the favicon: ring and emblem on a void disc
- *   app/apple-icon.png    180 × 180, the full patch on the void
+ *   assets/patch.svg      the share card's patch (lib/og-card.tsx): ring
+ *                         and emblem on a void disc
+ *   app/icon.svg          the favicon: a heavy AR on the void disc, with a
+ *                         prefers-color-scheme edge for dark tab strips
+ *   app/apple-icon.png    180 × 180, the emblem on the void, no lettering
  *   app/favicon.ico       16, 32 and 48 px PNGs of the favicon
  *
  * The ring reads the owner's name and his stated focus (Robotics · AI, the
@@ -144,8 +147,18 @@ function standalone(p, { band, disc }) {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" color="${INK}">${disc ? `<circle cx="100" cy="100" r="99" fill="${VOID}"/>` : `<rect width="200" height="200" fill="${VOID}"/>`}${body(p, `fill="${SUN}"`, band)}</svg>\n`;
 }
 
-const icon = standalone("i-", { band: false, disc: true });
-const apple = standalone("a-", { band: true, disc: false });
+const card = standalone("c-", { band: false, disc: true });
+const apple = standalone("a-", { band: false, disc: false });
+
+/**
+ * The favicon: the monogram alone, heavy enough for 16 px (a stroke of
+ * 14/200), on the void disc. Nothing finer survives that size: no
+ * lettering, stars, orbit or parallels, and the sun shrinks to a speck
+ * that only costs the letters room. Under a dark scheme a half-ink edge
+ * outlines the disc, so it reads on a dark tab strip too.
+ */
+const FAV_SCALE = 2.05;
+const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><style>.edge{display:none}@media (prefers-color-scheme:dark){.edge{display:inline}}</style><circle cx="100" cy="100" r="98" fill="${VOID}"/><circle class="edge" cx="100" cy="100" r="95" fill="none" stroke="${INK}" stroke-width="6" stroke-opacity=".5"/><path transform="translate(100 100) scale(${FAV_SCALE}) translate(-100 -96)" d="${MONO_A}${MONO_R}" fill="none" stroke="${INK}" stroke-width="${f2(14 / FAV_SCALE)}" stroke-linecap="square" stroke-linejoin="miter"/></svg>\n`;
 
 /** PNG-in-ICO: a 6-byte header, a 16-byte entry per image, then the PNGs. */
 function ico(pngs) {
@@ -175,8 +188,6 @@ const png = (svg, size) =>
         .png({ compressionLevel: 9 })
         .toBuffer();
 
-// The favicon drops the lettering and thickens nothing: at 16 px the
-// ring, limb, sun and monogram still read.
 const icoPngs = [];
 for (const size of [16, 32, 48]) {
     icoPngs.push({ size, data: await png(icon, size) });
@@ -186,6 +197,7 @@ await writeFile(
     fileURLToPath(new URL("lib/patch.json", root)),
     `${JSON.stringify({ symbol }, null, 4)}\n`,
 );
+await writeFile(fileURLToPath(new URL("assets/patch.svg", root)), card);
 await writeFile(fileURLToPath(new URL("app/icon.svg", root)), icon);
 await writeFile(
     fileURLToPath(new URL("app/apple-icon.png", root)),

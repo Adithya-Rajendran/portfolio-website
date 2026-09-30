@@ -38,7 +38,8 @@ export type StatusValue =
 
 /**
  * A glyph and a label, never colour alone (plan §4.5). The label is the
- * visible text; the glyph is drawn by CSS from `data-status`.
+ * visible text; the glyph is drawn by CSS from `data-status`, or for
+ * Stopped is the sprite's cross (no font glyph).
  */
 export function Status({
     value,
@@ -49,6 +50,9 @@ export function Status({
 }) {
     return (
         <span className="status" data-status={value}>
+            {value === "stopped" ? (
+                <Icon name="close" className="status__icon" />
+            ) : null}
             {children}
         </span>
     );

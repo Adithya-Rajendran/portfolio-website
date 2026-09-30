@@ -9,10 +9,10 @@ import { urlForImage } from "@/lib/sanity-image";
  * are plates (Pl. I), diagrams, plots and screenshots figures (Fig. 1). The
  * caption is the owner's, verbatim, with the credit as its source line;
  * nothing is added. A tall or square plate at text width keeps its caption
- * beside it on wider screens. In Void a photograph dissolves into the dark;
- * in Flight Manual it is mounted with crop marks (styles/components.css,
- * `.photo`). Ported from the mockup's `DF.render.photo` (site.css 4.26)
- * and writing.css "Plates".
+ * beside it on wider screens. The number leads the caption only; the
+ * photograph itself carries nothing (the plate rule in
+ * styles/components.css, `.photo`). Ported from the mockup's
+ * `DF.render.photo` (site.css 4.26) and writing.css "Plates".
  */
 
 export type PlateImage = {
@@ -51,13 +51,10 @@ function sizesFor(layout: ImageWidth, shape: Shape): string {
 export default function FigurePlate({
     value,
     info,
-    tag,
     priority = false,
 }: {
     value: PlateImage;
     info: FigureInfo;
-    /** Printed on the plate after its number: "LOG 003". */
-    tag?: string;
     /** The lead plate near the top loads eagerly. */
     priority?: boolean;
 }) {
@@ -103,11 +100,8 @@ export default function FigurePlate({
                           }
                         : {})}
                 />
-                <span className="photo__plate" aria-hidden="true">
-                    {tag ? `${info.label} · ${tag}` : info.label}
-                </span>
             </div>
-            <figcaption className="caption caption--plate">
+            <figcaption className="caption">
                 <span className="caption__num">{info.label}</span>
                 {caption || credit ? (
                     <span className="caption__body">

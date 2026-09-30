@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import LogIndex from "@/components/blogs/log-index";
 import Hero, { preloadHeroPhoto } from "@/components/home/hero";
@@ -27,7 +28,27 @@ import {
     getProfile,
     getProjectBySlug,
 } from "@/lib/sanity-client";
+import { homeCardAlt, shareImage, siteOpenGraph } from "@/lib/site-metadata";
 import styles from "./home.module.css";
+
+/**
+ * Home's share card with an alt in the card's own words (the route's
+ * `alt` export is one fixed string), over the site's Open Graph fields.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+    const profile = await getProfile();
+    return {
+        openGraph: {
+            ...siteOpenGraph(profile),
+            images: [
+                shareImage(
+                    "app/(site)/opengraph-image.tsx",
+                    homeCardAlt(profile),
+                ),
+            ],
+        },
+    };
+}
 
 /**
  * One section of the home page (contract §1, §9): the tag row (an

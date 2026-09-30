@@ -37,6 +37,7 @@ import {
     getProfile,
 } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
+import { shareImage } from "@/lib/site-metadata";
 import { TAG_PATTERN } from "@/lib/tags";
 import { readingTimeFromWordCount } from "@/components/blogs/utils";
 
@@ -120,7 +121,6 @@ export default async function BlogPostPage({
         index,
         highlightedCode: highlighted,
         headingIds: headingIdsByKey(headings),
-        plateTag: designation,
     });
     const contents = contentsHeadings(headings);
     const readMinutes =
@@ -206,7 +206,6 @@ export default async function BlogPostPage({
                             <FigurePlate
                                 value={{ ...lead, width: "wide" }}
                                 info={leadInfo}
-                                tag={designation}
                                 priority
                             />
                         ) : null}
@@ -276,6 +275,13 @@ export async function generateMetadata({
             ...(post.tags && post.tags.length > 0 ? { tags: post.tags } : {}),
             authors: [siteConfig.author],
             url,
+            images: [
+                shareImage(
+                    "app/(site)/blog/[slug]/opengraph-image.tsx",
+                    `${post.title} by ${siteConfig.author}`,
+                    slug,
+                ),
+            ],
         },
         twitter: {
             card: "summary_large_image",

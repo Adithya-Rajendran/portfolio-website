@@ -11,17 +11,17 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * The Missions share card: the page's name and its one-line introduction
- * from the profile, when there is one.
+ * The Projects share card: the name, tagged with the section, over the
+ * page's one-line introduction from the profile, when there is one.
  */
 export default async function Image() {
     const profile = await getProfile();
     return new ImageResponse(
         <OgCard
-            tag={copy.themed}
-            title={copy.plain}
+            tag={copy.plain}
+            title={profile?.name?.trim() || siteConfig.author}
+            upper
             subtitle={profile?.projectsIntro?.trim() || undefined}
-            footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/portfolio`}
         />,
         { ...size, fonts: OG_CARD_FONTS },

@@ -1,7 +1,6 @@
 /*
  * Loss of Signal: the 404 and error pages (components/los/loss-of-signal.tsx)
- * and the static star layer (components/sky/static-stars.tsx) behind every
- * page head.
+ * and the home hero's static star layer (components/sky/static-stars.tsx).
  * Global, not a CSS Module: the page answers every unmatched URL through
  * app/global-not-found.tsx, and Turbopack merged a module imported there
  * into the root layout's stylesheet, which the Studio loads too. The
@@ -9,8 +8,9 @@
  * Ported from the mockup's writing.css "404.HTML · Loss of Signal".
  */
 @layer components {
+    /* Filling the hero's sky, under the drifting canvas. */
     .static-stars {
-        position: fixed;
+        position: absolute;
         inset: 0;
         z-index: var(--z-starfield);
         width: 100%;
@@ -35,20 +35,9 @@
         stroke-width: 2.3px;
         opacity: 0.9;
     }
-    /* Behind a page head: the field fades out before the first section. */
-    .static-stars--band {
-        position: absolute;
-        inset: 0 0 auto;
-        -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent);
-        mask-image: linear-gradient(to bottom, #000 35%, transparent);
-    }
-    /* Filling a positioned parent: the home hero, under the canvas. */
-    .static-stars--field {
-        position: absolute;
-    }
-    /* On paper the stars are faint printed dots. */
+    /* Paper has no stars. */
     [data-theme="manual"] .static-stars {
-        opacity: 0.4;
+        display: none;
     }
     @media (forced-colors: active) {
         .static-stars {

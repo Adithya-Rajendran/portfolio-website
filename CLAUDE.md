@@ -60,8 +60,9 @@ only live in comments or commit messages.
   is no spatial motion; never read a cookie for this, it would make every
   route request-bound. The header's `ThemeSwitch` (one button, Void ↔
   Flight Manual) names the theme it switches to from `html[data-theme]`
-  in CSS, so under Auto it follows the screen; the footer and the menu
-  sheet carry `ThemeChoice` (Void · Manual · Auto, a `Segmented`), which
+  in CSS, so under Auto it follows the screen; the footer (from 960px)
+  and the menu sheet (below it) carry `ThemeChoice` (Void · Manual · Auto,
+  a `Segmented`), so each control shows once per breakpoint; it
   reads `lib/prefs.ts` through `useSyncExternalStore` (server snapshot
   `undefined`). Spatial motion runs
   only under `html[data-motion="full"]` and
@@ -76,13 +77,31 @@ only live in comments or commit messages.
   (cached for a day); the copyright year and the orbit map's "now"
   derive from it. Random-looking art is seeded (`lib/sky/`).
 - **The mission patch** is generated: `node scripts/generate-patch.mjs`
-  writes the sprite symbol (`lib/patch.json`), `app/icon.svg`,
+  writes the sprite symbol (`lib/patch.json`), the share card's patch
+  (`assets/patch.svg`, the emblem on a void disc), `app/icon.svg`,
   `app/apple-icon.png` and `app/favicon.ico`. Never edit those by hand.
+  The favicon is not the patch: a heavy AR monogram (stroke 14/200) on
+  the void disc, with nothing finer that 16 px would lose (no lettering,
+  stars, orbit, parallels or sun), and a `prefers-color-scheme` edge for
+  dark tab strips; the ICO holds 16, 32 and 48 px PNGs. The apple icon is
+  the emblem without the ring's lettering.
 - **Share images.** Every page draws the Deep Field card
-  (`lib/og-card.tsx`, which also exports the routes' `OG_SIZE` and
-  `OG_CONTENT_TYPE`); `/`'s card stands in for any page without its own.
-  The home and `/contact` cards add the availability line as a keyed
-  status line (● Open to …) when the profile has one.
+  (`lib/og-card.tsx`, which re-exports the routes' `OG_SIZE` and
+  `OG_CONTENT_TYPE` from `lib/site-metadata.ts`); `/`'s card stands in for
+  any page without its own. Every card names the author: a section's card
+  leads with the name in capitals, tagged with the section's plain name;
+  a post's or project's card signs its footer ("Adithya Rajendran · 30
+  Mar 2026 · 7 min read", or the type and status) over the item's own
+  address, which steps down in size to keep one line. No LOG or MSN
+  code, no orange dash and no stars (they are the home hero's alone). The home and `/contact` cards add the
+  availability line as a keyed status line (● Open to …) when the
+  profile has one. A route's `alt` export is one string, so a post, a
+  project and home name their card in their own metadata
+  (`shareImage` in `lib/site-metadata.ts`, the built URL from
+  `lib/route-tags.ts`): "<title> by Adithya Rajendran", and home's from
+  the profile's name, headline and availability. A page's `openGraph`
+  replaces its parent's whole, so home repeats the site's fields
+  (`siteOpenGraph`).
   Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
@@ -175,7 +194,12 @@ only live in comments or commit messages.
   model's description (`model.alt`), which describes the drawing, not the
   photograph. A lone photograph outside the long read (the stage, a tile,
   a project's head) carries no plate number: `Plate`'s `label` is
-  optional, and Pl. I… number the long read's plates only. The file
+  optional, and Pl. I… number the long read's plates only. Every
+  photograph follows one plate rule (`.photo` in styles/components.css):
+  a hard edge in a hairline, then the caption, with an even card mat
+  inside the hairline in Flight Manual; nothing on the photograph (no
+  number, feather, glow, crop marks or sepia) and no hover of its own.
+  The file
   reuses `PostReader`, so its in-page links resolve inside the visible
   file. The old `/portfolio` fragments (`#experience`, `#skills`,
   `#certifications`, `#engineering-writing`, `#contact`) are link rows
@@ -189,7 +213,9 @@ only live in comments or commit messages.
   SVG draws the limb from circles fitted to the photograph, in the same
   cover crop, so the two stay aligned at every size. The starfield
   (`components/sky/starfield.tsx`, the site's only ambient motion) is a
-  seeded canvas over `StaticStars variant="field"`, which it hides once it
+  seeded canvas over `StaticStars` (the site's only star layer: no page
+  head, index or reading page carries stars, and Flight Manual none at
+  all), which it hides once it
   has drawn: it runs at about 30 fps only while the hero is on screen, the
   tab is visible, the theme is Void and motion is allowed, keeps stars off
   `[data-clear]` text, reports `data-state` (`running` | `stopped`) and
@@ -226,8 +252,9 @@ only live in comments or commit messages.
   (`logEntries` in `lib/log-index.ts`), so a tag page keeps each entry's
   number. A post back-dated before an existing one renumbers those after
   it. The number is an entry's quiet identifier on its own page (the
-  crumb, the plates, the end mark, the pager); the lists print the date
-  instead, with "Updated …" only after a real `revisedAt`.
+  crumb, the end mark, the pager; never on a plate or a share card); the
+  lists print the date instead, with "Updated …" only after a real
+  `revisedAt`.
 - **Heads and names** (contract §1, §6). Every section is named by its
   plain label, Projects · Writing · Experience · About · Contact
   (`lib/navigation.ts`), in the header, the menu sheet, the footer, page
@@ -532,19 +559,22 @@ deployment require an authenticated Sanity CLI session.
 - **Playwright** (`tests/e2e/*.spec.ts`, Chromium, `playwright.config.ts`)
   covers the built site: `smoke` (every page returns its status with one
   `h1` and one `main`, no console errors, uncaught exceptions or CSP
-  violations; share images, feed, icons, headers, redirects, the Studio
+  violations; share images, and a post's, a project's and home's image
+  alt in their own words; feed, icons, headers, redirects, the Studio
   without chrome), `nojs` (complete pages without JavaScript: header, nav
   through the popover menu, footer, Void with no motion and no theme
   controls, no hidden streamed segments, nothing rendered twice), `a11y`
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
   Flight Manual, every page in full, and both kinds of 404), `layout` (no
-  sideways scroll at 320–1920 px, and the header's parts fit without
-  overlapping), `theme` (no flash of the wrong theme, persistence across
+  sideways scroll at 320–1920 px, the header's parts fit without
+  overlapping, and no visible text under 12 px on home, every post and
+  project, `/resume` and `/contact` at 1440 and 390), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, Pause motion, the stored
   theme on an unknown post or project URL), `chrome`
   (the menu sheet's focus, `inert` and closing; Contact in the bar on a
   phone; the current nav section; the header and footer naming every
-  section plainly),
+  section plainly; the footer naming the owner once, with one CV link and
+  the theme choice only from 960px),
   `contact` (the form's Topic is the one topic control and a fragment
   picks it, a route's prompt only as the message field's placeholder,
   the whole form in the first viewport at 1440×900, Hiring only beside an
@@ -585,7 +615,8 @@ deployment require an authenticated Sanity CLI session.
   none of them), `home` (the hero's name, availability and quick links,
   Projects · CV · Contact, in the first viewport at 1280×800 and 390×844
   with and without JavaScript; the starfield `running` only on screen, in
-  a visible tab, in Void and with motion allowed; the credit, and the
+  a visible tab, in Void and with motion allowed; the stars in the hero
+  only, and not on paper; the credit, and the
   drawn limb in Flight Manual; the sections in order, unnumbered and
   without themed names, with their links; the close's button only in
   the profile's words and only beside an Open To line; the flagship

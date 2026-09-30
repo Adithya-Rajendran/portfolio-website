@@ -30,8 +30,6 @@ export interface ProseContext {
     highlightedCode: Record<string, string>;
     /** Heading ids by block `_key` (lib/headings.ts). */
     headingIds: Record<string, string>;
-    /** Printed on each plate after its number: "LOG 003". */
-    plateTag?: string;
 }
 
 /**
@@ -87,12 +85,11 @@ export function createPortableTextComponents({
     index,
     highlightedCode,
     headingIds,
-    plateTag,
 }: ProseContext): PortableTextComponents {
     const plate = (value: PlateImage) => {
         const info = value._key ? index.figures[value._key] : undefined;
         if (!info || !hasImageAsset(value)) return null;
-        return <FigurePlate value={value} info={info} tag={plateTag} />;
+        return <FigurePlate value={value} info={info} />;
     };
 
     /**

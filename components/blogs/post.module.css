@@ -94,7 +94,7 @@
     max-width: 48ch;
     margin-top: var(--s-4);
     color: var(--ink-2);
-    font: 300 var(--step-1) / 1.45 var(--font-long);
+    font: 400 var(--step-1) / 1.45 var(--font-long);
     text-wrap: pretty;
 }
 
@@ -172,7 +172,7 @@
     flex: none;
     width: 1rem;
     color: var(--ink-2);
-    font: 300 1.25rem / 1 var(--font-display);
+    font: 400 1.25rem / 1 var(--font-display);
     text-align: center;
 }
 .box[open] > .boxSummary::after {
@@ -328,18 +328,7 @@
     max-width: 44rem;
     padding: var(--s-5) var(--s-7) var(--s-5) var(--s-5);
     border: var(--rule-hair) solid var(--rule-1);
-    background:
-        radial-gradient(
-            ellipse 70% 90% at 100% 0%,
-            var(--falloff-warm),
-            transparent 70%
-        ),
-        radial-gradient(
-            ellipse 60% 70% at 40% 40%,
-            var(--falloff),
-            transparent 72%
-        ),
-        var(--plate-bg);
+    background: var(--plate-bg);
     transition: border-color var(--dur-hover) var(--ease-dock);
 }
 .msn:hover {
@@ -364,7 +353,7 @@
     letter-spacing: 0.02em;
 }
 .msnTitle {
-    font: 300 var(--step-3) / 1.05 var(--font-display);
+    font: 400 var(--step-3) / 1.05 var(--font-display);
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
@@ -417,7 +406,7 @@
     max-width: 40ch;
     margin-top: var(--s-2);
     color: var(--ink-2);
-    font: 300 var(--step-1) / 1.45 var(--font-long);
+    font: 400 var(--step-1) / 1.45 var(--font-long);
 }
 .byLinks {
     --cluster: var(--s-3);

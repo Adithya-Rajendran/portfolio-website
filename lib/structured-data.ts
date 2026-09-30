@@ -11,12 +11,15 @@ import {
     isCurrentTimelineEntry,
 } from "@/lib/profile-content";
 import type { Mission } from "@/lib/missions";
-import { postShareImagePath } from "@/lib/route-tags";
+import { shareImagePath } from "@/lib/route-tags";
 import type {
     CredentialListItem,
     ProfileData,
     TimelineEntry,
 } from "@/lib/sanity-client";
+
+/** A post's share card, for the BlogPosting image. */
+const POST_CARD = "app/(site)/blog/[slug]/opengraph-image.tsx";
 
 /** `{ [key]: value }` when there is a value, else nothing to spread. */
 function optional<Key extends string>(
@@ -188,7 +191,8 @@ export function buildBlogPosting({
         description,
         datePublished: publishedAt,
         url,
-        image: imageUrl ?? `${siteConfig.url}${postShareImagePath(slug)}`,
+        image:
+            imageUrl ?? `${siteConfig.url}${shareImagePath(POST_CARD, slug)}`,
         author: {
             "@type": "Person",
             name: siteConfig.author,

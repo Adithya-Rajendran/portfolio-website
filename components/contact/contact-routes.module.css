@@ -46,7 +46,7 @@
 .body {
     max-width: 52ch;
     color: var(--ink-2);
-    font: 300 var(--step-0) / 1.55 var(--font-long);
+    font: 400 var(--step-0) / 1.55 var(--font-long);
     text-wrap: pretty;
 }
 .links {

@@ -1,4 +1,5 @@
 import type { APIRequestContext, Page } from "@playwright/test";
+import { siteConfig } from "@/lib/config";
 import {
     expandRoute,
     ROUTE_TAGS,
@@ -10,6 +11,7 @@ import {
     MISSING_PAGES,
     STATIC_PAGES,
     contentPages,
+    isPostPage,
     sitemapPages,
     sitePath,
 } from "./support/routes";
@@ -79,6 +81,42 @@ test.describe("pages", () => {
             });
         }
         await expectImages(request, images);
+    });
+
+    test("a post's and a project's share image say what they show", async ({
+        page,
+        request,
+    }, testInfo) => {
+        const content = await contentPages(request, testInfo);
+        const items = [
+            content.find(isPostPage),
+            content.find((path) => /^\/portfolio\/[^/]+$/.test(path)),
+        ];
+        for (const path of items) {
+            expect(path, "a post and a project").toBeTruthy();
+            await page.goto(path!);
+            const title = await page
+                .locator('meta[property="og:title"]')
+                .getAttribute("content");
+            for (const alt of [
+                'meta[property="og:image:alt"]',
+                'meta[name="twitter:image:alt"]',
+            ]) {
+                await expect(
+                    page.locator(alt),
+                    `${path} ${alt}`,
+                ).toHaveAttribute(
+                    "content",
+                    `${title} by ${siteConfig.author}`,
+                );
+            }
+        }
+        // Home's alt is the card's own words: the name and the headline.
+        await page.goto("/");
+        const home = await page
+            .locator('meta[property="og:image:alt"]')
+            .getAttribute("content");
+        expect(home).toMatch(new RegExp(`^${siteConfig.author} — \\S`));
     });
 
     for (const [kind, path] of Object.entries(MISSING_PAGES)) {

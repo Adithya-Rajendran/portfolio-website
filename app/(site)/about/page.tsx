@@ -4,7 +4,6 @@ import CrewRecord from "@/components/crew/crew-record";
 import Questions from "@/components/crew/questions";
 import { CvItem, CvList } from "@/components/cv/cv-list";
 import { ProfilePageJsonLd } from "@/components/json-ld";
-import StaticStars from "@/components/sky/static-stars";
 import Ask from "@/components/ui/ask";
 import { ButtonLink } from "@/components/ui/button";
 import DocSection from "@/components/ui/doc-section";
@@ -101,23 +100,20 @@ export default async function AboutPage() {
     return (
         <div data-page="about">
             <ProfilePageJsonLd />
-            <div className="head-band">
-                <StaticStars variant="band" />
-                <PageHead
-                    className="shell"
-                    ornament="hydrogen"
-                    tag={copy.themed}
-                    title={copy.plain}
-                    intro={headline}
-                    figure={<Patch />}
-                >
-                    <div className="cluster page-head__actions">
-                        <LinkArrow href={siteRoutes.resume}>
-                            {copy.experience}
-                        </LinkArrow>
-                    </div>
-                </PageHead>
-            </div>
+            <PageHead
+                className="shell"
+                ornament="hydrogen"
+                tag={copy.themed}
+                title={copy.plain}
+                intro={headline}
+                figure={<Patch />}
+            >
+                <div className="cluster page-head__actions">
+                    <LinkArrow href={siteRoutes.resume}>
+                        {copy.experience}
+                    </LinkArrow>
+                </div>
+            </PageHead>
 
             <div className="shell">
                 <CrewRecord profile={profile} className={styles.record} />

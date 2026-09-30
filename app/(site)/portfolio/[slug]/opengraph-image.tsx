@@ -12,10 +12,11 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * A mission file's share card: the owner's short name for the project in
- * capitals over its title (else the title alone), and MSN-0n · type ·
- * status underneath. Published content only; an unknown slug gets the
- * section's name.
+ * A project's share card: the owner's short name for the project in
+ * capitals over its title (else the title alone), signed "Adithya
+ * Rajendran · type · status" over its own address. Its alt is the page's
+ * (the project's metadata, lib/site-metadata.ts). Published content only;
+ * an unknown slug gets the section's name.
  */
 export default async function Image({
     params,
@@ -27,22 +28,18 @@ export default async function Image({
     const mission = project ? toMission(project, siteConfig.url) : null;
     return new ImageResponse(
         <OgCard
-            tag={copy.themed}
+            tag={copy.plain}
             title={mission?.label ?? copy.plain}
             upper={Boolean(mission?.name)}
             subtitle={mission?.name ? mission.title : undefined}
-            footerLeft={
-                mission
-                    ? [
-                          mission.designation,
-                          mission.types.join(" · "),
-                          mission.statusLabel,
-                      ]
-                          .filter(Boolean)
-                          .join(" · ")
-                    : siteConfig.author
-            }
-            footerRight={`${domain}/portfolio`}
+            footerLeft={[
+                siteConfig.author,
+                ...(mission?.types ?? []),
+                mission?.statusLabel,
+            ]
+                .filter(Boolean)
+                .join(" · ")}
+            footerRight={`${domain}/portfolio${mission ? `/${slug}` : ""}`}
         />,
         { ...size, fonts: OG_CARD_FONTS },
     );

@@ -10,8 +10,9 @@ import { storeTheme } from "./support/theme";
  * owner is open to and the quick links (Projects · CV · Contact) are in
  * the first viewport with and without JavaScript; the starfield drifts
  * only while it may (on screen, in a visible tab, in Void, with motion
- * allowed) and reports `stopped` otherwise; the photograph is credited
- * and Flight Manual draws the limb instead; the sections follow in order,
+ * allowed) and reports `stopped` otherwise; the stars are the hero's
+ * alone, and Void's; the photograph is credited and Flight Manual draws
+ * the limb instead; the sections follow in order,
  * unnumbered, and lead to their pages; the flagship shows no stats; the
  * page stays short; and it says nothing about what is missing.
  */
@@ -160,6 +161,21 @@ test("the photograph is credited in Void; Manual draws the limb", async ({
     await expect(credit).toBeHidden();
     await expect(starfield(page)).toHaveAttribute("data-state", "stopped");
     await expect(starfield(page)).toBeHidden();
+    // Paper has no stars, printed or drifting.
+    await expect(page.locator(".static-stars")).toBeHidden();
+});
+
+test("the stars stay in the home hero", async ({ page }) => {
+    for (const path of [
+        "/portfolio",
+        "/blog",
+        "/resume",
+        "/about",
+        "/contact",
+    ]) {
+        await page.goto(path);
+        await expect(page.locator(".static-stars"), path).toHaveCount(0);
+    }
 });
 
 test("the sections follow the hero in order and lead to their pages", async ({

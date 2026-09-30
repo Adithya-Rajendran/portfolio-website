@@ -1,8 +1,8 @@
 /*
  * Writing pages (/blog, /blog/archive, /blog/tags/[tag]): the index
- * section under the shared split head over a band of stars. Ported from
- * the mockup's writing.css "LOG.HTML". The index, its rows and the chips
- * have their own modules beside their components.
+ * section under the shared split head. Ported from the mockup's
+ * writing.css "LOG.HTML". The index, its rows and the chips have their
+ * own modules beside their components.
  */
 
 .page {
@@ -36,5 +36,5 @@
     border-top: var(--rule-hair) solid var(--rule-1);
 }
 .emptyTitle {
-    font: 300 var(--step-3) / 1.1 var(--font-display);
+    font: 400 var(--step-3) / 1.1 var(--font-display);
 }

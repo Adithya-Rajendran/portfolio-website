@@ -1,10 +1,11 @@
 /*
- * Trajectory · Experience / CV (/resume): the page head over a band of
- * static stars, the tool row, the orbit map's section and the CV sections
- * (DocSection: the shared section head, then the rows). The map, the CV rows and the key/value list have their
- * own styles (components/orbit/orbit.module.css; `.cv-list` and `.specs`
- * in styles/components.css). On paper the page is the controlled
- * document (G3): the print rules close this file and styles/print.css.
+ * Trajectory · Experience / CV (/resume): the page head, the tool row,
+ * the orbit map's section and the CV sections (DocSection: the shared
+ * section head, then the rows). The map, the CV rows and the key/value
+ * list have their own styles (components/orbit/orbit.module.css;
+ * `.cv-list` and `.specs` in styles/components.css). On paper the page is
+ * the controlled document (G3): the print rules close this file and
+ * styles/print.css.
  */
 .page {
     position: relative;

@@ -91,7 +91,7 @@
     padding-top: var(--s-4);
     border-top: var(--rule-hair) solid var(--rule-2);
     color: var(--ink-2);
-    font: 300 var(--step-1) / 1.5 var(--font-long);
+    font: 400 var(--step-1) / 1.5 var(--font-long);
 }
 .noScript strong {
     color: var(--ink-1);

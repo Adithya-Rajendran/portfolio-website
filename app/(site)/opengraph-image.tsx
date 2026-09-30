@@ -15,7 +15,9 @@ const domain = new URL(siteConfig.url).hostname;
  * The home share card (and the card of any page without its own): the
  * name in capitals, as in the hero, over the profile's headline and, when
  * the profile says what the owner is open to, that line, so a shared link
- * carries it.
+ * carries it. The home page names this image in its metadata with an alt
+ * built from the same fields (lib/site-metadata.ts); `alt` here serves
+ * any page that inherits the card.
  */
 export default async function Image() {
     const profile = await getProfile();

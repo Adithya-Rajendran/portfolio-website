@@ -11,17 +11,17 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * The Trajectory share card: the page's themed name, the owner's work
- * summary as written in the profile, and the name and address.
+ * The Experience share card: the name, tagged with the section, over the
+ * owner's work summary as written in the profile, and the address.
  */
 export default async function Image() {
     const profile = await getProfile();
     return new ImageResponse(
         <OgCard
-            tag={copy.themed}
-            title={copy.plain}
+            tag={copy.title}
+            title={profile?.name?.trim() || siteConfig.author}
+            upper
             subtitle={profile?.workSummary?.trim() || copy.description}
-            footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/resume`}
         />,
         { ...size, fonts: OG_CARD_FONTS },

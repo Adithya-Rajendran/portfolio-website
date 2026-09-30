@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import LogIndex from "@/components/blogs/log-index";
 import TagChips, { ALL_ENTRIES } from "@/components/blogs/tag-chips";
 import { BlogJsonLd } from "@/components/json-ld";
-import StaticStars from "@/components/sky/static-stars";
 import { ButtonLink, buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import PageHead from "@/components/ui/page-head";
@@ -55,45 +54,38 @@ export default async function WritingPage() {
     return (
         <div data-page="log" className={styles.page}>
             <BlogJsonLd />
-            <div className="head-band">
-                <StaticStars variant="band" />
-                <PageHead
-                    className="shell"
-                    split
-                    ornament="wave"
-                    tag={copy.themed}
-                    title={copy.plain}
-                    intro={getWritingDescription(profile)}
-                >
-                    <div className="cluster page-head__actions">
+            <PageHead
+                className="shell"
+                split
+                ornament="wave"
+                tag={copy.themed}
+                title={copy.plain}
+                intro={getWritingDescription(profile)}
+            >
+                <div className="cluster page-head__actions">
+                    <a
+                        className={buttonClass({ size: "sm" })}
+                        href={siteRoutes.feed}
+                    >
+                        <Icon name="rss" />
+                        {copy.rss}
+                    </a>
+                    {linkedIn ? (
                         <a
                             className={buttonClass({ size: "sm" })}
-                            href={siteRoutes.feed}
+                            href={linkedIn.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
-                            <Icon name="rss" />
-                            {copy.rss}
+                            {copy.linkedIn}
+                            <Icon name="external" />
                         </a>
-                        {linkedIn ? (
-                            <a
-                                className={buttonClass({ size: "sm" })}
-                                href={linkedIn.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {copy.linkedIn}
-                                <Icon name="external" />
-                            </a>
-                        ) : null}
-                        <ButtonLink
-                            size="sm"
-                            icon="search"
-                            href="/blog/archive"
-                        >
-                            {copy.search}
-                        </ButtonLink>
-                    </div>
-                </PageHead>
-            </div>
+                    ) : null}
+                    <ButtonLink size="sm" icon="search" href="/blog/archive">
+                        {copy.search}
+                    </ButtonLink>
+                </div>
+            </PageHead>
 
             <section className={`section ${styles.index}`}>
                 <div className={`shell ${styles.indexInner}`}>

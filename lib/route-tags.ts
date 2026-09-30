@@ -191,17 +191,13 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
 ];
 
 /**
- * A post's share image at its built URL (`/blog/<slug>/opengraph-image-…`),
- * for metadata that names the image directly (the BlogPosting JSON-LD).
+ * A share image at its built URL (`/blog/<slug>/opengraph-image-…`), for
+ * metadata that names the image directly: the BlogPosting JSON-LD, and a
+ * page whose image carries its own alt (lib/site-metadata.ts).
  */
-export function postShareImagePath(slug: string): string {
-    const route = ROUTE_TAGS.find(
-        (entry) => entry.file === "app/(site)/blog/[slug]/opengraph-image.tsx",
-    );
-    return (route?.path ?? "/blog/[slug]/opengraph-image").replace(
-        "[slug]",
-        slug,
-    );
+export function shareImagePath(file: string, slug = ""): string {
+    const route = ROUTE_TAGS.find((entry) => entry.file === file);
+    return (route?.path ?? "").replace(/\[slug\]/, slug);
 }
 
 /**

@@ -6,18 +6,15 @@ import { urlForImage } from "@/lib/sanity-image";
 /**
  * A photograph as a plate outside the long read (contract §4, the
  * mockup's site.css 4.26): a mission's cover or its model's poster,
- * inside the grid (5 columns beside copy, at most 8 alone). The image
- * dissolves into the dark in Void and is mounted with crop marks in
- * Flight Manual (`.photo` in styles/components.css). A lone photograph
+ * inside the grid (5 columns beside copy, at most 8 alone), on the one
+ * plate rule (`.photo` in styles/components.css). A lone photograph
  * carries no plate number (Pl. I… number the long read's plates); given
- * one, it is printed on the photograph and leads the caption. The
- * caption is the owner's words, never an explanation. Returns nothing
- * for an image without an asset.
+ * one, it leads the caption. The caption is the owner's words, never an
+ * explanation. Returns nothing for an image without an asset.
  */
 export default function Plate({
     image,
     label,
-    tag,
     caption,
     ratio,
     focus,
@@ -30,8 +27,6 @@ export default function Plate({
     image: SanityImageValue | null | undefined;
     /** "Pl. I": only where a page numbers its plates. */
     label?: string;
-    /** Printed on the plate after its number: "MSN-02". */
-    tag?: string;
     caption?: React.ReactNode;
     /** A crop, as a CSS aspect ratio ("4 / 5"); the photo's own otherwise. */
     ratio?: string;
@@ -85,15 +80,10 @@ export default function Plate({
                           }
                         : {})}
                 />
-                {label ? (
-                    <span className="photo__plate" aria-hidden="true">
-                        {tag ? `${label} · ${tag}` : label}
-                    </span>
-                ) : null}
                 {children}
             </div>
             {label || caption ? (
-                <figcaption className="caption caption--plate">
+                <figcaption className="caption">
                     {label ? (
                         <span className="caption__num">{label}</span>
                     ) : null}

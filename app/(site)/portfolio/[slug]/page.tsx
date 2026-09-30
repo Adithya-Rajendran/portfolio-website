@@ -44,6 +44,7 @@ import {
     getPostsByProject,
     getProjectBySlug,
 } from "@/lib/sanity-client";
+import { shareImage } from "@/lib/site-metadata";
 import styles from "./mission.module.css";
 
 export async function generateStaticParams() {
@@ -68,6 +69,13 @@ export async function generateMetadata({
             title: project.title,
             description: project.summary,
             url,
+            images: [
+                shareImage(
+                    "app/(site)/portfolio/[slug]/opengraph-image.tsx",
+                    `${project.title} by ${siteConfig.author}`,
+                    slug,
+                ),
+            ],
         },
         twitter: {
             card: "summary_large_image",

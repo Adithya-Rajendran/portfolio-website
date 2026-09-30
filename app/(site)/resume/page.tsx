@@ -5,7 +5,6 @@ import { CvItem, CvList } from "@/components/cv/cv-list";
 import OrbitInteraction from "@/components/orbit/orbit-interaction";
 import OrbitMap from "@/components/orbit/orbit-map";
 import ResumeShareAction from "@/components/resume/resume-share-action";
-import StaticStars from "@/components/sky/static-stars";
 import Availability from "@/components/ui/availability";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -262,8 +261,7 @@ export default async function ResumePage() {
         <div data-page="resume" data-view="list" className={styles.page}>
             <OrbitInteraction />
 
-            <div className={`head-band ${styles.band}`}>
-                <StaticStars variant="band" />
+            <div className={styles.band}>
                 <PageHead
                     className="shell"
                     split

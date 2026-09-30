@@ -11,6 +11,7 @@ import {
 } from "react";
 import { sendEmailAction } from "@/actions/sendEmail";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import Segmented from "@/components/ui/segmented";
 import {
     INITIAL_CONTACT_FORM_STATE,
@@ -255,6 +256,7 @@ export default function ContactForm({
                 />
                 {errors.senderEmail ? (
                     <p className="field__error" id={ids.emailError}>
+                        <Icon name="close" className="icon--sm" />{" "}
                         {errors.senderEmail}
                     </p>
                 ) : null}
@@ -298,6 +300,7 @@ export default function ContactForm({
                 </p>
                 {errors.message ? (
                     <p className="field__error" id={ids.messageError}>
+                        <Icon name="close" className="icon--sm" />{" "}
                         {errors.message}
                     </p>
                 ) : null}
@@ -308,6 +311,10 @@ export default function ContactForm({
 
             {shown.status === "error" ? (
                 <p className={styles.alert} role="alert">
+                    <Icon
+                        name="close"
+                        className={`icon--sm ${styles.alertIcon}`}
+                    />{" "}
                     {shown.message}
                 </p>
             ) : null}

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import StaticStars from "@/components/sky/static-stars";
 import TrajectoryView from "@/components/trajectory/trajectory-view";
 import { buttonClass } from "@/components/ui/button";
 import { LinkArrow } from "@/components/ui/marks";
@@ -34,32 +33,29 @@ export default async function TrajectoryPage() {
     const current = data.chapters.some((chapter) => chapter.current);
     return (
         <div data-page="trajectory">
-            <div className="head-band">
-                <StaticStars variant="band" />
-                <PageHead
-                    className="shell"
-                    ornament="orbit"
-                    tag={copy.tag}
-                    title={copy.title}
-                    meta={
-                        first ? (
-                            <span className="data">
-                                {first.year}
-                                {current ? " – present" : null}
-                            </span>
-                        ) : undefined
-                    }
-                >
-                    <div className="cluster page-head__actions">
-                        <Link
-                            className={buttonClass({ size: "sm" })}
-                            href={siteRoutes.resume}
-                        >
-                            {copy.list}
-                        </Link>
-                    </div>
-                </PageHead>
-            </div>
+            <PageHead
+                className="shell"
+                ornament="orbit"
+                tag={copy.tag}
+                title={copy.title}
+                meta={
+                    first ? (
+                        <span className="data">
+                            {first.year}
+                            {current ? " – present" : null}
+                        </span>
+                    ) : undefined
+                }
+            >
+                <div className="cluster page-head__actions">
+                    <Link
+                        className={buttonClass({ size: "sm" })}
+                        href={siteRoutes.resume}
+                    >
+                        {copy.list}
+                    </Link>
+                </div>
+            </PageHead>
             {data.chapters.length ? <TrajectoryView data={data} /> : null}
             <div className="shell section--tight">
                 <LinkArrow href={siteRoutes.resume}>{copy.close}</LinkArrow>

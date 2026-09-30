@@ -98,16 +98,14 @@ export const contactLink = {
     label: "Contact",
 } as const;
 
-/** Extra links in the menu sheet (< 960px). */
-export const sheetLinks = [
-    { href: siteRoutes.resumePdf, label: "Résumé (PDF)" },
-    { href: siteRoutes.feed, label: "RSS" },
-] as const;
+/** Extra links in the menu sheet (< 960px): CV is in the bar, and /resume
+ *  carries the PDF. */
+export const sheetLinks = [{ href: siteRoutes.feed, label: "RSS" }] as const;
 
-/** The footer's plain links; GitHub and LinkedIn come from the profile. */
+/** The footer's plain links; GitHub and LinkedIn come from the profile.
+ *  One CV route: /resume carries the PDF. */
 export const footerLinks = [
     { href: siteRoutes.resume, label: "CV" },
-    { href: siteRoutes.resumePdf, label: "Résumé (PDF)" },
     { href: siteRoutes.feed, label: "RSS" },
 ] as const;
 

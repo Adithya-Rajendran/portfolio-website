@@ -85,7 +85,7 @@
 .stageHeading {
     max-width: 22ch;
     margin-top: var(--s-5);
-    font: 300 var(--step-4) / 1.08 var(--font-display);
+    font: 400 var(--step-4) / 1.08 var(--font-display);
     letter-spacing: -0.015em;
     text-wrap: balance;
 }
@@ -109,7 +109,7 @@
     max-width: 52ch;
     margin-top: var(--s-3);
     color: var(--ink-2);
-    font: 300 var(--step-1) / 1.5 var(--font-long);
+    font: 400 var(--step-1) / 1.5 var(--font-long);
     text-wrap: pretty;
 }
 .stageCopy > .stack {
@@ -168,7 +168,7 @@
 .tileName {
     margin-top: var(--s-2);
     padding-right: var(--s-6);
-    font: 300 var(--step-3) / 1.08 var(--font-display);
+    font: 400 var(--step-3) / 1.08 var(--font-display);
     letter-spacing: -0.01em;
     text-wrap: balance;
 }
@@ -188,7 +188,7 @@
 .tileSummary {
     max-width: 52ch;
     color: var(--ink-2);
-    font: 300 var(--step-0) / 1.55 var(--font-long);
+    font: 400 var(--step-0) / 1.55 var(--font-long);
     text-wrap: pretty;
 }
 .tileArrow {

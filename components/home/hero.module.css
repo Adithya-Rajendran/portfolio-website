@@ -233,6 +233,9 @@
 .openTo {
     text-wrap: balance;
 }
+.item {
+    white-space: nowrap;
+}
 .routes {
     display: flex;
     flex-wrap: wrap;
@@ -258,7 +261,7 @@
 }
 .credit {
     color: var(--ink-2);
-    font: 400 0.6875rem / 1.5 var(--font-mono);
+    font: 400 var(--label-size) / 1.5 var(--font-mono);
     letter-spacing: 0.02em;
 }
 .credit a {
@@ -326,13 +329,10 @@
         align-items: center;
         column-gap: var(--s-3);
     }
-    .credit {
-        font-size: 0.625rem;
-    }
     .motion :global(.motion-toggle) {
         gap: 0.5rem;
         padding-inline: 0.7rem;
-        font-size: 0.6875rem;
+        font-size: var(--label-size);
         letter-spacing: 0.1em;
     }
     .motion :global(.motion-ctl__os) {

@@ -4,6 +4,7 @@ import { siteConfig } from "@/lib/config";
 import { getProfile } from "@/lib/sanity-client";
 import { getProfileDescription } from "@/lib/profile-content";
 import { FEED_PATH, FEED_TITLE } from "@/lib/feed";
+import { siteOpenGraph } from "@/lib/site-metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
     const profile = await getProfile();
@@ -28,14 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
             follow: true,
         },
         category: "technology",
-        openGraph: {
-            title: siteConfig.title,
-            ...described,
-            url: siteConfig.url,
-            siteName: "Adithya Rajendran",
-            locale: "en_US",
-            type: "website",
-        },
+        openGraph: siteOpenGraph(profile),
         twitter: {
             card: "summary_large_image",
             title: siteConfig.title,

@@ -12,17 +12,17 @@ export const contentType = OG_CONTENT_TYPE;
 const domain = new URL(siteConfig.url).hostname;
 
 /**
- * The Writing share card: the owner's description of his writing, signed
- * like every other card.
+ * The Writing share card: the name, tagged with the section, over the
+ * owner's description of his writing.
  */
 export default async function Image() {
     const profile = await getProfile();
     return new ImageResponse(
         <OgCard
-            tag={copy.themed}
-            title={copy.plain}
+            tag={copy.plain}
+            title={profile?.name?.trim() || siteConfig.author}
+            upper
             subtitle={getWritingDescription(profile) ?? undefined}
-            footerLeft={profile?.name || siteConfig.author}
             footerRight={`${domain}/blog`}
         />,
         { ...size, fonts: OG_CARD_FONTS },

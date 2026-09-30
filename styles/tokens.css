@@ -30,7 +30,7 @@
             var(--font-dm-mono), ui-monospace, "SFMono-Regular", Menlo,
             Consolas, monospace;
         /* ---- label tiers ---------------------------------------------
-           1  Michroma caps 11px   section tags, plate numbers, status
+           1  Michroma caps 12px   section tags, plate numbers, status
            2  Jost 500 caps 12px   metric labels, dl terms, form labels
            3  DM Mono 12px         counts and dates in meta lines      */
         --label-2: 500 0.75rem/1.35 var(--font-display);
@@ -38,7 +38,8 @@
 
         /* ---- fluid type scale (360 → 1440 px) ---------------------- */
         --step--2: clamp(0.75rem, 0.729rem + 0.093vw, 0.8125rem);
-        --step--1: clamp(0.875rem, 0.854rem + 0.093vw, 0.9375rem);
+        /* Jost UI text: 15px on a phone, 17px at 1440. */
+        --step--1: clamp(0.9375rem, 0.896rem + 0.185vw, 1.0625rem);
         --step-0: clamp(1rem, 0.958rem + 0.185vw, 1.125rem);
         --step-1: clamp(1.2rem, 1.1rem + 0.444vw, 1.5rem);
         --step-2: clamp(1.44rem, 1.254rem + 0.828vw, 2rem);
@@ -48,8 +49,8 @@
         --step-6: clamp(2.75rem, 1.877rem + 4.927vw, 6.312rem);
         --step-7: clamp(3.2rem, 1.973rem + 7.156vw, 8.413rem);
         --step-long: clamp(1.125rem, 1.083rem + 0.185vw, 1.25rem);
-        --label-size: 0.6875rem;
-        --label-size-lg: 0.75rem;
+        /* The smallest text on the site: nothing is set under 12px. */
+        --label-size: 0.75rem;
 
         --lh-display: 1.02;
         --lh-heading: 1.14;
@@ -161,22 +162,17 @@
         --on-accent: #050507; /* 6.5:1 on accent */
         --focus: var(--accent);
         --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
-        --falloff: color-mix(in oklab, var(--ink-1) 6.5%, transparent);
-        --falloff-warm: color-mix(in oklab, var(--accent) 8%, transparent);
         --glass: color-mix(in oklab, var(--bg) 94%, transparent);
         --limb-fill: #070709;
         --star-rgb: 236 232 223;
         --plate-bg: transparent;
         --plate-border: transparent;
-        --beam-warm: color-mix(in oklab, var(--accent) 10%, transparent);
-        /* Photographs (styles/components.css `.photo`): the frame dissolves
-           into the void, and the owner's photos are graded down into it
+        /* Photographs (styles/components.css `.photo`): a hard edge in a
+           hairline, and the owner's photos graded down into the void
            (exposure and saturation only, never content). */
         --photo-treatment: saturate(0.92) contrast(1.04);
         --photo-treatment-real: brightness(0.8) saturate(0.78) contrast(1.08);
-        --photo-feather: clamp(0.75rem, 3%, 2rem);
         --photo-mount: 0px;
-        --photo-mount-b: 0px;
     }
 
     /* ---- FLIGHT MANUAL (light): expedition photo-book on warm paper -- */
@@ -195,21 +191,15 @@
         --on-accent: #17150f; /*  4.75:1 on accent */
         --focus: var(--accent-text);
         --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
-        --falloff: transparent;
-        --falloff-warm: transparent;
         --glass: color-mix(in oklab, var(--bg) 96%, transparent);
         --limb-fill: var(--bg);
         --star-rgb: 23 21 15;
         --plate-bg: var(--surface-1);
         --plate-border: var(--rule-1);
-        --beam-warm: color-mix(in oklab, var(--accent) 16%, transparent);
-        /* Photographs become catalogue plates: mounted on card, hard edges,
-           crop marks, the plate number in the bottom strip. */
-        --photo-treatment: saturate(0.86) sepia(0.06) contrast(1.02);
-        --photo-treatment-real: saturate(0.82) sepia(0.05) contrast(1.02);
-        --photo-feather: 0px;
+        /* Photographs sit on an even card mat inside the hairline. */
+        --photo-treatment: saturate(0.86) contrast(1.02);
+        --photo-treatment-real: saturate(0.82) contrast(1.02);
         --photo-mount: 10px;
-        --photo-mount-b: 34px;
     }
 
     @media (prefers-contrast: more) {

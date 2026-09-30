@@ -62,7 +62,7 @@
 .interests {
     max-width: 30ch;
     color: var(--ink-1);
-    font: 300 var(--step-3) / 1.25 var(--font-long);
+    font: 400 var(--step-3) / 1.25 var(--font-long);
     letter-spacing: -0.005em;
     text-wrap: balance;
 }

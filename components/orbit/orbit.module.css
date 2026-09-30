@@ -174,7 +174,7 @@
 .year {
     position: absolute;
     color: var(--ink-2);
-    font: 400 0.6875rem / 1 var(--font-mono);
+    font: 400 var(--label-size) / 1 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
     white-space: nowrap;
 }
@@ -436,7 +436,7 @@ span.node {
 }
 .recTitle {
     margin-top: var(--s-4);
-    font: 300 var(--step-3) / 1.08 var(--font-display);
+    font: 400 var(--step-3) / 1.08 var(--font-display);
     letter-spacing: -0.01em;
     text-wrap: balance;
 }
@@ -461,7 +461,7 @@ span.node {
     max-width: 40ch;
     margin-top: var(--s-4);
     color: var(--ink-2);
-    font: 300 var(--step-1) / 1.45 var(--font-long);
+    font: 400 var(--step-1) / 1.45 var(--font-long);
     text-wrap: pretty;
 }
 .recLines {

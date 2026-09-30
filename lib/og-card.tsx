@@ -1,15 +1,20 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ReactElement } from "react";
-import { starLayout } from "@/lib/sky/stars";
+import { OG_SIZE } from "@/lib/site-metadata";
+
+export { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/site-metadata";
 
 /**
- * The Deep Field share card (plan §2.9): the void, a seeded scatter of
- * stars, the patch, one orange rule, Jost for the title, Michroma for the
- * tier-1 labels and DM Mono for the data. Satori reads static TTF copies
- * (assets/fonts/og/, each with its OFL licence), read once at module scope
- * so the image prerenders (docs: image-response.md §Custom fonts). Every
- * page's share image is this card.
+ * The Deep Field share card (plan §2.9): the void, the patch
+ * (assets/patch.svg, written by scripts/generate-patch.mjs; no stars:
+ * they are the home hero's alone), Jost for the title, Michroma for the
+ * tier-1 labels and DM Mono for the data. Every card names the author:
+ * a section's card leads with the name, an item's card signs its footer.
+ * Satori reads static TTF copies (assets/fonts/og/, each with its OFL
+ * licence), read once at module scope so the image prerenders (docs:
+ * image-response.md §Custom fonts). Every page's share image is this
+ * card.
  */
 
 const FONTS = join(process.cwd(), "assets/fonts/og");
@@ -19,7 +24,7 @@ const [jostLight, jostRegular, michroma, dmMono, patchSvg] = await Promise.all([
     readFile(join(FONTS, "Jost-Regular.ttf")),
     readFile(join(FONTS, "Michroma-Regular.ttf")),
     readFile(join(FONTS, "DMMono-Regular.ttf")),
-    readFile(join(process.cwd(), "app/icon.svg")),
+    readFile(join(process.cwd(), "assets/patch.svg")),
 ]);
 
 export const OG_CARD_FONTS = [
@@ -63,14 +68,8 @@ const VOID = {
     accentText: "#ff7a45",
 } as const;
 
-const WIDTH = 1200;
-const HEIGHT = 630;
-
-/** Every share image's size and type (the routes' `size`, `contentType`). */
-export const OG_SIZE = { width: WIDTH, height: HEIGHT } as const;
-export const OG_CONTENT_TYPE = "image/png" as const;
+const { width: WIDTH } = OG_SIZE;
 const PAD_X = 80;
-const STARS = starLayout(1990, 70, WIDTH, HEIGHT);
 
 const label = {
     fontFamily: "Michroma",
@@ -78,14 +77,15 @@ const label = {
     letterSpacing: "0.16em",
     textTransform: "uppercase" as const,
 };
-const mono = { fontFamily: "DM Mono", fontSize: 20 };
+/** DM Mono's advance, in em: the footer steps down to keep one line. */
+const MONO_ADVANCE = 0.6;
 
 /**
- * A page's card: the patch and one orange rule with the section's small
- * themed tag, the page's plain title, one line from the page, an optional
- * status line (● OPEN TO and the owner's words) and a footer of data.
- * `upper` sets the title in capitals (a project's name or the owner's,
- * the vehicle treatment).
+ * A page's card: the patch with the section's small tag, the title, one
+ * line from the page, an optional status line (● OPEN TO and the owner's
+ * words) and a footer of data: the author and the item's facts on the
+ * left, its address on the right. `upper` sets the title in capitals (a
+ * project's name or the owner's, the vehicle treatment).
  */
 export function OgCard({
     tag,
@@ -96,7 +96,7 @@ export function OgCard({
     footerRight,
     upper = false,
 }: {
-    /** The section's themed name: a small label beside the patch. */
+    /** The section's plain name: a small label beside the patch. */
     tag?: string;
     title: string;
     subtitle?: string;
@@ -106,6 +106,18 @@ export function OgCard({
     footerRight: string;
     upper?: boolean;
 }): ReactElement {
+    const footerChars = (footerLeft?.length ?? 0) + footerRight.length + 3;
+    const footerSize = Math.min(
+        20,
+        Math.floor((WIDTH - 2 * PAD_X) / (footerChars * MONO_ADVANCE)),
+    );
+    // The name in capitals keeps one line at 96 px; a long title wraps.
+    const titleSize =
+        title.length > 24
+            ? 84
+            : status || (upper && title.length > 12)
+              ? 96
+              : 124;
     return (
         <div
             style={{
@@ -113,53 +125,22 @@ export function OgCard({
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
-                position: "relative",
                 padding: `64px ${PAD_X}px 56px`,
                 background: VOID.bg,
                 color: VOID.ink1,
                 fontFamily: "Jost",
             }}
         >
-            {STARS.map((star, index) => (
-                <div
-                    key={index}
-                    style={{
-                        position: "absolute",
-                        left: Math.round(star.x),
-                        top: Math.round(star.y),
-                        width: star.mag === 1 ? 3 : 2,
-                        height: star.mag === 1 ? 3 : 2,
-                        borderRadius: 2,
-                        background: VOID.ink1,
-                        opacity:
-                            star.mag === 1 ? 0.7 : star.mag === 2 ? 0.4 : 0.2,
-                    }}
-                />
-            ))}
-
             <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- Satori draws <img>, not next/image */}
                 <img src={PATCH} width={76} height={76} alt="" />
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 16,
-                        ...label,
-                        color: VOID.ink1,
-                    }}
-                >
-                    <div
-                        style={{
-                            width: 48,
-                            height: 2,
-                            background: VOID.accent,
-                        }}
-                    />
-                    {tag ? (
-                        <span style={{ color: VOID.ink2 }}>{tag}</span>
-                    ) : null}
-                </div>
+                {tag ? (
+                    <span
+                        style={{ display: "flex", ...label, color: VOID.ink2 }}
+                    >
+                        {tag}
+                    </span>
+                ) : null}
             </div>
 
             <div
@@ -173,8 +154,7 @@ export function OgCard({
                 <div
                     style={{
                         display: "flex",
-                        // A status line takes room: the name steps down.
-                        fontSize: title.length > 24 ? 84 : status ? 96 : 124,
+                        fontSize: titleSize,
                         fontWeight: 300,
                         lineHeight: 1,
                         letterSpacing: upper ? "0.04em" : "-0.02em",
@@ -248,7 +228,8 @@ export function OgCard({
                     alignItems: "center",
                     paddingTop: 22,
                     borderTop: `1px solid ${VOID.rule2}`,
-                    ...mono,
+                    fontFamily: "DM Mono",
+                    fontSize: footerSize,
                     color: VOID.ink2,
                 }}
             >

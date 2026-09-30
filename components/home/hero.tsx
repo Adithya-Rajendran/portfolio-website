@@ -191,7 +191,7 @@ export default function Hero({
         >
             <div className={styles.sky}>
                 <Starfield />
-                <StaticStars variant="field" />
+                <StaticStars />
                 <div className={styles.photo}>
                     <Alignment crop="desktop" />
                     <Alignment crop="mobile" />
@@ -217,7 +217,18 @@ export default function Hero({
                     {openTo ? (
                         <p className={styles.status} data-clear>
                             <Status value="active">{copy.openTo}</Status>{" "}
-                            <span className={styles.openTo}>{openTo}</span>
+                            <span className={styles.openTo}>
+                                {/* Each opening stays on one line; the
+                                    line breaks only at a separator. */}
+                                {openTo.split(" · ").map((item, index) => (
+                                    <span key={`${item}-${index}`}>
+                                        {index ? " · " : null}
+                                        <span className={styles.item}>
+                                            {item}
+                                        </span>
+                                    </span>
+                                ))}
+                            </span>
                         </p>
                     ) : null}
                     <nav

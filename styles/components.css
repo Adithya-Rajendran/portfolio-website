@@ -24,7 +24,7 @@
         font: 400 var(--step-2) / 1.18 var(--font-display);
     }
     .t-lead {
-        font: 300 var(--step-2) / 1.38 var(--font-long);
+        font: 400 var(--step-2) / 1.38 var(--font-long);
         color: var(--ink-2);
         text-wrap: pretty;
     }
@@ -159,13 +159,14 @@
         background: transparent;
         border: 1px dashed var(--ink-2);
     }
+    /* Stopped: the sprite's cross (marks.tsx) in place of the dot. */
     .status[data-status="stopped"]::before {
-        content: "×";
-        width: auto;
-        height: auto;
-        border-radius: 0;
-        background: none;
-        font: 400 0.875rem / 1 var(--font-display);
+        content: none;
+    }
+    .status__icon {
+        width: 10px;
+        height: 10px;
+        stroke-width: 2;
     }
 
     /* ===== Header and navigation (site.css 4.2) ======================== */
@@ -208,7 +209,7 @@
         --patch-band: none;
     }
     .brand__name {
-        font: 400 var(--label-size-lg) / 1 var(--font-label);
+        font: 400 var(--label-size) / 1 var(--font-label);
         letter-spacing: 0.24em;
         text-transform: uppercase;
         white-space: nowrap;
@@ -326,8 +327,9 @@
         display: none;
     }
 
-    /* The theme switch (contract §6): one icon button, the half-lit disc.
-       Its name is the theme it switches to, picked by html[data-theme]. */
+    /* The theme switch (contract §6): the half-lit disc alone, unboxed,
+       in a 44px target. Its name is the theme it switches to, picked by
+       html[data-theme]. */
     .theme-switch {
         display: inline-flex;
         align-items: center;
@@ -336,21 +338,18 @@
         height: 44px;
         flex: none;
         padding: 0;
-        border: var(--rule-hair) solid var(--rule-2);
+        border: 0;
         background: transparent;
-        color: var(--ink-1);
+        color: var(--ink-2);
         cursor: pointer;
-        transition:
-            border-color var(--dur-hover) var(--ease-dock),
-            background-color var(--dur-hover) var(--ease-dock);
+        transition: color var(--dur-hover) var(--ease-dock);
     }
     .theme-switch .icon {
         width: 18px;
         height: 18px;
     }
     .theme-switch:hover {
-        border-color: var(--ink-1);
-        background: var(--surface-2);
+        color: var(--ink-1);
     }
     html[data-theme="manual"] .theme-switch__to-light,
     html:not([data-theme="manual"]) .theme-switch__to-dark {
@@ -789,7 +788,8 @@
         max-width: 52ch;
         margin-top: var(--s-6);
         color: var(--ink-2);
-        font: 300 var(--step-1) / 1.5 var(--font-long);
+        font: 400 var(--step-1) / 1.5 var(--font-long);
+        text-wrap: balance;
     }
 
     /* ===== Captions, plates, revision marks (site.css 4.8, 4.27) ====== */
@@ -857,6 +857,10 @@
     }
 
     /* ===== Footer (site.css 4.21, document control 4.27) =============== */
+    /* The patch, the sections, the links and the controls, then the strip:
+       the copyright (the footer's one mention of the name) and Back to
+       top. Two columns on phones, so the sections and the links sit side
+       by side. */
     .site-footer {
         position: relative;
         padding-block: var(--space-block) var(--s-7);
@@ -866,25 +870,14 @@
     }
     .site-footer__grid {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
         gap: var(--s-6) var(--gutter);
     }
     .site-footer .patch {
-        width: 88px;
-        height: 88px;
-    }
-    .site-footer__name {
-        margin-top: var(--s-4);
-        color: var(--ink-1);
-        font: 400 var(--label-size-lg) / var(--lh-label) var(--font-label);
-        letter-spacing: 0.24em;
-        text-transform: uppercase;
-    }
-    .site-footer__headline {
-        max-width: 34ch;
-        margin-top: var(--s-2);
-        color: var(--ink-2);
-        font: 400 var(--step--1) / 1.5 var(--font-text);
+        grid-column: 1 / -1;
+        width: 72px;
+        height: 72px;
     }
     .site-footer__nav ul,
     .site-footer__links {
@@ -918,10 +911,17 @@
         text-decoration-color: var(--accent);
     }
     .site-footer__controls {
+        grid-column: 1 / -1;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         gap: var(--s-3);
+    }
+    /* Below 960px the menu sheet carries the theme choice. */
+    @media (max-width: 59.99rem) {
+        .site-footer .theme-choice {
+            display: none;
+        }
     }
     .site-footer__base {
         display: flex;
@@ -930,35 +930,27 @@
         align-items: center;
         gap: var(--s-3) var(--s-6);
         margin-top: var(--s-7);
-        padding-top: var(--s-4);
-        border-top: var(--rule-hair) solid var(--rule-1);
-    }
-    .site-footer__base > * {
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.6 var(--font-label);
-        letter-spacing: var(--track-label);
-        text-transform: uppercase;
+        font: 400 var(--label-size) / 1.6 var(--font-text);
     }
     .site-footer__base a {
         display: inline-flex;
         align-items: center;
+        gap: 0.4em;
         min-height: 44px;
     }
-    /* The controls take a row of their own until the theme choice fits in
-       a column (>= 1280px). */
     @media (min-width: 37.5rem) {
-        .site-footer__grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .site-footer__controls {
-            grid-column: 1 / -1;
-        }
-    }
-    @media (min-width: 60rem) {
         .site-footer__grid {
             grid-template-columns: 4fr 3fr 3fr;
         }
+        .site-footer .patch {
+            grid-column: auto;
+            width: 88px;
+            height: 88px;
+        }
     }
+    /* The controls take a row of their own until the theme choice fits in
+       a column (>= 1280px). */
     @media (min-width: 80rem) {
         .site-footer__grid {
             grid-template-columns: 4fr 3fr 3fr auto;
@@ -989,10 +981,6 @@
     .field__error {
         color: var(--accent-text);
         font: 500 var(--step--1) / 1.45 var(--font-text);
-    }
-    /* Drawn, not read: the field's aria-invalid already says so. */
-    .field__error::before {
-        content: "✕ " / "";
     }
     .input,
     .textarea {
@@ -1052,13 +1040,7 @@
         margin: 0;
         border-top: var(--rule-hair) solid var(--rule-2);
         border-left: var(--rule-hair) solid var(--rule-1);
-        background:
-            radial-gradient(
-                ellipse 60% 80% at 100% 0%,
-                var(--falloff-warm),
-                transparent 70%
-            ),
-            var(--plate-bg);
+        background: var(--plate-bg);
     }
     .titleblock__cell {
         display: flex;
@@ -1180,7 +1162,7 @@
         grid-column: 2;
         max-width: 60ch;
         color: var(--ink-2);
-        font: 300 var(--step-0) / 1.55 var(--font-long);
+        font: 400 var(--step-0) / 1.55 var(--font-long);
         text-wrap: pretty;
     }
 
@@ -1376,7 +1358,7 @@
     }
     .cv-item__title {
         margin: 0;
-        font: 300 var(--step-2) / 1.18 var(--font-display);
+        font: 400 var(--step-2) / 1.18 var(--font-display);
         letter-spacing: -0.005em;
         text-wrap: pretty;
     }
@@ -1399,7 +1381,7 @@
         max-width: 60ch;
         margin-top: var(--s-3);
         color: var(--ink-2);
-        font: 300 var(--step-1) / 1.45 var(--font-long);
+        font: 400 var(--step-1) / 1.45 var(--font-long);
         text-wrap: pretty;
     }
     .cv-item__lines {
@@ -1517,15 +1499,14 @@
     }
 
     /* ===== Photographs and plates (site.css 4.26, 4.27) ================= */
-    /* The owner's photographs behave the same way in both themes: in Void
-       an object in the dark (the frame dissolves into the void, warm light
-       on hover), in Flight Manual a catalogue plate mounted on card with
-       crop marks and the plate number in its strip. Diagrams, plots and
-       screenshots (`photo--drawing`) keep hard edges and no grade.
+    /* One plate rule for every photograph, in both themes: a hard edge in
+       a hairline, then the caption. In Flight Manual an even card mat sits
+       inside the hairline (--photo-mount). The owner's photographs keep
+       their exposure and saturation grade; diagrams, plots and screenshots
+       (`photo--drawing`) have none. No hover of their own.
        <figure class="photo" style="--photo-ratio: 3 / 4">
-         <div class="photo__frame"><img class="photo__img" …>
-           <span class="photo__plate" aria-hidden="true">Pl. I · LOG 003</span></div>
-         <figcaption class="caption caption--plate">…</figcaption></figure> */
+         <div class="photo__frame"><img class="photo__img" …></div>
+         <figcaption class="caption">…</figcaption></figure> */
     .photo {
         position: relative;
         min-width: 0;
@@ -1533,8 +1514,9 @@
     }
     .photo__frame {
         position: relative;
-        isolation: isolate;
-        padding: var(--photo-mount) var(--photo-mount) var(--photo-mount-b);
+        padding: var(--photo-mount);
+        border: var(--rule-hair) solid var(--rule-1);
+        background: var(--plate-bg);
     }
     .photo__img {
         display: block;
@@ -1549,155 +1531,13 @@
     .photo--real .photo__img {
         filter: var(--photo-treatment-real);
     }
-    /* Light falloff: the edges fade into the void (mask alpha, not a
-       colour). The hover light shares it, so it never shows a hard edge. */
-    .photo:not(.photo--drawing) .photo__img,
-    .photo:not(.photo--drawing) .photo__frame::before {
-        -webkit-mask-image:
-            linear-gradient(
-                to right,
-                transparent,
-                #000 var(--photo-feather),
-                #000 calc(100% - var(--photo-feather)),
-                transparent
-            ),
-            linear-gradient(
-                to bottom,
-                transparent,
-                #000 var(--photo-feather),
-                #000 calc(100% - var(--photo-feather)),
-                transparent
-            );
-        -webkit-mask-composite: source-in;
-        mask-image:
-            linear-gradient(
-                to right,
-                transparent,
-                #000 var(--photo-feather),
-                #000 calc(100% - var(--photo-feather)),
-                transparent
-            ),
-            linear-gradient(
-                to bottom,
-                transparent,
-                #000 var(--photo-feather),
-                #000 calc(100% - var(--photo-feather)),
-                transparent
-            );
-        mask-composite: intersect;
-    }
-    .photo:not(.photo--drawing) .photo__frame::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        background: radial-gradient(
-            ellipse 60% 70% at 90% 8%,
-            var(--beam-warm),
-            transparent 70%
-        );
-        mix-blend-mode: screen;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity var(--dur-5) var(--ease-dock);
-    }
-    .photo:hover .photo__frame::before {
-        opacity: 1;
-    }
     .photo--drawing .photo__img {
-        border: var(--rule-hair) solid var(--rule-1);
         filter: none;
-    }
-    /* The plate number: a tiny label on the photograph (decorative; the
-       caption carries it for everyone). Photographs stay dark in both
-       themes, so it is set in the photo inks, over a soft shadow of the
-       photo's black that keeps it legible on bright hardware. */
-    .photo__plate {
-        position: absolute;
-        z-index: 2;
-        top: calc(var(--photo-mount) + var(--s-4) - var(--s-2));
-        left: calc(var(--photo-mount) + var(--s-4) - var(--s-3));
-        max-width: calc(100% - 2 * var(--photo-mount) - 2 * var(--s-4));
-        padding: var(--s-2) var(--s-3);
-        background: radial-gradient(
-            farthest-side,
-            color-mix(in srgb, var(--photo-black) 78%, transparent) 55%,
-            transparent
-        );
-        color: var(--photo-ink);
-        font: 400 var(--label-size) / 1.2 var(--font-label);
-        letter-spacing: var(--track-label);
-        text-transform: uppercase;
-        pointer-events: none;
-    }
-    .photo--drawing .photo__plate {
-        display: none;
-    }
-
-    /* Flight Manual: the exhibition-catalogue plate. */
-    [data-theme="manual"] .photo__frame {
-        background: var(--surface-1);
-        border: var(--rule-hair) solid var(--rule-1);
-    }
-    [data-theme="manual"] .photo__img {
-        -webkit-mask-image: none;
-        mask-image: none;
-    }
-    [data-theme="manual"] .photo__frame::before {
-        display: none;
-    }
-    [data-theme="manual"] .photo__plate {
-        top: auto;
-        bottom: 0;
-        left: var(--photo-mount);
-        right: var(--photo-mount);
-        height: var(--photo-mount-b);
-        display: flex;
-        align-items: center;
-        padding: 0;
-        background: none;
-        color: var(--ink-2);
-    }
-    [data-theme="manual"] .photo--drawing .photo__plate {
-        display: flex;
-    }
-    /* Crop marks outside the four corners. */
-    [data-theme="manual"] .photo__frame::after {
-        content: "";
-        position: absolute;
-        inset: -13px;
-        z-index: 2;
-        pointer-events: none;
-        background:
-            linear-gradient(var(--ink-2), var(--ink-2)) left 0 top 12px / 8px
-                1px,
-            linear-gradient(var(--ink-2), var(--ink-2)) left 12px top 0 / 1px
-                8px,
-            linear-gradient(var(--ink-2), var(--ink-2)) right 0 top 12px / 8px
-                1px,
-            linear-gradient(var(--ink-2), var(--ink-2)) right 12px top 0 / 1px
-                8px,
-            linear-gradient(var(--ink-2), var(--ink-2)) left 0 bottom 12px / 8px
-                1px,
-            linear-gradient(var(--ink-2), var(--ink-2)) left 12px bottom 0 / 1px
-                8px,
-            linear-gradient(var(--ink-2), var(--ink-2)) right 0 bottom 12px /
-                8px 1px,
-            linear-gradient(var(--ink-2), var(--ink-2)) right 12px bottom 0 /
-                1px 8px;
-        background-repeat: no-repeat;
-    }
-    [data-theme="manual"] .photo--drawing .photo__img {
-        border: 0;
     }
 
     /* ===== Page head, split (contract §1) ============================== */
     /* The title on the left half, the intro and the actions on the right
-       from 960px, over a band of static stars (`.head-band`). */
-    .head-band {
-        position: relative;
-        isolation: isolate;
-    }
+       from 960px. */
     .page-head--split {
         padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
         padding-bottom: var(--s-6);
@@ -1801,7 +1641,7 @@
         order: -1;
         margin: 0;
         color: var(--ink-1);
-        font: 300 var(--metric-size, var(--step-3)) / 1.05 var(--font-display);
+        font: 400 var(--metric-size, var(--step-3)) / 1.05 var(--font-display);
         letter-spacing: -0.01em;
         font-variant-numeric: tabular-nums lining-nums;
         overflow-wrap: break-word;
@@ -1809,18 +1649,14 @@
     }
     .metric__unit {
         color: var(--ink-2);
-        font-size: 0.6em;
+        font-size: max(0.6em, var(--label-size));
         letter-spacing: 0;
     }
     .metrics--lg {
         --metric-size: var(--step-4);
     }
-    /* Jost 300 only from step 3 (contract §2): a small stat is 400. */
     .metrics--sm {
         --metric-size: var(--step-1);
-    }
-    .metrics--sm .metric > dd {
-        font-weight: 400;
     }
 
     /* ===== Tables (site.css 4.14) ======================================= */
@@ -2067,7 +1903,7 @@
     /* A brief: the values are sentences, set in the serif. */
     .specs--read dd {
         max-width: 60ch;
-        font: 300 var(--step-1) / 1.5 var(--font-long);
+        font: 400 var(--step-1) / 1.5 var(--font-long);
         text-wrap: pretty;
     }
 
@@ -2084,7 +1920,7 @@
     .availability__text {
         max-width: 60ch;
         color: var(--ink-1);
-        font: 300 var(--step-1) / 1.35 var(--font-display);
+        font: 400 var(--step-1) / 1.35 var(--font-display);
         text-wrap: balance;
     }
 
@@ -2138,14 +1974,11 @@
             margin-top: var(--s-5);
         }
     }
-    /* The patch as a figure: the ring's disc is solid, so the band's
-       stars stay behind it. */
+    /* The patch as a figure. */
     .page-head__figure .patch {
         width: 100%;
         height: auto;
         aspect-ratio: 1;
-        border-radius: 50%;
-        background: var(--bg);
     }
 
     /* ===== Document sections (contract §1; components/ui/doc-section.tsx) */
@@ -2178,7 +2011,7 @@
         border-bottom: var(--rule-hair) solid var(--rule-1);
     }
     .ask__title {
-        font: 300 var(--step-4) / 1.05 var(--font-display);
+        font: 400 var(--step-4) / 1.05 var(--font-display);
         letter-spacing: -0.014em;
     }
 }

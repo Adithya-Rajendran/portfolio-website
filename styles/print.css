@@ -27,8 +27,6 @@
             --accent: #e4501b;
             --accent-text: #a13a0d;
             --on-accent: #17150f;
-            --falloff: transparent;
-            --falloff-warm: transparent;
             --plate-bg: transparent;
             --plate-border: #d5cdbd;
             --limb-fill: #ffffff;
@@ -39,9 +37,7 @@
             --star-rgb: 23 21 15;
             --photo-treatment: grayscale(1) contrast(1.04);
             --photo-treatment-real: grayscale(1) contrast(1.04);
-            --photo-feather: 0px;
             --photo-mount: 0px;
-            --photo-mount-b: 0px;
         }
         @page {
             margin: 18mm 16mm 20mm;

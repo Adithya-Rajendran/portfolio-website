@@ -1,5 +1,4 @@
 import Link from "next/link";
-import StaticStars from "@/components/sky/static-stars";
 import PageHead from "@/components/ui/page-head";
 import RouteList, { type RouteItem } from "@/components/ui/route-list";
 import SectionTag from "@/components/ui/section-tag";
@@ -24,7 +23,7 @@ const ROUTES: RouteItem[] = [homeRoute, ...primaryNavigation].map((route) => ({
 
 /**
  * Loss of Signal (G7): the 404 and, with other words and actions, the
- * error page. The shared page head over a band of stars, then a carrier
+ * error page. The shared page head, then a carrier
  * trace that drops out (ink, one accent mark where it is lost, no words),
  * then the site's sections as link rows over an engraved horizon (an ink
  * limb and the sun as its one accent). Everything renders without
@@ -51,22 +50,19 @@ export default function LossOfSignal({
     const copy = lossOfSignalCopy;
     return (
         <div data-page={page} className="los">
-            <div className="head-band">
-                <StaticStars variant="band" />
-                <PageHead
-                    className="shell"
-                    split
-                    ornament="dot"
-                    tag={tag}
-                    title={title}
-                    intro={lead}
-                >
-                    <div className="cluster page-head__actions">{actions}</div>
-                    {showRequested ? (
-                        <RequestedPath label={copy.requested} />
-                    ) : null}
-                </PageHead>
-            </div>
+            <PageHead
+                className="shell"
+                split
+                ornament="dot"
+                tag={tag}
+                title={title}
+                intro={lead}
+            >
+                <div className="cluster page-head__actions">{actions}</div>
+                {showRequested ? (
+                    <RequestedPath label={copy.requested} />
+                ) : null}
+            </PageHead>
 
             <div className="shell" aria-hidden="true">
                 <svg

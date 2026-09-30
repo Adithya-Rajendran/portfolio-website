@@ -1,7 +1,7 @@
 import Link from "next/link";
 import MotionToggle from "@/components/chrome/motion-toggle";
 import ThemeChoice from "@/components/chrome/theme-choice";
-import { Patch } from "@/components/ui/icon";
+import { Icon, Patch } from "@/components/ui/icon";
 import { getToday } from "@/lib/clock";
 import { chromeCopy } from "@/lib/copy";
 import { siteConfig } from "@/lib/config";
@@ -10,20 +10,19 @@ import { getProfile } from "@/lib/sanity-client";
 import { getProfileLink } from "@/lib/profile-content";
 
 /**
- * The footer (contract §6): the patch, the name and the profile's
- * headline, the sections by their plain names (also the menu's fallback
- * target without the Popover API), plain links, the theme choice and
- * Pause motion (on home the hero carries it, beside the starfield), then
- * the strip: the
- * copyright and Back to top. No date: a revision belongs to the document
- * it revises (a mission file, the CV), not to every page. Reads only
- * cached data (the profile and a day-cached "today"), so it is part of
- * every page's static shell.
+ * The footer (contract §6): the patch, the sections by their plain names
+ * (also the menu's fallback target without the Popover API), plain links
+ * (CV, RSS, GitHub, LinkedIn), the theme choice (from 960px; below it the
+ * menu sheet carries it) and Pause motion (on home the hero carries it,
+ * beside the starfield), then the strip: the copyright, the one place
+ * the footer names the owner, and Back to top. No date: a revision
+ * belongs to the document it revises (a mission file, the CV), not to
+ * every page. Reads only cached data (the profile and a day-cached
+ * "today"), so it is part of every page's static shell.
  */
 export default async function Footer() {
     const [today, profile] = await Promise.all([getToday(), getProfile()]);
     const name = profile?.name?.trim() || siteConfig.author;
-    const headline = profile?.headline?.trim();
     const social = (["github", "linkedin"] as const)
         .map((kind) => getProfileLink(profile, kind))
         .filter((link) => link !== undefined);
@@ -31,13 +30,7 @@ export default async function Footer() {
         <footer className="site-footer" data-print="hide">
             <div className="shell">
                 <div className="site-footer__grid">
-                    <div className="site-footer__id">
-                        <Patch />
-                        <p className="site-footer__name">{name}</p>
-                        {headline ? (
-                            <p className="site-footer__headline">{headline}</p>
-                        ) : null}
-                    </div>
+                    <Patch />
                     <nav
                         className="site-footer__nav"
                         id="site-footer-nav"
@@ -79,7 +72,8 @@ export default async function Footer() {
                         © {today.slice(0, 4)} {name}
                     </span>
                     <a href="#top" className="link-quiet">
-                        {chromeCopy.backToTop} <span aria-hidden="true">↑</span>
+                        {chromeCopy.backToTop}
+                        <Icon name="arrow-up" className="icon--sm" />
                     </a>
                 </div>
             </div>

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import MissionStage from "@/components/portfolio/mission-stage";
 import MissionTile, { MissionTiles } from "@/components/portfolio/mission-tile";
-import StaticStars from "@/components/sky/static-stars";
 import { LinkArrow } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
 import RouteList from "@/components/ui/route-list";
@@ -98,23 +97,20 @@ export default async function Portfolio() {
 
     return (
         <div data-page="missions" className={styles.page}>
-            <div className="head-band">
-                <StaticStars variant="band" />
-                <PageHead
-                    className="shell"
-                    split
-                    ornament="pulsar"
-                    tag={copy.themed}
-                    title={copy.plain}
-                    intro={profile?.projectsIntro?.trim() || null}
-                >
-                    <div className="cluster page-head__actions">
-                        <LinkArrow href={siteRoutes.resume}>
-                            {copy.experience}
-                        </LinkArrow>
-                    </div>
-                </PageHead>
-            </div>
+            <PageHead
+                className="shell"
+                split
+                ornament="pulsar"
+                tag={copy.themed}
+                title={copy.plain}
+                intro={profile?.projectsIntro?.trim() || null}
+            >
+                <div className="cluster page-head__actions">
+                    <LinkArrow href={siteRoutes.resume}>
+                        {copy.experience}
+                    </LinkArrow>
+                </div>
+            </PageHead>
 
             {flagship ? (
                 <section

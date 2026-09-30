@@ -4,7 +4,6 @@ import ContactForm from "@/components/contact/contact-form";
 import ContactNoScript from "@/components/contact/contact-no-script";
 import ContactRoutes from "@/components/contact/contact-routes";
 import { ContactPageJsonLd } from "@/components/json-ld";
-import StaticStars from "@/components/sky/static-stars";
 import Availability from "@/components/ui/availability";
 import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
@@ -61,25 +60,22 @@ export default async function ContactPage() {
     return (
         <div data-page="contact">
             <ContactPageJsonLd profile={profile} />
-            <div className="head-band">
-                <StaticStars variant="band" />
-                <PageHead
-                    className="shell"
-                    split
-                    ornament="record"
-                    tag={copy.themed}
-                    title={copy.plain}
-                    intro={profile?.contactIntro?.trim() || null}
-                >
-                    {openTo ? (
-                        <Availability
-                            className={styles.openTo}
-                            label={copy.openTo}
-                            text={openTo}
-                        />
-                    ) : null}
-                </PageHead>
-            </div>
+            <PageHead
+                className="shell"
+                split
+                ornament="record"
+                tag={copy.themed}
+                title={copy.plain}
+                intro={profile?.contactIntro?.trim() || null}
+            >
+                {openTo ? (
+                    <Availability
+                        className={styles.openTo}
+                        label={copy.openTo}
+                        text={openTo}
+                    />
+                ) : null}
+            </PageHead>
 
             <ContactDesk topics={routes.map((route) => route.topic)}>
                 <section

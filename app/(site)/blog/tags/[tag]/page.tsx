@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import LogIndex from "@/components/blogs/log-index";
 import TagChips from "@/components/blogs/tag-chips";
-import StaticStars from "@/components/sky/static-stars";
 import { ButtonLink } from "@/components/ui/button";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
@@ -37,37 +36,34 @@ async function TagEntries({ tag }: { tag: string }) {
 
     return (
         <>
-            <div className="head-band">
-                <StaticStars variant="band" />
-                <PageHead
-                    className="shell"
-                    split
-                    ornament="wave"
-                    tag={logCopy.themed}
-                    title={tag}
-                    intro={copy.intro(tag)}
-                >
-                    <div className="cluster page-head__actions">
+            <PageHead
+                className="shell"
+                split
+                ornament="wave"
+                tag={logCopy.themed}
+                title={tag}
+                intro={copy.intro(tag)}
+            >
+                <div className="cluster page-head__actions">
+                    <ButtonLink
+                        size="sm"
+                        icon="arrow"
+                        iconAt="end"
+                        href={siteRoutes.blog}
+                    >
+                        {logCopy.back}
+                    </ButtonLink>
+                    {filters ? (
                         <ButtonLink
                             size="sm"
-                            icon="arrow"
-                            iconAt="end"
-                            href={siteRoutes.blog}
+                            icon="search"
+                            href="/blog/archive"
                         >
-                            {logCopy.back}
+                            {logCopy.search}
                         </ButtonLink>
-                        {filters ? (
-                            <ButtonLink
-                                size="sm"
-                                icon="search"
-                                href="/blog/archive"
-                            >
-                                {logCopy.search}
-                            </ButtonLink>
-                        ) : null}
-                    </div>
-                </PageHead>
-            </div>
+                    ) : null}
+                </div>
+            </PageHead>
 
             <section
                 className={`section ${styles.index}`}

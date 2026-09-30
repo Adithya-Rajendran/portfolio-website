@@ -175,7 +175,7 @@
         gap: 0.45rem;
         padding-inline: 0.6rem;
         color: var(--ink-2);
-        font-size: 0.6875rem;
+        font-size: var(--label-size);
     }
     .listing .copy__btn .icon {
         width: 15px;
@@ -284,9 +284,6 @@
         max-width: 100%;
         max-height: 88svh;
         margin-inline: auto;
-    }
-    [data-theme="manual"] .prose > :is(.plate, .gallery) {
-        margin-inline: 13px;
     }
     .gallery__plates {
         display: grid;
@@ -421,7 +418,7 @@
     .fnref a {
         padding: 0 0.15em;
         color: var(--accent-text);
-        font: 400 0.72em / 1 var(--font-mono);
+        font: 400 var(--label-size) / 1 var(--font-mono);
         text-decoration: none;
     }
     .fnref a::before {
@@ -558,11 +555,6 @@
         .notes__item {
             break-inside: avoid;
         }
-        .photo__frame::before,
-        .photo__frame::after,
-        .photo__plate {
-            display: none !important;
-        }
         .photo__frame {
             background: none !important;
             border: 0 !important;
@@ -571,8 +563,6 @@
             max-height: 110mm;
             width: auto;
             max-width: 100%;
-            -webkit-mask-image: none !important;
-            mask-image: none !important;
         }
         .prose a[href^="http"]::after {
             content: " (" attr(href) ")";

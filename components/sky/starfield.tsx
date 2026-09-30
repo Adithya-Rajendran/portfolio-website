@@ -27,8 +27,9 @@ const LOOK: Record<Magnitude, { r: number; alpha: number }> = {
 
 /**
  * The home hero's drifting starfield (plan §2.5.2; the site's only ambient
- * motion). A seeded canvas over the server's `StaticStars`, which it hides
- * once it has drawn (Void only; Flight Manual keeps the printed chart).
+ * motion). A seeded canvas over the server's static star layer
+ * (components/sky/static-stars.tsx), which it hides once it has drawn
+ * (Void only; Flight Manual draws no stars).
  * It draws at about 30 fps, with the device pixel ratio capped at 1.5,
  * and only while its zone (`[data-drift-zone]`) is on screen, the tab is
  * visible, the theme is Void and motion is allowed (`html[data-motion=

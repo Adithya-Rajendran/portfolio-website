@@ -1,3 +1,4 @@
+import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import { primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 
@@ -85,4 +86,26 @@ test("the nav names every section plainly", async ({ page }) => {
         "About",
         "Contact",
     ]);
+});
+
+test("the footer names the owner once and carries each control once", async ({
+    page,
+}) => {
+    await page.goto("/about");
+    const footer = page.getByRole("contentinfo");
+    const name = FIXTURE_PROFILE.name!;
+    await expect(footer.getByText(name)).toHaveCount(1);
+    await expect(footer.getByText(name)).toHaveText(/^© \d{4} /);
+    await expect(footer.getByRole("link", { name: "CV" })).toHaveAttribute(
+        "href",
+        "/resume",
+    );
+    await expect(footer.getByRole("link", { name: /Résumé/ })).toHaveCount(0);
+    // Below 960px the menu sheet carries the theme choice, not the footer.
+    await expect(footer.getByRole("group", { name: "Theme" })).toBeHidden();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(footer.getByRole("group", { name: "Theme" })).toBeVisible();
+    await expect(
+        page.getByRole("banner").getByRole("group", { name: "Theme" }),
+    ).toBeHidden();
 });
