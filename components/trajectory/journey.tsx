@@ -500,10 +500,10 @@ export default function Journey({
                                                 }
                                             >
                                                 <span className={styles.year}>
-                                                    {copy.next}
+                                                    {copy.future}
                                                 </span>
-                                                <span className={styles.name}>
-                                                    {copy.openTo}
+                                                <span className="sr-only">
+                                                    {` ${data.planned.lines[0]}`}
                                                 </span>
                                             </button>
                                         </li>

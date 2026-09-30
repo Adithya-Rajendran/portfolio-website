@@ -14,19 +14,21 @@ import { OPEN_LENS } from "./flight-opening";
  * and testable in Node. flight-gl.ts draws what this module places.
  *
  * The frame is heliocentric, y up, the Sun at the origin. Each chapter has
- * a world on its own slightly inclined orbit, outward in time order, and
- * the ship flies the base route (lib/trajectory.ts) through them:
- * - a **coast** co-orbits the chapter's world on a parking loop, spiralling
- *   in from the loop's outer point and out to it again;
- * - a **flyby** is a smooth close pass across the world's orbit;
- * - a **transfer** is a Hohmann-like spiral, tangent at both ends;
- * - the **plan** holds the parking loop while a dashed leg spirals out to
- *   the planned orbit.
+ * a world on its own slightly inclined orbit, outward in time order, held
+ * where its chapter ends, and the ship flies the base route
+ * (lib/trajectory.ts) past them on one smooth **track** about the Sun:
+ * - a **coast** parks on a ring round the chapter's world: the ship leaves
+ *   the track where it touches the ring, flies its turns and rejoins the
+ *   track there;
+ * - a **flyby** passes close by the world on the track;
+ * - a **transfer** follows the track from one world to the next;
+ * - the **plan** keeps circling the last ring while the track goes on,
+ *   dashed, to the planned orbit.
  * The camera's track is sampled once over the whole route and smoothed,
  * so every pose is a function of the progress alone and scrubbing
  * backwards retraces the same frames. It opens low over Earth's night
  * side at sunrise and rises from there into the chase. It holds on a
- * chapter's world while its card is read (the ship loops or passes, the
+ * chapter's world while its card is read (the ship circles or passes, the
  * camera doesn't), and moves between chapters: each transfer backs off
  * to a two-shot of the world left behind and the one ahead, then flies
  * to the next world. The finale cranes up to a map of the whole route,
@@ -41,7 +43,7 @@ const TAU = Math.PI * 2;
 
 export const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-/** Zero slope at both ends: the spiral's radius and height. */
+/** Zero slope at both ends. */
 const ease = (u: number) => (1 - Math.cos(Math.PI * clamp01(u))) / 2;
 export const smoothstep = (a: number, b: number, x: number) => {
     const t = clamp01((x - a) / (b - a));
@@ -140,10 +142,12 @@ export interface World {
     /** Orbit radius. */
     orbit: number;
     plane: Plane;
-    /** Mean motion, radians per year, and the angle at the epoch. */
-    omega: number;
-    phase: number;
-    /** The parking loop's radius and its turns over the coast. */
+    /** Where it holds through the flight: its angle on its orbit, where
+     *  its chapter ends (a flyby's mid-pass), and its centre there. */
+    angle: number;
+    at: Vec3;
+    /** The parking ring's radius and the ship's turns on it over the
+     *  coast. */
     park: number;
     loops: number;
     /** Axial tilt, radians, and the spin axis it gives. */
@@ -170,30 +174,29 @@ export const RING = { inner: 1.24, outer: 2.27 };
 const INCL = [2.4, -3.1, 1.7, -2.6, 3.3, -1.9];
 const NODE = [40, 125, 215, 300, 80, 170];
 /** The first orbit, the gap between orbits, the heliocentric sweep of a
- *  transfer and the Sun's angle at launch. A short sweep keeps the two
+ *  transfer and Earth's angle about the Sun. A short sweep keeps the two
  *  worlds of a transfer on the same side of the Sun, so one shot frames
  *  both without it. */
 const FIRST_ORBIT = 16;
 const GAP = 6.5;
 const SWEEP = 50 * D2R;
-const LAUNCH = 200 * D2R;
+const LAUNCH = 220 * D2R;
 /** The planned leg's sweep about the Sun: the first of these (degrees)
  *  whose end sits well inside the map on a wide stage and a phone. */
 const PLAN_SWEEPS = [90, 100, 80, 110, 70, 120, 130];
-/** Mean motion at the first orbit, degrees per year; outer orbits are
- *  slower, by Kepler's third law. */
-const OMEGA0 = 5;
-/** The parking loop leans out of the orbit plane. */
+/** A parking ring leans this far out of its orbit's plane. */
 const LOOP_TILT = 14 * D2R;
-/** A flyby spans ±17° of its orbit, entering inside and leaving outside. */
+/** A flyby spans ±17° of the track about the Sun, and passes its world
+ *  this many parking radii off: on the flyby's shot the ship skims the
+ *  world's limb, and it leaves before the asteroid belt. */
 const FLYBY_SPAN = 17 * D2R;
-const FLYBY_IN = 0.8;
-const FLYBY_OUT = 3.4;
-/** A coast's loop starts and ends this much wider than its parking; the
- *  first leaves on a tighter arc (it is drawn round Earth, so its exit
- *  reads as leaving the planet, and keeps clear of the record). */
-const INSERT = 1.1;
-const DEPART_FIRST = 0.45;
+const FLYBY_PASS = 0.65;
+/** The track's fit is repeated this many times, so each touch point
+ *  settles square to the heading there. */
+const TRACK_FITS = 8;
+/** The drawn track's samples over the flown route, and a ring's. */
+const TRACK_STEPS = 2400;
+const RING_STEPS = 192;
 /** How far a world's axis tips toward the chase camera. */
 const POLE_TIP = 11 * D2R;
 /** A ringed world's leans toward the Sun, tipped this far away from the
@@ -461,7 +464,7 @@ export function labelSafe(
 
 /** How far a label stands off its world's centre, pixels: past the world
  *  as drawn (Saturn's ring included) and past `radial` of its parking
- *  loop (the whole loop for a world the ship circles, else only in the
+ *  ring (the whole ring for a world the ship circles, else only in the
  *  overview). `depth` is the world's, along the view axis. */
 export function labelGap(
     stage: Stage,
@@ -532,9 +535,9 @@ export function roomGap(
 /** A label fades out over this many pixels as it reaches the edge of
  *  the area it may print in. */
 export const LABEL_FADE = 24;
-/** On the chase a label stands this far off the route flown near its
- *  world, its loop included (pixels): the ship's half-length and glow,
- *  and a margin. */
+/** On the chase a label stands this far off the route drawn near its
+ *  world, its parking ring included (pixels): the ship's half-length and
+ *  glow, and a margin. */
 export const LOOP_CLEAR = 30;
 /** A side within this angle of its world's orbit on the stage would lay
  *  the leader along the orbit line (cosine of 20°). */
@@ -584,38 +587,60 @@ interface Leg {
     fly(u: number): number;
 }
 
-const angleAt = (w: World, t: number, epoch: number) =>
-    w.phase + w.omega * (t - epoch);
-
-function bezier(P0: Vec3, P1: Vec3, P2: Vec3, P3: Vec3) {
-    return {
-        at(u: number): Vec3 {
-            const v = 1 - u;
-            const a = v * v * v;
-            const b = 3 * v * v * u;
-            const c = 3 * v * u * u;
-            const d = u * u * u;
-            return [0, 1, 2].map(
-                (i) => a * P0[i] + b * P1[i] + c * P2[i] + d * P3[i],
-            ) as Vec3;
-        },
+/** A cubic spline through (xs, ys), xs increasing: natural at the start,
+ *  and at the end unless `endSlope` clamps its slope there. Past the
+ *  knots it carries on its end pieces. */
+export function cubicSpline(xs: number[], ys: number[], endSlope?: number) {
+    const n = xs.length;
+    if (n < 2) return { at: () => ys[0] ?? 0, d1: () => 0 };
+    const h = xs.slice(1).map((x, i) => x - xs[i]);
+    const slope = h.map((hi, i) => (ys[i + 1] - ys[i]) / hi);
+    // The second derivatives M at the knots: a tridiagonal system, solved
+    // by elimination (Thomas). M = 0 at a natural end.
+    const a = new Float64Array(n);
+    const b = new Float64Array(n).fill(1);
+    const c = new Float64Array(n);
+    const r = new Float64Array(n);
+    for (let i = 1; i < n - 1; i++) {
+        a[i] = h[i - 1];
+        b[i] = 2 * (h[i - 1] + h[i]);
+        c[i] = h[i];
+        r[i] = 6 * (slope[i] - slope[i - 1]);
+    }
+    if (endSlope !== undefined) {
+        a[n - 1] = h[n - 2];
+        b[n - 1] = 2 * h[n - 2];
+        r[n - 1] = 6 * (endSlope - slope[n - 2]);
+    }
+    for (let i = 1; i < n; i++) {
+        const m = a[i] / b[i - 1];
+        b[i] -= m * c[i - 1];
+        r[i] -= m * r[i - 1];
+    }
+    const M = new Float64Array(n);
+    M[n - 1] = r[n - 1] / b[n - 1];
+    for (let i = n - 2; i >= 0; i--) M[i] = (r[i] - c[i] * M[i + 1]) / b[i];
+    const piece = (x: number) => {
+        let i = 0;
+        while (i < n - 2 && x > xs[i + 1]) i++;
+        const A = (xs[i + 1] - x) / h[i];
+        return { i, A, B: 1 - A, h: h[i] };
     };
-}
-
-/** A prograde spiral from A to B about the Sun: the angle runs evenly, the
- *  radius and height ease, so it leaves and arrives tangentially. */
-export function spiral(A: Vec3, B: Vec3, minSweep = 40 * D2R) {
-    const ra = Math.hypot(A[0], A[2]);
-    const aa = Math.atan2(A[2], A[0]);
-    const rb = Math.hypot(B[0], B[2]);
-    let ab = Math.atan2(B[2], B[0]);
-    while (ab < aa + minSweep) ab += TAU;
     return {
-        at(u: number): Vec3 {
-            const e = ease(u);
-            const r = lerp(ra, rb, e);
-            const a = lerp(aa, ab, u);
-            return [r * Math.cos(a), lerp(A[1], B[1], e), r * Math.sin(a)];
+        at(x: number) {
+            const { i, A, B, h } = piece(x);
+            return (
+                A * ys[i] +
+                B * ys[i + 1] +
+                (((A ** 3 - A) * M[i] + (B ** 3 - B) * M[i + 1]) * h * h) / 6
+            );
+        },
+        d1(x: number) {
+            const { i, A, B, h } = piece(x);
+            return (
+                slope[i] +
+                (((1 - 3 * A * A) * M[i] + (3 * B * B - 1) * M[i + 1]) * h) / 6
+            );
         },
     };
 }
@@ -631,34 +656,37 @@ const behind = (d: Vec3) => Math.atan2(-d[2], -d[0]);
 
 /* ---- the plan -------------------------------------------------------------- */
 
+/** A line as the ship draws it: its points, and the progress at which
+ *  the ship first reaches each (Infinity where it never does). */
+export interface Drawn {
+    points: Vec3[];
+    ps: number[];
+}
+
 export interface FlightPlan {
     worlds: World[];
     /** The current chapter, whose leg is the accent (−1: none). */
     current: number;
-    /** Where the current leg starts (the transfer onto its orbit). */
+    /** Where the current leg starts (the transfer onto its orbit): the
+     *  track from here on, and the rings the ship joins from here on, are
+     *  the accent. */
     currentFrom: number;
     /** The dashed orbit and leg of the plan, when there is one. */
     planned: { orbit: number; plane: Plane; path: Vec3[]; end: Vec3 } | null;
     /** The outermost orbit, for the overview's framing. */
     reach: number;
-    epoch: number;
     /** The ship at progress p. */
     shipAt(p: number): Vec3;
-    /** A world's centre at mission time t. */
-    worldAt(w: World, t: number): Vec3;
-    /** Where a world is drawn: at mission time t on the chase, moving to
-     *  where its chapter ended as the map rises, so each sits on its own
-     *  loop of the route there. */
-    mapAt(w: World, t: number, overview: number): Vec3;
-    /** How far the route at progress p is drawn from where the ship flew
-     *  it, in a frame at mission time t: the first coast's loop is drawn
-     *  round Earth as it is at t (as it was when the chapter ended, from
-     *  then on), so the route opens on a parking loop round the planet
-     *  rather than a curl along its orbit, and the transfer leaves from
-     *  it. Zero elsewhere, and zero where the ship is at t. */
-    carry(p: number, t: number): Vec3;
-    /** Whether the ship circles each world (a coast), so its label
-     *  stands clear of the loop. */
+    /** The world whose parking ring the ship is on at progress p (−1: on
+     *  the track). */
+    ringOf(p: number): number;
+    /** The track as drawn, over the legs the ship flies on it. */
+    track: Drawn;
+    /** Each world's parking ring as drawn (null for a flyby's): once
+     *  round, from where the ship joins it. */
+    rings: (Drawn | null)[];
+    /** Whether the ship circles each world (a coast), so its label stands
+     *  clear of the ring. */
     looped: boolean[];
     /** Each world's label side in the map on a stage, for labels of these
      *  sizes (the "Open to" label's too, which keeps outward): chosen once
@@ -685,8 +713,8 @@ export interface FlightPlan {
         map?: LabelSide[],
     ): LabelSide[][];
     /** How far off its centre `c` toward direction v a world's label of
-     *  `size` stands on the chase so the route flown near the world (its
-     *  arrival, loop or flyby) keeps LOOP_CLEAR off it: the farthest the
+     *  `size` stands on the chase so the route drawn near the world (its
+     *  arrival, ring or flyby) keeps LOOP_CLEAR off it: the farthest the
      *  route reaches that way through the label's band across v, plus
      *  LOOP_CLEAR (pixels; 0 where nothing runs through the band). */
     flownGap(
@@ -707,9 +735,7 @@ export interface FlightPlan {
     /** The camera at a frame, for a stage. */
     pose(frame: Frame, stage: Stage): Pose;
     /** The Sun–world–eye angle, degrees: 0 is full, 90 half, 180 new. */
-    phaseAngle(pose: Pose, world: World, t: number): number;
-    /** Ship positions over [0, route.flown], n samples. */
-    trail(n: number): Vec3[];
+    phaseAngle(pose: Pose, world: World): number;
 }
 
 export interface Pose {
@@ -734,9 +760,6 @@ const CHASE_EL = 19 * D2R;
  *  world gibbous (a 45–63° phase) from screen right, with the Sun about
  *  125° off the view axis. */
 const CHASE_YAW = -36 * D2R;
-/** Each coast pans this much across its world, against the world's own
- *  turn about the Sun, so the view barely moves while the card is read. */
-const COAST_SWING = 8 * D2R;
 /** The flyby holds on its world like a coast, from further round toward
  *  the Sun: the ship passes on the far side, so at closest approach it
  *  skims the limb of a bright gibbous world. There the shot leans toward
@@ -786,8 +809,8 @@ const SIGMA = 0.006;
  *  the disc and of Saturn's ring. */
 const REST_ANGLE = 35 * D2R;
 const REST_CLEAR = 1.4;
-/** The loop may run ahead or behind by this much at most (radians), so
- *  the ship never stalls or turns back. */
+/** The ship may run ahead or behind on its ring by this much at most
+ *  (radians), so it never stalls or turns back. */
 const PHASE_MAX = 1.2;
 
 /** The fly-to over a transfer: out to the two-shot, held across the
@@ -800,6 +823,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
     const chapters = data.chapters;
     const kinds = worldKinds(chapters.length);
     const epoch = chapters[0]?.start ?? 0;
+    const last = chapters.length - 1;
     let lastCurrent = -1;
     chapters.forEach((c, i) => {
         if (c.current) lastCurrent = i;
@@ -810,197 +834,370 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                 s.chapter === i && (s.kind === "coast" || s.kind === "flyby"),
         );
 
-    // Worlds, outward in time order, each placed so the transfer into it
-    // sweeps SWEEP about the Sun from where the last chapter ended.
+    // Worlds, outward in time order, each held where its chapter ends: the
+    // track into it sweeps SWEEP about the Sun from where the last chapter
+    // left it (a flyby's world sits mid-pass, FLYBY_SPAN either side).
     const worlds: World[] = [];
     let orbit = FIRST_ORBIT;
-    let endAngle = LAUNCH - SWEEP;
+    let left = LAUNCH - SWEEP;
     chapters.forEach((chapter, i) => {
         const kind = kinds[i];
         const body = BODY[kind];
         if (i > 0) orbit += GAP + 0.9 * (worlds[i - 1].park + body.park);
-        const omega = OMEGA0 * D2R * Math.pow(FIRST_ORBIT / orbit, 1.5);
-        const seg = coastOf(i);
-        const loops = Math.max(1, Math.round((seg?.w ?? 1) * 0.9));
-        const w: World = {
-            chapter: i,
-            kind,
-            radius: body.radius,
-            orbit,
-            plane: plane(
-                INCL[i % INCL.length] * D2R,
-                NODE[i % NODE.length] * D2R,
-            ),
-            omega,
-            phase: 0,
-            park: body.park,
-            loops,
-            tilt: body.tilt * D2R,
-            pole: [0, 1, 0],
-            frame: body.frame,
-        };
-        if (chapter.flyby) {
-            const mid = (chapter.start + chapter.end) / 2;
-            w.phase = endAngle + SWEEP + FLYBY_SPAN - omega * (mid - epoch);
-            endAngle = angleAt(w, mid, epoch) + FLYBY_SPAN;
-        } else {
-            const start = i === 0 ? LAUNCH : endAngle + SWEEP;
-            w.phase = start - omega * (chapter.start - epoch);
-            endAngle = angleAt(w, chapter.end, epoch);
-        }
+        const pl = plane(
+            INCL[i % INCL.length] * D2R,
+            NODE[i % NODE.length] * D2R,
+        );
+        const angle = chapter.flyby
+            ? left + SWEEP + FLYBY_SPAN
+            : i === 0
+              ? LAUNCH
+              : left + SWEEP;
+        left = chapter.flyby ? angle + FLYBY_SPAN : angle;
         // The axis leans mostly sideways and a little toward the chase
         // camera, so a ring opens to it; a ringed world's leans toward the
         // Sun, so the face of the ring the camera sees is the lit one, and
         // so does Earth's, so the sunrise looks over its northern lands
         // rather than its polar night.
-        const mid = angleAt(w, (chapter.start + chapter.end) / 2, epoch);
-        const out = onPlane(w.plane, 1, mid);
-        const back = scale(tangentOn(w.plane, mid), -1);
+        const tilt = body.tilt * D2R;
+        const out = onPlane(pl, 1, angle);
+        const back = scale(tangentOn(pl, angle), -1);
         const ringed = kind === "saturn";
         const sunward = ringed || kind === "earth";
         const toward = Math.min(
             1,
-            Math.sin(ringed ? RING_TIP : POLE_TIP) / Math.sin(w.tilt),
+            Math.sin(ringed ? RING_TIP : POLE_TIP) / Math.sin(tilt),
         );
         const lean = add(
             scale(back, toward),
             scale(out, (sunward ? -1 : 1) * Math.sqrt(1 - toward * toward)),
         );
-        w.pole = unit(
-            add(
-                scale(w.plane.ey, Math.cos(w.tilt)),
-                scale(lean, Math.sin(w.tilt)),
+        worlds.push({
+            chapter: i,
+            kind,
+            radius: body.radius,
+            orbit,
+            plane: pl,
+            angle,
+            at: onPlane(pl, orbit, angle),
+            park: body.park,
+            loops: Math.max(1, Math.round((coastOf(i)?.w ?? 1) * 0.9)),
+            tilt,
+            pole: unit(
+                add(scale(pl.ey, Math.cos(tilt)), scale(lean, Math.sin(tilt))),
             ),
+            frame: body.frame,
+        });
+    });
+    const flyby = (w: World) => !!chapters[w.chapter]?.flyby;
+    /** The azimuth a world's hold looks from: behind its heading, turned
+     *  to the Sun's side (a flyby's further round). */
+    const holdAz = (w: World) =>
+        behind(tangentOn(w.plane, w.angle)) +
+        (flyby(w) ? FLYBY_YAW : CHASE_YAW);
+
+    // The outermost orbit, which the map frames: the planned one when
+    // there is a plan.
+    const planSeg = route.segments.find((s) => s.kind === "plan");
+    const pw = worlds[last];
+    const pplane = plane(
+        INCL[(last + 1) % INCL.length] * D2R,
+        NODE[(last + 1) % NODE.length] * D2R,
+    );
+    let reach = pw?.orbit ?? FIRST_ORBIT;
+    let outer = pw?.plane ?? plane(0, 0);
+    if (planSeg && pw) {
+        reach = pw.orbit + GAP + 0.9 * (pw.park + BODY.saturn.park) + 2;
+        outer = pplane;
+    }
+    const rim = Array.from({ length: 96 }, (_, k) =>
+        onPlane(outer, reach, (k / 96) * TAU),
+    );
+    // The finale's map looks down at the Sun from the azimuth the chase
+    // ends on, turned OVER_TURN.
+    const mapAz = (pw ? holdAz(pw) : 0) + OVER_TURN;
+    const sun: Vec3 = [0, 0, 0];
+
+    /** The map on a stage: as far back as puts the outermost orbit, at
+     *  `fit` of its size, inside the map's box. Each point bounds the
+     *  distance: offset / (d + its depth past the Sun) ≤ the box's side. */
+    const mapShot = (stage: Stage) => {
+        const { lens, box, fit } = stage.map;
+        const out = outward(mapAz, OVER_EL);
+        const { fwd, right, up } = viewAxes({ eye: out, target: sun });
+        const k = stage.kpx;
+        let d = 0;
+        for (const q of rim) {
+            const c = dot(q, fwd) * fit;
+            const a = dot(q, right) * fit;
+            const b = dot(q, up) * fit;
+            const side = a > 0 ? box.x1 - lens.x : lens.x - box.x0;
+            const level = b > 0 ? lens.y - box.y0 : box.y1 - lens.y;
+            d = Math.max(
+                d,
+                (Math.abs(a) * k) / Math.max(1, side) - c,
+                (Math.abs(b) * k) / Math.max(1, level) - c,
+            );
+        }
+        return {
+            eye: scale(out, d),
+            target: sun,
+            lens: { x: lens.x / stage.W, y: lens.y / stage.H },
+            d,
+        };
+    };
+
+    // Where the planned leg ends on the planned orbit: where it reads in
+    // the map on a wide stage and a phone, well inside the frame, clear of
+    // the Sun, heading into the picture.
+    let planAngle: number | null = null;
+    if (planSeg && pw) {
+        const refs = [stageFrame(1440, 828, true), stageFrame(390, 780, false)];
+        const reads = (deg: number) =>
+            refs.every((stage) => {
+                const shot = mapShot(stage);
+                const a = pw.angle + deg * D2R;
+                const at = screenOf(shot, stage, onPlane(pplane, reach, a));
+                const on = screenOf(
+                    shot,
+                    stage,
+                    add(onPlane(pplane, reach, a), tangentOn(pplane, a)),
+                );
+                const s = screenOf(shot, stage, sun);
+                const m = stage.wide ? 80 : 24;
+                const inside = (x: number, y: number, m: number) =>
+                    x >= stage.box.x0 + m &&
+                    x <= stage.box.x1 - m &&
+                    y >= stage.box.y0 + m &&
+                    y <= stage.box.y1 - m;
+                // 40px further along the leg is still in the picture.
+                const n = Math.hypot(on.x - at.x, on.y - at.y) || 1;
+                return (
+                    inside(at.x, at.y, m) &&
+                    inside(
+                        at.x + ((on.x - at.x) / n) * 40,
+                        at.y + ((on.y - at.y) / n) * 40,
+                        m / 2,
+                    ) &&
+                    Math.hypot(at.x - s.x, at.y - s.y) > 60
+                );
+            });
+        planAngle =
+            pw.angle + (PLAN_SWEEPS.find(reads) ?? PLAN_SWEEPS[0]) * D2R;
+    }
+
+    // The track: one smooth curve about the Sun through a point beside
+    // each world, and on to the planned orbit. Beside a coast's world it
+    // touches the world's parking ring: one parking radius off it, away
+    // from the Sun and leaning LOOP_TILT out of the orbit's plane, square
+    // to the track. A flyby passes its world FLYBY_PASS parking radii off,
+    // the same way. It is a cubic spline in the Sun's angle θ of the radius and the
+    // height, natural where it starts and meeting the planned orbit
+    // tangentially, so it has no joins to kink, and through these points
+    // it curves toward the Sun all the way. A touch point depends on the
+    // heading there, so the fit is repeated until they settle.
+    const polar = (q: Vec3, near: number) => ({
+        th: near + wrapPi(Math.atan2(q[2], q[0]) - near),
+        r: Math.hypot(q[0], q[2]),
+        y: q[1],
+    });
+    const end =
+        planAngle === null
+            ? null
+            : (() => {
+                  const at = onPlane(pplane, reach, planAngle);
+                  const d = scale(tangentOn(pplane, planAngle), reach);
+                  const k = polar(at, planAngle);
+                  // The orbit's slopes in r and y against θ.
+                  const turn = (at[0] * d[2] - at[2] * d[0]) / (k.r * k.r);
+                  const r1 = (at[0] * d[0] + at[2] * d[2]) / k.r / turn;
+                  return { ...k, at, r1, y1: d[1] / turn };
+              })();
+    const aside = worlds.map((w) =>
+        add(
+            scale(onPlane(w.plane, 1, w.angle), Math.cos(LOOP_TILT)),
+            scale(w.plane.ey, Math.sin(LOOP_TILT)),
+        ),
+    );
+    const fit = (heads: Vec3[]) => {
+        const knots = worlds.map((w, i) => {
+            const o = aside[i];
+            const n = unit(sub(o, scale(heads[i], dot(o, heads[i]))));
+            const off = (flyby(w) ? FLYBY_PASS : 1) * w.park;
+            return polar(add(w.at, scale(n, off)), w.angle);
+        });
+        if (end) knots.push(end);
+        const xs = knots.map((k) => k.th);
+        const R = cubicSpline(
+            xs,
+            knots.map((k) => k.r),
+            end?.r1,
         );
-        worlds.push(w);
+        const Y = cubicSpline(
+            xs,
+            knots.map((k) => k.y),
+            end?.y1,
+        );
+        return {
+            xs,
+            at(th: number): Vec3 {
+                const r = R.at(th);
+                return [r * Math.cos(th), Y.at(th), r * Math.sin(th)];
+            },
+            /** The derivative in θ. */
+            d(th: number): Vec3 {
+                const r = R.at(th);
+                const r1 = R.d1(th);
+                return [
+                    r1 * Math.cos(th) - r * Math.sin(th),
+                    Y.d1(th),
+                    r1 * Math.sin(th) + r * Math.cos(th),
+                ];
+            },
+        };
+    };
+    let curve = fit(worlds.map((w) => tangentOn(w.plane, w.angle)));
+    for (let k = 0; k < TRACK_FITS; k++)
+        curve = fit(worlds.map((_, i) => unit(curve.d(curve.xs[i]))));
+
+    // Each coast's parking ring: round its world at the parking radius,
+    // through the touch point (γ = 0), headed along the track there and
+    // turning the same way, toward the Sun.
+    const parking = worlds.map((w, i) => {
+        if (coastOf(i)?.kind !== "coast") return null;
+        const h = unit(curve.d(curve.xs[i]));
+        const o = sub(curve.at(curve.xs[i]), w.at);
+        const n = unit(sub(o, scale(h, dot(o, h))));
+        return (g: number): Vec3 =>
+            add(
+                w.at,
+                scale(
+                    add(scale(n, Math.cos(g)), scale(h, Math.sin(g))),
+                    w.park,
+                ),
+            );
     });
 
-    const worldAt = (w: World, t: number) =>
-        onPlane(w.plane, w.orbit, angleAt(w, t, epoch));
-    const loopAt = (w: World, t: number, gamma: number): Vec3 => {
-        const th = angleAt(w, t, epoch);
-        const r = onPlane(w.plane, 1, th);
-        const tg = tangentOn(w.plane, th);
-        const c = Math.cos(gamma) * w.park;
-        const s = Math.sin(gamma) * w.park;
-        // Tilted about the heading, so the loop leaves its outer point
-        // along the orbit and joins the transfers without a kink.
-        return [0, 1, 2].map(
-            (k) =>
-                (r[k] * Math.cos(LOOP_TILT) +
-                    w.plane.ey[k] * Math.sin(LOOP_TILT)) *
-                    c +
-                tg[k] * s,
-        ) as Vec3;
+    // The ship's angle along the track through progress: a monotone cubic
+    // Hermite through each leg's ends and a flyby's closest approach. Where
+    // the ship leaves or joins a ring it moves at the ring's speed, so its
+    // speed never jumps; elsewhere the slope is the harmonic mean of the
+    // secants either side (Fritsch–Carlson), which keeps it monotone.
+    const exitAt = (i: number) => curve.xs[i] + (parking[i] ? 0 : FLYBY_SPAN);
+    const entryAt = (i: number) => curve.xs[i] - (parking[i] ? 0 : FLYBY_SPAN);
+    const ringRate = (i: number) => {
+        const w = worlds[i];
+        const c = coastOf(i);
+        if (!parking[i] || !c) return NaN;
+        const speed = (TAU * w.loops * w.park) / (c.p1 - c.p0);
+        return speed / Math.hypot(...curve.d(curve.xs[i]));
     };
-    const tOf = (s: Segment, u: number) => lerp(s.t0, s.t1, u);
-    /** Behind a world's heading at time t. */
-    const behindWorld = (w: World, t: number) =>
-        behind(tangentOn(w.plane, angleAt(w, t, epoch)));
+    const times: { p: number; th: number; d: number }[] = [];
+    const time = (p: number, th: number, d = NaN) => {
+        if (times.at(-1)?.p !== p) times.push({ p, th, d });
+    };
+    route.segments.forEach((s) => {
+        if (s.kind === "transfer") {
+            const from = s.from ?? s.chapter - 1;
+            time(s.p0, exitAt(from), ringRate(from));
+            time(s.p1, entryAt(s.chapter), ringRate(s.chapter));
+        } else if (s.kind === "flyby") {
+            time(s.p0, entryAt(s.chapter));
+            time((s.p0 + s.p1) / 2, curve.xs[s.chapter]);
+            time(s.p1, exitAt(s.chapter));
+        }
+    });
+    const secant = (a: (typeof times)[number], b: (typeof times)[number]) =>
+        (b.th - a.th) / (b.p - a.p);
+    times.forEach((k, j) => {
+        if (!Number.isNaN(k.d)) return;
+        const s0 = j > 0 ? secant(times[j - 1], k) : null;
+        const s1 = j + 1 < times.length ? secant(k, times[j + 1]) : null;
+        k.d =
+            s0 === null || s1 === null
+                ? (s0 ?? s1 ?? 0)
+                : s0 * s1 > 0
+                  ? (2 * s0 * s1) / (s0 + s1)
+                  : 0;
+    });
+    const thetaAt = (p: number) => {
+        if (times.length < 2) return times[0]?.th ?? curve.xs[0] ?? 0;
+        let j = 0;
+        while (j < times.length - 2 && p > times[j + 1].p) j++;
+        const a = times[j];
+        const b = times[j + 1];
+        const h = b.p - a.p;
+        const s = clamp01((p - a.p) / h);
+        return (
+            (2 * s ** 3 - 3 * s ** 2 + 1) * a.th +
+            (s ** 3 - 2 * s ** 2 + s) * h * a.d +
+            (3 * s ** 2 - 2 * s ** 3) * b.th +
+            (s ** 3 - s ** 2) * h * b.d
+        );
+    };
+    const onTrack = (p: number) => curve.at(thetaAt(p));
 
-    // Each coast's loop phase, solved below (the camera looks at the world
-    // on a coast, so it doesn't depend on it). The shift is zero, with
-    // zero slope, where the loop joins a transfer; the first coast has no
-    // join at its start.
+    // Each coast's turns on its ring, solved below (the camera looks at the
+    // world on a coast, so it doesn't depend on them). The shift is zero,
+    // with zero slope, where the ship joins or leaves the track; the first
+    // coast has no join at its start.
     const phaseShift = route.segments.map(() => 0);
     const shiftShape = (seg: Segment, u: number) =>
         seg.chapter === 0
             ? Math.cos((Math.PI / 2) * clamp01(u)) ** 2
             : Math.sin(Math.PI * clamp01(u)) ** 2;
+    /** The ship's angle round its ring on a coast, and on through the plan
+     *  at the same rate. */
+    const gammaOf = (index: number, u: number) => {
+        const seg = route.segments[index];
+        const w = worlds[Math.min(seg.chapter, last)];
+        const coast = coastOf(w.chapter);
+        if (seg.kind !== "plan" || !coast)
+            return TAU * w.loops * u + phaseShift[index] * shiftShape(seg, u);
+        return (
+            TAU *
+            w.loops *
+            (1 + (u * (seg.p1 - seg.p0)) / (coast.p1 - coast.p0))
+        );
+    };
 
-    // The legs, in route order; a transfer joins the legs either side.
-    const last = chapters.length - 1;
+    // The legs, in route order; a transfer frames the legs either side.
     const legs: Leg[] = route.segments.map((seg, index) => {
         const w = worlds[Math.min(seg.chapter, last)];
+        const ring = parking[w.chapter];
+        const on = (u: number) => onTrack(lerp(seg.p0, seg.p1, u));
         if (seg.kind === "coast" || seg.kind === "plan") {
-            const plan = seg.kind === "plan";
-            const first = seg.chapter === 0;
-            const final = seg.chapter >= last;
-            const gammaOf = (u: number) =>
-                plan
-                    ? TAU * (w.loops + u)
-                    : TAU * w.loops * u +
-                      phaseShift[index] * shiftShape(seg, u);
-            // The loop spirals in from a wider arc and out again, so the
-            // curvature changes gradually; insertion and departure are
-            // brief, so the loop holds for the card.
-            const wide = (u: number) =>
-                plan
-                    ? 1
-                    : 1 +
-                      (first ? 0 : INSERT * (1 - smoothstep(0, 0.14, u))) +
-                      (final ? 0 : first ? DEPART_FIRST : INSERT) *
-                          smoothstep(0.86, 1, u);
-            // The camera holds on the world, the whole loop in frame, with
+            // The camera holds on the world, the whole ring in frame, with
             // one slow push; the ship moves, the camera doesn't. The plan
-            // keeps the shot the last coast ends on.
-            const own = plan ? (coastOf(last) ?? seg) : seg;
-            const turn = wrapPi(
-                behindWorld(w, own.t1) - behindWorld(w, own.t0),
-            );
-            const pan = -Math.sign(turn) * COAST_SWING;
+            // keeps the shot the hold ends on.
             const held = w.frame + 0.5 * w.park;
             return {
-                at: (u) => {
-                    const t = tOf(seg, u);
-                    return add(
-                        worldAt(w, t),
-                        scale(loopAt(w, t, gammaOf(u)), wide(u)),
-                    );
-                },
-                shot: (u) => {
-                    const t = tOf(seg, u);
-                    const e = plan ? 1 : ease(u);
-                    return {
-                        target: worldAt(w, t),
-                        frame: held * (1.04 - 0.08 * e),
-                        el: CHASE_EL,
-                        az: behindWorld(w, t) + CHASE_YAW + pan * (e - 0.5),
-                    };
-                },
+                at: (u) => (ring ? ring(gammaOf(index, u)) : on(u)),
+                shot: (u) => ({
+                    target: w.at,
+                    frame:
+                        held *
+                        (1.04 - 0.08 * (seg.kind === "plan" ? 1 : ease(u))),
+                    el: CHASE_EL,
+                    az: holdAz(w),
+                }),
                 fly: () => 0,
             };
         }
         if (seg.kind === "flyby") {
-            const am = angleAt(w, (seg.t0 + seg.t1) / 2, epoch);
-            const a0 = am - FLYBY_SPAN;
-            const a1 = am + FLYBY_SPAN;
-            const P0 = onPlane(w.plane, w.orbit - FLYBY_IN, a0);
-            const P3 = onPlane(w.plane, w.orbit + FLYBY_OUT, a1);
-            const L = (w.orbit * 2 * FLYBY_SPAN) / 3;
-            const curve = bezier(
-                P0,
-                add(P0, scale(tangentOn(w.plane, a0), L)),
-                add(P3, scale(tangentOn(w.plane, a1), -L)),
-                P3,
-            );
             // The camera holds on the world, as on a coast, and the ship
             // flies past it: at closest approach the shot leans toward the
             // ship and pushes in, so it crosses the world's limb.
             const bump = (u: number) =>
                 smoothstep(0.2, 0.5, u) * (1 - smoothstep(0.5, 0.95, u));
-            const turn = wrapPi(
-                behindWorld(w, seg.t1) - behindWorld(w, seg.t0),
-            );
-            const pan = -Math.sign(turn) * COAST_SWING;
             return {
-                at: curve.at,
-                shot: (u) => {
-                    const t = tOf(seg, u);
-                    return {
-                        target: mix(
-                            worldAt(w, t),
-                            curve.at(u),
-                            FLYBY_LEAN * bump(u),
-                        ),
-                        frame: w.frame * (1 - FLYBY_PUSH * bump(u)),
-                        el: CHASE_EL,
-                        az:
-                            behindWorld(w, t) +
-                            FLYBY_YAW +
-                            pan * (ease(u) - 0.5),
-                    };
-                },
+                at: on,
+                shot: (u) => ({
+                    target: mix(w.at, on(u), FLYBY_LEAN * bump(u)),
+                    frame: w.frame * (1 - FLYBY_PUSH * bump(u)),
+                    el: CHASE_EL,
+                    az: holdAz(w),
+                }),
                 fly: () => 0,
             };
         }
@@ -1009,20 +1206,16 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
     });
     route.segments.forEach((seg, i) => {
         if (seg.kind !== "transfer") return;
-        const before = legs[i - 1];
-        const after = legs[i + 1];
-        const path = spiral(before.at(1), after.at(0));
-        const a = before.shot(1);
-        const b = after.shot(0);
+        const a = legs[i - 1].shot(1);
+        const b = legs[i + 1].shot(0);
         // The two-shot, composed at the transfer's midpoint: the eye
         // behind A, turned toward the Sun and raised, looking a set share
         // of the way toward B and toward the ship, so every transfer
         // frames alike. The target is at A's depth, so a narrower stage
         // backs off from A.
         const from = worlds[seg.from ?? Math.max(0, seg.chapter - 1)];
-        const tm = (seg.t0 + seg.t1) / 2;
-        const A = worldAt(from, tm);
-        const B = worldAt(worlds[Math.min(seg.chapter, last)], tm);
+        const A = from.at;
+        const B = worlds[Math.min(seg.chapter, last)].at;
         const line = Math.atan2(A[2] - B[2], A[0] - B[0]);
         const sunward = Math.sign(wrapPi(Math.atan2(-A[2], -A[0]) - line)) || 1;
         const eye = add(
@@ -1039,7 +1232,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                     toward(A, 1 - SHOT_AIM - SHOT_AIM_SHIP),
                     toward(B, SHOT_AIM),
                 ),
-                toward(path.at(0.5), SHOT_AIM_SHIP),
+                toward(onTrack((seg.p0 + seg.p1) / 2), SHOT_AIM_SHIP),
             ),
         );
         const C = add(eye, scale(axis, dot(sub(A, eye), axis)));
@@ -1062,7 +1255,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             };
         };
         legs[i] = {
-            at: path.at,
+            at: (u) => onTrack(lerp(seg.p0, seg.p1, u)),
             shot: (u) => {
                 const m = flyOf(u);
                 if (u <= 0.5)
@@ -1079,6 +1272,14 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
     const shipAt = (p: number) => {
         const f = frameAt(route, p);
         return legs[f.index].at(f.u);
+    };
+    const ringOf = (p: number) => {
+        const { segment } = frameAt(route, p);
+        const i = Math.min(segment.chapter, last);
+        return (segment.kind === "coast" || segment.kind === "plan") &&
+            parking[i]
+            ? i
+            : -1;
     };
 
     // The camera's track, sampled once and smoothed (a Gaussian in p): the
@@ -1140,110 +1341,11 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
     const orbitFrom = (target: Vec3, d: number, az: number, el: number) =>
         add(target, scale(outward(az, el), d));
 
-    // The finale's map looks down at the Sun from the azimuth the chase
-    // ends on (OVER_TURN within ±30°).
-    const planSeg = route.segments.find((s) => s.kind === "plan");
-    const overAz = (planSeg ? sample(planSeg.p0).az : 0) + OVER_TURN;
-    const sun: Vec3 = [0, 0, 0];
-
-    // The outermost orbit, which the map frames: the planned one when
-    // there is a plan.
-    let reach = worlds.at(-1)?.orbit ?? FIRST_ORBIT;
-    let outer = worlds.at(-1)?.plane ?? plane(0, 0);
-    const pw = worlds[last];
-    const pplane = plane(
-        INCL[(last + 1) % INCL.length] * D2R,
-        NODE[(last + 1) % NODE.length] * D2R,
-    );
-    if (planSeg && pw) {
-        reach = pw.orbit + GAP + 0.9 * (pw.park + BODY.saturn.park) + 2;
-        outer = pplane;
-    }
-    const rim = Array.from({ length: 96 }, (_, k) =>
-        onPlane(outer, reach, (k / 96) * TAU),
-    );
-
-    /** The map on a stage: as far back as puts the outermost orbit, at
-     *  `fit` of its size, inside the map's box. Each point bounds the
-     *  distance: offset / (d + its depth past the Sun) ≤ the box's side. */
-    const mapShot = (stage: Stage) => {
-        const { lens, box, fit } = stage.map;
-        const out = outward(overAz, OVER_EL);
-        const { fwd, right, up } = viewAxes({ eye: out, target: sun });
-        const k = stage.kpx;
-        let d = 0;
-        for (const q of rim) {
-            const c = dot(q, fwd) * fit;
-            const a = dot(q, right) * fit;
-            const b = dot(q, up) * fit;
-            const side = a > 0 ? box.x1 - lens.x : lens.x - box.x0;
-            const level = b > 0 ? lens.y - box.y0 : box.y1 - lens.y;
-            d = Math.max(
-                d,
-                (Math.abs(a) * k) / Math.max(1, side) - c,
-                (Math.abs(b) * k) / Math.max(1, level) - c,
-            );
-        }
-        return {
-            eye: scale(out, d),
-            target: sun,
-            lens: { x: lens.x / stage.W, y: lens.y / stage.H },
-            d,
-        };
-    };
-
-    // The plan: a dashed spiral from the parking loop out to the planned
-    // orbit, ending where it reads in the map on a wide stage and a phone:
-    // well inside the frame, clear of the Sun, heading into the picture.
-    let planned: FlightPlan["planned"] = null;
-    if (planSeg && pw) {
-        const t = planSeg.t0;
-        const A = add(worldAt(pw, t), loopAt(pw, t, 0));
-        const aA = Math.atan2(A[2], A[0]);
-        const refs = [stageFrame(1440, 828, true), stageFrame(390, 780, false)];
-        const reads = (deg: number) =>
-            refs.every((stage) => {
-                const shot = mapShot(stage);
-                const a = aA + deg * D2R;
-                const at = screenOf(shot, stage, onPlane(pplane, reach, a));
-                const on = screenOf(
-                    shot,
-                    stage,
-                    add(onPlane(pplane, reach, a), tangentOn(pplane, a)),
-                );
-                const s = screenOf(shot, stage, sun);
-                const m = stage.wide ? 80 : 24;
-                const inside = (x: number, y: number, m: number) =>
-                    x >= stage.box.x0 + m &&
-                    x <= stage.box.x1 - m &&
-                    y >= stage.box.y0 + m &&
-                    y <= stage.box.y1 - m;
-                // 40px further along the leg is still in the picture.
-                const n = Math.hypot(on.x - at.x, on.y - at.y) || 1;
-                return (
-                    inside(at.x, at.y, m) &&
-                    inside(
-                        at.x + ((on.x - at.x) / n) * 40,
-                        at.y + ((on.y - at.y) / n) * 40,
-                        m / 2,
-                    ) &&
-                    Math.hypot(at.x - s.x, at.y - s.y) > 60
-                );
-            });
-        const sweep = PLAN_SWEEPS.find(reads) ?? PLAN_SWEEPS[0];
-        const end = onPlane(pplane, reach, aA + sweep * D2R);
-        const leg = spiral(A, end);
-        const path = Array.from({ length: 241 }, (_, k) => leg.at(k / 240));
-        planned = { orbit: reach, plane: pplane, path, end };
-    }
-
-    /** The sunrise the page opens on at time t: the eye low over Earth's
-     *  night side, above its orbit, looking at the Sun just below the
-     *  limb; the target is on the horizon under the Sun, where the lens
-     *  puts it. */
-    const earth = worlds[0];
-    const sunrise = (t: number) => {
-        const E = worldAt(earth, t);
+    /** The sunrise the page opens on: the eye low over Earth's night side,
+     *  above its orbit, looking at the Sun just below the limb; the target
+     *  is on the horizon under the Sun, where the lens puts it. */
+    const sunrise = (earth: World) => {
+        const E = earth.at;
         const S = unit(scale(E, -1));
         const N = earth.plane.ey;
         // The Sun and Earth's centre this far apart from the eye: g is
@@ -1268,7 +1370,9 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         const horizon = Math.sqrt(OPEN_ALT ** 2 - 1) * earth.radius;
         return { eye, target: add(eye, scale(toSun, horizon)) };
     };
-    const opens = route.segments[0]?.kind === "coast" && !!earth;
+    const earth = worlds[0];
+    const dawn =
+        earth && route.segments[0]?.kind === "coast" ? sunrise(earth) : null;
 
     const pose = (frame: Frame, stage: Stage): Pose => {
         const half = Math.max(1, Math.min(stage.halfW, stage.halfH));
@@ -1277,16 +1381,15 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         const lens = { x: stage.lens.x / stage.W, y: stage.lens.y / stage.H };
         const fly = frame.segment.kind === "transfer" ? flyOf(frame.u) : 0;
         const rise =
-            opens && frame.index === 0 ? smoother(frame.u / OPEN_SPAN) : 1;
-        if (rise < 1) {
+            dawn && frame.index === 0 ? smoother(frame.u / OPEN_SPAN) : 1;
+        if (dawn && rise < 1) {
             // From the sunrise, the camera rises into the chase: the
             // target, the distance (in log) and the direction blend
             // together, so there is no cut.
-            const o = sunrise(frame.t);
-            const dO = dist(o.eye, o.target);
-            const target = mix(o.target, s.g, rise);
+            const dO = dist(dawn.eye, dawn.target);
+            const target = mix(dawn.target, s.g, rise);
             const dir = slerp(
-                unit(sub(o.eye, o.target)),
+                unit(sub(dawn.eye, dawn.target)),
                 outward(s.az, s.el),
                 rise,
             );
@@ -1328,7 +1431,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             eye: orbitFrom(
                 target,
                 d,
-                lerp(s.az, overAz, e),
+                lerp(s.az, s.az + wrapPi(mapAz - s.az), e),
                 lerp(s.el, OVER_EL, e),
             ),
             target,
@@ -1342,17 +1445,17 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         };
     };
 
-    const phaseAngle = (p: Pose, world: World, t: number) => {
-        const c = worldAt(world, t);
-        const toSun = unit(scale(c, -1));
-        const toEye = unit(sub(p.eye, c));
+    const phaseAngle = (p: Pose, world: World) => {
+        const toSun = unit(scale(world.at, -1));
+        const toEye = unit(sub(p.eye, world.at));
         return Math.acos(Math.min(1, Math.max(-1, dot(toSun, toEye)))) / D2R;
     };
 
     // Compose the rest frames (where the rail sends each card, and the
-    // still frame under reduced motion): shift each coast's loop so the
-    // ship sits on the near side, below and right of its world, clear of
-    // the disc and the ring. Directions only, so any stage agrees.
+    // still frame under reduced motion): shift each coast's turns on its
+    // ring so the ship sits on the near side, below and right of its
+    // world, clear of the disc and the ring. Directions only, so any
+    // stage agrees.
     const restAim = Math.atan2(-Math.sin(REST_ANGLE), Math.cos(REST_ANGLE));
     route.segments.forEach((seg, index) => {
         if (seg.kind !== "coast") return;
@@ -1369,8 +1472,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             eye: add(s.target, outward(s.az, s.el)),
             target: s.target,
         });
-        const centre = worldAt(w, f.t);
-        // The first coast has no join before it, so its loop may start
+        // The first coast has no join before it, so its ring may start
         // anywhere; the others may run a little ahead or behind.
         const limit = seg.chapter === 0 ? Math.PI : PHASE_MAX;
         let best = 0;
@@ -1378,7 +1480,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         for (let j = 0; j <= 120; j++) {
             const shift = ((j / 120) * 2 - 1) * limit;
             phaseShift[index] = shift / shape;
-            const off = sub(leg.at(f.u), centre);
+            const off = sub(leg.at(f.u), w.at);
             const x = dot(off, right);
             const y = dot(off, up);
             const z = dot(off, fwd);
@@ -1410,28 +1512,73 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         phaseShift[index] = best;
     });
 
-    const trail = (n: number) =>
-        Array.from({ length: n }, (_, k) =>
-            shipAt((k / (n - 1)) * route.flown),
+    // The track and the rings as the ship draws them. The track is sampled
+    // along the legs the ship flies on it (the touch point once, where the
+    // ship first reaches it); a ring once round from where the ship joins
+    // it, with the progress at which it first reaches each point.
+    const track: Drawn = { points: [], ps: [] };
+    route.segments.forEach((seg) => {
+        if (seg.kind !== "transfer" && seg.kind !== "flyby") return;
+        const n = Math.ceil(
+            (TRACK_STEPS * (seg.p1 - seg.p0)) / (route.flown || 1),
         );
+        for (let k = 0; k <= n; k++) {
+            const p = lerp(seg.p0, seg.p1, k / n);
+            const q = onTrack(p);
+            const prev = track.points.at(-1);
+            if (prev && dist(prev, q) < 1e-9) continue;
+            track.points.push(q);
+            track.ps.push(p);
+        }
+    });
+    const planIndex = planSeg ? route.segments.indexOf(planSeg) : -1;
+    const rings = worlds.map((w, i): Drawn | null => {
+        const ring = parking[i];
+        const index = route.segments.findIndex(
+            (s) => s.kind === "coast" && s.chapter === i,
+        );
+        if (!ring || index < 0) return null;
+        const seg = route.segments[index];
+        // On through the plan, for the last world.
+        const on = i === last && planSeg ? planSeg : null;
+        const gammaAt = (p: number) =>
+            on && p > seg.p1
+                ? gammaOf(planIndex, (p - on.p0) / (on.p1 - on.p0))
+                : gammaOf(index, (p - seg.p0) / (seg.p1 - seg.p0));
+        const g0 = gammaAt(seg.p0);
+        const step = TAU / RING_STEPS;
+        const ps = [seg.p0];
+        const n = 4000;
+        let p0 = seg.p0;
+        let g = g0;
+        for (let k = 1; k <= n && ps.length <= RING_STEPS; k++) {
+            const p1 = lerp(seg.p0, on ? on.p1 : seg.p1, k / n);
+            const h = gammaAt(p1);
+            while (ps.length <= RING_STEPS && h >= g0 + ps.length * step) {
+                const want = g0 + ps.length * step;
+                ps.push(lerp(p0, p1, (want - g) / (h - g)));
+            }
+            p0 = p1;
+            g = h;
+        }
+        while (ps.length <= RING_STEPS) ps.push(Infinity);
+        return {
+            points: ps.map((_, k) => ring(g0 + k * step)),
+            ps,
+        };
+    });
+    const looped = rings.map((r) => r !== null);
 
-    // Worlds move to where their chapters ended as the map rises. The
-    // first coast's loop is drawn round Earth (it has no transfer before
-    // it): round Earth where it is while the chapter lasts, then where the
-    // chapter left it. The loop leaves its outer point along the orbit, as
-    // Earth moves, so the transfer from it joins without a kink.
-    const mapShare = (overview: number) => smoothstep(0.3, 0.8, overview);
-    const mapAt = (w: World, t: number, overview: number) =>
-        worldAt(w, lerp(t, chapters[w.chapter]?.end ?? t, mapShare(overview)));
-    const opening = route.segments[0];
-    const carry = (p: number, t: number): Vec3 => {
-        if (opening?.kind !== "coast" || p >= opening.p1) return [0, 0, 0];
-        const w = worlds[0];
-        return sub(
-            worldAt(w, Math.min(t, opening.t1)),
-            worldAt(w, frameAt(route, p).t),
+    // The plan: the track, dashed, from where the ship left the track last
+    // out to the planned orbit.
+    let planned: FlightPlan["planned"] = null;
+    if (end && pw) {
+        const from = exitAt(last);
+        const path = Array.from({ length: 241 }, (_, k) =>
+            curve.at(lerp(from, end.th, k / 240)),
         );
-    };
+        planned = { orbit: reach, plane: pplane, path, end: end.at };
+    }
 
     // Each label takes the side of its world with the least drawn under
     // it at the map's pose: of eight directions from outward (away from
@@ -1445,15 +1592,11 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         open: LabelSize | null,
         safe: Box = labelSafe(stage),
     ): LabelSide[] => {
-        const end = frameAt(route, 1);
-        const view = pose(end, stage);
+        const view = pose(frameAt(route, 1), stage);
         const at = (q: Vec3) => screenOf(view, stage, q);
         const points: { x: number; y: number; k: number }[] = [];
-        const n = 1200;
-        trail(n).forEach((q, i) => {
-            const c = carry((i / (n - 1)) * route.flown, end.t);
-            points.push({ ...at(add(q, c)), k: 1 });
-        });
+        for (const line of [track, ...rings])
+            for (const q of line?.points ?? []) points.push({ ...at(q), k: 1 });
         for (const q of planned?.path ?? []) points.push({ ...at(q), k: 1 });
         for (const w of worlds)
             for (let j = 0; j < 240; j++)
@@ -1461,7 +1604,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                     ...at(onPlane(w.plane, w.orbit, (j / 240) * TAU)),
                     k: 0.15,
                 });
-        const places = worlds.map((w) => at(mapAt(w, end.t, 1)));
+        const places = worlds.map((w) => at(w.at));
         for (const q of [...places, at(shipAt(1))])
             points.push({ ...q, k: 20 });
         const s = at(sun);
@@ -1532,46 +1675,25 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         return sides;
     };
 
-    const looped = worlds.map((w) =>
-        route.segments.some(
-            (s) => s.chapter === w.chapter && s.kind === "coast",
-        ),
-    );
-    // The route flown near each world while its label shows: its arrival
-    // (the second half of the transfer into it, and a loop's spiral in),
-    // its loop up to the spiral out or its flyby, and for the last world
-    // on through the plan to the crane. It stays drawn, so the world's
-    // chase label keeps clear of it. Only the part near the world counts
-    // (the world moves on along its orbit as the ship circles it), and of
-    // that only what runs through the label's band across its side: the
-    // route may pass above or below a label beside its world. The first
-    // coast's loop is drawn round Earth (carry), so it is kept as offsets
-    // from Earth's centre.
-    const nearPath = worlds.map((w, i) => {
-        const path: { q: Vec3; round: boolean }[] = [];
-        route.segments.forEach((s, index) => {
-            const next = route.segments[index + 1];
+    // The route drawn near each world while its label shows: its arrival
+    // (the second half of the transfer into it), and its ring or its
+    // flyby. Only the part near the world counts, and of that only what
+    // runs through the label's band across its side: the route may pass
+    // above or below a label beside its world.
+    const nearPath = worlds.map((_, i) => {
+        const path = [...(rings[i]?.points ?? [])];
+        route.segments.forEach((s) => {
             const span: [number, number] | null =
-                s.kind === "coast" && s.chapter === i
-                    ? [0, 0.86]
-                    : s.kind === "flyby" && s.chapter === i
-                      ? [0, 1]
-                      : s.kind === "plan" && Math.min(s.chapter, last) === i
-                        ? [0, CRANE]
-                        : s.kind === "transfer" && next?.chapter === i
-                          ? [0.5, 1]
-                          : null;
+                s.kind === "flyby" && s.chapter === i
+                    ? [0, 1]
+                    : s.kind === "transfer" && s.chapter === i
+                      ? [0.5, 1]
+                      : null;
             if (!span) return;
-            const round = s === opening && s.kind === "coast";
-            for (let k = 0; k <= 160; k++) {
-                const p = lerp(s.p0, s.p1, lerp(span[0], span[1], k / 160));
-                const q = shipAt(p);
+            for (let k = 0; k <= 160; k++)
                 path.push(
-                    round
-                        ? { q: sub(q, worldAt(w, frameAt(route, p).t)), round }
-                        : { q, round },
+                    onTrack(lerp(s.p0, s.p1, lerp(span[0], span[1], k / 160))),
                 );
-            }
         });
         return path;
     });
@@ -1584,8 +1706,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         const band = (Math.abs(v.y) * size.w + Math.abs(v.x) * size.h) / 2;
         const reach = Math.max(w.park, 2 * w.radius);
         let most = 0;
-        for (const { q: from, round } of path) {
-            const p = round ? add(c, from) : from;
+        for (const p of path) {
             const near = 1 - smoothstep(2.2, 2.8, dist(p, c) / reach);
             if (near <= 0) continue;
             const q = at(p);
@@ -1599,19 +1720,19 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         return most;
     };
     /** A world's label gap on the chase toward v: past its disc (and
-     *  ring, and a loop's radius), and clear of the route flown near it. */
+     *  ring, and a parking ring's radius), and clear of the route drawn
+     *  near it. */
     const chaseGap = (
         i: number,
         view: Pose,
         stage: Stage,
-        c: Vec3,
         depth: number,
         v: { x: number; y: number },
         size: LabelSize,
     ) =>
         Math.max(
             labelGap(stage, worlds[i], depth, looped[i] ? 1 : 0),
-            flownGap(i, view, stage, c, v, size),
+            flownGap(i, view, stage, worlds[i].at, v, size),
         );
 
     const chaseSides = (
@@ -1635,28 +1756,26 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             return shares.map((share) => {
                 const f = frameAt(route, lerp(seg.p0, seg.p1, share));
                 const view = pose(f, stage);
-                const c = worldAt(w, f.t);
-                const q = screenOf(view, stage, c);
-                const a = angleAt(w, f.t, epoch);
+                const q = screenOf(view, stage, w.at);
                 const ahead = screenOf(
                     view,
                     stage,
-                    onPlane(w.plane, w.orbit, a + 0.01),
+                    onPlane(w.plane, w.orbit, w.angle + 0.01),
                 );
                 const n = Math.hypot(ahead.x - q.x, ahead.y - q.y) || 1;
                 return {
-                    c,
                     q,
                     view,
                     orbit: { x: (ahead.x - q.x) / n, y: (ahead.y - q.y) / n },
                     on: q.depth > 0 && within(pointBox(q), safe),
-                    away: dot(scale(c, -1), viewAxes(view).right) > 0 ? -1 : 1,
+                    away:
+                        dot(scale(w.at, -1), viewAxes(view).right) > 0 ? -1 : 1,
                 };
             });
         };
         /** Of away from the Sun (level, then tilted 30° up and down),
          *  below, above and the Sun's side, the side on which the label
-         *  fits in the most of these frames, clear of the route flown near
+         *  fits in the most of these frames, clear of the route drawn near
          *  its world and of its orbit; the first on a tie. `toward`: of
          *  those that fit best, the one nearest that side. */
         const choose = (
@@ -1693,7 +1812,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                 if (!o.on) return false;
                 const { x: ox, y: oy } = o.orbit;
                 if (Math.abs(ox * v.x + oy * v.y) >= ALONG_ORBIT) return false;
-                const gap = chaseGap(i, o.view, stage, o.c, o.q.depth, v, size);
+                const gap = chaseGap(i, o.view, stage, o.q.depth, v, size);
                 const b = labelBox(o.q, v, gap, size);
                 if (!within(b, room)) return false;
                 const off = [b.x0, b.x1].flatMap((x) =>
@@ -1759,8 +1878,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             ? {
                   radius: MOON.radius,
                   at: (t: number): Vec3 => {
-                      const E = worldAt(earth, t);
-                      const S = unit(scale(E, -1));
+                      const S = unit(scale(earth.at, -1));
                       const N = earth.plane.ey;
                       const side = add(
                           scale(cross(N, S), Math.cos(MOON.incl)),
@@ -1768,7 +1886,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                       );
                       const a = MOON.phase + MOON.omega * (t - epoch);
                       return add(
-                          E,
+                          earth.at,
                           scale(
                               add(
                                   scale(S, Math.cos(a)),
@@ -1804,11 +1922,10 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         currentFrom: curSeg ? curSeg.p0 : 1,
         planned,
         reach,
-        epoch,
         shipAt,
-        worldAt,
-        mapAt,
-        carry,
+        ringOf,
+        track,
+        rings,
         looped,
         mapSides,
         chaseSides,
@@ -1820,6 +1937,5 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         belt,
         pose,
         phaseAngle,
-        trail,
     };
 }

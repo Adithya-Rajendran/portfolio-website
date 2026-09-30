@@ -443,8 +443,9 @@ export const trajectoryCopy = {
     entry: "Full entry",
     current: "Current",
     openTo: "Open to",
-    /** The rail's last stop: what the owner is open to. */
-    next: "Next",
+    /** The plan leg: the rail's last stop and the planned orbit's label in
+     *  the scene. */
+    future: "Future",
     contact: "Contact",
     /** The figure line: what is not to scale, and the maps' credit. */
     figure: "Not to scale · Maps: NASA, Solar System Scope (CC BY 4.0)",

@@ -73,9 +73,7 @@ describe("the 3D flight", () => {
             for (const w of flight.worlds) {
                 const clear =
                     w.kind === "saturn" ? w.radius * 2.4 : w.radius * 1.6;
-                expect(dist(ships[i], flight.worldAt(w, t))).toBeGreaterThan(
-                    clear,
-                );
+                expect(dist(ships[i], w.at)).toBeGreaterThan(clear);
             }
         });
     });
@@ -91,9 +89,9 @@ describe("the 3D flight", () => {
                     0.02 * dist(pose.eye, pose.target),
                 );
                 for (const w of flight.worlds)
-                    expect(
-                        dist(pose.eye, flight.worldAt(w, frame.t)),
-                    ).toBeGreaterThan(w.radius * 1.5);
+                    expect(dist(pose.eye, w.at)).toBeGreaterThan(
+                        w.radius * 1.5,
+                    );
                 prev = pose;
             }
             const f = frameAt(route, 0.4321);
@@ -227,11 +225,7 @@ describe("the chase camera", () => {
                 const pose = flown.pose(frame, stage);
                 expect(pose.fly).toBeCloseTo(1, 3);
                 const at = (i: number) =>
-                    screenOf(
-                        pose,
-                        stage,
-                        flown.worldAt(flown.worlds[i], frame.t),
-                    );
+                    screenOf(pose, stage, flown.worlds[i].at);
                 const from = at(seg.from!);
                 const to = at(seg.chapter);
                 expect(inBox(stage, from)).toBe(true);
@@ -254,10 +248,10 @@ describe("the chase camera", () => {
                 const frame = frameAt(paced, p);
                 const pose = flown.pose(frame, stage);
                 const w = flown.worlds[seg.chapter];
-                const phase = flown.phaseAngle(pose, w, frame.t);
+                const phase = flown.phaseAngle(pose, w);
                 expect(phase).toBeGreaterThanOrEqual(45);
                 expect(phase).toBeLessThanOrEqual(63);
-                const centre = flown.worldAt(w, frame.t);
+                const centre = w.at;
                 const ship3 = flown.shipAt(p);
                 const c = screenOf(pose, stage, centre);
                 const s = screenOf(pose, stage, ship3);
@@ -320,11 +314,11 @@ describe("the chase camera", () => {
         for (let u = 0.4; u <= 0.6; u += 0.005) {
             const frame = frameAt(paced, lerp(seg.p0, seg.p1, u));
             const pose = flown.pose(frame, stage);
-            const c = screenOf(pose, stage, flown.worldAt(w, frame.t));
+            const c = screenOf(pose, stage, w.at);
             const s = screenOf(pose, stage, flown.shipAt(frame.p));
             const R = (w.radius * stage.kpx) / c.depth;
             expect(R).toBeGreaterThan(95);
-            expect(flown.phaseAngle(pose, w, frame.t)).toBeLessThan(63);
+            expect(flown.phaseAngle(pose, w)).toBeLessThan(63);
             const off = Math.abs(Math.hypot(s.x - c.x, s.y - c.y) - R) / R;
             closest = Math.min(closest, off);
         }
@@ -356,7 +350,7 @@ describe("the chase camera", () => {
                 const frame = frameAt(paced, p);
                 const pose = flown.pose(frame, stage);
                 const w = flown.worlds[seg.chapter];
-                const c = screenOf(pose, stage, flown.worldAt(w, frame.t));
+                const c = screenOf(pose, stage, w.at);
                 const s = screenOf(pose, stage, flown.shipAt(p));
                 // The rest aim is 35° below the horizontal, on the right.
                 const angle = Math.atan2(c.y - s.y, s.x - c.x) / D2R;
@@ -377,6 +371,11 @@ const minus = (a: Vec3, b: Vec3): Vec3 => [
     a[1] - b[1],
     a[2] - b[2],
 ];
+const crossOf = (a: Vec3, b: Vec3): Vec3 => [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+];
 
 describe("the opening", () => {
     const first = paced.segments[0];
@@ -396,7 +395,7 @@ describe("the opening", () => {
             // The Sun's centre is under 1° behind the limb as the eye sees
             // it, so only its corona shows, and the eye is above the air.
             const w = flown.worlds[0];
-            const E = flown.worldAt(w, frame.t);
+            const E = w.at;
             const d = dist(pose.eye, E);
             const apart = Math.acos(
                 dotOf(
@@ -471,7 +470,7 @@ describe("Saturn's ring", () => {
             for (let u = 0.1; u <= 1; u += 0.01) {
                 const frame = frameAt(paced, lerp(seg.p0, seg.p1, u));
                 const pose = flown.pose(frame, stage);
-                const c = flown.worldAt(w, frame.t);
+                const c = w.at;
                 const nV = dotOf(w.pole, unitOf(minus(pose.eye, c)));
                 const nL = dotOf(w.pole, unitOf(minus([0, 0, 0], c)));
                 expect(nL).toBeGreaterThan(0);
@@ -496,7 +495,7 @@ describe("the poster", () => {
             const frame = frameAt(paced, 0);
             const pose = flown.pose(frame, stage);
             const w = flown.worlds[0];
-            const c = flown.worldAt(w, frame.t);
+            const c = w.at;
             const d = c.map((v, k) => v - pose.eye[k]) as Vec3;
             const L = Math.hypot(...d);
             const u = d.map((v) => v / L) as Vec3;
@@ -544,7 +543,7 @@ describe("the Moon and the belt", () => {
         for (let p = 0; p <= upto; p += 0.0005) {
             const t = frameAt(paced, p).t;
             const m = moon.at(t);
-            expect(dist(m, flown.worldAt(w, t))).toBeGreaterThan(3 * w.radius);
+            expect(dist(m, w.at)).toBeGreaterThan(3 * w.radius);
             expect(dist(m, flown.shipAt(p))).toBeGreaterThan(4 * moon.radius);
         }
         const stage = stages[0][1];
@@ -555,7 +554,7 @@ describe("the Moon and the belt", () => {
             expect(q.depth).toBeGreaterThan(0);
             expect(inBox(stage, q)).toBe(true);
             // In front of the sky, not behind Earth's disc.
-            const e = screenOf(pose, stage, flown.worldAt(w, frame.t));
+            const e = screenOf(pose, stage, w.at);
             const R = (w.radius * stage.kpx) / e.depth;
             expect(Math.hypot(q.x - e.x, q.y - e.y)).toBeGreaterThan(R);
         }
@@ -629,7 +628,7 @@ describe("the finale", () => {
             const pose = flown.pose(frame, stage);
             const need = name === "wide" ? 80 : 24;
             const marks = [
-                ...flown.worlds.map((w) => flown.mapAt(w, frame.t, 1)),
+                ...flown.worlds.map((w) => w.at),
                 flown.shipAt(1),
                 flown.planned!.end,
             ];
@@ -658,23 +657,59 @@ describe("the finale", () => {
         },
     );
 
-    it("sits each world on its own loop in the map", () => {
-        const frame = frameAt(paced, 1);
-        const trail = flown
-            .trail(2400)
-            .map((q, k) =>
-                add(q, flown.carry((k / 2399) * paced.flown, frame.t)),
-            );
+    it("rings each coast world where the track touches it", () => {
+        const line = [...flown.track.points, ...flown.planned!.path];
+        const eps = 1e-7;
+        const heading = (p: number, q: number) =>
+            unitOf(minus(flown.shipAt(q), flown.shipAt(p)));
         flown.worlds.forEach((w, i) => {
-            const chapter = data.chapters[i];
-            expect(flown.mapAt(w, frame.t, 0)).toEqual(
-                flown.worldAt(w, frame.t),
+            const near = Math.min(...line.map((q) => dist(q, w.at)));
+            const ring = flown.rings[i];
+            expect(flown.looped[i]).toBe(!!ring);
+            if (!ring) {
+                // A flyby passes close by.
+                expect(near).toBeGreaterThan(1.6 * w.radius);
+                expect(near).toBeLessThan(1.5 * w.park);
+                return;
+            }
+            // A circle of the parking radius round the world, which the
+            // track touches from outside: the ship joins it and leaves it
+            // along the track.
+            for (const q of ring.points)
+                expect(Math.abs(dist(q, w.at) - w.park)).toBeLessThan(1e-9);
+            expect(Math.abs(near - w.park)).toBeLessThan(1e-3);
+            const coast = paced.segments.find(
+                (s) => s.kind === "coast" && s.chapter === i,
+            )!;
+            for (const p of [coast.p0, coast.p1]) {
+                if (p === 0) continue;
+                expect(dist(flown.shipAt(p), w.at)).toBeCloseTo(w.park, 6);
+                const turn = Math.acos(
+                    Math.min(
+                        1,
+                        dotOf(
+                            heading(p - 2 * eps, p - eps),
+                            heading(p + eps, p + 2 * eps),
+                        ),
+                    ),
+                );
+                expect(turn / D2R).toBeLessThan(0.05);
+            }
+            // No line runs through a ring's disc.
+            const n = unitOf(
+                crossOf(
+                    minus(ring.points[0], w.at),
+                    minus(ring.points[48], w.at),
+                ),
             );
-            const at = flown.mapAt(w, frame.t, 1);
-            expect(at).toEqual(flown.worldAt(w, chapter.end));
-            // Inside the loop the ship flew round it.
-            const near = Math.min(...trail.map((s) => dist(s, at)));
-            expect(near).toBeLessThan(1.25 * w.park);
+            for (const q of line) {
+                const off = minus(q, w.at);
+                const up = dotOf(off, n);
+                const flat = Math.hypot(
+                    ...minus(off, n.map((v) => v * up) as Vec3),
+                );
+                expect(Math.abs(up) < 0.2 && flat < 0.98 * w.park).toBe(false);
+            }
         });
     });
 
@@ -708,25 +743,17 @@ describe("the finale", () => {
             const pose = flown.pose(frame, stage);
             const at = (q: Vec3) => screenOf(pose, stage, q);
             const route = [
-                ...flown
-                    .trail(2400)
-                    .map((q, k) =>
-                        at(
-                            add(
-                                q,
-                                flown.carry((k / 2399) * paced.flown, frame.t),
-                            ),
-                        ),
-                    ),
-                ...flown.planned!.path.map(at),
-            ];
+                ...flown.track.points,
+                ...flown.rings.flatMap((r) => r?.points ?? []),
+                ...flown.planned!.path,
+            ].map(at);
             const sun = at([0, 0, 0]);
             // On a phone, or a narrow window, only the current world is
             // labelled.
             const shown = mapNamesAll(stage) ? [0, 1, 2, 3] : [flown.current];
             const boxes = shown.map((i) => {
                 const w = flown.worlds[i];
-                const q = at(flown.mapAt(w, frame.t, 1));
+                const q = at(w.at);
                 const side = sides[i];
                 const gap = labelGap(stage, w, q.depth, 1) * side.reach;
                 return labelBox(q, side, gap, sizes[i]);
@@ -756,49 +783,258 @@ describe("the finale", () => {
         },
     );
 
-    it("draws the opening loop round Earth, on the chase and in the map", () => {
+    it("opens on Earth's ring and leaves it along the track", () => {
         const first = paced.segments[0];
         const w = flown.worlds[0];
-        const end = frameAt(paced, 1).t;
-        // Drawn where the ship is at its own time, and not moved once the
-        // loop has left.
-        for (const u of [0, 0.3, 0.7, 0.95]) {
-            const p = lerp(first.p0, first.p1, u);
-            expect(flown.carry(p, frameAt(paced, p).t)).toEqual([0, 0, 0]);
-        }
-        expect(flown.carry(first.p1, end)).toEqual([0, 0, 0]);
-        // Mid-chapter, the loop flown so far circles Earth where it is.
-        const now = frameAt(paced, lerp(first.p0, first.p1, 0.7));
-        const here = flown.worldAt(w, now.t);
-        for (let i = 0; i <= 200; i++) {
-            const p = lerp(first.p0, now.p, i / 200);
-            if (frameAt(paced, p).u >= 0.86) continue;
-            const at = add(flown.shipAt(p), flown.carry(p, now.t));
-            expect(dist(at, here) / w.park).toBeCloseTo(1, 6);
-        }
-        // In the map the route starts on the loop, which circles Earth at
-        // the parking radius (it widens only to leave) at least once.
-        const earth = flown.mapAt(w, end, 1);
+        const ring = flown.rings[0]!;
+        // The ship circles Earth at the parking radius, at least once,
+        // drawing its ring from where it starts; the ring is whole before
+        // it leaves.
         let turned = 0;
-        let prev: number | null = null;
-        let prevAt: Vec3 | null = null;
+        let prev: Vec3 | null = null;
         for (let i = 0; i <= 800; i++) {
             const p = lerp(first.p0, first.p1, i / 800);
-            const at = add(flown.shipAt(p), flown.carry(p, end));
-            const off = [0, 1, 2].map((k) => at[k] - earth[k]) as Vec3;
-            if (frameAt(paced, p).u < 0.86)
-                expect(Math.hypot(...off) / w.park).toBeCloseTo(1, 6);
-            const a = Math.atan2(off[2], off[0]);
-            if (prev !== null)
-                turned += Math.atan2(Math.sin(a - prev), Math.cos(a - prev));
-            prev = a;
-            // Continuous, and it meets the transfer where the ship leaves.
-            if (prevAt) expect(dist(at, prevAt)).toBeLessThan(0.1 * w.park);
-            prevAt = at;
+            const off = minus(flown.shipAt(p), w.at);
+            expect(Math.hypot(...off) / w.park).toBeCloseTo(1, 9);
+            expect(flown.ringOf(p)).toBe(0);
+            if (prev)
+                turned += Math.acos(
+                    Math.min(1, dotOf(unitOf(prev), unitOf(off))),
+                );
+            prev = off;
         }
-        expect(Math.abs(turned) / D2R).toBeGreaterThanOrEqual(360);
-        const out = flown.shipAt(first.p1 + 1e-4);
-        expect(dist(out, prevAt!)).toBeLessThan(0.1 * w.park);
+        expect(turned / D2R).toBeGreaterThanOrEqual(360);
+        expect(flown.ringOf(first.p1 + 1e-6)).toBe(-1);
+        expect(ring.ps[0]).toBe(first.p0);
+        expect(dist(ring.points[0], flown.shipAt(0))).toBeLessThan(1e-9);
+        expect(ring.ps.at(-1)!).toBeLessThanOrEqual(first.p1);
+        // The track starts where the ship leaves the ring, along it.
+        expect(flown.track.ps[0]).toBe(first.p1);
+        expect(
+            dist(flown.track.points[0], flown.shipAt(first.p1)),
+        ).toBeLessThan(1e-9);
+        const into = unitOf(
+            minus(flown.shipAt(first.p1), flown.shipAt(first.p1 - 1e-6)),
+        );
+        const out = unitOf(minus(flown.track.points[1], flown.track.points[0]));
+        expect(Math.acos(Math.min(1, dotOf(into, out))) / D2R).toBeLessThan(1);
+    });
+});
+
+/* ---- the track: one smooth line --------------------------------------- */
+
+type Px = { x: number; y: number };
+/** A drawn line's visible runs on the stage: in front of the camera and
+ *  over the scene (right of the record on a wide stage). */
+const visibleRuns = (points: Vec3[], pose: Pose, stage: Stage) => {
+    const runs: Px[][] = [];
+    let run: Px[] = [];
+    for (const q of points) {
+        const s = screenOf(pose, stage, q);
+        const seen =
+            s.depth > 0.05 &&
+            s.x >= stage.record &&
+            s.x <= stage.W &&
+            s.y >= 0 &&
+            s.y <= stage.H;
+        if (seen) run.push(s);
+        else {
+            if (run.length > 1) runs.push(run);
+            run = [];
+        }
+    }
+    if (run.length > 1) runs.push(run);
+    return runs;
+};
+/** Where segments ab and cd cross (null where they don't). */
+const crossing = (a: Px, b: Px, c: Px, d: Px): Px | null => {
+    const side = (p: Px, q: Px, r: Px) =>
+        (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+    const d1 = side(c, d, a);
+    const d2 = side(c, d, b);
+    if (d1 * d2 >= 0 || side(a, b, c) * side(a, b, d) >= 0) return null;
+    const t = d1 / (d1 - d2);
+    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+};
+/** Where the runs cross themselves (non-adjacent segments). */
+const selfCrossings = (runs: Px[][]) => {
+    const segs = runs.flatMap((run, r) =>
+        run.slice(1).map((b, i) => ({ a: run[i], b, r, i })),
+    );
+    const out: Px[] = [];
+    for (let m = 0; m < segs.length; m++)
+        for (let n = m + 1; n < segs.length; n++) {
+            const s = segs[m];
+            const t = segs[n];
+            if (s.r === t.r && t.i - s.i < 2) continue;
+            const at = crossing(s.a, s.b, t.a, t.b);
+            if (at) out.push(at);
+        }
+    return out;
+};
+/** A run's bends, resampled at 1px: its tightest radius, and how often
+ *  its turn changes side where both sides turn tighter than 150px. */
+const bendsOf = (run: Px[]) => {
+    const even: Px[] = [run[0]];
+    let carry = 0;
+    for (let i = 0; i + 1 < run.length; i++) {
+        const a = run[i];
+        const b = run[i + 1];
+        const d = Math.hypot(b.x - a.x, b.y - a.y);
+        let s = 1 - carry;
+        for (; s <= d; s += 1)
+            even.push({
+                x: a.x + ((b.x - a.x) * s) / d,
+                y: a.y + ((b.y - a.y) * s) / d,
+            });
+        carry = d - (s - 1);
+    }
+    let tightest = Infinity;
+    let flips = 0;
+    let sign = 0;
+    for (let k = 3; k + 3 < even.length; k++) {
+        const a = even[k - 3];
+        const b = even[k];
+        const c = even[k + 3];
+        const k1 = ((b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x)) / 27;
+        if (Math.abs(k1) > 1e-9)
+            tightest = Math.min(tightest, 1 / Math.abs(k1));
+        if (Math.abs(k1) < 1 / 150) continue;
+        if (sign && Math.sign(k1) !== sign) flips++;
+        sign = Math.sign(k1);
+    }
+    return { tightest, flips };
+};
+
+describe("the track", () => {
+    /** The track the ship flies, densely: its legs on the track, in order
+     *  (each coast leaves and rejoins it at the same touch point). */
+    const curve: Vec3[] = [];
+    for (const s of paced.segments) {
+        if (s.kind !== "transfer" && s.kind !== "flyby") continue;
+        for (let k = curve.length ? 1 : 0; k <= 4000; k++)
+            curve.push(flown.shipAt(lerp(s.p0, s.p1, k / 4000)));
+    }
+
+    it("flies one smooth track, curving toward the Sun all the way", () => {
+        let tightest = Infinity;
+        let prev: number | null = null;
+        for (let i = 1; i + 1 < curve.length; i++) {
+            const a = minus(curve[i], curve[i - 1]);
+            const b = minus(curve[i + 1], curve[i]);
+            const la = Math.hypot(...a);
+            const lb = Math.hypot(...b);
+            // No kink: consecutive chords (about 0.01u) turn by a hair.
+            const turn = Math.acos(Math.min(1, dotOf(a, b) / (la * lb)));
+            expect(turn / D2R).toBeLessThan(0.5);
+            // The curvature (Menger's, for uneven steps): toward the Sun
+            // in the ecliptic everywhere, never tighter than 10u, and
+            // changing smoothly (a C2 curve has no joins to break it).
+            const k = unitOf(minus(unitOf(b), unitOf(a))).map(
+                (v) => (v * 2 * Math.sin(turn / 2)) / ((la + lb) / 2),
+            ) as Vec3;
+            const q = curve[i];
+            const r = Math.hypot(q[0], q[2]);
+            if (turn > 0) {
+                expect(dotOf(k, [-q[0] / r, 0, -q[2] / r]) * r).toBeGreaterThan(
+                    0,
+                );
+                tightest = Math.min(tightest, 1 / Math.hypot(...k));
+            }
+            const size = turn > 0 ? Math.hypot(...k) : 0;
+            if (prev !== null) expect(Math.abs(size - prev)).toBeLessThan(0.01);
+            prev = size;
+        }
+        expect(tightest).toBeGreaterThanOrEqual(10);
+        // The dashed plan goes on along the same curve.
+        const plan = flown.planned!.path;
+        const last = unitOf(minus(curve.at(-1)!, curve.at(-2)!));
+        const next = unitOf(minus(plan[1], plan[0]));
+        expect(dist(plan[0], curve.at(-1)!)).toBeLessThan(1e-9);
+        expect(Math.acos(Math.min(1, dotOf(last, next))) / D2R).toBeLessThan(1);
+    });
+
+    it("moves the ship smoothly, without a jump in speed or heading", () => {
+        const n = 8000;
+        const ships = Array.from({ length: n + 1 }, (_, k) =>
+            flown.shipAt(k / n),
+        );
+        const steps = ships.slice(1).map((q, k) => dist(q, ships[k]));
+        for (let k = 1; k < steps.length; k++) {
+            const ratio = steps[k] / steps[k - 1];
+            expect(ratio).toBeGreaterThan(1 / 1.05);
+            expect(ratio).toBeLessThan(1.05);
+        }
+        // The heading as flight-gl.ts takes it turns at most 4° per
+        // 0.001 of progress (about 5px of scroll).
+        const heading = (p: number) =>
+            unitOf(
+                minus(
+                    flown.shipAt(Math.min(1, p + 0.0006)),
+                    flown.shipAt(Math.max(0, p - 0.0006)),
+                ),
+            );
+        for (let p = 0.0006; p + 0.001 < 1 - 0.0006; p += 0.0005) {
+            const c = dotOf(heading(p), heading(p + 0.001));
+            expect(Math.acos(Math.min(1, c)) / D2R).toBeLessThanOrEqual(4);
+        }
+    });
+
+    it("draws a clean line on the map and the chase", () => {
+        const [wideStage, phoneStage] = [stages[0][1], stages[1][1]];
+        const plan = paced.segments.find((s) => s.kind === "plan")!;
+        const frames: [Stage, number, number][] = [
+            [wideStage, 1, 40],
+            [phoneStage, 1, 25],
+            ...[...paced.rest, ...paced.segments.map((s) => s.p1)].map(
+                (p) => [wideStage, p, 15] as [Stage, number, number],
+            ),
+        ];
+        for (const [stage, p, radius] of frames) {
+            const frame = frameAt(paced, p);
+            const pose = flown.pose(frame, stage);
+            const reached = (line: { points: Vec3[]; ps: number[] }) =>
+                line.points.filter((_, k) => line.ps[k] <= p);
+            // The track and the dashed plan as far as it has drawn.
+            const on =
+                frame.segment === plan ? smoothstep(CRANE, 0.85, frame.u) : 0;
+            const path = flown.planned!.path;
+            const line = [
+                ...reached(flown.track),
+                ...path.slice(1, Math.round(on * (path.length - 1)) + 1),
+            ];
+            const runs = visibleRuns(line, pose, stage);
+            expect(selfCrossings(runs)).toEqual([]);
+            for (const run of runs) {
+                const { tightest, flips } = bendsOf(run);
+                expect(flips).toBe(0);
+                expect(tightest).toBeGreaterThanOrEqual(radius);
+            }
+            // A ring meets the line only at its touch point.
+            flown.rings.forEach((ring, i) => {
+                if (!ring || !line.length) return;
+                const w = flown.worlds[i];
+                const touch = line.reduce((a, b) =>
+                    dist(a, w.at) < dist(b, w.at) ? a : b,
+                );
+                const t = screenOf(pose, stage, touch);
+                for (const r of visibleRuns(reached(ring), pose, stage))
+                    for (const run of runs)
+                        for (let a = 1; a < r.length; a++)
+                            for (let b = 1; b < run.length; b++) {
+                                const at = crossing(
+                                    r[a - 1],
+                                    r[a],
+                                    run[b - 1],
+                                    run[b],
+                                );
+                                if (at)
+                                    expect(
+                                        Math.hypot(at.x - t.x, at.y - t.y),
+                                    ).toBeLessThan(6);
+                            }
+            });
+        }
     });
 });
 
@@ -830,7 +1066,7 @@ describe("the labels and the lines", () => {
                 const side = chase[index][i];
                 // Away from the Sun, or above or below the world.
                 const mid = frameAt(paced, (seg.p0 + seg.p1) / 2);
-                const c = flown.worldAt(w, mid.t);
+                const c = w.at;
                 const { right } = viewAxes(flown.pose(mid, stage));
                 const sunward = -(
                     c[0] * right[0] +
@@ -847,7 +1083,7 @@ describe("the labels and the lines", () => {
                     const p = lerp(seg.p0, seg.p1, u);
                     const frame = frameAt(paced, p);
                     const pose = flown.pose(frame, stage);
-                    const at = flown.worldAt(w, frame.t);
+                    const at = w.at;
                     const q = screenOf(pose, stage, at);
                     const gap = Math.max(
                         labelGap(stage, w, q.depth, 1),
@@ -933,7 +1169,7 @@ describe("the labels and the lines", () => {
             // of the column.
             const pose = flown.pose(end, stage);
             for (const q of [
-                ...flown.worlds.map((w) => flown.mapAt(w, end.t, 1)),
+                ...flown.worlds.map((w) => w.at),
                 flown.shipAt(1),
                 flown.planned!.end,
             ])
