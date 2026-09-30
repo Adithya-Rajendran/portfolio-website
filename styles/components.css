@@ -361,8 +361,8 @@
         }
     }
     /* On home the hero names the owner: the wordmark steps aside while the
-       hero is in view (html[data-hero], set by the starfield's observer;
-       without JavaScript it stays). */
+       hero's name shows below the header (html[data-hero], set by the
+       starfield's observer; without JavaScript it stays). */
     .brand__name {
         transition:
             opacity var(--dur-hover) var(--ease-dock),
@@ -1613,10 +1613,12 @@
         color: var(--ink-3);
         font: 400 0.8125rem / 1 var(--font-mono);
     }
+    /* The identifier never splits ("MSN-/01"): the name beside it wraps. */
     .crumb-row__code {
         color: var(--ink-2);
         font: 400 0.8125rem / 1 var(--font-mono);
         letter-spacing: 0.02em;
+        white-space: nowrap;
     }
 
     /* ===== Stats (site.css 4.9; components/ui/metrics.tsx) ============= */

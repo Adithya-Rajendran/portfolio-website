@@ -115,8 +115,13 @@ test("every project page has its crumb, title, close and pager", async ({
             await page.goto(path);
             // The crumb names the project by the owner's short name, else
             // its title, with its number as its one quiet identifier; the
-            // heading is the title alone, in sentence case.
+            // heading is the title alone, in sentence case. The number never
+            // splits at its hyphen.
             await expect(main(page).getByText(/^MSN-\d{2}$/)).toHaveCount(1);
+            await expect(main(page).getByText(/^MSN-\d{2}$/)).toHaveCSS(
+                "white-space",
+                "nowrap",
+            );
             const heading = main(page).getByRole("heading", { level: 1 });
             await expect(heading).toHaveCount(1);
             await expect(heading).toHaveCSS("text-transform", "none");

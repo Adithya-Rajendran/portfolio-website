@@ -108,6 +108,23 @@ test("the header's wordmark steps aside while the hero names the owner", async (
     const wordmark = page.getByRole("banner").locator(".brand__name");
     await expect(page.locator("html")).toHaveAttribute("data-hero", "");
     await expect(wordmark).toBeHidden();
+    // Once the name has gone under the header, the wordmark is back,
+    // while the rest of the hero is still on screen.
+    await page.evaluate(() =>
+        window.scrollTo({ top: 400, behavior: "instant" }),
+    );
+    await expect(page.locator("html")).not.toHaveAttribute("data-hero");
+    await expect(wordmark).toBeVisible();
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await expect(wordmark).toBeHidden();
+    // The quiet link lands on the projects with the name in the header.
+    await page
+        .getByRole("main")
+        .getByRole("link", { name: "Selected projects", exact: true })
+        .click();
+    await expect(page).toHaveURL(/#home-projects$/);
+    await expect(page.locator("html")).not.toHaveAttribute("data-hero");
+    await expect(wordmark).toBeVisible();
     await page
         .getByRole("main")
         .locator("#home-writing")

@@ -25,8 +25,8 @@ import styles from "./hero.module.css";
  * link down to the selected projects. The headline's and the Open To
  * line's parts are kept whole, and stack on phones. At the foot, the
  * credit with the frame's NASA ID, and Pause motion. The header's
- * wordmark steps aside while the hero, which names the owner, is in view
- * (the starfield sets `html[data-hero]`). Everything is server-rendered;
+ * wordmark steps aside while the hero's name shows below the header (the
+ * starfield sets `html[data-hero]`). Everything is server-rendered;
  * the starfield and the motion control are the only islands.
  */
 

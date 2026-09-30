@@ -36,11 +36,12 @@ const LOOK: Record<Magnitude, { r: number; alpha: number }> = {
  * "full"]`, no OS reduce-motion setting): otherwise it holds a still
  * frame. Stars fade out around the zone's text (`[data-clear]`), measured
  * again on resize and once the fonts have loaded. `data-state` reports
- * `running` or `stopped` for tests. The same observer, in both themes,
- * sets `html[data-hero]` while the zone is on screen, so the header's
- * wordmark steps aside while the hero names the owner. Cache Components
- * hides a visited page instead of unmounting it, so the effect's cleanup
- * stops the loop and clears the attribute.
+ * `running` or `stopped` for tests. A second observer, in both themes,
+ * sets `html[data-hero]` while the zone's name (its h1) shows below the
+ * header, so the header's wordmark steps aside only while the hero names
+ * the owner: the name is always on screen once. Cache Components hides a
+ * visited page instead of unmounting it, so the effect's cleanup stops
+ * the loop and clears the attribute.
  */
 export default function Starfield({ className }: { className?: string }) {
     const ref = useRef<HTMLCanvasElement>(null);
@@ -165,10 +166,19 @@ export default function Starfield({ className }: { className?: string }) {
         resize.observe(zone);
         const visible = new IntersectionObserver(([entry]) => {
             onScreen = entry?.isIntersecting ?? true;
-            root.toggleAttribute("data-hero", onScreen);
             update();
         });
         visible.observe(zone);
+        const name = zone.querySelector("h1");
+        const header =
+            parseFloat(getComputedStyle(root).getPropertyValue("--header-h")) ||
+            0;
+        const named = new IntersectionObserver(
+            ([entry]) =>
+                root.toggleAttribute("data-hero", !!entry?.isIntersecting),
+            { rootMargin: `-${header}px 0px 0px 0px` },
+        );
+        if (name) named.observe(name);
         // The theme and motion controls change these attributes (and a
         // theme switch may apply them after a view transition starts).
         const prefs = new MutationObserver(() => refresh());
@@ -185,6 +195,7 @@ export default function Starfield({ className }: { className?: string }) {
             root.removeAttribute("data-hero");
             resize.disconnect();
             visible.disconnect();
+            named.disconnect();
             prefs.disconnect();
             document.removeEventListener("visibilitychange", update);
             reduce.removeEventListener("change", update);

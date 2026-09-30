@@ -68,9 +68,14 @@ only live in comments or commit messages.
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
   (their variables on `<html>`); italic Newsreader is its own family,
-  `var(--font-long-italic)`, so it is not preloaded. The chrome (header,
-  footer, section marks) sets nothing in italic, so that file loads only
-  on pages whose text is italic (an `<em>` in a post); keep it that way.
+  `var(--font-long-italic)`, so it is not preloaded. DM Mono's regular is
+  preloaded with Jost and Newsreader's roman: its fallback sets lowercase
+  about a fifth narrower, so a wrapped mono line in the first viewport (a
+  project's stack on a phone) re-wrapped on arrival and shifted the page;
+  its medium (a listing's keywords) is its own call and is not. The
+  chrome (header, footer, section marks) sets nothing in italic, so that
+  file loads only on pages whose text is italic (an `<em>` in a post);
+  keep it that way.
 - **Dates in render.** Never call `new Date()`, `Date.now()` or
   `Math.random()` in render outside `"use cache"`: the build fails, or the
   page becomes request-bound. "Today" is `getToday()` from `lib/clock.ts`
@@ -246,10 +251,12 @@ only live in comments or commit messages.
   has drawn: it runs at about 30 fps only while the hero is on screen, the
   tab is visible, the theme is Void and motion is allowed, keeps stars off
   `[data-clear]` text, reports `data-state` (`running` | `stopped`) and
-  stops in its effect cleanup, because a visited page stays mounted. Its
-  observer also sets `html[data-hero]` while the hero is on screen (in
-  both themes; the cleanup clears it), and the header's wordmark steps
-  aside meanwhile, since the hero names the owner; without JavaScript it
+  stops in its effect cleanup, because a visited page stays mounted. A
+  second observer sets `html[data-hero]` while the hero's name (its h1)
+  shows below the header (in both themes; the cleanup clears it), and the
+  header's wordmark steps aside meanwhile, so the name is on screen once:
+  never twice, and never not at all while the rest of the hero, or the
+  projects the quiet link lands on, fill the view. Without JavaScript it
   stays. Over it: the name, the profile's headline and the availability
   line (only when set), each split into parts kept whole (`OpenToItems`)
   that stack on phones, then one action (CV, the hairline `.btn`, no
@@ -658,7 +665,8 @@ deployment require an authenticated Sanity CLI session.
   page, the index links every project with no counts, register, mission
   numbers or related pages, titles in sentence case and four stack items
   at most on a card, the flagship's title and View the project in the
-  first viewport at 1440×900, each project page has its crumb, its title
+  first viewport at 1440×900, each project page has its crumb (its number
+  never split), its title
   as the heading, close and pager and no title block, revision, "Table 1",
   jump to its own write-up or stand-in text, a stack item never split, a
   thin project is a short note (the Kubernetes note without a Stack row),
@@ -668,7 +676,8 @@ deployment require an authenticated Sanity CLI session.
   hero's name, availability, CV and the quiet link down to the projects
   in the first viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
-  the header's wordmark hidden while the hero is in view; the starfield
+  the header's wordmark hidden only while the hero's name is in view: back
+  at 400px down and after the quiet link to the projects; the starfield
   `running` only on screen, in a visible tab, in Void and with motion
   allowed; the stars in the hero only, and not on paper; the credit with
   its frame ID, and the drawn limb in Flight Manual; the sections in

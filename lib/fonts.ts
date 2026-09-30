@@ -6,10 +6,11 @@ import { DM_Mono, Jost, Michroma, Newsreader } from "next/font/google";
  * and styles/tokens.css builds the font stacks from them. Each variable
  * already carries a metric-matched fallback face (adjustFontFallback).
  *
- * Jost (the name, navigation and every UI label) and Newsreader's roman
- * (the long read, whose first paragraph is a post's largest paint) are the
- * two preloaded files. Newsreader's italic, DM Mono and Michroma load when
- * text first uses them. Jost's italic is never loaded.
+ * Jost (the name, navigation and every UI label), Newsreader's roman (the
+ * long read, whose first paragraph is a post's largest paint) and DM
+ * Mono's regular are the preloaded files. Newsreader's italic, DM Mono's
+ * medium and Michroma load when text first uses them. Jost's italic is
+ * never loaded.
  */
 export const jost = Jost({
     subsets: ["latin"],
@@ -37,10 +38,23 @@ export const newsreaderItalic = Newsreader({
     preload: false,
 });
 
+// The regular is preloaded: its fallback sets lowercase about a fifth
+// narrower, so a wrapped mono line in the first viewport (a project's
+// stack on a phone) re-wrapped when the face arrived and moved what sits
+// under it. The medium (a listing's keywords) is its own call, so it is
+// not preloaded; both declare the one "DM Mono" family, and
+// `--font-dm-mono` reaches both.
 export const dmMono = DM_Mono({
-    weight: ["400", "500"],
+    weight: "400",
     subsets: ["latin"],
     variable: "--font-dm-mono",
+    display: "swap",
+});
+
+export const dmMonoMedium = DM_Mono({
+    weight: "500",
+    subsets: ["latin"],
+    variable: "--font-dm-mono-medium",
     display: "swap",
     preload: false,
 });
@@ -59,5 +73,6 @@ export const fontVariables = [
     newsreader.variable,
     newsreaderItalic.variable,
     dmMono.variable,
+    dmMonoMedium.variable,
     michroma.variable,
 ].join(" ");
