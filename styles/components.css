@@ -1198,22 +1198,24 @@
         border-radius: var(--radius-round);
         box-shadow: inset 0 0 0 1px var(--ink-3);
     }
-    /* With a plain name under the label: "VOID / Dark". */
-    .seg__box--pair {
-        display: inline-grid;
-        grid-template-columns: auto auto;
-        align-content: center;
-        column-gap: 0.5rem;
+    /* With a description under the label (the contact form's topics):
+       the dot on the label's line, the words under it in the reading
+       face, wrapping. */
+    .seg__box--note {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        row-gap: var(--s-2);
+        padding-block: 0.85rem;
+        white-space: normal;
     }
-    .seg__box--pair::before {
-        grid-row: 1 / span 2;
-    }
-    .seg__sub {
+    .seg__note {
         grid-column: 2;
+        max-width: 60ch;
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.15 var(--font-display);
-        letter-spacing: 0.01em;
+        font: 400 var(--step-0) / 1.5 var(--font-long);
+        letter-spacing: 0;
         text-transform: none;
+        text-wrap: pretty;
     }
     .seg__input:hover + .seg__box {
         color: var(--ink-1);
@@ -1270,8 +1272,7 @@
     /* ===== CV rows (site.css 4.13, on the log index's grammar) ========= */
     /* components/cv/cv-list.tsx: a mono column (designation, dates, place,
        status) beside the title, organization, a serif line and the facts.
-       A row that stands for an orbit lights with it (`data-hl`, set by the
-       orbit map's island); a linked row is one big target. */
+       A linked row is one big target. */
     .cv-list {
         max-width: var(--measure-index);
         margin: 0;
@@ -1435,27 +1436,14 @@
         color: var(--ink-2);
         font: 400 var(--label-size) / 1.4 var(--font-mono);
     }
-    .cv-item__actions {
-        position: relative;
-        z-index: 2;
-        margin-top: var(--s-3);
-    }
-    /* Lit: the log row's hover (an ink rule and the title underlined),
-       from the pointer or from the orbit map. */
-    .cv-item:hover,
-    .cv-item[data-hl] {
+    /* Lit: the log row's hover (an ink rule and the title underlined). */
+    .cv-item:hover {
         border-top-color: var(--ink-1);
     }
     .cv-item:hover .cv-item__title a {
         text-decoration: underline;
         text-decoration-thickness: 2px;
         text-underline-offset: 0.16em;
-    }
-    .cv-list--grid .cv-item__title {
-        font: 400 var(--step-1) / 1.25 var(--font-display);
-    }
-    .cv-list--grid .cv-item__sub {
-        font-size: var(--step-0);
     }
 
     /* ===== Photographs and plates (site.css 4.26, 4.27) ================= */

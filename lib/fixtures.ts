@@ -131,8 +131,6 @@ export const FIXTURE_PROFILE: ProfileData = {
                 label: "Full-time opportunities in 2028",
             },
         ],
-        // Summer 2027, approximated for placing the planned orbit only.
-        from: "2027-06-01",
         // The former built-in button, now the profile's.
         cta: "Write about a role",
         consultingOpen: false,

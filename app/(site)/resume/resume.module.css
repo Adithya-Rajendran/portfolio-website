@@ -1,9 +1,8 @@
 /*
- * Trajectory · Experience / CV (/resume): the page head, the view row,
- * the orbit map's section and the CV sections (DocSection: the shared
- * section head, then the rows). The map, the CV rows and the key/value
- * list have their own styles (components/orbit/orbit.module.css;
- * `.cv-list` and `.specs` in styles/components.css); the plain rows (the
+ * Trajectory · Experience / CV (/resume): the page head, the Timeline
+ * link and the CV sections (DocSection: the shared section head, then the
+ * rows). The CV rows and the key/value list have their own styles
+ * (`.cv-list` and `.specs` in styles/components.css); the plain rows (the
  * latest writing, prior certifications) are here. On paper the page is
  * the controlled document (G3): the print rules close this file and
  * styles/print.css.
@@ -12,7 +11,7 @@
     position: relative;
 }
 
-/* ---- The head band: the shared split head, then the view row ------------ */
+/* ---- The head band: the shared split head, then the Timeline link ------- */
 .band {
     padding-bottom: var(--s-5);
 }
@@ -26,46 +25,9 @@
     margin-top: var(--s-5);
 }
 
-/* ---- Views: List | Timeline (JavaScript only; without it, the link that
-   opens the map), and beside them the flight, Timeline in 3D ------------ */
-.toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--s-3) var(--s-6);
+/* ---- Timeline: the one quiet link to the flight, under the head -------- */
+.timeline {
     padding-top: var(--s-4);
-    border-top: var(--rule-hair) solid var(--rule-1);
-}
-@media (max-width: 37.49rem) {
-    .switch {
-        width: 100%;
-    }
-    .switch :global(.seg__opt) {
-        flex: 1;
-    }
-    .switch :global(.seg__box) {
-        justify-content: center;
-    }
-}
-
-/* ---- The orbit map (Timeline): the optional Map view ------------------- */
-/* The list is the default view (`data-view="list"`, also without
-   JavaScript); the Timeline view shows the map above it. Without
-   JavaScript the map opens from its fragment. The rows' orbit numbers
-   and their "Show on timeline" buttons only mean something beside the
-   map. */
-.map {
-    padding-block: var(--space-block);
-}
-.page[data-view="list"] .map {
-    display: none;
-}
-:global(html:not([data-js])) .page .map:target {
-    display: block;
-}
-.page[data-view="list"] [data-orbit-row] :global(.cv-item__code),
-.page[data-view="list"] [data-orbit-show] {
-    display: none;
 }
 
 /* ---- The CV: the shared section head, the rows in the main column ------- */
@@ -159,15 +121,14 @@
    Paper (G3): Flight Manual tokens on white (styles/print.css), two
    sheets on A4 and on Letter. Sheet 1: the masthead, education and
    experience; sheet 2: projects, writing, skills and certifications. No
-   map, no chrome, no controls; every link prints its address.
+   chrome, no controls; every link prints its address.
    ====================================================================== */
 @media print {
     .page {
         font-size: 9.2pt;
         line-height: 1.38;
     }
-    .band,
-    .map {
+    .band {
         display: none !important;
     }
     .page :global(.shell) {

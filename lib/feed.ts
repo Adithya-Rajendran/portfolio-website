@@ -153,9 +153,10 @@ function renderLink(
 /**
  * Portable Text to conservative feed HTML. Video URLs are links, never
  * iframe markup; malformed links and images degrade to readable text.
- * Listings, plates, figures and footnotes carry the numbers the page
- * prints (lib/prose.ts): "Listing 3 · Bash · install.sh", "Pl. I", and a
- * raised note number that links to the Notes list at the end.
+ * Plates, figures and footnotes carry the numbers the page prints
+ * (lib/prose.ts): "Pl. I", and a raised note number that links to the
+ * Notes list at the end; a listing is named as its bar names it, "Bash ·
+ * install.sh".
  */
 function feedComponents(
     index: ProseIndex,
@@ -206,11 +207,7 @@ function feedComponents(
                         ? `<code>${escapeHtmlText(value.filename)}</code>`
                         : "";
                 const label = info
-                    ? [
-                          `Listing ${info.number}`,
-                          escapeHtmlText(info.language),
-                          filename,
-                      ]
+                    ? [escapeHtmlText(info.language), filename]
                           .filter(Boolean)
                           .join(" · ")
                     : filename;

@@ -4,8 +4,8 @@ import {
     PREFERS_REDUCED_MOTION,
     THEME_COLORS,
     THEME_KEY,
-    normalizeThemePref,
     resolveTheme,
+    themePref,
     type MotionPref,
     type Theme,
     type ThemePref,
@@ -21,8 +21,12 @@ import {
  * - The server snapshot is `undefined`, so the controls hydrate with
  *   nothing checked and then check the right option: no hydration mismatch.
  *   Their look comes from CSS on `html[data-theme]`, so nothing flashes.
- * - A change made in another tab arrives as a `storage` event. With `auto`,
- *   an OS colour-scheme change applies at once.
+ * - A change made in another tab arrives as a `storage` event. With `auto`
+ *   (chosen, or a post's default when nothing is stored), an OS
+ *   colour-scheme change applies at once.
+ * - The preference in force depends on the path when nothing is stored
+ *   (`themePref`): RouteMarker calls `applyRouteTheme` after each client
+ *   navigation, so a post follows the OS and the next page is Void again.
  * - `themechange` and `motionchange` (on `document`) tell canvas and WebGL
  *   islands to redraw.
  */
@@ -146,7 +150,15 @@ export function subscribePrefs(callback: () => void): () => void {
 }
 
 export function getThemePref(): ThemePref {
-    return normalizeThemePref(read(THEME_KEY));
+    return themePref(read(THEME_KEY), window.location.pathname);
+}
+
+/** The theme a path takes, after a client navigation to it. A stored
+ *  choice is the same on every path, so only the default can change. */
+export function applyRouteTheme(path: string) {
+    const pref = themePref(read(THEME_KEY), path);
+    applyTheme(resolveTheme(pref, matches(PREFERS_LIGHT)), false);
+    notify();
 }
 
 export function setThemePref(pref: ThemePref) {

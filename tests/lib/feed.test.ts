@@ -468,7 +468,7 @@ describe("renderFeedXml — the long-read types (PR 10)", () => {
         );
     });
 
-    it("numbers listings and names their language and file", () => {
+    it("names a listing by its language and file, as its bar does, with no number", () => {
         const html = itemHtml(
             renderFeedXml([
                 postOf({
@@ -490,11 +490,12 @@ describe("renderFeedXml — the long-read types (PR 10)", () => {
             ]),
         );
         expect(html).toContain(
-            '<figure><figcaption>Listing 1 · Bash · <code>install.sh</code></figcaption><pre><code class="language-bash">echo one</code></pre></figure>',
+            '<figure><figcaption>Bash · <code>install.sh</code></figcaption><pre><code class="language-bash">echo one</code></pre></figure>',
         );
         expect(html).toContain(
-            "<figure><figcaption>Listing 2 · Text</figcaption><pre><code>plain text</code></pre></figure>",
+            "<figure><figcaption>Text</figcaption><pre><code>plain text</code></pre></figure>",
         );
+        expect(html).not.toContain("Listing");
     });
 
     it("numbers plates and figures and prints the credit", () => {

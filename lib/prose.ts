@@ -1,9 +1,10 @@
 /**
- * One pass over a Portable Text body that numbers what the reader can cite:
- * listings (LISTING n), plates and figures (Pl. I, Fig. 1) and footnotes
- * (1, 2 …), in reading order. The post page, the project essay and the RSS
- * feed all read the same numbers, so the rail, the captions and the feed
- * never disagree. Pure: no React, no fetches.
+ * One pass over a Portable Text body that numbers what the reader can cite,
+ * plates and figures (Pl. I, Fig. 1) and footnotes (1, 2 …), and the
+ * listings, whose numbers only keep their accessible names apart, in
+ * reading order. The post page, the project essay and the RSS feed all
+ * read the same numbers, so the captions and the feed never disagree.
+ * Pure: no React, no fetches.
  */
 import { calloutToneTitle } from "@/lib/post-fields";
 

@@ -3,9 +3,10 @@ import { postCopy as copy } from "@/lib/copy";
 import type { ListingInfo } from "@/lib/prose";
 
 /**
- * A numbered code listing (G1): a bar with LISTING n and the file name,
- * then, at its right, the language and a visible Copy button, over the
- * highlighted code. The scroll box is the focusable region, named
+ * A code listing (G1): a bar with the file name, then, at its right, the
+ * language and a visible Copy button, over the highlighted code. Its
+ * number prints nowhere (premium D3: nothing refers to it); it only keeps
+ * the names apart: the scroll box is the focusable region, named
  * "Listing 3, Bash, install.sh", so a keyboard can scroll a long line and
  * every listing on a page has its own name. When any listing of a body is
  * longer than the text measure, they all break out wide
@@ -29,9 +30,6 @@ export default function Listing({
             data-listing={info.number}
         >
             <div className="listing__bar">
-                <span className="listing__num">
-                    {copy.listing.num(info.number)}
-                </span>
                 {info.filename ? (
                     <span className="listing__file" title={info.filename}>
                         {info.filename}

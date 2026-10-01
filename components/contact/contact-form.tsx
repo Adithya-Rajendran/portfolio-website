@@ -20,6 +20,7 @@ import {
     remainingNotice,
     reportedMessage,
     shownErrors,
+    topicFromHash,
     validateContactFields,
     type ContactChecks,
     type ContactFieldErrors,
@@ -32,7 +33,6 @@ import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import { contactCopy } from "@/lib/copy";
 import { REPORT_PARAM } from "@/lib/navigation";
 import type { ExternalLink } from "@/lib/sanity-client";
-import { useDeskTopic } from "./contact-desk";
 import {
     EMPTY_DRAFT,
     forgetDraft,
@@ -65,14 +65,15 @@ async function send(
 }
 
 /**
- * The contact form: an optional topic (one per route shown), your email and
- * a message, sent by the server action (BotID, Zod, the WAF rate limit,
- * the MX check, Resend). It needs JavaScript for BotID's challenge, so its
- * wrapper is `.js-only` and the page offers LinkedIn in a <noscript>
- * block instead (plan §2.5.6).
+ * The contact form: an optional topic (one per route shown, each with the
+ * owner's line about it), your email and a message, sent by the server
+ * action (BotID, Zod, the WAF rate limit, the MX check, Resend). It needs
+ * JavaScript for BotID's challenge, so its wrapper is `.js-only` and the
+ * page offers LinkedIn in a <noscript> block instead (plan §2.5.6).
  *
- * - Inside ContactDesk (/contact) the topic is the page's, so routes and
- *   radios stay in step; outside one it is local.
+ * - The address's fragment picks the topic on arrival and on
+ *   `hashchange` (`/contact#hiring`, from home and the CV), and a topic
+ *   picked here updates the fragment, so the address can be shared.
  * - The fields are the draft (contact-draft.ts), kept for the tab's
  *   session and restored on reload; the action is dispatched from
  *   onSubmit, so React never resets them.
@@ -96,10 +97,24 @@ export default function ContactForm({
     linkedIn?: ExternalLink;
 }) {
     const id = useId();
-    const desk = useDeskTopic();
-    const [ownTopic, setOwnTopic] = useState<ContactTopic | null>(null);
-    const topic = desk ? desk.topic : ownTopic;
-    const chooseTopic = desk ? desk.chooseTopic : setOwnTopic;
+    const [topic, setTopic] = useState<ContactTopic | null>(null);
+    useEffect(() => {
+        const shown = topics.map((option) => option.value);
+        const fromHash = () => {
+            const picked = topicFromHash(window.location.hash, shown);
+            if (picked) setTopic(picked);
+        };
+        fromHash();
+        window.addEventListener("hashchange", fromHash);
+        return () => window.removeEventListener("hashchange", fromHash);
+    }, [topics]);
+
+    function chooseTopic(next: ContactTopic) {
+        setTopic(next);
+        // Next.js syncs its router with native history calls (docs:
+        // linking-and-navigating, window.history.replaceState).
+        window.history.replaceState(null, "", `#${next}`);
+    }
 
     const [state, dispatch, pending] = useActionState(
         send,

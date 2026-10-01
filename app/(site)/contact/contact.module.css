@@ -1,45 +1,21 @@
 /*
  * Comms · Contact (/contact): the availability in the page head, the
- * desk (the form, the routes beside it from 960px), the no-JavaScript
- * note and the profiles' place. The head, the section heads and the
- * profile rows are shared (styles/components.css); the routes and the
- * form have their own modules beside their components.
+ * desk (the form, its topics the routes), the no-JavaScript note and the
+ * profiles' place. The head, the section heads and the profile rows are
+ * shared (styles/components.css); the form has its own module beside its
+ * component.
  */
 
 .openTo {
     margin-top: var(--s-4);
 }
 
-/* ---- The desk: the form first, the routes beside it --------------------- */
+/* ---- The desk: the form, its topics the routes ------------------------- */
 .desk {
     padding-top: var(--s-5);
 }
 .desk :global(.doc-section__tag) {
     margin-bottom: var(--s-5);
-}
-.deskGrid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s-8) var(--gutter);
-}
-@media (min-width: 60rem) {
-    .deskGrid {
-        grid-template-columns: repeat(12, minmax(0, 1fr));
-        align-items: start;
-    }
-    .form {
-        grid-column: 1 / span 7;
-    }
-    .routes {
-        grid-column: 9 / -1;
-    }
-}
-.routesTitle {
-    margin-bottom: var(--s-3);
-    color: var(--ink-2);
-    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
 }
 
 /* ---- Message: without JavaScript, the way to LinkedIn ------------------- */

@@ -13,8 +13,10 @@ import { THEMES, storeTheme } from "./support/theme";
  * navigation (Cache Components keeps the previous entry mounted, hidden).
  * Premium WS3: one numbering per thing (LOG in the crumb only, no margin
  * numbers or line counts), the type (h2 at 32px or less, leading 1.52),
- * the listings at one width, and one close (no Author block). The
- * fixture-only tests read the fixture posts in lib/fixtures.ts.
+ * the listings at one width, and one close (no Author block). Premium D3:
+ * no printed listing number and no numbers in the contents (the headings
+ * have names). The fixture-only tests read the fixture posts in
+ * lib/fixtures.ts.
  */
 
 const FIXTURE_POST = "/blog/fixture-post-code-and-links";
@@ -213,6 +215,17 @@ test("the rail lists the sections and repeats no record", async ({
         }
         if (headings.length) {
             await expect(rail.getByRole("link")).toHaveText(headings);
+            // By name only: no number before a section.
+            const marks = await rail
+                .getByRole("link")
+                .evaluateAll((links) =>
+                    links.map(
+                        (link) => getComputedStyle(link, "::before").content,
+                    ),
+                );
+            for (const mark of marks) {
+                expect(["none", "normal"], path).toContain(mark);
+            }
         } else {
             await expect(rail).toHaveCount(0);
         }
@@ -236,7 +249,7 @@ async function firstPostWith(
 
 const FIXTURE_ONLY = "Reads the fixture posts (lib/fixtures.ts).";
 
-test("a listing is numbered, named and copies its code", async ({
+test("a listing is named, prints no number and copies its code", async ({
     page,
     context,
     request,
@@ -248,8 +261,12 @@ test("a listing is numbered, named and copies its code", async ({
         ".listing",
     );
     test.skip(!path, "No entry has a code listing.");
+    // The number only keeps the names apart: the bar never prints it.
     const listing = page.getByRole("region", { name: /^Listing 1, / });
     await expect(listing).toBeVisible();
+    await expect(
+        page.locator('[data-page="post"]:visible .listing__bar').first(),
+    ).not.toContainText(/listing/i);
     const copy = page.getByRole("button", {
         name: postCopy.listing.copyLabel(1),
     });
@@ -325,11 +342,15 @@ test("one numbering per thing, and the text's type", async ({
             return parseFloat(style.lineHeight) / parseFloat(style.fontSize);
         });
         expect(leading, path).toBeCloseTo(1.52, 2);
-        // A listing's bar names its language and Copy, never a line count.
+        // A listing's bar names its file, language and Copy: never a line
+        // count or a listing number.
         const bars = await page
             .locator('[data-page="post"]:visible .listing__bar')
             .allInnerTexts();
-        for (const bar of bars) expect(bar, path).not.toMatch(/\blines?\b/);
+        for (const bar of bars) {
+            expect(bar, path).not.toMatch(/\blines?\b/);
+            expect(bar, path).not.toMatch(/\blisting\b/i);
+        }
     }
 });
 
@@ -547,9 +568,8 @@ test("the fixture's footnotes, caution and revisions reach the RSS feed", async 
     expect(decoded).toContain('<sup><a href="#fn-1" id="fnref-1">1</a></sup>');
     expect(decoded).toContain("<h2>Notes</h2>");
     expect(decoded).toContain("Caution: Fixture caution");
-    expect(decoded).toContain(
-        "Listing 2 · Bash · <code>fixture-wide.sh</code>",
-    );
+    expect(decoded).toContain("Bash · <code>fixture-wide.sh</code>");
+    expect(decoded).not.toMatch(/Listing \d/);
     expect(decoded).toContain("2026-06-30 · Correction.");
 });
 

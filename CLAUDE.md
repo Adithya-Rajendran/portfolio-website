@@ -61,11 +61,18 @@ only live in comments or commit messages.
       layout's stylesheet, which the Studio loads, so the 404's styles are
       global (`styles/los.css`).
 - **Theme and motion** (plan §2.5.1). `lib/theme-boot.ts` is the inline boot
-  script (under 600 bytes, unit-tested) that `ThemeBootScript` renders in
+  script (under 700 bytes, unit-tested) that `ThemeBootScript` renders in
   both root documents' `<head>`: it reads localStorage `ar-theme`
-  (`void` | `manual` | `auto`; missing means Void) and `ar-motion`
+  (`void` | `manual` | `auto`, the visitor's choice, which always wins;
+  missing means Void, except on a post, `/blog/<slug>` (`POST_PATH`),
+  which follows the OS like `auto`, so a light system reads it in Flight
+  Manual: premium D3) and `ar-motion`
   (`full` | `reduced`), and sets `data-theme`, `data-motion` and `data-js`
-  on `<html>` before the first paint. The server renders the literal
+  on `<html>` before the first paint. After a client navigation
+  `RouteMarker` applies the new path's default the same way
+  (`applyRouteTheme` in `lib/prefs.ts`), and the footer's choice shows
+  the preference in force there (`themePref`: System on a post, Dark
+  elsewhere, until one is stored). The server renders the literal
   `data-theme="void"` and never `data-motion`, so without JavaScript there
   is no spatial motion; never read a cookie for this, it would make every
   route request-bound. The header's `ThemeSwitch` (one button, Void ↔
@@ -96,7 +103,7 @@ only live in comments or commit messages.
 - **Dates in render.** Never call `new Date()`, `Date.now()` or
   `Math.random()` in render outside `"use cache"`: the build fails, or the
   page becomes request-bound. "Today" is `getToday()` from `lib/clock.ts`
-  (cached for a day); the copyright year and the orbit map's "now"
+  (cached for a day); the copyright year and the flight's "now"
   derive from it. Random-looking art is seeded (`lib/sky/`).
 - **The mission patch** is generated: `node scripts/generate-patch.mjs`
   writes the sprite symbol (`lib/patch.json`), the share card's patch
@@ -131,25 +138,11 @@ only live in comments or commit messages.
   Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
-- **The Trajectory map and the CV** (G2, G3). `lib/orbit/geometry.ts` is
-  pure and unit-tested: it places the timeline in time (a zero-length or
-  missing start is unknown and fades in; burns, coasts, flybys and the
-  planned orbit from `availability.from`) and projects it twice, time
-  running right (a 1000-unit width stretched to the plot, heights in
-  pixels) and up (pixels). `components/orbit/orbit-map.tsx` draws both
-  SVGs on the server with every word in HTML over them, and CSS shows one
-  (60rem). Its SVG masks need document-unique ids, so each page passes its
-  own `idPrefix`. `OrbitInteraction` is event delegation on the page root
-  (`data-orbit-id`, `data-orbit-row`, `data-orbit-show`…): it renders
-  nothing and keeps state in attributes. `/resume` opens on the CV list
-  (`data-view="list"`, server-rendered, so also without JavaScript); the
-  map is the optional Timeline view (List | Timeline, named as its
-  section is), opened by the view switch or `#orbit-map` (without
-  JavaScript a link to that fragment and CSS `:target`, since
-  `history.replaceState` does not update `:target`); only in that view do
-  the rows show their orbit numbers and "Show on timeline", which pins a
-  row's orbit. Beside the views, one quiet link, "Timeline in 3D", goes
-  to the flight (`siteRoutes.trajectory`). The head carries Download CV
+- **The CV** (G3). `/resume` is the CV as one list, server-rendered with
+  no island of its own; under the head, one quiet link, Timeline, goes to
+  the flight (`siteRoutes.trajectory`), the record's one view in time
+  (premium D3 retired the 2D orbit map, its List | Timeline switch,
+  "Orbit 0n" codes and "Show on timeline"). The head carries Download CV
   (PDF) as the primary and Contact: no Open PDF, Print or Share (the
   browser's Print prints the CV).
   `lib/cv.ts` words the rows' dates as the résumé gives them and derives
@@ -212,7 +205,9 @@ only live in comments or commit messages.
   (`tests/e2e/log.spec.ts`); each distinct URL also fetches its small route
   tree (`/_tree`), which the byte report lists apart.
 - **The long read** (G1). `lib/prose.ts` `indexProse(body)` numbers a
-  Portable Text body once: listings (LISTING n; one width per body, all
+  Portable Text body once: listings (the number only keeps their
+  accessible names apart, "Listing 3, Bash, install.sh", and prints
+  nowhere; one width per body, all
   wide once any line passes `LISTING_MEASURE`, the 64 columns of 13px
   mono the measure fits), plates and figures (Pl. I for photographs,
   Fig. 1 for diagrams, plots and screenshots; a post's cover is the lead
@@ -222,10 +217,11 @@ only live in comments or commit messages.
   `post.body`. An entry's rail is its contents only: the date, the read
   time and any revision are the head's, and no record box repeats them or
   counts its words. The text has one numbering per thing: no margin
-  number beside an h2 (the rail numbers the contents), no line count on
-  a listing (its bar is LISTING n and the file name, then the language
-  and Copy at the right, in the listing's mono), and the LOG number in
-  the crumb only. A listing is one treatment (the surface fill; hairlines
+  number beside an h2 and no number in the contents (the headings have
+  names), no line count or number on a listing (its bar is the file
+  name, then the language and Copy at the right, in the listing's mono;
+  the feed names it the same way, "Bash · install.sh"), and the LOG
+  number in the crumb only. A listing is one treatment (the surface fill; hairlines
   above and below on paper); a callout is the quotation's quiet note (the
   ink rule) led by its tone and title in bold ("Caution: Back up first",
   `calloutHeading`), with no colour, frame or band; inline code has no
@@ -586,8 +582,8 @@ only live in comments or commit messages.
   `/contact` (`/portfolio#contact` is sent on to it) and dispatches `sendEmailAction`
   from `onSubmit`, so React never resets its controlled fields. It needs
   JavaScript for BotID, so its wrapper is `.js-only` and a `<noscript>`
-  block offers LinkedIn instead. The routes and topics (`hiring`,
-  `research`, `consulting`, `hello`) live in `lib/contact.ts`: Hiring
+  block offers LinkedIn instead. The routes, which are the form's topics
+  (`hiring`, `research`, `consulting`, `hello`), live in `lib/contact.ts`: Hiring
   shows only while `availabilityLine` has a line (as on home and the CV),
   Consulting only while `availability.consultingOpen` is on, and the
   topic's name prefixes the email subject. Each route's title and prompt
@@ -595,16 +591,20 @@ only live in comments or commit messages.
   without a title takes its topic's name. A prompt is only the message
   field's optional placeholder once its topic is chosen; the page gives
   no "include" instructions. The page is the head (the introduction and
-  `Availability`), then the form first, whole in the first viewport at
+  `Availability`), then the form, whole in the first viewport at
   1440×900 under the Message section's plain hairline (the limit is the
   field's hint, for screen readers; the counter shows only when 100
-  characters or fewer are left), with the routes beside it as short rows
-  (below it on phones), then the profiles.
-  The form's Topic radios are the one topic control: the route rows carry
-  no buttons, and a fragment (`#hiring`) picks its topic on arrival.
+  characters or fewer are left), then the profiles. The Topic radios,
+  one per line, are the routes (premium D3 folded the Topics column into
+  them): each is named by its title and described by the owner's line
+  where there is one (Research: `contactInvitation`, a `Segmented`
+  option's `description`), and the routes carry no links. From 960px the
+  radios sit in columns 9–12 beside the fields (so Send stays in the
+  first viewport); on phones they lead the form. The form reads
+  the fragment (`#hiring`) to pick its topic on arrival and writes it
+  back when a topic is picked.
   The only words about the owner's situation on a button are the
-  profile's (`availability.cta`: the home close and the planned orbit's
-  record); code keeps a neutral verb ("Send a message"). Contact is one click from
+  profile's (`availability.cta`: the home close and the flight's close); code keeps a neutral verb ("Send a message"). Contact is one click from
   every page: the nav from 960px, and a link in the header bar below it. `sendEmail` sends a topic whose route is not
   shown (a crafted POST) as a hello, and treats Resend's returned
   `{ error }` as a failure: Resend 6 does not throw on API errors. A `"use server"` module may export only async
@@ -774,14 +774,18 @@ deployment require an authenticated Sanity CLI session.
   Homelab, a post, `/resume`, the flight, `/contact` and `/about`, at 1440
   and 390 in both themes, identity marks and focus aside; the primary an
   ink fill, the nav's bar and the header's CV ink), `theme` (no flash of the wrong theme, persistence across
-  reloads, pages and tabs, Auto following the OS, Pause motion, the stored
+  reloads, pages and tabs, Auto following the OS, a post following the
+  OS until a theme is chosen while every other page stays Void, on a
+  full load and after a client navigation, Pause motion, the stored
   theme on an unknown post or project URL), `chrome`
   (the menu sheet's focus, `inert` and closing; Contact in the bar on a
   phone; the current nav section; the header and footer naming every
   section plainly; the footer naming the owner once, with one CV link and
   the theme choice only from 960px),
-  `contact` (the form's Topic is the one topic control and a fragment
-  picks it, a route's prompt only as the message field's placeholder,
+  `contact` (the routes are the form's Topic radios, each named by its
+  title and described by the owner's line, with no Topics column or
+  links beside the form, and a fragment picks one; a route's prompt
+  only as the message field's placeholder,
   the whole form in the first viewport at 1440×900, Hiring only beside an
   Open To line, the email checked on leaving it and every field from the
   first submit, each error under its field (the words in ink with their
@@ -807,9 +811,9 @@ deployment require an authenticated Sanity CLI session.
   (every entry's first paragraph in the first viewport at 1280×800 and
   390×844 in both themes, a 60–75 character measure, code comments at
   4.5:1 or more, the rail listing the sections with no record box or word
-  count, the LOG number once, above the title, and nowhere else; no h2
-  margin number or listing line count, h2 at 32px or less and a 1.52
-  leading; the close (End of entry, the follow line, no Author block or
+  count or numbers, the LOG number once, above the title, and nowhere
+  else; no h2 margin number or listing line count or number, h2 at 32px
+  or less and a 1.52 leading; the close (End of entry, the follow line, no Author block or
   pager heading, the pager by name), Copy on a listing, the
   phone's contents box, the solid header, print, BlogPosting and
   BreadcrumbList; on the
@@ -818,17 +822,14 @@ deployment require an authenticated Sanity CLI session.
   margin notes, the caution callout as a quiet note and revisions, their
   RSS output, and
   in-page links landing in the visible entry after a client-side
-  navigation), `orbit` (the page opening on the CV list with Contact and
-  Timeline in 3D in the first viewport, no Open PDF, Print or Share, and
-  no per-row map buttons; no project link opening the site's own
-  address in a new tab, and every credential one plain row with no
-  status and no heading of its own; the Timeline view from
-  the switch and `#orbit-map`, "Show on timeline" pinning a row's orbit, a CV row lighting its orbit and back, a click pinning
-  a record and a second click or Escape releasing it, Earlier and Later,
-  every orbit labelled on a phone, and without JavaScript the list, the
-  map from its link and the labels as links to their rows), `print` (the CV
-  on two sheets on A4 and on Letter, without the map, chrome or
-  controls; Prior certifications and never "Expired"; each masthead
+  navigation), `resume` (Contact and the quiet Timeline link to the
+  flight in the first viewport, with no view switch, map, orbit codes or
+  buttons, and no Open PDF, Print or Share; no project link opening the
+  site's own address in a new tab, and every credential one plain row
+  with no status and no heading of its own; the same page without
+  JavaScript), `print` (the CV
+  on two sheets on A4 and on Letter, without the chrome, the controls or
+  the Timeline link; Prior certifications and never "Expired"; each masthead
   address and opening on one line), `trajectory` (the flight's crumb head
   with the rail and Play in the first viewport, its own canonical and
   card, the record holding still while scrubbed, one readout ticking

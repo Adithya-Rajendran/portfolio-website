@@ -150,10 +150,11 @@ describe("contact routes", () => {
         expect(topicsOf(null)).toEqual(["hello"]);
     });
 
-    it("links the résumé PDF only when one is uploaded, and LinkedIn from the profile", () => {
-        const withPdf = contactRoutes(
+    it("carries no links: the profiles below the form are the way elsewhere", () => {
+        const routes = contactRoutes(
             profileOf({
                 availability: availabilityOf(),
+                contactInvitation: "Working on vision?",
                 resumeUrl: "https://cdn.sanity.io/files/x/y/cv.pdf",
                 socialLinks: [
                     {
@@ -164,23 +165,12 @@ describe("contact routes", () => {
                 ],
             }),
         );
-        expect(withPdf[0].links.map((link) => link.href)).toEqual([
-            "/resume/view",
-            "/resume",
+        expect(routes.map((route) => route.topic)).toEqual([
+            "hiring",
+            "research",
+            "hello",
         ]);
-        expect(withPdf.at(-1)?.links).toEqual([
-            { href: "/feed.xml", label: "RSS" },
-            {
-                href: "https://www.linkedin.com/in/someone",
-                label: "LinkedIn",
-                external: true,
-            },
-        ]);
-        expect(
-            contactRoutes(
-                profileOf({ availability: availabilityOf() }),
-            )[0].links.map((link) => link.href),
-        ).toEqual(["/resume"]);
+        for (const route of routes) expect(route).not.toHaveProperty("links");
     });
 
     it("never offers an email address or phone number", () => {
@@ -195,12 +185,19 @@ describe("contact routes", () => {
         expect(text).not.toMatch(/mailto:|tel:|@[a-z0-9-]+\./i);
     });
 
-    it("offers one topic per route, with its prompt", () => {
+    it("offers one topic per route, described by the owner's line, with its prompt", () => {
         const options = topicOptions(contactRoutes(FIXTURE_PROFILE));
         expect(options.map((option) => option.label)).toEqual([
             "Internships & roles",
             "Research & collaboration",
             "Hello",
+        ]);
+        // The route's own line is its radio's description: Research's is
+        // the owner's invitation; the others have none.
+        expect(options.map((option) => option.description)).toEqual([
+            undefined,
+            FIXTURE_PROFILE.contactInvitation,
+            undefined,
         ]);
         expect(options.map((option) => option.prompt)).toEqual([
             FIXTURE_PROFILE.contactRoutes?.hiring?.prompt,

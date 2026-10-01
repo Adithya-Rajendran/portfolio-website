@@ -1,7 +1,7 @@
 import type { CvEntry } from "@/lib/cv";
-import { decimalYear, todayYear } from "@/lib/orbit/geometry";
 import { availabilityLine } from "@/lib/profile-content";
 import { contactHref } from "@/lib/navigation";
+import type { TimelineDatePrecision } from "@/lib/profile-fields";
 import type { Availability } from "@/lib/sanity-client";
 
 /**
@@ -18,6 +18,41 @@ import type { Availability } from "@/lib/sanity-client";
  * Scroll progress p ∈ [0, 1] picks a segment and a phase u ∈ [0, 1] in it,
  * and the mission date t runs from the segment's start to its end.
  */
+
+const MONTH = 1 / 12;
+
+function dateParts(
+    iso: string | null | undefined,
+): [number, number, number] | null {
+    const match = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(iso ?? "");
+    if (!match) return null;
+    return [Number(match[1]), Number(match[2] ?? 1), Number(match[3] ?? 1)];
+}
+
+/**
+ * A date as a decimal year: the middle of its month ("2024-05-01" →
+ * 2024.375), or the middle of its year when only the year is known, so a
+ * chapter covers the months it names.
+ */
+export function decimalYear(
+    iso: string | null | undefined,
+    precision?: TimelineDatePrecision | null,
+): number | null {
+    const date = dateParts(iso);
+    if (!date) return null;
+    const [year, month] = date;
+    if (precision === "year" || /^\d{4}$/.test(iso ?? "")) return year + 0.5;
+    return year + (month - 0.5) * MONTH;
+}
+
+/** Today as a decimal year, to the day. */
+export function todayYear(iso: string): number {
+    const date = dateParts(iso);
+    if (!date) return Number.NaN;
+    const [year, month, day] = date;
+    const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    return year + (month - 1 + (day - 0.5) / days) * MONTH;
+}
 
 export interface Chapter {
     id: string;
@@ -89,7 +124,7 @@ export function trajectoryData(
     // its end (a placeholder), gets a nominal span that ends on its end.
     const placed = entries
         .map((entry) => {
-            const o = entry.orbit;
+            const o = entry.span;
             const end = entry.current
                 ? today
                 : decimalYear(o.endDate, o.endPrecision);
@@ -140,12 +175,12 @@ export function trajectoryData(
             start: from,
             end: until,
             startYearOnly:
-                entry.orbit.startPrecision === "year" ||
-                /^\d{4}$/.test(entry.orbit.startDate ?? ""),
+                entry.span.startPrecision === "year" ||
+                /^\d{4}$/.test(entry.span.startDate ?? ""),
             endYearOnly:
                 !entry.current &&
-                (entry.orbit.endPrecision === "year" ||
-                    /^\d{4}$/.test(entry.orbit.endDate ?? "")),
+                (entry.span.endPrecision === "year" ||
+                    /^\d{4}$/.test(entry.span.endDate ?? "")),
             startKnown: startKnown && from === start,
             year: String(Math.floor(startKnown ? from : end)),
             href: `/resume#${entry.anchor}`,

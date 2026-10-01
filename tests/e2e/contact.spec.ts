@@ -1,14 +1,16 @@
 import type { Page } from "@playwright/test";
-import type { ContactTopic } from "@/lib/contact";
+import { contactRoutes, topicOptions, type ContactTopic } from "@/lib/contact";
 import { contactCopy, lossOfSignalCopy } from "@/lib/copy";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import { primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 
 /**
- * Comms (G4, plan §2.5.6): the form's topic is the one topic control (a
- * route's fragment picks it on arrival), the whole form is in the first
- * viewport, Hiring shows only beside what the owner is open to, the form
+ * Comms (G4, plan §2.5.6): the form's Topic radios are the routes, each
+ * described by the owner's line where there is one and named by its title
+ * alone, with no column of routes or links beside them (premium D3); a
+ * route's fragment picks its topic on arrival, the whole form is in the
+ * first viewport, Hiring shows only beside what the owner is open to, the form
  * checks the email on leaving it and every field from the first submit,
  * each error under its field, in ink with its cross, the field marked by
  * one 2px orange rule (premium D1); a send that does not go (refused, or lost
@@ -16,8 +18,8 @@ import { expect, test } from "./support/test";
  * and the draft survives a reload; a sent message says "Message
  * received." and promises nothing; the 404's report arrives with the
  * missed address; Consulting stays hidden while it is off, and without
- * JavaScript the routes and the LinkedIn alternative stand in for the
- * form. Nothing on the page is an email address or a phone number.
+ * JavaScript the LinkedIn alternative stands in for the form. Nothing on
+ * the page is an email address or a phone number.
  *
  * The fixture build has no Resend credentials, so a send is refused there
  * without leaving the machine; a sent message is that refusal answered as
@@ -25,22 +27,15 @@ import { expect, test } from "./support/test";
  * test sends from it.
  *
  * Route titles and prompts are the profile's words (Site copy), so the
- * specs read them from the page and fit fixture and real content alike.
+ * specs find a topic by its value and fit fixture and real content alike.
  */
 const { form, topics } = contactCopy;
 
-/** The route rows beside the form. */
-function routeRows(page: Page) {
-    return page.getByRole("main").locator("li[data-topic]");
-}
-
-function topicRadio(page: Page, title: string) {
-    return page.getByRole("radio", { name: title });
-}
-
-/** A route's row on /contact: `li#hello`. */
-function routeRow(page: Page, topic: ContactTopic) {
-    return page.locator(`li#${topic}`);
+/** A route's radio in the form, by its topic. */
+function topicRadio(page: Page, topic: ContactTopic) {
+    return page
+        .getByRole("main")
+        .locator(`input[type="radio"][name="topic"][value="${topic}"]`);
 }
 
 /** The email and message fields. */
@@ -63,13 +58,6 @@ async function answerAsSent(page: Page) {
         );
         await route.fulfill({ response, body });
     });
-}
-
-/** A route's title as the page prints it. */
-async function routeTitle(page: Page, topic: ContactTopic): Promise<string> {
-    return (
-        await routeRow(page, topic).getByRole("heading").innerText()
-    ).trim();
 }
 
 test("Contact in the header opens the contact page", async ({ page }) => {
@@ -100,9 +88,7 @@ test("a route's fragment picks its topic on arrival, and its prompt is only the 
     page,
 }, testInfo) => {
     await page.goto("/contact#hello");
-    await expect(
-        topicRadio(page, await routeTitle(page, "hello")),
-    ).toBeChecked();
+    await expect(topicRadio(page, "hello")).toBeChecked();
     // The message field suggests what to write with the route's own
     // prompt (the profile's), or its plain one when the route has none;
     // the page gives no instructions besides.
@@ -116,7 +102,7 @@ test("a route's fragment picks its topic on arrival, and its prompt is only the 
         );
     }
     if (placeholder !== form.messagePlaceholder) {
-        await expect(routeRow(page, "hello")).not.toContainText(placeholder);
+        await expect(page.getByRole("main")).not.toContainText(placeholder);
     }
     await expect(page.getByRole("main")).not.toContainText(/\bInclude\b/);
 });
@@ -132,28 +118,51 @@ test("the form comes first, whole, in the first viewport", async ({ page }) => {
     await expect(page.getByRole("button", { name: form.send })).toBeInViewport({
         ratio: 1,
     });
-    // The routes are short rows: no numbers.
-    await expect(routeRow(page, "hello")).not.toContainText(/^0\d/);
 });
 
-test("the form's topic is the one topic control, and follows through to the address", async ({
+test("the routes are the form's topics, each described by the owner's line, with nothing beside them", async ({
     page,
-}) => {
+}, testInfo) => {
     await page.goto("/contact");
-    // The routes beside the form describe the topics; they carry no
-    // buttons or links that pick one.
-    await expect(routeRows(page).getByRole("button")).toHaveCount(0);
-    await expect(routeRows(page).locator('a[href^="#"]')).toHaveCount(0);
+    const main = page.getByRole("main");
+    // No column of routes: no Topics heading, no route rows, and no
+    // links in the Message section (the profiles below are the way
+    // elsewhere).
+    await expect(main.getByRole("heading", { name: "Topics" })).toHaveCount(0);
+    await expect(main.locator("[data-topic]")).toHaveCount(0);
+    await expect(page.locator("#message").getByRole("link")).toHaveCount(0);
+    // Each topic shows no number.
+    for (const radio of await main.getByRole("radio").all()) {
+        const label = await radio.evaluate(
+            (input) => input.closest("label")?.textContent ?? "",
+        );
+        expect(label.trim()).not.toMatch(/^\d/);
+    }
+    if (testInfo.project.name === "fixture") {
+        // Every route shown is a topic, and no other; a route's line is
+        // its radio's description, and its title alone the radio's name.
+        const options = topicOptions(contactRoutes(FIXTURE_PROFILE));
+        await expect(main.getByRole("radio")).toHaveCount(options.length);
+        for (const option of options) {
+            const radio = main.getByRole("radio", {
+                name: option.label,
+                exact: true,
+            });
+            await expect(radio).toHaveValue(option.value);
+            if (option.description) {
+                await expect(radio).toHaveAccessibleDescription(
+                    option.description,
+                );
+                await expect(main.getByText(option.description)).toBeVisible();
+            }
+        }
+    }
 
-    const hello = topicRadio(page, await routeTitle(page, "hello"));
+    const hello = topicRadio(page, "hello");
     await expect(hello).not.toBeChecked();
     await hello.click();
     await expect(hello).toBeChecked();
     await expect(page).toHaveURL(/\/contact#hello$/);
-    // Every route shown is a topic in the form, and no other.
-    await expect(page.getByRole("main").getByRole("radio")).toHaveCount(
-        await routeRows(page).count(),
-    );
 });
 
 test("Hiring shows only beside what the owner is open to", async ({ page }) => {
@@ -162,7 +171,7 @@ test("Hiring shows only beside what the owner is open to", async ({ page }) => {
         .getByRole("main")
         .getByText(contactCopy.openTo, { exact: true })
         .count();
-    await expect(routeRow(page, "hiring")).toHaveCount(open ? 1 : 0);
+    await expect(topicRadio(page, "hiring")).toHaveCount(open ? 1 : 0);
 });
 
 test("the form checks the email on leaving it, and every field from the first submit, under each field", async ({
@@ -239,7 +248,7 @@ test("a refused send says so under Send, keeps the message and offers the ways o
         "A deployment has Resend credentials: this would send a real email.",
     );
     await page.goto("/contact#hiring");
-    const hiring = topicRadio(page, await routeTitle(page, "hiring"));
+    const hiring = topicRadio(page, "hiring");
     const { email, message } = fields(page);
     await email.fill("reader@example.com");
     await message.fill("A message from the browser tests.");
@@ -359,9 +368,7 @@ test("the 404's report arrives with the missed address in the message", async ({
     await expect(fields(page).message).toHaveValue(
         form.brokenLink("/blog/e2e-missing-post"),
     );
-    await expect(
-        topicRadio(page, await routeTitle(page, "hello")),
-    ).toBeChecked();
+    await expect(topicRadio(page, "hello")).toBeChecked();
 });
 
 test("Consulting stays hidden while it is off", async ({ page }, testInfo) => {
@@ -373,11 +380,8 @@ test("Consulting stays hidden while it is off", async ({ page }, testInfo) => {
     const consulting =
         FIXTURE_PROFILE.contactRoutes?.consulting?.title ??
         topics.consulting.name;
-    await expect(routeRow(page, "consulting")).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: consulting })).toHaveCount(
-        0,
-    );
-    await expect(topicRadio(page, consulting)).toHaveCount(0);
+    await expect(topicRadio(page, "consulting")).toHaveCount(0);
+    await expect(page.getByRole("radio", { name: consulting })).toHaveCount(0);
 });
 
 test("the page shows no email address or phone number", async ({ request }) => {
@@ -401,13 +405,8 @@ test("/portfolio#contact is sent on to the form", async ({ page }) => {
 test.describe("without JavaScript", () => {
     test.use({ javaScriptEnabled: false });
 
-    test("the routes stay and LinkedIn stands in for the form", async ({
-        page,
-    }) => {
+    test("LinkedIn stands in for the form", async ({ page }) => {
         await page.goto("/contact");
-        await expect(
-            routeRow(page, "hello").getByRole("heading"),
-        ).toBeVisible();
         await expect(page.getByRole("textbox")).toHaveCount(0);
         await expect(page.getByRole("radio")).toHaveCount(0);
         const linkedIn = page.getByRole("link", {
@@ -418,8 +417,5 @@ test.describe("without JavaScript", () => {
             "href",
             /^https:\/\/www\.linkedin\.com\//,
         );
-        // The fragment still lights its route.
-        await page.goto("/contact#hello");
-        await expect(routeRow(page, "hello")).toBeInViewport();
     });
 });

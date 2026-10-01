@@ -140,11 +140,6 @@
     html:not([data-js]) .js-only {
         display: none !important;
     }
-    /* Its no-JavaScript counterpart: a plain link in place of a control
-       (the orbit map's labels). */
-    html[data-js] .nojs-only {
-        display: none !important;
-    }
 }
 
 /* The theme switch is a same-document view transition (lib/prefs.ts): a
@@ -198,7 +193,7 @@ html[data-motion="reduced"] *::after {
         color: SelectedItemText;
         border-color: SelectedItem;
     }
-    .seg__input:checked + .seg__box :is(.seg__sub, span) {
+    .seg__input:checked + .seg__box :is(.seg__note, span) {
         color: SelectedItemText;
     }
     :is(.chip[aria-pressed="true"], .chip[aria-current])::before,

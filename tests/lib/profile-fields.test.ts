@@ -38,7 +38,7 @@ describe("profile schema rules", () => {
 
     it("warns when a timeline entry starts and ends on the same date", () => {
         expect(checkTimelineRange("2023-06-01", "2023-06-01")).toEqual(
-            expect.stringContaining("point"),
+            expect.stringContaining("the same"),
         );
         expect(checkTimelineRange("2019-01-01", "2023-06-01")).toBe(true);
         expect(checkTimelineRange(undefined, "2023-06-01")).toBe(true);

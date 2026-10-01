@@ -139,8 +139,8 @@
     .prose > .listing--wide {
         max-width: min(100%, 60rem);
     }
-    /* LISTING n and the file name, then the language and Copy at the
-       right, in the listing's own mono. */
+    /* The file name, then the language and Copy at the right, in the
+       listing's own mono. */
     .listing__bar {
         display: flex;
         flex-wrap: wrap;
@@ -148,12 +148,6 @@
         gap: 0 var(--s-4);
         min-height: 44px;
         padding: 0 var(--s-2) 0 var(--s-5);
-    }
-    .listing__num {
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1 var(--font-label);
-        letter-spacing: var(--track-label);
-        text-transform: uppercase;
     }
     .listing__lang {
         margin-left: auto;

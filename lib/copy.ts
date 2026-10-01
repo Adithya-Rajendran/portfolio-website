@@ -66,15 +66,9 @@ export const errorCopy = {
 export const contactCopy = {
     themed: "Comms",
     plain: "Contact",
-    routes: "Topics",
     message: "Message",
     elsewhere: "Profiles",
     openTo: "Open to",
-    links: {
-        resumePdf: "Résumé (PDF)",
-        cv: "Experience & CV",
-        rss: "RSS",
-    },
     topics: {
         hiring: { name: "Hiring" },
         research: { name: "Research" },
@@ -189,7 +183,6 @@ export const postCopy = {
     /** The contents' landmark name (plan §4.5). */
     contentsLabel: "On this page",
     listing: {
-        num: (number: number) => `Listing ${number}`,
         copy: "Copy",
         copyLabel: (number: number) => `Copy listing ${number}`,
         copied: "Copied",
@@ -231,8 +224,8 @@ export const postCopy = {
 } as const;
 
 /**
- * Experience & CV (themed Trajectory; G2, G3): /resume, its print and the
- * orbit map. UI copy only: roles, dates and the summary are the owner's.
+ * Experience & CV (themed Trajectory; G3): /resume and its print. UI copy
+ * only: roles, dates and the summary are the owner's.
  */
 export const cvCopy = {
     themed: "Trajectory",
@@ -242,23 +235,13 @@ export const cvCopy = {
     title: "Experience",
     /** The share card and metadata when the profile has no summary. */
     description: "Experience, education and skills.",
-    viewLegend: "View",
-    /** The CV list first; the orbit map (the Timeline) is the optional
-     *  view, named as its section is. */
-    views: [
-        { value: "list", label: "List" },
-        { value: "map", label: "Timeline" },
-    ],
-    /** Without JavaScript, the link that opens the Timeline. */
-    showMap: "Show the timeline",
-    /** Beside the views: the flight (/resume/trajectory). */
-    flight: "Timeline in 3D",
+    /** Under the head: the flight (/resume/trajectory), the record in
+     *  time. */
+    timeline: "Timeline",
     contact: "Contact",
     download: "Download CV (PDF)",
     openTo: "Open to",
     /** The sections' plain names, on screen and on paper. */
-    map: "Timeline",
-    figure: "Fig. 1",
     education: "Education",
     experience: "Experience",
     projects: "Projects",
@@ -273,8 +256,6 @@ export const cvCopy = {
     certifications: "Certifications",
     /** Expired credentials, as the résumé names them. */
     priorCertifications: "Prior certifications",
-    /** A row's button in the Timeline view: its orbit, pinned. */
-    showOnMap: "Show on timeline",
     links: "Links",
     current: "Current",
     /** The printed document's control marks (G3). */
@@ -334,29 +315,6 @@ export const missionsCopy = {
     pagerLabel: "More projects",
     previousFile: "Previous project",
     nextFile: "Next project",
-} as const;
-
-/** The orbit map's labels, key and record panel (G2). */
-export const orbitCopy = {
-    /** 3 → "Orbit 03". */
-    designation: (number: number) => `Orbit ${String(number).padStart(2, "0")}`,
-    hint: "Select an orbit to see its record.",
-    caption: "Roles over time, to scale.",
-    key: {
-        orbit: "Role",
-        current: "Current",
-        burn: "Change of role",
-        planned: "Planned",
-    },
-    planned: "Planned",
-    education: "Education",
-    role: "Role",
-    current: "Current",
-    earlier: "Earlier",
-    later: "Later",
-    fullRecord: "Full record",
-    pinned: "Selected",
-    showing: "Showing",
 } as const;
 
 /**

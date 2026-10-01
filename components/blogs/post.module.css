@@ -105,24 +105,17 @@
 .contentsTitle {
     margin-bottom: var(--s-3);
 }
+/* The headings by name, unnumbered (premium D3): each title centred in its
+   44px target. */
 .contentsList {
     margin: 0;
     padding: 0;
     border-left: var(--rule-hair) solid var(--rule-1);
-    counter-reset: contents;
     list-style: none;
 }
-.contentsList li {
-    counter-increment: contents;
-}
-/* The number sits on the title's first baseline; the pair is centred in
-   the 44px target, so a one-line title reads level with its number. */
 .contentsList a {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    column-gap: 0.75rem;
-    align-items: baseline;
-    align-content: center;
+    display: flex;
+    align-items: center;
     min-height: 44px;
     margin-left: -1px;
     padding: 0.35rem 0 0.35rem 1rem;
@@ -133,20 +126,12 @@
         color var(--dur-hover) var(--ease-dock),
         border-color var(--dur-3) var(--ease-dock);
 }
-.contentsList a::before {
-    content: counter(contents, decimal-leading-zero);
-    color: var(--ink-3);
-    font: 400 var(--label-size) / 1.6 var(--font-mono);
-}
 .contentsList a:hover {
     color: var(--ink-1);
 }
 /* The current section: the contents' one "now" mark, in orange. */
 .contentsList a[aria-current] {
     border-left-color: var(--accent);
-    color: var(--ink-1);
-}
-.contentsList a[aria-current]::before {
     color: var(--ink-1);
 }
 
@@ -188,7 +173,7 @@
 }
 
 /* ---- The text ------------------------------------------------------- */
-/* The headings carry their names only: the contents rail numbers them. */
+/* The headings carry their names only, as the contents do. */
 @media (min-width: 60rem) {
     .body > :is(ul, ol) {
         padding-left: 0;

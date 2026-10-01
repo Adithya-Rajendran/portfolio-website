@@ -1,31 +1,45 @@
 /*
- * The contact form: the topic, the counter, the send row, a send that did
- * not go and "Message received.". The fields and the topic's segmented
- * control are shared (.field, .input, .textarea and .seg in
+ * The contact form: the topics, the counter, the send row, a send that
+ * did not go and "Message received.". The fields and the topics'
+ * segmented control are shared (.field, .input, .textarea and .seg in
  * styles/components.css). Ported from the mockup's contact.css "Form" and
  * "Success".
  */
 /* Fields 24px apart: with the page head's two-line intro, the whole form
-   still fits the first viewport at 1440 × 900. */
+   still fits the first viewport at 1440 × 900. From 960px the topics take
+   the right-hand columns beside the fields (where the routes' column
+   stood before they were folded into them); below it they lead. */
 .form {
     display: grid;
     gap: var(--s-5);
     max-width: 46rem;
 }
+@media (min-width: 60rem) {
+    .form {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        column-gap: var(--gutter);
+        align-items: start;
+        max-width: none;
+    }
+    .form > * {
+        grid-column: 1 / span 7;
+    }
+    .form > .topics {
+        grid-row: 1 / span 3;
+        grid-column: 9 / -1;
+    }
+}
 
-/* ---- Topic: the shared segmented control ------------------------------ */
+/* ---- Topic: the routes, one per line, each with the owner's line ------ */
 .topics {
     width: 100%;
 }
-/* Phones: one topic per line, the full width. */
-@media (max-width: 37.49rem) {
-    .topics :global(.seg__opt) {
-        flex: 1 1 100%;
-    }
-    .topics :global(.seg__opt + .seg__opt) {
-        margin-top: -1px;
-        margin-left: 0;
-    }
+.topics :global(.seg__opt) {
+    flex: 1 1 100%;
+}
+.topics :global(.seg__opt + .seg__opt) {
+    margin-top: -1px;
+    margin-left: 0;
 }
 .optional {
     color: var(--ink-3);

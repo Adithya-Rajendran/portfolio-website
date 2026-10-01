@@ -13,7 +13,7 @@ export function projectStatusLabel(status: ProjectStatus): string {
  * A project's years as the current pages print them: "2023", "2024–2025",
  * or with "c." when the dates are the owner's estimate ("c. 2024–2025").
  * Months are never printed here, so `datePrecision` does not change the
- * result; it matters where dates are placed in time (the Trajectory map).
+ * result.
  */
 export function formatProjectYears(
     project: Pick<

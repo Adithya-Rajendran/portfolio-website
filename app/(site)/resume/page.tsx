@@ -2,19 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment } from "react";
 import { CvItem, CvList } from "@/components/cv/cv-list";
-import OrbitInteraction from "@/components/orbit/orbit-interaction";
-import OrbitMap from "@/components/orbit/orbit-map";
 import Availability from "@/components/ui/availability";
-import { Button, buttonClass } from "@/components/ui/button";
+import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { LinkArrow, Rev, Status, Updated } from "@/components/ui/marks";
 import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
-import Segmented from "@/components/ui/segmented";
 import Specs from "@/components/ui/specs";
-import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
-import { cvCopy as copy, orbitCopy } from "@/lib/copy";
+import { cvCopy as copy } from "@/lib/copy";
 import {
     cvCredentials,
     cvEntries,
@@ -26,7 +22,6 @@ import {
 } from "@/lib/cv";
 import { formatEntryDate, logEntries } from "@/lib/log-index";
 import { contactHref, siteRoutes } from "@/lib/navigation";
-import { orbitModel } from "@/lib/orbit/geometry";
 import { availabilityLine, getProfileLink } from "@/lib/profile-content";
 import { resolveResumeAssetUrl } from "@/lib/resume";
 import {
@@ -213,25 +208,20 @@ function credentialRow(credential: CvCredential) {
 }
 
 /**
- * Trajectory · Experience / CV (G2, G3): the CV first, as a list a hiring
- * reader can scan (education, experience, projects, writing and talks,
- * skills, certifications), under the head with what the owner is open to,
- * the PDF and the way to get in touch. The time-scaled orbit map with its
- * record panel is the optional Timeline view, and the flight
- * (/resume/trajectory) is one quiet link beside it. The PDF is
+ * Trajectory · Experience / CV (G3): the CV, as a list a hiring reader can
+ * scan (education, experience, projects, writing and talks, skills,
+ * certifications), under the head with what the owner is open to, the PDF
+ * and the way to get in touch, and one quiet link, Timeline, to the
+ * flight (/resume/trajectory), the record's one view in time. The PDF is
  * downloadable, and the browser's Print gives the two-sheet controlled
- * document. Everything is server-rendered: without JavaScript the list
- * shows and the map opens from its link (`#orbit-map`), its labels
- * linking to the CV rows; with it, `OrbitInteraction` runs the view
- * switch, previews, pins and cross-lights map and list. There is no
- * email address or phone number, on screen or on paper.
+ * document. Everything is server-rendered, with no island of its own.
+ * There is no email address or phone number, on screen or on paper.
  */
 export default async function ResumePage() {
-    const [profile, projects, posts, today] = await Promise.all([
+    const [profile, projects, posts] = await Promise.all([
         getProfile(),
         getAllProjects(),
         getAllPosts(),
-        getToday(),
     ]);
     const name = profile?.name || siteConfig.author;
     const hasPdf = Boolean(resolveResumeAssetUrl(profile?.resumeUrl, "view"));
@@ -242,18 +232,9 @@ export default async function ResumePage() {
             ? profile!.resumeUploadedAt!.slice(0, 10)
             : null;
     const summary = summaryOf(profile);
-    const availability = profile?.availability;
-    const openTo = availabilityLine(availability);
+    const openTo = availabilityLine(profile?.availability);
 
     const timeline = cvEntries(profile?.timeline);
-    const model = orbitModel({
-        entries: timeline.all.map((entry) => entry.orbit),
-        today,
-        plannedFrom: openTo ? availability?.from : null,
-    });
-    const numbers = new Map(
-        model?.orbits.map((orbit) => [orbit.id, orbit.number]) ?? [],
-    );
     const entries = logEntries(posts);
     const writing = entries.slice(0, WRITING_ROWS);
     const missions = cvProjects(projects, {
@@ -300,13 +281,7 @@ export default async function ResumePage() {
             <CvItem
                 key={entry.id}
                 anchor={entry.anchor}
-                orbit={model ? entry.id : undefined}
                 current={entry.current}
-                code={
-                    numbers.has(entry.id)
-                        ? orbitCopy.designation(numbers.get(entry.id)!)
-                        : undefined
-                }
                 dates={entry.dates}
                 meta={[entry.location, entry.expected, entry.employment]}
                 status={
@@ -321,28 +296,12 @@ export default async function ResumePage() {
                 lines={entry.highlights}
                 skills={entry.skills}
                 skillsLabel={copy.skillsLabel}
-                actions={
-                    model ? (
-                        <Button
-                            size="sm"
-                            variant="quiet"
-                            icon="arrow-up"
-                            className="js-only"
-                            data-orbit-show={entry.id}
-                            data-print="hide"
-                        >
-                            {copy.showOnMap}
-                        </Button>
-                    ) : null
-                }
             />
         );
     };
 
     return (
-        <div data-page="resume" data-view="list" className={styles.page}>
-            <OrbitInteraction />
-
+        <div data-page="resume" className={styles.page}>
             <div className={styles.band}>
                 <PageHead
                     className="shell"
@@ -394,62 +353,15 @@ export default async function ResumePage() {
                     ) : null}
                 </PageHead>
 
-                <div className={`shell ${styles.toolbar}`}>
-                    {model ? (
-                        <>
-                            <Segmented
-                                legend={copy.viewLegend}
-                                name="cv-view"
-                                options={copy.views}
-                                defaultValue="list"
-                                className={`js-only ${styles.switch}`}
-                            />
-                            {/* Without JavaScript the map opens from its
-                                fragment (CSS :target). */}
-                            <LinkArrow
-                                className="nojs-only"
-                                href="#orbit-map"
-                                prefetch={false}
-                            >
-                                {copy.showMap}
-                            </LinkArrow>
-                        </>
-                    ) : null}
-                    {/* The flight: the timeline in 3D, on its own page. */}
-                    {timeline.all.length ? (
+                {/* The flight: the record in time, on its own page. */}
+                {timeline.all.length ? (
+                    <div className={`shell ${styles.timeline}`}>
                         <LinkArrow href={siteRoutes.trajectory}>
-                            {copy.flight}
+                            {copy.timeline}
                         </LinkArrow>
-                    ) : null}
-                </div>
+                    </div>
+                ) : null}
             </div>
-
-            {model ? (
-                <DocSection
-                    className={styles.map}
-                    id="orbit-map"
-                    headingId="cv-map-h"
-                    data={{ "data-print": "hide" }}
-                    title={copy.map}
-                    wide
-                >
-                    <OrbitMap
-                        model={model}
-                        entries={timeline.all}
-                        planned={
-                            openTo
-                                ? {
-                                      text: openTo,
-                                      href: contactHref("hiring"),
-                                      cta: availability?.cta?.trim() || null,
-                                  }
-                                : null
-                        }
-                        idPrefix="cv-orbit"
-                        figure={copy.figure}
-                    />
-                </DocSection>
-            ) : null}
 
             {/* The printed masthead: sheet 1 opens with it (G3). */}
             <header className={`shell ${styles.mast}`} data-print="only">

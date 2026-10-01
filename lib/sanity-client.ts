@@ -119,8 +119,6 @@ export type Availability = {
     seeking?: Opening[] | null;
     /** The older single line; shown only while `seeking` is empty. */
     openTo?: string | null;
-    /** Places the planned orbit only; never printed. */
-    from?: string | null;
     /** The button that answers the Open To lines ("Write about a role"). */
     cta?: string | null;
     consultingOpen?: boolean | null;
@@ -350,7 +348,7 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     introduction,
     bio,
     availability{
-        status, "seeking": seeking[]{_key, label}, openTo, from, cta,
+        status, "seeking": seeking[]{_key, label}, openTo, cta,
         consultingOpen, updatedAt
     },
     launch{date, precision, event},

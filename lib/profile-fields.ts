@@ -105,13 +105,14 @@ export function checkAvailabilitySeeking(
 }
 
 /**
- * A timeline entry whose end equals its start has no length, so the orbit
- * map would draw it as a point. This is a warning: the date may be right.
+ * A timeline entry whose end equals its start has no length, so its start
+ * counts as unknown: the CV prints the end alone and the flight gives it a
+ * nominal span. This is a warning: the date may be right.
  */
 export function checkTimelineRange(
     startDate: string | undefined,
     endDate: string | undefined,
 ): true | string {
     if (!startDate || !endDate || startDate !== endDate) return true;
-    return "The start and end dates are the same, so the Trajectory map would draw this entry as a point. Check the start date.";
+    return "The start and end dates are the same, so the CV shows only the end date. Check the start date.";
 }

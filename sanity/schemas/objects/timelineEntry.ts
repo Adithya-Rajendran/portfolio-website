@@ -49,7 +49,7 @@ export default defineType({
             type: "string",
             group: "role",
             description:
-                "The label on the Trajectory map, for example UCSC or Canonical.",
+                "The world's name in the Timeline flight, for example UCSC or Canonical.",
             validation: (Rule) => Rule.max(16),
         }),
         defineField({
@@ -66,7 +66,7 @@ export default defineType({
             type: "string",
             group: "role",
             description:
-                "Shown on the CV. An internship that overlaps another entry is drawn as a flyby on the Trajectory map.",
+                "Shown on the CV. An internship is flown as a short flyby in the Timeline.",
             options: { list: [...EMPLOYMENT_TYPES] },
             validation: listValuesOnly,
         }),
@@ -149,7 +149,7 @@ export default defineType({
             type: "object",
             group: "details",
             description:
-                "Optional. The turn this entry began, drawn as a burn marker at its start on the Trajectory map.",
+                "Optional. The turn this entry began, named on the transfer into it in the Timeline.",
             fields: [
                 defineField({
                     name: "label",

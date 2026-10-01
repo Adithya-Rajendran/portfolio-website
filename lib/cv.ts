@@ -1,5 +1,4 @@
 import { formatMissionDesignation } from "@/lib/designations";
-import { decimalYear, type OrbitEntry } from "@/lib/orbit/geometry";
 import { formatTimelineDate } from "@/lib/profile-content";
 import { EMPLOYMENT_TYPES, TALK_KINDS } from "@/lib/profile-fields";
 import { formatProjectYears } from "@/lib/project-content";
@@ -10,6 +9,7 @@ import type {
     TalkOrPaper,
     TimelineEntry,
 } from "@/lib/sanity-client";
+import { decimalYear } from "@/lib/trajectory";
 
 /**
  * The Trajectory CV (G2, G3) as display-ready rows: the profile's timeline,
@@ -29,7 +29,7 @@ export interface CvEntry {
     kind: "work" | "education";
     title: string;
     organization: string;
-    /** The map's short name: `orgShort`, else the organization. */
+    /** The flight's short name: `orgShort`, else the organization. */
     orgLabel: string;
     orgUrl: string | null;
     location: string | null;
@@ -37,8 +37,6 @@ export interface CvEntry {
     employment: string | null;
     /** "May 2024 – Jul 2026", "Aug 2026 – present", "Jun 2023". */
     dates: string | null;
-    /** The map label's years: "2024–2026", "Since 2026", "2023". */
-    years: string | null;
     current: boolean;
     /** "Expected 2028". */
     expected: string | null;
@@ -46,7 +44,11 @@ export interface CvEntry {
     highlights: string[];
     skills: string[];
     burn: string | null;
-    orbit: OrbitEntry;
+    /** The entry's dates as recorded, which the flight places in time. */
+    span: Pick<
+        TimelineEntry,
+        "startDate" | "startPrecision" | "endDate" | "endPrecision"
+    >;
 }
 
 /** A fragment-safe id from a Sanity key. */
@@ -56,7 +58,7 @@ export function cvAnchor(key: string): string {
 
 /**
  * Whether a timeline entry's start is known: it is set and before the end
- * (the zero-length guard; lib/orbit/geometry.ts draws it the same way).
+ * (the zero-length guard; lib/trajectory.ts flies it the same way).
  */
 function startKnown(entry: TimelineEntry, current: boolean): boolean {
     const start = decimalYear(entry.startDate, entry.startPrecision);
@@ -86,14 +88,6 @@ export function cvEntry(entry: TimelineEntry): CvEntry {
                   : `${start} – ${end}`;
     else dates = end ?? start;
 
-    const startYear = known ? entry.startDate!.slice(0, 4) : null;
-    const endYear = current ? null : (entry.endDate?.slice(0, 4) ?? null);
-    let years: string | null = null;
-    if (current) years = startYear ? `Since ${startYear}` : null;
-    else if (startYear && endYear)
-        years = startYear === endYear ? endYear : `${startYear}–${endYear}`;
-    else years = endYear ?? startYear;
-
     const employment =
         entry.employment && entry.employment !== "degree"
             ? (EMPLOYMENT_TYPES.find((type) => type.value === entry.employment)
@@ -111,7 +105,6 @@ export function cvEntry(entry: TimelineEntry): CvEntry {
         location: entry.location?.trim() || null,
         employment,
         dates,
-        years,
         current,
         expected:
             current && entry.expectedEndYear
@@ -121,16 +114,11 @@ export function cvEntry(entry: TimelineEntry): CvEntry {
         highlights: (entry.highlights ?? []).filter((line) => line.trim()),
         skills: entry.skills ?? [],
         burn: entry.burn?.label?.trim() || null,
-        orbit: {
-            id: entry._key,
-            kind: entry.kind,
-            employment: entry.employment,
+        span: {
             startDate: entry.startDate,
             startPrecision: entry.startPrecision,
             endDate: entry.endDate,
             endPrecision: entry.endPrecision,
-            isCurrent: current,
-            expectedEndYear: entry.expectedEndYear,
         },
     };
 }

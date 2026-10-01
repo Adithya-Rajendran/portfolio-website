@@ -7,11 +7,9 @@ import type { CvLink } from "@/lib/cv";
  * styles/components.css): the log index's grammar, a mono column (a
  * designation, the dates, the place and a status) beside the title, its
  * organization, a quiet note (a title's parenthetical, `splitTitle`), a
- * serif line and the facts. A row linked to the orbit map
- * (`orbit`) lights its orbit on hover, and the map lights the row; a row
- * with an `href` is one big link, its other links still live; a link to
- * one of the site's posts (`/blog/…`) opens in place.
- * Directive-free: /resume and About render it.
+ * serif line and the facts. A row with an `href` is one big link, its
+ * other links still live; a link to one of the site's posts (`/blog/…`)
+ * opens in place. Directive-free: /resume renders it.
  */
 
 export function CvList({
@@ -33,7 +31,6 @@ export function CvList({
 
 export function CvItem({
     anchor,
-    orbit,
     current,
     code,
     dates,
@@ -50,12 +47,9 @@ export function CvItem({
     skillsLabel,
     links,
     linksLabel,
-    actions,
 }: {
     /** The row's id, a public fragment (`#cv-…`). */
     anchor?: string;
-    /** The orbit this row stands for on the map. */
-    orbit?: string;
     current?: boolean;
     /** A mono designation over the dates: "MSN-02". */
     code?: string;
@@ -77,14 +71,12 @@ export function CvItem({
     skillsLabel?: string;
     links?: readonly CvLink[];
     linksLabel?: string;
-    actions?: React.ReactNode;
 }) {
     const quiet = (meta ?? []).filter(Boolean) as string[];
     return (
         <li
             className="cv-item"
             id={anchor}
-            data-orbit-row={orbit}
             data-current={current ? "" : undefined}
         >
             <div className="cv-item__aside">
@@ -179,9 +171,6 @@ export function CvItem({
                             ))}
                         </span>
                     </p>
-                ) : null}
-                {actions ? (
-                    <div className="cv-item__actions">{actions}</div>
                 ) : null}
             </div>
         </li>

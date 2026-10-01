@@ -4,9 +4,11 @@ import { cvEntries } from "@/lib/cv";
 import { FIXTURE_PROFILE as fixtureProfile } from "@/lib/fixtures";
 import {
     buildRoute,
+    decimalYear,
     frameAt,
     missionDate,
     splitTitle,
+    todayYear,
     trajectoryData,
 } from "@/lib/trajectory";
 
@@ -15,6 +17,25 @@ const data = trajectoryData(
     fixtureProfile.availability,
     "2026-09-29",
 );
+
+describe("dates in time", () => {
+    it("places a date in the middle of its month, or of its year", () => {
+        expect(decimalYear("2024-05-01")).toBeCloseTo(2024 + 4.5 / 12);
+        expect(decimalYear("2024-05-17", "month")).toBeCloseTo(2024 + 4.5 / 12);
+        expect(decimalYear("2019-01-01", "year")).toBe(2019.5);
+        expect(decimalYear("2019")).toBe(2019.5);
+        expect(decimalYear(null)).toBeNull();
+        expect(decimalYear("soon")).toBeNull();
+    });
+
+    it("reads today to the day", () => {
+        expect(todayYear("2026-01-01")).toBeCloseTo(2026 + 0.5 / 31 / 12);
+        expect(todayYear("2026-09-28")).toBeGreaterThan(
+            decimalYear("2026-09-01")!,
+        );
+        expect(todayYear("soon")).toBeNaN();
+    });
+});
 
 describe("trajectory", () => {
     it("moves a long parenthetical out of the title only", () => {

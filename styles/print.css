@@ -111,10 +111,6 @@
         [data-page="resume"] .cv-item__aside > * {
             display: block;
         }
-        /* The map's designations stay on screen; missions keep theirs. */
-        [data-page="resume"] [data-orbit-row] .cv-item__code {
-            display: none;
-        }
         [data-page="resume"] .cv-item__code {
             font-size: 6pt;
         }

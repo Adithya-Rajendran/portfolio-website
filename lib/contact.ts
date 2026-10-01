@@ -1,11 +1,12 @@
 /**
  * Comms (G4, plan §2.5.6): contact routes by intent, not by channel. Each
  * route is a topic the form can send, so the message arrives with its
- * subject already sorted. Pure: the page, the form, the server action and
- * the tests share it. The topics and when each route shows are fixed
- * here and in lib/copy.ts; every word about the owner is the profile's,
- * printed as written: each route's title and prompt (`contactRoutes`) and
- * the research invitation (`contactInvitation`). Hiring shows while the
+ * subject already sorted; the form's Topic radios are the routes (premium
+ * D3). Pure: the page, the form, the server action and the tests share
+ * it. The topics and when each route shows are fixed here and in
+ * lib/copy.ts; every word about the owner is the profile's, printed as
+ * written: each route's title and prompt (`contactRoutes`) and the
+ * research invitation (`contactInvitation`). Hiring shows while the
  * profile says what the owner is open to (`availabilityLine`).
  *
  * There is no public email address or phone number: the form is the only
@@ -13,8 +14,8 @@
  * send does not go.
  */
 import { contactCopy } from "@/lib/copy";
-import { REPORT_PARAM, siteRoutes } from "@/lib/navigation";
-import { availabilityLine, getProfileLink } from "@/lib/profile-content";
+import { REPORT_PARAM } from "@/lib/navigation";
+import { availabilityLine } from "@/lib/profile-content";
 import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import type { ProfileData } from "@/lib/sanity-client";
 
@@ -56,24 +57,17 @@ export function contactSubject(topic: ContactTopic): string {
     return `[${contactCopy.topics[topic].name}] Contact Form for My Website`;
 }
 
-export interface ContactRouteLink {
-    href: string;
-    label: string;
-    /** Leaves the site (a profile, the PDF): marked with an arrow. */
-    external?: boolean;
-}
-
 export interface ContactRoute {
     topic: ContactTopic;
     /** The profile's title for the route, else the topic's name. */
     title: string;
-    /** The owner's own sentence (Research: `contactInvitation`). */
+    /** The owner's own sentence (Research: `contactInvitation`): the
+     *  topic's description under its radio. */
     body?: string;
     /** An optional prompt (the profile's): the message field's
      *  placeholder once this topic is chosen. Absent when the profile has
      *  none. */
     prompt?: string;
-    links: ContactRouteLink[];
 }
 
 /**
@@ -92,7 +86,6 @@ export interface ContactRoute {
 export function contactRoutes(profile: ProfileData | null): ContactRoute[] {
     const availability = profile?.availability;
     const invitation = profile?.contactInvitation?.trim();
-    const linkedIn = getProfileLink(profile, "linkedin");
     const shown: ContactRoute[] = [];
     const route = (topic: ContactTopic) => {
         const words = profile?.contactRoutes?.[topic];
@@ -104,45 +97,10 @@ export function contactRoutes(profile: ProfileData | null): ContactRoute[] {
         };
     };
 
-    if (availabilityLine(availability)) {
-        shown.push({
-            ...route("hiring"),
-            links: [
-                ...(profile?.resumeUrl
-                    ? [
-                          {
-                              href: siteRoutes.resumePdf,
-                              label: contactCopy.links.resumePdf,
-                              external: true,
-                          },
-                      ]
-                    : []),
-                { href: siteRoutes.resume, label: contactCopy.links.cv },
-            ],
-        });
-    }
-    if (invitation) {
-        shown.push({ ...route("research"), body: invitation, links: [] });
-    }
-    if (availability?.consultingOpen === true) {
-        shown.push({ ...route("consulting"), links: [] });
-    }
-    shown.push({
-        ...route("hello"),
-        links: [
-            { href: siteRoutes.feed, label: contactCopy.links.rss },
-            ...(linkedIn
-                ? [
-                      {
-                          href: linkedIn.url,
-                          label: linkedIn.label,
-                          external: true,
-                      },
-                  ]
-                : []),
-        ],
-    });
-
+    if (availabilityLine(availability)) shown.push(route("hiring"));
+    if (invitation) shown.push({ ...route("research"), body: invitation });
+    if (availability?.consultingOpen === true) shown.push(route("consulting"));
+    shown.push(route("hello"));
     return shown;
 }
 
@@ -150,6 +108,8 @@ export function contactRoutes(profile: ProfileData | null): ContactRoute[] {
 export interface TopicOption {
     value: ContactTopic;
     label: string;
+    /** The owner's line about the route, under its radio. */
+    description?: string;
     /** What to include: the message placeholder for this topic. */
     prompt?: string;
 }
@@ -158,6 +118,7 @@ export function topicOptions(routes: readonly ContactRoute[]): TopicOption[] {
     return routes.map((route) => ({
         value: route.topic,
         label: route.title,
+        ...(route.body ? { description: route.body } : {}),
         ...(route.prompt ? { prompt: route.prompt } : {}),
     }));
 }

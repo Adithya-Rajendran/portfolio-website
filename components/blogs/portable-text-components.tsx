@@ -14,8 +14,8 @@ import {
 /**
  * The long-read renderers for `contentBody` (G1), shared by the post page
  * and the project essay. They emit the final markup on the server (plan
- * §4.1: no client pass): numbered listings with a Copy button, numbered
- * plates and figures, callouts (`div[role=note]`, never an `aside` inside
+ * §4.1: no client pass): listings with a Copy button, numbered plates
+ * and figures, callouts (`div[role=note]`, never an `aside` inside
  * `main`: the quotation's quiet note, led by its tone and title in bold),
  * footnotes as raised numbers with a margin copy, and headings
  * with the ids the contents and the Studio's callout anchors use. Styles

@@ -5,10 +5,13 @@ import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
 
 /**
- * Theme and motion (plan §2.5.1, contract §6): Void for every first visit,
- * a stored choice applied before the first paint, the header's switch
- * (Void ↔ Flight Manual) and the footer's three-way choice kept in step
- * across reloads, pages and tabs, Auto following the OS, and Pause motion.
+ * Theme and motion (plan §2.5.1, contract §6): Void for every first visit
+ * except a post, which follows the OS until a theme is chosen (premium
+ * D3), on a full load and after a client navigation alike; a stored choice
+ * applied before the first paint and winning everywhere, the header's
+ * switch (Void ↔ Flight Manual) and the footer's three-way choice kept in
+ * step across reloads, pages and tabs, Auto following the OS, and Pause
+ * motion.
  */
 
 const html = (page: Page) => page.locator("html");
@@ -30,6 +33,77 @@ test("a first visit is Void, even when the OS prefers light", async ({
         "content",
         "#050507",
     );
+});
+
+/** The first entry linked from /blog, opened by a click (a client
+ *  navigation). */
+async function openFirstPost(page: Page) {
+    await page
+        .getByRole("main")
+        .locator(
+            'a[href^="/blog/"]:not([href^="/blog/archive"]):not([href^="/blog/tags/"])',
+        )
+        .first()
+        .click();
+    await expect(page).toHaveURL(/\/blog\/(?!archive$)[^/]+$/);
+}
+
+test("a post follows the OS until a theme is chosen, and the rest of the site stays Void", async ({
+    page,
+}) => {
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("/blog");
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    // A client navigation to a post: Flight Manual on a light system,
+    // and the footer says the post follows the system.
+    await openFirstPost(page);
+    await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+        "content",
+        "#F2EDE3",
+    );
+    await expect(
+        footerChoice(page).getByRole("radio", { name: "System" }),
+    ).toBeChecked();
+    // A full load of the post is the same, before the first paint.
+    const post = new URL(page.url()).pathname;
+    await page.reload();
+    await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    // It follows the system as it changes.
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    // Back to the index: Void again, with Dark checked.
+    await page
+        .getByRole("banner")
+        .getByRole("link", { name: "Writing", exact: true })
+        .click();
+    await expect(page).toHaveURL(/\/blog$/);
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await expect(
+        footerChoice(page).getByRole("radio", { name: "Dark" }),
+    ).toBeChecked();
+
+    // A stored choice wins on a post too.
+    await page.goto(post);
+    await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    await footerChoice(page).getByRole("radio", { name: "Dark" }).check();
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await page.reload();
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await expect(
+        footerChoice(page).getByRole("radio", { name: "Dark" }),
+    ).toBeChecked();
+});
+
+test("a post stays Void on a dark system", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto("/blog");
+    await openFirstPost(page);
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await page.reload();
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
 });
 
 test("a stored theme applies before the body is parsed", async ({ page }) => {

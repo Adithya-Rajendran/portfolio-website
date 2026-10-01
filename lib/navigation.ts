@@ -18,9 +18,8 @@ export const siteRoutes = {
     /** The flight: the timeline in 3D, linked from /resume. */
     trajectory: "/resume/trajectory",
     about: "/about",
-    /** Comms: the contact routes and the form. */
+    /** Comms: the form, its topics and the profiles. */
     contact: "/contact",
-    resumePdf: "/resume/view",
     feed: "/feed.xml",
 } as const;
 

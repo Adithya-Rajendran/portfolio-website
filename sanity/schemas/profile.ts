@@ -74,7 +74,7 @@ export default defineType({
             type: "object",
             group: "status",
             description:
-                "What you are open to right now. The Open To lines are shown under your name on the home page and its sharing image, in the About record, on the CV (on screen and printed), on Contact and its sharing image, and as the planned orbit on the CV's Timeline. While they are shown, Contact offers the Hiring route.",
+                "What you are open to right now. The Open To lines are shown under your name on the home page and its sharing image, in the About record, on the CV (on screen and printed), on Contact and its sharing image, and as the last stop of the Timeline flight. While they are shown, Contact offers the Hiring route.",
             fields: [
                 defineField({
                     name: "status",
@@ -134,15 +134,17 @@ export default defineType({
                     name: "from",
                     title: "Planned Orbit Starts",
                     type: "date",
-                    description:
-                        "Optional. Where the planned orbit begins on the Trajectory map. It only places the drawing and is never printed; the Open To lines are what readers see.",
+                    deprecated: {
+                        reason: "The CV's orbit map is retired, and nothing on the site reads this date. Clear it.",
+                    },
+                    hidden: ({ value }) => !value,
                 }),
                 defineField({
                     name: "cta",
                     title: "Contact Button",
                     type: "string",
                     description:
-                        "Optional. The button that answers the Open To lines, for example “Write about a role”. It closes the home page and the planned orbit's record on the CV's Timeline, and opens Contact on the Hiring route. Leave blank for no button.",
+                        "Optional. The button that answers the Open To lines, for example “Write about a role”. It closes the home page and the Timeline flight, and opens Contact on the Hiring route. Leave blank for no button.",
                     validation: (Rule) => Rule.max(40),
                 }),
                 defineField({

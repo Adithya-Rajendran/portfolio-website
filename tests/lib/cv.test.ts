@@ -34,7 +34,6 @@ describe("timeline rows", () => {
         );
         expect(row).toMatchObject({
             dates: "May 2024 – Jul 2026",
-            years: "2024–2026",
             current: false,
             location: "Remote",
             expected: null,
@@ -55,7 +54,6 @@ describe("timeline rows", () => {
         );
         expect(row).toMatchObject({
             dates: "Aug 2026 – present",
-            years: "Since 2026",
             current: true,
             expected: "Expected 2028",
         });
@@ -65,10 +63,7 @@ describe("timeline rows", () => {
         const row = cvEntry(
             entry({ startDate: "2023-06-01", endDate: "2023-06-01" }),
         );
-        expect(row).toMatchObject({
-            dates: "Jun 2023",
-            years: "2023",
-        });
+        expect(row).toMatchObject({ dates: "Jun 2023" });
         expect(
             cvEntry(entry({ startDate: null, isCurrent: true })).dates,
         ).toBeNull();
@@ -80,8 +75,13 @@ describe("timeline rows", () => {
         )!;
         expect(cvEntry(ucsc)).toMatchObject({
             dates: "2019–2023",
-            years: "2019–2023",
             orgLabel: "UCSC",
+            span: {
+                startDate: ucsc.startDate,
+                startPrecision: "year",
+                endDate: ucsc.endDate,
+                endPrecision: "year",
+            },
         });
     });
 
