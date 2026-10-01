@@ -1,4 +1,5 @@
 import { cvEntries, hostOf, type CvEntry } from "@/lib/cv";
+import { getProfileLink } from "@/lib/profile-content";
 import { CURIOSITY_KINDS, type CuriosityKind } from "@/lib/profile-fields";
 import { splitTitle } from "@/lib/trajectory";
 import type {
@@ -162,8 +163,9 @@ function share(count: number, total: number): number[] {
 
 /**
  * The record (G6, the title block): the name, what the owner studies and
- * did last, then the focus and the profile links, on two rows of 12
- * columns. Only cells with a value are drawn, and the rows close up.
+ * did last, then the focus and the profiles that verify those facts
+ * (LinkedIn and GitHub; the credentials' links are the CV's), on two rows
+ * of 12 columns. Only cells with a value are drawn, and the rows close up.
  * What the owner is open to is the home hero's and the heads' of /resume
  * and /contact; the profile's edit date is no fact about him.
  */
@@ -174,10 +176,9 @@ export function crewRecord(profile: ProfileData | null): RecordCell[] {
     );
     const previously = previousRole(profile.timeline);
     const focus = (profile.focusAreas ?? []).filter((item) => item?.trim());
-    const links = (profile.socialLinks ?? [])
-        .filter((link): link is ExternalLink =>
-            Boolean(link?.label && /^https?:\/\//.test(link.url ?? "")),
-        )
+    const links = (["linkedin", "github"] as const)
+        .map((platform) => getProfileLink(profile, platform))
+        .filter((link): link is ExternalLink => Boolean(link?.label))
         .map((link) => ({
             label: link.label,
             url: link.url,

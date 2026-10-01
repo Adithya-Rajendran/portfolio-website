@@ -162,7 +162,6 @@
            suns are identity marks. Never text, a fill, a link or a hover. */
         --accent: #ff5a1f; /* 6.5:1 */
         --focus: var(--accent);
-        --limb-fill: #070709;
         --star-rgb: 236 232 223;
         --plate-bg: transparent;
         --plate-border: transparent;
@@ -187,7 +186,6 @@
         --rule-2: #7a7468; /*  3.98:1 */
         --accent: #e4501b; /* marks only: 3.3:1 on paper */
         --focus: #a13a0d; /* burnt orange: 5.76:1 */
-        --limb-fill: var(--bg);
         --star-rgb: 23 21 15;
         --plate-bg: var(--surface-1);
         --plate-border: var(--rule-1);

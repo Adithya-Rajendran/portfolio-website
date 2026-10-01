@@ -12,13 +12,13 @@ import {
 import type { ThemePref } from "@/lib/theme-boot";
 
 /**
- * Void · Manual · Auto as a `Segmented` group (contract §6), in the footer
- * and the menu sheet; each instance has its own `name`. Which option is
+ * Void · Manual · Auto as a `Segmented` group (contract §6), in the menu
+ * sheet (below 960px; from 960px the header's switch). Which option is
  * checked comes from the prefs store, whose server snapshot is
  * `undefined`, so the radios hydrate unchecked and then check the stored
  * choice. Hidden without JavaScript (styles/components.css).
  */
-export default function ThemeChoice({ instance }: { instance: string }) {
+export default function ThemeChoice() {
     const pref = useSyncExternalStore(
         subscribePrefs,
         getThemePref,
@@ -28,7 +28,7 @@ export default function ThemeChoice({ instance }: { instance: string }) {
         <Segmented
             className="theme-choice"
             legend={chromeCopy.themeLegend}
-            name={`theme-${instance}`}
+            name="theme"
             options={themeOptions}
             value={pref ?? ""}
             onChange={(value) => setThemePref(value as ThemePref)}

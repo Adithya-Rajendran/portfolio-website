@@ -6,7 +6,7 @@ import StaticStars from "@/components/sky/static-stars";
 import Starfield from "@/components/sky/starfield";
 import { OpenToItems } from "@/components/ui/availability";
 import { Icon } from "@/components/ui/icon";
-import { LinkArrow, Status } from "@/components/ui/marks";
+import { Status } from "@/components/ui/marks";
 import { homeCopy as copy } from "@/lib/copy";
 import sunrise from "@/lib/hero-sunrise.json";
 import { siteRoutes } from "@/lib/navigation";
@@ -20,11 +20,11 @@ import styles from "./hero.module.css";
  * photograph (lib/hero-sunrise.json), so the first paint is right before
  * the photograph arrives, and without it. Centred over the black above
  * the limb: the name (the page's h1), the profile's one-line headline,
- * what the owner is open to (the profile's availability, only when set),
- * one action (CV, a hairline button over the photograph) and one quiet
- * link down to the selected projects. The headline's and the Open To
- * line's parts are kept whole, and stack on phones. At the foot, the
- * credit with the frame's NASA ID, and Pause motion. The header's
+ * what the owner is open to (the profile's availability, only when set)
+ * and one action, CV (a hairline button over the photograph). The
+ * headline's and the Open To line's parts are kept whole, and stack on
+ * phones. At the foot, the credit with the frame's NASA ID, and Pause
+ * motion (nothing under the OS reduce-motion setting). The header's
  * wordmark steps aside while the hero's name shows below the header (the
  * starfield sets `html[data-hero]`). Everything is server-rendered;
  * the starfield and the motion control are the only islands.
@@ -63,17 +63,10 @@ export function preloadHeroPhoto() {
     }
 }
 
-/** How far below the surface line the drawn parallels run, in CSS pixels
- *  at the crop's reference width: closer together toward the horizon. */
-const PARALLELS: Record<Crop, readonly number[]> = {
-    desktop: [20, 46, 80],
-    mobile: [22, 52, 96],
-};
-
 /**
  * The limb drawn on the photograph's own geometry: the night side (which
  * hides the stars behind the planet), the top of the atmosphere and the
- * surface under it as hairlines, the planet's parallels, and the sun, an
+ * surface under it as hairlines, and the sun, an
  * identity mark (`data-identity`: orange, outside the accent's budget).
  * The viewBox is the crop's largest encode, and `xMidYMax slice` matches
  * the photograph's `object-fit: cover` anchored to the bottom.
@@ -103,16 +96,6 @@ function Alignment({ crop }: { crop: Crop }) {
                 cy={surface.cy}
                 r={surface.r}
             />
-            <g className={styles.parallels}>
-                {PARALLELS[crop].map((depth) => (
-                    <circle
-                        key={depth}
-                        cx={surface.cx}
-                        cy={surface.cy}
-                        r={surface.r - depth * unit}
-                    />
-                ))}
-            </g>
             <circle
                 className={styles.rim}
                 cx={limb.cx}
@@ -183,14 +166,11 @@ export default function Hero({
     name,
     headline,
     openTo,
-    projects,
 }: {
     name: string;
     headline: string | null;
     /** The availability line: "Summer 2027 internships · …". */
     openTo: string | null;
-    /** Whether there are projects to link down to. */
-    projects: boolean;
 }) {
     const words = name.split(/\s+/).filter(Boolean);
     return (
@@ -241,15 +221,6 @@ export default function Hero({
                             <span>{copy.cv}</span>
                             <Icon name="arrow" className="icon--nudge" />
                         </Link>
-                        {projects ? (
-                            <LinkArrow
-                                className={styles.down}
-                                href="#home-projects"
-                                icon="arrow-down"
-                            >
-                                {copy.projectsAct.title}
-                            </LinkArrow>
-                        ) : null}
                     </nav>
                 </div>
 

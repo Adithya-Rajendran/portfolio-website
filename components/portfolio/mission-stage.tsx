@@ -3,7 +3,7 @@ import MissionLine, {
     CARD_STACK,
     MissionStack,
 } from "@/components/portfolio/mission-line";
-import { ButtonLink } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { LinkArrow } from "@/components/ui/marks";
 import Plate from "@/components/ui/plate";
 import { missionsCopy as copy } from "@/lib/copy";
@@ -12,10 +12,11 @@ import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
 
 /**
- * The flagship (contract §4 and §9): the mission's line (type, status,
- * dates), its title as the heading, in sentence case, its summary, which
- * leads, its first four stack items, one primary (View the project) and
- * the quiet way to the write-up, in seven columns, top-aligned with its
+ * The flagship (contract §4 and §9): the mission's line (status, dates),
+ * its title as the heading and the link to its page, in sentence case,
+ * with the rows' trailing arrow, its summary, which leads, its first four
+ * stack items and the quiet way to the write-up (where the page passes
+ * one), in seven columns, top-aligned with its
  * photograph as a plate in five. Without a photograph the copy takes the
  * full width. Shared by /portfolio and the home page. No stats and no
  * mission number: numbers stay on the file beside their notes, and the
@@ -48,7 +49,13 @@ export default function MissionStage({
             <div className={styles.stageCopy}>
                 <MissionLine mission={mission} />
                 <Heading className={styles.stageHeading}>
-                    <Link href={mission.href}>{mission.title}</Link>
+                    <Link href={mission.href}>
+                        {mission.title}
+                        {/* Glued to the last word: no line holds the
+                            arrow alone. */}
+                        {"\u00a0"}
+                        <Icon name="arrow" className={styles.stageArrow} />
+                    </Link>
                 </Heading>
                 {mission.summary ? (
                     <p className={styles.stageSummary}>{mission.summary}</p>
@@ -58,19 +65,11 @@ export default function MissionStage({
                     label={copy.stack}
                     max={CARD_STACK}
                 />
-                <div className={`cluster ${styles.stageActions}`}>
-                    <ButtonLink
-                        variant="primary"
-                        href={mission.href}
-                        icon="arrow"
-                        iconAt="end"
-                    >
-                        {copy.openFile}
-                    </ButtonLink>
-                    {writeUp ? (
+                {writeUp ? (
+                    <p className={styles.stageActions}>
                         <LinkArrow href={writeUp}>{copy.readWriteUp}</LinkArrow>
-                    ) : null}
-                </div>
+                    </p>
+                ) : null}
             </div>
             {plate ? (
                 <Plate

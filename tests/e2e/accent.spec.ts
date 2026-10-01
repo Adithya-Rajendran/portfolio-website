@@ -180,10 +180,12 @@ for (const theme of THEMES) {
     }
 }
 
-test("the primary is an ink fill; the nav's bar and the header's CV are ink", async ({
+test("the primary is an ink fill; the nav's bar and the bar's CV are ink", async ({
     page,
 }) => {
-    await page.goto("/resume");
+    // /contact: Send message is the primary, and Contact the current
+    // section.
+    await page.goto("/contact");
     const accent = await page.evaluate(() => {
         const probe = document.createElement("span");
         probe.style.color = "var(--accent)";
@@ -223,6 +225,8 @@ test("the primary is an ink fill; the nav's bar and the header's CV are ink", as
         (link) => getComputedStyle(link, "::after").backgroundColor,
     );
     expect(bar).not.toBe(accent);
+    // The bar's CV shows where the nav is in the sheet (below 960px).
+    await page.setViewportSize({ width: 390, height: 844 });
     const link = page
         .getByRole("banner")
         .getByRole("link", { name: "CV", exact: true });

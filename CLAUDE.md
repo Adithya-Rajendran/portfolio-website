@@ -71,24 +71,24 @@ only live in comments or commit messages.
   (`full` | `reduced`), and sets `data-theme`, `data-motion` and `data-js`
   on `<html>` before the first paint. After a client navigation
   `RouteMarker` applies the new path's default the same way
-  (`applyRouteTheme` in `lib/prefs.ts`), and the footer's choice shows
-  the preference in force there (`themePref`: System on a post, Dark
+  (`applyRouteTheme` in `lib/prefs.ts`), and the menu sheet's choice
+  shows the preference in force there (`themePref`: System on a post, Dark
   elsewhere, until one is stored). The server renders the literal
   `data-theme="void"` and never `data-motion`, so without JavaScript there
   is no spatial motion; never read a cookie for this, it would make every
   route request-bound. The header's `ThemeSwitch` (one button, Void ↔
   Flight Manual) names the theme it switches to from `html[data-theme]`
-  in CSS, so under Auto it follows the screen; the footer (from 960px)
-  and the menu sheet (below it) carry `ThemeChoice` (Void · Manual · Auto,
-  a `Segmented`), so each control shows once per breakpoint; it
-  reads `lib/prefs.ts` through `useSyncExternalStore` (server snapshot
-  `undefined`). Spatial motion runs
+  in CSS, so under Auto it follows the screen; the menu sheet (below
+  960px, where the switch is hidden) carries `ThemeChoice` (Void · Manual
+  · Auto, a `Segmented`), so each control shows once per breakpoint and
+  the footer repeats neither; it reads `lib/prefs.ts` through
+  `useSyncExternalStore` (server snapshot `undefined`). Spatial motion runs
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
   (their variables on `<html>`), each with one job: Jost for display
   (page and item titles and the hero's name at 350), headings, UI text
   and the controls' one caps voice (the nav, buttons, arrow links,
-  segmented boxes, Back to top and Pause motion: 500, 13px, 0.10em); Newsreader for reading; DM Mono
+  segmented boxes and Pause motion: 500, 13px, 0.10em); Newsreader for reading; DM Mono
   for data and every label (`.label`, `--font-label`: caps, 13px,
   0.08em, ink-2); Michroma in two places only, the header's wordmark and
   a page head's themed tag (`--font-mark`). There are no glyph
@@ -158,8 +158,10 @@ only live in comments or commit messages.
   switch), "The full record" after the stage and a card's Full entry
   (`onEntry`, the chapter's row) show the list and move focus there.
   `/resume/trajectory`, the flight's old page, answers 308 to `/resume`
-  (next.config.mjs). The head carries Download CV (PDF) as the primary
-  and Contact: no Open PDF, Print or Share (the browser's Print prints
+  (next.config.mjs). The head carries Download CV (PDF) as its one
+  action, and none without a PDF (the header's Contact is in the same
+  viewport, and the Future card keeps a quiet one): no Contact, Open
+  PDF, Print or Share (the browser's Print prints
   the CV); premium D3 retired the 2D orbit map, "Orbit 0n" codes and
   "Show on timeline".
   `lib/cv.ts` words the rows' dates as the résumé gives them and derives
@@ -252,9 +254,9 @@ only live in comments or commit messages.
   feed renderer in the same change. `components/blogs/post-reader.tsx`
   marks the current section and resolves in-page links (`#fn-1`, the
   contents) inside the visible entry, because a hidden, still-mounted
-  entry can hold the same ids. Reading pages (lib/navigation.ts
-  `headerMode`) get `html[data-header="solid"]` from RouteMarker.
-  Every writing route names the feed through `feedAlternates` (lib/feed.ts:
+  entry can hold the same ids. The header keeps its one `--rule-1`
+  hairline here as on every page (the firmer rule on reading pages is
+  retired). Every writing route names the feed through `feedAlternates` (lib/feed.ts:
   a page's `alternates` replaces the layout's whole). `/feed.xml` is
   served as `application/xml`, so a browser displays it through
   `public/feed.xsl` (a plain page in the Void's colours and system fonts:
@@ -281,9 +283,12 @@ only live in comments or commit messages.
   `/portfolio` is the head, then the tiers with their section names for
   screen readers only (no visible "Featured project" or "More projects"
   row, no "Experience & CV" link and no related pages); the stage's copy
-  is top-aligned with its plate, and a card (the stage, a tile) lists the
-  first four stack items (`CARD_STACK`); every stack item is kept whole
-  (`MissionStack`). The mission number (MSN-02) is the project page's quiet
+  is top-aligned with its plate, its title is its one link to the page
+  (with the rows' trailing arrow; no "View the project" button), and a
+  card (the stage, a tile) lists the first four stack items
+  (`CARD_STACK`); every stack item is kept whole (`MissionStack`).
+  `MissionLine` is ● Status · dates: no type (the title and summary say
+  what kind of project it is; the share card and the CV keep it). The mission number (MSN-02) is the project page's quiet
   identifier, in its crumb only: `MissionLine`, the stage, the tiles, the
   plates and the home page print none. Numbers appear only on a project
   page: its head's stats (`headStats`) unless it has a results table,
@@ -297,8 +302,8 @@ only live in comments or commit messages.
   under the line (tiles, like rows, are one column below 960px), the
   stage's plate when the flagship
   has one, and the plate beside a project's head in either layout; the
-  stage takes the model's poster without one, and the home "Also" line
-  and a post's project row stay text only. On a card and a head the
+  stage takes the model's poster without one, and a post's project row
+  stays text only. On a card and a head the
   cover's caption is the plate's credit line (`Plate credit`,
   `.caption__src`: DM Mono 13px, ink-3, as the hero's credit); the stage
   keeps it as the owner's caption. A card's cover never outweighs the
@@ -370,20 +375,25 @@ only live in comments or commit messages.
   shows below the header (in both themes; the cleanup clears it), and the
   header's wordmark steps aside meanwhile, so the name is on screen once:
   never twice, and never not at all while the rest of the hero, or the
-  projects the quiet link lands on, fill the view. Without JavaScript it
-  stays. Over it: the name, the profile's headline and the availability
-  line (only when set), each split into parts kept whole (`OpenToItems`)
-  that stack on phones, then one action (CV, the hairline `.btn`, no
-  fill or blur) and one quiet link down to the projects (`#home-projects`,
-  the sprite's `arrow-down`). The foot: the credit with the frame's ID
+  projects under it, fill the view. Without JavaScript it stays. Over
+  it: the name, the profile's headline and the availability line (only
+  when set), each split into parts kept whole (`OpenToItems`) that stack
+  on phones, then one action, centred in space (CV, the hairline `.btn`,
+  no fill or blur; the header's Projects is the way to the work, so no
+  link points down the page). The foot: the credit with the frame's ID
   ("Photo: NASA / Expedition 72 · ISS072-E-30246", `id` in
   `lib/hero-sunrise.json`; on phones its parts one a line, without the
-  separators) and Pause motion. Then the sections, each only
-  with content (`lib/home.ts`, unnumbered): the strongest project on its
-  stage (featured slot 1, led by its summary, no stats, mission number or
-  write-up link: its page links the write-up), the next two as rows and
-  any others as one line (`homeProjects`); the latest three entries,
-  without tags; and the close, headed by the owner's one-line statement
+  separators) and Pause motion (under the OS reduce-motion setting
+  nothing: no note reads the setting back). Then the sections, each only
+  with content (`lib/home.ts`, unnumbered), each tag row linking its
+  section's page only while that page holds more than home shows: the
+  strongest project on its stage (featured slot 1, led by its summary,
+  no stats, mission number or write-up link: its page links the
+  write-up; its title is its one link), the next two as rows
+  (`homeProjects`; the others are `/portfolio`'s alone, and All projects
+  shows only while there are any); the latest three entries, without
+  tags (All writing only while `/blog` lists more); and the close, in
+  open space (no rule over it), headed by the owner's one-line statement
   (`taglineOf`: the tagline, else the introduction's first sentence;
   "Contact" for screen readers without one) with a quiet link to About's
   current focus (the nav's Experience leads to the flight), then one way
@@ -391,17 +401,20 @@ only live in comments or commit messages.
   the one primary while there is an Open To line, else Send a message as
   a quiet link. On phones a section's link stays on its heading's line.
   The page stays under about 4,500 px at 1440 and 7,000 px at 390
-  (`home.spec.ts`). In Flight Manual the hero draws the planet's
-  parallels under the limb and has no foot row; on home the footer leaves
-  Pause motion to the hero. Pause motion is an unboxed control (the icon
-  and "Pause motion" in ink-2, in the controls' voice, a 44px target), in
-  the hero and the footer alike.
+  (`home.spec.ts`). In Flight Manual the hero draws the limb over open
+  paper (no parallels under it) and has no foot row; on home the footer
+  leaves Pause motion to the hero. Pause motion is an unboxed control (the
+  icon and "Pause motion" in ink-2, in the controls' voice, a 44px
+  target), in the hero and the footer alike, and shows nothing under the
+  OS reduce-motion setting, as without JavaScript.
 - **About** (`/about`, themed Crew File; plan §6.2 row 14, contract §9).
-  The patch is the identity mark (a `PageHead` `figure`; the site shows
-  no portrait; the head has no actions, the header carrying Experience
-  and CV, and no dek, the record stating the headline's facts), then the
-  record (`CrewRecord`: one hairline title block, Name in ink, Studying,
-  Previously, Focus, Links; no Open To, edit date or accent cell). A role
+  The head has no figure (the header's patch is the mark; the site shows
+  no portrait), no actions (the header carries Experience and Contact)
+  and no dek (the record states the headline's facts); then the record
+  (`CrewRecord`: one hairline title block, Name in ink, Studying,
+  Previously, Focus, Links: LinkedIn and GitHub only, beside the facts
+  they verify, the credentials' links being the CV's; no Open To, edit
+  date or accent cell). A role
   is set as on /resume: the title, then the organization and the dates as
   data (DM Mono 13px, `.titleblock__data`) in whole parts (`OpenToItems`,
   so no line ends on a dot), then the title's parenthetical
@@ -409,10 +422,12 @@ only live in comments or commit messages.
   one section head: also the mission files, `/contact` and the CV on
   `/resume`): the biography and the Now list grouped by
   `currentCuriosities[].kind` (`nowGroups`; a kind's label only when there
-  are two or more, and no Q1… numbers), each only when it has content,
-  then the close (`components/ui/ask.tsx`: "Questions or ideas?", Send a
-  message). The writing, the talks and the other sections are one click
-  away in the nav, not repeated here. Its
+  are two or more, and no Q1… numbers; a rule between questions only,
+  none over the first or under the last), each only when it has content;
+  the last ends the page in space, with no close (the header's Contact is
+  on screen).
+  The writing, the talks and the other sections are one click away in
+  the nav, not repeated here. Its
   section ids are prefixed (`crew-…`, and the home page's `home-…`)
   because a visited page, still mounted, can own the same fragment. No page carries the old design: there is no
   legacy stylesheet, token, class or icon library left, and
@@ -467,10 +482,19 @@ only live in comments or commit messages.
   lookups must resolve inside the visible page, not with
   `document.getElementById`.
 - Navigation labels and URLs come from `lib/navigation.ts` (header, menu
-  sheet, footer and the 404). Below 960px the header nav is a native
-  `popover` sheet, so it opens without JavaScript; `MenuButton` adds focus,
-  `inert` and the Tab loop. The sheet holds the five sections and the
-  theme choice only (the feed is in the footer).
+  sheet and the 404's primary). Below 960px the header nav is a native
+  `popover` sheet, so it opens without JavaScript (Baseline since 2024:
+  there is no fallback link); `MenuButton` adds focus, `inert` and the
+  Tab loop. The sheet holds the five sections and the theme choice only
+  (the feed is on `/blog` and each entry's close); the bar beside it
+  carries Contact and CV, which from 960px the nav's Contact and
+  Experience replace. The footer is one strip under its hairline: "©
+  2026 Adithya Rajendran · GitHub · LinkedIn", the colophon ("Built with
+  Next.js, Sanity and three.js · Source") and Pause motion (not on home),
+  all in the label voice; it repeats nothing the header carries (no
+  patch, sections, CV, RSS, theme or Back to top). The body is a column
+  whose `main` grows, so on a short page (the 404) the space falls above
+  the footer's hairline.
 - Never wrap page content in `<Suspense fallback={children}>`, and keep
   anything that must work without JavaScript out of Suspense: in a long
   page React streams a completed boundary holding more than ~500 bytes as
@@ -496,18 +520,18 @@ only live in comments or commit messages.
   `ThemeBootFallback` runs it once when `html[data-js]` is missing.
 - **Loss of Signal** (`components/los/`, the 404 and the error page):
   the page head (tag "Loss of signal · 404", or "Error · 500" with Try
-  again), a carrier trace shown already drawn (nothing on the page
-  animates), then three rows, Projects · Writing · Contact, and "Found a
-  broken link? Let me know". The 404 is one prerendered page for every
-  address, so what follows the missed address is read on the client
-  (`useRequestedPath`, server snapshot `null`): the Requested line, the
-  primary (`lostSection` in lib/navigation.ts: "All writing" under
-  `/blog/`, "All projects" under `/portfolio/`, else Home), the rows
-  without the section the primary offers (`lostRoutes`), in as many
-  columns as rows, and Let me know,
-  which carries the address to the form (`reportHref`:
-  `/contact?broken=…#hello`). Without JavaScript it is Home, the three
-  rows and `/contact#hello`.
+  again; the 404's lead "It may have moved or no longer exists.", since
+  the h1 says the rest), a carrier trace shown already drawn (the page's
+  one drawing: nothing on it animates), then "Found a broken link? Let me
+  know" and space. The 404 is one prerendered page for every address, so
+  what follows the missed address is read on the client
+  (`useRequestedPath`, server snapshot `null`): the primary
+  (`lostSection` in lib/navigation.ts: "All writing" under `/blog/`, "All
+  projects" under `/portfolio/`, else Home), the head's one action, and
+  Let me know, which carries the address to the form (`reportHref`:
+  `/contact?broken=…#hello`). Without JavaScript it is Home and
+  `/contact#hello`. No Requested line (the address bar shows it), no
+  link rows (the nav is on screen) and no engraved horizon.
 - Metadata image routes inside a route group get a stable `-<hash>` URL
   suffix from Next.js (`/about/opengraph-image-1ycygp`; `next build` prints
   them). Anything that requests them directly, like the warm lists
@@ -620,13 +644,16 @@ only live in comments or commit messages.
   Consulting only while `availability.consultingOpen` is on, and the
   topic's name prefixes the email subject. Each route's title and prompt
   are the profile's (`contactRoutes`, Studio group Site copy); a route
-  without a title takes its topic's name. A prompt is only the message
-  field's optional placeholder once its topic is chosen; the page gives
+  without a title takes its topic's name. A prompt is the message
+  field's placeholder once its topic is chosen; before that, and on the
+  email field, there is none (the labels say what goes in); the page gives
   no "include" instructions. The page is the head (the introduction and
-  `Availability`), then the form, whole in the first viewport at
-  1440×900 under the Message section's plain hairline (the limit is the
+  `Availability`, set apart by space alone), then, after space, the form
+  (its Message section named for screen readers only: no visible head or
+  hairline), whole in the first viewport at 1440×900 (the limit is the
   field's hint, for screen readers; the counter shows only when 100
-  characters or fewer are left), then the profiles. The Topic radios,
+  characters or fewer are left), which ends the page: the profiles are
+  the footer's and About's (no Profiles list). The Topic radios,
   one per line, are the routes (premium D3 folded the Topics column into
   them): each is named by its title and described by the owner's line
   where there is one (Research: `contactInvitation`, a `Segmented`
@@ -658,8 +685,11 @@ only live in comments or commit messages.
   problem comes back with its field (`invalid`, under that field); any
   other refusal, and a send the network loses (caught in the form, never
   the route's error page), is the failure under Send: "The message could
-  not be sent. Your text is still here." (or the reason: too many, not
-  verified), with Try again, Copy message and Message me on LinkedIn. A
+  not be sent." (or the reason: too many, not verified), with Copy
+  message and Message me on LinkedIn (the text stays in its fields, and
+  Send sends again: no Try again). Without JavaScript the `<noscript>`
+  block is "This form requires JavaScript." and the LinkedIn button, on
+  the section's one rule. A
   sent message is "Message received." (focused) and Write another
   message, and promises nothing: no reply address, no reply time, no
   auto-reply.
@@ -792,12 +822,12 @@ deployment require an authenticated Sanity CLI session.
   alt in their own words; feed, icons, headers, redirects, the Studio
   without chrome; the feed's four aliases answering 301, every writing
   page naming the feed, and the feed as a plain page in a browser; each
-  404's primary following the missed address, its rows without that
-  section and nothing animating; `security.txt` pointing to the form,
+  404's primary following the missed address, the report its only other
+  link and nothing animating; `security.txt` pointing to the form,
   unexpired), `nojs` (complete pages without JavaScript: header, nav
   through the popover menu, footer, Void with no motion and no theme
   controls, no hidden streamed segments, nothing rendered twice; the 404's
-  Home, three rows and plain report), `a11y`
+  Home and plain report), `a11y`
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
   Flight Manual, every page in full, and both kinds of 404), `layout` (no
   sideways scroll at 320–1920 px, the header's parts fit without
@@ -812,21 +842,26 @@ deployment require an authenticated Sanity CLI session.
   Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440
   and 390 in both themes, identity marks and focus aside, and on
   `/contact` refused with two invalid fields, only the first one's rule
-  orange; the primary an ink fill, the nav's bar and the header's CV
+  orange; the primary an ink fill, the nav's bar and the bar's CV
   ink), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, a post following the
   OS until a theme is chosen while every other page stays Void, on a
   full load and after a client navigation, Pause motion, the stored
-  theme on an unknown post or project URL), `chrome`
-  (the menu sheet's focus, `inert` and closing; Contact in the bar on a
-  phone; the current nav section; the header and footer naming every
-  section plainly; the footer naming the owner once, with one CV link and
-  the theme choice only from 960px; Back to top and Pause motion in the
-  controls' voice and the colophon a label),
+  theme on an unknown post or project URL, the three-way choice in the
+  menu sheet, and nothing in Pause motion's place under the OS setting),
+  `chrome` (the menu sheet's focus, `inert` and closing; Contact and CV
+  in the bar on a phone and neither from 960px; the current nav section;
+  the nav naming every section plainly, with no fallback Menu link; one
+  header hairline on every page; the footer one strip naming the owner
+  once, with GitHub, LinkedIn and Source its only links and Pause motion
+  its only control, fitting its width at 390 and 1440; Pause motion in
+  the controls' voice and the strip a label),
   `contact` (the routes are the form's Topic radios, each named by its
   title and described by the owner's line, with no Topics column or
   links beside the form, and a fragment picks one; a route's prompt
-  only as the message field's placeholder,
+  only as the message field's placeholder, and none before a topic or on
+  the email; the Message head for screen readers only and the form the
+  page's last section;
   the whole form in the first viewport at 1440×900 and reading in the
   order Tab takes at 390, 960, 1440 and 1920, Hiring only beside an
   Open To line, the email checked on leaving it and every field from the
@@ -834,10 +869,10 @@ deployment require an authenticated Sanity CLI session.
   once, each error under its field (the words in ink with their cross,
   a 2px rule on the field, orange on the first and ink after it), the
   counter only near the
-  limit; a refused send under Send with the text kept and Try again, Copy
-  message and LinkedIn, its stale alert clearing after leaving and
-  returning; a send the network drops staying on the page, Try again
-  sending again and the draft surviving a reload; "Message received."
+  limit; a refused send under Send with the text in its fields, Copy
+  message and LinkedIn and no Try again, its stale alert clearing after
+  leaving and returning; a send the network drops staying on the page,
+  Send sending again and the draft surviving a reload; "Message received."
   focused, promising nothing, and a fresh form; the 404's
   report arriving with its address, Consulting hidden while off, no email
   address or phone number, the no-JavaScript LinkedIn alternative; sends
@@ -859,15 +894,15 @@ deployment require an authenticated Sanity CLI session.
   else; no h2 margin number or listing line count or number, h2 at 32px
   or less and a 1.52 leading; the close (End of entry, the follow line, no Author block or
   pager heading, the pager by name), Copy on a listing, the
-  phone's contents box, the solid header, print, BlogPosting and
+  phone's contents box, the header's one hairline, print, BlogPosting and
   BreadcrumbList; on the
   fixture build also the listings at one width with no line cut and the
   highlighted line, footnotes and
   margin notes, the caution callout as a quiet note and revisions, their
   RSS output, and
   in-page links landing in the visible entry after a client-side
-  navigation), `resume` (Contact and Timeline · List in the first
-  viewport, Timeline chosen and the stage in view where motion runs, no
+  navigation), `resume` (Timeline · List in the first viewport, the
+  head leaving Contact to the header, Timeline chosen and the stage in view where motion runs, no
   orbit codes, Open PDF, Print or Share and no link to the flight's old
   page; the views switching in place, the scene dropped with its view,
   the choice kept across a client navigation; Skip to the list, The full
@@ -888,8 +923,8 @@ deployment require an authenticated Sanity CLI session.
   return), `missions` (every old `/portfolio` fragment sent on to its
   page, the index links every project with no counts, register, mission
   numbers or related pages, titles in sentence case and four stack items
-  at most on a card, the flagship's title and View the project in the
-  first viewport at 1440×900, each project page has its crumb (its number
+  at most on a card, the flagship's title, its one link, in the first
+  viewport at 1440×900 with no filled button, each project page has its crumb (its number
   never split), its title
   as the heading, close and pager and no title block, revision, "Table 1",
   jump to its own write-up or stand-in text, a stack item never split, a
@@ -902,29 +937,31 @@ deployment require an authenticated Sanity CLI session.
   Read the write-up lands on the original entry; on the fixture build a
   filled mission shows every module, its repository in the facts and its
   callouts as plain rows, and a planned one none of them), `home` (the
-  hero's name, availability, CV and the quiet link down to the projects
-  in the first viewport at 1280×800 and 390×844 with and without
+  hero's name, availability and its one action, CV, in the first
+  viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
   the name at 350, tracked 0.11–0.12em, on one line at 1440 and 1,400px
   wide at most at 1920; the header's wordmark hidden only while the hero's name is in view: back
-  at 400px down and after the quiet link to the projects; the starfield
+  at 400px down and with the projects in view; the starfield
   `running` only on screen, in a visible tab, in Void and with motion
-  allowed; the stars in the hero only, and not on paper; the credit with
-  its frame ID, and the drawn limb in Flight Manual; the sections in
-  order, unnumbered and without themed names, with their links, and the
-  latest writing without tags; the close headed by the tagline, with no
+  allowed, and nothing in Pause motion's place under the OS setting; the
+  stars in the hero only, and not on paper; the credit with its frame ID,
+  and the drawn limb in Flight Manual; the sections in order, unnumbered
+  and without themed names, each linking its page only while that page
+  holds more, no Also line, and the latest writing without tags; the close headed by the tagline, with no
   link to `/resume` (the nav's Experience is the flight's), its button
   only in the profile's words and
   only beside an Open To line, one primary at most and one way to
-  `/contact`; the flagship without stats or mission number, its
-  title in sentence case over four stack items at most; a row's cover a
+  `/contact`; the flagship without stats, mission number or type, its
+  title in sentence case and its one link (with the arrow, no button)
+  over four stack items at most; a row's cover a
   credited thumbnail, narrower than the stage's plate and, with the
   other, smaller (where the build has covers); the page's height
   at 1440 and 390; no gap wording and no old artwork), `crew` (About's
-  plain title with the patch and no portrait, head actions or dek, its record
-  without Open To, an edit date or an accent cell, the sections by their
-  plain names, no question numbers, no writing index or related pages,
-  Send a message, no gap wording; and no page keeping the old design's
+  plain title with no patch, portrait, head actions or dek, its record
+  without Open To, an edit date or an accent cell and LinkedIn and GitHub
+  its only links, the sections by their plain names, no question
+  numbers, no writing index, related pages or close, no gap wording; and no page keeping the old design's
   roots, classes or tokens),
   `budgets` (the brotli byte report, printed,
   not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the

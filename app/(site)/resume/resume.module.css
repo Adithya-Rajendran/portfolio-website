@@ -23,8 +23,9 @@
     color: var(--ink-2);
     font: 400 var(--label-size) / 1.5 var(--font-mono);
 }
+/* Space alone sets the Open To line apart from the intro. */
 .openTo {
-    margin-top: var(--s-5);
+    margin-top: var(--s-6);
 }
 
 /* ---- The CV: the shared section head, the rows in the main column ------- */

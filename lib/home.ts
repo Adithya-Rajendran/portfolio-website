@@ -28,9 +28,9 @@ export const HOME_PROJECT_ROWS = 2;
 
 /**
  * The home page's projects (`missionTiers`): the flagship with its summary
- * and plate, the next `HOME_PROJECT_ROWS` as compact rows, and any others
- * as one quiet line of links, so the least prominent project is the
- * owner's last.
+ * and plate and the next `HOME_PROJECT_ROWS` as compact rows. Home
+ * curates these; the others (`also`) are /portfolio's, and while there are
+ * any the section links there (All projects).
  */
 export function homeProjects<T extends { featured?: number | null }>(
     ordered: readonly T[],

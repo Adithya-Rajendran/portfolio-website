@@ -4,16 +4,17 @@ import { STATIC_PAGES } from "./support/routes";
 
 /**
  * About (themed Crew File; plan §6.2 PR 14, contract §9; premium WS2):
- * the head with the patch as the identity mark and no portrait, the
- * profile record (Name, Studying, Previously, Focus, Links: no Open To or
- * edit date, no accent cell), the sections by their plain names
- * (background, the Now list by kind) and the way to get in touch; no
- * writing index or related pages repeating other pages, and no question
- * numbers; the page names no gap. And the old design is gone from every
- * page: no legacy root, class or token.
+ * the head with no figure (the header's patch is the mark) and no
+ * portrait, the profile record (Name, Studying, Previously, Focus, Links:
+ * LinkedIn and GitHub; no Open To or edit date, no accent cell), the
+ * sections by their plain names (background, the Now list by kind), which
+ * end the page; no close repeating the header's Contact, no writing index
+ * or related pages repeating other pages, and no question numbers; the
+ * page names no gap. And the old design is gone from every page: no
+ * legacy root, class or token.
  */
 
-test("About opens on its head, the patch and the record", async ({ page }) => {
+test("About opens on its head and the record", async ({ page }) => {
     await page.goto("/about");
     const main = page.getByRole("main");
     const h1 = main.getByRole("heading", { level: 1 });
@@ -22,13 +23,10 @@ test("About opens on its head, the patch and the record", async ({ page }) => {
     await expect(
         main.getByText(copy.themed, { exact: true }).first(),
     ).toBeVisible();
-    await expect(page.locator("html")).toHaveAttribute("data-header", "solid");
 
-    // The patch is the identity mark: decorative, and no portrait.
-    const patch = main.locator(".page-head__figure");
-    await expect(patch).toHaveAttribute("aria-hidden", "true");
-    await expect(patch.locator("use")).toHaveAttribute("href", "#ar-patch");
-    await expect(patch).toBeVisible();
+    // The header's patch is the mark: the head repeats it nowhere, and
+    // there is no portrait.
+    await expect(main.locator("svg.patch")).toHaveCount(0);
     await expect(main.locator("img")).toHaveCount(0);
 
     const record = main.getByRole("group", { name: crewCopy.recordLabel });
@@ -40,6 +38,14 @@ test("About opens on its head, the patch and the record", async ({ page }) => {
         record.getByRole("term").filter({ hasText: /^(Open to|Updated)$/i }),
     ).toHaveCount(0);
     await expect(record.locator(".titleblock__cell--accent")).toHaveCount(0);
+    // The profiles beside the facts they verify: LinkedIn and GitHub
+    // only (the credentials' links are the CV's).
+    const links = record.getByRole("link");
+    if (await links.count()) {
+        for (const label of await links.allTextContents()) {
+            expect(label.trim()).toMatch(/^(LinkedIn|GitHub)$/);
+        }
+    }
 
     // The header carries Experience and CV; the head repeats neither,
     // and it has no dek: the record states the headline's facts.
@@ -47,7 +53,9 @@ test("About opens on its head, the patch and the record", async ({ page }) => {
     await expect(main.locator(".page-head__intro")).toHaveCount(0);
 });
 
-test("the sections name themselves plainly and lead on", async ({ page }) => {
+test("the sections name themselves plainly and end the page", async ({
+    page,
+}) => {
     await page.goto("/about");
     const main = page.getByRole("main");
     // No section numbers: a heading's words are its name.
@@ -77,10 +85,10 @@ test("the sections name themselves plainly and lead on", async ({ page }) => {
     ).toHaveCount(0);
     await expect(main.getByRole("navigation")).toHaveCount(0);
 
-    const touch = main.getByRole("link", { name: copy.message });
-    await expect(touch).toHaveAttribute("href", "/contact#hello");
-    await touch.click();
-    await expect(page).toHaveURL(/\/contact#hello$/);
+    // No close: the header's Contact is on screen; the last section ends
+    // the page.
+    await expect(main.locator('a[href^="/contact"]')).toHaveCount(0);
+    await expect(main.locator(".ask")).toHaveCount(0);
 });
 
 test("About names no gap and shows no email", async ({ page }) => {

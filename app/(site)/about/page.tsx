@@ -2,16 +2,13 @@ import type { Metadata } from "next";
 import CrewRecord from "@/components/crew/crew-record";
 import Questions from "@/components/crew/questions";
 import { ProfilePageJsonLd } from "@/components/json-ld";
-import Ask from "@/components/ui/ask";
-import { ButtonLink } from "@/components/ui/button";
 import DocSection from "@/components/ui/doc-section";
-import { Patch } from "@/components/ui/icon";
 import { Updated } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { aboutCopy as copy, nowKinds } from "@/lib/copy";
 import { nowGroups } from "@/lib/crew";
-import { contactHref, siteRoutes } from "@/lib/navigation";
+import { siteRoutes } from "@/lib/navigation";
 import {
     getAllPosts,
     getAllProjects,
@@ -62,15 +59,15 @@ function paragraphsOf(bio: string | null | undefined): string[] {
 }
 
 /**
- * About (themed Crew File; plan §6.2 row 14): the head with the patch as
- * the identity mark (there is no portrait) and no dek (the record under it
- * states what the headline would), the profile record (G6), then
- * the biography, the Now list by kind (a kind's label only when there is
- * more than one), and the way to get in touch. The writing, the talks and
- * the other sections have their own pages, one click away in the nav. A
- * section with nothing to show is absent; the sections are titled by
- * their plain names. Everything is server-rendered and static; there are
- * no islands.
+ * About (themed Crew File; plan §6.2 row 14): the head, with no figure
+ * (the header's patch is the mark; there is no portrait) and no dek (the
+ * record under it states what the headline would), the profile record
+ * (G6), then the biography and the Now list by kind (a kind's label only
+ * when there is more than one), which ends the page in space. The
+ * writing, the talks, the other sections and Contact are one click away
+ * in the nav. A section with nothing to show is absent; the sections are
+ * titled by their plain names. Everything is server-rendered and static;
+ * there are no islands.
  */
 export default async function AboutPage() {
     const [profile, posts, projects] = await Promise.all([
@@ -87,12 +84,7 @@ export default async function AboutPage() {
     return (
         <div data-page="about">
             <ProfilePageJsonLd />
-            <PageHead
-                className="shell"
-                tag={copy.themed}
-                title={copy.plain}
-                figure={<Patch />}
-            />
+            <PageHead className="shell" tag={copy.themed} title={copy.plain} />
 
             <div className="shell">
                 <CrewRecord profile={profile} className={styles.record} />
@@ -141,24 +133,6 @@ export default async function AboutPage() {
                     )}
                 </DocSection>
             ) : null}
-
-            <section
-                className="section"
-                aria-labelledby="crew-close-h"
-                data-print="hide"
-            >
-                <div className="shell">
-                    <Ask id="crew-close-h" title={copy.ask}>
-                        <ButtonLink
-                            href={contactHref("hello")}
-                            icon="arrow"
-                            iconAt="end"
-                        >
-                            {copy.message}
-                        </ButtonLink>
-                    </Ask>
-                </div>
-            </section>
         </div>
     );
 }

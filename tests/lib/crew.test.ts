@@ -229,7 +229,11 @@ describe("crewRecord", () => {
         const cells = crewRecord(
             profile({
                 socialLinks: [
-                    { _key: "l", label: "LinkedIn", url: "https://x.test/me" },
+                    {
+                        _key: "l",
+                        label: "LinkedIn",
+                        url: "https://www.linkedin.com/in/me",
+                    },
                     { _key: "m", label: "Mail", url: "mailto:a@b.test" },
                 ],
             }),
@@ -239,8 +243,41 @@ describe("crewRecord", () => {
             ["links", 12],
         ]);
         expect(cells[1].links).toEqual([
-            { label: "LinkedIn", url: "https://x.test/me", host: "x.test/me" },
+            {
+                label: "LinkedIn",
+                url: "https://www.linkedin.com/in/me",
+                host: "linkedin.com/in/me",
+            },
         ]);
         expect(crewRecord(null)).toEqual([]);
+    });
+
+    it("links LinkedIn and GitHub only, the profiles beside the facts", () => {
+        const cells = crewRecord(
+            profile({
+                socialLinks: [
+                    {
+                        _key: "c",
+                        label: "Credly",
+                        url: "https://www.credly.com/users/me",
+                    },
+                    {
+                        _key: "g",
+                        label: "GitHub",
+                        url: "https://github.com/me",
+                    },
+                    {
+                        _key: "l",
+                        label: "LinkedIn",
+                        url: "https://www.linkedin.com/in/me",
+                    },
+                ],
+            }),
+        );
+        const links = cells.find((cell) => cell.id === "links")?.links;
+        expect(links?.map((link) => link.label)).toEqual([
+            "LinkedIn",
+            "GitHub",
+        ]);
     });
 });

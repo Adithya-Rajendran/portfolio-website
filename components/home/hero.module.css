@@ -82,8 +82,7 @@
 }
 .rim,
 .surface,
-.halo,
-.parallels {
+.halo {
     display: none;
     fill: none;
 }
@@ -133,9 +132,9 @@
     }
 }
 
-/* Flight Manual: no photograph; the limb is drawn in ink with the
-   planet's parallels under it, the sun the orange identity mark. The photo
-   box runs to the hero's foot, which has nothing to credit or pause. */
+/* Flight Manual: no photograph; the limb is drawn in ink over open paper,
+   the sun the orange identity mark. The photo box runs to the hero's
+   foot, which has nothing to credit or pause. */
 :global([data-theme="manual"]) .img {
     display: none;
 }
@@ -143,12 +142,6 @@
     :global([data-theme="manual"]) .photo {
         bottom: 0;
     }
-}
-:global([data-theme="manual"]) .parallels {
-    display: inline;
-    stroke: var(--rule-2);
-    stroke-width: 1px;
-    stroke-dasharray: 2 6;
 }
 :global([data-theme="manual"]) .rim {
     display: inline;
@@ -238,14 +231,11 @@
 .openTo {
     justify-content: center;
 }
-/* One action and one quiet link: CV, a hairline button over the
-   photograph (no fill), and the way down to the projects. */
+/* One action, centred under the Open To line: CV, a hairline button over
+   the photograph (no fill). */
 .routes {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
     justify-content: center;
-    gap: var(--s-3) var(--s-6);
     margin-top: var(--s-7);
 }
 /* Over the photograph the CV stays a hairline, and fills with ink on
@@ -254,10 +244,6 @@
     border-color: var(--ink-1);
     background: var(--ink-1);
     color: var(--bg);
-}
-/* The link points down the page, so its arrow nudges down. */
-.down:hover :global(.icon) {
-    transform: translateY(3px);
 }
 
 .foot {
@@ -348,9 +334,6 @@
     .creditId {
         display: block;
     }
-    .motion :global(.motion-ctl__os) {
-        white-space: nowrap;
-    }
 }
 @media (max-width: 23.99rem) {
     .name {
@@ -372,12 +355,6 @@
         display: inline;
         stroke: var(--ink-1);
         stroke-width: 1.25px;
-    }
-    .parallels {
-        display: inline;
-        stroke: var(--rule-2);
-        stroke-width: 1px;
-        stroke-dasharray: 2 6;
     }
     .sun {
         display: inline;

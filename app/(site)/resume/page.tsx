@@ -23,7 +23,7 @@ import {
     type CvEntry,
 } from "@/lib/cv";
 import { formatEntryDate, logEntries } from "@/lib/log-index";
-import { contactHref, siteRoutes } from "@/lib/navigation";
+import { siteRoutes } from "@/lib/navigation";
 import { availabilityLine, getProfileLink } from "@/lib/profile-content";
 import { resolveResumeAssetUrl } from "@/lib/resume";
 import {
@@ -211,7 +211,8 @@ function credentialRow(credential: CvCredential) {
 
 /**
  * Trajectory · Experience / CV (G3): under the head with what the owner is
- * open to, the PDF and the way to get in touch, the record in two views
+ * open to and the PDF (the header's Contact is the way to get in touch),
+ * the record in two views
  * (components/cv/experience-views.tsx): Timeline, the flight through it
  * (the default where motion runs), and List, the CV a hiring reader can
  * scan (education, experience, projects, writing and talks, skills,
@@ -487,8 +488,8 @@ export default async function ResumePage() {
                             text={openTo}
                         />
                     ) : null}
-                    <div className="cluster page-head__actions">
-                        {hasPdf ? (
+                    {hasPdf ? (
+                        <div className="cluster page-head__actions">
                             <a
                                 className={buttonClass({
                                     variant: "primary",
@@ -499,22 +500,8 @@ export default async function ResumePage() {
                                 <Icon name="download" />
                                 {copy.download}
                             </a>
-                        ) : null}
-                        <Link
-                            className={buttonClass({
-                                variant: hasPdf ? "default" : "primary",
-                                size: "sm",
-                            })}
-                            href={
-                                openTo
-                                    ? contactHref("hiring")
-                                    : siteRoutes.contact
-                            }
-                        >
-                            {copy.contact}
-                            <Icon name="arrow" className="icon--nudge" />
-                        </Link>
-                    </div>
+                        </div>
+                    ) : null}
                     {profile?.resumeNote?.trim() ? (
                         <p className={styles.note}>
                             {profile.resumeNote.trim()}

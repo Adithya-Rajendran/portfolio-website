@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import LogIndex from "@/components/blogs/log-index";
 import Hero, { preloadHeroPhoto } from "@/components/home/hero";
 import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
@@ -45,8 +44,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * One section of the home page (contract §1, §9): the tag row (the
- * plain h2, a hairline and one link to the section's page),
- * then its content. The ids are prefixed, because a visited page that
+ * plain h2, a hairline and, while the section's page holds more than
+ * home shows, one link to it), then its content. The ids are prefixed, because a visited page that
  * stays mounted can own the same fragment (/portfolio's #projects).
  */
 function Act({
@@ -79,10 +78,10 @@ function Act({
 }
 
 /**
- * Home: the hero (the name, the profile's headline and availability, CV
- * and the way down to the projects), then, each only with content, the
- * strongest project on its stage with the next two as rows and any
- * others as one line, and the latest three entries; then the close: the
+ * Home: the hero (the name, the profile's headline and availability, and
+ * CV), then, each only with content, the strongest project on its stage
+ * with the next two as rows, and the latest three entries, each linking
+ * its section's page only while that page holds more; then the close: the
  * owner's tagline as its heading with the way to his current focus,
  * then one way to /contact: the profile's button that
  * answers what the owner is open to (the one primary, while both are
@@ -101,22 +100,24 @@ export default async function Home() {
     // The button that answers the Open To line: the profile's words.
     const answer = open ? profile?.availability?.cta?.trim() || null : null;
 
-    // Projects: the flagship on its stage (led by its summary; no stats),
-    // two rows (each with its cover as a thumbnail, when it has one), then
-    // any others as one line.
+    // Projects: the flagship on its stage (led by its summary; no stats)
+    // and two rows (each with its cover as a thumbnail, when it has one).
+    // Home curates these three: All projects shows only while /portfolio
+    // holds more.
     const ordered = missionOrder(projects);
     const picked = homeProjects(ordered);
     const mission = (project: (typeof ordered)[number]) =>
         toMission(project, siteConfig.url);
     const flagship = picked.flagship ? mission(picked.flagship) : null;
     const rows = picked.rows.map(mission);
-    const also = picked.also.map(mission);
     const detail = flagship ? await getProjectBySlug(flagship.slug) : null;
     const cover = detail?.cover?.asset ? detail.cover : null;
     const poster = detail?.model?.poster?.asset ? detail.model.poster : null;
-    // Writing: the latest three entries. (The stage leads to the project
-    // alone: its page links the write-up, and the entries are listed here.)
-    const latest = logEntries(posts).slice(0, 3);
+    // Writing: the latest three entries, and All writing only while /blog
+    // lists more. (The stage leads to the project alone: its page links the
+    // write-up, and the entries are listed here.)
+    const entries = logEntries(posts);
+    const latest = entries.slice(0, 3);
 
     // The close: the owner's one-line statement of what he is exploring,
     // and the way to his current questions on About.
@@ -134,7 +135,6 @@ export default async function Home() {
                 name={name}
                 headline={profile?.headline?.trim() || null}
                 openTo={open}
-                projects={ordered.length > 0}
             />
 
             {acts.includes("projects") && flagship ? (
@@ -142,9 +142,11 @@ export default async function Home() {
                     id="projects"
                     title={copy.projectsAct.title}
                     meta={
-                        <LinkArrow href={siteRoutes.portfolio}>
-                            {copy.projectsAct.all}
-                        </LinkArrow>
+                        picked.also.length ? (
+                            <LinkArrow href={siteRoutes.portfolio}>
+                                {copy.projectsAct.all}
+                            </LinkArrow>
+                        ) : undefined
                     }
                 >
                     <MissionStage
@@ -167,21 +169,6 @@ export default async function Home() {
                             ))}
                         </MissionRows>
                     ) : null}
-                    {also.length ? (
-                        <p className={styles.also}>
-                            <span className={styles.alsoLabel}>
-                                {copy.projectsAct.also}
-                            </span>
-                            {also.map((item, index) => (
-                                <span key={item.id}>
-                                    {index ? (
-                                        <span aria-hidden="true"> · </span>
-                                    ) : null}
-                                    <Link href={item.href}>{item.title}</Link>
-                                </span>
-                            ))}
-                        </p>
-                    ) : null}
                 </Act>
             ) : null}
 
@@ -190,9 +177,11 @@ export default async function Home() {
                     id="writing"
                     title={copy.writingAct.title}
                     meta={
-                        <LinkArrow href={siteRoutes.blog}>
-                            {copy.writingAct.all}
-                        </LinkArrow>
+                        entries.length > latest.length ? (
+                            <LinkArrow href={siteRoutes.blog}>
+                                {copy.writingAct.all}
+                            </LinkArrow>
+                        ) : undefined
                     }
                 >
                     <LogIndex

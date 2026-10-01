@@ -33,45 +33,20 @@
     }
 }
 
-/* ---- Projects: the stage, two rows (MissionRows), then one line of the
-   rest ------------------------------------------------------------------ */
+/* ---- Projects: the stage, then two rows (MissionRows) ---------------- */
 .projects {
     margin-top: var(--space-block);
 }
-.also {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--s-1) var(--s-3);
-    margin-top: var(--s-6);
-    padding-top: var(--s-3);
-    border-top: var(--rule-hair) solid var(--rule-1);
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.5 var(--font-display);
-}
-.alsoLabel {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
-}
-.also a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    color: var(--ink-1);
-    text-underline-offset: 0.25em;
-}
 
 /* ---- The close: the owner's statement, the way to his current focus,
-   then one way to /contact (the primary, else Send a message). The
+   then one way to /contact (the primary, else Send a message), in open
+   space: the gap above sets it apart, with no rule of its own. The
    statement shares the rows' step, so the page keeps to six sizes. ----- */
 .close {
     display: grid;
     justify-items: start;
     gap: var(--s-4);
     padding-top: var(--s-6);
-    border-top: var(--rule-hair) solid var(--rule-2);
 }
 .tagline {
     max-width: 30ch;

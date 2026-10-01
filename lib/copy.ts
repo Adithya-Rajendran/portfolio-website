@@ -18,8 +18,6 @@ export const chromeCopy = {
     toDark: "Switch to dark theme",
     holdDrift: "Pause motion",
     resumeDrift: "Resume motion",
-    motionHeldByOs: "Motion reduced",
-    backToTop: "Back to top",
     /** The colophon: how the site is made, and its source. */
     colophon: "Built with Next.js, Sanity and three.js",
     source: "Source",
@@ -37,12 +35,10 @@ export const themeOptions = [
 export const lossOfSignalCopy = {
     tag: "Loss of signal · 404",
     title: "Page not found",
-    lead: "The page you requested could not be found. It may have moved or no longer exists.",
+    lead: "It may have moved or no longer exists.",
     home: "Home",
     /** The primary for a missed address under a section's index. */
     index: { missions: "All projects", log: "All writing" },
-    requested: "Requested",
-    sections: "Site sections",
     report: "Found a broken link?",
     reportLink: "Let me know",
 } as const;
@@ -66,8 +62,8 @@ export const errorCopy = {
 export const contactCopy = {
     themed: "Comms",
     plain: "Contact",
+    /** The form's section, named for screen readers. */
     message: "Message",
-    elsewhere: "Profiles",
     openTo: "Open to",
     topics: {
         hiring: { name: "Hiring" },
@@ -79,9 +75,7 @@ export const contactCopy = {
         topicLegend: "Topic",
         topicOptional: "(optional)",
         emailLabel: "Your email",
-        emailPlaceholder: "you@example.com",
         messageLabel: "Message",
-        messagePlaceholder: "What’s on your mind?",
         messageHint: (max: number) =>
             `Up to ${max.toLocaleString("en-US")} characters.`,
         countHundred: "100 characters or fewer left.",
@@ -99,7 +93,7 @@ export const contactCopy = {
             messageLong: (max: number) =>
                 `Shorten the message to ${max.toLocaleString("en-US")} characters or fewer.`,
         },
-        /** A send that did not go, under Send; `kept` follows each. */
+        /** A send that did not go, under Send. */
         failures: {
             unsent: "The message could not be sent.",
             unverified:
@@ -107,8 +101,6 @@ export const contactCopy = {
             tooMany:
                 "Too many messages were sent in a short time. Try again in a few minutes.",
         },
-        kept: "Your text is still here.",
-        retry: "Try again",
         copyMessage: "Copy message",
         copied: "Copied",
         copyFailed: "Copy failed",
@@ -123,11 +115,7 @@ export const contactCopy = {
     /** The alternative to the form: beside a failed send, and without
      *  JavaScript. */
     linkedIn: "Message me on LinkedIn",
-    noScript: {
-        title: "This form requires JavaScript.",
-        body: "You can also reach me on LinkedIn.",
-        profiles: "You can also reach me through the profiles below.",
-    },
+    noScript: "This form requires JavaScript.",
 } as const;
 
 /**
@@ -244,7 +232,6 @@ export const cvCopy = {
             { value: "list", label: "List" },
         ],
     },
-    contact: "Contact",
     download: "Download CV (PDF)",
     openTo: "Open to",
     /** The sections' plain names, on screen and on paper. */
@@ -284,7 +271,6 @@ export const missionsCopy = {
     more: "More projects",
     /** The least prominent projects, under the tiles. */
     also: "Also",
-    openFile: "View the project",
     readWriteUp: "Read the write-up",
     stack: "Stack",
     /** A project page's share-card alt. */
@@ -330,19 +316,18 @@ export const missionsCopy = {
  * owner's.
  */
 export const homeCopy = {
-    /** The hero's action (CV) and its quiet link down to the projects
-     *  (the section's title). */
+    /** The hero's one action (CV). */
     routesLabel: "Start here",
     cv: "CV",
     openTo: "Open to",
     projectsAct: {
         title: "Selected projects",
+        /** Only while /portfolio holds more than home's three. */
         all: "All projects",
-        /** The projects past the first three, as one line of links. */
-        also: "Also",
     },
     writingAct: {
         title: "Latest writing",
+        /** Only while /blog lists more than home's three. */
         all: "All writing",
     },
     /** The close: the owner's tagline is its heading (`title` names it
@@ -367,9 +352,9 @@ export const nowKinds = {
 } as const;
 
 /**
- * About (/about; themed Crew File): the page head, its sections and the
- * close. UI copy only: the headline, the biography and the Now list are
- * the owner's.
+ * About (/about; themed Crew File): the page head and its sections. UI
+ * copy only: the headline, the biography and the Now list are the
+ * owner's.
  */
 export const aboutCopy = {
     themed: "Crew File",
@@ -379,8 +364,6 @@ export const aboutCopy = {
     bio: "Background",
     now: "Current focus",
     updated: "Updated",
-    ask: "Questions or ideas?",
-    message: "Send a message",
 } as const;
 
 /** The crew record (G6): /about. */

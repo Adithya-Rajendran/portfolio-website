@@ -30,6 +30,16 @@
         text-rendering: optimizeLegibility;
         overflow-x: clip;
     }
+    /* On a page shorter than the screen (the 404) the main grows, so the
+       space falls above the footer's hairline and the footer closes the
+       screen. Only the public site's body holds #main-content. */
+    body:has(> #main-content) {
+        display: flex;
+        flex-direction: column;
+    }
+    #main-content {
+        flex: 1 0 auto;
+    }
 
     h1,
     h2,

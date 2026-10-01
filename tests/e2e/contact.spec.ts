@@ -15,8 +15,8 @@ import { expect, test } from "./support/test";
  * checks the email on leaving it and every field from the first submit,
  * each error under its field, in ink with its cross, the field marked by
  * one 2px orange rule (premium D1); a send that does not go (refused, or lost
- * on the network) stays on the page with the text kept and the ways on,
- * and the draft survives a reload; a sent message says "Message
+ * on the network) stays on the page with the text in its fields and the
+ * ways on, and the draft survives a reload; a sent message says "Message
  * received." and promises nothing; the 404's report arrives with the
  * missed address; Consulting stays hidden while it is off, and without
  * JavaScript the LinkedIn alternative stands in for the form. Nothing on
@@ -88,24 +88,49 @@ test("/comms redirects to the contact page", async ({ page }) => {
 test("a route's fragment picks its topic on arrival, and its prompt is only the field's placeholder", async ({
     page,
 }, testInfo) => {
+    // Before a topic is picked the fields suggest nothing: their labels
+    // say what goes in them.
+    await page.goto("/contact");
+    const { email, message } = fields(page);
+    await expect(email).not.toHaveAttribute("placeholder", /.*/);
+    await expect(message).not.toHaveAttribute("placeholder", /.*/);
+
     await page.goto("/contact#hello");
     await expect(topicRadio(page, "hello")).toBeChecked();
     // The message field suggests what to write with the route's own
-    // prompt (the profile's), or its plain one when the route has none;
-    // the page gives no instructions besides.
-    const message = page.getByRole("textbox", { name: form.messageLabel });
-    const placeholder = (await message.getAttribute("placeholder")) ?? "";
-    expect(placeholder.length).toBeGreaterThan(0);
+    // prompt (the profile's), when it has one; the page gives no
+    // instructions besides.
+    const placeholder = await message.getAttribute("placeholder");
     if (testInfo.project.name === "fixture") {
         expect(placeholder).toBe(
-            FIXTURE_PROFILE.contactRoutes?.hello?.prompt ??
-                form.messagePlaceholder,
+            FIXTURE_PROFILE.contactRoutes?.hello?.prompt ?? null,
         );
     }
-    if (placeholder !== form.messagePlaceholder) {
+    if (placeholder) {
         await expect(page.getByRole("main")).not.toContainText(placeholder);
     }
+    await expect(email).not.toHaveAttribute("placeholder", /.*/);
     await expect(page.getByRole("main")).not.toContainText(/\bInclude\b/);
+});
+
+test("the form follows the head after space and ends the page", async ({
+    page,
+}) => {
+    await page.goto("/contact");
+    const main = page.getByRole("main");
+    // The section is named for screen readers; no visible head or rule
+    // repeats the field's label above it.
+    const section = main.getByRole("region", { name: contactCopy.message });
+    await expect(section).toBeVisible();
+    await expect(section.locator(".section-tag")).toHaveCount(0);
+    await expect(
+        section.getByRole("heading", { level: 2, name: contactCopy.message }),
+    ).toHaveClass(/sr-only/);
+    // No Profiles list after it: the form is the page's last section.
+    await expect(main.getByRole("region", { name: "Profiles" })).toHaveCount(0);
+    await expect(
+        main.locator("[data-page='contact'] > section").last(),
+    ).toHaveId("message");
 });
 
 test("the form comes first, whole, in the first viewport", async ({ page }) => {
@@ -155,8 +180,8 @@ test("the routes are the form's topics, each described by the owner's line, with
     await page.goto("/contact");
     const main = page.getByRole("main");
     // No column of routes: no Topics heading, no route rows, and no
-    // links in the Message section (the profiles below are the way
-    // elsewhere).
+    // links in the Message section (the header and the footer carry the
+    // profiles).
     await expect(main.getByRole("heading", { name: "Topics" })).toHaveCount(0);
     await expect(main.locator("[data-topic]")).toHaveCount(0);
     await expect(page.locator("#message").getByRole("link")).toHaveCount(0);
@@ -303,13 +328,16 @@ test("a refused send says so under Send, keeps the message and offers the ways o
     const send = page.getByRole("button", { name: form.send });
     await send.click();
     const alert = page.getByRole("main").getByRole("alert");
-    await expect(alert).toHaveText(`${form.failures.unsent} ${form.kept}`);
-    // Under Send, with Try again, Copy message and LinkedIn.
+    await expect(alert).toHaveText(form.failures.unsent);
+    // Under Send, with Copy message and LinkedIn: Send itself sends
+    // again, so there is no second button for it.
     expect((await alert.boundingBox())!.y).toBeGreaterThan(
         (await send.boundingBox())!.y,
     );
     const main = page.getByRole("main");
-    await expect(main.getByRole("button", { name: form.retry })).toBeVisible();
+    await expect(main.getByRole("button", { name: /try again/i })).toHaveCount(
+        0,
+    );
     await expect(
         main.getByRole("button", { name: form.copyMessage }),
     ).toBeVisible();
@@ -331,7 +359,7 @@ test("a refused send says so under Send, keeps the message and offers the ways o
     await expect(message).toHaveValue("A message from the browser tests.");
 });
 
-test("a send lost on the network stays on the page, keeps the text and tries again", async ({
+test("a send lost on the network stays on the page, keeps the text and sends again", async ({
     page,
 }, testInfo) => {
     test.skip(
@@ -351,7 +379,7 @@ test("a send lost on the network stays on the page, keeps the text and tries aga
     await page.getByRole("button", { name: form.send }).click();
     // The form's own failure, not the route's error page.
     await expect(page.getByRole("main").getByRole("alert")).toHaveText(
-        `${form.failures.unsent} ${form.kept}`,
+        form.failures.unsent,
     );
     await expect(page).toHaveURL(/\/contact$/);
     await expect(
@@ -360,7 +388,7 @@ test("a send lost on the network stays on the page, keeps the text and tries aga
     await expect(message).toHaveValue("A message the network drops.");
     expect(posts).toBe(1);
 
-    await page.getByRole("button", { name: form.retry }).click();
+    await page.getByRole("button", { name: form.send }).click();
     await expect.poll(() => posts).toBe(2);
 
     // The draft is kept for the tab's session: a reload restores it.
@@ -435,11 +463,8 @@ test("Consulting stays hidden while it is off", async ({ page }, testInfo) => {
 test("the page shows no email address or phone number", async ({ request }) => {
     const html = await (await request.get("/contact")).text();
     expect(html).not.toMatch(/mailto:|tel:/i);
-    // The one address on the page is the field's placeholder.
-    const addresses = html.match(/[\w.+-]+@[\w-]+\.[\w.-]+/g) ?? [];
-    expect(
-        addresses.filter((address) => address !== form.emailPlaceholder),
-    ).toEqual([]);
+    // No address at all, not even a placeholder's.
+    expect(html.match(/[\w.+-]+@[\w-]+\.[\w.-]+/g) ?? []).toEqual([]);
 });
 
 test("/portfolio#contact is sent on to the form", async ({ page }) => {

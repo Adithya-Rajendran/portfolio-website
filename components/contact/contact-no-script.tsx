@@ -6,8 +6,8 @@ import type { ExternalLink } from "@/lib/sanity-client";
 /**
  * What a reader without JavaScript gets in place of the form, which needs
  * it for BotID's challenge (plan §2.5.6): the reason, and the LinkedIn
- * profile from the Sanity profile, or a pointer to the profiles listed on
- * the page. Directive-free, so server and client components can render it.
+ * profile from the Sanity profile as the way on. Directive-free, so
+ * server and client components can render it.
  */
 export default function ContactNoScript({
     linkedIn,
@@ -16,13 +16,10 @@ export default function ContactNoScript({
     linkedIn?: ExternalLink;
     className?: string;
 }) {
-    const copy = contactCopy.noScript;
     return (
         <noscript>
             <div className={className}>
-                <p>
-                    <strong>{copy.title}</strong> {copy.body}
-                </p>
+                <p>{contactCopy.noScript}</p>
                 {linkedIn ? (
                     <p>
                         <a
@@ -34,9 +31,7 @@ export default function ContactNoScript({
                             <Icon name="external" />
                         </a>
                     </p>
-                ) : (
-                    <p>{copy.profiles}</p>
-                )}
+                ) : null}
             </div>
         </noscript>
     );

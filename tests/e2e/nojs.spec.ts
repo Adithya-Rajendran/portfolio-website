@@ -5,9 +5,9 @@ import { MISSING_PAGES, STATIC_PAGES, contentPages } from "./support/routes";
 
 /**
  * Without JavaScript every page is complete: the skip link, header, primary
- * navigation (in the popover menu sheet below 960px), the CV link, one
- * `main` with content, one `h1` and the footer, in Void with no motion and
- * no theme or motion controls. Nothing is held back in a streamed segment
+ * navigation (in the popover menu sheet below 960px, beside the bar's
+ * Contact and CV), one `main` with content, one `h1` and the footer, in
+ * Void with no motion and no theme or motion controls. Nothing is held back in a streamed segment
  * only JavaScript reveals, and nothing is rendered twice (the defects PR 1
  * fixed).
  */
@@ -26,17 +26,17 @@ async function expectCompletePage(page: Page, path: string, status = 200) {
 
     const banner = page.getByRole("banner");
     await expect(banner).toBeVisible();
-    await expect(
-        banner.getByRole("link", { name: cvLink.label, exact: true }),
-    ).toBeVisible();
     // Below 960px the nav is a popover sheet, which opens without
-    // JavaScript (popovertarget).
+    // JavaScript (popovertarget); from 960px the nav's Experience leads to
+    // the CV.
     const menu = banner.getByRole("button", { name: "Menu" });
     if (await menu.isVisible()) {
-        // Contact is in the bar as well, so the form is one tap away.
-        await expect(
-            banner.getByRole("link", { name: "Contact", exact: true }),
-        ).toBeVisible();
+        // Contact and CV are in the bar as well, one tap away.
+        for (const name of ["Contact", cvLink.label]) {
+            await expect(
+                banner.getByRole("link", { name, exact: true }),
+            ).toBeVisible();
+        }
         await menu.click();
     }
     const nav = banner.getByRole("navigation", { name: "Main" });
@@ -118,21 +118,17 @@ for (const width of [1440, 390]) {
     });
 }
 
-test("the 404 offers Home, three sections and the report without JavaScript", async ({
+test("the 404 offers Home and the report without JavaScript", async ({
     page,
 }) => {
-    // The server never knows the missed address: Home, every row, and the
-    // report to Hello without it.
+    // The server never knows the missed address: Home, and the report to
+    // Hello without it. The nav is the way to the sections.
     await page.goto(MISSING_PAGES.unmatched);
     const main = page.getByRole("main");
+    await expect(main.getByRole("link")).toHaveText(["Home", "Let me know"]);
     await expect(
         main.getByRole("link", { name: "Home", exact: true }),
     ).toHaveAttribute("href", "/");
-    await expect(
-        main
-            .getByRole("navigation", { name: "Site sections" })
-            .getByRole("link"),
-    ).toHaveCount(3);
     await expect(
         main.getByRole("link", { name: "Let me know" }),
     ).toHaveAttribute("href", "/contact#hello");

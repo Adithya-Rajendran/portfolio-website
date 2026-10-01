@@ -1,10 +1,9 @@
 /*
- * About (/about; themed Crew File): the head with the patch, the profile
- * record, then document sections (the biography, the Now list by kind)
- * and the close. Every part is shared (styles/components.css: the page
- * head and its figure, the title block, the question rows, the document
- * sections and the close); only the spacing is here. The close is the
- * last section, so its own padding ends the page.
+ * About (/about; themed Crew File): the head, the profile record, then
+ * document sections (the biography, the Now list by kind). Every part is
+ * shared (styles/components.css: the page head, the title block, the
+ * question rows and the document sections); only the spacing is here.
+ * The last section's own padding ends the page.
  */
 .record {
     margin-top: var(--s-4);

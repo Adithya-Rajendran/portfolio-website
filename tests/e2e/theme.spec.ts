@@ -1,5 +1,4 @@
-import type { Page } from "@playwright/test";
-import { chromeCopy } from "@/lib/copy";
+import type { Locator, Page } from "@playwright/test";
 import { MISSING_PAGES } from "./support/routes";
 import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
@@ -9,9 +8,9 @@ import { storeTheme } from "./support/theme";
  * except a post, which follows the OS until a theme is chosen (premium
  * D3), on a full load and after a client navigation alike; a stored choice
  * applied before the first paint and winning everywhere, the header's
- * switch (Void ↔ Flight Manual) and the footer's three-way choice kept in
- * step across reloads, pages and tabs, Auto following the OS, and Pause
- * motion.
+ * switch (Void ↔ Flight Manual) and the menu sheet's three-way choice
+ * kept in step across reloads, pages and tabs, Auto following the OS, and
+ * Pause motion (nothing at all under the OS reduce-motion setting).
  */
 
 const html = (page: Page) => page.locator("html");
@@ -19,8 +18,33 @@ const headerSwitch = (page: Page, to: "light" | "dark") =>
     page
         .getByRole("banner")
         .getByRole("button", { name: `Switch to ${to} theme`, exact: true });
-const footerChoice = (page: Page) =>
-    page.getByRole("contentinfo").getByRole("group", { name: "Theme" });
+
+/**
+ * The three-way choice (Dark · Light · System) is the menu sheet's, below
+ * 960px; from 960px the header's switch alone (the footer repeats
+ * neither). Opens the sheet at a phone's width, runs `act` on the choice,
+ * then closes it and gives the page its width back.
+ */
+async function inSheet(page: Page, act: (choice: Locator) => Promise<void>) {
+    const size = page.viewportSize();
+    await page.setViewportSize({ width: 390, height: 844 });
+    const banner = page.getByRole("banner");
+    await banner.getByRole("button", { name: "Menu" }).click();
+    await act(banner.getByRole("group", { name: "Theme" }));
+    await page.keyboard.press("Escape");
+    await expect(banner.getByRole("group", { name: "Theme" })).toBeHidden();
+    if (size) await page.setViewportSize(size);
+}
+
+/** The sheet's choice shows `name` as the preference in force. */
+const expectChoice = (page: Page, name: string) =>
+    inSheet(page, (choice) =>
+        expect(choice.getByRole("radio", { name })).toBeChecked(),
+    );
+
+/** Picks `name` in the sheet's choice. */
+const choose = (page: Page, name: string) =>
+    inSheet(page, (choice) => choice.getByRole("radio", { name }).check());
 
 test("a first visit is Void, even when the OS prefers light", async ({
     page,
@@ -55,16 +79,14 @@ test("a post follows the OS until a theme is chosen, and the rest of the site st
     await page.goto("/blog");
     await expect(html(page)).toHaveAttribute("data-theme", "void");
     // A client navigation to a post: Flight Manual on a light system,
-    // and the footer says the post follows the system.
+    // and the choice says the post follows the system.
     await openFirstPost(page);
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
         "content",
         "#F2EDE3",
     );
-    await expect(
-        footerChoice(page).getByRole("radio", { name: "System" }),
-    ).toBeChecked();
+    await expectChoice(page, "System");
     // A full load of the post is the same, before the first paint.
     const post = new URL(page.url()).pathname;
     await page.reload();
@@ -81,20 +103,16 @@ test("a post follows the OS until a theme is chosen, and the rest of the site st
         .click();
     await expect(page).toHaveURL(/\/blog$/);
     await expect(html(page)).toHaveAttribute("data-theme", "void");
-    await expect(
-        footerChoice(page).getByRole("radio", { name: "Dark" }),
-    ).toBeChecked();
+    await expectChoice(page, "Dark");
 
     // A stored choice wins on a post too.
     await page.goto(post);
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
-    await footerChoice(page).getByRole("radio", { name: "Dark" }).check();
+    await choose(page, "Dark");
     await expect(html(page)).toHaveAttribute("data-theme", "void");
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "void");
-    await expect(
-        footerChoice(page).getByRole("radio", { name: "Dark" }),
-    ).toBeChecked();
+    await expectChoice(page, "Dark");
 });
 
 test("a post stays Void on a dark system", async ({ page }) => {
@@ -142,17 +160,13 @@ test("the header switch's choice persists across reloads and pages", async ({
     await expect(headerSwitch(page, "dark")).toBeHidden();
     await headerSwitch(page, "light").click();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
-    // The switch now offers the way back, and the footer shows the choice.
+    // The switch now offers the way back, and the sheet shows the choice.
     await expect(headerSwitch(page, "dark")).toBeVisible();
-    await expect(
-        footerChoice(page).getByRole("radio", { name: "Light" }),
-    ).toBeChecked();
+    await expectChoice(page, "Light");
 
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
-    await expect(
-        footerChoice(page).getByRole("radio", { name: "Light" }),
-    ).toBeChecked();
+    await expectChoice(page, "Light");
 
     await page
         .getByRole("banner")
@@ -170,7 +184,7 @@ test("the header switch's choice persists across reloads and pages", async ({
 test("Auto follows the OS colour scheme as it changes", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/");
-    await footerChoice(page).getByRole("radio", { name: "System" }).check();
+    await choose(page, "System");
     await expect(html(page)).toHaveAttribute("data-theme", "void");
     await page.emulateMedia({ colorScheme: "light" });
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
@@ -178,9 +192,7 @@ test("Auto follows the OS colour scheme as it changes", async ({ page }) => {
     await expect(headerSwitch(page, "dark")).toBeVisible();
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
-    await expect(
-        footerChoice(page).getByRole("radio", { name: "System" }),
-    ).toBeChecked();
+    await expectChoice(page, "System");
 });
 
 test("a choice made in another tab applies here", async ({ page, context }) => {
@@ -190,9 +202,7 @@ test("a choice made in another tab applies here", async ({ page, context }) => {
     await headerSwitch(other, "light").click();
     await expect(html(other)).toHaveAttribute("data-theme", "manual");
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
-    await expect(
-        footerChoice(page).getByRole("radio", { name: "Light" }),
-    ).toBeChecked();
+    await expectChoice(page, "Light");
 });
 
 test("an unknown post or project URL keeps the stored theme and controls", async ({
@@ -207,7 +217,7 @@ test("an unknown post or project URL keeps the stored theme and controls", async
         await expect(html(page), path).toHaveAttribute("data-theme", "manual");
         await expect(html(page), path).toHaveAttribute("data-js", "");
         await expect(headerSwitch(page, "dark"), path).toBeVisible();
-        await expect(footerChoice(page), path).toBeVisible();
+        await expectChoice(page, "Light");
     }
 });
 
@@ -225,13 +235,15 @@ test("Pause motion reduces motion and is remembered", async ({ page }) => {
     await expect(html(page)).toHaveAttribute("data-motion", "full");
 });
 
-test("the OS reduce-motion setting holds motion and says so", async ({
+test("the OS reduce-motion setting holds motion and shows no control", async ({
     page,
 }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/about");
     await expect(html(page)).toHaveAttribute("data-motion", "reduced");
+    // Nothing moves, so nothing offers to pause it or reads the setting
+    // back.
     const footer = page.getByRole("contentinfo");
-    await expect(footer.getByText(chromeCopy.motionHeldByOs)).toBeVisible();
-    await expect(footer.getByRole("button", { name: /motion/ })).toBeHidden();
+    await expect(footer.locator(".motion-ctl")).toBeHidden();
+    await expect(footer.getByRole("button", { name: /motion/ })).toHaveCount(0);
 });

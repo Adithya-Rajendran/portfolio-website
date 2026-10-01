@@ -9,9 +9,8 @@ import { getMotionPref, setMotionPref } from "@/lib/prefs";
  * hero (beside the drifting starfield): an unboxed control, the icon and
  * its label in the controls' voice, on a 44px target. One button whose
  * label names the action; CSS picks the label from `html[data-motion]`,
- * so nothing re-renders. Under the OS reduce-motion setting a plain note
- * replaces it. Hidden without JavaScript, when nothing moves anyway (no
- * `data-motion`).
+ * so nothing re-renders. Under the OS reduce-motion setting, and without
+ * JavaScript (no `data-motion`), nothing moves, so it shows nothing.
  */
 export default function MotionToggle({ className }: { className?: string }) {
     return (
@@ -34,9 +33,6 @@ export default function MotionToggle({ className }: { className?: string }) {
                     {chromeCopy.resumeDrift}
                 </span>
             </button>
-            <span className="motion-ctl__os label">
-                {chromeCopy.motionHeldByOs}
-            </span>
         </span>
     );
 }

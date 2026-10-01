@@ -77,7 +77,7 @@
     cursor: progress;
 }
 
-/* ---- A send that did not go: under Send, the text kept, the ways on ---- */
+/* ---- A send that did not go: under Send, the ways on ------------------- */
 .failure {
     display: grid;
     gap: var(--s-2);
@@ -96,8 +96,7 @@
     margin-inline-start: -0.85rem;
 }
 
-/* ---- Received: the heading and the way back ---------------------------- */
-/* Under the section's own hairline: no rule of its own. */
+/* ---- Received: the heading and the way back, after the head's space ---- */
 .received {
     max-width: 46rem;
 }

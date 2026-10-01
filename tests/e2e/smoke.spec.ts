@@ -1,7 +1,6 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { siteConfig } from "@/lib/config";
 import { lossOfSignalCopy } from "@/lib/copy";
-import { lostRoutes } from "@/lib/navigation";
 import {
     expandRoute,
     ROUTE_TAGS,
@@ -130,8 +129,9 @@ test.describe("pages", () => {
             await expect(page.getByRole("banner")).toBeVisible();
             await expect(page.getByRole("contentinfo")).toBeVisible();
 
-            // The one action follows the missed address, and the rows
-            // (Projects, Writing, Contact) leave out the section it offers.
+            // The one action follows the missed address; then the trace and
+            // the report, and nothing else to choose from (the nav is the
+            // way to the sections).
             const [primary, href] = {
                 unmatched: ["Home", "/"],
                 post: ["All writing", "/blog"],
@@ -142,16 +142,12 @@ test.describe("pages", () => {
             await expect(
                 main.getByRole("link", { name: primary, exact: true }),
             ).toHaveAttribute("href", href);
-            const rows = main
-                .getByRole("navigation", { name: lossOfSignalCopy.sections })
-                .getByRole("link");
-            await expect(rows).toHaveCount(kind === "unmatched" ? 3 : 2);
-            for (const item of lostRoutes) {
-                await expect(
-                    rows.filter({ hasText: item.plain }),
-                    item.plain,
-                ).toHaveCount(item.href === href ? 0 : 1);
-            }
+            await expect(main.getByRole("link")).toHaveText([
+                primary,
+                lossOfSignalCopy.reportLink,
+            ]);
+            await expect(main.getByRole("navigation")).toHaveCount(0);
+            await expect(main.locator("code")).toHaveCount(0);
             // The trace is drawn already: nothing on the page moves.
             expect(
                 await page.evaluate(() => document.getAnimations().length),

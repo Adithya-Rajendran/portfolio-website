@@ -60,10 +60,13 @@ test("/portfolio links every project, the flagship first and the last project qu
 }) => {
     const paths = await missionPaths(page);
     await page.goto("/portfolio");
-    const links = main(page).getByRole("link", {
-        name: copy.openFile,
-    });
-    await expect(links).toHaveCount(paths.length ? 1 : 0);
+    // The flagship's title is its one link to the page: no filled button
+    // repeats it.
+    const stage = main(page).getByRole("article").first();
+    await expect(stage.getByRole("heading").getByRole("link")).toHaveCount(
+        paths.length ? 1 : 0,
+    );
+    await expect(main(page).locator(".btn--primary")).toHaveCount(0);
     for (const path of paths) {
         await expect(
             main(page).locator(`a[href="${path}"]`).first(),
@@ -198,16 +201,15 @@ test("a project's crumb keeps its section, separator and number on one line", as
     }
 });
 
-test("/portfolio shows the flagship's title and its button in the first viewport", async ({
+test("/portfolio shows the flagship's title, its link, in the first viewport", async ({
     page,
 }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/portfolio");
     const stage = main(page).getByRole("article").first();
-    await expect(stage.getByRole("heading")).toBeInViewport({ ratio: 1 });
-    const button = stage.getByRole("link", { name: copy.openFile });
-    await expect(button).toBeInViewport({ ratio: 1 });
-    const box = await button.boundingBox();
+    const title = stage.getByRole("heading").getByRole("link");
+    await expect(title).toBeInViewport({ ratio: 1 });
+    const box = await title.boundingBox();
     expect(box!.y + box!.height).toBeLessThanOrEqual(760);
 });
 

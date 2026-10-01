@@ -45,26 +45,9 @@
         }
     }
 
+    /* The page closes in open space above the footer. */
     .los {
-        position: relative;
-        isolation: isolate;
-    }
-
-    /* ---- The requested address, under the actions ------------------------ */
-    .los-requested {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: var(--s-2) var(--s-4);
-        margin-top: var(--s-5);
-    }
-    .los-requested-path {
-        padding: 0.1em 0.45em;
-        border: var(--rule-hair) solid var(--rule-1);
-        background: var(--surface-1);
-        color: var(--ink-1);
-        font-size: var(--label-size);
-        overflow-wrap: anywhere;
+        padding-bottom: var(--space-block);
     }
 
     /* ---- The carrier trace: a strip chart that drops out ------------------ */
@@ -107,66 +90,7 @@
         stroke-width: 1;
     }
 
-    /* ---- The site's sections over an engraved horizon ---------------------- */
-    /* Drawn in ink, the sun included: nothing here is "now" (contract §3). */
-    .los-return {
-        position: relative;
-        isolation: isolate;
-        padding-top: var(--space-block);
-        padding-bottom: clamp(10rem, 4rem + 20vw, 22rem);
-    }
-    .los-chart {
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        z-index: -1;
-        width: 100%;
-        height: clamp(10rem, 4rem + 20vw, 22rem);
-        overflow: hidden;
-        pointer-events: none;
-    }
-    .los-chart * {
-        vector-effect: non-scaling-stroke;
-    }
-    .los-rim {
-        fill: var(--limb-fill);
-        stroke: var(--ink-2);
-        stroke-width: 1.25;
-    }
-    .los-lat path {
-        fill: none;
-        stroke: var(--rule-2);
-        stroke-width: 1;
-        stroke-dasharray: 2 6;
-    }
-    .los-halo {
-        fill: none;
-        stroke: var(--ink-3);
-        stroke-width: 1;
-        stroke-dasharray: 1.5 5;
-    }
-    .los-sun {
-        fill: var(--ink-1);
-    }
-    .los-path {
-        fill: none;
-        stroke: var(--ink-3);
-        stroke-width: 1.25;
-        stroke-dasharray: 4 5;
-    }
-    .los-ghost {
-        fill: none;
-        stroke: var(--ink-3);
-        stroke-width: 1;
-        stroke-dasharray: 1 6;
-    }
-    .los-tick {
-        stroke: var(--ink-2);
-        stroke-width: 2;
-    }
-    .los-routes {
-        margin-top: var(--s-6);
-    }
+    /* ---- The report ------------------------------------------------------- */
     .los-report {
         margin-top: var(--s-6);
         color: var(--ink-2);

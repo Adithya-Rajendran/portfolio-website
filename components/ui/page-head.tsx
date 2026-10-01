@@ -7,9 +7,7 @@ import SectionTag from "@/components/ui/section-tag";
  * intro. The tag is secondary: the title alone names the page ("Writing",
  * not "Flight Log"). `split` sets the title on the left half and the
  * intro and actions on the right from 960px (`.page-head--split`).
- * `figure` is a decorative drawing beside the head (`.page-head--figure`):
- * at the title's right on phones, 4 of 12 columns from 960px. Actions go
- * in children, wrapped in `.page-head__actions`.
+ * Actions go in children, wrapped in `.page-head__actions`.
  */
 export default function PageHead({
     tag,
@@ -18,7 +16,6 @@ export default function PageHead({
     meta,
     intro,
     split = false,
-    figure,
     className,
     children,
 }: {
@@ -31,19 +28,12 @@ export default function PageHead({
     meta?: React.ReactNode;
     intro?: React.ReactNode;
     split?: boolean;
-    /** A decorative drawing beside the head; hidden from assistive tech. */
-    figure?: React.ReactNode;
     className?: string;
     children?: React.ReactNode;
 }) {
     return (
         <header
-            className={[
-                "page-head",
-                split && "page-head--split",
-                figure && "page-head--figure",
-                className,
-            ]
+            className={["page-head", split && "page-head--split", className]
                 .filter(Boolean)
                 .join(" ")}
         >
@@ -55,11 +45,6 @@ export default function PageHead({
             </h1>
             {intro ? <p className="page-head__intro">{intro}</p> : null}
             {children}
-            {figure ? (
-                <div className="page-head__figure" aria-hidden="true">
-                    {figure}
-                </div>
-            ) : null}
         </header>
     );
 }

@@ -44,18 +44,22 @@ function experience(page: Page) {
     });
 }
 
-test("the head offers the CV, the way to get in touch and the views, in the first viewport", async ({
+test("the head offers the CV and the views in the first viewport, and leaves Contact to the header", async ({
     page,
 }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/resume");
-    const contact = main(page).getByRole("link", {
-        name: cvCopy.contact,
-        exact: true,
-    });
-    await expect(contact).toBeInViewport();
-    await expect(contact).toHaveAttribute("href", /^\/contact(#hiring)?$/);
-    // What the owner is open to, when set, sits above it.
+    // The header's Contact is in the same viewport: the head repeats it
+    // nowhere, and Download CV (when there is a PDF) is its one action.
+    const head = main(page).locator(".page-head");
+    await expect(head.getByRole("link", { name: /contact/i })).toHaveCount(0);
+    await expect(
+        page
+            .getByRole("banner")
+            .getByRole("link", { name: "Contact", exact: true }),
+    ).toBeInViewport();
+    await expect(head.locator(".btn:not(.btn--primary)")).toHaveCount(0);
+    // What the owner is open to, when set.
     const openTo = main(page).getByText(cvCopy.openTo, { exact: true });
     if (await openTo.count()) await expect(openTo.first()).toBeInViewport();
     // Timeline · List, by plain names, in the head's tools; the flight is

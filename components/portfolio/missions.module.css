@@ -7,10 +7,9 @@
  * underlined, the arrow nudged.
  */
 
-/* ---- The line: TYPE · ● Status · dates, never wrapped ----------------- */
+/* ---- The line: ● Status · dates, never wrapped ------------------------- */
 .lineBox {
     min-width: 0;
-    container-type: inline-size;
 }
 .line {
     display: flex;
@@ -20,26 +19,11 @@
     overflow: hidden;
     white-space: nowrap;
 }
-.type {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1 var(--font-label);
-    letter-spacing: var(--track-label);
-    text-overflow: ellipsis;
-    text-transform: uppercase;
-}
 .dates {
     flex: none;
     color: var(--ink-1);
     font: 400 var(--label-size) / 1 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
-}
-/* Where the line would wrap, the type goes first. */
-@container (max-width: 30rem) {
-    .type {
-        display: none;
-    }
 }
 
 .stack {
@@ -89,11 +73,27 @@
     font: 400 var(--step-1) / 1.5 var(--font-long);
     text-wrap: pretty;
 }
+/* The title links the page: the rows' arrow trails its last word, in
+   ink-3, and nudges with the underline on hover. */
+.stageArrow {
+    width: 0.42em;
+    height: 0.42em;
+    color: var(--ink-3);
+    vertical-align: 0.06em;
+    transition:
+        transform var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock);
+}
+.stageHeading a:hover .stageArrow {
+    color: var(--ink-1);
+    transform: translateX(4px);
+}
 .stageCopy > .stack {
     margin-top: var(--s-5);
 }
+/* The quiet way to the write-up (/portfolio). Without it the stack line
+   is the stage's foot. */
 .stageActions {
-    --cluster: var(--s-3) var(--s-6);
     margin-top: var(--s-6);
 }
 @media (min-width: 60rem) {

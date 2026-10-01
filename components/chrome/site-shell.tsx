@@ -26,7 +26,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     return (
         <>
             <ThemeBootFallback />
-            <a className="skip-link" id="top" href="#main-content">
+            <a className="skip-link" href="#main-content">
                 {chromeCopy.skipLink}
             </a>
             <SvgSprite />

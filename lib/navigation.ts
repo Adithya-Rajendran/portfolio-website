@@ -1,10 +1,9 @@
 /**
  * The site's navigation, the one source for the header, the menu sheet,
- * the footer, the 404's primary and link rows and (from PR 16) the
- * console's page list. Every section is named by its plain label
- * (Projects, Writing, Experience, About, Contact); its themed name is a
- * secondary tag on its own page. URLs keep their words (plan §2.1). Keep
- * this module free of imports.
+ * the 404's primary and (from PR 16) the console's page list. Every
+ * section is named by its plain label (Projects, Writing, Experience,
+ * About, Contact); its themed name is a secondary tag on its own page.
+ * URLs keep their words (plan §2.1). Keep this module free of imports.
  */
 
 /** Canonical public routes shared by navigation and content. */
@@ -33,8 +32,6 @@ export interface NavItem {
     /** The section's themed name: only a small secondary tag, above its
      *  page's title and on its share card (contract §6). */
     themed: string;
-    /** One line for the 404's link rows. */
-    blurb: string;
 }
 
 /** The five sections, in site order: the work first. */
@@ -45,7 +42,6 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/portfolio",
         plain: "Projects",
         themed: "Missions",
-        blurb: "Projects and case studies.",
     },
     {
         id: "log",
@@ -53,7 +49,6 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/blog",
         plain: "Writing",
         themed: "Flight Log",
-        blurb: "Articles and technical notes.",
     },
     {
         id: "trajectory",
@@ -61,7 +56,6 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/resume",
         plain: "Experience",
         themed: "Trajectory",
-        blurb: "Experience, education and CV.",
     },
     {
         id: "crew",
@@ -69,7 +63,6 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/about",
         plain: "About",
         themed: "Crew File",
-        blurb: "Background and interests.",
     },
     {
         id: "comms",
@@ -77,15 +70,8 @@ export const primaryNavigation: readonly NavItem[] = [
         section: "/contact",
         plain: "Contact",
         themed: "Comms",
-        blurb: "Send a message.",
     },
 ];
-
-/** The 404's link rows: the work, the writing and the form. */
-export const lostRoutes: readonly NavItem[] = primaryNavigation.filter(
-    (item) =>
-        item.id === "missions" || item.id === "log" || item.id === "comms",
-);
 
 /** A section whose pages sit under an index: Projects, Writing. */
 export type IndexedSection = NavItem & { id: "missions" | "log" };
@@ -93,8 +79,8 @@ export type IndexedSection = NavItem & { id: "missions" | "log" };
 /**
  * The section whose index a missed address falls under ("/blog/…" is
  * Writing's, "/portfolio/…" Projects'): the 404 offers that index as its
- * primary and leaves the section out of its rows. Any other address, or
- * none (on the server), has none: the primary is Home.
+ * primary. Any other address, or none (on the server), has none: the
+ * primary is Home.
  */
 export function lostSection(path: string | null): IndexedSection | undefined {
     if (!path) return undefined;
@@ -105,7 +91,8 @@ export function lostSection(path: string | null): IndexedSection | undefined {
     );
 }
 
-/** The recruiter shortcut in the header bar, at every width. */
+/** The recruiter shortcut in the header bar below 960px, where the nav
+ *  (and its Experience) is in the menu sheet. */
 export const cvLink = { href: siteRoutes.resume, label: "CV" } as const;
 
 /** Contact in the header bar below 960px, where the nav is in the menu
@@ -114,13 +101,6 @@ export const contactLink = {
     href: siteRoutes.contact,
     label: "Contact",
 } as const;
-
-/** The footer's plain links; GitHub and LinkedIn come from the profile.
- *  One CV route: /resume carries the PDF. */
-export const footerLinks = [
-    { href: siteRoutes.resume, label: "CV" },
-    { href: siteRoutes.feed, label: "RSS" },
-] as const;
 
 /**
  * A contact route from anywhere on the site: "/contact#hiring" opens Comms
@@ -157,28 +137,6 @@ export function navCurrent(
     if (path === item.href) return "page";
     if (path === item.section) return "page";
     if (path.startsWith(`${item.section}/`)) return "true";
-    return undefined;
-}
-
-/**
- * The header's mode on a route (G1): reading pages (an entry, a mission
- * file, the CV, the Crew File, Comms) get the solid header, with a firmer
- * rule under it. RouteMarker sets it as `html[data-header]`.
- */
-export function headerMode(
-    pathname: string | null | undefined,
-): "solid" | undefined {
-    if (!pathname) return undefined;
-    const path = pathname.replace(/\/+$/, "") || "/";
-    if (/^\/blog\/(?!archive$|tags$)[^/]+$/.test(path)) return "solid";
-    if (/^\/portfolio\/[^/]+$/.test(path)) return "solid";
-    if (
-        path === siteRoutes.resume ||
-        path === siteRoutes.about ||
-        path === siteRoutes.contact
-    ) {
-        return "solid";
-    }
     return undefined;
 }
 

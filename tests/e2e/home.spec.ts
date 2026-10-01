@@ -7,16 +7,16 @@ import { storeTheme } from "./support/theme";
 
 /**
  * Home (plan §6.2 PR 13, contract §9; premium WS2): the hero's name,
- * headline, what the owner is open to and its one action (CV) with the
- * quiet link down to the projects are in the first viewport with and
- * without JavaScript; the header's wordmark steps aside while the hero
+ * headline, what the owner is open to and its one action (CV) are in the
+ * first viewport with and without JavaScript; the header's wordmark steps aside while the hero
  * names the owner; the starfield drifts only while it may (on screen, in
  * a visible tab, in Void, with motion allowed) and reports `stopped`
  * otherwise; the stars are the hero's alone, and Void's; the photograph is
  * credited with its frame ID and Flight Manual draws the limb instead;
  * the name keeps one line at 1440 and spans 1,400px at most at 1920;
- * the sections follow in order, unnumbered, and lead to their pages; the
- * flagship shows no stats and at most four stack items; a row's cover is
+ * the sections follow in order, unnumbered, and lead to their pages
+ * only while those hold more; the flagship's title is its one link, and
+ * it shows no stats and at most four stack items; a row's cover is
  * a thumbnail, credited, that never outweighs the stage's photograph
  * (checked where the build has covers; the fixtures have none); the close is the
  * owner's tagline, the Timeline by that name and one way to /contact (the
@@ -39,19 +39,10 @@ async function firstViewport(page: Page) {
     await expect(main.getByRole("heading", { level: 1 })).toBeInViewport({
         ratio: 1,
     });
-    // One action (CV) and one quiet link down to the projects.
+    // One action, CV: the header's Projects is the way to the work.
     const links = main.getByRole("navigation", { name: copy.routesLabel });
-    await expect(links.getByRole("link")).toHaveText([
-        copy.cv,
-        copy.projectsAct.title,
-    ]);
-    expect(
-        await links
-            .getByRole("link")
-            .evaluateAll((items) =>
-                items.map((item) => item.getAttribute("href")),
-            ),
-    ).toEqual(["/resume", "#home-projects"]);
+    await expect(links.getByRole("link")).toHaveText([copy.cv]);
+    await expect(links.getByRole("link")).toHaveAttribute("href", "/resume");
     await expect(links.getByRole("link", { name: copy.cv })).toBeInViewport({
         ratio: 1,
     });
@@ -154,12 +145,11 @@ test("the header's wordmark steps aside while the hero names the owner", async (
     await expect(wordmark).toBeVisible();
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await expect(wordmark).toBeHidden();
-    // The quiet link lands on the projects with the name in the header.
+    // The projects come into view with the name in the header.
     await page
         .getByRole("main")
-        .getByRole("link", { name: "Selected projects", exact: true })
-        .click();
-    await expect(page).toHaveURL(/#home-projects$/);
+        .locator("#home-projects")
+        .scrollIntoViewIfNeeded();
     await expect(page.locator("html")).not.toHaveAttribute("data-hero");
     await expect(wordmark).toBeVisible();
     await page
@@ -234,7 +224,9 @@ test("the starfield holds still under the OS reduce-motion setting", async ({
     await expect(starfield(page)).toHaveAttribute("data-state", "stopped");
     // A still frame is drawn, so the static layer steps aside.
     await expect(starfield(page)).toHaveAttribute("data-drawn", "");
-    await expect(hero(page).getByText(chromeCopy.motionHeldByOs)).toBeVisible();
+    // Nothing moves, so there is nothing to pause and no note reading the
+    // setting back: the foot's right side is empty.
+    await expect(hero(page).locator(".motion-ctl")).toBeHidden();
 });
 
 test("the photograph is credited in Void; Manual draws the limb", async ({
@@ -290,17 +282,11 @@ test("the sections follow the hero in order and lead to their pages", async ({
         await expect(main.getByText(themed, { exact: true })).toHaveCount(0);
     }
 
-    const leads: [section: string, name: string, href: string][] = [
-        ["home-projects", copy.projectsAct.all, "/portfolio"],
-        ["home-writing", copy.writingAct.all, "/blog"],
-        ["home-contact", copy.contactAct.now, "/about#crew-now"],
-    ];
-    for (const [id, name, href] of leads) {
-        const section = main.locator(`section#${id}`);
-        if (!(await section.count())) continue;
-        const link = section.getByRole("link", { name, exact: true });
-        if (name === copy.contactAct.now && !(await link.count())) continue;
-        await expect(link).toHaveAttribute("href", href);
+    const now = main
+        .locator("section#home-contact")
+        .getByRole("link", { name: copy.contactAct.now, exact: true });
+    if (await now.count()) {
+        await expect(now).toHaveAttribute("href", "/about#crew-now");
     }
     // The nav's Experience leads to the flight: the close does not.
     await expect(
@@ -312,6 +298,44 @@ test("the sections follow the hero in order and lead to their pages", async ({
             .locator("section#home-writing")
             .getByRole("list", { name: "Tags" }),
     ).toHaveCount(0);
+});
+
+test("a section links its page only while that page holds more than home shows", async ({
+    page,
+}) => {
+    /** The distinct item links on a page, by their prefix. */
+    const items = async (path: string, prefix: string) => {
+        await page.goto(path);
+        return page
+            .getByRole("main")
+            .locator(`a[href^="${prefix}"]`)
+            .evaluateAll(
+                (links) =>
+                    new Set(
+                        links
+                            .map((link) => link.getAttribute("href") ?? "")
+                            .filter(
+                                (href) => !/^\/blog\/(archive|tags)/.test(href),
+                            ),
+                    ).size,
+            );
+    };
+    const projects = await items("/portfolio", "/portfolio/");
+    const entries = await items("/blog", "/blog/");
+    await page.goto("/");
+    const main = page.getByRole("main");
+    for (const [id, name, href, more] of [
+        ["home-projects", copy.projectsAct.all, "/portfolio", projects > 3],
+        ["home-writing", copy.writingAct.all, "/blog", entries > 3],
+    ] as const) {
+        const section = main.locator(`section#${id}`);
+        if (!(await section.count())) continue;
+        const link = section.getByRole("link", { name, exact: true });
+        await expect(link, id).toHaveCount(more ? 1 : 0);
+        if (more) await expect(link).toHaveAttribute("href", href);
+    }
+    // Home curates its three projects: no line of the others under them.
+    await expect(main.getByText("Also", { exact: true })).toHaveCount(0);
 });
 
 test("the close answers what the owner is open to only in the profile's words", async ({
@@ -352,13 +376,18 @@ test("the strongest project leads with its summary and no stats", async ({
     // mission number.
     await expect(projects.getByRole("definition")).toHaveCount(0);
     await expect(projects.getByText(/^MSN-\d+$/)).toHaveCount(0);
-    // The title is the heading, in sentence case, over at most four stack
-    // items.
+    // The title is the heading, in sentence case, and the stage's one
+    // link to the project (with the rows' arrow; no filled button), over
+    // at most four stack items, with no type over it.
     const stage = projects.getByRole("article").first();
-    await expect(stage.getByRole("heading", { level: 3 })).toHaveCSS(
-        "text-transform",
-        "none",
-    );
+    const title = stage.getByRole("heading", { level: 3 });
+    await expect(title).toHaveCSS("text-transform", "none");
+    await expect(title.getByRole("link")).toHaveCount(1);
+    await expect(title.locator(".icon")).toHaveCount(1);
+    const href = await title.getByRole("link").getAttribute("href");
+    await expect(stage.locator(`a[href="${href}"]`)).toHaveCount(1);
+    await expect(stage.locator(".btn")).toHaveCount(0);
+    await expect(stage.getByText(/^infrastructure$/i)).toHaveCount(0);
     expect(
         await stage.getByRole("list", { name: "Stack" }).locator("li").count(),
     ).toBeLessThanOrEqual(4);

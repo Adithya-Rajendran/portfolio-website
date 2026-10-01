@@ -197,20 +197,6 @@ export const FIXTURE_PROFILE: ProfileData = {
             url: "https://www.credly.com/users/adithya-rajendran",
             kind: "profile",
         },
-        {
-            _key: "profile-hackthebox",
-            _type: "externalLink",
-            label: "Hack The Box",
-            url: "https://app.hackthebox.com/users/514798",
-            kind: "profile",
-        },
-        {
-            _key: "profile-tryhackme",
-            _type: "externalLink",
-            label: "TryHackMe",
-            url: "https://tryhackme.com/p/Cagmas",
-            kind: "profile",
-        },
     ],
     currentCuriosities: [
         {

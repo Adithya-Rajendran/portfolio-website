@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
     contactHref,
     cvLink,
-    headerMode,
-    lostRoutes,
     lostSection,
     movedFragment,
     navCurrent,
@@ -72,44 +70,11 @@ describe("the 404's ways on", () => {
         }
     });
 
-    it("lists Projects, Writing and Contact as its rows", () => {
-        expect(lostRoutes.map((item) => item.plain)).toEqual([
-            "Projects",
-            "Writing",
-            "Contact",
-        ]);
-    });
-
     it("reports a broken link to Hello with its address", () => {
         expect(reportHref("/blog/no such")).toBe(
             "/contact?broken=%2Fblog%2Fno%20such#hello",
         );
         expect(reportHref(null)).toBe("/contact#hello");
-    });
-});
-
-describe("headerMode", () => {
-    it("is solid on reading pages only", () => {
-        for (const path of [
-            "/blog/my-homelab",
-            "/blog/my-homelab/",
-            "/portfolio/homelab",
-            "/resume",
-            "/about",
-            "/contact",
-        ]) {
-            expect(headerMode(path), path).toBe("solid");
-        }
-        for (const path of [
-            "/",
-            "/blog",
-            "/blog/archive",
-            "/blog/tags/homelab",
-            "/portfolio",
-            null,
-        ]) {
-            expect(headerMode(path), String(path)).toBeUndefined();
-        }
     });
 });
 

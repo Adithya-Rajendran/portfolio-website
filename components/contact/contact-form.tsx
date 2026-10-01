@@ -80,8 +80,9 @@ async function send(
  * - The email is checked when the reader leaves it filled, and every rule
  *   (an empty field too) from the first submit. A field the server
  *   refuses is shown under that field.
- * - A send that did not go says so under Send, with the text kept and
- *   the ways on: Try again, Copy message, LinkedIn.
+ * - A send that did not go says so under Send, with the ways on: Copy
+ *   message and LinkedIn (Send itself sends again; the text stays in its
+ *   field).
  * - A sent message shows "Message received." and Write another message,
  *   and promises nothing (no reply address, no reply time). Cache
  *   Components keeps a visited page mounted but hidden, so that panel and
@@ -136,7 +137,6 @@ export default function ContactForm({
     const { senderEmail, message } = draft;
     const [checks, setChecks] = useState<ContactChecks>("none");
 
-    const formRef = useRef<HTMLFormElement>(null);
     const emailRef = useRef<HTMLInputElement>(null);
     const messageRef = useRef<HTMLTextAreaElement>(null);
     const failureRef = useRef<HTMLDivElement>(null);
@@ -244,12 +244,7 @@ export default function ContactForm({
 
     const left = MESSAGE_MAX_LENGTH - message.length;
     return (
-        <form
-            ref={formRef}
-            className={styles.form}
-            onSubmit={onSubmit}
-            noValidate
-        >
+        <form className={styles.form} onSubmit={onSubmit} noValidate>
             {topics.length > 1 ? (
                 <Segmented
                     className={styles.topics}
@@ -281,7 +276,6 @@ export default function ContactForm({
                     type="email"
                     autoComplete="email"
                     maxLength={EMAIL_MAX_LENGTH}
-                    placeholder={copy.emailPlaceholder}
                     required
                     value={senderEmail}
                     onChange={(event) =>
@@ -323,7 +317,7 @@ export default function ContactForm({
                     name="message"
                     rows={5}
                     maxLength={MESSAGE_MAX_LENGTH}
-                    placeholder={prompt ?? copy.messagePlaceholder}
+                    placeholder={prompt}
                     required
                     value={message}
                     onChange={(event) =>
@@ -374,17 +368,9 @@ export default function ContactForm({
                 <div ref={failureRef} className={styles.failure}>
                     <p className={styles.failureText} role="alert">
                         <Icon name="close" className="icon--sm" />{" "}
-                        {shown.message} {copy.kept}
+                        {shown.message}
                     </p>
                     <div className={`cluster ${styles.recover}`}>
-                        <Button
-                            size="sm"
-                            variant="quiet"
-                            icon="reset"
-                            onClick={() => formRef.current?.requestSubmit()}
-                        >
-                            {copy.retry}
-                        </Button>
                         <CopyButton
                             text={message}
                             idle={copy.copyMessage}

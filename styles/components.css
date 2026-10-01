@@ -155,13 +155,6 @@
         background: var(--bg);
         border-bottom: var(--rule-hair) solid var(--rule-1);
     }
-    /* Reading pages (a post, a mission file, the CV, Comms): a firmer rule
-       under the header, set from the route by RouteMarker
-       (lib/navigation.ts headerMode). Without JavaScript the header keeps
-       its hairline; it is opaque either way. */
-    html[data-header="solid"] .site-header {
-        border-bottom-color: var(--rule-2);
-    }
     .site-header__inner {
         height: 100%;
         display: flex;
@@ -242,8 +235,9 @@
         flex: none;
     }
 
-    /* CV: the recruiter shortcut, visible at every width, on the links'
-       hairline. */
+    /* Contact and CV in the bar, on the links' hairline, only where the
+       nav is in the sheet (< 960px): from 960px the nav's Contact and
+       Experience (whose head carries the CV) are on screen. */
     .header-cv {
         display: inline-flex;
         align-items: center;
@@ -256,16 +250,14 @@
         text-underline-offset: 0.55em;
         white-space: nowrap;
     }
-    /* Contact in the bar only where the nav is in the sheet (< 960px). */
     @media (min-width: 60rem) {
-        .header-contact {
+        .header-cv {
             display: none;
         }
     }
 
     /* The menu button and sheet (< 960px). The sheet is a popover: it
-       opens without JavaScript, in the top layer. The fallback link to the
-       footer nav shows only where the Popover API is missing. */
+       opens without JavaScript, in the top layer. */
     .nav-toggle {
         display: none;
         align-items: center;
@@ -288,9 +280,6 @@
     .nav-toggle .icon {
         width: 16px;
         height: 16px;
-    }
-    .nav-toggle.nav-toggle--fallback {
-        display: none;
     }
     .nav-toggle:hover {
         border-color: var(--ink-1);
@@ -439,14 +428,6 @@
             gap: var(--s-5);
             margin-top: var(--s-6);
         }
-        @supports not selector(:popover-open) {
-            .nav-toggle[popovertarget] {
-                display: none;
-            }
-            .nav-toggle.nav-toggle--fallback {
-                display: inline-flex;
-            }
-        }
     }
     @media (max-width: 37.49rem) {
         /* phones: the patch alone is the brand */
@@ -459,11 +440,11 @@
     }
 
     /* Pause motion (WCAG 2.2.2): in the footer and the home hero. Its
-       label names the action; under the OS reduce-motion setting a plain
-       note replaces it. On home the hero's control, beside the starfield,
-       is the one shown (html[data-route] is set by RouteMarker). Unboxed:
-       the icon and the label in ink-2, in the controls' voice, a 44px
-       target. */
+       label names the action; under the OS reduce-motion setting nothing
+       moves, so it shows nothing. On home the hero's control, beside the
+       starfield, is the one shown (html[data-route] is set by
+       RouteMarker). Unboxed: the icon and the label in ink-2, in the
+       controls' voice, a 44px target. */
     .motion-ctl {
         display: inline-flex;
         align-items: center;
@@ -491,17 +472,9 @@
     html[data-motion="reduced"] .motion-toggle__on {
         display: none;
     }
-    .motion-ctl__os {
-        display: none;
-    }
     @media (prefers-reduced-motion: reduce) {
-        .motion-ctl .motion-toggle {
+        .motion-ctl {
             display: none;
-        }
-        .motion-ctl__os {
-            display: inline-flex;
-            align-items: center;
-            min-height: 44px;
         }
     }
     html[data-route="/"] .site-footer .motion-ctl {
@@ -852,113 +825,50 @@
     }
 
     /* ===== Footer (site.css 4.21, document control 4.27) =============== */
-    /* The patch, the sections, the links and the controls, then the strip:
-       the copyright (the footer's one mention of the name) and Back to
-       top. Two columns on phones, so the sections and the links sit side
-       by side. */
+    /* One strip under the hairline, set as every other label (DM Mono
+       capitals, tracked, from sentence-case markup): the copyright (the
+       footer's one mention of the name) with GitHub and LinkedIn, the
+       colophon, and Pause motion, a control in the controls' voice. The
+       space above the hairline is the page's own close. Where they fit the
+       three share a line, the colophon in the middle with equal space on
+       either side; narrower they wrap, and on phones they stack. */
     .site-footer {
-        position: relative;
-        padding-block: var(--space-block) var(--s-7);
+        padding-block: var(--s-4) var(--s-6);
         border-top: var(--rule-hair) solid var(--rule-1);
-        color: var(--ink-2);
-        font-size: var(--step-0);
     }
-    .site-footer__grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: start;
-        gap: var(--s-6) var(--gutter);
-    }
-    .site-footer .patch {
-        grid-column: 1 / -1;
-        width: 72px;
-        height: 72px;
-    }
-    .site-footer__nav ul,
-    .site-footer__links {
-        display: grid;
-        gap: 0;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-    .site-footer__nav a {
-        display: inline-flex;
-        align-items: center;
-        min-height: 36px;
-        color: var(--ink-1);
-        font: 500 var(--label-size) / 1.2 var(--font-display);
-        letter-spacing: var(--track-control);
-        text-transform: uppercase;
-        text-decoration: none;
-    }
-    .site-footer__nav a:hover {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.45em;
-    }
-    .site-footer__links a {
-        display: inline-flex;
-        align-items: center;
-        min-height: 36px;
-        color: var(--ink-1);
-    }
-    .site-footer__controls {
-        grid-column: 1 / -1;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--s-3);
-    }
-    /* Below 960px the menu sheet carries the theme choice. */
-    @media (max-width: 59.99rem) {
-        .site-footer .theme-choice {
-            display: none;
-        }
-    }
-    /* The strip is set as every other label: DM Mono capitals, tracked,
-       from sentence-case markup (the copyright and the colophon); Back to
-       top is a control, in the controls' voice. */
-    .site-footer__base {
+    .site-footer__strip {
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-between;
         align-items: center;
-        gap: var(--s-3) var(--s-6);
-        margin-top: var(--s-7);
+        justify-content: space-between;
+        gap: 0 var(--s-6);
         color: var(--ink-2);
         font: 400 var(--label-size) / 1.6 var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
-    .site-footer__base a {
+    .site-footer__strip a {
         display: inline-flex;
         align-items: center;
-        gap: 0.4em;
         min-height: 44px;
     }
-    .site-footer__top {
-        font: 500 var(--label-size) / 1.2 var(--font-display);
-        letter-spacing: var(--track-control);
+    .site-footer__name {
+        white-space: nowrap;
     }
-    @media (min-width: 37.5rem) {
-        .site-footer__grid {
-            grid-template-columns: 4fr 3fr 3fr;
+    /* Phones: the name, then GitHub · LinkedIn on a line of their own
+       (without the dot that led them), then the colophon. */
+    @media (max-width: 37.49rem) {
+        .site-footer__strip {
+            align-items: flex-start;
+            flex-direction: column;
         }
-        .site-footer .patch {
-            grid-column: auto;
-            width: 88px;
-            height: 88px;
+        .site-footer__own {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
-    }
-    /* The controls take a row of their own until the theme choice fits in
-       a column (>= 1280px). */
-    @media (min-width: 80rem) {
-        .site-footer__grid {
-            grid-template-columns: 4fr 3fr 3fr auto;
-        }
-        .site-footer__controls {
-            grid-column: auto;
+        .site-footer__lead {
+            display: none;
         }
     }
 
@@ -1120,12 +1030,13 @@
 
     /* ===== Question rows (components/crew/questions.tsx) =============== */
     /* The owner's current questions: the question, the note in the serif,
-       on the log index's hairlines. */
+       with a hairline between rows only: none over the first (the section
+       head's rule is just above) and none under the last (About's last
+       section, so the footer's hairline follows). */
     .q-list {
         max-width: var(--measure-index);
         margin: 0;
         padding: 0;
-        border-bottom: var(--rule-hair) solid var(--rule-1);
         list-style: none;
     }
     .q-item {
@@ -1133,6 +1044,13 @@
         row-gap: var(--s-2);
         padding-block: var(--s-4) var(--s-5);
         border-top: var(--rule-hair) solid var(--rule-1);
+    }
+    .q-item:first-child {
+        padding-top: 0;
+        border-top: 0;
+    }
+    .q-item:last-child {
+        padding-bottom: 0;
     }
     .q-item__title {
         color: var(--ink-1);
@@ -1873,13 +1791,12 @@
 
     /* ===== Availability (components/ui/availability.tsx) ================ */
     /* What the owner is open to, in a page head: the active mark and its
-       label over the line, on a meaningful hairline. */
+       label over the line, set apart from the intro by space alone (the
+       tag row's hairline is just above). */
     .availability {
         display: grid;
         justify-items: start;
         gap: var(--s-2);
-        padding-top: var(--s-4);
-        border-top: var(--rule-hair) solid var(--rule-2);
     }
     .availability__text {
         max-width: 60ch;
@@ -1910,61 +1827,11 @@
         text-align: center;
     }
 
-    /* ===== Page head: actions and a figure (contract §1) =============== */
+    /* ===== Page head: actions (contract §1) ============================ */
     /* The head's links or buttons, under the intro. */
     .page-head__actions {
         --cluster: var(--s-3);
         margin-top: var(--s-5);
-    }
-    /* A drawing beside the head (the Crew File's patch): at the title's
-       right on phones, 4 of 12 columns from 960px, the tag row above it
-       running the full width. Decorative: its parent is aria-hidden. */
-    .page-head--figure {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        column-gap: var(--s-5);
-    }
-    .page-head--figure > * {
-        grid-column: 1 / -1;
-    }
-    .page-head--figure > .page-head__title {
-        grid-column: 1;
-    }
-    .page-head__figure {
-        grid-column: 2;
-        grid-row: 2;
-        align-self: end;
-        width: clamp(4.5rem, 3rem + 7vw, 7rem);
-    }
-    @media (min-width: 60rem) {
-        .page-head--figure {
-            grid-template-columns: repeat(12, minmax(0, 1fr));
-            grid-template-rows: auto auto auto auto;
-            column-gap: var(--gutter);
-        }
-        .page-head--figure > * {
-            grid-column: 1 / span 7;
-        }
-        .page-head--figure > .section-tag {
-            grid-column: 1 / -1;
-        }
-        .page-head--figure > .page-head__title {
-            grid-column: 1 / span 7;
-        }
-        .page-head--figure > .page-head__figure {
-            grid-column: 9 / -1;
-            grid-row: 2 / -1;
-            align-self: center;
-            justify-self: end;
-            width: min(100%, 19rem);
-            margin-top: var(--s-5);
-        }
-    }
-    /* The patch as a figure. */
-    .page-head__figure .patch {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 1;
     }
 
     /* ===== Document sections (contract §1; components/ui/doc-section.tsx) */

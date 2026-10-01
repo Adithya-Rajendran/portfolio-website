@@ -419,15 +419,21 @@ test("the phone's contents box opens, and a contents link closes it", async ({
     await expect(page).toHaveURL(new RegExp(`${hash}$`));
 });
 
-test("reading pages get the solid header, index pages do not", async ({
+test("the header keeps one hairline on reading and index pages alike", async ({
     page,
     request,
 }, testInfo) => {
     const [path] = await postPaths(request, testInfo);
+    // One theme on both pages (a post follows the OS otherwise).
+    await storeTheme(page, "void");
     await page.goto(path);
-    await expect(page.locator("html")).toHaveAttribute("data-header", "solid");
+    const header = page.getByRole("banner");
+    const rule = await header.evaluate(
+        (element) => getComputedStyle(element).borderBottomColor,
+    );
     await page.getByRole("link", { name: postCopy.allEntries }).click();
     await expect(page).toHaveURL(/\/blog$/);
+    await expect(header).toHaveCSS("border-bottom-color", rule);
     await expect(page.locator("html")).not.toHaveAttribute("data-header", /.*/);
 });
 
