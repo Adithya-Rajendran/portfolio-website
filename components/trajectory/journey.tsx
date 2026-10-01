@@ -34,8 +34,9 @@ import styles from "./journey.module.css";
  * - **Still** (reduced motion, or the site's Pause motion): nothing pins;
  *   the scene holds one frame and the chapters pick it. It opens on the
  *   whole system (the route's end) with the latest chapter's card; the
- *   ask stays the rail's last stop. Each card's line keeps its dates as
- *   written.
+ *   ask stays the rail's last stop. Each card shows its dates as written
+ *   in the readout's place, each part kept whole, so on a phone
+ *   "Expected 2028" takes a line of its own beside Full entry.
  * - **Inactive** (`active` false: the page shows its list instead) nothing
  *   is built or listened to; without JavaScript the page never shows it.
  * - **Full entry** goes to the chapter's row in the CV (`onEntry`, else
@@ -140,12 +141,10 @@ export default function Journey({
         const liveEl = root.querySelector<HTMLElement>("[data-announce]")!;
         const cards = [...root.querySelectorAll<HTMLElement>("[data-card]")];
         const rail = [...root.querySelectorAll<HTMLElement>("[data-go]")];
-        // Each chapter card's readout line, and its dates as written (the
-        // plan card has none).
+        // Each chapter card's readout (the plan card has none).
         const stamps = cards.map((card) =>
             card.querySelector<HTMLElement>("[data-stamp]"),
         );
-        const written = stamps.map((stamp) => stamp?.textContent ?? "");
         const scene = createScene(host, data, route);
         const reduce = window.matchMedia(REDUCE);
 
@@ -211,10 +210,10 @@ export default function Journey({
             const at = frameAt(route, progress());
             const f =
                 !moving && stillCard !== null ? { ...at, card: stillCard } : at;
-            // In flight the card's line ticks; a still card keeps its dates.
+            // In flight the card's readout ticks; a still card shows its
+            // dates as written in its place (the CSS).
             const stamp = stamps[f.card];
-            if (stamp)
-                stamp.textContent = moving ? readout(f) : written[f.card];
+            if (stamp && moving) stamp.textContent = readout(f);
             if (f.card !== lastCard) {
                 // Focus in the card that leaves would fall to <body> when the
                 // card hides: hand it to the new chapter's rail button.
@@ -405,13 +404,29 @@ export default function Journey({
                                             {chapter.title}
                                         </h3>
                                         <p className={styles.stamp}>
-                                            <span className="data" data-stamp>
-                                                {[
-                                                    chapter.dates,
-                                                    chapter.expected,
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(" · ")}
+                                            {/* The dates as written, each
+                                                part kept whole: a still
+                                                card's. */}
+                                            <span
+                                                className={`data open-to ${styles.written}`}
+                                            >
+                                                <OpenToItems
+                                                    text={[
+                                                        chapter.dates,
+                                                        chapter.expected,
+                                                    ]
+                                                        .filter(Boolean)
+                                                        .join(" · ")}
+                                                />
+                                            </span>
+                                            {/* In flight, the readout that
+                                                ticks in their place; it holds
+                                                the dates' line until then. */}
+                                            <span
+                                                className={`data ${styles.readout}`}
+                                                data-stamp
+                                            >
+                                                {chapter.dates}
                                             </span>
                                             {chapter.current ? (
                                                 <Status value="active">

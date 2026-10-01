@@ -149,10 +149,14 @@ export default async function Home() {
                         ) : undefined
                     }
                 >
+                    {/* Without "View the project" or the write-up the
+                        copy is short: a landscape crop keeps the plate
+                        about as tall as it. */}
                     <MissionStage
                         mission={flagship}
                         image={cover ?? poster}
                         caption={cover?.caption}
+                        ratio="5 / 4"
                     />
                     {rows.length ? (
                         <MissionRows className={styles.projects}>

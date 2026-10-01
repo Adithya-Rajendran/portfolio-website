@@ -255,6 +255,11 @@
             display: none;
         }
     }
+    /* With the menu sheet open its list carries Contact and Experience:
+       the bar's pair steps aside, keeping its place. */
+    .site-header:has(.nav__panel:popover-open) .header-cv {
+        visibility: hidden;
+    }
 
     /* The menu button and sheet (< 960px). The sheet is a popover: it
        opens without JavaScript, in the top layer. */
@@ -752,7 +757,8 @@
     /* One strip under the hairline, set as every other label (DM Mono
        capitals, tracked, from sentence-case markup): the copyright (the
        footer's one mention of the name) with GitHub and LinkedIn, the
-       colophon, and Pause motion, a control in the controls' voice. The
+       colophon (its sentence in its own case, its Source a label), and
+       Pause motion, a control in the controls' voice. The
        space above the hairline is the page's own close. Where they fit the
        three share a line, the colophon in the middle with equal space on
        either side; narrower they wrap, and on phones they stack. */
@@ -778,6 +784,12 @@
     }
     .site-footer__name {
         white-space: nowrap;
+    }
+    /* The colophon is a sentence, not a label: capitals stay on labels of
+       four words or fewer, so it keeps its case (and three.js its own). */
+    .site-footer__made {
+        letter-spacing: normal;
+        text-transform: none;
     }
     /* Phones: the name, then GitHub · LinkedIn on a line of their own
        (without the dot that led them), then the colophon. */
@@ -1697,6 +1709,12 @@
         left: 0;
         width: var(--open-to-gap);
         text-align: center;
+    }
+    /* In the data voice (DM Mono) the gap is a mono " · ", three
+       characters: 0.9em left the dot touching its neighbours. */
+    .open-to.data,
+    .open-to.titleblock__data {
+        --open-to-gap: 3ch;
     }
 
     /* ===== Page head: actions (contract §1) ============================ */

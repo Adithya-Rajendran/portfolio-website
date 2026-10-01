@@ -6,7 +6,6 @@ import { crewRecord } from "@/lib/crew";
 import type { ProfileData } from "@/lib/sanity-client";
 
 const LABELS = {
-    name: copy.name,
     studying: copy.studying,
     previously: copy.previously,
     focus: copy.focus,
@@ -14,8 +13,9 @@ const LABELS = {
 } as const;
 
 /**
- * The owner's record as one hairline title block (G6) on About: Name,
- * Studying, Previously, Focus, Links, all in ink. A role is its title,
+ * The owner's record as one hairline title block (G6) on About:
+ * Studying, Previously, Focus, Links, all in ink (no Name: the header's
+ * wordmark and the footer carry it). A role is its title,
  * then the organization and the dates, then the title's parenthetical,
  * as on /resume. The cells and their spans come from `crewRecord`
  * (lib/crew.ts); a value the profile leaves empty has no cell. Returns

@@ -5,8 +5,9 @@ import { STATIC_PAGES } from "./support/routes";
 /**
  * About (themed Crew File; plan §6.2 PR 14, contract §9; premium WS2):
  * the head with no figure (the header's patch is the mark) and no
- * portrait, the profile record (Name, Studying, Previously, Focus, Links:
- * LinkedIn and GitHub; no Open To or edit date, no accent cell), the
+ * portrait, the profile record (Studying, Previously, Focus, Links:
+ * LinkedIn and GitHub; no Name, which the header's wordmark and the footer
+ * carry, no Open To or edit date, no accent cell), the
  * sections by their plain names (background, the Now list by kind), which
  * end the page; no close repeating the header's Contact, no writing index
  * or related pages repeating other pages, and no question numbers; the
@@ -31,9 +32,14 @@ test("About opens on its head and the record", async ({ page }) => {
 
     const record = main.getByRole("group", { name: crewCopy.recordLabel });
     await expect(record).toBeVisible();
+    // It opens on what the owner studies: no Name cell beside the
+    // header's wordmark.
+    await expect(record.getByRole("term").first()).toHaveText(
+        crewCopy.studying,
+    );
     await expect(
-        record.getByText(crewCopy.name, { exact: true }),
-    ).toBeVisible();
+        record.getByRole("term").filter({ hasText: /^Name$/i }),
+    ).toHaveCount(0);
     await expect(
         record.getByRole("term").filter({ hasText: /^(Open to|Updated)$/i }),
     ).toHaveCount(0);

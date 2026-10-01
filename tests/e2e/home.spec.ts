@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { chromeCopy, homeCopy as copy } from "@/lib/copy";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import sunrise from "@/lib/hero-sunrise.json";
+import { cvLink } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
 
@@ -39,10 +40,11 @@ async function firstViewport(page: Page) {
     await expect(main.getByRole("heading", { level: 1 })).toBeInViewport({
         ratio: 1,
     });
-    // One action, CV: the header's Projects is the way to the work.
+    // One action, CV, to the CV itself (/resume's list, not the flight):
+    // the header's Projects is the way to the work.
     const links = main.getByRole("navigation", { name: copy.routesLabel });
     await expect(links.getByRole("link")).toHaveText([copy.cv]);
-    await expect(links.getByRole("link")).toHaveAttribute("href", "/resume");
+    await expect(links.getByRole("link")).toHaveAttribute("href", cvLink.href);
     await expect(links.getByRole("link", { name: copy.cv })).toBeInViewport({
         ratio: 1,
     });

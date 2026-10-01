@@ -146,8 +146,12 @@ only live in comments or commit messages.
   from the boot script's attributes (`experience-views.module.css`): the
   flight under `html[data-motion="full"]` and no reduce-motion setting,
   else the list; the list too when the address names a
-  part of it (`/resume#experience`, a Full entry opened in a new tab).
-  Until the page has run on the client nothing is checked and the
+  part of it (`/resume#experience`, a Full entry opened in a new tab, and
+  `/resume#cv`, the CV link's address: `cvLink`, home's CV and the
+  header bar's). Such an address opens the list whatever view the visit
+  picked, on arrival (`pin`) and from a link on the page itself, which
+  changes only the hash (`follow`). Until the page has run on the client
+  nothing is checked and the
   default's box reads as chosen; then a module-level store pins the view
   in force, and a click switches it for the visit (no storage; a client
   navigation back keeps it). Without JavaScript (no `data-motion`), on
@@ -213,7 +217,12 @@ only live in comments or commit messages.
   organisation, a note and a line, and Full entry; no big date, kind
   label or readout on the plan's card, which states Open to with a quiet
   Contact, the flight's one ask (after the stage only "The full record",
-  to the list). On a phone Full entry shares the readout's row;
+  to the list). No card cuts its words to fit: a phone's card has no
+  line (Full entry shows the row) and a short wide window's runs to its
+  end. A still card's dates are parts kept whole (`.open-to`, the
+  readout's place; in flight the readout ticks there, one line), so on a
+  phone "Expected 2028" takes its own line. On a phone Full entry shares
+  the readout's row;
   the plan's card has no readout, so its Contact stays under the
   openings. The scene (`flight-gl.ts`) names each world by its
   organisation alone (DM Mono 13px caps), only in the wide finale's map
@@ -309,7 +318,8 @@ only live in comments or commit messages.
   `/portfolio` is the head, then the tiers with their section names for
   screen readers only (no visible "Featured project" or "More projects"
   row, no "Experience & CV" link and no related pages); the stage's copy
-  is top-aligned with its plate, its title is its one link to the page
+  is top-aligned with its plate (4:5; home's 5:4, `MissionStage ratio`,
+  as tall as its shorter copy), its title is its one link to the page
   (with the rows' trailing arrow; no "View the project" button), and a
   card (the stage, a tile) lists the first four stack items
   (`CARD_STACK`); every stack item is kept whole (`MissionStack`).
@@ -371,7 +381,8 @@ only live in comments or commit messages.
   lists them flat, without tags, and is absent when only the original
   was tied to the project. The 3D viewer's server part
   (`components/viewer/viewer-figure.tsx`) is the model's poster as a
-  plate, and its callouts are plain hairline rows under "Parts of the
+  plate with no caption (the model's title is not the owner's caption,
+  as on the stage), and its callouts are plain hairline rows under "Parts of the
   build" (the part and what it does: no balloon, number or link until the
   drawing lands; the write-up is linked once, in the head); PR 15 mounts
   the drawing in its `data-viewer` slot, and with it the model's
@@ -446,8 +457,8 @@ only live in comments or commit messages.
   The head has no figure (the header's patch is the mark; the site shows
   no portrait), no actions (the header carries Experience and Contact)
   and no dek (the record states the headline's facts); then the record
-  (`CrewRecord`: one hairline title block, Name in ink, Studying,
-  Previously, Focus, Links: LinkedIn and GitHub only, beside the facts
+  (`CrewRecord`: one hairline title block, Studying, Previously, Focus,
+  Links (no Name: the header's wordmark and the footer carry it): LinkedIn and GitHub only, beside the facts
   they verify, the credentials' links being the CV's; no Open To, edit
   date or accent cell). A role
   is set as on /resume: the title, then the organization and the dates as
@@ -523,11 +534,14 @@ only live in comments or commit messages.
   there is no fallback link); `MenuButton` adds focus, `inert` and the
   Tab loop. The sheet holds the five sections and the theme choice only
   (the feed is on `/blog` and each entry's close); the bar beside it
-  carries Contact and CV, which from 960px the nav's Contact and
-  Experience replace. The footer is one strip under its hairline: "©
-  2026 Adithya Rajendran · GitHub · LinkedIn", the colophon ("Built with
-  Next.js, Sanity and three.js · Source") and Pause motion (not on home),
-  all in the label voice; it repeats nothing the header carries (no
+  carries Contact and CV (`cvLink`, `/resume#cv`, the list itself, as
+  home's CV), which from 960px the nav's Contact and Experience replace
+  and which step aside while the sheet is open (its list carries both).
+  The footer is one strip under its hairline: "© 2026 Adithya Rajendran
+  · GitHub · LinkedIn", the colophon ("Built with Next.js, Sanity and
+  three.js · Source") and Pause motion (not on home), all in the label
+  voice but the colophon's sentence, which keeps its own case (capitals
+  are for labels of four words or fewer); it repeats nothing the header carries (no
   patch, sections, CV, RSS, theme or Back to top). The body is a column
   whose `main` grows, so on a short page (the 404) the space falls above
   the footer's hairline.
@@ -886,12 +900,14 @@ deployment require an authenticated Sanity CLI session.
   theme on an unknown post or project URL, the three-way choice in the
   menu sheet, and nothing in Pause motion's place under the OS setting),
   `chrome` (the menu sheet's focus, `inert` and closing; Contact and CV
-  in the bar on a phone and neither from 960px; the current nav section;
+  in the bar on a phone, hidden while the sheet is open, and neither
+  from 960px; the current nav section;
   the nav naming every section plainly, with no fallback Menu link; one
   header hairline on every page; the footer one strip naming the owner
   once, with GitHub, LinkedIn and Source its only links and Pause motion
   its only control, fitting its width at 390 and 1440; Pause motion in
-  the controls' voice and the strip a label),
+  the controls' voice and the strip a label, the colophon's sentence in
+  its own case),
   `contact` (the routes are the form's Topic radios, each named by its
   title and described by the owner's line, with no Topics column or
   links beside the form, and a fragment picks one; a route's prompt
@@ -946,7 +962,9 @@ deployment require an authenticated Sanity CLI session.
   the choice kept across a client navigation; Skip to the list, The full
   record and a card's Full entry landing on the list and its row, with
   focus; the list and the flight's still under reduced motion; an
-  address naming a section opening the list; no project link opening the
+  address naming a section opening the list; CV (home's, then the
+  phone bar's on the page itself) opening the list whatever view the
+  visit picked; no project link opening the
   site's own address in a new tab, and every credential one plain row
   with no status and no heading of its own; the list saying each thing
   once: no head date, status, kind code, type line, Skills or Links key,
@@ -962,7 +980,9 @@ deployment require an authenticated Sanity CLI session.
   record holding still while scrubbed, one readout ticking under the
   title, no world named while the route is flown and the worlds named
   without dates in the wide finale, none on a phone, a still flight
-  opening on the latest chapter, a phone's cards in
+  opening on the latest chapter, no card's words cut at a short laptop
+  window or on a phone, a still card's dates clear of its Full entry at
+  360 and 390, a phone's cards in
   reading order, and the scene drawing, surviving a lost context and a
   return), `missions` (every old `/portfolio` fragment sent on to its
   page, the index links every project with no counts, register, mission
@@ -985,7 +1005,7 @@ deployment require an authenticated Sanity CLI session.
   its two subheads), its repository beside Read the write-up in the
   head with no Code row, no Related writing that would only repeat the
   original, its callouts as plain rows, and a planned one none of them), `home` (the
-  hero's name, availability and its one action, CV, in the first
+  hero's name, availability and its one action, CV (to `/resume#cv`), in the first
   viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
   the name at 350, tracked 0.11–0.12em, on one line at 1440 and 1,400px
@@ -1007,7 +1027,8 @@ deployment require an authenticated Sanity CLI session.
   other, smaller (where the build has covers); the page's height
   at 1440 and 390; no gap wording and no old artwork), `crew` (About's
   plain title with no patch, portrait, head actions or dek, its record
-  without Open To, an edit date or an accent cell and LinkedIn and GitHub
+  opening on Studying, without Name, Open To, an edit date or an accent
+  cell and LinkedIn and GitHub
   its only links, the sections by their plain names, no question
   numbers, no writing index, related pages or close, no gap wording; and no page keeping the old design's
   roots, classes or tokens),

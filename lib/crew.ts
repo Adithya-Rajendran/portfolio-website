@@ -139,7 +139,7 @@ export function nowGroups(
 }
 
 export interface RecordCell {
-    id: "name" | "studying" | "previously" | "focus" | "links";
+    id: "studying" | "previously" | "focus" | "links";
     value: string;
     /** The quieter line under the value, in parts each kept whole: the
      *  organization, the dates. */
@@ -162,15 +162,16 @@ function share(count: number, total: number): number[] {
 }
 
 /**
- * The record (G6, the title block): the name, what the owner studies and
- * did last, then the focus and the profiles that verify those facts
- * (LinkedIn and GitHub; the credentials' links are the CV's), on two rows
- * of 12 columns. Only cells with a value are drawn, and the rows close up.
- * What the owner is open to is the home hero's and the heads' of /resume
- * and /contact; the profile's edit date is no fact about him.
+ * The record (G6, the title block): what the owner studies and did last,
+ * then the focus and the profiles that verify those facts (LinkedIn and
+ * GitHub; the credentials' links are the CV's), on two rows of 12
+ * columns. Only cells with a value are drawn, and the rows close up. No
+ * name: the header's wordmark and the footer carry it. What the owner is
+ * open to is the home hero's and the heads' of /resume and /contact; the
+ * profile's edit date is no fact about him.
  */
 export function crewRecord(profile: ProfileData | null): RecordCell[] {
-    if (!profile?.name?.trim()) return [];
+    if (!profile) return [];
     const studying = cvEntries(profile.timeline).all.find(
         (entry) => entry.current && entry.kind === "education",
     );
@@ -199,7 +200,6 @@ export function crewRecord(profile: ProfileData | null): RecordCell[] {
     };
 
     const first: Omit<RecordCell, "span" | "spanSm">[] = [
-        { id: "name", value: profile.name.trim() },
         ...(studying ? [role("studying", studying)] : []),
         ...(previously ? [role("previously", previously)] : []),
     ];

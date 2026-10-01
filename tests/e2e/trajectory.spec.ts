@@ -9,10 +9,11 @@ import { THEMES, storeTheme } from "./support/theme";
  * runs axe on the page as it opens, the flight). Pinned, the stage shows
  * its rail and Play. The record fits the pinned stage on short laptop
  * screens and never moves while the flight is scrubbed (a long burn label
- * included); the card's one readout ticks; the scene names the worlds by
+ * included), with no card's words cut to fit; the card's one readout ticks; the scene names the worlds by
  * their organisation only, in the wide finale's map alone (at a hold the
  * card and the rail name the world); a still flight opens on the latest
- * chapter. Play gives way to
+ * chapter, and on a phone a still card's dates ("… · Expected 2028") wrap
+ * clear of its Full entry. Play gives way to
  * any key, and a phone keeps each chapter's name and full entry (and the
  * plan's Contact under its openings). The 3D scene draws in both themes,
  * survives a lost WebGL context, and leaves one canvas and no errors
@@ -24,6 +25,19 @@ const PATH = "/resume";
 // on the CPU: in order, in one worker, so this file never runs several
 // at once and starves the rest of the suite.
 test.describe.configure({ mode: "default" });
+
+/** The card paragraphs whose words are cut (a line clamp, a clip). */
+function cutWords(page: Page) {
+    return page.evaluate(() =>
+        [...document.querySelectorAll("[data-journey] [data-card] p")]
+            .filter(
+                (p) =>
+                    getComputedStyle(p).overflowY !== "visible" &&
+                    p.scrollHeight > p.clientHeight + 1,
+            )
+            .map((p) => p.textContent?.slice(0, 40)),
+    );
+}
 
 /** Scrolls to progress `p` through the pinned flight. */
 async function seek(page: Page, p: number) {
@@ -67,6 +81,8 @@ for (const [width, height] of [
         await page.setViewportSize({ width, height });
         await page.goto(PATH);
         await page.waitForLoadState("networkidle");
+        // Every card says its words whole: none is cut to fit.
+        expect(await cutWords(page)).toEqual([]);
         const frames = [];
         // 0.45 is inside the transfer that carries the burn's name.
         for (const p of [0, 0.45, 1]) {
@@ -195,6 +211,63 @@ test("a still flight opens on the latest chapter, the ask last on the rail", asy
     ).not.toHaveText(copy.openTo);
 });
 
+for (const width of [360, 390]) {
+    test(`a still card's dates clear its Full entry at ${width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await page.emulateMedia({ reducedMotion: "reduce" });
+        await page.goto(PATH);
+        await page
+            .getByRole("group", { name: cvCopy.views.legend })
+            .getByRole("radio", { name: "Timeline", exact: true })
+            .check();
+        await expect(page.locator("[data-journey]")).toBeVisible();
+        const buttons = page
+            .getByRole("list", { name: copy.rail })
+            .getByRole("button");
+        // The chapters' cards (the plan's has no readout).
+        const chapters = await page
+            .locator("[data-journey] [data-card]:has([data-stamp])")
+            .count();
+        expect(chapters).toBeGreaterThan(0);
+        // Each chapter's card, the latest ("… · Expected 2028") first.
+        for (let i = chapters - 1; i >= 0; i--) {
+            await buttons.nth(i).click();
+            await expect(
+                page.locator(`[data-journey] [data-card="${i}"]`),
+            ).toHaveAttribute("data-on", "");
+            const clash = await page.evaluate(
+                ({ card, entry }) => {
+                    const root = document.querySelector(
+                        `[data-journey] [data-card="${card}"]`,
+                    )!;
+                    const link = [...root.querySelectorAll("a")].find((a) =>
+                        a.textContent?.includes(entry),
+                    )!;
+                    const b = link.getBoundingClientRect();
+                    // Every box the readout's line draws, its text included.
+                    const range = document.createRange();
+                    range.selectNodeContents(
+                        root.querySelector("[data-stamp]")!.parentElement!,
+                    );
+                    return [...range.getClientRects()]
+                        .filter((a) => a.width > 0)
+                        .filter(
+                            (a) =>
+                                a.left < b.right &&
+                                b.left < a.right &&
+                                a.top < b.bottom &&
+                                b.top < a.bottom,
+                        ).length;
+                },
+                { card: i, entry: copy.entry },
+            );
+            expect(clash, `card ${i}`).toBe(0);
+        }
+    });
+}
+
 test("any key but Play's own press stops Play", async ({ page }) => {
     await page.goto(PATH);
     await page.waitForLoadState("networkidle");
@@ -223,6 +296,9 @@ test("a phone keeps each chapter's name and full entry, the ask in order", async
     await expect(
         page.getByRole("link", { name: "Full entry" }).first(),
     ).toBeVisible();
+    // No sentence cut short: a phone's card has no line (Full entry
+    // shows the row) and its note whole.
+    expect(await cutWords(page)).toEqual([]);
     // The plan's card, when set, reads in order: its Contact sits under
     // the openings, not beside the title (Full entry's place).
     const plan = page

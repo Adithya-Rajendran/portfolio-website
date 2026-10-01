@@ -38,12 +38,21 @@ test("the menu sheet opens, traps nothing behind it and closes", async ({
     await expect(first).toBeFocused();
     await expect(page.getByRole("main")).toHaveJSProperty("inert", true);
     await expect(banner.getByRole("group", { name: "Theme" })).toBeVisible();
+    // The sheet's list carries Contact and Experience: the bar's Contact
+    // and CV step aside while it is open, so neither shows twice.
+    for (const link of await banner.locator(".header-cv").all()) {
+        await expect(link).toBeHidden();
+    }
+    await expect(
+        banner.getByRole("link", { name: "Contact", exact: true }),
+    ).toHaveCount(1);
 
     await page.keyboard.press("Escape");
     await expect(menu).toBeFocused();
     await expect(menu).toHaveAttribute("aria-expanded", "false");
     await expect(page.getByRole("main")).toHaveJSProperty("inert", false);
     await expect(first).toBeHidden();
+    await expect(banner.getByRole("link", { name: "CV" })).toBeVisible();
 
     await menu.click();
     await banner
@@ -166,15 +175,20 @@ test("the footer's controls speak the controls' voice, its strip the labels'", a
         });
         expect(voice).toEqual(["Jost", "500", 13, "uppercase", 10]);
     }
-    // The colophon is set as the copyright and its links: a label.
+    // The copyright and the links are labels.
     for (const label of [
-        footer.getByText(chromeCopy.colophon),
         footer.getByText(FIXTURE_PROFILE.name!),
         footer.getByRole("link", { name: "GitHub" }),
+        footer.getByRole("link", { name: "Source" }),
     ]) {
         await expect(label).toHaveCSS("font-family", /DM Mono/);
         await expect(label).toHaveCSS("text-transform", "uppercase");
     }
+    // The colophon is a sentence, in the strip's mono and its own case:
+    // capitals are for labels of four words or fewer.
+    const colophon = footer.getByText(chromeCopy.colophon, { exact: true });
+    await expect(colophon).toHaveCSS("font-family", /DM Mono/);
+    await expect(colophon).toHaveCSS("text-transform", "none");
 });
 
 for (const width of [390, 1440]) {

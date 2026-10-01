@@ -338,7 +338,6 @@ export const aboutCopy = {
 /** The crew record (G6): /about. */
 export const crewCopy = {
     recordLabel: "Profile record",
-    name: "Name",
     studying: "Studying",
     previously: "Previously",
     focus: "Focus",

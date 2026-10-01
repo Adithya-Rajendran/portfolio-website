@@ -28,6 +28,7 @@ export default function MissionStage({
     caption,
     writeUp,
     as: Heading = "h3",
+    ratio = "4 / 5",
     priority = false,
 }: {
     mission: Mission;
@@ -37,6 +38,9 @@ export default function MissionStage({
     /** Where "Read the write-up" goes: the original entry, or the file's. */
     writeUp?: string | null;
     as?: "h2" | "h3";
+    /** The plate's crop: a portrait 4:5, or on home a 5:4, as tall as
+     *  the copy beside it, so its foot is no hole under the stack. */
+    ratio?: string;
     priority?: boolean;
 }) {
     const plate = image?.asset ? image : null;
@@ -76,7 +80,7 @@ export default function MissionStage({
                     className={styles.stagePlate}
                     image={plate}
                     caption={caption}
-                    ratio="4 / 5"
+                    ratio={ratio}
                     focus="50% 40%"
                     sizes="(min-width: 60rem) 36vw, 100vw"
                     priority={priority}

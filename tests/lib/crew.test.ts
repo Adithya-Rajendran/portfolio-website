@@ -169,10 +169,10 @@ describe("crewRecord", () => {
     it("draws the owner's record on two rows of twelve columns", () => {
         const cells = crewRecord(FIXTURE_PROFILE);
         // No Open To (the hero's and the heads') and no edit date.
+        // No name: the header's wordmark and the footer carry it.
         expect(cells.map((cell) => [cell.id, cell.span])).toEqual([
-            ["name", 4],
-            ["studying", 4],
-            ["previously", 4],
+            ["studying", 6],
+            ["previously", 6],
             ["links", 12],
         ]);
         expect(
@@ -181,20 +181,13 @@ describe("crewRecord", () => {
                 focusAreas: ["Robotic vision", "Robotics & AI"],
             }).map((cell) => [cell.id, cell.span]),
         ).toEqual([
-            ["name", 4],
-            ["studying", 4],
-            ["previously", 4],
+            ["studying", 6],
+            ["previously", 6],
             ["focus", 6],
             ["links", 6],
         ]);
-        expect(cells[0]).toEqual({
-            id: "name",
-            value: "Adithya Rajendran",
-            span: 4,
-            spanSm: 2,
-        });
         // The facts in whole parts, so a wrapped line never ends on a dot.
-        expect(cells[1]).toMatchObject({
+        expect(cells[0]).toMatchObject({
             facts: [
                 "San José State University",
                 "Aug 2026 – present",
@@ -202,7 +195,7 @@ describe("crewRecord", () => {
             ],
             note: null,
         });
-        expect(cells[2]).toMatchObject({
+        expect(cells[1]).toMatchObject({
             value: "Field Software Engineer I",
             facts: ["Canonical Ltd (Ubuntu)", "May 2024 – Jul 2026"],
         });
@@ -239,10 +232,9 @@ describe("crewRecord", () => {
             }),
         );
         expect(cells.map((cell) => [cell.id, cell.span])).toEqual([
-            ["name", 12],
             ["links", 12],
         ]);
-        expect(cells[1].links).toEqual([
+        expect(cells[0].links).toEqual([
             {
                 label: "LinkedIn",
                 url: "https://www.linkedin.com/in/me",

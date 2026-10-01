@@ -89,9 +89,17 @@ export function lostSection(path: string | null): IndexedSection | undefined {
     );
 }
 
-/** The recruiter shortcut in the header bar below 960px, where the nav
- *  (and its Experience) is in the menu sheet. */
-export const cvLink = { href: siteRoutes.resume, label: "CV" } as const;
+/** The CV list's id on /resume (components/cv/experience-views.tsx): an
+ *  address that names it opens the list, whatever view the visit picked. */
+export const cvListId = "cv";
+
+/** The recruiter shortcut: home's one action, and the header bar's below
+ *  960px, where the nav (and its Experience) is in the menu sheet. It
+ *  opens the CV itself, the list, not the flight. */
+export const cvLink = {
+    href: `${siteRoutes.resume}#${cvListId}`,
+    label: "CV",
+} as const;
 
 /** Contact in the header bar below 960px, where the nav is in the menu
  *  sheet: the form is one click from every page at every width. */

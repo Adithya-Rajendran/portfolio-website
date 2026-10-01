@@ -36,7 +36,7 @@ describe("site navigation", () => {
             "/about",
             "/contact",
         ]);
-        expect(cvLink.href).toBe("/resume");
+        expect(cvLink.href).toBe("/resume#cv");
     });
 
     it("links a contact route by its fragment", () => {

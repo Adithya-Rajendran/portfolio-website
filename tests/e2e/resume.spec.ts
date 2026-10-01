@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { siteConfig } from "@/lib/config";
-import { cvCopy, trajectoryCopy } from "@/lib/copy";
+import { chromeCopy, cvCopy, homeCopy, trajectoryCopy } from "@/lib/copy";
 import { axeViolations } from "./support/axe";
 import { expect, test } from "./support/test";
 import { THEMES, storeTheme } from "./support/theme";
@@ -205,6 +205,38 @@ test("an address that names a part of the CV opens the list there", async ({
         await expect(option(page, "List")).toBeChecked();
         await expect(page.locator("[data-journey]")).toBeHidden();
     }
+});
+
+test("CV opens the list, whichever view the visit picked", async ({ page }) => {
+    const cv = () =>
+        main(page).getByRole("link", { name: homeCopy.cv, exact: true });
+    await page.goto("/");
+    await cv().click();
+    await expect(page).toHaveURL(/\/resume#cv$/);
+    await expect(option(page, "List")).toBeChecked();
+    await expect(firstSection(page)).toBeInViewport();
+    // Timeline picked for the visit, then home's CV again (a client
+    // navigation back to the page).
+    await option(page, "Timeline").check();
+    await expect(page.locator("[data-journey]")).toBeVisible();
+    await page
+        .getByRole("banner")
+        .getByRole("link", { name: chromeCopy.homeLabel })
+        .click();
+    await expect(page).toHaveURL(/\/$/);
+    await cv().click();
+    await expect(option(page, "List")).toBeChecked();
+    await expect(page.locator("[data-journey]")).toBeHidden();
+    // On a phone, the header's CV from the flight on the page itself.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await option(page, "Timeline").check();
+    await expect(page.locator("[data-journey]")).toBeVisible();
+    await page
+        .getByRole("banner")
+        .getByRole("link", { name: "CV", exact: true })
+        .click();
+    await expect(option(page, "List")).toBeChecked();
+    await expect(firstSection(page)).toBeInViewport();
 });
 
 test("the CV links the site in place and lists every credential alike", async ({

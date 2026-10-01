@@ -6,13 +6,15 @@ import TrajectoryView from "@/components/trajectory/trajectory-view";
 import { LinkArrow } from "@/components/ui/marks";
 import Segmented from "@/components/ui/segmented";
 import { cvCopy, trajectoryCopy } from "@/lib/copy";
+import { cvListId } from "@/lib/navigation";
 import type { TrajectoryData } from "@/lib/trajectory";
 import styles from "./experience-views.module.css";
 
 type View = "timeline" | "list";
 
-/** The list's id: Skip to the list and The full record land on it. */
-const LIST = "cv";
+/** The list's id: Skip to the list, The full record and the CV link
+ *  (`cvLink`) land on it. */
+const LIST = cvListId;
 
 /*
  * The view for the visit, in memory only: undefined until the page first
@@ -67,15 +69,37 @@ function showList(id = LIST) {
     });
 }
 
-/** The CSS's default, pinned once the page has rendered: the list when
- *  the address names a part of it (a Full entry opened in a new tab, an
- *  old /portfolio fragment) or motion is off, else the flight. */
+/** Whether `hash` names the list or a part of it. */
+function inList(hash: string) {
+    const id = decodeURIComponent(hash.slice(1));
+    return document.getElementById(id)?.closest(`#${LIST}`) ? id : null;
+}
+
+/** On arrival: the list when the address names a part of it (the CV
+ *  link, a Full entry opened in a new tab, an old /portfolio fragment),
+ *  whatever view the visit picked; else the view picked, else the CSS's
+ *  default: the list when motion is off, the flight otherwise. */
 function pin() {
-    if (view) return;
-    const id = decodeURIComponent(window.location.hash.slice(1));
-    const target = id ? document.getElementById(id) : null;
-    if (target?.closest(`#${LIST}`)) showList(id);
-    else setView(motionAllowed() ? "timeline" : "list");
+    const id = inList(window.location.hash);
+    if (id) showList(id);
+    else if (!view) setView(motionAllowed() ? "timeline" : "list");
+}
+
+/** A link on this page, outside the views, to a part of the list (the
+ *  header's CV on a phone): Next changes only the hash, so nothing would
+ *  re-pin. */
+function follow(event: MouseEvent) {
+    if (event.button || event.metaKey || event.ctrlKey || event.shiftKey)
+        return;
+    const link =
+        event.target instanceof Element
+            ? event.target.closest<HTMLAnchorElement>("a[href*='#']")
+            : null;
+    if (!link || link.closest("[data-views]")) return;
+    const url = new URL(link.href);
+    if (url.pathname !== window.location.pathname) return;
+    const id = inList(url.hash);
+    if (id) showList(id);
 }
 
 /**
@@ -97,13 +121,17 @@ export default function ExperienceViews({
 }) {
     const current = useSyncExternalStore(subscribe, getView, noView);
     const flight = useSyncExternalStore(subscribe, getFlown, noView);
-    useEffect(() => pin(), []);
+    useEffect(() => {
+        pin();
+        document.addEventListener("click", follow);
+        return () => document.removeEventListener("click", follow);
+    }, []);
     const toList = (event: { preventDefault(): void }) => {
         event.preventDefault();
         showList();
     };
     return (
-        <div className={styles.views} data-view={current}>
+        <div className={styles.views} data-view={current} data-views>
             <div className={`shell ${styles.bar}`} data-print="hide">
                 <Segmented
                     className={`js-only ${styles.switch}`}

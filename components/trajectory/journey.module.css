@@ -67,7 +67,9 @@
    flight the date, ticking, and the phase ("May 2024 · Transfer"). DM
    Mono 13px (`.data` sets the family only), with "● Current" beside it on
    the current chapter in flight, where it is the card's one "now"; a
-   still card's "– present" says it, so there it is not shown. */
+   still card's "– present" says it, so there it is not shown. The
+   written dates are parts kept whole (`.open-to`): where they do not fit
+   a line, "Expected 2028" takes its own and the dot is clipped. */
 .stamp {
     display: flex;
     flex-wrap: wrap;
@@ -78,6 +80,11 @@
     line-height: 1.4;
     color: var(--ink-2);
     font-variant-numeric: tabular-nums;
+}
+
+/* In flight the readout ticks in the written dates' place. */
+.readout {
+    display: none;
 }
 
 .org {
@@ -306,6 +313,12 @@
 /* ---- flight: pinned and scrubbed ------------------------------------- */
 
 @media (prefers-reduced-motion: no-preference) {
+    :global(html[data-js][data-motion="full"]) .written {
+        display: none;
+    }
+    :global(html[data-js][data-motion="full"]) .readout {
+        display: block;
+    }
     :global(html[data-js][data-motion="full"]) .journey {
         height: calc((100 + var(--len)) * 1vh);
         height: calc((100 + var(--len)) * 1svh);
@@ -348,13 +361,10 @@
     :global(html[data-js]) .stamp {
         margin-bottom: var(--s-2);
     }
+    /* The line runs to its end: no sentence is cut (the record fits a
+       1366×657 window with the longest, three lines). */
     :global(html[data-js]) .line {
         margin-top: var(--s-2);
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        overflow: hidden;
     }
     :global(html[data-js]) .act {
         padding-top: var(--s-3);
@@ -393,17 +403,10 @@
         font-size: 1.5rem;
         margin-bottom: var(--s-1);
     }
-    /* Two lines at most, so the record stays in the stage's lower part. */
-    :global(html[data-js]) .line,
-    :global(html[data-js]) .note {
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        overflow: hidden;
-    }
+    /* No line, so the record stays in the stage's lower part and no
+       sentence is cut: Full entry shows the whole row. */
     :global(html[data-js]) .line {
-        margin-top: var(--s-2);
+        display: none;
     }
     /* Full entry shares the readout's row, at the panel's edge; the
        organization and the lines follow. The plan's card has no readout,

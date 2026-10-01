@@ -9,7 +9,7 @@ import { Icon } from "@/components/ui/icon";
 import { Status } from "@/components/ui/marks";
 import { homeCopy as copy } from "@/lib/copy";
 import sunrise from "@/lib/hero-sunrise.json";
-import { siteRoutes } from "@/lib/navigation";
+import { cvLink } from "@/lib/navigation";
 import styles from "./hero.module.css";
 
 /**
@@ -21,7 +21,8 @@ import styles from "./hero.module.css";
  * the photograph arrives, and without it. Centred over the black above
  * the limb: the name (the page's h1), the profile's one-line headline,
  * what the owner is open to (the profile's availability, only when set)
- * and one action, CV (a hairline button over the photograph). The
+ * and one action, CV (a hairline button over the photograph, to /resume's
+ * list: `cvLink`). The
  * headline's and the Open To line's parts are kept whole, and stack on
  * phones. At the foot, the credit with the frame's NASA ID, and Pause
  * motion (nothing under the OS reduce-motion setting). The header's
@@ -217,7 +218,7 @@ export default function Hero({
                         aria-label={copy.routesLabel}
                         data-clear
                     >
-                        <Link className="btn" href={siteRoutes.resume}>
+                        <Link className="btn" href={cvLink.href}>
                             <span>{copy.cv}</span>
                             <Icon name="arrow" className="icon--nudge" />
                         </Link>

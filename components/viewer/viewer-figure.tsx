@@ -6,8 +6,9 @@ import styles from "./viewer.module.css";
 /**
  * The 3D viewer's server part (G5, plan §2.5.4): until the viewer island
  * lands (PR 15), the model's poster photograph is the figure, as a plate
- * with the model's title for its caption; the photograph's own alt text
- * describes it. The model's description (`model.alt`) describes the
+ * with no caption (the model's title is not one the owner wrote, and the
+ * head's h1 names the project; as on home's and /portfolio's stage); the
+ * photograph's own alt text describes it. The model's description (`model.alt`) describes the
  * drawing, so the island renders it once the drawing is mounted.
  * `data-viewer` marks the slot the island will mount in; nothing here
  * pretends to be a control.
@@ -31,7 +32,6 @@ export default function ViewerFigure({
         >
             <Plate
                 image={model.poster}
-                caption={model.title?.trim() || null}
                 ratio="4 / 5"
                 focus="50% 40%"
                 sizes="(min-width: 60rem) 36vw, 100vw"
