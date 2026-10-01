@@ -160,9 +160,18 @@
     font: 400 var(--step-0) / 1.55 var(--font-long);
     text-wrap: pretty;
 }
+/* A cover: a 3:2 plate on top, its credit under it. */
+.tilePlate {
+    margin-bottom: var(--s-3);
+}
+/* The line, with the arrow at its end, placed from the line (a cover
+   above moves both). */
+.tileHead {
+    position: relative;
+}
 .tileArrow {
     position: absolute;
-    top: calc(var(--s-5) + 0.1rem);
+    top: 0.1rem;
     right: 0;
     color: var(--ink-3);
     transition:
@@ -172,16 +181,6 @@
 .tile:hover .tileArrow {
     transform: translateX(4px);
     color: var(--ink-1);
-}
-
-/* ---- A cover on a tile or a home row: a 3:2 plate under the line ------ */
-/* The line keeps its arrow; the caption is the cover's own. */
-.cardPlate {
-    margin-block: var(--s-2) var(--s-1);
-}
-/* A row leaves its right edge to the arrow; the plate spans the row. */
-.rowPlate {
-    margin-right: calc(-1 * var(--s-7));
 }
 
 /* ---- Rows: a project in a line or two (MissionRow) --------------------- */
@@ -232,6 +231,44 @@
     color: var(--ink-2);
     font: 400 var(--step-0) / 1.5 var(--font-long);
     text-wrap: pretty;
+}
+/* A row with a cover: a 3:2 thumbnail with its credit. On phones the
+   line keeps the row's width, the thumbnail (two fifths) sits beside the
+   title and the summary runs under both; from 600px the thumbnail (a
+   third) stands beside the line, title and summary, and the empty track
+   takes whatever it adds to their height. The stage's plate stays the
+   section's largest image. */
+.rowCovered {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-areas:
+        "line line"
+        "plate title"
+        "summary summary";
+    column-gap: var(--s-4);
+}
+.rowPlate {
+    grid-area: plate;
+}
+.rowCovered .rowLine {
+    grid-area: line;
+}
+.rowCovered .rowTitle {
+    grid-area: title;
+}
+.rowCovered .rowSummary {
+    grid-area: summary;
+}
+@media (min-width: 37.5rem) {
+    .rowCovered {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        grid-template-rows: auto auto auto 1fr;
+        grid-template-areas:
+            "plate line"
+            "plate title"
+            "plate summary"
+            "plate .";
+        column-gap: var(--gutter);
+    }
 }
 .rowArrow {
     position: absolute;

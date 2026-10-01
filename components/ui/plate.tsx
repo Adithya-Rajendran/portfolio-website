@@ -10,12 +10,15 @@ import { urlForImage } from "@/lib/sanity-image";
  * plate rule (`.photo` in styles/components.css). A lone photograph
  * carries no plate number (Pl. I… number the long read's plates); given
  * one, it leads the caption. The caption is the owner's words, never an
- * explanation. Returns nothing for an image without an asset.
+ * explanation; the credit is its source line (`.caption__src`, the long
+ * read's and the hero's mono voice). Returns nothing for an image without
+ * an asset.
  */
 export default function Plate({
     image,
     label,
     caption,
+    credit,
     ratio,
     focus,
     sizes,
@@ -28,6 +31,8 @@ export default function Plate({
     /** "Pl. I": only where a page numbers its plates. */
     label?: string;
     caption?: React.ReactNode;
+    /** Who made it ("Illustration"), under the caption. */
+    credit?: string | null;
     /** A crop, as a CSS aspect ratio ("4 / 5"); the photo's own otherwise. */
     ratio?: string;
     /** `object-position` for the crop. */
@@ -82,13 +87,20 @@ export default function Plate({
                 />
                 {children}
             </div>
-            {label || caption ? (
+            {label || caption || credit ? (
                 <figcaption className="caption">
                     {label ? (
                         <span className="caption__num">{label}</span>
                     ) : null}
                     {caption ? (
-                        <span className="caption__body">{caption}</span>
+                        <span className="caption__body">
+                            {caption}
+                            {credit ? (
+                                <span className="caption__src">{credit}</span>
+                            ) : null}
+                        </span>
+                    ) : credit ? (
+                        <span className="caption__src">{credit}</span>
                     ) : null}
                 </figcaption>
             ) : null}

@@ -9,9 +9,10 @@ import styles from "./missions.module.css";
 /**
  * A project as a compact row (contract §4's card rule): its status and
  * dates, its title (the link to its file, over the whole row) and its
- * summary, under a hairline. The home page's rows after the flagship
- * (where a cover adds a 3:2 plate under the line, as on a tile), and
- * /portfolio's least prominent projects.
+ * summary, under a hairline. The home page's rows after the flagship,
+ * and /portfolio's least prominent projects. A cover adds a 3:2
+ * thumbnail beside the line and title, its caption set as its credit
+ * ("Illustration"), so the row stays smaller than the stage's plate.
  */
 export default function MissionRow({
     mission,
@@ -23,7 +24,21 @@ export default function MissionRow({
     as?: "h3" | "h4";
 }) {
     return (
-        <li className={styles.row}>
+        <li
+            className={
+                cover?.asset ? `${styles.row} ${styles.rowCovered}` : styles.row
+            }
+        >
+            {cover?.asset ? (
+                <Plate
+                    className={styles.rowPlate}
+                    image={cover}
+                    credit={cover.caption}
+                    ratio="3 / 2"
+                    sizes="(min-width: 60rem) 14vw, 32vw"
+                    width={600}
+                />
+            ) : null}
             <p className={styles.rowLine}>
                 <Status value={mission.statusValue}>
                     {mission.statusLabel}
@@ -32,15 +47,6 @@ export default function MissionRow({
                     <span className={styles.rowDates}>{mission.dates}</span>
                 ) : null}
             </p>
-            {cover?.asset ? (
-                <Plate
-                    className={`${styles.cardPlate} ${styles.rowPlate}`}
-                    image={cover}
-                    caption={cover.caption}
-                    ratio="3 / 2"
-                    sizes="(min-width: 60rem) 45vw, 100vw"
-                />
-            ) : null}
             <Heading className={styles.rowTitle}>
                 <Link className="stretch" href={mission.href}>
                     {mission.title}

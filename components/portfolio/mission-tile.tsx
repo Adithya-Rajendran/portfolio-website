@@ -20,8 +20,8 @@ export function MissionTiles({ children }: { children: React.ReactNode }) {
  * dates), its title as the heading (the link to its file, stretched over
  * the tile), its summary and its first four stack items, under a
  * hairline. Numbers stay on the file, beside their notes. A cover adds a
- * 3:2 plate under the line, with its caption; a mission without one is
- * not given a stand-in.
+ * 3:2 plate on top, its caption set as its credit ("Illustration"); a
+ * mission without one is not given a stand-in. The arrow ends the line.
  */
 export default function MissionTile({
     mission,
@@ -34,16 +34,19 @@ export default function MissionTile({
 }) {
     return (
         <article className={styles.tile}>
-            <MissionLine mission={mission} />
             {cover?.asset ? (
                 <Plate
-                    className={styles.cardPlate}
+                    className={styles.tilePlate}
                     image={cover}
-                    caption={cover.caption}
+                    credit={cover.caption}
                     ratio="3 / 2"
                     sizes="(min-width: 37.5rem) 45vw, 100vw"
                 />
             ) : null}
+            <div className={styles.tileHead}>
+                <MissionLine mission={mission} />
+                <Icon name="arrow" className={styles.tileArrow} />
+            </div>
             <Heading className={styles.tileName}>
                 <Link className="stretch" href={mission.href}>
                     {mission.title}
@@ -57,7 +60,6 @@ export default function MissionTile({
                 label={copy.stack}
                 max={CARD_STACK}
             />
-            <Icon name="arrow" className={styles.tileArrow} />
         </article>
     );
 }

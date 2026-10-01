@@ -810,6 +810,10 @@
         color: var(--ink-3);
         font: 400 var(--label-size) / 1.45 var(--font-mono);
     }
+    /* A credit with no caption above it (a project's cover). */
+    .caption > .caption__src {
+        margin-top: 0;
+    }
 
     /* A hollow triangle and a date: document control and dated revisions. */
     .rev {

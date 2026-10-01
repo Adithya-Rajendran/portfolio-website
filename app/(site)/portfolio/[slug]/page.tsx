@@ -222,14 +222,15 @@ export default async function ProjectPage({
     );
 
     // The head's image: the model's poster (the viewer's slot), else the
-    // cover with its caption. Either layout sets it beside the head.
+    // cover, its caption set as its credit. Either layout sets it beside
+    // the head.
     const model = project.model?.poster?.asset ? project.model : null;
     const media = model ? (
         <ViewerFigure model={model} priority />
     ) : mission.cover ? (
         <Plate
             image={mission.cover}
-            caption={mission.cover.caption}
+            credit={mission.cover.caption}
             sizes="(min-width: 60rem) 36vw, 100vw"
             priority
         />

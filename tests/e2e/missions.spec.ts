@@ -8,7 +8,9 @@ import { sitemapPages } from "./support/routes";
  * sends the fragments its old sections had on to their pages and links
  * every project's page, the flagship first and the owner's last project
  * least prominent, with no counts, register or related pages; no project
- * name is set in capitals, and a card lists at most four stack items.
+ * name is set in capitals, and a card lists at most four stack items; a
+ * cover leads its card, carries its caption as a credit and opens the
+ * project (checked where the build has covers; the fixtures have none).
  * Each project page has its crumb, its title as the heading, the close and
  * the pager, and no title block or revision stamp; a project with little
  * content is a short note with no sections, and a module the owner has
@@ -89,6 +91,48 @@ test("/portfolio links every project, the flagship first and the last project qu
         .getByRole("list", { name: copy.stack })
         .all()) {
         expect(await stack.locator("li").count()).toBeLessThanOrEqual(4);
+    }
+});
+
+test("a cover leads its card, credited, and opens the project", async ({
+    page,
+}) => {
+    await page.goto("/portfolio");
+    const more = main(page).locator("#projects");
+    if (!(await more.count())) return;
+    // The fixtures carry no images; a build with covers is checked.
+    const covers = await more.evaluate((section) =>
+        [...section.querySelectorAll("article, li")]
+            .filter((card) => card.querySelector(":scope > figure"))
+            .map((card) => {
+                const figure = card.querySelector(":scope > figure")!;
+                const image = figure.querySelector("img")!;
+                image.scrollIntoView({ behavior: "instant", block: "center" });
+                const box = image.getBoundingClientRect();
+                const hit = document.elementFromPoint(
+                    box.x + box.width / 2,
+                    box.y + box.height / 2,
+                );
+                const credit = figure.querySelector("figcaption .caption__src");
+                return {
+                    first: card.firstElementChild === figure,
+                    caption: figure.querySelector("figcaption")?.textContent,
+                    credit: credit?.textContent ?? null,
+                    font: credit ? getComputedStyle(credit).fontFamily : "",
+                    opens: hit?.closest("a")?.getAttribute("href") ?? null,
+                    href: card
+                        .querySelector(":is(h3, h4) a")
+                        ?.getAttribute("href"),
+                };
+            }),
+    );
+    for (const cover of covers) {
+        expect(cover.first).toBe(true);
+        expect(cover.opens).toBe(cover.href);
+        if (cover.caption) {
+            expect(cover.credit).toBe(cover.caption);
+            expect(cover.font).toMatch(/Mono/);
+        }
     }
 });
 

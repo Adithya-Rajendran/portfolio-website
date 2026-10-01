@@ -16,7 +16,9 @@ import { storeTheme } from "./support/theme";
  * credited with its frame ID and Flight Manual draws the limb instead;
  * the name keeps one line at 1440 and spans 1,400px at most at 1920;
  * the sections follow in order, unnumbered, and lead to their pages; the
- * flagship shows no stats and at most four stack items; the close is the
+ * flagship shows no stats and at most four stack items; a row's cover is
+ * a thumbnail, credited, that never outweighs the stage's photograph
+ * (checked where the build has covers; the fixtures have none); the close is the
  * owner's tagline with one primary; the page stays short; and it says
  * nothing about what is missing.
  */
@@ -355,6 +357,67 @@ test("the strongest project leads with its summary and no stats", async ({
         await stage.getByRole("list", { name: "Stack" }).locator("li").count(),
     ).toBeLessThanOrEqual(4);
 });
+
+for (const width of [390, 1440, 1920]) {
+    test(`a row's cover is a credited thumbnail, smaller than the stage's plate, at ${width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto("/");
+        const projects = page
+            .getByRole("main")
+            .locator("section#home-projects");
+        if (!(await projects.count())) return;
+        // The fixtures carry no images; a build with covers is checked.
+        const plates = await projects.evaluate((section) => {
+            const size = (figure: Element | null) => {
+                const box = figure
+                    ?.querySelector("img")
+                    ?.getBoundingClientRect();
+                return {
+                    width: box?.width ?? 0,
+                    area: box ? box.width * box.height : 0,
+                };
+            };
+            return {
+                stage: size(section.querySelector("article figure")),
+                rows: [...section.querySelectorAll("li figure")].map(
+                    (figure) => {
+                        const credit = figure.querySelector(
+                            "figcaption .caption__src",
+                        );
+                        const style = credit ? getComputedStyle(credit) : null;
+                        return {
+                            ...size(figure),
+                            caption:
+                                figure.querySelector("figcaption")?.textContent,
+                            credit: credit?.textContent ?? null,
+                            font: style?.fontFamily ?? "",
+                            size: style ? parseFloat(style.fontSize) : 0,
+                        };
+                    },
+                ),
+            };
+        });
+        // The owner's photograph stays the section's largest image: each
+        // cover is narrower, and the rows' covers together are smaller.
+        if (plates.stage.area) {
+            const rows = plates.rows.reduce((sum, row) => sum + row.area, 0);
+            expect(rows).toBeLessThan(plates.stage.area);
+        }
+        for (const row of plates.rows) {
+            if (plates.stage.area) {
+                expect(row.width).toBeLessThan(plates.stage.width);
+            }
+            // Its one line is a credit, in the hero credit's mono voice.
+            if (row.caption) {
+                expect(row.credit).toBe(row.caption);
+                expect(row.font).toMatch(/Mono/);
+                expect(row.size).toBeLessThanOrEqual(13);
+            }
+        }
+    });
+}
 
 for (const [width, limit] of [
     [1440, 4500],

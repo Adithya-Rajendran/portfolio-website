@@ -53,9 +53,10 @@ const TILES = 2;
 /**
  * Projects (/portfolio; themed Missions): the page head with the owner's
  * introduction (`projectsIntro`, left out when empty), the flagship on its
- * stage, the next two as text-first tiles (with their covers, when they
- * have one) and the rest as compact rows,
- * so the owner's last project is the least prominent (`missionTiers`);
+ * stage, the next two as text-first tiles and the rest as compact rows
+ * (each with its cover, when it has one: a plate on a tile, a thumbnail
+ * on a row), so the owner's last project is the least prominent
+ * (`missionTiers`);
  * the tiers' sections are named for screen readers only, since the page
  * title already says what they are; #projects is the tiles. The old sections' fragments (#experience…) are sent on by
  * RouteMarker. Only what the owner published is shown: no counts, no
@@ -154,6 +155,7 @@ export default async function Portfolio() {
                                         <MissionRow
                                             key={item.id}
                                             mission={item}
+                                            cover={item.cover}
                                         />
                                     ))}
                                 </MissionRows>

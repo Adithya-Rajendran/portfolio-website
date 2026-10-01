@@ -276,12 +276,17 @@ only live in comments or commit messages.
   which carries them with their notes; the index has no counts, register
   or card stats. A Sanity cover (`Mission.cover`, with its alt text and
   its caption, today "Illustration" on the owner's generated stand-ins:
-  premium D4-B) is a 3:2 plate under the line of a `/portfolio` tile and
-  of a home row (`MissionTile` / `MissionRow` `cover`), the stage's plate
-  when the flagship has one, and the plate beside a project's head in
-  either layout; the stage takes the model's poster without one, and the
-  "Also" rows, the home "Also" line and a post's project rows stay text
-  only. `missionLayout` picks the page's layout: the full file
+  premium D4-B) is a 3:2 plate on top of a `/portfolio` tile (then its
+  line, which ends in the arrow), a 3:2 thumbnail in a row on home or
+  `/portfolio` (a third of the row beside its text; on phones two fifths
+  beside the title, under the line), the stage's plate when the flagship
+  has one, and the plate beside a project's head in either layout; the
+  stage takes the model's poster without one, and the home "Also" line
+  and a post's project row stay text only. On a card and a head the
+  cover's caption is the plate's credit line (`Plate credit`,
+  `.caption__src`: DM Mono 13px, ink-3, as the hero's credit); the stage
+  keeps it as the owner's caption. A row's cover never outweighs the
+  stage's photograph. `missionLayout` picks the page's layout: the full file
   where there is evidence (a brief that adds to the card, `briefAdds`;
   results, lessons or next steps, callouts, the model's poster, an essay
   in sections; a cover is no evidence of its own), otherwise the short
@@ -853,6 +858,8 @@ deployment require an authenticated Sanity CLI session.
   as the heading, close and pager and no title block, revision, "Table 1",
   jump to its own write-up or stand-in text, a stack item never split, a
   thin project is a short note (the Kubernetes note without a Stack row),
+  a cover leads its card, credited, and opens the project (where the
+  build has covers: the fixtures have none),
   Read the write-up lands on the original entry; on the fixture build a
   filled mission shows every module, its repository in the facts and its
   callouts as plain rows, and a planned one none of them), `home` (the
@@ -869,7 +876,9 @@ deployment require an authenticated Sanity CLI session.
   latest writing without tags; the close headed by the tagline, its
   button only in the profile's words and only beside an Open To line, one
   primary at most; the flagship without stats or mission number, its
-  title in sentence case over four stack items at most; the page's height
+  title in sentence case over four stack items at most; a row's cover a
+  credited thumbnail, narrower than the stage's plate and, with the
+  other, smaller (where the build has covers); the page's height
   at 1440 and 390; no gap wording and no old artwork), `crew` (About's
   plain title with the patch and no portrait, head actions or dek, its record
   without Open To, an edit date or an accent cell, the sections by their
