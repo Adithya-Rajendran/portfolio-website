@@ -88,15 +88,15 @@
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.7",
         "@types/three": "^0.186.0",
-        "@vitest/coverage-v8": "^4.1.11",
-        "eslint": "^9.39.5",
+        "@vitest/coverage-v8": "^5.0.2",
+        "eslint": "^10.11.0",
         "eslint-config-next": "^16.3.4",
         "husky": "^9.1.7",
-        "lint-staged": "^17.5.0",
+        "lint-staged": "^17.6.0",
         "postcss": "^8.5.28",
-        "prettier": "^3.9.6",
+        "prettier": "^3.9.9",
         "tailwindcss": "^4.3.3",
-        "typescript": "~6.0.3",
-        "vitest": "^4.1.11"
+        "typescript": "~7.0.2",
+        "vitest": "^5.0.2"
     }
 }
