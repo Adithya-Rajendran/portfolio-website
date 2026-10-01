@@ -353,11 +353,16 @@ export default function ContactForm({
             </div>
 
             <div className={styles.actions}>
+                {/* Pressing Send keeps the focus where it is: a press that
+                    left a malformed email would show its error, which moves
+                    Send down under the pointer before the click lands. The
+                    submit checks every field and focuses the first. */}
                 <Button
                     type="submit"
                     variant="primary"
                     icon="arrow"
                     iconAt="end"
+                    onMouseDown={(event) => event.preventDefault()}
                     aria-disabled={pending || undefined}
                     aria-busy={pending || undefined}
                 >

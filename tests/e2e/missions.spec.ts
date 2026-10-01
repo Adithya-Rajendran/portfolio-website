@@ -9,8 +9,10 @@ import { sitemapPages } from "./support/routes";
  * every project's page, the flagship first and the owner's last project
  * least prominent, with no counts, register or related pages; no project
  * name is set in capitals, and a card lists at most four stack items; a
- * cover leads its card, carries its caption as a credit and opens the
- * project (checked where the build has covers; the fixtures have none).
+ * cover leads its card, carries its caption as a credit, opens the project
+ * and stays a thumbnail smaller than the stage's photograph (checked where
+ * the build has covers; the fixtures have none). A project's crumb keeps
+ * its section, separator and number on one line.
  * Each project page has its crumb, its title as the heading, the close and
  * the pager, and no title block or revision stamp; a project with little
  * content is a short note with no sections, and a module the owner has
@@ -136,6 +138,66 @@ test("a cover leads its card, credited, and opens the project", async ({
     }
 });
 
+for (const width of [390, 768, 960, 1440, 1920]) {
+    test(`a tile's cover is a credited thumbnail, smaller than the stage's plate, at ${width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto("/portfolio");
+        // The fixtures carry no images; a build with covers is checked.
+        const plates = await main(page).evaluate((section) => {
+            const size = (figure: Element | null) => {
+                const box = figure
+                    ?.querySelector("img")
+                    ?.getBoundingClientRect();
+                return {
+                    width: box?.width ?? 0,
+                    area: box ? box.width * box.height : 0,
+                };
+            };
+            return {
+                stage: size(
+                    section.querySelector(
+                        "section:not(#projects) article figure",
+                    ),
+                ),
+                cards: [
+                    ...section.querySelectorAll(
+                        "#projects :is(article, li) > figure",
+                    ),
+                ].map(size),
+            };
+        });
+        // The owner's photograph stays the page's largest image: each
+        // cover is narrower, and the covers together are smaller.
+        if (!plates.stage.area) return;
+        const covers = plates.cards.reduce((sum, card) => sum + card.area, 0);
+        expect(covers).toBeLessThan(plates.stage.area);
+        for (const card of plates.cards) {
+            expect(card.width).toBeLessThan(plates.stage.width);
+        }
+    });
+}
+
+test("a project's crumb keeps its section, separator and number on one line", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const path of await missionPaths(page)) {
+        await page.goto(path);
+        // The name wraps under them; no line starts with the separator.
+        const [home, sep] = await Promise.all(
+            [".crumb-row__home", ".crumb-row__sep"].map((selector) =>
+                main(page).locator(selector).first().boundingBox(),
+            ),
+        );
+        expect(
+            Math.abs(home!.y + home!.height / 2 - (sep!.y + sep!.height / 2)),
+            path,
+        ).toBeLessThan(8);
+    }
+});
+
 test("/portfolio shows the flagship's title and its button in the first viewport", async ({
     page,
 }) => {
@@ -170,7 +232,7 @@ test("every project page has its crumb, title, close and pager", async ({
             await expect(heading).toHaveCount(1);
             await expect(heading).toHaveCSS("text-transform", "none");
             const crumb = (
-                await main(page).locator(".crumb-row__item").textContent()
+                await main(page).locator(".crumb-row__name").textContent()
             )
                 ?.replace(/\/|MSN-\d{2}/g, "")
                 .trim();

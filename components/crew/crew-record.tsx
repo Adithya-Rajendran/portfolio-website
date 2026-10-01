@@ -33,11 +33,11 @@ export default function CrewRecord({
         label: LABELS[cell.id],
         span: cell.span,
         spanSm: cell.spanSm,
-        // The facts each kept whole, so no line ends on a dot; then a
-        // title's parenthetical.
+        // The facts (places and dates) as data, each kept whole, so no
+        // line ends on a dot; then a title's parenthetical.
         notes: [
             cell.facts?.length ? (
-                <span className="open-to">
+                <span className="open-to titleblock__data">
                     <OpenToItems text={cell.facts.join(" · ")} />
                 </span>
             ) : null,

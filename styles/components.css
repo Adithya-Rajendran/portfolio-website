@@ -462,7 +462,8 @@
        label names the action; under the OS reduce-motion setting a plain
        note replaces it. On home the hero's control, beside the starfield,
        is the one shown (html[data-route] is set by RouteMarker). Unboxed:
-       the icon and the label in ink-2, sentence case, a 44px target. */
+       the icon and the label in ink-2, in the controls' voice, a 44px
+       target. */
     .motion-ctl {
         display: inline-flex;
         align-items: center;
@@ -473,7 +474,9 @@
         gap: 0.5rem;
         min-height: 44px;
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.2 var(--font-display);
+        font: 500 var(--label-size) / 1.2 var(--font-display);
+        letter-spacing: var(--track-control);
+        text-transform: uppercase;
         white-space: nowrap;
         transition: color var(--dur-hover) var(--ease-dock);
     }
@@ -914,7 +917,8 @@
         }
     }
     /* The strip is set as every other label: DM Mono capitals, tracked,
-       from sentence-case markup. */
+       from sentence-case markup (the copyright and the colophon); Back to
+       top is a control, in the controls' voice. */
     .site-footer__base {
         display: flex;
         flex-wrap: wrap;
@@ -927,18 +931,15 @@
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
-    /* A sentence, so it is set as one: plain type, not the caps label. */
-    .site-footer__colophon {
-        font: 400 var(--label-size) / 1.6 var(--font-display);
-        letter-spacing: 0;
-        text-transform: none;
-        color: var(--ink-3);
-    }
     .site-footer__base a {
         display: inline-flex;
         align-items: center;
         gap: 0.4em;
         min-height: 44px;
+    }
+    .site-footer__top {
+        font: 500 var(--label-size) / 1.2 var(--font-display);
+        letter-spacing: var(--track-control);
     }
     @media (min-width: 37.5rem) {
         .site-footer__grid {
@@ -964,7 +965,8 @@
     /* ===== Forms (site.css 4.18) ======================================= */
     /* A label over its control; errors are rendered only when present
        (the control carries aria-invalid and points at the message): the
-       words in ink with the cross, and one 2px orange rule on the field. */
+       words in ink with the cross, and a 2px rule on the field, orange on
+       the first. */
     .field {
         display: flex;
         flex-direction: column;
@@ -1025,6 +1027,13 @@
     .textarea[aria-invalid="true"] {
         box-shadow: inset var(--rule-strong) 0 0 var(--accent);
     }
+    /* Orange is the field to fix now, the first (it takes the focus); a
+       later one's rule is ink, beside its words and cross. */
+    .field:has([aria-invalid="true"])
+        ~ .field
+        :is(.input, .textarea)[aria-invalid="true"] {
+        box-shadow: inset var(--rule-strong) 0 0 var(--ink-1);
+    }
     .input:disabled,
     .textarea:disabled {
         opacity: 0.5;
@@ -1065,9 +1074,14 @@
         color: var(--ink-1);
         font: 400 var(--step-0) / 1.45 var(--font-display);
     }
+    /* The quieter lines: a role's places and dates as data, then its
+       note in the value's type. */
     .titleblock__cell > dd + dd {
         color: var(--ink-2);
-        font-size: var(--label-size);
+    }
+    .titleblock__data {
+        font: 400 var(--label-size) / 1.5 var(--font-mono);
+        font-variant-numeric: tabular-nums slashed-zero;
     }
     @media (min-width: 60rem) {
         .titleblock {
@@ -1526,6 +1540,20 @@
     }
 
     /* ===== Crumb row (contract §1; components/ui/crumb-row.tsx) ======== */
+    /* The section, the separator and the identifier keep one line; the
+       name wraps under them, on their baseline when it fits beside. */
+    .crumb-row {
+        align-items: baseline;
+    }
+    .crumb-row::after {
+        align-self: center;
+    }
+    .crumb-row__lead {
+        display: inline-flex;
+        align-items: baseline;
+        gap: var(--s-3);
+        white-space: nowrap;
+    }
     .crumb-row__home {
         display: inline-flex;
         align-items: center;

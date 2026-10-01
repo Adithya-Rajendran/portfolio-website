@@ -114,14 +114,14 @@
 }
 
 /* ---- Tiles: text first, a hairline on top, the whole tile one link ---- */
-/* The row of tiles: one column on phones, two from 600px
+/* The row of tiles: one column, two from 960px, as the rows
    (MissionTiles; /portfolio's more projects). */
 .tiles {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s-8) var(--gutter);
 }
-@media (min-width: 37.5rem) {
+@media (min-width: 60rem) {
     .tiles {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -160,12 +160,47 @@
     font: 400 var(--step-0) / 1.55 var(--font-long);
     text-wrap: pretty;
 }
-/* A cover: a 3:2 plate on top, its credit under it. */
-.tilePlate {
-    margin-bottom: var(--s-3);
+/* A tile with a cover: a 3:2 thumbnail with its credit beside the title,
+   under the line, which keeps the tile's width and its arrow; the summary
+   and the stack run under both. Two fifths of the tile on phones, a third
+   from 600px (a row's measures), so the stage's plate stays the page's
+   largest image. */
+.tileCovered {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-areas:
+        "head head"
+        "plate title"
+        "summary summary"
+        "stack stack";
+    align-content: start;
+    align-items: start;
+    column-gap: var(--s-4);
 }
-/* The line, with the arrow at its end, placed from the line (a cover
-   above moves both). */
+@media (min-width: 37.5rem) {
+    .tileCovered {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        column-gap: var(--gutter);
+    }
+}
+.tilePlate {
+    grid-area: plate;
+}
+.tileCovered .tileHead {
+    grid-area: head;
+}
+.tileCovered .tileName {
+    grid-area: title;
+    margin-top: 0;
+    padding-right: 0;
+}
+.tileCovered .tileSummary {
+    grid-area: summary;
+}
+.tileCovered .stack {
+    grid-area: stack;
+}
+/* The line, with the arrow at its end, placed from the line. */
 .tileHead {
     position: relative;
 }

@@ -72,9 +72,11 @@ export default async function Footer() {
                     <span>
                         © {today.slice(0, 4)} {name}
                     </span>
-                    <span className="site-footer__colophon">
+                    <span>
                         {chromeCopy.colophon}
-                        <span aria-hidden="true"> · </span>
+                        {/* Glued to its neighbours: no line starts or ends
+                            on the dot. */}
+                        <span aria-hidden="true">{"\u00a0·\u00a0"}</span>
                         <a
                             href={siteConfig.source}
                             target="_blank"
@@ -83,7 +85,7 @@ export default async function Footer() {
                             {chromeCopy.source}
                         </a>
                     </span>
-                    <a href="#top" className="link-quiet">
+                    <a href="#top" className="link-quiet site-footer__top">
                         {chromeCopy.backToTop}
                         <Icon name="arrow-up" className="icon--sm" />
                     </a>

@@ -37,7 +37,8 @@ only live in comments or commit messages.
       defined there and nowhere else. `--accent`, International Orange,
       means "now" (premium D1): the Open To, Active and Current status
       dots, the flight's flown path and its now mark, a contents' current
-      section, the one 2px rule on an invalid field, and `--focus`; the
+      section, the 2px rule on the first invalid field (the one to fix
+      now; a later one's is ink), and `--focus`; the
       patch's and the hero's suns are identity marks (`data-identity`).
       It is never text, a fill, a link rule, a hover or an error's words:
       those are ink, the primary button an ink-1 fill with a `--bg`
@@ -86,8 +87,8 @@ only live in comments or commit messages.
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
   (their variables on `<html>`), each with one job: Jost for display
   (page and item titles and the hero's name at 350), headings, UI text
-  and the controls' one caps voice (the nav, buttons, arrow links and
-  segmented boxes: 500, 13px, 0.10em); Newsreader for reading; DM Mono
+  and the controls' one caps voice (the nav, buttons, arrow links,
+  segmented boxes, Back to top and Pause motion: 500, 13px, 0.10em); Newsreader for reading; DM Mono
   for data and every label (`.label`, `--font-label`: caps, 13px,
   0.08em, ink-2); Michroma in two places only, the header's wordmark and
   a page head's themed tag (`--font-mark`). There are no glyph
@@ -276,17 +277,19 @@ only live in comments or commit messages.
   which carries them with their notes; the index has no counts, register
   or card stats. A Sanity cover (`Mission.cover`, with its alt text and
   its caption, today "Illustration" on the owner's generated stand-ins:
-  premium D4-B) is a 3:2 plate on top of a `/portfolio` tile (then its
-  line, which ends in the arrow), a 3:2 thumbnail in a row on home or
-  `/portfolio` (a third of the row beside its text; on phones two fifths
-  beside the title, under the line), the stage's plate when the flagship
+  premium D4-B) is a 3:2 thumbnail on a `/portfolio` tile (beside the
+  title, under the line, which keeps the arrow; the summary and stack
+  under both) or in a row on home or `/portfolio` (beside its text): a
+  third of the card from 600px, two fifths on phones, beside the title
+  under the line (tiles, like rows, are one column below 960px), the
+  stage's plate when the flagship
   has one, and the plate beside a project's head in either layout; the
   stage takes the model's poster without one, and the home "Also" line
   and a post's project row stay text only. On a card and a head the
   cover's caption is the plate's credit line (`Plate credit`,
   `.caption__src`: DM Mono 13px, ink-3, as the hero's credit); the stage
-  keeps it as the owner's caption. A row's cover never outweighs the
-  stage's photograph. `missionLayout` picks the page's layout: the full file
+  keeps it as the owner's caption. A card's cover never outweighs the
+  stage's photograph (`home.spec.ts`, `missions.spec.ts`). `missionLayout` picks the page's layout: the full file
   where there is evidence (a brief that adds to the card, `briefAdds`;
   results, lessons or next steps, callouts, the model's poster, an essay
   in sections; a cover is no evidence of its own), otherwise the short
@@ -361,23 +364,25 @@ only live in comments or commit messages.
   fill or blur) and one quiet link down to the projects (`#home-projects`,
   the sprite's `arrow-down`). The foot: the credit with the frame's ID
   ("Photo: NASA / Expedition 72 · ISS072-E-30246", `id` in
-  `lib/hero-sunrise.json`) and Pause motion. Then the sections, each only
+  `lib/hero-sunrise.json`; on phones its parts one a line, without the
+  separators) and Pause motion. Then the sections, each only
   with content (`lib/home.ts`, unnumbered): the strongest project on its
   stage (featured slot 1, led by its summary, no stats, mission number or
   write-up link: its page links the write-up), the next two as rows and
   any others as one line (`homeProjects`); the latest three entries,
   without tags; and the close, headed by the owner's one-line statement
   (`taglineOf`: the tagline, else the introduction's first sentence;
-  "Contact" for screen readers without one) with a quiet link to About's
-  current focus, the profile's `availability.cta` → `/contact#hiring` as
-  the one primary while there is an Open To line, and Send a message as
+  "Contact" for screen readers without one) with quiet links to About's
+  current focus and the flight ("Timeline", its one name), then one way
+  to `/contact`: the profile's `availability.cta` → `/contact#hiring` as
+  the one primary while there is an Open To line, else Send a message as
   a quiet link. On phones a section's link stays on its heading's line.
   The page stays under about 4,500 px at 1440 and 7,000 px at 390
   (`home.spec.ts`). In Flight Manual the hero draws the planet's
   parallels under the limb and has no foot row; on home the footer leaves
   Pause motion to the hero. Pause motion is an unboxed control (the icon
-  and "Pause motion" in ink-2, sentence case, a 44px target), in the
-  hero and the footer alike.
+  and "Pause motion" in ink-2, in the controls' voice, a 44px target), in
+  the hero and the footer alike.
 - **About** (`/about`, themed Crew File; plan §6.2 row 14, contract §9).
   The patch is the identity mark (a `PageHead` `figure`; the site shows
   no portrait; the head has no actions, the header carrying Experience
@@ -385,8 +390,9 @@ only live in comments or commit messages.
   record (`CrewRecord`: one hairline title block, Name in ink, Studying,
   Previously, Focus, Links; no Open To, edit date or accent cell). A role
   is set as on /resume: the title, then the organization and the dates as
-  whole parts (`OpenToItems`, so no line ends on a dot), then the
-  title's parenthetical (`splitTitle`). Then `DocSection`s (`components/ui/doc-section.tsx`, the
+  data (DM Mono 13px, `.titleblock__data`) in whole parts (`OpenToItems`,
+  so no line ends on a dot), then the title's parenthetical
+  (`splitTitle`) at `--step-0` in ink-2. Then `DocSection`s (`components/ui/doc-section.tsx`, the
   one section head: also the mission files, `/contact` and the CV on
   `/resume`): the biography and the Now list grouped by
   `currentCuriosities[].kind` (`nowGroups`; a kind's label only when there
@@ -611,9 +617,13 @@ only live in comments or commit messages.
   one per line, are the routes (premium D3 folded the Topics column into
   them): each is named by its title and described by the owner's line
   where there is one (Research: `contactInvitation`, a `Segmented`
-  option's `description`), and the routes carry no links. From 960px the
-  radios sit in columns 9–12 beside the fields (so Send stays in the
-  first viewport); on phones they lead the form. The form reads
+  option's `description`), and the routes carry no links. They lead the
+  form, as in the source, so it reads in the order Tab takes: from 960px
+  in columns 1–5, left of the fields and Send (columns 7–12, under the
+  head's intro, so Send stays in the first viewport), on phones above
+  them. Send's `mousedown` is not followed, so pressing it keeps the
+  focus in place: leaving a malformed email by the press would show its
+  error and move Send from under the pointer before the click landed. The form reads
   the fragment (`#hiring`) to pick its topic on arrival and writes it
   back when a topic is picked.
   The only words about the owner's situation on a button are the
@@ -781,12 +791,16 @@ deployment require an authenticated Sanity CLI session.
   overlapping, and no visible text under 12 px, generated text included,
   on home, every post and project, `/resume` and `/contact` (with the
   message counter near its limit) at 1440 and 390; on home, every post
-  and project and `/resume`, six font sizes at most, and every caps line
-  a label, a control, the hero's name or Michroma's two places), `accent`
+  and project, `/resume`, `/about` and `/contact`, six font sizes at
+  most, every caps line a label, a control, the hero's name or
+  Michroma's two places, and 13px text only a label, a control or data),
+  `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
   Homelab, a post, `/resume`, the flight, `/contact` and `/about`, at 1440
-  and 390 in both themes, identity marks and focus aside; the primary an
-  ink fill, the nav's bar and the header's CV ink), `theme` (no flash of the wrong theme, persistence across
+  and 390 in both themes, identity marks and focus aside, and on
+  `/contact` refused with two invalid fields, only the first one's rule
+  orange; the primary an ink fill, the nav's bar and the header's CV
+  ink), `theme` (no flash of the wrong theme, persistence across
   reloads, pages and tabs, Auto following the OS, a post following the
   OS until a theme is chosen while every other page stays Void, on a
   full load and after a client navigation, Pause motion, the stored
@@ -794,15 +808,19 @@ deployment require an authenticated Sanity CLI session.
   (the menu sheet's focus, `inert` and closing; Contact in the bar on a
   phone; the current nav section; the header and footer naming every
   section plainly; the footer naming the owner once, with one CV link and
-  the theme choice only from 960px),
+  the theme choice only from 960px; Back to top and Pause motion in the
+  controls' voice and the colophon a label),
   `contact` (the routes are the form's Topic radios, each named by its
   title and described by the owner's line, with no Topics column or
   links beside the form, and a fragment picks one; a route's prompt
   only as the message field's placeholder,
-  the whole form in the first viewport at 1440×900, Hiring only beside an
+  the whole form in the first viewport at 1440×900 and reading in the
+  order Tab takes at 390, 960, 1440 and 1920, Hiring only beside an
   Open To line, the email checked on leaving it and every field from the
-  first submit, each error under its field (the words in ink with their
-  cross, the field's one 2px orange rule), the counter only near the
+  first submit, a press on Send from a malformed email checking them at
+  once, each error under its field (the words in ink with their cross,
+  a 2px rule on the field, orange on the first and ink after it), the
+  counter only near the
   limit; a refused send under Send with the text kept and Try again, Copy
   message and LinkedIn, its stale alert clearing after leaving and
   returning; a send the network drops staying on the page, Try again
@@ -858,8 +876,11 @@ deployment require an authenticated Sanity CLI session.
   as the heading, close and pager and no title block, revision, "Table 1",
   jump to its own write-up or stand-in text, a stack item never split, a
   thin project is a short note (the Kubernetes note without a Stack row),
-  a cover leads its card, credited, and opens the project (where the
-  build has covers: the fixtures have none),
+  a cover leads its card, credited, opens the project and stays a
+  thumbnail narrower than the stage's plate and, with the other, smaller,
+  at 390, 768, 960, 1440 and 1920 (where the build has covers: the
+  fixtures have none), a project's crumb keeping its section, slash and
+  number on one line at 390,
   Read the write-up lands on the original entry; on the fixture build a
   filled mission shows every module, its repository in the facts and its
   callouts as plain rows, and a planned one none of them), `home` (the
@@ -873,9 +894,10 @@ deployment require an authenticated Sanity CLI session.
   allowed; the stars in the hero only, and not on paper; the credit with
   its frame ID, and the drawn limb in Flight Manual; the sections in
   order, unnumbered and without themed names, with their links, and the
-  latest writing without tags; the close headed by the tagline, its
-  button only in the profile's words and only beside an Open To line, one
-  primary at most; the flagship without stats or mission number, its
+  latest writing without tags; the close headed by the tagline, the
+  flight linked as Timeline, its button only in the profile's words and
+  only beside an Open To line, one primary at most and one way to
+  `/contact`; the flagship without stats or mission number, its
   title in sentence case over four stack items at most; a row's cover a
   credited thumbnail, narrower than the stage's plate and, with the
   other, smaller (where the build has covers); the page's height

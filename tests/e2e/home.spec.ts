@@ -19,8 +19,9 @@ import { storeTheme } from "./support/theme";
  * flagship shows no stats and at most four stack items; a row's cover is
  * a thumbnail, credited, that never outweighs the stage's photograph
  * (checked where the build has covers; the fixtures have none); the close is the
- * owner's tagline with one primary; the page stays short; and it says
- * nothing about what is missing.
+ * owner's tagline, the Timeline by that name and one way to /contact (the
+ * profile's primary, else Send a message); the page stays short; and it
+ * says nothing about what is missing.
  */
 
 function hero(page: Page) {
@@ -293,7 +294,8 @@ test("the sections follow the hero in order and lead to their pages", async ({
         ["home-projects", copy.projectsAct.all, "/portfolio"],
         ["home-writing", copy.writingAct.all, "/blog"],
         ["home-contact", copy.contactAct.now, "/about#crew-now"],
-        ["home-contact", copy.contactAct.message, "/contact"],
+        // The flight has one name everywhere.
+        ["home-contact", copy.contactAct.timeline, "/resume/trajectory"],
     ];
     for (const [id, name, href] of leads) {
         const section = main.locator(`section#${id}`);
@@ -328,10 +330,12 @@ test("the close answers what the owner is open to only in the profile's words", 
             FIXTURE_PROFILE.tagline!,
         );
     }
-    await expect(
-        close.getByRole("link", { name: copy.contactAct.message }),
-    ).toHaveAttribute("href", "/contact");
-    // One primary at most: the profile's answer, never Send a message.
+    // One way to /contact: the profile's answer, the one primary, while
+    // there is an Open To line; else Send a message, never a primary.
+    const message = close.getByRole("link", { name: copy.contactAct.message });
+    await expect(message).toHaveCount(open ? 0 : 1);
+    if (!open) await expect(message).toHaveAttribute("href", "/contact");
+    await expect(close.locator('a[href^="/contact"]')).toHaveCount(1);
     await expect(close.locator(".btn--primary")).toHaveCount(open ? 1 : 0);
 });
 

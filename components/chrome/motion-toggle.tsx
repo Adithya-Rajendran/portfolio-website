@@ -7,9 +7,9 @@ import { getMotionPref, setMotionPref } from "@/lib/prefs";
 /**
  * Pause motion / Resume motion (WCAG 2.2.2), in the footer and the home
  * hero (beside the drifting starfield): an unboxed control, the icon and
- * its label in sentence case, on a 44px target. One button whose label
- * names the action; CSS picks the label from `html[data-motion]`, so
- * nothing re-renders. Under the OS reduce-motion setting a plain note
+ * its label in the controls' voice, on a 44px target. One button whose
+ * label names the action; CSS picks the label from `html[data-motion]`,
+ * so nothing re-renders. Under the OS reduce-motion setting a plain note
  * replaces it. Hidden without JavaScript, when nothing moves anyway (no
  * `data-motion`).
  */

@@ -1,3 +1,4 @@
+import { chromeCopy } from "@/lib/copy";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import { primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
@@ -108,4 +109,34 @@ test("the footer names the owner once and carries each control once", async ({
     await expect(
         page.getByRole("banner").getByRole("group", { name: "Theme" }),
     ).toBeHidden();
+});
+
+test("the footer's controls speak the controls' voice, its strip the labels'", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/about");
+    const footer = page.getByRole("contentinfo");
+    // Back to top and Pause motion: Jost 500, 13px, caps, 0.10em.
+    for (const control of [
+        footer.getByRole("link", { name: chromeCopy.backToTop }),
+        footer.getByRole("button", { name: chromeCopy.holdDrift }),
+    ]) {
+        const voice = await control.evaluate((element) => {
+            const style = getComputedStyle(element);
+            const size = parseFloat(style.fontSize);
+            return [
+                style.fontFamily.split(",")[0].replace(/["']/g, ""),
+                style.fontWeight,
+                size,
+                style.textTransform,
+                Math.round((parseFloat(style.letterSpacing) / size) * 100),
+            ];
+        });
+        expect(voice).toEqual(["Jost", "500", 13, "uppercase", 10]);
+    }
+    // The colophon is set as the copyright beside it: a label.
+    const colophon = footer.getByText(chromeCopy.colophon);
+    await expect(colophon).toHaveCSS("font-family", /DM Mono/);
+    await expect(colophon).toHaveCSS("text-transform", "uppercase");
 });

@@ -54,8 +54,8 @@ const TILES = 2;
  * Projects (/portfolio; themed Missions): the page head with the owner's
  * introduction (`projectsIntro`, left out when empty), the flagship on its
  * stage, the next two as text-first tiles and the rest as compact rows
- * (each with its cover, when it has one: a plate on a tile, a thumbnail
- * on a row), so the owner's last project is the least prominent
+ * (each with its cover as a thumbnail, when it has one, smaller than the
+ * stage's plate), so the owner's last project is the least prominent
  * (`missionTiers`);
  * the tiers' sections are named for screen readers only, since the page
  * title already says what they are; #projects is the tiles. The old sections' fragments (#experience…) are sent on by

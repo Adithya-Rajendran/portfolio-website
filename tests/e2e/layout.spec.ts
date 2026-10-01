@@ -13,10 +13,11 @@ import {
  * overlapping. `body` clips horizontal overflow, which would hide a
  * sideways scroll, so the body's own scroll width is measured too. No
  * visible text is set under 12 px (the type floor, contract §2). And the
- * type voice (premium D2): home, the posts, the projects and the CV set
- * six sizes at most; every caps line is a label (DM Mono 13px, 0.08em),
- * a control (Jost 500 13px, 0.10em), the hero's name, or one of Michroma's
- * two places, the header's wordmark and a page head's themed tag.
+ * type voice (premium D2): home, the posts, the projects, the CV, About
+ * and Contact set six sizes at most; every caps line is a label (DM Mono
+ * 13px, 0.08em), a control (Jost 500 13px, 0.10em), the hero's name, or
+ * one of Michroma's two places, the header's wordmark and a page head's
+ * themed tag; and 13px text is a label, a control or data, never UI text.
  */
 const WIDTHS = [320, 390, 600, 960, 1024, 1280, 1440, 1920];
 
@@ -227,14 +228,22 @@ async function typeVoice(
                 }
                 continue;
             }
-            if (style.textTransform !== "uppercase") continue;
-            const label =
-                /DM Mono/.test(family) && size === 13 && near(tracking, 0.08);
+            const caps = style.textTransform === "uppercase";
             const control =
+                caps &&
                 /Jost/.test(family) &&
                 style.fontWeight === "500" &&
                 size === 13 &&
                 near(tracking, 0.1);
+            // 13px is the labels', the controls' and the data's size: no
+            // UI text is set that small (its step is --step-0).
+            if (size === 13 && !/DM Mono/.test(family) && !control) {
+                offVoice.push(`13px text: ${family.split(",")[0]} ${name}`);
+                continue;
+            }
+            if (!caps) continue;
+            const label =
+                /DM Mono/.test(family) && size === 13 && near(tracking, 0.08);
             if (!label && !control && !element.closest("#hero-name")) {
                 offVoice.push(
                     `${family.split(",")[0]} ${style.fontWeight} ${size}px ${tracking.toFixed(3)}em: ${name}`,
@@ -245,7 +254,7 @@ async function typeVoice(
     });
 }
 
-test("home, the posts, the projects and the CV keep to six sizes and one caps voice", async ({
+test("home, the posts, the projects, the CV, About and Contact keep to six sizes and one caps voice", async ({
     page,
     request,
 }, testInfo) => {
@@ -253,6 +262,8 @@ test("home, the posts, the projects and the CV keep to six sizes and one caps vo
     const paths = [
         "/",
         "/resume",
+        "/about",
+        "/contact",
         ...content.filter(
             (path) => isPostPage(path) || /^\/portfolio\/[^/]+$/.test(path),
         ),

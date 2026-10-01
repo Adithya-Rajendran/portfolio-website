@@ -344,8 +344,9 @@ export const homeCopy = {
     contactAct: {
         title: "Contact",
         now: "Current focus",
-        /** The flight on /resume/trajectory. */
-        route: "The route so far",
+        /** The flight on /resume/trajectory, by its one name. */
+        timeline: "Timeline",
+        /** The way to /contact while there is no Open To answer. */
         message: "Send a message",
     },
 } as const;

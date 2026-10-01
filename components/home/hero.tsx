@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 import { preload } from "react-dom";
 import MotionToggle from "@/components/chrome/motion-toggle";
 import StaticStars from "@/components/sky/static-stars";
@@ -35,6 +35,10 @@ type Crop = "desktop" | "mobile";
 const MOBILE = "(max-width: 47.99rem)";
 const DESKTOP = "(min-width: 48rem)";
 const SIZES = "100vw";
+
+/** The credit's parts ("Photo: NASA", "Expedition 72"): on one line from
+ *  600px; on phones one a line, without the slash, as the headline's. */
+const CREDIT_PARTS = sunrise.credit.split(" / ");
 
 function srcSet(crop: Crop, format: "avif" | "webp"): string {
     return sunrise[crop].sources
@@ -256,7 +260,18 @@ export default function Hero({
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            {sunrise.credit}{" "}
+                            {CREDIT_PARTS.map((part, index) => (
+                                <Fragment key={part}>
+                                    {index ? (
+                                        <span className={styles.creditSep}>
+                                            /{" "}
+                                        </span>
+                                    ) : null}
+                                    <span className={styles.creditPart}>
+                                        {part}
+                                    </span>{" "}
+                                </Fragment>
+                            ))}
                             <span className={styles.creditSep}>· </span>
                             <span className={styles.creditId}>
                                 {sunrise.id}

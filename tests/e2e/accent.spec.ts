@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { contactCopy } from "@/lib/copy";
 import { isPostPage, sitemapPages } from "./support/routes";
 import { expect, test } from "./support/test";
 import { THEMES, storeTheme } from "./support/theme";
@@ -8,7 +9,8 @@ import { THEMES, storeTheme } from "./support/theme";
  * Active and Current dots, the flight's flown path and its now mark, the
  * contents' current bar, and focus. The patch's and the hero's suns are
  * identity marks (`data-identity`), outside the budget. Every other mark
- * is ink: buttons, the nav's bar, link rules, hovers and errors. The first
+ * is ink: buttons, the nav's bar, link rules, hovers and errors (only the
+ * first invalid field, the one to fix now, takes its orange rule). The first
  * viewport of each page carries two orange marks at most, counting every
  * element and generated mark (`::before`, `::after`) whose text,
  * background, border, decoration, outline, shadow, fill or stroke is the
@@ -139,6 +141,42 @@ for (const theme of THEMES) {
                     `${path}: ${marks.join("; ")}`,
                 ).toBeLessThanOrEqual(2);
             }
+        });
+    }
+}
+
+for (const theme of THEMES) {
+    for (const [width, height] of WIDTHS) {
+        test(`a refused form keeps to the budget: the field to fix now is the orange one, ${theme} at ${width}px`, async ({
+            page,
+        }) => {
+            await storeTheme(page, theme);
+            await page.setViewportSize({ width, height });
+            await page.goto("/contact");
+            const { form } = contactCopy;
+            const email = page.getByRole("textbox", { name: form.emailLabel });
+            const message = page.getByRole("textbox", {
+                name: form.messageLabel,
+            });
+            await email.fill("not-an-email");
+            await page.getByRole("button", { name: form.send }).click();
+            await expect(email).toHaveAttribute("aria-invalid", "true");
+            await expect(message).toHaveAttribute("aria-invalid", "true");
+            // The focused field's rule counts once its focus has moved on.
+            await page.evaluate(() =>
+                (document.activeElement as HTMLElement | null)?.blur(),
+            );
+            const marks = await orangeMarks(page);
+            expect(marks.length, marks.join("; ")).toBeLessThanOrEqual(2);
+            // The later field's rule is ink, beside its words and cross.
+            const rules = await Promise.all(
+                [email, message].map((field) =>
+                    field.evaluate(
+                        (input) => getComputedStyle(input).boxShadow,
+                    ),
+                ),
+            );
+            expect(rules[1]).not.toBe(rules[0]);
         });
     }
 }

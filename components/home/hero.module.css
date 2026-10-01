@@ -282,7 +282,9 @@
 .credit a:hover {
     color: var(--ink-1);
 }
-/* The frame's NASA ID, kept whole: on a line of its own on phones. */
+/* The credit's parts and the frame's NASA ID, each kept whole: on phones
+   one a line, with no separator. */
+.creditPart,
 .creditId {
     white-space: nowrap;
 }
@@ -332,8 +334,8 @@
     .routes {
         margin-top: var(--s-6);
     }
-    /* The credit (its frame ID on a line of its own) and Pause motion
-       share one row. */
+    /* The credit (its parts and its frame ID one a line, without their
+       separators) and Pause motion share one row. */
     .foot {
         flex-wrap: nowrap;
         align-items: center;
@@ -342,6 +344,7 @@
     .creditSep {
         display: none;
     }
+    .creditPart,
     .creditId {
         display: block;
     }

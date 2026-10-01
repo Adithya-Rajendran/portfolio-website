@@ -83,10 +83,11 @@ function Act({
  * and the way down to the projects), then, each only with content, the
  * strongest project on its stage with the next two as rows and any
  * others as one line, and the latest three entries; then the close: the
- * owner's tagline as its heading with the way to his current focus, the
- * profile's button that answers what the owner is open to (the one
- * primary, while both are set) and Send a message. Everything is
- * server-rendered; the starfield and Pause motion are the only islands.
+ * owner's tagline as its heading with the ways to his current focus and
+ * to the Timeline, then one way to /contact: the profile's button that
+ * answers what the owner is open to (the one primary, while both are
+ * set), else Send a message. Everything is server-rendered; the
+ * starfield and Pause motion are the only islands.
  */
 export default async function Home() {
     preloadHeroPhoto();
@@ -225,10 +226,10 @@ export default async function Home() {
                                 </LinkArrow>
                             ) : null}
                             <LinkArrow href={siteRoutes.trajectory}>
-                                {copy.contactAct.route}
+                                {copy.contactAct.timeline}
                             </LinkArrow>
                         </div>
-                        <div className={`cluster ${styles.closeActions}`}>
+                        <div className={styles.closeActions}>
                             {answer ? (
                                 <ButtonLink
                                     variant="primary"
@@ -238,10 +239,11 @@ export default async function Home() {
                                 >
                                     {answer}
                                 </ButtonLink>
-                            ) : null}
-                            <LinkArrow href={siteRoutes.contact}>
-                                {copy.contactAct.message}
-                            </LinkArrow>
+                            ) : (
+                                <LinkArrow href={siteRoutes.contact}>
+                                    {copy.contactAct.message}
+                                </LinkArrow>
+                            )}
                         </div>
                     </div>
                 </div>

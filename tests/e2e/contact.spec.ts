@@ -10,7 +10,8 @@ import { expect, test } from "./support/test";
  * described by the owner's line where there is one and named by its title
  * alone, with no column of routes or links beside them (premium D3); a
  * route's fragment picks its topic on arrival, the whole form is in the
- * first viewport, Hiring shows only beside what the owner is open to, the form
+ * first viewport and reads in the order Tab takes (the topics, then the
+ * fields), Hiring shows only beside what the owner is open to, the form
  * checks the email on leaving it and every field from the first submit,
  * each error under its field, in ink with its cross, the field marked by
  * one 2px orange rule (premium D1); a send that does not go (refused, or lost
@@ -120,6 +121,34 @@ test("the form comes first, whole, in the first viewport", async ({ page }) => {
     });
 });
 
+for (const width of [390, 960, 1440, 1920]) {
+    test(`the form reads in the order Tab takes, at ${width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto("/contact");
+        const main = page.getByRole("main");
+        // The topics, then each field, then Send: each part starts under
+        // the one before it, or in a column to its right.
+        const parts = [
+            main.getByRole("group", { name: new RegExp(form.topicLegend) }),
+            page.getByRole("textbox", { name: form.emailLabel }),
+            page.getByRole("textbox", { name: form.messageLabel }),
+            page.getByRole("button", { name: form.send }),
+        ];
+        const boxes = [];
+        for (const part of parts) {
+            if (await part.count()) boxes.push((await part.boundingBox())!);
+        }
+        for (let index = 1; index < boxes.length; index++) {
+            const [before, box] = [boxes[index - 1], boxes[index]];
+            const below = box.y >= before.y + before.height - 1;
+            const right = box.x >= before.x + before.width - 1;
+            expect(below || right, `part ${index} at ${width}px`).toBe(true);
+        }
+    });
+}
+
 test("the routes are the form's topics, each described by the owner's line, with nothing beside them", async ({
     page,
 }, testInfo) => {
@@ -201,43 +230,62 @@ test("the form checks the email on leaving it, and every field from the first su
         new RegExp(form.errors.messageMissing),
     );
     // Each error sits under its own field.
-    for (const [field, error] of [
-        [email, form.errors.emailMissing],
-        [message, form.errors.messageMissing],
+    const [accent, ink] = await page.evaluate(() =>
+        ["--accent", "--ink-1"].map((token) => {
+            const probe = document.createElement("span");
+            probe.style.color = `var(${token})`;
+            document.body.append(probe);
+            const colour = getComputedStyle(probe).color;
+            probe.remove();
+            return colour;
+        }),
+    );
+    for (const [field, error, rule] of [
+        [email, form.errors.emailMissing, accent],
+        [message, form.errors.messageMissing, ink],
     ] as const) {
         const box = (await field.boundingBox())!;
         const under = (await page.getByText(error).boundingBox())!;
         expect(under.y).toBeGreaterThanOrEqual(box.y + box.height);
         expect(under.y - (box.y + box.height)).toBeLessThan(24);
-        // The words are ink with the cross; the field carries the one
-        // orange mark, a 2px rule at its start.
-        const [accent, ink] = await page.evaluate(() =>
-            ["--accent", "--ink-1"].map((token) => {
-                const probe = document.createElement("span");
-                probe.style.color = `var(${token})`;
-                document.body.append(probe);
-                const colour = getComputedStyle(probe).color;
-                probe.remove();
-                return colour;
-            }),
-        );
+        // The words are ink with the cross; the field carries a 2px rule
+        // at its start, orange on the first (the field to fix now, which
+        // has the focus) and ink on the next.
         const words = page.locator(".field__error").filter({ hasText: error });
         await expect(words).toHaveCSS("color", ink);
         await expect(words.locator(".icon")).toBeVisible();
         await expect(field).toHaveCSS(
             "box-shadow",
-            `${accent} 2px 0px 0px 0px inset`,
+            `${rule} 2px 0px 0px 0px inset`,
         );
     }
 
     await email.fill("you@example.com");
     await expect(email).not.toHaveAttribute("aria-invalid", /.*/);
+    // The message is the field to fix now.
+    await expect(message).toHaveCSS(
+        "box-shadow",
+        `${accent} 2px 0px 0px 0px inset`,
+    );
     // The counter shows only near the limit.
     await message.fill("x".repeat(899));
     await expect(page.getByText("899 / 1000")).toHaveCount(0);
     await message.fill("x".repeat(950));
     await expect(page.getByText("950 / 1000")).toBeVisible();
     await expect(message).not.toHaveAttribute("aria-invalid", /.*/);
+});
+
+test("pressing Send as a malformed email is left checks every field at once", async ({
+    page,
+}) => {
+    await page.goto("/contact");
+    const { email, message } = fields(page);
+    await email.fill("you@example");
+    // The press keeps the focus, so the email's error does not move Send
+    // from under the pointer before the click lands.
+    await page.getByRole("button", { name: form.send }).click();
+    await expect(message).toHaveAttribute("aria-invalid", "true");
+    await expect(email).toBeFocused();
 });
 
 test("a refused send says so under Send, keeps the message and offers the ways on", async ({
