@@ -118,6 +118,23 @@ describe("toMission", () => {
         expect(mission.role).toBeNull();
         expect(mission.statusNote).toBeNull();
         expect(mission.revised).toBeNull();
+        expect(mission.cover).toBeNull();
+    });
+
+    it("carries the cover with its alt text and caption, only with an image", () => {
+        const cover = {
+            asset: { _ref: "image-k8s-1536x1024-webp" },
+            alt: "Three small black computers in a row on a dark shelf.",
+            caption: "Illustration",
+        };
+        expect(toMission(project({ cover }), SITE).cover).toEqual(cover);
+        // A cover whose image was removed leaves only its fields behind.
+        expect(
+            toMission(
+                project({ cover: { alt: "Gone", caption: "Gone" } }),
+                SITE,
+            ).cover,
+        ).toBeNull();
     });
 
     it("keeps the links that leave the site, marking the repositories", () => {
@@ -586,6 +603,23 @@ describe("the short project note", () => {
         expect(missionLayout({ ...kubernetes, lessons: [" "], next: [] })).toBe(
             "note",
         );
+    });
+
+    it("keeps a note a note with a cover, which its head sets beside it", () => {
+        const image = { asset: { _ref: "image-k8s-1536x1024-webp" } };
+        const covered = {
+            ...kubernetes,
+            cover: { ...image, caption: "Illustration" },
+        };
+        // An image is no evidence of its own…
+        expect(missionLayout(covered)).toBe("note");
+        // …but the model's poster (the viewer's slot) is.
+        expect(
+            missionLayout({
+                ...kubernetes,
+                model: { kind: "procedural", alt: "The rack", poster: image },
+            }),
+        ).toBe("file");
     });
 
     it("leaves out a highlight that only repeats the summary", () => {

@@ -20,7 +20,8 @@ export function MissionTiles({ children }: { children: React.ReactNode }) {
  * dates), its title as the heading (the link to its file, stretched over
  * the tile), its summary and its first four stack items, under a
  * hairline. Numbers stay on the file, beside their notes. A cover adds a
- * 3:2 plate on top; a mission without one is not given a stand-in.
+ * 3:2 plate under the line, with its caption; a mission without one is
+ * not given a stand-in.
  */
 export default function MissionTile({
     mission,
@@ -33,17 +34,16 @@ export default function MissionTile({
 }) {
     return (
         <article className={styles.tile}>
+            <MissionLine mission={mission} />
             {cover?.asset ? (
                 <Plate
-                    className={styles.tilePlate}
+                    className={styles.cardPlate}
                     image={cover}
                     caption={cover.caption}
                     ratio="3 / 2"
-                    sizes="(min-width: 60rem) 30vw, 100vw"
-                    width={900}
+                    sizes="(min-width: 37.5rem) 45vw, 100vw"
                 />
             ) : null}
-            <MissionLine mission={mission} />
             <Heading className={styles.tileName}>
                 <Link className="stretch" href={mission.href}>
                     {mission.title}

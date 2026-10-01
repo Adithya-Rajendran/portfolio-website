@@ -101,7 +101,8 @@ export default async function Home() {
     const answer = open ? profile?.availability?.cta?.trim() || null : null;
 
     // Projects: the flagship on its stage (led by its summary; no stats),
-    // two rows, then any others as one line.
+    // two rows (each with its cover, when it has one), then any others as
+    // one line.
     const ordered = missionOrder(projects);
     const picked = homeProjects(ordered);
     const mission = (project: (typeof ordered)[number]) =>
@@ -157,7 +158,11 @@ export default async function Home() {
                     {rows.length ? (
                         <MissionRows className={styles.projects}>
                             {rows.map((row) => (
-                                <MissionRow key={row.id} mission={row} />
+                                <MissionRow
+                                    key={row.id}
+                                    mission={row}
+                                    cover={row.cover}
+                                />
                             ))}
                         </MissionRows>
                     ) : null}

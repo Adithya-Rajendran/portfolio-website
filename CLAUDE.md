@@ -274,11 +274,19 @@ only live in comments or commit messages.
   plates and the home page print none. Numbers appear only on a project
   page: its head's stats (`headStats`) unless it has a results table,
   which carries them with their notes; the index has no counts, register
-  or card stats. `missionLayout` picks the page's layout: the full file
+  or card stats. A Sanity cover (`Mission.cover`, with its alt text and
+  its caption, today "Illustration" on the owner's generated stand-ins:
+  premium D4-B) is a 3:2 plate under the line of a `/portfolio` tile and
+  of a home row (`MissionTile` / `MissionRow` `cover`), the stage's plate
+  when the flagship has one, and the plate beside a project's head in
+  either layout; the stage takes the model's poster without one, and the
+  "Also" rows, the home "Also" line and a post's project rows stay text
+  only. `missionLayout` picks the page's layout: the full file
   where there is evidence (a brief that adds to the card, `briefAdds`;
-  results, lessons or next steps, callouts, a photograph, an essay in
-  sections), otherwise the short note (title, summary, the highlights that
-  add to it via `noteLines`, the facts and links). Either shows the essay
+  results, lessons or next steps, callouts, the model's poster, an essay
+  in sections; a cover is no evidence of its own), otherwise the short
+  note (title, summary, the highlights that add to it via `noteLines`,
+  the facts and links). Either shows the essay
   (Case study) only when it says more than the summary, highlights and
   brief (`essayShown`: a heading, a non-text block or eight content words
   they lack, counted by stem in `newWords`). On the stage "Read the

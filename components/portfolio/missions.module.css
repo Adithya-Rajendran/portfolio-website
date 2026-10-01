@@ -139,9 +139,6 @@
 .tile:hover {
     border-top-color: var(--ink-1);
 }
-.tilePlate {
-    margin-bottom: var(--s-3);
-}
 .tileName {
     margin-top: var(--s-2);
     padding-right: var(--s-6);
@@ -175,6 +172,16 @@
 .tile:hover .tileArrow {
     transform: translateX(4px);
     color: var(--ink-1);
+}
+
+/* ---- A cover on a tile or a home row: a 3:2 plate under the line ------ */
+/* The line keeps its arrow; the caption is the cover's own. */
+.cardPlate {
+    margin-block: var(--s-2) var(--s-1);
+}
+/* A row leaves its right edge to the arrow; the plate spans the row. */
+.rowPlate {
+    margin-right: calc(-1 * var(--s-7));
 }
 
 /* ---- Rows: a project in a line or two (MissionRow) --------------------- */

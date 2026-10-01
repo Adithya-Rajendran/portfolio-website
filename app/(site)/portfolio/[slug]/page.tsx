@@ -172,14 +172,15 @@ function factRows(
  * - **The file**, where there is evidence to lay out: the crumb (with the
  *   mission number, the file's quiet identifier), the head (line, title,
  *   summary, the quiet way to the original entry, stats only when there
- *   is no results table, the facts with the code) beside the photograph,
- *   then the brief, the results with their notes, the lessons and next
- *   steps, the parts of the build, the write-up, the references (past
- *   two links) and the related entries, each only when the owner has
- *   published it.
+ *   is no results table, the facts with the code) beside the model's
+ *   poster or the cover, then the brief, the results with their notes,
+ *   the lessons and next steps, the parts of the build, the write-up, the
+ *   references (past two links) and the related entries, each only when
+ *   the owner has published it.
  * - **The short note**, for a project with little more than its card:
- *   the title, the summary, the highlights that add to it, the essay only
- *   when it says more, and the facts with the links. No empty sections.
+ *   the title, the summary, the highlights that add to it and the facts
+ *   with the links (beside the cover, when it has one), then the essay
+ *   only when it says more. No empty sections.
  *
  * The title is the heading, in sentence case; the owner's short name is
  * the crumb's and the pager's. Both close with one question and Send a
@@ -220,9 +221,19 @@ export default async function ProjectPage({
         slug,
     );
 
+    // The head's image: the model's poster (the viewer's slot), else the
+    // cover with its caption. Either layout sets it beside the head.
     const model = project.model?.poster?.asset ? project.model : null;
-    const cover = project.cover?.asset ? project.cover : null;
-    const hasPlate = Boolean(model || cover);
+    const media = model ? (
+        <ViewerFigure model={model} priority />
+    ) : mission.cover ? (
+        <Plate
+            image={mission.cover}
+            caption={mission.cover.caption}
+            sizes="(min-width: 60rem) 36vw, 100vw"
+            priority
+        />
+    ) : null;
     const layout = missionLayout(project);
     const brief = [
         ["problem", project.brief?.problem],
@@ -263,6 +274,30 @@ export default async function ProjectPage({
         ]),
         links: folded,
     });
+
+    // The short note: its line, title and summary, then the highlights
+    // that add to the summary and the facts.
+    const noteHead = (
+        <>
+            <MissionLine mission={mission} />
+            <h1 className={styles.title}>{mission.title}</h1>
+            {mission.summary ? (
+                <p className={styles.summary}>{mission.summary}</p>
+            ) : null}
+        </>
+    );
+    const noteBody = (
+        <div className={styles.noteBody}>
+            {lines.length ? (
+                <ul className={styles.lines} role="list">
+                    {lines.map((line) => (
+                        <li key={line}>{line}</li>
+                    ))}
+                </ul>
+            ) : null}
+            <Specs className={styles.facts} items={facts} />
+        </div>
+    );
 
     const essay = (
         <DocSection
@@ -315,17 +350,26 @@ export default async function ProjectPage({
                 />
 
                 {layout === "note" ? (
-                    <header className={styles.noteHead}>
-                        <MissionLine mission={mission} />
-                        <h1 className={styles.title}>{mission.title}</h1>
-                        {mission.summary ? (
-                            <p className={styles.summary}>{mission.summary}</p>
-                        ) : null}
-                    </header>
+                    media ? (
+                        <header className={styles.head}>
+                            <div className={styles.headCopy}>
+                                {noteHead}
+                                {noteBody}
+                            </div>
+                            <div className={styles.headMedia}>{media}</div>
+                        </header>
+                    ) : (
+                        <>
+                            <header className={styles.noteHead}>
+                                {noteHead}
+                            </header>
+                            {noteBody}
+                        </>
+                    )
                 ) : (
                     <header
                         className={
-                            hasPlate
+                            media
                                 ? styles.head
                                 : `${styles.head} ${styles.headText}`
                         }
@@ -348,40 +392,16 @@ export default async function ProjectPage({
                             <Metrics
                                 className={styles.metrics}
                                 items={stats}
-                                columns={hasPlate ? 2 : 4}
-                                size={hasPlate ? "lg" : "md"}
+                                columns={media ? 2 : 4}
+                                size={media ? "lg" : "md"}
                             />
                             <Specs className={styles.facts} items={facts} />
                         </div>
-                        {hasPlate ? (
-                            <div className={styles.headMedia}>
-                                {model ? (
-                                    <ViewerFigure model={model} priority />
-                                ) : (
-                                    <Plate
-                                        image={cover}
-                                        caption={cover?.caption}
-                                        sizes="(min-width: 60rem) 36vw, 100vw"
-                                        priority
-                                    />
-                                )}
-                            </div>
+                        {media ? (
+                            <div className={styles.headMedia}>{media}</div>
                         ) : null}
                     </header>
                 )}
-
-                {layout === "note" ? (
-                    <div className={styles.noteBody}>
-                        {lines.length ? (
-                            <ul className={styles.lines} role="list">
-                                {lines.map((line) => (
-                                    <li key={line}>{line}</li>
-                                ))}
-                            </ul>
-                        ) : null}
-                        <Specs className={styles.facts} items={facts} />
-                    </div>
-                ) : null}
             </div>
 
             {layout === "note" ? (

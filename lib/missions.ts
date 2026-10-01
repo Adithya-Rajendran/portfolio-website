@@ -16,6 +16,7 @@ import type {
     ModelHotspot,
     ProjectListItem,
     ProjectWithBody,
+    SanityImageValue,
 } from "@/lib/sanity-client";
 
 /**
@@ -74,6 +75,8 @@ export interface Mission {
     /** External links; links to this site's own pages are left out (its
      *  posts are entries instead). */
     links: MissionLink[];
+    /** The cover, with its alt text and caption; null without an image. */
+    cover: SanityImageValue | null;
     featured: number | null;
     /** `YYYY-MM-DD` of the last edit. */
     revised: string | null;
@@ -337,7 +340,6 @@ type LayoutSource = Pick<
     | "lessons"
     | "next"
     | "model"
-    | "cover"
     | "body"
 >;
 
@@ -383,22 +385,22 @@ export type MissionLayout = "file" | "note";
 /**
  * How a project's page is laid out (contract §9). The full file where
  * there is evidence to lay out: a brief that adds to the card, results,
- * lessons or next steps, the model's callouts, a photograph, or an essay
+ * lessons or next steps, the model (its poster or callouts), or an essay
  * in sections. Otherwise a short project note: the title, the summary,
- * the highlights, the stack and the links, with no empty sections.
+ * the highlights, the stack and the links, with no empty sections. A
+ * cover is no evidence of its own: either layout sets it beside its head.
  */
 export function missionLayout(project: LayoutSource): MissionLayout {
     const lines = [...(project.lessons ?? []), ...(project.next ?? [])];
     const callouts = (project.model?.hotspots ?? []).some((hotspot) =>
         hotspot.title?.trim(),
     );
-    const plate = Boolean(project.cover?.asset || project.model?.poster?.asset);
     const evidence =
         briefAdds(project) ||
         resultRows(project.results).length > 0 ||
         lines.some((line) => line.trim()) ||
         callouts ||
-        plate ||
+        Boolean(project.model?.poster?.asset) ||
         extractHeadings(project).length > 0;
     return evidence ? "file" : "note";
 }
@@ -460,6 +462,7 @@ export function toMission(project: ProjectListItem, siteUrl: string): Mission {
             [summary, ...highlights],
         ),
         links: externalLinks(project.links, siteUrl),
+        cover: project.cover?.asset ? project.cover : null,
         featured: project.featured ?? null,
         revised,
     };
