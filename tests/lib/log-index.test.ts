@@ -2,12 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
     formatEntryDate,
     entriesTagged,
-    entryCount,
     logEntries,
-    offersFilters,
     type LogSource,
 } from "@/lib/log-index";
-import { groupPostsByYear } from "@/lib/tags";
 
 /** The owner's three published posts, as the list query returns them. */
 const POSTS: LogSource[] = [
@@ -41,13 +38,9 @@ const POSTS: LogSource[] = [
 ];
 
 describe("logEntries", () => {
-    it("gives each entry its LOG number, newest first", () => {
+    it("numbers the entries in the order they were filed, newest first", () => {
         const entries = logEntries(POSTS);
-        expect(entries.map((entry) => entry.designation)).toEqual([
-            "LOG 003",
-            "LOG 002",
-            "LOG 001",
-        ]);
+        expect(entries.map((entry) => entry.number)).toEqual([3, 2, 1]);
         expect(entries[0]).toMatchObject({
             slug: "my-homelab",
             publishedAt: "2026-03-30",
@@ -63,7 +56,7 @@ describe("logEntries", () => {
 
     it("keeps an entry's number in a filtered list", () => {
         const tagged = entriesTagged(logEntries(POSTS), "linux");
-        expect(tagged.map((entry) => entry.designation)).toEqual(["LOG 002"]);
+        expect(tagged.map((entry) => entry.number)).toEqual([2]);
     });
 
     it("shows a tag only once it gathers two entries, counted across the whole log", () => {
@@ -95,79 +88,6 @@ describe("logEntries", () => {
         ]);
         expect(entry.tags).toEqual(["homelab"]);
         expect(entry.readMinutes).toBeNull();
-    });
-});
-
-describe("revisions", () => {
-    it("carries a revision only when the owner set one after filing", () => {
-        const [revised, same, none, earlier] = logEntries([
-            { ...POSTS[0], revisedAt: "2026-07-02T10:00:00Z" },
-            { ...POSTS[1], revisedAt: "2026-03-26" },
-            POSTS[2],
-            {
-                ...POSTS[2],
-                _id: "early",
-                slug: "early",
-                publishedAt: "2026-03-01",
-                revisedAt: "2026-02-01",
-            },
-        ]);
-        expect(revised.revisedAt).toBe("2026-07-02");
-        expect(same.revisedAt).toBeNull();
-        expect(none.revisedAt).toBeNull();
-        expect(earlier.revisedAt).toBeNull();
-    });
-});
-
-describe("offersFilters", () => {
-    it("offers the tag filters once a tag gathers two entries", () => {
-        expect(
-            offersFilters([
-                { tag: "homelab", count: 1 },
-                { tag: "linux", count: 1 },
-            ]),
-        ).toBe(false);
-        expect(
-            offersFilters([
-                { tag: "kubernetes", count: 2 },
-                { tag: "linux", count: 1 },
-            ]),
-        ).toBe(true);
-        expect(offersFilters([])).toBe(false);
-    });
-});
-
-describe("the year groups", () => {
-    it("groups entries by the year they were filed, newest year first", () => {
-        const entries = logEntries([
-            ...POSTS,
-            {
-                _id: "old",
-                title: "Earlier",
-                slug: "earlier",
-                description: "",
-                publishedAt: "2025-11-14",
-                tags: [],
-                wordCount: 10,
-            },
-        ]);
-        const years = groupPostsByYear(entries);
-        expect(years.map((year) => year.year)).toEqual(["2026", "2025"]);
-        expect(years[0].posts.map((entry) => entry.designation)).toEqual([
-            "LOG 004",
-            "LOG 003",
-            "LOG 002",
-        ]);
-        expect(years[1].posts.map((entry) => entry.designation)).toEqual([
-            "LOG 001",
-        ]);
-    });
-});
-
-describe("labels", () => {
-    it("prints counts", () => {
-        expect(entryCount(1)).toBe("1 entry");
-        expect(entryCount(3)).toBe("3 entries");
     });
 });
 

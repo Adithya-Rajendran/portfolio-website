@@ -5,8 +5,6 @@ import PostReader from "@/components/blogs/post-reader";
 import { BreadcrumbJsonLd, MissionJsonLd } from "@/components/json-ld";
 import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
 import ProjectEssay from "@/components/portfolio/project-essay";
-import Ask from "@/components/ui/ask";
-import { ButtonLink } from "@/components/ui/button";
 import CrumbRow from "@/components/ui/crumb-row";
 import DocSection from "@/components/ui/doc-section";
 import { Icon } from "@/components/ui/icon";
@@ -20,7 +18,7 @@ import ViewerFigure, {
     ViewerCallouts,
 } from "@/components/viewer/viewer-figure";
 import { siteConfig } from "@/lib/config";
-import { missionsCopy as copy } from "@/lib/copy";
+import { missionsCopy as copy, pagerCopy } from "@/lib/copy";
 import { contentsHeadings, extractHeadings } from "@/lib/headings";
 import { logEntries } from "@/lib/log-index";
 import {
@@ -30,6 +28,7 @@ import {
     missionCallouts,
     missionEntries,
     missionLayout,
+    missionOrder,
     noteLines,
     resultRows,
     stackSaid,
@@ -38,7 +37,7 @@ import {
     type Mission,
     type MissionLink,
 } from "@/lib/missions";
-import { contactHref, siteRoutes } from "@/lib/navigation";
+import { siteRoutes } from "@/lib/navigation";
 import {
     getAllPosts,
     getAllProjects,
@@ -113,17 +112,16 @@ function FactLinks({ links }: { links: readonly MissionLink[] }) {
 
 /**
  * The facts under a head: the status note, the stack (unless the words
- * on the page already name every item), the repositories (Code), the
- * owner's role, the named parameters the stack and the card do not name
- * and, while there are no more than two links in all, the other links.
- * Each row only when set.
+ * on the page already name every item), the owner's role, the named
+ * parameters the stack and the card do not name and, while there are no
+ * more than two links in all, the links other than the repositories
+ * (those are the head's actions). Each row only when set.
  */
 function factRows(
     mission: Mission,
     { stack, links }: { stack: boolean; links: MissionLink[] },
 ): SpecItem[] {
     const f = copy.facts;
-    const code = mission.links.filter((link) => link.code);
     return [
         ...(mission.statusNote
             ? [{ id: "status", term: f.status, value: mission.statusNote }]
@@ -141,9 +139,6 @@ function factRows(
                       ),
                   },
               ]
-            : []),
-        ...(code.length
-            ? [{ id: "code", term: f.code, value: <FactLinks links={code} /> }]
             : []),
         ...(mission.role
             ? [{ id: "role", term: f.role, value: mission.role }]
@@ -169,24 +164,24 @@ function factRows(
  * A project's page (G5, contract §9), in one of two layouts
  * (`missionLayout`):
  *
- * - **The file**, where there is evidence to lay out: the crumb (with the
- *   mission number, the file's quiet identifier), the head (line, title,
- *   summary, the quiet way to the original entry, stats only when there
- *   is no results table, the facts with the code) beside the model's
- *   poster or the cover, then the brief, the results with their notes,
- *   the lessons and next steps, the parts of the build, the write-up, the
- *   references (past two links) and the related entries, each only when
- *   the owner has published it.
+ * - **The file**, where there is evidence to lay out: the crumb (the
+ *   section alone), the head (line, title, summary, the quiet links to
+ *   the original entry and the repositories, stats only when there is no
+ *   results table, the facts) beside the model's poster or the cover,
+ *   then the overview, the results with their notes, the lessons and
+ *   next steps, the parts of the build, the write-up, the references
+ *   (past two links) and the other related entries, each only when the
+ *   owner has published it.
  * - **The short note**, for a project with little more than its card:
- *   the title, the summary, the highlights that add to it and the facts
- *   with the links (beside the cover, when it has one), then the essay
- *   only when it says more. No empty sections.
+ *   the title, the summary, the same quiet links, the highlights that add
+ *   to it and the facts with the links (beside the cover, when it has
+ *   one), then the essay only when it says more. No empty sections.
  *
  * The title is the heading, in sentence case; the owner's short name is
- * the crumb's and the pager's. Both close with one question and Send a
- * message, then the neighbouring projects (the crumb, and the footer
- * under the pager, lead back to all of them). Server-rendered; PostReader keeps in-page links inside this
- * page while another is still mounted.
+ * the pager's. Both end in space before the neighbouring projects, in
+ * the index's order (the crumb leads back to all of them).
+ * Server-rendered; PostReader keeps in-page links inside this page while
+ * another is still mounted.
  */
 export default async function ProjectPage({
     params,
@@ -217,7 +212,7 @@ export default async function ProjectPage({
     });
     const callouts = missionCallouts(project.model?.hotspots);
     const { previous, next } = adjacentMissions(
-        projects.map((item) => toMission(item, siteConfig.url)),
+        missionOrder(projects).map((item) => toMission(item, siteConfig.url)),
         slug,
     );
 
@@ -257,12 +252,13 @@ export default async function ProjectPage({
     // The head links the original entry quietly; the file's own write-up
     // is already on the page, so nothing points down to it.
     const writeUp = writeUpHref(mission, null, original);
+    const code = mission.links.filter((link) => link.code);
 
     // The short note: the highlights that add to the summary.
     const lines = noteLines(mission.summary, mission.highlights);
-    // The links: the repositories are the facts' Code row; the rest join
-    // the facts while there are two links or fewer (always on a note),
-    // else they are the References section.
+    // The links: the repositories are the head's; the rest join the
+    // facts while there are two links or fewer (always on a note), else
+    // they are the References section.
     const others = mission.links.filter((link) => !link.code);
     const folded =
         layout === "note" || mission.links.length <= FACT_LINKS ? others : [];
@@ -276,8 +272,21 @@ export default async function ProjectPage({
         links: folded,
     });
 
-    // The short note: its line, title and summary, then the highlights
-    // that add to the summary and the facts.
+    // The head's quiet links: the original entry and the repositories,
+    // each underlined, the repositories with their outbound mark.
+    const actions =
+        writeUp || code.length ? (
+            <div className={styles.actions}>
+                {writeUp ? (
+                    <LinkArrow href={writeUp}>{copy.readWriteUp}</LinkArrow>
+                ) : null}
+                {code.length ? <FactLinks links={code} /> : null}
+            </div>
+        ) : null;
+
+    // The short note: its line, title, summary and quiet links, then the
+    // highlights that add to the summary (one is a plain paragraph) and
+    // the facts.
     const noteHead = (
         <>
             <MissionLine mission={mission} />
@@ -285,16 +294,19 @@ export default async function ProjectPage({
             {mission.summary ? (
                 <p className={styles.summary}>{mission.summary}</p>
             ) : null}
+            {actions}
         </>
     );
     const noteBody = (
         <div className={styles.noteBody}>
-            {lines.length ? (
+            {lines.length > 1 ? (
                 <ul className={styles.lines} role="list">
                     {lines.map((line) => (
                         <li key={line}>{line}</li>
                     ))}
                 </ul>
+            ) : lines.length ? (
+                <p className={styles.line}>{lines[0]}</p>
             ) : null}
             <Specs className={styles.facts} items={facts} />
         </div>
@@ -346,8 +358,6 @@ export default async function ProjectPage({
                     className={styles.crumb}
                     label={copy.plain}
                     href={siteRoutes.portfolio}
-                    code={mission.designation}
-                    name={mission.label}
                 />
 
                 {layout === "note" ? (
@@ -383,13 +393,7 @@ export default async function ProjectPage({
                                     {mission.summary}
                                 </p>
                             ) : null}
-                            {writeUp ? (
-                                <p className={styles.actions}>
-                                    <LinkArrow href={writeUp}>
-                                        {copy.readWriteUp}
-                                    </LinkArrow>
-                                </p>
-                            ) : null}
+                            {actions}
                             <Metrics
                                 className={styles.metrics}
                                 items={stats}
@@ -413,7 +417,6 @@ export default async function ProjectPage({
                             <LogIndex
                                 entries={related}
                                 level={3}
-                                grouped={false}
                                 tags={false}
                             />
                         </DocSection>
@@ -422,7 +425,7 @@ export default async function ProjectPage({
             ) : (
                 <>
                     {brief.length ? (
-                        <DocSection id="brief" title={copy.briefTitle}>
+                        <DocSection id="brief" title={copy.overview}>
                             <Specs
                                 className={`specs--read ${styles.brief}`}
                                 items={brief.map(([key, text]) => ({
@@ -437,27 +440,35 @@ export default async function ProjectPage({
                     {results.length ? (
                         <DocSection id="results" title={copy.results}>
                             {/* The section is the region; the table is
-                                named by its heading, and reflows on phones
-                                instead of scrolling. */}
+                                named by its heading, opens on its first
+                                row (the column heads are for screen
+                                readers) and reflows on phones instead of
+                                scrolling. */}
                             <div className={`table-wrap ${styles.results}`}>
                                 <table
                                     className="table"
                                     aria-labelledby="results-h"
                                 >
-                                    <thead>
+                                    <thead className={styles.columns}>
                                         <tr>
                                             <th scope="col">
-                                                {copy.resultColumns.metric}
+                                                <span className="sr-only">
+                                                    {copy.resultColumns.metric}
+                                                </span>
                                             </th>
-                                            <th scope="col" className="num">
-                                                {copy.resultColumns.value}
+                                            <th scope="col">
+                                                <span className="sr-only">
+                                                    {copy.resultColumns.value}
+                                                </span>
                                             </th>
                                             {hasNotes ? (
-                                                <th
-                                                    scope="col"
-                                                    className={styles.noteCol}
-                                                >
-                                                    {copy.resultColumns.note}
+                                                <th scope="col">
+                                                    <span className="sr-only">
+                                                        {
+                                                            copy.resultColumns
+                                                                .note
+                                                        }
+                                                    </span>
                                                 </th>
                                             ) : null}
                                         </tr>
@@ -486,37 +497,48 @@ export default async function ProjectPage({
                         </DocSection>
                     ) : null}
 
-                    {lessons.length || nextSteps.length ? (
-                        <DocSection id="debrief" title={copy.debrief}>
+                    {/* One list is titled by its name; both share a
+                        plain title, each under its subhead. */}
+                    {lessons.length && nextSteps.length ? (
+                        <DocSection id="debrief" title={copy.retrospective}>
                             <div className={styles.debrief}>
-                                {lessons.length ? (
-                                    <div>
-                                        <h3 className={styles.subhead}>
-                                            {copy.lessons}
-                                        </h3>
-                                        <ul
-                                            className={styles.lessons}
-                                            role="list"
-                                        >
-                                            {lessons.map((line) => (
-                                                <li key={line}>{line}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ) : null}
-                                {nextSteps.length ? (
-                                    <div>
-                                        <h3 className={styles.subhead}>
-                                            {copy.nextSteps}
-                                        </h3>
-                                        <ul className={styles.next} role="list">
-                                            {nextSteps.map((line) => (
-                                                <li key={line}>{line}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ) : null}
+                                <div>
+                                    <h3 className={styles.subhead}>
+                                        {copy.lessons}
+                                    </h3>
+                                    <ul className={styles.lessons} role="list">
+                                        {lessons.map((line) => (
+                                            <li key={line}>{line}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className={styles.subhead}>
+                                        {copy.nextSteps}
+                                    </h3>
+                                    <ul className={styles.lessons} role="list">
+                                        {nextSteps.map((line) => (
+                                            <li key={line}>{line}</li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
+                        </DocSection>
+                    ) : lessons.length || nextSteps.length ? (
+                        <DocSection
+                            id="debrief"
+                            title={
+                                lessons.length ? copy.lessons : copy.nextSteps
+                            }
+                        >
+                            <ul
+                                className={`${styles.lessons} ${styles.single}`}
+                                role="list"
+                            >
+                                {[...lessons, ...nextSteps].map((line) => (
+                                    <li key={line}>{line}</li>
+                                ))}
+                            </ul>
                         </DocSection>
                     ) : null}
 
@@ -555,7 +577,6 @@ export default async function ProjectPage({
                             <LogIndex
                                 entries={related}
                                 level={3}
-                                grouped={false}
                                 tags={false}
                             />
                         </DocSection>
@@ -563,45 +584,33 @@ export default async function ProjectPage({
                 </>
             )}
 
-            <section
-                className="section"
-                aria-labelledby="mission-close-h"
-                data-print="hide"
-            >
-                <div className="shell">
-                    <Ask id="mission-close-h" title={copy.question}>
-                        <ButtonLink
-                            href={contactHref("hello")}
-                            icon="arrow"
-                            iconAt="end"
-                        >
-                            {copy.message}
-                        </ButtonLink>
-                    </Ask>
-                    <Pager
-                        className={styles.pager}
-                        label={copy.pagerLabel}
-                        previous={
-                            previous
-                                ? {
-                                      href: previous.href,
-                                      label: copy.previousFile,
-                                      title: previous.label,
-                                  }
-                                : null
-                        }
-                        next={
-                            next
-                                ? {
-                                      href: next.href,
-                                      label: copy.nextFile,
-                                      title: next.label,
-                                  }
-                                : null
-                        }
-                    />
+            {previous || next ? (
+                <div className="section" data-print="hide">
+                    <div className="shell">
+                        <Pager
+                            label={copy.pagerLabel}
+                            previous={
+                                previous
+                                    ? {
+                                          href: previous.href,
+                                          label: pagerCopy.previous,
+                                          title: previous.label,
+                                      }
+                                    : null
+                            }
+                            next={
+                                next
+                                    ? {
+                                          href: next.href,
+                                          label: pagerCopy.next,
+                                          title: next.label,
+                                      }
+                                    : null
+                            }
+                        />
+                    </div>
                 </div>
-            </section>
+            ) : null}
 
             <PostReader />
         </div>

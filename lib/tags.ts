@@ -32,8 +32,8 @@ export function collectTags(posts: Pick<PostListItem, "tags">[]): TagCount[] {
 /**
  * A tag links only once it gathers this many entries: a tag page with one
  * entry would only lead back to the entry in view. Below it the tag is not
- * shown at all (a tag shows only when it links): not on an index row, an
- * entry's head, the chips or the sitemap. Its page still answers.
+ * shown at all (a tag shows only when it links): not on an index row or
+ * the sitemap. Its page still answers.
  */
 export const TAG_LINK_MIN = 2;
 
@@ -54,7 +54,7 @@ const ACRONYMS: Readonly<Record<string, string>> = {
 /**
  * A tag as words, for its page's h1 and title: hyphens become spaces, in
  * sentence case, acronyms in capitals ("gpu-computing" → "GPU computing",
- * "homelab" → "Homelab"). The slug stays the tag's URL and its chip.
+ * "homelab" → "Homelab"). The slug stays the tag's URL and its link.
  */
 export function tagLabel(tag: string): string {
     const label = tag
@@ -70,31 +70,4 @@ export function filterPostsByTag<T extends Pick<PostListItem, "tags">>(
     tag: string,
 ): T[] {
     return posts.filter((post) => post.tags?.includes(tag));
-}
-
-/**
- * Group posts by publish year, newest year first. Post order within a
- * year is preserved from the input (list queries sort newest-first).
- * Posts with missing/malformed dates land in an "Undated" group at the
- * end rather than disappearing.
- */
-export function groupPostsByYear<T extends { publishedAt?: string }>(
-    posts: T[],
-): { year: string; posts: T[] }[] {
-    const groups = new Map<string, T[]>();
-    for (const post of posts) {
-        const year = /^\d{4}-/.test(post.publishedAt ?? "")
-            ? (post.publishedAt ?? "").slice(0, 4)
-            : "Undated";
-        const group = groups.get(year) ?? [];
-        group.push(post);
-        groups.set(year, group);
-    }
-    return [...groups.entries()]
-        .map(([year, groupPosts]) => ({ year, posts: groupPosts }))
-        .sort((a, b) => {
-            if (a.year === "Undated") return 1;
-            if (b.year === "Undated") return -1;
-            return b.year.localeCompare(a.year);
-        });
 }

@@ -155,7 +155,6 @@ describe("warm lists", () => {
         expect(paths("post")).toEqual([
             "/",
             "/blog",
-            "/blog/archive",
             "/portfolio",
             "/resume",
             "/about",
@@ -163,7 +162,6 @@ describe("warm lists", () => {
             "/sitemap.xml",
             "/opengraph-image-12o0cb",
             "/blog/opengraph-image-14vkmf",
-            "/blog/archive/opengraph-image-dfhyke",
             "/portfolio/opengraph-image-98lokn",
             "/resume/opengraph-image-1nyaml",
             "/about/opengraph-image-1ycygp",
@@ -195,7 +193,6 @@ describe("warm lists", () => {
         expect(paths("profile")).toEqual([
             "/",
             "/blog",
-            "/blog/archive",
             "/portfolio",
             "/resume",
             "/about",
@@ -204,7 +201,6 @@ describe("warm lists", () => {
             "/sitemap.xml",
             "/opengraph-image-12o0cb",
             "/blog/opengraph-image-14vkmf",
-            "/blog/archive/opengraph-image-dfhyke",
             "/portfolio/opengraph-image-98lokn",
             "/resume/opengraph-image-1nyaml",
             "/about/opengraph-image-1ycygp",
@@ -226,12 +222,7 @@ describe("warm lists", () => {
     it("keeps the entry points when there is no content", () => {
         const empty = { post: [], tag: [], project: [] };
         expect(paths("post", empty)).toEqual(
-            expect.arrayContaining([
-                "/",
-                "/blog",
-                "/blog/archive",
-                "/feed.xml",
-            ]),
+            expect.arrayContaining(["/", "/blog", "/feed.xml"]),
         );
         expect(paths("post", empty).some((path) => path.includes("["))).toBe(
             false,
@@ -279,13 +270,5 @@ describe("share-image redirects", () => {
                 `${redirect.source}-${redirect.destination.split("-").pop()}`,
             );
         }
-        // The archive's own image is not caught by the post pattern.
-        const archive = moved.findIndex(
-            ({ source }) => source === "/blog/archive/opengraph-image",
-        );
-        const post = moved.findIndex(
-            ({ source }) => source === "/blog/:slug/opengraph-image",
-        );
-        expect(archive).toBeLessThan(post);
     });
 });

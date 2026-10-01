@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
 import FollowLinks from "@/components/blogs/follow-links";
 import LogIndex from "@/components/blogs/log-index";
-import TagChips, { ALL_ENTRIES } from "@/components/blogs/tag-chips";
 import { BlogJsonLd } from "@/components/json-ld";
-import { LinkArrow } from "@/components/ui/marks";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { logCopy as copy } from "@/lib/copy";
 import { feedAlternates } from "@/lib/feed";
-import { logEntries, offersFilters } from "@/lib/log-index";
+import { logEntries } from "@/lib/log-index";
 import { siteRoutes } from "@/lib/navigation";
 import { getProfileLink, getWritingDescription } from "@/lib/profile-content";
 import { getAllPosts, getProfile } from "@/lib/sanity-client";
-import { collectTags } from "@/lib/tags";
 import styles from "./log.module.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -38,18 +35,15 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * Writing (/blog; themed Flight Log, G8): the page head with the owner's
  * description of his writing and one quiet line of ways to follow it
- * ("Follow: RSS · LinkedIn"), then every entry in the scannable index
- * (grouped by year once the entries span two), then a quiet link to the
- * searchable archive. The tag chips appear once a tag gathers two or
- * more entries (`offersFilters`); until then the list is short enough to
- * read whole. Everything is server-rendered links, so the page is
- * complete without JavaScript. Ported from the mockup's log.html.
+ * ("Follow: RSS · LinkedIn"), then every entry in the scannable index,
+ * one list ending on its closing rule. The rows' tags lead to their
+ * pages. Everything is server-rendered links, so the page is complete
+ * without JavaScript. /blog/archive answers 308 here. Ported from the
+ * mockup's log.html.
  */
 export default async function WritingPage() {
     const [posts, profile] = await Promise.all([getAllPosts(), getProfile()]);
     const entries = logEntries(posts);
-    const tags = collectTags(entries);
-    const filters = offersFilters(tags);
     const linkedIn = getProfileLink(profile, "linkedin");
 
     return (
@@ -70,23 +64,8 @@ export default async function WritingPage() {
 
             <section className={`section ${styles.index}`}>
                 <div className={`shell ${styles.indexInner}`}>
-                    {filters ? (
-                        <TagChips
-                            tags={tags}
-                            total={entries.length}
-                            current={ALL_ENTRIES}
-                        />
-                    ) : null}
                     {entries.length ? (
-                        <>
-                            <LogIndex entries={entries} level={2} />
-                            <LinkArrow
-                                className={styles.archive}
-                                href={siteRoutes.archive}
-                            >
-                                {copy.archive.title}
-                            </LinkArrow>
-                        </>
+                        <LogIndex entries={entries} level={2} />
                     ) : (
                         <div className={styles.empty}>
                             <p className={styles.emptyTitle}>{copy.empty}</p>

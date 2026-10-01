@@ -45,6 +45,13 @@ test("paper leaves off the chrome, the controls and the flight", async ({
     for (const sheet of [1, 2]) {
         await expect(main.getByText(cvCopy.sheet(sheet, 2))).toBeVisible();
     }
+    // The control line is the title, the revision and the sheet: no
+    // document number, and the revision has no triangle.
+    await expect(main.getByText(/AR-CV/)).toHaveCount(0);
+    await expect(
+        main.getByText(cvCopy.documentTitle, { exact: true }).first(),
+    ).toBeVisible();
+    await expect(main.locator(".rev__tri")).toHaveCount(0);
     await expect(
         main.getByRole("heading", { name: cvCopy.experience, exact: true }),
     ).toBeVisible();

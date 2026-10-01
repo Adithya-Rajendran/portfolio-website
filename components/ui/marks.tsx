@@ -4,8 +4,8 @@ import { Icon } from "@/components/ui/icon";
 import { formatEntryDate } from "@/lib/log-index";
 
 /**
- * Small marks of the design system: the arrow link, status, revision mark
- * and chips (the mockup's site.css 4.4–4.5, 4.27).
+ * Small marks of the design system: the arrow link, status, the paper's
+ * revision mark and Updated (the mockup's site.css 4.4–4.5, 4.27).
  * Directive-free, so server and client components can both render them.
  */
 
@@ -61,28 +61,18 @@ export function Status({
     );
 }
 
-/** △ Rev 2026-09-24: document control and dated revisions (G7). */
-export function Rev({
-    date,
-    label = "Rev",
-    title,
-}: {
-    /** `YYYY-MM-DD` */
-    date: string;
-    label?: string;
-    title?: string;
-}) {
+/** "Rev 2026-09-24": the printed CV's revision, on paper only (G3). */
+export function Rev({ date }: { /** `YYYY-MM-DD` */ date: string }) {
     return (
-        <span className="rev" title={title}>
-            <span className="rev__tri" aria-hidden="true" />
-            {label} <time dateTime={date}>{date}</time>
+        <span className="rev">
+            Rev <time dateTime={date}>{date}</time>
         </span>
     );
 }
 
 /**
  * "Updated 24 Sep 2026": when a list was last updated, in words. `Rev`
- * (ISO, with its triangle) is kept for document revisions (contract §2).
+ * (ISO) is the printed CV's alone (contract §2).
  */
 export function Updated({
     date,
@@ -96,27 +86,5 @@ export function Updated({
         <span className="updated">
             {label} <time dateTime={date}>{formatEntryDate(date)}</time>
         </span>
-    );
-}
-
-/** A filter or tag chip with an optional count; `current` marks it. */
-export function Chip({
-    children,
-    count,
-    current,
-    className,
-    ...props
-}: ComponentProps<typeof Link> & { count?: number; current?: boolean }) {
-    return (
-        <Link
-            className={className ? `chip ${className}` : "chip"}
-            aria-current={current ? "page" : undefined}
-            {...props}
-        >
-            {children}
-            {count === undefined ? null : (
-                <span className="chip__count">{count}</span>
-            )}
-        </Link>
     );
 }

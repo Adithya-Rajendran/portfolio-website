@@ -101,7 +101,6 @@ describe("warmBlogCache", () => {
             expect.arrayContaining([
                 url("/"),
                 url("/blog"),
-                url("/blog/archive"),
                 url("/feed.xml"),
                 url("/blog/vision-experiment"),
                 url("/blog/tags/robotics"),
@@ -124,12 +123,7 @@ describe("warmBlogCache", () => {
 
         expect(result.pages.failed).toEqual([]);
         expect(result.pages.warmed).toEqual(
-            expect.arrayContaining([
-                url("/"),
-                url("/blog"),
-                url("/blog/archive"),
-                url("/feed.xml"),
-            ]),
+            expect.arrayContaining([url("/"), url("/blog"), url("/feed.xml")]),
         );
         expect(result.pages.warmed.some((target) => target.includes("["))).toBe(
             false,
@@ -170,14 +164,12 @@ describe("warmProfileCache", () => {
                 url("/resume"),
                 url("/contact"),
                 url("/blog"),
-                url("/blog/archive"),
                 url("/feed.xml"),
                 url("/opengraph-image-12o0cb"),
                 url("/about/opengraph-image-1ycygp"),
                 url("/contact/opengraph-image-upzrkl"),
                 url("/portfolio/opengraph-image-98lokn"),
                 url("/blog/opengraph-image-14vkmf"),
-                url("/blog/archive/opengraph-image-dfhyke"),
                 url("/resume/view"),
                 url("/resume/download"),
             ]),

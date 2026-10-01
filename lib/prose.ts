@@ -1,10 +1,11 @@
 /**
- * One pass over a Portable Text body that numbers what the reader can cite,
- * plates and figures (Pl. I, Fig. 1) and footnotes (1, 2 …), and the
- * listings, whose numbers only keep their accessible names apart, in
- * reading order. The post page, the project essay and the RSS feed all
- * read the same numbers, so the captions and the feed never disagree.
- * Pure: no React, no fetches.
+ * One pass over a Portable Text body that numbers what the reader can
+ * cite, the footnotes (1, 2 …), and the listings, whose numbers only keep
+ * their accessible names apart, in reading order, and sorts its images
+ * into photographs and drawings. No plate or figure is numbered: no text
+ * cites one, and each caption stands on its own. The post page, the
+ * project essay and the RSS feed all read the same index, so the page and
+ * the feed never disagree. Pure: no React, no fetches.
  */
 import { calloutToneTitle } from "@/lib/post-fields";
 
@@ -65,31 +66,21 @@ export function languageName(language?: string | null): string {
 
 export interface ListingInfo {
     number: number;
-    /** The display name ("Bash", "YAML", "Text"). */
-    language: string;
-    filename?: string;
+    /** The bar's one label: the file name, else the language ("Bash",
+     *  "YAML", "Text"), which a file name already implies. */
+    name: string;
     /** The longest line, in columns (tabs count as four). */
     longest: number;
     /** Breaks out of the text measure: every listing of a body does when
      *  any one is longer than it, so the listings share one width. */
     wide: boolean;
-    /** The accessible name: "Listing 3, Bash, install.sh". */
+    /** The accessible name: "Listing 3, install.sh". */
     label: string;
 }
 
-/** "Listing 3, Bash, install.sh": unique per listing on a page. */
-export function listingLabel({
-    number,
-    language,
-    filename,
-}: {
-    number: number;
-    language: string;
-    filename?: string | null;
-}): string {
-    return [`Listing ${number}`, language, filename || null]
-        .filter(Boolean)
-        .join(", ");
+/** "Listing 3, install.sh": unique per listing on a page. */
+export function listingLabel(number: number, name: string): string {
+    return `Listing ${number}, ${name}`;
 }
 
 /** The lines of a listing as it is drawn: trailing blank lines dropped. */
@@ -109,9 +100,6 @@ export type FigureKind = "plate" | "figure";
 
 export interface FigureInfo {
     kind: FigureKind;
-    number: number;
-    /** "Pl. II" or "Fig. 1". */
-    label: string;
 }
 
 export interface NoteInfo {
@@ -130,7 +118,7 @@ export interface ProseIndex {
      */
     body: Block[];
     listings: Record<string, ListingInfo>;
-    /** Body images and gallery images, by `_key`. */
+    /** Body images and gallery images that render, by `_key`. */
     figures: Record<string, FigureInfo>;
     notes: NoteInfo[];
 }
@@ -142,35 +130,6 @@ export type NumberedFootnote = {
     text?: string;
     number?: number;
 };
-
-const ROMAN: [number, string][] = [
-    [1000, "M"],
-    [900, "CM"],
-    [500, "D"],
-    [400, "CD"],
-    [100, "C"],
-    [90, "XC"],
-    [50, "L"],
-    [40, "XL"],
-    [10, "X"],
-    [9, "IX"],
-    [5, "V"],
-    [4, "IV"],
-    [1, "I"],
-];
-
-/** 4 → "IV": plates are numbered in Roman numerals. */
-export function romanNumeral(value: number): string {
-    let rest = Math.max(0, Math.trunc(value));
-    let out = "";
-    for (const [amount, glyph] of ROMAN) {
-        while (rest >= amount) {
-            out += glyph;
-            rest -= amount;
-        }
-    }
-    return out;
-}
 
 /** An image that renders: it has an asset reference. */
 export function hasImageAsset(value: unknown): boolean {
@@ -209,14 +168,15 @@ function spanMarks(block: Block): string[] {
     return marks;
 }
 
+/** The key the lead plate (a post's cover) is indexed under. */
+export const LEAD_KEY = "lead";
+
 /**
- * Numbers a body's listings, plates, figures and footnotes in reading
- * order. A footnote is numbered where its annotation first appears in the
- * text; an annotation no text carries, or one without a note, is left
+ * Numbers a body's listings and footnotes in reading order, and sorts its
+ * images. A footnote is numbered where its annotation first appears in
+ * the text; an annotation no text carries, or one without a note, is left
  * unnumbered (the renderers then print the text alone).
  */
-/** The key the lead plate (a post's cover) is numbered under. */
-export const LEAD_KEY = "lead";
 
 export function indexProse(
     body: readonly Block[] | null | undefined,
@@ -225,8 +185,7 @@ export function indexProse(
     }: {
         /**
          * A post's cover, drawn as the lead plate after the first
-         * paragraph: it takes the first number of its kind (Pl. I), under
-         * `LEAD_KEY`, when it has an image.
+         * paragraph: indexed under `LEAD_KEY` when it has an image.
          */
         lead?: { asset?: unknown; kind?: unknown } | null;
     } = {},
@@ -234,21 +193,10 @@ export function indexProse(
     const listings: Record<string, ListingInfo> = {};
     const figures: Record<string, FigureInfo> = {};
     const notes: NoteInfo[] = [];
-    let plates = 0;
-    let drawings = 0;
 
     const addFigure = (value: Block) => {
         if (typeof value._key !== "string" || !hasImageAsset(value)) return;
-        const kind = figureKind(value.kind);
-        const number = kind === "plate" ? ++plates : ++drawings;
-        figures[value._key] = {
-            kind,
-            number,
-            label:
-                kind === "plate"
-                    ? `Pl. ${romanNumeral(number)}`
-                    : `Fig. ${number}`,
-        };
+        figures[value._key] = { kind: figureKind(value.kind) };
     };
 
     if (lead && hasImageAsset(lead)) {
@@ -261,18 +209,16 @@ export function indexProse(
             const code = typeof block.code === "string" ? block.code : "";
             const longest = Math.max(0, ...listingLines(code).map(columns));
             const number = Object.keys(listings).length + 1;
-            const language = languageName(block.language as string);
-            const filename =
+            const name =
                 typeof block.filename === "string" && block.filename.trim()
                     ? block.filename.trim()
-                    : undefined;
+                    : languageName(block.language as string);
             listings[block._key] = {
                 number,
-                language,
-                filename,
+                name,
                 longest,
                 wide: false,
-                label: listingLabel({ number, language, filename }),
+                label: listingLabel(number, name),
             };
             return block;
         }

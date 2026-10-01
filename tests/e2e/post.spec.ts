@@ -1,5 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
-import { postCopy } from "@/lib/copy";
+import { pagerCopy, postCopy } from "@/lib/copy";
 import { expect, test } from "./support/test";
 import { contentPages, isPostPage } from "./support/routes";
 import { THEMES, storeTheme } from "./support/theme";
@@ -11,12 +11,16 @@ import { THEMES, storeTheme } from "./support/theme";
  * copy, footnotes sit in the margin and in the notes, the phone's contents
  * box works, and in-page links land in the visible entry after a client-side
  * navigation (Cache Components keeps the previous entry mounted, hidden).
- * Premium WS3: one numbering per thing (LOG in the crumb only, no margin
- * numbers or line counts), the type (h2 at 32px or less, leading 1.52),
- * the listings at one width, and one close (no Author block). Premium D3:
- * no printed listing number and no numbers in the contents (the headings
- * have names). The fixture-only tests read the fixture posts in
- * lib/fixtures.ts.
+ * Premium WS3: one numbering per thing (the footnotes alone: no LOG
+ * number, plate or figure number, margin number or line count), the type
+ * (h2 at 32px or less, leading 1.52), the listings at one width, and one
+ * close (no Author block). Premium D3: no printed listing number and no
+ * numbers in the contents (the headings have names). The justify pass:
+ * the crumb is Writing alone, the head carries no tags, the contents
+ * show from two sections, a listing's bar has one label, the revisions
+ * are dated as the head dates, and the close is the end mark and the
+ * follow line, then the pager ("Previous", "Next"). The fixture-only
+ * tests read the fixture posts in lib/fixtures.ts.
  */
 
 const FIXTURE_POST = "/blog/fixture-post-code-and-links";
@@ -205,7 +209,7 @@ test("the rail lists the sections and repeats no record", async ({
             page.getByRole("main").getByText(/\b[\d,]+ words\b/),
         ).toHaveCount(0);
         // The contents list every section (the top heading level), in
-        // order; there are none without a heading.
+        // order, from two sections: one would lead nowhere new.
         let headings: string[] = [];
         for (const level of ["h2", "h3", "h4"]) {
             headings = await text
@@ -213,7 +217,7 @@ test("the rail lists the sections and repeats no record", async ({
                 .allTextContents();
             if (headings.length) break;
         }
-        if (headings.length) {
+        if (headings.length >= 2) {
             await expect(rail.getByRole("link")).toHaveText(headings);
             // By name only: no number before a section.
             const marks = await rail
@@ -228,6 +232,7 @@ test("the rail lists the sections and repeats no record", async ({
             }
         } else {
             await expect(rail).toHaveCount(0);
+            await expect(page.locator("[data-entry-box]")).toHaveCount(0);
         }
     }
 });
@@ -284,7 +289,7 @@ test("a listing is named, prints no number and copies its code", async ({
     expect(copied.replace(/\s+$/, "")).toBe(shown);
 });
 
-test("an entry's LOG number is printed once, above its title, in the crumb", async ({
+test("an entry carries no number: the crumb is Writing alone, and the head no tags", async ({
     page,
     request,
 }, testInfo) => {
@@ -292,28 +297,23 @@ test("an entry's LOG number is printed once, above its title, in the crumb", asy
         for (const width of [390, 1280]) {
             await page.setViewportSize({ width, height: 844 });
             await page.goto(path);
-            const title = page.locator('[data-page="post"]:visible h1');
-            await expect(title).toBeVisible();
-            const above = await title.evaluate((h1) => {
-                const top = h1.getBoundingClientRect().top;
-                return [
-                    ...h1.closest("[data-page]")!.querySelectorAll("span, p"),
-                ].filter(
-                    (el) =>
-                        /^LOG \d{3}$/.test(el.textContent?.trim() ?? "") &&
-                        el.checkVisibility() &&
-                        el.getBoundingClientRect().bottom <= top,
-                ).length;
+            const entry = page.locator('[data-page="post"]:visible');
+            const crumb = entry.locator(".crumb-row");
+            await expect(crumb).toHaveText(postCopy.plain);
+            await expect(crumb.getByRole("link")).toHaveAttribute(
+                "href",
+                "/blog",
+            );
+            // The title and standfirst say the topic: no tags in the head.
+            const head = entry.locator("header").filter({
+                has: page.getByRole("heading", { level: 1 }),
             });
-            expect(above, `${path} at ${width}px`).toBe(1);
-            // Nowhere else: not the end mark, the pager or a plate.
-            const text = await page
-                .locator('[data-page="post"]:visible')
-                .innerText();
-            expect(
-                text.match(/LOG \d{3}/g) ?? [],
-                `${path} at ${width}px`,
-            ).toHaveLength(1);
+            await expect(head.locator('a[href^="/blog/tags/"]')).toHaveCount(0);
+            // No LOG number, and no plate or figure number.
+            const text = await entry.innerText();
+            expect(text, `${path} at ${width}px`).not.toMatch(
+                /\bLOG \d{3}\b|\bPl\. [IVX]+\b|\bFig\. \d/,
+            );
         }
     }
 });
@@ -342,8 +342,8 @@ test("one numbering per thing, and the text's type", async ({
             return parseFloat(style.lineHeight) / parseFloat(style.fontSize);
         });
         expect(leading, path).toBeCloseTo(1.52, 2);
-        // A listing's bar names its file, language and Copy: never a line
-        // count or a listing number.
+        // A listing's bar names its file (else its language) and Copy:
+        // never a line count or a listing number.
         const bars = await page
             .locator('[data-page="post"]:visible .listing__bar')
             .allInnerTexts();
@@ -354,7 +354,7 @@ test("one numbering per thing, and the text's type", async ({
     }
 });
 
-test("the entry closes once: the end mark, a question, the follow line, then the pager by name", async ({
+test("the entry closes once: the end mark and the follow line, then the pager by name", async ({
     page,
     request,
 }, testInfo) => {
@@ -377,11 +377,26 @@ test("the entry closes once: the end mark, a question, the follow line, then the
             follow.getByRole("link", { name: "RSS", exact: true }),
         ).toHaveAttribute("href", "/feed.xml");
         await expect(main.locator(".btn", { hasText: /^RSS$/ })).toHaveCount(0);
-        // The pager names the entries: no LOG number, date or read time.
+        // The follow line alone: no question, Copy link or All writing (the
+        // header's Contact and Writing, and the crumb, are in reach).
+        await expect(main.getByText(/^Questions about/)).toHaveCount(0);
+        await expect(
+            main.getByRole("link", { name: "Send a message" }),
+        ).toHaveCount(0);
+        await expect(
+            main.getByRole("button", { name: /^Copy link/ }),
+        ).toHaveCount(0);
+        await expect(
+            main.getByRole("link", { name: "All writing" }),
+        ).toHaveCount(0);
+        // The pager names the entries: "Previous" or "Next", then the
+        // title; no LOG number, date or read time.
         const pager = main.getByRole("navigation", { name: postCopy.pager });
         for (const link of await pager.getByRole("link").all()) {
             await expect(link).toContainText(
-                new RegExp(`^(${postCopy.previous}|${postCopy.next})`),
+                new RegExp(
+                    `^(${pagerCopy.previous}|${pagerCopy.next})(?! entry)`,
+                ),
             );
             await expect(link).not.toContainText(/LOG|\d{4}|\bmin\b/);
         }
@@ -431,7 +446,10 @@ test("the header keeps one hairline on reading and index pages alike", async ({
     const rule = await header.evaluate(
         (element) => getComputedStyle(element).borderBottomColor,
     );
-    await page.getByRole("link", { name: postCopy.allEntries }).click();
+    await page
+        .locator('[data-page="post"]:visible .crumb-row')
+        .getByRole("link", { name: postCopy.plain })
+        .click();
     await expect(page).toHaveURL(/\/blog$/);
     await expect(header).toHaveCSS("border-bottom-color", rule);
     await expect(page.locator("html")).not.toHaveAttribute("data-header", /.*/);
@@ -444,13 +462,14 @@ test("printing an entry keeps the text and drops the rail and actions", async ({
     const [path] = await postPaths(request, testInfo);
     await page.goto(path);
     await page.emulateMedia({ media: "print" });
-    await expect(page.getByText(/^Writing · LOG \d{3}$/)).toBeVisible();
+    // The masthead's kicker is the section, with no number.
+    await expect(
+        page.locator('[data-print="only"] .label', { hasText: /^Writing$/ }),
+    ).toBeVisible();
     await expect(
         page.getByRole("navigation", { name: postCopy.contentsLabel }),
     ).toBeHidden();
-    await expect(
-        page.getByRole("button", { name: postCopy.copyLinkLabel }),
-    ).toBeHidden();
+    await expect(page.getByText(/^Follow:/)).toBeHidden();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(body(page).locator(":scope > p").first()).toBeVisible();
 });
@@ -460,14 +479,18 @@ test("one listing past the measure takes every listing wide; a highlighted line 
 }, testInfo) => {
     test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
     await page.goto(FIXTURE_POST);
+    // One label: the file name, which already implies the language.
     const short = page.locator(".listing").filter({
-        has: page.getByRole("region", { name: "Listing 1, Bash, fixture.sh" }),
+        has: page.getByRole("region", { name: "Listing 1, fixture.sh" }),
     });
     const wide = page.locator(".listing").filter({
         has: page.getByRole("region", {
-            name: "Listing 2, Bash, fixture-wide.sh",
+            name: "Listing 2, fixture-wide.sh",
         }),
     });
+    await expect(short.locator(".listing__bar")).toHaveText(
+        /^fixture\.sh\s*Copy$/,
+    );
     const text = await body(page).locator(":scope > p").first().boundingBox();
     const shortBox = await short.boundingBox();
     const wideBox = await wide.boundingBox();
@@ -545,17 +568,16 @@ test("a caution callout, the revisions and the end mark", async ({
     );
     await expect(caution).toHaveCSS("border-top-width", "0px");
     const revisions = page.getByRole("region", {
-        name: postCopy.revisions.title,
+        name: postCopy.revisions,
     });
-    // Oldest first, each dated with a revision mark.
+    // Oldest first, each dated as the head dates ("30 Jun 2026"), with no
+    // revision mark.
     await expect(revisions.getByRole("listitem")).toHaveText([
-        /Rev 2026-06-30.*Correction.*Fixture correction/,
-        /Rev 2026-07-02.*Update.*Fixture update/,
+        /^30 Jun 2026 · Correction\s*Fixture correction/,
+        /^2 Jul 2026 · Update\s*Fixture update/,
     ]);
+    await expect(revisions).not.toContainText(/Rev\b|△/);
     await expect(page.getByText(/^End of entry$/)).toBeVisible();
-    await expect(
-        page.getByRole("link", { name: postCopy.reply }),
-    ).toHaveAttribute("href", "/contact#hello");
 });
 
 test("the fixture's footnotes, caution and revisions reach the RSS feed", async ({
@@ -574,9 +596,9 @@ test("the fixture's footnotes, caution and revisions reach the RSS feed", async 
     expect(decoded).toContain('<sup><a href="#fn-1" id="fnref-1">1</a></sup>');
     expect(decoded).toContain("<h2>Notes</h2>");
     expect(decoded).toContain("Caution: Fixture caution");
-    expect(decoded).toContain("Bash · <code>fixture-wide.sh</code>");
-    expect(decoded).not.toMatch(/Listing \d/);
-    expect(decoded).toContain("2026-06-30 · Correction.");
+    expect(decoded).toContain("<figcaption>fixture-wide.sh</figcaption>");
+    expect(decoded).not.toMatch(/Listing \d|Bash ·|Pl\. I|Fig\. 1/);
+    expect(decoded).toContain("30 Jun 2026 · Correction.");
 });
 
 test("after a client-side navigation, the skip link and a contents link land in the visible entry", async ({
@@ -587,7 +609,10 @@ test("after a client-side navigation, the skip link and a contents link land in 
         "Needs two fixture entries that share a heading id.",
     );
     await page.goto(FIXTURE_QUOTE);
-    await page.getByRole("link", { name: /^Next entry/ }).click();
+    await page
+        .getByRole("navigation", { name: postCopy.pager })
+        .getByRole("link", { name: /^Next/ })
+        .click();
     await expect(page).toHaveURL(new RegExp(`${FIXTURE_POST}$`));
     const title = page.getByRole("heading", {
         level: 1,

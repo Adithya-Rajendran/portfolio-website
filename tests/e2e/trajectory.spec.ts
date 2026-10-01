@@ -10,8 +10,9 @@ import { THEMES, storeTheme } from "./support/theme";
  * its rail and Play. The record fits the pinned stage on short laptop
  * screens and never moves while the flight is scrubbed (a long burn label
  * included); the card's one readout ticks; the scene names the worlds by
- * their organisation only, at holds and in the finale, never through a
- * transfer; a still flight opens on the latest chapter. Play gives way to
+ * their organisation only, in the wide finale's map alone (at a hold the
+ * card and the rail name the world); a still flight opens on the latest
+ * chapter. Play gives way to
  * any key, and a phone keeps each chapter's name and full entry (and the
  * plan's Contact under its openings). The 3D scene draws in both themes,
  * survives a lost WebGL context, and leaves one canvas and no errors
@@ -112,7 +113,7 @@ function labelsShown(page: Page) {
     );
 }
 
-test("the readout ticks under the title; labels name worlds at holds only", async ({
+test("the readout ticks under the title; the scene names the worlds in the finale's map only", async ({
     page,
 }) => {
     test.setTimeout(90_000);
@@ -123,9 +124,7 @@ test("the readout ticks under the title; labels name worlds at holds only", asyn
         "",
         { timeout: 20_000 },
     );
-    const holds = new Set<string>([copy.phases.coast, copy.phases.flyby]);
-    let transfers = 0;
-    let previous = "";
+    let samples = 0;
     for (let p = 0.1; p < 0.8; p += 0.02) {
         await seek(page, p);
         const stamp = page.locator(
@@ -136,19 +135,39 @@ test("the readout ticks under the title; labels name worlds at holds only", asyn
         const readout = (await stamp.textContent()) ?? "";
         // "May 2024 · Transfer": the date, then the phase.
         expect(readout, `P ${p.toFixed(2)}`).toMatch(/^(\w{3} )?\d{4} · \S/);
-        const phase = readout.split(" · ").slice(1).join(" · ");
-        const shown = await labelsShown(page);
-        // A world is named by its organisation alone: no dates.
-        expect(shown.join(" "), `P ${p.toFixed(2)}`).not.toMatch(/\d/);
-        // Well into a transfer (its first sample may still hold the
-        // fading label of the world left behind), no label shows.
-        if (!holds.has(phase) && !holds.has(previous)) {
-            transfers += 1;
-            expect(shown, `P ${p.toFixed(2)} (${readout})`).toEqual([]);
-        }
-        previous = phase;
+        // At a hold and through a transfer alike, no world is named: the
+        // card's organisation and the lit rail stop name it.
+        expect(
+            await labelsShown(page),
+            `P ${p.toFixed(2)} (${readout})`,
+        ).toEqual([]);
+        samples += 1;
     }
-    expect(transfers).toBeGreaterThan(0);
+    expect(samples).toBeGreaterThan(0);
+    // The finale's map names the worlds flown, by organisation alone.
+    await seek(page, 1);
+    await page.waitForTimeout(600);
+    const named = await labelsShown(page);
+    expect(named.length).toBeGreaterThan(1);
+    expect(named.join(" ")).not.toMatch(/\d/);
+});
+
+test("a phone's scene names no world, in flight or in the finale", async ({
+    page,
+}) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(PATH);
+    await expect(page.locator("[data-journey] [data-scene]")).toHaveAttribute(
+        "data-ready",
+        "",
+        { timeout: 20_000 },
+    );
+    for (const p of [0.3, 0.6, 1]) {
+        await seek(page, p);
+        await page.waitForTimeout(300);
+        expect(await labelsShown(page), `P ${p}`).toEqual([]);
+    }
 });
 
 test("a still flight opens on the latest chapter, the ask last on the rail", async ({

@@ -1,19 +1,16 @@
 /**
- * Designations printed next to titles. A mission's number is stored on the
- * project (`designation`), so adding a project never renumbers the others.
- * A Flight Log entry's number is derived: entries are numbered in the
- * order they were filed, so LOG 001 is the oldest published post.
+ * Numbers no page prints. A mission's number is stored on the project
+ * (`designation`), so adding a project never renumbers the others; it
+ * orders the projects (`missionOrder`), names them in the Studio's lists
+ * and identifies them in the structured data. A Flight Log entry's
+ * number is derived: entries are numbered in the order they were filed,
+ * so 1 is the oldest published post.
  * Keep this module free of imports: the Studio preview uses it.
  */
 
-/** 2 → "MSN-02" */
+/** 2 → "MSN-02": the Studio's lists and the structured data. */
 export function formatMissionDesignation(designation: number): string {
     return `MSN-${String(designation).padStart(2, "0")}`;
-}
-
-/** 3 → "LOG 003" */
-export function formatLogDesignation(number: number): string {
-    return `LOG ${String(number).padStart(3, "0")}`;
 }
 
 interface Filed {

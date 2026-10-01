@@ -430,9 +430,9 @@ export const minWorldPx = (stage: Pick<Stage, "wide">) => (stage.wide ? 6 : 5);
 export const labelMinX = (stage: Pick<Stage, "wide" | "W" | "record">) =>
     stage.wide ? Math.max(stage.W * 0.37, stage.record + 24) : 8;
 
-/** Whether the map names every world: on a wide stage whose map has the
- *  room (a phone's, or a narrow window's beside the record, names only
- *  the world held; the record's chapters name the rest). */
+/** Whether the map names the worlds: on a wide stage whose map has the
+ *  room. A phone's, or a narrow window's beside the record, names none:
+ *  the card and the rail name them. The scene names no world at a hold. */
 export const mapNamesAll = (stage: Pick<Stage, "wide" | "map">) =>
     stage.wide && stage.map.box.x1 - stage.map.box.x0 >= 600;
 

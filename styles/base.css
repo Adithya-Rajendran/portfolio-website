@@ -185,19 +185,13 @@ html[data-motion="reduced"] *::after {
         forced-color-adjust: none;
     }
     .btn,
-    .chip,
     .seg__box,
     .theme-switch,
     .nav-toggle {
         border-color: ButtonText;
     }
     /* Selected states use the system highlight colours. */
-    :is(
-        .chip[aria-pressed="true"],
-        .chip[aria-current],
-        .seg__input:checked + .seg__box,
-        .nav__link[aria-current]
-    ) {
+    :is(.seg__input:checked + .seg__box, .nav__link[aria-current]) {
         forced-color-adjust: none;
         background: SelectedItem;
         color: SelectedItemText;
@@ -206,7 +200,6 @@ html[data-motion="reduced"] *::after {
     .seg__input:checked + .seg__box :is(.seg__note, span) {
         color: SelectedItemText;
     }
-    :is(.chip[aria-pressed="true"], .chip[aria-current])::before,
     .seg__input:checked + .seg__box::before {
         background: SelectedItemText;
     }

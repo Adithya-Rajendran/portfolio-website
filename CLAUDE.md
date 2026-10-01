@@ -168,9 +168,17 @@ only live in comments or commit messages.
   no length of time from them. A role's long parenthetical ("Field
   Software Engineer I (promoted from …)") is split by `splitTitle`
   (lib/trajectory.ts): the title, then the words as a quiet note under
-  the organisation (`CvItem note`). Project rows carry no status or
-  stack: the dates, else "Ongoing" for an active project, then the type,
-  the lines and the links (every project is listed, so no "All
+  the organisation (`CvItem note`). A row's mono column is the dates and
+  the place only: no "● Current" ("– present" says it, and Open To is the
+  list's one now-mark), no "Talk" code (the section says it) and no
+  employment the title already says (`cvEntry`: "Internship" beside "…
+  Intern", by the word less "-ship"). A row's facts (the skills, the
+  links) sit flush in the body column with no "Skills" or "Links" key:
+  the mono names and the links' own words say what they are. A section's
+  first row draws no rule: the section head's hairline is the division
+  (`resume.module.css`). Project rows carry no status, stack or type:
+  the dates, else "Ongoing" for an active project, then the role (when
+  set), the lines and the links (every project is listed, so no "All
   projects"). A link to the site itself is never an external link
   (`cvProjects` with `siteUrlOf`/`sitePostSlug` in lib/cv.ts): one to a
   published post opens it in place (`/blog/<slug>`, no ↗ or new tab; its
@@ -180,11 +188,16 @@ only live in comments or commit messages.
   talks. Every credential is the same plain row (`cvCredentials`): the
   span ("Sep 2023 – Sep 2026"), or the issue date without an expiry,
   then the name, linked to its verification page when the record has
-  one, and the issuer; the current ones, then Prior certifications, on
-  screen and on paper, with no status ("Expired", "No expiry").
-  The print is the only paper artefact: two sheets on the named
-  page `cv` (`styles/print.css`), sheet 2 breaking before its control
-  line; the masthead keeps each address and opening whole (`Unbroken`),
+  one, and the issuer unless the name already says it (case-insensitive:
+  "AWS Certified …" prints none, MTA keeps "· Microsoft"); the current
+  ones, then Prior certifications, on screen and on paper, with no
+  status ("Expired", "No expiry"). The head has no date: the résumé's
+  upload date is the paper's Rev alone (on screen it read as the page's
+  own date). The print is the only paper artefact: two sheets on the
+  named page `cv` (`styles/print.css`), each opening with its control
+  line, "Curriculum vitae · Rev 2026-09-30 · Sheet 1 of 2" (no document
+  number; `Rev` is plain text, paper only), sheet 2 breaking before its
+  control line; the masthead keeps each address and opening whole (`Unbroken`),
   and the site's address stays on it. `[data-print="only"]` forces
   `display: block !important` from a
   layer, which no unlayered rule overrides, so a print-only part that
@@ -195,17 +208,19 @@ only live in comments or commit messages.
   header, where its rail and Play show. `components/trajectory/journey.tsx`
   is the record: each card is the title, one DM Mono readout under it (the
   chapter's dates as written; in flight the date, ticking, and the phase,
-  "May 2024 · Transfer"), "● Current" on the current chapter, the
+  "May 2024 · Transfer"), "● Current" on the current chapter in flight
+  (a still card's "– present" says it, so there CSS hides it), the
   organisation, a note and a line, and Full entry; no big date, kind
   label or readout on the plan's card, which states Open to with a quiet
   Contact, the flight's one ask (after the stage only "The full record",
   to the list). On a phone Full entry shares the readout's row;
   the plan's card has no readout, so its Contact stays under the
   openings. The scene (`flight-gl.ts`) names each world by its
-  organisation alone (DM Mono 13px caps), only at a hold and in the finale:
-  the world left behind fades as the ship leaves, the next is named as
-  its hold begins, and nothing is named through a transfer. Flight
-  Manual prints no city lights. A still flight (reduced motion, Pause
+  organisation alone (DM Mono 13px caps), only in the wide finale's map
+  and the still (`mapNamesAll`), coming in as the map settles: at a hold
+  the card's organisation and the lit rail stop name the world, so the
+  scene is unlabelled while held, and a phone's or a narrow window's map
+  names none. Flight Manual prints no city lights. A still flight (reduced motion, Pause
   motion) opens on the whole system with the latest chapter's card; the
   ask stays the rail's last stop. The figure line is "Not to scale ·
   Maps: NASA, Solar System Scope (CC BY 4.0)".
@@ -222,32 +237,41 @@ only live in comments or commit messages.
   tree (`/_tree`), which the byte report lists apart.
 - **The long read** (G1). `lib/prose.ts` `indexProse(body)` numbers a
   Portable Text body once: listings (the number only keeps their
-  accessible names apart, "Listing 3, Bash, install.sh", and prints
-  nowhere; one width per body, all
+  accessible names apart, "Listing 3, install.sh", and prints nowhere;
+  one width per body, all
   wide once any line passes `LISTING_MEASURE`, the 64 columns of 13px
-  mono the measure fits), plates and figures (Pl. I for photographs,
-  Fig. 1 for diagrams, plots and screenshots; a post's cover is the lead
-  plate) and footnotes (in reading order, written onto a copy of the
-  body's markDefs). The post page, the project essay and the RSS feed
+  mono the measure fits) and footnotes (in reading order, written onto a
+  copy of the body's markDefs), and sorts the images into photographs
+  and drawings (`figures`: a kind, no number; a post's cover is the lead
+  plate). No plate or figure is numbered, on the page or in the feed: no
+  text cites one, and each caption stands on its own (bring back "Fig. n"
+  only where a post cites it). The post page, the project essay and the RSS feed
   (`lib/feed.ts`) all read it, so they agree; render `index.body`, not
   `post.body`. An entry's rail is its contents only: the date, the read
   time and any revision are the head's, and no record box repeats them or
   counts its words. The text has one numbering per thing: no margin
   number beside an h2 and no number in the contents (the headings have
-  names), no line count or number on a listing (its bar is the file
-  name, then the language and Copy at the right, in the listing's mono;
-  the feed names it the same way, "Bash · install.sh"), and the LOG
-  number in the crumb only. A listing is one treatment (the surface fill; hairlines
+  names), no line count or number on a listing (its bar has one label,
+  the file name, else the language, then Copy at the right, in the
+  listing's mono; the accessible name and the feed's caption follow the
+  same rule), and no LOG number: the crumb is "Writing" alone and the
+  print masthead's kicker "Writing". The head is the date, the read time
+  and Updated, the title and the standfirst: no tags (the index's rows
+  carry them). The contents (the rail, the phone's box) show from two
+  sections; with one, the rail's column is space. A listing is one treatment (the surface fill; hairlines
   above and below on paper); a callout is the quotation's quiet note (the
   ink rule) led by its tone and title in bold ("Caution: Back up first",
   `calloutHeading`), with no colour, frame or band; inline code has no
   box. Prose h2 are `--step-2` (32px at most), the leading 1.52
-  (`--lh-long`), figures proportional. The entry closes once, in its
-  own column: End of entry, "Questions about this entry? Send a
-  message.", "Follow: RSS · LinkedIn" (`FollowLinks`, also /blog's head),
-  Copy link and All writing; then the pager by name only (no heading, no
-  LOG number, date or read time), the project it belongs to (the shared
-  `MissionRow`) and related entries. There is no Author block: the
+  (`--lh-long`), figures proportional. A revision is dated as the head
+  dates ("30 Jun 2026 · Correction", on the page and in the feed; no
+  `Rev` or triangle). The entry closes once, in its own column: End of
+  entry, then "Follow: RSS · LinkedIn" (`FollowLinks`, also /blog's
+  head) alone (no question, Copy link or All writing: the header's
+  Contact and Writing, and the crumb, are in reach); then the pager
+  ("Previous", "Next" and the title: no heading, LOG number, date or read
+  time), the project it belongs to (the shared `MissionRow`) and related
+  entries, without tags (they share this entry's). There is no Author block: the
   footer carries the name. The renderers are
   `components/blogs/portable-text-components.tsx` and
   `components/prose/`; a new `contentBody` type lands with its web and
@@ -273,13 +297,15 @@ only live in comments or commit messages.
   everywhere (the stage, a tile, the file's h1 and its share card), in
   sentence case: no project name is set in capitals. Its short name
   (`project.name`, "Homelab") is the owner's, never derived from the
-  slug, and is the crumb's and the pager's words (`Mission.label`, else
-  the title); the order
-  (`missionOrder`) is the featured slots, then the mission number, then
-  the list query's, and `missionTiers` splits it into the flagship, the
-  next ones with room of their own (two tiles on `/portfolio`, two rows on
-  home) and the rest, least prominent; the files' previous / next go by
-  mission number (the pager has no "All projects": the crumb leads back).
+  slug, and is the pager's words (`Mission.label`, else the title); the
+  order (`missionOrder`) is the featured slots, then the mission number,
+  then the list query's, and `missionTiers` splits it into the flagship,
+  the next ones with room of their own (two tiles on `/portfolio`, two
+  rows on home) and the rest, least prominent (quiet rows under the
+  tiles, with no "Also" label); the files' previous / next go in the same
+  order (`adjacentMissions` on `missionOrder`), labelled "Previous" and
+  "Next" (`pagerCopy`, shared with an entry's pager; no "All projects":
+  the crumb leads back).
   `/portfolio` is the head, then the tiers with their section names for
   screen readers only (no visible "Featured project" or "More projects"
   row, no "Experience & CV" link and no related pages); the stage's copy
@@ -288,9 +314,10 @@ only live in comments or commit messages.
   card (the stage, a tile) lists the first four stack items
   (`CARD_STACK`); every stack item is kept whole (`MissionStack`).
   `MissionLine` is ● Status · dates: no type (the title and summary say
-  what kind of project it is; the share card and the CV keep it). The mission number (MSN-02) is the project page's quiet
-  identifier, in its crumb only: `MissionLine`, the stage, the tiles, the
-  plates and the home page print none. Numbers appear only on a project
+  what kind of project it is; the share card keeps it). No page prints
+  the mission number (MSN-02): it orders the projects, names them in the
+  Studio's lists and identifies them in the structured data; a project's
+  crumb is "Projects" alone, as a post's is "Writing". Numbers appear only on a project
   page: its head's stats (`headStats`) unless it has a results table,
   which carries them with their notes; the index has no counts, register
   or card stats. A Sanity cover (`Mission.cover`, with its alt text and
@@ -302,7 +329,8 @@ only live in comments or commit messages.
   under the line (tiles, like rows, are one column below 960px), the
   stage's plate when the flagship
   has one, and the plate beside a project's head in either layout; the
-  stage takes the model's poster without one, and a post's project row
+  stage takes the model's poster without one (with no caption: the
+  model's title is not one the owner wrote), and a post's project row
   stays text only. On a card and a head the
   cover's caption is the plate's credit line (`Plate credit`,
   `.caption__src`: DM Mono 13px, ink-3, as the hero's credit); the stage
@@ -311,45 +339,52 @@ only live in comments or commit messages.
   where there is evidence (a brief that adds to the card, `briefAdds`;
   results, lessons or next steps, callouts, the model's poster, an essay
   in sections; a cover is no evidence of its own), otherwise the short
-  note (title, summary, the highlights that add to it via `noteLines`,
-  the facts and links). Either shows the essay
+  note (title, summary, the head's quiet links, the highlights that add
+  to it via `noteLines`, one of them a plain paragraph with no dash or
+  rules, the facts and links). Either shows the essay
   (Case study) only when it says more than the summary, highlights and
   brief (`essayShown`: a heading, a non-text block or eight content words
   they lack, counted by stem in `newWords`). On the stage "Read the
   write-up" (a quiet link) goes to the original entry, else to that
-  essay; in a file's head it is a quiet link to the original entry only
-  (nothing points down to the page's own essay). The head's facts
-  (`factRows`): the Stack row (left out when the page's words already name
-  every item, `stackSaid`: the Kubernetes note), Code (the repositories,
-  `MissionLink.code`), Role, the named parameters the stack and the card's
-  text do not name (`splitParameters`: "Feed: RSS" beside "…RSS feed"), and
-  the other links while there are two links or fewer in all (else they
-  are the References section). A link to the site itself (a post, or its
+  essay; in a project's head it is a quiet link to the original entry
+  only (nothing points down to the page's own essay), followed by the
+  repositories (`MissionLink.code`), underlined with ↗: the head's quiet
+  links, in either layout. The head's facts (`factRows`): the status
+  note, the Stack row (left out when the page's words already name every
+  item, `stackSaid`: the Kubernetes note), Role, the named parameters the
+  stack and the card's text do not name (`splitParameters`: "Feed: RSS"
+  beside "…RSS feed"), and the other links while there are two links or
+  fewer in all (else they are the References section). The brief is
+  "Overview" (its rows name problem, approach and outcome); lessons and
+  next steps both are "Retrospective", each under its subhead, and one
+  alone is titled by its name with no subhead. A link to the site itself (a post, or its
   own address) is never an external link. The results table is named by
-  its "Results" heading (`aria-labelledby`, no caption), and on phones each
-  note moves under its row. A mission's Flight Log entries are
+  its "Results" heading (`aria-labelledby`, no caption) and opens on its
+  first row: its column heads are for screen readers (`sr-only` text in
+  zero-height cells, so `th scope` stays); on phones each note moves
+  under its row. A mission's Flight Log entries are
   derived (`missionEntries`): the posts that reference it, and the posts
   its links, its essay and its model's callouts point at; the original
-  entry is the first linked one, else the oldest referencing one. Links to
-  the site's own posts are entries, never external links; Related writing
-  lists them flat, without tags. The 3D viewer's server part
+  entry is the first linked one, else the oldest referencing one, and
+  `related` is the rest (the head links the original). Links to the
+  site's own posts are entries, never external links; Related writing
+  lists them flat, without tags, and is absent when only the original
+  was tied to the project. The 3D viewer's server part
   (`components/viewer/viewer-figure.tsx`) is the model's poster as a
   plate, and its callouts are plain hairline rows under "Parts of the
   build" (the part and what it does: no balloon, number or link until the
   drawing lands; the write-up is linked once, in the head); PR 15 mounts
   the drawing in its `data-viewer` slot, and with it the model's
   description (`model.alt`), which describes the drawing, not the
-  photograph. A lone photograph outside the long read (the stage, a tile,
-  a project's head) carries no plate number: `Plate`'s `label` is
-  optional, and Pl. I… number the long read's plates only. Every
+  photograph. No photograph carries a plate number. Every
   photograph follows one plate rule (`.photo` in styles/components.css):
   a hard edge in a hairline, then the caption, with an even card mat
   inside the hairline in Flight Manual; nothing on the photograph (no
   number, feather, glow, crop marks or sepia) and no hover of its own.
-  The file
-  closes with one row, "Questions about this project?" at a section
-  head's size and Send a message (`Ask`), then the pager; the close is
-  the last section, so its own padding ends the page. The file reuses
+  The page ends in space before the pager (the close, "Questions about
+  this project?" and Send a message, is retired with `Ask`: the header's
+  Contact is in every viewport); the pager's section is the last, so its
+  own padding ends the page. The file reuses
   `PostReader`, so its in-page links resolve inside the visible file.
   The old `/portfolio` fragments (`#experience`, `#skills`,
   `#certifications`, `#engineering-writing`, `#contact`) are sent on to
@@ -432,26 +467,27 @@ only live in comments or commit messages.
   because a visited page, still mounted, can own the same fragment. No page carries the old design: there is no
   legacy stylesheet, token, class or icon library left, and
   `tests/e2e/crew.spec.ts` checks every static page for one.
-- **LOG numbers** are derived, never stored: `logNumbers` in
-  `lib/designations.ts` numbers published posts by `publishedAt`, oldest
-  first (LOG 001), ties by document id. Number the whole list, then filter
-  (`logEntries` in `lib/log-index.ts`), so a tag page keeps each entry's
-  number. A post back-dated before an existing one renumbers those after
-  it. The number is an entry's quiet identifier on its own page, in the
-  crumb only (and the print masthead, where the crumb does not print):
-  never the end mark, the pager, a plate or a share card; the
-  lists print the date instead, with "Updated …" only after a real
-  `revisedAt`.
-- **Writing's lists** (G8, `/blog`, the archive, a tag page). The index
-  is the head (the writing description and the follow line; no search
-  and no boxed buttons), the rows, then a quiet "Archive" link. A tag
-  shows only when it links: once it gathers two entries
+- **Entry numbers** are derived, never stored, and printed nowhere:
+  `logNumbers` in `lib/designations.ts` numbers published posts by
+  `publishedAt`, oldest first, ties by document id. Number the whole
+  list, then filter (`logEntries` in `lib/log-index.ts`), so a tag page
+  keeps each entry's order. The LOG number (and the project's MSN) is
+  retired from every page: no visitor cites it, and it had to be decoded.
+  `formatMissionDesignation` stays for the Studio's lists and the
+  structured data's identifier.
+- **Writing's lists** (G8, `/blog`, a tag page). The index is the head
+  (the writing description and the follow line; no search, boxed buttons
+  or tag chips) running straight into the rows, one list with even
+  spacing (no year heads: each row's date carries its year), which ends
+  on its closing rule. A row has one date: a revision's "Updated" is the
+  entry head's. `/blog/archive`, which repeated the list at a second
+  address, answers 308 to `/blog` (next.config.mjs). A tag shows only
+  when it links: once it gathers two entries
   (`linkedTags`/`TAG_LINK_MIN` in lib/tags.ts, `LogEntry.tagLinks`), on a
-  row, an entry's head, the chips and the sitemap, and never with a "#";
-  a one-entry tag's page still answers. A list groups by year only when
-  its entries span two (`LogIndex`). A tag page's h1 is the tag in words
-  (`tagLabel`: "GPU computing"), with no dek; the archive and tag heads
-  carry no actions (the header's Writing leads back).
+  row and in the sitemap, and never with a "#"; a one-entry tag's page
+  still answers. A tag page's h1 is the tag in words (`tagLabel`: "GPU
+  computing"), with no dek or actions (the header's Writing leads back),
+  and its rows leave that tag out.
 - **Heads and names** (contract §1, §6). Every section is named by its
   plain label, Projects · Writing · Experience · About · Contact
   (`lib/navigation.ts`), in the header, the menu sheet, the footer, page
@@ -879,27 +915,29 @@ deployment require an authenticated Sanity CLI session.
   only on the fixture build, which has no Resend credentials, a sent one
   being its refusal answered as sent), `log` (the first
   entry in the first viewport at 1280×800 and 390×844 in both themes,
-  entries newest first in the same order on the archive and tag pages, no
-  LOG numbers and no chart on the index, "Updated" only after a revision,
-  a tag (on a row or a chip, never with "#") only once it gathers two
-  entries, a year head only across two years, the head's follow line
-  with no search or boxes, the chips' counts, the archive linked after
-  the index, a tag page's h1 in words with no dek, 404 for an unknown or
-  malformed tag, the archive's search and
-  its no-JavaScript list, and the prefetch budget on `/blog`), `post`
+  entries newest first in the same order on the tag pages, no LOG
+  numbers and no chart on the index, one date on a row (no "Updated"),
+  a tag (on a row, never with "#") only once it gathers two entries, one
+  list with no year heads, the head's follow line with no search, boxes,
+  chips or archive link, `/blog/archive` answering 308 to `/blog`, a
+  row's tag opening its page, whose h1 is the tag in words with no dek
+  and whose rows leave it out, 404 for an unknown or malformed tag, and
+  the prefetch budget on `/blog`), `post`
   (every entry's first paragraph in the first viewport at 1280×800 and
   390×844 in both themes, a 60–75 character measure, code comments at
-  4.5:1 or more, the rail listing the sections with no record box or word
-  count or numbers, the LOG number once, above the title, and nowhere
-  else; no h2 margin number or listing line count or number, h2 at 32px
-  or less and a 1.52 leading; the close (End of entry, the follow line, no Author block or
-  pager heading, the pager by name), Copy on a listing, the
+  4.5:1 or more, the rail listing the sections (from two) with no record
+  box or word count or numbers, no LOG, plate or figure number, the
+  crumb "Writing" alone and no tags in the head; no h2 margin number or
+  listing line count or number, h2 at 32px or less and a 1.52 leading;
+  the close (End of entry and the follow line alone, no question, Copy
+  link, All writing, Author block or pager heading, the pager's
+  "Previous" and "Next" by name), Copy on a listing, the
   phone's contents box, the header's one hairline, print, BlogPosting and
   BreadcrumbList; on the
-  fixture build also the listings at one width with no line cut and the
-  highlighted line, footnotes and
-  margin notes, the caution callout as a quiet note and revisions, their
-  RSS output, and
+  fixture build also the listings at one width with no line cut, one
+  label on the bar and the highlighted line, footnotes and
+  margin notes, the caution callout as a quiet note and revisions dated
+  as the head dates, their RSS output, and
   in-page links landing in the visible entry after a client-side
   navigation), `resume` (Timeline · List in the first viewport, the
   head leaving Contact to the header, Timeline chosen and the stage in view where motion runs, no
@@ -910,33 +948,43 @@ deployment require an authenticated Sanity CLI session.
   focus; the list and the flight's still under reduced motion; an
   address naming a section opening the list; no project link opening the
   site's own address in a new tab, and every credential one plain row
-  with no status and no heading of its own; axe on the list in both
-  themes; without JavaScript the CV with no switch or flight), `print`
+  with no status and no heading of its own; the list saying each thing
+  once: no head date, status, kind code, type line, Skills or Links key,
+  employment the title says or issuer the name says, and no second rule
+  under a section head; a still card with no "● Current"; axe on the
+  list in both themes; without JavaScript the CV with no switch or
+  flight), `print`
   (the CV on two sheets on A4 and on Letter, without the chrome, the
   controls or the flight, whichever view was on screen; Prior
-  certifications and never "Expired"; each masthead address and opening
-  on one line), `trajectory` (on `/resume`: pinned, the rail and Play in
-  view, the record holding still while scrubbed, one readout ticking
-  under the title, the worlds named without dates and never mid-transfer,
-  a still flight opening on the latest chapter, a phone's cards in
+  certifications and never "Expired"; the control line with no document
+  number or triangle; each masthead address and opening on one line),
+  `trajectory` (on `/resume`: pinned, the rail and Play in view, the
+  record holding still while scrubbed, one readout ticking under the
+  title, no world named while the route is flown and the worlds named
+  without dates in the wide finale, none on a phone, a still flight
+  opening on the latest chapter, a phone's cards in
   reading order, and the scene drawing, surviving a lost context and a
   return), `missions` (every old `/portfolio` fragment sent on to its
   page, the index links every project with no counts, register, mission
   numbers or related pages, titles in sentence case and four stack items
   at most on a card, the flagship's title, its one link, in the first
-  viewport at 1440×900 with no filled button, each project page has its crumb (its number
-  never split), its title
-  as the heading, close and pager and no title block, revision, "Table 1",
-  jump to its own write-up or stand-in text, a stack item never split, a
-  thin project is a short note (the Kubernetes note without a Stack row),
+  viewport at 1440×900 with no filled button and no "Also" label, each
+  project page has its crumb ("Projects" alone, no number), its title as
+  the heading and the pager ("Previous", "Next", in the index's order)
+  and no close, title block, revision, "Table 1", jump to its own
+  write-up or stand-in text, a stack item never split, a thin project is
+  a short note (the Kubernetes note without a Stack row, one highlight a
+  paragraph),
   a cover leads its card, credited, opens the project and stays a
   thumbnail narrower than the stage's plate and, with the other, smaller,
   at 390, 768, 960, 1440 and 1920 (where the build has covers: the
-  fixtures have none), a project's crumb keeping its section, slash and
-  number on one line at 390,
+  fixtures have none),
   Read the write-up lands on the original entry; on the fixture build a
-  filled mission shows every module, its repository in the facts and its
-  callouts as plain rows, and a planned one none of them), `home` (the
+  filled mission shows every module (Overview, Results opening on their
+  first row with the column heads for screen readers, Retrospective with
+  its two subheads), its repository beside Read the write-up in the
+  head with no Code row, no Related writing that would only repeat the
+  original, its callouts as plain rows, and a planned one none of them), `home` (the
   hero's name, availability and its one action, CV, in the first
   viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;

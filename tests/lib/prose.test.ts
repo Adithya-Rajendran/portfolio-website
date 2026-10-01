@@ -8,7 +8,6 @@ import {
     indexProse,
     languageName,
     listingLabel,
-    romanNumeral,
     type NumberedFootnote,
 } from "@/lib/prose";
 
@@ -70,8 +69,11 @@ describe("listings", () => {
             code("b", "echo 2", { language: "bash", filename: "install.sh" }),
             code("c", "plain"),
         ]);
+        // One name: the file name, else the language.
+        expect(listings.a.name).toBe("Bash");
+        expect(listings.b.name).toBe("install.sh");
         expect(listings.a.label).toBe("Listing 1, Bash");
-        expect(listings.b.label).toBe("Listing 2, Bash, install.sh");
+        expect(listings.b.label).toBe("Listing 2, install.sh");
         expect(listings.c.label).toBe("Listing 3, Text");
         expect(new Set(Object.values(listings).map((l) => l.label)).size).toBe(
             3,
@@ -115,14 +117,12 @@ describe("listings", () => {
         expect(languageName("sh")).toBe("Shell");
         expect(languageName(undefined)).toBe("Text");
         expect(languageName("nginx")).toBe("nginx");
-        expect(
-            listingLabel({ number: 4, language: "Go", filename: null }),
-        ).toBe("Listing 4, Go");
+        expect(listingLabel(4, "Go")).toBe("Listing 4, Go");
     });
 });
 
 describe("plates and figures", () => {
-    it("numbers photographs as plates and drawings as figures, separately", () => {
+    it("sorts photographs from drawings, and numbers neither", () => {
         const { figures } = indexProse([
             image("p1"),
             image("d1", "diagram"),
@@ -134,26 +134,25 @@ describe("plates and figures", () => {
                 images: [image("g1"), image("g2", "plot")],
             } as Block,
         ]);
-        expect(figures.p1.label).toBe("Pl. I");
-        expect(figures.p2.label).toBe("Pl. II");
-        expect(figures.g1.label).toBe("Pl. III");
-        expect(figures.d1.label).toBe("Fig. 1");
-        expect(figures.s1.label).toBe("Fig. 2");
-        expect(figures.g2.label).toBe("Fig. 3");
+        expect(figures).toEqual({
+            p1: { kind: "plate" },
+            d1: { kind: "figure" },
+            p2: { kind: "plate" },
+            s1: { kind: "figure" },
+            g1: { kind: "plate" },
+            g2: { kind: "figure" },
+        });
     });
 
-    it("gives a post's cover, the lead plate, the first number of its kind", () => {
+    it("indexes a post's cover, the lead plate, by its kind", () => {
         const { figures } = indexProse([image("p1"), image("d1", "plot")], {
             lead: { asset: { _ref: "image-cover-10x10-png" } },
         });
-        expect(figures[LEAD_KEY].label).toBe("Pl. I");
-        expect(figures.p1.label).toBe("Pl. II");
-        expect(figures.d1.label).toBe("Fig. 1");
+        expect(figures[LEAD_KEY]).toEqual({ kind: "plate" });
         const drawn = indexProse([image("d1", "plot")], {
             lead: { asset: { _ref: "image-cover-10x10-png" }, kind: "diagram" },
         });
-        expect(drawn.figures[LEAD_KEY].label).toBe("Fig. 1");
-        expect(drawn.figures.d1.label).toBe("Fig. 2");
+        expect(drawn.figures[LEAD_KEY]).toEqual({ kind: "figure" });
         expect(
             indexProse([image("p1")], { lead: { asset: undefined } }).figures,
         ).not.toHaveProperty(LEAD_KEY);
@@ -186,26 +185,13 @@ describe("plates and figures", () => {
             image("y"),
         ]);
         expect(figures.x).toBeUndefined();
-        expect(figures.y.label).toBe("Pl. I");
+        expect(figures.y).toEqual({ kind: "plate" });
     });
 
     it("treats an image with no kind as a photograph", () => {
         expect(figureKind(undefined)).toBe("plate");
         expect(figureKind("photo")).toBe("plate");
         expect(figureKind("plot")).toBe("figure");
-    });
-
-    it("writes Roman numerals", () => {
-        expect([1, 4, 9, 14, 40, 90, 400, 1994].map(romanNumeral)).toEqual([
-            "I",
-            "IV",
-            "IX",
-            "XIV",
-            "XL",
-            "XC",
-            "CD",
-            "MCMXCIV",
-        ]);
     });
 });
 

@@ -748,9 +748,9 @@ describe("the finale", () => {
                 ...flown.planned!.path,
             ].map(at);
             const sun = at([0, 0, 0]);
-            // On a phone, or a narrow window, only the current world is
-            // labelled.
-            const shown = mapNamesAll(stage) ? [0, 1, 2, 3] : [flown.current];
+            // The map names every world where it has the room; a phone,
+            // or a narrow window, names none.
+            const shown = mapNamesAll(stage) ? [0, 1, 2, 3] : [];
             const boxes = shown.map((i) => {
                 const w = flown.worlds[i];
                 const q = at(w.at);

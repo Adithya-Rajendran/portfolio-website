@@ -314,9 +314,7 @@ test("a section links its page only while that page holds more than home shows",
                     new Set(
                         links
                             .map((link) => link.getAttribute("href") ?? "")
-                            .filter(
-                                (href) => !/^\/blog\/(archive|tags)/.test(href),
-                            ),
+                            .filter((href) => !/^\/blog\/tags/.test(href)),
                     ).size,
             );
     };

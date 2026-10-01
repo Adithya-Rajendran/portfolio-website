@@ -33,9 +33,9 @@ export const THEME_COLORS: Record<Theme, string> = {
 export const PREFERS_LIGHT = "(prefers-color-scheme:light)";
 export const PREFERS_REDUCED_MOTION = "(prefers-reduced-motion:reduce)";
 
-/** A post's path: with no theme chosen, it follows the OS. Not /blog, the
- *  archive or a tag page. */
-export const POST_PATH = /^\/blog\/(?!archive$)[^/]+$/;
+/** A post's path: with no theme chosen, it follows the OS. Not /blog or a
+ *  tag page. */
+export const POST_PATH = /^\/blog\/[^/]+$/;
 
 /**
  * The preference in force on a path: the stored choice, else the site's

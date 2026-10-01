@@ -1,8 +1,7 @@
 /*
- * The scannable writing index (G8) and its rows. Ported from the mockup's
- * site.css 4.10 (Post row) and 4.27 (Scannable log index), with the year
- * groups the plan adds: the year heads its group. Below 960px the tracks
- * fold into a stacked row.
+ * The scannable writing index (G8) and its rows, one list with even
+ * spacing. Ported from the mockup's site.css 4.10 (Post row) and 4.27
+ * (Scannable log index). Below 960px the tracks fold into a stacked row.
  */
 /* As wide as the mockup's index beside its preview plate (8 of 12
    columns at 1440px), so the read time and arrow stay by the standfirst,
@@ -11,19 +10,6 @@
     --log-cols: 7.5rem minmax(0, 1fr) 4.5rem 1.5rem;
     min-width: 0;
     max-width: var(--measure-index);
-}
-.group + .group {
-    margin-top: var(--s-7);
-}
-
-/* ---- The year over its group ------------------------------------------ */
-.year {
-    margin: 0;
-    padding-bottom: var(--s-2);
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.35 var(--font-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
 }
 
 /* ---- Rows --------------------------------------------------------------- */
@@ -51,7 +37,6 @@
     gap: 0.25rem 1rem;
 }
 .date,
-.updated,
 .read {
     color: var(--ink-2);
     font: 400 var(--label-size) / 1.4 var(--font-mono);
@@ -75,12 +60,6 @@
 }
 .tags {
     margin-top: var(--s-1);
-}
-/* The tag the page is filtered by: ink, underlined. */
-.match {
-    color: var(--ink-1);
-    text-decoration: underline;
-    text-underline-offset: 0.25em;
 }
 .arrow {
     display: none;
@@ -109,16 +88,6 @@
     .date {
         grid-column: 1;
         grid-row: 1;
-    }
-    /* Under the filing date, in the same column: "Updated" over its
-       date when the two do not fit on one line. */
-    .updated {
-        grid-column: 1;
-        grid-row: 2;
-        white-space: normal;
-    }
-    .updated time {
-        white-space: nowrap;
     }
     .read {
         grid-column: 3;

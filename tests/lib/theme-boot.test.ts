@@ -60,7 +60,6 @@ describe("the theme boot script", () => {
         for (const path of [
             "/",
             "/blog",
-            "/blog/archive",
             "/blog/tags/gpu",
             "/portfolio/homelab",
             "/resume",
@@ -168,7 +167,6 @@ describe("theme preferences", () => {
         expect(themePref("void", "/blog/my-homelab")).toBe("void");
         expect(themePref("manual", "/blog/my-homelab")).toBe("manual");
         expect(themePref(null, "/blog")).toBe("void");
-        expect(themePref(null, "/blog/archive")).toBe("void");
         expect(themePref(null, "/blog/tags/gpu")).toBe("void");
     });
 

@@ -7,16 +7,13 @@ import { urlForImage } from "@/lib/sanity-image";
  * A photograph as a plate outside the long read (contract §4, the
  * mockup's site.css 4.26): a mission's cover or its model's poster,
  * inside the grid (5 columns beside copy, at most 8 alone), on the one
- * plate rule (`.photo` in styles/components.css). A lone photograph
- * carries no plate number (Pl. I… number the long read's plates); given
- * one, it leads the caption. The caption is the owner's words, never an
- * explanation; the credit is its source line (`.caption__src`, the long
- * read's and the hero's mono voice). Returns nothing for an image without
- * an asset.
+ * plate rule (`.photo` in styles/components.css). No plate carries a
+ * number. The caption is the owner's words, never an explanation; the
+ * credit is its source line (`.caption__src`, the long read's and the
+ * hero's mono voice). Returns nothing for an image without an asset.
  */
 export default function Plate({
     image,
-    label,
     caption,
     credit,
     ratio,
@@ -28,8 +25,6 @@ export default function Plate({
     children,
 }: {
     image: SanityImageValue | null | undefined;
-    /** "Pl. I": only where a page numbers its plates. */
-    label?: string;
     caption?: React.ReactNode;
     /** Who made it ("Illustration"), under the caption. */
     credit?: string | null;
@@ -87,11 +82,8 @@ export default function Plate({
                 />
                 {children}
             </div>
-            {label || caption || credit ? (
+            {caption || credit ? (
                 <figcaption className="caption">
-                    {label ? (
-                        <span className="caption__num">{label}</span>
-                    ) : null}
                     {caption ? (
                         <span className="caption__body">
                             {caption}

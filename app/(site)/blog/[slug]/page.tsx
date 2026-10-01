@@ -79,18 +79,18 @@ function coverUrl(cover: Parameters<typeof urlForImage>[0] | null | undefined) {
 }
 
 /**
- * An entry (G1, the paper-grade post). One grid: the crumb row (Writing /
- * LOG nnn, the number's one place), the head (date · read time · Updated
- * · the tags that link, the title, the standfirst) in the reading column
- * with the first paragraph in the first screen, the sticky contents
- * beside it (a closed box above the text on phones), the text at a 68ch
- * measure with numbered listings, plates, quiet notes and margin notes,
- * then the end matter (notes, revisions, the end mark, a question, the
- * follow line, Copy link and All writing) and what comes after (previous
- * and next, the project, related entries). The footer carries the author.
- * No ambient motion. Everything is server-rendered; PostReader marks the
- * current section and keeps in-page links inside the visible entry, and
- * the Copy buttons need JavaScript. Ported from the mockup's post.html.
+ * An entry (G1, the paper-grade post). One grid: the crumb row (Writing),
+ * the head (date · read time · Updated, the title, the standfirst) in the
+ * reading column with the first paragraph in the first screen, the
+ * sticky contents beside it (a closed box above the text on phones) once
+ * there are two sections, the text at a 68ch measure with listings,
+ * plates, quiet notes and margin notes, then the end matter (notes,
+ * revisions, the end mark and the follow line) and what comes after
+ * (previous and next, the project, related entries). The
+ * footer carries the author. No ambient motion. Everything is
+ * server-rendered; PostReader marks the current section and keeps
+ * in-page links inside the visible entry, and the listings' Copy needs
+ * JavaScript. Ported from the mockup's post.html.
  */
 export default async function BlogPostPage({
     params,
@@ -110,11 +110,9 @@ export default async function BlogPostPage({
     ]);
 
     const entries = logEntries(posts);
-    const entry = entries.find((item) => item.slug === slug);
-    const designation = entry?.designation;
     const headings = extractHeadings(post);
     // The cover, when there is one, is the lead plate after the first
-    // paragraph (Pl. I).
+    // paragraph.
     const lead = post.cover && hasImageAsset(post.cover) ? post.cover : null;
     const index = indexProse(post.body, { lead });
     const leadInfo = lead ? index.figures[LEAD_KEY] : undefined;
@@ -163,7 +161,7 @@ export default async function BlogPostPage({
             />
 
             <div className={`shell ${styles.printHead}`} data-print="only">
-                <p className="label">{copy.printKicker(designation)}</p>
+                <p className="label">{copy.plain}</p>
                 <p className="data">
                     {[
                         url.replace(/^https?:\/\//, ""),
@@ -178,10 +176,7 @@ export default async function BlogPostPage({
             </div>
 
             <article className={`shell ${styles.layout}`}>
-                <PostCrumb
-                    className={styles.crumbRow}
-                    designation={designation}
-                />
+                <PostCrumb className={styles.crumbRow} />
                 <PostHead
                     className={styles.head}
                     title={post.title}
@@ -189,7 +184,6 @@ export default async function BlogPostPage({
                     publishedAt={post.publishedAt}
                     revisedAt={revised}
                     readMinutes={readMinutes}
-                    tags={entry?.tagLinks ?? []}
                 />
                 <PostRail className={styles.rail} headings={contents} />
                 <div className={styles.main}>
@@ -228,7 +222,6 @@ export default async function BlogPostPage({
                         className={styles.after}
                         notes={index.notes}
                         changelog={post.changelog ?? []}
-                        url={url}
                         linkedIn={linkedIn}
                     />
                 </div>

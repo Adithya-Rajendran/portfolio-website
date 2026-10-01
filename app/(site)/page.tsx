@@ -152,11 +152,7 @@ export default async function Home() {
                     <MissionStage
                         mission={flagship}
                         image={cover ?? poster}
-                        caption={
-                            cover
-                                ? cover.caption
-                                : detail?.model?.title?.trim() || null
-                        }
+                        caption={cover?.caption}
                     />
                     {rows.length ? (
                         <MissionRows className={styles.projects}>
@@ -184,12 +180,7 @@ export default async function Home() {
                         ) : undefined
                     }
                 >
-                    <LogIndex
-                        entries={latest}
-                        level={3}
-                        grouped={false}
-                        tags={false}
-                    />
+                    <LogIndex entries={latest} level={3} tags={false} />
                 </Act>
             ) : null}
 

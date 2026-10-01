@@ -64,10 +64,10 @@
     }
 }
 
-/* ---- Crumb row: Writing / LOG nnn ------------------------------------ */
+/* ---- Crumb row: Writing, then its hairline ---------------------------- */
 /* The row itself is the shared CrumbRow (.crumb-row in components.css). */
 
-/* ---- Head: date · read · Updated · tags → title → standfirst ---------- */
+/* ---- Head: date · read · Updated → title → standfirst ----------------- */
 .meta {
     display: flex;
     flex-wrap: wrap;
@@ -79,9 +79,6 @@
     font: 400 var(--label-size) / 1.4 var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
     white-space: nowrap;
-}
-.metaTags {
-    margin-left: var(--s-1);
 }
 .title {
     max-width: 21ch;
@@ -180,9 +177,8 @@
     }
 }
 
-/* ---- End matter: notes, revisions, the end mark, the actions -------- */
-/* End of entry, then one line each for the question and the follow links,
-   then Copy link and All writing. */
+/* ---- End matter: notes, revisions, the end mark, the follow line ----- */
+/* End of entry, then the follow links alone. */
 .after {
     max-width: 36rem;
     margin-top: var(--s-8);
@@ -216,19 +212,14 @@
 .revision + .revision {
     margin-top: var(--s-4);
 }
+/* "30 Jun 2026 · Correction": the post head's date format; a
+   correction's in ink. */
 .revisionHead {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--s-2) var(--s-3);
-}
-.revisionKind {
     color: var(--ink-2);
-    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
 }
-.revision[data-kind="correction"] .revisionKind {
+.revision[data-kind="correction"] .revisionHead {
     color: var(--ink-1);
 }
 .revisionNote {
@@ -247,17 +238,8 @@
     height: var(--rule-hair);
     background: var(--rule-1);
 }
-.actions {
-    display: grid;
-    gap: var(--s-4);
+.follow {
     margin-top: var(--s-5);
-}
-.actionsNote {
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.5 var(--font-text);
-}
-.actionsRow {
-    --cluster: var(--s-3) var(--s-5);
 }
 
 /* ---- After this entry: aligned to the reading column --------------- */

@@ -64,12 +64,10 @@ test("a first visit is Void, even when the OS prefers light", async ({
 async function openFirstPost(page: Page) {
     await page
         .getByRole("main")
-        .locator(
-            'a[href^="/blog/"]:not([href^="/blog/archive"]):not([href^="/blog/tags/"])',
-        )
+        .locator('a[href^="/blog/"]:not([href^="/blog/tags/"])')
         .first()
         .click();
-    await expect(page).toHaveURL(/\/blog\/(?!archive$)[^/]+$/);
+    await expect(page).toHaveURL(/\/blog\/(?!tags\/)[^/]+$/);
 }
 
 test("a post follows the OS until a theme is chosen, and the rest of the site stays Void", async ({

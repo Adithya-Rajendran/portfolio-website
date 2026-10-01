@@ -139,8 +139,8 @@
     .prose > .listing--wide {
         max-width: min(100%, 60rem);
     }
-    /* The file name, then the language and Copy at the right, in the
-       listing's own mono. */
+    /* One label (the file name, else the language), then Copy at the
+       right, in the listing's own mono. */
     .listing__bar {
         display: flex;
         flex-wrap: wrap;
@@ -149,18 +149,16 @@
         min-height: 44px;
         padding: 0 var(--s-2) 0 var(--s-5);
     }
-    .listing__lang {
-        margin-left: auto;
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1 var(--font-mono);
-    }
-    .listing__file {
+    .listing__name {
         min-width: 0;
         overflow: hidden;
         color: var(--ink-2);
         font: 400 var(--label-size) / 1 var(--font-mono);
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+    .listing__bar > .copy {
+        margin-left: auto;
     }
     .listing .copy__btn {
         --btn-h: 40px;

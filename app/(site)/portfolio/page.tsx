@@ -110,11 +110,7 @@ export default async function Portfolio() {
                         <MissionStage
                             mission={flagship}
                             image={cover ?? poster}
-                            caption={
-                                cover
-                                    ? cover.caption
-                                    : detail?.model?.title?.trim() || null
-                            }
+                            caption={cover?.caption}
                             writeUp={writeUpHref(
                                 flagship,
                                 detail,
@@ -149,7 +145,6 @@ export default async function Portfolio() {
                         ) : null}
                         {rest.length ? (
                             <div className={styles.rest}>
-                                <p className={styles.restLabel}>{copy.also}</p>
                                 <MissionRows quiet>
                                     {rest.map((item) => (
                                         <MissionRow

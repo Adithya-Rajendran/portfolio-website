@@ -119,9 +119,9 @@ export const contactCopy = {
 } as const;
 
 /**
- * Writing (the Flight Log, G8): the index, the archive and the tag pages.
- * The intro is the owner's own writing description from the profile;
- * everything here is UI copy.
+ * Writing (the Flight Log, G8): the index and the tag pages. The intro is
+ * the owner's own writing description from the profile; everything here
+ * is UI copy.
  */
 export const logCopy = {
     themed: "Flight Log",
@@ -129,27 +129,11 @@ export const logCopy = {
     rss: "RSS",
     /** "Follow: RSS · LinkedIn", in /blog's head and after an entry. */
     follow: "Follow:",
-    tags: "Tags",
-    all: "All",
     /** "5 min read", the words after the number for assistive tech. */
     read: (minutes: number) => `${minutes} min`,
     readSuffix: " read",
-    updated: "Updated",
     tagList: "Tags",
     empty: "No entries yet.",
-    archive: {
-        /** The page's name, and the quiet link at the end of /blog. */
-        title: "Archive",
-        searchLabel: "Search the writing",
-        searchPlaceholder: "A title, a word or a tag",
-        /** "2 of 3 entries" while a search is on. */
-        count: (shown: number, entries: string) =>
-            `${shown.toLocaleString("en-US")} of ${entries}`,
-        noMatch: "No entries match.",
-        noMatchNote: (query: string) =>
-            `Nothing in the log matches “${query}”. Try another word or tag.`,
-        clear: "Clear search",
-    },
     tag: {
         /** The metadata description: "Articles tagged GPU computing." */
         description: (label: string) => `Articles tagged ${label}.`,
@@ -166,7 +150,6 @@ export const postCopy = {
     /** "7 min read". */
     read: (minutes: number) => `${minutes} min read`,
     updated: "Updated",
-    tags: "Tags",
     contents: "Contents",
     /** The contents' landmark name (plan §4.5). */
     contentsLabel: "On this page",
@@ -183,31 +166,16 @@ export const postCopy = {
         ref: (number: number) => `Note ${number}`,
         back: (number: number) => `Back to note ${number} in the text`,
     },
-    revisions: {
-        title: "Revisions",
-        /** "△ Rev 2026-07-02 · Correction". */
-        rev: "Rev",
-    },
-    /** The end mark: the LOG number is the crumb's alone. */
+    /** Each dated "30 Jun 2026 · Correction". */
+    revisions: "Revisions",
     end: "End of entry",
-    question: "Questions about this entry?",
-    reply: "Send a message",
-    copyLink: "Copy link",
-    /** Starts with the visible label, for voice control (WCAG 2.5.3). */
-    copyLinkLabel: "Copy link to this entry",
-    linkCopied: "Link copied",
-    allEntries: "All writing",
     after: "After this entry",
     projects: (count: number) =>
         count === 1 ? "Related project" : "Related projects",
     /** The pager's landmark name (it has no visible heading). */
     pager: "Previous and next",
-    previous: "Previous entry",
-    next: "Next entry",
     related: "Related entries",
-    /** The print masthead: "Writing · LOG 003". */
-    printKicker: (designation?: string) =>
-        designation ? `Writing · ${designation}` : "Writing",
+    /** The print masthead's kicker is the section's plain name. */
     printFiled: "Filed",
 } as const;
 
@@ -245,14 +213,11 @@ export const cvCopy = {
     },
     allWriting: "All writing",
     skills: "Skills",
-    skillsLabel: "Skills",
     certifications: "Certifications",
     /** Expired credentials, as the résumé names them. */
     priorCertifications: "Prior certifications",
-    links: "Links",
-    current: "Current",
-    /** The printed document's control marks (G3). */
-    document: "AR-CV-001",
+    /** The printed document's control line (G3): its title, then the
+     *  revision and the sheet. */
     documentTitle: "Curriculum vitae",
     sheet: (sheet: number, of: number) => `Sheet ${sheet} of ${of}`,
 } as const;
@@ -269,23 +234,21 @@ export const missionsCopy = {
     /** The flagship's section, named for screen readers. */
     flagship: "Featured project",
     more: "More projects",
-    /** The least prominent projects, under the tiles. */
-    also: "Also",
     readWriteUp: "Read the write-up",
     stack: "Stack",
     /** A project page's share-card alt. */
     file: "Project",
-    /** The facts under a project's head: the repositories are Code, the
-     *  other links (two in all, or a note's) Links. */
+    /** The facts under a project's head: the links other than the
+     *  repositories (two in all, or a note's) are Links. */
     facts: {
         status: "Status",
         stack: "Stack",
-        code: "Code",
         role: "Role",
         links: "Links",
     },
     callouts: "Parts of the build",
-    briefTitle: "Problem, approach and outcome",
+    /** The brief's title: its rows name problem, approach and outcome. */
+    overview: "Overview",
     brief: {
         problem: "Problem",
         approach: "Approach",
@@ -295,18 +258,24 @@ export const missionsCopy = {
     contents: "Contents",
     contentsLabel: "On this page",
     results: "Results",
+    /** The results' column heads, for screen readers. */
     resultColumns: { metric: "Metric", value: "Value", note: "Note" },
-    debrief: "Lessons and next steps",
+    /** Lessons and next steps both, each under its subhead; one alone is
+     *  titled by its own name. */
+    retrospective: "Retrospective",
     lessons: "Lessons",
     nextSteps: "Next steps",
     /** The links past the facts' two, as a section. */
     references: "References",
     related: "Related writing",
-    question: "Questions about this project?",
-    message: "Send a message",
     pagerLabel: "More projects",
-    previousFile: "Previous project",
-    nextFile: "Next project",
+} as const;
+
+/** The pager's sides, for a project and an entry alike: the landmark
+ *  names what the titles are. */
+export const pagerCopy = {
+    previous: "Previous",
+    next: "Next",
 } as const;
 
 /**

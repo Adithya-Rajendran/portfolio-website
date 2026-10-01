@@ -238,19 +238,19 @@ describe("missionOrder and adjacentMissions", () => {
         expect(order.map((item) => item.slug)).toEqual(["a", "b"]);
     });
 
-    it("pages through the files by mission number", () => {
-        const missions = [
-            { slug: "b", number: 2 },
-            { slug: "a", number: 1 },
-            { slug: "c", number: 3 },
-        ];
+    it("pages through the files in the index's order", () => {
+        const missions = missionOrder([
+            { slug: "b", designation: 2 },
+            { slug: "a", designation: 1, featured: 1 },
+            { slug: "c", designation: 3 },
+        ]);
         expect(adjacentMissions(missions, "a")).toEqual({
             previous: null,
-            next: { slug: "b", number: 2 },
+            next: { slug: "b", designation: 2 },
         });
         expect(adjacentMissions(missions, "b")).toEqual({
-            previous: { slug: "a", number: 1 },
-            next: { slug: "c", number: 3 },
+            previous: { slug: "a", designation: 1, featured: 1 },
+            next: { slug: "c", designation: 3 },
         });
         expect(adjacentMissions(missions, "zzz")).toEqual({
             previous: null,
@@ -297,7 +297,7 @@ describe("missionTiers", () => {
 });
 
 describe("missionEntries", () => {
-    it("finds the original entry and every related one", () => {
+    it("finds the original entry and the other related ones", () => {
         const body = [
             {
                 _type: "block",
@@ -331,11 +331,8 @@ describe("missionEntries", () => {
             siteUrl: SITE,
         });
         expect(original?.slug).toBe("my-homelab");
-        expect(related.map((entry) => entry.designation)).toEqual([
-            "LOG 003",
-            "LOG 002",
-            "LOG 001",
-        ]);
+        // The head links the original: Related writing lists the rest.
+        expect(related.map((entry) => entry.slug)).toEqual(["gui", "gpu"]);
     });
 
     it("falls back to the oldest post that references the mission", () => {
@@ -349,10 +346,7 @@ describe("missionEntries", () => {
             siteUrl: SITE,
         });
         expect(original?.slug).toBe("gpu");
-        expect(related.map((entry) => entry.slug)).toEqual([
-            "my-homelab",
-            "gpu",
-        ]);
+        expect(related.map((entry) => entry.slug)).toEqual(["my-homelab"]);
     });
 
     it("has nothing when nothing is linked", () => {

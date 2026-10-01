@@ -11,7 +11,7 @@ import { LinkArrow } from "@/components/ui/marks";
 
 export interface PagerLink {
     href: string;
-    /** "Previous file · MSN-01". */
+    /** "Previous" or "Next": the landmark names what the titles are. */
     label: string;
     title: string;
     meta?: string | null;

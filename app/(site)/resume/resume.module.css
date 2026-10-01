@@ -36,9 +36,14 @@
     padding-bottom: var(--space-section);
 }
 /* The next section's head parts each list from the one before, so lists
-   drop their closing rule. */
+   drop their closing rule; and the section head's hairline is the
+   division above, so a section's first row draws no second rule under
+   it. */
 .cv :global(:is(.cv-list, .specs)) {
     border-bottom: 0;
+}
+.cv :global(.g-main) > :first-child > :first-child {
+    border-top: 0;
 }
 .after {
     margin-top: var(--s-5);
@@ -161,10 +166,6 @@
     .sheetHead :global(.rev) {
         font: inherit;
         color: var(--ink-1);
-    }
-    .sheetHead :global(.rev__tri) {
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
     }
     .sheetTwo {
         display: block !important;

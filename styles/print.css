@@ -110,22 +110,6 @@
         [data-page="resume"] .cv-item__aside > * {
             display: block;
         }
-        [data-page="resume"] .cv-item__code {
-            font-size: 6pt;
-        }
-        [data-page="resume"] .cv-item__status {
-            margin-top: 0.8mm;
-        }
-        [data-page="resume"] .status {
-            gap: 1.2mm;
-            font-size: 6.4pt;
-        }
-        [data-page="resume"] .status::before {
-            width: 1.5mm;
-            height: 1.5mm;
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
-        }
         [data-page="resume"] .cv-item__title {
             font: 500 9.6pt / 1.25 var(--font-display);
             letter-spacing: 0;
@@ -173,13 +157,6 @@
             margin-top: 0.6mm;
             font: 400 7.6pt / 1.38 var(--font-display);
         }
-        [data-page="resume"] .cv-item__key {
-            margin-right: 1.6mm;
-            padding: 0;
-            color: var(--ink-1);
-            font: 400 6.4pt / 1 var(--font-label);
-            letter-spacing: var(--track-label);
-        }
         [data-page="resume"] .cv-item__skills {
             font-size: 7.2pt;
         }
@@ -205,8 +182,8 @@
             color: var(--ink-1);
             font-size: 7pt;
         }
-        /* Sheet 2 runs compact: what follows a title (a project's type, a
-           talk's venue, a credential's issuer) shares its line. A
+        /* Sheet 2 runs compact: what follows a title (a project's role, a
+           talk's venue) shares its line. A
            project's stack and links keep a line each, so no separator is
            left hanging where the stack wraps. */
         [data-page="resume"]

@@ -468,7 +468,7 @@ describe("renderFeedXml — the long-read types (PR 10)", () => {
         );
     });
 
-    it("names a listing by its language and file, as its bar does, with no number", () => {
+    it("names a listing by its file, else its language, as its bar does, with no number", () => {
         const html = itemHtml(
             renderFeedXml([
                 postOf({
@@ -490,7 +490,7 @@ describe("renderFeedXml — the long-read types (PR 10)", () => {
             ]),
         );
         expect(html).toContain(
-            '<figure><figcaption>Bash · <code>install.sh</code></figcaption><pre><code class="language-bash">echo one</code></pre></figure>',
+            '<figure><figcaption>install.sh</figcaption><pre><code class="language-bash">echo one</code></pre></figure>',
         );
         expect(html).toContain(
             "<figure><figcaption>Text</figcaption><pre><code>plain text</code></pre></figure>",
@@ -498,7 +498,7 @@ describe("renderFeedXml — the long-read types (PR 10)", () => {
         expect(html).not.toContain("Listing");
     });
 
-    it("numbers plates and figures and prints the credit", () => {
+    it("prints a plate's caption and credit, and numbers no plate or figure", () => {
         const html = itemHtml(
             renderFeedXml([
                 postOf({
@@ -529,14 +529,13 @@ describe("renderFeedXml — the long-read types (PR 10)", () => {
             ]),
         );
         expect(html).toContain(
-            "<figcaption><strong>Pl. I</strong> The rack <small>Photo: the author</small></figcaption>",
+            "<figcaption>The rack <small>Photo: the author</small></figcaption>",
         );
-        expect(html).toContain(
-            "<figcaption><strong>Fig. 1</strong></figcaption>",
-        );
+        expect(html).toContain('alt="A diagram"/></figure>');
+        expect(html).not.toMatch(/Pl\. I|Fig\. 1/);
     });
 
-    it("lists the post's revisions, oldest first", () => {
+    it("lists the post's revisions, oldest first, dated as the page dates them", () => {
         const html = itemHtml(
             renderFeedXml([
                 postOf({
@@ -558,7 +557,7 @@ describe("renderFeedXml — the long-read types (PR 10)", () => {
             ]),
         );
         expect(html).toContain(
-            "<section><h2>Revisions</h2><ul><li><strong>2026-02-01 · Correction.</strong> Fixed a &lt;wrong&gt; path.</li><li><strong>2026-03-01 · Update.</strong> Added a section.</li></ul></section>",
+            "<section><h2>Revisions</h2><ul><li><strong>1 Feb 2026 · Correction.</strong> Fixed a &lt;wrong&gt; path.</li><li><strong>1 Mar 2026 · Update.</strong> Added a section.</li></ul></section>",
         );
     });
 

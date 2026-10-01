@@ -53,11 +53,6 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         tags: [profile, post],
     },
     {
-        path: "/blog/archive",
-        file: "app/(site)/blog/archive/page.tsx",
-        tags: [profile, post],
-    },
-    {
         path: "/portfolio",
         file: "app/(site)/portfolio/page.tsx",
         tags: [profile, project, post],
@@ -89,11 +84,6 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
     {
         path: "/blog/opengraph-image-14vkmf",
         file: "app/(site)/blog/opengraph-image.tsx",
-        tags: [profile, post],
-    },
-    {
-        path: "/blog/archive/opengraph-image-dfhyke",
-        file: "app/(site)/blog/archive/opengraph-image.tsx",
         tags: [profile, post],
     },
     {

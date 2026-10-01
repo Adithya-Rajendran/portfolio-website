@@ -31,7 +31,7 @@ export interface MissionLink {
     id: string;
     label: string;
     url: string;
-    /** A repository: the head's Code row carries it. */
+    /** A repository: the head's quiet links carry it. */
     code: boolean;
     /** "github.com/…". */
     host: string;
@@ -48,12 +48,12 @@ export interface Mission {
     slug: string;
     href: string;
     number: number;
-    /** "MSN-02". */
+    /** "MSN-02": the structured data's identifier, never on screen. */
     designation: string;
     /** The owner's short name ("Homelab"); null when the project has
      *  none. The title is always the heading. */
     name: string | null;
-    /** The name, else the title: the crumb's and the pager's words. */
+    /** The name, else the title: the pager's words. */
     label: string;
     title: string;
     summary: string;
@@ -513,18 +513,12 @@ export function missionTiers<T extends { featured?: number | null }>(
     };
 }
 
-/** By mission number: the files' previous / next. */
-export function byDesignation<T extends { number: number }>(
-    missions: readonly T[],
-): T[] {
-    return [...missions].sort((a, b) => a.number - b.number);
-}
-
-export function adjacentMissions<T extends { slug: string; number: number }>(
-    missions: readonly T[],
+/** A file's previous / next, in the order given: the index's
+ *  (`missionOrder`), so the pager reads as /portfolio does. */
+export function adjacentMissions<T extends { slug: string }>(
+    ordered: readonly T[],
     slug: string,
 ): { previous: T | null; next: T | null } {
-    const ordered = byDesignation(missions);
     const index = ordered.findIndex((mission) => mission.slug === slug);
     if (index < 0) return { previous: null, next: null };
     return {
@@ -557,7 +551,8 @@ export function bodyLinks(body: ContentBody | null | undefined): string[] {
 export interface MissionEntries {
     /** The entry the mission's write-up comes from, when there is one. */
     original: LogEntry | null;
-    /** Every entry tied to the mission, newest first. */
+    /** The other entries tied to the mission, newest first: the head's
+     *  Read the write-up links the original. */
     related: LogEntry[];
 }
 
@@ -565,8 +560,8 @@ export interface MissionEntries {
  * The Flight Log entries that belong to a mission: the posts that reference
  * it, the posts its links and its essay point at, and the posts its model's
  * callouts anchor in. The original entry is the first link to one of its
- * posts, else the oldest post that references it. Unpublished posts are
- * never in `entries`, so they are left out.
+ * posts, else the oldest post that references it; `related` is the rest.
+ * Unpublished posts are never in `entries`, so they are left out.
  */
 export function missionEntries({
     entries,
@@ -613,7 +608,9 @@ export function missionEntries({
         ...new Set([...linked, ...citing, ...inEssay, ...anchored]),
     ]
         .map((slug) => bySlug.get(slug))
-        .filter((entry): entry is LogEntry => Boolean(entry))
+        .filter(
+            (entry): entry is LogEntry => Boolean(entry) && entry !== original,
+        )
         .sort((a, b) => b.number - a.number);
     return { original, related };
 }

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
     collectTags,
     filterPostsByTag,
-    groupPostsByYear,
     linkedTags,
     tagLabel,
 } from "@/lib/tags";
@@ -85,49 +84,5 @@ describe("filterPostsByTag", () => {
         expect(filterPostsByTag(posts, "kubernetes")).toEqual([
             { tags: ["kubernetes"] },
         ]);
-    });
-});
-
-describe("groupPostsByYear", () => {
-    it("groups by year, newest year first, preserving input order within a year", () => {
-        const groups = groupPostsByYear([
-            { publishedAt: "2026-05-01T12:00:00.000Z" },
-            { publishedAt: "2026-01-15T12:00:00.000Z" },
-            { publishedAt: "2025-11-30T12:00:00.000Z" },
-        ]);
-
-        expect(groups).toEqual([
-            {
-                year: "2026",
-                posts: [
-                    { publishedAt: "2026-05-01T12:00:00.000Z" },
-                    { publishedAt: "2026-01-15T12:00:00.000Z" },
-                ],
-            },
-            {
-                year: "2025",
-                posts: [{ publishedAt: "2025-11-30T12:00:00.000Z" }],
-            },
-        ]);
-    });
-
-    it("keeps posts with identical dates", () => {
-        const groups = groupPostsByYear([
-            { publishedAt: "2026-05-01T12:00:00.000Z" },
-            { publishedAt: "2026-05-01T12:00:00.000Z" },
-        ]);
-
-        expect(groups[0].posts).toHaveLength(2);
-    });
-
-    it("collects malformed or missing dates into a trailing Undated group", () => {
-        const groups = groupPostsByYear([
-            { publishedAt: "not-a-date" },
-            { publishedAt: "2026-05-01T12:00:00.000Z" },
-            { publishedAt: undefined },
-        ]);
-
-        expect(groups.map((g) => g.year)).toEqual(["2026", "Undated"]);
-        expect(groups[1].posts).toHaveLength(2);
     });
 });

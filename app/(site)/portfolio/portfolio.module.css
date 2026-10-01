@@ -8,14 +8,8 @@
 .first {
     padding-top: var(--space-block);
 }
-/* The least prominent projects: quiet rows under the tiles. */
+/* The least prominent projects: quiet rows under the tiles, set apart by
+   space and their hairline alone. */
 .rest {
     margin-top: var(--space-block);
-}
-.restLabel {
-    margin-bottom: var(--s-3);
-    color: var(--ink-2);
-    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
 }

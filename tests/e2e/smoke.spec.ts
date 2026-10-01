@@ -209,12 +209,12 @@ test.describe("routes and headers", () => {
     test("every writing page names the feed", async ({ request }, testInfo) => {
         // A page's alternates replace the layout's whole, so each route
         // names the feed itself (feedAlternates in lib/feed.ts): the
-        // index, the archive, and every post and tag page listed.
+        // index, and every post and tag page listed.
         const listed = (await contentPages(request, testInfo)).filter((path) =>
             path.startsWith("/blog/"),
         );
         expect(listed.some(isPostPage), "posts in the sitemap").toBe(true);
-        for (const path of ["/", "/blog", "/blog/archive", ...listed]) {
+        for (const path of ["/", "/blog", ...listed]) {
             const html = await (await request.get(path)).text();
             const links = html.match(/<link [^>]*rel="alternate"[^>]*>/g) ?? [];
             expect(
@@ -260,7 +260,7 @@ test.describe("routes and headers", () => {
         const values = (pattern: RegExp) =>
             listed.flatMap((path) => pattern.exec(path)?.slice(1) ?? []);
         const lists: WarmLists = {
-            post: values(/^\/blog\/(?!tags\/|archive$)([^/]+)$/),
+            post: values(/^\/blog\/(?!tags\/)([^/]+)$/),
             tag: values(/^\/blog\/tags\/([^/]+)$/),
             project: values(/^\/portfolio\/([^/]+)$/),
         };
@@ -317,12 +317,10 @@ test.describe("routes and headers", () => {
             ["/comms", "/contact"],
             // The flight is /resume's Timeline view.
             ["/resume/trajectory", "/resume"],
+            // The archive repeated /blog's list.
+            ["/blog/archive", "/blog"],
             // Share images from before the (site) route group.
             ["/about/opengraph-image", "/about/opengraph-image-1ycygp"],
-            [
-                "/blog/archive/opengraph-image",
-                "/blog/archive/opengraph-image-dfhyke",
-            ],
             [
                 "/blog/e2e-legacy-post/opengraph-image",
                 "/blog/e2e-legacy-post/opengraph-image-fx5gi7",

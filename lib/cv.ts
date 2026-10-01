@@ -1,8 +1,6 @@
-import { formatMissionDesignation } from "@/lib/designations";
 import { formatTimelineDate } from "@/lib/profile-content";
-import { EMPLOYMENT_TYPES, TALK_KINDS } from "@/lib/profile-fields";
+import { EMPLOYMENT_TYPES } from "@/lib/profile-fields";
 import { formatProjectYears } from "@/lib/project-content";
-import { PROJECT_TYPES } from "@/lib/project-fields";
 import type {
     CredentialListItem,
     ProjectListItem,
@@ -33,7 +31,8 @@ export interface CvEntry {
     orgLabel: string;
     orgUrl: string | null;
     location: string | null;
-    /** "Internship", "Part-time"…; never "Degree". */
+    /** "Part-time", "Contract"…; never "Degree", and never what the
+     *  title already says ("Internship" beside "… Intern"). */
     employment: string | null;
     /** "May 2024 – Jul 2026", "Aug 2026 – present", "Jun 2023". */
     dates: string | null;
@@ -93,6 +92,13 @@ export function cvEntry(entry: TimelineEntry): CvEntry {
             ? (EMPLOYMENT_TYPES.find((type) => type.value === entry.employment)
                   ?.title ?? null)
             : null;
+    // "Internship" is said by "… Intern": the word, less "-ship", is a
+    // word of the title.
+    const said =
+        employment !== null &&
+        new RegExp(`\\b${employment.replace(/ship$/i, "")}\\b`, "i").test(
+            entry.title,
+        );
 
     return {
         id: entry._key,
@@ -103,7 +109,7 @@ export function cvEntry(entry: TimelineEntry): CvEntry {
         orgLabel: entry.orgShort?.trim() || entry.organization,
         orgUrl: entry.orgUrl ?? null,
         location: entry.location?.trim() || null,
-        employment,
+        employment: said ? null : employment,
         dates,
         current,
         expected:
@@ -218,14 +224,10 @@ function projectLinks(
 export interface CvProject {
     id: string;
     slug: string;
-    /** "MSN-02". */
-    designation: string;
     title: string;
     /** "c. 2024–2025"; "Ongoing" for an active project without dates;
      *  otherwise null. */
     years: string | null;
-    /** "Infrastructure · Software". */
-    types: string | null;
     role: string | null;
     /** The highlights, or the summary when there are none. */
     lines: string[];
@@ -248,23 +250,13 @@ export function cvProjects(
             const highlights = (project.highlights ?? []).filter((line) =>
                 line.trim(),
             );
-            const types = (project.types ?? [])
-                .map(
-                    (type) =>
-                        PROJECT_TYPES.find((option) => option.value === type)
-                            ?.title,
-                )
-                .filter(Boolean)
-                .join(" · ");
             return {
                 id: project._id,
                 slug: project.slug,
-                designation: formatMissionDesignation(project.designation),
                 title: project.title,
                 years:
                     formatProjectYears(project) ??
                     (project.status === "active" ? "Ongoing" : null),
-                types: types || null,
                 role: project.myRole?.trim() || null,
                 lines: highlights.length
                     ? highlights
@@ -279,8 +271,6 @@ export function cvProjects(
 export interface CvTalk {
     id: string;
     title: string;
-    /** "Talk", "Paper"… */
-    kind: string;
     venue: string | null;
     /** "Mar 2024"; null when the date is not set. */
     date: string | null;
@@ -295,9 +285,6 @@ export function cvTalks(
         .map((talk) => ({
             id: talk._key,
             title: talk.title.trim(),
-            kind:
-                TALK_KINDS.find((option) => option.value === talk.kind)
-                    ?.title ?? "Talk",
             venue: talk.venue?.trim() || null,
             date: formatTimelineDate(talk.date),
             links: httpLinks(talk.links),
@@ -308,7 +295,8 @@ export function cvTalks(
  * A credential as one plain row, as the résumé lists it: the span it is
  * held ("Sep 2023 – Sep 2026"), or its issue date when it has no expiry,
  * then its name, linked to its verification page when the record has
- * one, and the issuer.
+ * one, and the issuer unless the name already says it ("AWS Certified
+ * …" from AWS).
  */
 export interface CvCredential {
     id: string;
@@ -336,10 +324,15 @@ export function cvCredentials(
         const ended = credential.lifetime
             ? null
             : formatTimelineDate(credential.expiresOn);
+        const title = credential.title.trim();
+        const issuer = credential.issuer?.trim() || null;
         const row: CvCredential = {
             id: credential._key,
-            title: credential.title.trim(),
-            issuer: credential.issuer?.trim() || null,
+            title,
+            issuer:
+                issuer && title.toLowerCase().includes(issuer.toLowerCase())
+                    ? null
+                    : issuer,
             url: /^https?:\/\//.test(credential.verificationUrl ?? "")
                 ? credential.verificationUrl!
                 : null,

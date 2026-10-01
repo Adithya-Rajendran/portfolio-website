@@ -9,10 +9,14 @@ import styles from "./post.module.css";
  * the first screen. CSS shows one of the two; both are server-rendered,
  * so they work without JavaScript. The contents are `nav aria-label="On
  * this page"`, never an `aside` inside `main`. PostReader marks the
- * current section. An entry without sections has neither. The date, the
- * read time and any revision are the head's alone: the rail repeats none
- * of them.
+ * current section. An entry with fewer than two sections has neither (a
+ * one-item contents leads nowhere new), and the rail's column is space.
+ * The date, the read time and any revision are the head's alone: the
+ * rail repeats none of them.
  */
+
+/** Contents need at least this many sections to lead anywhere. */
+const CONTENTS_MIN = 2;
 
 function Contents({
     headings,
@@ -51,7 +55,7 @@ export function PostRail({
     headings: readonly PostHeading[];
     className?: string;
 }) {
-    if (!headings.length) return null;
+    if (headings.length < CONTENTS_MIN) return null;
     return (
         <div className={className} data-print="hide">
             <Contents headings={headings} />
@@ -67,7 +71,7 @@ export function PostBox({
     headings: readonly PostHeading[];
     className?: string;
 }) {
-    if (!headings.length) return null;
+    if (headings.length < CONTENTS_MIN) return null;
     return (
         <details className={className} data-print="hide" data-entry-box>
             <summary className={styles.boxSummary}>

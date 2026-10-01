@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-    formatLogDesignation,
-    formatMissionDesignation,
-    logNumbers,
-} from "@/lib/designations";
+import { formatMissionDesignation, logNumbers } from "@/lib/designations";
 
 /** The owner's three published posts, as the list query returns them. */
 const POSTS = [
@@ -23,17 +19,6 @@ const POSTS = [
         publishedAt: "2026-03-06",
     },
 ];
-
-describe("formatLogDesignation", () => {
-    it("pads to three digits", () => {
-        expect(formatLogDesignation(1)).toBe("LOG 001");
-        expect(formatLogDesignation(42)).toBe("LOG 042");
-    });
-
-    it("keeps every digit past 999", () => {
-        expect(formatLogDesignation(1000)).toBe("LOG 1000");
-    });
-});
 
 describe("formatMissionDesignation", () => {
     it("pads to two digits", () => {

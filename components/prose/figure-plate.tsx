@@ -5,14 +5,15 @@ import type { FigureInfo } from "@/lib/prose";
 import { urlForImage } from "@/lib/sanity-image";
 
 /**
- * An image in the text as a numbered plate or figure (G1, G7): photographs
- * are plates (Pl. I), diagrams, plots and screenshots figures (Fig. 1). The
+ * An image in the text as a plate (G1, G7): a photograph, or a diagram,
+ * plot or screenshot, which keeps no photographic grade. Neither is
+ * numbered: no text cites one, and the caption stands on its own. The
  * caption is the owner's, verbatim, with the credit as its source line;
- * nothing is added. A tall or square plate at text width keeps its caption
- * beside it on wider screens. The number leads the caption only; the
- * photograph itself carries nothing (the plate rule in
- * styles/components.css, `.photo`). Ported from the mockup's
- * `DF.render.photo` (site.css 4.26) and writing.css "Plates".
+ * nothing is added. A tall or square plate at text width keeps its
+ * caption beside it on wider screens. The photograph itself carries
+ * nothing (the plate rule in styles/components.css, `.photo`). Ported
+ * from the mockup's `DF.render.photo` (site.css 4.26) and writing.css
+ * "Plates".
  */
 
 export type PlateImage = {
@@ -101,17 +102,16 @@ export default function FigurePlate({
                         : {})}
                 />
             </div>
-            <figcaption className="caption">
-                <span className="caption__num">{info.label}</span>
-                {caption || credit ? (
+            {caption || credit ? (
+                <figcaption className="caption">
                     <span className="caption__body">
                         {caption}
                         {credit ? (
                             <span className="caption__src">{credit}</span>
                         ) : null}
                     </span>
-                ) : null}
-            </figcaption>
+                </figcaption>
+            ) : null}
         </figure>
     );
 }

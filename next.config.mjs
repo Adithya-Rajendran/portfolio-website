@@ -147,6 +147,12 @@ const nextConfig = {
                 destination: "/resume",
                 permanent: true,
             },
+            // The archive repeated /blog's list at a second address.
+            {
+                source: "/blog/archive",
+                destination: "/blog",
+                permanent: true,
+            },
             // Comms is the themed name of /contact (plan §2.2). Never
             // redirect from /contact itself.
             {
@@ -163,16 +169,11 @@ const nextConfig = {
             })),
             // Share images moved into the app/(site) route group, which
             // gives each one a stable hash suffix (lib/route-tags.ts). Links
-            // shared before the move keep their preview image. The archive
-            // comes before the post pattern, which would also match it.
+            // shared before the move keep their preview image.
             ...[
                 ["/opengraph-image", "/opengraph-image-12o0cb"],
                 ["/about/opengraph-image", "/about/opengraph-image-1ycygp"],
                 ["/blog/opengraph-image", "/blog/opengraph-image-14vkmf"],
-                [
-                    "/blog/archive/opengraph-image",
-                    "/blog/archive/opengraph-image-dfhyke",
-                ],
                 [
                     "/blog/:slug/opengraph-image",
                     "/blog/:slug/opengraph-image-fx5gi7",

@@ -1,21 +1,14 @@
 import type { PostListItem } from "@/lib/sanity-client";
 import { readingTimeFromWordCount } from "@/components/blogs/utils";
-import { formatLogDesignation, logNumbers } from "@/lib/designations";
-import {
-    collectTags,
-    linkedTags,
-    TAG_PATTERN,
-    type TagCount,
-} from "@/lib/tags";
+import { logNumbers } from "@/lib/designations";
+import { collectTags, linkedTags, TAG_PATTERN } from "@/lib/tags";
 
 /**
  * The writing index (G8): one row per published entry on shared column
- * tracks (date and any revision · title, standfirst and the tags that
- * link · read time), grouped by year (`groupPostsByYear` in lib/tags.ts)
- * when the entries span more than one. Pure, so
- * /blog, the tag pages, the archive, the home page and About derive the
- * same rows. Each entry keeps its derived LOG number, the quiet
- * identifier its own page prints.
+ * tracks (date · title, standfirst and the tags that link · read time),
+ * in one list. Pure, so /blog, the tag pages, the home page, a project's
+ * related writing and the CV derive the same rows. Each entry keeps its
+ * filing number, which orders the entries and is printed nowhere.
  */
 
 export interface LogEntry {
@@ -25,27 +18,22 @@ export interface LogEntry {
     dek: string;
     /** The date it was filed (published), `YYYY-MM-DD`; "" if unknown. */
     publishedAt: string;
-    /** The last substantive revision (`revisedAt`), `YYYY-MM-DD`, only
-     *  when the owner set one after the filing date; otherwise null. */
-    revisedAt: string | null;
     /** Minutes at 200 words a minute; null when the body has no words. */
     readMinutes: number | null;
     wordCount: number;
     /** Slug-safe tags only, so every one is a working tag page. */
     tags: string[];
-    /** The tags its row and its head show: the ones that link, gathering
-     *  two or more entries across the whole log (`linkedTags`). */
+    /** The tags its row shows: the ones that link, gathering two or
+     *  more entries across the whole log (`linkedTags`). */
     tagLinks: string[];
     /** 1 is the oldest entry. */
     number: number;
-    /** "LOG 003". */
-    designation: string;
 }
 
 export type LogSource = Pick<
     PostListItem,
     "slug" | "title" | "description" | "publishedAt" | "tags" | "wordCount"
-> & { _id?: string | null; revisedAt?: string | null };
+> & { _id?: string | null };
 
 const DATE = /^\d{4}-\d{2}-\d{2}/;
 
@@ -64,25 +52,17 @@ export function logEntries(posts: readonly LogSource[]): LogEntry[] {
             const publishedAt = DATE.test(post.publishedAt ?? "")
                 ? post.publishedAt.slice(0, 10)
                 : "";
-            const revised = DATE.test(post.revisedAt ?? "")
-                ? post.revisedAt!.slice(0, 10)
-                : null;
             return {
                 slug: post.slug,
                 title: post.title || "",
                 dek: post.description || "",
                 publishedAt,
-                revisedAt:
-                    revised && (!publishedAt || revised > publishedAt)
-                        ? revised
-                        : null,
                 readMinutes:
                     wordCount > 0 ? readingTimeFromWordCount(wordCount) : null,
                 wordCount,
                 tags: (post.tags ?? []).filter((tag) => TAG_PATTERN.test(tag)),
                 tagLinks: [] as string[],
                 number,
-                designation: formatLogDesignation(number),
             };
         })
         .sort((a, b) => b.number - a.number);
@@ -93,16 +73,6 @@ export function logEntries(posts: readonly LogSource[]): LogEntry[] {
         entry.tagLinks = entry.tags.filter((tag) => linked.has(tag));
     }
     return entries;
-}
-
-/**
- * Whether the writing pages offer their tag chips: only once a tag
- * gathers two or more entries (`linkedTags`). Until then every entry is
- * on one short list, and a filter would only narrow it to the entry
- * already in view.
- */
-export function offersFilters(tags: readonly TagCount[]): boolean {
-    return linkedTags(tags).length > 0;
 }
 
 /** Entries that carry the exact tag. */
@@ -133,9 +103,4 @@ export function formatEntryDate(date: string | null | undefined): string {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date ?? "");
     if (!match) return "";
     return `${Number(match[3])} ${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
-}
-
-/** "3 entries", "1 entry". */
-export function entryCount(count: number): string {
-    return `${count.toLocaleString("en-US")} ${count === 1 ? "entry" : "entries"}`;
 }

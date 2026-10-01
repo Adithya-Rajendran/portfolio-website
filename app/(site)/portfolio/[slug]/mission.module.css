@@ -3,10 +3,10 @@
  * (the head, copy 7/12 beside the plate 5/12 or the full width without
  * one, its facts, then the sections on the rail + main grid) or the short
  * note (title, summary, highlights and facts in one column), and the
- * close. Shared parts (stats, plates, key/value lists, tables, link rows,
+ * pager. Shared parts (stats, plates, key/value lists, tables, link rows,
  * the pager) are styled in styles/components.css; the mission line, the
- * stack and the callouts in their components' modules. The close is the
- * last section, so its own padding ends the page.
+ * stack and the callouts in their components' modules. The pager's
+ * section is the last, so its own padding ends the page.
  */
 
 .crumb {
@@ -42,14 +42,19 @@
     font: 400 var(--step-1) / 1.5 var(--font-long);
     text-wrap: pretty;
 }
-/* The quiet way to the original entry. */
+/* The quiet links: the original entry, then the repositories. */
 .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-2) var(--s-6);
     margin-top: var(--s-5);
 }
 .metrics {
     margin-top: var(--s-7);
 }
-/* The facts: the stack, the role, named parameters (and a note's links). */
+/* The facts: the stack, the role, named parameters (and a note's links).
+   The repositories' links are the head's actions. */
 .facts {
     max-width: var(--measure-index);
     margin-top: var(--s-7);
@@ -109,6 +114,13 @@
 .noteBody > :first-child {
     margin-top: 0;
 }
+/* A note's one highlight: a plain paragraph in the summary's measure. */
+.line {
+    max-width: 52ch;
+    color: var(--ink-1);
+    font: 400 var(--step-0) / 1.55 var(--font-display);
+    text-wrap: pretty;
+}
 
 /* ---- Sections (components/ui/doc-section.tsx) -------------------------- */
 
@@ -163,8 +175,15 @@
     max-width: 44ch;
     color: var(--ink-2);
 }
+/* The column heads are for screen readers: the row heading, the mono
+   value and its note read without them, so the table opens on its first
+   row. */
+.columns th {
+    padding: 0;
+    border: 0;
+}
 /* Phones: each note moves under its row, across the full width; the row
-   keeps one hairline, and the Note column's head is for screen readers. */
+   keeps one hairline. */
 @media (max-width: 37.49rem) {
     .results tr {
         display: grid;
@@ -183,14 +202,6 @@
     }
     .results td.note:empty {
         display: none;
-    }
-    .results th.noteCol {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
     }
 }
 
@@ -212,8 +223,11 @@
     letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
+/* One list alone takes the section's measure. */
+.single {
+    max-width: var(--measure-index);
+}
 .lessons,
-.next,
 .lines {
     margin: 0;
     padding: 0;
@@ -223,7 +237,6 @@
 /* One list style for both columns, like the callouts: the subheads tell
    them apart. */
 .lessons li,
-.next li,
 .lines li {
     position: relative;
     padding: var(--s-4) 0 var(--s-4) var(--s-6);
@@ -233,7 +246,6 @@
     text-wrap: pretty;
 }
 .lessons li::before,
-.next li::before,
 .lines li::before {
     content: "";
     position: absolute;
@@ -242,9 +254,4 @@
     width: 0.9rem;
     height: 1px;
     background: var(--ink-3);
-}
-
-/* ---- Close: the question, then the neighbouring files ------------------- */
-.pager {
-    margin-top: var(--s-7);
 }

@@ -85,11 +85,34 @@ describe("timeline rows", () => {
         });
     });
 
-    it("labels employment except degrees, and makes a safe fragment", () => {
+    it("labels employment except degrees and what the title says, and makes a safe fragment", () => {
         expect(cvEntry(entry({ employment: "internship" })).employment).toBe(
             "Internship",
         );
         expect(cvEntry(entry({ employment: "degree" })).employment).toBeNull();
+        // "Intern" already says it, on screen and on paper; a word that
+        // only starts the same does not.
+        expect(
+            cvEntry(
+                entry({
+                    title: "Cybersecurity Analyst Intern",
+                    employment: "internship",
+                }),
+            ).employment,
+        ).toBeNull();
+        expect(
+            cvEntry(
+                entry({
+                    title: "International Programs Lead",
+                    employment: "internship",
+                }),
+            ).employment,
+        ).toBe("Internship");
+        expect(
+            cvEntry(
+                entry({ title: "Research Assistant", employment: "research" }),
+            ).employment,
+        ).toBeNull();
         expect(cvAnchor("timeline-1 a/b")).toBe("cv-timeline-1-a-b");
     });
 
@@ -150,13 +173,11 @@ describe("projects, talks and credentials", () => {
             ],
             SITE,
         );
-        expect(rows.map((row) => row.designation)).toEqual([
-            "MSN-01",
-            "MSN-03",
-        ]);
+        expect(rows.map((row) => row.slug)).toEqual(["a", "b"]);
+        // No type line: the title says what kind of project it is.
+        expect(rows[0]).not.toHaveProperty("types");
         expect(rows[0]).toMatchObject({
             years: "c. 2023",
-            types: "Infrastructure",
             lines: ["Built it."],
             links: [
                 {
@@ -227,7 +248,6 @@ describe("projects, talks and credentials", () => {
             {
                 id: "talk-navigating-ai-risks",
                 title: "Navigating AI Risks for Small Businesses",
-                kind: "Talk",
                 venue: "IGNITE · Bucknell University",
                 date: null,
                 links: [],
@@ -240,8 +260,9 @@ describe("projects, talks and credentials", () => {
             FIXTURE_PROFILE.credentials as CredentialListItem[],
         );
         // As the résumé lists them: the span (or the issue date without
-        // an expiry), the name and the issuer, linked when the record has
-        // a page; no status, never "Expired" or "No expiry".
+        // an expiry), the name and the issuer unless the name says it,
+        // linked when the record has a page; no status, never "Expired"
+        // or "No expiry".
         expect(current).toEqual([
             {
                 id: "credential-mta-security",
@@ -255,14 +276,14 @@ describe("projects, talks and credentials", () => {
             {
                 id: "credential-aws-saa",
                 title: "AWS Certified Solutions Architect – Associate",
-                issuer: "AWS",
+                issuer: null,
                 url: "https://www.credly.com/badges/80207866-2bf2-41a0-8c92-991295e79063/",
                 dates: "Sep 2023 – Sep 2026",
             },
             {
                 id: "credential-security-plus",
                 title: "CompTIA Security+",
-                issuer: "CompTIA",
+                issuer: null,
                 url: "https://www.credly.com/badges/78c2780d-63dc-4c2b-a6df-72138c469271",
                 dates: "Aug 2022 – Aug 2025",
             },

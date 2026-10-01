@@ -1,4 +1,3 @@
-import Link from "next/link";
 import CrumbRow from "@/components/ui/crumb-row";
 import { Updated } from "@/components/ui/marks";
 import { postCopy as copy } from "@/lib/copy";
@@ -7,29 +6,19 @@ import { siteRoutes } from "@/lib/navigation";
 import styles from "./post.module.css";
 
 /**
- * The top of an entry (G1): the crumb row (Writing / LOG nnn: the section
- * and the entry's one quiet identifier, as a project file's), then date ·
- * read time · Updated (only after a revision) · the tags that link (two
- * or more entries each; `LogEntry.tagLinks`), the title and the
- * standfirst. Kept short, so the first paragraph reaches the first
- * screen. Ported from the mockup's post.html (`.post-crumbrow`,
- * `.post-head`).
+ * The top of an entry (G1): the crumb row (Writing, the section alone, as
+ * a project's), then date · read time · Updated (only after a revision),
+ * the title and the standfirst, which say the topic: the tags that link
+ * are the index's (/blog's rows). Kept short, so the first paragraph
+ * reaches the first screen. Ported from the mockup's post.html
+ * (`.post-crumbrow`, `.post-head`).
  */
-export function PostCrumb({
-    designation,
-    className,
-}: {
-    designation?: string;
-    className?: string;
-}) {
+export function PostCrumb({ className }: { className?: string }) {
     return (
         <CrumbRow
-            className={
-                className ? `${styles.crumb} ${className}` : styles.crumb
-            }
+            className={className}
             label={copy.plain}
             href={siteRoutes.blog}
-            code={designation}
         />
     );
 }
@@ -40,7 +29,6 @@ export function PostHead({
     publishedAt,
     revisedAt,
     readMinutes,
-    tags,
     className,
 }: {
     title: string;
@@ -48,8 +36,6 @@ export function PostHead({
     publishedAt?: string | null;
     revisedAt?: string | null;
     readMinutes: number | null;
-    /** The tags that link: a tag with one entry is not shown. */
-    tags: readonly string[];
     className?: string;
 }) {
     const filed = publishedAt?.slice(0, 10) ?? "";
@@ -73,23 +59,6 @@ export function PostHead({
                             label={copy.updated}
                         />
                     </span>
-                ) : null}
-                {tags.length > 0 ? (
-                    <ul
-                        className={`tags ${styles.metaTags}`}
-                        aria-label={copy.tags}
-                    >
-                        {tags.map((tag) => (
-                            <li key={tag}>
-                                <Link
-                                    className="tag"
-                                    href={`/blog/tags/${tag}`}
-                                >
-                                    {tag}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
                 ) : null}
             </div>
             <h1 className={styles.title}>{title}</h1>

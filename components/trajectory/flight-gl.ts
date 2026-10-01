@@ -1071,9 +1071,7 @@ export function mountFlight(
      * A label `gap` pixels off its world toward `side` (a direction on the
      * stage), with a leader from `limb` pixels off the centre. Its box
      * fades as it nears the edge of the safe area; it never slides along
-     * it. Under a world on a phone (`hang` 1) it hangs from the leader at
-     * the share of its width that its world is across the stage, so it
-     * stays on the stage without changing side.
+     * it.
      */
     const place = (
         label: ReturnType<typeof makeLabel>,
@@ -1083,18 +1081,9 @@ export function mountFlight(
         limb: number,
         alpha: number,
         state: string,
-        hang = 0,
     ) => {
         const { el, leader } = label;
         const box = labelBox(at, side, gap, label);
-        if (hang > 0) {
-            const x0 = safe.x0 + LABEL_FADE;
-            const x1 = safe.x1 - LABEL_FADE;
-            const share = Math.min(1, Math.max(0, (at.x - x0) / (x1 - x0)));
-            const dx = lerp(box.x0, at.x - share * label.w, hang) - box.x0;
-            box.x0 += dx;
-            box.x1 += dx;
-        }
         const a = at.on ? alpha * keep(box, LABEL_FADE) : 0;
         if (label.state !== state) {
             label.state = state;
@@ -1130,8 +1119,7 @@ export function mountFlight(
      *  into the map: across that boundary the label turns to its new side
      *  when that is a right angle away at most, else fades out and back
      *  in there; through the crane it turns to the map's side, or fades
-     *  across where that is more than about 100° away. `hang`: under its
-     *  world on a phone. */
+     *  across where that is more than about 100° away. */
     const sideAt = (i: number, frame: Frame, radial: number) => {
         const c = chase[frame.index]?.[i] ?? { x: -1, y: 0, reach: 1 };
         const before = chase[frame.index - 1]?.[i];
@@ -1148,28 +1136,24 @@ export function mountFlight(
                 side = turn(side, after, 0.5 * smoothstep(0.85, 1, frame.u));
             else fade *= 1 - smoothstep(0.85, 1, frame.u);
         }
-        const hang = !wideLayout && c.x === 0 ? 1 - radial : 0;
         const m = sides[i] ?? c;
-        if (radial <= 0) return { side, reach: 1, fade, hang };
+        if (radial <= 0) return { side, reach: 1, fade };
         if (dotOf(side, m) > -0.2)
             return {
                 side: turn(side, m, radial),
                 reach: lerp(1, m.reach, radial),
                 fade,
-                hang,
             };
         return radial < 0.5
             ? {
                   side,
                   reach: 1,
                   fade: fade * (1 - smoothstep(0.1, 0.5, radial)),
-                  hang,
               }
             : {
                   side: m,
                   reach: m.reach,
                   fade: fade * smoothstep(0.5, 0.9, radial),
-                  hang,
               };
     };
     const mark = (
@@ -1443,12 +1427,12 @@ export function mountFlight(
             plannedLeg.material.gapSize = 6 * px;
         }
 
-        // Labels: only at a hold and in the finale, never through a
-        // transfer. The world left behind fades as the ship leaves, by
-        // progress, before the view swings away from it; the world ahead
-        // is named as its hold begins. The map names every world where it
-        // has the room (mapNamesAll); a phone, or a narrow window beside
-        // the record, names only the world held.
+        // Labels: only in the finale's map (and a still flight's), where
+        // it has the room to name every world (mapNamesAll). At a hold the
+        // card's organisation and the lit rail stop name the world, so the
+        // scene is unlabelled while held; a phone, or a narrow window
+        // beside the record, names none.
+        const named = kind === "plan" && mapNamesAll(stage);
         const radial = smoothstep(0.35, 0.85, pose.overview);
         const away = (at: { x: number; y: number }) => {
             const n = Math.hypot(at.x - sunAt.x, at.y - sunAt.y) || 1;
@@ -1460,27 +1444,14 @@ export function mountFlight(
             const visited = p >= coastStart[i] - 1e-6;
             const state =
                 i === world ? "current" : visited ? "visited" : "future";
-            let alpha = 0;
-            if (kind === "transfer")
-                alpha = i === from ? 1 - smoothstep(0, 0.12, frame.u) : 0;
-            else if (i === world)
-                alpha =
-                    kind === "plan" || i === 0
-                        ? 1
-                        : smoothstep(0, 0.12, frame.u);
-            // The map's other labels come in as it settles, not as their
-            // worlds sweep in through the crane.
-            else if (
-                kind === "plan" &&
-                mapNamesAll(stage) &&
-                state !== "future"
-            )
-                alpha = smoothstep(0.4, 0.6, frame.u);
-            // Gone once its world leaves the safe area.
-            alpha *= 1 - smoothstep(-16, 8, overflow(pointBox(at)));
-            // At the sunrise the first world is its limb: named only as
-            // the camera settles into the chase.
-            if (i === 0) alpha *= smoothstep(0.7, 1, 1 - pose.open);
+            // The labels come in as the map settles, not as their worlds
+            // sweep in through the crane; each is gone once its world
+            // leaves the safe area.
+            const alpha =
+                named && state !== "future"
+                    ? smoothstep(0.4, 0.6, frame.u) *
+                      (1 - smoothstep(-16, 8, overflow(pointBox(at))))
+                    : 0;
             // A hairline ring round a world drawn at its smallest; in the
             // map a world with a parking ring needs none.
             const small =
@@ -1491,7 +1462,7 @@ export function mountFlight(
                     `${(2 * b.drawn + 7).toFixed(1)}px`,
                 );
             mark(rings[i], at, alpha * small);
-            const { side, reach, fade, hang } = sideAt(i, frame, radial);
+            const { side, reach, fade } = sideAt(i, frame, radial);
             if (alpha * fade <= 0.01) {
                 place(label, at, side, 0, 0, 0, state);
                 return;
@@ -1502,15 +1473,7 @@ export function mountFlight(
             // for that); the leader ends on the disc or on Saturn's ring.
             const flown =
                 radial < 1
-                    ? plan.flownGap(
-                          i,
-                          pose,
-                          stage,
-                          positions[i],
-                          side,
-                          // A phone's label hangs anywhere across its width.
-                          wideLayout ? label : { w: 2 * label.w, h: label.h },
-                      ) *
+                    ? plan.flownGap(i, pose, stage, positions[i], side, label) *
                       (1 - radial)
                     : 0;
             const gap = Math.max(
@@ -1529,7 +1492,6 @@ export function mountFlight(
                 b.drawn * ring + 3,
                 alpha * fade,
                 state,
-                hang,
             );
         });
         if (openLabel && plan.planned) {
@@ -1537,7 +1499,7 @@ export function mountFlight(
             // The planned orbit's end and its label come in as the leg
             // reaches them.
             const on = kind === "plan" ? smoothstep(0.78, 0.9, frame.u) : 0;
-            place(openLabel, at, away(at), 12, 12, wideLayout ? on : 0, "plan");
+            place(openLabel, at, away(at), 12, 12, named ? on : 0, "plan");
             mark(targetMark, at, on);
         }
         const shipAt = project(ship3);

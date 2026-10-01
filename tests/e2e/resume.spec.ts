@@ -13,9 +13,12 @@ import { THEMES, storeTheme } from "./support/theme";
  * when the address names a part of it. A click switches views for the
  * visit, in place; Skip to the list, The full record and a card's Full
  * entry land on the list. A project row's link to one of the site's posts
- * opens in place, and every credential is the same plain row. Rows are
- * found by their content, so the spec fits fixture and real content
- * alike. The flight itself is trajectory.spec's.
+ * opens in place, and every credential is the same plain row. The list
+ * says each thing once: no upload date in the head, no status, kind code,
+ * type line or Skills or Links key on a row, no employment the title says, no
+ * issuer the credential's name says, and no second rule under a section
+ * head. Rows are found by their content, so the spec fits fixture and
+ * real content alike. The flight itself is trajectory.spec's.
  */
 
 function main(page: Page) {
@@ -181,6 +184,10 @@ test("under reduced motion the list is the view; Timeline is the flight's still"
     await expect(
         main(page).getByRole("button", { name: trajectoryCopy.play }),
     ).toBeHidden();
+    // A still card's "– present" says it is current: no "● Current".
+    await expect(
+        page.locator("[data-journey] [data-card][data-on] .status"),
+    ).toBeHidden();
 });
 
 test("an address that names a part of the CV opens the list there", async ({
@@ -227,6 +234,54 @@ test("the CV links the site in place and lists every credential alike", async ({
                 .getByRole("heading", { level: 3 })
                 .filter({ hasNotText: cvCopy.priorCertifications }),
         ).toHaveCount(0);
+    }
+});
+
+test("the list says each thing once", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/resume");
+    await expect(experience(page)).toBeVisible();
+    // The head: no upload date reading as the page's own; its tag row's
+    // hairline runs to the edge.
+    const head = main(page).locator(".page-head");
+    await expect(head.locator(".section-tag__meta")).toHaveCount(0);
+    await expect(head).not.toContainText(/\bUpdated\b/);
+    // No status, kind code or Skills or Links key on a row: "– present",
+    // the section's name, the mono names and the link's own words say
+    // them.
+    const list = main(page).locator("#cv");
+    await expect(list.locator(".status")).toHaveCount(0);
+    await expect(
+        list.locator(".cv-item").getByText(/^(Talk|Paper|Skills|Links)$/),
+    ).toHaveCount(0);
+    // A project row has no type line.
+    await expect(
+        list.locator("#projects").getByText(/^(Software|Infrastructure)/),
+    ).toHaveCount(0);
+    // No employment the title already says ("Internship" by "… Intern").
+    for (const row of await list.locator(".cv-item").all()) {
+        const title =
+            (await row.locator(".cv-item__title").textContent()) ?? "";
+        if (/\bintern\b/i.test(title)) {
+            await expect(row.locator(".cv-item__aside")).not.toContainText(
+                /Internship/,
+            );
+        }
+    }
+    // No issuer the credential's name already says.
+    for (const row of await main(page).locator("#certifications li").all()) {
+        const text = (await row.innerText()).replace(/\s+/g, " ");
+        const [line, issuer] = text.split(" · ").slice(-2);
+        if (issuer)
+            expect(line.toLowerCase(), text).not.toContain(
+                issuer.toLowerCase(),
+            );
+    }
+    // One rule under a section head: its first row draws no second.
+    for (const section of await list.locator("section").all()) {
+        const first = section.locator(".g-main > :first-child > :first-child");
+        if (!(await first.count())) continue;
+        await expect(first).toHaveCSS("border-top-width", "0px");
     }
 });
 

@@ -14,7 +14,6 @@ export const STATIC_PAGES = [
     "/resume",
     "/contact",
     "/blog",
-    "/blog/archive",
 ] as const;
 
 /**
@@ -62,9 +61,9 @@ export async function contentPages(
     ];
 }
 
-/** True for a post page (`/blog/<slug>`), not the archive or a tag page. */
+/** True for a post page (`/blog/<slug>`), not a tag page. */
 export function isPostPage(path: string): boolean {
-    return /^\/blog\/(?!tags\/|archive$)[^/]+$/.test(path);
+    return /^\/blog\/(?!tags\/)[^/]+$/.test(path);
 }
 
 /** A same-origin path for an absolute URL the site emits (og:image etc.). */

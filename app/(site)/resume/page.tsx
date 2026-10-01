@@ -6,7 +6,7 @@ import ExperienceViews from "@/components/cv/experience-views";
 import Availability from "@/components/ui/availability";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { LinkArrow, Rev, Status, Updated } from "@/components/ui/marks";
+import { LinkArrow, Rev } from "@/components/ui/marks";
 import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
 import Specs from "@/components/ui/specs";
@@ -100,7 +100,8 @@ function CvSection({
     );
 }
 
-/** The printed document's control line, at the top of each sheet (G3). */
+/** The printed document's control line, at the top of each sheet (G3):
+ *  "Curriculum vitae · Rev 2026-09-30 · Sheet 1 of 2". */
 function SheetHead({
     sheet,
     sheets,
@@ -112,9 +113,7 @@ function SheetHead({
 }) {
     return (
         <p className={styles.sheetHead}>
-            <span className={styles.sheetDoc}>
-                {copy.document} · {copy.documentTitle}
-            </span>
+            <span className={styles.sheetDoc}>{copy.documentTitle}</span>
             <span className={styles.sheetRev}>
                 {rev ? (
                     <>
@@ -147,19 +146,26 @@ function Unbroken({ items }: { items: readonly string[] }) {
 
 /**
  * A short list on the CV's columns: a date in the mono column, then a
- * line (the latest writing, the certifications).
+ * line (the latest writing, the certifications). `screenOnly` leaves it
+ * off the paper.
  */
 function PlainRows({
     rows,
+    screenOnly = false,
 }: {
     rows: readonly {
         id: string;
         date: React.ReactNode;
         line: React.ReactNode;
     }[];
+    screenOnly?: boolean;
 }) {
     return (
-        <ol className={styles.rows} role="list">
+        <ol
+            className={styles.rows}
+            role="list"
+            data-print={screenOnly ? "hide" : undefined}
+        >
             {rows.map((row) => (
                 <li className={styles.row} key={row.id}>
                     <span className={styles.rowDate}>{row.date}</span>
@@ -230,8 +236,8 @@ export default async function ResumePage() {
     ]);
     const name = profile?.name || siteConfig.author;
     const hasPdf = Boolean(resolveResumeAssetUrl(profile?.resumeUrl, "view"));
-    // The résumé's upload date: "Updated …" on screen, the revision on
-    // paper.
+    // The résumé's upload date: the paper's revision. On screen it would
+    // read as the page's own date, so it is not shown there.
     const rev =
         hasPdf && /^\d{4}-\d{2}-\d{2}/.test(profile?.resumeUploadedAt ?? "")
             ? profile!.resumeUploadedAt!.slice(0, 10)
@@ -287,21 +293,14 @@ export default async function ResumePage() {
             <CvItem
                 key={entry.id}
                 anchor={entry.anchor}
-                current={entry.current}
                 dates={entry.dates}
                 meta={[entry.location, entry.expected, entry.employment]}
-                status={
-                    entry.current ? (
-                        <Status value="active">{copy.current}</Status>
-                    ) : null
-                }
                 title={title}
                 sub={entry.organization}
                 note={note}
                 dek={entry.summary}
                 lines={entry.highlights}
                 skills={entry.skills}
-                skillsLabel={copy.skillsLabel}
             />
         );
     };
@@ -339,14 +338,9 @@ export default async function ResumePage() {
                                 dates={mission.years}
                                 title={mission.title}
                                 href={`/portfolio/${mission.slug}`}
-                                sub={
-                                    [mission.types, mission.role]
-                                        .filter(Boolean)
-                                        .join(" · ") || null
-                                }
+                                sub={mission.role}
                                 lines={mission.lines}
                                 links={mission.links}
-                                linksLabel={copy.links}
                             />
                         ))}
                     </CvList>
@@ -386,23 +380,22 @@ export default async function ResumePage() {
                         more. Paper lists talks, not the Flight Log
                         (plan §2.5.5). */}
                     {writing.length ? (
-                        <div data-print="hide">
-                            <PlainRows
-                                rows={writing.map((entry) => ({
-                                    id: entry.slug,
-                                    date: (
-                                        <time dateTime={entry.publishedAt}>
-                                            {formatEntryDate(entry.publishedAt)}
-                                        </time>
-                                    ),
-                                    line: (
-                                        <Link href={`/blog/${entry.slug}`}>
-                                            {entry.title}
-                                        </Link>
-                                    ),
-                                }))}
-                            />
-                        </div>
+                        <PlainRows
+                            screenOnly
+                            rows={writing.map((entry) => ({
+                                id: entry.slug,
+                                date: (
+                                    <time dateTime={entry.publishedAt}>
+                                        {formatEntryDate(entry.publishedAt)}
+                                    </time>
+                                ),
+                                line: (
+                                    <Link href={`/blog/${entry.slug}`}>
+                                        {entry.title}
+                                    </Link>
+                                ),
+                            }))}
+                        />
                     ) : null}
                     {talks.length ? (
                         <CvList
@@ -413,7 +406,6 @@ export default async function ResumePage() {
                             {talks.map((talk) => (
                                 <CvItem
                                     key={talk.id}
-                                    code={talk.kind}
                                     dates={talk.date}
                                     title={talk.title}
                                     sub={talk.venue}
@@ -478,7 +470,6 @@ export default async function ResumePage() {
                     split
                     tag={copy.themed}
                     title={copy.title}
-                    meta={rev ? <Updated date={rev} /> : undefined}
                     intro={summary}
                 >
                     {openTo ? (

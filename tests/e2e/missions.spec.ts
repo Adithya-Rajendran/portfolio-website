@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { missionsCopy as copy } from "@/lib/copy";
+import { missionsCopy as copy, pagerCopy } from "@/lib/copy";
 import { expect, test } from "./support/test";
 import { sitemapPages } from "./support/routes";
 
@@ -11,15 +11,19 @@ import { sitemapPages } from "./support/routes";
  * name is set in capitals, and a card lists at most four stack items; a
  * cover leads its card, carries its caption as a credit, opens the project
  * and stays a thumbnail smaller than the stage's photograph (checked where
- * the build has covers; the fixtures have none). A project's crumb keeps
- * its section, separator and number on one line.
- * Each project page has its crumb, its title as the heading, the close and
- * the pager, and no title block or revision stamp; a project with little
- * content is a short note with no sections, and a module the owner has
- * not filled in is absent. On the fixture build a fully filled mission
- * shows every module, its repository in the facts and its callouts as
- * plain rows, and a planned one shows none of them. Projects are read
- * from the sitemap, so the spec fits fixture and real content alike.
+ * the build has covers; the fixtures have none); the quieter rows carry no
+ * "Also" label.
+ * Each project page has its crumb (Projects alone: no number or name),
+ * its title as the heading and the pager ("Previous", "Next", in the
+ * index's order), with no close, title block or revision stamp; a project
+ * with little content is a short note with no sections, and a module the
+ * owner has not filled in is absent. On the fixture build a fully filled
+ * mission shows every module (the overview, the results opening on their
+ * first row, the retrospective), its repository beside Read the write-up
+ * in the head and its callouts as plain rows, and no Related writing that
+ * would only repeat the original entry; a planned one shows none of them.
+ * Projects are read from the sitemap, so the spec fits fixture and real
+ * content alike.
  */
 
 function main(page: Page) {
@@ -79,12 +83,15 @@ test("/portfolio links every project, the flagship first and the last project qu
     await expect(main(page)).not.toContainText(/MSN-\d+/);
     await expect(main(page).locator(".page-head .status")).toHaveCount(0);
     await expect(main(page).getByRole("navigation")).toHaveCount(0);
-    // The tiers' sections are named for screen readers only.
+    // The tiers' sections are named for screen readers only, and the
+    // quieter rows carry no "Also" label: space and a hairline set them
+    // apart.
     for (const name of [copy.flagship, copy.more]) {
         await expect(
             main(page).getByRole("heading", { name, exact: true }),
         ).toHaveClass(/sr-only/);
     }
+    await expect(main(page).getByText("Also", { exact: true })).toHaveCount(0);
     // Titles in sentence case, and a card lists four stack items at most.
     for (const heading of await main(page)
         .getByRole("article")
@@ -182,25 +189,6 @@ for (const width of [390, 768, 960, 1440, 1920]) {
     });
 }
 
-test("a project's crumb keeps its section, separator and number on one line", async ({
-    page,
-}) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    for (const path of await missionPaths(page)) {
-        await page.goto(path);
-        // The name wraps under them; no line starts with the separator.
-        const [home, sep] = await Promise.all(
-            [".crumb-row__home", ".crumb-row__sep"].map((selector) =>
-                main(page).locator(selector).first().boundingBox(),
-            ),
-        );
-        expect(
-            Math.abs(home!.y + home!.height / 2 - (sep!.y + sep!.height / 2)),
-            path,
-        ).toBeLessThan(8);
-    }
-});
-
 test("/portfolio shows the flagship's title, its link, in the first viewport", async ({
     page,
 }) => {
@@ -213,32 +201,21 @@ test("/portfolio shows the flagship's title, its link, in the first viewport", a
     expect(box!.y + box!.height).toBeLessThanOrEqual(760);
 });
 
-test("every project page has its crumb, title, close and pager", async ({
-    page,
-}) => {
+test("every project page has its crumb, title and pager", async ({ page }) => {
     const paths = await missionPaths(page);
     expect(paths.length).toBeGreaterThan(0);
     for (const path of paths) {
         await test.step(path, async () => {
             await page.goto(path);
-            // The crumb names the project by the owner's short name, else
-            // its title, with its number as its one quiet identifier; the
-            // heading is the title alone, in sentence case. The number never
-            // splits at its hyphen.
-            await expect(main(page).getByText(/^MSN-\d{2}$/)).toHaveCount(1);
-            await expect(main(page).getByText(/^MSN-\d{2}$/)).toHaveCSS(
-                "white-space",
-                "nowrap",
+            // The crumb is the section alone, as a post's: the h1 names
+            // the project, and no number is printed.
+            await expect(main(page).locator(".crumb-row")).toHaveText(
+                copy.plain,
             );
+            await expect(main(page)).not.toContainText(/MSN-\d+/);
             const heading = main(page).getByRole("heading", { level: 1 });
             await expect(heading).toHaveCount(1);
             await expect(heading).toHaveCSS("text-transform", "none");
-            const crumb = (
-                await main(page).locator(".crumb-row__name").textContent()
-            )
-                ?.replace(/\/|MSN-\d{2}/g, "")
-                .trim();
-            expect(crumb).toBeTruthy();
             // No jump to the page's own write-up, and no "Table 1".
             await expect(main(page).locator('a[href="#write-up"]')).toHaveCount(
                 0,
@@ -251,8 +228,8 @@ test("every project page has its crumb, title, close and pager", async ({
                 .all()) {
                 await expect(item).toHaveCSS("white-space", "nowrap");
             }
-            // The pager: the neighbouring projects only (the crumb leads
-            // back to all of them).
+            // The pager: the neighbouring projects only, "Previous" or
+            // "Next" then the name (the crumb leads back to all of them).
             const pager = main(page).getByRole("navigation", {
                 name: copy.pagerLabel,
             });
@@ -260,14 +237,25 @@ test("every project page has its crumb, title, close and pager", async ({
                 "href",
                 /^\/portfolio\/[^/]+$/,
             );
+            for (const link of await pager.getByRole("link").all()) {
+                await expect(link).toContainText(
+                    new RegExp(
+                        `^(${pagerCopy.previous}|${pagerCopy.next})(?! project)`,
+                    ),
+                );
+            }
             await expect(
                 main(page).locator(".crumb-row").getByRole("link", {
                     name: copy.plain,
                 }),
             ).toHaveAttribute("href", "/portfolio");
+            // No close: the header's Contact is in every viewport.
+            await expect(main(page).getByText(/^Questions about/)).toHaveCount(
+                0,
+            );
             await expect(
-                main(page).getByRole("link", { name: copy.message }),
-            ).toHaveAttribute("href", "/contact#hello");
+                main(page).getByRole("link", { name: "Send a message" }),
+            ).toHaveCount(0);
             // No title block repeating the line, and no revision stamp.
             await expect(
                 main(page)
@@ -283,6 +271,45 @@ test("every project page has its crumb, title, close and pager", async ({
     }
 });
 
+test("the pager follows the index's order", async ({ page }) => {
+    await page.goto("/portfolio");
+    const order = await main(page)
+        .locator('a[href^="/portfolio/"]')
+        .evaluateAll((links) => [
+            ...new Set(
+                links
+                    .map((link) => link.getAttribute("href") ?? "")
+                    .filter((href) => /^\/portfolio\/[^/#]+$/.test(href)),
+            ),
+        ]);
+    expect(order.length).toBeGreaterThan(1);
+    for (const [index, path] of order.entries()) {
+        await page.goto(path);
+        const pager = main(page).getByRole("navigation", {
+            name: copy.pagerLabel,
+        });
+        const next = pager.getByRole("link", {
+            name: new RegExp(`^${pagerCopy.next}`),
+        });
+        const previous = pager.getByRole("link", {
+            name: new RegExp(`^${pagerCopy.previous}`),
+        });
+        if (index < order.length - 1) {
+            await expect(next, path).toHaveAttribute("href", order[index + 1]);
+        } else {
+            await expect(next, path).toHaveCount(0);
+        }
+        if (index > 0) {
+            await expect(previous, path).toHaveAttribute(
+                "href",
+                order[index - 1],
+            );
+        } else {
+            await expect(previous, path).toHaveCount(0);
+        }
+    }
+});
+
 test("a project with little content is a short note, with no sections", async ({
     page,
 }) => {
@@ -295,19 +322,25 @@ test("a project with little content is a short note, with no sections", async ({
         notes += 1;
         await test.step(path, async () => {
             // The title is the heading; the summary, highlights and facts
-            // follow without section heads (only related writing, an essay
-            // that says more, and the close), stats or a write-up button.
+            // follow without section heads (only related writing and an
+            // essay that says more), stats or a write-up button. One
+            // highlight is a plain paragraph, not a one-item list.
             for (const heading of await main(page)
                 .getByRole("heading", { level: 2 })
                 .allTextContents()) {
-                expect([copy.related, copy.writeUp, copy.question]).toContain(
-                    heading.trim(),
-                );
+                expect([copy.related, copy.writeUp]).toContain(heading.trim());
             }
             await expect(main(page).locator(".metrics")).toHaveCount(0);
-            await expect(
-                main(page).getByRole("link", { name: copy.readWriteUp }),
-            ).toHaveCount(0);
+            await expect(main(page).locator(".btn")).toHaveCount(0);
+            for (const list of await main(page)
+                .locator("ul:not([aria-label])")
+                .filter({ hasNot: page.getByRole("link") })
+                .all()) {
+                expect(
+                    await list.locator(":scope > li").count(),
+                    path,
+                ).not.toBe(1);
+            }
         });
     }
     // The published Kubernetes cluster (and its fixture) is a note, and
@@ -352,15 +385,10 @@ const FIXTURE_ONLY =
     "Only the fixture missions are known to fill or skip each module.";
 
 /** The mission file's modules, by their sections' ids. Its one link, the
- *  repository, is in the facts, not a References section. */
-const MODULES = [
-    "callouts",
-    "brief",
-    "write-up",
-    "results",
-    "debrief",
-    "related",
-];
+ *  repository, is the head's, not a References section; its only post is
+ *  the original entry, which the head links, so it has no Related
+ *  writing. */
+const MODULES = ["callouts", "brief", "write-up", "results", "debrief"];
 
 test.describe("on the fixture build", () => {
     test("a filled mission shows every module, its callouts as plain rows", async ({
@@ -377,16 +405,44 @@ test.describe("on the fixture build", () => {
             ).toHaveCount(1);
         }
         await expect(main(page).locator("#links")).toHaveCount(0);
+        await expect(main(page).locator("#related")).toHaveCount(0);
+        // The brief is the Overview (its rows name problem, approach and
+        // outcome); lessons and next steps both share a plain title.
+        await expect(
+            main(page).getByRole("heading", { level: 2, name: copy.overview }),
+        ).toBeVisible();
+        await expect(
+            main(page).getByRole("heading", {
+                level: 2,
+                name: copy.retrospective,
+            }),
+        ).toBeVisible();
+        for (const name of [copy.lessons, copy.nextSteps]) {
+            await expect(
+                main(page).getByRole("heading", { level: 3, name }),
+            ).toBeVisible();
+        }
         // The callouts: plain rows under "Parts of the build", no links.
         const callouts = main(page).getByRole("region", {
             name: copy.callouts,
         });
         await expect(callouts.getByRole("listitem")).toHaveCount(2);
         await expect(callouts.getByRole("link")).toHaveCount(0);
-        // The repository is the facts' Code row.
+        // The repository is the head's, beside Read the write-up, and no
+        // facts row labels it.
+        const head = main(page)
+            .locator("header")
+            .filter({
+                has: page.getByRole("heading", { level: 1 }),
+            });
         await expect(
-            main(page).getByRole("link", { name: "Fixture repository" }),
+            head.getByRole("link", { name: "Fixture repository" }),
         ).toHaveAttribute("href", "https://example.com/fixture-repository");
+        await expect(
+            main(page)
+                .getByRole("term")
+                .filter({ hasText: /^Code$/ }),
+        ).toHaveCount(0);
         // Read the write-up goes to the original entry, once, quietly.
         const writeUp = main(page).getByRole("link", {
             name: copy.readWriteUp,
@@ -396,10 +452,17 @@ test.describe("on the fixture build", () => {
             "/blog/fixture-post-code-and-links",
         );
         await expect(writeUp).not.toHaveClass(/btn/);
-        // The results table is named by its section's heading.
-        await expect(
-            main(page).getByRole("table", { name: copy.results }),
-        ).toBeVisible();
+        // The results table is named by its section's heading, and opens
+        // on its first row: the column heads are for screen readers.
+        const table = main(page).getByRole("table", { name: copy.results });
+        await expect(table).toBeVisible();
+        await expect(table.getByRole("columnheader")).toHaveText([
+            copy.resultColumns.metric,
+            copy.resultColumns.value,
+            copy.resultColumns.note,
+        ]);
+        const thead = await table.locator("thead").boundingBox();
+        expect(thead?.height ?? 0).toBeLessThanOrEqual(1);
     });
 
     test("a planned mission leaves out what it does not have", async ({

@@ -3,7 +3,7 @@ import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import Pager, { type PagerLink } from "@/components/ui/pager";
 import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
-import { postCopy as copy } from "@/lib/copy";
+import { pagerCopy, postCopy as copy } from "@/lib/copy";
 import type { LogEntry } from "@/lib/log-index";
 import { toMission } from "@/lib/missions";
 import type { ProjectListItem } from "@/lib/sanity-client";
@@ -11,15 +11,16 @@ import styles from "./post.module.css";
 
 /**
  * After an entry (G1): the entries filed just before and after it (the
- * shared `Pager`, names only, only the sides that exist), then the
- * project it belongs to (only when the owner linked one, as the shared
- * project row) and other entries that share a tag (only when there are
- * any). The end matter above it closes the entry itself; the footer
- * carries the author. Every block is server-rendered links; empty blocks
- * are left out. Ported from the mockup's post.html `.post-end`.
+ * shared `Pager`, "Previous" and "Next" with the titles, only the sides
+ * that exist), then the project it belongs to (only when the owner linked
+ * one, as the shared project row) and other entries that share a tag
+ * (only when there are any; their rows leave the shared tags out). The
+ * end matter above it closes the entry itself; the footer carries the
+ * author. Every block is server-rendered links; empty blocks are left
+ * out. Ported from the mockup's post.html `.post-end`.
  */
 
-/** A neighbouring entry as a pager side: "Next entry", then its title. */
+/** A neighbouring entry as a pager side: "Next", then its title. */
 function pagerLink(
     entry: LogEntry | null,
     direction: "previous" | "next",
@@ -27,7 +28,7 @@ function pagerLink(
     if (!entry) return null;
     return {
         href: `/blog/${entry.slug}`,
-        label: direction === "previous" ? copy.previous : copy.next,
+        label: direction === "previous" ? pagerCopy.previous : pagerCopy.next,
         title: entry.title,
     };
 }
@@ -99,7 +100,7 @@ export default function ArticleContinuation({
                 ) : null}
                 {related.length > 0 ? (
                     <Block id="entry-related" title={copy.related}>
-                        <LogIndex entries={related} level={3} />
+                        <LogIndex entries={related} level={3} tags={false} />
                     </Block>
                 ) : null}
             </div>

@@ -3,12 +3,13 @@ import { postCopy as copy } from "@/lib/copy";
 import type { ListingInfo } from "@/lib/prose";
 
 /**
- * A code listing (G1): a bar with the file name, then, at its right, the
- * language and a visible Copy button, over the highlighted code. Its
- * number prints nowhere (premium D3: nothing refers to it); it only keeps
- * the names apart: the scroll box is the focusable region, named
- * "Listing 3, Bash, install.sh", so a keyboard can scroll a long line and
- * every listing on a page has its own name. When any listing of a body is
+ * A code listing (G1): a bar with one label, the file name, else the
+ * language (a file name already implies it), and, at its right, a
+ * visible Copy button, over the highlighted code. Its number prints
+ * nowhere (premium D3: nothing refers to it); it only keeps the names
+ * apart: the scroll box is the focusable region, named "Listing 3,
+ * install.sh", so a keyboard can scroll a long line and every listing on
+ * a page has its own name. When any listing of a body is
  * longer than the text measure, they all break out wide
  * (`listing--wide`, lib/prose.ts). Highlighted lines arrive from Shiki as
  * `.line-highlight` (lib/highlight-code.ts). Ported from the mockup's
@@ -30,12 +31,9 @@ export default function Listing({
             data-listing={info.number}
         >
             <div className="listing__bar">
-                {info.filename ? (
-                    <span className="listing__file" title={info.filename}>
-                        {info.filename}
-                    </span>
-                ) : null}
-                <span className="listing__lang">{info.language}</span>
+                <span className="listing__name" title={info.name}>
+                    {info.name}
+                </span>
                 <CopyButton
                     text={code}
                     idle={copy.listing.copy}

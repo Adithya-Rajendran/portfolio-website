@@ -5,12 +5,12 @@ import {
     type PortableTextHtmlComponents,
 } from "@portabletext/to-html";
 import { siteConfig } from "@/lib/config";
+import { formatEntryDate } from "@/lib/log-index";
 import { urlForImage } from "@/lib/sanity-image";
 import { changeKindTitle } from "@/lib/post-fields";
 import {
     calloutHeading,
     indexProse,
-    type FigureInfo,
     type NumberedFootnote,
     type ProseIndex,
 } from "@/lib/prose";
@@ -32,8 +32,8 @@ export const FEED_STYLESHEET = "/feed.xsl";
 /**
  * A page's `alternates`: its canonical address and the feed, so a reader's
  * app finds the feed from it. A page's `alternates` replaces the layout's
- * whole, so the site layout and every writing route (/blog, the archive,
- * the tag pages and each entry) name both through this one helper.
+ * whole, so the site layout and every writing route (/blog, the tag
+ * pages and each entry) name both through this one helper.
  */
 export function feedAlternates(canonical: string): Metadata["alternates"] {
     return {
@@ -107,10 +107,7 @@ function safeHttpTarget(url: unknown): string | null {
     }
 }
 
-function renderImage(
-    value: Record<string, unknown>,
-    info: FigureInfo | undefined,
-): string {
+function renderImage(value: Record<string, unknown>): string {
     if (!value.asset) return "";
 
     try {
@@ -125,7 +122,6 @@ function renderImage(
         const credit =
             typeof value.credit === "string" ? value.credit.trim() : "";
         const parts = [
-            info ? `<strong>${escapeHtmlText(info.label)}</strong>` : "",
             caption ? escapeHtmlText(caption) : "",
             credit ? `<small>${escapeHtmlText(credit)}</small>` : "",
         ].filter(Boolean);
@@ -153,23 +149,17 @@ function renderLink(
 /**
  * Portable Text to conservative feed HTML. Video URLs are links, never
  * iframe markup; malformed links and images degrade to readable text.
- * Plates, figures and footnotes carry the numbers the page prints
- * (lib/prose.ts): "Pl. I", and a raised note number that links to the
- * Notes list at the end; a listing is named as its bar names it, "Bash ·
- * install.sh".
+ * The feed matches the page (lib/prose.ts): a plate's caption carries no
+ * number, a footnote its raised number linking to the Notes list at the
+ * end, and a listing the one label its bar prints, the file name, else
+ * the language.
  */
 function feedComponents(
     index: ProseIndex,
 ): Partial<PortableTextHtmlComponents> {
     const components: Partial<PortableTextHtmlComponents> = {
         types: {
-            image: ({ value }) =>
-                renderImage(
-                    value,
-                    typeof value?._key === "string"
-                        ? index.figures[value._key]
-                        : undefined,
-                ),
+            image: ({ value }) => renderImage(value),
             gallery: ({ value }) => {
                 const images = Array.isArray(value?.images)
                     ? value.images
@@ -180,12 +170,7 @@ function feedComponents(
                                   Boolean(image) && typeof image === "object",
                           )
                           .map((image: Record<string, unknown>) =>
-                              renderImage(
-                                  image,
-                                  typeof image._key === "string"
-                                      ? index.figures[image._key]
-                                      : undefined,
-                              ),
+                              renderImage(image),
                           )
                           .filter(Boolean)
                           .join("")
@@ -202,17 +187,8 @@ function feedComponents(
                     typeof value?._key === "string"
                         ? index.listings[value._key]
                         : undefined;
-                const filename =
-                    typeof value?.filename === "string" && value.filename
-                        ? `<code>${escapeHtmlText(value.filename)}</code>`
-                        : "";
-                const label = info
-                    ? [escapeHtmlText(info.language), filename]
-                          .filter(Boolean)
-                          .join(" · ")
-                    : filename;
-                const figcaption = label
-                    ? `<figcaption>${label}</figcaption>`
+                const figcaption = info
+                    ? `<figcaption>${escapeHtmlText(info.name)}</figcaption>`
                     : "";
                 const language =
                     typeof value?.language === "string" && value.language
@@ -279,7 +255,8 @@ function renderNotes(index: ProseIndex): string {
     return `<section><h2>Notes</h2><ol>${items}</ol></section>`;
 }
 
-/** The post's recorded updates and corrections, oldest first. */
+/** The post's recorded updates and corrections, oldest first, each
+ *  dated as the page dates it ("30 Jun 2026 · Correction"). */
 function renderRevisions(changelog: FeedPost["changelog"]): string {
     const changes = (changelog ?? [])
         .filter((change) => change?.date && change.note)
@@ -288,7 +265,7 @@ function renderRevisions(changelog: FeedPost["changelog"]): string {
     const items = changes
         .map(
             (change) =>
-                `<li><strong>${escapeHtmlText(change.date.slice(0, 10))} · ${escapeHtmlText(
+                `<li><strong>${escapeHtmlText(formatEntryDate(change.date))} · ${escapeHtmlText(
                     changeKindTitle(change.kind),
                 )}.</strong> ${escapeHtmlText(change.note)}</li>`,
         )
