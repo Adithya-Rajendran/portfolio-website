@@ -9,6 +9,7 @@ import { missionsCopy as copy } from "@/lib/copy";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
+import KeepWhole from "@/components/ui/keep-whole";
 
 /** The row of tiles: one column, two across from 960px (/portfolio). */
 export function MissionTiles({ children }: { children: React.ReactNode }) {
@@ -61,7 +62,9 @@ export default function MissionTile({
                 </Link>
             </Heading>
             {mission.summary ? (
-                <p className={styles.tileSummary}>{mission.summary}</p>
+                <p className={styles.tileSummary}>
+                    <KeepWhole text={mission.summary} />
+                </p>
             ) : null}
             <MissionStack
                 items={mission.technologies}

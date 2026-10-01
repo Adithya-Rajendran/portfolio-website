@@ -21,6 +21,29 @@ import type {
 /** A post's share card, for the BlogPosting image. */
 const POST_CARD = "app/(site)/blog/[slug]/opengraph-image.tsx";
 
+/**
+ * The graph's node ids: the site's person, the site, the writing and the
+ * projects are one node each, which every other node names by its id (an
+ * author, a post's or a project's `isPartOf`), across the page's blocks.
+ */
+export const LD_IDS = {
+    person: `${siteConfig.url}/#person`,
+    website: `${siteConfig.url}/#website`,
+    blog: `${siteConfig.url}/blog#blog`,
+    projects: `${siteConfig.url}/portfolio#collection`,
+} as const;
+
+/** The site's person as an author or creator: its id, with the name and
+ *  address a reader of this node alone needs. */
+function personRef(name: string = siteConfig.author) {
+    return {
+        "@type": "Person",
+        "@id": LD_IDS.person,
+        name,
+        url: siteConfig.url,
+    };
+}
+
 /** `{ [key]: value }` when there is a value, else nothing to spread. */
 function optional<Key extends string>(
     key: Key,
@@ -109,6 +132,7 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
 
     return {
         "@type": "Person",
+        "@id": LD_IDS.person,
         name: profile?.name || siteConfig.author,
         alternateName: "Adithya",
         url: siteConfig.url,
@@ -141,7 +165,8 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
 /**
  * About as a schema.org ProfilePage. Its dates are the profile document's
  * own (`_createdAt`, `_updatedAt`); a date the document does not carry is
- * left out, never assumed.
+ * left out, never assumed. Its main entity is the site's person (the same
+ * `@id` as every page's Person block, so one node), with the credentials.
  */
 export function buildProfilePage(input: PersonEntityInput) {
     const credentials = buildHasCredential(input.profile?.credentials);
@@ -190,27 +215,22 @@ export function buildBlogPosting({
         headline: title,
         description,
         datePublished: publishedAt,
+        // The last revision, else the publication: never a later date
+        // than the post records.
+        dateModified: revisedAt || publishedAt,
         url,
         image:
             imageUrl ?? `${siteConfig.url}${shareImagePath(POST_CARD, slug)}`,
-        author: {
-            "@type": "Person",
-            name: siteConfig.author,
-            url: siteConfig.url,
-        },
-        publisher: {
-            "@type": "Person",
-            name: siteConfig.author,
-        },
+        author: personRef(),
+        publisher: personRef(),
         mainEntityOfPage: {
             "@type": "WebPage",
             "@id": url,
         },
         isPartOf: {
             "@type": "Blog",
-            "@id": `${siteConfig.url}/blog`,
+            "@id": LD_IDS.blog,
         },
-        ...(revisedAt ? { dateModified: revisedAt } : {}),
         ...(tags && tags.length > 0 ? { keywords: tags.join(", ") } : {}),
         ...(typeof wordCount === "number" && wordCount > 0
             ? { wordCount }
@@ -241,14 +261,29 @@ export function buildBlog(profile: ProfileData | null = null) {
     return {
         "@context": "https://schema.org",
         "@type": "Blog",
+        "@id": LD_IDS.blog,
         name: `${siteConfig.author} — Writing`,
         url: `${siteConfig.url}/blog`,
         ...optional("description", getWritingDescription(profile)),
-        author: {
-            "@type": "Person",
-            name: siteConfig.author,
-            url: siteConfig.url,
-        },
+        author: personRef(),
+        isPartOf: { "@id": LD_IDS.website },
+    };
+}
+
+/**
+ * `/portfolio` as a schema.org CollectionPage: the node each project's
+ * `isPartOf` names.
+ */
+export function buildProjects(profile: ProfileData | null = null) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "@id": LD_IDS.projects,
+        name: `${siteConfig.author} — Projects`,
+        url: `${siteConfig.url}/portfolio`,
+        ...optional("description", profile?.projectsIntro?.trim()),
+        author: personRef(),
+        isPartOf: { "@id": LD_IDS.website },
     };
 }
 
@@ -268,9 +303,7 @@ export function buildContactPage(profile: ProfileData | null = null) {
             profile?.contactInvitation?.trim() || profile?.contactIntro?.trim(),
         ),
         about: {
-            "@type": "Person",
-            name: profile?.name || siteConfig.author,
-            url: siteConfig.url,
+            ...personRef(profile?.name || siteConfig.author),
             sameAs: buildSameAs(profile),
         },
     };
@@ -311,14 +344,10 @@ export function buildMission(
             ? { keywords: mission.technologies.join(", ") }
             : {}),
         ...(mission.revised ? { dateModified: mission.revised } : {}),
-        creator: {
-            "@type": "Person",
-            name: siteConfig.author,
-            url: siteConfig.url,
-        },
+        creator: personRef(),
         isPartOf: {
             "@type": "CollectionPage",
-            "@id": `${siteConfig.url}/portfolio`,
+            "@id": LD_IDS.projects,
         },
         ...(sameAs.length ? { sameAs } : {}),
     };

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import LogIndex from "@/components/blogs/log-index";
-import Hero, { preloadHeroPhoto } from "@/components/home/hero";
+import Hero from "@/components/home/hero";
 import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import MissionStage from "@/components/portfolio/mission-stage";
 import { ButtonLink } from "@/components/ui/button";
@@ -89,7 +89,6 @@ function Act({
  * starfield and Pause motion are the only islands.
  */
 export default async function Home() {
-    preloadHeroPhoto();
     const [profile, posts, projects] = await Promise.all([
         getProfile(),
         getAllPosts(),

@@ -223,9 +223,12 @@ export default function Journey({
                     cards[lastCard]?.contains(held)
                 )
                     rail[f.card]?.focus({ preventScroll: true });
+                // A card that leaves fades out, but is out of the Tab order
+                // (and the accessibility tree) at once.
                 cards.forEach((card, i) => {
                     if (i === f.card) card.dataset.on = "";
                     else delete card.dataset.on;
+                    card.inert = i !== f.card;
                 });
                 rail.forEach((button, i) => {
                     if (i < f.card) button.dataset.past = "";

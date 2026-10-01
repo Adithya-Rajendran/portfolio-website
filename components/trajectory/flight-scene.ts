@@ -1,7 +1,12 @@
 import { trajectoryCopy as copy } from "@/lib/copy";
 import type { Frame } from "@/lib/trajectory";
 import type { FlightGL } from "./flight-gl";
-import { firstMaps, flightMaps, requestMap } from "./flight-maps";
+import {
+    firstMaps,
+    flightMaps,
+    requestMap,
+    type MapImage,
+} from "./flight-maps";
 import type { Box } from "./flight-route";
 import type { CreateScene } from "./journey";
 import styles from "./flight.module.css";
@@ -12,7 +17,8 @@ import styles from "./flight.module.css";
  * with three.js). This part is small and synchronous: it picks the maps
  * for the screen and requests the ones the first frame needs, then
  * imports the renderer and three.js as one lazy chunk, so the page never
- * waits for WebGL and the maps arrive with it. Until the scene draws, and
+ * waits for WebGL and the maps arrive with it; without a WebGL2 context it
+ * does neither. Until the scene draws, and
  * without WebGL or while a lost context is away, the poster rendered with
  * the page (trajectory-view.tsx) shows: the canvas goes under it, and it
  * fades out as the canvas fades in.
@@ -56,47 +62,59 @@ export const createFlightScene: CreateScene = (host, data, route) => {
         };
     };
     let last: Frame | null = null;
+    // The context first: without WebGL2 nothing is fetched and the poster
+    // stays. The renderer draws on this canvas (one context per mount).
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("webgl2", {
+        antialias: true,
+        alpha: false,
+        stencil: false,
+        powerPreference: "default",
+    });
     // Phones and narrow windows take the smaller maps (flight-maps.ts).
     const maps = flightMaps(!window.matchMedia("(min-width: 960px)").matches);
-    const images = new Map(
-        firstMaps(maps, data.chapters.length).map((f) => [f, requestMap(f)]),
-    );
-    // Void's sky too (Flight Manual never shows it): the first frame waits
-    // for it, so its upload never lands mid-scroll.
-    if (document.documentElement.dataset.theme !== "manual")
-        images.set(maps.sky, requestMap(maps.sky));
+    const images = new Map<string, MapImage>();
+    if (context) {
+        for (const f of firstMaps(maps, data.chapters.length))
+            images.set(f, requestMap(f));
+        // Void's sky too (Flight Manual never shows it): the first frame
+        // waits for it, so its upload never lands mid-scroll.
+        if (document.documentElement.dataset.theme !== "manual")
+            images.set(maps.sky, requestMap(maps.sky));
 
-    import("./flight-gl")
-        .then(({ mountFlight }) => {
-            if (disposed) return;
-            gl = mountFlight(host, data, route, {
-                labels: layer,
-                scrim,
-                classes: {
-                    label: styles.label,
-                    name: styles.name,
-                    now: styles.now,
-                    target: styles.target,
-                    world: styles.world,
-                    leader: styles.leader,
-                },
-                openTo: copy.future,
-                maps,
-                images,
-                ready: () => {
-                    host.dataset.ready = "";
-                },
-                lost: () => {
-                    delete host.dataset.ready;
-                },
+        import("./flight-gl")
+            .then(({ mountFlight }) => {
+                if (disposed) return;
+                gl = mountFlight(host, data, route, {
+                    context,
+                    labels: layer,
+                    scrim,
+                    classes: {
+                        label: styles.label,
+                        name: styles.name,
+                        now: styles.now,
+                        target: styles.target,
+                        world: styles.world,
+                        leader: styles.leader,
+                    },
+                    openTo: copy.future,
+                    maps,
+                    images,
+                    ready: () => {
+                        host.dataset.ready = "";
+                    },
+                    lost: () => {
+                        delete host.dataset.ready;
+                    },
+                });
+                if (!gl) return;
+                if (size) gl.resize(...size);
+                if (last) gl.render(last);
+            })
+            .catch(() => {
+                // The chunk failed to load (offline): the poster stays.
             });
-            if (!gl) return;
-            if (size) gl.resize(...size);
-            if (last) gl.render(last);
-        })
-        .catch(() => {
-            // The chunk failed to load (offline): the poster stays.
-        });
+    }
 
     return {
         resize(width, height, wide) {
@@ -117,8 +135,15 @@ export const createFlightScene: CreateScene = (host, data, route) => {
         },
         dispose() {
             disposed = true;
-            gl?.dispose();
+            // The renderer frees its context; one it never took is let go.
+            if (gl) gl.dispose();
+            else context?.getExtension("WEBGL_lose_context")?.loseContext();
             gl = null;
+            // The decoded maps are let go at once, drawn or not.
+            for (const image of images.values())
+                image.then((bitmap) => {
+                    if (bitmap instanceof ImageBitmap) bitmap.close();
+                });
             images.clear();
             scrim.remove();
             layer.remove();

@@ -154,11 +154,19 @@ only live in comments or commit messages.
   nothing is checked and the
   default's box reads as chosen; then a module-level store pins the view
   in force, and a click switches it for the visit (no storage; a client
-  navigation back keeps it). Without JavaScript (no `data-motion`), on
-  paper and for a crawler the list shows: the CV is always in the HTML,
+  navigation back keeps it; a tap before hydration is kept, `pin` reads
+  the checked radio). Without JavaScript (no `data-motion`), on paper and
+  for a crawler (one that runs scripts too: `pin` gives a bot's user
+  agent the list) the list shows: the CV is always in the HTML,
   and the flight is never shown without JavaScript, so its chapters never
   repeat the CV. The flight's scene is built only while it is the view
-  (`Journey active`). "Skip to the list" (shown on focus, after the
+  (`Journey active`), and fetches nothing without a WebGL2 context
+  (`flight-scene.ts` makes the context first). Its maps decode off the
+  main thread into ImageBitmaps (`requestMap`, an `<img>` only where
+  createImageBitmap's options cannot be trusted) and upload one a frame;
+  its first programs compile and warm one part of the scene a task
+  (`compileFirst`), with nothing drawn until they are in, so no task
+  builds it all. A card that leaves is `inert` at once while it fades. "Skip to the list" (shown on focus, after the
   switch), "The full record" after the stage and a card's Full entry
   (`onEntry`, the chapter's row) show the list and move focus there.
   `/resume/trajectory`, the flight's old page, answers 308 to `/resume`
@@ -408,7 +416,11 @@ only live in comments or commit messages.
   version on every re-encode). The photograph is screen-blended over the
   starfield in Void; under it, and alone in Flight Manual and print, an
   SVG draws the limb from circles fitted to the photograph, in the same
-  cover crop, so the two stay aligned at every size. The starfield
+  cover crop, so the two stay aligned at every size. The photograph's
+  preload is a client component's `preload()` (`hero-preload.tsx`): a
+  server component's, or a `<link rel="preload">` it renders, rides the
+  RSC payload as a hint that a prefetch of home applies to whatever page
+  is open. The starfield
   (`components/sky/starfield.tsx`, the site's only ambient motion) is a
   seeded canvas over `StaticStars` (the site's only star layer: no page
   head, index or reading page carries stars, and Flight Manual none at
@@ -496,7 +508,10 @@ only live in comments or commit messages.
   when it links: once it gathers two entries
   (`linkedTags`/`TAG_LINK_MIN` in lib/tags.ts, `LogEntry.tagLinks`), on a
   row and in the sitemap, and never with a "#"; a one-entry tag's page
-  still answers. A tag page's h1 is the tag in words (`tagLabel`: "GPU
+  still answers, but asks not to be indexed (`robots` follows
+  `TAG_LINK_MIN`, as the sitemap does), and a tag with no entries is a
+  404 with the 404's head (`notFoundMetadata`, lib/site-metadata.ts, as a
+  missing post or project has). A tag page shares Writing's card. A tag page's h1 is the tag in words (`tagLabel`: "GPU
   computing"), with no dek or actions (the header's Writing leads back),
   and its rows leave that tag out.
 - **Heads and names** (contract §1, §6). Every section is named by its
@@ -532,14 +547,17 @@ only live in comments or commit messages.
   sheet and the 404's primary). Below 960px the header nav is a native
   `popover` sheet, so it opens without JavaScript (Baseline since 2024:
   there is no fallback link); `MenuButton` adds focus, `inert` and the
-  Tab loop. The sheet holds the five sections and the theme choice only
+  Tab loop (the brand, the button, then the sheet, as a browser tabs a
+  popover after its invoker, one stop for the theme choice; every Tab is
+  steered, so focus never leaves the header). The sheet holds the five sections and the theme choice only
   (the feed is on `/blog` and each entry's close); the bar beside it
   carries Contact and CV (`cvLink`, `/resume#cv`, the list itself, as
   home's CV), which from 960px the nav's Contact and Experience replace
   and which step aside while the sheet is open (its list carries both).
   The footer is one strip under its hairline: "© 2026 Adithya Rajendran
   · GitHub · LinkedIn", the colophon ("Built with Next.js, Sanity and
-  three.js · Source") and Pause motion (not on home), all in the label
+  three.js · Source", Source on a line of its own on phones, as GitHub ·
+  LinkedIn are) and Pause motion (not on home), all in the label
   voice but the colophon's sentence, which keeps its own case (capitals
   are for labels of four words or fewer); it repeats nothing the header carries (no
   patch, sections, CV, RSS, theme or Back to top). The body is a column
@@ -621,7 +639,8 @@ only live in comments or commit messages.
   `sanityFetch`: it queries the live API uncached, because right after
   `revalidateTag(…, "max")` the cached lists are still stale and would miss
   a post or project published a moment ago. A route that renders on every
-  request (`perRequest`, today the post share image) is never warmed. A new route goes into the table in
+  request (`perRequest`; none today: the post and project cards have
+  static params, so they prerender and are warmed) is never warmed. A new route goes into the table in
   the PR that adds it: `tests/lib/route-tags.test.ts` fails for a route file
   missing from the table or a path that differs from the build, and the
   e2e smoke spec requests every warmed URL. Redirect routes (`redirects`)

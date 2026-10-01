@@ -382,9 +382,10 @@
         .header-tools .theme-switch {
             display: none;
         }
+        /* The nav holds only the sheet (in the top layer when open):
+           out of the bar's flow, so no gap trails the Menu box. */
         .nav {
-            order: 3;
-            margin-inline-start: 0;
+            position: absolute;
         }
         .header-tools {
             margin-inline-start: auto;
@@ -792,13 +793,16 @@
         text-transform: none;
     }
     /* Phones: the name, then GitHub · LinkedIn on a line of their own
-       (without the dot that led them), then the colophon. */
+       (without the dot that led them), then the colophon's sentence and
+       its Source the same way, so the sentence is never cut into what
+       reads as a row of its own. */
     @media (max-width: 37.49rem) {
         .site-footer__strip {
             align-items: flex-start;
             flex-direction: column;
         }
-        .site-footer__own {
+        .site-footer__own,
+        .site-footer__colophon {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
@@ -1671,6 +1675,11 @@
         max-width: 60ch;
         font: 400 var(--step-1) / 1.5 var(--font-long);
         text-wrap: pretty;
+    }
+
+    /* A short hyphenated name kept on one line (components/ui/keep-whole.tsx). */
+    .keep-whole {
+        white-space: nowrap;
     }
 
     /* ===== Availability (components/ui/availability.tsx) ================ */

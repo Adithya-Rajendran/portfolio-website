@@ -24,6 +24,34 @@ describe("resolveLinkMark", () => {
         ).toEqual({ href: "https://example.com/a?b=c", external: true });
     });
 
+    it("opens a link to the site itself in place, by its path", () => {
+        expect(
+            resolveLinkMark({
+                href: "https://adithya-rajendran.com/blog/kubernetes-on-the-nvidia-dgx-spark",
+            }),
+        ).toEqual({
+            href: "/blog/kubernetes-on-the-nvidia-dgx-spark",
+            external: false,
+        });
+        expect(
+            resolveLinkMark({
+                href: "https://www.adithya-rajendran.com/portfolio/homelab?a=b#notes",
+            }),
+        ).toEqual({ href: "/portfolio/homelab?a=b#notes", external: false });
+        expect(
+            resolveLinkMark({ href: "https://adithya-rajendran.com" }),
+        ).toEqual({ href: "/", external: false });
+        // Another host that only starts with the site's name stays external.
+        expect(
+            resolveLinkMark({
+                href: "https://adithya-rajendran.com.evil.test/",
+            }),
+        ).toEqual({
+            href: "https://adithya-rajendran.com.evil.test/",
+            external: true,
+        });
+    });
+
     it("keeps site-relative paths and fragments internal", () => {
         expect(resolveLinkMark({ href: "/blog/my-homelab" })).toEqual({
             href: "/blog/my-homelab",

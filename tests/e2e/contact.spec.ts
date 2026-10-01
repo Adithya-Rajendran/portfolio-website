@@ -161,6 +161,11 @@ for (const width of [390, 960, 1440, 1920]) {
             page.getByRole("textbox", { name: form.messageLabel }),
             page.getByRole("button", { name: form.send }),
         ];
+        // Its name keeps the space before "(optional)".
+        if (await parts[0].count())
+            await expect(parts[0]).toHaveAccessibleName(
+                new RegExp(`^${form.topicLegend} \\(optional\\)$`, "i"),
+            );
         const boxes = [];
         for (const part of parts) {
             if (await part.count()) boxes.push((await part.boundingBox())!);

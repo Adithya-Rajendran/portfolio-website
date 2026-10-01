@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Fragment, type CSSProperties } from "react";
-import { preload } from "react-dom";
 import MotionToggle from "@/components/chrome/motion-toggle";
+import HeroPreload from "@/components/home/hero-preload";
 import StaticStars from "@/components/sky/static-stars";
 import Starfield from "@/components/sky/starfield";
 import { OpenToItems } from "@/components/ui/availability";
@@ -28,7 +28,8 @@ import styles from "./hero.module.css";
  * motion (nothing under the OS reduce-motion setting). The header's
  * wordmark steps aside while the hero's name shows below the header (the
  * starfield sets `html[data-hero]`). Everything is server-rendered;
- * the starfield and the motion control are the only islands.
+ * the starfield and the motion control are the only islands (with the
+ * photograph's preload, which draws nothing: components/home/hero-preload.tsx).
  */
 
 type Crop = "desktop" | "mobile";
@@ -48,21 +49,22 @@ function srcSet(crop: Crop, format: "avif" | "webp"): string {
 }
 
 /** One size of one format for the viewport in use, fetched early. */
-export function preloadHeroPhoto() {
-    for (const [crop, media] of [
+const PRELOADS = (
+    [
         ["desktop", DESKTOP],
         ["mobile", MOBILE],
-    ] as const) {
-        preload(sunrise[crop].sources.at(-1)!.avif, {
-            as: "image",
-            type: "image/avif",
-            media,
-            imageSrcSet: srcSet(crop, "avif"),
-            imageSizes: SIZES,
-            fetchPriority: "high",
-        });
-    }
-}
+    ] as const
+).map(([crop, media]) => ({
+    href: sunrise[crop].sources.at(-1)!.avif,
+    options: {
+        as: "image",
+        type: "image/avif",
+        media,
+        imageSrcSet: srcSet(crop, "avif"),
+        imageSizes: SIZES,
+        fetchPriority: "high",
+    } as const,
+}));
 
 /**
  * The limb drawn on the photograph's own geometry: the night side (which
@@ -184,6 +186,7 @@ export default function Hero({
                 <Starfield />
                 <StaticStars />
                 <div className={styles.photo}>
+                    <HeroPreload images={PRELOADS} />
                     <Alignment crop="desktop" />
                     <Alignment crop="mobile" />
                     <Photo />

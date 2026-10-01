@@ -105,25 +105,18 @@ describe("route table", () => {
         }
     });
 
-    it("never warms a route rendered on every request", () => {
-        // Not in the build's prerender manifest (`next build` marks it ƒ):
-        // a warm request would render it once for nobody.
-        expect(
-            ROUTE_TAGS.filter((route) => route.perRequest).map(
-                (route) => route.path,
-            ),
-        ).toEqual([
-            "/blog/[slug]/opengraph-image-fx5gi7",
-            "/portfolio/[slug]/opengraph-image-ysfoa1",
-        ]);
+    it("warms the entries' and projects' cards with their pages", () => {
+        // Each card has static params, so the build prerenders it (no
+        // route is rendered on every request): a change refreshes it.
+        expect(ROUTE_TAGS.filter((route) => route.perRequest)).toEqual([]);
         const warmed = (["profile", "post", "project"] as const).flatMap(
             (tag) => warmPaths(tag, LISTS).map(({ path }) => path),
         );
         expect(
-            warmed.some((path) =>
-                /\/opengraph-image-(fx5gi7|ysfoa1)/.test(path),
-            ),
-        ).toBe(false);
+            warmed.filter((path) =>
+                /\/opengraph-image-(fx5gi7|ysfoa1)$/.test(path),
+            ).length,
+        ).toBeGreaterThan(0);
     });
 
     it("never warms icons, robots, the API or the Studio", () => {
@@ -167,8 +160,11 @@ describe("warm lists", () => {
             "/about/opengraph-image-1ycygp",
             "/blog/post-a",
             "/blog/post-b",
+            "/blog/post-a/opengraph-image-fx5gi7",
+            "/blog/post-b/opengraph-image-fx5gi7",
             "/blog/tags/robotics",
             "/portfolio/homelab",
+            "/portfolio/homelab/opengraph-image-ysfoa1",
         ]);
     });
 
@@ -185,7 +181,10 @@ describe("warm lists", () => {
             "/about/opengraph-image-1ycygp",
             "/blog/post-a",
             "/blog/post-b",
+            "/blog/post-a/opengraph-image-fx5gi7",
+            "/blog/post-b/opengraph-image-fx5gi7",
             "/portfolio/homelab",
+            "/portfolio/homelab/opengraph-image-ysfoa1",
         ]);
     });
 
@@ -207,7 +206,10 @@ describe("warm lists", () => {
             "/contact/opengraph-image-upzrkl",
             "/blog/post-a",
             "/blog/post-b",
+            "/blog/post-a/opengraph-image-fx5gi7",
+            "/blog/post-b/opengraph-image-fx5gi7",
             "/portfolio/homelab",
+            "/portfolio/homelab/opengraph-image-ysfoa1",
             "/resume/view",
             "/resume/download",
         ]);

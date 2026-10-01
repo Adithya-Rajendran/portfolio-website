@@ -63,6 +63,42 @@ test("the menu sheet opens, traps nothing behind it and closes", async ({
     await expect(page.getByRole("main")).toHaveJSProperty("inert", false);
 });
 
+test("Tab and Shift+Tab loop inside the open menu sheet", async ({ page }) => {
+    await page.goto("/about");
+    const banner = page.getByRole("banner");
+    await banner.getByRole("button", { name: "Menu" }).click();
+    await expect(
+        banner.getByRole("link", {
+            name: primaryNavigation[0].plain,
+            exact: true,
+        }),
+    ).toBeFocused();
+    const where = () =>
+        page.evaluate(() => {
+            const active = document.activeElement;
+            if (!active || active === document.body) return "body";
+            if (!active.closest("header")) return "outside";
+            return active instanceof HTMLInputElement
+                ? `radio:${active.value}`
+                : (active.getAttribute("aria-label") ??
+                      active.textContent?.trim() ??
+                      "");
+        });
+    for (const key of ["Tab", "Shift+Tab"]) {
+        const seen = new Set<string>();
+        for (let i = 0; i < 10; i++) {
+            await page.keyboard.press(key);
+            seen.add(await where());
+        }
+        expect(seen).not.toContain("body");
+        expect(seen).not.toContain("outside");
+        for (const link of primaryNavigation)
+            expect(seen).toContain(link.plain);
+        expect(seen).toContain("Close");
+        expect([...seen].some((name) => name.startsWith("radio:"))).toBe(true);
+    }
+});
+
 test("the current section is marked in the nav", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/blog");

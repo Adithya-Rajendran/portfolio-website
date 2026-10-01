@@ -250,9 +250,12 @@ export default function ContactForm({
                     className={styles.topics}
                     legend={
                         <>
-                            {copy.topicLegend}{" "}
+                            {copy.topicLegend}
+                            {/* The space in the span's one text node: a
+                                legend's layout dropped a space-only node,
+                                and its name read "Topic(optional)". */}
                             <span className={styles.optional}>
-                                {copy.topicOptional}
+                                {` ${copy.topicOptional}`}
                             </span>
                         </>
                     }

@@ -192,6 +192,10 @@ test("a still flight opens on the latest chapter, the ask last on the rail", asy
     // Under reduced motion the list is the view; Timeline is the still.
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(PATH);
+    await expect(page.locator("[data-views]")).toHaveAttribute(
+        "data-view",
+        "list",
+    );
     await page
         .getByRole("group", { name: cvCopy.views.legend })
         .getByRole("radio", { name: "Timeline", exact: true })
@@ -218,6 +222,10 @@ for (const width of [360, 390]) {
         await page.setViewportSize({ width, height: 844 });
         await page.emulateMedia({ reducedMotion: "reduce" });
         await page.goto(PATH);
+        await expect(page.locator("[data-views]")).toHaveAttribute(
+            "data-view",
+            "list",
+        );
         await page
             .getByRole("group", { name: cvCopy.views.legend })
             .getByRole("radio", { name: "Timeline", exact: true })

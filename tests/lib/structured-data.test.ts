@@ -6,6 +6,8 @@ import {
     buildContactPage,
     buildPersonEntity,
     buildProfilePage,
+    buildProjects,
+    LD_IDS,
 } from "@/lib/structured-data";
 import { siteConfig, socialProfiles } from "@/lib/config";
 import type { CredentialListItem, ProfileData } from "@/lib/sanity-client";
@@ -208,6 +210,23 @@ describe("buildPersonEntity", () => {
     });
 });
 
+describe("the graph's ids", () => {
+    it("names the site's person, the site, the writing and the projects once each", () => {
+        expect(buildPersonEntity({ profile: null })["@id"]).toBe(
+            `${siteConfig.url}/#person`,
+        );
+        expect(buildProfilePage({ profile: null }).mainEntity["@id"]).toBe(
+            LD_IDS.person,
+        );
+        expect(buildBlog()["@id"]).toBe(`${siteConfig.url}/blog#blog`);
+        const projects = buildProjects();
+        expect(projects["@type"]).toBe("CollectionPage");
+        expect(projects["@id"]).toBe(`${siteConfig.url}/portfolio#collection`);
+        expect(projects.url).toBe(`${siteConfig.url}/portfolio`);
+        expect(new Set(Object.values(LD_IDS)).size).toBe(4);
+    });
+});
+
 describe("buildProfilePage", () => {
     it("maps Profile credentials and keeps lifetime credentials open-ended", () => {
         const profile = profileOf({
@@ -274,7 +293,7 @@ describe("buildBlogPosting", () => {
     });
 
     it("adds optional article metadata only when supplied", () => {
-        expect(buildBlogPosting(base)).not.toHaveProperty("dateModified");
+        expect(buildBlogPosting(base)).not.toHaveProperty("keywords");
         const post = buildBlogPosting({
             ...base,
             revisedAt: "2026-02-01",
@@ -286,10 +305,10 @@ describe("buildBlogPosting", () => {
         expect(post.wordCount).toBe(812);
     });
 
-    it("dates a modification only from a recorded revision", () => {
+    it("dates a modification from a recorded revision, else the publication", () => {
         expect(
-            buildBlogPosting({ ...base, revisedAt: null }),
-        ).not.toHaveProperty("dateModified");
+            buildBlogPosting({ ...base, revisedAt: null }).dateModified,
+        ).toBe(base.publishedAt);
     });
 
     it("names the share image at its built URL, or the cover when there is one", () => {
@@ -306,11 +325,12 @@ describe("buildBlogPosting", () => {
         ).toBe("https://cdn.sanity.io/images/x/y/cover.jpg");
     });
 
-    it("belongs to the blog", () => {
-        expect(buildBlogPosting(base).isPartOf).toEqual({
-            "@type": "Blog",
-            "@id": `${siteConfig.url}/blog`,
-        });
+    it("belongs to the blog, by the author the site names", () => {
+        const post = buildBlogPosting(base);
+        expect(post.isPartOf).toEqual({ "@type": "Blog", "@id": LD_IDS.blog });
+        expect(buildBlog()["@id"]).toBe(LD_IDS.blog);
+        expect(post.author["@id"]).toBe(LD_IDS.person);
+        expect(post.publisher["@id"]).toBe(LD_IDS.person);
     });
 
     it("omits empty tags and a zero word count", () => {
@@ -388,6 +408,7 @@ describe("buildContactPage", () => {
         expect(page.description).toBe("Working on robotic vision?");
         expect(page.about).toEqual({
             "@type": "Person",
+            "@id": LD_IDS.person,
             name: "Adithya Rajendran",
             url: siteConfig.url,
             sameAs: ["https://www.linkedin.com/in/adithya-rajendran"],

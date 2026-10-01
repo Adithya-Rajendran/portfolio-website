@@ -1,3 +1,6 @@
+import { siteConfig } from "@/lib/config";
+import { siteUrlOf } from "@/lib/cv";
+
 /**
  * Link annotations in Portable Text. The Studio writes `contentLink`
  * markDefs (sanity/schemas/objects/contentLink.ts); older documents may
@@ -26,7 +29,10 @@ const ALLOWED_PROTOCOLS = ["http:", "https:"];
  * - Site-relative paths (`/blog/x`) and fragments (`#section`) pass through.
  *   `//host` and `/\host` are protocol-relative in browsers, so they are not
  *   treated as site-relative.
- * - Absolute URLs must use http or https, and are external.
+ * - Absolute URLs must use http or https, and are external, except one to
+ *   the site itself (with or without www), which becomes its path and
+ *   opens in place. The feed resolves links on its own (lib/feed.ts), so
+ *   its links stay absolute.
  */
 export function resolveLinkMark(value: unknown): ResolvedLinkMark | null {
     const href =
@@ -44,6 +50,11 @@ export function resolveLinkMark(value: unknown): ResolvedLinkMark | null {
     try {
         const url = new URL(trimmed);
         if (!ALLOWED_PROTOCOLS.includes(url.protocol)) return null;
+        if (siteUrlOf(url.href, siteConfig.url))
+            return {
+                href: `${url.pathname}${url.search}${url.hash}`,
+                external: false,
+            };
         return { href: url.href, external: true };
     } catch {
         return null;

@@ -84,7 +84,12 @@ export default async function AboutPage() {
     return (
         <div data-page="about">
             <ProfilePageJsonLd />
-            <PageHead className="shell" tag={copy.themed} title={copy.plain} />
+            <PageHead
+                className="shell"
+                split
+                tag={copy.themed}
+                title={copy.plain}
+            />
 
             <div className="shell">
                 <CrewRecord profile={profile} className={styles.record} />

@@ -102,11 +102,13 @@ const nextConfig = {
                     },
                 ],
             },
-            // Cache static assets aggressively. This includes unhashed
-            // /public files, so every new or re-encoded public asset needs a
-            // versioned path (public/images/hero-sunrise-v1/…).
+            // Cache the public images for a year: every new or re-encoded
+            // one takes a versioned path (public/images/hero-sunrise-v1/…).
+            // Only that directory: a rule by extension also pinned a 404
+            // (an /apple-touch-icon.png probe) for a year. Next.js already
+            // serves /_next/static immutable.
             {
-                source: "/(.*)\\.(ico|png|jpg|jpeg|gif|webp|avif|svg|woff|woff2)",
+                source: "/images/:path*",
                 headers: [
                     {
                         key: "Cache-Control",
@@ -114,11 +116,10 @@ const nextConfig = {
                     },
                 ],
             },
-            // /favicon.ico has a fixed, unversioned URL, so the immutable
-            // rule above would pin a replaced favicon for a year. When two
-            // rules set the same key, the later one wins.
+            // The icons have fixed, unversioned URLs: a day, then checked,
+            // so a replaced icon is not pinned.
             {
-                source: "/favicon.ico",
+                source: "/:icon(favicon\\.ico|icon\\.svg|apple-icon\\.png)",
                 headers: [
                     {
                         key: "Cache-Control",
@@ -130,11 +131,27 @@ const nextConfig = {
     },
     async redirects() {
         return [
+            // One hop each: an empty :path* would send /blogs to /blog/,
+            // which the trailing-slash rule then sends on to /blog.
             {
-                source: "/blogs/:path*",
-                destination: "/blog/:path*",
+                source: "/blogs",
+                destination: "/blog",
                 permanent: true,
             },
+            {
+                source: "/blogs/:path+",
+                destination: "/blog/:path+",
+                permanent: true,
+            },
+            // The icon's usual guesses (iOS, link unfurlers).
+            ...[
+                "/apple-touch-icon.png",
+                "/apple-touch-icon-precomposed.png",
+            ].map((source) => ({
+                source,
+                destination: "/apple-icon.png",
+                permanent: true,
+            })),
             {
                 source: "/resume.pdf",
                 destination: "/resume/view",

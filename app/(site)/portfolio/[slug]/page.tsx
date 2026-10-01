@@ -4,6 +4,7 @@ import LogIndex from "@/components/blogs/log-index";
 import PostReader from "@/components/blogs/post-reader";
 import { BreadcrumbJsonLd, MissionJsonLd } from "@/components/json-ld";
 import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
+import KeepWhole from "@/components/ui/keep-whole";
 import ProjectEssay from "@/components/portfolio/project-essay";
 import CrumbRow from "@/components/ui/crumb-row";
 import DocSection from "@/components/ui/doc-section";
@@ -45,7 +46,7 @@ import {
     getPostsByProject,
     getProjectBySlug,
 } from "@/lib/sanity-client";
-import { shareImage } from "@/lib/site-metadata";
+import { notFoundMetadata, shareImage } from "@/lib/site-metadata";
 import styles from "./mission.module.css";
 
 export async function generateStaticParams() {
@@ -57,10 +58,10 @@ export async function generateMetadata({
     params,
 }: {
     params: Promise<{ slug: string }>;
-}): Promise<Metadata | undefined> {
+}): Promise<Metadata> {
     const { slug } = await params;
     const project = await getProjectBySlug(slug);
-    if (!project) return;
+    if (!project) return notFoundMetadata;
     const url = `${siteConfig.url}/portfolio/${slug}`;
     return {
         title: project.title,
@@ -292,7 +293,9 @@ export default async function ProjectPage({
             <MissionLine mission={mission} />
             <h1 className={styles.title}>{mission.title}</h1>
             {mission.summary ? (
-                <p className={styles.summary}>{mission.summary}</p>
+                <p className={styles.summary}>
+                    <KeepWhole text={mission.summary} />
+                </p>
             ) : null}
             {actions}
         </>
@@ -302,11 +305,15 @@ export default async function ProjectPage({
             {lines.length > 1 ? (
                 <ul className={styles.lines} role="list">
                     {lines.map((line) => (
-                        <li key={line}>{line}</li>
+                        <li key={line}>
+                            <KeepWhole text={line} />
+                        </li>
                     ))}
                 </ul>
             ) : lines.length ? (
-                <p className={styles.line}>{lines[0]}</p>
+                <p className={styles.line}>
+                    <KeepWhole text={lines[0]} />
+                </p>
             ) : null}
             <Specs className={styles.facts} items={facts} />
         </div>
@@ -390,7 +397,7 @@ export default async function ProjectPage({
                             <h1 className={styles.title}>{mission.title}</h1>
                             {mission.summary ? (
                                 <p className={styles.summary}>
-                                    {mission.summary}
+                                    <KeepWhole text={mission.summary} />
                                 </p>
                             ) : null}
                             {actions}
@@ -431,7 +438,7 @@ export default async function ProjectPage({
                                 items={brief.map(([key, text]) => ({
                                     id: key,
                                     term: copy.brief[key],
-                                    value: text.trim(),
+                                    value: <KeepWhole text={text.trim()} />,
                                 }))}
                             />
                         </DocSection>

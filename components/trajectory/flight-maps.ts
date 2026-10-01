@@ -83,9 +83,51 @@ export function firstMaps(maps: FlightMaps, count: number): string[] {
     return [...files];
 }
 
-/** Starts a map's download (its decode waits for `image.decode()`). */
-export function requestMap(file: string): HTMLImageElement {
+/** A map on its way: its pixels, ready to upload, or null if it failed. */
+export type MapImage = Promise<ImageBitmap | HTMLImageElement | null>;
+
+/** Whether createImageBitmap honours the options below: three.js's own
+ *  test (GLTFLoader: Safari from 17, Firefox from 98). */
+function bitmaps(): boolean {
+    if (typeof createImageBitmap === "undefined") return false;
+    const agent = navigator.userAgent;
+    const safari = /^((?!chrome|android).)*safari/i.test(agent)
+        ? Number(/Version\/(\d+)/.exec(agent)?.[1] ?? 0)
+        : null;
+    const firefox = /Firefox\/(\d+)\./.exec(agent);
+    if (safari !== null && safari < 17) return false;
+    return !firefox || Number(firefox[1]) >= 98;
+}
+
+/**
+ * Starts a map's download and its decode. The decode runs off the main
+ * thread into an ImageBitmap that is uploaded as it is: flipped for the
+ * UVs, its colours and alpha untouched (three.js's ImageBitmapLoader
+ * options, the same pixels an <img> gave with three's unpack settings).
+ * An <img>, which the upload decodes again on the main thread, only where
+ * a bitmap cannot be trusted with those options. Fetched at low priority,
+ * as an <img> off the page is.
+ */
+export function requestMap(file: string): MapImage {
+    const url = DIR + file;
+    if (bitmaps())
+        return fetch(url, { priority: "low" })
+            .then((response) =>
+                response.ok ? response.blob() : Promise.reject(),
+            )
+            .then((blob) =>
+                createImageBitmap(blob, {
+                    imageOrientation: "flipY",
+                    premultiplyAlpha: "none",
+                    colorSpaceConversion: "none",
+                }),
+            )
+            .catch(() => null);
     const image = new Image();
-    image.src = DIR + file;
-    return image;
+    image.src = url;
+    return image.decode().then(
+        () => image,
+        // A decode can be refused (memory) where the image loaded.
+        () => (image.complete && image.naturalWidth > 0 ? image : null),
+    );
 }

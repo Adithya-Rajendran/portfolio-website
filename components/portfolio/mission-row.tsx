@@ -5,6 +5,7 @@ import Plate from "@/components/ui/plate";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
+import KeepWhole from "@/components/ui/keep-whole";
 
 /**
  * A project as a compact row (contract §4's card rule): its status and
@@ -53,7 +54,9 @@ export default function MissionRow({
                 </Link>
             </Heading>
             {mission.summary ? (
-                <p className={styles.rowSummary}>{mission.summary}</p>
+                <p className={styles.rowSummary}>
+                    <KeepWhole text={mission.summary} />
+                </p>
             ) : null}
             <Icon name="arrow" className={styles.rowArrow} />
         </li>

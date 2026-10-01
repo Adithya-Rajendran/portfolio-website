@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { siteConfig } from "@/lib/config";
 import { homeCopy } from "@/lib/copy";
 import { availabilityLine, getProfileDescription } from "@/lib/profile-content";
@@ -11,6 +12,7 @@ export const OG_CONTENT_TYPE = "image/png" as const;
 /** The share images whose alt a page words itself. */
 type CardFile =
     | "app/(site)/opengraph-image.tsx"
+    | "app/(site)/blog/opengraph-image.tsx"
     | "app/(site)/blog/[slug]/opengraph-image.tsx"
     | "app/(site)/portfolio/[slug]/opengraph-image.tsx";
 
@@ -29,6 +31,17 @@ export function shareImage(file: CardFile, alt: string, slug?: string) {
         type: OG_CONTENT_TYPE,
     };
 }
+
+/**
+ * A missing post's, project's or tag's head: a page's metadata is decided
+ * before its body calls notFound(), and without this it would inherit the
+ * site layout's (home's canonical, "index, follow").
+ */
+export const notFoundMetadata = {
+    title: "Page not found",
+    robots: { index: false, follow: false },
+    alternates: { canonical: null },
+} satisfies Metadata;
 
 /**
  * The site's Open Graph fields: the site layout's, and home's with its
