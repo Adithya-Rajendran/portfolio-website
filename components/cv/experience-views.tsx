@@ -75,14 +75,34 @@ function inList(hash: string) {
     return document.getElementById(id)?.closest(`#${LIST}`) ? id : null;
 }
 
+/** A crawler that runs scripts (Google's renderer reports no reduce-motion
+ *  setting): it is given the list, like one that runs none. */
+const CRAWLER = /bot|crawl|spider|slurp|Google-InspectionTool/i;
+
+/** The view a tap chose before the page ran: the switch shows from the
+ *  boot script's `data-js`, and hydration keeps the radio it checked. */
+function picked(): View | undefined {
+    const value = document.querySelector<HTMLInputElement>(
+        '[data-views] input[name="cv-view"]:checked',
+    )?.value;
+    return value === "timeline" || value === "list" ? value : undefined;
+}
+
 /** On arrival: the list when the address names a part of it (the CV
  *  link, a Full entry opened in a new tab, an old /portfolio fragment),
- *  whatever view the visit picked; else the view picked, else the CSS's
- *  default: the list when motion is off, the flight otherwise. */
+ *  whatever view the visit picked; else the view picked (a tap before
+ *  hydration included), else the CSS's default: the list when motion is
+ *  off or for a crawler, the flight otherwise. */
 function pin() {
     const id = inList(window.location.hash);
     if (id) showList(id);
-    else if (!view) setView(motionAllowed() ? "timeline" : "list");
+    else if (!view)
+        setView(
+            picked() ??
+                (motionAllowed() && !CRAWLER.test(navigator.userAgent)
+                    ? "timeline"
+                    : "list"),
+        );
 }
 
 /** A link on this page, outside the views, to a part of the list (the
@@ -108,7 +128,8 @@ function follow(event: MouseEvent) {
  * `children`, under a Timeline · List switch. The default is decided in
  * CSS before the first paint from the attributes the boot script sets:
  * the flight where motion runs, the list otherwise (and without
- * JavaScript, on paper and for a crawler: the CV is always in the HTML).
+ * JavaScript, on paper and for a crawler, which `pin` gives the list
+ * whether or not it runs scripts: the CV is always in the HTML).
  * A click switches views for the visit; under reduced motion the flight
  * is its still. The flight's scene is built only while it is the view.
  */

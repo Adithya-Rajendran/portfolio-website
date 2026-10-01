@@ -88,6 +88,28 @@ test("the head offers the CV and the views in the first viewport, and leaves Con
     ).toHaveCount(0);
 });
 
+test.describe("for a crawler that runs scripts", () => {
+    test.use({
+        userAgent:
+            "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.7390.122 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+        viewport: { width: 412, height: 732 },
+    });
+
+    test("the list is the view and the flight is never built", async ({
+        page,
+    }) => {
+        await page.goto("/resume");
+        await expect(page.locator("[data-views]")).toHaveAttribute(
+            "data-view",
+            "list",
+        );
+        await expect(option(page, "List")).toBeChecked();
+        await expect(experience(page)).toBeVisible();
+        await expect(page.locator("[data-journey]")).toBeHidden();
+        await expect(page.locator("[data-scene] > canvas")).toHaveCount(0);
+    });
+});
+
 test("the views switch in place and hold for the visit", async ({ page }) => {
     await page.goto("/resume");
     await expect(option(page, "Timeline")).toBeChecked();

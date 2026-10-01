@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import LossOfSignal from "@/components/los/loss-of-signal";
 import NotFoundActions from "@/components/los/not-found-actions";
 import { lossOfSignalCopy as copy } from "@/lib/copy";
+import { notFoundMetadata } from "@/lib/site-metadata";
 
-export const metadata: Metadata = {
-    title: "Page not found",
-    robots: { index: false, follow: false },
-    alternates: { canonical: null },
-};
+export const metadata: Metadata = notFoundMetadata;
 
 /**
  * notFound() inside a public page renders here, inside the site chrome.

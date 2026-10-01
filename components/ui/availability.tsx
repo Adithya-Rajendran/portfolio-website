@@ -5,10 +5,12 @@ import { Status } from "@/components/ui/marks";
  * opportunities in 2028"), each kept whole, for a `.open-to` line. The dot
  * before an opening sits in the gap, so where the line wraps it falls at
  * the line's start and is clipped: a wrapped line reads as a list, with no
- * dot left at either end (styles/components.css).
+ * dot left at either end (styles/components.css). Any list of parts reads
+ * the same way (the CV's skills, About's focus): `text` is then the parts.
  */
-export function OpenToItems({ text }: { text: string }) {
-    return text.split(" · ").map((item, index) => (
+export function OpenToItems({ text }: { text: string | readonly string[] }) {
+    const items = typeof text === "string" ? text.split(" · ") : text;
+    return items.map((item, index) => (
         <span className="open-to__item" key={`${item}-${index}`}>
             {index ? <span className="open-to__sep"> · </span> : null}
             {item}

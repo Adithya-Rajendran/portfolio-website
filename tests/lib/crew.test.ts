@@ -175,17 +175,18 @@ describe("crewRecord", () => {
             ["previously", 6],
             ["links", 12],
         ]);
-        expect(
-            crewRecord({
-                ...FIXTURE_PROFILE,
-                focusAreas: ["Robotic vision", "Robotics & AI"],
-            }).map((cell) => [cell.id, cell.span]),
-        ).toEqual([
+        const focused = crewRecord({
+            ...FIXTURE_PROFILE,
+            focusAreas: ["Robotic vision", "Robotics & AI"],
+        });
+        expect(focused.map((cell) => [cell.id, cell.span])).toEqual([
             ["studying", 6],
             ["previously", 6],
             ["focus", 6],
             ["links", 6],
         ]);
+        // The focus in whole parts too.
+        expect(focused[2].parts).toEqual(["Robotic vision", "Robotics & AI"]);
         // The facts in whole parts, so a wrapped line never ends on a dot.
         expect(cells[0]).toMatchObject({
             facts: [

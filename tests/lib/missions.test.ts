@@ -754,12 +754,13 @@ describe("buildMission", () => {
             dateModified: "2026-09-28",
             creator: {
                 "@type": "Person",
+                "@id": `${SITE}/#person`,
                 name: "Adithya Rajendran",
                 url: SITE,
             },
             isPartOf: {
                 "@type": "CollectionPage",
-                "@id": `${SITE}/portfolio`,
+                "@id": `${SITE}/portfolio#collection`,
             },
             sameAs: ["https://github.com/owner/repo"],
         });

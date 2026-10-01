@@ -19,6 +19,7 @@ import {
 } from "@/lib/headings";
 import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
 import { formatEntryDate, logEntries } from "@/lib/log-index";
+import { originalEntries } from "@/lib/missions";
 import { siteRoutes } from "@/lib/navigation";
 import { getProfileLink } from "@/lib/profile-content";
 import FigurePlate from "@/components/prose/figure-plate";
@@ -38,7 +39,7 @@ import {
     getProfile,
 } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
-import { shareImage } from "@/lib/site-metadata";
+import { notFoundMetadata, shareImage } from "@/lib/site-metadata";
 import { TAG_PATTERN } from "@/lib/tags";
 import { readingTimeFromWordCount } from "@/components/blogs/utils";
 
@@ -127,7 +128,17 @@ export default async function BlogPostPage({
         post.wordCount > 0 ? readingTimeFromWordCount(post.wordCount) : null;
     const tags = (post.tags ?? []).filter((tag) => TAG_PATTERN.test(tag));
     const linkedIn = getProfileLink(profile, "linkedin");
-    const missions = (post.projectIds ?? [])
+    // The projects the entry names, then those that name it as their
+    // write-up (a project's link to it), as each project's page does.
+    const originals = originalEntries(projects, posts, entries, siteConfig.url);
+    const missions = [
+        ...new Set([
+            ...(post.projectIds ?? []),
+            ...projects
+                .filter((project) => originals.get(project._id)?.slug === slug)
+                .map((project) => project._id),
+        ]),
+    ]
         .map((id) => projects.find((project) => project._id === id))
         .filter((project) => project !== undefined);
     const { previous, next } = adjacentEntries(entries, slug);
@@ -243,12 +254,10 @@ export async function generateMetadata({
     params,
 }: {
     params: Promise<{ slug: string }>;
-}): Promise<Metadata | undefined> {
+}): Promise<Metadata> {
     const { slug } = await params;
     const post = await getPostMeta(slug);
-    if (!post) {
-        return;
-    }
+    if (!post) return notFoundMetadata;
     const url = `${siteConfig.url}/blog/${slug}`;
     return {
         title: post.title,
@@ -262,7 +271,8 @@ export async function generateMetadata({
             publishedTime: post.publishedAt,
             ...(post.revisedAt ? { modifiedTime: post.revisedAt } : {}),
             ...(post.tags && post.tags.length > 0 ? { tags: post.tags } : {}),
-            authors: [siteConfig.author],
+            // A profile's address, as Open Graph asks: About.
+            authors: [`${siteConfig.url}${siteRoutes.about}`],
             url,
             images: [
                 shareImage(

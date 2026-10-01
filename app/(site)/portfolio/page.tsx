@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ProjectsJsonLd } from "@/components/json-ld";
 import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import MissionStage from "@/components/portfolio/mission-stage";
 import MissionTile, { MissionTiles } from "@/components/portfolio/mission-tile";
@@ -89,6 +90,7 @@ export default async function Portfolio() {
 
     return (
         <div data-page="missions">
+            <ProjectsJsonLd />
             <PageHead
                 className="shell"
                 split

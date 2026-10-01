@@ -13,6 +13,8 @@ import {
     buildMission,
     buildPersonEntity,
     buildProfilePage,
+    buildProjects,
+    LD_IDS,
     type BlogPostingInput,
 } from "@/lib/structured-data";
 
@@ -64,13 +66,11 @@ export async function WebSiteJsonLd() {
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "WebSite",
+        "@id": LD_IDS.website,
         name: siteConfig.author,
         url: siteConfig.url,
         ...(description ? { description } : {}),
-        author: {
-            "@type": "Person",
-            name: siteConfig.author,
-        },
+        author: { "@id": LD_IDS.person },
     };
 
     return (
@@ -116,6 +116,18 @@ export async function BlogJsonLd() {
         <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: safeJsonLd(buildBlog(profile)) }}
+        />
+    );
+}
+
+export async function ProjectsJsonLd() {
+    const profile = await getProfile();
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+                __html: safeJsonLd(buildProjects(profile)),
+            }}
         />
     );
 }

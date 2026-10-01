@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Metadata, Viewport } from "next";
+import { preload } from "react-dom";
 import SiteShell from "@/components/chrome/site-shell";
 import ThemeBootScript from "@/components/chrome/theme-boot-script";
 import LossOfSignal from "@/components/los/loss-of-signal";
@@ -10,7 +13,7 @@ import { fontVariables } from "@/lib/fonts";
 export const metadata: Metadata = {
     metadataBase: new URL(siteConfig.url),
     title: `Page not found | ${siteConfig.author}`,
-    robots: { index: false, follow: false },
+    // No robots: Next.js already sets noindex on a 404.
 };
 
 export const viewport: Viewport = {
@@ -18,6 +21,38 @@ export const viewport: Viewport = {
     initialScale: 1,
     maximumScale: 5,
 };
+
+/**
+ * The font files every other page preloads (lib/fonts.ts). Next.js looks
+ * a layout's fonts up by its file, and its font manifest lists this
+ * document under the not-found route's page instead, so it preloads none
+ * here and the title re-wrapped when the faces swapped in. Read from the
+ * build's manifest (the prerender runs after it is written); none when it
+ * cannot be read.
+ */
+function preloadedFonts(): string[] {
+    try {
+        const manifest = JSON.parse(
+            readFileSync(
+                join(
+                    process.cwd(),
+                    ".next",
+                    "server",
+                    "next-font-manifest.json",
+                ),
+                "utf8",
+            ),
+        ) as { app?: Record<string, string[]> };
+        const entry = Object.entries(manifest.app ?? {}).find(([page]) =>
+            page.endsWith("app/_not-found/page"),
+        );
+        return (entry?.[1] ?? []).filter((file) => file.endsWith(".woff2"));
+    } catch {
+        return [];
+    }
+}
+
+const FONTS = preloadedFonts();
 
 /**
  * Unmatched URLs (experimental.globalNotFound, next.config.mjs). Next.js
@@ -28,6 +63,12 @@ export const viewport: Viewport = {
  * Signal page is the same one app/(site)/not-found.tsx renders.
  */
 export default function GlobalNotFound() {
+    for (const file of FONTS)
+        preload(`/_next/${file}`, {
+            as: "font",
+            type: "font/woff2",
+            crossOrigin: "",
+        });
     return (
         <html
             lang="en"

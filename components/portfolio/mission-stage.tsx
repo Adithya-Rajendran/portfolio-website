@@ -10,6 +10,7 @@ import { missionsCopy as copy } from "@/lib/copy";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
+import KeepWhole from "@/components/ui/keep-whole";
 
 /**
  * The flagship (contract §4 and §9): the mission's line (status, dates),
@@ -62,7 +63,9 @@ export default function MissionStage({
                     </Link>
                 </Heading>
                 {mission.summary ? (
-                    <p className={styles.stageSummary}>{mission.summary}</p>
+                    <p className={styles.stageSummary}>
+                        <KeepWhole text={mission.summary} />
+                    </p>
                 ) : null}
                 <MissionStack
                     items={mission.technologies}

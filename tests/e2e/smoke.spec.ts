@@ -128,6 +128,16 @@ test.describe("pages", () => {
             await expectHealthyPage(page, pageErrors, path, 404);
             await expect(page.getByRole("banner")).toBeVisible();
             await expect(page.getByRole("contentinfo")).toBeVisible();
+            // The 404's own head: never home's canonical, never indexable.
+            await expect(page).toHaveTitle(/^Page not found\b/);
+            await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+            const robots = await page
+                .locator('meta[name="robots"]')
+                .evaluateAll((tags) =>
+                    tags.map((tag) => tag.getAttribute("content")),
+                );
+            expect(robots.length, path).toBeGreaterThan(0);
+            for (const content of robots) expect(content).toMatch(/noindex/);
 
             // The one action follows the missed address; then the trace and
             // the report, and nothing else to choose from (the nav is the
@@ -306,13 +316,27 @@ test.describe("routes and headers", () => {
         expect(csp).toContain("frame-ancestors 'none'");
         expect(csp).toContain("object-src 'none'");
 
-        const favicon = await request.get("/favicon.ico");
-        expect(favicon.headers()["cache-control"]).toContain("max-age=86400");
+        // The icons' URLs are fixed: a day, never a year.
+        for (const icon of ["/favicon.ico", "/icon.svg", "/apple-icon.png"]) {
+            const response = await request.get(icon);
+            expect(response.headers()["cache-control"], icon).toContain(
+                "max-age=86400",
+            );
+        }
+        // A missing image is never cached for a year.
+        const missing = await request.get("/no-such-image-e2e.jpg");
+        expect(missing.status()).toBe(404);
+        expect(missing.headers()["cache-control"] ?? "").not.toContain(
+            "immutable",
+        );
     });
 
     test("legacy URLs redirect permanently", async ({ request, baseURL }) => {
         const redirects: [from: string, to: string][] = [
             ["/blogs/e2e-legacy-post", "/blog/e2e-legacy-post"],
+            // In one hop, not by way of /blog/.
+            ["/blogs", "/blog"],
+            ["/apple-touch-icon.png", "/apple-icon.png"],
             ["/resume.pdf", "/resume/view"],
             ["/comms", "/contact"],
             // The flight is /resume's Timeline view.

@@ -115,12 +115,11 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         expand: "post",
     },
     {
-        // No static params of its own, so Next.js renders it per request.
+        // Prerendered per published post (its own static params).
         path: "/blog/[slug]/opengraph-image-fx5gi7",
         file: "app/(site)/blog/[slug]/opengraph-image.tsx",
         tags: [post, project, profile],
         expand: "post",
-        perRequest: true,
     },
     {
         path: "/blog/tags/[tag]",
@@ -135,12 +134,11 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         expand: "project",
     },
     {
-        // Like a post's card: rendered per request.
+        // Like a post's card: prerendered per published project.
         path: "/portfolio/[slug]/opengraph-image-ysfoa1",
         file: "app/(site)/portfolio/[slug]/opengraph-image.tsx",
         tags: [project, post, profile],
         expand: "project",
-        perRequest: true,
     },
 
     // The résumé PDF links: redirects to the current file.

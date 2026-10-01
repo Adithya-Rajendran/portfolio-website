@@ -7,6 +7,7 @@ import {
     Group,
     InstancedBufferAttribute,
     type InterleavedBufferAttribute,
+    Light,
     Mesh,
     MeshLambertMaterial,
     MeshPhongMaterial,
@@ -78,7 +79,12 @@ import {
     type World,
     type WorldKind,
 } from "./flight-route";
-import { NIGHT_WINDOW, requestMap, type FlightMaps } from "./flight-maps";
+import {
+    NIGHT_WINDOW,
+    requestMap,
+    type FlightMaps,
+    type MapImage,
+} from "./flight-maps";
 import { SUN_LIFT } from "./flight-opening";
 
 /**
@@ -109,6 +115,9 @@ export interface FlightGL {
 }
 
 export interface FlightHooks {
+    /** The WebGL2 context to draw with, on its own canvas (the scene
+     *  makes it before it fetches anything). */
+    context: WebGL2RenderingContext;
     /** The layer the HTML labels go in, and their classes. */
     labels: HTMLElement;
     /** The scrim under the record, whose ramp follows the record's column
@@ -127,7 +136,7 @@ export interface FlightHooks {
     /** The maps this screen loads (flight-maps.ts), and those already
      *  requested, by file. */
     maps: FlightMaps;
-    images: Map<string, HTMLImageElement>;
+    images: Map<string, MapImage>;
     /** The first frame is on screen with its textures (or without them),
      *  or is back after a lost context. */
     ready(): void;
@@ -368,14 +377,8 @@ export function mountFlight(
     route: Route,
     hooks: FlightHooks,
 ): FlightGL | null {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("webgl2", {
-        antialias: true,
-        alpha: false,
-        stencil: false,
-        powerPreference: "default",
-    });
-    if (!context) return null;
+    const context = hooks.context;
+    const canvas = context.canvas as HTMLCanvasElement;
     let renderer: WebGLRenderer;
     try {
         renderer = new WebGLRenderer({ canvas, context, antialias: true });
@@ -413,38 +416,54 @@ export function mountFlight(
     // uploads it (at once, not when its world first shows) and never
     // changes a shader. The scene picked the files and requested the first
     // frame's already (flight-maps.ts); each is decoded off the main
-    // thread before it is uploaded. The canvas shows once the maps are in
-    // (in Void the sky's too, so its large upload never lands mid-scroll),
-    // or after a few seconds without them. Their images stay, so a
+    // thread, and the uploads go one a frame, so no task takes several.
+    // The canvas shows once the maps are in (in Void the sky's too, so its
+    // large upload never lands mid-scroll) and the programs are compiled,
+    // or after a few seconds without the maps. Their images stay, so a
     // restored context uploads them again.
     const maps = hooks.maps;
+    // Asked once, before the GPU has work queued: the answer waits on it.
+    const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     let pending = 0;
     let revealed = false;
+    /** The maps are in, or the wait for them is over. */
+    let waited = false;
+    /** The first programs are compiling (compileFirst): nothing is drawn
+     *  until they are in, so no draw waits on them. */
+    let compiling = true;
     const reveal = () => {
-        if (revealed || disposed) return;
+        waited = true;
+        if (revealed || disposed || compiling) return;
         revealed = true;
         // A context lost before the reveal shows the scene on its return.
         if (!lost) hooks.ready();
     };
     const revealTimer = window.setTimeout(reveal, 4000);
+    const uploads: (() => void)[] = [];
+    let uploadFrame = 0;
+    const nextUpload = () => {
+        uploadFrame = 0;
+        if (disposed) return;
+        uploads.shift()?.();
+        if (uploads.length) uploadFrame = requestAnimationFrame(nextUpload);
+    };
     const load = (
         file: string,
         colour = true,
         waits = true,
         then?: () => void,
     ) => {
-        const image = hooks.images.get(file) ?? requestMap(file);
-        const texture = new Texture(image);
+        const texture = new Texture();
         texture.colorSpace = colour ? SRGBColorSpace : NoColorSpace;
-        texture.anisotropy = Math.min(
-            8,
-            renderer.capabilities.getMaxAnisotropy(),
-        );
+        texture.anisotropy = anisotropy;
         textures.push(texture);
         if (waits) pending++;
-        const done = (ok: boolean) => {
+        // Set on the texture at its turn, not on arrival: a draw in
+        // between would upload it in that frame.
+        const done = (image: ImageBitmap | HTMLImageElement | null) => {
             if (disposed) return;
-            if (ok) {
+            if (image) {
+                texture.image = image;
                 texture.needsUpdate = true;
                 if (!lost) renderer.initTexture(texture);
                 then?.();
@@ -454,11 +473,14 @@ export function mountFlight(
             warm();
             reveal();
         };
-        image.decode().then(
-            () => done(true),
-            // A decode can be refused (memory) where the image loaded.
-            () => done(image.complete && image.naturalWidth > 0),
-        );
+        (hooks.images.get(file) ?? requestMap(file)).then((image) => {
+            if (disposed) {
+                if (image instanceof ImageBitmap) image.close();
+                return;
+            }
+            uploads.push(() => done(image));
+            if (!uploadFrame) uploadFrame = requestAnimationFrame(nextUpload);
+        });
         return texture;
     };
 
@@ -898,18 +920,21 @@ export function mountFlight(
         accent: new Color(),
         light: false,
     };
-    /** Draws every object once into a single pixel, so each program,
-     *  texture and pipeline the GPU builds on first use is ready before
-     *  its object first shows mid-scroll (once the maps are in, and for
-     *  each theme). */
-    const warm = () => {
-        if (lost) return;
+    /** Draws every object (or the scene's part `only`, with the lights)
+     *  once into a single pixel, none culled, so each program, texture and
+     *  pipeline the GPU builds on first use is ready before its object
+     *  first shows mid-scroll. */
+    const drawOnce = (only?: Object3D) => {
         const kept: [Object3D, boolean, boolean][] = [];
         scene.traverse((o) => {
             kept.push([o, o.visible, o.frustumCulled]);
             o.visible = true;
             o.frustumCulled = false;
         });
+        if (only)
+            for (const part of scene.children)
+                if (part !== only && !(part instanceof Light))
+                    part.visible = false;
         renderer.setScissorTest(true);
         renderer.setScissor(0, 0, 1, 1);
         renderer.render(scene, camera);
@@ -918,6 +943,45 @@ export function mountFlight(
             o.visible = visible;
             o.frustumCulled = culled;
         }
+    };
+    /** Warms every object: once the maps are in, and for each theme. */
+    const warm = () => {
+        if (!lost && !compiling) drawOnce();
+    };
+    /** The first programs, one part of the scene a task: each part's
+     *  compiled (in parallel where the browser can,
+     *  KHR_parallel_shader_compile), then each drawn once, so neither
+     *  the mount nor the first frame does it all at once. Nothing is
+     *  drawn meanwhile; after a few seconds the rest is left to the
+     *  first frame. */
+    let staging = false;
+    const compileFirst = async () => {
+        staging = true;
+        const parts = scene.children.filter((part) => !(part instanceof Light));
+        const turn = () => new Promise((resolve) => setTimeout(resolve));
+        const compiled: Promise<unknown>[] = [];
+        // Without the extension compileAsync only waits (and warns).
+        const parallel = renderer.extensions.has("KHR_parallel_shader_compile");
+        for (const part of parts) {
+            await turn();
+            if (disposed) return;
+            if (lost) continue;
+            if (parallel)
+                compiled.push(renderer.compileAsync(part, camera, scene));
+            else renderer.compile(part, camera, scene);
+        }
+        await Promise.race([
+            Promise.all(compiled),
+            new Promise((resolve) => setTimeout(resolve, 3000)),
+        ]);
+        for (const part of parts) {
+            await turn();
+            if (disposed) return;
+            if (!lost) drawOnce(part);
+        }
+        compiling = false;
+        if (last) draw(last);
+        if (waited) reveal();
     };
     const applyTheme = () => {
         const css = getComputedStyle(root);
@@ -1009,8 +1073,13 @@ export function mountFlight(
             plannedOrbit.material.opacity = light ? 0.7 : 0.6;
         }
         // Every program for this theme (and its tone map), compiled now
-        // rather than when its object first shows mid-scroll.
+        // rather than when its object first shows mid-scroll; the first
+        // ones a part at a time (compileFirst).
         if (lost) return;
+        if (compiling) {
+            if (!staging) void compileFirst();
+            return;
+        }
         renderer.compile(scene, camera);
         warm();
     };
@@ -1509,7 +1578,7 @@ export function mountFlight(
             kind === "plan" ? smoothstep(0.45, 0.65, pose.overview) : 0,
         );
 
-        renderer.render(scene, camera);
+        if (!compiling) renderer.render(scene, camera);
     }
 
     /** The last layout, as a key: a resize that changes none of it
@@ -1647,6 +1716,7 @@ export function mountFlight(
         dispose() {
             disposed = true;
             window.clearTimeout(revealTimer);
+            cancelAnimationFrame(uploadFrame);
             themeWatch.disconnect();
             ratioQuery?.removeEventListener("change", onRatio);
             canvas.removeEventListener("webglcontextlost", onLost);
@@ -1667,6 +1737,8 @@ export function mountFlight(
                 for (const t of textures) t.dispose();
                 renderer.dispose();
             }
+            for (const t of textures)
+                if (t.image instanceof ImageBitmap) t.image.close();
             if (!renderer.getContext().isContextLost())
                 renderer.forceContextLoss();
             canvas.remove();

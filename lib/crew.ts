@@ -147,6 +147,8 @@ export interface RecordCell {
     /** A title's long parenthetical as its own quiet line ("Promoted
      *  from …", `splitTitle`), as on /resume. */
     note?: string | null;
+    /** The value as a list of parts, each kept whole (the focus). */
+    parts?: string[];
     links?: { label: string; url: string; host: string }[];
     span: number;
     spanSm: 1 | 2;
@@ -205,7 +207,13 @@ export function crewRecord(profile: ProfileData | null): RecordCell[] {
     ];
     const second: Omit<RecordCell, "span" | "spanSm">[] = [
         ...(focus.length
-            ? [{ id: "focus" as const, value: focus.join(" · ") }]
+            ? [
+                  {
+                      id: "focus" as const,
+                      value: focus.join(" · "),
+                      parts: focus,
+                  },
+              ]
             : []),
         ...(links.length ? [{ id: "links" as const, value: "", links }] : []),
     ];

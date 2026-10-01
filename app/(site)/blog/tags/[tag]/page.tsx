@@ -7,7 +7,12 @@ import { logCopy } from "@/lib/copy";
 import { feedAlternates } from "@/lib/feed";
 import { entriesTagged, logEntries } from "@/lib/log-index";
 import { getAllPosts } from "@/lib/sanity-client";
-import { collectTags, TAG_PATTERN, tagLabel } from "@/lib/tags";
+import {
+    notFoundMetadata,
+    shareImage,
+    siteOpenGraph,
+} from "@/lib/site-metadata";
+import { collectTags, TAG_LINK_MIN, TAG_PATTERN, tagLabel } from "@/lib/tags";
 import styles from "../../log.module.css";
 
 /**
@@ -94,29 +99,40 @@ export async function generateMetadata({
     params,
 }: {
     params: Promise<{ tag: string }>;
-}): Promise<Metadata | undefined> {
+}): Promise<Metadata> {
     const { tag } = await params;
-    if (!TAG_PATTERN.test(tag)) {
-        return;
-    }
+    if (!TAG_PATTERN.test(tag)) return notFoundMetadata;
+    const count = entriesTagged(logEntries(await getAllPosts()), tag).length;
+    if (count === 0) return notFoundMetadata;
     const description = copy.description(tagLabel(tag));
     const title = `${tagLabel(tag)} · ${logCopy.plain}`;
+    const url = `${siteConfig.url}/blog/tags/${tag}`;
     return {
         title,
         description,
-        alternates: feedAlternates(`${siteConfig.url}/blog/tags/${tag}`),
+        alternates: feedAlternates(url),
+        // A page's openGraph replaces its parent's whole: the site's
+        // fields again, and Writing's card.
         openGraph: {
+            ...siteOpenGraph(null),
             title: `${title} | ${siteConfig.author}`,
             description,
-            url: `${siteConfig.url}/blog/tags/${tag}`,
+            url,
+            images: [
+                shareImage(
+                    "app/(site)/blog/opengraph-image.tsx",
+                    `${logCopy.plain} — ${siteConfig.author}`,
+                ),
+            ],
         },
         twitter: {
             card: "summary_large_image",
             title: `${title} | ${siteConfig.author}`,
             description,
         },
+        // Indexed only where the site links it (and the sitemap lists it).
         robots: {
-            index: true,
+            index: count >= TAG_LINK_MIN,
             follow: true,
         },
     };

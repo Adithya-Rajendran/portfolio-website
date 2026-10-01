@@ -12,8 +12,9 @@ const FOCUSABLE =
  * (`popovertarget`), so it opens, closes and light-dismisses without
  * JavaScript. With it, this island adds what a dialog needs: the label
  * says Close while open, focus moves to the first link, the page behind
- * the sheet is inert and does not scroll, Tab stays inside the header,
- * choosing a link closes the sheet, and focus returns to the button.
+ * the sheet is inert and does not scroll, Tab loops through the brand,
+ * the button and the sheet, choosing a link closes the sheet, and focus
+ * returns to the button.
  */
 export default function MenuButton({ panelId }: { panelId: string }) {
     // null until the first toggle, so the server HTML claims no state.
@@ -58,21 +59,47 @@ export default function MenuButton({ panelId }: { panelId: string }) {
         const onClick = (event: MouseEvent) => {
             if ((event.target as Element | null)?.closest("a[href]")) hide();
         };
+        // The loop in the order a browser tabs an open popover: the brand,
+        // the button, then the sheet (right after its invoker), with one
+        // stop per radio group (its checked radio, else its first). Every
+        // Tab is steered, so focus never leaves the header whatever order
+        // the browser would take.
+        const brand = header.querySelector<HTMLElement>(".brand");
+        const stop = (element: Element | null) => {
+            if (!(element instanceof HTMLInputElement)) return element;
+            if (element.type !== "radio") return element;
+            const group = [
+                ...panel.querySelectorAll<HTMLInputElement>(
+                    `input[type="radio"][name="${CSS.escape(element.name)}"]`,
+                ),
+            ];
+            return group.find((radio) => radio.checked) ?? group[0] ?? element;
+        };
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key !== "Tab" || !isOpen()) return;
             const items = [
-                ...header.querySelectorAll<HTMLElement>(FOCUSABLE),
-            ].filter((element) => element.offsetParent !== null);
+                ...new Set(
+                    [
+                        brand,
+                        button,
+                        ...panel.querySelectorAll<HTMLElement>(FOCUSABLE),
+                    ]
+                        .filter(
+                            (element): element is HTMLElement =>
+                                !!element &&
+                                element.getClientRects().length > 0,
+                        )
+                        .map((element) => stop(element) as HTMLElement),
+                ),
+            ];
             if (!items.length) return;
-            const first = items[0];
-            const last = items[items.length - 1];
-            if (event.shiftKey && document.activeElement === first) {
-                event.preventDefault();
-                last.focus();
-            } else if (!event.shiftKey && document.activeElement === last) {
-                event.preventDefault();
-                first.focus();
-            }
+            const at = items.indexOf(
+                stop(document.activeElement) as HTMLElement,
+            );
+            const step = event.shiftKey ? -1 : 1;
+            const from = at < 0 ? (event.shiftKey ? 0 : -1) : at;
+            event.preventDefault();
+            items[(from + step + items.length) % items.length].focus();
         };
         const onResize = () => {
             if (window.innerWidth >= 960) hide();

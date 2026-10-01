@@ -12,7 +12,8 @@ const DOT = " · ";
  * The footer (contract §6): one strip under its hairline. The copyright,
  * the one place the footer names the owner, with GitHub and LinkedIn; the
  * colophon (how the site is made, a sentence, so in sentence case, then
- * its source); and Pause motion (on
+ * its source, on a line of its own on phones, so the sentence never
+ * breaks into what reads as a row); and Pause motion (on
  * home the hero carries it, beside the starfield). The sections, CV and
  * the theme are the header's, on screen whenever the footer is. No date:
  * a revision belongs to the document it revises (a mission file, the
@@ -62,7 +63,9 @@ export default async function Footer() {
                     <span className="site-footer__made">
                         {chromeCopy.colophon}
                     </span>
-                    <span aria-hidden="true">{DOT}</span>
+                    <span className="site-footer__lead" aria-hidden="true">
+                        {DOT}
+                    </span>
                     <a
                         href={siteConfig.source}
                         target="_blank"

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { CvItem, CvList } from "@/components/cv/cv-list";
 import ExperienceViews from "@/components/cv/experience-views";
-import Availability from "@/components/ui/availability";
+import Availability, { OpenToItems } from "@/components/ui/availability";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { LinkArrow, Rev } from "@/components/ui/marks";
@@ -424,7 +424,12 @@ export default async function ResumePage() {
                         items={skills.map((group) => ({
                             id: group._key,
                             term: group.title,
-                            value: group.skills.join(" · "),
+                            // Each skill kept whole: no line ends on a dot.
+                            value: (
+                                <span className="open-to">
+                                    <OpenToItems text={group.skills} />
+                                </span>
+                            ),
                         }))}
                     />
                 </CvSection>

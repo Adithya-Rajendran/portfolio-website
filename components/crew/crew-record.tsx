@@ -57,6 +57,11 @@ export default function CrewRecord({
                     </a>
                 ))}
             </span>
+        ) : cell.parts ? (
+            // Each part kept whole, so no line ends on a dot.
+            <span className="open-to">
+                <OpenToItems text={cell.parts} />
+            </span>
         ) : (
             cell.value
         ),

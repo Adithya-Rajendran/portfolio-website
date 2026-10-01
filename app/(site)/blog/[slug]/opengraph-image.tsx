@@ -4,7 +4,7 @@ import { siteConfig } from "@/lib/config";
 import { postCopy as copy } from "@/lib/copy";
 import { formatEntryDate } from "@/lib/log-index";
 import { OG_CARD_FONTS, OG_CONTENT_TYPE, OG_SIZE, OgCard } from "@/lib/og-card";
-import { getPostMeta } from "@/lib/sanity-client";
+import { getAllSlugs, getPostMeta } from "@/lib/sanity-client";
 
 export const alt = `${copy.plain} — ${siteConfig.author}`;
 export const size = OG_SIZE;
@@ -18,6 +18,13 @@ function standfirst(text: string | null | undefined, max = 170): string {
     if (value.length <= max) return value;
     const cut = value.slice(0, max);
     return `${cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,;:.—–-]+$/, "")}…`;
+}
+
+/** A card per published entry, prerendered and refreshed with the entry
+ *  (lib/route-tags.ts), as the entry's page is. */
+export async function generateStaticParams() {
+    const slugs = await getAllSlugs();
+    return (slugs.length ? slugs : ["placeholder"]).map((slug) => ({ slug }));
 }
 
 /**
