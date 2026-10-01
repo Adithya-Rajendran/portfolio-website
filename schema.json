@@ -1,5 +1,28 @@
 [
   {
+    "type": "type",
+    "name": "burn",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "label": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": false
+        },
+        "note": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        }
+      }
+    }
+  },
+  {
     "name": "mediaEmbed",
     "type": "type",
     "value": {
@@ -193,6 +216,10 @@
               {
                 "type": "string",
                 "value": "warning"
+              },
+              {
+                "type": "string",
+                "value": "caution"
               }
             ]
           },
@@ -331,6 +358,180 @@
             }
           },
           "optional": false
+        }
+      }
+    }
+  },
+  {
+    "name": "contactRoute",
+    "type": "type",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "contactRoute"
+          }
+        },
+        "title": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "prompt": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        }
+      }
+    }
+  },
+  {
+    "type": "type",
+    "name": "project.reference",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_ref": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          }
+        },
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "reference"
+          }
+        },
+        "_weak": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "boolean"
+          },
+          "optional": true
+        }
+      },
+      "dereferencesTo": "project"
+    }
+  },
+  {
+    "name": "talkOrPaper",
+    "type": "type",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "talkOrPaper"
+          }
+        },
+        "title": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": false
+        },
+        "kind": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "talk"
+              },
+              {
+                "type": "string",
+                "value": "paper"
+              },
+              {
+                "type": "string",
+                "value": "preprint"
+              },
+              {
+                "type": "string",
+                "value": "poster"
+              },
+              {
+                "type": "string",
+                "value": "thesis"
+              },
+              {
+                "type": "string",
+                "value": "report"
+              }
+            ]
+          },
+          "optional": false
+        },
+        "venue": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "date": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "authors": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "links": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "array",
+            "of": {
+              "type": "object",
+              "attributes": {
+                "_key": {
+                  "type": "objectAttribute",
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              },
+              "rest": {
+                "type": "inline",
+                "name": "externalLink"
+              }
+            }
+          },
+          "optional": true
+        },
+        "abstract": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "project": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "inline",
+            "name": "project.reference"
+          },
+          "optional": true
         }
       }
     }
@@ -531,6 +732,53 @@
           },
           "optional": false
         },
+        "orgShort": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "orgUrl": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "employment": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "full-time"
+              },
+              {
+                "type": "string",
+                "value": "internship"
+              },
+              {
+                "type": "string",
+                "value": "part-time"
+              },
+              {
+                "type": "string",
+                "value": "contract"
+              },
+              {
+                "type": "string",
+                "value": "degree"
+              },
+              {
+                "type": "string",
+                "value": "research"
+              }
+            ]
+          },
+          "optional": true
+        },
         "location": {
           "type": "objectAttribute",
           "value": {
@@ -552,6 +800,23 @@
           },
           "optional": true
         },
+        "startPrecision": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "month"
+              },
+              {
+                "type": "string",
+                "value": "year"
+              }
+            ]
+          },
+          "optional": true
+        },
         "endDate": {
           "type": "objectAttribute",
           "value": {
@@ -559,10 +824,35 @@
           },
           "optional": true
         },
+        "endPrecision": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "month"
+              },
+              {
+                "type": "string",
+                "value": "year"
+              }
+            ]
+          },
+          "optional": true
+        },
         "expectedEndYear": {
           "type": "objectAttribute",
           "value": {
             "type": "number"
+          },
+          "optional": true
+        },
+        "burn": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "inline",
+            "name": "burn"
           },
           "optional": true
         },
@@ -651,6 +941,36 @@
     }
   },
   {
+    "type": "type",
+    "name": "post.reference",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_ref": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          }
+        },
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "reference"
+          }
+        },
+        "_weak": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "boolean"
+          },
+          "optional": true
+        }
+      },
+      "dereferencesTo": "post"
+    }
+  },
+  {
     "name": "curiosity",
     "type": "type",
     "value": {
@@ -662,6 +982,31 @@
             "type": "string",
             "value": "curiosity"
           }
+        },
+        "kind": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "question"
+              },
+              {
+                "type": "string",
+                "value": "building"
+              },
+              {
+                "type": "string",
+                "value": "reading"
+              },
+              {
+                "type": "string",
+                "value": "learning"
+              }
+            ]
+          },
+          "optional": true
         },
         "title": {
           "type": "objectAttribute",
@@ -681,6 +1026,22 @@
           "type": "objectAttribute",
           "value": {
             "type": "string"
+          },
+          "optional": true
+        },
+        "project": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "inline",
+            "name": "project.reference"
+          },
+          "optional": true
+        },
+        "post": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "inline",
+            "name": "post.reference"
           },
           "optional": true
         }
@@ -708,6 +1069,74 @@
           "optional": false
         },
         "url": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          },
+          "optional": false
+        },
+        "kind": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "repo"
+              },
+              {
+                "type": "string",
+                "value": "docs"
+              },
+              {
+                "type": "string",
+                "value": "paper"
+              },
+              {
+                "type": "string",
+                "value": "video"
+              },
+              {
+                "type": "string",
+                "value": "dataset"
+              },
+              {
+                "type": "string",
+                "value": "demo"
+              },
+              {
+                "type": "string",
+                "value": "article"
+              },
+              {
+                "type": "string",
+                "value": "profile"
+              },
+              {
+                "type": "string",
+                "value": "other"
+              }
+            ]
+          },
+          "optional": true
+        }
+      }
+    }
+  },
+  {
+    "name": "footnote",
+    "type": "type",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "footnote"
+          }
+        },
+        "text": {
           "type": "objectAttribute",
           "value": {
             "type": "string"
@@ -849,19 +1278,39 @@
                 "value": {
                   "type": "array",
                   "of": {
-                    "type": "object",
-                    "attributes": {
-                      "_key": {
-                        "type": "objectAttribute",
-                        "value": {
-                          "type": "string"
+                    "type": "union",
+                    "of": [
+                      {
+                        "type": "object",
+                        "attributes": {
+                          "_key": {
+                            "type": "objectAttribute",
+                            "value": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "rest": {
+                          "type": "inline",
+                          "name": "contentLink"
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "attributes": {
+                          "_key": {
+                            "type": "objectAttribute",
+                            "value": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "rest": {
+                          "type": "inline",
+                          "name": "footnote"
                         }
                       }
-                    },
-                    "rest": {
-                      "type": "inline",
-                      "name": "contentLink"
-                    }
+                    ]
                   }
                 },
                 "optional": true
@@ -938,6 +1387,59 @@
                 "type": "objectAttribute",
                 "value": {
                   "type": "string"
+                },
+                "optional": true
+              },
+              "credit": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": true
+              },
+              "kind": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "union",
+                  "of": [
+                    {
+                      "type": "string",
+                      "value": "photo"
+                    },
+                    {
+                      "type": "string",
+                      "value": "diagram"
+                    },
+                    {
+                      "type": "string",
+                      "value": "plot"
+                    },
+                    {
+                      "type": "string",
+                      "value": "screenshot"
+                    }
+                  ]
+                },
+                "optional": true
+              },
+              "width": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "union",
+                  "of": [
+                    {
+                      "type": "string",
+                      "value": "prose"
+                    },
+                    {
+                      "type": "string",
+                      "value": "wide"
+                    },
+                    {
+                      "type": "string",
+                      "value": "full"
+                    }
+                  ]
                 },
                 "optional": true
               },
@@ -1026,6 +1528,36 @@
     }
   },
   {
+    "type": "type",
+    "name": "sanity.fileAsset.reference",
+    "value": {
+      "type": "object",
+      "attributes": {
+        "_ref": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string"
+          }
+        },
+        "_type": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "string",
+            "value": "reference"
+          }
+        },
+        "_weak": {
+          "type": "objectAttribute",
+          "value": {
+            "type": "boolean"
+          },
+          "optional": true
+        }
+      },
+      "dereferencesTo": "sanity.fileAsset"
+    }
+  },
+  {
     "name": "project",
     "type": "document",
     "attributes": {
@@ -1060,12 +1592,26 @@
           "type": "string"
         }
       },
+      "designation": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": false
+      },
       "title": {
         "type": "objectAttribute",
         "value": {
           "type": "string"
         },
         "optional": false
+      },
+      "name": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
       },
       "slug": {
         "type": "objectAttribute",
@@ -1082,64 +1628,54 @@
         },
         "optional": false
       },
-      "status": {
+      "types": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "union",
+            "of": [
+              {
+                "type": "string",
+                "value": "research"
+              },
+              {
+                "type": "string",
+                "value": "hardware"
+              },
+              {
+                "type": "string",
+                "value": "software"
+              },
+              {
+                "type": "string",
+                "value": "infrastructure"
+              }
+            ]
+          }
+        },
+        "optional": false
+      },
+      "featured": {
         "type": "objectAttribute",
         "value": {
           "type": "union",
           "of": [
             {
-              "type": "string",
-              "value": "active"
+              "type": "number",
+              "value": 1
             },
             {
-              "type": "string",
-              "value": "completed"
+              "type": "number",
+              "value": 2
             },
             {
-              "type": "string",
-              "value": "paused"
-            },
-            {
-              "type": "string",
-              "value": "archived"
+              "type": "number",
+              "value": 3
             }
           ]
         },
-        "optional": false
-      },
-      "startDate": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
-        },
         "optional": true
-      },
-      "endDate": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "string"
-        },
-        "optional": true
-      },
-      "technologies": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "array",
-          "of": {
-            "type": "string"
-          }
-        },
-        "optional": false
-      },
-      "highlights": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "array",
-          "of": {
-            "type": "string"
-          }
-        },
-        "optional": false
       },
       "cover": {
         "type": "objectAttribute",
@@ -1202,6 +1738,209 @@
         },
         "optional": true
       },
+      "coverPortrait": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "asset": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "sanity.imageAsset.reference"
+              },
+              "optional": true
+            },
+            "media": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "unknown"
+              },
+              "optional": true
+            },
+            "hotspot": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "sanity.imageHotspot"
+              },
+              "optional": true
+            },
+            "crop": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "sanity.imageCrop"
+              },
+              "optional": true
+            },
+            "alt": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": false
+            },
+            "_type": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string",
+                "value": "image"
+              }
+            }
+          }
+        },
+        "optional": true
+      },
+      "status": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "union",
+          "of": [
+            {
+              "type": "string",
+              "value": "active"
+            },
+            {
+              "type": "string",
+              "value": "completed"
+            },
+            {
+              "type": "string",
+              "value": "paused"
+            },
+            {
+              "type": "string",
+              "value": "archived"
+            },
+            {
+              "type": "string",
+              "value": "planned"
+            },
+            {
+              "type": "string",
+              "value": "stopped"
+            }
+          ]
+        },
+        "optional": false
+      },
+      "statusNote": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "myRole": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "startDate": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "endDate": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "datePrecision": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "union",
+          "of": [
+            {
+              "type": "string",
+              "value": "month"
+            },
+            {
+              "type": "string",
+              "value": "year"
+            }
+          ]
+        },
+        "optional": true
+      },
+      "datesApproximate": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "boolean"
+        },
+        "optional": true
+      },
+      "technologies": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "string"
+          }
+        },
+        "optional": false
+      },
+      "highlights": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "string"
+          }
+        },
+        "optional": false
+      },
+      "parameters": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "label": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "value": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "_type": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string",
+                  "value": "parameter"
+                }
+              }
+            },
+            "rest": {
+              "type": "object",
+              "attributes": {
+                "_key": {
+                  "type": "objectAttribute",
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "optional": true
+      },
       "links": {
         "type": "objectAttribute",
         "value": {
@@ -1219,6 +1958,445 @@
             "rest": {
               "type": "inline",
               "name": "externalLink"
+            }
+          }
+        },
+        "optional": true
+      },
+      "brief": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "problem": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "approach": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "outcome": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            }
+          }
+        },
+        "optional": true
+      },
+      "results": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "metric": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "value": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "note": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": true
+              },
+              "_type": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string",
+                  "value": "result"
+                }
+              }
+            },
+            "rest": {
+              "type": "object",
+              "attributes": {
+                "_key": {
+                  "type": "objectAttribute",
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "optional": true
+      },
+      "lessons": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "string"
+          }
+        },
+        "optional": true
+      },
+      "next": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "string"
+          }
+        },
+        "optional": true
+      },
+      "model": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "kind": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "union",
+                "of": [
+                  {
+                    "type": "string",
+                    "value": "procedural"
+                  },
+                  {
+                    "type": "string",
+                    "value": "gltf"
+                  }
+                ]
+              },
+              "optional": false
+            },
+            "procedural": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "union",
+                "of": [
+                  {
+                    "type": "string",
+                    "value": "homelab-rack"
+                  }
+                ]
+              },
+              "optional": true
+            },
+            "file": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "object",
+                "attributes": {
+                  "asset": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "inline",
+                      "name": "sanity.fileAsset.reference"
+                    },
+                    "optional": true
+                  },
+                  "media": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "unknown"
+                    },
+                    "optional": true
+                  },
+                  "_type": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "string",
+                      "value": "file"
+                    }
+                  }
+                }
+              },
+              "optional": true
+            },
+            "poster": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "object",
+                "attributes": {
+                  "asset": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "inline",
+                      "name": "sanity.imageAsset.reference"
+                    },
+                    "optional": true
+                  },
+                  "media": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "unknown"
+                    },
+                    "optional": true
+                  },
+                  "hotspot": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "inline",
+                      "name": "sanity.imageHotspot"
+                    },
+                    "optional": true
+                  },
+                  "crop": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "inline",
+                      "name": "sanity.imageCrop"
+                    },
+                    "optional": true
+                  },
+                  "alt": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "string"
+                    },
+                    "optional": false
+                  },
+                  "_type": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "string",
+                      "value": "image"
+                    }
+                  }
+                }
+              },
+              "optional": false
+            },
+            "title": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "alt": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": false
+            },
+            "realWorld": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "object",
+                "attributes": {
+                  "dimension": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "union",
+                      "of": [
+                        {
+                          "type": "string",
+                          "value": "height"
+                        },
+                        {
+                          "type": "string",
+                          "value": "width"
+                        },
+                        {
+                          "type": "string",
+                          "value": "depth"
+                        },
+                        {
+                          "type": "string",
+                          "value": "reach"
+                        }
+                      ]
+                    },
+                    "optional": false
+                  },
+                  "value": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "number"
+                    },
+                    "optional": false
+                  },
+                  "unit": {
+                    "type": "objectAttribute",
+                    "value": {
+                      "type": "union",
+                      "of": [
+                        {
+                          "type": "string",
+                          "value": "mm"
+                        },
+                        {
+                          "type": "string",
+                          "value": "cm"
+                        },
+                        {
+                          "type": "string",
+                          "value": "in"
+                        },
+                        {
+                          "type": "string",
+                          "value": "U"
+                        }
+                      ]
+                    },
+                    "optional": false
+                  }
+                }
+              },
+              "optional": true
+            },
+            "hotspots": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "array",
+                "of": {
+                  "type": "object",
+                  "attributes": {
+                    "label": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    },
+                    "title": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    },
+                    "body": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string"
+                      },
+                      "optional": true
+                    },
+                    "part": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "union",
+                        "of": [
+                          {
+                            "type": "string",
+                            "value": "tier0"
+                          },
+                          {
+                            "type": "string",
+                            "value": "network"
+                          },
+                          {
+                            "type": "string",
+                            "value": "ms01"
+                          },
+                          {
+                            "type": "string",
+                            "value": "ascent"
+                          },
+                          {
+                            "type": "string",
+                            "value": "power"
+                          }
+                        ]
+                      },
+                      "optional": true
+                    },
+                    "position": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "object",
+                        "attributes": {
+                          "x": {
+                            "type": "objectAttribute",
+                            "value": {
+                              "type": "number"
+                            },
+                            "optional": false
+                          },
+                          "y": {
+                            "type": "objectAttribute",
+                            "value": {
+                              "type": "number"
+                            },
+                            "optional": false
+                          },
+                          "z": {
+                            "type": "objectAttribute",
+                            "value": {
+                              "type": "number"
+                            },
+                            "optional": false
+                          }
+                        }
+                      },
+                      "optional": true
+                    },
+                    "anchor": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "object",
+                        "attributes": {
+                          "heading": {
+                            "type": "objectAttribute",
+                            "value": {
+                              "type": "string"
+                            },
+                            "optional": false
+                          },
+                          "post": {
+                            "type": "objectAttribute",
+                            "value": {
+                              "type": "inline",
+                              "name": "post.reference"
+                            },
+                            "optional": true
+                          }
+                        }
+                      },
+                      "optional": true
+                    },
+                    "_type": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string",
+                        "value": "hotspot"
+                      }
+                    }
+                  },
+                  "rest": {
+                    "type": "object",
+                    "attributes": {
+                      "_key": {
+                        "type": "objectAttribute",
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "optional": true
             }
           }
         },
@@ -1353,66 +2531,6 @@
     }
   },
   {
-    "type": "type",
-    "name": "post.reference",
-    "value": {
-      "type": "object",
-      "attributes": {
-        "_ref": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "string"
-          }
-        },
-        "_type": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "string",
-            "value": "reference"
-          }
-        },
-        "_weak": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "boolean"
-          },
-          "optional": true
-        }
-      },
-      "dereferencesTo": "post"
-    }
-  },
-  {
-    "type": "type",
-    "name": "sanity.fileAsset.reference",
-    "value": {
-      "type": "object",
-      "attributes": {
-        "_ref": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "string"
-          }
-        },
-        "_type": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "string",
-            "value": "reference"
-          }
-        },
-        "_weak": {
-          "type": "objectAttribute",
-          "value": {
-            "type": "boolean"
-          },
-          "optional": true
-        }
-      },
-      "dereferencesTo": "sanity.fileAsset"
-    }
-  },
-  {
     "name": "profile",
     "type": "document",
     "attributes": {
@@ -1461,12 +2579,165 @@
         },
         "optional": false
       },
+      "tagline": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
       "introduction": {
         "type": "objectAttribute",
         "value": {
           "type": "string"
         },
         "optional": false
+      },
+      "availability": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "status": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "union",
+                "of": [
+                  {
+                    "type": "string",
+                    "value": "open"
+                  },
+                  {
+                    "type": "string",
+                    "value": "selective"
+                  },
+                  {
+                    "type": "string",
+                    "value": "closed"
+                  }
+                ]
+              },
+              "optional": false
+            },
+            "seeking": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "array",
+                "of": {
+                  "type": "object",
+                  "attributes": {
+                    "label": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string"
+                      },
+                      "optional": false
+                    },
+                    "_type": {
+                      "type": "objectAttribute",
+                      "value": {
+                        "type": "string",
+                        "value": "opening"
+                      }
+                    }
+                  },
+                  "rest": {
+                    "type": "object",
+                    "attributes": {
+                      "_key": {
+                        "type": "objectAttribute",
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "optional": true
+            },
+            "openTo": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "from": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "cta": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "consultingOpen": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "boolean"
+              },
+              "optional": true
+            },
+            "updatedAt": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            }
+          }
+        },
+        "optional": true
+      },
+      "launch": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "date": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": false
+            },
+            "precision": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "union",
+                "of": [
+                  {
+                    "type": "string",
+                    "value": "day"
+                  },
+                  {
+                    "type": "string",
+                    "value": "month"
+                  },
+                  {
+                    "type": "string",
+                    "value": "year"
+                  }
+                ]
+              },
+              "optional": true
+            },
+            "event": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": false
+            }
+          }
+        },
+        "optional": true
       },
       "focusAreas": {
         "type": "objectAttribute",
@@ -1499,6 +2770,61 @@
         },
         "optional": true
       },
+      "projectsIntro": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "contactIntro": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "contactRoutes": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "hiring": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "contactRoute"
+              },
+              "optional": true
+            },
+            "research": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "contactRoute"
+              },
+              "optional": true
+            },
+            "consulting": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "contactRoute"
+              },
+              "optional": true
+            },
+            "hello": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "contactRoute"
+              },
+              "optional": true
+            }
+          }
+        },
+        "optional": true
+      },
       "seoDescription": {
         "type": "objectAttribute",
         "value": {
@@ -1511,6 +2837,28 @@
         "value": {
           "type": "inline",
           "name": "post.reference"
+        },
+        "optional": true
+      },
+      "startHere": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "_key": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "rest": {
+              "type": "inline",
+              "name": "post.reference"
+            }
+          }
         },
         "optional": true
       },
@@ -1736,6 +3084,28 @@
           }
         },
         "optional": true
+      },
+      "talksAndPapers": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "_key": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "rest": {
+              "type": "inline",
+              "name": "talkOrPaper"
+            }
+          }
+        },
+        "optional": true
       }
     }
   },
@@ -1803,12 +3173,195 @@
         },
         "optional": false
       },
+      "revisedAt": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "changelog": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "date": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "kind": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "union",
+                  "of": [
+                    {
+                      "type": "string",
+                      "value": "update"
+                    },
+                    {
+                      "type": "string",
+                      "value": "correction"
+                    }
+                  ]
+                },
+                "optional": false
+              },
+              "note": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": false
+              },
+              "_type": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string",
+                  "value": "postChange"
+                }
+              }
+            },
+            "rest": {
+              "type": "object",
+              "attributes": {
+                "_key": {
+                  "type": "objectAttribute",
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "optional": true
+      },
       "tags": {
         "type": "objectAttribute",
         "value": {
           "type": "array",
           "of": {
             "type": "string"
+          }
+        },
+        "optional": true
+      },
+      "cover": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "asset": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "sanity.imageAsset.reference"
+              },
+              "optional": true
+            },
+            "media": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "unknown"
+              },
+              "optional": true
+            },
+            "hotspot": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "sanity.imageHotspot"
+              },
+              "optional": true
+            },
+            "crop": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "inline",
+                "name": "sanity.imageCrop"
+              },
+              "optional": true
+            },
+            "alt": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": false
+            },
+            "caption": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "credit": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "kind": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "union",
+                "of": [
+                  {
+                    "type": "string",
+                    "value": "photo"
+                  },
+                  {
+                    "type": "string",
+                    "value": "diagram"
+                  },
+                  {
+                    "type": "string",
+                    "value": "plot"
+                  },
+                  {
+                    "type": "string",
+                    "value": "screenshot"
+                  }
+                ]
+              },
+              "optional": true
+            },
+            "_type": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string",
+                "value": "image"
+              }
+            }
+          }
+        },
+        "optional": true
+      },
+      "projects": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "_key": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "rest": {
+              "type": "inline",
+              "name": "project.reference"
+            }
           }
         },
         "optional": true

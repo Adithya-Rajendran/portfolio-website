@@ -1,0 +1,117 @@
+/*
+ * The contact form: the topics, the counter, the send row, a send that
+ * did not go and "Message received.". The fields and the topics'
+ * segmented control are shared (.field, .input, .textarea and .seg in
+ * styles/components.css). Ported from the mockup's contact.css "Form" and
+ * "Success".
+ */
+/* Fields 24px apart: with the page head's two-line intro, the whole form
+   still fits the first viewport at 1440 × 900. The topics lead, as in the
+   source, so the page reads in the order Tab takes: on phones above the
+   fields, from 960px in the left-hand columns beside them, the fields
+   under the head's intro (its columns 7–12; 1–7 with no topics). */
+.form {
+    display: grid;
+    gap: var(--s-5);
+    max-width: 46rem;
+}
+@media (min-width: 60rem) {
+    .form {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        column-gap: var(--gutter);
+        align-items: start;
+        max-width: none;
+    }
+    .form > * {
+        grid-column: 1 / span 7;
+    }
+    .form:has(> .topics) > * {
+        grid-column: 7 / -1;
+    }
+    .form > .topics {
+        grid-row: 1 / span 3;
+        grid-column: 1 / span 5;
+    }
+}
+
+/* ---- Topic: the routes, one per line, each with the owner's line ------ */
+.topics {
+    width: 100%;
+}
+.topics :global(.seg__opt) {
+    flex: 1 1 100%;
+}
+.topics :global(.seg__opt + .seg__opt) {
+    margin-top: -1px;
+    margin-left: 0;
+}
+.optional {
+    color: var(--ink-3);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* ---- Message ----------------------------------------------------------- */
+.fieldRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-2) var(--s-4);
+}
+/* Shown only near the limit, in ink: its appearing is the signal. */
+.count {
+    color: var(--ink-1);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-3) var(--s-5);
+}
+.actions [aria-busy="true"] {
+    cursor: progress;
+}
+
+/* ---- A send that did not go: under Send, the ways on ------------------- */
+.failure {
+    display: grid;
+    gap: var(--s-2);
+    padding: var(--s-3) var(--s-4);
+    border-left: var(--rule-strong) solid var(--ink-1);
+    background: var(--surface-1);
+}
+.failureText {
+    color: var(--ink-1);
+    font: 400 var(--step-0) / 1.5 var(--font-text);
+}
+/* The first control's label lines up with the text above; each control
+   is already a 44px target, so wrapped rows need no gap. */
+.recover {
+    row-gap: 0;
+    margin-inline-start: -0.85rem;
+}
+
+/* ---- Received: the heading and the way back, after the head's space ---- */
+.received {
+    max-width: 46rem;
+}
+.receivedTitle {
+    color: var(--ink-1);
+    font: 400 var(--step-4) / 1.08 var(--font-display);
+    letter-spacing: -0.012em;
+}
+.receivedTitle:focus {
+    outline: none;
+}
+.receivedTitle:focus-visible {
+    outline: var(--rule-strong) solid var(--focus);
+    outline-offset: 4px;
+}
+.again {
+    margin-top: var(--s-5);
+}

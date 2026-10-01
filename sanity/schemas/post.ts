@@ -1,4 +1,11 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import {
+    CHANGE_KINDS,
+    CHANGE_NOTE_MAX,
+    checkChangeDate,
+} from "@/lib/post-fields";
+import { listValuesOnly } from "@/lib/profile-fields";
+import { checkRevisedAt, IMAGE_KINDS } from "@/lib/project-fields";
 import { TAG_PATTERN } from "@/lib/tags";
 
 export default defineType({
@@ -41,6 +48,89 @@ export default defineType({
             validation: (Rule) => Rule.required(),
         }),
         defineField({
+            name: "revisedAt",
+            title: "Revised At",
+            type: "date",
+            group: "editorial",
+            description:
+                "Optional. The date of the last substantive revision, shown as “Updated” in the post header and given to search engines. Leave empty for typo fixes.",
+            validation: (Rule) =>
+                Rule.custom((value: string | undefined, context) =>
+                    checkRevisedAt(
+                        (context.document as { publishedAt?: string })
+                            ?.publishedAt,
+                        value,
+                    ),
+                ),
+        }),
+        defineField({
+            name: "changelog",
+            title: "Changelog",
+            type: "array",
+            group: "editorial",
+            description:
+                "Optional. Dated updates and corrections, listed at the end of the post (and in the RSS feed) with a revision mark. Add one only for a real change a reader should know about.",
+            of: [
+                defineArrayMember({
+                    type: "object",
+                    name: "postChange",
+                    title: "Change",
+                    fields: [
+                        defineField({
+                            name: "date",
+                            title: "Date",
+                            type: "date",
+                            validation: (Rule) =>
+                                Rule.required().custom(
+                                    (value: string | undefined, context) =>
+                                        checkChangeDate(
+                                            (
+                                                context.document as {
+                                                    publishedAt?: string;
+                                                }
+                                            )?.publishedAt,
+                                            value,
+                                        ),
+                                ),
+                        }),
+                        defineField({
+                            name: "kind",
+                            title: "Kind",
+                            type: "string",
+                            description:
+                                "A correction fixes something the post got wrong; an update adds or changes content.",
+                            initialValue: "update",
+                            options: {
+                                list: [...CHANGE_KINDS],
+                                layout: "radio",
+                            },
+                            validation: (Rule) => Rule.required(),
+                        }),
+                        defineField({
+                            name: "note",
+                            title: "Note",
+                            type: "text",
+                            rows: 3,
+                            description: "What changed, in a sentence or two.",
+                            validation: (Rule) =>
+                                Rule.required().max(CHANGE_NOTE_MAX),
+                        }),
+                    ],
+                    preview: {
+                        select: { date: "date", kind: "kind", note: "note" },
+                        prepare({ date, kind, note }) {
+                            return {
+                                title: note,
+                                subtitle: [date, kind]
+                                    .filter(Boolean)
+                                    .join(" · "),
+                            };
+                        },
+                    },
+                }),
+            ],
+        }),
+        defineField({
             name: "tags",
             title: "Tags",
             type: "array",
@@ -64,6 +154,62 @@ export default defineType({
                         ? true
                         : `Invalid tag(s): ${invalid.join(", ")} — use lowercase letters, digits, and hyphens only`;
                 }),
+        }),
+        defineField({
+            name: "cover",
+            title: "Cover",
+            type: "image",
+            group: "editorial",
+            description:
+                "Optional. The lead image of the post, on its Flight Log card and in its sharing image. Posts without one get a text-only layout.",
+            options: { hotspot: true },
+            fields: [
+                defineField({
+                    name: "alt",
+                    title: "Alt Text",
+                    type: "string",
+                    validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                    name: "caption",
+                    title: "Caption",
+                    type: "string",
+                    validation: (Rule) => Rule.max(220),
+                }),
+                defineField({
+                    name: "credit",
+                    title: "Credit",
+                    type: "string",
+                    description:
+                        "Who made the image, or its source and licence.",
+                    validation: (Rule) => Rule.max(120),
+                }),
+                defineField({
+                    name: "kind",
+                    title: "Kind",
+                    type: "string",
+                    description:
+                        "Photographs are numbered as plates, diagrams, plots and screenshots as figures.",
+                    options: { list: [...IMAGE_KINDS], layout: "radio" },
+                    validation: listValuesOnly,
+                }),
+            ],
+        }),
+        defineField({
+            name: "projects",
+            title: "Related Projects",
+            type: "array",
+            group: "editorial",
+            description:
+                "Optional. Up to three projects this post is about. The post shows them as mission links, and each project lists the post among its Flight Log entries.",
+            of: [
+                defineArrayMember({
+                    type: "reference",
+                    to: [{ type: "project" }],
+                    weak: true,
+                }),
+            ],
+            validation: (Rule) => Rule.unique().max(3),
         }),
         defineField({
             name: "body",

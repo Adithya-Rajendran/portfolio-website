@@ -2,11 +2,15 @@ import { cacheLife, cacheTag } from "next/cache";
 import { siteConfig } from "@/lib/config";
 import { getProfileDescription } from "@/lib/profile-content";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import type { Mission } from "@/lib/missions";
 import { getProfile, type ProfileData } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 import {
     buildBlog,
     buildBlogPosting,
+    buildBreadcrumbList,
+    buildContactPage,
+    buildMission,
     buildPersonEntity,
     buildProfilePage,
     type BlogPostingInput,
@@ -56,12 +60,13 @@ export async function PersonJsonLd() {
 
 export async function WebSiteJsonLd() {
     const profile = await getProfile();
+    const description = getProfileDescription(profile);
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "WebSite",
         name: siteConfig.author,
         url: siteConfig.url,
-        description: getProfileDescription(profile),
+        ...(description ? { description } : {}),
         author: {
             "@type": "Person",
             name: siteConfig.author,
@@ -90,6 +95,21 @@ export function BlogPostJsonLd(input: BlogPostingInput) {
     );
 }
 
+export function BreadcrumbJsonLd({
+    items,
+}: {
+    items: readonly { name: string; path: string }[];
+}) {
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+                __html: safeJsonLd(buildBreadcrumbList(items)),
+            }}
+        />
+    );
+}
+
 export async function BlogJsonLd() {
     const profile = await getProfile();
     return (
@@ -111,7 +131,6 @@ export async function ProfilePageJsonLd() {
         ...buildProfilePage({
             profile,
             imageUrl: profileImageUrl(profile),
-            dateModified: profile?._updatedAt?.slice(0, 10) || "2024-01-01",
         }),
     };
 
@@ -119,6 +138,32 @@ export async function ProfilePageJsonLd() {
         <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
+        />
+    );
+}
+
+export function ContactPageJsonLd({
+    profile,
+}: {
+    profile: ProfileData | null;
+}) {
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+                __html: safeJsonLd(buildContactPage(profile)),
+            }}
+        />
+    );
+}
+
+export function MissionJsonLd({ mission }: { mission: Mission }) {
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+                __html: safeJsonLd(buildMission(mission)),
+            }}
         />
     );
 }

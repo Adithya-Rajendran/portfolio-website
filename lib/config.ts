@@ -1,27 +1,17 @@
 /**
- * Stable site identity, design tokens, and neutral fallbacks. Changing roles,
- * interests, biography, and editorial copy are owned by the Sanity Profile.
+ * Stable site identity: the address, the name and the profile links used
+ * before a Profile exists. Everything that describes the owner or changes
+ * over time (roles, availability, interests, the biography, page
+ * introductions and contact routes) is owned by the Sanity Profile, and
+ * is left out, not replaced, when the Profile leaves it empty.
  */
-
-/** Canvas (page background) colors — mirror --color-canvas/--color-canvas-dark
- *  in app/globals.css. Duplicated as literals only because viewport.themeColor
- *  and OG images cannot read CSS variables. */
-export const THEME_COLORS = {
-    light: "#0c1318",
-    dark: "#0c1318",
-} as const;
-
-/** Neutral writing description used only when no CMS description is set. */
-export const BLOG_DESCRIPTION =
-    "Notes, essays, and experiments by Adithya Rajendran.";
 
 export const siteConfig = {
     url: "https://adithya-rajendran.com",
     title: "Adithya Rajendran",
-    description: "Writing, projects, and notes by Adithya Rajendran.",
     author: "Adithya Rajendran",
-    /** Role-neutral fallback; current work and study come from Profile. */
-    role: "Engineer and writer",
+    /** The site's own source, credited in the footer's colophon. */
+    source: "https://github.com/Adithya-Rajendran/portfolio-website",
     /** Fallback location when the Profile singleton has no value. */
     location: "",
     /** Named profiles consumed by the footer and fallback profile views.

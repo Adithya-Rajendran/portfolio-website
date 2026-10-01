@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+    availabilityLine,
+    formatTimelineDate,
     getProfileDescription,
     getProfileLink,
     getProfileLinks,
@@ -7,7 +9,6 @@ import {
     isCurrentTimelineEntry,
     selectFeaturedPost,
 } from "@/lib/profile-content";
-import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
 import type {
     PostListItem,
     ProfileData,
@@ -84,7 +85,7 @@ describe("CMS profile links", () => {
 });
 
 describe("CMS descriptions", () => {
-    it("uses editorial overrides, then introduction, then neutral copy", () => {
+    it("uses editorial overrides, then introduction, then nothing", () => {
         expect(
             getProfileDescription(
                 profileOf({
@@ -95,7 +96,12 @@ describe("CMS descriptions", () => {
         expect(getProfileDescription(profileOf({ seoDescription: "  " }))).toBe(
             "Learning, building, and writing.",
         );
-        expect(getProfileDescription(null)).toBe(siteConfig.description);
+        expect(
+            getProfileDescription(
+                profileOf({ seoDescription: "", introduction: " " }),
+            ),
+        ).toBeNull();
+        expect(getProfileDescription(null)).toBeNull();
         expect(
             getWritingDescription(
                 profileOf({ writingDescription: "Robotics lab notes." }),
@@ -103,7 +109,57 @@ describe("CMS descriptions", () => {
         ).toBe("Robotics lab notes.");
         expect(
             getWritingDescription(profileOf({ writingDescription: "  " })),
-        ).toBe(BLOG_DESCRIPTION);
+        ).toBeNull();
+        expect(getWritingDescription(null)).toBeNull();
+    });
+});
+
+describe("availabilityLine", () => {
+    it("joins the Open To lines as written", () => {
+        expect(
+            availabilityLine({
+                status: "open",
+                seeking: [
+                    { _key: "a", label: " Summer 2027 internships " },
+                    { _key: "b", label: "" },
+                    { _key: "c", label: "Full-time opportunities in 2028" },
+                ],
+                updatedAt: "2026-09-24",
+            }),
+        ).toBe("Summer 2027 internships · Full-time opportunities in 2028");
+    });
+
+    it("falls back to the older single line only while there are no lines", () => {
+        expect(
+            availabilityLine({
+                status: "selective",
+                seeking: [],
+                openTo: "Research internships",
+                updatedAt: "2026-09-24",
+            }),
+        ).toBe("Research internships");
+        expect(
+            availabilityLine({
+                status: "open",
+                seeking: [{ _key: "a", label: "Summer 2027 internships" }],
+                openTo: "Older line",
+                updatedAt: "2026-09-24",
+            }),
+        ).toBe("Summer 2027 internships");
+    });
+
+    it("says nothing while availability is unset, empty or Closed", () => {
+        expect(availabilityLine(null)).toBeNull();
+        expect(
+            availabilityLine({ status: "open", updatedAt: "2026-09-24" }),
+        ).toBeNull();
+        expect(
+            availabilityLine({
+                status: "closed",
+                seeking: [{ _key: "a", label: "Summer 2027 internships" }],
+                updatedAt: "2026-09-24",
+            }),
+        ).toBeNull();
     });
 });
 
@@ -126,6 +182,26 @@ describe("current work and study", () => {
         expect(
             isCurrentTimelineEntry(entryOf({ startDate: "2026-08-01" })),
         ).toBe(true);
+    });
+});
+
+describe("timeline dates", () => {
+    it("prints month and year for full dates and year-month values", () => {
+        expect(formatTimelineDate("2023-06-01")).toBe("Jun 2023");
+        expect(formatTimelineDate("2026-08")).toBe("Aug 2026");
+        expect(formatTimelineDate("2024-05-01", "month")).toBe("May 2024");
+    });
+
+    it("never adds a month to a date known only to the year", () => {
+        expect(formatTimelineDate("2019-01-01", "year")).toBe("2019");
+        expect(formatTimelineDate("2019-09-23", "year")).toBe("2019");
+        expect(formatTimelineDate("2019")).toBe("2019");
+    });
+
+    it("leaves missing and unparseable values alone", () => {
+        expect(formatTimelineDate(null)).toBeNull();
+        expect(formatTimelineDate(undefined, "year")).toBeNull();
+        expect(formatTimelineDate("Summer 2027")).toBe("Summer 2027");
     });
 });
 

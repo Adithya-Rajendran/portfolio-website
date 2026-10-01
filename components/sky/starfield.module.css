@@ -1,0 +1,25 @@
+/*
+ * The drifting starfield (components/sky/starfield.tsx): a canvas filling
+ * its zone. Once it has drawn, it replaces the server's static star layer
+ * (the next sibling). Flight Manual draws no stars (styles/los.css), so
+ * it hides the canvas, and so do print and forced colours.
+ */
+.canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.canvas[data-drawn] ~ :global(.static-stars) {
+    display: none;
+}
+:global([data-theme="manual"]) .canvas {
+    display: none;
+}
+@media (forced-colors: active) {
+    .canvas {
+        display: none;
+    }
+}

@@ -7,10 +7,19 @@ export const metadata: Metadata = {
     alternates: { canonical: null },
 };
 
+/**
+ * The Studio sits outside the (site) route group: it gets the root layout
+ * only (fonts and BotID), never the site's stylesheets, chrome, JSON-LD or
+ * analytics. Inline styles because Tailwind is not loaded here.
+ */
 export default function StudioLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    return <div className="min-h-screen bg-white">{children}</div>;
+    return (
+        <div style={{ minHeight: "100vh", background: "#ffffff" }}>
+            {children}
+        </div>
+    );
 }

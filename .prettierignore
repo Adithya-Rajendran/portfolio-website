@@ -7,6 +7,9 @@ pnpm-lock.yaml
 out
 build
 coverage
+playwright-report
+test-results
+blob-report
 
 # Generated files
 sanity.types.ts

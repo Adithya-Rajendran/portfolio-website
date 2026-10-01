@@ -1,0 +1,27 @@
+{
+    "slug": "sunrise-iss072e030246",
+    "title": "The first rays of an orbital sunrise illuminate Earth's atmosphere",
+    "id": "ISS072-E-30246",
+    "date": "2024-10-07",
+    "source": "https://images.nasa.gov/details/iss072e030246",
+    "original": "https://images-assets.nasa.gov/image/iss072e030246/iss072e030246~orig.jpg",
+    "creator": "NASA / Expedition 72 crew",
+    "credit": "Photo: NASA / Expedition 72",
+    "license": "NASA media: generally not subject to US copyright. Credit NASA; no implied endorsement.",
+    "terms": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+    "file": "nasa-iss072e030246.jpg",
+    "size": [8256, 5504],
+    "crops": {
+        "desktop": {
+            "box": [1100, 1560, 8256, 4627],
+            "widths": [1280, 1920, 2560, 3840]
+        },
+        "mobile": { "box": [4468, 0, 7564, 5504], "widths": [640, 960, 1440] }
+    },
+    "geometry": {
+        "_note": "In original pixels, fitted to the photograph (least-squares circles, rms under 3.5 px): the top of the atmosphere, the night-side surface under it, and the sun's centre.",
+        "limb": { "cx": 4300, "cy": 34438, "r": 30712 },
+        "surface": { "cx": 4048, "cy": 39368, "r": 35411 },
+        "sun": { "x": 6053, "y": 3954 }
+    }
+}

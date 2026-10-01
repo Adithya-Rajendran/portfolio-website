@@ -1,20 +1,48 @@
+import type { Metadata } from "next";
 import {
     toHTML,
     uriLooksSafe,
     type PortableTextHtmlComponents,
 } from "@portabletext/to-html";
-import { BLOG_DESCRIPTION, siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/config";
+import { formatEntryDate } from "@/lib/log-index";
 import { urlForImage } from "@/lib/sanity-image";
+import { changeKindTitle } from "@/lib/post-fields";
+import {
+    calloutHeading,
+    indexProse,
+    type NumberedFootnote,
+    type ProseIndex,
+} from "@/lib/prose";
 import type { PostWithBody } from "@/lib/sanity-client";
 
 /** The exact projection consumed by the RSS renderer. */
 export type FeedPost = Pick<
     PostWithBody,
     "title" | "slug" | "description" | "publishedAt" | "body"
->;
+> &
+    Partial<Pick<PostWithBody, "changelog">>;
 
 export const FEED_PATH = "/feed.xml";
-export const FEED_TITLE = `${siteConfig.author} — Blog`;
+/** The section's plain name, as the nav names it. */
+export const FEED_TITLE = `${siteConfig.author} — Writing`;
+/** The stylesheet a browser shows the feed with (public/feed.xsl). */
+export const FEED_STYLESHEET = "/feed.xsl";
+
+/**
+ * A page's `alternates`: its canonical address and the feed, so a reader's
+ * app finds the feed from it. A page's `alternates` replaces the layout's
+ * whole, so the site layout and every writing route (/blog, the tag
+ * pages and each entry) name both through this one helper.
+ */
+export function feedAlternates(canonical: string): Metadata["alternates"] {
+    return {
+        canonical,
+        types: {
+            "application/rss+xml": [{ url: FEED_PATH, title: FEED_TITLE }],
+        },
+    };
+}
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 const XML_ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
@@ -59,9 +87,8 @@ function safeLinkTarget(href: unknown): string | null {
 
     try {
         const parsed = new URL(href);
-        if (!["http:", "https:", "mailto:"].includes(parsed.protocol)) {
-            return null;
-        }
+        // No mailto: the site publishes no email address (lib/content-links.ts).
+        if (!["http:", "https:"].includes(parsed.protocol)) return null;
         return parsed.toString();
     } catch {
         return null;
@@ -91,12 +118,19 @@ function renderImage(value: Record<string, unknown>): string {
             .url();
         const alt = typeof value.alt === "string" ? value.alt : "";
         const caption =
-            typeof value.caption === "string" && value.caption
-                ? `<figcaption>${escapeHtmlText(value.caption)}</figcaption>`
-                : "";
+            typeof value.caption === "string" ? value.caption.trim() : "";
+        const credit =
+            typeof value.credit === "string" ? value.credit.trim() : "";
+        const parts = [
+            caption ? escapeHtmlText(caption) : "",
+            credit ? `<small>${escapeHtmlText(credit)}</small>` : "",
+        ].filter(Boolean);
+        const figcaption = parts.length
+            ? `<figcaption>${parts.join(" ")}</figcaption>`
+            : "";
         return `<figure><img src="${escapeHtmlAttr(src)}" alt="${escapeHtmlAttr(
             alt,
-        )}"/>${caption}</figure>`;
+        )}"/>${figcaption}</figure>`;
     } catch {
         return "";
     }
@@ -115,87 +149,152 @@ function renderLink(
 /**
  * Portable Text to conservative feed HTML. Video URLs are links, never
  * iframe markup; malformed links and images degrade to readable text.
+ * The feed matches the page (lib/prose.ts): a plate's caption carries no
+ * number, a footnote its raised number linking to the Notes list at the
+ * end, and a listing the one label its bar prints, the file name, else
+ * the language.
  */
-const components: Partial<PortableTextHtmlComponents> = {
-    types: {
-        image: ({ value }) => renderImage(value),
-        gallery: ({ value }) => {
-            const images = Array.isArray(value?.images)
-                ? value.images
-                      .filter(
-                          (image: unknown): image is Record<string, unknown> =>
-                              Boolean(image) && typeof image === "object",
-                      )
-                      .map(renderImage)
-                      .filter(Boolean)
-                      .join("")
-                : "";
-            if (!images) return "";
-            const caption =
-                typeof value?.caption === "string" && value.caption
-                    ? `<p>${escapeHtmlText(value.caption)}</p>`
+function feedComponents(
+    index: ProseIndex,
+): Partial<PortableTextHtmlComponents> {
+    const components: Partial<PortableTextHtmlComponents> = {
+        types: {
+            image: ({ value }) => renderImage(value),
+            gallery: ({ value }) => {
+                const images = Array.isArray(value?.images)
+                    ? value.images
+                          .filter(
+                              (
+                                  image: unknown,
+                              ): image is Record<string, unknown> =>
+                                  Boolean(image) && typeof image === "object",
+                          )
+                          .map((image: Record<string, unknown>) =>
+                              renderImage(image),
+                          )
+                          .filter(Boolean)
+                          .join("")
                     : "";
-            return `<section>${images}${caption}</section>`;
+                if (!images) return "";
+                const caption =
+                    typeof value?.caption === "string" && value.caption
+                        ? `<p>${escapeHtmlText(value.caption)}</p>`
+                        : "";
+                return `<section>${images}${caption}</section>`;
+            },
+            code: ({ value }) => {
+                const info =
+                    typeof value?._key === "string"
+                        ? index.listings[value._key]
+                        : undefined;
+                const figcaption = info
+                    ? `<figcaption>${escapeHtmlText(info.name)}</figcaption>`
+                    : "";
+                const language =
+                    typeof value?.language === "string" && value.language
+                        ? ` class="language-${escapeHtmlAttr(value.language)}"`
+                        : "";
+                return `<figure>${figcaption}<pre><code${language}>${escapeHtmlText(
+                    typeof value?.code === "string" ? value.code : "",
+                )}</code></pre></figure>`;
+            },
+            callout: ({ value }) => {
+                const heading = `<p><strong>${escapeHtmlText(
+                    calloutHeading(value ?? {}),
+                )}</strong></p>`;
+                const body = Array.isArray(value?.body)
+                    ? toHTML(value.body, {
+                          components,
+                          onMissingComponent: false,
+                      })
+                    : "";
+                return `<aside>${heading}${body}</aside>`;
+            },
+            mediaEmbed: ({ value }) => {
+                const href = safeHttpTarget(value?.url);
+                const title =
+                    typeof value?.title === "string" && value.title
+                        ? value.title
+                        : href || "Linked media";
+                const caption =
+                    typeof value?.caption === "string" && value.caption
+                        ? `<p>${escapeHtmlText(value.caption)}</p>`
+                        : "";
+                if (!href) return caption;
+                return `<aside><a href="${escapeHtmlAttr(href)}">${escapeHtmlText(
+                    title,
+                )}</a>${caption}</aside>`;
+            },
         },
-        code: ({ value }) => {
-            const filename =
-                typeof value?.filename === "string" && value.filename
-                    ? `<figcaption><code>${escapeHtmlText(value.filename)}</code></figcaption>`
-                    : "";
-            const language =
-                typeof value?.language === "string" && value.language
-                    ? ` class="language-${escapeHtmlAttr(value.language)}"`
-                    : "";
-            return `<figure>${filename}<pre><code${language}>${escapeHtmlText(
-                typeof value?.code === "string" ? value.code : "",
-            )}</code></pre></figure>`;
+        marks: {
+            contentLink: ({ children, value }) => renderLink(children, value),
+            // Keep legacy documents readable during the additive-migration phase.
+            link: ({ children, value }) => renderLink(children, value),
+            underline: ({ children }) => `<u>${children}</u>`,
+            "strike-through": ({ children }) => `<del>${children}</del>`,
+            footnote: ({ children, value }) => {
+                const number = (value as NumberedFootnote | undefined)?.number;
+                const note = number ? index.notes[number - 1] : undefined;
+                if (!note) return children;
+                return `${children}<sup><a href="#${note.id}" id="${note.refId}">${note.number}</a></sup>`;
+            },
         },
-        callout: ({ value }) => {
-            const title =
-                typeof value?.title === "string" && value.title
-                    ? `<strong>${escapeHtmlText(value.title)}</strong>`
-                    : "";
-            const body = Array.isArray(value?.body)
-                ? toHTML(value.body, {
-                      components,
-                      onMissingComponent: false,
-                  })
-                : "";
-            return title || body ? `<aside>${title}${body}</aside>` : "";
-        },
-        mediaEmbed: ({ value }) => {
-            const href = safeHttpTarget(value?.url);
-            const title =
-                typeof value?.title === "string" && value.title
-                    ? value.title
-                    : href || "Linked media";
-            const caption =
-                typeof value?.caption === "string" && value.caption
-                    ? `<p>${escapeHtmlText(value.caption)}</p>`
-                    : "";
-            if (!href) return caption;
-            return `<aside><a href="${escapeHtmlAttr(href)}">${escapeHtmlText(
-                title,
-            )}</a>${caption}</aside>`;
-        },
-    },
-    marks: {
-        contentLink: ({ children, value }) => renderLink(children, value),
-        // Keep legacy documents readable during the additive-migration phase.
-        link: ({ children, value }) => renderLink(children, value),
-        underline: ({ children }) => `<u>${children}</u>`,
-        "strike-through": ({ children }) => `<del>${children}</del>`,
-    },
-};
+    };
+    return components;
+}
+
+/** The Notes list after the text, each note linking back to its number. */
+function renderNotes(index: ProseIndex): string {
+    if (!index.notes.length) return "";
+    const items = index.notes
+        .map(
+            (note) =>
+                `<li id="${note.id}">${escapeHtmlText(note.text)} <a href="#${note.refId}">↩</a></li>`,
+        )
+        .join("");
+    return `<section><h2>Notes</h2><ol>${items}</ol></section>`;
+}
+
+/** The post's recorded updates and corrections, oldest first, each
+ *  dated as the page dates it ("30 Jun 2026 · Correction"). */
+function renderRevisions(changelog: FeedPost["changelog"]): string {
+    const changes = (changelog ?? [])
+        .filter((change) => change?.date && change.note)
+        .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    if (!changes.length) return "";
+    const items = changes
+        .map(
+            (change) =>
+                `<li><strong>${escapeHtmlText(formatEntryDate(change.date))} · ${escapeHtmlText(
+                    changeKindTitle(change.kind),
+                )}.</strong> ${escapeHtmlText(change.note)}</li>`,
+        )
+        .join("");
+    return `<section><h2>Revisions</h2><ul>${items}</ul></section>`;
+}
 
 function renderPostHtml(post: FeedPost): string {
     if (!post.body) return "";
-    return toHTML(post.body, { components, onMissingComponent: false });
+    const index = indexProse(post.body);
+    return (
+        toHTML(index.body as typeof post.body, {
+            components: feedComponents(index),
+            onMissingComponent: false,
+        }) +
+        renderNotes(index) +
+        renderRevisions(post.changelog)
+    );
 }
 
+/**
+ * The feed. RSS requires a channel description: the owner's description
+ * of his writing, or the feed's own title when the profile has none. A
+ * browser shows it through public/feed.xsl, as a plain page; a feed
+ * reader ignores the stylesheet.
+ */
 export function renderFeedXml(
     posts: FeedPost[],
-    description = BLOG_DESCRIPTION,
+    description?: string | null,
 ): string {
     const feedUrl = `${siteConfig.url}${FEED_PATH}`;
     const publishable = posts.filter(
@@ -225,7 +324,7 @@ export function renderFeedXml(
     const channelLines = [
         `<title>${escapeXml(FEED_TITLE)}</title>`,
         `<link>${escapeXml(`${siteConfig.url}/blog`)}</link>`,
-        `<description>${escapeXml(description)}</description>`,
+        `<description>${escapeXml(description?.trim() || FEED_TITLE)}</description>`,
         `<language>en-us</language>`,
         ...(lastBuildDate
             ? [`<lastBuildDate>${lastBuildDate}</lastBuildDate>`]
@@ -235,6 +334,7 @@ export function renderFeedXml(
     ];
 
     return `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="${FEED_STYLESHEET}"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         ${channelLines.join("\n        ")}

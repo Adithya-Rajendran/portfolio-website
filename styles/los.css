@@ -1,0 +1,99 @@
+/*
+ * Loss of Signal: the 404 and error pages (components/los/loss-of-signal.tsx)
+ * and the home hero's static star layer (components/sky/static-stars.tsx).
+ * Global, not a CSS Module: the page answers every unmatched URL through
+ * app/global-not-found.tsx, and Turbopack merged a module imported there
+ * into the root layout's stylesheet, which the Studio loads too. The
+ * classes are prefixed (los-, static-stars) so nothing else matches them.
+ * Ported from the mockup's writing.css "404.HTML · Loss of Signal".
+ */
+@layer components {
+    /* Filling the hero's sky, under the drifting canvas. */
+    .static-stars {
+        position: absolute;
+        inset: 0;
+        z-index: var(--z-starfield);
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        fill: none;
+        stroke: rgb(var(--star-rgb));
+        stroke-linecap: round;
+    }
+    .static-stars path {
+        vector-effect: non-scaling-stroke;
+    }
+    .static-stars__faint {
+        stroke-width: 1.1px;
+        opacity: 0.38;
+    }
+    .static-stars__mid {
+        stroke-width: 1.6px;
+        opacity: 0.6;
+    }
+    .static-stars__bright {
+        stroke-width: 2.3px;
+        opacity: 0.9;
+    }
+    /* Paper has no stars. */
+    [data-theme="manual"] .static-stars {
+        display: none;
+    }
+    @media (forced-colors: active) {
+        .static-stars {
+            display: none;
+        }
+    }
+
+    /* The page closes in open space above the footer. */
+    .los {
+        padding-bottom: var(--space-block);
+    }
+
+    /* ---- The carrier trace: a strip chart that drops out ------------------ */
+    /* Ink only, no words (contract §3, §8), already drawn: it never moves. */
+    .los-trace {
+        display: block;
+        width: 100%;
+        height: clamp(3.5rem, 2.75rem + 2.2vw, 5rem);
+        margin-top: var(--s-4);
+        overflow: visible;
+    }
+    .los-trace path {
+        fill: none;
+        vector-effect: non-scaling-stroke;
+    }
+    .los-grid-v,
+    .los-grid-h {
+        stroke: var(--rule-1);
+        stroke-width: 1;
+    }
+    .los-grid-v {
+        stroke-dasharray: 1 4;
+    }
+    .los-axis {
+        stroke: var(--rule-2);
+        stroke-width: 1;
+    }
+    .los-signal {
+        stroke: var(--ink-1);
+        stroke-width: 1.25;
+        stroke-linejoin: round;
+    }
+    .los-dead {
+        stroke: var(--ink-3);
+        stroke-width: 1.25;
+        stroke-dasharray: 3 4;
+    }
+    .los-los-line {
+        stroke: var(--ink-2);
+        stroke-width: 1;
+    }
+
+    /* ---- The report ------------------------------------------------------- */
+    .los-report {
+        margin-top: var(--s-6);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.5 var(--font-text);
+    }
+}

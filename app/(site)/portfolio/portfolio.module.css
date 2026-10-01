@@ -1,0 +1,15 @@
+/*
+ * Projects (/portfolio; themed Missions): the head, then the flagship, the
+ * tiles and the quiet rows, their sections named for screen readers
+ * only. The missions' own parts are styled in
+ * components/portfolio/missions.module.css; the head is shared
+ * (styles/components.css). The last section's own padding ends the page.
+ */
+.first {
+    padding-top: var(--space-block);
+}
+/* The least prominent projects: quiet rows under the tiles, set apart by
+   space and their hairline alone. */
+.rest {
+    margin-top: var(--space-block);
+}

@@ -1,0 +1,28 @@
+/*
+ * Comms · Contact (/contact): the availability in the page head, the
+ * desk (the form, its topics the routes) and the no-JavaScript note. The
+ * head is shared (styles/components.css); the form has its own module
+ * beside its component.
+ */
+
+/* Space alone sets the Open To line apart from the intro. */
+.openTo {
+    margin-top: var(--s-6);
+}
+
+/* ---- The desk: the form, its topics the routes, after space ------------ */
+.desk {
+    padding-top: var(--s-7);
+}
+
+/* ---- Message: without JavaScript, the reason and the way to LinkedIn,
+   on the section's one rule ----------------------------------------------- */
+.noScript {
+    display: grid;
+    gap: var(--s-4);
+    max-width: 46rem;
+    padding-top: var(--s-4);
+    border-top: var(--rule-hair) solid var(--rule-2);
+    color: var(--ink-1);
+    font: 400 var(--step-1) / 1.5 var(--font-long);
+}

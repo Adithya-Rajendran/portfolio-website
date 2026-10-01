@@ -1,0 +1,340 @@
+/*
+ * Missions (G5, G6): the mission line, the flagship stage and the tiles,
+ * shared by /portfolio, the mission files and the home page's stage. Ported from the mockup's site.css 4.12 and
+ * missions.css, held to the unified contract: orange only on the Active
+ * dot, hairlines, no boxes; a project's title is its heading, in
+ * sentence case. Hover is the site's one grammar: an ink rule, the title
+ * underlined, the arrow nudged.
+ */
+
+/* ---- The line: ● Status · dates, never wrapped ------------------------- */
+.lineBox {
+    min-width: 0;
+}
+.line {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--s-4);
+    overflow: hidden;
+    white-space: nowrap;
+}
+.dates {
+    flex: none;
+    color: var(--ink-1);
+    font: 400 var(--label-size) / 1 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+}
+
+.stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-1) var(--s-4);
+    margin: 0;
+    padding: 0;
+    color: var(--ink-2);
+    font: 400 var(--label-size) / 1.5 var(--font-mono);
+    list-style: none;
+}
+/* An item never splits across lines ("Canonical OpenStack"). */
+.stack li {
+    white-space: nowrap;
+}
+
+/* ---- The flagship: copy 7/12 beside its plate 5/12 -------------------- */
+.stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-7) var(--gutter);
+}
+.stageCopy {
+    min-width: 0;
+}
+/* The title is the heading, in sentence case. */
+.stageHeading {
+    max-width: 22ch;
+    margin-top: var(--s-5);
+    font: 400 var(--step-4) / 1.08 var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+}
+.stageHeading a {
+    text-decoration: none;
+}
+.stageHeading a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.12em;
+}
+.stageSummary {
+    max-width: 52ch;
+    margin-top: var(--s-3);
+    color: var(--ink-2);
+    font: 400 var(--step-1) / 1.5 var(--font-long);
+    text-wrap: pretty;
+}
+/* The title links the page: the rows' arrow trails its last word, in
+   ink-3, and nudges with the underline on hover. */
+.stageArrow {
+    width: 0.42em;
+    height: 0.42em;
+    color: var(--ink-3);
+    vertical-align: 0.06em;
+    transition:
+        transform var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock);
+}
+.stageHeading a:hover .stageArrow {
+    color: var(--ink-1);
+    transform: translateX(4px);
+}
+.stageCopy > .stack {
+    margin-top: var(--s-5);
+}
+/* The quiet way to the write-up (/portfolio). Without it the stack line
+   is the stage's foot. */
+.stageActions {
+    margin-top: var(--s-6);
+}
+@media (min-width: 60rem) {
+    .stage {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        align-items: start;
+    }
+    .stageCopy {
+        grid-column: 1 / span 7;
+    }
+    .stagePlate {
+        grid-column: 8 / -1;
+        grid-row: 1;
+    }
+    .stageText .stageCopy {
+        grid-column: 1 / span 10;
+    }
+}
+
+/* ---- Tiles: text first, a hairline on top, the whole tile one link ---- */
+/* The row of tiles: one column, two from 960px, as the rows
+   (MissionTiles; /portfolio's more projects). */
+.tiles {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-8) var(--gutter);
+}
+@media (min-width: 60rem) {
+    .tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+.tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    min-width: 0;
+    padding-top: var(--s-5);
+    border-top: var(--rule-hair) solid var(--rule-2);
+    transition: border-color var(--dur-hover) var(--ease-dock);
+}
+.tile:hover {
+    border-top-color: var(--ink-1);
+}
+.tileName {
+    margin-top: var(--s-2);
+    padding-right: var(--s-6);
+    font: 400 var(--step-3) / 1.08 var(--font-display);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+.tileName a {
+    text-decoration: none;
+}
+.tile:hover .tileName a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.14em;
+}
+.tileSummary {
+    max-width: 52ch;
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.55 var(--font-long);
+    text-wrap: pretty;
+}
+/* A tile with a cover: a 3:2 thumbnail with its credit beside the title,
+   under the line, which keeps the tile's width and its arrow; the summary
+   and the stack run under both. Two fifths of the tile on phones, a third
+   from 600px (a row's measures), so the stage's plate stays the page's
+   largest image. */
+.tileCovered {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-areas:
+        "head head"
+        "plate title"
+        "summary summary"
+        "stack stack";
+    align-content: start;
+    align-items: start;
+    column-gap: var(--s-4);
+}
+@media (min-width: 37.5rem) {
+    .tileCovered {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        column-gap: var(--gutter);
+    }
+}
+.tilePlate {
+    grid-area: plate;
+}
+.tileCovered .tileHead {
+    grid-area: head;
+}
+.tileCovered .tileName {
+    grid-area: title;
+    margin-top: 0;
+    padding-right: 0;
+}
+.tileCovered .tileSummary {
+    grid-area: summary;
+}
+.tileCovered .stack {
+    grid-area: stack;
+}
+/* The line, with the arrow at its end, placed from the line. */
+.tileHead {
+    position: relative;
+}
+.tileArrow {
+    position: absolute;
+    top: 0.1rem;
+    right: 0;
+    color: var(--ink-3);
+    transition:
+        transform var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock);
+}
+.tile:hover .tileArrow {
+    transform: translateX(4px);
+    color: var(--ink-1);
+}
+
+/* ---- Rows: a project in a line or two (MissionRow) --------------------- */
+/* A card is a hairline on top; the title's link covers the row. */
+.rows {
+    display: grid;
+    gap: var(--s-5) var(--gutter);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+@media (min-width: 60rem) {
+    .rows {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+.row {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: var(--s-2);
+    padding: var(--s-4) var(--s-7) 0 0;
+    border-top: var(--rule-hair) solid var(--rule-2);
+    transition: border-color var(--dur-hover) var(--ease-dock);
+}
+.rowLine {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-1) var(--s-4);
+}
+.rowDates {
+    color: var(--ink-2);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+}
+.rowTitle {
+    margin-top: var(--s-1);
+    font: 400 var(--step-2) / 1.2 var(--font-display);
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+}
+.rowTitle a {
+    text-decoration: none;
+}
+.rowSummary {
+    max-width: 60ch;
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.5 var(--font-long);
+    text-wrap: pretty;
+}
+/* A row with a cover: a 3:2 thumbnail with its credit. On phones the
+   line keeps the row's width, the thumbnail (two fifths) sits beside the
+   title and the summary runs under both; from 600px the thumbnail (a
+   third) stands beside the line, title and summary, and the empty track
+   takes whatever it adds to their height. The stage's plate stays the
+   section's largest image. */
+.rowCovered {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-areas:
+        "line line"
+        "plate title"
+        "summary summary";
+    column-gap: var(--s-4);
+}
+.rowPlate {
+    grid-area: plate;
+}
+.rowCovered .rowLine {
+    grid-area: line;
+}
+.rowCovered .rowTitle {
+    grid-area: title;
+}
+.rowCovered .rowSummary {
+    grid-area: summary;
+}
+@media (min-width: 37.5rem) {
+    .rowCovered {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        grid-template-rows: auto auto auto 1fr;
+        grid-template-areas:
+            "plate line"
+            "plate title"
+            "plate summary"
+            "plate .";
+        column-gap: var(--gutter);
+    }
+}
+.rowArrow {
+    position: absolute;
+    top: var(--s-4);
+    right: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--ink-3);
+    transition:
+        transform var(--dur-hover) var(--ease-dock),
+        color var(--dur-hover) var(--ease-dock);
+}
+.row:hover {
+    border-top-color: var(--ink-1);
+}
+/* Quiet rows: a step smaller, the hairline in the quieter rule. */
+.rowsQuiet .row {
+    border-top-color: var(--rule-1);
+}
+.rowsQuiet .row:hover {
+    border-top-color: var(--ink-1);
+}
+.rowsQuiet .rowTitle {
+    font-size: var(--step-1);
+}
+.row:hover .rowTitle a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.16em;
+}
+.row:hover .rowArrow {
+    color: var(--ink-1);
+    transform: translateX(4px);
+}

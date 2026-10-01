@@ -1,0 +1,132 @@
+/*
+ * The scannable writing index (G8) and its rows, one list with even
+ * spacing. Ported from the mockup's site.css 4.10 (Post row) and 4.27
+ * (Scannable log index). Below 960px the tracks fold into a stacked row.
+ */
+/* As wide as the mockup's index beside its preview plate (8 of 12
+   columns at 1440px), so the read time and arrow stay by the standfirst,
+   which stops at 62ch, instead of drifting to the page's far edge. */
+.index {
+    --log-cols: 7.5rem minmax(0, 1fr) 4.5rem 1.5rem;
+    min-width: 0;
+    max-width: var(--measure-index);
+}
+
+/* ---- Rows --------------------------------------------------------------- */
+.list {
+    margin: 0;
+    padding: 0;
+    border-bottom: var(--rule-hair) solid var(--rule-1);
+    list-style: none;
+}
+.row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-2);
+    padding-block: var(--s-5);
+    border-top: var(--rule-hair) solid var(--rule-1);
+    transition:
+        border-color var(--dur-hover) var(--ease-dock),
+        background-color var(--dur-hover) var(--ease-dock);
+}
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+}
+.date,
+.read {
+    color: var(--ink-2);
+    font: 400 var(--label-size) / 1.4 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    white-space: nowrap;
+}
+.title {
+    margin: 0;
+    font: 400 var(--step-1) / 1.25 var(--font-display);
+    letter-spacing: -0.003em;
+    text-wrap: pretty;
+}
+.title a {
+    text-decoration: none;
+}
+.dek {
+    max-width: 62ch;
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.5 var(--font-long);
+    text-wrap: pretty;
+}
+.tags {
+    margin-top: var(--s-1);
+}
+.arrow {
+    display: none;
+}
+
+/* Hover: an ink rule, the title underlined and the arrow nudged. The
+   whole row is the title's link. */
+.row:hover {
+    border-top-color: var(--ink-1);
+}
+.row:hover .title a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.16em;
+}
+
+@media (min-width: 60rem) {
+    .row {
+        grid-template-columns: var(--log-cols);
+        column-gap: var(--gutter);
+        align-items: baseline;
+    }
+    .meta {
+        display: contents;
+    }
+    .date {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .read {
+        grid-column: 3;
+        grid-row: 1;
+        text-align: right;
+    }
+    .row > :not(.meta):not(.arrow) {
+        grid-column: 2;
+    }
+    .title {
+        grid-row: 1;
+        font-size: var(--step-2);
+        font-weight: 400;
+        line-height: 1.15;
+    }
+    .arrow {
+        display: block;
+        grid-column: 4;
+        grid-row: 1;
+        align-self: center;
+        justify-self: end;
+        width: 20px;
+        height: 20px;
+        color: var(--ink-3);
+        transition:
+            transform var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+    .row:hover .arrow {
+        color: var(--ink-1);
+        transform: translateX(4px);
+    }
+}
+
+@media print {
+    .row {
+        break-inside: avoid;
+    }
+    .arrow {
+        display: none !important;
+    }
+}

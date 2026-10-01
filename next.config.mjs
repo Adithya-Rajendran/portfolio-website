@@ -27,6 +27,22 @@ function contentSecurityPolicy(isStudio = false) {
 const nextConfig = {
     cacheComponents: true,
     reactCompiler: true,
+    // Partial Prefetching stays off app-wide (plan §4.6 rule 8, measured in
+    // PR 9). It cut /blog's page prefetches from 9 to 5 at 412px, but made
+    // the first request for an unknown post or tag slug answer 200 (a soft
+    // 404; the next one was 404) on `next start`, and posts beyond the
+    // first then loaded on the click. The two list-heavy routes, posts and
+    // tags, opt in on their own (`export const prefetch = "partial"`),
+    // which keeps the 404.
+    partialPrefetching: false,
+    experimental: {
+        // app/global-not-found.tsx renders unmatched URLs as its own
+        // document, so the site's stylesheet is not attached to every route
+        // under the root layout (the Studio included), as a root
+        // app/not-found.tsx would make it.
+        globalNotFound: true,
+    },
+    poweredByHeader: false,
     allowedDevOrigins: ["127.0.0.1", "localhost"],
     env: {
         NEXT_PUBLIC_BUILD_DATE: new Date().toISOString(),
@@ -86,13 +102,27 @@ const nextConfig = {
                     },
                 ],
             },
-            // Cache static assets aggressively
+            // Cache static assets aggressively. This includes unhashed
+            // /public files, so every new or re-encoded public asset needs a
+            // versioned path (public/images/hero-sunrise-v1/…).
             {
                 source: "/(.*)\\.(ico|png|jpg|jpeg|gif|webp|avif|svg|woff|woff2)",
                 headers: [
                     {
                         key: "Cache-Control",
                         value: "public, max-age=31536000, immutable",
+                    },
+                ],
+            },
+            // /favicon.ico has a fixed, unversioned URL, so the immutable
+            // rule above would pin a replaced favicon for a year. When two
+            // rules set the same key, the later one wins.
+            {
+                source: "/favicon.ico",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=86400, must-revalidate",
                     },
                 ],
             },
@@ -110,6 +140,61 @@ const nextConfig = {
                 destination: "/resume/view",
                 permanent: true,
             },
+            // The flight is /resume's Timeline view (the default where
+            // motion runs), no longer a page of its own.
+            {
+                source: "/resume/trajectory",
+                destination: "/resume",
+                permanent: true,
+            },
+            // The archive repeated /blog's list at a second address.
+            {
+                source: "/blog/archive",
+                destination: "/blog",
+                permanent: true,
+            },
+            // Comms is the themed name of /contact (plan §2.2). Never
+            // redirect from /contact itself.
+            {
+                source: "/comms",
+                destination: "/contact",
+                permanent: true,
+            },
+            // The feed's usual guesses. 301, not 308: feed readers are old
+            // HTTP clients, and some only move a subscription on a 301.
+            ...["/rss.xml", "/rss", "/feed", "/atom.xml"].map((source) => ({
+                source,
+                destination: "/feed.xml",
+                statusCode: 301,
+            })),
+            // Share images moved into the app/(site) route group, which
+            // gives each one a stable hash suffix (lib/route-tags.ts). Links
+            // shared before the move keep their preview image.
+            ...[
+                ["/opengraph-image", "/opengraph-image-12o0cb"],
+                ["/about/opengraph-image", "/about/opengraph-image-1ycygp"],
+                ["/blog/opengraph-image", "/blog/opengraph-image-14vkmf"],
+                [
+                    "/blog/:slug/opengraph-image",
+                    "/blog/:slug/opengraph-image-fx5gi7",
+                ],
+                [
+                    "/portfolio/opengraph-image",
+                    "/portfolio/opengraph-image-98lokn",
+                ],
+                ["/resume/opengraph-image", "/resume/opengraph-image-1nyaml"],
+                // Newer than the move, kept at the unhashed URL like the
+                // others so every share image answers there.
+                ["/contact/opengraph-image", "/contact/opengraph-image-upzrkl"],
+                [
+                    "/portfolio/:slug/opengraph-image",
+                    "/portfolio/:slug/opengraph-image-ysfoa1",
+                ],
+            ].map(([source, destination]) => ({
+                source,
+                destination,
+                permanent: true,
+            })),
         ];
     },
     images: {

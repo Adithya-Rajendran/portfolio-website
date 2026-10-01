@@ -1,68 +1,109 @@
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { getAllPosts, type PostMeta } from "@/lib/sanity-client";
-import { selectNextPosts } from "@/lib/related-posts";
-import { formatDate } from "@/components/blogs/utils";
+import LogIndex from "@/components/blogs/log-index";
+import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
+import Pager, { type PagerLink } from "@/components/ui/pager";
+import SectionTag from "@/components/ui/section-tag";
+import { siteConfig } from "@/lib/config";
+import { pagerCopy, postCopy as copy } from "@/lib/copy";
+import type { LogEntry } from "@/lib/log-index";
+import { toMission } from "@/lib/missions";
+import type { ProjectListItem } from "@/lib/sanity-client";
+import styles from "./post.module.css";
 
-export default async function ArticleContinuation({
-    currentPost,
+/**
+ * After an entry (G1): the entries filed just before and after it (the
+ * shared `Pager`, "Previous" and "Next" with the titles, only the sides
+ * that exist), then the project it belongs to (only when the owner linked
+ * one, as the shared project row) and other entries that share a tag
+ * (only when there are any; their rows leave the shared tags out). The
+ * end matter above it closes the entry itself; the footer carries the
+ * author. Every block is server-rendered links; empty blocks are left
+ * out. Ported from the mockup's post.html `.post-end`.
+ */
+
+/** A neighbouring entry as a pager side: "Next", then its title. */
+function pagerLink(
+    entry: LogEntry | null,
+    direction: "previous" | "next",
+): PagerLink | null {
+    if (!entry) return null;
+    return {
+        href: `/blog/${entry.slug}`,
+        label: direction === "previous" ? pagerCopy.previous : pagerCopy.next,
+        title: entry.title,
+    };
+}
+
+function Block({
+    id,
+    title,
+    children,
 }: {
-    currentPost: PostMeta;
+    id: string;
+    title: string;
+    children: React.ReactNode;
 }) {
-    const nextPosts = selectNextPosts(await getAllPosts(), currentPost);
-
     return (
-        <aside
-            className="journal-article-continuation"
-            aria-label="Continue exploring"
+        <div className={styles.endSection}>
+            <SectionTag>
+                <h2 className="section-tag__h" id={id}>
+                    {title}
+                </h2>
+            </SectionTag>
+            {children}
+        </div>
+    );
+}
+
+export default function ArticleContinuation({
+    missions,
+    previous,
+    next,
+    related,
+    className,
+}: {
+    missions: readonly ProjectListItem[];
+    previous: LogEntry | null;
+    next: LogEntry | null;
+    related: readonly LogEntry[];
+    className?: string;
+}) {
+    if (!previous && !next && !missions.length && !related.length) {
+        return null;
+    }
+    return (
+        <section
+            className={className}
+            aria-label={copy.after}
+            data-print="hide"
         >
-            {nextPosts.length > 0 && (
-                <section aria-labelledby="journal-next-heading">
-                    <div className="journal-section-heading">
-                        <h2 id="journal-next-heading">Keep exploring.</h2>
-                        <Link href="/blog" className="journal-link">
-                            All writing <ArrowUpRight size={15} aria-hidden />
-                        </Link>
-                    </div>
-                    <ul className="journal-next-posts">
-                        {nextPosts.map((post) => (
-                            <li key={post._id}>
-                                <Link href={`/blog/${post.slug}`}>
-                                    <time
-                                        className="journal-next-date"
-                                        dateTime={post.publishedAt}
-                                    >
-                                        {formatDate(post.publishedAt)}
-                                    </time>
-                                    <span className="journal-next-title">
-                                        {post.title}
-                                    </span>
-                                    <ArrowUpRight size={19} aria-hidden />
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
-            <nav
-                className="journal-article-actions"
-                aria-label="Beyond this article"
-            >
-                <p>Beyond the notebook</p>
-                <div>
-                    {nextPosts.length === 0 && (
-                        <Link href="/blog" className="journal-link">
-                            All writing <ArrowUpRight size={15} aria-hidden />
-                        </Link>
-                    )}
-                    <Link href="/portfolio" className="journal-link">
-                        Explore my work <ArrowUpRight size={15} aria-hidden />
-                    </Link>
-                    <Link href="/portfolio#contact" className="journal-link">
-                        Get in touch <ArrowUpRight size={15} aria-hidden />
-                    </Link>
-                </div>
-            </nav>
-        </aside>
+            <div className={styles.end}>
+                <Pager
+                    className={styles.pager}
+                    label={copy.pager}
+                    previous={pagerLink(previous, "previous")}
+                    next={pagerLink(next, "next")}
+                />
+                {missions.length > 0 ? (
+                    <Block
+                        id="entry-mission"
+                        title={copy.projects(missions.length)}
+                    >
+                        <MissionRows>
+                            {missions.map((project) => (
+                                <MissionRow
+                                    key={project._id}
+                                    mission={toMission(project, siteConfig.url)}
+                                />
+                            ))}
+                        </MissionRows>
+                    </Block>
+                ) : null}
+                {related.length > 0 ? (
+                    <Block id="entry-related" title={copy.related}>
+                        <LogIndex entries={related} level={3} tags={false} />
+                    </Block>
+                ) : null}
+            </div>
+        </section>
     );
 }

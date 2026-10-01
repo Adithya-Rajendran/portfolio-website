@@ -1,0 +1,276 @@
+/*
+ * Trajectory · Experience / CV (/resume): the page head and the CV
+ * sections (DocSection: the shared section head, then the rows), which
+ * are the List view. The views, their switch and the flight have their
+ * own styles (components/cv/experience-views.module.css,
+ * components/trajectory/), as do the CV rows and the key/value list
+ * (`.cv-list` and `.specs` in styles/components.css); the plain rows (the
+ * latest writing, prior certifications) are here. On paper the page is
+ * the controlled document (G3): the print rules close this file and
+ * styles/print.css.
+ */
+.page {
+    position: relative;
+}
+
+/* ---- The head band: the shared split head ------------------------------ */
+.band {
+    padding-bottom: var(--s-5);
+}
+.note {
+    max-width: 52ch;
+    margin-top: var(--s-4);
+    color: var(--ink-2);
+    font: 400 var(--label-size) / 1.5 var(--font-mono);
+}
+/* Space alone sets the Open To line apart from the intro. */
+.openTo {
+    margin-top: var(--s-6);
+}
+
+/* ---- The CV: the shared section head, the rows in the main column ------- */
+.cv + .cv {
+    padding-top: var(--s-6);
+}
+.cvBody {
+    padding-bottom: var(--space-section);
+}
+/* The next section's head parts each list from the one before, so lists
+   drop their closing rule; and the section head's hairline is the
+   division above, so a section's first row draws no second rule under
+   it. */
+.cv :global(:is(.cv-list, .specs)) {
+    border-bottom: 0;
+}
+.cv :global(.g-main) > :first-child > :first-child {
+    border-top: 0;
+}
+.after {
+    margin-top: var(--s-5);
+}
+.talks {
+    margin-top: var(--s-6);
+}
+.skills {
+    max-width: var(--measure-index);
+}
+
+/* Plain rows on the CV's columns: the date in the mono column, then one
+   line (a linked title, or a credential's name and issuer). */
+.rows {
+    max-width: var(--measure-index);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-1) var(--gutter);
+    padding-block: var(--s-3);
+    border-top: var(--rule-hair) solid var(--rule-1);
+    color: var(--ink-1);
+    font: 400 var(--step-0) / 1.45 var(--font-display);
+}
+@media (min-width: 37.5rem) {
+    .row {
+        grid-template-columns: 11rem minmax(0, 1fr);
+        align-items: baseline;
+    }
+}
+.rowDate {
+    color: var(--ink-2);
+    font: 400 var(--label-size) / 1.5 var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+}
+.row a {
+    color: var(--ink-1);
+    text-underline-offset: 0.18em;
+}
+/* A credential's verification page leaves the site: the outbound mark
+   of the CV's other links. */
+.row a :global(.icon) {
+    width: 0.7em;
+    height: 0.7em;
+    margin-left: 0.3em;
+    color: var(--ink-3);
+    vertical-align: 0.05em;
+}
+/* What follows the line's name: a credential's issuer. */
+.rowAside {
+    color: var(--ink-2);
+}
+
+/* Prior certifications, under the current ones. */
+.subhead {
+    margin: var(--s-6) 0 var(--s-3);
+    color: var(--ink-1);
+    font: 400 var(--step-0) / 1.4 var(--font-display);
+}
+
+/* An address or an opening on the masthead, or a credential's last word
+   with its outbound mark, never split. */
+.whole {
+    white-space: nowrap;
+}
+
+/* Print-only parts: the masthead and the sheet heads. */
+.mast,
+.sheetTwo {
+    display: none;
+}
+
+/* ======================================================================
+   Paper (G3): Flight Manual tokens on white (styles/print.css), two
+   sheets on A4 and on Letter. Sheet 1: the masthead, education and
+   experience; sheet 2: projects, writing, skills and certifications. No
+   chrome, no controls; every link prints its address.
+   ====================================================================== */
+@media print {
+    .page {
+        font-size: 9.2pt;
+        line-height: 1.38;
+    }
+    .band {
+        display: none !important;
+    }
+    .page :global(.shell) {
+        width: auto;
+        max-width: none;
+        margin: 0;
+    }
+
+    .mast {
+        padding-bottom: 3mm;
+        border-bottom: 1.25pt solid var(--ink-1);
+    }
+    .mast > * {
+        display: block;
+    }
+    .sheetHead {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 4mm;
+        margin: 0 0 4mm;
+        padding-bottom: 1.4mm;
+        border-bottom: 0.6pt solid var(--rule-2);
+        color: var(--ink-2);
+        font: 400 6.6pt / 1.2 var(--font-mono);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .sheetDoc {
+        color: var(--ink-1);
+    }
+    .sheetHead :global(.rev) {
+        font: inherit;
+        color: var(--ink-1);
+    }
+    .sheetTwo {
+        display: block !important;
+        break-before: page;
+    }
+    .mastName {
+        font: var(--weight-display) 21pt / 1 var(--font-display);
+        letter-spacing: 0.115em;
+        text-transform: uppercase;
+    }
+    .mastRole {
+        margin-top: 2mm;
+        font: 400 10.2pt / 1.3 var(--font-display);
+    }
+    .mastLinks {
+        margin-top: 1.2mm;
+        color: var(--ink-2);
+        font: 400 7.6pt / 1.4 var(--font-mono);
+    }
+    .mastOpen {
+        margin-top: 1.4mm;
+        font: 400 8.8pt / 1.35 var(--font-display);
+    }
+    .mastKey {
+        display: inline-flex;
+        align-items: center;
+        gap: 1.2mm;
+        margin-right: 2mm;
+        color: var(--ink-1);
+        font: 400 6.4pt / 1 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .mastKey::before {
+        content: "";
+        width: 1.5mm;
+        height: 1.5mm;
+        border-radius: 50%;
+        background: var(--accent);
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    .mastSummary {
+        margin-top: 2.2mm;
+        font: 400 9pt / 1.42 var(--font-long);
+    }
+
+    .cvBody {
+        padding: 0;
+    }
+    .cv {
+        margin-top: 2.2mm;
+        padding: 0 !important;
+    }
+    .cv :global(.doc-section__body) {
+        display: block;
+    }
+    /* The section head on paper: the plain name in capitals over a
+       rule. */
+    .cv :global(.doc-section__tag) {
+        margin-bottom: 1.3mm;
+        padding: 0 0 0.7mm;
+        border-bottom: 0.6pt solid var(--rule-2);
+        font-size: 6.6pt;
+        letter-spacing: 0.14em;
+        break-after: avoid;
+    }
+    .cv :global(.doc-section__tag)::after {
+        display: none;
+    }
+    .cv :global(.doc-section__tag .section-tag__h) {
+        color: var(--ink-1);
+        font: inherit;
+        letter-spacing: inherit;
+        text-transform: inherit;
+    }
+    .after {
+        display: none;
+    }
+    .talks {
+        margin-top: 1.2mm;
+    }
+    .skills {
+        max-width: none;
+    }
+    .row {
+        grid-template-columns: 31mm minmax(0, 1fr);
+        column-gap: 4.5mm;
+        padding: 0 0 0.6mm;
+        border: 0;
+        font: 400 8.4pt / 1.35 var(--font-display);
+        break-inside: avoid;
+    }
+    .rowDate {
+        font-size: 7pt;
+    }
+    .row a {
+        text-decoration: none;
+    }
+    .row a :global(.icon) {
+        display: none;
+    }
+    .subhead {
+        margin: 1.2mm 0 0.6mm;
+        font: 500 8.4pt / 1.3 var(--font-display);
+        break-after: avoid;
+    }
+}

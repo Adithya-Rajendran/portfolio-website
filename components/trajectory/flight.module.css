@@ -1,0 +1,343 @@
+/*
+ * Option C · Flight: the 3D scene's layers inside the journey's stage.
+ * Bottom to top: the canvas, the still poster over it (rendered with the
+ * page, shown until the renderer and its textures are in, and while a
+ * lost WebGL context is away; it fades out as the canvas fades in), a
+ * scrim that keeps the record's text legible over the scene, and the
+ * HTML labels projected from the worlds, shown only with the canvas.
+ */
+
+.host {
+    background: var(--bg);
+    overflow: hidden;
+}
+
+.host > canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* On a phone nothing is drawn under the record (--record: its top
+       edge, set when the stage is sized). */
+    clip-path: inset(0 0 calc(100% - var(--record, 100%)) 0);
+    opacity: 0;
+    transition: opacity var(--dur-6) var(--ease-dock);
+}
+
+.host[data-ready] > canvas {
+    opacity: 1;
+}
+
+/* ---- the poster: the opening's sunrise (a hint of orbits when still) -- */
+
+.poster {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    container-type: size;
+    pointer-events: none;
+    transition: opacity var(--dur-6) var(--ease-dock);
+}
+
+.host[data-ready] > .poster {
+    opacity: 0;
+}
+
+.opening {
+    position: absolute;
+    inset: 0;
+}
+
+/* In thousandths of the stage's height about where the Sun rises
+   (--wx, --wy; a phone's --nx, --ny). */
+.sunrise {
+    position: absolute;
+    left: calc(var(--wx) - 200cqh);
+    top: calc(var(--wy) - 50cqh);
+    width: 300cqh;
+    height: 150cqh;
+}
+
+.narrow {
+    display: none;
+}
+
+.globe {
+    fill: var(--bg);
+}
+
+.air,
+.rim {
+    fill: none;
+}
+
+.rim {
+    stroke-width: 1.5px;
+    vector-effect: non-scaling-stroke;
+}
+
+.sunMark {
+    position: absolute;
+    left: calc(var(--wx) - 20px);
+    top: calc(var(--wy) - var(--lift) - 20px);
+    width: 40px;
+    height: 40px;
+    display: none;
+    fill: none;
+    stroke: var(--ink-1);
+    stroke-width: 1.1;
+}
+
+.sunDot {
+    fill: var(--ink-1);
+    stroke: none;
+}
+
+/* Flight Manual: the limb in ink under the printed ☉. */
+:global([data-theme="manual"]) .air,
+:global([data-theme="manual"]) .corona {
+    display: none;
+}
+
+:global([data-theme="manual"]) .rim {
+    stroke: var(--ink-1);
+    stroke-width: 1px;
+}
+
+:global([data-theme="manual"]) .sunMark {
+    display: block;
+}
+
+.hint {
+    position: absolute;
+    left: 65%;
+    top: 50%;
+    width: min(60%, 56rem);
+    transform: translate(-50%, -50%);
+    display: none;
+    overflow: visible;
+    fill: none;
+    stroke: var(--ink-3);
+    stroke-width: 1;
+    opacity: 0.55;
+}
+
+.hint ellipse {
+    vector-effect: non-scaling-stroke;
+}
+
+/* A still flight opens on the map. */
+:global(html:not([data-motion="full"])) .opening {
+    display: none;
+}
+
+:global(html:not([data-motion="full"])) .hint {
+    display: block;
+}
+
+.hintPlan {
+    stroke-dasharray: 4 5;
+}
+
+.hintSun {
+    fill: var(--ink-1);
+    stroke: none;
+}
+
+/* ---- the scrim under the record --------------------------------------- */
+
+.scrim {
+    --a: var(--scrim-a, 24%);
+    --s: calc(var(--scrim-b, 58%) - var(--a));
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /* An eased ramp (a smoothstep in twelfths, so no bands show) that
+       holds the record's column to --a and clears at --b: on a wide
+       stage the renderer sets them from the column (flight-gl.ts). */
+    background: linear-gradient(
+        var(--to, 90deg),
+        color-mix(in oklab, var(--bg) 96%, transparent) var(--a),
+        color-mix(in oklab, var(--bg) 93.9%, transparent)
+            calc(var(--a) + var(--s) * 0.088),
+        color-mix(in oklab, var(--bg) 88.1%, transparent)
+            calc(var(--a) + var(--s) * 0.176),
+        color-mix(in oklab, var(--bg) 79.4%, transparent)
+            calc(var(--a) + var(--s) * 0.265),
+        color-mix(in oklab, var(--bg) 68.5%, transparent)
+            calc(var(--a) + var(--s) * 0.353),
+        color-mix(in oklab, var(--bg) 56.4%, transparent)
+            calc(var(--a) + var(--s) * 0.441),
+        color-mix(in oklab, var(--bg) 43.9%, transparent)
+            calc(var(--a) + var(--s) * 0.529),
+        color-mix(in oklab, var(--bg) 31.4%, transparent)
+            calc(var(--a) + var(--s) * 0.618),
+        color-mix(in oklab, var(--bg) 20%, transparent)
+            calc(var(--a) + var(--s) * 0.706),
+        color-mix(in oklab, var(--bg) 10.6%, transparent)
+            calc(var(--a) + var(--s) * 0.794),
+        color-mix(in oklab, var(--bg) 3.8%, transparent)
+            calc(var(--a) + var(--s) * 0.882),
+        transparent calc(var(--a) + var(--s))
+    );
+}
+
+/* ---- labels ------------------------------------------------------------ */
+
+.labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-6) var(--ease-dock);
+}
+
+/* No label before its world is drawn, nor over a lost scene. */
+.host:not([data-ready]) > .labels {
+    opacity: 0;
+}
+
+/* A map label: the organisation's name alone (the card carries the
+   dates), on a knockout backing, so a line passing under it breaks
+   rather than striking the text, and a leader to its world. The backing
+   reaches a few pixels past the text and feathers out, so over the sky it
+   reads as a soft plate, not a box. */
+.label {
+    --knockout: color-mix(in oklab, var(--bg) 80%, transparent);
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    gap: 3px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background: var(--knockout);
+    box-shadow: 0 0 8px 6px var(--knockout);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+/* One pixel wide, scaled to its length and turned toward the label. */
+.leader {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: var(--rule-hair);
+    margin-top: calc(var(--rule-hair) / -2);
+    background: var(--rule-2);
+    transform-origin: 0 50%;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.leader[data-state="current"] {
+    background: var(--ink-3);
+}
+
+.name {
+    display: -webkit-box;
+    max-width: 17em;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font: 400 var(--label-size) / 1.35 var(--font-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    text-wrap: balance;
+    color: var(--ink-2);
+}
+
+.label[data-state="current"] .name {
+    color: var(--ink-1);
+}
+
+.label[data-state="future"] .name,
+.label[data-state="plan"] .name {
+    color: var(--ink-3);
+}
+
+/* The ship's "now" mark in the overview, and the planned orbit's end. */
+.now,
+.target,
+.world {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.now::before,
+.target::before,
+.world::before {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.now::before {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* Sized round the world's drawn disc (--d, set per frame). */
+.world::before {
+    width: var(--d, 11px);
+    height: var(--d, 11px);
+    border: var(--rule-hair) solid var(--ink-3);
+}
+
+.target::before {
+    width: 9px;
+    height: 9px;
+    border: var(--rule-hair) solid var(--ink-2);
+    background: var(--bg);
+}
+
+@media (max-width: 959.98px) {
+    .hint {
+        left: 50%;
+        top: 29%;
+        width: 94%;
+    }
+    .sunrise {
+        left: calc(var(--nx) - 200cqh);
+        top: calc(var(--ny) - 50cqh);
+    }
+    .sunMark {
+        left: calc(var(--nx) - 20px);
+        top: calc(var(--ny) - var(--lift) - 20px);
+    }
+    .wide {
+        display: none;
+    }
+    .narrow {
+        display: inline;
+    }
+    /* From the foot up, holding the record below the scene. */
+    .scrim {
+        --to: 0deg;
+        --a: 30%;
+        --s: 34%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .host > canvas,
+    .poster,
+    .labels {
+        transition: none;
+    }
+    .opening {
+        display: none;
+    }
+    .hint {
+        display: block;
+    }
+}

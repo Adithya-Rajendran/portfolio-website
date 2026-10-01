@@ -15,6 +15,11 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type Burn = {
+    label: string;
+    note?: string;
+};
+
 export type MediaEmbed = {
     _type: "mediaEmbed";
     url: string;
@@ -46,7 +51,7 @@ export type Gallery = {
 
 export type Callout = {
     _type: "callout";
-    tone: "note" | "tip" | "warning";
+    tone: "note" | "tip" | "warning" | "caution";
     title?: string;
     body: Array<{
         children?: Array<{
@@ -66,6 +71,35 @@ export type Callout = {
         _type: "block";
         _key: string;
     }>;
+};
+
+export type ContactRoute = {
+    _type: "contactRoute";
+    title?: string;
+    prompt?: string;
+};
+
+export type ProjectReference = {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "project";
+};
+
+export type TalkOrPaper = {
+    _type: "talkOrPaper";
+    title: string;
+    kind: "talk" | "paper" | "preprint" | "poster" | "thesis" | "report";
+    venue?: string;
+    date?: string;
+    authors?: string;
+    links?: Array<
+        {
+            _key: string;
+        } & ExternalLink
+    >;
+    abstract?: string;
+    project?: ProjectReference;
 };
 
 export type Credential = {
@@ -98,11 +132,23 @@ export type TimelineEntry = {
     kind: "work" | "education";
     title: string;
     organization: string;
+    orgShort?: string;
+    orgUrl?: string;
+    employment?:
+        | "full-time"
+        | "internship"
+        | "part-time"
+        | "contract"
+        | "degree"
+        | "research";
     location?: string;
     isCurrent?: boolean;
     startDate?: string;
+    startPrecision?: "month" | "year";
     endDate?: string;
+    endPrecision?: "month" | "year";
     expectedEndYear?: number;
+    burn?: Burn;
     summary?: string;
     highlights?: Array<string>;
     skills?: Array<string>;
@@ -116,17 +162,42 @@ export type TimelineEntry = {
     };
 };
 
+export type PostReference = {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "post";
+};
+
 export type Curiosity = {
     _type: "curiosity";
+    kind?: "question" | "building" | "reading" | "learning";
     title: string;
     note?: string;
     url?: string;
+    project?: ProjectReference;
+    post?: PostReference;
 };
 
 export type ExternalLink = {
     _type: "externalLink";
     label: string;
     url: string;
+    kind?:
+        | "repo"
+        | "docs"
+        | "paper"
+        | "video"
+        | "dataset"
+        | "demo"
+        | "article"
+        | "profile"
+        | "other";
+};
+
+export type Footnote = {
+    _type: "footnote";
+    text: string;
 };
 
 export type ContentLink = {
@@ -145,9 +216,12 @@ export type ContentBody = Array<
           style?: "normal" | "h2" | "h3" | "h4" | "blockquote";
           listItem?: "bullet" | "number";
           markDefs?: Array<
-              {
-                  _key: string;
-              } & ContentLink
+              | ({
+                    _key: string;
+                } & ContentLink)
+              | ({
+                    _key: string;
+                } & Footnote)
           >;
           level?: number;
           _type: "block";
@@ -160,6 +234,9 @@ export type ContentBody = Array<
           crop?: SanityImageCrop;
           alt: string;
           caption?: string;
+          credit?: string;
+          kind?: "photo" | "diagram" | "plot" | "screenshot";
+          width?: "prose" | "wide" | "full";
           _type: "image";
           _key: string;
       }
@@ -177,20 +254,26 @@ export type ContentBody = Array<
       } & MediaEmbed)
 >;
 
+export type SanityFileAssetReference = {
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    [internalGroqTypeReferenceTo]?: "sanity.fileAsset";
+};
+
 export type Project = {
     _id: string;
     _type: "project";
     _createdAt: string;
     _updatedAt: string;
     _rev: string;
+    designation: number;
     title: string;
+    name?: string;
     slug: Slug;
     summary: string;
-    status: "active" | "completed" | "paused" | "archived";
-    startDate?: string;
-    endDate?: string;
-    technologies: Array<string>;
-    highlights: Array<string>;
+    types: Array<"research" | "hardware" | "software" | "infrastructure">;
+    featured?: 1 | 2 | 3;
     cover?: {
         asset?: SanityImageAssetReference;
         media?: unknown;
@@ -200,11 +283,90 @@ export type Project = {
         caption?: string;
         _type: "image";
     };
+    coverPortrait?: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        _type: "image";
+    };
+    status:
+        "active" | "completed" | "paused" | "archived" | "planned" | "stopped";
+    statusNote?: string;
+    myRole?: string;
+    startDate?: string;
+    endDate?: string;
+    datePrecision?: "month" | "year";
+    datesApproximate?: boolean;
+    technologies: Array<string>;
+    highlights: Array<string>;
+    parameters?: Array<{
+        label: string;
+        value: string;
+        _type: "parameter";
+        _key: string;
+    }>;
     links?: Array<
         {
             _key: string;
         } & ExternalLink
     >;
+    brief?: {
+        problem?: string;
+        approach?: string;
+        outcome?: string;
+    };
+    results?: Array<{
+        metric: string;
+        value: string;
+        note?: string;
+        _type: "result";
+        _key: string;
+    }>;
+    lessons?: Array<string>;
+    next?: Array<string>;
+    model?: {
+        kind: "procedural" | "gltf";
+        procedural?: "homelab-rack";
+        file?: {
+            asset?: SanityFileAssetReference;
+            media?: unknown;
+            _type: "file";
+        };
+        poster: {
+            asset?: SanityImageAssetReference;
+            media?: unknown;
+            hotspot?: SanityImageHotspot;
+            crop?: SanityImageCrop;
+            alt: string;
+            _type: "image";
+        };
+        title?: string;
+        alt: string;
+        realWorld?: {
+            dimension: "height" | "width" | "depth" | "reach";
+            value: number;
+            unit: "mm" | "cm" | "in" | "U";
+        };
+        hotspots?: Array<{
+            label: string;
+            title: string;
+            body?: string;
+            part?: "tier0" | "network" | "ms01" | "ascent" | "power";
+            position?: {
+                x: number;
+                y: number;
+                z: number;
+            };
+            anchor?: {
+                heading: string;
+                post?: PostReference;
+            };
+            _type: "hotspot";
+            _key: string;
+        }>;
+    };
     body: ContentBody;
 };
 
@@ -230,20 +392,6 @@ export type Slug = {
     source?: string;
 };
 
-export type PostReference = {
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "post";
-};
-
-export type SanityFileAssetReference = {
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "sanity.fileAsset";
-};
-
 export type Profile = {
     _id: string;
     _type: "profile";
@@ -252,13 +400,45 @@ export type Profile = {
     _rev: string;
     name: string;
     headline: string;
+    tagline?: string;
     introduction: string;
+    availability?: {
+        status: "open" | "selective" | "closed";
+        seeking?: Array<{
+            label: string;
+            _type: "opening";
+            _key: string;
+        }>;
+        openTo?: string;
+        from?: string;
+        cta?: string;
+        consultingOpen?: boolean;
+        updatedAt?: string;
+    };
+    launch?: {
+        date: string;
+        precision?: "day" | "month" | "year";
+        event: string;
+    };
     focusAreas?: Array<string>;
     workSummary?: string;
     writingDescription?: string;
     contactInvitation?: string;
+    projectsIntro?: string;
+    contactIntro?: string;
+    contactRoutes?: {
+        hiring?: ContactRoute;
+        research?: ContactRoute;
+        consulting?: ContactRoute;
+        hello?: ContactRoute;
+    };
     seoDescription?: string;
     featuredPost?: PostReference;
+    startHere?: Array<
+        {
+            _key: string;
+        } & PostReference
+    >;
     bio: string;
     location?: string;
     portrait?: {
@@ -301,6 +481,11 @@ export type Profile = {
             _key: string;
         } & Credential
     >;
+    talksAndPapers?: Array<
+        {
+            _key: string;
+        } & TalkOrPaper
+    >;
 };
 
 export type Post = {
@@ -313,7 +498,31 @@ export type Post = {
     slug: Slug;
     description: string;
     publishedAt: string;
+    revisedAt?: string;
+    changelog?: Array<{
+        date: string;
+        kind: "update" | "correction";
+        note: string;
+        _type: "postChange";
+        _key: string;
+    }>;
     tags?: Array<string>;
+    cover?: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        caption?: string;
+        credit?: string;
+        kind?: "photo" | "diagram" | "plot" | "screenshot";
+        _type: "image";
+    };
+    projects?: Array<
+        {
+            _key: string;
+        } & ProjectReference
+    >;
     body: ContentBody;
 };
 
@@ -423,23 +632,28 @@ export type Geopoint = {
 };
 
 export type AllSanitySchemaTypes =
+    | Burn
     | MediaEmbed
     | SanityImageAssetReference
     | Gallery
     | Callout
+    | ContactRoute
+    | ProjectReference
+    | TalkOrPaper
     | Credential
     | SkillGroup
     | TimelineEntry
+    | PostReference
     | Curiosity
     | ExternalLink
+    | Footnote
     | ContentLink
     | ContentBody
+    | SanityFileAssetReference
     | Project
     | SanityImageCrop
     | SanityImageHotspot
     | Slug
-    | PostReference
-    | SanityFileAssetReference
     | Profile
     | Post
     | Code
@@ -459,24 +673,33 @@ export type DUE_POSTS_QUERY_RESULT = Array<string>;
 
 // Source: lib/sanity-client.ts
 // Variable: PROFILE_QUERY
-// Query: *[_id == "profile"][0]{    _id,    _updatedAt,    name,    headline,    introduction,    bio,    focusAreas,    workSummary,    writingDescription,    contactInvitation,    seoDescription,    "featuredPostId": featuredPost._ref,    location,    portrait,    "resumeUrl": resume.asset->url,    resumeNote,    socialLinks[]{_key, _type, label, url},    currentCuriosities[]{_key, _type, title, note, url},    curiositiesUpdatedAt,    timeline[]{        _key, _type, kind, title, organization, location, startDate, endDate,        isCurrent, expectedEndYear,        summary, highlights, skills, logo    },    skillGroups[]{_key, _type, title, skills},    credentials[]{        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,        credentialId, verificationUrl, badge,        "lifecycleStatus": select(            lifetime == true => "lifetime",            defined(expiresOn) && expiresOn < $today => "expired",            "active"        )    }}
+// Query: *[_id == "profile"][0]{    _id,    _createdAt,    _updatedAt,    name,    headline,    tagline,    introduction,    bio,    availability{        status, "seeking": seeking[]{_key, label}, openTo, cta,        consultingOpen, updatedAt    },    launch{date, precision, event},    focusAreas,    workSummary,    writingDescription,    contactInvitation,    projectsIntro,    contactIntro,    contactRoutes{        hiring{title, prompt},        research{title, prompt},        consulting{title, prompt},        hello{title, prompt}    },    seoDescription,    "featuredPostId": featuredPost._ref,    "startHereIds": startHere[]._ref,    location,    portrait,    "resumeUrl": resume.asset->url,    "resumeUploadedAt": resume.asset->_createdAt,    resumeNote,    socialLinks[]{_key, _type, label, url, kind},    currentCuriosities[]{        _key, _type, kind, title, note, url,        "projectId": project._ref,        "postId": post._ref    },    curiositiesUpdatedAt,    timeline[]{        _key, _type, kind, title, organization, orgShort, orgUrl, employment,        location, startDate, startPrecision, endDate, endPrecision,        isCurrent, expectedEndYear,        summary, highlights, skills, logo, burn{label, note}    },    skillGroups[]{_key, _type, title, skills},    credentials[]{        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,        credentialId, verificationUrl, badge,        "lifecycleStatus": select(            lifetime == true => "lifetime",            defined(expiresOn) && expiresOn < $today => "expired",            "active"        )    },    talksAndPapers[]{        _key, _type, title, kind, venue, date, authors,        links[]{_key, _type, label, url, kind},        abstract,        "projectId": project._ref    }}
 export type PROFILE_QUERY_RESULT =
     | {
           _id: "profile";
+          _createdAt: string;
           _updatedAt: string;
           name: null;
           headline: null;
+          tagline: null;
           introduction: null;
           bio: null;
+          availability: null;
+          launch: null;
           focusAreas: null;
           workSummary: null;
           writingDescription: null;
           contactInvitation: null;
+          projectsIntro: null;
+          contactIntro: null;
+          contactRoutes: null;
           seoDescription: null;
           featuredPostId: null;
+          startHereIds: null;
           location: null;
           portrait: null;
           resumeUrl: null;
+          resumeUploadedAt: null;
           resumeNote: null;
           socialLinks: null;
           currentCuriosities: null;
@@ -484,20 +707,94 @@ export type PROFILE_QUERY_RESULT =
           timeline: null;
           skillGroups: null;
           credentials: null;
+          talksAndPapers: null;
       }
     | {
           _id: "profile";
+          _createdAt: string;
+          _updatedAt: string;
+          name: string | null;
+          headline: null;
+          tagline: null;
+          introduction: null;
+          bio: null;
+          availability: null;
+          launch: null;
+          focusAreas: null;
+          workSummary: null;
+          writingDescription: null;
+          contactInvitation: null;
+          projectsIntro: null;
+          contactIntro: null;
+          contactRoutes: null;
+          seoDescription: null;
+          featuredPostId: null;
+          startHereIds: null;
+          location: null;
+          portrait: null;
+          resumeUrl: null;
+          resumeUploadedAt: null;
+          resumeNote: null;
+          socialLinks: null;
+          currentCuriosities: null;
+          curiositiesUpdatedAt: null;
+          timeline: null;
+          skillGroups: null;
+          credentials: null;
+          talksAndPapers: null;
+      }
+    | {
+          _id: "profile";
+          _createdAt: string;
           _updatedAt: string;
           name: string;
           headline: string;
+          tagline: string | null;
           introduction: string;
           bio: string;
+          availability: {
+              status: "closed" | "open" | "selective";
+              seeking: Array<{
+                  _key: string;
+                  label: string;
+              }> | null;
+              openTo: string | null;
+              cta: string | null;
+              consultingOpen: boolean | null;
+              updatedAt: string | null;
+          } | null;
+          launch: {
+              date: string;
+              precision: "day" | "month" | "year" | null;
+              event: string;
+          } | null;
           focusAreas: Array<string> | null;
           workSummary: string | null;
           writingDescription: string | null;
           contactInvitation: string | null;
+          projectsIntro: string | null;
+          contactIntro: string | null;
+          contactRoutes: {
+              hiring: {
+                  title: string | null;
+                  prompt: string | null;
+              } | null;
+              research: {
+                  title: string | null;
+                  prompt: string | null;
+              } | null;
+              consulting: {
+                  title: string | null;
+                  prompt: string | null;
+              } | null;
+              hello: {
+                  title: string | null;
+                  prompt: string | null;
+              } | null;
+          } | null;
           seoDescription: string | null;
           featuredPostId: string | null;
+          startHereIds: Array<string> | null;
           location: string | null;
           portrait: {
               asset?: SanityImageAssetReference;
@@ -508,19 +805,34 @@ export type PROFILE_QUERY_RESULT =
               _type: "image";
           } | null;
           resumeUrl: string | null;
+          resumeUploadedAt: string | null;
           resumeNote: string | null;
           socialLinks: Array<{
               _key: string;
               _type: "externalLink";
               label: string;
               url: string;
+              kind:
+                  | "article"
+                  | "dataset"
+                  | "demo"
+                  | "docs"
+                  | "other"
+                  | "paper"
+                  | "profile"
+                  | "repo"
+                  | "video"
+                  | null;
           }> | null;
           currentCuriosities: Array<{
               _key: string;
               _type: "curiosity";
+              kind: "building" | "learning" | "question" | "reading" | null;
               title: string;
               note: string | null;
               url: string | null;
+              projectId: string | null;
+              postId: string | null;
           }> | null;
           curiositiesUpdatedAt: string | null;
           timeline: Array<{
@@ -529,9 +841,21 @@ export type PROFILE_QUERY_RESULT =
               kind: "education" | "work";
               title: string;
               organization: string;
+              orgShort: string | null;
+              orgUrl: string | null;
+              employment:
+                  | "contract"
+                  | "degree"
+                  | "full-time"
+                  | "internship"
+                  | "part-time"
+                  | "research"
+                  | null;
               location: string | null;
               startDate: string | null;
+              startPrecision: "month" | "year" | null;
               endDate: string | null;
+              endPrecision: "month" | "year" | null;
               isCurrent: boolean | null;
               expectedEndYear: number | null;
               summary: string | null;
@@ -544,6 +868,10 @@ export type PROFILE_QUERY_RESULT =
                   crop?: SanityImageCrop;
                   alt: string;
                   _type: "image";
+              } | null;
+              burn: {
+                  label: string;
+                  note: string | null;
               } | null;
           }> | null;
           skillGroups: Array<{
@@ -572,25 +900,110 @@ export type PROFILE_QUERY_RESULT =
               };
               lifecycleStatus: "active" | "expired" | "lifetime";
           }> | null;
+          talksAndPapers: Array<{
+              _key: string;
+              _type: "talkOrPaper";
+              title: string;
+              kind:
+                  | "paper"
+                  | "poster"
+                  | "preprint"
+                  | "report"
+                  | "talk"
+                  | "thesis";
+              venue: string | null;
+              date: string | null;
+              authors: string | null;
+              links: Array<{
+                  _key: string;
+                  _type: "externalLink";
+                  label: string;
+                  url: string;
+                  kind:
+                      | "article"
+                      | "dataset"
+                      | "demo"
+                      | "docs"
+                      | "other"
+                      | "paper"
+                      | "profile"
+                      | "repo"
+                      | "video"
+                      | null;
+              }> | null;
+              abstract: string | null;
+              projectId: string | null;
+          }> | null;
       }
     | null;
 
 // Source: lib/sanity-client.ts
 // Variable: POST_LIST_QUERY
-// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    title,    "slug": slug.current,    description,    publishedAt,    tags,    "wordCount": length(string::split(pt::text(body), " "))}
+// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " "))}
 export type POST_LIST_QUERY_RESULT = Array<{
     _id: string;
     title: string;
     slug: string;
     description: string;
     publishedAt: string;
+    revisedAt: string | null;
     tags: Array<string> | null;
+    projectIds: Array<string> | null;
+    cover: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        caption?: string;
+        credit?: string;
+        kind?: "diagram" | "photo" | "plot" | "screenshot";
+        _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
+        bg: string | null;
+    } | null;
+    wordCount: number;
+}>;
+
+// Source: lib/sanity-client.ts
+// Variable: POSTS_BY_PROJECT_QUERY
+// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today &&    references($projectId)] | order(publishedAt desc){    _id,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " "))}
+export type POSTS_BY_PROJECT_QUERY_RESULT = Array<{
+    _id: string;
+    title: string;
+    slug: string;
+    description: string;
+    publishedAt: string;
+    revisedAt: string | null;
+    tags: Array<string> | null;
+    projectIds: Array<string> | null;
+    cover: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        caption?: string;
+        credit?: string;
+        kind?: "diagram" | "photo" | "plot" | "screenshot";
+        _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
+        bg: string | null;
+    } | null;
     wordCount: number;
 }>;
 
 // Source: lib/sanity-client.ts
 // Variable: RECENT_POSTS_QUERY
-// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    tags,    "wordCount": length(string::split(pt::text(body), " ")),    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
+// Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " ")),    changelog[]{_key, date, kind, note},    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type RECENT_POSTS_QUERY_RESULT = Array<{
     _id: string;
     _updatedAt: string;
@@ -598,8 +1011,33 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
     slug: string;
     description: string;
     publishedAt: string;
+    revisedAt: string | null;
     tags: Array<string> | null;
+    projectIds: Array<string> | null;
+    cover: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        caption?: string;
+        credit?: string;
+        kind?: "diagram" | "photo" | "plot" | "screenshot";
+        _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
+        bg: string | null;
+    } | null;
     wordCount: number;
+    changelog: Array<{
+        _key: string;
+        date: string;
+        kind: "correction" | "update";
+        note: string;
+    }> | null;
     body: Array<
         | {
               children?: Array<{
@@ -611,9 +1049,12 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
               style?: "blockquote" | "h2" | "h3" | "h4" | "normal";
               listItem?: "bullet" | "number";
               markDefs?: Array<
-                  {
-                      _key: string;
-                  } & ContentLink
+                  | ({
+                        _key: string;
+                    } & ContentLink)
+                  | ({
+                        _key: string;
+                    } & Footnote)
               >;
               level?: number;
               _type: "block";
@@ -622,7 +1063,7 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
         | {
               _key: string;
               _type: "callout";
-              tone: "note" | "tip" | "warning";
+              tone: "caution" | "note" | "tip" | "warning";
               title?: string;
               body: Array<{
                   children?: Array<{
@@ -678,6 +1119,9 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
               crop?: SanityImageCrop;
               alt: string;
               caption?: string;
+              credit?: string;
+              kind?: "diagram" | "photo" | "plot" | "screenshot";
+              width?: "full" | "prose" | "wide";
               _type: "image";
               _key: string;
               lqip: string | null;
@@ -698,7 +1142,7 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
 
 // Source: lib/sanity-client.ts
 // Variable: POST_BY_SLUG_QUERY
-// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    tags,    "wordCount": length(string::split(pt::text(body), " ")),    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
+// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " ")),    changelog[]{_key, date, kind, note},    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type POST_BY_SLUG_QUERY_RESULT = {
     _id: string;
     _updatedAt: string;
@@ -706,8 +1150,33 @@ export type POST_BY_SLUG_QUERY_RESULT = {
     slug: string;
     description: string;
     publishedAt: string;
+    revisedAt: string | null;
     tags: Array<string> | null;
+    projectIds: Array<string> | null;
+    cover: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        caption?: string;
+        credit?: string;
+        kind?: "diagram" | "photo" | "plot" | "screenshot";
+        _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
+        bg: string | null;
+    } | null;
     wordCount: number;
+    changelog: Array<{
+        _key: string;
+        date: string;
+        kind: "correction" | "update";
+        note: string;
+    }> | null;
     body: Array<
         | {
               children?: Array<{
@@ -719,9 +1188,12 @@ export type POST_BY_SLUG_QUERY_RESULT = {
               style?: "blockquote" | "h2" | "h3" | "h4" | "normal";
               listItem?: "bullet" | "number";
               markDefs?: Array<
-                  {
-                      _key: string;
-                  } & ContentLink
+                  | ({
+                        _key: string;
+                    } & ContentLink)
+                  | ({
+                        _key: string;
+                    } & Footnote)
               >;
               level?: number;
               _type: "block";
@@ -730,7 +1202,7 @@ export type POST_BY_SLUG_QUERY_RESULT = {
         | {
               _key: string;
               _type: "callout";
-              tone: "note" | "tip" | "warning";
+              tone: "caution" | "note" | "tip" | "warning";
               title?: string;
               body: Array<{
                   children?: Array<{
@@ -786,6 +1258,9 @@ export type POST_BY_SLUG_QUERY_RESULT = {
               crop?: SanityImageCrop;
               alt: string;
               caption?: string;
+              credit?: string;
+              kind?: "diagram" | "photo" | "plot" | "screenshot";
+              width?: "full" | "prose" | "wide";
               _type: "image";
               _key: string;
               lqip: string | null;
@@ -806,14 +1281,33 @@ export type POST_BY_SLUG_QUERY_RESULT = {
 
 // Source: lib/sanity-client.ts
 // Variable: POST_META_QUERY
-// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    title,    "slug": slug.current,    description,    publishedAt,    tags,    _updatedAt,    "wordCount": length(string::split(pt::text(body), " "))}
+// Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " "))}
 export type POST_META_QUERY_RESULT = {
+    _updatedAt: string;
     title: string;
     slug: string;
     description: string;
     publishedAt: string;
+    revisedAt: string | null;
     tags: Array<string> | null;
-    _updatedAt: string;
+    projectIds: Array<string> | null;
+    cover: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        caption?: string;
+        credit?: string;
+        kind?: "diagram" | "photo" | "plot" | "screenshot";
+        _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
+        bg: string | null;
+    } | null;
     wordCount: number;
 } | null;
 
@@ -832,18 +1326,32 @@ export type POST_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
 
 // Source: lib/sanity-client.ts
 // Variable: PROJECT_LIST_QUERY
-// Query: *[    _type == "project" && defined(slug.current)] | order(coalesce(endDate, startDate, _createdAt) desc){    _id,    _updatedAt,    title,    "slug": slug.current,    summary,    status,    startDate,    endDate,    technologies,    highlights,    cover,    links[]{_key, _type, label, url}}
+// Query: *[    _type == "project" && defined(slug.current)] | order(coalesce(endDate, startDate, _createdAt) desc){    _id,    _updatedAt,    designation,    title,    name,    "slug": slug.current,    summary,    status,    statusNote,    types,    featured,    myRole,    startDate,    endDate,    datePrecision,    datesApproximate,    technologies,    highlights,    parameters[]{_key, label, value},    cover{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    coverPortrait{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    links[]{_key, _type, label, url, kind},    "hasModel": defined(model)}
 export type PROJECT_LIST_QUERY_RESULT = Array<{
     _id: string;
     _updatedAt: string;
+    designation: number;
     title: string;
+    name: string | null;
     slug: string;
     summary: string;
-    status: "active" | "archived" | "completed" | "paused";
+    status:
+        "active" | "archived" | "completed" | "paused" | "planned" | "stopped";
+    statusNote: string | null;
+    types: Array<"hardware" | "infrastructure" | "research" | "software">;
+    featured: 1 | 2 | 3 | null;
+    myRole: string | null;
     startDate: string | null;
     endDate: string | null;
+    datePrecision: "month" | "year" | null;
+    datesApproximate: boolean | null;
     technologies: Array<string>;
     highlights: Array<string>;
+    parameters: Array<{
+        _key: string;
+        label: string;
+        value: string;
+    }> | null;
     cover: {
         asset?: SanityImageAssetReference;
         media?: unknown;
@@ -852,29 +1360,73 @@ export type PROJECT_LIST_QUERY_RESULT = Array<{
         alt: string;
         caption?: string;
         _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
+    } | null;
+    coverPortrait: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
     } | null;
     links: Array<{
         _key: string;
         _type: "externalLink";
         label: string;
         url: string;
+        kind:
+            | "article"
+            | "dataset"
+            | "demo"
+            | "docs"
+            | "other"
+            | "paper"
+            | "profile"
+            | "repo"
+            | "video"
+            | null;
     }> | null;
+    hasModel: false | true;
 }>;
 
 // Source: lib/sanity-client.ts
 // Variable: PROJECT_BY_SLUG_QUERY
-// Query: *[    _type == "project" && slug.current == $slug][0]{    _id,    _updatedAt,    title,    "slug": slug.current,    summary,    status,    startDate,    endDate,    technologies,    highlights,    cover,    links[]{_key, _type, label, url},    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
+// Query: *[    _type == "project" && slug.current == $slug][0]{    _id,    _updatedAt,    designation,    title,    name,    "slug": slug.current,    summary,    status,    statusNote,    types,    featured,    myRole,    startDate,    endDate,    datePrecision,    datesApproximate,    technologies,    highlights,    parameters[]{_key, label, value},    cover{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    coverPortrait{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    links[]{_key, _type, label, url, kind},    "hasModel": defined(model),    brief{problem, approach, outcome},    results[]{_key, metric, value, note},    lessons,    next,    model{        kind,        procedural,        "fileUrl": file.asset->url,        poster{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},        title,        alt,        realWorld{dimension, value, unit},        hotspots[]{            _key, label, title, body, part,            position{x, y, z},            anchor{heading, "postId": post._ref}        }    },    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type PROJECT_BY_SLUG_QUERY_RESULT = {
     _id: string;
     _updatedAt: string;
+    designation: number;
     title: string;
+    name: string | null;
     slug: string;
     summary: string;
-    status: "active" | "archived" | "completed" | "paused";
+    status:
+        "active" | "archived" | "completed" | "paused" | "planned" | "stopped";
+    statusNote: string | null;
+    types: Array<"hardware" | "infrastructure" | "research" | "software">;
+    featured: 1 | 2 | 3 | null;
+    myRole: string | null;
     startDate: string | null;
     endDate: string | null;
+    datePrecision: "month" | "year" | null;
+    datesApproximate: boolean | null;
     technologies: Array<string>;
     highlights: Array<string>;
+    parameters: Array<{
+        _key: string;
+        label: string;
+        value: string;
+    }> | null;
     cover: {
         asset?: SanityImageAssetReference;
         media?: unknown;
@@ -883,13 +1435,97 @@ export type PROJECT_BY_SLUG_QUERY_RESULT = {
         alt: string;
         caption?: string;
         _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
+    } | null;
+    coverPortrait: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt: string;
+        _type: "image";
+        lqip: string | null;
+        dimensions: {
+            width: number;
+            height: number;
+        } | null;
     } | null;
     links: Array<{
         _key: string;
         _type: "externalLink";
         label: string;
         url: string;
+        kind:
+            | "article"
+            | "dataset"
+            | "demo"
+            | "docs"
+            | "other"
+            | "paper"
+            | "profile"
+            | "repo"
+            | "video"
+            | null;
     }> | null;
+    hasModel: false | true;
+    brief: {
+        problem: string | null;
+        approach: string | null;
+        outcome: string | null;
+    } | null;
+    results: Array<{
+        _key: string;
+        metric: string;
+        value: string;
+        note: string | null;
+    }> | null;
+    lessons: Array<string> | null;
+    next: Array<string> | null;
+    model: {
+        kind: "gltf" | "procedural";
+        procedural: "homelab-rack" | null;
+        fileUrl: string | null;
+        poster: {
+            asset?: SanityImageAssetReference;
+            media?: unknown;
+            hotspot?: SanityImageHotspot;
+            crop?: SanityImageCrop;
+            alt: string;
+            _type: "image";
+            lqip: string | null;
+            dimensions: {
+                width: number;
+                height: number;
+            } | null;
+        };
+        title: string | null;
+        alt: string;
+        realWorld: {
+            dimension: "depth" | "height" | "reach" | "width";
+            value: number;
+            unit: "cm" | "in" | "mm" | "U";
+        } | null;
+        hotspots: Array<{
+            _key: string;
+            label: string;
+            title: string;
+            body: string | null;
+            part: "ascent" | "ms01" | "network" | "power" | "tier0" | null;
+            position: {
+                x: number;
+                y: number;
+                z: number;
+            } | null;
+            anchor: {
+                heading: string;
+                postId: string | null;
+            } | null;
+        }> | null;
+    } | null;
     body: Array<
         | {
               children?: Array<{
@@ -901,9 +1537,12 @@ export type PROJECT_BY_SLUG_QUERY_RESULT = {
               style?: "blockquote" | "h2" | "h3" | "h4" | "normal";
               listItem?: "bullet" | "number";
               markDefs?: Array<
-                  {
-                      _key: string;
-                  } & ContentLink
+                  | ({
+                        _key: string;
+                    } & ContentLink)
+                  | ({
+                        _key: string;
+                    } & Footnote)
               >;
               level?: number;
               _type: "block";
@@ -912,7 +1551,7 @@ export type PROJECT_BY_SLUG_QUERY_RESULT = {
         | {
               _key: string;
               _type: "callout";
-              tone: "note" | "tip" | "warning";
+              tone: "caution" | "note" | "tip" | "warning";
               title?: string;
               body: Array<{
                   children?: Array<{
@@ -968,6 +1607,9 @@ export type PROJECT_BY_SLUG_QUERY_RESULT = {
               crop?: SanityImageCrop;
               alt: string;
               caption?: string;
+              credit?: string;
+              kind?: "diagram" | "photo" | "plot" | "screenshot";
+              width?: "full" | "prose" | "wide";
               _type: "image";
               _key: string;
               lqip: string | null;
@@ -999,21 +1641,34 @@ export type PROJECT_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
     updatedAt: string;
 }>;
 
+// Source: lib/sanity-client.ts
+// Variable: WARM_LISTS_QUERY
+// Query: {    "posts": *[        _type == "post" && defined(publishedAt) && publishedAt <= $today    ]{"slug": slug.current, tags},    "projectSlugs": *[_type == "project" && defined(slug.current)].slug.current}
+export type WARM_LISTS_QUERY_RESULT = {
+    posts: Array<{
+        slug: string;
+        tags: Array<string> | null;
+    }>;
+    projectSlugs: Array<string>;
+};
+
 // Query TypeMap
 declare global {
     interface SanityQueries {
         '*[\n    _type == "post" &&\n    defined(publishedAt) &&\n    publishedAt == $today\n].slug.current': DUE_POSTS_QUERY_RESULT;
-        '*[_id == "profile"][0]{\n    _id,\n    _updatedAt,\n    name,\n    headline,\n    introduction,\n    bio,\n    focusAreas,\n    workSummary,\n    writingDescription,\n    contactInvitation,\n    seoDescription,\n    "featuredPostId": featuredPost._ref,\n    location,\n    portrait,\n    "resumeUrl": resume.asset->url,\n    resumeNote,\n    socialLinks[]{_key, _type, label, url},\n    currentCuriosities[]{_key, _type, title, note, url},\n    curiositiesUpdatedAt,\n    timeline[]{\n        _key, _type, kind, title, organization, location, startDate, endDate,\n        isCurrent, expectedEndYear,\n        summary, highlights, skills, logo\n    },\n    skillGroups[]{_key, _type, title, skills},\n    credentials[]{\n        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,\n        credentialId, verificationUrl, badge,\n        "lifecycleStatus": select(\n            lifetime == true => "lifetime",\n            defined(expiresOn) && expiresOn < $today => "expired",\n            "active"\n        )\n    }\n}': PROFILE_QUERY_RESULT;
-        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_LIST_QUERY_RESULT;
-        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': RECENT_POSTS_QUERY_RESULT;
-        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    "wordCount": length(string::split(pt::text(body), " ")),\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': POST_BY_SLUG_QUERY_RESULT;
-        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    tags,\n    _updatedAt,\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_META_QUERY_RESULT;
+        '*[_id == "profile"][0]{\n    _id,\n    _createdAt,\n    _updatedAt,\n    name,\n    headline,\n    tagline,\n    introduction,\n    bio,\n    availability{\n        status, "seeking": seeking[]{_key, label}, openTo, cta,\n        consultingOpen, updatedAt\n    },\n    launch{date, precision, event},\n    focusAreas,\n    workSummary,\n    writingDescription,\n    contactInvitation,\n    projectsIntro,\n    contactIntro,\n    contactRoutes{\n        hiring{title, prompt},\n        research{title, prompt},\n        consulting{title, prompt},\n        hello{title, prompt}\n    },\n    seoDescription,\n    "featuredPostId": featuredPost._ref,\n    "startHereIds": startHere[]._ref,\n    location,\n    portrait,\n    "resumeUrl": resume.asset->url,\n    "resumeUploadedAt": resume.asset->_createdAt,\n    resumeNote,\n    socialLinks[]{_key, _type, label, url, kind},\n    currentCuriosities[]{\n        _key, _type, kind, title, note, url,\n        "projectId": project._ref,\n        "postId": post._ref\n    },\n    curiositiesUpdatedAt,\n    timeline[]{\n        _key, _type, kind, title, organization, orgShort, orgUrl, employment,\n        location, startDate, startPrecision, endDate, endPrecision,\n        isCurrent, expectedEndYear,\n        summary, highlights, skills, logo, burn{label, note}\n    },\n    skillGroups[]{_key, _type, title, skills},\n    credentials[]{\n        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,\n        credentialId, verificationUrl, badge,\n        "lifecycleStatus": select(\n            lifetime == true => "lifetime",\n            defined(expiresOn) && expiresOn < $today => "expired",\n            "active"\n        )\n    },\n    talksAndPapers[]{\n        _key, _type, title, kind, venue, date, authors,\n        links[]{_key, _type, label, url, kind},\n        abstract,\n        "projectId": project._ref\n    }\n}': PROFILE_QUERY_RESULT;
+        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_LIST_QUERY_RESULT;
+        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today &&\n    references($projectId)\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POSTS_BY_PROJECT_QUERY_RESULT;
+        '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " ")),\n    changelog[]{_key, date, kind, note},\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': RECENT_POSTS_QUERY_RESULT;
+        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " ")),\n    changelog[]{_key, date, kind, note},\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': POST_BY_SLUG_QUERY_RESULT;
+        '*[\n    _type == "post" && slug.current == $slug &&\n    defined(publishedAt) && publishedAt <= $today\n][0]{\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_META_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n].slug.current': POST_SLUGS_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n]{"slug": slug.current, "updatedAt": _updatedAt}': POST_SLUGS_WITH_DATES_QUERY_RESULT;
-        '*[\n    _type == "project" && defined(slug.current)\n] | order(coalesce(endDate, startDate, _createdAt) desc){\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    summary,\n    status,\n    startDate,\n    endDate,\n    technologies,\n    highlights,\n    cover,\n    links[]{_key, _type, label, url}\n}': PROJECT_LIST_QUERY_RESULT;
-        '*[\n    _type == "project" && slug.current == $slug\n][0]{\n    _id,\n    _updatedAt,\n    title,\n    "slug": slug.current,\n    summary,\n    status,\n    startDate,\n    endDate,\n    technologies,\n    highlights,\n    cover,\n    links[]{_key, _type, label, url},\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': PROJECT_BY_SLUG_QUERY_RESULT;
+        '*[\n    _type == "project" && defined(slug.current)\n] | order(coalesce(endDate, startDate, _createdAt) desc){\n    _id,\n    _updatedAt,\n    designation,\n    title,\n    name,\n    "slug": slug.current,\n    summary,\n    status,\n    statusNote,\n    types,\n    featured,\n    myRole,\n    startDate,\n    endDate,\n    datePrecision,\n    datesApproximate,\n    technologies,\n    highlights,\n    parameters[]{_key, label, value},\n    cover{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    coverPortrait{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    links[]{_key, _type, label, url, kind},\n    "hasModel": defined(model)\n}': PROJECT_LIST_QUERY_RESULT;
+        '*[\n    _type == "project" && slug.current == $slug\n][0]{\n    _id,\n    _updatedAt,\n    designation,\n    title,\n    name,\n    "slug": slug.current,\n    summary,\n    status,\n    statusNote,\n    types,\n    featured,\n    myRole,\n    startDate,\n    endDate,\n    datePrecision,\n    datesApproximate,\n    technologies,\n    highlights,\n    parameters[]{_key, label, value},\n    cover{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    coverPortrait{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    links[]{_key, _type, label, url, kind},\n    "hasModel": defined(model),\n    brief{problem, approach, outcome},\n    results[]{_key, metric, value, note},\n    lessons,\n    next,\n    model{\n        kind,\n        procedural,\n        "fileUrl": file.asset->url,\n        poster{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n        title,\n        alt,\n        realWorld{dimension, value, unit},\n        hotspots[]{\n            _key, label, title, body, part,\n            position{x, y, z},\n            anchor{heading, "postId": post._ref}\n        }\n    },\n    body[]{\n    ...,\n    _type == "image" => {\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n},\n    _type == "gallery" => {\n        ...,\n        images[]{\n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n}\n    }\n}\n}': PROJECT_BY_SLUG_QUERY_RESULT;
         '*[_type == "project" && defined(slug.current)].slug.current': PROJECT_SLUGS_QUERY_RESULT;
         '*[\n    _type == "project" && defined(slug.current)\n]{"slug": slug.current, "updatedAt": _updatedAt}': PROJECT_SLUGS_WITH_DATES_QUERY_RESULT;
+        '{\n    "posts": *[\n        _type == "post" && defined(publishedAt) && publishedAt <= $today\n    ]{"slug": slug.current, tags},\n    "projectSlugs": *[_type == "project" && defined(slug.current)].slug.current\n}': WARM_LISTS_QUERY_RESULT;
     }
 }
 // Lets @sanity/client releases that predate the global registry read it too

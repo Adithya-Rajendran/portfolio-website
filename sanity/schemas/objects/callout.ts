@@ -1,4 +1,5 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { CALLOUT_TONES } from "@/lib/post-fields";
 
 export default defineType({
     name: "callout",
@@ -10,14 +11,9 @@ export default defineType({
             title: "Tone",
             type: "string",
             initialValue: "note",
-            options: {
-                list: [
-                    { title: "Note", value: "note" },
-                    { title: "Tip", value: "tip" },
-                    { title: "Warning", value: "warning" },
-                ],
-                layout: "radio",
-            },
+            description:
+                "Caution is the advisory box, for steps that can break a setup or lose data.",
+            options: { list: [...CALLOUT_TONES], layout: "radio" },
             validation: (Rule) => Rule.required(),
         }),
         defineField({

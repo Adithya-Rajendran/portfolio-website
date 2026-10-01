@@ -10,11 +10,24 @@ import {
     getWritingDescription,
     isCurrentTimelineEntry,
 } from "@/lib/profile-content";
+import type { Mission } from "@/lib/missions";
+import { shareImagePath } from "@/lib/route-tags";
 import type {
     CredentialListItem,
     ProfileData,
     TimelineEntry,
 } from "@/lib/sanity-client";
+
+/** A post's share card, for the BlogPosting image. */
+const POST_CARD = "app/(site)/blog/[slug]/opengraph-image.tsx";
+
+/** `{ [key]: value }` when there is a value, else nothing to spread. */
+function optional<Key extends string>(
+    key: Key,
+    value: string | null | undefined,
+): Partial<Record<Key, string>> {
+    return value ? ({ [key]: value } as Record<Key, string>) : {};
+}
 
 export interface PersonEntityInput {
     profile: ProfileData | null;
@@ -49,12 +62,17 @@ function buildKnowsAbout(profile: ProfileData | null) {
     return [...new Set(skills.filter(Boolean))];
 }
 
+/**
+ * Profile links as `sameAs`, web addresses only. The schema accepts only
+ * http(s) links; this keeps a `mailto:` or `tel:` out of the JSON-LD even
+ * if one got in some other way (no public email or phone anywhere).
+ */
 function buildSameAs(profile: ProfileData | null) {
     return [
         ...new Set(
             getProfileLinks(profile)
                 .map((link) => link.url)
-                .filter(Boolean),
+                .filter((url) => /^https?:\/\//i.test(url ?? "")),
         ),
     ];
 }
@@ -95,7 +113,7 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
         alternateName: "Adithya",
         url: siteConfig.url,
         ...(imageUrl ? { image: imageUrl } : {}),
-        description: getProfileDescription(profile),
+        ...optional("description", getProfileDescription(profile)),
         ...(activeWork
             ? {
                   jobTitle: activeWork.title,
@@ -120,15 +138,22 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
     };
 }
 
-export function buildProfilePage(
-    input: PersonEntityInput & { dateModified: string },
-) {
+/**
+ * About as a schema.org ProfilePage. Its dates are the profile document's
+ * own (`_createdAt`, `_updatedAt`); a date the document does not carry is
+ * left out, never assumed.
+ */
+export function buildProfilePage(input: PersonEntityInput) {
     const credentials = buildHasCredential(input.profile?.credentials);
+    const day = (value: string | null | undefined) =>
+        /^\d{4}-\d{2}-\d{2}/.exec(value ?? "")?.[0];
+    const created = day(input.profile?._createdAt);
+    const modified = day(input.profile?._updatedAt);
 
     return {
         "@type": "ProfilePage",
-        dateCreated: "2024-01-01",
-        dateModified: input.dateModified,
+        ...(created ? { dateCreated: created } : {}),
+        ...(modified ? { dateModified: modified } : {}),
         mainEntity: {
             ...buildPersonEntity(input),
             ...(credentials.length > 0 ? { hasCredential: credentials } : {}),
@@ -141,9 +166,12 @@ export interface BlogPostingInput {
     description: string;
     publishedAt: string;
     slug: string;
-    updatedAt?: string;
+    /** The last substantive revision (`post.revisedAt`), as dateModified. */
+    revisedAt?: string | null;
     tags?: string[];
     wordCount?: number;
+    /** The cover, when the post has one; otherwise its share image. */
+    imageUrl?: string;
 }
 
 export function buildBlogPosting({
@@ -151,17 +179,20 @@ export function buildBlogPosting({
     description,
     publishedAt,
     slug,
-    updatedAt,
+    revisedAt,
     tags,
     wordCount,
+    imageUrl,
 }: BlogPostingInput) {
+    const url = `${siteConfig.url}/blog/${slug}`;
     return {
         "@type": "BlogPosting",
         headline: title,
         description,
         datePublished: publishedAt,
-        url: `${siteConfig.url}/blog/${slug}`,
-        image: `${siteConfig.url}/blog/${slug}/opengraph-image`,
+        url,
+        image:
+            imageUrl ?? `${siteConfig.url}${shareImagePath(POST_CARD, slug)}`,
         author: {
             "@type": "Person",
             name: siteConfig.author,
@@ -173,9 +204,13 @@ export function buildBlogPosting({
         },
         mainEntityOfPage: {
             "@type": "WebPage",
-            "@id": `${siteConfig.url}/blog/${slug}`,
+            "@id": url,
         },
-        ...(updatedAt ? { dateModified: updatedAt } : {}),
+        isPartOf: {
+            "@type": "Blog",
+            "@id": `${siteConfig.url}/blog`,
+        },
+        ...(revisedAt ? { dateModified: revisedAt } : {}),
         ...(tags && tags.length > 0 ? { keywords: tags.join(", ") } : {}),
         ...(typeof wordCount === "number" && wordCount > 0
             ? { wordCount }
@@ -183,17 +218,108 @@ export function buildBlogPosting({
     };
 }
 
+/**
+ * Where a page sits: Home › a section › the page. Every item but the last
+ * links; the last is the page itself (schema.org BreadcrumbList).
+ */
+export function buildBreadcrumbList(
+    items: readonly { name: string; path: string }[],
+) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: item.name,
+            item: `${siteConfig.url}${item.path === "/" ? "" : item.path}`,
+        })),
+    };
+}
+
 export function buildBlog(profile: ProfileData | null = null) {
     return {
         "@context": "https://schema.org",
         "@type": "Blog",
-        name: `${siteConfig.author} — Blog`,
+        name: `${siteConfig.author} — Writing`,
         url: `${siteConfig.url}/blog`,
-        description: getWritingDescription(profile),
+        ...optional("description", getWritingDescription(profile)),
         author: {
             "@type": "Person",
             name: siteConfig.author,
             url: siteConfig.url,
         },
+    };
+}
+
+/**
+ * `/contact` as a schema.org ContactPage about the site's person. There is
+ * deliberately no `email`, `telephone` or `contactPoint`: the form is the
+ * only channel (no public email address or phone number anywhere).
+ */
+export function buildContactPage(profile: ProfileData | null = null) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        name: `Contact ${profile?.name || siteConfig.author}`,
+        url: `${siteConfig.url}/contact`,
+        ...optional(
+            "description",
+            profile?.contactInvitation?.trim() || profile?.contactIntro?.trim(),
+        ),
+        about: {
+            "@type": "Person",
+            name: profile?.name || siteConfig.author,
+            url: siteConfig.url,
+            sameAs: buildSameAs(profile),
+        },
+    };
+}
+
+/**
+ * A mission file as a schema.org CreativeWork by the site's person: its
+ * title, number, summary, types and stack, and its external links (a
+ * repository, a live site) as `sameAs`. Web addresses only.
+ */
+export function buildMission(
+    mission: Pick<
+        Mission,
+        | "href"
+        | "title"
+        | "name"
+        | "designation"
+        | "summary"
+        | "types"
+        | "technologies"
+        | "links"
+        | "revised"
+    >,
+) {
+    const sameAs = mission.links
+        .map((link) => link.url)
+        .filter((url) => /^https?:\/\//i.test(url));
+    return {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        name: mission.title,
+        ...(mission.name ? { alternateName: mission.name } : {}),
+        identifier: mission.designation,
+        url: `${siteConfig.url}${mission.href}`,
+        ...(mission.summary ? { description: mission.summary } : {}),
+        ...(mission.types.length ? { genre: mission.types.join(", ") } : {}),
+        ...(mission.technologies.length
+            ? { keywords: mission.technologies.join(", ") }
+            : {}),
+        ...(mission.revised ? { dateModified: mission.revised } : {}),
+        creator: {
+            "@type": "Person",
+            name: siteConfig.author,
+            url: siteConfig.url,
+        },
+        isPartOf: {
+            "@type": "CollectionPage",
+            "@id": `${siteConfig.url}/portfolio`,
+        },
+        ...(sameAs.length ? { sameAs } : {}),
     };
 }

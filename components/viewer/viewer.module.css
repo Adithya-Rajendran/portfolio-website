@@ -1,0 +1,30 @@
+/*
+ * The 3D viewer's server part (G5): the poster plate's slot and the
+ * callouts as plain hairline rows (the part and what it does). The live
+ * drawing's own styles, its balloons among them, join this file in PR 15.
+ */
+.figure {
+    min-width: 0;
+}
+
+.callouts {
+    max-width: var(--measure-index);
+    margin: 0;
+    padding: 0;
+    border-bottom: var(--rule-hair) solid var(--rule-1);
+    list-style: none;
+}
+.callout {
+    padding-block: var(--s-4);
+    border-top: var(--rule-hair) solid var(--rule-1);
+}
+.calloutTitle {
+    font: 400 var(--step-1) / 1.3 var(--font-display);
+}
+.calloutText {
+    max-width: 62ch;
+    margin-top: var(--s-1);
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.5 var(--font-display);
+    text-wrap: pretty;
+}

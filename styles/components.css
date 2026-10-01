@@ -1,0 +1,1742 @@
+/*
+ * The shared design system: every class a Server Component can use on any
+ * route without an import. Ported from d-deep-field-plus site.css
+ * "4. COMPONENTS" (4.1–4.6, 4.8, 4.21, 4.27), pruned to what the site
+ * renders. Route- and feature-specific styles live in CSS Modules beside
+ * their component instead.
+ */
+@layer components {
+    /* ===== Typography roles (site.css 4.1) ============================ */
+    .t-h2 {
+        font: 400 var(--step-3) / 1.12 var(--font-display);
+        letter-spacing: -0.008em;
+    }
+    .t-h3 {
+        font: 400 var(--step-2) / 1.18 var(--font-display);
+    }
+    .t-lead {
+        font: 400 var(--step-2) / 1.38 var(--font-long);
+        color: var(--ink-2);
+        text-wrap: pretty;
+    }
+    .t-body {
+        font: 400 var(--step-0) / var(--lh-body) var(--font-text);
+    }
+    .t-small {
+        font: 400 var(--step-0) / 1.5 var(--font-text);
+        color: var(--ink-2);
+    }
+    .t-muted {
+        color: var(--ink-2);
+    }
+    .t-faint {
+        color: var(--ink-3);
+    }
+
+    /* The one label voice (contract §2): DM Mono caps, tracked, ink-2. */
+    .label {
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--ink-2);
+    }
+
+    /* Dates, metrics, codes. */
+    .data {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums lining-nums slashed-zero;
+        letter-spacing: 0;
+    }
+
+    /* ===== Icons and the patch (inline sprite) ========================= */
+    .df-sprite {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+    }
+    .icon {
+        display: inline-block;
+        width: 1.25em;
+        height: 1.25em;
+        vertical-align: -0.25em;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: square;
+        stroke-linejoin: miter;
+        flex: none;
+    }
+    .icon--sm {
+        width: 1em;
+        height: 1em;
+        vertical-align: -0.14em;
+    }
+    /* The patch's sun is an identity mark: orange at every size. */
+    .patch {
+        display: block;
+        width: 96px;
+        height: 96px;
+        color: var(--ink-1);
+        --patch-sun: var(--accent);
+    }
+    .patch--mark {
+        --patch-band: none;
+    }
+
+    /* Status: a glyph and a label, never colour alone. */
+    .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55em;
+        font: 400 var(--label-size) / 1 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        color: var(--ink-2);
+        white-space: nowrap;
+    }
+    .status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: var(--radius-round);
+        background: var(--ink-1);
+        flex: none;
+    }
+    /* Active (Open to, Current): the label in ink, the dot the orange
+       "now" mark (contract §3). */
+    .status[data-status="active"] {
+        color: var(--ink-1);
+    }
+    .status[data-status="active"]::before {
+        background: var(--accent);
+    }
+    .status:is([data-status="complete"], [data-status="lifetime"])::before {
+        border-radius: 0;
+        width: 6px;
+        height: 6px;
+    }
+    .status[data-status="archived"] {
+        color: var(--ink-3);
+    }
+    .status[data-status="archived"]::before {
+        background: transparent;
+        box-shadow: inset 0 0 0 1px var(--ink-3);
+    }
+    .status[data-status="paused"]::before {
+        width: 6px;
+        height: 8px;
+        border-radius: 0;
+        background: transparent;
+        border-inline: 2px solid var(--ink-1);
+    }
+    .status[data-status="planned"]::before {
+        background: transparent;
+        border: 1px dashed var(--ink-2);
+    }
+    /* Stopped: the sprite's cross (marks.tsx) in place of the dot. */
+    .status[data-status="stopped"]::before {
+        content: none;
+    }
+    .status__icon {
+        width: 10px;
+        height: 10px;
+        stroke-width: 2;
+    }
+
+    /* ===== Header and navigation (site.css 4.2) ======================== */
+    /* Sticky and always opaque (contract §1): body text never shows
+       through it, and the home hero starts under it. */
+    .site-header {
+        position: sticky;
+        top: 0;
+        z-index: var(--z-header);
+        height: var(--header-h);
+        background: var(--bg);
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .site-header__inner {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: var(--s-5);
+    }
+
+    .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--s-3);
+        min-height: 44px;
+        flex: none;
+        color: var(--ink-1);
+        text-decoration: none;
+    }
+    .brand .patch {
+        width: 36px;
+        height: 36px;
+        --patch-band: none;
+    }
+    /* The wordmark: one of the two places Michroma is set. */
+    .brand__name {
+        font: 400 var(--label-size) / 1 var(--font-mark);
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .nav {
+        margin-inline-start: auto;
+    }
+    .nav__list {
+        display: flex;
+        align-items: center;
+        gap: clamp(1rem, 2.1vw, 2.5rem);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .nav__link {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding-block: var(--s-1);
+        color: var(--ink-1);
+        font: 500 var(--label-size) / 1.2 var(--font-display);
+        letter-spacing: var(--track-control);
+        text-transform: uppercase;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    /* The current section: a 2px ink bar (a third of it on hover). */
+    .nav__link::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -2px;
+        height: var(--rule-strong);
+        background: var(--ink-1);
+        transform: scaleX(0);
+        transform-origin: left center;
+        transition: transform var(--dur-3) var(--ease-transfer);
+    }
+    .nav__link:hover::after {
+        transform: scaleX(0.35);
+    }
+    .nav__link[aria-current]::after {
+        transform: scaleX(1);
+    }
+
+    .header-tools {
+        display: flex;
+        align-items: center;
+        gap: var(--s-3);
+        flex: none;
+    }
+
+    /* Contact and CV in the bar, on the links' hairline, only where the
+       nav is in the sheet (< 960px): from 960px the nav's Contact and
+       Experience (whose head carries the CV) are on screen. */
+    .header-cv {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 0.35rem;
+        color: var(--ink-1);
+        font: 500 var(--label-size) / 1 var(--font-display);
+        letter-spacing: var(--track-control);
+        text-transform: uppercase;
+        text-underline-offset: 0.55em;
+        white-space: nowrap;
+    }
+    @media (min-width: 60rem) {
+        .header-cv {
+            display: none;
+        }
+    }
+    /* With the menu sheet open its list carries Contact and Experience:
+       the bar's pair steps aside, keeping its place. */
+    .site-header:has(.nav__panel:popover-open) .header-cv {
+        visibility: hidden;
+    }
+
+    /* The menu button and sheet (< 960px). The sheet is a popover: it
+       opens without JavaScript, in the top layer. */
+    .nav-toggle {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0 0.7rem;
+        background: transparent;
+        border: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-1);
+        font: 500 var(--label-size) / 1 var(--font-display);
+        letter-spacing: var(--track-control);
+        text-transform: uppercase;
+        text-decoration: none;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    .nav-toggle .icon {
+        width: 16px;
+        height: 16px;
+    }
+    .nav-toggle:hover {
+        border-color: var(--ink-1);
+        background: var(--surface-2);
+    }
+    .nav__sheet-extra {
+        display: none;
+    }
+
+    /* The theme switch (contract §6): the half-lit disc alone, unboxed,
+       in a 44px target. Its name is the theme it switches to, picked by
+       html[data-theme]. */
+    .theme-switch {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        flex: none;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--ink-2);
+        cursor: pointer;
+        transition: color var(--dur-hover) var(--ease-dock);
+    }
+    .theme-switch .icon {
+        width: 18px;
+        height: 18px;
+    }
+    .theme-switch:hover {
+        color: var(--ink-1);
+    }
+    html[data-theme="manual"] .theme-switch__to-light,
+    html:not([data-theme="manual"]) .theme-switch__to-dark {
+        display: none;
+    }
+
+    /* Width budget, measured with the real labels from 320 to 1920px: the
+       brand name at >= 1360px (and 600–959px). CV and Menu keep their
+       words everywhere. */
+    @media (max-width: 84.99rem) {
+        .brand__name {
+            display: none;
+        }
+    }
+    /* On home the hero names the owner: the wordmark steps aside while the
+       hero's name shows below the header (html[data-hero], set by the
+       starfield's observer; without JavaScript it stays). */
+    .brand__name {
+        transition:
+            opacity var(--dur-hover) var(--ease-dock),
+            visibility var(--dur-hover);
+    }
+    html[data-hero] .brand__name {
+        visibility: hidden;
+        opacity: 0;
+    }
+    @media (min-width: 60rem) and (max-width: 74.99rem) {
+        .site-header__inner {
+            gap: var(--s-4);
+        }
+        .nav__list {
+            gap: 1rem;
+        }
+        .header-tools {
+            gap: var(--s-2);
+        }
+    }
+    @media (min-width: 60rem) {
+        .nav__panel,
+        .nav__panel:popover-open {
+            display: block;
+            position: static;
+            inset: auto;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: none;
+            color: inherit;
+            overflow: visible;
+        }
+    }
+    @media (max-width: 59.99rem) {
+        .brand__name {
+            display: inline;
+        }
+        .nav-toggle {
+            display: inline-flex;
+        }
+        .header-tools .theme-switch {
+            display: none;
+        }
+        .nav {
+            order: 3;
+            margin-inline-start: 0;
+        }
+        .header-tools {
+            margin-inline-start: auto;
+        }
+        .nav__panel {
+            display: none;
+        }
+        .nav__panel:popover-open {
+            display: block;
+            position: fixed;
+            inset: var(--header-h) 0 0 0;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            margin: 0;
+            padding: var(--s-6) var(--margin) var(--s-8);
+            border: 0;
+            border-top: var(--rule-hair) solid var(--rule-1);
+            background: var(--bg);
+            color: var(--ink-1);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+        .nav__list {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+        }
+        .nav__list > li {
+            border-bottom: var(--rule-hair) solid var(--rule-1);
+        }
+        .nav__link {
+            display: flex;
+            padding-block: var(--s-4);
+            min-height: 64px;
+            font-size: var(--step-0);
+        }
+        .nav__link::after {
+            bottom: -1px;
+        }
+        .nav__sheet-extra {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--s-5);
+            margin-top: var(--s-6);
+        }
+    }
+    @media (max-width: 37.49rem) {
+        /* phones: the patch alone is the brand */
+        .site-header__inner {
+            gap: var(--s-3);
+        }
+        .brand__name {
+            display: none;
+        }
+    }
+
+    /* Pause motion (WCAG 2.2.2): in the footer and the home hero. Its
+       label names the action; under the OS reduce-motion setting nothing
+       moves, so it shows nothing. On home the hero's control, beside the
+       starfield, is the one shown (html[data-route] is set by
+       RouteMarker). Unboxed: the icon and the label in ink-2, in the
+       controls' voice, a 44px target. */
+    .motion-ctl {
+        display: inline-flex;
+        align-items: center;
+    }
+    .motion-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        color: var(--ink-2);
+        font: 500 var(--label-size) / 1.2 var(--font-display);
+        letter-spacing: var(--track-control);
+        text-transform: uppercase;
+        white-space: nowrap;
+        transition: color var(--dur-hover) var(--ease-dock);
+    }
+    .motion-toggle:hover {
+        color: var(--ink-1);
+    }
+    .motion-toggle .icon {
+        width: 16px;
+        height: 16px;
+    }
+    html:not([data-motion="reduced"]) .motion-toggle__off,
+    html[data-motion="reduced"] .motion-toggle__on {
+        display: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .motion-ctl {
+            display: none;
+        }
+    }
+    html[data-route="/"] .site-footer .motion-ctl {
+        display: none;
+    }
+    /* Theme and motion controls need JavaScript. */
+    html:not([data-js]) :is(.theme-switch, .theme-choice, .motion-ctl) {
+        display: none;
+    }
+
+    /* ===== Buttons and links (site.css 4.4) ============================ */
+    .btn {
+        --btn-h: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+        min-height: var(--btn-h);
+        padding: 0 1.25rem;
+        border: var(--rule-hair) solid var(--rule-2);
+        border-radius: 0;
+        background: transparent;
+        color: var(--ink-1);
+        font: 500 var(--label-size) / 1 var(--font-display);
+        letter-spacing: var(--track-control);
+        text-transform: uppercase;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+    .btn .icon {
+        width: 16px;
+        height: 16px;
+        transition: transform var(--dur-hover) var(--ease-dock);
+    }
+    .btn:hover {
+        border-color: var(--ink-1);
+        background: var(--surface-1);
+    }
+    .btn:hover .icon--nudge {
+        transform: translateX(4px);
+    }
+    .btn:active {
+        background: var(--surface-2);
+    }
+    .btn[disabled],
+    .btn[aria-disabled="true"] {
+        opacity: 0.45;
+        cursor: not-allowed;
+        background: transparent;
+        border-color: var(--rule-2);
+    }
+    /* The primary: an ink fill with a label in the page's colour (APCA
+       Lc 90 and more in both themes). */
+    .btn--primary {
+        background: var(--ink-1);
+        border-color: var(--ink-1);
+        color: var(--bg);
+    }
+    .btn--primary:hover,
+    .btn--primary:active {
+        background: var(--ink-2);
+        border-color: var(--ink-2);
+        color: var(--bg);
+    }
+    .btn--quiet {
+        border-color: transparent;
+        padding-inline: 0.25rem;
+    }
+    .btn--quiet:hover {
+        background: transparent;
+        border-color: transparent;
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.45em;
+    }
+    .btn--sm {
+        --btn-h: 44px;
+        padding: 0 0.85rem;
+    }
+
+    /* "All entries →": the controls' caps on the links' hairline, which
+       turns ink-1 and 2px on hover while the arrow nudges. */
+    .link-arrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55em;
+        min-height: 44px;
+        border-bottom: var(--rule-hair) solid var(--ink-3);
+        color: var(--ink-1);
+        font: 500 var(--label-size) / 1.2 var(--font-display);
+        letter-spacing: var(--track-control);
+        text-transform: uppercase;
+        text-decoration: none;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            box-shadow var(--dur-hover) var(--ease-dock);
+    }
+    .link-arrow .icon {
+        width: 15px;
+        height: 15px;
+        transition: transform var(--dur-hover) var(--ease-dock);
+    }
+    .link-arrow:hover {
+        border-bottom-color: var(--ink-1);
+        box-shadow: 0 1px 0 var(--ink-1);
+    }
+    .link-arrow:hover .icon {
+        transform: translateX(4px);
+    }
+
+    .link-quiet {
+        text-decoration: none;
+    }
+    .link-quiet:hover {
+        text-decoration: underline;
+    }
+
+    /* Stretched link: the whole card is clickable, the title is the link. */
+    .stretch {
+        position: static;
+    }
+    .stretch::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+    }
+
+    /* ===== Tags (site.css 4.5) ========================================= */
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.9rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .tag {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    a.tag {
+        position: relative;
+        z-index: 2;
+    }
+    a.tag:hover {
+        color: var(--ink-1);
+        text-decoration: underline;
+    }
+
+    /* ===== Section head and page head (site.css 4.6, 4.27) ============= */
+    /* <div class="section-tag"> h2 or tag · meta </div>: the meta stays
+       out of the heading's name. The row's own face is the label (the
+       crumb); a section's plain name is a real heading in Jost, and a
+       page head's themed tag is set in Michroma. */
+    .section-tag {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--s-2) var(--s-3);
+        margin: 0;
+        color: var(--ink-1);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .section-tag::after {
+        content: "";
+        flex: 1;
+        height: var(--rule-hair);
+        min-width: var(--s-6);
+        background: var(--rule-1);
+    }
+    .section-tag__h {
+        display: inline-flex;
+        min-width: 0;
+        margin: 0;
+        color: var(--ink-1);
+        font: 400 var(--step-1) / 1.25 var(--font-display);
+        letter-spacing: -0.003em;
+        text-transform: none;
+    }
+    .section-tag__meta {
+        order: 3;
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        letter-spacing: 0;
+        text-transform: none;
+        white-space: nowrap;
+    }
+    @media (max-width: 37.49rem) {
+        .section-tag::after {
+            order: 4;
+            flex-basis: 100%;
+            min-width: 0;
+        }
+        .section-tag__meta {
+            order: 5;
+            flex-basis: 100%;
+            white-space: normal;
+        }
+    }
+
+    /* One page head per page: the tag row with the section's small themed
+       tag, the plain h1, then a serif intro. */
+    .page-head {
+        position: relative;
+        padding-top: clamp(2.5rem, 1rem + 4vw, 4.5rem);
+        padding-bottom: var(--space-block);
+    }
+    /* The section's themed tag: the other place Michroma is set. */
+    .page-head__tag {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-mark);
+        letter-spacing: 0.16em;
+    }
+    .page-head__title {
+        margin-top: var(--s-4);
+        font: var(--weight-display) var(--step-6) / 0.98 var(--font-display);
+        letter-spacing: var(--track-display);
+    }
+    /* Set ragged, as prose: a balanced break can split a phrase ("or an /
+       opportunity") where a full first line would not. */
+    .page-head__intro {
+        max-width: 52ch;
+        margin-top: var(--s-6);
+        color: var(--ink-2);
+        font: 400 var(--step-1) / 1.5 var(--font-long);
+        text-wrap: pretty;
+    }
+
+    /* ===== Captions, plates, revision marks (site.css 4.8, 4.27) ====== */
+    .caption {
+        display: flex;
+        gap: var(--s-3);
+        max-width: 60ch;
+        margin-top: var(--s-3);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.5 var(--font-text);
+    }
+    .caption--plate {
+        padding-top: var(--s-3);
+        border-top: var(--rule-hair) solid var(--rule-1);
+    }
+    .caption__body {
+        min-width: 0;
+    }
+    .caption__src {
+        display: block;
+        margin-top: 0.3rem;
+        color: var(--ink-3);
+        font: 400 var(--label-size) / 1.45 var(--font-mono);
+    }
+    /* A credit with no caption above it (a project's cover). */
+    .caption > .caption__src {
+        margin-top: 0;
+    }
+
+    /* "Rev 2026-09-24": the printed CV's revision. */
+    .rev {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.2 var(--font-mono);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+
+    /* ===== Footer (site.css 4.21, document control 4.27) =============== */
+    /* One strip under the hairline, set as every other label (DM Mono
+       capitals, tracked, from sentence-case markup): the copyright (the
+       footer's one mention of the name) with GitHub and LinkedIn, the
+       colophon (its sentence in its own case, its Source a label), and
+       Pause motion, a control in the controls' voice. The
+       space above the hairline is the page's own close. Where they fit the
+       three share a line, the colophon in the middle with equal space on
+       either side; narrower they wrap, and on phones they stack. */
+    .site-footer {
+        padding-block: var(--s-4) var(--s-6);
+        border-top: var(--rule-hair) solid var(--rule-1);
+    }
+    .site-footer__strip {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0 var(--s-6);
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.6 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .site-footer__strip a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+    }
+    .site-footer__name {
+        white-space: nowrap;
+    }
+    /* The colophon is a sentence, not a label: capitals stay on labels of
+       four words or fewer, so it keeps its case (and three.js its own). */
+    .site-footer__made {
+        letter-spacing: normal;
+        text-transform: none;
+    }
+    /* Phones: the name, then GitHub · LinkedIn on a line of their own
+       (without the dot that led them), then the colophon. */
+    @media (max-width: 37.49rem) {
+        .site-footer__strip {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .site-footer__own {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .site-footer__lead {
+            display: none;
+        }
+    }
+
+    /* ===== Forms (site.css 4.18) ======================================= */
+    /* A label over its control; errors are rendered only when present
+       (the control carries aria-invalid and points at the message): the
+       words in ink with the cross, and a 2px rule on the field, orange on
+       the first. */
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+    }
+    .field__label {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .field__hint {
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.45 var(--font-text);
+    }
+    .field__error {
+        color: var(--ink-1);
+        font: 500 var(--step-0) / 1.45 var(--font-text);
+    }
+    .input,
+    .textarea {
+        width: 100%;
+        min-height: 48px;
+        padding: 0.7rem 0.9rem;
+        border: var(--rule-hair) solid var(--rule-2);
+        border-radius: 0;
+        background: var(--surface-1);
+        color: var(--ink-1);
+        font: 400 var(--step-0) / 1.4 var(--font-text);
+        -webkit-appearance: none;
+        appearance: none;
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    .textarea {
+        min-height: 8.5rem;
+        line-height: 1.55;
+        resize: vertical;
+    }
+    .input::placeholder,
+    .textarea::placeholder {
+        color: var(--ink-3);
+        opacity: 1;
+    }
+    .input:hover,
+    .textarea:hover {
+        border-color: var(--ink-2);
+    }
+    .input:focus-visible,
+    .textarea:focus-visible {
+        outline: var(--rule-strong) solid var(--focus);
+        outline-offset: 0;
+        border-color: var(--focus);
+        background: var(--surface-2);
+    }
+    .input[aria-invalid="true"],
+    .textarea[aria-invalid="true"] {
+        box-shadow: inset var(--rule-strong) 0 0 var(--accent);
+    }
+    /* Orange is the field to fix now, the first (it takes the focus); a
+       later one's rule is ink, beside its words and cross. */
+    .field:has([aria-invalid="true"])
+        ~ .field
+        :is(.input, .textarea)[aria-invalid="true"] {
+        box-shadow: inset var(--rule-strong) 0 0 var(--ink-1);
+    }
+    .input:disabled,
+    .textarea:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* ===== Title block (site.css, graft 6) ============================= */
+    /* The drawing title block set in the dark: a hairline grid of cells,
+       each a tiny label over a value. 12 internal columns from 960px
+       (--span), 2 on phones (--span-sm: 1 | 2). components/ui/title-block.tsx */
+    .titleblock {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 0;
+        border-top: var(--rule-hair) solid var(--rule-2);
+        border-left: var(--rule-hair) solid var(--rule-1);
+        background: var(--plate-bg);
+    }
+    .titleblock__cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-width: 0;
+        grid-column: span var(--span-sm, 2);
+        padding: var(--s-3) var(--s-4) var(--s-4);
+        border-right: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .titleblock__cell > dt {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.3 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .titleblock__cell > dd {
+        margin: 0;
+        overflow-wrap: break-word;
+        color: var(--ink-1);
+        font: 400 var(--step-0) / 1.45 var(--font-display);
+    }
+    /* The quieter lines: a role's places and dates as data, then its
+       note in the value's type. */
+    .titleblock__cell > dd + dd {
+        color: var(--ink-2);
+    }
+    .titleblock__data {
+        font: 400 var(--label-size) / 1.5 var(--font-mono);
+        font-variant-numeric: tabular-nums slashed-zero;
+    }
+    @media (min-width: 60rem) {
+        .titleblock {
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+        }
+        .titleblock__cell {
+            grid-column: span var(--span, 3);
+        }
+    }
+    /* A links cell: the profile links, each with its outbound mark. */
+    .titleblock__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 var(--s-4);
+    }
+    .titleblock__links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        min-height: 32px;
+        color: var(--ink-1);
+        text-underline-offset: 0.18em;
+    }
+    .titleblock__links .icon {
+        width: 0.85em;
+        height: 0.85em;
+        color: var(--ink-3);
+    }
+    [data-theme="manual"] .titleblock {
+        border-top-color: var(--ink-1);
+        border-left-color: var(--rule-2);
+    }
+    [data-theme="manual"] .titleblock__cell {
+        border-color: var(--rule-2);
+    }
+
+    /* ===== Question rows (components/crew/questions.tsx) =============== */
+    /* The owner's current questions: the question, the note in the serif,
+       with a hairline between rows only: none over the first (the section
+       head's rule is just above) and none under the last (About's last
+       section, so the footer's hairline follows). */
+    .q-list {
+        max-width: var(--measure-index);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .q-item {
+        display: grid;
+        row-gap: var(--s-2);
+        padding-block: var(--s-4) var(--s-5);
+        border-top: var(--rule-hair) solid var(--rule-1);
+    }
+    .q-item:first-child {
+        padding-top: 0;
+        border-top: 0;
+    }
+    .q-item:last-child {
+        padding-bottom: 0;
+    }
+    .q-item__title {
+        color: var(--ink-1);
+        font: 400 var(--step-1) / 1.3 var(--font-display);
+        text-wrap: balance;
+    }
+    .q-item__title a {
+        text-underline-offset: 0.16em;
+    }
+    .q-item__title .icon {
+        width: 0.7em;
+        height: 0.7em;
+        margin-left: 0.3em;
+        color: var(--ink-3);
+    }
+    .q-item__note {
+        max-width: 60ch;
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.55 var(--font-long);
+        text-wrap: pretty;
+    }
+
+    /* ===== Segmented control (contract §4; the theme toggle's grammar) == */
+    /* A radio group of joined hairline boxes; the chosen one is filled,
+       with an ink dot (shape, not colour alone).
+       components/ui/segmented.tsx */
+    .seg {
+        display: inline-flex;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-inline-size: 0;
+    }
+    /* A visible legend (a form field's label) takes the first line: a
+       floated legend is laid out as an ordinary flex item. */
+    .seg__legend {
+        float: left;
+        width: 100%;
+        margin-bottom: var(--s-3);
+        padding: 0;
+    }
+    .seg__opt {
+        position: relative;
+        display: flex;
+    }
+    .seg__opt + .seg__opt {
+        margin-left: -1px;
+    }
+    .seg__input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .seg__box {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        min-height: 44px;
+        padding: 0 0.9rem;
+        border: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-2);
+        font: 500 var(--label-size) / 1.15 var(--font-display);
+        letter-spacing: var(--track-control);
+        text-transform: uppercase;
+        white-space: nowrap;
+        transition:
+            color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    .seg__box::before {
+        content: "";
+        flex: none;
+        width: 7px;
+        height: 7px;
+        border-radius: var(--radius-round);
+        box-shadow: inset 0 0 0 1px var(--ink-3);
+    }
+    /* With a description under the label (the contact form's topics):
+       the dot on the label's line, the words under it in the reading
+       face, wrapping. */
+    .seg__box--note {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        row-gap: var(--s-2);
+        padding-block: 0.85rem;
+        white-space: normal;
+    }
+    .seg__note {
+        grid-column: 2;
+        max-width: 60ch;
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.5 var(--font-long);
+        letter-spacing: 0;
+        text-transform: none;
+        text-wrap: pretty;
+    }
+    .seg__input:hover + .seg__box {
+        color: var(--ink-1);
+    }
+    .seg__input:checked + .seg__box {
+        position: relative;
+        z-index: 1;
+        border-color: var(--ink-2);
+        background: var(--surface-2);
+        color: var(--ink-1);
+    }
+    .seg__input:checked + .seg__box::before {
+        background: var(--ink-1);
+        box-shadow: none;
+    }
+    .seg__input:focus-visible + .seg__box {
+        z-index: 2;
+        outline: var(--rule-strong) solid var(--focus);
+        outline-offset: 2px;
+    }
+
+    /* ===== Key/value list (site.css 4.9) =============================== */
+    /* components/ui/specs.tsx: labels in a rail beside their values, one
+       hairline across each row; stacked on phones. */
+    .specs {
+        margin: 0;
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+    }
+    .specs__row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--s-1) var(--gutter);
+        padding-block: var(--s-3);
+        border-top: var(--rule-hair) solid var(--rule-1);
+    }
+    @media (min-width: 37.5rem) {
+        .specs__row {
+            grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+        }
+    }
+    .specs dt {
+        padding-top: 0.2rem;
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .specs dd {
+        margin: 0;
+        color: var(--ink-1);
+        font: 400 var(--step-0) / 1.55 var(--font-display);
+    }
+
+    /* ===== CV rows (site.css 4.13, on the log index's grammar) ========= */
+    /* components/cv/cv-list.tsx: a mono column (dates, place) beside the
+       title, organization, a serif line and the facts. A linked row is one
+       big target. */
+    .cv-list {
+        max-width: var(--measure-index);
+        margin: 0;
+        padding: 0;
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+        list-style: none;
+    }
+    .cv-item {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--s-3);
+        padding-block: var(--s-5);
+        border-top: var(--rule-hair) solid var(--rule-1);
+        transition:
+            border-color var(--dur-hover) var(--ease-dock),
+            background-color var(--dur-hover) var(--ease-dock);
+    }
+    @media (min-width: 37.5rem) {
+        .cv-item {
+            grid-template-columns: 11rem minmax(0, 1fr);
+            column-gap: var(--gutter);
+        }
+    }
+    .cv-item__aside {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--s-1) var(--s-4);
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.5 var(--font-mono);
+        font-variant-numeric: tabular-nums slashed-zero;
+    }
+    @media (min-width: 37.5rem) {
+        .cv-item__aside {
+            flex-direction: column;
+            align-items: flex-start;
+            padding-top: 0.35rem;
+        }
+    }
+    .cv-item__dates {
+        color: var(--ink-1);
+    }
+    .cv-item__body {
+        min-width: 0;
+    }
+    .cv-item__title {
+        margin: 0;
+        font: 400 var(--step-2) / 1.18 var(--font-display);
+        letter-spacing: -0.005em;
+        text-wrap: pretty;
+    }
+    .cv-item__title a {
+        text-decoration: none;
+    }
+    .cv-item__ext {
+        width: 0.7em;
+        height: 0.7em;
+        margin-left: 0.3em;
+        color: var(--ink-3);
+        vertical-align: 0.05em;
+    }
+    .cv-item__sub {
+        margin-top: var(--s-1);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.4 var(--font-display);
+    }
+    .cv-item__note {
+        margin-top: var(--s-1);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.45 var(--font-display);
+    }
+    .cv-item__dek {
+        max-width: 60ch;
+        margin-top: var(--s-3);
+        color: var(--ink-2);
+        font: 400 var(--step-1) / 1.45 var(--font-long);
+        text-wrap: pretty;
+    }
+    .cv-item__lines {
+        max-width: 68ch;
+        margin: var(--s-3) 0 0;
+        padding: 0;
+        list-style: none;
+    }
+    .cv-item__lines li {
+        position: relative;
+        padding-left: 1.35rem;
+        color: var(--ink-1);
+        font: 400 var(--step-0) / 1.55 var(--font-display);
+    }
+    .cv-item__lines li + li {
+        margin-top: var(--s-2);
+    }
+    .cv-item__lines li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.78em;
+        width: 0.7rem;
+        height: 1px;
+        background: var(--ink-3);
+    }
+    /* The skills and the links, flush in the body column with no key: the
+       mono names and the links' own words say what they are. */
+    .cv-item__facts {
+        max-width: 68ch;
+        margin-top: var(--s-3);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.5 var(--font-display);
+    }
+    .cv-item__skills {
+        font-family: var(--font-mono);
+        font-size: var(--label-size);
+    }
+    .cv-item__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 var(--s-4);
+    }
+    .cv-item__link a {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        min-height: 32px;
+        color: var(--ink-1);
+        text-underline-offset: 0.18em;
+    }
+    .cv-item__link .icon {
+        width: 0.9em;
+        height: 0.9em;
+    }
+    .cv-item__url {
+        margin-left: 0.4em;
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
+    }
+    /* Lit: the log row's hover (an ink rule and the title underlined). */
+    .cv-item:hover {
+        border-top-color: var(--ink-1);
+    }
+    .cv-item:hover .cv-item__title a {
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.16em;
+    }
+
+    /* ===== Photographs and plates (site.css 4.26, 4.27) ================= */
+    /* One plate rule for every photograph, in both themes: a hard edge in
+       a hairline, then the caption. In Flight Manual an even card mat sits
+       inside the hairline (--photo-mount). The owner's photographs keep
+       their exposure and saturation grade; diagrams, plots and screenshots
+       (`photo--drawing`) have none. No hover of their own.
+       <figure class="photo" style="--photo-ratio: 3 / 4">
+         <div class="photo__frame"><img class="photo__img" …></div>
+         <figcaption class="caption">…</figcaption></figure> */
+    .photo {
+        position: relative;
+        min-width: 0;
+        margin: 0;
+    }
+    .photo__frame {
+        position: relative;
+        padding: var(--photo-mount);
+        border: var(--rule-hair) solid var(--rule-1);
+        background: var(--plate-bg);
+    }
+    .photo__img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: var(--photo-ratio, auto);
+        object-fit: cover;
+        object-position: var(--photo-focus, 50% 50%);
+        background: var(--surface-1);
+        filter: var(--photo-treatment);
+    }
+    .photo--real .photo__img {
+        filter: var(--photo-treatment-real);
+    }
+    .photo--drawing .photo__img {
+        filter: none;
+    }
+
+    /* ===== Page head, split (contract §1) ============================== */
+    /* The title on the left half, the intro and the actions on the right
+       from 960px. */
+    .page-head--split {
+        padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+        padding-bottom: var(--s-6);
+    }
+    .page-head--split > .page-head__intro {
+        margin-top: var(--s-4);
+    }
+    @media (max-width: 37.49rem) {
+        .page-head--split > .page-head__title {
+            margin-top: var(--s-3);
+        }
+        .page-head--split > .page-head__intro {
+            font-size: var(--step-0);
+        }
+    }
+    @media (min-width: 60rem) {
+        .page-head--split {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            column-gap: var(--gutter);
+            align-items: end;
+        }
+        .page-head--split > .section-tag {
+            grid-column: 1 / -1;
+        }
+        .page-head--split > .page-head__title {
+            grid-column: 1 / span 6;
+            grid-row: 2 / span 4;
+            align-self: end;
+        }
+        .page-head--split > :not(.section-tag, .page-head__title) {
+            grid-column: 7 / -1;
+        }
+    }
+
+    /* ===== Crumb row (contract §1; components/ui/crumb-row.tsx) ======== */
+    /* The section's name, then the row's hairline. */
+    .crumb-row {
+        align-items: baseline;
+    }
+    .crumb-row::after {
+        align-self: center;
+    }
+    .crumb-row__home {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        color: var(--ink-1);
+        text-decoration: none;
+    }
+    .crumb-row__home:hover {
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.3em;
+    }
+
+    /* ===== Stats (site.css 4.9; components/ui/metrics.tsx) ============= */
+    /* The value over its label, a meaningful hairline on top; the unit
+       smaller and quieter. Two across on phones. */
+    .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--s-5) var(--gutter);
+        margin: 0;
+    }
+    @media (min-width: 37.5rem) {
+        .metrics {
+            grid-template-columns: repeat(
+                var(--metric-cols, 4),
+                minmax(0, 1fr)
+            );
+        }
+    }
+    .metric {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+        min-width: 0;
+        padding-top: var(--s-3);
+        border-top: var(--rule-hair) solid var(--rule-2);
+    }
+    .metric > dt {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .metric > dd {
+        order: -1;
+        margin: 0;
+        color: var(--ink-1);
+        font: 400 var(--metric-size, var(--step-3)) / 1.05 var(--font-display);
+        letter-spacing: -0.01em;
+        font-variant-numeric: tabular-nums lining-nums;
+        overflow-wrap: break-word;
+        text-wrap: balance;
+    }
+    /* The unit a head's step, not a fraction of the value: the page
+       keeps to its six sizes. */
+    .metric__unit {
+        color: var(--ink-2);
+        font-size: var(--step-1);
+        letter-spacing: 0;
+    }
+    .metrics--lg {
+        --metric-size: var(--step-4);
+    }
+    .metrics--sm {
+        --metric-size: var(--step-1);
+    }
+
+    /* ===== Tables (site.css 4.14) ======================================= */
+    /* <div class="table-wrap"><table class="table" aria-labelledby="…">:
+       the table is named by its section's heading, with no caption
+       repeating it, and its section is the region (a project's Results). */
+    /* Positioned, so an absolutely placed descendant (a visually hidden
+       label) scrolls with the table instead of widening the page. */
+    .table-wrap {
+        position: relative;
+        overflow-x: auto;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font: 400 var(--step-0) / 1.45 var(--font-text);
+        font-variant-numeric: tabular-nums lining-nums;
+    }
+    .table th,
+    .table td {
+        padding: var(--s-4) var(--s-4) var(--s-4) 0;
+        border-bottom: var(--rule-hair) solid var(--rule-1);
+        text-align: left;
+        vertical-align: top;
+    }
+    .table thead th {
+        padding-block: var(--s-3);
+        border-bottom-color: var(--rule-2);
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+        vertical-align: bottom;
+        white-space: nowrap;
+    }
+    .table tbody th {
+        font-weight: 400;
+    }
+    .table .num {
+        font-family: var(--font-mono);
+        text-align: right;
+        white-space: nowrap;
+    }
+    .table .data {
+        white-space: nowrap;
+    }
+    .table tbody tr {
+        transition: background-color var(--dur-hover) var(--ease-dock);
+    }
+    .table tbody tr:hover {
+        background: linear-gradient(
+            to right,
+            var(--surface-1),
+            transparent 85%
+        );
+    }
+    @media (forced-colors: active) {
+        .table tbody tr:hover {
+            background: none;
+        }
+    }
+
+    /* ===== Link rows (contract §4; components/ui/route-list.tsx) ======= */
+    /* Numbered hairline rows, the whole row one link (from the 404's). */
+    .route-list ol {
+        display: grid;
+        column-gap: var(--gutter);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    @media (min-width: 37.5rem) {
+        .route-list--2 ol,
+        .route-list--3 ol {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 60rem) {
+        .route-list--3 ol {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    .route-list li {
+        scroll-margin-top: calc(var(--header-h) + var(--s-6));
+    }
+    .route-row {
+        display: grid;
+        grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+        column-gap: var(--s-3);
+        row-gap: var(--s-2);
+        height: 100%;
+        padding: var(--s-5) 0;
+        border-top: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-1);
+        text-decoration: none;
+        transition: border-color var(--dur-hover) var(--ease-dock);
+    }
+    .route-row__num {
+        grid-row: 1;
+        grid-column: 1;
+        padding-top: 0.1rem;
+        color: var(--ink-3);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
+    }
+    .route-row__name {
+        grid-row: 1;
+        grid-column: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 0;
+    }
+    .route-row__themed {
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .route-row__plain {
+        overflow-wrap: anywhere;
+        font: 400 var(--step-0) / 1.3 var(--font-display);
+    }
+    .route-row__blurb {
+        grid-row: 2;
+        grid-column: 2;
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.45 var(--font-text);
+    }
+    .route-row__arrow {
+        grid-row: 1 / span 2;
+        grid-column: 3;
+        align-self: center;
+        color: var(--ink-3);
+        transition:
+            transform var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+    /* Unnumbered rows (profile links): no number column. */
+    .route-list--plain .route-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .route-list--plain :is(.route-row__name, .route-row__blurb) {
+        grid-column: 1;
+    }
+    .route-list--plain .route-row__arrow {
+        grid-column: 2;
+    }
+    .route-row:hover {
+        border-top-color: var(--ink-1);
+    }
+    .route-row:hover .route-row__plain {
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.2em;
+    }
+    .route-row:hover .route-row__arrow {
+        transform: translateX(4px);
+        color: var(--ink-1);
+    }
+
+    /* ===== Pager (contract §4; components/ui/pager.tsx) ================ */
+    .pager {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--s-4) var(--gutter);
+    }
+    .pager__item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+        min-width: 0;
+        padding: var(--s-4) 0 var(--s-2);
+        border-top: var(--rule-strong) solid var(--rule-2);
+        color: var(--ink-1);
+        text-decoration: none;
+        transition: border-color var(--dur-hover) var(--ease-dock);
+    }
+    .pager__item:hover {
+        border-top-color: var(--ink-1);
+    }
+    .pager__label {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .pager__title {
+        font: 400 var(--step-1) / 1.25 var(--font-display);
+        text-wrap: balance;
+    }
+    .pager__item:hover .pager__title {
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.18em;
+    }
+    .pager__meta {
+        color: var(--ink-3);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
+    }
+    .pager__all {
+        justify-self: start;
+        align-self: center;
+    }
+    @media (min-width: 60rem) {
+        .pager {
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        }
+        .pager__item--previous {
+            grid-column: 1;
+        }
+        .pager__all {
+            grid-column: 2;
+            grid-row: 1;
+            justify-self: center;
+        }
+        .pager__item--next {
+            grid-column: 3;
+            grid-row: 1;
+            align-items: flex-end;
+            text-align: right;
+        }
+    }
+
+    /* ===== Key/value list, long values (components/ui/specs.tsx) ======= */
+    /* A brief: the values are sentences, set in the serif. */
+    .specs--read dd {
+        max-width: 60ch;
+        font: 400 var(--step-1) / 1.5 var(--font-long);
+        text-wrap: pretty;
+    }
+
+    /* ===== Availability (components/ui/availability.tsx) ================ */
+    /* What the owner is open to, in a page head: the active mark and its
+       label over the line, set apart from the intro by space alone (the
+       tag row's hairline is just above). */
+    .availability {
+        display: grid;
+        justify-items: start;
+        gap: var(--s-2);
+    }
+    .availability__text {
+        max-width: 60ch;
+        color: var(--ink-1);
+        font: 400 var(--step-1) / 1.35 var(--font-display);
+        text-wrap: balance;
+    }
+    /* An Open To line (here and in the home hero): each opening whole, a
+       dot between two on one line. The dot sits in the gap before an
+       opening, so where the line wraps it lands left of the line's start,
+       outside the box, and is clipped: a wrapped line reads as a list. */
+    .open-to {
+        --open-to-gap: 0.9em;
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: var(--open-to-gap);
+        overflow: hidden;
+    }
+    .open-to__item + .open-to__item {
+        position: relative;
+        margin-left: calc(-1 * var(--open-to-gap));
+        padding-left: var(--open-to-gap);
+    }
+    .open-to__sep {
+        position: absolute;
+        left: 0;
+        width: var(--open-to-gap);
+        text-align: center;
+    }
+    /* In the data voice (DM Mono) the gap is a mono " · ", three
+       characters: 0.9em left the dot touching its neighbours. */
+    .open-to.data,
+    .open-to.titleblock__data {
+        --open-to-gap: 3ch;
+    }
+
+    /* ===== Page head: actions (contract §1) ============================ */
+    /* The head's links or buttons, under the intro. */
+    .page-head__actions {
+        --cluster: var(--s-3);
+        margin-top: var(--s-5);
+    }
+
+    /* ===== Document sections (contract §1; components/ui/doc-section.tsx) */
+    /* The full-width tag row, then the rail and the main column. */
+    .doc-section__tag {
+        margin-bottom: var(--s-7);
+    }
+    .doc-section__body {
+        row-gap: var(--s-6);
+    }
+    @media (min-width: 60rem) {
+        .doc-section__rail {
+            align-self: start;
+            position: sticky;
+            top: calc(var(--header-h) + var(--s-6));
+        }
+    }
+}

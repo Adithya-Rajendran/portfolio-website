@@ -7,12 +7,14 @@ const {
     afterMock,
     warmBlogCacheMock,
     warmProfileCacheMock,
+    warmProjectCacheMock,
 } = vi.hoisted(() => ({
     parseBodyMock: vi.fn(),
     revalidateTagMock: vi.fn(),
     afterMock: vi.fn(),
     warmBlogCacheMock: vi.fn(),
     warmProfileCacheMock: vi.fn(),
+    warmProjectCacheMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidateTag: revalidateTagMock }));
@@ -24,6 +26,7 @@ vi.mock("next-sanity/webhook", () => ({ parseBody: parseBodyMock }));
 vi.mock("@/actions/warmCache", () => ({
     warmBlogCache: warmBlogCacheMock,
     warmProfileCache: warmProfileCacheMock,
+    warmProjectCache: warmProjectCacheMock,
 }));
 
 function request() {
@@ -48,6 +51,7 @@ beforeEach(() => {
     const result = { pages: { warmed: [], failed: [] } };
     warmBlogCacheMock.mockResolvedValue(result);
     warmProfileCacheMock.mockResolvedValue(result);
+    warmProjectCacheMock.mockResolvedValue(result);
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -128,21 +132,48 @@ describe("POST /api/revalidate", () => {
         expect(warmProfileCacheMock).not.toHaveBeenCalled();
     });
 
-    it("keeps project changes on their own cache tag", async () => {
+    it("revalidates the project tag and schedules the project warmer", async () => {
         parseBodyMock.mockResolvedValue({
             isValidSignature: true,
-            body: { _type: "project" },
+            body: { _type: "project", slug: { current: "homelab" } },
         });
         const POST = await importPost();
 
         const response = await POST(request());
 
         expect(response.status).toBe(200);
+        expect(await response.json()).toMatchObject({
+            revalidated: true,
+            warming: "scheduled",
+        });
         expect(revalidateTagMock).toHaveBeenCalledExactlyOnceWith(
             "project",
             "max",
         );
-        expect(afterMock).not.toHaveBeenCalled();
+        expect(afterMock).toHaveBeenCalledTimes(1);
+        expect(warmProjectCacheMock).not.toHaveBeenCalled();
+        await afterMock.mock.calls[0][0]();
+        expect(warmProjectCacheMock).toHaveBeenCalledTimes(1);
+        expect(warmBlogCacheMock).not.toHaveBeenCalled();
+        expect(warmProfileCacheMock).not.toHaveBeenCalled();
+    });
+
+    it("contains project warming failures after the tag is revalidated", async () => {
+        parseBodyMock.mockResolvedValue({
+            isValidSignature: true,
+            body: { _type: "project" },
+        });
+        warmProjectCacheMock.mockRejectedValue(new Error("warming failed"));
+        const POST = await importPost();
+
+        const response = await POST(request());
+
+        expect(response.status).toBe(200);
+        await expect(afterMock.mock.calls[0][0]()).resolves.toBeUndefined();
+        expect(console.error).toHaveBeenCalledWith(
+            "[Revalidate] Project cache warming failed:",
+            expect.any(Error),
+        );
     });
 
     it("does not allow arbitrary document types to schedule warming", async () => {

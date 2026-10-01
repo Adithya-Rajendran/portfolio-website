@@ -1,0 +1,84 @@
+/*
+ * The page frame: the shell, the 4 / 8 / 12 column grid (up to 1552px),
+ * named regions and rhythm helpers. Ported from d-deep-field-plus site.css
+ * "3. LAYOUT".
+ */
+@layer components {
+    .shell {
+        width: min(100% - 2 * var(--margin), var(--maxw));
+        margin-inline: auto;
+    }
+
+    /* Children are full width below 960px. */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+        column-gap: var(--gutter);
+        row-gap: var(--space-block);
+    }
+    .grid > * {
+        grid-column: 1 / -1;
+        min-width: 0;
+    }
+
+    @media (min-width: 60rem) {
+        .grid > .span-3 {
+            grid-column: auto / span 3;
+        }
+        .grid > .span-4 {
+            grid-column: auto / span 4;
+        }
+        .grid > .span-5 {
+            grid-column: auto / span 5;
+        }
+        .grid > .span-6 {
+            grid-column: auto / span 6;
+        }
+        .grid > .span-7 {
+            grid-column: auto / span 7;
+        }
+        .grid > .span-8 {
+            grid-column: auto / span 8;
+        }
+        .grid > .span-12 {
+            grid-column: 1 / -1;
+        }
+        .grid > .start-9 {
+            grid-column-start: 9;
+        }
+        /* named regions: a rail and the main column */
+        .grid > .g-rail {
+            grid-column: 1 / span 3;
+        }
+        .grid > .g-main {
+            grid-column: 4 / -1;
+        }
+        .grid > .g-prose {
+            grid-column: 4 / span 8;
+        }
+        .grid > .g-wide {
+            grid-column: 1 / -1;
+        }
+    }
+
+    .stack > * + * {
+        margin-top: var(--stack, var(--s-4));
+    }
+    .cluster {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--cluster, var(--s-3));
+    }
+
+    .section {
+        position: relative;
+        padding-block: var(--space-section);
+    }
+    .section--tight {
+        padding-block: var(--space-block);
+    }
+    .section + .section {
+        padding-top: 0;
+    }
+}

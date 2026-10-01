@@ -1,0 +1,362 @@
+/*
+ * The home hero (components/home/hero.tsx): full-bleed under the header.
+ * The sky layer (stars, the drawn limb, the photograph) is isolated, so
+ * the photograph screen-blends with the stars and the limb only. The photo
+ * box keeps the crop's aspect ratio against the bottom edge (21:9 from
+ * 48rem, 9:16 below) and gives way at the top on short screens; the
+ * photograph and the SVG both cover it anchored to the bottom, so they
+ * stay aligned. The copy is centred in the black above the limb: the
+ * centre keeps clear of the box's lower 40%, where the sun and the limb
+ * are. Ported from the mockup's home.css "00 · LAUNCH", without its
+ * corner labels, scroll cue or scroll-linked sinking (contract §7, §11).
+ */
+.hero {
+    position: relative;
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    min-height: max(calc(100svh - var(--header-h)), 36rem);
+    --photo-h: min(100cqw * 1646 / 3840, 0.82 * (100svh - var(--header-h)));
+    --limb-clear: calc(var(--photo-h) * 0.47);
+}
+@media (max-width: 47.99rem) {
+    .hero {
+        --photo-h: min(100cqw * 16 / 9, 0.94 * (100svh - var(--header-h)));
+        --limb-clear: calc(var(--photo-h) * 0.3);
+    }
+}
+
+/* ---- The sky: stars, the drawn limb, the photograph ------------------- */
+.sky {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    isolation: isolate;
+    /* The backdrop the photograph screens onto: its black becomes the
+       page's black, not a darker box. */
+    background: var(--bg);
+    pointer-events: none;
+}
+/* From 48rem the box stands on the foot row (the credit and Pause motion
+   sit on the night side, under the limb); the drawn planet runs on below
+   it. On phones the crop's own night side is deep enough. */
+.photo {
+    position: absolute;
+    right: 0;
+    bottom: calc(44px + var(--s-5) * 2);
+    left: 0;
+    height: var(--photo-h);
+}
+@media (max-width: 47.99rem) {
+    .photo {
+        bottom: calc(var(--photo-h) * -0.06);
+    }
+}
+.alignD,
+.alignM {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+.alignM {
+    display: none;
+}
+@media (max-width: 47.99rem) {
+    .alignD {
+        display: none;
+    }
+    .alignM {
+        display: block;
+    }
+}
+.alignD circle,
+.alignM circle {
+    vector-effect: non-scaling-stroke;
+}
+/* The night side hides the stars behind the planet; the drawn rim, the
+   surface line and the sun show only where the photograph does not. */
+.body {
+    fill: var(--bg);
+}
+.rim,
+.surface,
+.halo {
+    display: none;
+    fill: none;
+}
+.sun {
+    display: none;
+    fill: var(--accent);
+}
+
+.picture {
+    display: contents;
+}
+.img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 100%;
+    /* A 48px preview until the photograph arrives. */
+    background: var(--preview-d) 50% 100% / cover no-repeat;
+    mix-blend-mode: screen;
+    -webkit-mask-image:
+        linear-gradient(
+            to bottom,
+            transparent 0,
+            #000 26%,
+            #000 84%,
+            transparent
+        ),
+        linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image:
+        linear-gradient(
+            to bottom,
+            transparent 0,
+            #000 26%,
+            #000 84%,
+            transparent
+        ),
+        linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+    mask-composite: intersect;
+}
+@media (max-width: 47.99rem) {
+    .img {
+        background-image: var(--preview-m);
+    }
+}
+
+/* Flight Manual: no photograph; the limb is drawn in ink over open paper,
+   the sun the orange identity mark. The photo box runs to the hero's
+   foot, which has nothing to credit or pause. */
+:global([data-theme="manual"]) .img {
+    display: none;
+}
+@media (min-width: 48rem) {
+    :global([data-theme="manual"]) .photo {
+        bottom: 0;
+    }
+}
+:global([data-theme="manual"]) .rim {
+    display: inline;
+    stroke: var(--ink-1);
+    stroke-width: 1.25px;
+}
+:global([data-theme="manual"]) .surface {
+    display: inline;
+    stroke: var(--rule-2);
+    stroke-width: 1px;
+}
+:global([data-theme="manual"]) .halo {
+    display: inline;
+    stroke: var(--ink-2);
+    stroke-width: 1px;
+    stroke-dasharray: 1.5 5;
+}
+:global([data-theme="manual"]) .sun {
+    display: inline;
+}
+@media (forced-colors: active) {
+    .img {
+        display: none;
+    }
+    .rim {
+        display: inline;
+        stroke: CanvasText;
+        stroke-width: 1.25px;
+    }
+}
+
+/* ---- The copy --------------------------------------------------------- */
+.frame {
+    position: relative;
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    padding-top: clamp(1.5rem, 0.5rem + 4svh, 4.5rem);
+    padding-bottom: var(--s-5);
+}
+.centre {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: var(--limb-clear);
+    text-align: center;
+}
+/* The one set piece in capitals: the display weight, tracked wide, at
+   most 7rem (one line at 1440, within 1,400px at 1920). */
+.name {
+    margin: 0 -0.115em 0 0;
+    color: var(--ink-1);
+    font: var(--weight-display) clamp(2.3rem, 0.2rem + 6.55vw, 7rem) / 1
+        var(--font-display);
+    letter-spacing: 0.115em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.word {
+    display: inline-block;
+}
+/* The profile's headline: one plain line under the name, its parts kept
+   whole (.open-to). */
+.headline {
+    justify-content: center;
+    max-width: 44rem;
+    margin-top: var(--s-5);
+    color: var(--ink-1);
+    font: 400 var(--step-1) / 1.4 var(--font-display);
+    letter-spacing: 0.005em;
+}
+/* What the owner is open to: the active status mark, then the line. */
+.status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--s-1) var(--s-3);
+    max-width: 52rem;
+    margin-top: var(--s-4);
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.45 var(--font-display);
+}
+/* The Open To line (.open-to): its openings, centred. */
+.openTo {
+    justify-content: center;
+}
+/* One action, centred under the Open To line: CV, a hairline button over
+   the photograph (no fill). */
+.routes {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--s-7);
+}
+/* Over the photograph the CV stays a hairline, and fills with ink on
+   hover: no fill at rest. */
+.routes :global(.btn):hover {
+    border-color: var(--ink-1);
+    background: var(--ink-1);
+    color: var(--bg);
+}
+
+.foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--s-3) var(--s-5);
+}
+.credit {
+    color: var(--ink-2);
+    font: 400 var(--label-size) / 1.5 var(--font-mono);
+    letter-spacing: 0.02em;
+}
+/* A 44px target around one line (two on phones). */
+.credit a {
+    display: inline-block;
+    padding-block: calc((44px - 1.5em) / 2);
+    color: inherit;
+    text-underline-offset: 0.3em;
+}
+.credit a:hover {
+    color: var(--ink-1);
+}
+/* The credit's parts and the frame's NASA ID, each kept whole: on phones
+   one a line, with no separator. */
+.creditPart,
+.creditId {
+    white-space: nowrap;
+}
+.motion {
+    margin-left: auto;
+}
+/* No photograph and nothing drifting in Flight Manual. */
+:global([data-theme="manual"]) .foot {
+    display: none;
+}
+
+/* ---- Phones: the name on two lines; the headline, the Open To line and
+   the credit stack their parts -------------------------------------------- */
+@media (max-width: 37.49rem) {
+    .frame {
+        padding-top: var(--s-5);
+    }
+    .headline {
+        flex-direction: column;
+        align-items: center;
+        max-width: 22rem;
+        font-size: var(--step-0);
+    }
+    .name {
+        font-size: clamp(2.3rem, 11.4vw, 3.4rem);
+        line-height: 1.02;
+        white-space: normal;
+    }
+    .word {
+        display: block;
+    }
+    /* The openings stack under the label, and the headline's parts under
+       each other, one a line, with no dot: centred lines cannot clip a
+       dot at their start as the heads' ragged lines do. */
+    .openTo {
+        flex: 1 0 100%;
+        flex-direction: column;
+        align-items: center;
+    }
+    :is(.openTo, .headline) :global(.open-to__sep) {
+        display: none;
+    }
+    :is(.openTo, .headline) :global(.open-to__item) {
+        margin-left: 0;
+        padding-left: 0;
+    }
+    .routes {
+        margin-top: var(--s-6);
+    }
+    /* The credit (its parts and its frame ID one a line, without their
+       separators) and Pause motion share one row. */
+    .foot {
+        flex-wrap: nowrap;
+        align-items: center;
+        column-gap: var(--s-3);
+    }
+    .creditSep {
+        display: none;
+    }
+    .creditPart,
+    .creditId {
+        display: block;
+    }
+}
+@media (max-width: 23.99rem) {
+    .name {
+        font-size: 2.15rem;
+    }
+}
+
+/* ---- Print: a title page drawn in ink -------------------------------- */
+@media print {
+    .hero {
+        min-height: auto;
+    }
+    .img,
+    .routes,
+    .foot {
+        display: none;
+    }
+    .rim {
+        display: inline;
+        stroke: var(--ink-1);
+        stroke-width: 1.25px;
+    }
+    .sun {
+        display: inline;
+    }
+}

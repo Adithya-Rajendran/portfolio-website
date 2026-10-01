@@ -9,9 +9,20 @@ import { checkRateLimit } from "@vercel/firewall";
 import ContactFormEmail from "@/email/contact-form-email";
 import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import {
+    CONTACT_TOPICS,
+    DEFAULT_CONTACT_TOPIC,
+    contactRoutes,
+    contactSubject,
+    type ContactFields,
+    type ContactFormState,
+    type ContactTopic,
+} from "@/lib/contact";
+import { contactCopy } from "@/lib/copy";
+import {
     EMAIL_CHARSET_PATTERN,
     hasValidMxRecords,
 } from "@/lib/email-validation";
+import { getProfile } from "@/lib/sanity-client";
 
 /**
  * Email config is read lazily inside sendEmail() — module-level throws
@@ -27,87 +38,124 @@ function getEmailConfig(): { apiKey: string; toEmail: string } | null {
     return { apiKey, toEmail };
 }
 
+/**
+ * What the sender reads, in the form's words (lib/copy.ts): a field
+ * problem under its field, anything else under Send as a send that did
+ * not go. Plain words, no exclamation mark, nothing about the server.
+ */
+const { errors, failures } = contactCopy.form;
+
 const emailSchema = z.object({
     senderEmail: z
-        .email("Invalid sender email")
-        .regex(EMAIL_CHARSET_PATTERN, "Email contains invalid characters"),
+        .email(errors.emailInvalid)
+        .regex(EMAIL_CHARSET_PATTERN, errors.emailInvalid),
     message: z
         .string()
-        .min(1, "Message cannot be empty")
-        .max(MESSAGE_MAX_LENGTH),
+        .min(1, errors.messageMissing)
+        .max(MESSAGE_MAX_LENGTH, errors.messageLong(MESSAGE_MAX_LENGTH)),
+    // The contact route the sender picked; none chosen is a hello. It only
+    // sorts the subject line, so an unknown value is refused, not guessed;
+    // a known topic whose route is hidden is sent as a hello (sentTopic).
+    topic: z
+        .enum(CONTACT_TOPICS, "Choose one of the listed topics.")
+        .default(DEFAULT_CONTACT_TOPIC),
 });
 
-export type ContactFormState =
-    | { status: "idle" }
-    | { status: "success" }
-    | {
-          status: "error";
-          message: string;
-          /** Echo of the submitted fields so the form can repopulate —
-           *  React 19 resets uncontrolled inputs after the action runs. */
-          values: { senderEmail: string; message: string };
-      };
-
-export const INITIAL_CONTACT_FORM_STATE: ContactFormState = { status: "idle" };
-
 /**
- * useActionState-compatible wrapper around sendEmail. The form in
- * `components/portfolio/contact.tsx` uses this as its server action so
- * React 19 wires up pending state and the result without manual glue.
+ * useActionState-compatible wrapper around sendEmail. The contact form
+ * (`components/contact/contact-form.tsx`, on /contact) dispatches it, so
+ * React 19 wires up pending state and the result; a send that never
+ * reaches this function (the network, a new deploy) the form catches
+ * itself. Its state type and initial value live in lib/contact.ts: a
+ * "use server" module may export only async functions, and anything else
+ * it exports reaches the client as a server reference, not as the value.
  */
 export async function sendEmailAction(
     _prevState: ContactFormState,
     formData: FormData,
 ): Promise<ContactFormState> {
     const result = await sendEmail(formData);
-    if (result.error) {
-        return {
-            status: "error",
-            message:
-                typeof result.error === "string"
-                    ? result.error
-                    : "Error sending the message! Please try again.",
-            values: {
-                senderEmail: String(formData.get("senderEmail") ?? ""),
-                message: String(formData.get("message") ?? ""),
-            },
-        };
+    if (result.error !== undefined) {
+        return result.field
+            ? { status: "invalid", field: result.field, message: result.error }
+            : { status: "error", message: result.error };
     }
     return { status: "success" };
 }
 
-export const sendEmail = async (formData: FormData) => {
+/** A field the sender can fix, else a send that did not go. */
+type Refusal = { error: string; field?: keyof ContactFields };
+/** Resend accepted the message. */
+type Sent = { error?: undefined; data: { id: string }; topic: ContactTopic };
+
+function fieldOf(
+    path: readonly PropertyKey[],
+): keyof ContactFields | undefined {
+    const [field] = path;
+    return field === "senderEmail" || field === "message" ? field : undefined;
+}
+
+/**
+ * The topic a message is sent under: the one picked, while the page shows
+ * its route. A crafted POST can name any topic in CONTACT_TOPICS, so one
+ * whose route is hidden (Consulting while it is off, Research without an
+ * invitation) goes out as a hello. The profile read is the pages' own
+ * cached one; if it fails, the message still goes, as a hello.
+ */
+async function sentTopic(topic: ContactTopic): Promise<ContactTopic> {
+    if (topic === DEFAULT_CONTACT_TOPIC) return topic;
+    try {
+        const shown = contactRoutes(await getProfile()).map(
+            (route) => route.topic,
+        );
+        return shown.includes(topic) ? topic : DEFAULT_CONTACT_TOPIC;
+    } catch (error: unknown) {
+        console.error(
+            "[sendEmail] Could not read the profile to check the topic:",
+            error,
+        );
+        return DEFAULT_CONTACT_TOPIC;
+    }
+}
+
+export const sendEmail = async (
+    formData: FormData,
+): Promise<Refusal | Sent> => {
     const config = getEmailConfig();
     if (!config) {
         console.error(
             "[sendEmail] RESEND_API_KEY and/or CONTACT_FORM_TO_EMAIL is not configured.",
         );
-        return {
-            error: "The contact form is not configured on this server. Please try again later.",
-        };
+        return { error: failures.unsent };
     }
 
     // Vercel BotID — invisible CAPTCHA. The client SDK in app/layout.tsx
-    // protects /portfolio POST; this verifies the challenge response on
+    // protects every POST (Server Actions post to the page that runs them:
+    // /contact and /portfolio); this verifies the challenge response on
     // the server before doing any expensive work.
     const { isBot } = await checkBotId();
     if (isBot) {
-        return {
-            error: "Verification failed. Please refresh the page and try again.",
-        };
+        return { error: failures.unverified };
     }
 
     // FormData.get() can return File | string | null; coerce to string so
     // a file upload field with the same name can't bypass the zod schema.
+    // No topic chosen (the radios are optional) is left undefined, so the
+    // schema's default applies.
+    const rawTopic = formData.get("topic");
     const rawData = {
         senderEmail: String(formData.get("senderEmail") ?? ""),
         message: String(formData.get("message") ?? ""),
+        topic:
+            rawTopic === null || rawTopic === "" ? undefined : String(rawTopic),
     };
 
     const validatedData = emailSchema.safeParse(rawData);
 
     if (!validatedData.success) {
-        return { error: validatedData.error.issues[0].message };
+        const [issue] = validatedData.error.issues;
+        const field = fieldOf(issue.path);
+        return { error: issue.message, ...(field ? { field } : {}) };
     }
 
     const { senderEmail, message } = validatedData.data;
@@ -129,17 +177,15 @@ export const sendEmail = async (formData: FormData) => {
         );
     }
     if (rateLimited) {
-        return {
-            error: "You have exceeded the maximum number of emails at this given time. Please try again later.",
-        };
+        return { error: failures.tooMany };
     }
 
     const validDomain = await hasValidMxRecords(senderEmail);
     if (!validDomain) {
-        return {
-            error: "The email domain does not appear to exist. Please check your email address.",
-        };
+        return { error: errors.emailDomain, field: "senderEmail" };
     }
+
+    const topic = await sentTopic(validatedData.data.topic);
 
     try {
         // Instantiated lazily so importing this module never requires the
@@ -149,22 +195,28 @@ export const sendEmail = async (formData: FormData) => {
         // React Email renders {message} / {senderEmail} as text nodes, which
         // React already HTML-escapes. Passing pre-escaped values double-encoded
         // them, so the recipient saw literal "&lt;" instead of "<".
-        const data = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
             from: "Contact Form <contact-form@email.adithya-rajendran.com>",
             to: config.toEmail,
-            subject: "Contact Form for My Website",
+            subject: contactSubject(topic),
             replyTo: senderEmail,
-            react: ContactFormEmail({ message, senderEmail }),
+            react: ContactFormEmail({ message, senderEmail, topic }),
         });
 
-        return { data };
+        // Resend reports a refused send (an unverified domain, the quota,
+        // a revoked key) as a returned error, not a throw. Anything but an
+        // accepted message must not read as "Message sent".
+        if (error || !data) {
+            console.error("[sendEmail] Resend refused the message:", error);
+            return { error: failures.unsent };
+        }
+
+        return { data, topic };
     } catch (error: unknown) {
         // Log the real error server-side for debugging; return a generic
         // message so we don't leak Resend internals (rate-limit details,
         // API tokens in stack traces, etc.) to the client.
         console.error("[sendEmail] Resend error:", error);
-        return {
-            error: "Failed to send the email. Please try again later.",
-        };
+        return { error: failures.unsent };
     }
 };

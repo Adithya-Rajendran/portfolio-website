@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderFeedXml, type FeedPost } from "@/lib/feed";
+import { feedAlternates, renderFeedXml, type FeedPost } from "@/lib/feed";
 
 type Body = NonNullable<FeedPost["body"]>;
 
@@ -50,6 +50,13 @@ describe("renderFeedXml — channel", () => {
             "<description>Robotics &amp; &lt;AI&gt;</description>",
         );
     });
+    it("describes the channel by its title when the profile has no description", () => {
+        for (const description of [undefined, null, "  "]) {
+            expect(renderFeedXml([], description)).toContain(
+                "<description>Adithya Rajendran — Writing</description>",
+            );
+        }
+    });
     it("renders a valid empty channel when there are no posts (CI fallback path)", () => {
         const xml = renderFeedXml([]);
 
@@ -61,6 +68,24 @@ describe("renderFeedXml — channel", () => {
         expect(xml).toContain("<language>en-us</language>");
         expect(xml).not.toContain("<item>");
         expect(xml).not.toContain("<lastBuildDate>");
+    });
+
+    it("names the stylesheet a browser shows it with, before the rss root", () => {
+        const xml = renderFeedXml([]);
+        expect(xml).toMatch(
+            /^<\?xml [^\n]+\n<\?xml-stylesheet type="text\/xsl" href="\/feed\.xsl"\?>\n<rss /,
+        );
+    });
+
+    it("names the feed in every page's alternates beside its canonical address", () => {
+        expect(feedAlternates("https://adithya-rajendran.com/blog")).toEqual({
+            canonical: "https://adithya-rajendran.com/blog",
+            types: {
+                "application/rss+xml": [
+                    { url: "/feed.xml", title: "Adithya Rajendran — Writing" },
+                ],
+            },
+        });
     });
 
     it("includes an atom:link self reference to the feed URL", () => {
@@ -226,6 +251,24 @@ describe("renderFeedXml — content:encoded", () => {
         expect(xml).toContain("click me");
     });
 
+    it("drops mailto and tel links but keeps their text", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    contentLinkedParagraph(
+                        "write to me",
+                        "mailto:someone@example.com",
+                    ),
+                    linkedParagraph("call me", "tel:+15555550100"),
+                ] as Body,
+            }),
+        ]);
+
+        expect(xml).not.toMatch(/mailto:|tel:|someone@example\.com/);
+        expect(xml).toContain("write to me");
+        expect(xml).toContain("call me");
+    });
+
     it("absolutizes relative links against the site URL", () => {
         const xml = renderFeedXml([
             postOf({
@@ -298,5 +341,229 @@ describe("renderFeedXml — content:encoded", () => {
 
         expect(xml).not.toContain("javascript:");
         expect(xml).toContain("A readable fallback.");
+    });
+});
+
+/** Decodes the item HTML out of content:encoded (XML-escaped once). */
+function itemHtml(xml: string): string {
+    const match = /<content:encoded>([\s\S]*?)<\/content:encoded>/.exec(xml);
+    return (match?.[1] ?? "")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, "&");
+}
+
+function footnotedParagraph(
+    key: string,
+    parts: (string | [text: string, note: string])[],
+): Body[number] {
+    const markDefs: { _key: string; _type: string; text: string }[] = [];
+    const children = parts.map((part, index) => {
+        if (typeof part === "string") {
+            return {
+                _type: "span",
+                _key: `${key}s${index}`,
+                text: part,
+                marks: [],
+            };
+        }
+        const mark = {
+            _key: `${key}n${index}`,
+            _type: "footnote",
+            text: part[1],
+        };
+        markDefs.push(mark);
+        return {
+            _type: "span",
+            _key: `${key}s${index}`,
+            text: part[0],
+            marks: [mark._key],
+        };
+    });
+    return {
+        _type: "block",
+        _key: key,
+        style: "normal",
+        markDefs,
+        children,
+    } as unknown as Body[number];
+}
+
+describe("renderFeedXml — the long-read types (PR 10)", () => {
+    it("numbers footnotes in reading order and lists them as Notes with back-links", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        footnotedParagraph("p1", [
+                            "A claim",
+                            [
+                                " with a source",
+                                "The first note & its <source>.",
+                            ],
+                            ".",
+                        ]),
+                        footnotedParagraph("p2", [
+                            ["Another", "The second note."],
+                        ]),
+                    ] as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            'A claim with a source<sup><a href="#fn-1" id="fnref-1">1</a></sup>.',
+        );
+        expect(html).toContain(
+            'Another<sup><a href="#fn-2" id="fnref-2">2</a></sup>',
+        );
+        expect(html).toContain(
+            '<section><h2>Notes</h2><ol><li id="fn-1">The first note &amp; its &lt;source&gt;. <a href="#fnref-1">↩</a></li><li id="fn-2">The second note. <a href="#fnref-2">↩</a></li></ol></section>',
+        );
+    });
+
+    it("prints a footnote without a note as its text alone", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        footnotedParagraph("p1", [["Plain words", "  "]]),
+                    ] as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain("<p>Plain words</p>");
+        expect(html).not.toContain("<sup>");
+        expect(html).not.toContain("Notes");
+    });
+
+    it("labels a caution callout with its tone and title", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "callout",
+                            _key: "c1",
+                            tone: "caution",
+                            title: "Back up first",
+                            body: [paragraph("This wipes the disk.", "cb")],
+                        },
+                        {
+                            _type: "callout",
+                            _key: "c2",
+                            tone: "note",
+                            body: [paragraph("A plain note.", "nb")],
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<aside><p><strong>Caution: Back up first</strong></p><p>This wipes the disk.</p></aside>",
+        );
+        expect(html).toContain(
+            "<aside><p><strong>Note</strong></p><p>A plain note.</p></aside>",
+        );
+    });
+
+    it("names a listing by its file, else its language, as its bar does, with no number", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "code",
+                            _key: "k1",
+                            language: "bash",
+                            filename: "install.sh",
+                            code: "echo one",
+                        },
+                        {
+                            _type: "code",
+                            _key: "k2",
+                            code: "plain text",
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            '<figure><figcaption>install.sh</figcaption><pre><code class="language-bash">echo one</code></pre></figure>',
+        );
+        expect(html).toContain(
+            "<figure><figcaption>Text</figcaption><pre><code>plain text</code></pre></figure>",
+        );
+        expect(html).not.toContain("Listing");
+    });
+
+    it("prints a plate's caption and credit, and numbers no plate or figure", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "image",
+                            _key: "i1",
+                            asset: {
+                                _type: "reference",
+                                _ref: "image-abc123def456-1000x500-png",
+                            },
+                            alt: "A photograph",
+                            caption: "The rack",
+                            credit: "Photo: the author",
+                        },
+                        {
+                            _type: "image",
+                            _key: "i2",
+                            kind: "diagram",
+                            asset: {
+                                _type: "reference",
+                                _ref: "image-abc123def456-1000x500-png",
+                            },
+                            alt: "A diagram",
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<figcaption>The rack <small>Photo: the author</small></figcaption>",
+        );
+        expect(html).toContain('alt="A diagram"/></figure>');
+        expect(html).not.toMatch(/Pl\. I|Fig\. 1/);
+    });
+
+    it("lists the post's revisions, oldest first, dated as the page dates them", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    changelog: [
+                        {
+                            _key: "r2",
+                            date: "2026-03-01",
+                            kind: "update",
+                            note: "Added a section.",
+                        },
+                        {
+                            _key: "r1",
+                            date: "2026-02-01",
+                            kind: "correction",
+                            note: "Fixed a <wrong> path.",
+                        },
+                    ],
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<section><h2>Revisions</h2><ul><li><strong>1 Feb 2026 · Correction.</strong> Fixed a &lt;wrong&gt; path.</li><li><strong>1 Mar 2026 · Update.</strong> Added a section.</li></ul></section>",
+        );
+    });
+
+    it("adds no Notes or Revisions to a post without them", () => {
+        const html = itemHtml(renderFeedXml([postOf({})]));
+        expect(html).not.toContain("Notes");
+        expect(html).not.toContain("Revisions");
     });
 });

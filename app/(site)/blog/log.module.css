@@ -1,0 +1,39 @@
+/*
+ * Writing pages (/blog, /blog/tags/[tag]): the index section under the
+ * shared split head. Ported from the mockup's writing.css "LOG.HTML". The
+ * index and its rows have their own module beside their components.
+ */
+
+.page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* ---- The index ------------------------------------------------------------ */
+.index {
+    padding-top: var(--s-5);
+    padding-bottom: var(--s-9);
+}
+.indexInner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--s-5);
+}
+@media (max-width: 37.49rem) {
+    .index {
+        padding-top: var(--s-4);
+    }
+    .indexInner {
+        row-gap: var(--s-4);
+    }
+}
+.empty {
+    display: grid;
+    justify-items: start;
+    gap: var(--s-3);
+    padding: var(--s-7) 0;
+    border-top: var(--rule-hair) solid var(--rule-1);
+}
+.emptyTitle {
+    font: 400 var(--step-3) / 1.1 var(--font-display);
+}

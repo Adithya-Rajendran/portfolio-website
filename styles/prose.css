@@ -1,0 +1,501 @@
+/*
+ * The long read (G1): what the rich-text renderers emit
+ * (components/blogs/portable-text-components.tsx) under `.prose`, on the
+ * post page and in the project essay. Newsreader at a 68-character measure,
+ * numbered listings with the one Shiki theme's colours, plates and figures,
+ * quiet notes (a quotation and a callout share one rule), footnotes with
+ * margin notes, and the notes list. A page decides the column around it
+ * (components/blogs/post.module.css for posts). Ported from
+ * d-deep-field-plus site.css 4.15–4.17 and writing.css.
+ */
+
+@layer components {
+    /* The measure: 36rem, about 68 characters of Newsreader to the line at
+       18–20px (CSS `ch` counts the wide "0", so it reads 52ch). */
+    .prose {
+        --prose-measure: 36rem;
+        color: var(--ink-1);
+        font: 400 var(--step-long) / var(--lh-long) var(--font-long);
+        font-variant-numeric: proportional-nums;
+        text-wrap: pretty;
+        hanging-punctuation: first;
+        hyphenate-limit-chars: 8 4 4;
+    }
+    .prose > * {
+        max-width: var(--prose-measure);
+    }
+    .prose > * + * {
+        margin-top: 1.1em;
+    }
+    /* Phones: hyphenate long words only, never in lists, quotes, callouts,
+       captions or headings. */
+    @media (max-width: 37.49rem) {
+        .prose {
+            hyphens: auto;
+        }
+        .prose :is(li, blockquote, .callout, figcaption, h2, h3, h4) {
+            hyphens: manual;
+        }
+    }
+
+    /* ---- Headings ---------------------------------------------------- */
+    .prose h2 {
+        margin-top: 2.4em;
+        font: 400 var(--step-2) / 1.15 var(--font-display);
+        letter-spacing: -0.01em;
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+    .prose h3 {
+        margin-top: 1.9em;
+        font: 500 var(--step-1) / 1.25 var(--font-display);
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+    .prose h4 {
+        margin-top: 1.6em;
+        font: 500 var(--step-0) / 1.35 var(--font-display);
+        letter-spacing: 0.01em;
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+    .prose :is(h2, h3, h4) + * {
+        margin-top: 0.7em;
+    }
+
+    /* ---- Text -------------------------------------------------------- */
+    /* Links keep the site's hairline (styles/base.css). */
+    .prose strong {
+        font-weight: 600;
+    }
+    .prose :is(ul, ol) {
+        padding-left: 1.3em;
+    }
+    .prose ul {
+        list-style: disc;
+    }
+    .prose ol {
+        list-style: decimal;
+    }
+    .prose li + li {
+        margin-top: 0.4em;
+    }
+    .prose li::marker {
+        color: var(--ink-3);
+        font-family: var(--font-mono);
+        font-size: var(--step-0);
+    }
+    /* Inline code takes the UI text's step (17px beside the text's 20px
+       at 1440), not a fraction of its line: the page keeps to its six
+       sizes. In a heading it is the heading's size. */
+    .prose :not(pre) > code {
+        padding: 0.08em 0.32em;
+        background: var(--surface-1);
+        font-size: var(--step-0);
+        font-variant-ligatures: none;
+        white-space: break-spaces;
+    }
+    .prose :is(h2, h3, h4) code {
+        font-size: inherit;
+    }
+    /* The owner's asides: a quiet note, not a pull quote. A callout is
+       the same note with a bold lead-in (below). */
+    .prose blockquote,
+    .callout {
+        margin-block: var(--s-6);
+        padding: var(--s-1) 0 var(--s-1) var(--s-5);
+        border-left: var(--rule-strong) solid var(--rule-2);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.6 var(--font-long);
+    }
+    .prose blockquote strong,
+    .callout strong {
+        color: var(--ink-1);
+    }
+
+    /* ---- Listings (components/prose/listing.tsx) --------------------- */
+    /* The one Shiki theme (lib/highlight-code.ts) colours tokens with
+       these variables: monochrome, from the tokens, so every theme and
+       print follow (contract §3: text, strokes and labels are never
+       orange). Keywords are ink-1 at weight 500, strings ink-2, links
+       ink-2 underlined. Comments are ink-3: 5.7:1 (Void) and 5.8:1
+       (Flight Manual) on the listing, 5.2:1 on a highlighted line. */
+    .listing {
+        --code-foreground: var(--ink-1);
+        --code-background: transparent;
+        --code-token-comment: var(--ink-3);
+        --code-token-keyword: var(--ink-1);
+        --code-token-string: var(--ink-2);
+        --code-token-string-expression: var(--ink-2);
+        --code-token-constant: var(--ink-1);
+        --code-token-function: var(--ink-1);
+        --code-token-parameter: var(--ink-2);
+        --code-token-punctuation: var(--ink-3);
+        --code-token-link: var(--ink-2);
+        --code-token-inserted: var(--ink-1);
+        --code-token-deleted: var(--ink-2);
+        --code-token-changed: var(--ink-1);
+        margin-block: var(--space-block);
+        background: var(--surface-1);
+        font: 400 var(--label-size) / 1.62 var(--font-mono);
+    }
+    .prose > .listing--wide {
+        max-width: min(100%, 60rem);
+    }
+    /* One label (the file name, else the language), then Copy at the
+       right, in the listing's own mono. */
+    .listing__bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 var(--s-4);
+        min-height: 44px;
+        padding: 0 var(--s-2) 0 var(--s-5);
+    }
+    .listing__name {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1 var(--font-mono);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .listing__bar > .copy {
+        margin-left: auto;
+    }
+    .listing .copy__btn {
+        --btn-h: 40px;
+        gap: 0.45rem;
+        padding-inline: 0.6rem;
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1 var(--font-mono);
+        letter-spacing: 0;
+        text-transform: none;
+    }
+    .listing .copy__btn .icon {
+        width: 15px;
+        height: 15px;
+    }
+    .listing .copy__btn:hover,
+    .listing .copy__btn:focus-visible {
+        color: var(--ink-1);
+    }
+    /* The scroll box is the focusable, labelled region. */
+    .listing__code {
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--rule-2) transparent;
+    }
+    .listing__code:focus-visible {
+        outline-offset: -2px;
+    }
+    .listing__code pre {
+        margin: 0;
+        width: max-content;
+        min-width: 100%;
+        padding: var(--s-2) var(--s-5) var(--s-5) 0;
+        background: transparent !important;
+        color: var(--code-foreground);
+        font: inherit;
+        tab-size: 4;
+        font-variant-ligatures: none;
+    }
+    .listing__code code {
+        display: block;
+        font: inherit;
+    }
+    .listing__code .line {
+        display: inline-block;
+        min-width: 100%;
+        padding-left: var(--s-5);
+    }
+    .listing__code span[style*="--code-token-comment"] {
+        font-style: italic;
+    }
+    .listing__code span[style*="--code-token-keyword"] {
+        font-weight: 500;
+    }
+    .listing__code span[style*="--code-token-link"] {
+        text-decoration: underline;
+        text-decoration-color: var(--rule-2);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.2em;
+    }
+    /* Highlighted lines (the Studio's `highlightedLines`): a lit surface
+       and an ink mark in the gutter, so the line is not told apart by its
+       fill alone. */
+    .listing__code .line-highlight {
+        position: relative;
+        background: var(--surface-2);
+    }
+    .listing__code .line-highlight::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0.35rem;
+        background: var(--ink-2);
+    }
+
+    /* ---- Plates and figures (components/prose/figure-plate.tsx) ------ */
+    .prose > .plate,
+    .prose > .gallery,
+    .prose > .media {
+        margin-block: var(--space-block);
+    }
+    .plate > .caption {
+        max-width: 60ch;
+    }
+    .prose > .plate--wide {
+        max-width: min(100%, 60rem);
+    }
+    .prose > .plate--full {
+        max-width: none;
+    }
+    /* A tall or square plate at text width keeps its caption beside it. */
+    @media (min-width: 37.5rem) {
+        .prose > .plate--prose:is(.plate--portrait, .plate--square) {
+            display: grid;
+            grid-template-columns: minmax(0, 22rem) minmax(9rem, 15rem);
+            column-gap: var(--gutter);
+            align-items: end;
+            max-width: min(100%, 40rem);
+        }
+        .prose > .plate--prose.plate--square {
+            grid-template-columns: minmax(0, 24rem) minmax(9rem, 15rem);
+        }
+        .prose > .plate--prose:is(.plate--portrait, .plate--square) > .caption {
+            flex-direction: column;
+            gap: var(--s-2);
+            margin-top: 0;
+            padding-bottom: var(--s-2);
+        }
+    }
+    /* Wide and full plates of a tall picture stay within the screen. */
+    .plate:is(.plate--wide, .plate--full):is(.plate--portrait, .plate--square)
+        .photo__img {
+        width: auto;
+        max-width: 100%;
+        max-height: 88svh;
+        margin-inline: auto;
+    }
+    .gallery__plates {
+        display: grid;
+        gap: var(--s-6) var(--gutter);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    @media (min-width: 37.5rem) {
+        .gallery__plates {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    .gallery__plates .plate {
+        margin: 0;
+    }
+    .media__frame {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        border: var(--rule-hair) solid var(--rule-1);
+        background: var(--surface-1);
+    }
+    .media__frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+    .media-link {
+        display: grid;
+        gap: var(--s-1);
+        padding: var(--s-4) var(--s-5);
+        border: var(--rule-hair) solid var(--rule-1);
+        font: 400 var(--step-0) / 1.5 var(--font-text);
+    }
+    .media-link a {
+        font: 500 var(--step-0) / 1.35 var(--font-display);
+    }
+    .media-link__host {
+        color: var(--ink-3);
+        font: 400 var(--label-size) / 1.4 var(--font-mono);
+    }
+    .media-link__caption {
+        color: var(--ink-2);
+    }
+
+    /* ---- Callouts ---------------------------------------------------- */
+    /* The quotation's note (above), led by its tone and title in bold:
+       "Caution: Back up first". No colour, frame or band: the words say
+       it. */
+    .callout > * + * {
+        margin-top: var(--s-3);
+    }
+    @media (forced-colors: active) {
+        .listing__code .line-highlight::before {
+            forced-color-adjust: none;
+            background: Highlight;
+        }
+    }
+
+    /* ---- Footnotes --------------------------------------------------- */
+    .fnref {
+        line-height: 0;
+    }
+    .fnref a {
+        padding: 0 0.15em;
+        color: var(--ink-1);
+        font: 400 var(--label-size) / 1 var(--font-mono);
+        text-decoration: none;
+    }
+    .fnref a::before {
+        content: "[";
+        color: var(--ink-3);
+    }
+    .fnref a::after {
+        content: "]";
+        color: var(--ink-3);
+    }
+    .fnref a:hover {
+        text-decoration: underline;
+    }
+    .fnref:target {
+        background: var(--surface-2);
+        outline: 0.2em solid var(--surface-2);
+    }
+    /* The margin copy of a note (≥ 1280px): floated into the space right
+       of the measure, beside the line that cites it. Decorative; the
+       numbered notes at the end are canonical. */
+    .sidenote {
+        display: none;
+    }
+    @media (min-width: 80rem) {
+        .prose :is(p, li) .sidenote {
+            display: grid;
+            grid-template-columns: 1.4rem minmax(0, 1fr);
+            float: right;
+            clear: right;
+            width: 12.5rem;
+            margin: 0.35rem -14.5rem var(--s-4) 0;
+            padding-left: var(--s-4);
+            border-left: var(--rule-hair) solid var(--rule-1);
+            color: var(--ink-2);
+            font: 400 var(--step-0) / 1.5 var(--font-text);
+            text-indent: 0;
+            hyphens: manual;
+        }
+        /* Anything wider than the measure clears the margin notes. */
+        .prose > :is(.listing--wide, .plate--wide, .plate--full, .gallery) {
+            clear: right;
+        }
+    }
+    .sidenote__n {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.8 var(--font-mono);
+    }
+
+    /* The numbered notes at the end (components/prose/footnotes.tsx). */
+    .notes {
+        max-width: var(--prose-measure, 36rem);
+        padding-top: var(--s-5);
+        border-top: var(--rule-hair) solid var(--rule-2);
+        color: var(--ink-2);
+        font: 400 var(--step-0) / 1.55 var(--font-text);
+    }
+    .notes__title {
+        margin-bottom: var(--s-4);
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1 var(--font-label);
+        letter-spacing: var(--track-label);
+        text-transform: uppercase;
+    }
+    .notes__list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .notes__item {
+        display: grid;
+        grid-template-columns: 1.75rem minmax(0, 1fr);
+        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    }
+    .notes__item + .notes__item {
+        margin-top: var(--s-3);
+    }
+    .notes__n {
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1.9 var(--font-mono);
+    }
+    .notes__text {
+        margin: 0;
+    }
+    .notes__back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        min-height: 24px;
+        vertical-align: middle;
+        color: var(--ink-1);
+    }
+    .notes__back .icon {
+        width: 14px;
+        height: 14px;
+    }
+    .notes__item:target {
+        background: var(--surface-2);
+        outline: 0.3em solid var(--surface-2);
+    }
+}
+
+@layer utilities {
+    @media print {
+        .prose {
+            font-size: 10.5pt;
+            line-height: 1.5;
+        }
+        .prose > * {
+            max-width: none;
+        }
+        .sidenote,
+        .copy {
+            display: none !important;
+        }
+        /* Paper drops the fill: hairlines above and below instead. */
+        .listing {
+            border-block: 1px solid var(--rule-2);
+            break-inside: auto;
+        }
+        .listing__bar {
+            min-height: 0;
+            padding-block: 4pt;
+        }
+        .listing__code {
+            overflow: visible;
+        }
+        .listing__code pre {
+            width: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .plate,
+        .callout,
+        .notes__item {
+            break-inside: avoid;
+        }
+        .photo__frame {
+            background: none !important;
+            border: 0 !important;
+        }
+        .photo__img {
+            max-height: 110mm;
+            width: auto;
+            max-width: 100%;
+        }
+        .prose a[href^="http"]::after {
+            content: " (" attr(href) ")";
+            color: var(--ink-2);
+            font: 7.5pt var(--font-mono);
+            overflow-wrap: anywhere;
+        }
+    }
+}

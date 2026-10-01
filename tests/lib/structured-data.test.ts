@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
     buildBlog,
     buildBlogPosting,
+    buildBreadcrumbList,
+    buildContactPage,
     buildPersonEntity,
     buildProfilePage,
 } from "@/lib/structured-data";
-import { BLOG_DESCRIPTION, siteConfig, socialProfiles } from "@/lib/config";
+import { siteConfig, socialProfiles } from "@/lib/config";
 import type { CredentialListItem, ProfileData } from "@/lib/sanity-client";
 
 function profileOf(overrides: Partial<ProfileData> = {}): ProfileData {
@@ -47,7 +49,8 @@ describe("buildPersonEntity", () => {
         expect(person).not.toHaveProperty("knowsAbout");
         expect(person).not.toHaveProperty("homeLocation");
         expect(person).not.toHaveProperty("image");
-        expect(person.description).toBe(siteConfig.description);
+        // Nothing describes the owner until the Profile does.
+        expect(person).not.toHaveProperty("description");
         expect(person.sameAs).toEqual(socialProfiles);
     });
 
@@ -220,10 +223,14 @@ describe("buildProfilePage", () => {
             ],
         });
         const page = buildProfilePage({
-            profile,
-            dateModified: "2026-07-11",
+            profile: {
+                ...profile,
+                _createdAt: "2025-02-03T10:00:00Z",
+                _updatedAt: "2026-07-11T08:00:00Z",
+            },
         });
 
+        expect(page.dateCreated).toBe("2025-02-03");
         expect(page.dateModified).toBe("2026-07-11");
         expect(page.mainEntity.hasCredential).toHaveLength(2);
         expect(page.mainEntity.hasCredential?.[0]).toMatchObject({
@@ -241,9 +248,14 @@ describe("buildProfilePage", () => {
     it("omits credentials when Profile has none", () => {
         const page = buildProfilePage({
             profile: profileOf({ credentials: [] }),
-            dateModified: "2026-07-11",
         });
         expect(page.mainEntity).not.toHaveProperty("hasCredential");
+    });
+
+    it("leaves out a date the profile document does not carry", () => {
+        const page = buildProfilePage({ profile: profileOf() });
+        expect(page).not.toHaveProperty("dateCreated");
+        expect(page).not.toHaveProperty("dateModified");
     });
 });
 
@@ -265,19 +277,77 @@ describe("buildBlogPosting", () => {
         expect(buildBlogPosting(base)).not.toHaveProperty("dateModified");
         const post = buildBlogPosting({
             ...base,
-            updatedAt: "2026-02-01T00:00:00Z",
+            revisedAt: "2026-02-01",
             tags: ["documentary", "notes"],
             wordCount: 812,
         });
-        expect(post.dateModified).toBe("2026-02-01T00:00:00Z");
+        expect(post.dateModified).toBe("2026-02-01");
         expect(post.keywords).toBe("documentary, notes");
         expect(post.wordCount).toBe(812);
+    });
+
+    it("dates a modification only from a recorded revision", () => {
+        expect(
+            buildBlogPosting({ ...base, revisedAt: null }),
+        ).not.toHaveProperty("dateModified");
+    });
+
+    it("names the share image at its built URL, or the cover when there is one", () => {
+        expect(buildBlogPosting(base).image).toMatch(
+            new RegExp(
+                `^${siteConfig.url}/blog/a-post/opengraph-image-[a-z0-9]+$`,
+            ),
+        );
+        expect(
+            buildBlogPosting({
+                ...base,
+                imageUrl: "https://cdn.sanity.io/images/x/y/cover.jpg",
+            }).image,
+        ).toBe("https://cdn.sanity.io/images/x/y/cover.jpg");
+    });
+
+    it("belongs to the blog", () => {
+        expect(buildBlogPosting(base).isPartOf).toEqual({
+            "@type": "Blog",
+            "@id": `${siteConfig.url}/blog`,
+        });
     });
 
     it("omits empty tags and a zero word count", () => {
         const post = buildBlogPosting({ ...base, tags: [], wordCount: 0 });
         expect(post).not.toHaveProperty("keywords");
         expect(post).not.toHaveProperty("wordCount");
+    });
+});
+
+describe("buildBreadcrumbList", () => {
+    it("lists Home, the section and the page in order, as absolute URLs", () => {
+        const list = buildBreadcrumbList([
+            { name: "Home", path: "/" },
+            { name: "Flight Log", path: "/blog" },
+            { name: "A post", path: "/blog/a-post" },
+        ]);
+        expect(list["@type"]).toBe("BreadcrumbList");
+        expect(list.itemListElement).toEqual([
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: siteConfig.url,
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Flight Log",
+                item: `${siteConfig.url}/blog`,
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: "A post",
+                item: `${siteConfig.url}/blog/a-post`,
+            },
+        ]);
     });
 });
 
@@ -293,8 +363,66 @@ describe("buildBlog", () => {
         const blog = buildBlog();
         expect(blog["@context"]).toBe("https://schema.org");
         expect(blog["@type"]).toBe("Blog");
-        expect(blog.name).toBe(`${siteConfig.author} — Blog`);
+        expect(blog.name).toBe(`${siteConfig.author} — Writing`);
         expect(blog.url).toBe(`${siteConfig.url}/blog`);
-        expect(blog.description).toBe(BLOG_DESCRIPTION);
+        expect(blog).not.toHaveProperty("description");
+    });
+});
+
+describe("buildContactPage", () => {
+    it("describes /contact as a ContactPage about the person, with the profile's links", () => {
+        const page = buildContactPage(
+            profileOf({
+                contactInvitation: "Working on robotic vision?",
+                socialLinks: [
+                    {
+                        _key: "linkedin",
+                        label: "LinkedIn",
+                        url: "https://www.linkedin.com/in/adithya-rajendran",
+                    },
+                ],
+            }),
+        );
+        expect(page["@type"]).toBe("ContactPage");
+        expect(page.url).toBe(`${siteConfig.url}/contact`);
+        expect(page.description).toBe("Working on robotic vision?");
+        expect(page.about).toEqual({
+            "@type": "Person",
+            name: "Adithya Rajendran",
+            url: siteConfig.url,
+            sameAs: ["https://www.linkedin.com/in/adithya-rajendran"],
+        });
+    });
+
+    it("never publishes an email address, a phone number or a contact point", () => {
+        // The form is the only channel: no public email or phone anywhere.
+        const json = JSON.stringify(
+            buildContactPage(
+                profileOf({
+                    socialLinks: [
+                        {
+                            _key: "mail",
+                            label: "Email",
+                            url: "mailto:someone@example.com",
+                        },
+                    ],
+                }),
+            ),
+        );
+        for (const key of ["email", "telephone", "contactPoint", "faxNumber"]) {
+            expect(json).not.toContain(`"${key}"`);
+        }
+        expect(json).not.toMatch(/mailto:|tel:/);
+    });
+
+    it("uses the page's introduction without an invitation, and nothing without either", () => {
+        expect(
+            buildContactPage(
+                profileOf({ contactIntro: "An idea or a question." }),
+            ).description,
+        ).toBe("An idea or a question.");
+        const page = buildContactPage();
+        expect(page).not.toHaveProperty("description");
+        expect(page.about.sameAs).toEqual(socialProfiles);
     });
 });

@@ -1,0 +1,18 @@
+/*
+ * About (/about; themed Crew File): the head, the profile record, then
+ * document sections (the biography, the Now list by kind). Every part is
+ * shared (styles/components.css: the page head, the title block, the
+ * question rows and the document sections); only the spacing is here.
+ * The last section's own padding ends the page.
+ */
+.record {
+    margin-top: var(--s-4);
+}
+
+/* The Now list: one group per kind, its label over its rows. */
+.group + .group {
+    margin-top: var(--s-8);
+}
+.groupTitle {
+    margin-bottom: var(--s-4);
+}

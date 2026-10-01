@@ -1,4 +1,7 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
+import { listValuesOnly } from "@/lib/profile-fields";
+import { IMAGE_CREDIT_MAX, IMAGE_WIDTHS } from "@/lib/post-fields";
+import { IMAGE_KINDS } from "@/lib/project-fields";
 
 const languageAlternatives = [
     { title: "Bash", value: "bash" },
@@ -38,7 +41,10 @@ export default defineType({
                     { title: "Underline", value: "underline" },
                     { title: "Strikethrough", value: "strike-through" },
                 ],
-                annotations: [defineArrayMember({ type: "contentLink" })],
+                annotations: [
+                    defineArrayMember({ type: "contentLink" }),
+                    defineArrayMember({ type: "footnote" }),
+                ],
             },
         }),
         defineArrayMember({
@@ -56,6 +62,33 @@ export default defineType({
                     title: "Caption",
                     type: "string",
                     validation: (Rule) => Rule.max(220),
+                }),
+                defineField({
+                    name: "credit",
+                    title: "Credit",
+                    type: "string",
+                    description:
+                        "Optional. Who made the image, or its source and licence, printed under the caption.",
+                    validation: (Rule) => Rule.max(IMAGE_CREDIT_MAX),
+                }),
+                defineField({
+                    name: "kind",
+                    title: "Kind",
+                    type: "string",
+                    description:
+                        "Photographs are numbered as plates (Pl. I), diagrams, plots and screenshots as figures (Fig. 1). Empty counts as a photograph.",
+                    options: { list: [...IMAGE_KINDS], layout: "radio" },
+                    validation: listValuesOnly,
+                }),
+                defineField({
+                    name: "width",
+                    title: "Width",
+                    type: "string",
+                    description:
+                        "Text width sits in the column of text; Wide takes the whole reading column; Full width spans the page.",
+                    initialValue: "prose",
+                    options: { list: [...IMAGE_WIDTHS], layout: "radio" },
+                    validation: listValuesOnly,
                 }),
             ],
         }),
