@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment } from "react";
 import { CvItem, CvList } from "@/components/cv/cv-list";
+import ExperienceViews from "@/components/cv/experience-views";
 import Availability from "@/components/ui/availability";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -9,6 +10,7 @@ import { LinkArrow, Rev, Status, Updated } from "@/components/ui/marks";
 import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
 import Specs from "@/components/ui/specs";
+import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
 import { cvCopy as copy } from "@/lib/copy";
 import {
@@ -30,7 +32,7 @@ import {
     getProfile,
     type ProfileData,
 } from "@/lib/sanity-client";
-import { splitTitle } from "@/lib/trajectory";
+import { splitTitle, trajectoryData } from "@/lib/trajectory";
 import styles from "./resume.module.css";
 
 const canonicalUrl = `${siteConfig.url}${siteRoutes.resume}`;
@@ -208,20 +210,22 @@ function credentialRow(credential: CvCredential) {
 }
 
 /**
- * Trajectory · Experience / CV (G3): the CV, as a list a hiring reader can
+ * Trajectory · Experience / CV (G3): under the head with what the owner is
+ * open to, the PDF and the way to get in touch, the record in two views
+ * (components/cv/experience-views.tsx): Timeline, the flight through it
+ * (the default where motion runs), and List, the CV a hiring reader can
  * scan (education, experience, projects, writing and talks, skills,
- * certifications), under the head with what the owner is open to, the PDF
- * and the way to get in touch, and one quiet link, Timeline, to the
- * flight (/resume/trajectory), the record's one view in time. The PDF is
- * downloadable, and the browser's Print gives the two-sheet controlled
- * document. Everything is server-rendered, with no island of its own.
- * There is no email address or phone number, on screen or on paper.
+ * certifications), which is always in the HTML and shows without
+ * JavaScript, under reduced motion and on paper. The PDF is downloadable,
+ * and the browser's Print gives the two-sheet controlled document. There
+ * is no email address or phone number, on screen or on paper.
  */
 export default async function ResumePage() {
-    const [profile, projects, posts] = await Promise.all([
+    const [profile, projects, posts, today] = await Promise.all([
         getProfile(),
         getAllProjects(),
         getAllPosts(),
+        getToday(),
     ]);
     const name = profile?.name || siteConfig.author;
     const hasPdf = Boolean(resolveResumeAssetUrl(profile?.resumeUrl, "view"));
@@ -235,6 +239,7 @@ export default async function ResumePage() {
     const openTo = availabilityLine(profile?.availability);
 
     const timeline = cvEntries(profile?.timeline);
+    const flight = trajectoryData(timeline.all, profile?.availability, today);
     const entries = logEntries(posts);
     const writing = entries.slice(0, WRITING_ROWS);
     const missions = cvProjects(projects, {
@@ -300,6 +305,170 @@ export default async function ResumePage() {
         );
     };
 
+    // The CV: the List view, and the paper.
+    const body = (
+        <div className={styles.cvBody}>
+            {timeline.education.length ? (
+                <CvSection id="education" title={copy.education}>
+                    <CvList>{timeline.education.map(roleRow)}</CvList>
+                </CvSection>
+            ) : null}
+
+            {timeline.experience.length ? (
+                <CvSection id="experience" title={copy.experience}>
+                    <CvList>{timeline.experience.map(roleRow)}</CvList>
+                </CvSection>
+            ) : null}
+
+            {sheets === 2 ? (
+                <div className={`shell ${styles.sheetTwo}`} data-print="only">
+                    <SheetHead sheet={2} sheets={sheets} rev={rev} />
+                </div>
+            ) : null}
+
+            {/* Every project is here; the header's Projects is one
+                click away. */}
+            {missions.length ? (
+                <CvSection id="projects" title={copy.projects}>
+                    <CvList>
+                        {missions.map((mission) => (
+                            <CvItem
+                                key={mission.id}
+                                anchor={`cv-${mission.slug}`}
+                                dates={mission.years}
+                                title={mission.title}
+                                href={`/portfolio/${mission.slug}`}
+                                sub={
+                                    [mission.types, mission.role]
+                                        .filter(Boolean)
+                                        .join(" · ") || null
+                                }
+                                lines={mission.lines}
+                                links={mission.links}
+                                linksLabel={copy.links}
+                            />
+                        ))}
+                    </CvList>
+                </CvSection>
+            ) : null}
+
+            {writing.length || talks.length ? (
+                <CvSection
+                    id="writing"
+                    title={
+                        writing.length && talks.length ? (
+                            <>
+                                <span data-print="hide">
+                                    {copy.writing.withTalks}
+                                </span>
+                                <span data-print="only">
+                                    {copy.writing.talks}
+                                </span>
+                            </>
+                        ) : talks.length ? (
+                            copy.writing.talks
+                        ) : (
+                            copy.writing.title
+                        )
+                    }
+                    print={talks.length > 0}
+                    after={
+                        entries.length > writing.length ? (
+                            <LinkArrow href={siteRoutes.blog}>
+                                {copy.allWriting}
+                            </LinkArrow>
+                        ) : null
+                    }
+                >
+                    {/* The latest entries, compact: the date and the
+                        linked title; All writing only when /blog has
+                        more. Paper lists talks, not the Flight Log
+                        (plan §2.5.5). */}
+                    {writing.length ? (
+                        <div data-print="hide">
+                            <PlainRows
+                                rows={writing.map((entry) => ({
+                                    id: entry.slug,
+                                    date: (
+                                        <time dateTime={entry.publishedAt}>
+                                            {formatEntryDate(entry.publishedAt)}
+                                        </time>
+                                    ),
+                                    line: (
+                                        <Link href={`/blog/${entry.slug}`}>
+                                            {entry.title}
+                                        </Link>
+                                    ),
+                                }))}
+                            />
+                        </div>
+                    ) : null}
+                    {talks.length ? (
+                        <CvList
+                            className={
+                                writing.length ? styles.talks : undefined
+                            }
+                        >
+                            {talks.map((talk) => (
+                                <CvItem
+                                    key={talk.id}
+                                    code={talk.kind}
+                                    dates={talk.date}
+                                    title={talk.title}
+                                    sub={talk.venue}
+                                    links={talk.links}
+                                />
+                            ))}
+                        </CvList>
+                    ) : null}
+                </CvSection>
+            ) : null}
+
+            {skills.length ? (
+                <CvSection id="skills" title={copy.skills}>
+                    <Specs
+                        className={styles.skills}
+                        items={skills.map((group) => ({
+                            id: group._key,
+                            term: group.title,
+                            value: group.skills.join(" · "),
+                        }))}
+                    />
+                </CvSection>
+            ) : null}
+
+            {/* Every credential the same plain row: the current ones,
+                then Prior certifications, as the résumé lists them, on
+                screen and on paper. */}
+            {credentials.current.length || credentials.prior.length ? (
+                <CvSection
+                    id="certifications"
+                    title={
+                        credentials.current.length
+                            ? copy.certifications
+                            : copy.priorCertifications
+                    }
+                >
+                    {credentials.current.length ? (
+                        <PlainRows
+                            rows={credentials.current.map(credentialRow)}
+                        />
+                    ) : null}
+                    {credentials.current.length && credentials.prior.length ? (
+                        <h3 className={styles.subhead}>
+                            {copy.priorCertifications}
+                        </h3>
+                    ) : null}
+                    {credentials.prior.length ? (
+                        <PlainRows
+                            rows={credentials.prior.map(credentialRow)}
+                        />
+                    ) : null}
+                </CvSection>
+            ) : null}
+        </div>
+    );
+
     return (
         <div data-page="resume" className={styles.page}>
             <div className={styles.band}>
@@ -352,15 +521,6 @@ export default async function ResumePage() {
                         </p>
                     ) : null}
                 </PageHead>
-
-                {/* The flight: the record in time, on its own page. */}
-                {timeline.all.length ? (
-                    <div className={`shell ${styles.timeline}`}>
-                        <LinkArrow href={siteRoutes.trajectory}>
-                            {copy.timeline}
-                        </LinkArrow>
-                    </div>
-                ) : null}
             </div>
 
             {/* The printed masthead: sheet 1 opens with it (G3). */}
@@ -391,172 +551,11 @@ export default async function ResumePage() {
                 ) : null}
             </header>
 
-            <div className={styles.cvBody}>
-                {timeline.education.length ? (
-                    <CvSection id="education" title={copy.education}>
-                        <CvList>{timeline.education.map(roleRow)}</CvList>
-                    </CvSection>
-                ) : null}
-
-                {timeline.experience.length ? (
-                    <CvSection id="experience" title={copy.experience}>
-                        <CvList>{timeline.experience.map(roleRow)}</CvList>
-                    </CvSection>
-                ) : null}
-
-                {sheets === 2 ? (
-                    <div
-                        className={`shell ${styles.sheetTwo}`}
-                        data-print="only"
-                    >
-                        <SheetHead sheet={2} sheets={sheets} rev={rev} />
-                    </div>
-                ) : null}
-
-                {/* Every project is here; the header's Projects is
-                    one click away. */}
-                {missions.length ? (
-                    <CvSection id="projects" title={copy.projects}>
-                        <CvList>
-                            {missions.map((mission) => (
-                                <CvItem
-                                    key={mission.id}
-                                    anchor={`cv-${mission.slug}`}
-                                    dates={mission.years}
-                                    title={mission.title}
-                                    href={`/portfolio/${mission.slug}`}
-                                    sub={
-                                        [mission.types, mission.role]
-                                            .filter(Boolean)
-                                            .join(" · ") || null
-                                    }
-                                    lines={mission.lines}
-                                    links={mission.links}
-                                    linksLabel={copy.links}
-                                />
-                            ))}
-                        </CvList>
-                    </CvSection>
-                ) : null}
-
-                {writing.length || talks.length ? (
-                    <CvSection
-                        id="writing"
-                        title={
-                            writing.length && talks.length ? (
-                                <>
-                                    <span data-print="hide">
-                                        {copy.writing.withTalks}
-                                    </span>
-                                    <span data-print="only">
-                                        {copy.writing.talks}
-                                    </span>
-                                </>
-                            ) : talks.length ? (
-                                copy.writing.talks
-                            ) : (
-                                copy.writing.title
-                            )
-                        }
-                        print={talks.length > 0}
-                        after={
-                            entries.length > writing.length ? (
-                                <LinkArrow href={siteRoutes.blog}>
-                                    {copy.allWriting}
-                                </LinkArrow>
-                            ) : null
-                        }
-                    >
-                        {/* The latest entries, compact: the date and the
-                            linked title; All writing only when /blog has
-                            more. Paper lists talks, not the Flight Log
-                            (plan §2.5.5). */}
-                        {writing.length ? (
-                            <div data-print="hide">
-                                <PlainRows
-                                    rows={writing.map((entry) => ({
-                                        id: entry.slug,
-                                        date: (
-                                            <time dateTime={entry.publishedAt}>
-                                                {formatEntryDate(
-                                                    entry.publishedAt,
-                                                )}
-                                            </time>
-                                        ),
-                                        line: (
-                                            <Link href={`/blog/${entry.slug}`}>
-                                                {entry.title}
-                                            </Link>
-                                        ),
-                                    }))}
-                                />
-                            </div>
-                        ) : null}
-                        {talks.length ? (
-                            <CvList
-                                className={
-                                    writing.length ? styles.talks : undefined
-                                }
-                            >
-                                {talks.map((talk) => (
-                                    <CvItem
-                                        key={talk.id}
-                                        code={talk.kind}
-                                        dates={talk.date}
-                                        title={talk.title}
-                                        sub={talk.venue}
-                                        links={talk.links}
-                                    />
-                                ))}
-                            </CvList>
-                        ) : null}
-                    </CvSection>
-                ) : null}
-
-                {skills.length ? (
-                    <CvSection id="skills" title={copy.skills}>
-                        <Specs
-                            className={styles.skills}
-                            items={skills.map((group) => ({
-                                id: group._key,
-                                term: group.title,
-                                value: group.skills.join(" · "),
-                            }))}
-                        />
-                    </CvSection>
-                ) : null}
-
-                {/* Every credential the same plain row: the current
-                    ones, then Prior certifications, as the résumé lists
-                    them, on screen and on paper. */}
-                {credentials.current.length || credentials.prior.length ? (
-                    <CvSection
-                        id="certifications"
-                        title={
-                            credentials.current.length
-                                ? copy.certifications
-                                : copy.priorCertifications
-                        }
-                    >
-                        {credentials.current.length ? (
-                            <PlainRows
-                                rows={credentials.current.map(credentialRow)}
-                            />
-                        ) : null}
-                        {credentials.current.length &&
-                        credentials.prior.length ? (
-                            <h3 className={styles.subhead}>
-                                {copy.priorCertifications}
-                            </h3>
-                        ) : null}
-                        {credentials.prior.length ? (
-                            <PlainRows
-                                rows={credentials.prior.map(credentialRow)}
-                            />
-                        ) : null}
-                    </CvSection>
-                ) : null}
-            </div>
+            {flight.chapters.length ? (
+                <ExperienceViews data={flight}>{body}</ExperienceViews>
+            ) : (
+                body
+            )}
         </div>
     );
 }

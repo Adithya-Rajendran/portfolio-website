@@ -4,8 +4,9 @@ import { expect, test } from "./support/test";
 /**
  * The printed CV (G3, plan §6.2 PR 11): /resume prints as a controlled
  * document of two sheets on both A4 and Letter, each opening with its
- * control line, with the chrome, the controls and the Timeline link left
- * off the paper, and no email address or phone number on it. Expired
+ * control line, with the chrome, the controls, the view switch and the
+ * flight left off the paper (the list prints, whichever view is on
+ * screen), and no email address or phone number on it. Expired
  * credentials print as Prior certifications, never "Expired", and no
  * masthead address or opening splits across a line.
  */
@@ -28,15 +29,15 @@ test("/resume prints on two sheets on A4 and on Letter", async ({ page }) => {
     }
 });
 
-test("paper leaves off the chrome, the controls and the Timeline link", async ({
+test("paper leaves off the chrome, the controls and the flight", async ({
     page,
 }) => {
     await page.goto("/resume");
+    // On screen the flight is the view (motion is allowed here).
+    await expect(page.locator("[data-journey]")).toBeVisible();
     await page.emulateMedia({ media: "print" });
     const main = page.getByRole("main");
-    await expect(
-        main.getByRole("link", { name: cvCopy.timeline, exact: true }),
-    ).toBeHidden();
+    await expect(page.locator("[data-journey]")).toBeHidden();
     await expect(page.getByRole("banner")).toBeHidden();
     await expect(page.getByRole("contentinfo")).toBeHidden();
     await expect(main.getByRole("button")).toHaveCount(0);

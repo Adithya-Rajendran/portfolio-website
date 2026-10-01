@@ -1,7 +1,9 @@
 /*
- * Trajectory · Experience / CV (/resume): the page head, the Timeline
- * link and the CV sections (DocSection: the shared section head, then the
- * rows). The CV rows and the key/value list have their own styles
+ * Trajectory · Experience / CV (/resume): the page head and the CV
+ * sections (DocSection: the shared section head, then the rows), which
+ * are the List view. The views, their switch and the flight have their
+ * own styles (components/cv/experience-views.module.css,
+ * components/trajectory/), as do the CV rows and the key/value list
  * (`.cv-list` and `.specs` in styles/components.css); the plain rows (the
  * latest writing, prior certifications) are here. On paper the page is
  * the controlled document (G3): the print rules close this file and
@@ -11,7 +13,7 @@
     position: relative;
 }
 
-/* ---- The head band: the shared split head, then the Timeline link ------- */
+/* ---- The head band: the shared split head ------------------------------ */
 .band {
     padding-bottom: var(--s-5);
 }
@@ -23,11 +25,6 @@
 }
 .openTo {
     margin-top: var(--s-5);
-}
-
-/* ---- Timeline: the one quiet link to the flight, under the head -------- */
-.timeline {
-    padding-top: var(--s-4);
 }
 
 /* ---- The CV: the shared section head, the rows in the main column ------- */

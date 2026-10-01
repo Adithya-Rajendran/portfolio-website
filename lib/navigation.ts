@@ -15,8 +15,6 @@ export const siteRoutes = {
     archive: "/blog/archive",
     portfolio: "/portfolio",
     resume: "/resume",
-    /** The flight: the timeline in 3D, linked from /resume. */
-    trajectory: "/resume/trajectory",
     about: "/about",
     /** Comms: the form, its topics and the profiles. */
     contact: "/contact",

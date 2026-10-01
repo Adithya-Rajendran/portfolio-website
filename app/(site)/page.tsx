@@ -83,8 +83,8 @@ function Act({
  * and the way down to the projects), then, each only with content, the
  * strongest project on its stage with the next two as rows and any
  * others as one line, and the latest three entries; then the close: the
- * owner's tagline as its heading with the ways to his current focus and
- * to the Timeline, then one way to /contact: the profile's button that
+ * owner's tagline as its heading with the way to his current focus,
+ * then one way to /contact: the profile's button that
  * answers what the owner is open to (the one primary, while both are
  * set), else Send a message. Everything is server-rendered; the
  * starfield and Pause motion are the only islands.
@@ -217,18 +217,11 @@ export default async function Home() {
                         >
                             {tagline ?? copy.contactAct.title}
                         </h2>
-                        <div className={`cluster ${styles.closeLinks}`}>
-                            {asked ? (
-                                <LinkArrow
-                                    href={`${siteRoutes.about}#crew-now`}
-                                >
-                                    {copy.contactAct.now}
-                                </LinkArrow>
-                            ) : null}
-                            <LinkArrow href={siteRoutes.trajectory}>
-                                {copy.contactAct.timeline}
+                        {asked ? (
+                            <LinkArrow href={`${siteRoutes.about}#crew-now`}>
+                                {copy.contactAct.now}
                             </LinkArrow>
-                        </div>
+                        ) : null}
                         <div className={styles.closeActions}>
                             {answer ? (
                                 <ButtonLink

@@ -68,11 +68,6 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         tags: [profile, project, post],
     },
     {
-        path: "/resume/trajectory",
-        file: "app/(site)/resume/trajectory/page.tsx",
-        tags: [profile],
-    },
-    {
         path: "/about",
         file: "app/(site)/about/page.tsx",
         tags: [profile, post, project],
@@ -173,11 +168,6 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
     },
 
     // No content tags: never warmed.
-    {
-        path: "/resume/trajectory/opengraph-image-hha09c",
-        file: "app/(site)/resume/trajectory/opengraph-image.tsx",
-        tags: [],
-    },
     { path: "/robots.txt", file: "app/robots.ts", tags: [] },
     // A static file asked for by name: served from public/ as it is.
     {

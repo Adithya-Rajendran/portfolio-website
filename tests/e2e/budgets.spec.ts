@@ -22,13 +22,6 @@ const BUDGETS = {
     prefetches: 8,
 };
 
-/** Pages whose own styles take them past the CSS budget, with theirs:
- *  /resume/trajectory carries the flight's stage, record and scene
- *  (about 2.8 KB br of its own over the site's 23.3 KB). */
-const CSS_ALLOWANCE: Record<string, number> = {
-    "/resume/trajectory": 27 * 1024,
-};
-
 type Kind = "document" | "script" | "stylesheet" | "font";
 const KINDS: Kind[] = ["document", "script", "stylesheet", "font"];
 
@@ -66,7 +59,7 @@ function total(page: PageBytes, kind: Kind, field: "raw" | "br" = "br") {
 
 test("byte report", async ({ browser, request, baseURL }, testInfo) => {
     const posts = (await contentPages(request, testInfo)).filter(isPostPage);
-    const paths = [...STATIC_PAGES, ...posts.slice(0, 1), "/resume/trajectory"];
+    const paths = [...STATIC_PAGES, ...posts.slice(0, 1)];
     test.setTimeout(30_000 + paths.length * 15_000);
     const origin = new URL(baseURL ?? "").origin;
     const pages: PageBytes[] = [];
@@ -161,7 +154,7 @@ test("byte report", async ({ browser, request, baseURL }, testInfo) => {
             "html br": kb(total(page, "document")),
             "js br": kb(js),
             "route js br": kb(js - sharedJs),
-            "css br": `${kb(total(page, "stylesheet"))}${over(total(page, "stylesheet"), CSS_ALLOWANCE[page.path] ?? BUDGETS.css)}`,
+            "css br": `${kb(total(page, "stylesheet"))}${over(total(page, "stylesheet"), BUDGETS.css)}`,
             "fonts br": `${kb(total(page, "font"))}${over(total(page, "font"), BUDGETS.fonts)}`,
             prefetches: `${page.prefetches}${over(page.prefetches, BUDGETS.prefetches)}`,
             "route trees": page.trees,

@@ -125,7 +125,6 @@ for (const theme of THEMES) {
                 project!,
                 post!,
                 "/resume",
-                "/resume/trajectory",
                 "/contact",
                 "/about",
             ];

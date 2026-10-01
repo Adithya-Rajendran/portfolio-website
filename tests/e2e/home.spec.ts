@@ -294,8 +294,6 @@ test("the sections follow the hero in order and lead to their pages", async ({
         ["home-projects", copy.projectsAct.all, "/portfolio"],
         ["home-writing", copy.writingAct.all, "/blog"],
         ["home-contact", copy.contactAct.now, "/about#crew-now"],
-        // The flight has one name everywhere.
-        ["home-contact", copy.contactAct.timeline, "/resume/trajectory"],
     ];
     for (const [id, name, href] of leads) {
         const section = main.locator(`section#${id}`);
@@ -304,6 +302,10 @@ test("the sections follow the hero in order and lead to their pages", async ({
         if (name === copy.contactAct.now && !(await link.count())) continue;
         await expect(link).toHaveAttribute("href", href);
     }
+    // The nav's Experience leads to the flight: the close does not.
+    await expect(
+        main.locator('section#home-contact a[href^="/resume"]'),
+    ).toHaveCount(0);
     // The latest writing lists no tags.
     await expect(
         main

@@ -140,6 +140,13 @@ const nextConfig = {
                 destination: "/resume/view",
                 permanent: true,
             },
+            // The flight is /resume's Timeline view (the default where
+            // motion runs), no longer a page of its own.
+            {
+                source: "/resume/trajectory",
+                destination: "/resume",
+                permanent: true,
+            },
             // Comms is the themed name of /contact (plan §2.2). Never
             // redirect from /contact itself.
             {
@@ -178,10 +185,6 @@ const nextConfig = {
                 // Newer than the move, kept at the unhashed URL like the
                 // others so every share image answers there.
                 ["/contact/opengraph-image", "/contact/opengraph-image-upzrkl"],
-                [
-                    "/resume/trajectory/opengraph-image",
-                    "/resume/trajectory/opengraph-image-hha09c",
-                ],
                 [
                     "/portfolio/:slug/opengraph-image",
                     "/portfolio/:slug/opengraph-image-ysfoa1",

@@ -63,10 +63,9 @@
     text-underline-offset: 0.25em;
 }
 
-/* ---- The close: the owner's statement, the ways to his current focus
-   and the Timeline, then one way to /contact (the primary, else Send a
-   message). The statement shares the rows' step, so the page keeps to
-   six sizes. ------------------------------------------------------------ */
+/* ---- The close: the owner's statement, the way to his current focus,
+   then one way to /contact (the primary, else Send a message). The
+   statement shares the rows' step, so the page keeps to six sizes. ----- */
 .close {
     display: grid;
     justify-items: start;
@@ -81,10 +80,6 @@
     letter-spacing: -0.005em;
     text-wrap: balance;
 }
-.closeLinks {
-    --cluster: var(--s-2) var(--s-6);
-}
-
 .closeActions {
     margin-top: var(--s-5);
 }

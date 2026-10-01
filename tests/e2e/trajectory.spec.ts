@@ -1,27 +1,23 @@
 import type { Page } from "@playwright/test";
-import { siteConfig } from "@/lib/config";
-import { trajectoryCopy as copy } from "@/lib/copy";
-import { axeViolations } from "./support/axe";
+import { cvCopy, trajectoryCopy as copy } from "@/lib/copy";
 import { expect, test } from "./support/test";
 import { THEMES, storeTheme } from "./support/theme";
 
 /**
- * /resume/trajectory (components/trajectory/journey.tsx): one crumb line
- * for a head (Experience / Timeline, and Skip to the list), with the rail
- * and Play in the first viewport at 1440×900; its own address and share
- * card. The record fits the pinned stage on short laptop screens and
- * never moves while the flight is scrubbed (a long burn label included);
- * the card's one readout ticks; the scene names the worlds by their
- * organisation only, at holds and in the finale, never through a
+ * The flight (components/trajectory/journey.tsx), /resume's Timeline view
+ * and its default where motion runs (resume.spec has the views; a11y.spec
+ * runs axe on the page as it opens, the flight). Pinned, the stage shows
+ * its rail and Play. The record fits the pinned stage on short laptop
+ * screens and never moves while the flight is scrubbed (a long burn label
+ * included); the card's one readout ticks; the scene names the worlds by
+ * their organisation only, at holds and in the finale, never through a
  * transfer; a still flight opens on the latest chapter. Play gives way to
- * any key, a phone keeps each chapter's name and full entry (and the
- * plan's Contact under its openings), and axe finds nothing in either
- * theme (the route is not in the sitemap, so a11y.spec's page list does
- * not reach it). The 3D scene draws in both themes,
+ * any key, and a phone keeps each chapter's name and full entry (and the
+ * plan's Contact under its openings). The 3D scene draws in both themes,
  * survives a lost WebGL context, and leaves one canvas and no errors
- * after the route is left and shown again.
+ * after the page is left and shown again.
  */
-const PATH = "/resume/trajectory";
+const PATH = "/resume";
 
 // Every test here draws the 3D flight, which a GPU-less browser renders
 // on the CPU: in order, in one worker, so this file never runs several
@@ -89,63 +85,18 @@ for (const [width, height] of [
     });
 }
 
-test("the head is one crumb line, with the rail and Play in view", async ({
-    page,
-}) => {
+test("pinned, the stage shows its rail and Play", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(PATH);
+    await page.waitForLoadState("networkidle");
+    await seek(page, 0);
     const main = page.getByRole("main");
-    await expect(
-        main.getByRole("heading", { level: 1, name: copy.title, exact: true }),
-    ).toBeVisible();
-    await expect(
-        main.getByRole("link", { name: copy.section, exact: true }),
-    ).toHaveAttribute("href", "/resume");
-    const skip = main.getByRole("link", { name: copy.skip });
-    await expect(skip).toBeInViewport();
-    await expect(skip).toHaveAttribute("href", "/resume");
     await expect(
         main.getByRole("list", { name: copy.rail }).getByRole("button").last(),
     ).toBeInViewport();
     await expect(
         main.getByRole("button", { name: copy.play, exact: true }),
     ).toBeInViewport();
-});
-
-test("the flight has its own address and share card", async ({
-    page,
-    request,
-}) => {
-    await page.goto(PATH);
-    const url = `${siteConfig.url}${PATH}`;
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
-        "href",
-        url,
-    );
-    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
-        "content",
-        url,
-    );
-    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
-        "content",
-        `${copy.title} | ${siteConfig.author}`,
-    );
-    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
-        "content",
-        `${copy.title} by ${siteConfig.author}`,
-    );
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
-        "content",
-        /noindex/,
-    );
-    const image = await page
-        .locator('meta[property="og:image"]')
-        .getAttribute("content");
-    const { pathname } = new URL(image!);
-    expect(pathname).toMatch(new RegExp(`^${PATH}/opengraph-image-`));
-    const response = await request.get(pathname);
-    expect(response.status()).toBe(200);
-    expect(response.headers()["content-type"]).toMatch(/^image\//);
 });
 
 /** The scene's labels on show (opacity above zero), by their text. */
@@ -203,8 +154,13 @@ test("the readout ticks under the title; labels name worlds at holds only", asyn
 test("a still flight opens on the latest chapter, the ask last on the rail", async ({
     page,
 }) => {
+    // Under reduced motion the list is the view; Timeline is the still.
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(PATH);
+    await page
+        .getByRole("group", { name: cvCopy.views.legend })
+        .getByRole("radio", { name: "Timeline", exact: true })
+        .check();
     const rail = page.getByRole("list", { name: copy.rail });
     const buttons = rail.getByRole("button");
     const count = await buttons.count();
@@ -264,27 +220,6 @@ test("a phone keeps each chapter's name and full entry, the ask in order", async
         );
     }
 });
-
-for (const theme of THEMES) {
-    for (const width of [390, 1440]) {
-        test(`axe finds nothing in ${theme} at ${width}px`, async ({
-            page,
-        }) => {
-            await page.setViewportSize({
-                width,
-                height: width < 600 ? 844 : 900,
-            });
-            await storeTheme(page, theme);
-            await page.goto(PATH);
-            await page.waitForLoadState("networkidle");
-            await expect(page.locator("html")).toHaveAttribute(
-                "data-theme",
-                theme,
-            );
-            expect(await axeViolations(page, PATH)).toEqual([]);
-        });
-    }
-}
 
 /** The luminance spread (standard deviation, of 255) of the stage right of
  *  the record, clear of the caption: a drawn scene has worlds, lines and
@@ -377,9 +312,9 @@ for (const theme of THEMES) {
         for (let i = 0; i < 2; i++) {
             await page
                 .getByRole("banner")
-                .getByRole("link", { name: "Experience", exact: true })
+                .getByRole("link", { name: "About", exact: true })
                 .click();
-            await expect(page).toHaveURL(/\/resume$/);
+            await expect(page).toHaveURL(/\/about$/);
             await page.goBack();
             await expect(page).toHaveURL(new RegExp(`${PATH}$`));
             await expect(scene).toHaveAttribute("data-ready", "", {

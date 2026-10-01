@@ -3,7 +3,7 @@ import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-// The maps for the 3D flight on /resume/trajectory
+// The maps for the 3D flight, /resume's Timeline view
 // (components/trajectory/flight-maps.ts picks them per screen, flight-gl.ts
 // draws them): Solar System Scope's
 // equirectangular textures (CC BY 4.0) and NASA's Earth layers (public

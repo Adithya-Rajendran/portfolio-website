@@ -36,14 +36,17 @@ import styles from "./journey.module.css";
  *   whole system (the route's end) with the latest chapter's card; the
  *   ask stays the rail's last stop. Each card's line keeps its dates as
  *   written.
- * - **Without JavaScript** the chapters are a list and no scene is drawn.
+ * - **Inactive** (`active` false: the page shows its list instead) nothing
+ *   is built or listened to; without JavaScript the page never shows it.
+ * - **Full entry** goes to the chapter's row in the CV (`onEntry`, else
+ *   the link itself).
  * - **Screen readers** hear the chapter when it changes (a polite live
  *   region), and focus in a card that leaves moves to its rail button.
  *
- * The scene is the renderer's (`createScene`): an SVG plot, a voyage, a 3D
- * flight. It gets the route and draws a frame; the record is shared. Its
- * `poster`, if any, is rendered on the server inside the scene's host, so
- * a still frame shows from the first paint until the scene draws.
+ * The scene is the renderer's (`createScene`): it gets the route and
+ * draws a frame; the record is HTML. Its `poster`, if any, is rendered on
+ * the server inside the scene's host, so a still frame shows from the
+ * first paint until the scene draws.
  */
 
 export interface Scene {
@@ -78,7 +81,9 @@ const DURATION = 26000;
 const TRANSFER_RATE = 1.7;
 const REDUCE = "(prefers-reduced-motion: reduce)";
 
-function motionAllowed(): boolean {
+/** Spatial motion runs only under html[data-motion="full"] and no OS
+ *  reduce-motion setting (the boot script, lib/theme-boot.ts). */
+export function motionAllowed(): boolean {
     return (
         document.documentElement.dataset.motion === "full" &&
         !window.matchMedia(REDUCE).matches
@@ -102,6 +107,8 @@ export default function Journey({
     className,
     pacing,
     poster,
+    active = true,
+    onEntry,
 }: {
     data: TrajectoryData;
     createScene: CreateScene;
@@ -109,6 +116,10 @@ export default function Journey({
     className?: string;
     pacing?: Pacing;
     poster?: React.ReactNode;
+    /** False while the page shows something else in its place. */
+    active?: boolean;
+    /** A card's Full entry, given its href, in place of the link. */
+    onEntry?: (href: string) => void;
 }) {
     const routeOptions = pacing?.route;
     const transferRate = pacing?.transferRate ?? TRANSFER_RATE;
@@ -123,7 +134,7 @@ export default function Journey({
 
     useEffect(() => {
         const root = section.current;
-        if (!root) return;
+        if (!active || !root) return;
         const stage = root.querySelector<HTMLElement>("[data-stage]")!;
         const host = root.querySelector<HTMLElement>("[data-scene]")!;
         const liveEl = root.querySelector<HTMLElement>("[data-announce]")!;
@@ -356,7 +367,7 @@ export default function Journey({
             controls.current = null;
             scene.dispose();
         };
-    }, [data, route, createScene, transferRate, duration]);
+    }, [active, data, route, createScene, transferRate, duration]);
 
     return (
         <section
@@ -426,6 +437,16 @@ export default function Journey({
                                                 className={styles.entry}
                                                 href={chapter.href}
                                                 prefetch={false}
+                                                onNavigate={
+                                                    onEntry
+                                                        ? (event) => {
+                                                              event.preventDefault();
+                                                              onEntry(
+                                                                  chapter.href,
+                                                              );
+                                                          }
+                                                        : undefined
+                                                }
                                             >
                                                 {copy.entry}
                                             </LinkArrow>

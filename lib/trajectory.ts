@@ -5,10 +5,10 @@ import type { TimelineDatePrecision } from "@/lib/profile-fields";
 import type { Availability } from "@/lib/sanity-client";
 
 /**
- * The flight on /resume/trajectory: the profile's timeline as chapters,
- * oldest first, and the scroll route through them. Pure and shared by
- * every renderer (the plot, the voyage, the 3D flight), so they all tell
- * the same record; only the drawing differs.
+ * The flight, /resume's Timeline view: the profile's timeline as
+ * chapters, oldest first, and the scroll route through them. Pure, so
+ * the record and the 3D scene tell the same story; only the drawing
+ * differs.
  *
  * A route is a list of segments, each with a scroll weight:
  * - a **coast** holds a chapter (a role or a degree held for a period);
@@ -88,7 +88,6 @@ export interface Chapter {
 
 export interface PlannedLeg {
     lines: string[];
-    cta: string | null;
     href: string;
 }
 
@@ -197,7 +196,6 @@ export function trajectoryData(
         planned: openTo
             ? {
                   lines: lines.length ? lines : [openTo],
-                  cta: availability?.cta?.trim() || null,
                   href: contactHref("hiring"),
               }
             : null,

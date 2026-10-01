@@ -139,13 +139,29 @@ only live in comments or commit messages.
   Satori takes TTF, not WOFF2,
   so the card reads static copies from `assets/fonts/og/` (each with its
   OFL licence) once at module scope, which keeps the image prerendered.
-- **The CV** (G3). `/resume` is the CV as one list, server-rendered with
-  no island of its own; under the head, one quiet link, Timeline, goes to
-  the flight (`siteRoutes.trajectory`), the record's one view in time
-  (premium D3 retired the 2D orbit map, its List | Timeline switch,
-  "Orbit 0n" codes and "Show on timeline"). The head carries Download CV
-  (PDF) as the primary and Contact: no Open PDF, Print or Share (the
-  browser's Print prints the CV).
+- **The CV** (G3). `/resume` is the record in two views under one head
+  (`components/cv/experience-views.tsx`): Timeline, the flight (below),
+  and List, the CV, switched by a `Segmented` "Timeline · List" where the
+  head's tools sit. The default is decided in CSS before the first paint
+  from the boot script's attributes (`experience-views.module.css`): the
+  flight under `html[data-motion="full"]` and no reduce-motion setting,
+  else the list; the list too when the address names a
+  part of it (`/resume#experience`, a Full entry opened in a new tab).
+  Until the page has run on the client nothing is checked and the
+  default's box reads as chosen; then a module-level store pins the view
+  in force, and a click switches it for the visit (no storage; a client
+  navigation back keeps it). Without JavaScript (no `data-motion`), on
+  paper and for a crawler the list shows: the CV is always in the HTML,
+  and the flight is never shown without JavaScript, so its chapters never
+  repeat the CV. The flight's scene is built only while it is the view
+  (`Journey active`). "Skip to the list" (shown on focus, after the
+  switch), "The full record" after the stage and a card's Full entry
+  (`onEntry`, the chapter's row) show the list and move focus there.
+  `/resume/trajectory`, the flight's old page, answers 308 to `/resume`
+  (next.config.mjs). The head carries Download CV (PDF) as the primary
+  and Contact: no Open PDF, Print or Share (the browser's Print prints
+  the CV); premium D3 retired the 2D orbit map, "Orbit 0n" codes and
+  "Show on timeline".
   `lib/cv.ts` words the rows' dates as the résumé gives them and derives
   no length of time from them. A role's long parenthetical ("Field
   Software Engineer I (promoted from …)") is split by `splitTitle`
@@ -171,20 +187,17 @@ only live in comments or commit messages.
   `display: block !important` from a
   layer, which no unlayered rule overrides, so a print-only part that
   needs another display sits inside a print-only container instead.
-- **The flight** (`/resume/trajectory`, noindex, reached from `/resume`).
-  The head is one crumb line (`CrumbRow heading`: Experience, linking to
-  `/resume`, / the small h1 Timeline, and "Skip to the list"), so the
-  pinned stage starts just under the header and its rail and Play show in
-  the first viewport at 1440×900. The page has its own canonical,
-  `og:url`, "Timeline | Adithya Rajendran" and share card (tag
-  Trajectory, title Timeline). `components/trajectory/journey.tsx` is the
-  record: each card is the title, one DM Mono readout under it (the
+- **The flight** (`/resume`'s Timeline view, the default where motion
+  runs). It has no head of its own: the page's head and the switch sit
+  above the stage, which starts in the first viewport and pins under the
+  header, where its rail and Play show. `components/trajectory/journey.tsx`
+  is the record: each card is the title, one DM Mono readout under it (the
   chapter's dates as written; in flight the date, ticking, and the phase,
   "May 2024 · Transfer"), "● Current" on the current chapter, the
   organisation, a note and a line, and Full entry; no big date, kind
   label or readout on the plan's card, which states Open to with a quiet
-  Contact (the profile's button follows the stage, with the one way back,
-  "The full record"). On a phone Full entry shares the readout's row;
+  Contact, the flight's one ask (after the stage only "The full record",
+  to the list). On a phone Full entry shares the readout's row;
   the plan's card has no readout, so its Contact stays under the
   openings. The scene (`flight-gl.ts`) names each world by its
   organisation alone (DM Mono 13px caps), only at a hold and in the finale:
@@ -372,8 +385,8 @@ only live in comments or commit messages.
   any others as one line (`homeProjects`); the latest three entries,
   without tags; and the close, headed by the owner's one-line statement
   (`taglineOf`: the tagline, else the introduction's first sentence;
-  "Contact" for screen readers without one) with quiet links to About's
-  current focus and the flight ("Timeline", its one name), then one way
+  "Contact" for screen readers without one) with a quiet link to About's
+  current focus (the nav's Experience leads to the flight), then one way
   to `/contact`: the profile's `availability.cta` → `/contact#hiring` as
   the one primary while there is an Open To line, else Send a message as
   a quiet link. On phones a section's link stays on its heading's line.
@@ -627,7 +640,7 @@ only live in comments or commit messages.
   the fragment (`#hiring`) to pick its topic on arrival and writes it
   back when a topic is picked.
   The only words about the owner's situation on a button are the
-  profile's (`availability.cta`: the home close and the flight's close); code keeps a neutral verb ("Send a message"). Contact is one click from
+  profile's (`availability.cta`: the home close); code keeps a neutral verb ("Send a message"). Contact is one click from
   every page: the nav from 960px, and a link in the header bar below it. `sendEmail` sends a topic whose route is not
   shown (a crafted POST) as a hello, and treats Resend's returned
   `{ error }` as a failure: Resend 6 does not throw on API errors. A `"use server"` module may export only async
@@ -796,7 +809,7 @@ deployment require an authenticated Sanity CLI session.
   Michroma's two places, and 13px text only a label, a control or data),
   `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
-  Homelab, a post, `/resume`, the flight, `/contact` and `/about`, at 1440
+  Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440
   and 390 in both themes, identity marks and focus aside, and on
   `/contact` refused with two invalid fields, only the first one's rule
   orange; the primary an ink fill, the nav's bar and the header's CV
@@ -853,21 +866,26 @@ deployment require an authenticated Sanity CLI session.
   margin notes, the caution callout as a quiet note and revisions, their
   RSS output, and
   in-page links landing in the visible entry after a client-side
-  navigation), `resume` (Contact and the quiet Timeline link to the
-  flight in the first viewport, with no view switch, map, orbit codes or
-  buttons, and no Open PDF, Print or Share; no project link opening the
+  navigation), `resume` (Contact and Timeline · List in the first
+  viewport, Timeline chosen and the stage in view where motion runs, no
+  orbit codes, Open PDF, Print or Share and no link to the flight's old
+  page; the views switching in place, the scene dropped with its view,
+  the choice kept across a client navigation; Skip to the list, The full
+  record and a card's Full entry landing on the list and its row, with
+  focus; the list and the flight's still under reduced motion; an
+  address naming a section opening the list; no project link opening the
   site's own address in a new tab, and every credential one plain row
-  with no status and no heading of its own; the same page without
-  JavaScript), `print` (the CV
-  on two sheets on A4 and on Letter, without the chrome, the controls or
-  the Timeline link; Prior certifications and never "Expired"; each masthead
-  address and opening on one line), `trajectory` (the flight's crumb head
-  with the rail and Play in the first viewport, its own canonical and
-  card, the record holding still while scrubbed, one readout ticking
+  with no status and no heading of its own; axe on the list in both
+  themes; without JavaScript the CV with no switch or flight), `print`
+  (the CV on two sheets on A4 and on Letter, without the chrome, the
+  controls or the flight, whichever view was on screen; Prior
+  certifications and never "Expired"; each masthead address and opening
+  on one line), `trajectory` (on `/resume`: pinned, the rail and Play in
+  view, the record holding still while scrubbed, one readout ticking
   under the title, the worlds named without dates and never mid-transfer,
   a still flight opening on the latest chapter, a phone's cards in
-  reading order, axe in both themes, and
-  the scene drawing, surviving a lost context and a return), `missions` (every old `/portfolio` fragment sent on to its
+  reading order, and the scene drawing, surviving a lost context and a
+  return), `missions` (every old `/portfolio` fragment sent on to its
   page, the index links every project with no counts, register, mission
   numbers or related pages, titles in sentence case and four stack items
   at most on a card, the flagship's title and View the project in the
@@ -894,8 +912,9 @@ deployment require an authenticated Sanity CLI session.
   allowed; the stars in the hero only, and not on paper; the credit with
   its frame ID, and the drawn limb in Flight Manual; the sections in
   order, unnumbered and without themed names, with their links, and the
-  latest writing without tags; the close headed by the tagline, the
-  flight linked as Timeline, its button only in the profile's words and
+  latest writing without tags; the close headed by the tagline, with no
+  link to `/resume` (the nav's Experience is the flight's), its button
+  only in the profile's words and
   only beside an Open To line, one primary at most and one way to
   `/contact`; the flagship without stats or mission number, its
   title in sentence case over four stack items at most; a row's cover a

@@ -1,10 +1,12 @@
 /*
- * The flight's stage and record. Three layouts, chosen before first paint
+ * The flight's stage and record. Two layouts, chosen before first paint
  * from the attributes the theme boot script sets on <html>:
- * - no JavaScript: the chapters as a list, no scene;
  * - still (reduced motion or Pause motion): a stage one screen tall, one
  *   card at a time, picked from the chapters;
  * - flight: the section is tall and the stage sticks under the header.
+ * Without JavaScript the page shows its list instead
+ * (components/cv/experience-views.module.css); the rules below without
+ * `html[data-js]` are only the record's base.
  *
  * On the stage the record fits by construction: the grid keeps clear of
  * the header rule and the stage's foot, the record is never taller than
@@ -52,12 +54,6 @@
 
 .card {
     max-width: 40rem;
-}
-
-/* Without JavaScript the chapters are a list of cards: a hairline on top. */
-:global(html:not([data-js])) .card {
-    border-top: var(--rule-hair) solid var(--rule-2);
-    padding-top: var(--s-4);
 }
 
 .title {

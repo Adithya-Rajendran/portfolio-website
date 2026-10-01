@@ -319,6 +319,8 @@ test.describe("routes and headers", () => {
             ["/blogs/e2e-legacy-post", "/blog/e2e-legacy-post"],
             ["/resume.pdf", "/resume/view"],
             ["/comms", "/contact"],
+            // The flight is /resume's Timeline view.
+            ["/resume/trajectory", "/resume"],
             // Share images from before the (site) route group.
             ["/about/opengraph-image", "/about/opengraph-image-1ycygp"],
             [

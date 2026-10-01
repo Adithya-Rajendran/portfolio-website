@@ -1,6 +1,6 @@
 # Trajectory textures
 
-The maps for the 3D flight on `/resume/trajectory` (option C · Flight,
+The maps for the 3D flight, `/resume`'s Timeline view (option C · Flight,
 `components/trajectory/flight-gl.ts` and `flight-bodies.ts`).
 `components/trajectory/flight-maps.ts` picks them: a wide screen loads the
 2k maps and the 4k sky; a phone or a window under 960px loads the 1k maps

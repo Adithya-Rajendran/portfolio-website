@@ -3,11 +3,9 @@ import Link from "next/link";
 /**
  * The item head's crumb row (contract §1, extracted from the post's): the
  * section's plain name as a link back to its index, then the item itself
- * (its quiet identifier and its name) and an optional meta at the end of
- * the hairline. Used above a post and a project file, whose own title is
- * the page's h1; on the flight (/resume/trajectory) the name is the h1
- * (`heading`), the page's whole head. The name, where it wraps, takes a
- * line of its own under the section, the separator and the identifier,
+ * (its quiet identifier and its name). Used above a post and a project
+ * file, whose own title is the page's h1. The name, where it wraps, takes
+ * a line of its own under the section, the separator and the identifier,
  * which keep one line, so no line starts or ends on the separator.
  */
 export default function CrumbRow({
@@ -15,9 +13,6 @@ export default function CrumbRow({
     href,
     code,
     name,
-    heading = false,
-    meta,
-    metaClassName,
     className,
 }: {
     /** The section's plain name: "Writing". */
@@ -28,13 +23,8 @@ export default function CrumbRow({
     code?: string;
     /** The item's short name. */
     name?: string;
-    /** The name is the page's h1, small, in the crumb's line. */
-    heading?: boolean;
-    meta?: React.ReactNode;
-    metaClassName?: string;
     className?: string;
 }) {
-    const Row = heading ? "div" : "p";
     const sep = (
         <span className="crumb-row__sep" aria-hidden="true">
             /
@@ -42,7 +32,7 @@ export default function CrumbRow({
     );
     return (
         <div className={className} data-print="hide">
-            <Row className="section-tag crumb-row">
+            <p className="section-tag crumb-row">
                 <span className="crumb-row__lead">
                     <Link className="crumb-row__home" href={href}>
                         {label}
@@ -57,25 +47,10 @@ export default function CrumbRow({
                 {name ? (
                     <span className="crumb-row__item crumb-row__name">
                         {code ? null : sep}
-                        {heading ? (
-                            <h1 className="crumb-row__title">{name}</h1>
-                        ) : (
-                            <span>{name}</span>
-                        )}
+                        <span>{name}</span>
                     </span>
                 ) : null}
-                {meta ? (
-                    <span
-                        className={
-                            metaClassName
-                                ? `section-tag__meta ${metaClassName}`
-                                : "section-tag__meta"
-                        }
-                    >
-                        {meta}
-                    </span>
-                ) : null}
-            </Row>
+            </p>
         </div>
     );
 }

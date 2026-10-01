@@ -235,9 +235,15 @@ export const cvCopy = {
     title: "Experience",
     /** The share card and metadata when the profile has no summary. */
     description: "Experience, education and skills.",
-    /** Under the head: the flight (/resume/trajectory), the record in
-     *  time. */
-    timeline: "Timeline",
+    /** Where the head's tools sit: the flight (the default where motion
+     *  runs) or the list, by plain names. */
+    views: {
+        legend: "View",
+        options: [
+            { value: "timeline", label: "Timeline" },
+            { value: "list", label: "List" },
+        ],
+    },
     contact: "Contact",
     download: "Download CV (PDF)",
     openTo: "Open to",
@@ -344,8 +350,6 @@ export const homeCopy = {
     contactAct: {
         title: "Contact",
         now: "Current focus",
-        /** The flight on /resume/trajectory, by its one name. */
-        timeline: "Timeline",
         /** The way to /contact while there is no Open To answer. */
         message: "Send a message",
     },
@@ -389,18 +393,12 @@ export const crewCopy = {
     links: "Links",
 } as const;
 
-/** The flight through the timeline on /resume/trajectory. */
+/** The flight through the timeline: /resume's Timeline view. */
 export const trajectoryCopy = {
-    /** The share card's small tag. */
-    tag: "Trajectory",
-    /** The crumb: the section, then the page's small h1 (and its title). */
-    section: "Experience",
-    title: "Timeline",
-    description:
-        "Education and work in order, each linked to its full entry on the CV.",
-    /** In the head: past the flight, to the CV's list. */
+    /** For a keyboard, beside the views: past the flight, to the list. */
     skip: "Skip to the list",
-    heading: "The route",
+    /** The flight's section, named for screen readers as its view is. */
+    heading: "Timeline",
     rail: "Chapters",
     play: "Play",
     pause: "Pause",
@@ -420,5 +418,6 @@ export const trajectoryCopy = {
         flyby: "Flyby",
         transfer: "Transfer",
     },
+    /** After the flight: to the list. */
     close: "The full record",
 } as const;

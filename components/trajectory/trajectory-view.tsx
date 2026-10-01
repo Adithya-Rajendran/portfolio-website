@@ -9,12 +9,22 @@ import Journey from "./journey";
 import styles from "./flight.module.css";
 
 /**
- * The renderer for /resume/trajectory, option C · Flight: a chase-camera
- * flight through a 3D solar system (flight-scene.ts), paced for its camera
- * moves (FLIGHT_PACING). The figure line says what is not to scale and
- * carries the maps' credit (public/images/trajectory/README.md).
+ * The flight, Experience's Timeline view (components/cv/experience-views.tsx):
+ * a chase-camera flight through a 3D solar system (flight-scene.ts), paced
+ * for its camera moves (FLIGHT_PACING). The figure line says what is not
+ * to scale and carries the maps' credit
+ * (public/images/trajectory/README.md). `active` and `onEntry` are the
+ * journey's (journey.tsx).
  */
-export default function TrajectoryView({ data }: { data: TrajectoryData }) {
+export default function TrajectoryView({
+    data,
+    active,
+    onEntry,
+}: {
+    data: TrajectoryData;
+    active?: boolean;
+    onEntry?: (href: string) => void;
+}) {
     // Each part stays whole and keeps its separator, so a narrow stage
     // breaks the line after a "·", never before one.
     const figure = copy.figure
@@ -28,6 +38,8 @@ export default function TrajectoryView({ data }: { data: TrajectoryData }) {
             figure={figure}
             pacing={FLIGHT_PACING}
             poster={POSTER}
+            active={active}
+            onEntry={onEntry}
         />
     );
 }

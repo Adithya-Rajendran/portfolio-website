@@ -1580,13 +1580,6 @@
         color: var(--ink-3);
         font: 400 var(--label-size) / 1 var(--font-mono);
     }
-    /* A name that is the page's h1 (the flight's head): the crumb's size,
-       in ink. */
-    .crumb-row__title {
-        margin: 0;
-        color: var(--ink-1);
-        font: inherit;
-    }
     /* The identifier never splits ("MSN-/01"): the name beside it wraps. */
     .crumb-row__code {
         color: var(--ink-2);
