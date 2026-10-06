@@ -749,8 +749,7 @@ only live in comments or commit messages.
   characters or fewer are left), which ends the page: the profiles are
   the footer's and About's (no Profiles list). The form closes on one
   line saying where a message goes (`contactCopy.form.privacy`: through
-  Resend, kept 30 days there, nothing stored by the site, analytics
-  without cookies). The Topic radios,
+  Resend, kept 30 days there, nothing else keeps a copy). The Topic radios,
   one per line, are the routes (premium D3 folded the Topics column into
   them): each is named by its title and described by the owner's line
   where there is one (Research: `contactInvitation`, a `Segmented`

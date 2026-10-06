@@ -110,10 +110,9 @@ export const contactCopy = {
         brokenLink: (path: string) => `Broken link: ${path}`,
         /** Where a message goes, at the form's end: the address and the
          *  text reach the owner through Resend (actions/sendEmail.ts),
-         *  whose plan keeps sent mail 30 days; the site stores nothing and
-         *  Vercel's analytics are cookieless. */
+         *  whose plan keeps sent mail 30 days; nothing else keeps a copy. */
         privacy:
-            "Your email and message reach my inbox through Resend, which keeps them for up to 30 days. This site stores neither, and its analytics set no cookies.",
+            "Your email and message reach my inbox through Resend, which keeps them for up to 30 days. Nothing else keeps a copy.",
         /** A sent message promises nothing: no reply address, no time. */
         successTitle: "Message received.",
         again: "Write another message",
