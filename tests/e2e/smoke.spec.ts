@@ -1,6 +1,6 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { siteConfig } from "@/lib/config";
-import { lossOfSignalCopy } from "@/lib/copy";
+import { contactCopy, logCopy, lossOfSignalCopy } from "@/lib/copy";
 import {
     expandRoute,
     ROUTE_TAGS,
@@ -35,6 +35,10 @@ async function expectHealthyPage(
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
     await expect(page.getByRole("main")).toHaveCount(1);
     await expect(page).toHaveTitle(/\S/);
+    // A page's openGraph replaces the site's whole, so each names its type.
+    if (status === 200) {
+        await expect(page.locator('meta[property="og:type"]')).toHaveCount(1);
+    }
     expect(await pageErrors.drain(page), `${path} errors`).toEqual([]);
     const images = await page
         .locator('meta[property="og:image"], meta[name="twitter:image"]')
@@ -164,6 +168,47 @@ test.describe("pages", () => {
             ).toBe(0);
         });
     }
+
+    test("the unmatched URL's 404 opens the page each link names", async ({
+        page,
+    }) => {
+        // Next.js serves it as its own document, whose router cannot
+        // render the site's routes: every link loads its page in full
+        // (components/chrome/site-link.tsx), and it carries no JSON-LD (a
+        // static 404.html that no webhook refreshes).
+        const main = page.getByRole("main");
+        const h1 = main.getByRole("heading", { level: 1 });
+        const lost = async () => {
+            await page.goto(MISSING_PAGES.unmatched);
+            await expect(h1).toHaveText(lossOfSignalCopy.title);
+        };
+
+        await lost();
+        await expect(
+            page.locator('script[type="application/ld+json"]'),
+        ).toHaveCount(0);
+        await main
+            .getByRole("link", { name: lossOfSignalCopy.home, exact: true })
+            .click();
+        await expect(page).toHaveURL(/\/$/);
+        await expect(h1).toHaveText(siteConfig.author);
+
+        await lost();
+        await page
+            .getByRole("banner")
+            .getByRole("navigation", { name: "Main" })
+            .getByRole("link", { name: logCopy.plain, exact: true })
+            .click();
+        await expect(page).toHaveURL(/\/blog$/);
+        await expect(h1).toHaveText(logCopy.plain);
+
+        await lost();
+        await main
+            .getByRole("link", { name: lossOfSignalCopy.reportLink })
+            .click();
+        await expect(page).toHaveURL(/\/contact/);
+        await expect(h1).toHaveText(contactCopy.plain);
+    });
 });
 
 test.describe("routes and headers", () => {

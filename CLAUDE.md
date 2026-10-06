@@ -38,7 +38,8 @@ only live in comments or commit messages.
       means "now" (premium D1): the Open To, Active and Current status
       dots, the flight's flown path and its now mark, a contents' current
       section, the 2px rule on the first invalid field (the one to fix
-      now; a later one's is ink), and `--focus`; the
+      now; a later one's is ink, and Flight Manual draws a focused one in
+      `--focus`: the accent is under 3:1 on its ground), and `--focus`; the
       patch's and the hero's suns are identity marks (`data-identity`).
       It is never text, a fill, a link rule, a hover or an error's words:
       those are ink, the primary button an ink-1 fill with a `--bg`
@@ -148,7 +149,9 @@ only live in comments or commit messages.
   else the list; the list too when the address names a
   part of it (`/resume#experience`, a Full entry opened in a new tab, and
   `/resume#cv`, the CV link's address: `cvLink`, home's CV and the
-  header bar's). Such an address opens the list whatever view the visit
+  header bar's, which lands with the head's last row, Download CV (PDF),
+  in view under the header: the list's scroll margin holds that row and
+  the switch). Such an address opens the list whatever view the visit
   picked, on arrival (`pin`) and from a link on the page itself, which
   changes only the hash (`follow`). Until the page has run on the client
   nothing is checked and the
@@ -168,7 +171,9 @@ only live in comments or commit messages.
   (`compileFirst`), with nothing drawn until they are in, so no task
   builds it all. A card that leaves is `inert` at once while it fades. "Skip to the list" (shown on focus, after the
   switch), "The full record" after the stage and a card's Full entry
-  (`onEntry`, the chapter's row) show the list and move focus there.
+  (`onEntry`, the chapter's row) show the list and move focus there,
+  and write it into the address (`#cv`, the row's), so a reload returns
+  to it.
   `/resume/trajectory`, the flight's old page, answers 308 to `/resume`
   (next.config.mjs). The head carries Download CV (PDF) as its one
   action, and none without a PDF (the header's Contact is in the same
@@ -240,7 +245,8 @@ only live in comments or commit messages.
   names none. Flight Manual prints no city lights. A still flight (reduced motion, Pause
   motion) opens on the whole system with the latest chapter's card; the
   ask stays the rail's last stop. The figure line is "Not to scale ·
-  Maps: NASA, Solar System Scope (CC BY 4.0)".
+  Maps: NASA, Solar System Scope (adapted, CC BY 4.0)", Solar System
+  Scope and CC BY 4.0 linked to the maps' source and the licence.
 - **Prefetching** (plan §4.6 rule 8). The app-wide `partialPrefetching`
   flag is off: in Next.js 16.3.4 it made the first request for an unknown
   post or tag slug answer 200 instead of 404 on `next start`. The two
@@ -299,7 +305,11 @@ only live in comments or commit messages.
   hairline here as on every page (the firmer rule on reading pages is
   retired). Every writing route names the feed through `feedAlternates` (lib/feed.ts:
   a page's `alternates` replaces the layout's whole). `/feed.xml` is
-  served as `application/xml`, so a browser displays it through
+  served as `application/xml`; an item leads with the post's cover (its
+  lead plate), names its author (`dc:creator`: RSS's `<author>` is an
+  email address) and its tags in words (`<category>`), and the channel's
+  `lastBuildDate` is the newest date a post records, a revision included
+  (`lastRevised`). A browser displays it through
   `public/feed.xsl` (a plain page in the Void's colours and system fonts:
   the title, "Copy this page's address into a feed reader.", the posts);
   browsers are retiring XSLT, and without it the feed shows as XML, as it
@@ -553,7 +563,10 @@ only live in comments or commit messages.
   (the feed is on `/blog` and each entry's close); the bar beside it
   carries Contact and CV (`cvLink`, `/resume#cv`, the list itself, as
   home's CV), which from 960px the nav's Contact and Experience replace
-  and which step aside while the sheet is open (its list carries both).
+  and which step aside while the sheet is open (its list carries both);
+  under 360px the bar keeps Contact alone. The bar's spacing does not
+  grow with the root text size, so at 150% text it still fits a 390px
+  phone.
   The footer is one strip under its hairline: "© 2026 Adithya Rajendran
   · GitHub · LinkedIn", the colophon ("Built with Next.js, Sanity and
   three.js · Source", Source on a line of its own on phones, as GitHub ·
@@ -580,7 +593,11 @@ only live in comments or commit messages.
   fonts and boot script around `SiteShell` and the same Loss of Signal
   page. There is deliberately no root `app/not-found.tsx`: Next.js attaches
   its stylesheet to every route under the root layout, the Studio
-  included. An unmatched URL gets a complete server-rendered 404. An unknown slug under a dynamic route
+  included. An unmatched URL gets a complete server-rendered 404. Its
+  router cannot render the (site) routes, so its links are plain
+  `<a href>` that load the page in full (`SiteShell standalone`,
+  `SiteLink plain`), and `next build` copies it to a static `404.html`
+  that no webhook refreshes, so it renders no JSON-LD. An unknown slug under a dynamic route
   (`notFound()` during the render) answers 404 with Next.js's recovery
   document, which only JavaScript fills (a Next.js 16.3 limitation, marked
   `test.fail` in `tests/e2e/nojs.spec.ts`). React renders the head's boot
@@ -646,9 +663,17 @@ only live in comments or commit messages.
   e2e smoke spec requests every warmed URL. Redirect routes (`redirects`)
   are warmed without following the redirect.
 - Derived artifacts that include the post list (`app/feed.xml/route.ts`,
-  `app/sitemap.ts`) use `cacheLife("days")`, never `"max"`: a post whose
+  `app/sitemap.xml/route.ts`) use `cacheLife("days")`, never `"max"`: a post whose
   `publishedAt` arrives must reach them within a day even if the cron is
-  missing, because their tags only fire on the webhook or the cron.
+  missing, because their tags only fire on the webhook or the cron. Both
+  are route handlers reading tagged, cached data: served from the
+  `app/sitemap.ts` metadata route, the sitemap stayed the build's copy
+  for days. Its entries are `lib/sitemap.ts`'s: a post (and /blog, the
+  tag pages, home) is dated by what it records (`lastRevised` in
+  `lib/log-index.ts`: publication, revision, changelog), never by
+  `_updatedAt`, which a migration moves for every post at once; a
+  project, which has no editorial date, by its last edit. The feed's
+  query takes only its posts (`[0...$limit]`).
 - Cache keys are derived from the literal GROQ query string passed into
   `sanityFetch`/`"use cache"`. Reformatting a query string (whitespace,
   line breaks) changes the cache key and silently orphans the old cache
@@ -722,7 +747,9 @@ only live in comments or commit messages.
   hairline), whole in the first viewport at 1440×900 (the limit is the
   field's hint, for screen readers; the counter shows only when 100
   characters or fewer are left), which ends the page: the profiles are
-  the footer's and About's (no Profiles list). The Topic radios,
+  the footer's and About's (no Profiles list). The form closes on one
+  line saying where a message goes (`contactCopy.form.privacy`: through
+  Resend, kept 30 days there, nothing else keeps a copy). The Topic radios,
   one per line, are the routes (premium D3 folded the Topics column into
   them): each is named by its title and described by the owner's line
   where there is one (Research: `contactInvitation`, a `Segmented`
@@ -887,12 +914,13 @@ deployment require an authenticated Sanity CLI session.
 - **Playwright** (`tests/e2e/*.spec.ts`, Chromium, `playwright.config.ts`)
   covers the built site: `smoke` (every page returns its status with one
   `h1` and one `main`, no console errors, uncaught exceptions or CSP
-  violations; share images, and a post's, a project's and home's image
+  violations, and names its `og:type`; share images, and a post's, a project's and home's image
   alt in their own words; feed, icons, headers, redirects, the Studio
   without chrome; the feed's four aliases answering 301, every writing
   page naming the feed, and the feed as a plain page in a browser; each
   404's primary following the missed address, the report its only other
-  link and nothing animating; `security.txt` pointing to the form,
+  link and nothing animating; the unmatched URL's Home, header link and
+  report opening their pages, with no JSON-LD; `security.txt` pointing to the form,
   unexpired), `nojs` (complete pages without JavaScript: header, nav
   through the popover menu, footer, Void with no motion and no theme
   controls, no hidden streamed segments, nothing rendered twice; the 404's
@@ -900,7 +928,8 @@ deployment require an authenticated Sanity CLI session.
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
   Flight Manual, every page in full, and both kinds of 404), `layout` (no
   sideways scroll at 320–1920 px, the header's parts fit without
-  overlapping, and no visible text under 12 px, generated text included,
+  overlapping, also at 320–414 px with the root text at 150% (labels
+  13px or more, no title spilling its column), and no visible text under 12 px, generated text included,
   on home, every post and project, `/resume` and `/contact` (with the
   message counter near its limit) at 1440 and 390; on home, every post
   and project, `/resume`, `/about` and `/contact`, six font sizes at
@@ -944,7 +973,9 @@ deployment require an authenticated Sanity CLI session.
   message and LinkedIn and no Try again, its stale alert clearing after
   leaving and returning; a send the network drops staying on the page,
   Send sending again and the draft surviving a reload; "Message received."
-  focused, promising nothing, and a fresh form; the 404's
+  focused, promising nothing, and a fresh form; the form closing on
+  where a message goes; Flight Manual's focused field ruled in the focus
+  colour; the 404's
   report arriving with its address, Consulting hidden while off, no email
   address or phone number, the no-JavaScript LinkedIn alternative; sends
   only on the fixture build, which has no Resend credentials, a sent one
@@ -980,10 +1011,12 @@ deployment require an authenticated Sanity CLI session.
   page; the views switching in place, the scene dropped with its view,
   the choice kept across a client navigation; Skip to the list, The full
   record and a card's Full entry landing on the list and its row, with
-  focus; the list and the flight's still under reduced motion; an
-  address naming a section opening the list; CV (home's, then the
-  phone bar's on the page itself) opening the list whatever view the
-  visit picked; no project link opening the
+  focus, the address naming it (a reload returns there); the list and
+  the flight's still under reduced motion; an
+  address naming a section opening the list; `/resume#cv` keeping the
+  head's last row in view under the header at 1440 and on a phone; CV
+  (home's, then the phone bar's on the page itself) opening the list
+  whatever view the visit picked; no project link opening the
   site's own address in a new tab, and every credential one plain row
   with no status and no heading of its own; the list saying each thing
   once: no head date, status, kind code, type line, Skills or Links key,
@@ -1001,7 +1034,8 @@ deployment require an authenticated Sanity CLI session.
   without dates in the wide finale, none on a phone, a still flight
   opening on the latest chapter, no card's words cut at a short laptop
   window or on a phone, a still card's dates clear of its Full entry at
-  360 and 390, a phone's cards in
+  360 and 390, and Full entry a 44px target there, no card sliding under
+  Pause motion, the figure line's source and licence linked, a phone's cards in
   reading order, and the scene drawing, surviving a lost context and a
   return), `missions` (every old `/portfolio` fragment sent on to its
   page, the index links every project with no counts, register, mission

@@ -98,6 +98,30 @@ const MONTHS = [
     "Dec",
 ];
 
+/**
+ * The newest date a post records for itself: its publication, its last
+ * substantive revision (`revisedAt`) and its changelog's dates, the
+ * dates its page prints. A document edit (`_updatedAt`) is not one: a
+ * migration touches every post at once. The sitemap's lastmod and the
+ * feed's lastBuildDate read it; undefined when no date is readable.
+ */
+export function lastRevised(post: {
+    publishedAt?: string | null;
+    revisedAt?: string | null;
+    changes?: readonly (string | null | undefined)[] | null;
+}): string | undefined {
+    let newest: string | undefined;
+    for (const date of [
+        post.publishedAt,
+        post.revisedAt,
+        ...(post.changes ?? []),
+    ]) {
+        if (!date || Number.isNaN(Date.parse(date))) continue;
+        if (!newest || Date.parse(date) > Date.parse(newest)) newest = date;
+    }
+    return newest;
+}
+
 /** "2026-03-30" → "30 Mar 2026": the post head's date. */
 export function formatEntryDate(date: string | null | undefined): string {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date ?? "");

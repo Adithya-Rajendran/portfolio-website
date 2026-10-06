@@ -437,9 +437,11 @@ export const POSTS_BY_PROJECT_QUERY = defineQuery(`*[
 /** A post's changelog: detail queries only (the page and the feed). */
 const postChangelogProjection = `changelog[]{_key, date, kind, note}`;
 
+/** The feed's posts, newest first: the first `$limit`, sliced here so
+ *  the payload stays the feed's size as the archive grows. */
 export const RECENT_POSTS_QUERY = defineQuery(`*[
     _type == "post" && defined(publishedAt) && publishedAt <= $today
-] | order(publishedAt desc){
+] | order(publishedAt desc)[0...$limit]{
     _id,
     _updatedAt,${postListFields},
     ${postChangelogProjection},
@@ -467,9 +469,11 @@ export const POST_SLUGS_QUERY = defineQuery(`*[
     _type == "post" && defined(publishedAt) && publishedAt <= $today
 ].slug.current`);
 
+/** The sitemap's posts with the dates they record (`lastRevised` in
+ *  lib/log-index.ts), never `_updatedAt`, which any edit moves. */
 export const POST_SLUGS_WITH_DATES_QUERY = defineQuery(`*[
     _type == "post" && defined(publishedAt) && publishedAt <= $today
-]{"slug": slug.current, "updatedAt": _updatedAt}`);
+]{"slug": slug.current, publishedAt, revisedAt, "changes": changelog[].date}`);
 
 /** The list fields every project query shares (never the essay). */
 const projectListFields = `
@@ -598,17 +602,14 @@ export function getPostsByProject(projectId: string): Promise<PostListItem[]> {
     );
 }
 
-export async function getRecentPostsWithBody(
-    limit = 20,
-): Promise<PostWithBody[]> {
-    const posts = await sanityFetch<PostWithBody[]>(
+export function getRecentPostsWithBody(limit = 20): Promise<PostWithBody[]> {
+    const safeLimit = Math.min(100, Math.max(1, Math.trunc(limit) || 1));
+    return sanityFetch<PostWithBody[]>(
         RECENT_POSTS_QUERY,
-        {},
+        { limit: safeLimit },
         CACHE_TAGS.post,
         [],
     );
-    const safeLimit = Math.min(100, Math.max(1, Math.trunc(limit) || 1));
-    return posts.slice(0, safeLimit);
 }
 
 export function getPostBySlug(slug: string): Promise<PostWithBody | null> {
@@ -623,9 +624,15 @@ export function getAllSlugs(): Promise<string[]> {
     return sanityFetch(POST_SLUGS_QUERY, {}, CACHE_TAGS.post, []);
 }
 
-export function getAllSlugsWithDates(): Promise<
-    { slug: string; updatedAt: string }[]
-> {
+/** A post's address and the dates it records, for the sitemap. */
+export type PostDates = {
+    slug: string;
+    publishedAt: string;
+    revisedAt?: string | null;
+    changes?: (string | null)[] | null;
+};
+
+export function getAllSlugsWithDates(): Promise<PostDates[]> {
     return sanityFetch(POST_SLUGS_WITH_DATES_QUERY, {}, CACHE_TAGS.post, []);
 }
 

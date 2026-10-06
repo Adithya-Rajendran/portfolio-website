@@ -69,6 +69,12 @@ function showList(id = LIST) {
     });
 }
 
+/** Writes the part a link showed into the address, without a
+ *  navigation, so a reload or a shared address returns to it (`pin`). */
+function nameInAddress(href: string) {
+    window.history.replaceState(null, "", href);
+}
+
 /** Whether `hash` names the list or a part of it. */
 function inList(hash: string) {
     const id = decodeURIComponent(hash.slice(1));
@@ -150,6 +156,7 @@ export default function ExperienceViews({
     const toList = (event: { preventDefault(): void }) => {
         event.preventDefault();
         showList();
+        nameInAddress(`#${LIST}`);
     };
     return (
         <div className={styles.views} data-view={current} data-views>
@@ -179,9 +186,10 @@ export default function ExperienceViews({
                 <TrajectoryView
                     data={data}
                     active={flight === "timeline"}
-                    onEntry={(href) =>
-                        showList(href.slice(href.indexOf("#") + 1))
-                    }
+                    onEntry={(href) => {
+                        showList(href.slice(href.indexOf("#") + 1));
+                        nameInAddress(href);
+                    }}
                 />
                 {/* After the flight, the way to the list. The ask is the
                     Future card's Contact (and the head's). */}

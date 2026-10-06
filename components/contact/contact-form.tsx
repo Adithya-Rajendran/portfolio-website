@@ -399,6 +399,7 @@ export default function ContactForm({
                     </div>
                 </div>
             ) : null}
+            <p className={styles.privacy}>{copy.privacy}</p>
         </form>
     );
 }

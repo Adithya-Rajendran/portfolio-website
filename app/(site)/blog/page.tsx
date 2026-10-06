@@ -23,7 +23,12 @@ export async function generateMetadata(): Promise<Metadata> {
         title,
         ...described,
         alternates: feedAlternates(url),
-        openGraph: { title: `${title} | ${name}`, ...described, url },
+        openGraph: {
+            title: `${title} | ${name}`,
+            ...described,
+            url,
+            type: "website",
+        },
         twitter: {
             card: "summary_large_image",
             title: `${title} | ${name}`,

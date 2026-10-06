@@ -54,51 +54,106 @@ test("no post, tag or project page scrolls sideways", async ({
     }
 });
 
+/** The header's parts outside the viewport or the bar, or overlapping. */
+function headerProblems(page: Page): Promise<string[]> {
+    return page.evaluate(() => {
+        const visible = (element: Element) => {
+            const box = element.getBoundingClientRect();
+            return box.width > 0 && box.height > 0;
+        };
+        const boxes = [
+            ...document.querySelectorAll(
+                ".site-header .brand, .site-header .nav__link, .site-header .header-tools > *",
+            ),
+        ]
+            .filter(visible)
+            .map((element) => ({
+                name:
+                    element.getAttribute("aria-label") ??
+                    element.textContent?.trim() ??
+                    element.className,
+                box: element.getBoundingClientRect(),
+            }));
+        const out: string[] = [];
+        const header = document
+            .querySelector(".site-header")!
+            .getBoundingClientRect();
+        for (const { name, box } of boxes) {
+            if (box.left < 0 || box.right > window.innerWidth) {
+                out.push(`${name} outside the viewport`);
+            }
+            if (box.top < header.top || box.bottom > header.bottom + 2) {
+                out.push(`${name} outside the header bar`);
+            }
+        }
+        boxes.sort((a, b) => a.box.left - b.box.left);
+        for (let i = 1; i < boxes.length; i++) {
+            if (boxes[i].box.left < boxes[i - 1].box.right - 0.5) {
+                out.push(`${boxes[i - 1].name} overlaps ${boxes[i].name}`);
+            }
+        }
+        return out;
+    });
+}
+
 test("the header fits from 320 to 1920 px", async ({ page }) => {
     await page.goto("/blog");
     await page.waitForLoadState("networkidle");
     for (const width of WIDTHS) {
         await page.setViewportSize({ width, height: 900 });
-        const problems = await page.evaluate(() => {
-            const visible = (element: Element) => {
-                const box = element.getBoundingClientRect();
-                return box.width > 0 && box.height > 0;
-            };
-            const boxes = [
-                ...document.querySelectorAll(
-                    ".site-header .brand, .site-header .nav__link, .site-header .header-tools > *",
-                ),
-            ]
-                .filter(visible)
-                .map((element) => ({
-                    name:
-                        element.getAttribute("aria-label") ??
-                        element.textContent?.trim() ??
-                        element.className,
-                    box: element.getBoundingClientRect(),
-                }));
-            const out: string[] = [];
-            const header = document
-                .querySelector(".site-header")!
-                .getBoundingClientRect();
-            for (const { name, box } of boxes) {
-                if (box.left < 0 || box.right > window.innerWidth) {
-                    out.push(`${name} outside the viewport`);
-                }
-                if (box.top < header.top || box.bottom > header.bottom + 2) {
-                    out.push(`${name} outside the header bar`);
-                }
-            }
-            boxes.sort((a, b) => a.box.left - b.box.left);
-            for (let i = 1; i < boxes.length; i++) {
-                if (boxes[i].box.left < boxes[i - 1].box.right - 0.5) {
-                    out.push(`${boxes[i - 1].name} overlaps ${boxes[i].name}`);
-                }
-            }
-            return out;
-        });
-        expect(problems, `header at ${width}px`).toEqual([]);
+        expect(await headerProblems(page), `header at ${width}px`).toEqual([]);
     }
+});
+
+test("the header fits a phone with the root text at 150%", async ({ page }) => {
+    // A browser that maps a large text setting to the root font size
+    // grows the bar's labels (13px to 19.5px), never its spacing: the
+    // row still fits, and from 390px the page does not scroll sideways.
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    await page.evaluate(() => {
+        document.documentElement.style.fontSize = "150%";
+    });
+    for (const width of [320, 360, 375, 390, 414]) {
+        await page.setViewportSize({ width, height: 844 });
+        expect(await headerProblems(page), `header at ${width}px`).toEqual([]);
+        const labels = await page
+            .locator(".site-header .header-tools > :is(a, button)")
+            .evaluateAll((elements) =>
+                elements
+                    .filter((element) => element.getClientRects().length)
+                    .map((element) =>
+                        parseFloat(getComputedStyle(element).fontSize),
+                    ),
+            );
+        expect(
+            Math.min(...labels),
+            `labels at ${width}px`,
+        ).toBeGreaterThanOrEqual(13);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    const overflow = await page.evaluate(
+        () =>
+            Math.max(
+                document.documentElement.scrollWidth,
+                document.body.scrollWidth,
+            ) - document.documentElement.clientWidth,
+    );
+    expect(overflow, "home at 390px and 150% overflows by").toBe(0);
+    // A title's longest word stays inside its column.
+    const spilled = await page
+        .getByRole("main")
+        .locator("h2, h3")
+        .evaluateAll((headings) =>
+            headings
+                .filter(
+                    (heading) =>
+                        heading.getClientRects().length &&
+                        heading.scrollWidth > heading.clientWidth + 1,
+                )
+                .map((heading) => heading.textContent?.trim()),
+        );
+    expect(spilled, "titles past their column").toEqual([]);
 });
 
 /**
