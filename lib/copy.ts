@@ -108,6 +108,12 @@ export const contactCopy = {
         announceCopyFailed: "Copying failed",
         /** The message a report from the 404's "Let me know" starts with. */
         brokenLink: (path: string) => `Broken link: ${path}`,
+        /** Where a message goes, at the form's end: the address and the
+         *  text reach the owner through Resend (actions/sendEmail.ts),
+         *  whose plan keeps sent mail 30 days; the site stores nothing and
+         *  Vercel's analytics are cookieless. */
+        privacy:
+            "Your email and message reach my inbox through Resend, which keeps them for up to 30 days. This site stores neither, and its analytics set no cookies.",
         /** A sent message promises nothing: no reply address, no time. */
         successTitle: "Message received.",
         again: "Write another message",
@@ -360,8 +366,23 @@ export const trajectoryCopy = {
      *  the scene. */
     future: "Future",
     contact: "Contact",
-    /** The figure line: what is not to scale, and the maps' credit. */
-    figure: "Not to scale · Maps: NASA, Solar System Scope (CC BY 4.0)",
+    /** The figure line: what is not to scale, and the maps' credit, "Not
+     *  to scale · Maps: NASA, Solar System Scope (adapted, CC BY 4.0)",
+     *  with the CC BY maps' source and licence linked
+     *  (public/images/trajectory/README.md lists the changes). */
+    figure: {
+        scale: "Not to scale",
+        maps: "Maps: NASA,",
+        source: {
+            label: "Solar System Scope",
+            href: "https://www.solarsystemscope.com/textures/",
+        },
+        adapted: "adapted,",
+        licence: {
+            label: "CC BY 4.0",
+            href: "https://creativecommons.org/licenses/by/4.0/",
+        },
+    },
     /** The readout's phase, after its date ("May 2024 · Transfer"); the
      *  plan leg has no readout. */
     phases: {

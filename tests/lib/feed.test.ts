@@ -114,6 +114,71 @@ describe("renderFeedXml — channel", () => {
     });
 });
 
+describe("renderFeedXml — dates, authors and tags", () => {
+    it("dates the channel by the newest revision, an item by its publication", () => {
+        const xml = renderFeedXml([
+            postOf({
+                slug: "revised",
+                publishedAt: "2026-01-15",
+                revisedAt: "2026-03-01",
+                changelog: [
+                    {
+                        _key: "c1",
+                        date: "2026-03-20",
+                        kind: "update",
+                        note: "Added a section.",
+                    },
+                ] as FeedPost["changelog"],
+            }),
+            postOf({ slug: "newer", publishedAt: "2026-02-01" }),
+        ]);
+
+        expect(xml).toContain(
+            "<lastBuildDate>Fri, 20 Mar 2026 00:00:00 GMT</lastBuildDate>",
+        );
+        expect(xml).toContain(
+            "<pubDate>Thu, 15 Jan 2026 00:00:00 GMT</pubDate>",
+        );
+    });
+
+    it("names each item's author and its tags in words, never an email address", () => {
+        const xml = renderFeedXml([
+            postOf({ tags: ["gpu-computing", "homelab"] }),
+        ]);
+
+        expect(xml).toContain('xmlns:dc="http://purl.org/dc/elements/1.1/"');
+        expect(xml).toContain("<dc:creator>Adithya Rajendran</dc:creator>");
+        expect(xml).toContain("<category>GPU computing</category>");
+        expect(xml).toContain("<category>Homelab</category>");
+        expect(xml).not.toContain("<author>");
+    });
+
+    it("leads an item's content with the post's cover, as the page does", () => {
+        const xml = renderFeedXml([
+            postOf({
+                cover: {
+                    _type: "image",
+                    asset: {
+                        _type: "reference",
+                        _ref: "image-abc123def456-1200x800-png",
+                    },
+                    alt: "The rack, front",
+                    credit: "Illustration",
+                } as unknown as FeedPost["cover"],
+            }),
+        ]);
+        const content = /<content:encoded>([\s\S]*?)<\/content:encoded>/.exec(
+            xml,
+        )![1];
+
+        expect(content.startsWith("&lt;figure&gt;&lt;img src=")).toBe(true);
+        expect(content).toContain("The rack, front");
+        expect(content.indexOf("cdn.sanity.io")).toBeLessThan(
+            content.indexOf("Hello world"),
+        );
+    });
+});
+
 describe("renderFeedXml — items", () => {
     it("renders absolute link and permaLink guid per item", () => {
         const xml = renderFeedXml([postOf({ slug: "k8s-deep-dive" })]);

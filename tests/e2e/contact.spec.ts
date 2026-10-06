@@ -4,6 +4,7 @@ import { contactCopy, lossOfSignalCopy } from "@/lib/copy";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import { primaryNavigation } from "@/lib/navigation";
 import { expect, test } from "./support/test";
+import { storeTheme } from "./support/theme";
 
 /**
  * Comms (G4, plan §2.5.6): the form's Topic radios are the routes, each
@@ -144,6 +145,17 @@ test("the form comes first, whole, in the first viewport", async ({ page }) => {
     await expect(page.getByRole("button", { name: form.send })).toBeInViewport({
         ratio: 1,
     });
+});
+
+test("the form closes on where a message goes", async ({ page }) => {
+    await page.goto("/contact");
+    const note = page.getByRole("main").getByText(form.privacy);
+    await expect(note).toBeVisible();
+    const send = page.getByRole("button", { name: form.send });
+    expect((await note.boundingBox())!.y).toBeGreaterThan(
+        (await send.boundingBox())!.y,
+    );
+    await expect(note.getByRole("link")).toHaveCount(0);
 });
 
 for (const width of [390, 960, 1440, 1920]) {
@@ -303,6 +315,30 @@ test("the form checks the email on leaving it, and every field from the first su
     await message.fill("x".repeat(950));
     await expect(page.getByText("950 / 1000")).toBeVisible();
     await expect(message).not.toHaveAttribute("aria-invalid", /.*/);
+});
+
+test("in Flight Manual the focused field's rule takes the focus colour", async ({
+    page,
+}) => {
+    // Manual's accent is under 3:1 on a focused field's ground (surface-2);
+    // the focus colour, the same orange darker, holds 4.7:1 there.
+    await storeTheme(page, "manual");
+    await page.goto("/contact");
+    const { email } = fields(page);
+    await page.getByRole("button", { name: form.send }).click();
+    await expect(email).toBeFocused();
+    const focus = await page.evaluate(() => {
+        const probe = document.createElement("span");
+        probe.style.color = "var(--focus)";
+        document.body.append(probe);
+        const colour = getComputedStyle(probe).color;
+        probe.remove();
+        return colour;
+    });
+    await expect(email).toHaveCSS(
+        "box-shadow",
+        `${focus} 2px 0px 0px 0px inset`,
+    );
 });
 
 test("pressing Send as a malformed email is left checks every field at once", async ({

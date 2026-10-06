@@ -321,9 +321,9 @@
         margin-top: var(--s-6);
     }
     /* The credit (its parts and its frame ID one a line, without their
-       separators) and Pause motion share one row. */
+       separators) and Pause motion share one row; at a large text size
+       Pause motion wraps under the credit rather than past the edge. */
     .foot {
-        flex-wrap: nowrap;
         align-items: center;
         column-gap: var(--s-3);
     }

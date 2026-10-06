@@ -942,10 +942,12 @@ export function resolveFixtureQuery<T>(
         return (query.includes("body[]{") ? post : metaPost(post)) as T;
     }
 
-    if (query.includes('"updatedAt": _updatedAt')) {
-        return posts.map(({ slug, _updatedAt }) => ({
+    if (query.includes('"changes": changelog[].date')) {
+        return posts.map(({ slug, publishedAt, revisedAt, changelog }) => ({
             slug,
-            updatedAt: _updatedAt ?? "",
+            publishedAt,
+            revisedAt: revisedAt ?? null,
+            changes: changelog?.map(({ date }) => date) ?? null,
         })) as T;
     }
 
@@ -953,6 +955,12 @@ export function resolveFixtureQuery<T>(
         return posts.map(({ slug }) => slug) as T;
     }
 
-    if (query.includes("body[]{")) return posts as T;
+    if (query.includes("body[]{")) {
+        return (
+            typeof params.limit === "number"
+                ? posts.slice(0, params.limit)
+                : posts
+        ) as T;
+    }
     return posts.map(listPost) as T;
 }

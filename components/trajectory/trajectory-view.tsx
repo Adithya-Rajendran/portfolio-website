@@ -26,11 +26,26 @@ export default function TrajectoryView({
     onEntry?: (href: string) => void;
 }) {
     // Each part stays whole and keeps its separator, so a narrow stage
-    // breaks the line after a "·", never before one.
-    const figure = copy.figure
-        .split(" · ")
-        .map((part) => part.replaceAll(" ", "\u00a0"))
-        .join(" · ");
+    // breaks the line after a "·", never before one. The CC BY maps'
+    // source and licence are links.
+    const { scale, maps, source, adapted, licence } = copy.figure;
+    const whole = (text: string) => text.replaceAll(" ", "\u00a0");
+    const link = ({ label, href }: { label: string; href: string }) => (
+        <a href={href} target="_blank" rel="noopener noreferrer">
+            {whole(label)}
+        </a>
+    );
+    const figure = (
+        <>
+            {whole(scale)} · {whole(maps)}
+            {"\u00a0"}
+            {link(source)}
+            {"\u00a0("}
+            {whole(adapted)}
+            {"\u00a0"}
+            {link(licence)})
+        </>
+    );
     return (
         <Journey
             data={data}

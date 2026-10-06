@@ -71,6 +71,7 @@ export async function generateMetadata({
             title: project.title,
             description: project.summary,
             url,
+            type: "website",
             images: [
                 shareImage(
                     "app/(site)/portfolio/[slug]/opengraph-image.tsx",

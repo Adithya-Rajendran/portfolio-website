@@ -1,4 +1,6 @@
-export const RESUME_FILENAME = "Adithya_Rajendran_Resume.pdf";
+/** The download's file name, spelled as the uploaded PDF's own name, which
+ *  the inline view (/resume/view) serves: one file, one name. */
+export const RESUME_FILENAME = "Adithya-Rajendran-Resume.pdf";
 
 export type ResumeAssetMode = "view" | "download";
 

@@ -5,7 +5,7 @@ import {
     type PortableTextHtmlComponents,
 } from "@portabletext/to-html";
 import { siteConfig } from "@/lib/config";
-import { formatEntryDate } from "@/lib/log-index";
+import { formatEntryDate, lastRevised } from "@/lib/log-index";
 import { urlForImage } from "@/lib/sanity-image";
 import { changeKindTitle } from "@/lib/post-fields";
 import {
@@ -15,13 +15,14 @@ import {
     type ProseIndex,
 } from "@/lib/prose";
 import type { PostWithBody } from "@/lib/sanity-client";
+import { tagLabel } from "@/lib/tags";
 
 /** The exact projection consumed by the RSS renderer. */
 export type FeedPost = Pick<
     PostWithBody,
     "title" | "slug" | "description" | "publishedAt" | "body"
 > &
-    Partial<Pick<PostWithBody, "changelog">>;
+    Partial<Pick<PostWithBody, "changelog" | "revisedAt" | "tags" | "cover">>;
 
 export const FEED_PATH = "/feed.xml";
 /** The section's plain name, as the nav names it. */
@@ -273,10 +274,12 @@ function renderRevisions(changelog: FeedPost["changelog"]): string {
     return `<section><h2>Revisions</h2><ul>${items}</ul></section>`;
 }
 
+/** The post's cover leads it, as the page's lead plate does. */
 function renderPostHtml(post: FeedPost): string {
     if (!post.body) return "";
     const index = indexProse(post.body);
     return (
+        (post.cover ? renderImage(post.cover as Record<string, unknown>) : "") +
         toHTML(index.body as typeof post.body, {
             components: feedComponents(index),
             onMissingComponent: false,
@@ -288,7 +291,11 @@ function renderPostHtml(post: FeedPost): string {
 
 /**
  * The feed. RSS requires a channel description: the owner's description
- * of his writing, or the feed's own title when the profile has none. A
+ * of his writing, or the feed's own title when the profile has none. Each
+ * item names its author (`dc:creator`: RSS's own `<author>` is an email
+ * address, which the site never publishes) and its tags, in words. The
+ * channel's lastBuildDate is the newest date a post records, a revision
+ * included (`lastRevised`); an item's pubDate stays its publication. A
  * browser shows it through public/feed.xsl, as a plain page; a feed
  * reader ignores the stylesheet.
  */
@@ -309,18 +316,26 @@ export function renderFeedXml(
             `<link>${escapeXml(url)}</link>`,
             `<guid isPermaLink="true">${escapeXml(url)}</guid>`,
             ...(pubDate ? [`<pubDate>${pubDate}</pubDate>`] : []),
+            `<dc:creator>${escapeXml(siteConfig.author)}</dc:creator>`,
+            ...(post.tags ?? [])
+                .filter(Boolean)
+                .map(
+                    (tag) => `<category>${escapeXml(tagLabel(tag))}</category>`,
+                ),
             `<description>${escapeXml(post.description)}</description>`,
             `<content:encoded>${escapeXml(renderPostHtml(post))}</content:encoded>`,
         ];
         return `        <item>\n            ${lines.join("\n            ")}\n        </item>`;
     });
 
-    const newestPublishedAt = publishable.find((post) =>
-        toRfc822(post.publishedAt),
-    )?.publishedAt;
-    const lastBuildDate = newestPublishedAt
-        ? toRfc822(newestPublishedAt)
-        : null;
+    const newest = lastRevised({
+        changes: publishable.flatMap((post) => [
+            post.publishedAt,
+            post.revisedAt,
+            ...(post.changelog ?? []).map((change) => change?.date),
+        ]),
+    });
+    const lastBuildDate = newest ? toRfc822(newest) : null;
     const channelLines = [
         `<title>${escapeXml(FEED_TITLE)}</title>`,
         `<link>${escapeXml(`${siteConfig.url}/blog`)}</link>`,
@@ -335,7 +350,7 @@ export function renderFeedXml(
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="${FEED_STYLESHEET}"?>
-<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
         ${channelLines.join("\n        ")}
     </channel>

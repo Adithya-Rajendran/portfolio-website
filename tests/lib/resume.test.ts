@@ -17,6 +17,8 @@ describe("resolveResumeAssetUrl", () => {
         const result = new URL(resolveResumeAssetUrl(asset, "download")!);
 
         expect(result.searchParams.get("dl")).toBe(RESUME_FILENAME);
+        // The uploaded PDF's own name, which the inline view serves.
+        expect(RESUME_FILENAME).toBe("Adithya-Rajendran-Resume.pdf");
         expect(result.searchParams.get("token")).toBe("kept");
     });
 

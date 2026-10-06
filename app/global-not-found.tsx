@@ -60,7 +60,11 @@ const FONTS = preloadedFonts();
  * the root layout's <html>: the font variables and the theme boot script.
  * It replaces a root app/not-found.tsx, whose stylesheet Next.js attached
  * to every route under the root layout, the Studio included. The Loss of
- * Signal page is the same one app/(site)/not-found.tsx renders.
+ * Signal page is the same one app/(site)/not-found.tsx renders. Its
+ * router cannot render the (site) routes, so every link here is a plain
+ * <a href> that loads the page in full, and the build copies it to a
+ * static 404.html that no webhook refreshes, so it carries no JSON-LD
+ * (SiteShell `standalone`).
  */
 export default function GlobalNotFound() {
     for (const file of FONTS)
@@ -80,14 +84,15 @@ export default function GlobalNotFound() {
                 <ThemeBootScript />
             </head>
             <body>
-                <SiteShell>
+                <SiteShell standalone>
                     <LossOfSignal
                         page="not-found"
                         tag={copy.tag}
                         title={copy.title}
                         lead={copy.lead}
-                        actions={<NotFoundActions />}
+                        actions={<NotFoundActions plain />}
                         missed
+                        plainLinks
                     />
                 </SiteShell>
             </body>

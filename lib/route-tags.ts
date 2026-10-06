@@ -71,7 +71,7 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
     { path: "/feed.xml", file: "app/feed.xml/route.ts", tags: [post, profile] },
     {
         path: "/sitemap.xml",
-        file: "app/sitemap.ts",
+        file: "app/sitemap.xml/route.ts",
         tags: [profile, post, project],
     },
 
