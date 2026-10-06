@@ -633,11 +633,9 @@ only live in comments or commit messages.
        (schedule in `vercel.json`, 00:05 UTC). `publishedAt` is a date and
        visibility is gated by `publishedAt <= $today`, so a future post
        crosses the gate on its UTC date without a document change. The cron
-       performs an uncached query for posts dated in the last seven days,
-       today included, so a run that is missed or fails is made good by the
-       next one within that window; when it finds any, it revalidates the
-       `post` tag and warms its routes. Auth is
-       `Authorization: Bearer ${CRON_SECRET}` (Vercel attaches it
+       performs an uncached query for posts dated today (the UTC date) and,
+       when it finds any, revalidates the `post` tag and warms its routes.
+       Auth is `Authorization: Bearer ${CRON_SECRET}` (Vercel attaches it
        automatically); missing/wrong auth → stealth 404. If `CRON_SECRET`
        is unset, same-day publishing silently degrades to the pages' daily
        cache revalidation.
@@ -659,8 +657,7 @@ only live in comments or commit messages.
   e2e smoke spec requests every warmed URL. Redirect routes (`redirects`)
   are warmed without following the redirect.
 - Derived artifacts that include the post list (`app/feed.xml/route.ts`,
-  and the sitemap's route handler, `app/sitemap.xml/route.ts`) use
-  `cacheLife("days")`, never `"max"`: a post whose
+  `app/sitemap.ts`) use `cacheLife("days")`, never `"max"`: a post whose
   `publishedAt` arrives must reach them within a day even if the cron is
   missing, because their tags only fire on the webhook or the cron.
 - Cache keys are derived from the literal GROQ query string passed into
@@ -708,13 +705,12 @@ only live in comments or commit messages.
 - **`security.txt`** (`public/.well-known/security.txt`, RFC 9116): Contact
   is the `/contact` form, never an address; `Expires` must stay within a
   year, so renew it yearly (the smoke spec fails once it lapses).
-- **Rate limiting** — `actions/sendEmail.ts` calls `checkRateLimit()`
-  (`@vercel/firewall`) against the `contact-form` rule in the Vercel
-  dashboard (Firewall → Rate Limit, a Pro or Enterprise feature). If the
-  rule is absent, the SDK returns `error: "not-found"` and the action
-  applies its own fallback limit in code instead, so the form is still
-  limited, though only as well as that fallback can count; it does not
-  fail closed.
+- **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
+  `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in
+  the Vercel dashboard (Firewall → Rate Limit, a Pro or Enterprise
+  feature). If the rule is absent, the SDK returns `error: "not-found"`, a
+  warning is logged, and the form still sends with no rate limit, relying
+  on BotID, Zod validation and the MX check; it does not fail closed.
 - **Vercel BotID** — invisible bot check. The client protect list is
   registered in `app/layout.tsx` (`<BotIdClient protect={[...]} />`); each
   server action verifies the challenge with `checkBotId()` from
@@ -1092,8 +1088,9 @@ session, with the two variables loaded, so the hosted copy matches.
       previews (sent to that origin only, and never traced, because traces
       record request headers and CI uploads the report). CI runs it on every successful
       Vercel preview (`.github/workflows/e2e-preview.yml`); while that
-      repository secret is missing the job runs no test and reports itself
-      as skipped, never as passed.
+      repository secret is missing, the job's first step writes a notice,
+      every other step is skipped, and the job reports success without
+      running a test.
     - First run: `pnpm exec playwright install chromium` (add
       `--with-deps` on a machine without Chromium's system libraries).
     - Pages come from `tests/e2e/support/routes.ts`: the static pages, plus

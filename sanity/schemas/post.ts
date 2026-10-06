@@ -161,7 +161,7 @@ export default defineType({
             type: "image",
             group: "editorial",
             description:
-                "Optional. The lead image of the post, on its Flight Log card and in its sharing image. Posts without one get a text-only layout.",
+                "Optional. The lead image of the post, shown after its first paragraph and given to search engines as the post's image. Lists and the sharing image do not show it.",
             options: { hotspot: true },
             fields: [
                 defineField({
@@ -201,7 +201,7 @@ export default defineType({
             type: "array",
             group: "editorial",
             description:
-                "Optional. Up to three projects this post is about. The post shows them as mission links, and each project lists the post among its Flight Log entries.",
+                "Optional. Up to three projects this post is about. The post shows them as project rows under Related projects after its text, and each project's page links the post, as its write-up or under Related writing.",
             of: [
                 defineArrayMember({
                     type: "reference",

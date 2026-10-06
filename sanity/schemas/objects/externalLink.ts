@@ -24,7 +24,7 @@ export default defineType({
             title: "Kind",
             type: "string",
             description:
-                "Optional. What the link points to. On a project, Repository puts the link in the page's head, beside Read the write-up, and Article on a link to one of this site's posts makes that post the project's write-up. The other kinds change nothing on the site; a profile link is recognised by its address.",
+                "Optional. What the link points to. On a project, Repository puts the link in the page's head, beside Read the write-up. A project's write-up is its first link, of any kind, to one of this site's posts (else the oldest post that names the project); Article only puts a link ahead of the others for that choice. The other kinds change nothing on the site; a profile link is recognised by its address.",
             options: { list: [...LINK_KINDS] },
             validation: listValuesOnly,
         }),
