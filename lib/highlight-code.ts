@@ -70,11 +70,12 @@ function getHighlighter(): Promise<Highlighter> {
  * Pre-highlights all code blocks from a Sanity Portable Text body
  * using the singleton shiki highlighter.
  *
- * Cached via Next.js "use cache" — the highlighted HTML is stored in
- * Vercel's edge cache and revalidated via the post's own tag when that
- * post changes in Sanity (the old "post" tag was never revalidated).
- * Returns a plain Record (not Map) so the result is serialisable by
- * the cache layer.
+ * Cached via Next.js "use cache" under its content type's tag
+ * (`contentTag`: CACHE_TAGS.post, or CACHE_TAGS.project for a project's
+ * essay), which the webhook revalidates (and the cron, for `post`), and
+ * keyed by the code blocks, the slug and HIGHLIGHT_MARKUP_VERSION, so an
+ * edited block never serves its old HTML. Returns a plain Record (not
+ * Map) so the result is serialisable by the cache layer.
  *
  * Takes only the code blocks (not the whole body) so the serialized
  * cache key stays proportional to the code, not the prose.

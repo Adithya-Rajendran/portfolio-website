@@ -189,7 +189,7 @@ export default defineType({
                     title: "Kind",
                     type: "string",
                     description:
-                        "Photographs are numbered as plates, diagrams, plots and screenshots as figures.",
+                        "Photographs are toned to the theme; diagrams, plots and screenshots are shown as drawn. No image is numbered.",
                     options: { list: [...IMAGE_KINDS], layout: "radio" },
                     validation: listValuesOnly,
                 }),

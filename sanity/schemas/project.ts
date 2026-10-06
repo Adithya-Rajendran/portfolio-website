@@ -383,7 +383,7 @@ export default defineType({
             type: "array",
             group: "details",
             description:
-                "Up to six short facts, for example “Nodes · 3”. A value that starts with a number is a stat in the project page's head, unless the project has Results; a named value is listed in the page's facts, or left out when Technologies already names it. Only values stated in a source.",
+                "Up to six short facts, for example “Nodes · 3”. A value that starts with a number is a stat in the project page's head, unless the project has Results (the table carries the numbers) or the page is a short note, which shows no stats; a named value is listed in the page's facts, or left out when Technologies, the summary or a highlight already names it. Only values stated in a source.",
             of: [
                 defineArrayMember({
                     name: "parameter",

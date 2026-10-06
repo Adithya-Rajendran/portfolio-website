@@ -35,8 +35,9 @@ export const PROJECT_TYPES = [
 export type ProjectType = ValueOf<typeof PROJECT_TYPES>;
 
 /**
- * What an image shows. Photographs are numbered as plates (Pl. n); plots,
- * diagrams and screenshots as figures (Fig. n).
+ * What an image shows. Photographs are plates, toned to the theme
+ * (`photo--real`); plots, diagrams and screenshots are figures, shown as
+ * drawn. No plate or figure is numbered (lib/prose.ts).
  */
 export const IMAGE_KINDS = [
     { title: "Photograph", value: "photo" },

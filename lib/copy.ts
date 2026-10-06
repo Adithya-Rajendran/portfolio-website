@@ -23,8 +23,8 @@ export const chromeCopy = {
     source: "Source",
 } as const;
 
-/** The theme choices in the footer and the menu sheet: Void, Flight
- *  Manual and the screen's own setting, by their plain names. */
+/** The theme choices in the menu sheet: Void, Flight Manual and the
+ *  screen's own setting, by their plain names. */
 export const themeOptions = [
     { value: "void", label: "Dark" },
     { value: "manual", label: "Light" },

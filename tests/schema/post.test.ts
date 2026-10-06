@@ -224,6 +224,30 @@ describe("post schema: the long-read additions", () => {
         );
     });
 
+    it("promises no plate or figure number in the Studio's descriptions", () => {
+        // Every field description in the schema, however deeply nested.
+        const descriptions = (node: unknown): string[] => {
+            if (Array.isArray(node)) return node.flatMap(descriptions);
+            if (!node || typeof node !== "object") return [];
+            const { description, fields, of } = node as Record<string, unknown>;
+            return [
+                ...(typeof description === "string" ? [description] : []),
+                ...descriptions(fields),
+                ...descriptions(of),
+            ];
+        };
+        const all = descriptions(schemaTypes);
+        // The walk reaches the image kinds (post cover and body images).
+        expect(
+            all.filter((text) => /diagrams, plots and screenshots/.test(text)),
+        ).toHaveLength(2);
+        expect(
+            all.filter((text) =>
+                /numbered as|\bPl\. [IVX]|\bFig\. \d/.test(text),
+            ),
+        ).toEqual([]);
+    });
+
     it("dates a change on or after publication", () => {
         expect(checkChangeDate("2026-03-01", "2026-03-01")).toBe(true);
         expect(checkChangeDate("2026-03-01", "2026-02-28")).toMatch(/before/);
