@@ -77,6 +77,14 @@
     cursor: progress;
 }
 
+/* Where a message goes, closing the form: quiet UI text. */
+.privacy {
+    max-width: 52ch;
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.5 var(--font-display);
+    text-wrap: pretty;
+}
+
 /* ---- A send that did not go: under Send, the ways on ------------------- */
 .failure {
     display: grid;

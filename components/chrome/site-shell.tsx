@@ -21,8 +21,20 @@ import { chromeCopy } from "@/lib/copy";
  * <main> would repeat in the document and the skip link could land in a
  * hidden page. Each page renders a root element with `data-page`, which
  * scopes its styles.
+ *
+ * `standalone` is the global 404's document: Next.js serves it outside the
+ * root layout, so its links load pages in full (SiteLink `plain`), and
+ * builds it once into a static 404.html that no webhook refreshes, so it
+ * carries no JSON-LD, whose profile text would go stale there (the page
+ * is not indexed either way).
  */
-export default function SiteShell({ children }: { children: React.ReactNode }) {
+export default function SiteShell({
+    children,
+    standalone = false,
+}: {
+    children: React.ReactNode;
+    standalone?: boolean;
+}) {
     return (
         <>
             <ThemeBootFallback />
@@ -30,7 +42,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                 {chromeCopy.skipLink}
             </a>
             <SvgSprite />
-            <SiteHeader />
+            <SiteHeader plainLinks={standalone} />
             <main id="main-content" tabIndex={-1}>
                 {children}
             </main>
@@ -41,8 +53,12 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             <Footer />
             {/* ProfilePageJsonLd lives on /about, its semantically correct
                 home, rather than sitewide. */}
-            <PersonJsonLd />
-            <WebSiteJsonLd />
+            {standalone ? null : (
+                <>
+                    <PersonJsonLd />
+                    <WebSiteJsonLd />
+                </>
+            )}
             <SpeedInsights />
             <Analytics />
         </>

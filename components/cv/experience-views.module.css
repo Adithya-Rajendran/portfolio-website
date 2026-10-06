@@ -35,9 +35,14 @@
 }
 
 /* The list takes focus from Skip to the list and The full record (and a
-   row from a card's Full entry), as <main> does from the skip link. */
+   row from a card's Full entry), as <main> does from the skip link. The
+   CV link (`/resume#cv`) lands on it too, so its margin keeps the head's
+   last row in view under the header (the root's scroll padding):
+   Download CV (PDF), else the Open To line. Above the list sit that row
+   (a 44px control) and its space, the head's and the band's space and
+   the switch's bar (a 44px control and its space). */
 .list {
-    scroll-margin-top: var(--header-h);
+    scroll-margin-top: calc(2 * 44px + var(--s-6) + 3 * var(--s-5));
 }
 
 .list:focus,

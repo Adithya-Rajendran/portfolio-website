@@ -11,15 +11,15 @@ import { primaryNavigation } from "@/lib/navigation";
  * same link unmarked. One boundary per link, not one for the list: React
  * streams a finished boundary of more than ~500 bytes on a long page as a
  * hidden segment that only JavaScript reveals, and the whole list is
- * larger than that.
+ * larger than that. `plain`: plain <a href> links (the global 404).
  */
-export default function NavLinks() {
+export default function NavLinks({ plain = false }: { plain?: boolean }) {
     return (
         <>
             {primaryNavigation.map((item) => (
                 <li key={item.id}>
-                    <Suspense fallback={<NavLink item={item} />}>
-                        <ActiveNavLink item={item} />
+                    <Suspense fallback={<NavLink item={item} plain={plain} />}>
+                        <ActiveNavLink item={item} plain={plain} />
                     </Suspense>
                 </li>
             ))}
