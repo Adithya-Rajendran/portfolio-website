@@ -6,7 +6,7 @@ import { LinkArrow } from "@/components/ui/marks";
  * `blogs/article-continuation.tsx`): two hairline-topped links with a
  * label, a title and one line of data, and an optional link to the whole
  * list between them. Only the sides that exist are drawn; nothing stands
- * in for a missing one.
+ * in for a missing one, and a lone side takes the whole width.
  */
 
 export interface PagerLink {

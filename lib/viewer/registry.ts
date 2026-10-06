@@ -17,6 +17,7 @@ type ProceduralModel = {
     readonly parts: readonly ModelPart[];
 };
 
+/** @internal Exported for tests. */
 export const PROCEDURAL_MODELS = [
     {
         // The owner's 12U homelab rack, as photographed in the homelab post

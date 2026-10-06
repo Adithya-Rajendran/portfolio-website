@@ -300,7 +300,7 @@
     background: var(--bg);
 }
 
-@media (max-width: 959.98px) {
+@media (max-width: 59.99rem) {
     .hint {
         left: 50%;
         top: 29%;

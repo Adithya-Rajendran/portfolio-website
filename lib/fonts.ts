@@ -13,7 +13,7 @@ import { DM_Mono, Jost, Michroma, Newsreader } from "next/font/google";
  * first uses them; Michroma sets two things only, the header's wordmark
  * and a page head's themed tag. Jost's italic is never loaded.
  */
-export const jost = Jost({
+const jost = Jost({
     subsets: ["latin"],
     variable: "--font-jost",
     display: "swap",
@@ -21,7 +21,7 @@ export const jost = Jost({
 
 // Variable weight only: the default leaves out the optical-size axis, which
 // would more than double the file.
-export const newsreader = Newsreader({
+const newsreader = Newsreader({
     subsets: ["latin"],
     variable: "--font-newsreader",
     display: "swap",
@@ -31,7 +31,7 @@ export const newsreader = Newsreader({
 // every file of a call. Italic Newsreader text sets
 // `font-family: var(--font-long-italic)` (styles/tokens.css) with
 // `font-style: italic`.
-export const newsreaderItalic = Newsreader({
+const newsreaderItalic = Newsreader({
     subsets: ["latin"],
     style: "italic",
     variable: "--font-newsreader-italic",
@@ -52,7 +52,7 @@ export const dmMono = DM_Mono({
     display: "swap",
 });
 
-export const dmMonoMedium = DM_Mono({
+const dmMonoMedium = DM_Mono({
     weight: "500",
     subsets: ["latin"],
     variable: "--font-dm-mono-medium",

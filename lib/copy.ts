@@ -142,8 +142,9 @@ export const logCopy = {
     tagList: "Tags",
     empty: "No entries yet.",
     tag: {
-        /** The metadata description: "Articles tagged GPU computing." */
-        description: (label: string) => `Articles tagged ${label}.`,
+        /** The metadata description, in the section's word: "Writing tagged
+         *  GPU computing." */
+        description: (label: string) => `Writing tagged ${label}.`,
     },
 } as const;
 
@@ -182,8 +183,6 @@ export const postCopy = {
     /** The pager's landmark name (it has no visible heading). */
     pager: "Previous and next",
     related: "Related entries",
-    /** The print masthead's kicker is the section's plain name. */
-    printFiled: "Filed",
 } as const;
 
 /**

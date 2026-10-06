@@ -114,7 +114,7 @@ export interface FlightGL {
     dispose(): void;
 }
 
-export interface FlightHooks {
+interface FlightHooks {
     /** The WebGL2 context to draw with, on its own canvas (the scene
      *  makes it before it fetches anything). */
     context: WebGL2RenderingContext;
@@ -235,6 +235,7 @@ const NOWHERE = new Vector4(-1e4, -1e4, -9e3, -9e3);
  */
 const LINE_VERTEX_AT = "vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );";
 const LINE_FRAGMENT_AT = "gl_FragColor = vec4( diffuseColor.rgb, alpha );";
+/** @internal Exported for tests. */
 export function patchLineShader(vertex: string, fragment: string) {
     if (
         !vertex.includes(LINE_VERTEX_AT) ||

@@ -462,10 +462,15 @@ test("printing an entry keeps the text and drops the rail and actions", async ({
     const [path] = await postPaths(request, testInfo);
     await page.goto(path);
     await page.emulateMedia({ media: "print" });
-    // The masthead's kicker is the section, with no number.
-    await expect(
-        page.locator('[data-print="only"] .label', { hasText: /^Writing$/ }),
-    ).toBeVisible();
+    // The masthead's kicker is the section, with no number; its line is
+    // the address and the author: the date prints once, in the head.
+    const masthead = page.locator('[data-print="only"]').filter({
+        has: page.locator(".label", { hasText: /^Writing$/ }),
+    });
+    await expect(masthead).toBeVisible();
+    await expect(masthead.locator(".data")).not.toHaveText(
+        /Filed|\b\d{1,2} [A-Z][a-z]{2} \d{4}\b/,
+    );
     await expect(
         page.getByRole("navigation", { name: postCopy.contentsLabel }),
     ).toBeHidden();

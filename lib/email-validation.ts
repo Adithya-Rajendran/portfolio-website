@@ -12,7 +12,7 @@ import { EMAIL_MAX_LENGTH } from "@/lib/contact-constants";
 // RFC 1035 caps a domain name at 253 characters. Validate length and a
 // conservative character set before issuing a DNS query so the resolver
 // isn't a free oracle for arbitrary attacker-supplied strings.
-export const DOMAIN_PATTERN =
+const DOMAIN_PATTERN =
     /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
 
 /**

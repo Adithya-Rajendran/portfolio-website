@@ -71,7 +71,6 @@
         --s-7: 3rem;
         --s-8: 4rem;
         --s-9: 6rem;
-        --s-10: 8rem;
         --space-block: clamp(2rem, 1.667rem + 1.481vw, 3rem);
         --space-section: clamp(5rem, 3.333rem + 7.407vw, 10rem);
 
@@ -86,39 +85,22 @@
         --header-h: 64px;
 
         /* ---- shape: radius 0, hairlines, no shadows ----------------- */
-        --radius-0: 0;
         --radius-round: 50%;
         --rule-hair: 1px;
         --rule-strong: 2px;
 
         /* ---- motion: orbital, never elastic ------------------------- */
-        --ease-coast: linear;
         --ease-dock: cubic-bezier(0.2, 0, 0, 1);
-        --ease-insert: cubic-bezier(0.16, 1, 0.3, 1);
-        --ease-burn: cubic-bezier(0.5, 0, 0.75, 0);
         --ease-transfer: cubic-bezier(0.65, 0, 0.35, 1);
-        --dur-1: 90ms;
         --dur-2: 150ms;
         --dur-3: 220ms;
-        --dur-4: 320ms;
         --dur-5: 480ms;
         --dur-6: 800ms;
         --dur-hover: var(--dur-2);
-        --dur-enter: var(--dur-3);
-        --dur-exit: var(--dur-2);
-
-        /* ---- photographs and plates stay dark in both themes -------- */
-        --photo-black: #050507;
-        --photo-ink: #ece8df;
-        --photo-ink-2: #bcb7ad;
 
         /* ---- z ----------------------------------------------------- */
         --z-starfield: -1;
-        --z-raised: 10;
-        --z-rail: 50;
         --z-header: 100;
-        --z-sheet: 200;
-        --z-toast: 400;
         --z-skip: 1000;
     }
 

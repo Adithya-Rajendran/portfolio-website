@@ -51,7 +51,8 @@ import styles from "./journey.module.css";
  */
 
 export interface Scene {
-    /** The stage's size in CSS pixels; `wide` from 960px. */
+    /** The stage's size in CSS pixels; `wide` from 60rem (960px at the
+     *  default text size), the breakpoint of the record's CSS. */
     resize(width: number, height: number, wide: boolean): void;
     render(frame: Frame): void;
     /** The theme changed: re-read colours. */
@@ -254,7 +255,12 @@ export default function Journey({
         };
         const resize = () => {
             const box = stage.getBoundingClientRect();
-            scene.resize(box.width, box.height, box.width >= 960);
+            // A media query's rem is the default text size, the root's.
+            const rem =
+                parseFloat(
+                    getComputedStyle(document.documentElement).fontSize,
+                ) || 16;
+            scene.resize(box.width, box.height, box.width >= 60 * rem);
             measure();
             request();
         };

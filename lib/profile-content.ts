@@ -1,4 +1,5 @@
 import { siteConfig } from "@/lib/config";
+import { monthYear } from "@/lib/dates";
 import type { TimelineDatePrecision } from "@/lib/profile-fields";
 import type {
     Availability,
@@ -8,7 +9,7 @@ import type {
     TimelineEntry,
 } from "@/lib/sanity-client";
 
-export type ProfilePlatform = "linkedin" | "github";
+type ProfilePlatform = "linkedin" | "github";
 
 /** A saved Profile is authoritative, including deliberately empty lists. */
 export function getProfileLinks(profile: ProfileData | null): ExternalLink[] {
@@ -95,14 +96,11 @@ export function formatTimelineDate(
     if (!value) return null;
     if (/^\d{4}$/.test(value)) return value;
     if (precision === "year" && /^\d{4}-/.test(value)) return value.slice(0, 4);
-    const normalized = /^\d{4}-\d{2}$/.test(value) ? `${value}-01` : value;
-    const parsed = new Date(`${normalized}T00:00:00Z`);
-    if (Number.isNaN(parsed.getTime())) return value;
-    return new Intl.DateTimeFormat("en", {
-        month: "short",
-        year: "numeric",
-        timeZone: "UTC",
-    }).format(parsed);
+    const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(value);
+    const month = Number(match?.[2]);
+    const day = Number(match?.[3] ?? 1);
+    if (!match || month < 1 || month > 12 || day < 1 || day > 31) return value;
+    return monthYear(Number(match[1]), month);
 }
 
 /** Preserve legacy date semantics until an editor explicitly sets status. */
@@ -113,6 +111,7 @@ export function isCurrentTimelineEntry(entry: TimelineEntry): boolean {
 /**
  * Only select from the public posts returned by getAllPosts(). The profile
  * owns the chosen ID; the post query owns the content and publication gate.
+ * @internal Exported for tests.
  */
 export function selectFeaturedPost(
     profile: ProfileData | null,
