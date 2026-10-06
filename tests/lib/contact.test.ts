@@ -11,6 +11,7 @@ import {
     topicOptions,
     validateContactFields,
 } from "@/lib/contact";
+import { EMAIL_MAX_LENGTH } from "@/lib/contact-constants";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import type { Availability, ProfileData } from "@/lib/sanity-client";
 
@@ -234,6 +235,10 @@ describe("contact topics", () => {
         expect(topicFromHash("#consulting", shown)).toBeNull();
         expect(topicFromHash("#message", shown)).toBeNull();
         expect(topicFromHash("", shown)).toBeNull();
+        // A malformed escape picks nothing instead of throwing.
+        expect(topicFromHash("#%", shown)).toBeNull();
+        expect(topicFromHash("#%E0%A4", shown)).toBeNull();
+        expect(topicFromHash("#%68iring", shown)).toBe("hiring");
     });
 });
 
@@ -268,6 +273,56 @@ describe("contact form checks", () => {
                 message: "x",
             }).senderEmail,
         ).toBeDefined();
+    });
+
+    it("takes an address of 254 characters at most, its local part 64", () => {
+        const of = (senderEmail: string) =>
+            validateContactFields({ senderEmail, message: "Hi" }).senderEmail;
+        const label = "d".repeat(63);
+        // 64 + 1 + 189 = 254 characters: the longest that goes.
+        const domain189 = `${label}.${label}.${"d".repeat(58)}.co`;
+        expect(domain189).toHaveLength(189);
+        expect(of(`${"a".repeat(64)}@${domain189}`)).toBeUndefined();
+        // One more anywhere is refused: 255 in all, or a local part of 65.
+        expect(of(`${"a".repeat(64)}@e${domain189}`)).toBe(
+            "Enter an email address like you@example.com.",
+        );
+        expect(of(`${"a".repeat(65)}@example.com`)).toBe(
+            "Enter an email address like you@example.com.",
+        );
+        expect(
+            of(`${"a".repeat(30)}.${"b".repeat(33)}@example.com`),
+        ).toBeUndefined();
+        expect(EMAIL_MAX_LENGTH).toBe(254);
+    });
+
+    it("accepts what the server accepts: an apostrophe, a tag, a domain in any script", () => {
+        for (const senderEmail of [
+            "o'brien@example.com",
+            "first.last+tag@sub.example.co.uk",
+            "x%y@example.com",
+            "user@bücher.de",
+            "user@xn--bcher-kva.example",
+        ]) {
+            expect(
+                validateContactFields({ senderEmail, message: "Hi" }),
+                senderEmail,
+            ).toEqual({});
+        }
+        for (const senderEmail of [
+            "not-an-email",
+            "a..b@example.com",
+            ".a@example.com",
+            "a b@example.com",
+            "a@-bad-.example",
+            "a@example.com.",
+        ]) {
+            expect(
+                validateContactFields({ senderEmail, message: "Hi" })
+                    .senderEmail,
+                senderEmail,
+            ).toBe("Enter an email address like you@example.com.");
+        }
     });
 
     it("checks the email when it is left filled, and every field from the first submit", () => {

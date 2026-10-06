@@ -836,6 +836,11 @@
         color: var(--ink-1);
         font: 500 var(--step-0) / 1.45 var(--font-text);
     }
+    /* Rendered empty, as a live region the words are added to: out of the
+       field's flow until it has some, so it adds no gap. */
+    .field__error:empty {
+        position: absolute;
+    }
     .input,
     .textarea {
         width: 100%;

@@ -81,6 +81,40 @@ describe("project schema", () => {
     });
 });
 
+describe("project slug", () => {
+    type SlugRule = {
+        required(): SlugRule;
+        custom(check: (value: { current?: string }) => true | string): unknown;
+    };
+    /** The slug field's own check, read from its validation rule. */
+    function slugCheck() {
+        const field = project.fields.find((entry) => entry.name === "slug") as
+            { validation?: (rule: SlugRule) => unknown } | undefined;
+        let check: ((value: { current?: string }) => true | string) | null =
+            null;
+        const rule: SlugRule = {
+            required: () => rule,
+            custom: (fn) => {
+                check = fn;
+                return rule;
+            },
+        };
+        field?.validation?.(rule);
+        return check!;
+    }
+
+    it("takes the post's shape and leaves /portfolio's own addresses free", () => {
+        const check = slugCheck();
+        expect(check({ current: "homelab" })).toBe(true);
+        expect(check({ current: "Homelab" })).toMatch(/lowercase/);
+        expect(check({ current: "opengraph-image" })).toMatch(
+            /address of another page/,
+        );
+        // Posts' reserved words are free for a project.
+        expect(check({ current: "archive" })).toBe(true);
+    });
+});
+
 describe("new project template", () => {
     type Resolver = (
         params: unknown,

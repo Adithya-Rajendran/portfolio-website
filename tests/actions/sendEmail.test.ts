@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const resendSendMock = vi.fn();
 const resolveMxMock = vi.fn();
+const resolve4Mock = vi.fn();
+const resolve6Mock = vi.fn();
 const headersMock = vi.fn();
 const checkBotIdMock = vi.fn();
 const checkRateLimitMock = vi.fn();
@@ -13,10 +15,15 @@ vi.mock("resend", () => ({
     },
 }));
 
-vi.mock("dns/promises", () => ({
-    default: { resolveMx: resolveMxMock },
-    resolveMx: resolveMxMock,
-}));
+vi.mock("dns/promises", () => {
+    class Resolver {
+        resolveMx = resolveMxMock;
+        resolve4 = resolve4Mock;
+        resolve6 = resolve6Mock;
+        cancel = vi.fn();
+    }
+    return { default: { Resolver }, Resolver };
+});
 
 vi.mock("next/headers", () => ({
     headers: headersMock,
@@ -30,7 +37,8 @@ vi.mock("@vercel/firewall", () => ({
     checkRateLimit: checkRateLimitMock,
 }));
 
-vi.mock("@/email/contact-form-email", () => ({
+vi.mock("@/email/contact-form-email", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("@/email/contact-form-email")>()),
     default: vi.fn(() => null),
 }));
 
@@ -54,6 +62,11 @@ function formDataOf(fields: Record<string, string>): FormData {
     return fd;
 }
 
+/** A DNS failure as Node reports it, by its code. */
+function dnsError(code: string) {
+    return Object.assign(new Error(`queryMx ${code} example`), { code });
+}
+
 function withIp(ip: string) {
     headersMock.mockResolvedValue({
         get: (name: string) =>
@@ -75,6 +88,8 @@ beforeEach(() => {
     vi.resetModules();
     resendSendMock.mockReset();
     resolveMxMock.mockReset();
+    resolve4Mock.mockReset();
+    resolve6Mock.mockReset();
     headersMock.mockReset();
     checkBotIdMock.mockReset();
     checkRateLimitMock.mockReset();
@@ -84,6 +99,8 @@ beforeEach(() => {
     resolveMxMock.mockResolvedValue([
         { exchange: "mx.example.com", priority: 10 },
     ]);
+    resolve4Mock.mockRejectedValue(dnsError("ENODATA"));
+    resolve6Mock.mockRejectedValue(dnsError("ENODATA"));
     // Default mocks: human user, not rate-limited.
     checkBotIdMock.mockResolvedValue({ isBot: false });
     checkRateLimitMock.mockResolvedValue({ rateLimited: false });
@@ -181,6 +198,65 @@ describe("sendEmail — schema validation", () => {
         expect(resendSendMock).not.toHaveBeenCalled();
     });
 
+    it("accepts every address the form accepts: an apostrophe, a tag, a domain in any script", async () => {
+        withIp("10.0.0.5");
+        const sendEmail = await importSendEmail();
+
+        for (const [typed, sent] of [
+            ["o'brien@example.com", "o'brien@example.com"],
+            [
+                "first.last+tag@sub.example.co.uk",
+                "first.last+tag@sub.example.co.uk",
+            ],
+            // The domain goes out in ASCII, as DNS and mail servers take it.
+            ["user@bücher.de", "user@xn--bcher-kva.de"],
+        ]) {
+            resendSendMock.mockClear();
+            const result = await sendEmail(
+                formDataOf({ senderEmail: typed, message: "hello" }),
+            );
+            expect(result, typed).toHaveProperty("data");
+            expect(resendSendMock.mock.calls[0][0].replyTo, typed).toBe(sent);
+        }
+        expect(resolveMxMock).toHaveBeenCalledWith("xn--bcher-kva.de");
+    });
+
+    it("refuses an address the form refuses for its length, before any lookup", async () => {
+        withIp("10.0.0.7");
+        const sendEmail = await importSendEmail();
+
+        for (const senderEmail of [
+            // A local part of 65 characters.
+            `${"a".repeat(65)}@example.com`,
+            // 255 characters in all.
+            `${"a".repeat(64)}@${"d".repeat(63)}.${"e".repeat(63)}.${"f".repeat(59)}.co`,
+        ]) {
+            const result = await sendEmail(
+                formDataOf({ senderEmail, message: "hello" }),
+            );
+            expect(result, senderEmail).toEqual({
+                error: "Enter an email address like you@example.com.",
+                field: "senderEmail",
+            });
+        }
+        expect(resolveMxMock).not.toHaveBeenCalled();
+        expect(resendSendMock).not.toHaveBeenCalled();
+    });
+
+    it("refuses an empty address as the form does", async () => {
+        withIp("10.0.0.6");
+        const sendEmail = await importSendEmail();
+
+        const result = await sendEmail(
+            formDataOf({ senderEmail: "  ", message: "hello" }),
+        );
+
+        expect(result).toEqual({
+            error: "Enter your email address.",
+            field: "senderEmail",
+        });
+    });
+
     it("coerces non-string form fields to strings before validation", async () => {
         withIp("10.0.0.4");
         const sendEmail = await importSendEmail();
@@ -229,6 +305,90 @@ describe("sendEmail — Vercel WAF rate limit", () => {
     });
 });
 
+describe("sendEmail — fallback limit while the WAF rule is missing", () => {
+    it("allows five sends an address in ten minutes, then refuses, logging once", async () => {
+        checkRateLimitMock.mockResolvedValue({
+            rateLimited: false,
+            error: "not-found",
+        });
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const sendEmail = await importSendEmail();
+        const send = () =>
+            sendEmail(
+                formDataOf({ senderEmail: "a@example.com", message: "hi" }),
+            );
+
+        withIp("10.0.5.1");
+        for (let i = 0; i < 5; i += 1) {
+            await expect(send()).resolves.toHaveProperty("data");
+        }
+        await expect(send()).resolves.toEqual({
+            error: "Too many messages were sent in a short time. Try again in a few minutes.",
+        });
+        expect(resendSendMock).toHaveBeenCalledTimes(5);
+
+        // Another address has its own count.
+        withIp("10.0.5.2");
+        await expect(send()).resolves.toHaveProperty("data");
+
+        const notes = warn.mock.calls.filter(([line]) =>
+            String(line).includes('"contact-form"'),
+        );
+        expect(notes).toHaveLength(1);
+        warn.mockRestore();
+    });
+
+    it("counts only sends whose domain takes mail, so dead domains lock no one out", async () => {
+        checkRateLimitMock.mockResolvedValue({
+            rateLimited: false,
+            error: "not-found",
+        });
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const sendEmail = await importSendEmail();
+        const send = (senderEmail: string) =>
+            sendEmail(formDataOf({ senderEmail, message: "hi" }));
+
+        // Thirty refusals from six addresses, the instance's whole cap.
+        resolveMxMock.mockRejectedValue(dnsError("ENOTFOUND"));
+        for (let ip = 0; ip < 6; ip += 1) {
+            withIp(`10.0.7.${ip}`);
+            for (let i = 0; i < 5; i += 1) {
+                await expect(send("a@dead.example")).resolves.toMatchObject({
+                    field: "senderEmail",
+                });
+            }
+        }
+
+        // None of them counted: the same addresses still send, five each.
+        resolveMxMock.mockResolvedValue([
+            { exchange: "mx.example.com", priority: 10 },
+        ]);
+        withIp("10.0.7.0");
+        for (let i = 0; i < 5; i += 1) {
+            await expect(send("a@example.com")).resolves.toHaveProperty("data");
+        }
+        await expect(send("a@example.com")).resolves.toEqual({
+            error: "Too many messages were sent in a short time. Try again in a few minutes.",
+        });
+        withIp("10.0.7.99");
+        await expect(send("a@example.com")).resolves.toHaveProperty("data");
+        vi.mocked(console.warn).mockRestore();
+    });
+
+    it("leaves the count to the WAF rule while it exists", async () => {
+        const sendEmail = await importSendEmail();
+
+        withIp("10.0.5.3");
+        for (let i = 0; i < 7; i += 1) {
+            await expect(
+                sendEmail(
+                    formDataOf({ senderEmail: "a@example.com", message: "hi" }),
+                ),
+            ).resolves.toHaveProperty("data");
+        }
+    });
+});
+
 describe("sendEmail — DNS / MX validation", () => {
     it("rejects domains with no MX records", async () => {
         withIp("10.0.1.1");
@@ -246,17 +406,52 @@ describe("sendEmail — DNS / MX validation", () => {
         expect(resendSendMock).not.toHaveBeenCalled();
     });
 
-    it("rejects domains where DNS resolution throws", async () => {
+    it("rejects a domain DNS says does not exist", async () => {
         withIp("10.0.1.2");
-        resolveMxMock.mockRejectedValue(new Error("ENOTFOUND"));
+        resolveMxMock.mockRejectedValue(dnsError("ENOTFOUND"));
         const sendEmail = await importSendEmail();
 
         const result = await sendEmail(
             formDataOf({ senderEmail: "a@broken.example", message: "hi" }),
         );
 
-        expect(result).toHaveProperty("error");
+        expect(result).toEqual({
+            error: "The domain after the @ does not receive email. Check the address.",
+            field: "senderEmail",
+        });
         expect(resendSendMock).not.toHaveBeenCalled();
+    });
+
+    it("sends when a lookup cannot finish, and logs it", async () => {
+        withIp("10.0.1.4");
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const sendEmail = await importSendEmail();
+
+        for (const code of ["ETIMEOUT", "ESERVFAIL", "ECONNREFUSED"]) {
+            resendSendMock.mockClear();
+            resolveMxMock.mockRejectedValue(dnsError(code));
+            const result = await sendEmail(
+                formDataOf({ senderEmail: "a@slow.example", message: "hi" }),
+            );
+            expect(result, code).toHaveProperty("data");
+            expect(warn).toHaveBeenLastCalledWith(
+                expect.stringContaining(code),
+            );
+        }
+        warn.mockRestore();
+    });
+
+    it("sends to a domain without MX that has an address (implicit MX)", async () => {
+        withIp("10.0.1.5");
+        resolveMxMock.mockRejectedValue(dnsError("ENODATA"));
+        resolve4Mock.mockResolvedValue(["192.0.2.10"]);
+        const sendEmail = await importSendEmail();
+
+        const result = await sendEmail(
+            formDataOf({ senderEmail: "a@a-only.example", message: "hi" }),
+        );
+
+        expect(result).toHaveProperty("data");
     });
 
     it("rejects domains that fail the format pattern without querying DNS", async () => {
@@ -356,6 +551,33 @@ describe("sendEmail — happy path and Resend integration", () => {
         // Vercel WAF receives the synthetic Request without that header
         // and falls back to its own IP resolution server-side.
         expect(result).toHaveProperty("data");
+    });
+});
+
+describe("sendEmail — the email", () => {
+    it("keeps the sender's paragraphs in the HTML and the plain-text part", async () => {
+        withIp("10.0.6.1");
+        const sendEmail = await importSendEmail();
+        const message = "Hi Adithya,\n\nSecond paragraph.\n- one\n- two";
+
+        await sendEmail(formDataOf({ senderEmail: "a@example.com", message }));
+
+        const { text } = resendSendMock.mock.calls[0][0];
+        expect(text).toContain(message);
+        expect(text).toContain("Topic: Hello");
+        expect(text).toContain("The sender's email is: a@example.com");
+
+        const { default: Email } = await vi.importActual<
+            typeof import("@/email/contact-form-email")
+        >("@/email/contact-form-email");
+        const { render } = await import("react-email");
+        const html = await render(
+            Email({ message, senderEmail: "a@example.com", topic: "hello" }),
+        );
+        const paragraph = /<p[^>]*white-space:pre-wrap[^>]*>([^<]*)<\/p>/.exec(
+            html,
+        );
+        expect(paragraph?.[1]).toBe(message);
     });
 });
 

@@ -7,6 +7,10 @@ on:
         branches: ["main", "redesign", "redesign/**"]
     pull_request:
         branches: ["main", "redesign", "redesign/**"]
+    # Monthly on main, so a dated check fails without a push: the smoke
+    # spec's security.txt expiry, a month ahead of the date.
+    schedule:
+        - cron: "0 9 1 * *"
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,11 +22,11 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             # pnpm version comes from package.json "packageManager".
-            - uses: pnpm/action-setup@v6
+            - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
             - name: Use Node.js 24.x
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
               with:
                   node-version: 24.x
                   cache: "pnpm"
@@ -55,11 +59,11 @@ jobs:
             NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: fallback
 
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             # pnpm version comes from package.json "packageManager".
-            - uses: pnpm/action-setup@v6
+            - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
             - name: Use Node.js 24.x
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
               with:
                   node-version: 24.x
                   cache: "pnpm"
@@ -76,11 +80,11 @@ jobs:
         timeout-minutes: 30
 
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             # pnpm version comes from package.json "packageManager".
-            - uses: pnpm/action-setup@v6
+            - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
             - name: Use Node.js 24.x
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
               with:
                   node-version: 24.x
                   cache: "pnpm"
@@ -90,7 +94,7 @@ jobs:
             - run: pnpm test:e2e
             - name: Upload the report and screenshots
               if: ${{ !cancelled() }}
-              uses: actions/upload-artifact@v7
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: playwright-report-fixture
                   path: playwright-report/

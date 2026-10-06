@@ -16,7 +16,10 @@ import {
  *   the run never leaves the machine.
  * - `preview`: same-origin requests carry the Vercel protection-bypass
  *   secret when one is set, and ask Vercel not to inject its toolbar. The
- *   secret is never sent to another origin.
+ *   secret is never sent to another origin. The Web Analytics and Speed
+ *   Insights scripts are answered with an empty script here too, so the
+ *   test runs (the weekly one is against the production site) never count
+ *   as visits.
  *
  * The `request` fixture gets the same headers, and `pageErrors` records
  * console errors, uncaught exceptions and CSP violations.
@@ -53,14 +56,20 @@ export async function prepareContext(
                     headers: { ...route.request().headers(), ...headers },
                 }),
         );
-        return;
+    } else {
+        await context.route(
+            (url) => url.origin !== origin,
+            (route) => route.fulfill({ status: 200, body: "" }),
+        );
     }
-    await context.route(
-        (url) => url.origin !== origin,
-        (route) => route.fulfill({ status: 200, body: "" }),
-    );
+    // Registered last, so it wins over the routes above (Playwright runs
+    // the newest matching route first).
     await context.route(VERCEL_SCRIPT, (route) =>
-        route.fulfill({ contentType: "text/javascript", body: "" }),
+        route.fulfill({
+            status: 200,
+            contentType: "text/javascript",
+            body: "",
+        }),
     );
 }
 

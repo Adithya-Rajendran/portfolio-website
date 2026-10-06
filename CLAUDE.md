@@ -622,11 +622,13 @@ only live in comments or commit messages.
        (schedule in `vercel.json`, 00:05 UTC). `publishedAt` is a date and
        visibility is gated by `publishedAt <= $today`, so a future post
        crosses the gate on its UTC date without a document change. The cron
-       performs an uncached query for posts dated today, revalidates the
-       `post` tag and warms its routes. Auth is
+       performs an uncached query for posts dated in the last seven days up
+       to today (UTC dates), so the next run catches up a day a run missed,
+       revalidates the `post` tag and warms its routes. Auth is
        `Authorization: Bearer ${CRON_SECRET}` (Vercel attaches it
-       automatically); missing/wrong auth → stealth 404. If `CRON_SECRET`
-       is unset, same-day publishing silently degrades to the pages' daily
+       automatically), compared in constant time; missing/wrong auth →
+       stealth 404. If `CRON_SECRET`
+       is unset (or blank), same-day publishing silently degrades to the pages' daily
        cache revalidation.
 - `lib/route-tags.ts` is the route → tag table: every URL the app serves
   (pages, share images at their built URL, the feed, the sitemap, the CV
@@ -693,12 +695,19 @@ only live in comments or commit messages.
   load.
 - **`security.txt`** (`public/.well-known/security.txt`, RFC 9116): Contact
   is the `/contact` form, never an address; `Expires` must stay within a
-  year, so renew it yearly (the smoke spec fails once it lapses).
+  year, so renew it yearly (the smoke spec fails a month before it lapses,
+  and CI runs monthly as well as on every push).
 - **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
   `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in
   the Vercel dashboard (Firewall → Rate Limit). If the rule is absent,
-  the SDK returns `error: "not-found"`, a warning is logged, and the form
-  still works but is unprotected at that layer — it does not fail closed.
+  the SDK returns `error: "not-found"`, a warning is logged once per
+  function instance, and an in-memory fallback stands in
+  (`lib/contact-rate-limit.ts`: 5 sends an address in 10 minutes, 30 per
+  instance, counted only once the sender's domain passes the mail check,
+  so attempts to dead domains lock no one out). Each instance keeps its
+  own counts and a cold start forgets
+  them, so it slows a burst but is no deployment-wide limit; the form does
+  not fail closed.
 - **Vercel BotID** — invisible bot check. The client protect list is
   registered in `app/layout.tsx` (`<BotIdClient protect={[...]} />`); each
   server action verifies the challenge with `checkBotId()` from
@@ -763,8 +772,8 @@ only live in comments or commit messages.
   message, and promises nothing: no reply address, no reply time, no
   auto-reply.
 - **Sanity webhook** — `app/api/revalidate/route.ts` requires
-  `SANITY_REVALIDATE_SECRET`; if unset, the route 404s on every request
-  and cache invalidation is silently disabled.
+  `SANITY_REVALIDATE_SECRET`; if unset (or blank once trimmed), the route
+  404s on every request and cache invalidation is silently disabled.
 - **Vercel Cron** — `vercel.json` schedules `/api/cron/publish-due` daily
   (Hobby plan allows daily crons; times are approximate, within the hour).
   Requires `CRON_SECRET` in the project's Vercel env. Crons only run on
@@ -805,7 +814,9 @@ deployment require an authenticated Sanity CLI session.
   precision…), `lib/project-fields.ts` (project statuses and types, image
   kinds, model kinds, mission numbers, the anchor and revision rules),
   `lib/post-fields.ts` (callout tones, image widths, changelog kinds, the
-  footnote and note limits), `lib/viewer/registry.ts` (the 3D models built
+  footnote and note limits), `lib/slugs.ts` (the slug shape the feed and
+  warming read, and the slugs other pages' addresses take),
+  `lib/viewer/registry.ts` (the 3D models built
   in code and the parts a callout can point at; never import three.js
   there) and `lib/headings.ts`
   (heading ids, shared by the pages and the Studio's anchor check). Sanity
@@ -1052,7 +1063,8 @@ deployment require an authenticated Sanity CLI session.
   numbers, no writing index, related pages or close, no gap wording; and no page keeping the old design's
   roots, classes or tokens),
   `budgets` (the brotli byte report, printed,
-  not enforced yet; page prefetches and route trees apart), `screens` (review screenshots in both themes and the
+  then enforced, every post measured; page prefetches and route trees
+  apart), `screens` (review screenshots in both themes and the
   `/resume` print PDF, attached to the HTML report) and `studio` (the embedded Studio
   with JavaScript, fixture project only: it boots to its login screen and,
   signed in against the stand-in API in `tests/e2e/support/sanity-api.ts`,
@@ -1068,8 +1080,23 @@ deployment require an authenticated Sanity CLI session.
       `BASE_URL=<url>`, plus `VERCEL_AUTOMATION_BYPASS_SECRET` for protected
       previews (sent to that origin only, and never traced, because traces
       record request headers and CI uploads the report). CI runs it on every successful
-      Vercel preview (`.github/workflows/e2e-preview.yml`); it is skipped
-      with a notice while that repository secret is missing.
+      Vercel preview (`.github/workflows/e2e-preview.yml`, the check
+      "Browser tests on the preview"); while that repository secret is
+      missing, its gate job leaves the test job skipped, with a notice,
+      never passed. The gate also skips a fork's pull request, but that
+      stops an honest fork only: on `deployment_status` GitHub runs the
+      deployed commit's own copy of the workflow, so a hostile fork's
+      commit, once deployed, brings one without the gate and can read the
+      repository's secrets. The control that holds is Vercel's Git Fork
+      Protection (a fork's pull request is not deployed without the
+      owner's approval; read a fork's whole diff before approving its
+      deployment, because the deployment runs the fork's code with the
+      repository's secrets and the Preview environment variables), so the
+      owner confirms it is on before adding
+      `VERCEL_AUTOMATION_BYPASS_SECRET`. The gate takes only deployments
+      Vercel itself created (`vercel[bot]`). The same workflow runs weekly
+      against the production site, which needs no secret, under the same
+      check name (the test step and the run's summary name the target).
     - First run: `pnpm exec playwright install chromium` (add
       `--with-deps` on a machine without Chromium's system libraries).
     - Pages come from `tests/e2e/support/routes.ts`: the static pages, plus

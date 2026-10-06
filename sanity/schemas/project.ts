@@ -22,6 +22,7 @@ import {
     REAL_WORLD_DIMENSIONS,
     REAL_WORLD_UNITS,
 } from "@/lib/project-fields";
+import { RESERVED_PROJECT_SLUGS, checkSlug } from "@/lib/slugs";
 import {
     checkModelPart,
     MODEL_PART_OPTIONS,
@@ -216,7 +217,13 @@ export default defineType({
             type: "slug",
             group: "editorial",
             options: { source: "title", maxLength: 96 },
-            validation: (Rule) => Rule.required(),
+            // The site's slug shape and the addresses other pages answer
+            // (lib/slugs.ts).
+            validation: (Rule) =>
+                Rule.required().custom(
+                    (value: { current?: string } | undefined) =>
+                        checkSlug(value?.current, RESERVED_PROJECT_SLUGS),
+                ),
         }),
         defineField({
             name: "summary",

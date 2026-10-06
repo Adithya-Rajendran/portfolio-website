@@ -14,13 +14,14 @@ import { expect, test } from "./support/test";
  * fields), Hiring shows only beside what the owner is open to, the form
  * checks the email on leaving it and every field from the first submit,
  * each error under its field, in ink with its cross, the field marked by
- * one 2px orange rule (premium D1); a send that does not go (refused, or lost
- * on the network) stays on the page with the text in its fields and the
- * ways on, and the draft survives a reload; a sent message says "Message
- * received." and promises nothing; the 404's report arrives with the
- * missed address; Consulting stays hidden while it is off, and without
- * JavaScript the LinkedIn alternative stands in for the form. Nothing on
- * the page is an email address or a phone number.
+ * one 2px orange rule (premium D1), and announced as it appears; a send
+ * that does not go (refused, or lost on the network) stays on the page
+ * with the text in its fields and the ways on, and the draft survives a
+ * reload; a sent message says "Message received." and promises nothing;
+ * the 404's report arrives with the missed address; Consulting stays
+ * hidden while it is off, and without JavaScript the LinkedIn alternative
+ * stands in for the form. Nothing on the page is an email address or a
+ * phone number.
  *
  * The fixture build has no Resend credentials, so a send is refused there
  * without leaving the machine; a sent message is that refusal answered as
@@ -303,6 +304,25 @@ test("the form checks the email on leaving it, and every field from the first su
     await message.fill("x".repeat(950));
     await expect(page.getByText("950 / 1000")).toBeVisible();
     await expect(message).not.toHaveAttribute("aria-invalid", /.*/);
+});
+
+test("a check's words are announced as they appear", async ({ page }) => {
+    await page.goto("/contact");
+    const { email, message } = fields(page);
+    // Each field's error line is a live region before it has words, so a
+    // screen reader speaks the email's error as focus leaves the field
+    // (WCAG 4.1.3); empty, it takes no room under its field.
+    const live = page.getByRole("main").getByRole("status");
+    await expect(live).toHaveCount(2);
+    for (const region of await live.all()) {
+        await expect(region).toBeEmpty();
+        expect((await region.boundingBox())?.height ?? 0).toBe(0);
+    }
+    await email.fill("you@example");
+    await message.focus();
+    await expect(live.first()).toHaveText(form.errors.emailInvalid);
+    await expect(email).toHaveAccessibleDescription(form.errors.emailInvalid);
+    await expect(live.last()).toBeEmpty();
 });
 
 test("pressing Send as a malformed email is left checks every field at once", async ({

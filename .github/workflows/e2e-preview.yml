@@ -5,71 +5,123 @@ permissions:
 # Vercel reports each deployment to GitHub. When a Preview deployment
 # succeeds, run the browser tests against its URL with real content. The
 # result shows as a check on the deployed commit, so it appears on the PR.
+# Weekly, the same tests run against the production site, because a
+# content edit in Sanity makes no deployment.
 on:
     deployment_status:
+    schedule:
+        - cron: "0 10 * * 1"
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.event.deployment.sha }}
+    group: ${{ github.workflow }}-${{ github.event.deployment.sha || github.ref }}
     cancel-in-progress: true
 
 jobs:
-    preview:
-        name: Browser tests on the preview
+    # Decides whether the tests can run. When they cannot, the test job is
+    # skipped, so the check never passes having run nothing.
+    gate:
+        name: Preview test gate
+        # Vercel's own successful Preview deployments (it creates them as
+        # vercel[bot]), and the weekly run.
         if: >-
-            github.event.deployment_status.state == 'success' &&
-            startsWith(github.event.deployment.environment, 'Preview')
+            github.event_name == 'schedule' ||
+            (github.event.deployment_status.state == 'success' &&
+            startsWith(github.event.deployment.environment, 'Preview') &&
+            github.event.deployment.creator.login == 'vercel[bot]')
         runs-on: ubuntu-latest
-        timeout-minutes: 30
-        env:
-            BASE_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
-
-        # The protection-bypass secret is exposed only to the two steps that
-        # need it (the check and the test run), never to checkout, the
-        # dependency install or the Playwright install (which runs apt).
-        # Note: on deployment_status, checkout gets the deployed commit, so
-        # the test step runs that commit's code with the secret; the secret
-        # only opens this project's protected previews.
+        permissions:
+            contents: read
+            pull-requests: read
+        outputs:
+            enabled: ${{ steps.check.outputs.enabled }}
         steps:
-            - name: Check for the protection-bypass secret
-              id: bypass
+            - name: Check for the protection-bypass secret and the commit's origin
+              id: check
               env:
+                  EVENT: ${{ github.event_name }}
+                  SHA: ${{ github.event.deployment.sha }}
+                  GH_TOKEN: ${{ github.token }}
                   VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
               run: |
-                  if [ -n "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
+                  # The production site is not protected: no secret needed.
+                  if [ "$EVENT" = "schedule" ]; then
                       echo "enabled=true" >> "$GITHUB_OUTPUT"
-                  else
+                      exit 0
+                  fi
+                  if [ -z "$VERCEL_AUTOMATION_BYPASS_SECRET" ]; then
                       echo "enabled=false" >> "$GITHUB_OUTPUT"
                       echo "::notice title=Preview tests skipped::Add the VERCEL_AUTOMATION_BYPASS_SECRET repository secret to run the browser tests against protected Vercel previews."
                       echo "Preview tests skipped: the VERCEL_AUTOMATION_BYPASS_SECRET secret is not set." >> "$GITHUB_STEP_SUMMARY"
+                      exit 0
                   fi
-            - uses: actions/checkout@v7
-              if: steps.bypass.outputs.enabled == 'true'
+                  # The test step runs the deployed commit's code with the
+                  # secret, so a fork's pull request stops here. This holds
+                  # for an honest fork only: on deployment_status GitHub
+                  # runs the deployed commit's own copy of this file, so a
+                  # hostile fork's commit, once deployed, brings a workflow
+                  # without this check. The control that holds is Vercel's
+                  # Git Fork Protection: no fork is deployed without the
+                  # owner's approval (read a fork's whole diff before
+                  # approving its deployment, because the deployment runs
+                  # the fork's code with the repository's secrets and the
+                  # Preview environment variables).
+                  forks=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
+                      --jq "[.[] | select(.head.repo.full_name != \"$GITHUB_REPOSITORY\")] | length")
+                  if [ "$forks" != "0" ]; then
+                      echo "enabled=false" >> "$GITHUB_OUTPUT"
+                      echo "::notice title=Preview tests skipped::The deployed commit is a fork's pull request, which never gets the protection-bypass secret."
+                      echo "Preview tests skipped: the deployed commit is a fork's pull request." >> "$GITHUB_STEP_SUMMARY"
+                      exit 0
+                  fi
+                  echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+    preview:
+        # A static name: GitHub shows a skipped job's name unevaluated, so
+        # an expression here would read as code in the checks list. The
+        # test step's name and the run's summary say where it ran.
+        name: Browser tests on the preview
+        needs: gate
+        if: needs.gate.outputs.enabled == 'true'
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        env:
+            BASE_URL: ${{ github.event_name == 'schedule' && 'https://adithya-rajendran.com' || github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+
+        # The protection-bypass secret is exposed only to the test run,
+        # never to checkout, the dependency install or the Playwright
+        # install (which runs apt), and never to the production run.
+        # Note: on deployment_status, checkout gets the deployed commit, so
+        # the test step runs that commit's code with the secret. The gate
+        # keeps an honest fork's out; a hostile fork's commit brings its
+        # own workflow, so Vercel's Git Fork Protection is what keeps it
+        # from the secret. The secret only opens this project's protected
+        # previews.
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             # pnpm version comes from package.json "packageManager".
-            - uses: pnpm/action-setup@v6
-              if: steps.bypass.outputs.enabled == 'true'
+            - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
             - name: Use Node.js 24.x
-              if: steps.bypass.outputs.enabled == 'true'
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
               with:
                   node-version: 24.x
                   cache: "pnpm"
-            - if: steps.bypass.outputs.enabled == 'true'
-              run: pnpm install --frozen-lockfile
+            - run: pnpm install --frozen-lockfile
             - name: Install Chromium and its system libraries
-              if: steps.bypass.outputs.enabled == 'true'
               run: pnpm exec playwright install --with-deps chromium
             - name: Run the browser tests against ${{ env.BASE_URL }}
-              if: steps.bypass.outputs.enabled == 'true'
               env:
                   # Vercel → Project → Settings → Deployment Protection →
                   # Protection Bypass for Automation. Sent to the preview
                   # origin only (tests/e2e/support/test.ts).
-                  VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-              run: pnpm test:e2e:preview
+                  VERCEL_AUTOMATION_BYPASS_SECRET: ${{ github.event_name != 'schedule' && secrets.VERCEL_AUTOMATION_BYPASS_SECRET || '' }}
+                  TARGET: ${{ github.event_name == 'schedule' && 'the production site' || 'the preview' }}
+              run: |
+                  echo "Browser tests on $TARGET: $BASE_URL" >> "$GITHUB_STEP_SUMMARY"
+                  pnpm test:e2e:preview
             - name: Upload the report and screenshots
-              if: ${{ !cancelled() && steps.bypass.outputs.enabled == 'true' }}
-              uses: actions/upload-artifact@v7
+              if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
-                  name: playwright-report-preview
+                  name: playwright-report-${{ github.event_name == 'schedule' && 'production' || 'preview' }}
                   path: playwright-report/
                   retention-days: 14

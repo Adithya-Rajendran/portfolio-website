@@ -6,10 +6,14 @@ updates:
           interval: "weekly"
           day: "monday"
       open-pull-requests-limit: 5
+      ignore:
+          # typescript-eslint does not support TypeScript 7 yet: with it the
+          # dev-tooling group fails lint and holds back every update in it.
+          - dependency-name: "typescript"
+            versions: [">=7"]
+      # A dependency goes to the first group that matches it, so the
+      # packages that move in lockstep come before the catch-all types.
       groups:
-          types:
-              patterns:
-                  - "@types/*"
           sanity:
               patterns:
                   - "sanity"
@@ -25,9 +29,18 @@ updates:
                   - "react-dom"
                   - "@types/react"
                   - "@types/react-dom"
-          radix:
+          three:
               patterns:
-                  - "@radix-ui/*"
+                  - "three"
+                  - "@types/three"
+          tailwind:
+              patterns:
+                  - "tailwindcss"
+                  - "@tailwindcss/postcss"
+          playwright:
+              patterns:
+                  - "@playwright/test"
+                  - "@axe-core/playwright"
           dev-tooling:
               patterns:
                   - "eslint*"
@@ -37,6 +50,9 @@ updates:
                   - "lint-staged"
                   - "vitest"
                   - "@vitest/*"
+          types:
+              patterns:
+                  - "@types/*"
 
     - package-ecosystem: "github-actions"
       directory: "/"

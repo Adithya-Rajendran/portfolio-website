@@ -126,13 +126,19 @@ export function topicOptions(routes: readonly ContactRoute[]): TopicOption[] {
 /**
  * The topic a URL fragment picks ("#hiring"), when that route is shown.
  * The page reads the fragment on the client, never `searchParams`, which
- * would make it request-bound.
+ * would make it request-bound. A malformed escape ("#%") picks nothing:
+ * decoding it throws, which would replace the page with the error page.
  */
 export function topicFromHash(
     hash: string,
     shown: readonly ContactTopic[],
 ): ContactTopic | null {
-    const value = decodeURIComponent(hash.replace(/^#/, ""));
+    let value: string;
+    try {
+        value = decodeURIComponent(hash.replace(/^#/, ""));
+    } catch {
+        return null;
+    }
     return isContactTopic(value) && shown.includes(value) ? value : null;
 }
 
@@ -143,12 +149,22 @@ export interface ContactFields {
 
 export type ContactFieldErrors = Partial<Record<keyof ContactFields, string>>;
 
-/** A plain shape check; the server action does the real validation. */
-const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/**
+ * An email address's shape, the same in the form and the server action,
+ * so the form flags what the server would refuse: a local part of 64
+ * characters at most (RFC 5321) in RFC 5322's dot-atom (letters, digits
+ * and !#$%&'*+/=?^_`{|}~-, dots between them: "o'brien@…" passes), then a
+ * domain of two or more labels in any script ("bücher.de"), which the
+ * server looks up in its ASCII form. The whole address is
+ * `EMAIL_MAX_LENGTH` (254) at most.
+ */
+export const EMAIL_PATTERN =
+    /^(?=[^@]{1,64}@)[\w!#$%&'*+/=?^`{|}~-]+(?:\.[\w!#$%&'*+/=?^`{|}~-]+)*@(?:[\p{L}\p{N}](?:[\p{L}\p{M}\p{N}-]*[\p{L}\p{M}\p{N}])?\.)+[\p{L}\p{N}](?:[\p{L}\p{M}\p{N}-]*[\p{L}\p{M}\p{N}])?$/u;
 
 /**
  * The form's own checks before it sends, worded for the field they
- * belong to. The server repeats its stricter checks (charset, MX record).
+ * belong to. The server repeats them, then checks that the domain can
+ * receive mail.
  */
 export function validateContactFields({
     senderEmail,
@@ -158,7 +174,7 @@ export function validateContactFields({
     const email = senderEmail.trim();
     const { errors: copy } = contactCopy.form;
     if (!email) errors.senderEmail = copy.emailMissing;
-    else if (email.length > EMAIL_MAX_LENGTH || !EMAIL_SHAPE.test(email)) {
+    else if (email.length > EMAIL_MAX_LENGTH || !EMAIL_PATTERN.test(email)) {
         errors.senderEmail = copy.emailInvalid;
     }
     if (!message.trim()) errors.message = copy.messageMissing;

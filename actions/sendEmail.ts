@@ -6,22 +6,27 @@ import { z } from "zod";
 import { headers } from "next/headers";
 import { checkBotId } from "botid/server";
 import { checkRateLimit } from "@vercel/firewall";
-import ContactFormEmail from "@/email/contact-form-email";
-import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
+import ContactFormEmail, {
+    contactFormEmailText,
+} from "@/email/contact-form-email";
+import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import {
     CONTACT_TOPICS,
     DEFAULT_CONTACT_TOPIC,
+    EMAIL_PATTERN,
     contactRoutes,
     contactSubject,
     type ContactFields,
     type ContactFormState,
     type ContactTopic,
 } from "@/lib/contact";
-import { contactCopy } from "@/lib/copy";
 import {
-    EMAIL_CHARSET_PATTERN,
-    hasValidMxRecords,
-} from "@/lib/email-validation";
+    CONTACT_FALLBACK_LIMITS,
+    createFallbackLimiter,
+    senderAddress,
+} from "@/lib/contact-rate-limit";
+import { contactCopy } from "@/lib/copy";
+import { asciiAddress, mayReceiveMail } from "@/lib/email-validation";
 import { getProfile } from "@/lib/sanity-client";
 
 /**
@@ -46,9 +51,14 @@ function getEmailConfig(): { apiKey: string; toEmail: string } | null {
 const { errors, failures } = contactCopy.form;
 
 const emailSchema = z.object({
+    // The form's own rule (EMAIL_PATTERN in lib/contact.ts), so the form
+    // flags what this refuses.
     senderEmail: z
-        .email(errors.emailInvalid)
-        .regex(EMAIL_CHARSET_PATTERN, errors.emailInvalid),
+        .string()
+        .trim()
+        .min(1, errors.emailMissing)
+        .max(EMAIL_MAX_LENGTH, errors.emailInvalid)
+        .regex(EMAIL_PATTERN, errors.emailInvalid),
     message: z
         .string()
         .min(1, errors.messageMissing)
@@ -56,10 +66,17 @@ const emailSchema = z.object({
     // The contact route the sender picked; none chosen is a hello. It only
     // sorts the subject line, so an unknown value is refused, not guessed;
     // a known topic whose route is hidden is sent as a hello (sentTopic).
-    topic: z
-        .enum(CONTACT_TOPICS, "Choose one of the listed topics.")
-        .default(DEFAULT_CONTACT_TOPIC),
+    topic: z.enum(CONTACT_TOPICS, errors.topic).default(DEFAULT_CONTACT_TOPIC),
 });
+
+/**
+ * The stopgap limit while the WAF rule is missing (lib/contact-rate-limit.ts):
+ * this instance's memory, so it slows a burst rather than enforcing a limit
+ * across the deployment. It counts only sends whose domain passed the mail
+ * check (below). Its use is logged once per instance.
+ */
+const fallbackLimited = createFallbackLimiter(CONTACT_FALLBACK_LIMITS);
+let fallbackLogged = false;
 
 /**
  * useActionState-compatible wrapper around sendEmail. The contact form
@@ -158,31 +175,48 @@ export const sendEmail = async (
         return { error: issue.message, ...(field ? { field } : {}) };
     }
 
-    const { senderEmail, message } = validatedData.data;
+    const { message } = validatedData.data;
+    // The domain in ASCII ("bücher.de" → "xn--bcher-kva.de"), as DNS and
+    // the mail servers take it; the message goes out with this address.
+    const senderEmail = asciiAddress(validatedData.data.senderEmail);
+    if (!senderEmail) {
+        return { error: errors.emailInvalid, field: "senderEmail" };
+    }
 
     // Vercel WAF rate limit. The rule with ID "contact-form" must be
     // configured in the Vercel dashboard (Firewall → Rate Limit) — the
     // SDK only invokes the rule, it doesn't define it. Available on Pro
     // and Enterprise plans; on Hobby the SDK returns `error: 'not-found'`
-    // with `rateLimited: false`, so the form still works but is
-    // unprotected at this layer.
+    // with `rateLimited: false`, and the in-memory fallback stands in,
+    // logged once per instance.
     const headersList = await headers();
     const { rateLimited, error: rateLimitError } = await checkRateLimit(
         "contact-form",
         { headers: headersList },
     );
-    if (rateLimitError === "not-found") {
-        console.warn(
-            '[sendEmail] WAF rule "contact-form" not configured in Vercel dashboard — rate limiting is disabled.',
-        );
-    }
     if (rateLimited) {
         return { error: failures.tooMany };
     }
 
-    const validDomain = await hasValidMxRecords(senderEmail);
-    if (!validDomain) {
+    // False only when DNS says the domain takes no mail; a lookup that
+    // cannot finish lets the message through (lib/email-validation.ts).
+    if (!(await mayReceiveMail(senderEmail))) {
         return { error: errors.emailDomain, field: "senderEmail" };
+    }
+
+    // The fallback counts a send only once its domain has passed the mail
+    // check, so attempts to dead domains, which deliver nothing, cannot
+    // use up the instance's cap and lock everyone else out.
+    if (rateLimitError === "not-found") {
+        if (!fallbackLogged) {
+            fallbackLogged = true;
+            console.warn(
+                '[sendEmail] WAF rule "contact-form" not configured in the Vercel dashboard: using the in-memory fallback limit, which this instance alone keeps.',
+            );
+        }
+        if (fallbackLimited(senderAddress(headersList))) {
+            return { error: failures.tooMany };
+        }
     }
 
     const topic = await sentTopic(validatedData.data.topic);
@@ -194,13 +228,15 @@ export const sendEmail = async (
 
         // React Email renders {message} / {senderEmail} as text nodes, which
         // React already HTML-escapes. Passing pre-escaped values double-encoded
-        // them, so the recipient saw literal "&lt;" instead of "<".
+        // them, so the recipient saw literal "&lt;" instead of "<". The
+        // plain-text part keeps the sender's line breaks as written.
         const { data, error } = await resend.emails.send({
             from: "Contact Form <contact-form@email.adithya-rajendran.com>",
             to: config.toEmail,
             subject: contactSubject(topic),
             replyTo: senderEmail,
             react: ContactFormEmail({ message, senderEmail, topic }),
+            text: contactFormEmailText({ message, senderEmail, topic }),
         });
 
         // Resend reports a refused send (an unverified domain, the quota,

@@ -218,10 +218,15 @@ const nextConfig = {
         qualities: [75, 90],
         formats: ["image/avif", "image/webp"],
         minimumCacheTTL: 31536000,
+        // Only this project's and dataset's images, as lib/sanity-image.ts
+        // builds their URLs, so another Sanity project's cannot spend this
+        // site's transformations. Read from the env at build time: no id
+        // is written here.
         remotePatterns: [
             {
                 protocol: "https",
                 hostname: "cdn.sanity.io",
+                pathname: `/images/${process.env.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID || "fallback"}/${process.env.NEXT_PUBLIC_STORE_SANITY_DATASET || "production"}/**`,
             },
         ],
     },

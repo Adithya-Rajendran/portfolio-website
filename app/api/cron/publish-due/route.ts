@@ -3,25 +3,32 @@ import { after, connection, type NextRequest, NextResponse } from "next/server";
 import { defineQuery } from "next-sanity";
 import { warmBlogCache } from "@/actions/warmCache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
+import { sameSecret } from "@/lib/request-auth";
 import { client, isSanityConfigured } from "@/lib/sanity-config";
 
 const DUE_POSTS_QUERY = defineQuery(`*[
     _type == "post" &&
     defined(publishedAt) &&
-    publishedAt == $today
+    publishedAt > $since &&
+    publishedAt <= $today
 ].slug.current`);
+
+/** How far back a run looks, so a missed or failed run is caught up. */
+const DUE_WINDOW_DAYS = 7;
 
 /**
  * Vercel Cron target (vercel.json) — runs daily just after the UTC date
  * flips. Published visibility is date-based (`publishedAt <= $today`), so a
  * future-dated post becomes eligible on its UTC date but stays invisible
  * until something invalidates the cached queries. This route is that
- * something: it looks for posts whose publish date is today and, when
+ * something: it looks for posts whose publish date fell in the last week,
+ * up to today (so the next run catches up a day a run missed), and, when
  * found, revalidates the same tags the Sanity webhook would.
  *
  * Auth: Vercel attaches `Authorization: Bearer ${CRON_SECRET}` to cron
- * invocations when the CRON_SECRET env var is set. Anything else gets
- * the same stealth 404 the revalidate webhook uses.
+ * invocations when the CRON_SECRET env var is set; it is compared in
+ * constant time. Anything else, or a blank secret, gets the same stealth
+ * 404 the revalidate webhook uses.
  */
 export async function GET(req: NextRequest) {
     // Force request-time evaluation: without this, the env-check below can
@@ -30,11 +37,18 @@ export async function GET(req: NextRequest) {
     // not available under cacheComponents).
     await connection();
 
-    const cronSecret = process.env.CRON_SECRET;
+    // Trimmed, as the webhook's is: one of spaces alone is no secret, and
+    // is answered as if unset.
+    const cronSecret = process.env.CRON_SECRET?.trim();
     if (!cronSecret) {
         return new NextResponse(null, { status: 404 });
     }
-    if (req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
+    if (
+        !sameSecret(
+            req.headers.get("authorization") ?? "",
+            `Bearer ${cronSecret}`,
+        )
+    ) {
         return new NextResponse(null, { status: 404 });
     }
     if (!isSanityConfigured) {
@@ -44,9 +58,14 @@ export async function GET(req: NextRequest) {
     try {
         // This deliberately bypasses sanityFetch so the scheduled request
         // can see the new publication date before invalidating the cache.
+        // UTC dates, as the pages' gate (`publishedAt <= $today`) reads them.
         const now = new Date();
         const today = now.toISOString().slice(0, 10);
+        const since = new Date(now.getTime() - DUE_WINDOW_DAYS * 86_400_000)
+            .toISOString()
+            .slice(0, 10);
         const dueSlugs = await client.fetch<string[]>(DUE_POSTS_QUERY, {
+            since,
             today,
         });
         const slugs = (dueSlugs ?? []).filter(Boolean);
