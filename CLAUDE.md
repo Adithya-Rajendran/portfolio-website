@@ -1089,8 +1089,10 @@ deployment require an authenticated Sanity CLI session.
       commit, once deployed, brings one without the gate and can read the
       repository's secrets. The control that holds is Vercel's Git Fork
       Protection (a fork's pull request is not deployed without the
-      owner's approval; never approve one that touches `.github/` or
-      `tests/`), so the owner confirms it is on before adding
+      owner's approval; read a fork's whole diff before approving its
+      deployment, because the deployment runs the fork's code with the
+      repository's secrets and the Preview environment variables), so the
+      owner confirms it is on before adding
       `VERCEL_AUTOMATION_BYPASS_SECRET`. The gate takes only deployments
       Vercel itself created (`vercel[bot]`). The same workflow runs weekly
       against the production site, which needs no secret, under the same

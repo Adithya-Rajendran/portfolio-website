@@ -61,8 +61,10 @@ jobs:
                   # hostile fork's commit, once deployed, brings a workflow
                   # without this check. The control that holds is Vercel's
                   # Git Fork Protection: no fork is deployed without the
-                  # owner's approval (never approve one that touches
-                  # .github/ or tests/).
+                  # owner's approval (read a fork's whole diff before
+                  # approving its deployment, because the deployment runs
+                  # the fork's code with the repository's secrets and the
+                  # Preview environment variables).
                   forks=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
                       --jq "[.[] | select(.head.repo.full_name != \"$GITHUB_REPOSITORY\")] | length")
                   if [ "$forks" != "0" ]; then
