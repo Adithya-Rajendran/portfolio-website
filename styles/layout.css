@@ -22,30 +22,6 @@
     }
 
     @media (min-width: 60rem) {
-        .grid > .span-3 {
-            grid-column: auto / span 3;
-        }
-        .grid > .span-4 {
-            grid-column: auto / span 4;
-        }
-        .grid > .span-5 {
-            grid-column: auto / span 5;
-        }
-        .grid > .span-6 {
-            grid-column: auto / span 6;
-        }
-        .grid > .span-7 {
-            grid-column: auto / span 7;
-        }
-        .grid > .span-8 {
-            grid-column: auto / span 8;
-        }
-        .grid > .span-12 {
-            grid-column: 1 / -1;
-        }
-        .grid > .start-9 {
-            grid-column-start: 9;
-        }
         /* named regions: a rail and the main column */
         .grid > .g-rail {
             grid-column: 1 / span 3;

@@ -7,10 +7,11 @@ import { siteUrlOf } from "@/lib/cv";
  * still carry legacy `link` markDefs. Both have the shape `{ href }` and
  * render the same way on the web (components/blogs/portable-text-components.tsx)
  * and in RSS (lib/feed.ts).
+ * @internal Exported for tests.
  */
 export const LINK_MARK_TYPES = ["contentLink", "link"] as const;
 
-export interface ResolvedLinkMark {
+interface ResolvedLinkMark {
     href: string;
     /** Opens in a new tab with `rel="noopener noreferrer"`. */
     external: boolean;

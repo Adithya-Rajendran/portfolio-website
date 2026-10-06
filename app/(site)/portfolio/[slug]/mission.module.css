@@ -147,21 +147,24 @@
 }
 .contents a {
     display: block;
-    padding-block: var(--s-2);
+    padding: var(--s-2) 0 var(--s-2) var(--s-4);
+    border-left: var(--rule-strong) solid transparent;
     color: var(--ink-2);
     font: 400 var(--step-0) / 1.4 var(--font-display);
     text-decoration: none;
+    transition: border-color var(--dur-3) var(--ease-dock);
 }
-.contents a:hover,
-.contents a[aria-current] {
+.contents a:hover {
     color: var(--ink-1);
     text-decoration: underline;
     text-decoration-thickness: 2px;
     text-underline-offset: 0.2em;
 }
-/* The current section: the contents' one "now" mark, in orange. */
+/* The current section: the contents' one "now" mark, in orange, the 2px
+   bar an entry's rail draws (post.module.css), never a rule under a link. */
 .contents a[aria-current] {
-    text-decoration-color: var(--accent);
+    border-left-color: var(--accent);
+    color: var(--ink-1);
 }
 
 .results {

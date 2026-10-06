@@ -31,6 +31,7 @@ export type ContactTopic = (typeof CONTACT_TOPICS)[number];
 /** A message sent without choosing a topic. */
 export const DEFAULT_CONTACT_TOPIC: ContactTopic = "hello";
 
+/** @internal Exported for tests. */
 export function isContactTopic(value: unknown): value is ContactTopic {
     return (
         typeof value === "string" &&

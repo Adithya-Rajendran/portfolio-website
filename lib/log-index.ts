@@ -1,5 +1,6 @@
 import type { PostListItem } from "@/lib/sanity-client";
 import { readingTimeFromWordCount } from "@/components/blogs/utils";
+import { dateOnly, MONTHS } from "@/lib/dates";
 import { logNumbers } from "@/lib/designations";
 import { collectTags, linkedTags, TAG_PATTERN } from "@/lib/tags";
 
@@ -30,12 +31,11 @@ export interface LogEntry {
     number: number;
 }
 
+/** @internal Exported for tests. */
 export type LogSource = Pick<
     PostListItem,
     "slug" | "title" | "description" | "publishedAt" | "tags" | "wordCount"
 > & { _id?: string | null };
-
-const DATE = /^\d{4}-\d{2}-\d{2}/;
 
 /**
  * Every entry with a slug, newest first (by number, so posts filed on the
@@ -49,9 +49,7 @@ export function logEntries(posts: readonly LogSource[]): LogEntry[] {
         .map((post) => {
             const number = numbers.get(post.slug)!;
             const wordCount = post.wordCount ?? 0;
-            const publishedAt = DATE.test(post.publishedAt ?? "")
-                ? post.publishedAt.slice(0, 10)
-                : "";
+            const publishedAt = dateOnly(post.publishedAt) ?? "";
             return {
                 slug: post.slug,
                 title: post.title || "",
@@ -83,24 +81,10 @@ export function entriesTagged(
     return entries.filter((entry) => entry.tags.includes(tag));
 }
 
-const MONTHS = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-];
-
 /** "2026-03-30" → "30 Mar 2026": the post head's date. */
 export function formatEntryDate(date: string | null | undefined): string {
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date ?? "");
-    if (!match) return "";
-    return `${Number(match[3])} ${MONTHS[Number(match[2]) - 1]} ${match[1]}`;
+    const day = dateOnly(date);
+    if (!day) return "";
+    const [year, month, dayOfMonth] = day.split("-").map(Number);
+    return `${dayOfMonth} ${MONTHS[month - 1]} ${year}`;
 }

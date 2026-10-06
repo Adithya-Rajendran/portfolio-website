@@ -229,6 +229,36 @@ test("an address that names a part of the CV opens the list there", async ({
     }
 });
 
+test("a part of the CV is found in the CV, not in a page kept mounted", async ({
+    page,
+}) => {
+    // /portfolio's tiles are #projects too, and a visited page stays
+    // mounted, hidden: a stand-in for it comes first in the document; a
+    // link on this page, outside the views, goes to the CV's Projects.
+    await page.goto("/resume");
+    await option(page, "Timeline").check();
+    await expect(page.locator("[data-journey]")).toBeVisible();
+    await page.evaluate(() => {
+        const stale = document.createElement("div");
+        stale.id = "projects";
+        stale.hidden = true;
+        const link = document.createElement("a");
+        link.href = "/resume#projects";
+        link.textContent = "To the projects";
+        document.body.prepend(stale);
+        document.body.append(link);
+    });
+    await page.getByRole("link", { name: "To the projects" }).click();
+    await expect(option(page, "List")).toBeChecked();
+    await expect(
+        main(page).getByRole("heading", {
+            level: 2,
+            name: cvCopy.projects,
+            exact: true,
+        }),
+    ).toBeInViewport();
+});
+
 test("CV opens the list, whichever view the visit picked", async ({ page }) => {
     const cv = () =>
         main(page).getByRole("link", { name: homeCopy.cv, exact: true });

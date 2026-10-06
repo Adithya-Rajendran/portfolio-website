@@ -1,5 +1,6 @@
 import type { CvEntry } from "@/lib/cv";
 import { availabilityLine } from "@/lib/profile-content";
+import { monthYear } from "@/lib/dates";
 import { contactHref } from "@/lib/navigation";
 import type { TimelineDatePrecision } from "@/lib/profile-fields";
 import type { Availability } from "@/lib/sanity-client";
@@ -45,7 +46,8 @@ export function decimalYear(
     return year + (month - 0.5) * MONTH;
 }
 
-/** Today as a decimal year, to the day. */
+/** Today as a decimal year, to the day.
+ *  @internal Exported for tests. */
 export function todayYear(iso: string): number {
     const date = dateParts(iso);
     if (!date) return Number.NaN;
@@ -54,7 +56,7 @@ export function todayYear(iso: string): number {
     return year + (month - 1 + (day - 0.5) / days) * MONTH;
 }
 
-export interface Chapter {
+interface Chapter {
     id: string;
     kind: "work" | "education";
     flyby: boolean;
@@ -86,7 +88,7 @@ export interface Chapter {
     href: string;
 }
 
-export interface PlannedLeg {
+interface PlannedLeg {
     lines: string[];
     href: string;
 }
@@ -204,7 +206,7 @@ export function trajectoryData(
 
 /* ---- the route ---------------------------------------------------------- */
 
-export type SegmentKind = "coast" | "flyby" | "transfer" | "plan";
+type SegmentKind = "coast" | "flyby" | "transfer" | "plan";
 
 export interface Segment {
     kind: SegmentKind;
@@ -350,21 +352,6 @@ export function frameAt(route: Route, progress: number): Frame {
     };
 }
 
-const MONTHS = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-];
-
 /** The mission date for the readout: "Mar 2024", or "2021" where the
  *  record holds only the year. A year-only bound never gets a month: not
  *  while its chapter is held (a year-only start holds the whole chapter to
@@ -396,5 +383,5 @@ export function missionDate(
           );
     if (yearOnly) return String(year);
     const month = Math.min(11, Math.max(0, Math.floor((at - year) * 12)));
-    return `${MONTHS[month]} ${year}`;
+    return monthYear(year, month + 1);
 }

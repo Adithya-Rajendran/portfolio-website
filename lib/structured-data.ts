@@ -4,6 +4,7 @@
  * exercise without React or a Sanity connection.
  */
 import { siteConfig } from "@/lib/config";
+import { dateOnly } from "@/lib/dates";
 import {
     getProfileDescription,
     getProfileLinks,
@@ -52,7 +53,7 @@ function optional<Key extends string>(
     return value ? ({ [key]: value } as Record<Key, string>) : {};
 }
 
-export interface PersonEntityInput {
+interface PersonEntityInput {
     profile: ProfileData | null;
     imageUrl?: string;
 }
@@ -170,10 +171,8 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
  */
 export function buildProfilePage(input: PersonEntityInput) {
     const credentials = buildHasCredential(input.profile?.credentials);
-    const day = (value: string | null | undefined) =>
-        /^\d{4}-\d{2}-\d{2}/.exec(value ?? "")?.[0];
-    const created = day(input.profile?._createdAt);
-    const modified = day(input.profile?._updatedAt);
+    const created = dateOnly(input.profile?._createdAt);
+    const modified = dateOnly(input.profile?._updatedAt);
 
     return {
         "@type": "ProfilePage",

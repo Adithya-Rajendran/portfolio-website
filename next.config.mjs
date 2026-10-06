@@ -63,8 +63,10 @@ const nextConfig = {
                         value: "max-age=63072000; includeSubDomains; preload",
                     },
                     {
+                        // Nothing on the site asks for these, nor may a
+                        // frame (the video embeds).
                         key: "Permissions-Policy",
-                        value: "camera=(), microphone=(), geolocation=()",
+                        value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
                     },
                     {
                         // 'unsafe-inline' in script-src is structurally
@@ -215,9 +217,11 @@ const nextConfig = {
         ];
     },
     images: {
+        // Sanity's CDN makes each srcset width (lib/sanity-image-loader.ts),
+        // so Vercel's optimizer, and its formats and cache, are not used.
+        loader: "custom",
+        loaderFile: "./lib/sanity-image-loader.ts",
         qualities: [75, 90],
-        formats: ["image/avif", "image/webp"],
-        minimumCacheTTL: 31536000,
         remotePatterns: [
             {
                 protocol: "https",

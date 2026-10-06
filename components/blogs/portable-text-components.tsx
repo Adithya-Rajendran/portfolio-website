@@ -25,7 +25,7 @@ import {
  * the RSS feed, so they agree. Pass its `body`
  * (the footnotes are numbered there) to <PortableText>.
  */
-export interface ProseContext {
+interface ProseContext {
     index: ProseIndex;
     /** Shiki markup by code block `_key` (lib/highlight-code.ts). */
     highlightedCode: Record<string, string>;

@@ -104,6 +104,7 @@ function footnotedTextBlock(
  * (location) stays empty.
  * The UC Santa Cruz years are known only to the year (2019 – 2023), so both
  * dates are stored with year precision and printed without a month.
+ * @internal Exported for tests.
  */
 export const FIXTURE_PROFILE: ProfileData = {
     _id: "profile",
@@ -690,6 +691,7 @@ function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
  * say they are fixtures and they describe no real work: one fills every
  * mission field and links callouts to its essay and to a fixture post, one
  * has estimated years ("c. 2023"), and one is planned, without dates.
+ * @internal Exported for tests.
  */
 export const FIXTURE_PROJECTS: ProjectWithBody[] = [
     ...SEED_PROJECTS.map(fixtureFromSeed),
@@ -829,6 +831,7 @@ function listProject(project: ProjectWithBody): ProjectListItem {
 /**
  * A renderer-only project fixture. It deliberately exercises every custom
  * contentBody member but is never returned by the public project-list query.
+ * @internal Exported for tests.
  */
 export const PROJECT_ESSAY_FIXTURE: ProjectWithBody = {
     _id: "fixture-project-essay",
@@ -855,6 +858,8 @@ export const PROJECT_ESSAY_FIXTURE: ProjectWithBody = {
     body: [
         textBlock("Fixture heading", "h2"),
         textBlock("Paragraph, lists, marks, and quotes use Portable Text."),
+        // A second section, so the essay has its contents rail.
+        textBlock("Fixture second heading", "h2"),
         {
             _key: "fixture-callout",
             _type: "callout",

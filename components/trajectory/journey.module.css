@@ -171,9 +171,9 @@
     visibility: hidden;
     transform: translateY(12px);
     transition:
-        opacity 0.45s ease,
-        transform 0.45s ease,
-        visibility 0s linear 0.45s;
+        opacity var(--dur-5) var(--ease-dock),
+        transform var(--dur-5) var(--ease-dock),
+        visibility 0s linear var(--dur-5);
 }
 
 :global(html[data-js]) .card[data-on] {
@@ -181,8 +181,8 @@
     visibility: visible;
     transform: none;
     transition:
-        opacity 0.45s ease 0.08s,
-        transform 0.45s ease 0.08s,
+        opacity var(--dur-5) var(--ease-dock) 0.08s,
+        transform var(--dur-5) var(--ease-dock) 0.08s,
         visibility 0s;
 }
 
@@ -350,7 +350,7 @@
 
 /* ---- short wide screens (a laptop's browser window): denser record ---- */
 
-@media (min-width: 960px) and (max-height: 820px) {
+@media (min-width: 60rem) and (max-height: 51.25rem) {
     :global(html[data-js]) .inner {
         gap: var(--s-5);
     }
@@ -389,7 +389,7 @@
 
 /* ---- phones and small tablets: the scene above, the record below ------ */
 
-@media (max-width: 959.98px) {
+@media (max-width: 59.99rem) {
     /* The record keeps to the stage's lower 45%: the scene has the top. */
     :global(html[data-js]) .grid {
         grid-template-columns: 1fr;
@@ -490,7 +490,7 @@
 }
 
 /* A tablet has room for the names under the years. */
-@media (min-width: 600px) and (max-width: 959.98px) {
+@media (min-width: 37.5rem) and (max-width: 59.99rem) {
     .name {
         position: static;
         display: block;

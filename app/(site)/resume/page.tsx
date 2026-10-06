@@ -13,6 +13,7 @@ import Specs from "@/components/ui/specs";
 import { getToday } from "@/lib/clock";
 import { siteConfig } from "@/lib/config";
 import { cvCopy as copy } from "@/lib/copy";
+import { dateOnly } from "@/lib/dates";
 import {
     cvCredentials,
     cvEntries,
@@ -238,10 +239,7 @@ export default async function ResumePage() {
     const hasPdf = Boolean(resolveResumeAssetUrl(profile?.resumeUrl, "view"));
     // The résumé's upload date: the paper's revision. On screen it would
     // read as the page's own date, so it is not shown there.
-    const rev =
-        hasPdf && /^\d{4}-\d{2}-\d{2}/.test(profile?.resumeUploadedAt ?? "")
-            ? profile!.resumeUploadedAt!.slice(0, 10)
-            : null;
+    const rev = hasPdf ? dateOnly(profile?.resumeUploadedAt) : null;
     const summary = summaryOf(profile);
     const openTo = availabilityLine(profile?.availability);
 

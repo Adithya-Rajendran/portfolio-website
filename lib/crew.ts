@@ -16,7 +16,8 @@ import type {
  * profile leaves empty is left out, never filled in.
  */
 
-/** The finished role that ended last: the record's "Previously". */
+/** The finished role that ended last: the record's "Previously".
+ *  @internal Exported for tests. */
 export function previousRole(
     timeline: readonly TimelineEntry[] | null | undefined,
 ): CvEntry | null {
@@ -108,7 +109,7 @@ export function questions(
     return toRows(listed(items), posts, projects);
 }
 
-export interface NowGroup {
+interface NowGroup {
     kind: CuriosityKind;
     items: Question[];
 }
@@ -138,7 +139,7 @@ export function nowGroups(
     })).filter((group) => group.items.length > 0);
 }
 
-export interface RecordCell {
+interface RecordCell {
     id: "studying" | "previously" | "focus" | "links";
     value: string;
     /** The quieter line under the value, in parts each kept whole: the
