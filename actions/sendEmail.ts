@@ -72,7 +72,8 @@ const emailSchema = z.object({
 /**
  * The stopgap limit while the WAF rule is missing (lib/contact-rate-limit.ts):
  * this instance's memory, so it slows a burst rather than enforcing a limit
- * across the deployment. Its use is logged once per instance.
+ * across the deployment. It counts only sends whose domain passed the mail
+ * check (below). Its use is logged once per instance.
  */
 const fallbackLimited = createFallbackLimiter(CONTACT_FALLBACK_LIMITS);
 let fallbackLogged = false;
@@ -196,6 +197,16 @@ export const sendEmail = async (
     if (rateLimited) {
         return { error: failures.tooMany };
     }
+
+    // False only when DNS says the domain takes no mail; a lookup that
+    // cannot finish lets the message through (lib/email-validation.ts).
+    if (!(await mayReceiveMail(senderEmail))) {
+        return { error: errors.emailDomain, field: "senderEmail" };
+    }
+
+    // The fallback counts a send only once its domain has passed the mail
+    // check, so attempts to dead domains, which deliver nothing, cannot
+    // use up the instance's cap and lock everyone else out.
     if (rateLimitError === "not-found") {
         if (!fallbackLogged) {
             fallbackLogged = true;
@@ -206,12 +217,6 @@ export const sendEmail = async (
         if (fallbackLimited(senderAddress(headersList))) {
             return { error: failures.tooMany };
         }
-    }
-
-    // False only when DNS says the domain takes no mail; a lookup that
-    // cannot finish lets the message through (lib/email-validation.ts).
-    if (!(await mayReceiveMail(senderEmail))) {
-        return { error: errors.emailDomain, field: "senderEmail" };
     }
 
     const topic = await sentTopic(validatedData.data.topic);

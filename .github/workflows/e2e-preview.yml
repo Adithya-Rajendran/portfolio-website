@@ -55,7 +55,14 @@ jobs:
                       exit 0
                   fi
                   # The test step runs the deployed commit's code with the
-                  # secret, so a fork's pull request never gets there.
+                  # secret, so a fork's pull request stops here. This holds
+                  # for an honest fork only: on deployment_status GitHub
+                  # runs the deployed commit's own copy of this file, so a
+                  # hostile fork's commit, once deployed, brings a workflow
+                  # without this check. The control that holds is Vercel's
+                  # Git Fork Protection: no fork is deployed without the
+                  # owner's approval (never approve one that touches
+                  # .github/ or tests/).
                   forks=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
                       --jq "[.[] | select(.head.repo.full_name != \"$GITHUB_REPOSITORY\")] | length")
                   if [ "$forks" != "0" ]; then
@@ -67,7 +74,10 @@ jobs:
                   echo "enabled=true" >> "$GITHUB_OUTPUT"
 
     preview:
-        name: Browser tests on ${{ github.event_name == 'schedule' && 'the production site' || 'the preview' }}
+        # A static name: GitHub shows a skipped job's name unevaluated, so
+        # an expression here would read as code in the checks list. The
+        # test step's name and the run's summary say where it ran.
+        name: Browser tests on the preview
         needs: gate
         if: needs.gate.outputs.enabled == 'true'
         runs-on: ubuntu-latest
@@ -79,9 +89,11 @@ jobs:
         # never to checkout, the dependency install or the Playwright
         # install (which runs apt), and never to the production run.
         # Note: on deployment_status, checkout gets the deployed commit, so
-        # the test step runs that commit's code with the secret (the gate
-        # keeps a fork's out); the secret only opens this project's
-        # protected previews.
+        # the test step runs that commit's code with the secret. The gate
+        # keeps an honest fork's out; a hostile fork's commit brings its
+        # own workflow, so Vercel's Git Fork Protection is what keeps it
+        # from the secret. The secret only opens this project's protected
+        # previews.
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             # pnpm version comes from package.json "packageManager".
@@ -100,7 +112,10 @@ jobs:
                   # Protection Bypass for Automation. Sent to the preview
                   # origin only (tests/e2e/support/test.ts).
                   VERCEL_AUTOMATION_BYPASS_SECRET: ${{ github.event_name != 'schedule' && secrets.VERCEL_AUTOMATION_BYPASS_SECRET || '' }}
-              run: pnpm test:e2e:preview
+                  TARGET: ${{ github.event_name == 'schedule' && 'the production site' || 'the preview' }}
+              run: |
+                  echo "Browser tests on $TARGET: $BASE_URL" >> "$GITHUB_STEP_SUMMARY"
+                  pnpm test:e2e:preview
             - name: Upload the report and screenshots
               if: ${{ !cancelled() }}
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

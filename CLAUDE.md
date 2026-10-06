@@ -628,7 +628,7 @@ only live in comments or commit messages.
        `Authorization: Bearer ${CRON_SECRET}` (Vercel attaches it
        automatically), compared in constant time; missing/wrong auth →
        stealth 404. If `CRON_SECRET`
-       is unset, same-day publishing silently degrades to the pages' daily
+       is unset (or blank), same-day publishing silently degrades to the pages' daily
        cache revalidation.
 - `lib/route-tags.ts` is the route → tag table: every URL the app serves
   (pages, share images at their built URL, the feed, the sitemap, the CV
@@ -703,7 +703,9 @@ only live in comments or commit messages.
   the SDK returns `error: "not-found"`, a warning is logged once per
   function instance, and an in-memory fallback stands in
   (`lib/contact-rate-limit.ts`: 5 sends an address in 10 minutes, 30 per
-  instance). Each instance keeps its own counts and a cold start forgets
+  instance, counted only once the sender's domain passes the mail check,
+  so attempts to dead domains lock no one out). Each instance keeps its
+  own counts and a cold start forgets
   them, so it slows a burst but is no deployment-wide limit; the form does
   not fail closed.
 - **Vercel BotID** — invisible bot check. The client protect list is
@@ -770,8 +772,8 @@ only live in comments or commit messages.
   message, and promises nothing: no reply address, no reply time, no
   auto-reply.
 - **Sanity webhook** — `app/api/revalidate/route.ts` requires
-  `SANITY_REVALIDATE_SECRET`; if unset, the route 404s on every request
-  and cache invalidation is silently disabled.
+  `SANITY_REVALIDATE_SECRET`; if unset (or blank once trimmed), the route
+  404s on every request and cache invalidation is silently disabled.
 - **Vercel Cron** — `vercel.json` schedules `/api/cron/publish-due` daily
   (Hobby plan allows daily crons; times are approximate, within the hour).
   Requires `CRON_SECRET` in the project's Vercel env. Crons only run on
@@ -1078,11 +1080,21 @@ deployment require an authenticated Sanity CLI session.
       `BASE_URL=<url>`, plus `VERCEL_AUTOMATION_BYPASS_SECRET` for protected
       previews (sent to that origin only, and never traced, because traces
       record request headers and CI uploads the report). CI runs it on every successful
-      Vercel preview (`.github/workflows/e2e-preview.yml`); while that
-      repository secret is missing, or for a fork's pull request, its gate
-      job leaves the test job skipped, with a notice, never passed. The same
-      workflow runs weekly against the production site, which needs no
-      secret.
+      Vercel preview (`.github/workflows/e2e-preview.yml`, the check
+      "Browser tests on the preview"); while that repository secret is
+      missing, its gate job leaves the test job skipped, with a notice,
+      never passed. The gate also skips a fork's pull request, but that
+      stops an honest fork only: on `deployment_status` GitHub runs the
+      deployed commit's own copy of the workflow, so a hostile fork's
+      commit, once deployed, brings one without the gate and can read the
+      repository's secrets. The control that holds is Vercel's Git Fork
+      Protection (a fork's pull request is not deployed without the
+      owner's approval; never approve one that touches `.github/` or
+      `tests/`), so the owner confirms it is on before adding
+      `VERCEL_AUTOMATION_BYPASS_SECRET`. The gate takes only deployments
+      Vercel itself created (`vercel[bot]`). The same workflow runs weekly
+      against the production site, which needs no secret, under the same
+      check name (the test step and the run's summary name the target).
     - First run: `pnpm exec playwright install chromium` (add
       `--with-deps` on a machine without Chromium's system libraries).
     - Pages come from `tests/e2e/support/routes.ts`: the static pages, plus

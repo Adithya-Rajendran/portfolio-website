@@ -11,6 +11,7 @@ import {
     topicOptions,
     validateContactFields,
 } from "@/lib/contact";
+import { EMAIL_MAX_LENGTH } from "@/lib/contact-constants";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import type { Availability, ProfileData } from "@/lib/sanity-client";
 
@@ -272,6 +273,27 @@ describe("contact form checks", () => {
                 message: "x",
             }).senderEmail,
         ).toBeDefined();
+    });
+
+    it("takes an address of 254 characters at most, its local part 64", () => {
+        const of = (senderEmail: string) =>
+            validateContactFields({ senderEmail, message: "Hi" }).senderEmail;
+        const label = "d".repeat(63);
+        // 64 + 1 + 189 = 254 characters: the longest that goes.
+        const domain189 = `${label}.${label}.${"d".repeat(58)}.co`;
+        expect(domain189).toHaveLength(189);
+        expect(of(`${"a".repeat(64)}@${domain189}`)).toBeUndefined();
+        // One more anywhere is refused: 255 in all, or a local part of 65.
+        expect(of(`${"a".repeat(64)}@e${domain189}`)).toBe(
+            "Enter an email address like you@example.com.",
+        );
+        expect(of(`${"a".repeat(65)}@example.com`)).toBe(
+            "Enter an email address like you@example.com.",
+        );
+        expect(
+            of(`${"a".repeat(30)}.${"b".repeat(33)}@example.com`),
+        ).toBeUndefined();
+        expect(EMAIL_MAX_LENGTH).toBe(254);
     });
 
     it("accepts what the server accepts: an apostrophe, a tag, a domain in any script", () => {

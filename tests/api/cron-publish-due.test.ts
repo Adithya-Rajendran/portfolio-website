@@ -79,6 +79,18 @@ describe("GET /api/cron/publish-due", () => {
         expect(revalidateTagMock).not.toHaveBeenCalled();
     });
 
+    it("404s without revalidating when CRON_SECRET is spaces alone", async () => {
+        process.env.CRON_SECRET = "   ";
+        const GET = await importGet();
+
+        for (const auth of ["Bearer    ", "Bearer", "Bearer "]) {
+            const res = await GET(requestWith(auth));
+            expect(res.status, JSON.stringify(auth)).toBe(404);
+        }
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(revalidateTagMock).not.toHaveBeenCalled();
+    });
+
     it("404s without revalidating on a wrong bearer token", async () => {
         const GET = await importGet();
 

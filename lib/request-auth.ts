@@ -21,7 +21,10 @@ export function sameSecret(given: string, expected: string): boolean {
 /** The header Sanity signs a webhook delivery in (@sanity/webhook). */
 export const SANITY_SIGNATURE_HEADER = "sanity-webhook-signature";
 
-const SIGNATURE = /^t=(\d+)[, ]+v1=([^, ]+)$/;
+/** The timestamp a header leads with; the whole header is checked below. */
+const SIGNATURE = /^t=(\d+),v1=/;
+/** @sanity/webhook's floor for that timestamp: 1 January 2021, in ms. */
+const MINIMUM_TIMESTAMP = 1_609_459_200_000;
 
 /**
  * Sanity's signature for a delivery: `t=<ms>,v1=<sig>`, where `sig` is the
@@ -40,17 +43,24 @@ export function sanitySignature(
 }
 
 /**
- * Whether a delivery's body is signed with the shared secret, its HMAC
- * compared in constant time (`sameSecret`). A missing or malformed header,
- * or an empty body, is not signed.
+ * Whether a delivery's body is signed with the shared secret, as
+ * @sanity/webhook's `isValidSignature` decides it: the header must be
+ * exactly the one Sanity would write for that body and timestamp
+ * (compared in constant time, `sameSecret`). A missing or other-shaped
+ * header, a timestamp before 2021, an empty body, or a secret that is
+ * empty once trimmed (an HMAC under an empty key is one anybody can
+ * make) is not signed.
  */
 export function isSignedBySanity(
     body: string,
     header: string | null,
     secret: string,
 ): boolean {
-    const match = SIGNATURE.exec(header?.trim() ?? "");
-    if (!match || !body) return false;
-    const expected = sanitySignature(body, Number(match[1]), secret.trim());
-    return sameSecret(match[2], SIGNATURE.exec(expected)![2]);
+    const key = secret.trim();
+    const given = header?.trim() ?? "";
+    const match = SIGNATURE.exec(given);
+    if (!key || !body || !match) return false;
+    const timestamp = Number(match[1]);
+    if (!(timestamp >= MINIMUM_TIMESTAMP)) return false;
+    return sameSecret(given, sanitySignature(body, timestamp, key));
 }

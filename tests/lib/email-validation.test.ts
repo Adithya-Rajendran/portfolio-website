@@ -57,6 +57,17 @@ describe("asciiAddress", () => {
         expect(asciiAddress("a@localhost")).toBeNull();
         expect(asciiAddress("no-at-sign")).toBeNull();
     });
+
+    it("has no answer when the ASCII address passes 254 characters", () => {
+        // "bücher" is "xn--bcher-kva" in ASCII: seven characters longer.
+        const typed = (n: number) =>
+            `${"a".repeat(64)}@${"d".repeat(63)}.${"e".repeat(63)}.${"f".repeat(n)}.bücher.de`;
+        expect(typed(40)).toHaveLength(243);
+        expect(asciiAddress(typed(40))).toHaveLength(250);
+        // 253 as typed, which the form takes, but 260 sent: refused.
+        expect(typed(50)).toHaveLength(253);
+        expect(asciiAddress(typed(50))).toBeNull();
+    });
 });
 
 describe("mayReceiveMail", () => {

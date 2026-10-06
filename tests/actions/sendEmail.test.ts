@@ -221,6 +221,28 @@ describe("sendEmail — schema validation", () => {
         expect(resolveMxMock).toHaveBeenCalledWith("xn--bcher-kva.de");
     });
 
+    it("refuses an address the form refuses for its length, before any lookup", async () => {
+        withIp("10.0.0.7");
+        const sendEmail = await importSendEmail();
+
+        for (const senderEmail of [
+            // A local part of 65 characters.
+            `${"a".repeat(65)}@example.com`,
+            // 255 characters in all.
+            `${"a".repeat(64)}@${"d".repeat(63)}.${"e".repeat(63)}.${"f".repeat(59)}.co`,
+        ]) {
+            const result = await sendEmail(
+                formDataOf({ senderEmail, message: "hello" }),
+            );
+            expect(result, senderEmail).toEqual({
+                error: "Enter an email address like you@example.com.",
+                field: "senderEmail",
+            });
+        }
+        expect(resolveMxMock).not.toHaveBeenCalled();
+        expect(resendSendMock).not.toHaveBeenCalled();
+    });
+
     it("refuses an empty address as the form does", async () => {
         withIp("10.0.0.6");
         const sendEmail = await importSendEmail();
@@ -314,6 +336,43 @@ describe("sendEmail — fallback limit while the WAF rule is missing", () => {
         );
         expect(notes).toHaveLength(1);
         warn.mockRestore();
+    });
+
+    it("counts only sends whose domain takes mail, so dead domains lock no one out", async () => {
+        checkRateLimitMock.mockResolvedValue({
+            rateLimited: false,
+            error: "not-found",
+        });
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const sendEmail = await importSendEmail();
+        const send = (senderEmail: string) =>
+            sendEmail(formDataOf({ senderEmail, message: "hi" }));
+
+        // Thirty refusals from six addresses, the instance's whole cap.
+        resolveMxMock.mockRejectedValue(dnsError("ENOTFOUND"));
+        for (let ip = 0; ip < 6; ip += 1) {
+            withIp(`10.0.7.${ip}`);
+            for (let i = 0; i < 5; i += 1) {
+                await expect(send("a@dead.example")).resolves.toMatchObject({
+                    field: "senderEmail",
+                });
+            }
+        }
+
+        // None of them counted: the same addresses still send, five each.
+        resolveMxMock.mockResolvedValue([
+            { exchange: "mx.example.com", priority: 10 },
+        ]);
+        withIp("10.0.7.0");
+        for (let i = 0; i < 5; i += 1) {
+            await expect(send("a@example.com")).resolves.toHaveProperty("data");
+        }
+        await expect(send("a@example.com")).resolves.toEqual({
+            error: "Too many messages were sent in a short time. Try again in a few minutes.",
+        });
+        withIp("10.0.7.99");
+        await expect(send("a@example.com")).resolves.toHaveProperty("data");
+        vi.mocked(console.warn).mockRestore();
     });
 
     it("leaves the count to the WAF rule while it exists", async () => {

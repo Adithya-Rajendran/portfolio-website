@@ -89,6 +89,28 @@ describe("POST /api/revalidate", () => {
         expect(afterMock).not.toHaveBeenCalled();
     });
 
+    it("rejects a secret of spaces alone, even signed with an empty key", async () => {
+        vi.stubEnv("SANITY_REVALIDATE_SECRET", "   ");
+        const POST = await importPost();
+
+        // What anybody can sign: an HMAC under the empty key the blank
+        // secret trims to.
+        const response = await POST(request(undefined, { secret: "" }));
+
+        expect(response.status).toBe(404);
+        expect(revalidateTagMock).not.toHaveBeenCalled();
+        expect(afterMock).not.toHaveBeenCalled();
+    });
+
+    it("trims the configured secret as Sanity's toolkit does", async () => {
+        vi.stubEnv("SANITY_REVALIDATE_SECRET", ` ${SECRET}\n`);
+        const POST = await importPost();
+
+        const response = await POST(request());
+
+        expect(response.status).toBe(200);
+    });
+
     it("rejects a missing or invalid signature without invalidating or warming", async () => {
         const POST = await importPost();
         const body = JSON.stringify({ _type: "profile" });

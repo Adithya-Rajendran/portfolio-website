@@ -1,5 +1,6 @@
 import dns from "dns/promises";
 import { domainToASCII } from "node:url";
+import { EMAIL_MAX_LENGTH } from "@/lib/contact-constants";
 
 /**
  * The contact form's server-side address checks, after the shape the form
@@ -24,14 +25,16 @@ export const MAIL_CHECK_TIMEOUT_MS = 3000;
 /**
  * The address with its domain in ASCII ("user@bücher.de" →
  * "user@xn--bcher-kva.de"), or null when the domain has no valid ASCII
- * form.
+ * form or the ASCII address is longer than a mail path carries
+ * (`EMAIL_MAX_LENGTH`: a domain in another script can grow past it).
  */
 export function asciiAddress(email: string): string | null {
     const at = email.lastIndexOf("@");
     const domain = domainToASCII(email.slice(at + 1));
     if (at < 1 || !domain || domain.length > 253) return null;
     if (!DOMAIN_PATTERN.test(domain)) return null;
-    return `${email.slice(0, at)}@${domain}`;
+    const address = `${email.slice(0, at)}@${domain}`;
+    return address.length > EMAIL_MAX_LENGTH ? null : address;
 }
 
 /** A lookup DNS could not answer: it proves nothing about the address. */

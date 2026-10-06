@@ -27,8 +27,8 @@ const DUE_WINDOW_DAYS = 7;
  *
  * Auth: Vercel attaches `Authorization: Bearer ${CRON_SECRET}` to cron
  * invocations when the CRON_SECRET env var is set; it is compared in
- * constant time. Anything else gets the same stealth 404 the revalidate
- * webhook uses.
+ * constant time. Anything else, or a blank secret, gets the same stealth
+ * 404 the revalidate webhook uses.
  */
 export async function GET(req: NextRequest) {
     // Force request-time evaluation: without this, the env-check below can
@@ -37,7 +37,9 @@ export async function GET(req: NextRequest) {
     // not available under cacheComponents).
     await connection();
 
-    const cronSecret = process.env.CRON_SECRET;
+    // Trimmed, as the webhook's is: one of spaces alone is no secret, and
+    // is answered as if unset.
+    const cronSecret = process.env.CRON_SECRET?.trim();
     if (!cronSecret) {
         return new NextResponse(null, { status: 404 });
     }

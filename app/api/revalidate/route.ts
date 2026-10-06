@@ -9,8 +9,10 @@ import {
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { SANITY_SIGNATURE_HEADER, isSignedBySanity } from "@/lib/request-auth";
 
-// Secret shared between Sanity webhook and this API route
-const revalidateSecret = process.env.SANITY_REVALIDATE_SECRET;
+// Secret shared between Sanity webhook and this API route, trimmed as
+// @sanity/webhook trims it. One of spaces alone is no secret: an HMAC
+// under an empty key is one anybody can make.
+const revalidateSecret = process.env.SANITY_REVALIDATE_SECRET?.trim();
 
 /**
  * What the webhook's projection sends: the document's type, which picks
@@ -31,16 +33,17 @@ const CONSISTENCY_WAIT_MS = 3000;
 
 /**
  * The Sanity webhook (CLAUDE.md, caching contract). Its answers, so the
- * delivery log tells each case apart: 404 when the secret is unset or the
- * signature is missing or wrong (the stealth 404 the cron uses too; the
- * signature's HMAC is compared in constant time, lib/request-auth.ts),
+ * delivery log tells each case apart: 404 when the secret is unset (or
+ * blank) or the signature is missing or wrong (the stealth 404 the cron uses too; the
+ * signature is compared whole, in constant time, lib/request-auth.ts),
  * 400 for a signed body that is not a document's type and slug, 200 with
  * `ignored` for a type no page shows (an asset, a system document), and
  * 500 when revalidating fails.
  */
 export async function POST(req: NextRequest) {
     try {
-        // If no secret is configured, stealthily drop the request
+        // If no secret is configured (or a blank one), stealthily drop the
+        // request
         if (!revalidateSecret) {
             return new NextResponse(null, { status: 404 });
         }

@@ -151,13 +151,15 @@ export type ContactFieldErrors = Partial<Record<keyof ContactFields, string>>;
 
 /**
  * An email address's shape, the same in the form and the server action,
- * so the form flags what the server would refuse: a local part in RFC
- * 5322's dot-atom (letters, digits and !#$%&'*+/=?^_`{|}~-, dots between
- * them: "o'brien@…" passes), then a domain of two or more labels in any
- * script ("bücher.de"), which the server looks up in its ASCII form.
+ * so the form flags what the server would refuse: a local part of 64
+ * characters at most (RFC 5321) in RFC 5322's dot-atom (letters, digits
+ * and !#$%&'*+/=?^_`{|}~-, dots between them: "o'brien@…" passes), then a
+ * domain of two or more labels in any script ("bücher.de"), which the
+ * server looks up in its ASCII form. The whole address is
+ * `EMAIL_MAX_LENGTH` (254) at most.
  */
 export const EMAIL_PATTERN =
-    /^[\w!#$%&'*+/=?^`{|}~-]+(?:\.[\w!#$%&'*+/=?^`{|}~-]+)*@(?:[\p{L}\p{N}](?:[\p{L}\p{M}\p{N}-]*[\p{L}\p{M}\p{N}])?\.)+[\p{L}\p{N}](?:[\p{L}\p{M}\p{N}-]*[\p{L}\p{M}\p{N}])?$/u;
+    /^(?=[^@]{1,64}@)[\w!#$%&'*+/=?^`{|}~-]+(?:\.[\w!#$%&'*+/=?^`{|}~-]+)*@(?:[\p{L}\p{N}](?:[\p{L}\p{M}\p{N}-]*[\p{L}\p{M}\p{N}])?\.)+[\p{L}\p{N}](?:[\p{L}\p{M}\p{N}-]*[\p{L}\p{M}\p{N}])?$/u;
 
 /**
  * The form's own checks before it sends, worded for the field they
