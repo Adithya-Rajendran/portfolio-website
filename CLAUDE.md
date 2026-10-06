@@ -79,9 +79,10 @@ only live in comments or commit messages.
   route request-bound. The header's `ThemeSwitch` (one button, Void ↔
   Flight Manual) names the theme it switches to from `html[data-theme]`
   in CSS, so under Auto it follows the screen; the menu sheet (below
-  960px, where the switch is hidden) carries `ThemeChoice` (Void · Manual
-  · Auto, a `Segmented`), so each control shows once per breakpoint and
-  the footer repeats neither; it reads `lib/prefs.ts` through
+  960px, where the switch is hidden) carries `ThemeChoice` (Dark · Light
+  · System, the values `void` · `manual` · `auto`, a `Segmented`), so
+  each control shows once per breakpoint and the footer repeats neither;
+  it reads `lib/prefs.ts` through
   `useSyncExternalStore` (server snapshot `undefined`). Spatial motion runs
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
@@ -240,7 +241,11 @@ only live in comments or commit messages.
   names none. Flight Manual prints no city lights. A still flight (reduced motion, Pause
   motion) opens on the whole system with the latest chapter's card; the
   ask stays the rail's last stop. The figure line is "Not to scale ·
-  Maps: NASA, Solar System Scope (CC BY 4.0)".
+  Maps: NASA, Solar System Scope (CC BY 4.0)". The maps, their sources
+  and licences, and the script that encodes them
+  (`node scripts/encode-trajectory-textures.mjs`) are in
+  `public/images/trajectory/README.md`; `/public` is cached immutably,
+  so rename a map when you re-encode it.
 - **Prefetching** (plan §4.6 rule 8). The app-wide `partialPrefetching`
   flag is off: in Next.js 16.3.4 it made the first request for an unknown
   post or tag slug answer 200 instead of 404 on `next start`. The two
@@ -351,7 +356,8 @@ only live in comments or commit messages.
   model's title is not one the owner wrote), and a post's project row
   stays text only. On a card and a head the
   cover's caption is the plate's credit line (`Plate credit`,
-  `.caption__src`: DM Mono 13px, ink-3, as the hero's credit); the stage
+  `.caption__src`: DM Mono 13px in ink-3; the hero's credit, over the
+  photograph, is the same mono in ink-2); the stage
   keeps it as the owner's caption. A card's cover never outweighs the
   stage's photograph (`home.spec.ts`, `missions.spec.ts`). `missionLayout` picks the page's layout: the full file
   where there is evidence (a brief that adds to the card, `briefAdds`;
@@ -527,7 +533,12 @@ only live in comments or commit messages.
 
 - `app/layout.tsx` is the minimal root layout shared by the public site and
   the Studio: `<html>`, fonts, BotID and route-independent metadata only.
-  Do not add site CSS, chrome, JSON-LD or analytics there.
+  Do not add site CSS, chrome, JSON-LD or analytics there. Its `viewport`
+  (and the 404's) sets no `viewportFit`, so a phone keeps the page inside
+  the notch and the home indicator and nothing pads for them; a change to
+  `viewport-fit=cover` (an edge-to-edge hero or flight) adds
+  `env(safe-area-inset-*)` padding to the header, the flight's rail and
+  Play, and the footer in the same change.
 - Every public page lives under `app/(site)/` (route groups do not change
   URLs). `app/(site)/layout.tsx` renders `components/chrome/site-shell.tsx`:
   the global stylesheet, the skip link, the icon sprite, the server-rendered
@@ -622,7 +633,9 @@ only live in comments or commit messages.
        (schedule in `vercel.json`, 00:05 UTC). `publishedAt` is a date and
        visibility is gated by `publishedAt <= $today`, so a future post
        crosses the gate on its UTC date without a document change. The cron
-       performs an uncached query for posts dated today, revalidates the
+       performs an uncached query for posts dated in the last seven days,
+       today included, so a run that is missed or fails is made good by the
+       next one within that window; when it finds any, it revalidates the
        `post` tag and warms its routes. Auth is
        `Authorization: Bearer ${CRON_SECRET}` (Vercel attaches it
        automatically); missing/wrong auth → stealth 404. If `CRON_SECRET`
@@ -646,7 +659,8 @@ only live in comments or commit messages.
   e2e smoke spec requests every warmed URL. Redirect routes (`redirects`)
   are warmed without following the redirect.
 - Derived artifacts that include the post list (`app/feed.xml/route.ts`,
-  `app/sitemap.ts`) use `cacheLife("days")`, never `"max"`: a post whose
+  and the sitemap's route handler, `app/sitemap.xml/route.ts`) use
+  `cacheLife("days")`, never `"max"`: a post whose
   `publishedAt` arrives must reach them within a day even if the cron is
   missing, because their tags only fire on the webhook or the cron.
 - Cache keys are derived from the literal GROQ query string passed into
@@ -694,11 +708,13 @@ only live in comments or commit messages.
 - **`security.txt`** (`public/.well-known/security.txt`, RFC 9116): Contact
   is the `/contact` form, never an address; `Expires` must stay within a
   year, so renew it yearly (the smoke spec fails once it lapses).
-- **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
-  `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in
-  the Vercel dashboard (Firewall → Rate Limit). If the rule is absent,
-  the SDK returns `error: "not-found"`, a warning is logged, and the form
-  still works but is unprotected at that layer — it does not fail closed.
+- **Rate limiting** — `actions/sendEmail.ts` calls `checkRateLimit()`
+  (`@vercel/firewall`) against the `contact-form` rule in the Vercel
+  dashboard (Firewall → Rate Limit, a Pro or Enterprise feature). If the
+  rule is absent, the SDK returns `error: "not-found"` and the action
+  applies its own fallback limit in code instead, so the form is still
+  limited, though only as well as that fallback can count; it does not
+  fail closed.
 - **Vercel BotID** — invisible bot check. The client protect list is
   registered in `app/layout.tsx` (`<BotIdClient protect={[...]} />`); each
   server action verifies the challenge with `checkBotId()` from
@@ -797,7 +813,11 @@ Sanity commands; never commit their concrete values.
 
 Commit the regenerated `schema.json` and `sanity.types.ts`. Schema extraction
 and TypeGen are local; dataset export, migration execution, and schema
-deployment require an authenticated Sanity CLI session.
+deployment require an authenticated Sanity CLI session. The embedded Studio
+ships with the site, but the hosted copy of the schema (the one the Sanity
+MCP tools and dashboard read) does not: once a schema change is on
+production, the owner runs `pnpm exec sanity schema deploy` from that
+session, with the two variables loaded, so the hosted copy matches.
 
 - Option lists and pure rules that both the schema and the site read live
   in modules with no imports, because the Studio bundles them:
@@ -832,7 +852,9 @@ deployment require an authenticated Sanity CLI session.
   button verbs, form mechanics). When a profile value is empty its
   element is left out, never replaced by wording in code; the RSS
   channel, which must have a description, uses the feed's title.
-  `design/impl-log/phase-4-copy-audit.md` classifies every string.
+  The copy audit that classifies every string
+  (`design/impl-log/phase-4-copy-audit.md`) is in the owner's design
+  workspace, outside this repository.
   Availability is `availability.seeking[]` (one line per opening, joined
   with " · " by `availabilityLine` in `lib/profile-content.ts`); the older
   single `openTo` line is deprecated and read only while that list is
@@ -859,7 +881,8 @@ deployment require an authenticated Sanity CLI session.
   other fixture project, and every fixture post, is named as a fixture and
   describes no real work. The fixture profile holds only the owner's
   published values, plus the Open To lines and Site copy from
-  `design/impl-log/phase-4-profile-copy.json`: a field the real profile
+  `design/impl-log/phase-4-profile-copy.json` (in the owner's design
+  workspace, outside this repository): a field the real profile
   leaves empty stays empty. The fixture projects' short names come from
   the same file (none for the Gmail project, whose title leads).
 - Content migrations (`migrations/<name>/index.ts`) are run only by the owner,
@@ -1068,8 +1091,9 @@ deployment require an authenticated Sanity CLI session.
       `BASE_URL=<url>`, plus `VERCEL_AUTOMATION_BYPASS_SECRET` for protected
       previews (sent to that origin only, and never traced, because traces
       record request headers and CI uploads the report). CI runs it on every successful
-      Vercel preview (`.github/workflows/e2e-preview.yml`); it is skipped
-      with a notice while that repository secret is missing.
+      Vercel preview (`.github/workflows/e2e-preview.yml`); while that
+      repository secret is missing the job runs no test and reports itself
+      as skipped, never as passed.
     - First run: `pnpm exec playwright install chromium` (add
       `--with-deps` on a machine without Chromium's system libraries).
     - Pages come from `tests/e2e/support/routes.ts`: the static pages, plus
