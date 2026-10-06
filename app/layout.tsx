@@ -17,7 +17,10 @@ export const metadata: Metadata = {
 };
 
 // theme-color and color-scheme are added by the boot script (ThemeBootScript)
-// for the theme it applies.
+// for the theme it applies. No viewportFit: a phone keeps the page inside
+// the notch and the home indicator, so nothing pads for them. "cover" (an
+// edge-to-edge hero or flight) needs env(safe-area-inset-*) padding on the
+// header, the flight's rail and Play, and the footer in the same change.
 export const viewport: Viewport = {
     width: "device-width",
     initialScale: 1,
