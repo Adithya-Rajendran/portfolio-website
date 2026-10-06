@@ -6,6 +6,7 @@ import {
 } from "@/lib/post-fields";
 import { listValuesOnly } from "@/lib/profile-fields";
 import { checkRevisedAt, IMAGE_KINDS } from "@/lib/project-fields";
+import { RESERVED_POST_SLUGS, checkSlug } from "@/lib/slugs";
 import { TAG_PATTERN } from "@/lib/tags";
 
 export default defineType({
@@ -30,7 +31,13 @@ export default defineType({
             type: "slug",
             group: "editorial",
             options: { source: "title", maxLength: 96 },
-            validation: (Rule) => Rule.required(),
+            // The site's slug shape and the addresses other pages answer
+            // (lib/slugs.ts).
+            validation: (Rule) =>
+                Rule.required().custom(
+                    (value: { current?: string } | undefined) =>
+                        checkSlug(value?.current, RESERVED_POST_SLUGS),
+                ),
         }),
         defineField({
             name: "description",
@@ -45,6 +52,8 @@ export default defineType({
             title: "Published At",
             type: "date",
             group: "editorial",
+            description:
+                "A calendar date in UTC. The post goes live at about 00:05 UTC on this date, which is the evening before in US time zones.",
             validation: (Rule) => Rule.required(),
         }),
         defineField({

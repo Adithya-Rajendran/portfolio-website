@@ -23,6 +23,7 @@
         "prepare": "husky"
     },
     "lint-staged": {
+        "*": "node scripts/check-project-ids.mjs",
         "*.{ts,tsx}": [
             "eslint --fix",
             "prettier --write"

@@ -8,6 +8,7 @@ import { siteConfig } from "@/lib/config";
 import { formatEntryDate } from "@/lib/log-index";
 import { urlForImage } from "@/lib/sanity-image";
 import { changeKindTitle } from "@/lib/post-fields";
+import { SAFE_SLUG } from "@/lib/slugs";
 import {
     calloutHeading,
     indexProse,
@@ -44,7 +45,6 @@ export function feedAlternates(canonical: string): Metadata["alternates"] {
     };
 }
 
-const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 const XML_ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
 
 function escapeXml(value: string): string {

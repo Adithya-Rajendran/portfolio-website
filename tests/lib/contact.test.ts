@@ -234,6 +234,10 @@ describe("contact topics", () => {
         expect(topicFromHash("#consulting", shown)).toBeNull();
         expect(topicFromHash("#message", shown)).toBeNull();
         expect(topicFromHash("", shown)).toBeNull();
+        // A malformed escape picks nothing instead of throwing.
+        expect(topicFromHash("#%", shown)).toBeNull();
+        expect(topicFromHash("#%E0%A4", shown)).toBeNull();
+        expect(topicFromHash("#%68iring", shown)).toBe("hiring");
     });
 });
 
@@ -268,6 +272,35 @@ describe("contact form checks", () => {
                 message: "x",
             }).senderEmail,
         ).toBeDefined();
+    });
+
+    it("accepts what the server accepts: an apostrophe, a tag, a domain in any script", () => {
+        for (const senderEmail of [
+            "o'brien@example.com",
+            "first.last+tag@sub.example.co.uk",
+            "x%y@example.com",
+            "user@bücher.de",
+            "user@xn--bcher-kva.example",
+        ]) {
+            expect(
+                validateContactFields({ senderEmail, message: "Hi" }),
+                senderEmail,
+            ).toEqual({});
+        }
+        for (const senderEmail of [
+            "not-an-email",
+            "a..b@example.com",
+            ".a@example.com",
+            "a b@example.com",
+            "a@-bad-.example",
+            "a@example.com.",
+        ]) {
+            expect(
+                validateContactFields({ senderEmail, message: "Hi" })
+                    .senderEmail,
+                senderEmail,
+            ).toBe("Enter an email address like you@example.com.");
+        }
     });
 
     it("checks the email when it is left filled, and every field from the first submit", () => {
