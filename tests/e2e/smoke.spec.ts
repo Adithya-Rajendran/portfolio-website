@@ -55,9 +55,13 @@ async function expectImages(request: APIRequestContext, paths: Set<string>) {
 }
 
 const SOME_TEXT = expect.stringMatching(/\S/);
+/** Text with every regular-expression metacharacter escaped, to match literally. */
+function escapeRegExp(text: string) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 /** An absolute address on the site (the canonical origin, on any build). */
 const SITE_URL = expect.stringMatching(
-    new RegExp(`^${siteConfig.url.replace(/\./g, "\\.")}(/|$)`),
+    new RegExp(`^${escapeRegExp(siteConfig.url)}(/|$)`),
 );
 const ISO_DATE = expect.stringMatching(/^\d{4}-\d{2}-\d{2}(T|$)/);
 const NAMED = { name: SOME_TEXT, url: SITE_URL };
