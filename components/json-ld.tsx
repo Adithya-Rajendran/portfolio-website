@@ -17,6 +17,7 @@ import {
     LD_IDS,
     type BlogPostingInput,
 } from "@/lib/structured-data";
+import type { WebSite, WithContext } from "schema-dts";
 
 /** Prevent CMS strings from closing the JSON-LD script element. */
 function safeJsonLd(data: unknown): string {
@@ -71,7 +72,7 @@ export async function WebSiteJsonLd() {
         url: siteConfig.url,
         ...(description ? { description } : {}),
         author: { "@id": LD_IDS.person },
-    };
+    } satisfies WithContext<WebSite>;
 
     return (
         <script

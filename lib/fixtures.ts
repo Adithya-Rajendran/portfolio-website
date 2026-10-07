@@ -895,6 +895,29 @@ export const PROJECT_ESSAY_FIXTURE: ProjectWithBody = {
     ] as ContentBody,
 };
 
+/**
+ * A project whose page fails, for the error page's browser test on the
+ * fixture build. Like the essay fixture it is never listed, so nothing
+ * prerenders it: requested, it renders on demand, its head renders and
+ * its writing's read fails (`getPostsByProject` in lib/sanity-client.ts),
+ * as a failed Sanity read would. Today that answers a bare "Internal
+ * Server Error" rather than app/(site)/error.tsx (the test's `test.fail`).
+ */
+export const FAILING_PROJECT_FIXTURE: ProjectWithBody = {
+    _id: "fixture-project-failing",
+    _updatedAt: "2026-07-11T00:00:00Z",
+    designation: 98,
+    title: "Fixture mission whose page fails",
+    slug: "e2e-render-error",
+    summary: "A non-published fixture whose page fails to render.",
+    status: "completed",
+    types: ["software"],
+    hasModel: false,
+    technologies: [],
+    highlights: [],
+    body: [],
+};
+
 export function resolveFixtureQuery<T>(
     query: string,
     params: Record<string, unknown>,
@@ -905,9 +928,11 @@ export function resolveFixtureQuery<T>(
 
     if (query.includes('_type == "project"')) {
         if (query.includes("slug.current == $slug")) {
-            return ([...FIXTURE_PROJECTS, PROJECT_ESSAY_FIXTURE].find(
-                (project) => project.slug === params.slug,
-            ) ?? null) as T;
+            return ([
+                ...FIXTURE_PROJECTS,
+                PROJECT_ESSAY_FIXTURE,
+                FAILING_PROJECT_FIXTURE,
+            ].find((project) => project.slug === params.slug) ?? null) as T;
         }
         if (query.includes('"updatedAt": _updatedAt')) {
             return FIXTURE_PROJECTS.map(({ slug, _updatedAt }) => ({

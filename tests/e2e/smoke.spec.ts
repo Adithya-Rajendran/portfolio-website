@@ -1,6 +1,7 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { siteConfig } from "@/lib/config";
-import { lossOfSignalCopy } from "@/lib/copy";
+import { errorCopy, lossOfSignalCopy } from "@/lib/copy";
+import { FAILING_PROJECT_FIXTURE } from "@/lib/fixtures";
 import {
     expandRoute,
     ROUTE_TAGS,
@@ -52,6 +53,42 @@ async function expectImages(request: APIRequestContext, paths: Set<string>) {
         expect(response.headers()["content-type"], path).toMatch(/^image\//);
     }
 }
+
+const SOME_TEXT = expect.stringMatching(/\S/);
+/** An absolute address on the site (the canonical origin, on any build). */
+const SITE_URL = expect.stringMatching(
+    new RegExp(`^${siteConfig.url.replace(/\./g, "\\.")}(/|$)`),
+);
+const ISO_DATE = expect.stringMatching(/^\d{4}-\d{2}-\d{2}(T|$)/);
+const NAMED = { name: SOME_TEXT, url: SITE_URL };
+
+/**
+ * What a search engine needs of each JSON-LD type the site emits: Google's
+ * guidelines for an article (headline, image, dates, author), a breadcrumb
+ * trail (checked item by item) and a profile page (its person's name), and
+ * a name and an address for the rest. The builders' schema-dts types catch
+ * a misspelt property (lib/structured-data.ts); this catches one left
+ * empty or wired wrong. A new type is added here with its needs.
+ */
+const LD_NEEDS: Record<string, Record<string, unknown>> = {
+    Person: NAMED,
+    WebSite: NAMED,
+    Blog: NAMED,
+    CollectionPage: NAMED,
+    ContactPage: { ...NAMED, about: NAMED },
+    CreativeWork: { ...NAMED, creator: NAMED },
+    ProfilePage: { mainEntity: { "@type": "Person", ...NAMED } },
+    BlogPosting: {
+        headline: SOME_TEXT,
+        url: SITE_URL,
+        image: expect.stringMatching(/^https:\/\//),
+        datePublished: ISO_DATE,
+        dateModified: ISO_DATE,
+        author: NAMED,
+        mainEntityOfPage: { "@id": SITE_URL },
+    },
+    BreadcrumbList: { itemListElement: expect.any(Array) },
+};
 
 test.describe("pages", () => {
     for (const path of STATIC_PAGES) {
@@ -120,6 +157,45 @@ test.describe("pages", () => {
         expect(home).toMatch(new RegExp(`^${siteConfig.author} — \\S`));
     });
 
+    test("every page's structured data carries what search engines need of its type", async ({
+        request,
+    }, testInfo) => {
+        const paths = [
+            ...STATIC_PAGES,
+            ...(await contentPages(request, testInfo)),
+        ];
+        for (const path of paths) {
+            const html = await (await request.get(path)).text();
+            const items = [
+                ...html.matchAll(
+                    /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g,
+                ),
+            ].map(([, json]) => JSON.parse(json) as Record<string, unknown>);
+            expect(items.length, `${path} JSON-LD`).toBeGreaterThan(0);
+            for (const item of items) {
+                const type = String(item["@type"]);
+                const label = `${path} ${type}`;
+                expect(item["@context"], label).toBe("https://schema.org");
+                expect(Object.keys(LD_NEEDS), label).toContain(type);
+                expect(item, label).toMatchObject(LD_NEEDS[type]);
+                if (type !== "BreadcrumbList") continue;
+                const crumbs = item.itemListElement as Record<
+                    string,
+                    unknown
+                >[];
+                expect(crumbs.length, label).toBeGreaterThan(1);
+                crumbs.forEach((crumb, index) =>
+                    expect(crumb, label).toMatchObject({
+                        "@type": "ListItem",
+                        position: index + 1,
+                        name: SOME_TEXT,
+                        item: SITE_URL,
+                    }),
+                );
+            }
+        }
+    });
+
     for (const [kind, path] of Object.entries(MISSING_PAGES)) {
         test(`an unknown ${kind} URL returns 404 inside the chrome`, async ({
             page,
@@ -164,6 +240,58 @@ test.describe("pages", () => {
             ).toBe(0);
         });
     }
+
+    test("a page that fails to render shows the error page, and Try again asks again", async ({
+        page,
+    }, testInfo) => {
+        test.skip(
+            testInfo.project.name !== "fixture",
+            "Only the fixture build has a page that fails (lib/fixtures.ts).",
+        );
+        // Known defect: on `next start` (Next.js 16.3.4, Cache Components) a
+        // page that fails while rendering on demand answers a bare "Internal
+        // Server Error" with its 500, never app/(site)/error.tsx. Once the
+        // error page shows, this turns red: remove the marker.
+        test.fail();
+        const logged: string[] = [];
+        page.on("console", (message) => {
+            if (message.type() === "error") logged.push(message.text());
+        });
+        const path = `/portfolio/${FAILING_PROJECT_FIXTURE.slug}`;
+        const response = await page.goto(path);
+        expect(response?.status(), path).toBe(500);
+        const main = page.getByRole("main");
+        await expect(
+            main.getByRole("heading", { level: 1, name: errorCopy.title }),
+        ).toBeVisible();
+        await expect(main.getByText(errorCopy.tag)).toBeVisible();
+        await expect(main.getByText(errorCopy.lead)).toBeVisible();
+        // The error's digest is logged: it names the failure in the
+        // server's log.
+        expect(logged.join("\n")).toMatch(/Server error \(digest \S+\)/);
+
+        // Try again asks the server for the page again (retry(), not
+        // reset()); the read still fails, so the error page stays.
+        const asked = page.waitForRequest(
+            (request) =>
+                request.headers()["rsc"] === "1" &&
+                new URL(request.url()).pathname === path,
+        );
+        await main.getByRole("button", { name: errorCopy.retry }).click();
+        await asked;
+        await expect(
+            main.getByRole("heading", { level: 1, name: errorCopy.title }),
+        ).toBeVisible();
+
+        // Home leaves it.
+        await main
+            .getByRole("link", { name: lossOfSignalCopy.home, exact: true })
+            .click();
+        await expect(page).toHaveURL(/^[^?#]+:\/\/[^/]+\/$/);
+        await expect(
+            page.getByRole("heading", { level: 1, name: siteConfig.author }),
+        ).toBeVisible();
+    });
 });
 
 test.describe("routes and headers", () => {
@@ -367,10 +495,12 @@ test.describe("routes and headers", () => {
         expect(html).not.toMatch(/<header[\s>]/);
         expect(html).not.toMatch(/<footer[\s>]/);
         // Nor its stylesheet: no root not-found boundary attaches it
-        // (app/global-not-found.tsx).
-        const sheets = [...html.matchAll(/<link[^>]+href="([^"]+\.css)"/g)].map(
-            ([, href]) => href,
-        );
+        // (app/global-not-found.tsx). app/global-error.tsx's is preloaded
+        // only, for the document that replaces this one on an error.
+        const sheets = [
+            ...html.matchAll(/<link rel="stylesheet" href="([^"]+\.css)"/g),
+        ].map(([, href]) => href);
+        expect(sheets.length, "the Studio's stylesheets").toBeGreaterThan(0);
         for (const href of sheets) {
             const css = await (await request.get(href)).text();
             expect(css, href).not.toContain(".site-header");

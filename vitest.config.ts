@@ -10,6 +10,35 @@ export default defineConfig({
         environment: "node",
         include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
         setupFiles: ["./tests/setup.ts"],
+        // The flight's sampling tests take well under a second alone, but
+        // a build or a browser run on the same machine (the gate's order)
+        // can slow them past the 5 s default: a false red, not a defect.
+        testTimeout: 20_000,
+        coverage: {
+            // Every module of pure logic, whether a test imports it or not:
+            // without `include`, Vitest counts only the files the tests
+            // load, and an untested module drops out of the total. The
+            // components, pages and the flight's WebGL are the browser
+            // tests' (tests/e2e).
+            include: [
+                "lib/**/*.{ts,tsx}",
+                "actions/**/*.ts",
+                "app/api/**/*.ts",
+                "app/sitemap.ts",
+                "app/feed.xml/**/*.ts",
+            ],
+            reporter: ["text", "json-summary"],
+            // Under today's totals (86% of statements, 83% of branches,
+            // 86% of functions; `pnpm test:coverage`, run in CI), so the
+            // number cannot drift down unnoticed. Raise them as tests are
+            // added; never lower them to let a change through.
+            thresholds: {
+                statements: 80,
+                branches: 80,
+                functions: 80,
+                lines: 80,
+            },
+        },
     },
     resolve: {
         alias: {
