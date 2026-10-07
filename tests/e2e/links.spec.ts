@@ -5,17 +5,6 @@ import { STATIC_PAGES, contentPages } from "./support/routes";
 const MAX_HOPS = 5;
 
 /**
- * The owner's real posts, which his seeded missions' essays link to: the
- * fixture build carries the missions but not the posts (`fixtureFromSeed`
- * in lib/fixtures.ts), so there they are not requested. A deployment has
- * them and checks them.
- */
-const REAL_POSTS_ONLY = new Set([
-    "/blog/my-homelab",
-    "/blog/kubernetes-on-the-nvidia-dgx-spark",
-]);
-
-/**
  * The link check (the design checklist's P11): on every page the sitemap
  * lists (and the fixture-only renderer page), each same-origin link
  * answers, and each link to a fragment of the page itself names an
@@ -35,7 +24,6 @@ test("every same-origin link answers and every fragment lands", async ({
     // drawing WebGL on the CPU.
     await page.emulateMedia({ reducedMotion: "reduce" });
     const origin = new URL(baseURL!).origin;
-    const fixture = testInfo.project.name === "fixture";
     /** Each address's answer: "ok", or what is wrong with it. */
     const answers = new Map<string, string>();
     const broken: string[] = [];
@@ -87,7 +75,6 @@ test("every same-origin link answers and every fragment lands", async ({
             for (const link of links) {
                 const url = new URL(link.url);
                 if (url.origin !== origin) continue;
-                if (fixture && REAL_POSTS_ONLY.has(url.pathname)) continue;
                 if (link.here && url.hash) {
                     const id = decodeURIComponent(url.hash.slice(1));
                     if (!onPage.has(id))

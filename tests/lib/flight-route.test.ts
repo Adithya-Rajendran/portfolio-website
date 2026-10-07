@@ -1,6 +1,6 @@
 import { ShaderLib } from "three";
 import "three/examples/jsm/lines/LineMaterial.js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { patchLineShader } from "@/components/trajectory/flight-gl";
 import { firstMaps, flightMaps } from "@/components/trajectory/flight-maps";
 import { OPEN_LIMB } from "@/components/trajectory/flight-opening";
@@ -35,6 +35,12 @@ import {
 import { cvEntries } from "@/lib/cv";
 import { FIXTURE_PROFILE as fixtureProfile } from "@/lib/fixtures";
 import { buildRoute, frameAt, trajectoryData } from "@/lib/trajectory";
+
+// The sampling tests take well under a second alone, but a build or a
+// browser run on the same machine (the gate's order) can slow them past
+// the 5 s default: a false red, not a defect. This file only; the rest
+// keep the default.
+vi.setConfig({ testTimeout: 20_000 });
 
 const data = trajectoryData(
     cvEntries(fixtureProfile.timeline).all,

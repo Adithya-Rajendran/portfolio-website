@@ -90,6 +90,57 @@ const LD_NEEDS: Record<string, Record<string, unknown>> = {
     BreadcrumbList: { itemListElement: expect.any(Array) },
 };
 
+const FAILING_PROJECT_PATH = `/portfolio/${FAILING_PROJECT_FIXTURE.slug}`;
+
+/** The page's console errors, as they arrive. */
+function consoleErrors(page: Page): string[] {
+    const logged: string[] = [];
+    page.on("console", (message) => {
+        if (message.type() === "error") logged.push(message.text());
+    });
+    return logged;
+}
+
+/** The app router Next.js exposes on `window.next`, for debugging. */
+type NextWindow = Window & { next?: { router?: { push(href: string): void } } };
+
+/**
+ * The error page on the fixture's failing project: its head, the digest
+ * logged, Try again asking the server again (retry(), not reset()) and
+ * keeping the page, since the read still fails, and Home leaving it.
+ */
+async function expectErrorPage(page: Page, logged: string[]) {
+    const main = page.getByRole("main");
+    const head = main.getByRole("heading", {
+        level: 1,
+        name: errorCopy.title,
+    });
+    await expect(head).toBeVisible();
+    await expect(main.getByText(errorCopy.tag)).toBeVisible();
+    await expect(main.getByText(errorCopy.lead)).toBeVisible();
+    // The error's digest names the failure in the server's log.
+    await expect
+        .poll(() => logged.join("\n"))
+        .toMatch(/Server error \(digest \S+\)/);
+
+    const asked = page.waitForRequest(
+        (request) =>
+            request.headers()["rsc"] === "1" &&
+            new URL(request.url()).pathname === FAILING_PROJECT_PATH,
+    );
+    await main.getByRole("button", { name: errorCopy.retry }).click();
+    await asked;
+    await expect(head).toBeVisible();
+
+    await main
+        .getByRole("link", { name: lossOfSignalCopy.home, exact: true })
+        .click();
+    await expect(page).toHaveURL(/^[^?#]+:\/\/[^/]+\/$/);
+    await expect(
+        page.getByRole("heading", { level: 1, name: siteConfig.author }),
+    ).toBeVisible();
+}
+
 test.describe("pages", () => {
     for (const path of STATIC_PAGES) {
         test(`${path} loads cleanly`, async ({ page, pageErrors, request }) => {
@@ -241,56 +292,48 @@ test.describe("pages", () => {
         });
     }
 
-    test("a page that fails to render shows the error page, and Try again asks again", async ({
+    test("a page that fails on the server shows the error page after a client-side navigation", async ({
         page,
     }, testInfo) => {
         test.skip(
             testInfo.project.name !== "fixture",
             "Only the fixture build has a page that fails (lib/fixtures.ts).",
         );
-        // Known defect: on `next start` (Next.js 16.3.4, Cache Components) a
-        // page that fails while rendering on demand answers a bare "Internal
-        // Server Error" with its 500, never app/(site)/error.tsx. Once the
-        // error page shows, this turns red: remove the marker.
-        test.fail();
-        const logged: string[] = [];
-        page.on("console", (message) => {
-            if (message.type() === "error") logged.push(message.text());
-        });
-        const path = `/portfolio/${FAILING_PROJECT_FIXTURE.slug}`;
-        const response = await page.goto(path);
-        expect(response?.status(), path).toBe(500);
-        const main = page.getByRole("main");
-        await expect(
-            main.getByRole("heading", { level: 1, name: errorCopy.title }),
-        ).toBeVisible();
-        await expect(main.getByText(errorCopy.tag)).toBeVisible();
-        await expect(main.getByText(errorCopy.lead)).toBeVisible();
-        // The error's digest is logged: it names the failure in the
-        // server's log.
-        expect(logged.join("\n")).toMatch(/Server error \(digest \S+\)/);
-
-        // Try again asks the server for the page again (retry(), not
-        // reset()); the read still fails, so the error page stays.
-        const asked = page.waitForRequest(
-            (request) =>
-                request.headers()["rsc"] === "1" &&
-                new URL(request.url()).pathname === path,
+        const logged = consoleErrors(page);
+        await page.goto("/portfolio");
+        // The failing project is unlisted, so no link leads to it: the
+        // router's own push, as a link's click would make it.
+        await page.waitForFunction(() =>
+            Boolean((window as NextWindow).next?.router),
         );
-        await main.getByRole("button", { name: errorCopy.retry }).click();
-        await asked;
-        await expect(
-            main.getByRole("heading", { level: 1, name: errorCopy.title }),
-        ).toBeVisible();
+        await page.evaluate(
+            (to) => (window as NextWindow).next!.router!.push(to),
+            FAILING_PROJECT_PATH,
+        );
+        await expect(page).toHaveURL(new RegExp(`${FAILING_PROJECT_PATH}$`));
+        await expectErrorPage(page, logged);
+    });
 
-        // Home leaves it.
-        await main
-            .getByRole("link", { name: lossOfSignalCopy.home, exact: true })
-            .click();
-        await expect(page).toHaveURL(/^[^?#]+:\/\/[^/]+\/$/);
-        await expect(
-            page.getByRole("heading", { level: 1, name: siteConfig.author }),
-        ).toBeVisible();
+    test("a fresh load of a page that fails on the server shows the error page", async ({
+        page,
+    }, testInfo) => {
+        test.skip(
+            testInfo.project.name !== "fixture",
+            "Only the fixture build has a page that fails (lib/fixtures.ts).",
+        );
+        // Known defect, observed on Next.js 16.3.4 (`next start`, Cache
+        // Components): a fresh load of a page that fails while rendering on
+        // demand answers a bare text/plain 500, never app/(site)/error.tsx,
+        // which only a client-side navigation reaches (the test above).
+        // Next.js 16.4 answers with the error page, so a bump to it turns
+        // this red: remove the marker then. (A failing cached read that
+        // generateMetadata awaits too still leaves the load unanswered on
+        // 16.4.0; the fixture's read fails outside the cache.)
+        test.fail();
+        const logged = consoleErrors(page);
+        const response = await page.goto(FAILING_PROJECT_PATH);
+        expect(response?.status(), FAILING_PROJECT_PATH).toBe(500);
+        await expectErrorPage(page, logged);
     });
 });
 

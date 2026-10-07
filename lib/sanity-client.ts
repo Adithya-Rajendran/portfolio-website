@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { defineQuery } from "next-sanity";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import {
-    FAILING_PROJECT_FIXTURE,
+    fixtureReadFails,
     fixturesEnabled,
     resolveFixtureQuery,
 } from "@/lib/fixtures";
@@ -594,14 +594,8 @@ export function getAllPosts(): Promise<PostListItem[]> {
 
 /** Published posts whose `projects` include this project id. */
 export function getPostsByProject(projectId: string): Promise<PostListItem[]> {
-    // The fixture build's failing project (lib/fixtures.ts): its page's
-    // read fails here, outside "use cache", where a throw left the request
-    // unanswered on `next start` (Next.js 16.3.4).
-    if (
-        !isSanityConfigured &&
-        fixturesEnabled() &&
-        projectId === FAILING_PROJECT_FIXTURE._id
-    )
+    // The fixture build's failing project: `fixtureReadFails` (lib/fixtures).
+    if (!isSanityConfigured && fixtureReadFails(projectId))
         return Promise.reject(new Error("The fixture project's read failed."));
     return sanityFetch(
         POSTS_BY_PROJECT_QUERY,

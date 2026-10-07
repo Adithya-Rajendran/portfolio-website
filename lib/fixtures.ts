@@ -7,7 +7,9 @@ import type {
     ProjectListItem,
     ProjectWithBody,
 } from "@/lib/sanity-client";
+import { siteConfig } from "@/lib/config";
 import { newestFirst } from "@/lib/content-rules";
+import { sitePostSlug } from "@/lib/cv";
 import {
     SEED_PROJECTS,
     type SeedProject,
@@ -607,14 +609,22 @@ const FIXTURE_PROJECT_NAMES: Partial<Record<string, string>> = {
     "personal-website": "Personal Website",
 };
 
+/** Whether a seeded link points at one of the owner's posts, which the
+ *  fixtures do not carry (the seeds link only real posts). */
+function linksMissingPost(url: string): boolean {
+    const slug = sitePostSlug(url, siteConfig.url);
+    return slug !== null && !fixturePosts.some((post) => post.slug === slug);
+}
+
 /**
  * The owner's four résumé projects, from the drafts the seed migration
  * writes (`migrations/seed-resume-projects/data.ts`), so fixture builds show
  * the real missions with their published ids (`project-<slug>`). The seeds
  * have no cover (the owner picks one). Fixture builds have no Sanity assets
- * and no copy of the homelab post, so the model poster keeps only its alt
- * text and the callouts carry no links; links in the essays point at the real
- * posts' URLs.
+ * and no copy of the owner's posts, so the model poster keeps only its alt
+ * text, the callouts carry no links, and a link to one of those posts (the
+ * homelab's write-up, the essay's two) is left out: an essay keeps its
+ * words, unlinked.
  */
 function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
     const model = seed.model;
@@ -646,11 +656,13 @@ function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
             label,
             value,
         })),
-        links: seed.links?.map(({ key, ...link }) => ({
-            _key: key,
-            _type: "externalLink",
-            ...link,
-        })),
+        links: seed.links
+            ?.filter((link) => !linksMissingPost(link.url))
+            .map(({ key, ...link }) => ({
+                _key: key,
+                _type: "externalLink",
+                ...link,
+            })),
         hasModel: Boolean(model),
         brief: seed.brief,
         results: seed.results?.map(({ key, ...result }) => ({
@@ -680,7 +692,15 @@ function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
                   },
               }
             : {}),
-        body: seedBody(seed.body),
+        body: seedBody(
+            seed.body.map((parts) =>
+                parts.map((part) =>
+                    typeof part !== "string" && linksMissingPost(part[1])
+                        ? part[0]
+                        : part,
+                ),
+            ),
+        ),
     };
 }
 
@@ -896,12 +916,13 @@ export const PROJECT_ESSAY_FIXTURE: ProjectWithBody = {
 };
 
 /**
- * A project whose page fails, for the error page's browser test on the
+ * A project whose page fails, for the error page's browser tests on the
  * fixture build. Like the essay fixture it is never listed, so nothing
  * prerenders it: requested, it renders on demand, its head renders and
- * its writing's read fails (`getPostsByProject` in lib/sanity-client.ts),
- * as a failed Sanity read would. Today that answers a bare "Internal
- * Server Error" rather than app/(site)/error.tsx (the test's `test.fail`).
+ * its writing's read fails (`fixtureReadFails`), as a failed Sanity read
+ * would. Reached by a client-side navigation it shows
+ * app/(site)/error.tsx; a fresh page load answers a bare 500 instead
+ * (Next.js 16.3.4, the smoke test's `test.fail`).
  */
 export const FAILING_PROJECT_FIXTURE: ProjectWithBody = {
     _id: "fixture-project-failing",
@@ -917,6 +938,19 @@ export const FAILING_PROJECT_FIXTURE: ProjectWithBody = {
     highlights: [],
     body: [],
 };
+
+/**
+ * Whether a project's writing read fails: on the fixture build, for
+ * `FAILING_PROJECT_FIXTURE` alone. `getPostsByProject` asks only where
+ * Sanity is not configured, as `sanityFetch` asks the fixture resolver, so
+ * a deployment never does. The read fails there, outside `sanityFetch`'s
+ * "use cache" and in the page's body only: a cached read that both
+ * `generateMetadata` and the page await, failing, leaves a fresh page load
+ * unanswered (Next.js 16.3.4 to 16.4.0), where this one answers 500.
+ */
+export function fixtureReadFails(projectId: string): boolean {
+    return fixturesEnabled() && projectId === FAILING_PROJECT_FIXTURE._id;
+}
 
 export function resolveFixtureQuery<T>(
     query: string,

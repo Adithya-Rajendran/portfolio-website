@@ -10,10 +10,6 @@ export default defineConfig({
         environment: "node",
         include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
         setupFiles: ["./tests/setup.ts"],
-        // The flight's sampling tests take well under a second alone, but
-        // a build or a browser run on the same machine (the gate's order)
-        // can slow them past the 5 s default: a false red, not a defect.
-        testTimeout: 20_000,
         coverage: {
             // Every module of pure logic, whether a test imports it or not:
             // without `include`, Vitest counts only the files the tests
