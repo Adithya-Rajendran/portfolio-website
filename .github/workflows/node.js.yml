@@ -40,7 +40,9 @@ jobs:
                   pnpm typegen
                   git diff --exit-code schema.json sanity.types.ts
             - run: pnpm run format:check
-            - run: pnpm test
+            # The unit tests with coverage, which fails below the thresholds
+            # in vitest.config.ts.
+            - run: pnpm test:coverage
 
     build:
         # cacheComponents + reactCompiler surface cache/Suspense placement

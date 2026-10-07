@@ -39,7 +39,12 @@ function cutWords(page: Page) {
     );
 }
 
-/** Scrolls to progress `p` through the pinned flight. */
+/**
+ * Scrolls to progress `p` through the pinned flight and waits two frames:
+ * the scroll's draw (a frame the scroll event requests) has run by the
+ * second, so the record, the readout and the labels' opacity are this
+ * position's. What the GPU shows later is polled for (`sceneSpread`).
+ */
 async function seek(page: Page, p: number) {
     await page.evaluate((to) => {
         const section = document.querySelector<HTMLElement>("[data-journey]")!;
@@ -48,8 +53,10 @@ async function seek(page: Page, p: number) {
         const top = section.getBoundingClientRect().top + scrollY - pin;
         const span = section.offsetHeight - stage.offsetHeight;
         scrollTo({ top: top + to * span, behavior: "instant" });
+        return new Promise((done) =>
+            requestAnimationFrame(() => requestAnimationFrame(done)),
+        );
     }, p);
-    await page.waitForTimeout(300);
 }
 
 async function panel(page: Page) {
@@ -162,10 +169,10 @@ test("the readout ticks under the title; the scene names the worlds in the final
     expect(samples).toBeGreaterThan(0);
     // The finale's map names the worlds flown, by organisation alone.
     await seek(page, 1);
-    await page.waitForTimeout(600);
-    const named = await labelsShown(page);
-    expect(named.length).toBeGreaterThan(1);
-    expect(named.join(" ")).not.toMatch(/\d/);
+    await expect
+        .poll(async () => (await labelsShown(page)).length)
+        .toBeGreaterThan(1);
+    expect((await labelsShown(page)).join(" ")).not.toMatch(/\d/);
 });
 
 test("a phone's scene names no world, in flight or in the finale", async ({
@@ -181,7 +188,6 @@ test("a phone's scene names no world, in flight or in the finale", async ({
     );
     for (const p of [0.3, 0.6, 1]) {
         await seek(page, p);
-        await page.waitForTimeout(300);
         expect(await labelsShown(page), `P ${p}`).toEqual([]);
     }
 });
@@ -369,6 +375,8 @@ async function sceneSpread(page: Page) {
  *  there the frames checked start once the chase has begun. */
 const DRAWN = 10;
 const FRAMES = { void: [0, 0.5, 1], manual: [0.15, 0.5, 1] } as const;
+/** Polling for a drawn frame: CPU rendering on a busy runner is slow. */
+const DRAWING = (message: string) => ({ message, timeout: 15_000 });
 
 for (const theme of THEMES) {
     test(`the flight draws in ${theme}, survives a lost context and a return`, async ({
@@ -382,11 +390,13 @@ for (const theme of THEMES) {
         await expect(scene).toHaveAttribute("data-ready", "", {
             timeout: 20_000,
         });
-        // The canvas's fade in.
-        await page.waitForTimeout(900);
+        // Polled: the canvas fades in, and a frame reaches the screen a
+        // little after it is drawn.
         for (const p of FRAMES[theme]) {
             await seek(page, p);
-            expect(await sceneSpread(page), `P ${p}`).toBeGreaterThan(DRAWN);
+            await expect
+                .poll(() => sceneSpread(page), DRAWING(`P ${p}`))
+                .toBeGreaterThan(DRAWN);
         }
 
         // A lost context hides the canvas and the labels (the poster
@@ -408,8 +418,9 @@ for (const theme of THEMES) {
             ).lose.restoreContext(),
         );
         await expect(scene).toHaveAttribute("data-ready", "");
-        await page.waitForTimeout(900);
-        expect(await sceneSpread(page), "restored").toBeGreaterThan(DRAWN);
+        await expect
+            .poll(() => sceneSpread(page), DRAWING("restored"))
+            .toBeGreaterThan(DRAWN);
 
         // Away and back, twice: one canvas, drawn again.
         for (let i = 0; i < 2; i++) {
@@ -426,8 +437,9 @@ for (const theme of THEMES) {
         }
         expect(await page.locator("[data-scene] > canvas").count()).toBe(1);
         await seek(page, 0.5);
-        await page.waitForTimeout(900);
-        expect(await sceneSpread(page), "returned").toBeGreaterThan(DRAWN);
+        await expect
+            .poll(() => sceneSpread(page), DRAWING("returned"))
+            .toBeGreaterThan(DRAWN);
         expect(await pageErrors.drain(page)).toEqual([]);
     });
 }

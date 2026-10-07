@@ -1,6 +1,7 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { siteConfig } from "@/lib/config";
-import { lossOfSignalCopy } from "@/lib/copy";
+import { errorCopy, lossOfSignalCopy } from "@/lib/copy";
+import { FAILING_PROJECT_FIXTURE } from "@/lib/fixtures";
 import {
     expandRoute,
     ROUTE_TAGS,
@@ -51,6 +52,97 @@ async function expectImages(request: APIRequestContext, paths: Set<string>) {
         expect(response.status(), path).toBe(200);
         expect(response.headers()["content-type"], path).toMatch(/^image\//);
     }
+}
+
+const SOME_TEXT = expect.stringMatching(/\S/);
+/** Text with every regular-expression metacharacter escaped, to match literally. */
+function escapeRegExp(text: string) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+/** An absolute address on the site (the canonical origin, on any build). */
+const SITE_URL = expect.stringMatching(
+    new RegExp(`^${escapeRegExp(siteConfig.url)}(/|$)`),
+);
+const ISO_DATE = expect.stringMatching(/^\d{4}-\d{2}-\d{2}(T|$)/);
+const NAMED = { name: SOME_TEXT, url: SITE_URL };
+
+/**
+ * What a search engine needs of each JSON-LD type the site emits: Google's
+ * guidelines for an article (headline, image, dates, author), a breadcrumb
+ * trail (checked item by item) and a profile page (its person's name), and
+ * a name and an address for the rest. The builders' schema-dts types catch
+ * a misspelt property (lib/structured-data.ts); this catches one left
+ * empty or wired wrong. A new type is added here with its needs.
+ */
+const LD_NEEDS: Record<string, Record<string, unknown>> = {
+    Person: NAMED,
+    WebSite: NAMED,
+    Blog: NAMED,
+    CollectionPage: NAMED,
+    ContactPage: { ...NAMED, about: NAMED },
+    CreativeWork: { ...NAMED, creator: NAMED },
+    ProfilePage: { mainEntity: { "@type": "Person", ...NAMED } },
+    BlogPosting: {
+        headline: SOME_TEXT,
+        url: SITE_URL,
+        image: expect.stringMatching(/^https:\/\//),
+        datePublished: ISO_DATE,
+        dateModified: ISO_DATE,
+        author: NAMED,
+        mainEntityOfPage: { "@id": SITE_URL },
+    },
+    BreadcrumbList: { itemListElement: expect.any(Array) },
+};
+
+const FAILING_PROJECT_PATH = `/portfolio/${FAILING_PROJECT_FIXTURE.slug}`;
+
+/** The page's console errors, as they arrive. */
+function consoleErrors(page: Page): string[] {
+    const logged: string[] = [];
+    page.on("console", (message) => {
+        if (message.type() === "error") logged.push(message.text());
+    });
+    return logged;
+}
+
+/** The app router Next.js exposes on `window.next`, for debugging. */
+type NextWindow = Window & { next?: { router?: { push(href: string): void } } };
+
+/**
+ * The error page on the fixture's failing project: its head, the digest
+ * logged, Try again asking the server again (retry(), not reset()) and
+ * keeping the page, since the read still fails, and Home leaving it.
+ */
+async function expectErrorPage(page: Page, logged: string[]) {
+    const main = page.getByRole("main");
+    const head = main.getByRole("heading", {
+        level: 1,
+        name: errorCopy.title,
+    });
+    await expect(head).toBeVisible();
+    await expect(main.getByText(errorCopy.tag)).toBeVisible();
+    await expect(main.getByText(errorCopy.lead)).toBeVisible();
+    // The error's digest names the failure in the server's log.
+    await expect
+        .poll(() => logged.join("\n"))
+        .toMatch(/Server error \(digest \S+\)/);
+
+    const asked = page.waitForRequest(
+        (request) =>
+            request.headers()["rsc"] === "1" &&
+            new URL(request.url()).pathname === FAILING_PROJECT_PATH,
+    );
+    await main.getByRole("button", { name: errorCopy.retry }).click();
+    await asked;
+    await expect(head).toBeVisible();
+
+    await main
+        .getByRole("link", { name: lossOfSignalCopy.home, exact: true })
+        .click();
+    await expect(page).toHaveURL(/^[^?#]+:\/\/[^/]+\/$/);
+    await expect(
+        page.getByRole("heading", { level: 1, name: siteConfig.author }),
+    ).toBeVisible();
 }
 
 test.describe("pages", () => {
@@ -120,6 +212,45 @@ test.describe("pages", () => {
         expect(home).toMatch(new RegExp(`^${siteConfig.author} — \\S`));
     });
 
+    test("every page's structured data carries what search engines need of its type", async ({
+        request,
+    }, testInfo) => {
+        const paths = [
+            ...STATIC_PAGES,
+            ...(await contentPages(request, testInfo)),
+        ];
+        for (const path of paths) {
+            const html = await (await request.get(path)).text();
+            const items = [
+                ...html.matchAll(
+                    /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g,
+                ),
+            ].map(([, json]) => JSON.parse(json) as Record<string, unknown>);
+            expect(items.length, `${path} JSON-LD`).toBeGreaterThan(0);
+            for (const item of items) {
+                const type = String(item["@type"]);
+                const label = `${path} ${type}`;
+                expect(item["@context"], label).toBe("https://schema.org");
+                expect(Object.keys(LD_NEEDS), label).toContain(type);
+                expect(item, label).toMatchObject(LD_NEEDS[type]);
+                if (type !== "BreadcrumbList") continue;
+                const crumbs = item.itemListElement as Record<
+                    string,
+                    unknown
+                >[];
+                expect(crumbs.length, label).toBeGreaterThan(1);
+                crumbs.forEach((crumb, index) =>
+                    expect(crumb, label).toMatchObject({
+                        "@type": "ListItem",
+                        position: index + 1,
+                        name: SOME_TEXT,
+                        item: SITE_URL,
+                    }),
+                );
+            }
+        }
+    });
+
     for (const [kind, path] of Object.entries(MISSING_PAGES)) {
         test(`an unknown ${kind} URL returns 404 inside the chrome`, async ({
             page,
@@ -164,6 +295,50 @@ test.describe("pages", () => {
             ).toBe(0);
         });
     }
+
+    test("a page that fails on the server shows the error page after a client-side navigation", async ({
+        page,
+    }, testInfo) => {
+        test.skip(
+            testInfo.project.name !== "fixture",
+            "Only the fixture build has a page that fails (lib/fixtures.ts).",
+        );
+        const logged = consoleErrors(page);
+        await page.goto("/portfolio");
+        // The failing project is unlisted, so no link leads to it: the
+        // router's own push, as a link's click would make it.
+        await page.waitForFunction(() =>
+            Boolean((window as NextWindow).next?.router),
+        );
+        await page.evaluate(
+            (to) => (window as NextWindow).next!.router!.push(to),
+            FAILING_PROJECT_PATH,
+        );
+        await expect(page).toHaveURL(new RegExp(`${FAILING_PROJECT_PATH}$`));
+        await expectErrorPage(page, logged);
+    });
+
+    test("a fresh load of a page that fails on the server shows the error page", async ({
+        page,
+    }, testInfo) => {
+        test.skip(
+            testInfo.project.name !== "fixture",
+            "Only the fixture build has a page that fails (lib/fixtures.ts).",
+        );
+        // Known defect, observed on Next.js 16.3.4 (`next start`, Cache
+        // Components): a fresh load of a page that fails while rendering on
+        // demand answers a bare text/plain 500, never app/(site)/error.tsx,
+        // which only a client-side navigation reaches (the test above).
+        // Next.js 16.4 answers with the error page, so a bump to it turns
+        // this red: remove the marker then. (A failing cached read that
+        // generateMetadata awaits too still leaves the load unanswered on
+        // 16.4.0; the fixture's read fails outside the cache.)
+        test.fail();
+        const logged = consoleErrors(page);
+        const response = await page.goto(FAILING_PROJECT_PATH);
+        expect(response?.status(), FAILING_PROJECT_PATH).toBe(500);
+        await expectErrorPage(page, logged);
+    });
 });
 
 test.describe("routes and headers", () => {
@@ -367,10 +542,12 @@ test.describe("routes and headers", () => {
         expect(html).not.toMatch(/<header[\s>]/);
         expect(html).not.toMatch(/<footer[\s>]/);
         // Nor its stylesheet: no root not-found boundary attaches it
-        // (app/global-not-found.tsx).
-        const sheets = [...html.matchAll(/<link[^>]+href="([^"]+\.css)"/g)].map(
-            ([, href]) => href,
-        );
+        // (app/global-not-found.tsx). app/global-error.tsx's is preloaded
+        // only, for the document that replaces this one on an error.
+        const sheets = [
+            ...html.matchAll(/<link rel="stylesheet" href="([^"]+\.css)"/g),
+        ].map(([, href]) => href);
+        expect(sheets.length, "the Studio's stylesheets").toBeGreaterThan(0);
         for (const href of sheets) {
             const css = await (await request.get(href)).text();
             expect(css, href).not.toContain(".site-header");

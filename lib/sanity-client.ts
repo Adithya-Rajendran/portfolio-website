@@ -1,7 +1,11 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { defineQuery } from "next-sanity";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import { fixturesEnabled, resolveFixtureQuery } from "@/lib/fixtures";
+import {
+    fixtureReadFails,
+    fixturesEnabled,
+    resolveFixtureQuery,
+} from "@/lib/fixtures";
 import type {
     AvailabilityStatus,
     CuriosityKind,
@@ -590,6 +594,9 @@ export function getAllPosts(): Promise<PostListItem[]> {
 
 /** Published posts whose `projects` include this project id. */
 export function getPostsByProject(projectId: string): Promise<PostListItem[]> {
+    // The fixture build's failing project: `fixtureReadFails` (lib/fixtures).
+    if (!isSanityConfigured && fixtureReadFails(projectId))
+        return Promise.reject(new Error("The fixture project's read failed."));
     return sanityFetch(
         POSTS_BY_PROJECT_QUERY,
         { projectId },
