@@ -102,7 +102,7 @@ export default function MenuButton({ panelId }: { panelId: string }) {
             items[(from + step + items.length) % items.length].focus();
         };
         const onResize = () => {
-            if (window.innerWidth >= 960) hide();
+            if (window.matchMedia("(min-width: 60rem)").matches) hide();
         };
 
         panel.addEventListener("toggle", onToggle);

@@ -50,6 +50,11 @@ export default function RootLayout({
         >
             <head>
                 <ThemeBootScript />
+                {/* Every photograph is a Sanity image, loaded from this origin
+                    (lib/sanity-image-loader.ts), so open the connection while
+                    the page parses. No crossorigin: images need no CORS. The
+                    fonts are self-hosted and need no preconnect. */}
+                <link rel="preconnect" href="https://cdn.sanity.io" />
                 {/* BotID protects the contact action. Server Actions post to
                     the page that invokes them, so every public path needs the
                     challenge header. */}

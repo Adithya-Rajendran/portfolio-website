@@ -255,7 +255,8 @@ export default function Journey({
         };
         const resize = () => {
             const box = stage.getBoundingClientRect();
-            // A media query's rem is the default text size, the root's.
+            // A media query's rem is the browser's default font size, equal
+            // to the root's only while the root sets none, as today.
             const rem =
                 parseFloat(
                     getComputedStyle(document.documentElement).fontSize,

@@ -11,7 +11,7 @@ describe("sanityImageLoader", () => {
             "https://cdn.sanity.io/images/project/dataset/abc-3000x4000.jpg",
         );
         expect(url.searchParams.getAll("w")).toEqual(["640"]);
-        expect(url.searchParams.get("q")).toBe("75");
+        expect(url.searchParams.get("q")).toBe("60");
         expect(url.searchParams.get("fit")).toBe("max");
         expect(url.searchParams.get("auto")).toBe("format");
     });
