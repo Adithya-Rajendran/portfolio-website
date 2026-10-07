@@ -8,7 +8,12 @@ import { siteRoutes } from "@/lib/navigation";
 
 /**
  * A render error inside a public page: the Loss of Signal instrument with
- * a Try again button, inside the site chrome.
+ * a Try again button, inside the site chrome. An error the site layout or
+ * the root layout throws is app/global-error.tsx's. A page that fails
+ * while rendering on demand on the server answers a bare "Internal Server
+ * Error" instead (Next.js 16.3.4; the fixture's failing project,
+ * `FAILING_PROJECT_FIXTURE`, marks it `test.fail` in
+ * tests/e2e/smoke.spec.ts), so this shows for a failure in the browser.
  */
 export default function Error({
     error,
@@ -18,7 +23,11 @@ export default function Error({
     retry: () => void;
 }) {
     useEffect(() => {
-        console.error(error);
+        // A server error reaches the browser with its message withheld:
+        // its digest names it in the server's log (the Vercel function's).
+        console.error(
+            error.digest ? `Server error (digest ${error.digest})` : error,
+        );
     }, [error]);
 
     return (
