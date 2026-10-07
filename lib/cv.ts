@@ -50,7 +50,8 @@ export interface CvEntry {
     >;
 }
 
-/** A fragment-safe id from a Sanity key. */
+/** A fragment-safe id from a Sanity key.
+ *  @internal Exported for tests. */
 export function cvAnchor(key: string): string {
     return `cv-${key.replace(/[^A-Za-z0-9_-]/g, "-")}`;
 }
@@ -67,6 +68,7 @@ function startKnown(entry: TimelineEntry, current: boolean): boolean {
     return end === null || start < end;
 }
 
+/** @internal Exported for tests. */
 export function cvEntry(entry: TimelineEntry): CvEntry {
     const current = entry.isCurrent ?? !entry.endDate;
     const known = startKnown(entry, current);
@@ -221,7 +223,7 @@ function projectLinks(
     });
 }
 
-export interface CvProject {
+interface CvProject {
     id: string;
     slug: string;
     title: string;
@@ -268,7 +270,7 @@ export function cvProjects(
         });
 }
 
-export interface CvTalk {
+interface CvTalk {
     id: string;
     title: string;
     venue: string | null;

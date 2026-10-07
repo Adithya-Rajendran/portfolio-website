@@ -7,12 +7,6 @@ import {
 import { cacheLife, cacheTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 
-export interface HighlightedBlock {
-    key: string;
-    html: string;
-    language: string;
-}
-
 /**
  * Singleton shiki highlighter — initialises the WASM engine + grammars once
  * and reuses the instance across all subsequent requests.  This avoids a

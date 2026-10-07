@@ -6,33 +6,6 @@
  * their component instead.
  */
 @layer components {
-    /* ===== Typography roles (site.css 4.1) ============================ */
-    .t-h2 {
-        font: 400 var(--step-3) / 1.12 var(--font-display);
-        letter-spacing: -0.008em;
-    }
-    .t-h3 {
-        font: 400 var(--step-2) / 1.18 var(--font-display);
-    }
-    .t-lead {
-        font: 400 var(--step-2) / 1.38 var(--font-long);
-        color: var(--ink-2);
-        text-wrap: pretty;
-    }
-    .t-body {
-        font: 400 var(--step-0) / var(--lh-body) var(--font-text);
-    }
-    .t-small {
-        font: 400 var(--step-0) / 1.5 var(--font-text);
-        color: var(--ink-2);
-    }
-    .t-muted {
-        color: var(--ink-2);
-    }
-    .t-faint {
-        color: var(--ink-3);
-    }
-
     /* The one label voice (contract §2): DM Mono caps, tracked, ink-2. */
     .label {
         font: 400 var(--label-size) / var(--lh-label) var(--font-label);
@@ -596,13 +569,6 @@
         transform: translateX(4px);
     }
 
-    .link-quiet {
-        text-decoration: none;
-    }
-    .link-quiet:hover {
-        text-decoration: underline;
-    }
-
     /* Stretched link: the whole card is clickable, the title is the link. */
     .stretch {
         position: static;
@@ -728,10 +694,6 @@
         color: var(--ink-2);
         font: 400 var(--step-0) / 1.5 var(--font-text);
     }
-    .caption--plate {
-        padding-top: var(--s-3);
-        border-top: var(--rule-hair) solid var(--rule-1);
-    }
     .caption__body {
         min-width: 0;
     }
@@ -827,10 +789,6 @@
         font: 400 var(--label-size) / var(--lh-label) var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
-    }
-    .field__hint {
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.45 var(--font-text);
     }
     .field__error {
         color: var(--ink-1);
@@ -1200,6 +1158,12 @@
         font: 400 var(--step-2) / 1.18 var(--font-display);
         letter-spacing: -0.005em;
         text-wrap: pretty;
+    }
+    /* On a phone a two-line title balances, as Writing's rows do. */
+    @media (max-width: 37.49rem) {
+        .cv-item__title {
+            text-wrap: balance;
+        }
     }
     .cv-item__title a {
         text-decoration: none;
@@ -1666,6 +1630,11 @@
             grid-row: 1;
             align-items: flex-end;
             text-align: right;
+        }
+        /* A lone side spans the measure, so its rule closes the page
+           whole; a lone Next keeps to the right. */
+        .pager__item:only-child {
+            grid-column: 1 / -1;
         }
     }
 

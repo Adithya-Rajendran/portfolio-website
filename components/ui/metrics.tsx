@@ -9,7 +9,7 @@ import { splitUnit } from "@/lib/metrics";
  * first in the markup, so it is read before the value.
  */
 
-export interface MetricItem {
+interface MetricItem {
     /** Stable React key. */
     id: string;
     label: string;

@@ -307,6 +307,13 @@ test("the pager follows the index's order", async ({ page }) => {
         } else {
             await expect(previous, path).toHaveCount(0);
         }
+        // A lone side takes the whole width, so its hairline closes the
+        // page across the measure, not over half of it.
+        if (index === 0 || index === order.length - 1) {
+            const lone = await pager.getByRole("link").boundingBox();
+            const whole = await pager.boundingBox();
+            expect(lone!.width, path).toBeCloseTo(whole!.width, 0);
+        }
     }
 });
 
@@ -481,5 +488,38 @@ test.describe("on the fixture build", () => {
         await expect(
             main(page).getByRole("link", { name: copy.readWriteUp }),
         ).toHaveCount(0);
+    });
+
+    test("an essay's contents mark the section being read as an entry's do", async ({
+        page,
+    }, testInfo) => {
+        test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
+        await page.goto("/portfolio/portable-text-project-fixture");
+        const second = main(page)
+            .getByRole("navigation", { name: copy.contentsLabel })
+            .getByRole("link")
+            .nth(1);
+        await second.click();
+        await page.mouse.move(0, 0);
+        await expect(second).toHaveAttribute("aria-current", "location");
+        // The 2px orange bar of post.module.css (once its colour has
+        // eased in), not a rule under the link.
+        await expect
+            .poll(() =>
+                second.evaluate((link) => {
+                    const probe = document.createElement("i");
+                    probe.style.color = "var(--accent)";
+                    link.append(probe);
+                    const accent = getComputedStyle(probe).color;
+                    probe.remove();
+                    const style = getComputedStyle(link);
+                    return {
+                        bar: style.borderLeftColor === accent,
+                        width: style.borderLeftWidth,
+                        line: style.textDecorationLine,
+                    };
+                }),
+            )
+            .toEqual({ bar: true, width: "2px", line: "none" });
     });
 });

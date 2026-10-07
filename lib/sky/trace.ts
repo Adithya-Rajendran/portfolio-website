@@ -14,7 +14,7 @@ export const TRACE_LOS = 684;
 /** The axis the dead carrier lies on. */
 export const TRACE_AXIS = 92;
 
-export interface CarrierTrace {
+interface CarrierTrace {
     /** The live signal, from x = 0 to the drop at LOS. */
     signal: string;
     /** The vertical grid, every 50 units. */

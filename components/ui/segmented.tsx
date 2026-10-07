@@ -17,7 +17,7 @@ import { useId, type ChangeEvent } from "react";
  * `js-only` when nothing else reads them.
  */
 
-export interface SegmentedOption {
+interface SegmentedOption {
     value: string;
     label: string;
     /** A line under the label, read as the radio's description. */

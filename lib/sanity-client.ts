@@ -24,7 +24,7 @@ import { client, isSanityConfigured } from "@/lib/sanity-config";
 import type { ModelPartKey, ProceduralModelKey } from "@/lib/viewer/registry";
 import type { WARM_LISTS_QUERY_RESULT } from "@/sanity.types";
 
-export type ContentBlock = {
+type ContentBlock = {
     _key?: string;
     _type: string;
     [key: string]: unknown;
@@ -134,12 +134,12 @@ export type Launch = {
 };
 
 /** The words of one contact route (Profile → Site copy). */
-export type ContactRouteCopy = {
+type ContactRouteCopy = {
     title?: string | null;
     prompt?: string | null;
 };
 
-export type ContactRoutesCopy = {
+type ContactRoutesCopy = {
     hiring?: ContactRouteCopy | null;
     research?: ContactRouteCopy | null;
     consulting?: ContactRouteCopy | null;
@@ -198,7 +198,7 @@ export type ProfileData = {
 };
 
 /** A post's cover: image metadata plus its dominant colour (`bg`). */
-export type PostCover = SanityImageValue & {
+type PostCover = SanityImageValue & {
     credit?: string | null;
     kind?: ImageKind | null;
     bg?: string | null;
@@ -238,7 +238,7 @@ export type PostMeta = Omit<PostListItem, "_id"> & {
     _updatedAt?: string;
 };
 
-export type ProjectParameter = {
+type ProjectParameter = {
     _key: string;
     label: string;
     value: string;
@@ -275,7 +275,7 @@ export type ProjectListItem = {
     hasModel: boolean;
 };
 
-export type ProjectResult = {
+type ProjectResult = {
     _key: string;
     metric: string;
     value: string;
@@ -648,7 +648,7 @@ export function getAllProjectSlugs(): Promise<string[]> {
     return sanityFetch(PROJECT_SLUGS_QUERY, {}, CACHE_TAGS.project, []);
 }
 
-export type WarmSource = {
+type WarmSource = {
     posts: { slug: string; tags: string[] }[];
     projectSlugs: string[];
 };

@@ -7,7 +7,7 @@ import { missionTiers } from "@/lib/missions";
  * is absent; nothing is numbered. Pure; the page passes what it found.
  */
 
-export const HOME_ACTS = ["projects", "writing", "contact"] as const;
+const HOME_ACTS = ["projects", "writing", "contact"] as const;
 export type HomeAct = (typeof HOME_ACTS)[number];
 
 export function homeActs(content: {
@@ -23,7 +23,8 @@ export function homeActs(content: {
     return HOME_ACTS.filter((act) => shown[act]);
 }
 
-/** How many projects after the flagship get a row of their own. */
+/** How many projects after the flagship get a row of their own.
+ *  @internal Exported for tests. */
 export const HOME_PROJECT_ROWS = 2;
 
 /**

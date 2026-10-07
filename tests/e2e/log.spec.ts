@@ -84,6 +84,20 @@ for (const [width, height] of [
     }
 }
 
+test("a row's title balances its lines on a phone, so no word stands alone", async ({
+    page,
+}) => {
+    const wrap = () =>
+        entryRows(page)
+            .first()
+            .getByRole("heading")
+            .evaluate((title) => getComputedStyle(title).textWrapStyle);
+    await page.goto("/blog");
+    expect(await wrap()).toBe("pretty");
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await wrap()).toBe("balance");
+});
+
 test("entries are newest first, in the same order on every list", async ({
     page,
 }) => {
@@ -206,6 +220,11 @@ test("a row's tag opens its page, whose rows leave that tag out", async ({
     await expect(
         page.getByRole("heading", { level: 1, name: tagLabel(name) }),
     ).toBeVisible();
+    // Its description says the section's word, Writing.
+    const html = await (await page.request.get(`/blog/tags/${name}`)).text();
+    expect(html).toContain(
+        `<meta name="description" content="Writing tagged ${tagLabel(name)}."/>`,
+    );
     const tagged = await rows(page);
     expect(tagged).toHaveLength(count);
     // The h1 names the tag: no row repeats it.

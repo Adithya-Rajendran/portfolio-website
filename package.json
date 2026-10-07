@@ -42,7 +42,6 @@
         "@vercel/firewall": "^1.2.5",
         "@vercel/speed-insights": "^2.0.0",
         "botid": "^1.5.11",
-        "clsx": "^2.1.1",
         "next": "^16.3.4",
         "next-sanity": "^13.3.4",
         "react": "^19.2.8",
@@ -52,7 +51,6 @@
         "sanity": "^6.12.0",
         "server-only": "^0.0.1",
         "shiki": "^4.4.3",
-        "tailwind-merge": "^3.6.0",
         "three": "^0.186.1",
         "zod": "^4.5.4"
     },

@@ -311,6 +311,9 @@ test.describe("routes and headers", () => {
         expect(headers["x-powered-by"]).toBeUndefined();
         expect(headers["x-content-type-options"]).toBe("nosniff");
         expect(headers["x-frame-options"]).toBe("DENY");
+        expect(headers["permissions-policy"]).toBe(
+            "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+        );
         const csp = headers["content-security-policy"] ?? "";
         expect(csp).toContain("script-src-attr 'none'");
         expect(csp).toContain("frame-ancestors 'none'");

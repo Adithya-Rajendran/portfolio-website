@@ -41,7 +41,7 @@ export type WorldKind = "earth" | "mars" | "jupiter" | "saturn";
 const D2R = Math.PI / 180;
 const TAU = Math.PI * 2;
 
-export const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 /** Zero slope at both ends. */
 const ease = (u: number) => (1 - Math.cos(Math.PI * clamp01(u))) / 2;
@@ -68,6 +68,7 @@ const mix = (a: Vec3, b: Vec3, t: number): Vec3 => [
     lerp(a[1], b[1], t),
     lerp(a[2], b[2], t),
 ];
+/** @internal Exported for tests. */
 export const dist = (a: Vec3, b: Vec3) =>
     Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const unit = (a: Vec3): Vec3 => {
@@ -97,7 +98,7 @@ export { worldKinds };
 /** An orbit's plane: the ecliptic's axes turned by the inclination about
  *  the line of nodes. A point at angle θ is r(cos θ·ex + sin θ·ez), which
  *  runs clockwise seen from above, so the Sun is to the ship's right. */
-export interface Plane {
+interface Plane {
     ex: Vec3;
     ey: Vec3;
     ez: Vec3;
@@ -225,7 +226,7 @@ const BELT_HALF = 0.15;
 
 /* ---- the stage ------------------------------------------------------------- */
 
-export interface Layout {
+interface Layout {
     /** Pixels per unit of tan(angle) from the lens centre. */
     kpx: number;
     /** Half the subject's box, pixels. */
@@ -335,9 +336,9 @@ export function stageFrame(
 
 /** The drawing buffer's pixel budget: about what a laptop's integrated
  *  GPU fills at a steady frame on a wide stage, less on a phone. */
-export const PIXEL_BUDGET = { wide: 3.0e6, phone: 1.4e6 };
+const PIXEL_BUDGET = { wide: 3.0e6, phone: 1.4e6 };
 /** WebGL's device pixel ratio cap (the brief's). */
-export const MAX_DPR = 1.75;
+const MAX_DPR = 1.75;
 
 /** The drawing buffer's pixel ratio for a stage `width`×`height` (CSS
  *  pixels) on a screen of `device` pixel ratio: the device's, at most
@@ -356,7 +357,8 @@ export function drawingRatio(
 }
 
 /** The camera's axes for a pose: forward, right and up, with world-up
- *  fixed (no roll), as three.js's lookAt builds them. */
+ *  fixed (no roll), as three.js's lookAt builds them.
+ *  @internal Exported for tests. */
 export function viewAxes(pose: { eye: Vec3; target: Vec3 }) {
     const fwd = unit(sub(pose.target, pose.eye));
     const right = unit(cross(fwd, [0, 1, 0]));
@@ -426,7 +428,8 @@ export function ringReach(
 /** No world is drawn smaller than this radius on the stage, pixels, so the
  *  map shows worlds, not empty rings. */
 export const minWorldPx = (stage: Pick<Stage, "wide">) => (stage.wide ? 6 : 5);
-/** Labels keep right of the record on a wide stage. */
+/** Labels keep right of the record on a wide stage.
+ *  @internal Exported for tests. */
 export const labelMinX = (stage: Pick<Stage, "wide" | "W" | "record">) =>
     stage.wide ? Math.max(stage.W * 0.37, stage.record + 24) : 8;
 
@@ -480,7 +483,7 @@ export function labelGap(
     return Math.min(stage.W * 0.3, Math.max(ring, loop, 6 * small)) + 9;
 }
 
-export interface LabelSize {
+interface LabelSize {
     w: number;
     h: number;
 }
@@ -537,7 +540,8 @@ export function roomGap(
 export const LABEL_FADE = 24;
 /** On the chase a label stands this far off the route drawn near its
  *  world, its parking ring included (pixels): the ship's half-length and
- *  glow, and a margin. */
+ *  glow, and a margin.
+ *  @internal Exported for tests. */
 export const LOOP_CLEAR = 30;
 /** A side within this angle of its world's orbit on the stage would lay
  *  the leader along the orbit line (cosine of 20°). */
@@ -590,7 +594,7 @@ interface Leg {
 /** A cubic spline through (xs, ys), xs increasing: natural at the start,
  *  and at the end unless `endSlope` clamps its slope there. Past the
  *  knots it carries on its end pieces. */
-export function cubicSpline(xs: number[], ys: number[], endSlope?: number) {
+function cubicSpline(xs: number[], ys: number[], endSlope?: number) {
     const n = xs.length;
     if (n < 2) return { at: () => ys[0] ?? 0, d1: () => 0 };
     const h = xs.slice(1).map((x, i) => x - xs[i]);
@@ -663,7 +667,7 @@ export interface Drawn {
     ps: number[];
 }
 
-export interface FlightPlan {
+interface FlightPlan {
     worlds: World[];
     /** The current chapter, whose leg is the accent (−1: none). */
     current: number;
@@ -796,7 +800,8 @@ const OVER_TURN = -15 * D2R;
  *  over Earth's night side, this many of its radii from its centre, with
  *  the Sun this far (radians) below the limb, so only its corona shows
  *  over the atmosphere; the Sun sits where the home page's sunrise has it
- *  (OPEN_LENS). Then the camera rises into the chase. */
+ *  (OPEN_LENS). Then the camera rises into the chase.
+ *  @internal Exported for tests. */
 export const OPEN_SPAN = 0.6;
 const OPEN_ALT = 1.7;
 const OPEN_DIP = 0.6 * D2R;
@@ -1161,8 +1166,9 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
         );
     };
 
-    // The legs, in route order; a transfer frames the legs either side.
-    const legs: Leg[] = route.segments.map((seg, index) => {
+    // The legs, in route order; a transfer frames the legs either side, so
+    // it is resolved in a second pass, once they exist.
+    const pending = route.segments.map<Leg | null>((seg, index) => {
         const w = worlds[Math.min(seg.chapter, last)];
         const ring = parking[w.chapter];
         const on = (u: number) => onTrack(lerp(seg.p0, seg.p1, u));
@@ -1202,12 +1208,18 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             };
         }
         // Transfers are resolved below, once their neighbours exist.
-        return null as unknown as Leg;
+        return null;
     });
     route.segments.forEach((seg, i) => {
         if (seg.kind !== "transfer") return;
-        const a = legs[i - 1].shot(1);
-        const b = legs[i + 1].shot(0);
+        // buildRoute (lib/trajectory.ts) sets a transfer between two
+        // chapters' legs, never first or last.
+        const before = pending[i - 1];
+        const after = pending[i + 1];
+        if (!before || !after)
+            throw new Error(`Transfer ${i} has no leg either side`);
+        const a = before.shot(1);
+        const b = after.shot(0);
         // The two-shot, composed at the transfer's midpoint: the eye
         // behind A, turned toward the Sun and raised, looking a set share
         // of the way toward B and toward the ship, so every transfer
@@ -1254,7 +1266,7 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
                 az: Math.atan2(v[2], v[0]),
             };
         };
-        legs[i] = {
+        pending[i] = {
             at: (u) => onTrack(lerp(seg.p0, seg.p1, u)),
             shot: (u) => {
                 const m = flyOf(u);
@@ -1267,6 +1279,10 @@ export function buildFlight(data: TrajectoryData, route: Route): FlightPlan {
             },
             fly: flyOf,
         };
+    });
+    const legs = pending.map((leg, i) => {
+        if (!leg) throw new Error(`Segment ${i} has no leg`);
+        return leg;
     });
 
     const shipAt = (p: number) => {

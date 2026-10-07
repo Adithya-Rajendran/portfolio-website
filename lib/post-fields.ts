@@ -24,7 +24,6 @@ export const CALLOUT_TONES = [
     { title: "Warning", value: "warning" },
     { title: "Caution", value: "caution" },
 ] as const satisfies readonly Option<string>[];
-export type CalloutTone = ValueOf<typeof CALLOUT_TONES>;
 
 /** The tone's word, which leads a callout (and its title, if any). */
 export function calloutToneTitle(tone: unknown): string {

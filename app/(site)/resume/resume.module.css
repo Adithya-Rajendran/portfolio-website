@@ -156,7 +156,7 @@
         padding-bottom: 1.4mm;
         border-bottom: 0.6pt solid var(--rule-2);
         color: var(--ink-2);
-        font: 400 6.6pt / 1.2 var(--font-mono);
+        font: 400 7.6pt / 1.2 var(--font-mono);
         letter-spacing: 0.04em;
         text-transform: uppercase;
     }
@@ -195,7 +195,7 @@
         gap: 1.2mm;
         margin-right: 2mm;
         color: var(--ink-1);
-        font: 400 6.4pt / 1 var(--font-label);
+        font: 400 7pt / 1 var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -229,7 +229,7 @@
         margin-bottom: 1.3mm;
         padding: 0 0 0.7mm;
         border-bottom: 0.6pt solid var(--rule-2);
-        font-size: 6.6pt;
+        font-size: 7pt;
         letter-spacing: 0.14em;
         break-after: avoid;
     }
@@ -260,7 +260,7 @@
         break-inside: avoid;
     }
     .rowDate {
-        font-size: 7pt;
+        font-size: 7.6pt;
     }
     .row a {
         text-decoration: none;

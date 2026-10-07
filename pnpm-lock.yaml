@@ -60,9 +60,6 @@ importers:
       botid:
         specifier: ^1.5.11
         version: 1.5.11(next@16.3.4(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@26.4.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
       next:
         specifier: ^16.3.4
         version: 16.3.4(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@26.4.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -90,9 +87,6 @@ importers:
       shiki:
         specifier: ^4.4.3
         version: 4.4.3
-      tailwind-merge:
-        specifier: ^3.6.0
-        version: 3.6.0
       three:
         specifier: ^0.186.1
         version: 0.186.1
@@ -6118,9 +6112,6 @@ packages:
   tagged-tag@1.0.0:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
-
-  tailwind-merge@3.6.0:
-    resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
 
   tailwindcss@4.3.3:
     resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
@@ -13669,8 +13660,6 @@ snapshots:
   symbol-tree@3.2.4: {}
 
   tagged-tag@1.0.0: {}
-
-  tailwind-merge@3.6.0: {}
 
   tailwindcss@4.3.3: {}
 

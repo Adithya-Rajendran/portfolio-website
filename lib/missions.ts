@@ -1,5 +1,6 @@
 import type { StatusValue } from "@/components/ui/marks";
 import { hostOf, siteUrlOf, sitePostSlug } from "@/lib/cv";
+import { dateOnly } from "@/lib/dates";
 import { formatMissionDesignation } from "@/lib/designations";
 import { extractHeadings } from "@/lib/headings";
 import type { LogEntry } from "@/lib/log-index";
@@ -37,7 +38,7 @@ export interface MissionLink {
     host: string;
 }
 
-export interface MissionParameter {
+interface MissionParameter {
     id: string;
     label: string;
     value: string;
@@ -92,12 +93,12 @@ const STATUS_VALUE: Record<ProjectStatus, StatusValue> = {
 };
 
 /** The glyph a project status is drawn with (● Active, ■ Complete…). */
-export function missionStatusValue(status: ProjectStatus): StatusValue {
+function missionStatusValue(status: ProjectStatus): StatusValue {
     return STATUS_VALUE[status] ?? "planned";
 }
 
 /** "infrastructure" → "Infrastructure". */
-export function typeTitle(type: ProjectType): string {
+function typeTitle(type: ProjectType): string {
     return PROJECT_TYPES.find((option) => option.value === type)?.title ?? type;
 }
 
@@ -125,7 +126,8 @@ function externalLinks(
 
 /** Whether the stack already names a value: every part of "Next.js +
  *  React" is a technology, or a whole word of one ("MLP" in "Multilayer
- *  perceptron (MLP)"). */
+ *  perceptron (MLP)").
+ *  @internal Exported for tests. */
 export function inStack(value: string, technologies: readonly string[]) {
     const parts = value
         .split(/\s*(?:\+|,|&|\/|\band\b)\s*/i)
@@ -152,6 +154,7 @@ export function inStack(value: string, technologies: readonly string[]) {
  * ("Okta OIDC") is a spec, or nothing when the stack or the card's text
  * (`said`: the summary and highlights) already names it ("Feed: RSS"
  * beside "…and RSS feed"), so a name is never set as a stat or said twice.
+ * @internal Exported for tests.
  */
 export function splitParameters(
     parameters: readonly MissionParameter[],
@@ -290,6 +293,7 @@ function contentWords(texts: readonly (string | null | undefined)[]) {
  * How many content words `texts` has that `known` does not, a word
  * matching when one stem starts with the other ("page" and "pages").
  * What a reader would learn from `texts` after reading `known`.
+ * @internal Exported for tests.
  */
 export function newWords(
     texts: readonly (string | null | undefined)[],
@@ -315,6 +319,7 @@ const BRIEF_ADDS = 4;
  * not: a section heading, anything that is not a paragraph (a photograph,
  * a listing, a callout), or at least eight content words they lack. A
  * page leaves out an essay that only restates them.
+ * @internal Exported for tests.
  */
 export function essayAdds(
     body: ContentBody | null | undefined,
@@ -359,6 +364,7 @@ function cardLines(project: Pick<LayoutSource, "summary" | "highlights">) {
  * Whether the brief adds to the card: a row with at least four content
  * words the summary and highlights lack. A brief that only restates them
  * is not evidence of its own.
+ * @internal Exported for tests.
  */
 export function briefAdds(
     project: Pick<LayoutSource, "summary" | "highlights" | "brief">,
@@ -380,7 +386,7 @@ export function essayShown(project: LayoutSource): boolean {
     ]);
 }
 
-export type MissionLayout = "file" | "note";
+type MissionLayout = "file" | "note";
 
 /**
  * How a project's page is laid out (contract §9). The full file where
@@ -426,9 +432,7 @@ export function toMission(project: ProjectListItem, siteUrl: string): Mission {
     const name = project.name?.trim() || null;
     const summary = project.summary?.trim() ?? "";
     const highlights = (project.highlights ?? []).filter((line) => line.trim());
-    const revised = /^\d{4}-\d{2}-\d{2}/.test(project._updatedAt ?? "")
-        ? project._updatedAt!.slice(0, 10)
-        : null;
+    const revised = dateOnly(project._updatedAt);
     return {
         id: project._id,
         slug: project.slug,
@@ -527,7 +531,8 @@ export function adjacentMissions<T extends { slug: string }>(
     };
 }
 
-/** Every `contentLink` href in a Portable Text body, nested ones too. */
+/** Every `contentLink` href in a Portable Text body, nested ones too.
+ *  @internal Exported for tests. */
 export function bodyLinks(body: ContentBody | null | undefined): string[] {
     const hrefs: string[] = [];
     const walk = (value: unknown) => {
@@ -548,7 +553,7 @@ export function bodyLinks(body: ContentBody | null | undefined): string[] {
     return hrefs;
 }
 
-export interface MissionEntries {
+interface MissionEntries {
     /** The entry the mission's write-up comes from, when there is one. */
     original: LogEntry | null;
     /** The other entries tied to the mission, newest first: the head's

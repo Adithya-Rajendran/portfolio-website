@@ -1,6 +1,7 @@
+/** @internal Exported for tests. */
 export const RESUME_FILENAME = "Adithya_Rajendran_Resume.pdf";
 
-export type ResumeAssetMode = "view" | "download";
+type ResumeAssetMode = "view" | "download";
 
 /**
  * Sanity file references come from CMS data, so keep the public resume routes

@@ -1,4 +1,4 @@
-import { PortableText, type PortableTextBlock } from "@portabletext/react";
+import { PortableText } from "@portabletext/react";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
 import Footnotes from "@/components/prose/footnotes";
 import { CACHE_TAGS } from "@/lib/cache-tags";
@@ -34,7 +34,7 @@ export default async function ProjectEssay({
     return (
         <div className="prose">
             <PortableText
-                value={index.body as unknown as PortableTextBlock[]}
+                value={index.body}
                 components={createPortableTextComponents({
                     index,
                     highlightedCode: highlighted,

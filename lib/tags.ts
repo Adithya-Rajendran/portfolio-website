@@ -6,7 +6,7 @@ import type { PostListItem } from "@/lib/sanity-client";
  * its URL segment — no slugification layer between content and routes.
  */
 
-export type TagCount = { tag: string; count: number };
+type TagCount = { tag: string; count: number };
 
 /** Same shape the schema validation enforces; used as a URL-side gate. */
 export const TAG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -64,7 +64,8 @@ export function tagLabel(tag: string): string {
     return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-/** Posts carrying the exact tag (no fuzzy/prefix matching). */
+/** Posts carrying the exact tag (no fuzzy/prefix matching).
+ *  @internal Exported for tests. */
 export function filterPostsByTag<T extends Pick<PostListItem, "tags">>(
     posts: T[],
     tag: string,

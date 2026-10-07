@@ -24,7 +24,11 @@
 /* Any leftover dark: utility follows Void. */
 @custom-variant dark (&:where([data-theme="void"], [data-theme="void"] *));
 
-/* No default palette or fonts: utilities use the design tokens only. */
+/* No default palette or fonts: utilities use the design tokens only. The
+   breakpoints are the grid's (styles/tokens.css); every media query is in
+   rem, so all of them follow the visitor's text size together. A width
+   only one component needs (the hero's 24rem and 48rem, the header's
+   75rem and 85rem) stays in that component's rules. */
 @theme {
     --color-*: initial;
     --font-*: initial;

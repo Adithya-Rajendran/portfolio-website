@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { motionAllowed } from "@/components/trajectory/journey";
 import TrajectoryView from "@/components/trajectory/trajectory-view";
 import { LinkArrow } from "@/components/ui/marks";
@@ -56,12 +56,19 @@ function setView(next: View) {
     );
 }
 
+/** The element `id` names inside these views (`root`), never in another
+ *  page: Cache Components keeps visited routes mounted but hidden, and
+ *  /portfolio's tiles are `#projects` too. */
+function find(root: HTMLElement, id: string) {
+    return root.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
+}
+
 /** Shows the list and moves to `id` (a row, else the list's top), with
  *  focus, so a keyboard carries on from there. */
-function showList(id = LIST) {
+function showList(root: HTMLElement, id = LIST) {
     setView("list");
     requestAnimationFrame(() => {
-        const target = document.getElementById(id);
+        const target = find(root, id);
         if (!target) return;
         if (!target.hasAttribute("tabindex")) target.tabIndex = -1;
         target.focus({ preventScroll: true });
@@ -70,9 +77,9 @@ function showList(id = LIST) {
 }
 
 /** Whether `hash` names the list or a part of it. */
-function inList(hash: string) {
+function inList(root: HTMLElement, hash: string) {
     const id = decodeURIComponent(hash.slice(1));
-    return document.getElementById(id)?.closest(`#${LIST}`) ? id : null;
+    return id && find(root, id)?.closest(`#${LIST}`) ? id : null;
 }
 
 /** A crawler that runs scripts (Google's renderer reports no reduce-motion
@@ -93,9 +100,9 @@ function picked(): View | undefined {
  *  whatever view the visit picked; else the view picked (a tap before
  *  hydration included), else the CSS's default: the list when motion is
  *  off or for a crawler, the flight otherwise. */
-function pin() {
-    const id = inList(window.location.hash);
-    if (id) showList(id);
+function pin(root: HTMLElement) {
+    const id = inList(root, window.location.hash);
+    if (id) showList(root, id);
     else if (!view)
         setView(
             picked() ??
@@ -108,7 +115,7 @@ function pin() {
 /** A link on this page, outside the views, to a part of the list (the
  *  header's CV on a phone): Next changes only the hash, so nothing would
  *  re-pin. */
-function follow(event: MouseEvent) {
+function follow(root: HTMLElement, event: MouseEvent) {
     if (event.button || event.metaKey || event.ctrlKey || event.shiftKey)
         return;
     const link =
@@ -118,8 +125,8 @@ function follow(event: MouseEvent) {
     if (!link || link.closest("[data-views]")) return;
     const url = new URL(link.href);
     if (url.pathname !== window.location.pathname) return;
-    const id = inList(url.hash);
-    if (id) showList(id);
+    const id = inList(root, url.hash);
+    if (id) showList(root, id);
 }
 
 /**
@@ -142,17 +149,21 @@ export default function ExperienceViews({
 }) {
     const current = useSyncExternalStore(subscribe, getView, noView);
     const flight = useSyncExternalStore(subscribe, getFlown, noView);
+    const root = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        pin();
-        document.addEventListener("click", follow);
-        return () => document.removeEventListener("click", follow);
+        const views = root.current;
+        if (!views) return;
+        pin(views);
+        const onClick = (event: MouseEvent) => follow(views, event);
+        document.addEventListener("click", onClick);
+        return () => document.removeEventListener("click", onClick);
     }, []);
     const toList = (event: { preventDefault(): void }) => {
         event.preventDefault();
-        showList();
+        if (root.current) showList(root.current);
     };
     return (
-        <div className={styles.views} data-view={current} data-views>
+        <div ref={root} className={styles.views} data-view={current} data-views>
             <div className={`shell ${styles.bar}`} data-print="hide">
                 <Segmented
                     className={`js-only ${styles.switch}`}
@@ -179,9 +190,13 @@ export default function ExperienceViews({
                 <TrajectoryView
                     data={data}
                     active={flight === "timeline"}
-                    onEntry={(href) =>
-                        showList(href.slice(href.indexOf("#") + 1))
-                    }
+                    onEntry={(href) => {
+                        if (root.current)
+                            showList(
+                                root.current,
+                                href.slice(href.indexOf("#") + 1),
+                            );
+                    }}
                 />
                 {/* After the flight, the way to the list. The ask is the
                     Future card's Contact (and the head's). */}

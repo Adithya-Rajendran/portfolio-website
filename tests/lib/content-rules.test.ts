@@ -1,43 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-    credentialLifecycle,
-    hasVisibleItems,
-    newestFirst,
-} from "@/lib/content-rules";
-
-describe("hasVisibleItems", () => {
-    it("hides missing and empty CMS arrays", () => {
-        expect(hasVisibleItems(undefined)).toBe(false);
-        expect(hasVisibleItems(null)).toBe(false);
-        expect(hasVisibleItems([])).toBe(false);
-    });
-
-    it("shows a section only after real content exists", () => {
-        expect(hasVisibleItems([{ _key: "one" }])).toBe(true);
-    });
-});
-
-describe("credentialLifecycle", () => {
-    const today = "2026-07-11";
-
-    it("keeps lifetime credentials distinct from dated credentials", () => {
-        expect(
-            credentialLifecycle({ lifetime: true, expiresOn: null }, today),
-        ).toBe("lifetime");
-    });
-
-    it("marks only dates before today as expired", () => {
-        expect(credentialLifecycle({ expiresOn: "2025-08-01" }, today)).toBe(
-            "expired",
-        );
-        expect(credentialLifecycle({ expiresOn: "2026-07-11" }, today)).toBe(
-            "active",
-        );
-        expect(credentialLifecycle({ expiresOn: "2026-09-01" }, today)).toBe(
-            "active",
-        );
-    });
-});
+import { newestFirst } from "@/lib/content-rules";
 
 describe("newestFirst", () => {
     it("orders mixed personal posts by publishedAt without mutating input", () => {

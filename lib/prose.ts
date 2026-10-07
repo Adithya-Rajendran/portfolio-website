@@ -15,6 +15,7 @@ type Block = { _key?: string; _type: string; [key: string]: unknown };
  * The listings break out of the text measure (G1) when a line is longer
  * than this many characters: the measure fits 64 columns of mono at 13px
  * (66, less a little room), so a line that fits is never cut.
+ * @internal Exported for tests.
  */
 export const LISTING_MEASURE = 64;
 
@@ -57,7 +58,8 @@ const LANGUAGE_NAMES: Record<string, string> = {
     txt: "Text",
 };
 
-/** "bash" → "Bash"; none → "Text"; an unknown id prints as stored. */
+/** "bash" → "Bash"; none → "Text"; an unknown id prints as stored.
+ *  @internal Exported for tests. */
 export function languageName(language?: string | null): string {
     const id = typeof language === "string" ? language.trim() : "";
     if (!id) return "Text";
@@ -78,13 +80,14 @@ export interface ListingInfo {
     label: string;
 }
 
-/** "Listing 3, install.sh": unique per listing on a page. */
+/** "Listing 3, install.sh": unique per listing on a page.
+ *  @internal Exported for tests. */
 export function listingLabel(number: number, name: string): string {
     return `Listing ${number}, ${name}`;
 }
 
 /** The lines of a listing as it is drawn: trailing blank lines dropped. */
-export function listingLines(code: string): string[] {
+function listingLines(code: string): string[] {
     return code.replace(/\s+$/, "").split("\n");
 }
 
@@ -96,7 +99,7 @@ function columns(line: string): number {
     return width;
 }
 
-export type FigureKind = "plate" | "figure";
+type FigureKind = "plate" | "figure";
 
 export interface FigureInfo {
     kind: FigureKind;
@@ -146,6 +149,7 @@ export function hasImageAsset(value: unknown): boolean {
  * Photographs are plates; diagrams, plots and screenshots are figures. An
  * image with no kind (every image saved before kinds existed) is a
  * photograph.
+ * @internal Exported for tests.
  */
 export function figureKind(kind: unknown): FigureKind {
     return kind === "diagram" || kind === "plot" || kind === "screenshot"

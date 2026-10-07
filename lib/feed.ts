@@ -5,6 +5,7 @@ import {
     type PortableTextHtmlComponents,
 } from "@portabletext/to-html";
 import { siteConfig } from "@/lib/config";
+import { dateOnly } from "@/lib/dates";
 import { formatEntryDate } from "@/lib/log-index";
 import { urlForImage } from "@/lib/sanity-image";
 import { changeKindTitle } from "@/lib/post-fields";
@@ -16,18 +17,19 @@ import {
 } from "@/lib/prose";
 import type { PostWithBody } from "@/lib/sanity-client";
 
-/** The exact projection consumed by the RSS renderer. */
+/** The exact projection consumed by the RSS renderer.
+ *  @internal Exported for tests. */
 export type FeedPost = Pick<
     PostWithBody,
     "title" | "slug" | "description" | "publishedAt" | "body"
 > &
     Partial<Pick<PostWithBody, "changelog">>;
 
-export const FEED_PATH = "/feed.xml";
+const FEED_PATH = "/feed.xml";
 /** The section's plain name, as the nav names it. */
-export const FEED_TITLE = `${siteConfig.author} — Writing`;
+const FEED_TITLE = `${siteConfig.author} — Writing`;
 /** The stylesheet a browser shows the feed with (public/feed.xsl). */
-export const FEED_STYLESHEET = "/feed.xsl";
+const FEED_STYLESHEET = "/feed.xsl";
 
 /**
  * A page's `alternates`: its canonical address and the feed, so a reader's
@@ -74,10 +76,10 @@ function escapeHtmlAttr(value: string): string {
 
 /** Accept both legacy date-only values and the V3 datetime field. */
 function toRfc822(value: string): string | null {
-    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
-    const parsed = new Date(dateOnly ? `${value}T00:00:00Z` : value);
+    const bare = dateOnly(value) === value;
+    const parsed = new Date(bare ? `${value}T00:00:00Z` : value);
     if (Number.isNaN(parsed.getTime())) return null;
-    if (dateOnly && parsed.toISOString().slice(0, 10) !== value) return null;
+    if (bare && parsed.toISOString().slice(0, 10) !== value) return null;
     return parsed.toUTCString();
 }
 

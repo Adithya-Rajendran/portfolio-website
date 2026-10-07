@@ -25,7 +25,8 @@ export const siteConfig = {
     },
 };
 
-/** Every public profile for schema.org sameAs — filled slots only. */
+/** Every public profile for schema.org sameAs — filled slots only.
+ *  @internal Exported for tests. */
 export const socialProfiles: string[] = [
     siteConfig.profiles.linkedin,
     siteConfig.profiles.github,

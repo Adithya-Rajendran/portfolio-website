@@ -1,4 +1,4 @@
-export type MediaEmbedTarget =
+type MediaEmbedTarget =
     | {
           kind: "video";
           provider: "youtube" | "vimeo";

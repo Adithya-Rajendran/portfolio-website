@@ -26,9 +26,9 @@ import { CACHE_TAGS, type CacheTag } from "@/lib/cache-tags";
 import { TAG_PATTERN } from "@/lib/tags";
 
 /** Where the values of a route's dynamic segment come from. */
-export type RouteExpansion = "post" | "tag" | "project";
+type RouteExpansion = "post" | "tag" | "project";
 
-export type RouteTagEntry = {
+type RouteTagEntry = {
     /** The public path; `[slug]` or `[tag]` stands for each published value. */
     readonly path: string;
     /** The file that serves it. */
@@ -44,6 +44,7 @@ export type RouteTagEntry = {
 
 const { profile, post, project } = CACHE_TAGS;
 
+/** @internal Exported for tests. */
 export const ROUTE_TAGS: readonly RouteTagEntry[] = [
     // Entry points first: warming requests the list in this order.
     { path: "/", file: "app/(site)/page.tsx", tags: [profile, post, project] },
@@ -195,7 +196,8 @@ export function shareImagePath(file: string, slug = ""): string {
  */
 export const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
-/** The published values each dynamic segment expands to. */
+/** The published values each dynamic segment expands to.
+ *  @internal Exported for tests. */
 export type WarmLists = Record<RouteExpansion, readonly string[]>;
 
 export type WarmTarget = { path: string; redirects: boolean };
@@ -213,6 +215,7 @@ function expansionValues(
 /**
  * The cached routes a tag's content appears on, in table order: the ones
  * warming requests. Routes rendered per request are left out.
+ * @internal Exported for tests.
  */
 export function routesForTag(tag: CacheTag): RouteTagEntry[] {
     return ROUTE_TAGS.filter(
@@ -220,7 +223,8 @@ export function routesForTag(tag: CacheTag): RouteTagEntry[] {
     );
 }
 
-/** A route's URLs, with its dynamic segment expanded from `lists`. */
+/** A route's URLs, with its dynamic segment expanded from `lists`.
+ *  @internal Exported for tests. */
 export function expandRoute(route: RouteTagEntry, lists: WarmLists): string[] {
     return route.expand
         ? expansionValues(route.expand, lists).map((value) =>
