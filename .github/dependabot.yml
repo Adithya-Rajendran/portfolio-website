@@ -11,6 +11,11 @@ updates:
           # dev-tooling group fails lint and holds back every update in it.
           - dependency-name: "typescript"
             versions: [">=7"]
+          # @types/node follows the Node major the site runs on
+          # (engines.node, CI and Vercel: 24.x), so tsc rejects APIs that
+          # would throw in production. Lift this when the engine moves.
+          - dependency-name: "@types/node"
+            update-types: ["version-update:semver-major"]
       # A dependency goes to the first group that matches it, so the
       # packages that move in lockstep come before the catch-all types.
       groups:
