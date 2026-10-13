@@ -145,6 +145,9 @@
     font: 400 var(--step-3) / 1.08 var(--font-display);
     letter-spacing: -0.01em;
     text-wrap: balance;
+    /* A word wider than a covered tile's title column (large or tracked
+       text on a phone) breaks rather than runs past it. */
+    overflow-wrap: break-word;
 }
 .tileName a {
     text-decoration: none;
@@ -257,6 +260,8 @@
     font: 400 var(--step-2) / 1.2 var(--font-display);
     letter-spacing: -0.005em;
     text-wrap: balance;
+    /* As a tile's title: a word wider than the column breaks. */
+    overflow-wrap: break-word;
 }
 .rowTitle a {
     text-decoration: none;

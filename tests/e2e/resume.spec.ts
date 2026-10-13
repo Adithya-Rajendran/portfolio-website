@@ -156,6 +156,8 @@ test("Skip to the list, The full record and a card's Full entry land on the list
     await expect(option(page, "List")).toBeChecked();
     await expect(firstSection(page)).toBeInViewport();
     await expect(page.locator("#cv")).toBeFocused();
+    // The address names the list, so a reload returns to it.
+    await expect(page).toHaveURL(/\/resume#cv$/);
 
     // The full record, after the flight.
     await option(page, "Timeline").check();
@@ -166,6 +168,7 @@ test("Skip to the list, The full record and a card's Full entry land on the list
     await record.click();
     await expect(option(page, "List")).toBeChecked();
     await expect(firstSection(page)).toBeInViewport();
+    await expect(page).toHaveURL(/\/resume#cv$/);
 
     // A card's Full entry: the chapter's row.
     await option(page, "Timeline").check();
@@ -176,10 +179,15 @@ test("Skip to the list, The full record and a card's Full entry land on the list
         .getAttribute("href");
     await card.getByRole("link", { name: trajectoryCopy.entry }).click();
     await expect(option(page, "List")).toBeChecked();
-    const row = page.locator(`[id="${href!.split("#")[1]}"]`);
+    const id = href!.split("#")[1];
+    const row = page.locator(`[id="${id}"]`);
     await expect(row).toBeInViewport();
     await expect(row).toBeFocused();
-    await expect(page).toHaveURL(/\/resume$/);
+    // The address names the row: a reload opens the list there.
+    await expect(page).toHaveURL(new RegExp(`/resume#${id}$`));
+    await page.reload();
+    await expect(option(page, "List")).toBeChecked();
+    await expect(row).toBeInViewport();
 });
 
 test("under reduced motion the list is the view; Timeline is the flight's still", async ({
@@ -226,6 +234,38 @@ test("an address that names a part of the CV opens the list there", async ({
         await expect(part).toBeInViewport();
         await expect(option(page, "List")).toBeChecked();
         await expect(page.locator("[data-journey]")).toBeHidden();
+    }
+});
+
+test("the CV's address keeps the head's last row in view, at 1440 and on a phone", async ({
+    page,
+}) => {
+    // iPhone 13's viewport: 390×664.
+    for (const viewport of [
+        { width: 1440, height: 900 },
+        { width: 390, height: 664 },
+    ]) {
+        await page.setViewportSize(viewport);
+        await page.goto("about:blank");
+        await page.goto("/resume#cv");
+        await expect(option(page, "List")).toBeChecked();
+        await expect(firstSection(page)).toBeInViewport();
+        // Download CV (PDF), the head's one action, where the build has a
+        // PDF (the fixtures have none); else the head's last row, the
+        // Open To line: wholly under the sticky header.
+        const head = main(page).locator(".page-head");
+        const download = head.getByRole("link", { name: cvCopy.download });
+        const last = (await download.count())
+            ? download
+            : head.locator(":scope > :last-child");
+        const header = (await page.getByRole("banner").boundingBox())!;
+        await expect
+            .poll(async () => (await last.boundingBox())!.y, {
+                message: `${viewport.width}px: the head's last row's top`,
+            })
+            .toBeGreaterThanOrEqual(header.y + header.height);
+        const box = (await last.boundingBox())!;
+        expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
     }
 });
 

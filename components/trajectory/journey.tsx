@@ -113,7 +113,7 @@ export default function Journey({
 }: {
     data: TrajectoryData;
     createScene: CreateScene;
-    figure?: string;
+    figure?: React.ReactNode;
     className?: string;
     pacing?: Pacing;
     poster?: React.ReactNode;

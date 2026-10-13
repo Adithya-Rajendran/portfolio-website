@@ -171,9 +171,9 @@
     visibility: hidden;
     transform: translateY(12px);
     transition:
-        opacity 0.45s ease,
-        transform 0.45s ease,
-        visibility 0s linear 0.45s;
+        opacity var(--dur-5) var(--ease-dock),
+        transform var(--dur-5) var(--ease-dock),
+        visibility 0s linear var(--dur-5);
 }
 
 :global(html[data-js]) .card[data-on] {
@@ -181,8 +181,8 @@
     visibility: visible;
     transform: none;
     transition:
-        opacity 0.45s ease 0.08s,
-        transform 0.45s ease 0.08s,
+        opacity var(--dur-5) var(--ease-dock) 0.08s,
+        transform var(--dur-5) var(--ease-dock) 0.08s,
         visibility 0s;
 }
 
@@ -298,6 +298,10 @@
     color: var(--ink-3);
     pointer-events: none;
 }
+/* The maps' source and licence: the credit's links. */
+.figure a {
+    pointer-events: auto;
+}
 
 :global(html[data-js]) .figure {
     display: block;
@@ -334,6 +338,14 @@
 :global(html[data-motion="reduced"]) .play,
 :global(html:not([data-motion="full"])) .stamp :global(.status) {
     display: none;
+}
+
+/* Pause motion stills a card's change as the OS setting does (below):
+   spatial motion runs only under data-motion="full". */
+:global(html[data-motion="reduced"]) .card,
+:global(html[data-motion="reduced"]) .card[data-on] {
+    transition: none;
+    transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -439,10 +451,11 @@
         position: relative;
         min-height: 0;
     }
+    /* A 44px tap target around the 17px link. */
     :global(html[data-js]) .entry::after {
         content: "";
         position: absolute;
-        inset: -12px -8px;
+        inset: -14px -8px;
     }
     :global(html[data-js]) .controls {
         flex-direction: row;

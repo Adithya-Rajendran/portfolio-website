@@ -18,7 +18,9 @@ const TRACE = carrierTrace();
  * report ("Found a broken link? Let me know") and space. Everything
  * renders without JavaScript; on the 404 (`missed`) the primary that
  * follows the missed address and the report that carries it need it.
- * Directive-free, so the client error boundary can render it too.
+ * `plainLinks` on the global 404, whose links load pages in full
+ * (SiteLink). Directive-free, so the client error boundary can render it
+ * too.
  */
 export default function LossOfSignal({
     page,
@@ -27,6 +29,7 @@ export default function LossOfSignal({
     lead,
     actions,
     missed = false,
+    plainLinks = false,
 }: {
     /** The root element's `data-page`. */
     page: string;
@@ -37,6 +40,8 @@ export default function LossOfSignal({
     actions: React.ReactNode;
     /** The 404: the page follows the address that was missed. */
     missed?: boolean;
+    /** Plain <a href> links: the global 404's document. */
+    plainLinks?: boolean;
 }) {
     const copy = lossOfSignalCopy;
     return (
@@ -81,7 +86,8 @@ export default function LossOfSignal({
 
             <div className="shell">
                 <p className="los-report">
-                    {copy.report} <ReportLink missed={missed} />.
+                    {copy.report}{" "}
+                    <ReportLink missed={missed} plain={plainLinks} />.
                 </p>
             </div>
         </div>

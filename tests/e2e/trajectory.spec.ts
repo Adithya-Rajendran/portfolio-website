@@ -102,6 +102,22 @@ for (const [width, height] of [
     });
 }
 
+test("the figure line credits the maps, their source and licence linked", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(PATH);
+    const journey = page.locator("[data-journey]");
+    await expect(journey).toBeVisible();
+    // CC BY 4.0: the source, the licence and that the maps were adapted.
+    await expect(journey.getByText(copy.figure.adapted)).toBeVisible();
+    for (const { label, href } of [copy.figure.source, copy.figure.licence]) {
+        const link = journey.getByRole("link", { name: label, exact: true });
+        await expect(link).toHaveAttribute("href", href);
+        await expect(link).toHaveCSS("pointer-events", "auto");
+    }
+});
+
 test("pinned, the stage shows its rail and Play", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(PATH);
@@ -215,6 +231,44 @@ test("a still flight opens on the latest chapter, the ask last on the rail", asy
     ).not.toHaveText(copy.openTo);
 });
 
+test("under Pause motion a card changes in place, with no slide", async ({
+    page,
+}) => {
+    // The site's own Pause motion, with no OS setting: spatial motion
+    // runs only under data-motion="full".
+    await page.addInitScript(() => {
+        try {
+            window.localStorage.setItem("ar-motion", "reduced");
+        } catch {
+            // Storage blocked: the page keeps motion, which the spec sees.
+        }
+    });
+    await page.goto(PATH);
+    await expect(page.locator("html")).toHaveAttribute(
+        "data-motion",
+        "reduced",
+    );
+    await page
+        .getByRole("group", { name: cvCopy.views.legend })
+        .getByRole("radio", { name: "Timeline", exact: true })
+        .check();
+    const cards = page.locator("[data-journey] [data-card]");
+    await expect(cards.first()).toBeAttached();
+    const moving = await cards.evaluateAll(
+        (elements) =>
+            elements
+                .map((card) => getComputedStyle(card))
+                .filter(
+                    (style) =>
+                        style.transform !== "none" ||
+                        style.transitionDuration
+                            .split(", ")
+                            .some((d) => d !== "0s"),
+                ).length,
+    );
+    expect(moving, "cards that slide or fade").toBe(0);
+});
+
 for (const width of [360, 390]) {
     test(`a still card's dates clear its Full entry at ${width}px`, async ({
         page,
@@ -273,6 +327,18 @@ for (const width of [360, 390]) {
             );
             expect(clash, `card ${i}`).toBe(0);
         }
+        // Full entry's hit area reaches the 44px tap target.
+        const target = await page
+            .locator("[data-journey] [data-card][data-on]")
+            .getByRole("link", { name: copy.entry })
+            .evaluate((link) => {
+                const box = link.getBoundingClientRect();
+                const area = getComputedStyle(link, "::after");
+                return (
+                    box.height - parseFloat(area.top) - parseFloat(area.bottom)
+                );
+            });
+        expect(target).toBeGreaterThanOrEqual(44);
     });
 }
 

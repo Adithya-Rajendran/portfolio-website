@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     formatEntryDate,
     entriesTagged,
+    lastRevised,
     logEntries,
     type LogSource,
 } from "@/lib/log-index";
@@ -97,5 +98,31 @@ describe("formatEntryDate", () => {
         expect(formatEntryDate("2026-03-06T00:00:00Z")).toBe("6 Mar 2026");
         expect(formatEntryDate("")).toBe("");
         expect(formatEntryDate(null)).toBe("");
+    });
+});
+
+describe("lastRevised", () => {
+    it("is the newest date the post records: published, revised or a change", () => {
+        expect(lastRevised({ publishedAt: "2026-03-06" })).toBe("2026-03-06");
+        expect(
+            lastRevised({
+                publishedAt: "2026-03-06",
+                revisedAt: "2026-04-01T09:00:00.000Z",
+            }),
+        ).toBe("2026-04-01T09:00:00.000Z");
+        expect(
+            lastRevised({
+                publishedAt: "2026-03-06",
+                revisedAt: "2026-04-01",
+                changes: ["2026-03-20", "2026-05-02", null],
+            }),
+        ).toBe("2026-05-02");
+    });
+
+    it("skips unreadable dates, and is undefined without any", () => {
+        expect(
+            lastRevised({ publishedAt: "2026-03-06", revisedAt: "soon" }),
+        ).toBe("2026-03-06");
+        expect(lastRevised({ publishedAt: "not-a-date" })).toBeUndefined();
     });
 });
