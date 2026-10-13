@@ -9,7 +9,7 @@ import { Icon } from "@/components/ui/icon";
  * number column.
  */
 
-export interface RouteItem {
+interface RouteItem {
     /** Stable React key. */
     key: string;
     href: string;

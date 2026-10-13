@@ -1,8 +1,9 @@
 /** The download's file name, spelled as the uploaded PDF's own name, which
- *  the inline view (/resume/view) serves: one file, one name. */
+ *  the inline view (/resume/view) serves: one file, one name.
+ *  @internal Exported for tests. */
 export const RESUME_FILENAME = "Adithya-Rajendran-Resume.pdf";
 
-export type ResumeAssetMode = "view" | "download";
+type ResumeAssetMode = "view" | "download";
 
 /**
  * Sanity file references come from CMS data, so keep the public resume routes

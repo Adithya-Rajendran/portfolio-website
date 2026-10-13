@@ -49,6 +49,13 @@
     letter-spacing: -0.003em;
     text-wrap: pretty;
 }
+/* A phone's column is too narrow for pretty to pull a word down, so a
+   two-line title balances: its last word never stands alone. */
+@media (max-width: 37.49rem) {
+    .title {
+        text-wrap: balance;
+    }
+}
 .title a {
     text-decoration: none;
 }

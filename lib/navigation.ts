@@ -72,7 +72,7 @@ export const primaryNavigation: readonly NavItem[] = [
 ];
 
 /** A section whose pages sit under an index: Projects, Writing. */
-export type IndexedSection = NavItem & { id: "missions" | "log" };
+type IndexedSection = NavItem & { id: "missions" | "log" };
 
 /**
  * The section whose index a missed address falls under ("/blog/…" is

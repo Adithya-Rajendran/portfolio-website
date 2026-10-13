@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PortableText, type PortableTextBlock } from "@portabletext/react";
+import { PortableText } from "@portabletext/react";
 import ArticleContinuation from "@/components/blogs/article-continuation";
 import EndMatter from "@/components/blogs/end-matter";
 import { createPortableTextComponents } from "@/components/blogs/portable-text-components";
@@ -18,7 +18,7 @@ import {
     headingIdsByKey,
 } from "@/lib/headings";
 import { highlightCodeBlocks, type CodeBlock } from "@/lib/highlight-code";
-import { formatEntryDate, logEntries } from "@/lib/log-index";
+import { logEntries } from "@/lib/log-index";
 import { originalEntries } from "@/lib/missions";
 import { siteRoutes } from "@/lib/navigation";
 import { getProfileLink } from "@/lib/profile-content";
@@ -35,7 +35,6 @@ import {
     getAllProjects,
     getAllSlugs,
     getPostBySlug,
-    getPostMeta,
     getProfile,
 } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
@@ -148,7 +147,6 @@ export default async function BlogPostPage({
         ),
     });
     const url = `${siteConfig.url}/blog/${slug}`;
-    const filed = post.publishedAt?.slice(0, 10);
     const revised = post.revisedAt?.slice(0, 10) ?? null;
 
     return (
@@ -176,9 +174,6 @@ export default async function BlogPostPage({
                 <p className="data">
                     {[
                         url.replace(/^https?:\/\//, ""),
-                        filed
-                            ? `${copy.printFiled} ${formatEntryDate(filed)}`
-                            : null,
                         profile?.name || siteConfig.author,
                     ]
                         .filter(Boolean)
@@ -201,12 +196,7 @@ export default async function BlogPostPage({
                     <PostBox className={styles.box} headings={contents} />
                     <div className={`prose ${styles.body}`}>
                         <PortableText
-                            value={
-                                index.body.slice(
-                                    0,
-                                    split,
-                                ) as unknown as PortableTextBlock[]
-                            }
+                            value={index.body.slice(0, split)}
                             components={components}
                             onMissingComponent={false}
                         />
@@ -219,11 +209,7 @@ export default async function BlogPostPage({
                         ) : null}
                         {split < index.body.length ? (
                             <PortableText
-                                value={
-                                    index.body.slice(
-                                        split,
-                                    ) as unknown as PortableTextBlock[]
-                                }
+                                value={index.body.slice(split)}
                                 components={components}
                                 onMissingComponent={false}
                             />
@@ -256,7 +242,9 @@ export async function generateMetadata({
     params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
     const { slug } = await params;
-    const post = await getPostMeta(slug);
+    // The page's own read: one cache entry and one Sanity request per post
+    // (the share image reads the smaller meta query).
+    const post = await getPostBySlug(slug);
     if (!post) return notFoundMetadata;
     const url = `${siteConfig.url}/blog/${slug}`;
     return {

@@ -7,7 +7,7 @@ import type { LogEntry } from "@/lib/log-index";
  * and the numbering), so the pager and the list agree with the index.
  */
 
-export interface Adjacent {
+interface Adjacent {
     /** The entry filed just before this one (LOG n − 1). */
     previous: LogEntry | null;
     /** The entry filed just after this one (LOG n + 1). */

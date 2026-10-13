@@ -8,6 +8,7 @@ import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { aboutCopy as copy, nowKinds } from "@/lib/copy";
 import { nowGroups } from "@/lib/crew";
+import { dateOnly } from "@/lib/dates";
 import { siteRoutes } from "@/lib/navigation";
 import {
     getAllPosts,
@@ -77,9 +78,7 @@ export default async function AboutPage() {
     ]);
     const paragraphs = paragraphsOf(profile?.bio);
     const groups = nowGroups(profile?.currentCuriosities, posts, projects);
-    const nowDate = /^\d{4}-\d{2}-\d{2}/.exec(
-        profile?.curiositiesUpdatedAt ?? "",
-    )?.[0];
+    const nowDate = dateOnly(profile?.curiositiesUpdatedAt);
 
     return (
         <div data-page="about">

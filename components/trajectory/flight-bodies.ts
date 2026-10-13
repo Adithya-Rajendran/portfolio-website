@@ -73,7 +73,7 @@ export interface RingShadow {
     radii: { value: [number, number] };
 }
 
-export interface GlobeLook {
+interface GlobeLook {
     /** Wrap lighting: how far past the terminator the light reaches. */
     wrap: number;
     /** A soft terminator: the light comes in gradually over this much of

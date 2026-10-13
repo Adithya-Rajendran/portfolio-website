@@ -47,10 +47,15 @@ export default function Starfield({ className }: { className?: string }) {
     const ref = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        const canvas = ref.current;
-        const zone = canvas?.closest<HTMLElement>("[data-drift-zone]");
-        const context = canvas?.getContext("2d");
-        if (!canvas || !zone || !context) return;
+        const element = ref.current;
+        const area = element?.closest<HTMLElement>("[data-drift-zone]");
+        const pen = element?.getContext("2d");
+        if (!element || !area || !pen) return;
+        // Bound again past the guard: the function declarations below are
+        // hoisted, so they would not keep its narrowing.
+        const canvas = element;
+        const zone = area;
+        const context = pen;
         const root = document.documentElement;
         const reduce = window.matchMedia(REDUCE);
 
@@ -74,15 +79,15 @@ export default function Starfield({ className }: { className?: string }) {
             !reduce.matches;
 
         function measure() {
-            const box = canvas!.getBoundingClientRect();
+            const box = canvas.getBoundingClientRect();
             width = box.width;
             height = box.height;
             ratio = Math.min(window.devicePixelRatio || 1, DPR_CAP);
-            canvas!.width = Math.max(1, Math.round(width * ratio));
-            canvas!.height = Math.max(1, Math.round(height * ratio));
+            canvas.width = Math.max(1, Math.round(width * ratio));
+            canvas.height = Math.max(1, Math.round(height * ratio));
             stars = starLayout(SEED, starCount(width, height), width, height);
             clearings = [
-                ...zone!.querySelectorAll<HTMLElement>("[data-clear]"),
+                ...zone.querySelectorAll<HTMLElement>("[data-clear]"),
             ].flatMap((element) => {
                 const rect = element.getBoundingClientRect();
                 if (!rect.width || !rect.height) return [];
@@ -96,26 +101,26 @@ export default function Starfield({ className }: { className?: string }) {
                 ];
             });
             colour =
-                getComputedStyle(canvas!)
+                getComputedStyle(canvas)
                     .getPropertyValue("--star-rgb")
                     .trim() || colour;
         }
 
         function draw() {
             if (!width || !height) return;
-            context!.setTransform(ratio, 0, 0, ratio, 0, 0);
-            context!.clearRect(0, 0, width, height);
+            context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            context.clearRect(0, 0, width, height);
             for (const star of stars) {
                 const x = driftX(star.x, seconds, DRIFT_SPEED[star.mag], width);
                 const look = LOOK[star.mag];
                 const alpha = clearance(x, star.y, clearings, PAD) * look.alpha;
                 if (alpha < 0.02) continue;
-                context!.fillStyle = `rgb(${colour} / ${alpha.toFixed(3)})`;
-                context!.beginPath();
-                context!.arc(x, star.y, look.r, 0, Math.PI * 2);
-                context!.fill();
+                context.fillStyle = `rgb(${colour} / ${alpha.toFixed(3)})`;
+                context.beginPath();
+                context.arc(x, star.y, look.r, 0, Math.PI * 2);
+                context.fill();
             }
-            canvas!.dataset.drawn = "";
+            canvas.dataset.drawn = "";
         }
 
         function tick(now: number) {
@@ -137,14 +142,14 @@ export default function Starfield({ className }: { className?: string }) {
         function stop() {
             if (frame) cancelAnimationFrame(frame);
             frame = 0;
-            canvas!.dataset.state = "stopped";
+            canvas.dataset.state = "stopped";
         }
 
         function update() {
             if (running()) {
                 if (frame) return;
                 last = performance.now();
-                canvas!.dataset.state = "running";
+                canvas.dataset.state = "running";
                 frame = requestAnimationFrame(tick);
             } else {
                 stop();
