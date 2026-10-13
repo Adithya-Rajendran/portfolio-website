@@ -62,6 +62,16 @@ only live in comments or commit messages.
       module imported by `app/global-not-found.tsx` is merged into the root
       layout's stylesheet, which the Studio loads, so the 404's styles are
       global (`styles/los.css`).
+    - Every media query is in rem, the JavaScript breakpoints too (the
+      flight's `wide` is `60rem`), so they all follow the visitor's text
+      size.
+- **Images.** `next/image` loads through `lib/sanity-image-loader.ts`
+  (`images.loaderFile`): Sanity's CDN makes each srcset width, and
+  Vercel's image optimizer is not used. Every `next/image` on the site is
+  a Sanity image; any other source would be served as given. AVIF and
+  WebP come from Sanity's CDN, encoded once per srcset width at quality
+  60 by default (a quality passed to `next/image` is kept). `/_next/image`
+  is no longer served. The root layout preconnects to `cdn.sanity.io`.
 - **Theme and motion** (plan §2.5.1). `lib/theme-boot.ts` is the inline boot
   script (under 700 bytes, unit-tested) that `ThemeBootScript` renders in
   both root documents' `<head>`: it reads localStorage `ar-theme`
@@ -262,7 +272,11 @@ only live in comments or commit messages.
   that repeat another link on the page pass `prefetch={false}`. A first
   view stays within 8 page prefetches
   (`tests/e2e/log.spec.ts`); each distinct URL also fetches its small route
-  tree (`/_tree`), which the byte report lists apart.
+  tree (`/_tree`), which the byte report lists apart. A prefetched route
+  brings its stylesheet as a `<link rel="preload" as="style">`, so Chrome
+  logs "preloaded but not used" for header links not followed within a
+  few seconds. This is expected and kept
+  (`components/chrome/nav-links.tsx`).
 - **The long read** (G1). `lib/prose.ts` `indexProse(body)` numbers a
   Portable Text body once: listings (the number only keeps their
   accessible names apart, "Listing 3, install.sh", and prints nowhere;
@@ -542,7 +556,8 @@ only live in comments or commit messages.
 ## Layout: the `(site)` route group
 
 - `app/layout.tsx` is the minimal root layout shared by the public site and
-  the Studio: `<html>`, fonts, BotID and route-independent metadata only.
+  the Studio: `<html>`, fonts, BotID, the `cdn.sanity.io` preconnect and
+  route-independent metadata only.
   Do not add site CSS, chrome, JSON-LD or analytics there. Its `viewport`
   (and the 404's) sets no `viewportFit`, so a phone keeps the page inside
   the notch and the home indicator and nothing pads for them; a change to
@@ -940,12 +955,14 @@ session, with the two variables loaded, so the hosted copy matches.
 - **Vitest** (`pnpm test`, `tests/**/*.test.ts`) covers pure logic.
   `vitest.config.ts` uses `environment: "node"` by design: there is no
   jsdom or component-rendering setup. Anything that needs a browser is a
-  Playwright spec.
+  Playwright spec. A symbol exported only for a test carries the tag
+  `@internal Exported for tests.`; an export with no importer anywhere is
+  deleted.
 - **Playwright** (`tests/e2e/*.spec.ts`, Chromium, `playwright.config.ts`)
   covers the built site: `smoke` (every page returns its status with one
   `h1` and one `main`, no console errors, uncaught exceptions or CSP
   violations, and names its `og:type`; share images, and a post's, a project's and home's image
-  alt in their own words; feed, icons, headers, redirects, the Studio
+  alt in their own words; feed, icons, headers (the Permissions-Policy among them), redirects, the Studio
   without chrome; the feed's four aliases answering 301, every writing
   page naming the feed, and the feed as a plain page in a browser; each
   404's primary following the missed address, the report its only other
@@ -1018,7 +1035,8 @@ session, with the two variables loaded, so the hosted copy matches.
   chips or archive link, `/blog/archive` answering 308 to `/blog`, a
   row's tag opening its page, whose h1 is the tag in words with no dek
   and whose rows leave it out, 404 for an unknown or malformed tag, and
-  the prefetch budget on `/blog`), `post`
+  a row's title balancing on a phone, a tag page's description "Writing
+  tagged …", and the prefetch budget on `/blog`), `post`
   (every entry's first paragraph in the first viewport at 1280×800 and
   390×844 in both themes, a 60–75 character measure, code comments at
   4.5:1 or more, the rail listing the sections (from two) with no record
@@ -1028,7 +1046,7 @@ session, with the two variables loaded, so the hosted copy matches.
   the close (End of entry and the follow line alone, no question, Copy
   link, All writing, Author block or pager heading, the pager's
   "Previous" and "Next" by name), Copy on a listing, the
-  phone's contents box, the header's one hairline, print, BlogPosting and
+  phone's contents box, the header's one hairline, print (a masthead with no date), BlogPosting and
   BreadcrumbList; on the
   fixture build also the listings at one width with no line cut, one
   label on the bar and the highlighted line, footnotes and
@@ -1043,7 +1061,8 @@ session, with the two variables loaded, so the hosted copy matches.
   record and a card's Full entry landing on the list and its row, with
   focus, the address naming it (a reload returns there); the list and
   the flight's still under reduced motion; an
-  address naming a section opening the list; `/resume#cv` keeping the
+  address naming a section opening the list, found in the CV and not in a
+  hidden page still mounted; `/resume#cv` keeping the
   head's last row in view under the header at 1440 and on a phone; CV
   (home's, then the phone bar's on the page itself) opening the list
   whatever view the visit picked; no project link opening the
@@ -1073,7 +1092,8 @@ session, with the two variables loaded, so the hosted copy matches.
   at most on a card, the flagship's title, its one link, in the first
   viewport at 1440×900 with no filled button and no "Also" label, each
   project page has its crumb ("Projects" alone, no number), its title as
-  the heading and the pager ("Previous", "Next", in the index's order)
+  the heading and the pager ("Previous", "Next", in the index's order; a lone side
+  spanning the measure)
   and no close, title block, revision, "Table 1", jump to its own
   write-up or stand-in text, a stack item never split, a thin project is
   a short note (the Kubernetes note without a Stack row, one highlight a
@@ -1087,7 +1107,8 @@ session, with the two variables loaded, so the hosted copy matches.
   first row with the column heads for screen readers, Retrospective with
   its two subheads), its repository beside Read the write-up in the
   head with no Code row, no Related writing that would only repeat the
-  original, its callouts as plain rows, and a planned one none of them), `home` (the
+  original, its callouts as plain rows, an essay's contents marking the current
+  section with the entry's 2px bar, and a planned one none of them), `home` (the
   hero's name, availability and its one action, CV (to `/resume#cv`), in the first
   viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
