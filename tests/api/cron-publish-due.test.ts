@@ -79,6 +79,18 @@ describe("GET /api/cron/publish-due", () => {
         expect(revalidateTagMock).not.toHaveBeenCalled();
     });
 
+    it("404s without revalidating when CRON_SECRET is spaces alone", async () => {
+        process.env.CRON_SECRET = "   ";
+        const GET = await importGet();
+
+        for (const auth of ["Bearer    ", "Bearer", "Bearer "]) {
+            const res = await GET(requestWith(auth));
+            expect(res.status, JSON.stringify(auth)).toBe(404);
+        }
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(revalidateTagMock).not.toHaveBeenCalled();
+    });
+
     it("404s without revalidating on a wrong bearer token", async () => {
         const GET = await importGet();
 
@@ -120,16 +132,44 @@ describe("GET /api/cron/publish-due", () => {
         expect(afterMock).not.toHaveBeenCalled();
     });
 
-    it("queries posts published on the current UTC date", async () => {
+    it("queries the posts dated in the last week, up to the current UTC date", async () => {
+        // Just after midnight UTC: still the evening before in California.
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(new Date("2026-03-01T00:05:00Z"));
+        try {
+            const GET = await importGet();
+
+            await GET(requestWith(`Bearer ${SECRET}`));
+
+            const [query, params] = fetchMock.mock.calls[0];
+            expect(query).toContain("publishedAt > $since");
+            expect(query).toContain("publishedAt <= $today");
+            // A post dated 23 Feb to 1 Mar is due: a run missed on any of
+            // those days is caught up by this one.
+            expect(params).toEqual({
+                since: "2026-02-22",
+                today: "2026-03-01",
+            });
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it("accepts only the exact bearer, compared in constant time", async () => {
         const GET = await importGet();
 
-        await GET(requestWith(`Bearer ${SECRET}`));
-
-        const today = new Date().toISOString().slice(0, 10);
-        expect(fetchMock).toHaveBeenCalledWith(
-            expect.stringContaining("publishedAt == $today"),
-            { today },
-        );
+        for (const auth of [
+            `Bearer ${SECRET}x`,
+            `Bearer ${SECRET.slice(0, -1)}`,
+            `bearer ${SECRET}`,
+            SECRET,
+        ]) {
+            const res = await GET(requestWith(auth));
+            expect(res.status, auth).toBe(404);
+        }
+        expect(fetchMock).not.toHaveBeenCalled();
+        const res = await GET(requestWith(`Bearer ${SECRET}`));
+        expect(res.status).toBe(200);
     });
 
     it("revalidates the post tag and schedules warming", async () => {

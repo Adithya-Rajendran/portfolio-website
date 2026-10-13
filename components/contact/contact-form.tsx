@@ -294,12 +294,18 @@ export default function ContactForm({
                         errors.senderEmail ? ids.emailError : undefined
                     }
                 />
-                {errors.senderEmail ? (
-                    <p className="field__error" id={ids.emailError}>
-                        <Icon name="close" className="icon--sm" />{" "}
-                        {errors.senderEmail}
-                    </p>
-                ) : null}
+                {/* Always in the page, empty until there is something to
+                    say: a live region announces only the words added to
+                    one already there, and the email is checked as focus
+                    leaves it (WCAG 4.1.3). */}
+                <p className="field__error" id={ids.emailError} role="status">
+                    {errors.senderEmail ? (
+                        <>
+                            <Icon name="close" className="icon--sm" />{" "}
+                            {errors.senderEmail}
+                        </>
+                    ) : null}
+                </p>
             </div>
 
             <div className="field">
@@ -338,12 +344,14 @@ export default function ContactForm({
                 <p className="sr-only" id={ids.messageHint}>
                     {copy.messageHint(MESSAGE_MAX_LENGTH)}
                 </p>
-                {errors.message ? (
-                    <p className="field__error" id={ids.messageError}>
-                        <Icon name="close" className="icon--sm" />{" "}
-                        {errors.message}
-                    </p>
-                ) : null}
+                <p className="field__error" id={ids.messageError} role="status">
+                    {errors.message ? (
+                        <>
+                            <Icon name="close" className="icon--sm" />{" "}
+                            {errors.message}
+                        </>
+                    ) : null}
+                </p>
                 <p className="sr-only" aria-live="polite">
                     {remainingNotice(message.length)}
                 </p>

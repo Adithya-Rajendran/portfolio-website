@@ -184,7 +184,7 @@ test.describe("routes and headers", () => {
         }
     });
 
-    test("security.txt points to the contact form, before it expires", async ({
+    test("security.txt points to the contact form, a month or more before it expires", async ({
         request,
     }) => {
         const response = await request.get("/.well-known/security.txt");
@@ -197,10 +197,13 @@ test.describe("routes and headers", () => {
         expect(text).toMatch(/^Preferred-Languages: en$/m);
         // No address or number: the form is the only channel.
         expect(text).not.toMatch(/mailto:|tel:|@/);
-        // RFC 9116: Expires is required, within a year. Renew it yearly.
+        // RFC 9116: Expires is required, within a year. Renew it yearly:
+        // this fails a month ahead, which CI's monthly run reaches without
+        // a push (.github/workflows/node.js.yml).
+        const day = 24 * 3600 * 1000;
         const expires = Date.parse(/^Expires: (\S+)$/m.exec(text)?.[1] ?? "");
-        expect(expires - Date.now()).toBeGreaterThan(0);
-        expect(expires - Date.now()).toBeLessThan(366 * 24 * 3600 * 1000);
+        expect(expires - Date.now()).toBeGreaterThan(31 * day);
+        expect(expires - Date.now()).toBeLessThan(366 * day);
     });
 
     test("the feed's usual addresses answer 301 to /feed.xml", async ({
@@ -329,6 +332,21 @@ test.describe("routes and headers", () => {
         expect(missing.headers()["cache-control"] ?? "").not.toContain(
             "immutable",
         );
+    });
+
+    test("the image optimizer refuses another Sanity project's images", async ({
+        request,
+    }) => {
+        // Refused before any fetch (400 from next start), so no
+        // transformation is spent.
+        const other = encodeURIComponent(
+            "https://cdn.sanity.io/images/e2eother/production/abc-10x10.png",
+        );
+        const response = await request.get(
+            `/_next/image?url=${other}&w=640&q=75`,
+        );
+        expect(response.status()).toBeGreaterThanOrEqual(400);
+        expect(response.status()).toBeLessThan(500);
     });
 
     test("legacy URLs redirect permanently", async ({ request, baseURL }) => {

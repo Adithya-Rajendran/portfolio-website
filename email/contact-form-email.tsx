@@ -21,6 +21,27 @@ type ContactFormEmailProps = {
     topic: ContactTopic;
 };
 
+const HEADING = "You received the following message from the contact form";
+
+/**
+ * The same email as plain text, for clients that show it and for the
+ * multipart's fallback: the message keeps its line breaks as written.
+ */
+export function contactFormEmailText({
+    message,
+    senderEmail,
+    topic,
+}: ContactFormEmailProps): string {
+    const route = contactCopy.topics[topic].name;
+    return [
+        HEADING,
+        `Topic: ${route}`,
+        message,
+        "---",
+        `The sender's email is: ${senderEmail}`,
+    ].join("\n\n");
+}
+
 export default function ContactFormEmail({
     message,
     senderEmail,
@@ -36,11 +57,14 @@ export default function ContactFormEmail({
                     <Container>
                         <Section className="bg-white border border-black/10 my-10 px-10 py-4 rounded-md">
                             <Heading className="leading-tight">
-                                You received the following message from the
-                                contact form
+                                {HEADING}
                             </Heading>
                             <Text>Topic: {route}</Text>
-                            <Text>{message}</Text>
+                            {/* The sender's paragraphs and line breaks, as
+                                written: HTML would run them together. */}
+                            <Text style={{ whiteSpace: "pre-wrap" }}>
+                                {message}
+                            </Text>
                             <Hr />
                             <Text>The sender's email is: {senderEmail}</Text>
                         </Section>

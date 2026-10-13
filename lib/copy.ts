@@ -83,7 +83,8 @@ export const contactCopy = {
         countFull: "Character limit reached.",
         send: "Send message",
         sending: "Sending…",
-        /** Under their field, from the form or the server. */
+        /** Under their field, from the form or the server; the topic's,
+         *  which only a crafted POST can trip, under Send. */
         errors: {
             emailMissing: "Enter your email address.",
             emailInvalid: "Enter an email address like you@example.com.",
@@ -92,6 +93,7 @@ export const contactCopy = {
             messageMissing: "Write a message before sending.",
             messageLong: (max: number) =>
                 `Shorten the message to ${max.toLocaleString("en-US")} characters or fewer.`,
+            topic: "Choose one of the listed topics.",
         },
         /** A send that did not go, under Send. */
         failures: {

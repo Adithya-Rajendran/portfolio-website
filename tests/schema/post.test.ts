@@ -33,7 +33,10 @@ const schema = createSchema({
 
 type ValidationOptions = Parameters<typeof validateDocument>[0];
 
-async function validate(document: Record<string, unknown>) {
+async function validate(
+    document: Record<string, unknown>,
+    environment: "cli" | "studio" = "cli",
+) {
     const client = {
         // The slug type's own check: `!defined(…)` is true when it is free.
         fetch: async () => true,
@@ -48,7 +51,7 @@ async function validate(document: Record<string, unknown>) {
             schema,
             getClient: () => client,
         } as unknown as ValidationOptions["workspace"],
-        environment: "cli",
+        environment,
         getDocumentExists: async () => true,
     });
     return markers
@@ -228,5 +231,47 @@ describe("post schema: the long-read additions", () => {
         expect(checkChangeDate("2026-03-01", "2026-03-01")).toBe(true);
         expect(checkChangeDate("2026-03-01", "2026-02-28")).toMatch(/before/);
         expect(checkChangeDate(undefined, "2026-02-28")).toBe(true);
+    });
+});
+
+describe("post schema: the slug", () => {
+    // As the Studio validates: the CLI reports a slug field's own rules as
+    // warnings.
+    const slugErrors = async (current: string) =>
+        (
+            await validate(
+                postWith({ slug: { _type: "slug", current } }),
+                "studio",
+            )
+        )
+            .filter((error) => error.path === JSON.stringify(["slug"]))
+            .map((error) => error.message);
+
+    it("accepts the site's own shape: lowercase letters, digits and hyphens", async () => {
+        expect(await slugErrors("running-gui-apps-in-lxc-2")).toEqual([]);
+    });
+
+    it("refuses a slug the feed and cache warming would drop", async () => {
+        for (const current of ["My Post", "Post", "-post", "post_1", "café"]) {
+            expect(await slugErrors(current), current).toEqual([
+                "Use lowercase letters, digits and hyphens, starting with a letter or digit.",
+            ]);
+        }
+    });
+
+    it("refuses an address another page answers under /blog", async () => {
+        for (const current of ["archive", "tags", "opengraph-image"]) {
+            expect(await slugErrors(current), current).toEqual([
+                `“${current}” is the address of another page. Choose another slug.`,
+            ]);
+        }
+    });
+
+    it("still requires one", async () => {
+        const errors = await validate(postWith({ slug: undefined }), "studio");
+        expect(errors).toContainEqual({
+            path: JSON.stringify(["slug"]),
+            message: "Required",
+        });
     });
 });

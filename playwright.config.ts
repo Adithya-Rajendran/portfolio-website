@@ -10,9 +10,10 @@ import { defineConfig, devices } from "@playwright/test";
  *   server on the port is reused, so specs can be iterated against a fixture
  *   build started by hand.
  * - `preview` (`pnpm test:e2e:preview`): a deployed site at `BASE_URL`
- *   (a Vercel preview, from .github/workflows/e2e-preview.yml). The
- *   protection-bypass secret, when set, is sent to that origin only
- *   (tests/e2e/support/test.ts). No server is started.
+ *   (a Vercel preview, or weekly the production site, from
+ *   .github/workflows/e2e-preview.yml). The protection-bypass secret, when
+ *   set, is sent to that origin only (tests/e2e/support/test.ts). No
+ *   server is started.
  */
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const FIXTURE_URL = `http://127.0.0.1:${PORT}`;

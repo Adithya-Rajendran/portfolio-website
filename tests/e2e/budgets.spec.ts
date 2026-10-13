@@ -9,16 +9,25 @@ import { STATIC_PAGES, contentPages, isPostPage } from "./support/routes";
  * budget counts, and the per-URL route trees (`/_tree`, small static
  * responses) beside them. `next start`
  * serves gzip only, so each body is compressed here at quality 11; a
- * preview run reports the same numbers for the deployed build. Budgets are
- * printed next to the figures but only enforced from PR 17, so nothing
- * here fails on size.
+ * preview run reports the same numbers for the deployed build. The budgets
+ * are printed next to the figures, then enforced: the run fails on any
+ * page over one, after the report is out.
+ *
+ * Every post is measured, since its HTML is the one budget that grows
+ * with the writing. That budget is the decoded document, and it is not
+ * the plan's 90 KB: the RSC flight data inlined after the article repeats
+ * it (about 60% of the bytes), so the plan's figure waits on that
+ * duplicate render going. Until then the ceiling sits above today's
+ * posts with room for a longer one: 100 KB on the fixture build's largest
+ * and 164 KB on the largest live post (Kubernetes on the DGX Spark,
+ * October 2026), about 21 KB brotli on the wire.
  */
 
 const BUDGETS = {
     sharedJs: 200 * 1024,
     css: 25 * 1024,
     fonts: 150 * 1024,
-    postHtml: 90 * 1024,
+    postHtml: 200 * 1024,
     prefetches: 8,
 };
 
@@ -59,7 +68,7 @@ function total(page: PageBytes, kind: Kind, field: "raw" | "br" = "br") {
 
 test("byte report", async ({ browser, request, baseURL }, testInfo) => {
     const posts = (await contentPages(request, testInfo)).filter(isPostPage);
-    const paths = [...STATIC_PAGES, ...posts.slice(0, 1)];
+    const paths = [...STATIC_PAGES, ...posts];
     test.setTimeout(30_000 + paths.length * 15_000);
     const origin = new URL(baseURL ?? "").origin;
     const pages: PageBytes[] = [];
@@ -195,4 +204,26 @@ test("byte report", async ({ browser, request, baseURL }, testInfo) => {
             2,
         ),
     });
+
+    // The budgets, each failure named, once the report is out.
+    expect
+        .soft(sharedJs, "shared JS (brotli)")
+        .toBeLessThanOrEqual(BUDGETS.sharedJs);
+    for (const page of pages) {
+        const { path } = page;
+        expect
+            .soft(total(page, "stylesheet"), `${path} CSS (brotli)`)
+            .toBeLessThanOrEqual(BUDGETS.css);
+        expect
+            .soft(total(page, "font"), `${path} fonts (brotli)`)
+            .toBeLessThanOrEqual(BUDGETS.fonts);
+        expect
+            .soft(page.prefetches, `${path} page prefetches`)
+            .toBeLessThanOrEqual(BUDGETS.prefetches);
+        if (posts.includes(path)) {
+            expect
+                .soft(total(page, "document", "raw"), `${path} HTML (decoded)`)
+                .toBeLessThanOrEqual(BUDGETS.postHtml);
+        }
+    }
 });

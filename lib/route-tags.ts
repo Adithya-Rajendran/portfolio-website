@@ -23,6 +23,7 @@
  * This module has no server-only imports, so the e2e smoke spec reads it.
  */
 import { CACHE_TAGS, type CacheTag } from "@/lib/cache-tags";
+import { SAFE_SLUG } from "@/lib/slugs";
 import { TAG_PATTERN } from "@/lib/tags";
 
 /** Where the values of a route's dynamic segment come from. */
@@ -189,12 +190,6 @@ export function shareImagePath(file: string, slug = ""): string {
     return (route?.path ?? "").replace(/\[slug\]/, slug);
 }
 
-/**
- * Only slugs of this shape are put into a URL. Sanity validates slugs, but
- * a misconfigured document must not make warming fetch arbitrary paths.
- */
-export const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
-
 /** The published values each dynamic segment expands to. */
 export type WarmLists = Record<RouteExpansion, readonly string[]>;
 
@@ -202,6 +197,11 @@ export type WarmTarget = { path: string; redirects: boolean };
 
 const SEGMENT = /\[[a-z]+\]/;
 
+/**
+ * Only slugs of the Studio's shape (lib/slugs.ts) are put into a URL: the
+ * schema enforces it, and a document saved before it did must not make
+ * warming fetch arbitrary paths.
+ */
 function expansionValues(
     expand: RouteExpansion,
     lists: WarmLists,
