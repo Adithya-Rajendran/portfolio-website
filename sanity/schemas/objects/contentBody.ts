@@ -76,7 +76,7 @@ export default defineType({
                     title: "Kind",
                     type: "string",
                     description:
-                        "Photographs are numbered as plates (Pl. I), diagrams, plots and screenshots as figures (Fig. 1). Empty counts as a photograph.",
+                        "Photographs are toned to the theme; diagrams, plots and screenshots are shown as drawn. No image is numbered: write each caption to stand on its own. Empty counts as a photograph.",
                     options: { list: [...IMAGE_KINDS], layout: "radio" },
                     validation: listValuesOnly,
                 }),

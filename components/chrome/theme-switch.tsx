@@ -29,8 +29,9 @@ function getServerTheme(): undefined {
  * that name from `html[data-theme]`, so under Auto it follows the theme on
  * screen and nothing re-renders or mismatches on hydration. Once hydrated
  * it also carries the same words as a hover title for mouse users. Auto
- * stays one click away in the footer and the menu sheet (ThemeChoice).
- * Hidden without JavaScript, like every theme control.
+ * (System) is the menu sheet's choice (ThemeChoice, below 960px); the
+ * footer has no theme control. Hidden without JavaScript, like every
+ * theme control.
  */
 export default function ThemeSwitch() {
     const theme = useSyncExternalStore(

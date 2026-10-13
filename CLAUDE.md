@@ -62,6 +62,16 @@ only live in comments or commit messages.
       module imported by `app/global-not-found.tsx` is merged into the root
       layout's stylesheet, which the Studio loads, so the 404's styles are
       global (`styles/los.css`).
+    - Every media query is in rem, the JavaScript breakpoints too (the
+      flight's `wide` is `60rem`), so they all follow the visitor's text
+      size.
+- **Images.** `next/image` loads through `lib/sanity-image-loader.ts`
+  (`images.loaderFile`): Sanity's CDN makes each srcset width, and
+  Vercel's image optimizer is not used. Every `next/image` on the site is
+  a Sanity image; any other source would be served as given. AVIF and
+  WebP come from Sanity's CDN, encoded once per srcset width at quality
+  60 by default (a quality passed to `next/image` is kept). `/_next/image`
+  is no longer served. The root layout preconnects to `cdn.sanity.io`.
 - **Theme and motion** (plan §2.5.1). `lib/theme-boot.ts` is the inline boot
   script (under 700 bytes, unit-tested) that `ThemeBootScript` renders in
   both root documents' `<head>`: it reads localStorage `ar-theme`
@@ -80,9 +90,10 @@ only live in comments or commit messages.
   route request-bound. The header's `ThemeSwitch` (one button, Void ↔
   Flight Manual) names the theme it switches to from `html[data-theme]`
   in CSS, so under Auto it follows the screen; the menu sheet (below
-  960px, where the switch is hidden) carries `ThemeChoice` (Void · Manual
-  · Auto, a `Segmented`), so each control shows once per breakpoint and
-  the footer repeats neither; it reads `lib/prefs.ts` through
+  960px, where the switch is hidden) carries `ThemeChoice` (Dark · Light
+  · System, the values `void` · `manual` · `auto`, a `Segmented`), so
+  each control shows once per breakpoint and the footer repeats neither;
+  it reads `lib/prefs.ts` through
   `useSyncExternalStore` (server snapshot `undefined`). Spatial motion runs
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
@@ -246,7 +257,11 @@ only live in comments or commit messages.
   motion) opens on the whole system with the latest chapter's card; the
   ask stays the rail's last stop. The figure line is "Not to scale ·
   Maps: NASA, Solar System Scope (adapted, CC BY 4.0)", Solar System
-  Scope and CC BY 4.0 linked to the maps' source and the licence.
+  Scope and CC BY 4.0 linked to the maps' source and the licence. The
+  maps, their sources and licences, and the script that encodes them
+  (`node scripts/encode-trajectory-textures.mjs`) are in
+  `public/images/trajectory/README.md`; `/public` is cached immutably,
+  so rename a map when you re-encode it.
 - **Prefetching** (plan §4.6 rule 8). The app-wide `partialPrefetching`
   flag is off: in Next.js 16.3.4 it made the first request for an unknown
   post or tag slug answer 200 instead of 404 on `next start`. The two
@@ -257,7 +272,11 @@ only live in comments or commit messages.
   that repeat another link on the page pass `prefetch={false}`. A first
   view stays within 8 page prefetches
   (`tests/e2e/log.spec.ts`); each distinct URL also fetches its small route
-  tree (`/_tree`), which the byte report lists apart.
+  tree (`/_tree`), which the byte report lists apart. A prefetched route
+  brings its stylesheet as a `<link rel="preload" as="style">`, so Chrome
+  logs "preloaded but not used" for header links not followed within a
+  few seconds. This is expected and kept
+  (`components/chrome/nav-links.tsx`).
 - **The long read** (G1). `lib/prose.ts` `indexProse(body)` numbers a
   Portable Text body once: listings (the number only keeps their
   accessible names apart, "Listing 3, install.sh", and prints nowhere;
@@ -361,7 +380,8 @@ only live in comments or commit messages.
   model's title is not one the owner wrote), and a post's project row
   stays text only. On a card and a head the
   cover's caption is the plate's credit line (`Plate credit`,
-  `.caption__src`: DM Mono 13px, ink-3, as the hero's credit); the stage
+  `.caption__src`: DM Mono 13px in ink-3; the hero's credit, over the
+  photograph, is the same mono in ink-2); the stage
   keeps it as the owner's caption. A card's cover never outweighs the
   stage's photograph (`home.spec.ts`, `missions.spec.ts`). `missionLayout` picks the page's layout: the full file
   where there is evidence (a brief that adds to the card, `briefAdds`;
@@ -536,8 +556,14 @@ only live in comments or commit messages.
 ## Layout: the `(site)` route group
 
 - `app/layout.tsx` is the minimal root layout shared by the public site and
-  the Studio: `<html>`, fonts, BotID and route-independent metadata only.
-  Do not add site CSS, chrome, JSON-LD or analytics there.
+  the Studio: `<html>`, fonts, BotID, the `cdn.sanity.io` preconnect and
+  route-independent metadata only.
+  Do not add site CSS, chrome, JSON-LD or analytics there. Its `viewport`
+  (and the 404's) sets no `viewportFit`, so a phone keeps the page inside
+  the notch and the home indicator and nothing pads for them; a change to
+  `viewport-fit=cover` (an edge-to-edge hero or flight) adds
+  `env(safe-area-inset-*)` padding to the header, the flight's rail and
+  Play, and the footer in the same change.
 - Every public page lives under `app/(site)/` (route groups do not change
   URLs). `app/(site)/layout.tsx` renders `components/chrome/site-shell.tsx`:
   the global stylesheet, the skip link, the icon sprite, the server-rendered
@@ -724,7 +750,8 @@ only live in comments or commit messages.
   and CI runs monthly as well as on every push).
 - **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
   `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in
-  the Vercel dashboard (Firewall → Rate Limit). If the rule is absent,
+  the Vercel dashboard (Firewall → Rate Limit, a Pro or Enterprise
+  feature). If the rule is absent,
   the SDK returns `error: "not-found"`, a warning is logged once per
   function instance, and an in-memory fallback stands in
   (`lib/contact-rate-limit.ts`: 5 sends an address in 10 minutes, 30 per
@@ -833,7 +860,11 @@ Sanity commands; never commit their concrete values.
 
 Commit the regenerated `schema.json` and `sanity.types.ts`. Schema extraction
 and TypeGen are local; dataset export, migration execution, and schema
-deployment require an authenticated Sanity CLI session.
+deployment require an authenticated Sanity CLI session. The embedded Studio
+ships with the site, but the hosted copy of the schema (the one the Sanity
+MCP tools and dashboard read) does not: once a schema change is on
+production, the owner runs `pnpm exec sanity schema deploy` from that
+session, with the two variables loaded, so the hosted copy matches.
 
 - Option lists and pure rules that both the schema and the site read live
   in modules with no imports, because the Studio bundles them:
@@ -870,7 +901,9 @@ deployment require an authenticated Sanity CLI session.
   button verbs, form mechanics). When a profile value is empty its
   element is left out, never replaced by wording in code; the RSS
   channel, which must have a description, uses the feed's title.
-  `design/impl-log/phase-4-copy-audit.md` classifies every string.
+  The copy audit that classifies every string
+  (`design/impl-log/phase-4-copy-audit.md`) is in the owner's design
+  workspace, outside this repository.
   Availability is `availability.seeking[]` (one line per opening, joined
   with " · " by `availabilityLine` in `lib/profile-content.ts`); the older
   single `openTo` line is deprecated and read only while that list is
@@ -897,7 +930,8 @@ deployment require an authenticated Sanity CLI session.
   other fixture project, and every fixture post, is named as a fixture and
   describes no real work. The fixture profile holds only the owner's
   published values, plus the Open To lines and Site copy from
-  `design/impl-log/phase-4-profile-copy.json`: a field the real profile
+  `design/impl-log/phase-4-profile-copy.json` (in the owner's design
+  workspace, outside this repository): a field the real profile
   leaves empty stays empty. The fixture projects' short names come from
   the same file (none for the Gmail project, whose title leads).
 - Content migrations (`migrations/<name>/index.ts`) are run only by the owner,
@@ -921,12 +955,14 @@ deployment require an authenticated Sanity CLI session.
 - **Vitest** (`pnpm test`, `tests/**/*.test.ts`) covers pure logic.
   `vitest.config.ts` uses `environment: "node"` by design: there is no
   jsdom or component-rendering setup. Anything that needs a browser is a
-  Playwright spec.
+  Playwright spec. A symbol exported only for a test carries the tag
+  `@internal Exported for tests.`; an export with no importer anywhere is
+  deleted.
 - **Playwright** (`tests/e2e/*.spec.ts`, Chromium, `playwright.config.ts`)
   covers the built site: `smoke` (every page returns its status with one
   `h1` and one `main`, no console errors, uncaught exceptions or CSP
   violations, and names its `og:type`; share images, and a post's, a project's and home's image
-  alt in their own words; feed, icons, headers, redirects, the Studio
+  alt in their own words; feed, icons, headers (the Permissions-Policy among them), redirects, the Studio
   without chrome; the feed's four aliases answering 301, every writing
   page naming the feed, and the feed as a plain page in a browser; each
   404's primary following the missed address, the report its only other
@@ -999,7 +1035,8 @@ deployment require an authenticated Sanity CLI session.
   chips or archive link, `/blog/archive` answering 308 to `/blog`, a
   row's tag opening its page, whose h1 is the tag in words with no dek
   and whose rows leave it out, 404 for an unknown or malformed tag, and
-  the prefetch budget on `/blog`), `post`
+  a row's title balancing on a phone, a tag page's description "Writing
+  tagged …", and the prefetch budget on `/blog`), `post`
   (every entry's first paragraph in the first viewport at 1280×800 and
   390×844 in both themes, a 60–75 character measure, code comments at
   4.5:1 or more, the rail listing the sections (from two) with no record
@@ -1009,7 +1046,7 @@ deployment require an authenticated Sanity CLI session.
   the close (End of entry and the follow line alone, no question, Copy
   link, All writing, Author block or pager heading, the pager's
   "Previous" and "Next" by name), Copy on a listing, the
-  phone's contents box, the header's one hairline, print, BlogPosting and
+  phone's contents box, the header's one hairline, print (a masthead with no date), BlogPosting and
   BreadcrumbList; on the
   fixture build also the listings at one width with no line cut, one
   label on the bar and the highlighted line, footnotes and
@@ -1024,7 +1061,8 @@ deployment require an authenticated Sanity CLI session.
   record and a card's Full entry landing on the list and its row, with
   focus, the address naming it (a reload returns there); the list and
   the flight's still under reduced motion; an
-  address naming a section opening the list; `/resume#cv` keeping the
+  address naming a section opening the list, found in the CV and not in a
+  hidden page still mounted; `/resume#cv` keeping the
   head's last row in view under the header at 1440 and on a phone; CV
   (home's, then the phone bar's on the page itself) opening the list
   whatever view the visit picked; no project link opening the
@@ -1054,7 +1092,8 @@ deployment require an authenticated Sanity CLI session.
   at most on a card, the flagship's title, its one link, in the first
   viewport at 1440×900 with no filled button and no "Also" label, each
   project page has its crumb ("Projects" alone, no number), its title as
-  the heading and the pager ("Previous", "Next", in the index's order)
+  the heading and the pager ("Previous", "Next", in the index's order; a lone side
+  spanning the measure)
   and no close, title block, revision, "Table 1", jump to its own
   write-up or stand-in text, a stack item never split, a thin project is
   a short note (the Kubernetes note without a Stack row, one highlight a
@@ -1068,7 +1107,8 @@ deployment require an authenticated Sanity CLI session.
   first row with the column heads for screen readers, Retrospective with
   its two subheads), its repository beside Read the write-up in the
   head with no Code row, no Related writing that would only repeat the
-  original, its callouts as plain rows, and a planned one none of them), `home` (the
+  original, its callouts as plain rows, an essay's contents marking the current
+  section with the entry's 2px bar, and a planned one none of them), `home` (the
   hero's name, availability and its one action, CV (to `/resume#cv`), in the first
   viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
