@@ -1,7 +1,10 @@
 /**
  * Pure schema.org builders for the site's JSON-LD. Fetching and script-tag
  * escaping live in components/json-ld.tsx so these functions stay easy to
- * exercise without React or a Sanity connection.
+ * exercise without React or a Sanity connection. Each node `satisfies` its
+ * schema-dts type, so a misspelt property or type fails `pnpm typecheck`;
+ * the smoke spec checks what search engines need of each type on the
+ * built pages.
  */
 import { siteConfig } from "@/lib/config";
 import { dateOnly } from "@/lib/dates";
@@ -18,6 +21,19 @@ import type {
     ProfileData,
     TimelineEntry,
 } from "@/lib/sanity-client";
+import type {
+    Blog,
+    BlogPosting,
+    BreadcrumbList,
+    CollectionPage,
+    CollegeOrUniversity,
+    ContactPage,
+    CreativeWork,
+    EducationalOccupationalCredential,
+    Person,
+    ProfilePage,
+    WithContext,
+} from "schema-dts";
 
 /** A post's share card, for the BlogPosting image. */
 const POST_CARD = "app/(site)/blog/[slug]/opengraph-image.tsx";
@@ -42,7 +58,7 @@ function personRef(name: string = siteConfig.author) {
         "@id": LD_IDS.person,
         name,
         url: siteConfig.url,
-    };
+    } satisfies Person;
 }
 
 /** `{ [key]: value }` when there is a value, else nothing to spread. */
@@ -73,10 +89,13 @@ function educationOrganizations(profile: ProfileData | null, current: boolean) {
                 isCurrentTimelineEntry(entry) === current,
         )
         .map((entry) => entry.organization);
-    return [...new Set(names)].map((name) => ({
-        "@type": "CollegeOrUniversity",
-        name,
-    }));
+    return [...new Set(names)].map(
+        (name) =>
+            ({
+                "@type": "CollegeOrUniversity",
+                name,
+            }) satisfies CollegeOrUniversity,
+    );
 }
 
 function buildKnowsAbout(profile: ProfileData | null) {
@@ -104,25 +123,30 @@ function buildSameAs(profile: ProfileData | null) {
 function buildHasCredential(credentials?: CredentialListItem[] | null) {
     return (credentials ?? [])
         .filter((credential) => credential.title && credential.issuer)
-        .map((credential) => ({
-            "@type": "EducationalOccupationalCredential",
-            name: credential.title,
-            credentialCategory: "certification",
-            recognizedBy: {
-                "@type": "Organization",
-                name: credential.issuer,
-            },
-            ...(credential.issuedOn ? { validFrom: credential.issuedOn } : {}),
-            ...(!credential.lifetime && credential.expiresOn
-                ? { validUntil: credential.expiresOn }
-                : {}),
-            ...(credential.credentialId
-                ? { identifier: credential.credentialId }
-                : {}),
-            ...(credential.verificationUrl
-                ? { url: credential.verificationUrl }
-                : {}),
-        }));
+        .map(
+            (credential) =>
+                ({
+                    "@type": "EducationalOccupationalCredential",
+                    name: credential.title,
+                    credentialCategory: "certification",
+                    recognizedBy: {
+                        "@type": "Organization",
+                        name: credential.issuer,
+                    },
+                    ...(credential.issuedOn
+                        ? { validFrom: credential.issuedOn }
+                        : {}),
+                    ...(!credential.lifetime && credential.expiresOn
+                        ? { validUntil: credential.expiresOn }
+                        : {}),
+                    ...(credential.credentialId
+                        ? { identifier: credential.credentialId }
+                        : {}),
+                    ...(credential.verificationUrl
+                        ? { url: credential.verificationUrl }
+                        : {}),
+                }) satisfies EducationalOccupationalCredential,
+        );
 }
 
 export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
@@ -160,7 +184,7 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
         ...(affiliation.length > 0 ? { affiliation } : {}),
         ...(knowsAbout.length > 0 ? { knowsAbout } : {}),
         sameAs: buildSameAs(profile),
-    };
+    } satisfies Person;
 }
 
 /**
@@ -182,7 +206,7 @@ export function buildProfilePage(input: PersonEntityInput) {
             ...buildPersonEntity(input),
             ...(credentials.length > 0 ? { hasCredential: credentials } : {}),
         },
-    };
+    } satisfies ProfilePage;
 }
 
 export interface BlogPostingInput {
@@ -234,7 +258,7 @@ export function buildBlogPosting({
         ...(typeof wordCount === "number" && wordCount > 0
             ? { wordCount }
             : {}),
-    };
+    } satisfies BlogPosting;
 }
 
 /**
@@ -253,7 +277,7 @@ export function buildBreadcrumbList(
             name: item.name,
             item: `${siteConfig.url}${item.path === "/" ? "" : item.path}`,
         })),
-    };
+    } satisfies WithContext<BreadcrumbList>;
 }
 
 export function buildBlog(profile: ProfileData | null = null) {
@@ -266,7 +290,7 @@ export function buildBlog(profile: ProfileData | null = null) {
         ...optional("description", getWritingDescription(profile)),
         author: personRef(),
         isPartOf: { "@id": LD_IDS.website },
-    };
+    } satisfies WithContext<Blog>;
 }
 
 /**
@@ -283,7 +307,7 @@ export function buildProjects(profile: ProfileData | null = null) {
         ...optional("description", profile?.projectsIntro?.trim()),
         author: personRef(),
         isPartOf: { "@id": LD_IDS.website },
-    };
+    } satisfies WithContext<CollectionPage>;
 }
 
 /**
@@ -305,7 +329,7 @@ export function buildContactPage(profile: ProfileData | null = null) {
             ...personRef(profile?.name || siteConfig.author),
             sameAs: buildSameAs(profile),
         },
-    };
+    } satisfies WithContext<ContactPage>;
 }
 
 /**
@@ -349,5 +373,5 @@ export function buildMission(
             "@id": LD_IDS.projects,
         },
         ...(sameAs.length ? { sameAs } : {}),
-    };
+    } satisfies WithContext<CreativeWork>;
 }

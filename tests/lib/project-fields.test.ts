@@ -1,7 +1,11 @@
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
+import { siteConfig } from "@/lib/config";
+import { sitePostSlug } from "@/lib/cv";
 import { formatMissionDesignation } from "@/lib/designations";
 import {
+    FAILING_PROJECT_FIXTURE,
     FIXTURE_PROJECTS,
+    fixtureReadFails,
     PROJECT_ESSAY_FIXTURE,
     resolveFixtureQuery,
 } from "@/lib/fixtures";
@@ -227,9 +231,54 @@ describe("fixture projects", () => {
             drafts.map((draft) => draft.slug.current),
         );
         expect(seeded.map(summary)).toEqual(drafts.map(summary));
-        expect(seeded.map((project) => project.body)).toEqual(
-            drafts.map((draft) => draft.body),
+        // The same essays, word for word: only their links to the owner's
+        // posts, which the fixtures do not carry, are left out.
+        const words = (body: readonly object[] | null | undefined) =>
+            (body ?? []).map((block) =>
+                ("children" in block && Array.isArray(block.children)
+                    ? (block.children as { text?: string }[])
+                    : []
+                )
+                    .map((span) => span.text)
+                    .join(""),
+            );
+        expect(seeded.map((project) => words(project.body))).toEqual(
+            drafts.map((draft) => words(draft.body)),
         );
+    });
+
+    it("link no post the fixtures lack", () => {
+        const posts = new Set(
+            resolveFixtureQuery<PostListItem[]>(POST_LIST_QUERY, {
+                today: "9999-12-31",
+            })?.map((post) => post.slug),
+        );
+        for (const project of [...FIXTURE_PROJECTS, PROJECT_ESSAY_FIXTURE]) {
+            const hrefs = [
+                ...(project.links ?? []).map((link) => link.url),
+                ...(project.body ?? []).flatMap((block) =>
+                    "markDefs" in block && Array.isArray(block.markDefs)
+                        ? (block.markDefs as { href?: string }[]).map(
+                              (mark) => mark.href ?? "",
+                          )
+                        : [],
+                ),
+            ];
+            for (const href of hrefs) {
+                const slug = sitePostSlug(href, siteConfig.url);
+                if (slug)
+                    expect(posts, `${project.slug}: ${href}`).toContain(slug);
+            }
+        }
+    });
+
+    it("fail the failing project's writing read on the fixture build alone", () => {
+        vi.stubEnv("SANITY_USE_FIXTURES", "1");
+        expect(fixtureReadFails(FAILING_PROJECT_FIXTURE._id)).toBe(true);
+        expect(fixtureReadFails(FIXTURE_PROJECTS[0]._id)).toBe(false);
+        vi.stubEnv("SANITY_USE_FIXTURES", "");
+        expect(fixtureReadFails(FAILING_PROJECT_FIXTURE._id)).toBe(false);
+        vi.unstubAllEnvs();
     });
 
     it("give each featured slot to one project", () => {
