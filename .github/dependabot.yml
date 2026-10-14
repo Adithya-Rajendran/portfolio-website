@@ -16,6 +16,12 @@ updates:
           # would throw in production. Lift this when the engine moves.
           - dependency-name: "@types/node"
             update-types: ["version-update:semver-major"]
+          # eslint-config-next 16 (to 16.5 canary) bundles eslint-plugin-react 7.37,
+          # eslint-plugin-import and eslint-plugin-jsx-a11y, which support ESLint 9
+          # at most: on 10, lint crashes on its first file (vercel/next.js#89764)
+          # and holds back the dev-tooling group. Lift when eslint-config-next does.
+          - dependency-name: "eslint"
+            versions: [">=10"]
       # A dependency goes to the first group that matches it, so the
       # packages that move in lockstep come before the catch-all types.
       groups:

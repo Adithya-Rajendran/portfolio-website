@@ -58,7 +58,7 @@ async function warmUrls(
         const results = await Promise.allSettled(
             batch.map(async ({ path, redirects }) => {
                 const url = `${siteConfig.url}${path}`;
-                // A redirect route's cached answer is the redirect itself:
+                // A redirect route is warmed for the cached data it reads:
                 // do not follow it to the file it points at.
                 const res = await fetch(url, {
                     headers: { "x-cache-warm": "1" },

@@ -18,7 +18,8 @@
  * - A route that renders on every request (`perRequest`; it is not in the
  *   build's prerender manifest) keeps its tags as a record but is never
  *   warmed: there is no cached copy to refresh, so a warm request would only
- *   render it once for nobody.
+ *   render it once for nobody. The résumé redirects, computed per request
+ *   from the cached profile, are the exception (below).
  *
  * This module has no server-only imports, so the e2e smoke spec reads it.
  */
@@ -143,7 +144,11 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
         expand: "project",
     },
 
-    // The résumé PDF links: redirects to the current file.
+    // The résumé PDF links: redirects to the current file, computed per
+    // request from the cached profile, so they refresh with the profile tag.
+    // They stay warmed, not `perRequest`: after `revalidateTag(…, "max")`
+    // the first read of the profile is served stale while it refreshes, and
+    // the warm request makes that read instead of a reader.
     {
         path: "/resume/view",
         file: "app/(site)/resume/view/route.ts",

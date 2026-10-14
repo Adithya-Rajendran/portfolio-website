@@ -688,8 +688,13 @@ only live in comments or commit messages.
   static params, so they prerender and are warmed) is never warmed. A new route goes into the table in
   the PR that adds it: `tests/lib/route-tags.test.ts` fails for a route file
   missing from the table or a path that differs from the build, and the
-  e2e smoke spec requests every warmed URL. Redirect routes (`redirects`)
-  are warmed without following the redirect.
+  e2e smoke spec requests every warmed URL. The CV redirects
+  (`redirects`: `/resume/view`, `/resume/download`) are not `perRequest`
+  though each is computed per request from the cached profile
+  (`connection()` first, so the build never prerenders it) and refreshes
+  with the profile tag: they are warmed, without following the redirect,
+  so that the stale read that starts the profile's refresh is the warm's,
+  not a reader's.
 - Derived artifacts that include the post list (`app/feed.xml/route.ts`,
   `app/sitemap.xml/route.ts`) use `cacheLife("days")`, never `"max"`: a post whose
   `publishedAt` arrives must reach them within a day even if the cron is

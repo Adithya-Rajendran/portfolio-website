@@ -106,8 +106,9 @@ describe("route table", () => {
     });
 
     it("warms the entries' and projects' cards with their pages", () => {
-        // Each card has static params, so the build prerenders it (no
-        // route is rendered on every request): a change refreshes it.
+        // Each card has static params, so the build prerenders it: a
+        // change refreshes it. No route is `perRequest` (the résumé
+        // redirects render per request but stay warmed).
         expect(ROUTE_TAGS.filter((route) => route.perRequest)).toEqual([]);
         const warmed = (["profile", "post", "project"] as const).flatMap(
             (tag) => warmPaths(tag, LISTS).map(({ path }) => path),
