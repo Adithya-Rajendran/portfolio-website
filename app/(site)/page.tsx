@@ -9,7 +9,7 @@ import SectionTag from "@/components/ui/section-tag";
 import { siteConfig } from "@/lib/config";
 import { homeCopy as copy } from "@/lib/copy";
 import { questions, taglineOf } from "@/lib/crew";
-import { homeActs, homeProjects, type HomeAct } from "@/lib/home";
+import { heroLatest, homeActs, homeProjects, type HomeAct } from "@/lib/home";
 import { logEntries } from "@/lib/log-index";
 import { missionOrder, toMission } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
@@ -79,8 +79,9 @@ function Act({
 
 /**
  * Home: the hero (the name, the profile's headline and availability, and
- * CV), then, each only with content, the strongest project on its stage
- * with the next two as rows, and the latest three entries, each linking
+ * CV, with the newest entry beside it), then, each only with content,
+ * the strongest project on its stage with the next two as rows, and the
+ * latest three entries, each linking
  * its section's page only while that page holds more; then the close: the
  * owner's tagline as its heading with the way to his current focus,
  * then one way to /contact: the profile's button that
@@ -134,6 +135,7 @@ export default async function Home() {
                 name={name}
                 headline={profile?.headline?.trim() || null}
                 openTo={open}
+                latest={heroLatest(entries)}
             />
 
             {acts.includes("projects") && flagship ? (

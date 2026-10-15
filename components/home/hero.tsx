@@ -6,6 +6,7 @@ import StaticStars from "@/components/sky/static-stars";
 import Starfield from "@/components/sky/starfield";
 import { OpenToItems } from "@/components/ui/availability";
 import { Icon } from "@/components/ui/icon";
+import KeepWhole from "@/components/ui/keep-whole";
 import { Status } from "@/components/ui/marks";
 import { homeCopy as copy } from "@/lib/copy";
 import sunrise from "@/lib/hero-sunrise.json";
@@ -22,7 +23,9 @@ import styles from "./hero.module.css";
  * the limb: the name (the page's h1), the profile's one-line headline,
  * what the owner is open to (the profile's availability, only when set)
  * and one action, CV (a hairline button over the photograph, to /resume's
- * list: `cvLink`). The
+ * list: `cvLink`), with beside it, while there is an entry, a quiet text
+ * link to the newest, "Latest: <title>" (the way to the writing on a
+ * phone, whose bar has no Writing). The
  * headline's and the Open To line's parts are kept whole, and stack on
  * phones. At the foot, the credit with the frame's NASA ID, and Pause
  * motion (nothing under the OS reduce-motion setting). The header's
@@ -169,11 +172,14 @@ export default function Hero({
     name,
     headline,
     openTo,
+    latest,
 }: {
     name: string;
     headline: string | null;
     /** The availability line: "Summer 2027 internships · …". */
     openTo: string | null;
+    /** The newest entry (`heroLatest` in lib/home.ts), or none. */
+    latest: { title: string; href: string } | null;
 }) {
     const words = name.split(/\s+/).filter(Boolean);
     return (
@@ -225,6 +231,17 @@ export default function Hero({
                             <span>{copy.cv}</span>
                             <Icon name="arrow" className="icon--nudge" />
                         </Link>
+                        {/* Home's Latest writing lists it too: no second
+                            prefetch. */}
+                        {latest ? (
+                            <Link
+                                className={styles.latest}
+                                href={latest.href}
+                                prefetch={false}
+                            >
+                                {copy.latest} <KeepWhole text={latest.title} />
+                            </Link>
+                        ) : null}
                     </nav>
                 </div>
 

@@ -300,9 +300,11 @@ only live in comments or commit messages.
   the file name, else the language, then Copy at the right, in the
   listing's mono; the accessible name and the feed's caption follow the
   same rule), and no LOG number: the crumb is "Writing" alone and the
-  print masthead's kicker "Writing". The head is the date, the read time
-  and Updated, the title and the standfirst: no tags (the index's rows
-  carry them). The contents (the rail, the phone's box) show from two
+  print masthead's kicker "Writing". The head is the date, the read time,
+  Updated and the byline ("By" the profile's name, linked to About, in
+  the meta line's DM Mono; on screen only, as the print masthead's line
+  names the author), the title and the standfirst: no tags (the index's
+  rows carry them). The contents (the rail, the phone's box) show from two
   sections; with one, the rail's column is space. A listing is one treatment (the surface fill; hairlines
   above and below on paper); a callout is the quotation's quiet note (the
   ink rule) led by its tone and title in bold ("Caution: Back up first",
@@ -317,7 +319,7 @@ only live in comments or commit messages.
   ("Previous", "Next" and the title: no heading, LOG number, date or read
   time), the project it belongs to (the shared `MissionRow`) and related
   entries, without tags (they share this entry's). There is no Author block: the
-  footer carries the name. The renderers are
+  byline names the author once, and the footer carries the name. The renderers are
   `components/blogs/portable-text-components.tsx` and
   `components/prose/`; a new `contentBody` type lands with its web and
   feed renderer in the same change. `components/blogs/post-reader.tsx`
@@ -471,7 +473,12 @@ only live in comments or commit messages.
   when set), each split into parts kept whole (`OpenToItems`) that stack
   on phones, then one action, centred in space (CV, the hairline `.btn`,
   no fill or blur; the header's Projects is the way to the work, so no
-  link points down the page). The foot: the credit with the frame's ID
+  link points down the page), and beside it, while there is an entry, a
+  quiet text link to the newest, "Latest: <title>" (`heroLatest` in
+  `lib/home.ts`, in the Open To line's voice, the title balanced and its
+  short names whole, `KeepWhole`; it wraps under CV where the two do not
+  fit, and is a phone's way to Writing, which its bar lacks). The foot:
+  the credit with the frame's ID
   ("Photo: NASA / Expedition 72 · ISS072-E-30246", `id` in
   `lib/hero-sunrise.json`; on phones its parts one a line, without the
   separators) and Pause motion (under the OS reduce-motion setting
@@ -1051,7 +1058,8 @@ session, with the two variables loaded, so the hosted copy matches.
   390×844 in both themes, a 60–75 character measure, code comments at
   4.5:1 or more, the rail listing the sections (from two) with no record
   box or word count or numbers, no LOG, plate or figure number, the
-  crumb "Writing" alone and no tags in the head; no h2 margin number or
+  crumb "Writing" alone and no tags in the head; the byline once, linked
+  to About, and not on paper; no h2 margin number or
   listing line count or number, h2 at 32px or less and a 1.52 leading;
   the close (End of entry and the follow line alone, no question, Copy
   link, All writing, Author block or pager heading, the pager's
@@ -1119,7 +1127,8 @@ session, with the two variables loaded, so the hosted copy matches.
   head with no Code row, no Related writing that would only repeat the
   original, its callouts as plain rows, an essay's contents marking the current
   section with the entry's 2px bar, and a planned one none of them), `home` (the
-  hero's name, availability and its one action, CV (to `/resume#cv`), in the first
+  hero's name, availability and its one action, CV (to `/resume#cv`), with
+  Latest beside it (a quiet link to the newest entry, no button), in the first
   viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
   the name at 350, tracked 0.11–0.12em, on one line at 1440 and 1,400px

@@ -156,6 +156,8 @@ export const postCopy = {
     /** "7 min read". */
     read: (minutes: number) => `${minutes} min read`,
     updated: "Updated",
+    /** The head's byline, "By <the profile's name>", linked to About. */
+    by: "By",
     contents: "Contents",
     /** The contents' landmark name (plan §4.5). */
     contentsLabel: "On this page",
@@ -289,9 +291,11 @@ export const pagerCopy = {
  * owner's.
  */
 export const homeCopy = {
-    /** The hero's one action (CV). */
+    /** The hero's one action (CV), and the quiet link to the newest
+     *  entry beside it: "Latest: <title>". */
     routesLabel: "Start here",
     cv: "CV",
+    latest: "Latest:",
     openTo: "Open to",
     projectsAct: {
         title: "Selected projects",
