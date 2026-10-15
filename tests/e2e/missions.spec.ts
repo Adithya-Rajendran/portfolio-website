@@ -15,8 +15,9 @@ import { sitemapPages } from "./support/routes";
  * the build has covers; the fixtures have none); the quieter rows carry no
  * "Also" label.
  * Each project page has its crumb (Projects alone: no number or name),
- * its title as the heading and the pager ("Previous", "Next", in the
- * index's order), with no close, title block or revision stamp; a project
+ * its title as the heading and the pager ("Previous", "Next", in mission
+ * order: the index's, but a quiet project keeps its slot's place), with
+ * no close, title block or revision stamp; a project
  * with little content is a short note with no sections, and a module the
  * owner has not filled in is absent. On the fixture build a fully filled
  * mission shows every module (the overview, the results opening on their
@@ -279,7 +280,7 @@ test("every project page has its crumb, title and pager", async ({
 
 test("the pager follows the index's order, a quiet row's project in its mission order", async ({
     page,
-}) => {
+}, testInfo) => {
     await page.goto("/portfolio");
     /** The distinct project pages linked under `selector`, in order. */
     const linked = (selector: string) =>
@@ -294,8 +295,8 @@ test("the pager follows the index's order, a quiet row's project in its mission 
             ]);
     // The stage and the tiles, then the quiet rows.
     const featured = await linked('article a[href^="/portfolio/"]');
-    const quiet = await linked('#projects li a[href^="/portfolio/"]');
-    const listed = [...featured, ...quiet];
+    const rows = await linked('#projects li a[href^="/portfolio/"]');
+    const listed = [...featured, ...rows];
     expect(listed.length).toBeGreaterThan(1);
 
     const sides = new Map<
@@ -342,10 +343,23 @@ test("the pager follows the index's order, a quiet row's project in its mission 
         expect(sides.get(path)!.previous, path).toBe(chain[index - 1] ?? null);
     }
     // The pager goes in mission order, as the index does: the stage and
-    // the tiles keep its order, and so do the quiet rows. Only a quiet
-    // project, listed after the tiles, may sit earlier in the pager.
+    // the tiles keep its order, and so do the quiet rows.
     expect(chain.filter((path) => featured.includes(path))).toEqual(featured);
-    expect(chain.filter((path) => quiet.includes(path))).toEqual(quiet);
+    expect(chain.filter((path) => rows.includes(path))).toEqual(rows);
+    // Only a quiet project, listed among the rows whatever its slot, may
+    // sit earlier in the pager. The fixture build's quiet projects are
+    // known: without them, the pager and the index match exactly.
+    if (testInfo.project.name === "fixture") {
+        const quiet = new Set(
+            FIXTURE_PROJECTS.filter((project) => project.quiet).map(
+                (project) => `/portfolio/${project.slug}`,
+            ),
+        );
+        expect(quiet.size).toBeGreaterThan(0);
+        const loud = (paths: string[]) =>
+            paths.filter((path) => !quiet.has(path));
+        expect(loud(chain)).toEqual(loud(listed));
+    }
 });
 
 test("a project with little content is a short note, with no sections", async ({

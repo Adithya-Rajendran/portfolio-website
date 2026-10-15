@@ -257,7 +257,7 @@ export default defineType({
             type: "number",
             group: "editorial",
             description:
-                "Optional. 1 puts this project on the photographic stage of the home page and Projects; 2 and 3 come right after it (on the home page, the two rows under it). Leave empty for the rest, which follow by Mission Number. Each slot holds one project. Quiet listing, when on, overrides the slot.",
+                "Optional. 1 puts this project on the photographic stage of the home page and Projects; 2 and 3 come right after it (on the home page, the two rows under it). Leave empty for the rest, which follow by Mission Number. Each slot holds one project. Quiet listing, when on, keeps the project off the stage, the tiles and the home rows; the slot still orders previous / next and the quiet rows.",
             options: { list: [1, 2, 3] },
             validation: (Rule) => [
                 Rule.integer().min(1).max(3),

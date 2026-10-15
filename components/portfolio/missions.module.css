@@ -203,6 +203,50 @@
 .tileCovered .stack {
     grid-area: stack;
 }
+/* A lone tile (one project between the stage and the quiet rows) spans
+   both columns rather than leave one empty: its line and hairline run
+   the width, its title (beside its thumbnail, in a tile's proportions)
+   keeps a tile's column, and its summary and stack take the other, in
+   line with the rows' second column, so no measure grows. */
+@media (min-width: 60rem) {
+    .tile:only-child {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            "head head"
+            "title summary"
+            "title stack";
+        align-items: start;
+        column-gap: var(--gutter);
+    }
+    .tileCovered:only-child {
+        grid-template-columns:
+            minmax(0, 1fr) minmax(0, 2fr)
+            calc(50% - var(--gutter) / 2);
+        grid-template-areas:
+            "head head head"
+            "plate title summary"
+            "plate title stack";
+    }
+    .tile:only-child .tileHead {
+        grid-area: head;
+    }
+    .tile:only-child .tileName {
+        grid-area: title;
+    }
+    .tile:only-child .tileSummary {
+        grid-area: summary;
+    }
+    .tile:only-child .stack {
+        grid-area: stack;
+    }
+    /* The summary starts level with the title. */
+    .tile:not(.tileCovered):only-child .tileSummary {
+        margin-top: var(--s-2);
+    }
+}
 /* The line, with the arrow at its end, placed from the line. */
 .tileHead {
     position: relative;

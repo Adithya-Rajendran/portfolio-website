@@ -74,7 +74,7 @@ describe("project schema", () => {
 
     it("lists a project quietly only when asked, never requiring it", () => {
         const names = fieldNames(project);
-        // Beside the featured slot it overrides.
+        // Beside the featured slot, which it keeps off the stage.
         expect(names.indexOf("quiet")).toBe(names.indexOf("featured") + 1);
         const quiet = project.fields.find((field) => field.name === "quiet") as
             (Record<string, unknown> & { name: string }) | undefined;
@@ -88,11 +88,14 @@ describe("project schema", () => {
         });
         // Optional: the stored projects, which have no value, stay valid.
         expect(quiet).not.toHaveProperty("validation");
-        // The featured slot's description says which wins.
+        // The featured slot's description says which wins, and what the
+        // slot still orders.
         const featured = project.fields.find(
             (field) => field.name === "featured",
         ) as { description?: string } | undefined;
-        expect(featured?.description).toContain("Quiet listing");
+        expect(featured?.description).toContain(
+            "Quiet listing, when on, keeps the project off the stage, the tiles and the home rows; the slot still orders previous / next and the quiet rows.",
+        );
     });
 
     it("gives the post a cover, related projects and a revision date", () => {

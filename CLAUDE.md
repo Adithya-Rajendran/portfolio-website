@@ -383,7 +383,9 @@ only live in comments or commit messages.
   title, under the line, which keeps the arrow; the summary and stack
   under both) or in a row on home or `/portfolio` (beside its text): a
   third of the card from 600px, two fifths on phones, beside the title
-  under the line (tiles, like rows, are one column below 960px), the
+  under the line (tiles, like rows, are one column below 960px; from
+  there a lone tile spans both columns, its title, beside the thumbnail,
+  in one and its summary and stack in the other), the
   stage's plate when the flagship
   has one, and the plate beside a project's head in either layout; the
   stage takes the model's poster without one (with no caption: the
@@ -493,7 +495,8 @@ only live in comments or commit messages.
   strongest project on its stage (featured slot 1, led by its summary,
   no stats, mission number or write-up link: its page links the
   write-up; its title is its one link), the next two as rows
-  (`homeProjects`; the others are `/portfolio`'s alone, and All projects
+  (`homeProjects`; never a quiet one, on the stage or in a row: the
+  others are `/portfolio`'s alone, and All projects
   shows only while there are any); the latest three entries, without
   tags (All writing only while `/blog` lists more); and the close, in
   open space (no rule over it), headed by the owner's one-line statement
@@ -1134,7 +1137,9 @@ session, with the two variables loaded, so the hosted copy matches.
   at most on a card, the flagship's title, its one link, in the first
   viewport at 1440×900 with no filled button and no "Also" label, each
   project page has its crumb ("Projects" alone, no number), its title as
-  the heading and the pager ("Previous", "Next", in the index's order; a lone side
+  the heading and the pager ("Previous", "Next", in mission order: the
+  index's, but a quiet project keeps its slot's place, and on the fixture
+  build the others follow exactly the index's order; a lone side
   spanning the measure)
   and no close, title block, revision, "Table 1", jump to its own
   write-up or stand-in text, a stack item never split, a thin project is
@@ -1150,7 +1155,9 @@ session, with the two variables loaded, so the hosted copy matches.
   its two subheads), its repository beside Read the write-up in the
   head with no Code row, no Related writing that would only repeat the
   original, its callouts as plain rows, an essay's contents marking the current
-  section with the entry's 2px bar, and a planned one none of them), `home` (the
+  section with the entry's 2px bar, and a planned one none of them; quiet
+  in a featured slot, it is a quiet row, not the stage or a tile, and
+  its pager keeps the slot's place), `home` (the
   hero's name, availability and its one action, CV (to `/resume#cv`), with
   Latest beside it (a quiet link to the newest entry, no button), in the first
   viewport at 1280×800 and 390×844 with and without
@@ -1163,7 +1170,8 @@ session, with the two variables loaded, so the hosted copy matches.
   stars in the hero only, and not on paper; the credit with its frame ID,
   and the drawn limb in Flight Manual; the sections in order, unnumbered
   and without themed names, each linking its page only while that page
-  holds more, no Also line, and the latest writing without tags; the close headed by the tagline, with no
+  holds more, no Also line, no row for a quiet project (on the fixture
+  build; All projects leads to it), and the latest writing without tags; the close headed by the tagline, with no
   link to `/resume` (the nav's Experience is the flight's), its button
   only in the profile's words and
   only beside an Open To line, one primary at most and one way to

@@ -526,8 +526,10 @@ export function missionTiers<
     };
 }
 
-/** A file's previous / next, in the order given: the index's
- *  (`missionOrder`), so the pager reads as /portfolio does. */
+/** A file's previous / next, in the order given: mission order
+ *  (`missionOrder`). /portfolio lists the projects in it too, but a quiet
+ *  project keeps its place in the pager while the index lists it among
+ *  the quiet rows (`missionTiers`). */
 export function adjacentMissions<T extends { slug: string }>(
     ordered: readonly T[],
     slug: string,
