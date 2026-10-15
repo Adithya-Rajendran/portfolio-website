@@ -1,4 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
+import { axeViolations } from "./support/axe";
 import { MISSING_PAGES } from "./support/routes";
 import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
@@ -7,23 +8,50 @@ import { storeTheme } from "./support/theme";
  * Theme and motion (plan §2.5.1, contract §6): Void for every first visit
  * except a post, which follows the OS until a theme is chosen (premium
  * D3), on a full load and after a client navigation alike; a stored choice
- * applied before the first paint and winning everywhere, the header's
- * switch (Void ↔ Flight Manual) and the menu sheet's three-way choice
- * kept in step across reloads, pages and tabs, Auto following the OS, and
- * Pause motion (nothing at all under the OS reduce-motion setting).
+ * applied before the first paint and winning everywhere, the three-way
+ * choice in the header switch's popover (from 960px) and the menu sheet
+ * (below it) kept in step across reloads, pages and tabs, Auto following
+ * the OS, and Pause motion (nothing at all under the OS reduce-motion
+ * setting).
  */
 
 const html = (page: Page) => page.locator("html");
-const headerSwitch = (page: Page, to: "light" | "dark") =>
+const storedTheme = (page: Page) =>
+    page.evaluate(() => window.localStorage.getItem("ar-theme"));
+
+/** The header's switch, from 960px: it opens the three-way choice. */
+const headerSwitch = (page: Page) =>
     page
         .getByRole("banner")
-        .getByRole("button", { name: `Switch to ${to} theme`, exact: true });
+        .getByRole("button", { name: "Theme", exact: true });
+
+/** The choice in the header switch's popover (the sheet's is hidden from
+ *  960px). */
+const headerChoice = (page: Page) =>
+    page.getByRole("banner").getByRole("group", { name: "Theme" });
+
+/** Picks `name` from the header's popover with a click: the popover
+ *  closes and focus returns to the switch. */
+async function pick(page: Page, name: string) {
+    await headerSwitch(page).click();
+    await headerChoice(page).getByRole("radio", { name }).click();
+    await expect(headerChoice(page)).toBeHidden();
+    await expect(headerSwitch(page)).toBeFocused();
+}
+
+/** The header's popover shows `name` as the preference in force. */
+async function expectHeaderChoice(page: Page, name: string) {
+    await headerSwitch(page).click();
+    await expect(headerChoice(page).getByRole("radio", { name })).toBeChecked();
+    await page.keyboard.press("Escape");
+    await expect(headerChoice(page)).toBeHidden();
+}
 
 /**
- * The three-way choice (Dark · Light · System) is the menu sheet's, below
- * 960px; from 960px the header's switch alone (the footer repeats
- * neither). Opens the sheet at a phone's width, runs `act` on the choice,
- * then closes it and gives the page its width back.
+ * The menu sheet carries the three-way choice below 960px, where the
+ * header's switch is hidden (the footer repeats neither). Opens the sheet
+ * at a phone's width, runs `act` on the choice, then closes it and gives
+ * the page its width back.
  */
 async function inSheet(page: Page, act: (choice: Locator) => Promise<void>) {
     const size = page.viewportSize();
@@ -151,19 +179,104 @@ test("a stored theme applies before the body is parsed", async ({ page }) => {
     );
 });
 
-test("the header switch's choice persists across reloads and pages", async ({
+test("the header's popover opens on a click and closes on a pick, a click outside or Escape", async ({
     page,
 }) => {
     await page.goto("/about");
-    await expect(headerSwitch(page, "dark")).toBeHidden();
-    await headerSwitch(page, "light").click();
+    const button = headerSwitch(page);
+    await expect(button).toHaveAttribute("aria-expanded", "false");
+    await expect(headerChoice(page)).toBeHidden();
+
+    // A click opens it on the choice in force, its radio focused.
+    await button.click();
+    await expect(button).toHaveAttribute("aria-expanded", "true");
+    const dark = headerChoice(page).getByRole("radio", { name: "Dark" });
+    await expect(dark).toBeChecked();
+    await expect(dark).toBeFocused();
+    expect(await axeViolations(page, "/about"), "axe, popover open").toEqual(
+        [],
+    );
+
+    // A click outside closes it; so does the switch itself.
+    await page.getByRole("heading", { level: 1 }).click();
+    await expect(headerChoice(page)).toBeHidden();
+    await expect(button).toHaveAttribute("aria-expanded", "false");
+    await button.click();
+    await expect(headerChoice(page)).toBeVisible();
+    await button.click();
+    await expect(headerChoice(page)).toBeHidden();
+
+    // Escape closes it and returns focus to the switch.
+    await button.click();
+    await page.keyboard.press("Escape");
+    await expect(headerChoice(page)).toBeHidden();
+    await expect(button).toBeFocused();
+
+    // A click on an option picks it, closes it and returns focus.
+    await pick(page, "Light");
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
-    // The switch now offers the way back, and the sheet shows the choice.
-    await expect(headerSwitch(page, "dark")).toBeVisible();
+
+    // From the keyboard the arrows pick without closing it.
+    await button.click();
+    await page.keyboard.press("ArrowRight");
+    await expect(
+        headerChoice(page).getByRole("radio", { name: "System" }),
+    ).toBeChecked();
+    await expect(headerChoice(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(headerChoice(page)).toBeHidden();
+});
+
+test("from the header, System hands a post back to the OS", async ({
+    page,
+}) => {
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("/blog");
+    await openFirstPost(page);
+    await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    await expectHeaderChoice(page, "System");
+
+    // Dark pins the post, through a reload.
+    await pick(page, "Dark");
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    expect(await storedTheme(page)).toBe("void");
+    await page.reload();
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await expectHeaderChoice(page, "Dark");
+
+    // System hands it back: stored as `auto`, it follows the OS.
+    await pick(page, "System");
+    expect(await storedTheme(page)).toBe("auto");
+    await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await page.reload();
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await expectHeaderChoice(page, "System");
+
+    // And Dark again holds through a reload, whatever the OS does.
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    await pick(page, "Dark");
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    await page.reload();
+    await expect(html(page)).toHaveAttribute("data-theme", "void");
+    expect(await storedTheme(page)).toBe("void");
+});
+
+test("the header's choice persists across reloads and pages", async ({
+    page,
+}) => {
+    await page.goto("/about");
+    await pick(page, "Light");
+    await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    // Both copies of the choice show it.
+    await expectHeaderChoice(page, "Light");
     await expectChoice(page, "Light");
 
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
+    await expectHeaderChoice(page, "Light");
     await expectChoice(page, "Light");
 
     await page
@@ -173,7 +286,7 @@ test("the header switch's choice persists across reloads and pages", async ({
     await expect(page).toHaveURL(/\/portfolio$/);
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
 
-    await headerSwitch(page, "dark").click();
+    await pick(page, "Dark");
     await expect(html(page)).toHaveAttribute("data-theme", "void");
     await page.goto("/");
     await expect(html(page)).toHaveAttribute("data-theme", "void");
@@ -186,8 +299,8 @@ test("Auto follows the OS colour scheme as it changes", async ({ page }) => {
     await expect(html(page)).toHaveAttribute("data-theme", "void");
     await page.emulateMedia({ colorScheme: "light" });
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
-    // Under Auto, the header switch shows the theme on screen.
-    await expect(headerSwitch(page, "dark")).toBeVisible();
+    // The header's popover shows the same choice.
+    await expectHeaderChoice(page, "System");
     await page.reload();
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expectChoice(page, "System");
@@ -197,7 +310,7 @@ test("a choice made in another tab applies here", async ({ page, context }) => {
     await page.goto("/");
     const other = await context.newPage();
     await other.goto("/about");
-    await headerSwitch(other, "light").click();
+    await pick(other, "Light");
     await expect(html(other)).toHaveAttribute("data-theme", "manual");
     await expect(html(page)).toHaveAttribute("data-theme", "manual");
     await expectChoice(page, "Light");
@@ -214,7 +327,7 @@ test("an unknown post or project URL keeps the stored theme and controls", async
         expect(response?.status(), path).toBe(404);
         await expect(html(page), path).toHaveAttribute("data-theme", "manual");
         await expect(html(page), path).toHaveAttribute("data-js", "");
-        await expect(headerSwitch(page, "dark"), path).toBeVisible();
+        await expect(headerSwitch(page), path).toBeVisible();
         await expectChoice(page, "Light");
     }
 });

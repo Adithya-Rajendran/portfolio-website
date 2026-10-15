@@ -82,18 +82,21 @@ only live in comments or commit messages.
   (`full` | `reduced`), and sets `data-theme`, `data-motion` and `data-js`
   on `<html>` before the first paint. After a client navigation
   `RouteMarker` applies the new path's default the same way
-  (`applyRouteTheme` in `lib/prefs.ts`), and the menu sheet's choice
-  shows the preference in force there (`themePref`: System on a post, Dark
+  (`applyRouteTheme` in `lib/prefs.ts`), and the theme choice shows the
+  preference in force there (`themePref`: System on a post, Dark
   elsewhere, until one is stored). The server renders the literal
   `data-theme="void"` and never `data-motion`, so without JavaScript there
   is no spatial motion; never read a cookie for this, it would make every
-  route request-bound. The header's `ThemeSwitch` (one button, Void ↔
-  Flight Manual) names the theme it switches to from `html[data-theme]`
-  in CSS, so under Auto it follows the screen; the menu sheet (below
-  960px, where the switch is hidden) carries `ThemeChoice` (Dark · Light
-  · System, the values `void` · `manual` · `auto`, a `Segmented`), so
-  each control shows once per breakpoint and the footer repeats neither;
-  it reads `lib/prefs.ts` through
+  route request-bound. The theme choice is `ThemeChoice` (Dark · Light
+  · System, the values `void` · `manual` · `auto`, a `Segmented`): from
+  960px the header's `ThemeSwitch` (one 44px button, "Theme", with
+  `aria-expanded`) opens it in a small popover hanging from the header's
+  hairline, which a click on an option, a click outside or Escape closes
+  (an option or Escape returns focus to the button; arrow keys pick
+  without closing), so a desktop visitor can always return to System; below 960px, where the
+  switch is hidden, the menu sheet carries it. Each copy names its radios
+  by `useId`, the choice shows once per breakpoint and the footer
+  repeats neither; it reads `lib/prefs.ts` through
   `useSyncExternalStore` (server snapshot `undefined`). Spatial motion runs
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
@@ -998,7 +1001,9 @@ session, with the two variables loaded, so the hosted copy matches.
   OS until a theme is chosen while every other page stays Void, on a
   full load and after a client navigation, Pause motion, the stored
   theme on an unknown post or project URL, the three-way choice in the
-  menu sheet, and nothing in Pause motion's place under the OS setting),
+  menu sheet and in the header's popover (its opening, closing and
+  focus, and System on a post following the OS from it), and nothing in
+  Pause motion's place under the OS setting),
   `chrome` (the menu sheet's focus, `inert` and closing; Contact and CV
   in the bar on a phone, hidden while the sheet is open, and neither
   from 960px; the current nav section;

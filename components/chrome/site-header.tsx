@@ -14,10 +14,11 @@ const PANEL_ID = "site-nav";
  * The header, a Server Component: brand and patch, the five sections by
  * their plain names, Contact and CV in the bar below 960px (where the nav
  * is in the sheet; from 960px the nav's Experience is the way to the CV)
- * and the theme switch (from 960px) are in the static HTML. Below 960px
- * the nav is a popover sheet that opens without JavaScript, with the
- * three-way theme choice. Only the current-section mark needs the
- * pathname (components/chrome/nav-links.tsx). Search arrives with the
+ * and the theme switch (from 960px, opening the three-way theme choice)
+ * are in the static HTML. Below 960px the nav is a popover sheet that
+ * opens without JavaScript, with the same choice. Only the
+ * current-section mark needs the pathname
+ * (components/chrome/nav-links.tsx). Search arrives with the
  * console (PR 16). `plainLinks`: every link a plain <a href> (the global
  * 404, components/chrome/site-link.tsx).
  * Ported from the mockup's header (_template.html, site.css 4.2).

@@ -272,9 +272,15 @@
     }
 
     /* The theme switch (contract §6): the half-lit disc alone, unboxed,
-       in a 44px target. Its name is the theme it switches to, picked by
-       html[data-theme]. */
+       in a 44px target, opening a popover that hangs from the header's
+       hairline: the three-way choice on the page's ground, in hairlines,
+       nothing in orange. */
     .theme-switch {
+        position: relative;
+        display: flex;
+        flex: none;
+    }
+    .theme-switch__button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -288,16 +294,22 @@
         cursor: pointer;
         transition: color var(--dur-hover) var(--ease-dock);
     }
-    .theme-switch .icon {
+    .theme-switch__button .icon {
         width: 18px;
         height: 18px;
     }
-    .theme-switch:hover {
+    .theme-switch__button:hover,
+    .theme-switch__button[aria-expanded="true"] {
         color: var(--ink-1);
     }
-    html[data-theme="manual"] .theme-switch__to-light,
-    html:not([data-theme="manual"]) .theme-switch__to-dark {
-        display: none;
+    .theme-switch__popover {
+        position: absolute;
+        top: calc(100% + (var(--header-h) - 44px) / 2);
+        right: 0;
+        padding: var(--s-3);
+        border: var(--rule-hair) solid var(--rule-1);
+        border-top: 0;
+        background: var(--bg);
     }
 
     /* Width budget, measured with the real labels from 320 to 1920px: the
