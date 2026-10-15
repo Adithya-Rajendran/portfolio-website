@@ -362,6 +362,10 @@ describe("contact form checks", () => {
         expect(
             shownErrors({ senderEmail: "", message: "x".repeat(2000) }, "none"),
         ).toEqual({});
+        // Blank past the limit: the missing-message rule waits for a submit.
+        expect(
+            shownErrors({ senderEmail: "", message: " ".repeat(2300) }, "none"),
+        ).toEqual({});
     });
 
     it("starts a broken link's report with its address, and nothing else", () => {

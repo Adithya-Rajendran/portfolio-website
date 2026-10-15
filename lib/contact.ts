@@ -205,9 +205,8 @@ export function shownErrors(
     if (checks === "email" && fields.senderEmail.trim() && found.senderEmail) {
         shown.senderEmail = found.senderEmail;
     }
-    if (fields.message.length > MESSAGE_MAX_LENGTH) {
-        shown.message = found.message;
-    }
+    const over = contactCopy.form.errors.messageLong(MESSAGE_MAX_LENGTH);
+    if (found.message === over) shown.message = over;
     return shown;
 }
 
