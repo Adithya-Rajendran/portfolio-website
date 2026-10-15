@@ -11,7 +11,8 @@ import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
 import KeepWhole from "@/components/ui/keep-whole";
 
-/** The row of tiles: one column, two across from 960px (/portfolio). */
+/** The row of tiles: one column, two across from 960px, where a lone
+ *  tile spans both (/portfolio). */
 export function MissionTiles({ children }: { children: React.ReactNode }) {
     return <div className={styles.tiles}>{children}</div>;
 }

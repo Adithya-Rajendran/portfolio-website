@@ -711,7 +711,8 @@ function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
  * fixture stand-ins for shapes the real missions lack. The stand-ins' names
  * say they are fixtures and they describe no real work: one fills every
  * mission field and links callouts to its essay and to a fixture post, one
- * has estimated years ("c. 2023"), and one is planned, without dates.
+ * has estimated years ("c. 2023"), and one is planned, without dates, and
+ * quiet in a featured slot (a quiet row on /portfolio, not on home).
  * @internal Exported for tests.
  */
 export const FIXTURE_PROJECTS: ProjectWithBody[] = [
@@ -827,6 +828,11 @@ export const FIXTURE_PROJECTS: ProjectWithBody[] = [
         summary: "A fixture project that has not started, so it has no dates.",
         status: "planned",
         types: ["research"],
+        // Quiet in slot 3: no write-up yet, so it is a quiet row on
+        // /portfolio and the second tile and home row go to the next
+        // project, while the pager keeps it after slot 2.
+        featured: 3,
+        quiet: true,
         technologies: ["Fixture technology D"],
         highlights: ["Has a status but no dates."],
         hasModel: false,

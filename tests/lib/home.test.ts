@@ -42,7 +42,7 @@ describe("the hero's latest entry", () => {
     });
 });
 
-type Project = { slug: string; featured?: number };
+type Project = { slug: string; featured?: number; quiet?: boolean };
 
 describe("the home projects", () => {
     it("stages the flagship, gives the next ones rows and lists the rest", () => {
@@ -59,6 +59,33 @@ describe("the home projects", () => {
             "kubernetes",
         ]);
         expect(also.map((project) => project.slug)).toEqual(["website"]);
+    });
+
+    it("gives a quiet project no row: it is /portfolio's", () => {
+        const { flagship, rows, also } = homeProjects<Project>([
+            { slug: "homelab", featured: 1 },
+            { slug: "gmail" },
+            { slug: "kubernetes", quiet: true },
+            { slug: "website" },
+        ]);
+        expect(flagship?.slug).toBe("homelab");
+        expect(rows.map((project) => project.slug)).toEqual([
+            "gmail",
+            "website",
+        ]);
+        // All projects shows while /portfolio holds it.
+        expect(also.map((project) => project.slug)).toEqual(["kubernetes"]);
+    });
+
+    it("leaves a row empty rather than give it to a quiet project", () => {
+        const { flagship, rows, also } = homeProjects<Project>([
+            { slug: "homelab", featured: 1 },
+            { slug: "kubernetes", quiet: true },
+            { slug: "website" },
+        ]);
+        expect(flagship?.slug).toBe("homelab");
+        expect(rows.map((project) => project.slug)).toEqual(["website"]);
+        expect(also.map((project) => project.slug)).toEqual(["kubernetes"]);
     });
 
     it("stages the first project when none is featured", () => {

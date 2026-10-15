@@ -498,27 +498,38 @@ export function missionOrder<
  * Projects in tiers, from `missionOrder`: the flagship (featured slot 1,
  * else the first), the next `rows` given room of their own, and the rest,
  * shown least prominently, so the owner's last project is the quietest.
- * The home page and /portfolio both read it.
+ * A quiet project (`quiet`, one with no write-up yet) is never the
+ * flagship or given room: it is one of the rest, in its mission order,
+ * whatever its featured slot. When every project is quiet the flagship
+ * is still chosen from them all, so the page never empties. The home page
+ * and /portfolio both read it.
  */
-export function missionTiers<T extends { featured?: number | null }>(
+export function missionTiers<
+    T extends { featured?: number | null; quiet?: boolean | null },
+>(
     ordered: readonly T[],
     rows: number,
 ): { flagship: T | null; rows: T[]; also: T[] } {
     if (!ordered.length) return { flagship: null, rows: [], also: [] };
-    const lead = Math.max(
-        0,
-        ordered.findIndex((project) => project.featured === 1),
-    );
-    const rest = ordered.filter((_, index) => index !== lead);
+    const shown = ordered.filter((project) => !project.quiet);
+    const lead = shown.length ? shown : ordered;
+    const flagship = lead.find((project) => project.featured === 1) ?? lead[0];
+    const roomy = shown
+        .filter((project) => project !== flagship)
+        .slice(0, rows);
     return {
-        flagship: ordered[lead],
-        rows: rest.slice(0, rows),
-        also: rest.slice(rows),
+        flagship,
+        rows: roomy,
+        also: ordered.filter(
+            (project) => project !== flagship && !roomy.includes(project),
+        ),
     };
 }
 
-/** A file's previous / next, in the order given: the index's
- *  (`missionOrder`), so the pager reads as /portfolio does. */
+/** A file's previous / next, in the order given: mission order
+ *  (`missionOrder`). /portfolio lists the projects in it too, but a quiet
+ *  project keeps its place in the pager while the index lists it among
+ *  the quiet rows (`missionTiers`). */
 export function adjacentMissions<T extends { slug: string }>(
     ordered: readonly T[],
     slug: string,

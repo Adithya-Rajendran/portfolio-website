@@ -264,6 +264,10 @@ export type ProjectListItem = {
     types: ProjectType[];
     /** 1 is the photographic stage; 2 and 3 are featured beside it. */
     featured?: number | null;
+    /** Listed only as a quiet row on /portfolio (`missionTiers`): never
+     *  the flagship, a tile or a home row, whatever `featured` says,
+     *  unless every project is quiet. */
+    quiet?: boolean | null;
     myRole?: string | null;
     startDate?: string | null;
     endDate?: string | null;
@@ -492,6 +496,7 @@ const projectListFields = `
     statusNote,
     types,
     featured,
+    quiet,
     myRole,
     startDate,
     endDate,

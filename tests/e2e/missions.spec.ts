@@ -1,5 +1,6 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { missionsCopy as copy, pagerCopy } from "@/lib/copy";
+import { FIXTURE_PROJECTS } from "@/lib/fixtures";
 import { expect, test } from "./support/test";
 import { sitemapPages } from "./support/routes";
 
@@ -14,16 +15,18 @@ import { sitemapPages } from "./support/routes";
  * the build has covers; the fixtures have none); the quieter rows carry no
  * "Also" label.
  * Each project page has its crumb (Projects alone: no number or name),
- * its title as the heading and the pager ("Previous", "Next", in the
- * index's order), with no close, title block or revision stamp; a project
+ * its title as the heading and the pager ("Previous", "Next", in mission
+ * order: the index's, but a quiet project keeps its slot's place), with
+ * no close, title block or revision stamp; a project
  * with little content is a short note with no sections, and a module the
  * owner has not filled in is absent. On the fixture build a fully filled
  * mission shows every module (the overview, the results opening on their
  * first row, the retrospective), its repository beside Read the write-up
  * in the head and its callouts as plain rows, and no Related writing that
- * would only repeat the original entry; a planned one shows none of them.
- * Projects are read from the sitemap, so the spec fits fixture and real
- * content alike.
+ * would only repeat the original entry; a planned one shows none of them,
+ * and, quiet in a featured slot, is a quiet row whose pager keeps its
+ * mission order. Projects are read from the sitemap, so the spec fits
+ * fixture and real content alike.
  */
 
 function main(page: Page) {
@@ -275,49 +278,87 @@ test("every project page has its crumb, title and pager", async ({
     }
 });
 
-test("the pager follows the index's order", async ({ page }) => {
+test("the pager follows the index's order, a quiet row's project in its mission order", async ({
+    page,
+}, testInfo) => {
     await page.goto("/portfolio");
-    const order = await main(page)
-        .locator('a[href^="/portfolio/"]')
-        .evaluateAll((links) => [
-            ...new Set(
-                links
-                    .map((link) => link.getAttribute("href") ?? "")
-                    .filter((href) => /^\/portfolio\/[^/#]+$/.test(href)),
-            ),
-        ]);
-    expect(order.length).toBeGreaterThan(1);
-    for (const [index, path] of order.entries()) {
+    /** The distinct project pages linked under `selector`, in order. */
+    const linked = (selector: string) =>
+        main(page)
+            .locator(selector)
+            .evaluateAll((links) => [
+                ...new Set(
+                    links
+                        .map((link) => link.getAttribute("href") ?? "")
+                        .filter((href) => /^\/portfolio\/[^/#]+$/.test(href)),
+                ),
+            ]);
+    // The stage and the tiles, then the quiet rows.
+    const featured = await linked('article a[href^="/portfolio/"]');
+    const rows = await linked('#projects li a[href^="/portfolio/"]');
+    const listed = [...featured, ...rows];
+    expect(listed.length).toBeGreaterThan(1);
+
+    const sides = new Map<
+        string,
+        { previous: string | null; next: string | null }
+    >();
+    for (const path of listed) {
         await page.goto(path);
         const pager = main(page).getByRole("navigation", {
             name: copy.pagerLabel,
         });
-        const next = pager.getByRole("link", {
-            name: new RegExp(`^${pagerCopy.next}`),
-        });
-        const previous = pager.getByRole("link", {
-            name: new RegExp(`^${pagerCopy.previous}`),
-        });
-        if (index < order.length - 1) {
-            await expect(next, path).toHaveAttribute("href", order[index + 1]);
-        } else {
-            await expect(next, path).toHaveCount(0);
-        }
-        if (index > 0) {
-            await expect(previous, path).toHaveAttribute(
-                "href",
-                order[index - 1],
-            );
-        } else {
-            await expect(previous, path).toHaveCount(0);
-        }
+        const side = async (name: string) => {
+            const link = pager.getByRole("link", {
+                name: new RegExp(`^${name}`),
+            });
+            return (await link.count()) ? link.getAttribute("href") : null;
+        };
+        const previous = await side(pagerCopy.previous);
+        const next = await side(pagerCopy.next);
+        sides.set(path, { previous, next });
         // A lone side takes the whole width, so its hairline closes the
         // page across the measure, not over half of it.
-        if (index === 0 || index === order.length - 1) {
+        if (!previous || !next) {
             const lone = await pager.getByRole("link").boundingBox();
             const whole = await pager.boundingBox();
             expect(lone!.width, path).toBeCloseTo(whole!.width, 0);
         }
+    }
+
+    // One chain through every listed project, each Next undone by the
+    // next page's Previous.
+    const firsts = listed.filter((path) => !sides.get(path)!.previous);
+    expect(firsts).toHaveLength(1);
+    const chain: string[] = [];
+    for (
+        let path: string | null = firsts[0];
+        path && chain.length <= listed.length;
+        path = sides.get(path)?.next ?? null
+    ) {
+        chain.push(path);
+    }
+    expect([...chain].sort()).toEqual([...listed].sort());
+    for (const [index, path] of chain.entries()) {
+        expect(sides.get(path)!.previous, path).toBe(chain[index - 1] ?? null);
+    }
+    // The pager goes in mission order, as the index does: the stage and
+    // the tiles keep its order, and so do the quiet rows.
+    expect(chain.filter((path) => featured.includes(path))).toEqual(featured);
+    expect(chain.filter((path) => rows.includes(path))).toEqual(rows);
+    // Only a quiet project, listed among the rows whatever its slot, may
+    // sit earlier in the pager. The fixture build's quiet projects are
+    // known: without them, the pager and the index match exactly.
+    if (testInfo.project.name === "fixture") {
+        const quiet = new Set(
+            FIXTURE_PROJECTS.filter((project) => project.quiet).map(
+                (project) => `/portfolio/${project.slug}`,
+            ),
+        );
+        expect(quiet.size).toBeGreaterThan(0);
+        const loud = (paths: string[]) =>
+            paths.filter((path) => !quiet.has(path));
+        expect(loud(chain)).toEqual(loud(listed));
     }
 });
 
@@ -493,6 +534,40 @@ test.describe("on the fixture build", () => {
         await expect(
             main(page).getByRole("link", { name: copy.readWriteUp }),
         ).toHaveCount(0);
+    });
+
+    test("a quiet mission is a quiet row, though it holds a featured slot", async ({
+        page,
+    }, testInfo) => {
+        test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
+        const quiet = FIXTURE_PROJECTS.find((project) => project.quiet)!;
+        const href = `/portfolio/${quiet.slug}`;
+        await page.goto("/portfolio");
+        // Not the stage or a tile: the next projects fill both tiles, and
+        // it leads the quiet rows, first of them in mission order.
+        await expect(
+            main(page).locator(`article a[href="${href}"]`),
+        ).toHaveCount(0);
+        await expect(main(page).locator("#projects article")).toHaveCount(2);
+        await expect(
+            main(page).locator('#projects li a[href^="/portfolio/"]').first(),
+        ).toHaveAttribute("href", href);
+        // Its page is as any other's, and the pager keeps its slot's
+        // place: right after slot 2.
+        await page.goto(href);
+        await expect(main(page).getByRole("heading", { level: 1 })).toHaveText(
+            quiet.title,
+        );
+        const before = FIXTURE_PROJECTS.find(
+            (project) => project.featured === quiet.featured! - 1,
+        )!;
+        await expect(
+            main(page)
+                .getByRole("navigation", { name: copy.pagerLabel })
+                .getByRole("link", {
+                    name: new RegExp(`^${pagerCopy.previous}`),
+                }),
+        ).toHaveAttribute("href", `/portfolio/${before.slug}`);
     });
 
     test("an essay's contents mark the section being read as an entry's do", async ({
