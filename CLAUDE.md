@@ -900,12 +900,11 @@ but the hosted copy of the schema (the one the Sanity dashboard and MCP
 tools read) does not: after each merge to `main`, the Sanity schema workflow
 (`.github/workflows/sanity-schema.yml`) runs `pnpm schema:deploy` in the
 `Production` environment, whose secrets only `main` can reach. That is
-`sanity deploy --external
---schema-required`, which refreshes the schema of the Studio application
-registered for `/studio` (`deployment.appId` in `sanity.cli.ts`) and the
-dataset copy (the one `sanity schema deploy` writes), which those tools read
-last. Run it by hand, with the two variables loaded, only when that run
-cannot.
+`sanity deploy --external --schema-required`, which refreshes the schema of
+the Studio application registered for `/studio` (`deployment.appId` in
+`sanity.cli.ts`) and the dataset copy (the one `sanity schema deploy`
+writes), which those tools read last. Run it by hand, with the two variables
+loaded, only when that run cannot.
 
 - Option lists and pure rules that both the schema and the site read live
   in modules with no imports, because the Studio bundles them:
