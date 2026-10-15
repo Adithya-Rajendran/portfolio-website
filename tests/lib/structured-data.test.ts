@@ -58,7 +58,7 @@ describe("buildPersonEntity", () => {
 
     it("derives current work, education, skills, links, and location from Profile", () => {
         const profile = profileOf({
-            location: "Remote · United States",
+            location: "San José, California",
             socialLinks: [
                 {
                     _key: "github",
@@ -101,10 +101,7 @@ describe("buildPersonEntity", () => {
                 },
             ],
         });
-        const person = buildPersonEntity({
-            profile,
-            imageUrl: "https://cdn.sanity.io/profile.webp",
-        });
+        const person = buildPersonEntity({ profile });
 
         expect(person.jobTitle).toBe("Cloud Field Engineer");
         expect(person.worksFor).toEqual({
@@ -121,9 +118,48 @@ describe("buildPersonEntity", () => {
         ]);
         expect(person.homeLocation).toEqual({
             "@type": "Place",
-            name: "Remote · United States",
+            address: {
+                "@type": "PostalAddress",
+                addressLocality: "San José",
+                addressRegion: "California",
+            },
         });
-        expect(person.image).toBe("https://cdn.sanity.io/profile.webp");
+        expect(person).not.toHaveProperty("image");
+    });
+
+    it("gives the location's city and region and leaves out a part it lacks", () => {
+        const placeOf = (location: string) =>
+            buildPersonEntity({ profile: profileOf({ location }) })
+                .homeLocation;
+
+        expect(placeOf("San José")).toEqual({
+            "@type": "Place",
+            address: { "@type": "PostalAddress", addressLocality: "San José" },
+        });
+        expect(placeOf(" , California")).toEqual({
+            "@type": "Place",
+            address: { "@type": "PostalAddress", addressRegion: "California" },
+        });
+        expect(placeOf("  ")).toBeUndefined();
+        expect(
+            JSON.stringify(placeOf("San José, California, United States")),
+        ).not.toMatch(/postalCode|streetAddress|United States/);
+    });
+
+    it("never carries an image of the owner, on the Person or the ProfilePage", () => {
+        // A portrait left in the dataset from before the field was removed.
+        const profile = {
+            ...profileOf({ location: "San José, California" }),
+            portrait: { asset: { _ref: "image-face-1200x1200-jpg" } },
+        } as ProfileData;
+
+        for (const person of [
+            buildPersonEntity({ profile }),
+            buildProfilePage({ profile }).mainEntity,
+        ]) {
+            expect(person).not.toHaveProperty("image");
+            expect(JSON.stringify(person)).not.toContain("image-face");
+        }
     });
 
     it("represents current study without inventing employment or a completed degree", () => {

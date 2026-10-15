@@ -50,12 +50,36 @@ describe("profile copy fields", () => {
     type Field = {
         name: string;
         type: string;
+        description?: string;
         fields?: Field[];
         of?: { name?: string; fields?: Field[] }[];
         validation?: unknown;
     };
     const fields = profile.fields as unknown as Field[];
     const field = (name: string) => fields.find((item) => item.name === name);
+
+    it("keeps the location an optional city and region, and holds no image of the owner", () => {
+        const location = field("location");
+        expect(location?.type).toBe("string");
+        expect(location?.description).toBe(
+            "City and region, e.g. San José, California; shown only in the Person structured data",
+        );
+        // The rule's calls, recorded: a length cap, never `required`.
+        const calls: string[] = [];
+        const rule: object = new Proxy(
+            {},
+            {
+                get: (_, name) => () => {
+                    calls.push(String(name));
+                    return rule;
+                },
+            },
+        );
+        (location?.validation as (rule: object) => unknown)(rule);
+        expect(calls).toEqual(["max"]);
+        expect(field("portrait")).toBeUndefined();
+        expect(fields.filter((item) => item.type === "image")).toEqual([]);
+    });
 
     it("words one route per contact topic, in route order", () => {
         const routes = field("contactRoutes");

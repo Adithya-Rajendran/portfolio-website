@@ -31,6 +31,7 @@ import type {
     CreativeWork,
     EducationalOccupationalCredential,
     Person,
+    Place,
     ProfilePage,
     WithContext,
 } from "schema-dts";
@@ -71,7 +72,6 @@ function optional<Key extends string>(
 
 interface PersonEntityInput {
     profile: ProfileData | null;
-    imageUrl?: string;
 }
 
 function currentWork(timeline?: TimelineEntry[] | null) {
@@ -149,11 +149,38 @@ function buildHasCredential(credentials?: CredentialListItem[] | null) {
         );
 }
 
-export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
+/**
+ * The profile's location ("San José, California") as a city and region:
+ * the text before the first comma is the locality, the next part the
+ * region, and a part that is missing is left out (no street, no postal
+ * code). Nothing when the profile has no location.
+ */
+function buildHomeLocation(location?: string | null) {
+    const [locality, region] = (location ?? "")
+        .split(",")
+        .map((part) => part.trim());
+    if (!locality && !region) return undefined;
+    return {
+        "@type": "Place",
+        address: {
+            "@type": "PostalAddress",
+            ...optional("addressLocality", locality),
+            ...optional("addressRegion", region),
+        },
+    } satisfies Place;
+}
+
+/**
+ * The site's person. It has no `image`: the owner's face is in no
+ * structured data (there is no portrait field), and its place is the
+ * profile's city and region.
+ */
+export function buildPersonEntity({ profile }: PersonEntityInput) {
     const activeWork = currentWork(profile?.timeline);
     const alumniOf = educationOrganizations(profile, false);
     const affiliation = educationOrganizations(profile, true);
     const knowsAbout = buildKnowsAbout(profile);
+    const homeLocation = buildHomeLocation(profile?.location);
 
     return {
         "@type": "Person",
@@ -161,7 +188,6 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
         name: profile?.name || siteConfig.author,
         alternateName: "Adithya",
         url: siteConfig.url,
-        ...(imageUrl ? { image: imageUrl } : {}),
         ...optional("description", getProfileDescription(profile)),
         ...(activeWork
             ? {
@@ -172,14 +198,7 @@ export function buildPersonEntity({ profile, imageUrl }: PersonEntityInput) {
                   },
               }
             : {}),
-        ...(profile?.location
-            ? {
-                  homeLocation: {
-                      "@type": "Place",
-                      name: profile.location,
-                  },
-              }
-            : {}),
+        ...(homeLocation ? { homeLocation } : {}),
         ...(alumniOf.length > 0 ? { alumniOf } : {}),
         ...(affiliation.length > 0 ? { affiliation } : {}),
         ...(knowsAbout.length > 0 ? { knowsAbout } : {}),

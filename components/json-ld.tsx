@@ -4,7 +4,6 @@ import { getProfileDescription } from "@/lib/profile-content";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import type { Mission } from "@/lib/missions";
 import { getProfile, type ProfileData } from "@/lib/sanity-client";
-import { urlForImage } from "@/lib/sanity-image";
 import {
     buildBlog,
     buildBlogPosting,
@@ -24,21 +23,6 @@ function safeJsonLd(data: unknown): string {
     return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-function profileImageUrl(profile: ProfileData | null) {
-    if (!profile?.portrait?.asset) return undefined;
-
-    try {
-        return urlForImage(profile.portrait)
-            .width(1200)
-            .height(1200)
-            .fit("crop")
-            .auto("format")
-            .url();
-    } catch {
-        return undefined;
-    }
-}
-
 export async function PersonJsonLd() {
     "use cache";
     cacheLife("max");
@@ -47,10 +31,7 @@ export async function PersonJsonLd() {
     const profile = await getProfile();
     const jsonLd = {
         "@context": "https://schema.org",
-        ...buildPersonEntity({
-            profile,
-            imageUrl: profileImageUrl(profile),
-        }),
+        ...buildPersonEntity({ profile }),
     };
 
     return (
@@ -141,10 +122,7 @@ export async function ProfilePageJsonLd() {
     const profile = await getProfile();
     const jsonLd = {
         "@context": "https://schema.org",
-        ...buildProfilePage({
-            profile,
-            imageUrl: profileImageUrl(profile),
-        }),
+        ...buildProfilePage({ profile }),
     };
 
     return (

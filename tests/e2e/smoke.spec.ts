@@ -1,7 +1,7 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { siteConfig } from "@/lib/config";
 import { contactCopy, errorCopy, logCopy, lossOfSignalCopy } from "@/lib/copy";
-import { FAILING_PROJECT_FIXTURE } from "@/lib/fixtures";
+import { FAILING_PROJECT_FIXTURE, FIXTURE_PROFILE } from "@/lib/fixtures";
 import {
     expandRoute,
     ROUTE_TAGS,
@@ -97,6 +97,35 @@ const LD_NEEDS: Record<string, Record<string, unknown>> = {
     },
     BreadcrumbList: { itemListElement: expect.any(Array) },
 };
+
+/** A page's JSON-LD blocks, parsed. */
+function jsonLd(html: string): Record<string, unknown>[] {
+    return [
+        ...html.matchAll(
+            /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g,
+        ),
+    ].map(([, json]) => JSON.parse(json) as Record<string, unknown>);
+}
+
+/**
+ * The site's person carries no image of the owner, and its place is a
+ * city and region at most: no street, no postal code.
+ */
+function expectPrivatePerson(person: Record<string, unknown>, label: string) {
+    expect(person, label).not.toHaveProperty("image");
+    if (!("homeLocation" in person)) return;
+    const place = person.homeLocation as Record<string, unknown>;
+    expect(Object.keys(place).sort(), label).toEqual(["@type", "address"]);
+    expect(place["@type"], label).toBe("Place");
+    const address = place.address as Record<string, unknown>;
+    expect(address["@type"], label).toBe("PostalAddress");
+    expect(
+        Object.keys(address).every((key) =>
+            ["@type", "addressLocality", "addressRegion"].includes(key),
+        ),
+        label,
+    ).toBe(true);
+}
 
 const FAILING_PROJECT_PATH = `/portfolio/${FAILING_PROJECT_FIXTURE.slug}`;
 
@@ -224,12 +253,7 @@ test.describe("pages", () => {
             ...(await contentPages(request, testInfo)),
         ];
         for (const path of paths) {
-            const html = await (await request.get(path)).text();
-            const items = [
-                ...html.matchAll(
-                    /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g,
-                ),
-            ].map(([, json]) => JSON.parse(json) as Record<string, unknown>);
+            const items = jsonLd(await (await request.get(path)).text());
             expect(items.length, `${path} JSON-LD`).toBeGreaterThan(0);
             for (const item of items) {
                 const type = String(item["@type"]);
@@ -237,6 +261,13 @@ test.describe("pages", () => {
                 expect(item["@context"], label).toBe("https://schema.org");
                 expect(Object.keys(LD_NEEDS), label).toContain(type);
                 expect(item, label).toMatchObject(LD_NEEDS[type]);
+                const person =
+                    type === "ProfilePage"
+                        ? (item.mainEntity as Record<string, unknown>)
+                        : type === "Person"
+                          ? item
+                          : undefined;
+                if (person) expectPrivatePerson(person, label);
                 if (type !== "BreadcrumbList") continue;
                 const crumbs = item.itemListElement as Record<
                     string,
@@ -252,6 +283,35 @@ test.describe("pages", () => {
                     }),
                 );
             }
+        }
+    });
+
+    test("the Person names the profile's city and region, which no page prints", async ({
+        page,
+        request,
+    }, testInfo) => {
+        test.skip(
+            testInfo.project.name !== "fixture",
+            "Only the fixture profile's location is known (lib/fixtures.ts).",
+        );
+        const location = FIXTURE_PROFILE.location ?? "";
+        const [locality, region] = location.split(", ");
+        const person = jsonLd(await (await request.get("/")).text()).find(
+            (item) => item["@type"] === "Person",
+        );
+        expect(person?.homeLocation).toEqual({
+            "@type": "Place",
+            address: {
+                "@type": "PostalAddress",
+                addressLocality: locality,
+                addressRegion: region,
+            },
+        });
+        for (const path of ["/", "/about", "/resume", "/contact"]) {
+            await page.goto(path);
+            expect(await page.locator("body").innerText(), path).not.toContain(
+                location,
+            );
         }
     });
 

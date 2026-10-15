@@ -347,22 +347,9 @@ export default defineType({
             title: "Location",
             type: "string",
             group: "about",
+            description:
+                "City and region, e.g. San José, California; shown only in the Person structured data",
             validation: (Rule) => Rule.max(120),
-        }),
-        defineField({
-            name: "portrait",
-            title: "Portrait",
-            type: "image",
-            group: ["identity", "about"],
-            options: { hotspot: true },
-            fields: [
-                defineField({
-                    name: "alt",
-                    title: "Alt Text",
-                    type: "string",
-                    validation: (Rule) => Rule.required(),
-                }),
-            ],
         }),
         defineField({
             name: "resume",
@@ -454,6 +441,6 @@ export default defineType({
         }),
     ],
     preview: {
-        select: { title: "name", subtitle: "headline", media: "portrait" },
+        select: { title: "name", subtitle: "headline" },
     },
 });
