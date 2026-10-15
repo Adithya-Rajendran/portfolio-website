@@ -897,9 +897,12 @@ Commit the regenerated `schema.json` and `sanity.types.ts`. Schema extraction
 and TypeGen are local; dataset export, migration execution, and schema
 deployment require an authenticated Sanity CLI session. The embedded Studio
 ships with the site, but the hosted copy of the schema (the one the Sanity
-MCP tools and dashboard read) does not: once a schema change is on
-production, the owner runs `pnpm exec sanity schema deploy` from that
-session, with the two variables loaded, so the hosted copy matches.
+dashboard and MCP tools read) does not: once a schema change is on
+production, the owner runs `pnpm schema:deploy` from that session, with the
+two variables loaded. It runs `sanity deploy --external`, which refreshes
+the schema of the Studio application registered for `/studio`
+(`deployment.appId` in `sanity.cli.ts`); `sanity schemas deploy` alone only
+writes the dataset copy, which those tools read last.
 
 - Option lists and pure rules that both the schema and the site read live
   in modules with no imports, because the Studio bundles them:

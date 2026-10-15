@@ -26,6 +26,7 @@
         "test:e2e": "playwright test --project=fixture",
         "test:e2e:preview": "playwright test --project=preview",
         "typegen": "sanity schema extract --enforce-required-fields --workspace portfolio-blog --force && sanity typegen generate",
+        "schema:deploy": "sanity deploy --external --url https://adithya-rajendran.com/studio --schema-required",
         "prepare": "husky"
     },
     "lint-staged": {
