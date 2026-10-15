@@ -188,7 +188,9 @@ export function validateContactFields({
 /**
  * When the form shows its checks: none at first; the email's shape once
  * the reader leaves a filled email field (`email`); every rule, an empty
- * field included, from the first submit (`all`).
+ * field included, from the first submit (`all`). A message over the
+ * limit is shown at once, whatever the checks: the field keeps every
+ * character, so its error is what says the limit.
  */
 export type ContactChecks = "none" | "email" | "all";
 
@@ -197,12 +199,15 @@ export function shownErrors(
     fields: ContactFields,
     checks: ContactChecks,
 ): ContactFieldErrors {
-    if (checks === "none") return {};
     const found = validateContactFields(fields);
     if (checks === "all") return found;
-    return fields.senderEmail.trim() && found.senderEmail
-        ? { senderEmail: found.senderEmail }
-        : {};
+    const shown: ContactFieldErrors = {};
+    if (checks === "email" && fields.senderEmail.trim() && found.senderEmail) {
+        shown.senderEmail = found.senderEmail;
+    }
+    const over = contactCopy.form.errors.messageLong(MESSAGE_MAX_LENGTH);
+    if (found.message === over) shown.message = over;
+    return shown;
 }
 
 /**
@@ -219,11 +224,14 @@ export function reportedMessage(search: string): string | null {
 
 /**
  * What the message counter announces: nothing until 100 characters are
- * left, then once per band, so a screen reader is not told every keystroke.
+ * left, then once per band, so a screen reader is not told every
+ * keystroke. Past the limit it is quiet: the field's error, a live
+ * region of its own, says it.
  */
 export function remainingNotice(length: number): string {
     const left = MESSAGE_MAX_LENGTH - length;
-    if (left <= 0) return contactCopy.form.countFull;
+    if (left < 0) return "";
+    if (left === 0) return contactCopy.form.countFull;
     if (left <= 50) return contactCopy.form.countFifty;
     if (left <= 100) return contactCopy.form.countHundred;
     return "";

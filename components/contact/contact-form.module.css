@@ -60,7 +60,8 @@
     justify-content: space-between;
     gap: var(--s-2) var(--s-4);
 }
-/* Shown only near the limit, in ink: its appearing is the signal. */
+/* Shown only near the limit and past it, in ink: its appearing is the
+   signal. */
 .count {
     color: var(--ink-1);
     font: 400 var(--label-size) / 1.4 var(--font-mono);

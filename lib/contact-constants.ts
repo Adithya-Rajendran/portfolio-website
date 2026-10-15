@@ -1,9 +1,11 @@
 /**
- * Contact form limits shared by the client form (textarea maxLength)
- * and the server action's zod schema. Lives outside actions/ because
- * a "use server" module may only export async functions.
+ * Contact form limits shared by the client form's checks and the server
+ * action's zod schema. The message field has no `maxLength`: a longer
+ * paste is kept whole and refused with the limit under the field, so
+ * nothing is cut. Lives outside actions/ because a "use server" module
+ * may only export async functions.
  */
-export const MESSAGE_MAX_LENGTH = 1000;
+export const MESSAGE_MAX_LENGTH = 2000;
 
 /**
  * The longest address, the email field's `maxLength` in the form: 254

@@ -180,19 +180,19 @@ describe("sendEmail — schema validation", () => {
         expect(resendSendMock).not.toHaveBeenCalled();
     });
 
-    it("rejects messages over 1000 characters", async () => {
+    it("rejects messages over 2000 characters", async () => {
         withIp("10.0.0.3");
         const sendEmail = await importSendEmail();
 
         const result = await sendEmail(
             formDataOf({
                 senderEmail: "a@example.com",
-                message: "x".repeat(1001),
+                message: "x".repeat(2001),
             }),
         );
 
         expect(result).toEqual({
-            error: "Shorten the message to 1,000 characters or fewer.",
+            error: "Shorten the message to 2,000 characters or fewer.",
             field: "message",
         });
         expect(resendSendMock).not.toHaveBeenCalled();
@@ -486,6 +486,21 @@ describe("sendEmail — happy path and Resend integration", () => {
         expect(callArgs.replyTo).toBe("sender@example.com");
         expect(callArgs.to).toBe("test@example.com");
         expect(callArgs.subject).toMatch(/contact form/i);
+    });
+
+    it("sends a message of 2,000 characters whole", async () => {
+        withIp("10.0.3.9");
+        const sendEmail = await importSendEmail();
+        const message = `${"word ".repeat(399)}last.`;
+        expect(message).toHaveLength(2000);
+
+        const result = await sendEmail(
+            formDataOf({ senderEmail: "sender@example.com", message }),
+        );
+
+        expect(result).toHaveProperty("data");
+        expect(resendSendMock).toHaveBeenCalledTimes(1);
+        expect(resendSendMock.mock.calls[0][0].text).toContain(message);
     });
 
     it("returns a generic error and does not leak details when Resend throws", async () => {
