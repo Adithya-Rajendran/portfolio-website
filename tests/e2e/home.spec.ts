@@ -9,7 +9,8 @@ import { storeTheme } from "./support/theme";
 /**
  * Home (plan §6.2 PR 13, contract §9; premium WS2): the hero's name,
  * headline, what the owner is open to and its one action (CV) are in the
- * first viewport with and without JavaScript; the header's wordmark steps aside while the hero
+ * first viewport with and without JavaScript, with the newest entry beside
+ * CV as a quiet link (Latest), no second button; the header's wordmark steps aside while the hero
  * names the owner; the starfield drifts only while it may (on screen, in
  * a visible tab, in Void, with motion allowed) and reports `stopped`
  * otherwise; the stars are the hero's alone, and Void's; the photograph is
@@ -31,6 +32,14 @@ function hero(page: Page) {
         .getByRole("region", { name: /Rajendran|Adithya/ });
 }
 
+/** The hero's quiet link to the newest entry, "Latest: <title>". */
+function latest(page: Page) {
+    return page
+        .getByRole("main")
+        .getByRole("navigation", { name: copy.routesLabel })
+        .getByRole("link", { name: new RegExp(`^${copy.latest} `) });
+}
+
 function starfield(page: Page) {
     return page.locator("[data-starfield]");
 }
@@ -41,13 +50,19 @@ async function firstViewport(page: Page) {
         ratio: 1,
     });
     // One action, CV, to the CV itself (/resume's list, not the flight):
-    // the header's Projects is the way to the work.
+    // the header's Projects is the way to the work. Latest, beside it, is
+    // a quiet link, not a second button.
     const links = main.getByRole("navigation", { name: copy.routesLabel });
-    await expect(links.getByRole("link")).toHaveText([copy.cv]);
-    await expect(links.getByRole("link")).toHaveAttribute("href", cvLink.href);
-    await expect(links.getByRole("link", { name: copy.cv })).toBeInViewport({
-        ratio: 1,
-    });
+    const cv = links.getByRole("link", { name: copy.cv, exact: true });
+    await expect(cv).toHaveAttribute("href", cvLink.href);
+    await expect(cv).toBeInViewport({ ratio: 1 });
+    await expect(hero(page).locator(".btn")).toHaveCount(1);
+    await expect(links.getByRole("link")).toHaveCount(
+        (await latest(page).count()) + 1,
+    );
+    if (await latest(page).count()) {
+        await expect(latest(page)).toBeInViewport({ ratio: 1 });
+    }
     // What the owner is open to, when the profile says.
     const open = hero(page).getByText(copy.openTo, { exact: true });
     if (await open.count()) await expect(open).toBeInViewport({ ratio: 1 });
@@ -94,6 +109,56 @@ for (const [width, height] of [
             );
             await expect(page.locator(".static-stars").first()).toBeVisible();
         });
+    });
+}
+
+test("beside CV, a quiet link leads to the newest entry", async ({ page }) => {
+    // The newest entry: the index's first row (log.spec checks its order).
+    await page.goto("/blog");
+    const first = page
+        .getByRole("main")
+        .getByRole("listitem")
+        .filter({ has: page.getByRole("heading") })
+        .first()
+        .getByRole("heading")
+        .getByRole("link");
+    const entries = await first.count();
+    const title = entries ? ((await first.textContent()) ?? "").trim() : "";
+    const href = entries ? await first.getAttribute("href") : null;
+
+    await page.goto("/");
+    // None without an entry: it says nothing about what is missing.
+    await expect(latest(page)).toHaveCount(entries && title ? 1 : 0);
+    if (!entries || !title) return;
+    await expect(latest(page)).toHaveAttribute("href", href!);
+    await expect(latest(page)).toHaveText(`${copy.latest} ${title}`);
+    // A text link in ink, not a button: the hero keeps CV its one action.
+    await expect(latest(page)).not.toHaveClass(/\bbtn\b/);
+    await expect(latest(page)).toHaveCSS("text-transform", "none");
+    await expect(hero(page).locator(".btn")).toHaveCount(1);
+    await expect(hero(page).locator(".btn--primary")).toHaveCount(0);
+    await latest(page).click();
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await expect(
+        page.getByRole("heading", { level: 1, name: title, exact: true }),
+    ).toBeVisible();
+});
+
+for (const width of [320, 360, 390]) {
+    test(`Latest wraps inside the hero at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto("/");
+        if (!(await latest(page).count())) return;
+        // Under CV, centred, within the page's gutters.
+        const [link, cv] = await Promise.all([
+            latest(page).boundingBox(),
+            hero(page)
+                .getByRole("link", { name: copy.cv, exact: true })
+                .boundingBox(),
+        ]);
+        expect(link!.x).toBeGreaterThanOrEqual(16);
+        expect(link!.x + link!.width).toBeLessThanOrEqual(width - 16);
+        expect(link!.y).toBeGreaterThanOrEqual(cv!.y + cv!.height);
     });
 }
 

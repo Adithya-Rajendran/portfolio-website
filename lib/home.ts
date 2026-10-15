@@ -1,4 +1,5 @@
 import { missionTiers } from "@/lib/missions";
+import { siteRoutes } from "@/lib/navigation";
 
 /**
  * The home page's sections (contract §9), in reading order: the strongest
@@ -37,4 +38,19 @@ export function homeProjects<T extends { featured?: number | null }>(
     ordered: readonly T[],
 ): { flagship: T | null; rows: T[]; also: T[] } {
     return missionTiers(ordered, HOME_PROJECT_ROWS);
+}
+
+/**
+ * The hero's quiet way to the writing, beside CV: the newest entry
+ * (`logEntries`' order, newest first) by its title. None without an
+ * entry, or when the newest has no title to name it by.
+ */
+export function heroLatest(
+    entries: readonly { slug: string; title: string }[],
+): { title: string; href: string } | null {
+    const [newest] = entries;
+    const title = newest?.title.trim();
+    return newest && title
+        ? { title, href: `${siteRoutes.blog}/${newest.slug}` }
+        : null;
 }

@@ -67,7 +67,7 @@
 /* ---- Crumb row: Writing, then its hairline ---------------------------- */
 /* The row itself is the shared CrumbRow (.crumb-row in components.css). */
 
-/* ---- Head: date · read · Updated → title → standfirst ----------------- */
+/* ---- Head: date · read · Updated · By → title → standfirst ------------ */
 .meta {
     display: flex;
     flex-wrap: wrap;

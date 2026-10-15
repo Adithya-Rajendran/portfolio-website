@@ -2,7 +2,12 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import sunrise from "@/lib/hero-sunrise.json";
-import { HOME_PROJECT_ROWS, homeActs, homeProjects } from "@/lib/home";
+import {
+    HOME_PROJECT_ROWS,
+    heroLatest,
+    homeActs,
+    homeProjects,
+} from "@/lib/home";
 
 describe("the home sections", () => {
     it("shows every section that has something to show, in order", () => {
@@ -18,6 +23,22 @@ describe("the home sections", () => {
             "writing",
             "contact",
         ]);
+    });
+});
+
+describe("the hero's latest entry", () => {
+    it("names the newest entry, the first in the log's order", () => {
+        expect(
+            heroLatest([
+                { slug: "my-homelab", title: " My homelab " },
+                { slug: "older", title: "An older entry" },
+            ]),
+        ).toEqual({ title: "My homelab", href: "/blog/my-homelab" });
+    });
+
+    it("is absent without an entry or a title to name it by", () => {
+        expect(heroLatest([])).toBeNull();
+        expect(heroLatest([{ slug: "untitled", title: "  " }])).toBeNull();
     });
 });
 

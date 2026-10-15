@@ -16,7 +16,8 @@ import { THEMES, storeTheme } from "./support/theme";
  * (h2 at 32px or less, leading 1.52), the listings at one width, and one
  * close (no Author block). Premium D3: no printed listing number and no
  * numbers in the contents (the headings have names). The justify pass:
- * the crumb is Writing alone, the head carries no tags, the contents
+ * the crumb is Writing alone, the head carries no tags and names the
+ * author once (By, linked to About; on paper the masthead), the contents
  * show from two sections, a listing's bar has one label, the revisions
  * are dated as the head dates, and the close is the end mark and the
  * follow line, then the pager ("Previous", "Next"). The fixture-only
@@ -318,6 +319,47 @@ test("an entry carries no number: the crumb is Writing alone, and the head no ta
     }
 });
 
+test("the head names the author once, linked to About, and leaves paper to the masthead", async ({
+    page,
+    request,
+}, testInfo) => {
+    const [path] = await postPaths(request, testInfo);
+    for (const width of [390, 1280]) {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto(path);
+        const entry = page.locator('[data-page="post"]:visible');
+        const head = entry.locator("header").filter({
+            has: page.getByRole("heading", { level: 1 }),
+        });
+        // In the meta line, beside the date and the read time, in its mono.
+        const byline = head.getByText(new RegExp(`^${postCopy.by} \\S`));
+        await expect(byline).toHaveCount(1);
+        await expect(byline).toBeVisible();
+        await expect(byline).toHaveCSS("font-family", /DM Mono/);
+        const author = byline.getByRole("link");
+        await expect(author).toHaveAttribute("href", "/about");
+        const name = ((await author.textContent()) ?? "").trim();
+        expect(name.length).toBeGreaterThan(0);
+        await expect(byline).toHaveText(`${postCopy.by} ${name}`);
+        // Once in the entry: no Author block or second byline.
+        await expect(
+            page.getByRole("main").getByText(`${postCopy.by} ${name}`),
+        ).toHaveCount(1);
+        await expect(
+            page.getByRole("main").getByRole("link", { name, exact: true }),
+        ).toHaveCount(1);
+    }
+    // On paper the masthead's line names the author: the byline steps
+    // aside, so the name prints once.
+    await page.emulateMedia({ media: "print" });
+    const head = page.locator('[data-page="post"]:visible header').filter({
+        has: page.getByRole("heading", { level: 1 }),
+    });
+    await expect(
+        head.getByText(new RegExp(`^${postCopy.by} \\S`)),
+    ).toBeHidden();
+});
+
 test("one numbering per thing, and the text's type", async ({
     page,
     request,
@@ -363,7 +405,7 @@ test("the entry closes once: the end mark and the follow line, then the pager by
         await page.goto(path);
         const main = page.getByRole("main");
         await expect(main.getByText(/^End of entry$/)).toBeVisible();
-        // No Author block (the footer carries the name) and no heading
+        // No Author block (the head's byline names the author) and no heading
         // over the pager.
         for (const name of ["Author", postCopy.pager]) {
             await expect(

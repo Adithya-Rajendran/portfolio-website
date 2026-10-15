@@ -232,11 +232,28 @@
     justify-content: center;
 }
 /* One action, centred under the Open To line: CV, a hairline button over
-   the photograph (no fill). */
+   the photograph (no fill), and beside it the newest entry, a quiet
+   link in the Open To line's voice; it wraps under CV where the two do
+   not fit one line (always on phones), and its title wraps balanced. */
 .routes {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
+    gap: var(--s-2) var(--s-6);
     margin-top: var(--s-7);
+}
+/* A 44px target around one line. */
+.latest {
+    display: inline-block;
+    max-width: 26rem;
+    padding-block: calc((44px - 1.45em) / 2);
+    color: var(--ink-2);
+    font: 400 var(--step-0) / 1.45 var(--font-display);
+    text-wrap: balance;
+}
+.latest:hover {
+    color: var(--ink-1);
 }
 /* Over the photograph the CV stays a hairline, and fills with ink on
    hover: no fill at rest. */
@@ -317,7 +334,9 @@
         margin-left: 0;
         padding-left: 0;
     }
+    /* Latest under CV, whatever the title's length. */
     .routes {
+        flex-direction: column;
         margin-top: var(--s-6);
     }
     /* The credit (its parts and its frame ID one a line, without their
