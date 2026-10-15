@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { chromeCopy, homeCopy as copy } from "@/lib/copy";
 import { FIXTURE_PROFILE, FIXTURE_PROJECTS } from "@/lib/fixtures";
 import sunrise from "@/lib/hero-sunrise.json";
@@ -371,20 +371,29 @@ test("the sections follow the hero in order and lead to their pages", async ({
 test("a section links its page only while that page holds more than home shows", async ({
     page,
 }) => {
-    /** The distinct item links on a page, by their prefix. */
-    const items = async (path: string, prefix: string) => {
-        await page.goto(path);
-        return page
-            .getByRole("main")
+    /**
+     * The distinct items linked under a locator, by their prefix: a page's
+     * fragment links (the stage's write-up) and tag links are not items.
+     */
+    const distinct = (scope: Locator, prefix: string) =>
+        scope
             .locator(`a[href^="${prefix}"]`)
             .evaluateAll(
                 (links) =>
                     new Set(
                         links
-                            .map((link) => link.getAttribute("href") ?? "")
+                            .map(
+                                (link) =>
+                                    (link.getAttribute("href") ?? "").split(
+                                        "#",
+                                    )[0],
+                            )
                             .filter((href) => !/^\/blog\/tags/.test(href)),
                     ).size,
             );
+    const items = async (path: string, prefix: string) => {
+        await page.goto(path);
+        return distinct(page.getByRole("main"), prefix);
     };
     const projects = await items("/portfolio", "/portfolio/");
     const entries = await items("/blog", "/blog/");
@@ -404,14 +413,7 @@ test("a section links its page only while that page holds more than home shows",
         if (!(await section.count())) continue;
         // Against what home shows, not a fixed three: a quiet project keeps
         // a home row empty while /portfolio still lists it.
-        const shown = await section
-            .locator(`a[href^="${prefix}"]`)
-            .evaluateAll(
-                (links) =>
-                    new Set(
-                        links.map((link) => link.getAttribute("href") ?? ""),
-                    ).size,
-            );
+        const shown = await distinct(section, prefix);
         const more = total > shown;
         const link = section.getByRole("link", { name, exact: true });
         await expect(link, id).toHaveCount(more ? 1 : 0);
