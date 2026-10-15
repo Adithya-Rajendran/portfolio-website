@@ -894,15 +894,17 @@ Load `NEXT_PUBLIC_STORE_SANITY_PROJECT_ID` and
 Sanity commands; never commit their concrete values.
 
 Commit the regenerated `schema.json` and `sanity.types.ts`. Schema extraction
-and TypeGen are local; dataset export, migration execution, and schema
-deployment require an authenticated Sanity CLI session. The embedded Studio
-ships with the site, but the hosted copy of the schema (the one the Sanity
-dashboard and MCP tools read) does not: once a schema change is on
-production, the owner runs `pnpm schema:deploy` from that session, with the
-two variables loaded. It runs `sanity deploy --external --schema-required`,
-which refreshes the schema of the Studio application registered for
-`/studio` (`deployment.appId` in `sanity.cli.ts`) and the dataset copy (the
-one `sanity schema deploy` writes), which those tools read last.
+and TypeGen are local; dataset export and migration execution need an
+authenticated Sanity CLI session. The embedded Studio ships with the site,
+but the hosted copy of the schema (the one the Sanity dashboard and MCP
+tools read) does not: after each merge to `main`, the Sanity schema workflow
+(`.github/workflows/sanity-schema.yml`) runs `pnpm schema:deploy` in the
+`Production` environment, whose secrets only `main` can reach. That is
+`sanity deploy --external --schema-required`, which refreshes the schema of
+the Studio application registered for `/studio` (`deployment.appId` in
+`sanity.cli.ts`) and the dataset copy (the one `sanity schema deploy`
+writes), which those tools read last. Run it by hand, with the two variables
+loaded, only when that run cannot.
 
 - Option lists and pure rules that both the schema and the site read live
   in modules with no imports, because the Studio bundles them:
