@@ -899,7 +899,7 @@ authenticated Sanity CLI session. The embedded Studio ships with the site,
 but the hosted copy of the schema (the one the Sanity dashboard and MCP
 tools read) does not: after each merge to `main`, the Sanity schema workflow
 (`.github/workflows/sanity-schema.yml`) runs `pnpm schema:deploy` in the
-`sanity` environment, whose deploy token only `main` can reach. That is
+`Production` environment, whose secrets only `main` can reach. That is
 `sanity deploy --external
 --schema-required`, which refreshes the schema of the Studio application
 registered for `/studio` (`deployment.appId` in `sanity.cli.ts`) and the

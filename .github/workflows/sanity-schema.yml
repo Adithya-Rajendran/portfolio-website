@@ -5,12 +5,12 @@ permissions:
 # After each merge to main, `pnpm schema:deploy` registers the embedded
 # Studio and deploys its schema, so the copy Sanity's dashboard and tools
 # read matches the repository (CLAUDE.md, the Sanity schema paragraph). It
-# runs in the `sanity` environment (Settings → Environments), whose
-# deployment branches are limited to main, so no other branch's run can
-# reach its token. The environment holds the secret SANITY_AUTH_TOKEN (a
-# Sanity API token with the Deploy Studio role) and the variables
-# NEXT_PUBLIC_STORE_SANITY_PROJECT_ID and NEXT_PUBLIC_STORE_SANITY_DATASET.
-# A manual run is for the first deploy or a retry.
+# runs in the Production environment (Settings → Environments), whose
+# deployment branches are limited to protected branches, that is main, so
+# no other branch's run can reach its secrets: SANITY_AUTH_TOKEN (a Sanity
+# API token with the Deploy Studio role), NEXT_PUBLIC_STORE_SANITY_PROJECT_ID
+# and NEXT_PUBLIC_STORE_SANITY_DATASET. A manual run is for the first
+# deploy or a retry.
 on:
     push:
         branches: ["main"]
@@ -26,10 +26,12 @@ jobs:
     deploy:
         name: Deploy the schema
         runs-on: ubuntu-latest
-        environment: sanity
+        environment: Production
+        # The two identifiers are public (every page's source has them) but
+        # kept as environment secrets with the token; the log masks them.
         env:
-            NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID }}
-            NEXT_PUBLIC_STORE_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_STORE_SANITY_DATASET }}
+            NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID }}
+            NEXT_PUBLIC_STORE_SANITY_DATASET: ${{ secrets.NEXT_PUBLIC_STORE_SANITY_DATASET }}
 
         steps:
             - name: Check the environment's settings
@@ -37,11 +39,11 @@ jobs:
                   SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
               run: |
                   missing=""
-                  [ -n "$SANITY_AUTH_TOKEN" ] || missing="$missing SANITY_AUTH_TOKEN (secret)"
-                  [ -n "$NEXT_PUBLIC_STORE_SANITY_PROJECT_ID" ] || missing="$missing NEXT_PUBLIC_STORE_SANITY_PROJECT_ID (variable)"
-                  [ -n "$NEXT_PUBLIC_STORE_SANITY_DATASET" ] || missing="$missing NEXT_PUBLIC_STORE_SANITY_DATASET (variable)"
+                  [ -n "$SANITY_AUTH_TOKEN" ] || missing="$missing SANITY_AUTH_TOKEN"
+                  [ -n "$NEXT_PUBLIC_STORE_SANITY_PROJECT_ID" ] || missing="$missing NEXT_PUBLIC_STORE_SANITY_PROJECT_ID"
+                  [ -n "$NEXT_PUBLIC_STORE_SANITY_DATASET" ] || missing="$missing NEXT_PUBLIC_STORE_SANITY_DATASET"
                   if [ -n "$missing" ]; then
-                      echo "::error title=Sanity schema not deployed::Add these to the sanity environment (Settings → Environments):$missing"
+                      echo "::error title=Sanity schema not deployed::Add these secrets to the Production environment (Settings → Environments):$missing"
                       exit 1
                   fi
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
