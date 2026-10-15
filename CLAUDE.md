@@ -685,8 +685,8 @@ only live in comments or commit messages.
        cache revalidation.
 - `lib/route-tags.ts` is the route → tag table: every URL the app serves
   (pages, share images at their built URL, the feed, the sitemap, the CV
-  redirects, icons, `/.well-known/security.txt`, API routes and the
-  Studio) with the tags of the content it shows. `warm(tag)` in `actions/warmCache.ts` requests every route
+  redirects, icons, `/.well-known/security.txt`, `/llms.txt`, API routes
+  and the Studio) with the tags of the content it shows. `warm(tag)` in `actions/warmCache.ts` requests every route
   listed under a tag, expanding `[slug]` and `[tag]` from the published
   post and project lists; `warmBlogCache`, `warmProfileCache` and
   `warmProjectCache` are its wrappers. Those lists come from
@@ -763,6 +763,14 @@ only live in comments or commit messages.
   is the `/contact` form, never an address; `Expires` must stay within a
   year, so renew it yearly (the smoke spec fails a month before it lapses,
   and CI runs monthly as well as on every push).
+- **`llms.txt`** (`public/llms.txt`, the llms.txt convention): the name,
+  the home description as its summary, then Writing, Projects, Profile
+  and Policies, each a link with a line from that page's own meta
+  description. It is kept by hand and under 2 KB, with no address or
+  number (`tests/lib/llms-txt.test.ts`): publishing, renaming or
+  unpublishing a post or project means editing it, or the smoke spec
+  fails on the next preview and in the weekly production run. It is not
+  in the sitemap, and `robots.txt` stays allow-all.
 - **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
   `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in
   the Vercel dashboard (Firewall → Rate Limit, a Pro or Enterprise
@@ -987,7 +995,8 @@ session, with the two variables loaded, so the hosted copy matches.
   404's primary following the missed address, the report its only other
   link and nothing animating; the unmatched URL's Home, header link and
   report opening their pages, with no JSON-LD; `security.txt` pointing to the form,
-  unexpired), `nojs` (complete pages without JavaScript: header, nav
+  unexpired; `llms.txt` linking only to pages the site serves, and off
+  the fixture build to every post and project the sitemap lists), `nojs` (complete pages without JavaScript: header, nav
   through the popover menu, footer, Void with no motion and no theme
   controls, no hidden streamed segments, nothing rendered twice; the 404's
   Home and plain report), `a11y`

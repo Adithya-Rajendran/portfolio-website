@@ -164,12 +164,13 @@ export const ROUTE_TAGS: readonly RouteTagEntry[] = [
 
     // No content tags: never warmed.
     { path: "/robots.txt", file: "app/robots.ts", tags: [] },
-    // A static file asked for by name: served from public/ as it is.
+    // Static files asked for by name: served from public/ as they are.
     {
         path: "/.well-known/security.txt",
         file: "public/.well-known/security.txt",
         tags: [],
     },
+    { path: "/llms.txt", file: "public/llms.txt", tags: [] },
     { path: "/icon.svg", file: "app/icon.svg", tags: [] },
     { path: "/apple-icon.png", file: "app/apple-icon.png", tags: [] },
     { path: "/favicon.ico", file: "app/favicon.ico", tags: [] },

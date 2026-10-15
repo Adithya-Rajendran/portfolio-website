@@ -12,7 +12,7 @@ A writing-first personal website about systems, robotic vision, AI, and possible
 - **React & TypeScript**: Robust, scalable, and type-safe development environment.
 - **Tailwind CSS**: CSS-first Tailwind 4 over the Deep Field design tokens in `styles/`: two themes, Void (dark, the default) and Flight Manual (light). From 960px the header's switch flips between them; below 960px the menu sheet offers Dark · Light · System. A post follows the system setting until a theme is chosen, and nothing flashes on load. Jost, Newsreader, DM Mono and Michroma are self-hosted through `next/font`; a Pause motion control and reduced-motion support.
 - **Sanity CMS**: Code-defined Profile, Blog Post, Project, and structured rich-prose schemas, edited in the Studio embedded at `/studio`. Studio images reach the page straight from Sanity's CDN as AVIF or WebP, one encode per width the page asks for.
-- **SEO Optimized**: Implements structured data (JSON-LD) and semantic HTML for optimal search engine visibility, with a share image for every page.
+- **SEO Optimized**: Implements structured data (JSON-LD) and semantic HTML for optimal search engine visibility, with a share image for every page. `public/llms.txt` lists the writing, projects and profile pages in the llms.txt format for language models.
 - **Plain names**: the header, menu, footer, page titles, breadcrumbs and buttons name the five sections Projects, Writing, Experience, About and Contact. Each section's themed name (Missions, Flight Log, Trajectory, Crew File, Comms) is only a small tag above its page title and on its share card, and no heading is numbered.
 - **Home**: the name, the profile's headline and what you are open to over NASA's orbital sunrise, with one action, CV, which opens the CV on `/resume`; then the strongest project on its stage (led by its summary, without stats) and the next two as rows; the latest three posts; and a close: your one-line statement (the tagline, else the introduction's first sentence) with a link to Current focus on About, then one way to `/contact`, your Contact Button to the Hiring topic while there is an Open To line, else Send a message.
 - **Writing**: `/blog` is one list, newest first, under the writing introduction and "Follow: RSS · LinkedIn". Each row is the date, reading time, title and standfirst, with a tag once that tag gathers two posts; there is no search, archive or year heading (`/blog/archive` redirects to `/blog`). Tag pages and a full-content RSS feed titled "Adithya Rajendran — Writing". Each entry is a paper-grade long read: its first paragraph on the first screen, a 68-character measure, a contents rail from two sections (a closed box on phones), code listings with a Copy button that break out wide once a line passes 64 characters, photographs and figures with their captions, callouts, footnotes in the margin and in the notes at the end, dated revisions, the previous and next entries, the related project, and a print layout. Only the footnotes are numbered: the crumb is "Writing", with no entry number, and no photograph or figure carries one; a listing carries one only in its accessible name ("Copy listing 1") and prints none.
@@ -89,6 +89,10 @@ BASE_URL=https://<preview-url> pnpm test:e2e:preview   # the same specs against 
 ## Contribution
 
 Contributions are welcome (idk why you'd want to lol just fork it for yourself)! Please submit any issues or pull requests through GitHub. Thank you.
+
+## Licence
+
+The code is released under the MIT License (`LICENSE`). The writing, project write-ups, photographs, illustrations and résumé are all rights reserved, and `LICENSE-CONTENT.md` names the fonts and planet maps that keep their own licences.
 
 ## Credits
 
