@@ -5,11 +5,12 @@ permissions:
 # After each merge to main, `pnpm schema:deploy` registers the embedded
 # Studio and deploys its schema, so the copy Sanity's dashboard and tools
 # read matches the repository (CLAUDE.md, the Sanity schema paragraph). It
-# needs three settings under Settings → Secrets and variables → Actions:
-# the secret SANITY_AUTH_TOKEN (a Sanity API token with the Deploy Studio
-# role) and the variables NEXT_PUBLIC_STORE_SANITY_PROJECT_ID and
-# NEXT_PUBLIC_STORE_SANITY_DATASET. A manual run is for the first deploy
-# or a retry.
+# runs in the `sanity` environment (Settings → Environments), whose
+# deployment branches are limited to main, so no other branch's run can
+# reach its token. The environment holds the secret SANITY_AUTH_TOKEN (a
+# Sanity API token with the Deploy Studio role) and the variables
+# NEXT_PUBLIC_STORE_SANITY_PROJECT_ID and NEXT_PUBLIC_STORE_SANITY_DATASET.
+# A manual run is for the first deploy or a retry.
 on:
     push:
         branches: ["main"]
@@ -25,12 +26,13 @@ jobs:
     deploy:
         name: Deploy the schema
         runs-on: ubuntu-latest
+        environment: sanity
         env:
             NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID }}
             NEXT_PUBLIC_STORE_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_STORE_SANITY_DATASET }}
 
         steps:
-            - name: Check the repository settings
+            - name: Check the environment's settings
               env:
                   SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
               run: |
@@ -39,7 +41,7 @@ jobs:
                   [ -n "$NEXT_PUBLIC_STORE_SANITY_PROJECT_ID" ] || missing="$missing NEXT_PUBLIC_STORE_SANITY_PROJECT_ID (variable)"
                   [ -n "$NEXT_PUBLIC_STORE_SANITY_DATASET" ] || missing="$missing NEXT_PUBLIC_STORE_SANITY_DATASET (variable)"
                   if [ -n "$missing" ]; then
-                      echo "::error title=Sanity schema not deployed::Add these under Settings → Secrets and variables → Actions:$missing"
+                      echo "::error title=Sanity schema not deployed::Add these to the sanity environment (Settings → Environments):$missing"
                       exit 1
                   fi
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
