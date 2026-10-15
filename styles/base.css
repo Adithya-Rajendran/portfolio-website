@@ -188,7 +188,7 @@ html[data-motion="reduced"] *::after {
     }
     .btn,
     .seg__box,
-    .theme-switch,
+    .theme-switch__button,
     .nav-toggle {
         border-color: ButtonText;
     }

@@ -12,10 +12,8 @@ export const chromeCopy = {
     homeLabel: "Adithya Rajendran, home",
     menu: "Menu",
     close: "Close",
+    /** The theme choice's group, and the header switch that opens it. */
     themeLegend: "Theme",
-    /** The header's theme switch names the theme it switches to. */
-    toLight: "Switch to light theme",
-    toDark: "Switch to dark theme",
     holdDrift: "Pause motion",
     resumeDrift: "Resume motion",
     /** The colophon: how the site is made, and its source. */
@@ -23,8 +21,8 @@ export const chromeCopy = {
     source: "Source",
 } as const;
 
-/** The theme choices in the menu sheet: Void, Flight Manual and the
- *  screen's own setting, by their plain names. */
+/** The theme choices in the menu sheet and the header switch's popover:
+ *  Void, Flight Manual and the screen's own setting, by their plain names. */
 export const themeOptions = [
     { value: "void", label: "Dark" },
     { value: "manual", label: "Light" },
