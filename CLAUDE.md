@@ -976,6 +976,11 @@ session, with the two variables loaded, so the hosted copy matches.
   print a `mailto:` or `tel:` annotation as plain text. JSON-LD `sameAs`
   keeps http(s) links only, and `/contact`'s `ContactPage` has no `email`,
   `telephone` or `contactPoint`.
+- No image of the owner in search results: the profile has no portrait
+  field, and the Person (and `/about`'s `ProfilePage` main entity) has no
+  `image`. Its `homeLocation` is the profile's `location` ("San José,
+  California") as a `PostalAddress` locality and region, never a street or
+  postal code, and no page prints it (`tests/e2e/smoke.spec.ts`).
 
 ## Tests
 

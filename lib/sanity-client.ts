@@ -186,8 +186,9 @@ export type ProfileData = {
     seoDescription?: string | null;
     featuredPostId?: string | null;
     startHereIds?: string[] | null;
+    /** City and region ("San José, California"): the Person's home, in
+     *  the structured data only. */
     location?: string | null;
-    portrait?: SanityImageValue | null;
     resumeUrl?: string | null;
     /** When the résumé PDF was uploaded: the CV's revision. */
     resumeUploadedAt?: string | null;
@@ -372,7 +373,6 @@ export const PROFILE_QUERY = defineQuery(`*[_id == "profile"][0]{
     "featuredPostId": featuredPost._ref,
     "startHereIds": startHere[]._ref,
     location,
-    portrait,
     "resumeUrl": resume.asset->url,
     "resumeUploadedAt": resume.asset->_createdAt,
     resumeNote,

@@ -103,7 +103,7 @@ function footnotedTextBlock(
  * routes) are the values in design/impl-log/phase-4-profile-copy.json: the
  * résumé's header line and the site's former built-in wording, which the
  * owner's profile takes on. A field the published profile leaves empty
- * (location) stays empty.
+ * stays empty.
  * The UC Santa Cruz years are known only to the year (2019 – 2023), so both
  * dates are stored with year precision and printed without a month.
  * @internal Exported for tests.
@@ -177,7 +177,8 @@ export const FIXTURE_PROFILE: ProfileData = {
         event: "Started at UC Santa Cruz",
     },
     startHereIds: ["fixture-post-3", "fixture-post-1"],
-    // profile.location is empty in the published profile.
+    // profile.location: city and region, in the Person structured data only.
+    location: "San José, California",
     socialLinks: [
         {
             _key: "profile-linkedin",

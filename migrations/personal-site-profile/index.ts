@@ -354,10 +354,6 @@ function profilePatches(documents: LegacyDocument[]): NodePatch[] {
         asString(intro?.subtitle) ||
         asString(intro?.role) ||
         "Cloud Field Engineer @ Canonical";
-    const portrait = withImageAlt(
-        about?.portrait,
-        "Portrait of Adithya Rajendran",
-    );
 
     const patches: NodePatch[] = [
         at("name", setIfMissing("Adithya Rajendran")),
@@ -373,7 +369,6 @@ function profilePatches(documents: LegacyDocument[]): NodePatch[] {
 
     const location = asString(about?.location);
     if (location) patches.push(at("location", setIfMissing(location)));
-    if (portrait) patches.push(at("portrait", setIfMissing(portrait)));
     if (intro?.resume) {
         patches.push(at("resume", setIfMissing(intro.resume)));
     }
