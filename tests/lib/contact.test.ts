@@ -11,7 +11,7 @@ import {
     topicOptions,
     validateContactFields,
 } from "@/lib/contact";
-import { EMAIL_MAX_LENGTH } from "@/lib/contact-constants";
+import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import type { Availability, ProfileData } from "@/lib/sanity-client";
 
@@ -261,12 +261,19 @@ describe("contact form checks", () => {
     it("refuses a malformed address and an over-long message", () => {
         const errors = validateContactFields({
             senderEmail: "you@example",
-            message: "x".repeat(1001),
+            message: "x".repeat(2001),
         });
         expect(errors.senderEmail).toMatch(/you@example\.com/);
         expect(errors.message).toBe(
-            "Shorten the message to 1,000 characters or fewer.",
+            "Shorten the message to 2,000 characters or fewer.",
         );
+        expect(MESSAGE_MAX_LENGTH).toBe(2000);
+        expect(
+            validateContactFields({
+                senderEmail: "you@example.com",
+                message: "x".repeat(2000),
+            }),
+        ).toEqual({});
         expect(
             validateContactFields({
                 senderEmail: `${"a".repeat(496)}@b.co`, // 501 characters
@@ -339,6 +346,24 @@ describe("contact form checks", () => {
         expect(shownErrors(empty, "all")).toEqual(validateContactFields(empty));
     });
 
+    it("shows a message over the limit at once, whatever the checks", () => {
+        const long = "x".repeat(2300);
+        const over = "Shorten the message to 2,000 characters or fewer.";
+        expect(shownErrors({ senderEmail: "", message: long }, "none")).toEqual(
+            { message: over },
+        );
+        expect(
+            shownErrors({ senderEmail: "you@example", message: long }, "email"),
+        ).toEqual({
+            senderEmail: "Enter an email address like you@example.com.",
+            message: over,
+        });
+        // At the limit, nothing until the checks say so.
+        expect(
+            shownErrors({ senderEmail: "", message: "x".repeat(2000) }, "none"),
+        ).toEqual({});
+    });
+
     it("starts a broken link's report with its address, and nothing else", () => {
         expect(reportedMessage("?broken=%2Fblog%2Fno-such-post")).toBe(
             "Broken link: /blog/no-such-post",
@@ -358,10 +383,13 @@ describe("contact form checks", () => {
 
     it("announces the characters left once per band", () => {
         expect(remainingNotice(0)).toBe("");
-        expect(remainingNotice(899)).toBe("");
-        expect(remainingNotice(900)).toBe("100 characters or fewer left.");
-        expect(remainingNotice(949)).toBe("100 characters or fewer left.");
-        expect(remainingNotice(950)).toBe("50 characters or fewer left.");
-        expect(remainingNotice(1000)).toBe("Character limit reached.");
+        expect(remainingNotice(1899)).toBe("");
+        expect(remainingNotice(1900)).toBe("100 characters or fewer left.");
+        expect(remainingNotice(1949)).toBe("100 characters or fewer left.");
+        expect(remainingNotice(1950)).toBe("50 characters or fewer left.");
+        expect(remainingNotice(2000)).toBe("Character limit reached.");
+        // Past the limit the field's error speaks, not the counter.
+        expect(remainingNotice(2001)).toBe("");
+        expect(remainingNotice(2300)).toBe("");
     });
 });

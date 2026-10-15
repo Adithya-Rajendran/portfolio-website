@@ -225,8 +225,8 @@ test("no visible text is under 12 px on home, the posts, the projects, the CV an
             // the end.
             await page
                 .locator('textarea[name="message"]')
-                .fill("a".repeat(960));
-            await expect(page.getByText("960 / 1000")).toBeVisible();
+                .fill("a".repeat(1960));
+            await expect(page.getByText("1,960 / 2,000")).toBeVisible();
         }
         for (const width of [1440, 390]) {
             await page.setViewportSize({ width, height: 900 });

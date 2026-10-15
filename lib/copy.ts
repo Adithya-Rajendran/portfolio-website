@@ -76,6 +76,8 @@ export const contactCopy = {
         messageLabel: "Message",
         messageHint: (max: number) =>
             `Up to ${max.toLocaleString("en-US")} characters.`,
+        /** The counter's announcements near the limit (remainingNotice);
+         *  past it, `errors.messageLong` under the field says it. */
         countHundred: "100 characters or fewer left.",
         countFifty: "50 characters or fewer left.",
         countFull: "Character limit reached.",

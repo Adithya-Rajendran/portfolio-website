@@ -78,8 +78,9 @@ async function send(
  *   session and restored on reload; the action is dispatched from
  *   onSubmit, so React never resets them.
  * - The email is checked when the reader leaves it filled, and every rule
- *   (an empty field too) from the first submit. A field the server
- *   refuses is shown under that field.
+ *   (an empty field too) from the first submit. A message over the limit
+ *   is kept whole and its error shown at once: the field cuts nothing. A
+ *   field the server refuses is shown under that field.
  * - A send that did not go says so under Send, with the ways on: Copy
  *   message and LinkedIn (Send itself sends again; the text stays in its
  *   field).
@@ -243,6 +244,7 @@ export default function ContactForm({
     }
 
     const left = MESSAGE_MAX_LENGTH - message.length;
+    const count = (n: number) => n.toLocaleString("en-US");
     return (
         <form className={styles.form} onSubmit={onSubmit} noValidate>
             {topics.length > 1 ? (
@@ -315,7 +317,8 @@ export default function ContactForm({
                     </label>
                     {left <= 100 ? (
                         <span className={styles.count} aria-hidden="true">
-                            {message.length} / {MESSAGE_MAX_LENGTH}
+                            {count(message.length)} /{" "}
+                            {count(MESSAGE_MAX_LENGTH)}
                         </span>
                     ) : null}
                 </div>
@@ -325,7 +328,6 @@ export default function ContactForm({
                     id={ids.message}
                     name="message"
                     rows={5}
-                    maxLength={MESSAGE_MAX_LENGTH}
                     placeholder={prompt}
                     required
                     value={message}
@@ -340,7 +342,9 @@ export default function ContactForm({
                     }
                 />
                 {/* The limit is the field's description for assistive
-                    tech; the counter above shows only near it. */}
+                    tech; the counter above shows only near it and past
+                    it. No maxLength: a paste over the limit is kept
+                    whole, and the error below says to shorten it. */}
                 <p className="sr-only" id={ids.messageHint}>
                     {copy.messageHint(MESSAGE_MAX_LENGTH)}
                 </p>

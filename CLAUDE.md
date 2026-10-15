@@ -795,9 +795,10 @@ only live in comments or commit messages.
   no "include" instructions. The page is the head (the introduction and
   `Availability`, set apart by space alone), then, after space, the form
   (its Message section named for screen readers only: no visible head or
-  hairline), whole in the first viewport at 1440×900 (the limit is the
-  field's hint, for screen readers; the counter shows only when 100
-  characters or fewer are left), which ends the page: the profiles are
+  hairline), whole in the first viewport at 1440×900 (the limit, 2,000
+  characters (`MESSAGE_MAX_LENGTH`, one constant for the form and the
+  server), is the field's hint, for screen readers; the counter shows only
+  when 100 characters or fewer are left, and past the limit), which ends the page: the profiles are
   the footer's and About's (no Profiles list). The form closes on one
   line saying where a message goes (`contactCopy.form.privacy`: through
   Resend, kept 30 days there, nothing else keeps a copy). The Topic radios,
@@ -828,6 +829,9 @@ only live in comments or commit messages.
   message only when no draft is waiting, and its query leaves the address
   bar. The email is checked when the reader leaves it filled, and every
   field (an empty one too) from the first submit (`shownErrors`). The
+  message field has no `maxLength`, so nothing is cut: a longer message
+  is kept whole, its error shows under the field at once, and Send
+  refuses it (as the server does). The
   server's words (lib/copy.ts `contactCopy.form`) are plain: a field
   problem comes back with its field (`invalid`, under that field); any
   other refusal, and a send the network loses (caught in the form, never
@@ -1033,7 +1037,8 @@ session, with the two variables loaded, so the hosted copy matches.
   once, each error under its field (the words in ink with their cross,
   a 2px rule on the field, orange on the first and ink after it), the
   counter only near the
-  limit; a refused send under Send with the text in its fields, Copy
+  limit; a 2,300-character paste kept whole, its error shown at once and
+  Send refusing it; a refused send under Send with the text in its fields, Copy
   message and LinkedIn and no Try again, its stale alert clearing after
   leaving and returning; a send the network drops staying on the page,
   Send sending again and the draft surviving a reload; "Message received."

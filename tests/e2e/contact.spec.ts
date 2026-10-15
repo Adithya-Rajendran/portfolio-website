@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { contactRoutes, topicOptions, type ContactTopic } from "@/lib/contact";
+import { MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import { contactCopy, lossOfSignalCopy } from "@/lib/copy";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
 import { primaryNavigation } from "@/lib/navigation";
@@ -15,7 +16,9 @@ import { storeTheme } from "./support/theme";
  * fields), Hiring shows only beside what the owner is open to, the form
  * checks the email on leaving it and every field from the first submit,
  * each error under its field, in ink with its cross, the field marked by
- * one 2px orange rule (premium D1), and announced as it appears; a send
+ * one 2px orange rule (premium D1), and announced as it appears; a
+ * message over the limit is kept whole, says so at once and is not sent;
+ * a send
  * that does not go (refused, or lost on the network) stays on the page
  * with the text in its fields and the ways on, and the draft survives a
  * reload; a sent message says "Message received." and promises nothing;
@@ -311,10 +314,10 @@ test("the form checks the email on leaving it, and every field from the first su
         `${accent} 2px 0px 0px 0px inset`,
     );
     // The counter shows only near the limit.
-    await message.fill("x".repeat(899));
-    await expect(page.getByText("899 / 1000")).toHaveCount(0);
-    await message.fill("x".repeat(950));
-    await expect(page.getByText("950 / 1000")).toBeVisible();
+    await message.fill("x".repeat(1899));
+    await expect(page.getByText("1,899 / 2,000")).toHaveCount(0);
+    await message.fill("x".repeat(1950));
+    await expect(page.getByText("1,950 / 2,000")).toBeVisible();
     await expect(message).not.toHaveAttribute("aria-invalid", /.*/);
 });
 
@@ -335,6 +338,51 @@ test("a check's words are announced as they appear", async ({ page }) => {
     await expect(live.first()).toHaveText(form.errors.emailInvalid);
     await expect(email).toHaveAccessibleDescription(form.errors.emailInvalid);
     await expect(live.last()).toBeEmpty();
+});
+
+test("a paste over the limit is kept whole, says the limit and is not sent", async ({
+    page,
+}, testInfo) => {
+    test.skip(
+        testInfo.project.name !== "fixture",
+        "A deployment has Resend credentials: a send would be a real email.",
+    );
+    await page.goto("/contact");
+    let posts = 0;
+    await page.route("**/contact", (route) => {
+        if (route.request().method() !== "POST") return route.continue();
+        posts += 1;
+        return route.abort();
+    });
+    const { email, message } = fields(page);
+    await email.fill("reader@example.com");
+    // A paste: the whole text in one insertion, and none of it cut.
+    const long = "x".repeat(2300);
+    await message.focus();
+    await page.keyboard.insertText(long);
+    await expect(message).toHaveValue(long);
+    await expect(page.getByText("2,300 / 2,000")).toBeVisible();
+    // The error shows at once, before any submit, in the field's live
+    // region, and the field is marked.
+    const over = form.errors.messageLong(MESSAGE_MAX_LENGTH);
+    await expect(page.getByRole("main").getByRole("status").last()).toHaveText(
+        over,
+    );
+    await expect(message).toHaveAttribute("aria-invalid", "true");
+    await expect(message).toHaveAccessibleDescription(new RegExp(over));
+
+    // Send refuses it in the browser: the message takes the focus, keeps
+    // every character, and nothing is posted.
+    await page.getByRole("button", { name: form.send }).click();
+    await expect(message).toBeFocused();
+    await expect(message).toHaveValue(long);
+    await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+    expect(posts).toBe(0);
+
+    // Shortened to the limit, the error goes.
+    await message.fill("x".repeat(MESSAGE_MAX_LENGTH));
+    await expect(message).not.toHaveAttribute("aria-invalid", /.*/);
+    await expect(page.getByText("2,000 / 2,000")).toBeVisible();
 });
 
 test("in Flight Manual the focused field's rule takes the focus colour", async ({
