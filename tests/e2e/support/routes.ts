@@ -31,12 +31,19 @@ export const MISSING_PAGES = {
     project: "/portfolio/e2e-missing-project",
 } as const;
 
-/** Every page the sitemap lists, as same-origin paths. */
+/**
+ * Every page the sitemap lists, as paths on the target. Each `<loc>` is
+ * built on siteConfig.url, the production domain, on every build, so only
+ * its path is kept. Pass the `request` fixture: `page.request` skips the
+ * context's routes, so on a protected preview it would be sent to Vercel's
+ * login page without the bypass header.
+ */
 export async function sitemapPages(
     request: APIRequestContext,
 ): Promise<string[]> {
     const response = await request.get("/sitemap.xml");
     expect(response.status(), "/sitemap.xml").toBe(200);
+    expect(response.headers()["content-type"], "/sitemap.xml").toContain("xml");
     const xml = await response.text();
     const paths = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
         ([, loc]) => new URL(loc).pathname,

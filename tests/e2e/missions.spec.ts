@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { APIRequestContext, Page } from "@playwright/test";
 import { missionsCopy as copy, pagerCopy } from "@/lib/copy";
 import { expect, test } from "./support/test";
 import { sitemapPages } from "./support/routes";
@@ -30,8 +30,8 @@ function main(page: Page) {
     return page.getByRole("main");
 }
 
-async function missionPaths(page: Page): Promise<string[]> {
-    const paths = await sitemapPages(page.request);
+async function missionPaths(request: APIRequestContext): Promise<string[]> {
+    const paths = await sitemapPages(request);
     return paths.filter((path) => /^\/portfolio\/[^/]+$/.test(path));
 }
 
@@ -61,8 +61,9 @@ test("/portfolio sends every old fragment on to its page", async ({ page }) => {
 
 test("/portfolio links every project, the flagship first and the last project quietest", async ({
     page,
+    request,
 }) => {
-    const paths = await missionPaths(page);
+    const paths = await missionPaths(request);
     await page.goto("/portfolio");
     // The flagship's title is its one link to the page: no filled button
     // repeats it.
@@ -201,8 +202,11 @@ test("/portfolio shows the flagship's title, its link, in the first viewport", a
     expect(box!.y + box!.height).toBeLessThanOrEqual(760);
 });
 
-test("every project page has its crumb, title and pager", async ({ page }) => {
-    const paths = await missionPaths(page);
+test("every project page has its crumb, title and pager", async ({
+    page,
+    request,
+}) => {
+    const paths = await missionPaths(request);
     expect(paths.length).toBeGreaterThan(0);
     for (const path of paths) {
         await test.step(path, async () => {
@@ -319,8 +323,9 @@ test("the pager follows the index's order", async ({ page }) => {
 
 test("a project with little content is a short note, with no sections", async ({
     page,
+    request,
 }) => {
-    const paths = await missionPaths(page);
+    const paths = await missionPaths(request);
     let notes = 0;
     for (const path of paths) {
         await page.goto(path);
@@ -362,8 +367,8 @@ test("a project with little content is a short note, with no sections", async ({
     ).toHaveCount(0);
 });
 
-test("Read the write-up lands on the write-up", async ({ page }) => {
-    const paths = await missionPaths(page);
+test("Read the write-up lands on the write-up", async ({ page, request }) => {
+    const paths = await missionPaths(request);
     let checked = 0;
     for (const path of paths) {
         await page.goto(path);
@@ -380,10 +385,10 @@ test("Read the write-up lands on the write-up", async ({ page }) => {
     expect(checked).toBeGreaterThan(0);
 });
 
-test("the pages show no email address or phone number", async ({ page }) => {
-    const paths = ["/portfolio", ...(await missionPaths(page))];
+test("the pages show no email address or phone number", async ({ request }) => {
+    const paths = ["/portfolio", ...(await missionPaths(request))];
     for (const path of paths) {
-        const html = await (await page.request.get(path)).text();
+        const html = await (await request.get(path)).text();
         expect(html, path).not.toMatch(/mailto:|tel:/i);
     }
 });

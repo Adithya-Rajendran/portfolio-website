@@ -1176,6 +1176,12 @@ session, with the two variables loaded, so the hosted copy matches.
       Vercel itself created (`vercel[bot]`). The same workflow runs weekly
       against the production site, which needs no secret, under the same
       check name (the test step and the run's summary name the target).
+      Specs fetch with the `request` fixture, never `page.request` or
+      `context.request`: those skip the context's routes, so they reach a
+      protected preview without the bypass header and get Vercel's login
+      page (ESLint refuses them under `tests/e2e`). The Vercel Firewall
+      denies `/studio` on previews, so the Studio's smoke check skips there
+      and runs on the fixture build and the weekly production run.
     - First run: `pnpm exec playwright install chromium` (add
       `--with-deps` on a machine without Chromium's system libraries).
     - Pages come from `tests/e2e/support/routes.ts`: the static pages, plus

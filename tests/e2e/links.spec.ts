@@ -1,3 +1,4 @@
+import { siteConfig } from "@/lib/config";
 import { expect, test } from "./support/test";
 import { STATIC_PAGES, contentPages } from "./support/routes";
 
@@ -11,7 +12,9 @@ const MAX_HOPS = 5;
  * element there (`#main-content`, the contents, `#fn-1`). Links to other
  * hosts are never requested, so a third party's outage cannot fail a run;
  * a redirect is followed on the site only, and one that leaves it counts as
- * an answer. Each address is requested once, however many pages link it.
+ * an answer. An absolute link on siteConfig.url, the production domain, is
+ * the site's own page wherever it is tested, so it is requested on the
+ * target. Each address is requested once, however many pages link it.
  */
 test("every same-origin link answers and every fragment lands", async ({
     page,
@@ -24,6 +27,13 @@ test("every same-origin link answers and every fragment lands", async ({
     // drawing WebGL on the CPU.
     await page.emulateMedia({ reducedMotion: "reduce" });
     const origin = new URL(baseURL!).origin;
+    const productionOrigin = new URL(siteConfig.url).origin;
+    /** The address on the target, for a link on the production domain. */
+    function onTarget(href: string): URL {
+        const url = new URL(href);
+        if (url.origin !== productionOrigin) return url;
+        return new URL(`${url.pathname}${url.search}${url.hash}`, origin);
+    }
     /** Each address's answer: "ok", or what is wrong with it. */
     const answers = new Map<string, string>();
     const broken: string[] = [];
@@ -43,7 +53,7 @@ test("every same-origin link answers and every fragment lands", async ({
                 answers.set(key, result);
                 return result;
             }
-            url = new URL(location, url);
+            url = onTarget(new URL(location, url).href);
             if (url.origin !== origin) {
                 answers.set(key, "ok");
                 return "ok";
@@ -55,33 +65,31 @@ test("every same-origin link answers and every fragment lands", async ({
     for (const path of paths) {
         await test.step(path, async () => {
             await page.goto(path);
-            const { links, ids } = await page.evaluate(() => ({
+            const { links, ids, here } = await page.evaluate(() => ({
                 links: [
                     ...document.querySelectorAll<HTMLAnchorElement>("a[href]"),
-                ].map((a) => {
-                    const url = new URL(a.href);
-                    return {
-                        href: a.getAttribute("href") ?? "",
-                        url: url.href,
-                        here:
-                            url.origin === location.origin &&
-                            url.pathname === location.pathname &&
-                            url.search === location.search,
-                    };
-                }),
+                ].map((a) => ({
+                    href: a.getAttribute("href") ?? "",
+                    url: a.href,
+                })),
                 ids: [...document.querySelectorAll("[id]")].map((el) => el.id),
+                here: location.href,
             }));
             const onPage = new Set(ids);
+            const current = new URL(here);
             for (const link of links) {
-                const url = new URL(link.url);
+                const url = onTarget(link.url);
                 if (url.origin !== origin) continue;
-                if (link.here && url.hash) {
+                const samePage =
+                    url.pathname === current.pathname &&
+                    url.search === current.search;
+                if (samePage && url.hash) {
                     const id = decodeURIComponent(url.hash.slice(1));
                     if (!onPage.has(id))
                         broken.push(`${path}: ${link.href} names no element`);
                     continue;
                 }
-                const result = await answer(link.url);
+                const result = await answer(url.href);
                 if (result !== "ok")
                     broken.push(`${path}: ${link.href} ${result}`);
             }

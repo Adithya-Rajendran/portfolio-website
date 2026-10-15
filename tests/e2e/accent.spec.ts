@@ -108,8 +108,9 @@ for (const theme of THEMES) {
     for (const [width, height] of WIDTHS) {
         test(`two orange marks at most in the first viewport, ${theme} at ${width}px`, async ({
             page,
+            request,
         }) => {
-            const listed = await sitemapPages(page.request);
+            const listed = await sitemapPages(request);
             const projects = listed.filter((path) =>
                 /^\/portfolio\/[^/]+$/.test(path),
             );

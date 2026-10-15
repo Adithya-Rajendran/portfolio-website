@@ -599,8 +599,18 @@ test.describe("routes and headers", () => {
         }
     });
 
-    test("the Studio renders none of the site chrome", async ({ request }) => {
+    test("the Studio renders none of the site chrome", async ({
+        request,
+    }, testInfo) => {
         const response = await request.get("/studio");
+        // The Vercel Firewall denies /studio on preview deployments (403,
+        // `x-vercel-mitigated: deny`), so the Studio is checked on the
+        // fixture build and in the weekly run against the production site.
+        test.skip(
+            testInfo.project.name === "preview" &&
+                response.headers()["x-vercel-mitigated"] === "deny",
+            "The Vercel Firewall denies /studio on preview deployments.",
+        );
         expect(response.status()).toBe(200);
         const html = await response.text();
         expect(html).not.toContain('href="#main-content"');
