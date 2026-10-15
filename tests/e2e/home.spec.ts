@@ -390,12 +390,29 @@ test("a section links its page only while that page holds more than home shows",
     const entries = await items("/blog", "/blog/");
     await page.goto("/");
     const main = page.getByRole("main");
-    for (const [id, name, href, more] of [
-        ["home-projects", copy.projectsAct.all, "/portfolio", projects > 3],
-        ["home-writing", copy.writingAct.all, "/blog", entries > 3],
+    for (const [id, name, href, prefix, total] of [
+        [
+            "home-projects",
+            copy.projectsAct.all,
+            "/portfolio",
+            "/portfolio/",
+            projects,
+        ],
+        ["home-writing", copy.writingAct.all, "/blog", "/blog/", entries],
     ] as const) {
         const section = main.locator(`section#${id}`);
         if (!(await section.count())) continue;
+        // Against what home shows, not a fixed three: a quiet project keeps
+        // a home row empty while /portfolio still lists it.
+        const shown = await section
+            .locator(`a[href^="${prefix}"]`)
+            .evaluateAll(
+                (links) =>
+                    new Set(
+                        links.map((link) => link.getAttribute("href") ?? ""),
+                    ).size,
+            );
+        const more = total > shown;
         const link = section.getByRole("link", { name, exact: true });
         await expect(link, id).toHaveCount(more ? 1 : 0);
         if (more) await expect(link).toHaveAttribute("href", href);

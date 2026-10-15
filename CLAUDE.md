@@ -899,10 +899,10 @@ deployment require an authenticated Sanity CLI session. The embedded Studio
 ships with the site, but the hosted copy of the schema (the one the Sanity
 dashboard and MCP tools read) does not: once a schema change is on
 production, the owner runs `pnpm schema:deploy` from that session, with the
-two variables loaded. It runs `sanity deploy --external`, which refreshes
-the schema of the Studio application registered for `/studio`
-(`deployment.appId` in `sanity.cli.ts`); `sanity schemas deploy` alone only
-writes the dataset copy, which those tools read last.
+two variables loaded. It runs `sanity deploy --external --schema-required`,
+which refreshes the schema of the Studio application registered for
+`/studio` (`deployment.appId` in `sanity.cli.ts`) and the dataset copy that
+`sanity schema deploy` alone writes, which those tools read last.
 
 - Option lists and pure rules that both the schema and the site read live
   in modules with no imports, because the Studio bundles them:

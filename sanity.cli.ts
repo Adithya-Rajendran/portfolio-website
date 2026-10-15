@@ -8,8 +8,9 @@ export default defineCliConfig({
     deployment: {
         // The Studio application registered for the embedded Studio at
         // /studio in the Sanity dashboard. `pnpm schema:deploy` (sanity
-        // deploy --external) refreshes that application's schema; without
-        // the id the CLI would register a second application.
+        // deploy --external) refreshes that application's schema: the CLI
+        // resolves this id before any URL, so the deploy goes to that
+        // application whatever URL it was registered with.
         appId: "go7tr653762tnknqhjkhot5x",
     },
     typegen: {
