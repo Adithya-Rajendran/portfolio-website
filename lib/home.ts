@@ -31,7 +31,7 @@ export const HOME_PROJECT_ROWS = 2;
 /**
  * The home page's projects (`missionTiers`): the flagship with its summary
  * and plate and the next `HOME_PROJECT_ROWS` as compact rows, never a
- * quiet project. Home curates these; the others (`also`, the quiet ones
+ * quiet project unless every project is. Home curates these; the others (`also`, the quiet ones
  * among them) are /portfolio's, and while there are any the section links
  * there (All projects).
  */

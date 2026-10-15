@@ -495,8 +495,8 @@ only live in comments or commit messages.
   strongest project on its stage (featured slot 1, led by its summary,
   no stats, mission number or write-up link: its page links the
   write-up; its title is its one link), the next two as rows
-  (`homeProjects`; never a quiet one, on the stage or in a row: the
-  others are `/portfolio`'s alone, and All projects
+  (`homeProjects`; never a quiet one, on the stage or in a row, unless
+  every project is: the others are `/portfolio`'s alone, and All projects
   shows only while there are any); the latest three entries, without
   tags (All writing only while `/blog` lists more); and the close, in
   open space (no rule over it), headed by the owner's one-line statement

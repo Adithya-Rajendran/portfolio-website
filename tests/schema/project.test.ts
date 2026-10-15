@@ -83,7 +83,7 @@ describe("project schema", () => {
             title: "Quiet listing",
             group: "editorial",
             description:
-                "List this project only as a quiet row on Projects, never as the flagship, a tile or a home row. Use it for a project that has no write-up yet.",
+                "List this project only as a quiet row on Projects, never as the flagship, a tile or a home row (unless every project is quiet). Use it for a project that has no write-up yet.",
             initialValue: false,
         });
         // Optional: the stored projects, which have no value, stay valid.
