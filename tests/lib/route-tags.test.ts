@@ -120,7 +120,7 @@ describe("route table", () => {
         ).toBeGreaterThan(0);
     });
 
-    it("never warms icons, robots, the API or the Studio", () => {
+    it("never warms icons, robots, the static text files, the API or the Studio", () => {
         const warmed = new Set(
             (["profile", "post", "project"] as const).flatMap((tag) =>
                 routesForTag(tag).map((route) => route.path),
@@ -129,6 +129,7 @@ describe("route table", () => {
         for (const path of [
             "/robots.txt",
             "/.well-known/security.txt",
+            "/llms.txt",
             "/icon.svg",
             "/apple-icon.png",
             "/favicon.ico",

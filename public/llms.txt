@@ -1,0 +1,26 @@
+# Adithya Rajendran
+
+> M.S. Engineering student in robotics and AI at SJSU, formerly a Field Software Engineer at Canonical. Notes on infrastructure and robotic vision.
+
+## Writing
+
+- [A Homelab Built to Be Rebuilt](https://adithya-rajendran.com/blog/my-homelab): How three Raspberry Pis, an old Dell laptop, and three mini PCs bootstrap my OpenStack lab.
+- [Running GUI Apps in LXD Containers](https://adithya-rajendran.com/blog/running-gui-apps-in-lxc-containers): The LXD profile I use to run GUI tools on my Linux desktop.
+- [Sharing the DGX Spark GPU with MicroK8s](https://adithya-rajendran.com/blog/kubernetes-on-the-nvidia-dgx-spark): Setting up MicroK8s, the NVIDIA GPU Operator, and GPU time-slicing on my DGX Spark.
+
+## Projects
+
+- [Homelab with segmented networks and high availability](https://adithya-rajendran.com/portfolio/homelab): PXE bare-metal provisioning, segmented networking, and storage outside the cluster so it can be wiped and redeployed.
+- [Kubernetes cluster with NFS and OIDC](https://adithya-rajendran.com/portfolio/kubernetes-cluster): A highly available three-node Kubernetes cluster with zero downtime during upgrades and maintenance.
+- [Gmail filter with an experimental spam classifier](https://adithya-rajendran.com/portfolio/gmail-spam-filter): Built with a student team in 2022, extended in 2025 with a TF-IDF and multilayer-perceptron spam classifier trained on the CEAS-08 corpus.
+
+## Profile
+
+- [About](https://adithya-rajendran.com/about): Studies, previous role, focus areas and current focus.
+- [Experience and CV](https://adithya-rajendran.com/resume): Previously a Field Software Engineer at Canonical, designing private clouds and troubleshooting across the stack.
+- [Contact](https://adithya-rajendran.com/contact): Research, collaboration, or opportunities to contribute.
+
+## Policies
+
+- [robots.txt](https://adithya-rajendran.com/robots.txt): Crawling rules and the sitemap.
+- [RSS feed](https://adithya-rajendran.com/feed.xml): Every post in full.

@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "description": "Adithya Rajendran's personal website: writing, projects and the CV, on Next.js and Sanity.",
+    "license": "MIT",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Adithya-Rajendran/portfolio-website.git"

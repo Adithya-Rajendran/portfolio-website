@@ -428,6 +428,42 @@ test.describe("routes and headers", () => {
         expect(expires - Date.now()).toBeLessThan(366 * day);
     });
 
+    test("llms.txt links only to pages the site serves", async ({
+        request,
+    }, testInfo) => {
+        const response = await request.get("/llms.txt");
+        expect(response.status()).toBe(200);
+        // Its descriptions keep their typography, so the charset matters.
+        expect(response.headers()["content-type"]).toMatch(
+            /^text\/plain; charset=utf-8$/i,
+        );
+        const text = await response.text();
+        expect(text).toMatch(new RegExp(`^# ${siteConfig.author}\\n`));
+        const links = [...text.matchAll(/\]\((https?:[^)]+)\)/g)].map(
+            ([, url]) => sitePath(url),
+        );
+        expect(links.length).toBeGreaterThan(0);
+        // Hand-kept: a post or project renamed, unpublished or new fails
+        // here on a preview and in the weekly run against production. The
+        // fixture build's posts and projects are lib/fixtures.ts's.
+        const staticPaths = new Set<string>([
+            ...STATIC_PAGES,
+            "/robots.txt",
+            "/feed.xml",
+        ]);
+        if (testInfo.project.name !== "fixture") {
+            const postOrProject = (path: string) =>
+                isPostPage(path) || /^\/portfolio\/[^/]+$/.test(path);
+            const listed = await sitemapPages(request);
+            expect(
+                links.filter((path) => !staticPaths.has(path)).sort(),
+            ).toEqual(listed.filter(postOrProject).sort());
+        }
+        for (const path of links.filter((path) => staticPaths.has(path))) {
+            expect((await request.get(path)).status(), path).toBe(200);
+        }
+    });
+
     test("the feed's usual addresses answer 301 to /feed.xml", async ({
         request,
         baseURL,
