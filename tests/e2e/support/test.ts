@@ -22,7 +22,10 @@ import {
  *   as visits.
  *
  * The `request` fixture gets the same headers, and `pageErrors` records
- * console errors, uncaught exceptions and CSP violations.
+ * console errors, uncaught exceptions and CSP violations. `page.request`
+ * and `context.request` do not get them (a context's routes never see
+ * their requests), so on a protected preview they land on Vercel's login
+ * page: specs fetch with the `request` fixture (eslint.config.mjs).
  */
 
 const VERCEL_SCRIPT = /\/_vercel\/(insights|speed-insights)\/script\.js$/;

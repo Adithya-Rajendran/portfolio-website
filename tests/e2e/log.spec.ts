@@ -203,6 +203,7 @@ test("/blog/archive answers 308 to /blog, and no list links it", async ({
 
 test("a row's tag opens its page, whose rows leave that tag out", async ({
     page,
+    request,
 }, testInfo) => {
     test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
     await page.goto("/blog");
@@ -221,7 +222,7 @@ test("a row's tag opens its page, whose rows leave that tag out", async ({
         page.getByRole("heading", { level: 1, name: tagLabel(name) }),
     ).toBeVisible();
     // Its description says the section's word, Writing.
-    const html = await (await page.request.get(`/blog/tags/${name}`)).text();
+    const html = await (await request.get(`/blog/tags/${name}`)).text();
     expect(html).toContain(
         `<meta name="description" content="Writing tagged ${tagLabel(name)}."/>`,
     );
