@@ -925,9 +925,9 @@ export const PROJECT_ESSAY_FIXTURE: ProjectWithBody = {
  * fixture build. Like the essay fixture it is never listed, so nothing
  * prerenders it: requested, it renders on demand, its head renders and
  * its writing's read fails (`fixtureReadFails`), as a failed Sanity read
- * would. Reached by a client-side navigation it shows
- * app/(site)/error.tsx; a fresh page load answers a bare 500 instead
- * (Next.js 16.3.4, the smoke test's `test.fail`).
+ * would. A client-side navigation and a fresh page load both show
+ * app/(site)/error.tsx (the fresh load as a 500 whose recovery document
+ * the browser fills, since Next.js 16.4).
  */
 export const FAILING_PROJECT_FIXTURE: ProjectWithBody = {
     _id: "fixture-project-failing",

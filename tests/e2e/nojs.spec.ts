@@ -106,8 +106,9 @@ for (const width of [1440, 390]) {
                 // Production does the same. The app-level workaround, a
                 // proxy.ts slug check before rendering, would put a function
                 // call in front of every cached post, tag and project view,
-                // so it is not taken. Re-check on each Next.js upgrade: when
-                // this starts passing, remove the marker.
+                // so it is not taken (still so on Next.js 16.4.0). Re-check
+                // on each upgrade: when this starts passing, remove the
+                // marker.
                 test.fail(
                     kind !== "unmatched",
                     "Unknown dynamic slugs render their 404 only with JavaScript",

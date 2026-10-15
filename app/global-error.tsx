@@ -17,9 +17,9 @@ import { siteRoutes } from "@/lib/navigation";
  * app/global-not-found.tsx, it repeats the root layout's <html>: the font
  * variables, the theme boot script and the stylesheet, which applies only
  * when this page shows (other routes, the Studio included, preload it).
- * Then the error page's head, Try again and Home. A server failure on a
- * fresh page load never reaches it, and the prerendered 500 page is
- * Next.js's own, not this one.
+ * Then the error page's head, Try again and Home. A page that fails on the
+ * server shows app/(site)/error.tsx, on a fresh page load too (Next.js
+ * 16.4), and the prerendered 500 page is Next.js's own, not this one.
  * A client component cannot render SiteShell (it reads server data), so
  * there is no header or footer; metadata exports do not apply here, so
  * the title is React's <title>.
