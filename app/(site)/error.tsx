@@ -11,13 +11,13 @@ import { siteRoutes } from "@/lib/navigation";
  * a Try again button, inside the site chrome. A page that fails while
  * rendering on the server shows it after a client-side navigation, and
  * Try again asks the server again. A fresh page load (a first visit, a
- * reload, a crawler) of a page rendered on demand does not reach it on
- * Next.js 16.3.4: a bare text/plain 500 answers instead (16.4 shows this
- * page), and a failing cached read that both generateMetadata and the page
- * await leaves the request unanswered. The fixture's failing project
- * (`FAILING_PROJECT_FIXTURE`) tests both in tests/e2e/smoke.spec.ts, the
- * fresh load as `test.fail`. An error a layout throws in the browser is
- * app/global-error.tsx's.
+ * reload, a crawler) of a page rendered on demand answers 500 with
+ * Next.js's recovery document, which the browser fills with this page
+ * (Next.js 16.4; without JavaScript it stays empty). A failing cached read
+ * that both generateMetadata and the page await still leaves the request
+ * unanswered (16.4.0). The fixture's failing project
+ * (`FAILING_PROJECT_FIXTURE`) tests both loads in tests/e2e/smoke.spec.ts.
+ * An error a layout throws in the browser is app/global-error.tsx's.
  */
 export default function Error({
     error,

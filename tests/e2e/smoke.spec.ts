@@ -370,18 +370,20 @@ test.describe("pages", () => {
             testInfo.project.name !== "fixture",
             "Only the fixture build has a page that fails (lib/fixtures.ts).",
         );
-        // Known defect, observed on Next.js 16.3.4 (`next start`, Cache
-        // Components): a fresh load of a page that fails while rendering on
-        // demand answers a bare text/plain 500, never app/(site)/error.tsx,
-        // which only a client-side navigation reaches (the test above).
-        // Next.js 16.4 answers with the error page, so a bump to it turns
-        // this red: remove the marker then. (A failing cached read that
-        // generateMetadata awaits too still leaves the load unanswered on
-        // 16.4.0; the fixture's read fails outside the cache.)
-        test.fail();
+        // Since Next.js 16.4 (vercel/next.js#99037) a fresh load of a page
+        // that fails while rendering on demand answers 500, uncached, with
+        // Next.js's recovery document, which the browser fills with
+        // app/(site)/error.tsx inside the chrome (16.3 answered a bare
+        // text/plain 500). Without JavaScript that document stays empty,
+        // as an unknown slug's 404 does (nojs.spec.ts). Known defect, still
+        // on 16.4.0: a failing cached read that generateMetadata awaits too
+        // leaves the load unanswered; the fixture's read fails outside the
+        // cache, so this test does not reach it.
         const logged = consoleErrors(page);
         const response = await page.goto(FAILING_PROJECT_PATH);
         expect(response?.status(), FAILING_PROJECT_PATH).toBe(500);
+        expect(response?.headers()["cache-control"]).toContain("no-store");
+        await expect(page.getByRole("banner")).toBeVisible();
         await expectErrorPage(page, logged);
     });
 });

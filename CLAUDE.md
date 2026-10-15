@@ -625,7 +625,7 @@ only live in comments or commit messages.
   `SiteLink plain`), and `next build` copies it to a static `404.html`
   that no webhook refreshes, so it renders no JSON-LD. An unknown slug under a dynamic route
   (`notFound()` during the render) answers 404 with Next.js's recovery
-  document, which only JavaScript fills (a Next.js 16.3 limitation, marked
+  document, which only JavaScript fills (a Next.js 16.3–16.4.0 limitation, marked
   `test.fail` in `tests/e2e/nojs.spec.ts`). React renders the head's boot
   script into that document, where it never runs, so `SiteShell`'s
   `ThemeBootFallback` runs it once when `html[data-js]` is missing.
