@@ -16,7 +16,7 @@
 
 ## Profile
 
-- [About](https://adithya-rajendran.com/about): Studies, previous role, focus areas and current focus.
+- [About](https://adithya-rajendran.com/about): I’m exploring how robots perceive and remember the world.
 - [Experience and CV](https://adithya-rajendran.com/resume): Previously a Field Software Engineer at Canonical, designing private clouds and troubleshooting across the stack.
 - [Contact](https://adithya-rajendran.com/contact): Research, collaboration, or opportunities to contribute.
 

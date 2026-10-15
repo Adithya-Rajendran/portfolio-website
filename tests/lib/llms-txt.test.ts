@@ -62,7 +62,7 @@ describe("llms.txt", () => {
         }
     });
 
-    it("links only to pages the site serves, by their absolute URLs", () => {
+    it("links by absolute URL, each under one of the site's routes", () => {
         const writing = paths("Writing");
         const projects = paths("Projects");
         expect(writing).toHaveLength(3);
