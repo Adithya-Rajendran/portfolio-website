@@ -57,8 +57,8 @@ const TILES = 2;
  * introduction (`projectsIntro`, left out when empty), the flagship on its
  * stage, the next two as text-first tiles and the rest as compact rows
  * (each with its cover as a thumbnail, when it has one, smaller than the
- * stage's plate), so the owner's last project is the least prominent
- * (`missionTiers`);
+ * stage's plate), so the owner's last project is the least prominent and
+ * a quiet one is never more than a row (`missionTiers`);
  * the tiers' sections are named for screen readers only, since the page
  * title already says what they are; #projects is the tiles. The old sections' fragments (#experience…) are sent on by
  * RouteMarker. Only what the owner published is shown: no counts, no

@@ -1677,6 +1677,13 @@
         },
         "optional": true
       },
+      "quiet": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "boolean"
+        },
+        "optional": true
+      },
       "cover": {
         "type": "objectAttribute",
         "value": {

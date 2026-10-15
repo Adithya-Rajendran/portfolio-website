@@ -257,7 +257,7 @@ export default defineType({
             type: "number",
             group: "editorial",
             description:
-                "Optional. 1 puts this project on the photographic stage of the home page and Projects; 2 and 3 come right after it (on the home page, the two rows under it). Leave empty for the rest, which follow by Mission Number. Each slot holds one project.",
+                "Optional. 1 puts this project on the photographic stage of the home page and Projects; 2 and 3 come right after it (on the home page, the two rows under it). Leave empty for the rest, which follow by Mission Number. Each slot holds one project. Quiet listing, when on, overrides the slot.",
             options: { list: [1, 2, 3] },
             validation: (Rule) => [
                 Rule.integer().min(1).max(3),
@@ -265,6 +265,15 @@ export default defineType({
                     validateFeaturedSlot(value, context),
                 ).warning(),
             ],
+        }),
+        defineField({
+            name: "quiet",
+            title: "Quiet listing",
+            type: "boolean",
+            group: "editorial",
+            description:
+                "List this project only as a quiet row on Projects, never as the flagship, a tile or a home row. Use it for a project that has no write-up yet.",
+            initialValue: false,
         }),
         defineField({
             name: "cover",

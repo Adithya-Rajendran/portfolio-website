@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { chromeCopy, homeCopy as copy } from "@/lib/copy";
-import { FIXTURE_PROFILE } from "@/lib/fixtures";
+import { FIXTURE_PROFILE, FIXTURE_PROJECTS } from "@/lib/fixtures";
 import sunrise from "@/lib/hero-sunrise.json";
 import { cvLink } from "@/lib/navigation";
 import { expect, test } from "./support/test";
@@ -17,7 +17,8 @@ import { storeTheme } from "./support/theme";
  * credited with its frame ID and Flight Manual draws the limb instead;
  * the name keeps one line at 1440 and spans 1,400px at most at 1920;
  * the sections follow in order, unnumbered, and lead to their pages
- * only while those hold more; the flagship's title is its one link, and
+ * only while those hold more; a quiet project gets no row (checked on the
+ * fixture build); the flagship's title is its one link, and
  * it shows no stats and at most four stack items; a row's cover is
  * a thumbnail, credited, that never outweighs the stage's photograph
  * (checked where the build has covers; the fixtures have none); the close is the
@@ -401,6 +402,29 @@ test("a section links its page only while that page holds more than home shows",
     }
     // Home curates its three projects: no line of the others under them.
     await expect(main.getByText("Also", { exact: true })).toHaveCount(0);
+});
+
+test("a quiet project gets no row: /portfolio lists it", async ({
+    page,
+}, testInfo) => {
+    test.skip(
+        testInfo.project.name !== "fixture",
+        "Only the fixture build is known to hold a quiet project.",
+    );
+    const quiet = FIXTURE_PROJECTS.find((project) => project.quiet)!;
+    await page.goto("/");
+    const projects = page.getByRole("main").locator("section#home-projects");
+    // Though it holds a featured slot, the stage and both rows go to
+    // others, and All projects leads to it.
+    await expect(
+        projects.locator(`a[href="/portfolio/${quiet.slug}"]`),
+    ).toHaveCount(0);
+    await expect(
+        projects.locator('li:has(a[href^="/portfolio/"])'),
+    ).toHaveCount(2);
+    await expect(
+        projects.getByRole("link", { name: copy.projectsAct.all, exact: true }),
+    ).toHaveAttribute("href", "/portfolio");
 });
 
 test("the close answers what the owner is open to only in the profile's words", async ({

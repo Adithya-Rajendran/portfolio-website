@@ -294,6 +294,78 @@ describe("missionTiers", () => {
             also: [],
         });
     });
+
+    describe("a quiet project", () => {
+        type Quiet = Project & { designation?: number; quiet?: boolean | null };
+        const slugs = (items: readonly Quiet[]) =>
+            items.map((item) => item.slug);
+
+        it("is never given room: it is one of the rest, in its mission order", () => {
+            const ordered = missionOrder<Quiet>([
+                { slug: "homelab", featured: 1, designation: 2 },
+                { slug: "gmail", designation: 1 },
+                { slug: "kubernetes", designation: 3, quiet: true },
+                { slug: "website", designation: 4 },
+                { slug: "notes", designation: 5 },
+            ]);
+            const { flagship, rows, also } = missionTiers(ordered, 2);
+            expect(flagship?.slug).toBe("homelab");
+            expect(slugs(rows)).toEqual(["gmail", "website"]);
+            expect(slugs(also)).toEqual(["kubernetes", "notes"]);
+        });
+
+        it("gives up its featured slot, the flagship's too", () => {
+            const ordered = missionOrder<Quiet>([
+                { slug: "a", featured: 1, designation: 1, quiet: true },
+                { slug: "b", featured: 2, designation: 2, quiet: true },
+                { slug: "c", designation: 3 },
+                { slug: "d", designation: 4 },
+                { slug: "e", designation: 5 },
+            ]);
+            const { flagship, rows, also } = missionTiers(ordered, 1);
+            expect(flagship?.slug).toBe("c");
+            expect(slugs(rows)).toEqual(["d"]);
+            expect(slugs(also)).toEqual(["a", "b", "e"]);
+        });
+
+        it("is only one set to true: off or unset changes nothing", () => {
+            const ordered: Quiet[] = [
+                { slug: "a", quiet: false },
+                { slug: "b", quiet: null },
+                { slug: "c" },
+                { slug: "d" },
+            ];
+            const { flagship, rows, also } = missionTiers(ordered, 2);
+            expect(flagship?.slug).toBe("a");
+            expect(slugs(rows)).toEqual(["b", "c"]);
+            expect(slugs(also)).toEqual(["d"]);
+        });
+
+        it("still leads when every project is quiet, so the page never empties", () => {
+            const ordered: Quiet[] = [
+                { slug: "a", quiet: true },
+                { slug: "b", quiet: true },
+                { slug: "c", quiet: true },
+            ];
+            const { flagship, rows, also } = missionTiers(ordered, 2);
+            expect(flagship?.slug).toBe("a");
+            expect(rows).toEqual([]);
+            expect(slugs(also)).toEqual(["b", "c"]);
+        });
+
+        it("lets the first project that is not quiet lead", () => {
+            const ordered: Quiet[] = [
+                { slug: "a", quiet: true },
+                { slug: "b" },
+                { slug: "c", quiet: true },
+                { slug: "d" },
+            ];
+            const { flagship, rows, also } = missionTiers(ordered, 2);
+            expect(flagship?.slug).toBe("b");
+            expect(slugs(rows)).toEqual(["d"]);
+            expect(slugs(also)).toEqual(["a", "c"]);
+        });
+    });
 });
 
 describe("missionEntries", () => {

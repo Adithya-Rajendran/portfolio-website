@@ -356,7 +356,12 @@ only live in comments or commit messages.
   tiles, with no "Also" label); the files' previous / next go in the same
   order (`adjacentMissions` on `missionOrder`), labelled "Previous" and
   "Next" (`pagerCopy`, shared with an entry's pager; no "All projects":
-  the crumb leads back).
+  the crumb leads back). A project set to `quiet` (Quiet listing, for one
+  with no write-up yet) is never the flagship, a tile or a home row,
+  whatever its featured slot: `missionTiers` lists it among the quiet rows
+  in its mission order (when every project is quiet the flagship still
+  leads), and its page, the sitemap, the structured data, the pager and the
+  CV treat it as any other.
   `/portfolio` is the head, then the tiers with their section names for
   screen readers only (no visible "Featured project" or "More projects"
   row, no "Experience & CV" link and no related pages); the stage's copy
