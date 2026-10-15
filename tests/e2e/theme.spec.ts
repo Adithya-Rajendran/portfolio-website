@@ -179,6 +179,28 @@ test("a stored theme applies before the body is parsed", async ({ page }) => {
     );
 });
 
+/** Dark · Light · System sit on one row, in order, inside the viewport:
+ *  one joined Segmented control, not a column of boxes. */
+async function expectOneRow(page: Page) {
+    const boxes = [];
+    for (const name of ["Dark", "Light", "System"]) {
+        const box = await headerChoice(page)
+            .getByRole("radio", { name })
+            .boundingBox();
+        expect(box, name).not.toBeNull();
+        if (box) boxes.push(box);
+    }
+    const [first, ...rest] = boxes;
+    const width = page.viewportSize()?.width ?? 0;
+    for (const [i, box] of rest.entries()) {
+        expect(box.y).toBeCloseTo(first.y, 0);
+        expect(box.x).toBeGreaterThan(boxes[i].x + boxes[i].width - 2);
+    }
+    expect(first.x).toBeGreaterThanOrEqual(0);
+    const last = boxes[boxes.length - 1];
+    expect(last.x + last.width).toBeLessThanOrEqual(width);
+}
+
 test("the header's popover opens on a click and closes on a pick, a click outside or Escape", async ({
     page,
 }) => {
@@ -196,6 +218,11 @@ test("the header's popover opens on a click and closes on a pick, a click outsid
     expect(await axeViolations(page, "/about"), "axe, popover open").toEqual(
         [],
     );
+    await expectOneRow(page);
+    // At the narrowest width the switch shows, it still fits on the right.
+    await page.setViewportSize({ width: 960, height: 900 });
+    await expectOneRow(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
 
     // A click outside closes it; so does the switch itself.
     await page.getByRole("heading", { level: 1 }).click();

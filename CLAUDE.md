@@ -93,10 +93,10 @@ only live in comments or commit messages.
   `aria-expanded`) opens it in a small popover hanging from the header's
   hairline, which a click on an option, a click outside or Escape closes
   (an option or Escape returns focus to the button; arrow keys pick
-  without closing), so a desktop visitor can always return to System; below 960px, where the
-  switch is hidden, the menu sheet carries it. Each copy names its radios
-  by `useId`, the choice shows once per breakpoint and the footer
-  repeats neither; it reads `lib/prefs.ts` through
+  without closing), so a desktop visitor can always return to System;
+  below 960px, where the switch is hidden, the menu sheet carries it.
+  Each copy names its radios by `useId`, the choice shows once per
+  breakpoint and the footer repeats neither; it reads `lib/prefs.ts` through
   `useSyncExternalStore` (server snapshot `undefined`). Spatial motion runs
   only under `html[data-motion="full"]` and
   `prefers-reduced-motion: no-preference`. Fonts come from `lib/fonts.ts`
