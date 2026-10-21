@@ -1,7 +1,7 @@
 /*
  * The long read (G1): what the rich-text renderers emit
  * (components/blogs/portable-text-components.tsx) under `.prose`, on the
- * post page and in the project essay. Newsreader at a 68-character measure,
+ * post page and in the project essay. Newsreader at a 74-character measure,
  * numbered listings with the one Shiki theme's colours, plates and figures,
  * quiet notes (a quotation and a callout share one rule), footnotes with
  * margin notes, and the notes list. A page decides the column around it
@@ -39,9 +39,9 @@
 }
 
 @layer components {
-    /* The measure (`--prose-measure`, styles/tokens.css): about 68
+    /* The measure (`--prose-measure`, styles/tokens.css): about 74
        characters of Newsreader to the line at 18–20px (CSS `ch` counts the
-       wide "0", so it reads 52ch). */
+       wide "0", so it reads 56ch). */
     .prose {
         color: var(--ink-1);
         font: 400 var(--step-long) / var(--lh-long) var(--font-long);

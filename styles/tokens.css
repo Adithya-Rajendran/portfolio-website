@@ -75,14 +75,20 @@
         --space-section: clamp(5rem, 3.333rem + 7.407vw, 10rem);
 
         /* ---- layout ------------------------------------------------ */
-        /* The long read's two edges: the measure (about 68 characters of
-           Newsreader at 18–20px), where the text, every listing and the
+        /* The long read's two edges: the measure (about 74 characters of
+           Newsreader to the line at every width), where the text, every listing and the
            close stop, and the wide edge, where a title, a wide plate and
            what follows the entry (the pager, the project row, the related
            entries) stop, or the shell's right edge where that is nearer
            (post.module.css `--reach`), with the margin notes
            (styles/prose.css .sidenote) inside it. */
-        --prose-measure: 36rem;
+        /* The measure follows the text: 39rem from 1440px, where the text
+           (`--step-long`) reaches its full 20px, narrowing with it below
+           (37.8rem at 1280, 35rem at its floor), so a smaller laptop's
+           smaller text does not set more characters to the line. The slope
+           is measured, not the text's own ratio: Newsreader sets more
+           characters to the em at 18–19px than at 20px. */
+        --prose-measure: clamp(35rem, 28.3rem + 11.875vw, 39rem);
         --prose-wide: 60rem;
         /* The site's one bullet: a hairline dash, `--list-mark` wide, in
            a `--list-gutter` gutter at the column's edge, with the text

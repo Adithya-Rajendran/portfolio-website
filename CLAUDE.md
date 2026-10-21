@@ -311,8 +311,18 @@ only live in comments or commit messages.
   notes', the two sides equal), not set in grid columns 4–12 as a
   record page's `g-main` body is: the measure sits as far from the
   shell's left edge as from its right, except on a narrow laptop
-  (under 1136px), where the rail's track keeps its 12rem floor and the
-  measure sits that far in. The entry's `.layout` is a size container,
+  (under about 1184px), where the rail's track keeps its 12rem floor
+  and the measure sits that far in, and just above 60rem, where the
+  measure itself gives way (`minmax(0, --prose-measure)`) rather than
+  push the page sideways. The measure is 39rem from 1440px (2026-10-21,
+  the owner's choice over 36rem and 38rem) and narrows with the text
+  below it (`clamp(35rem, 28.3rem + 11.875vw, 39rem)`, about 37.8rem at
+  1280), so ordinary prose stays near 74 characters a line at every
+  width, inside the post spec's 60–75: a fixed 39rem set about 76 at
+  1280, where the text is smaller. The spec measures from an entry's own
+  paragraphs, so the fixture posts' first paragraph carries ordinary
+  prose (`FIXTURE_PROSE` in lib/fixtures.ts): a one-line placeholder of
+  narrow letters read up to 79 characters at the same measure. The entry's `.layout` is a size container,
   so the title and a wide or full plate, sized from it (`--room`, the
   measure's left edge to the shell's right; `--reach`, the nearer of
   that and the wide edge), reach right into the notes' track and never
@@ -1125,7 +1135,7 @@ loaded, only when that run cannot.
   a row's title balancing on a phone, a tag page's description "Writing
   tagged …", and the prefetch budget on `/blog`), `post`
   (every entry's first paragraph in the first viewport at 1280×800 and
-  390×844 in both themes, a 60–75 character measure, code comments at
+  390×844 in both themes, a 60–76 character measure, code comments at
   4.5:1 or more, the rail listing the sections (from two) with no record
   box or word count or numbers, no LOG, plate or figure number, the
   crumb "Writing" alone and no tags in the head; the byline once, linked
