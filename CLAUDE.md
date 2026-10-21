@@ -283,9 +283,9 @@ only live in comments or commit messages.
 - **The long read** (G1). `lib/prose.ts` `indexProse(body)` numbers a
   Portable Text body once: listings (the number only keeps their
   accessible names apart, "Listing 3, install.sh", and prints nowhere;
-  one width per body, all
-  wide once any line passes `LISTING_MEASURE`, the 64 columns of 13px
-  mono the measure fits) and footnotes (in reading order, written onto a
+  every listing is the text's width, never wider: a line past it scrolls
+  inside the box, its edge fading where it continues, and the wide
+  breakout is retired) and footnotes (in reading order, written onto a
   copy of the body's markDefs), and sorts the images into photographs
   and drawings (`figures`: a kind, no number; a post's cover is the lead
   plate). No plate or figure is numbered, on the page or in the feed: no
@@ -297,9 +297,9 @@ only live in comments or commit messages.
   counts its words. The text has one numbering per thing: no margin
   number beside an h2 and no number in the contents (the headings have
   names), no line count or number on a listing (its bar has one label,
-  the file name, else the language, then Copy at the right, in the
-  listing's mono; the accessible name and the feed's caption follow the
-  same rule), and no LOG number: the crumb is "Writing" alone and the
+  the file name, else the language, none for plain text, then Copy at
+  the right, in the listing's mono; the feed's caption follows the same
+  rule, and the accessible name says "Text"), and no LOG number: the crumb is "Writing" alone and the
   print masthead's kicker "Writing". The head is the date, the read time,
   Updated and the byline ("By" the profile's name, linked to About, in
   the meta line's DM Mono; on screen only, as the print masthead's line
@@ -309,8 +309,26 @@ only live in comments or commit messages.
   above and below on paper); a callout is the quotation's quiet note (the
   ink rule) led by its tone and title in bold ("Caution: Back up first",
   `calloutHeading`), with no colour, frame or band; inline code has no
-  box. Prose h2 are `--step-2` (32px at most), the leading 1.52
-  (`--lh-long`), figures proportional. A revision is dated as the head
+  box (no fill or padding). A list has one treatment on every width and
+  page (`.list`, `.list--bullet`, `.list--number`, `.list__item` in
+  styles/prose.css, the renderer's classes; its `ul`/`ol` carry
+  `role="list"`): the mark in a gutter at the column's left edge
+  (`--list-gutter`; 1.75rem for numbers), the text flush after it and
+  wrapping under itself; the marks are the stylesheet's, never the
+  browser's and never hung in the margin: the site's one bullet, a
+  hairline dash `--list-mark` wide in ink-2 (a border, so paper keeps
+  it; the tokens the CV's lines and a project's highlight and
+  retrospective lists share, styles/tokens.css), DM Mono numerals at
+  the label size for a number (the notes list's voice), and one level
+  down an ink-3 dash and letters. The item keeps its inline flow (the
+  gutter is its padding, the mark an inline-block on its first line):
+  never a grid, which would break a link, inline code or a footnote's
+  margin note out of the line. Prose h2 are `--step-2` (32px at most), the leading 1.52
+  (`--lh-long`), figures proportional. An entry has two right edges
+  (styles/tokens.css): `--prose-measure` (the text, every listing, the
+  standfirst, the close) and `--prose-wide`, past the margin notes (the
+  title, wide plates, and after the entry the pager, the project row and
+  the related entries). A revision is dated as the head
   dates ("30 Jun 2026 · Correction", on the page and in the feed; no
   `Rev` or triangle). The entry closes once, in its own column: End of
   entry, then "Follow: RSS · LinkedIn" (`FollowLinks`, also /blog's
@@ -1098,8 +1116,13 @@ loaded, only when that run cannot.
   "Previous" and "Next" by name), Copy on a listing, the
   phone's contents box, the header's one hairline, print (a masthead with no date), BlogPosting and
   BreadcrumbList; on the
-  fixture build also the listings at one width with no line cut, one
-  label on the bar and the highlighted line, footnotes and
+  fixture build also every listing at the text's width, a long line
+  scrolling inside it and a short one not, one
+  label on the bar and the highlighted line, a list's marks (the dash,
+  DM Mono numerals at 13px) in a gutter at the column's edge with no
+  browser marker or indent, every line of an item, a link and inline
+  code in it included, and a nested item flush after the gutter, at
+  1440 and 390, footnotes and
   margin notes, the caution callout as a quiet note and revisions dated
   as the head dates, their RSS output, and
   in-page links landing in the visible entry after a client-side

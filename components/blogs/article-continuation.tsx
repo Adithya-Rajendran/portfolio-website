@@ -78,7 +78,6 @@ export default function ArticleContinuation({
         >
             <div className={styles.end}>
                 <Pager
-                    className={styles.pager}
                     label={copy.pager}
                     previous={pagerLink(previous, "previous")}
                     next={pagerLink(next, "next")}

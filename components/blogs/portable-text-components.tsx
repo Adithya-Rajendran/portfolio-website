@@ -263,13 +263,29 @@ export function createPortableTextComponents({
             link: LinkMark,
             footnote: FootnoteMark,
         },
+        // The marks are the stylesheet's (`.list` in styles/prose.css:
+        // `list-style: none`), so the role keeps the list for Safari's
+        // VoiceOver; the classes keep the rules off the notes list and a
+        // gallery, lists under `.prose` too.
         list: {
-            bullet: ({ children }) => <ul>{children}</ul>,
-            number: ({ children }) => <ol>{children}</ol>,
+            bullet: ({ children }) => (
+                <ul className="list list--bullet" role="list">
+                    {children}
+                </ul>
+            ),
+            number: ({ children }) => (
+                <ol className="list list--number" role="list">
+                    {children}
+                </ol>
+            ),
         },
         listItem: {
-            bullet: ({ children }) => <li>{children}</li>,
-            number: ({ children }) => <li>{children}</li>,
+            bullet: ({ children }) => (
+                <li className="list__item">{children}</li>
+            ),
+            number: ({ children }) => (
+                <li className="list__item">{children}</li>
+            ),
         },
     };
 }

@@ -80,15 +80,18 @@
     font-variant-numeric: tabular-nums slashed-zero;
     white-space: nowrap;
 }
+/* The title stops at the wide edge, with the wide plates and what
+   follows the entry (the pager, the project row, the related entries);
+   the standfirst, the text, the listings and the close at the measure. */
 .title {
-    max-width: 21ch;
+    max-width: min(21ch, var(--prose-wide));
     margin-top: var(--s-4);
     font: var(--weight-display) var(--step-5) / 1.04 var(--font-display);
     letter-spacing: var(--track-display);
     text-wrap: balance;
 }
 .dek {
-    max-width: 48ch;
+    max-width: var(--prose-measure);
     margin-top: var(--s-4);
     color: var(--ink-2);
     font: 400 var(--step-1) / 1.45 var(--font-long);
@@ -169,18 +172,10 @@
     padding-top: var(--s-4);
 }
 
-/* ---- The text ------------------------------------------------------- */
-/* The headings carry their names only, as the contents do. */
-@media (min-width: 60rem) {
-    .body > :is(ul, ol) {
-        padding-left: 0;
-    }
-}
-
 /* ---- End matter: notes, revisions, the end mark, the follow line ----- */
 /* End of entry, then the follow links alone. */
 .after {
-    max-width: 36rem;
+    max-width: var(--prose-measure);
     margin-top: var(--s-8);
 }
 .endBlock + .endBlock,
@@ -263,8 +258,10 @@
     margin-bottom: var(--s-5);
 }
 
-.pager {
-    max-width: 56rem;
+/* The pager, the project and the related entries stop at the wide edge,
+   as the title does. */
+.end > * {
+    max-width: var(--prose-wide);
 }
 
 /* ---- Print: one column, a masthead, no rail or actions -------------- */

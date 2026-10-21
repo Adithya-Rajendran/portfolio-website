@@ -75,6 +75,21 @@
         --space-section: clamp(5rem, 3.333rem + 7.407vw, 10rem);
 
         /* ---- layout ------------------------------------------------ */
+        /* The long read's two edges: the measure (about 68 characters of
+           Newsreader at 18–20px), where the text, every listing and the
+           close stop, and the wide edge, where a title, a wide plate and
+           what follows the entry (the pager, the project row, the related
+           entries) stop, with the margin notes (styles/prose.css
+           .sidenote) inside it. */
+        --prose-measure: 36rem;
+        --prose-wide: 60rem;
+        /* The site's one bullet: a hairline dash, `--list-mark` wide, in
+           a `--list-gutter` gutter at the column's edge, with the text
+           after it (prose lists in styles/prose.css, the CV's lines in
+           styles/components.css, a project's highlight and retrospective
+           lists in mission.module.css). */
+        --list-gutter: 1.5rem;
+        --list-mark: 0.75rem;
         --margin: 16px;
         --gutter: 16px;
         --cols: 4;

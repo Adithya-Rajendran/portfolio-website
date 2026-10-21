@@ -238,11 +238,13 @@
     list-style: none;
 }
 /* One list style for both columns, like the callouts: the subheads tell
-   them apart. */
+   them apart. The mark is the site's bullet (styles/tokens.css
+   `--list-gutter`, `--list-mark`: the prose lists' and the CV's), a
+   border so paper keeps it. */
 .lessons li,
 .lines li {
     position: relative;
-    padding: var(--s-4) 0 var(--s-4) var(--s-6);
+    padding: var(--s-4) 0 var(--s-4) var(--list-gutter);
     border-top: var(--rule-hair) solid var(--rule-1);
     color: var(--ink-1);
     font: 400 var(--step-0) / 1.55 var(--font-display);
@@ -254,7 +256,7 @@
     position: absolute;
     left: 0;
     top: calc(var(--s-4) + 0.78em);
-    width: 0.9rem;
-    height: 1px;
-    background: var(--ink-3);
+    width: var(--list-mark);
+    height: 0;
+    border-top: var(--rule-hair) solid var(--ink-2);
 }
