@@ -148,8 +148,7 @@
         [data-page="resume"] .cv-item__lines li::before {
             top: 0.66em;
             width: 1.9mm;
-            height: 0.6pt;
-            background: var(--ink-2);
+            border-top-width: 0.6pt;
         }
         [data-page="resume"] .cv-item__facts {
             display: block;

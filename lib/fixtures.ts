@@ -41,15 +41,37 @@ function textBlock(
     };
 }
 
+/** A list item: a bullet or a number, nested by `level` (1 is the top);
+ *  a plain sentence, or a block with marks. */
+function listBlock(
+    text: string | ReturnType<typeof linkedTextBlock>,
+    listItem: "bullet" | "number",
+    level = 1,
+) {
+    const block = typeof text === "string" ? textBlock(text) : text;
+    return { ...block, listItem, level };
+}
+
 /**
  * A paragraph whose links are Studio-style `contentLink` annotations:
- * `[text, href]` pairs become linked spans between the plain `parts`.
+ * `[text, href]` pairs become linked spans between the plain `parts`,
+ * and `{ code }` an inline code span.
  */
-function linkedTextBlock(...parts: (string | [text: string, href: string])[]) {
+function linkedTextBlock(
+    ...parts: (string | [text: string, href: string] | { code: string })[]
+) {
     const markDefs: { _key: string; _type: "contentLink"; href: string }[] = [];
     const children = parts.map((part) => {
         if (typeof part === "string") {
             return { _key: nextKey(), _type: "span", text: part, marks: [] };
+        }
+        if (!Array.isArray(part)) {
+            return {
+                _key: nextKey(),
+                _type: "span",
+                text: part.code,
+                marks: ["code"],
+            };
         }
         const [text, href] = part;
         const mark = { _key: nextKey(), _type: "contentLink" as const, href };
@@ -499,7 +521,7 @@ const fixturePosts: PostWithBody[] = [
                 language: "bash",
                 filename: "fixture-wide.sh",
                 highlightedLines: [2],
-                code: "echo fixture\n# A fixture comment long enough to carry this listing past the 72-column measure.\nls -la",
+                code: "echo fixture\n# A fixture comment long enough that this line scrolls inside the listing's box.\nls -la",
             },
             {
                 _key: nextKey(),
@@ -531,6 +553,27 @@ const fixturePosts: PostWithBody[] = [
                 language: "yaml",
                 code: "# A fixture namespace\napiVersion: v1\nkind: Namespace\nmetadata:\n  name: fixture",
             },
+            textBlock("A fixture list of three, the second nested:"),
+            listBlock("A fixture bullet item.", "bullet"),
+            listBlock(
+                "A fixture bullet item long enough to wrap under itself on a phone, and not under its mark.",
+                "bullet",
+            ),
+            listBlock("A fixture nested item.", "bullet", 2),
+            // An item with marks: its link and inline code stay in the line.
+            listBlock(
+                linkedTextBlock(
+                    "A fixture third item, with ",
+                    ["a fixture link", "/blog/fixture-post-short-note"],
+                    " and ",
+                    { code: "fixture code" },
+                    " in its line, long enough to wrap on a phone.",
+                ),
+                "bullet",
+            ),
+            textBlock("A fixture numbered list:"),
+            listBlock("A fixture first step.", "number"),
+            listBlock("A fixture second step.", "number"),
         ] as ContentBody,
     },
     {

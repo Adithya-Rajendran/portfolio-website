@@ -155,7 +155,7 @@ function renderLink(
  * The feed matches the page (lib/prose.ts): a plate's caption carries no
  * number, a footnote its raised number linking to the Notes list at the
  * end, and a listing the one label its bar prints, the file name, else
- * the language.
+ * the language, and none for plain text.
  */
 function feedComponents(
     index: ProseIndex,
@@ -190,8 +190,8 @@ function feedComponents(
                     typeof value?._key === "string"
                         ? index.listings[value._key]
                         : undefined;
-                const figcaption = info
-                    ? `<figcaption>${escapeHtmlText(info.name)}</figcaption>`
+                const figcaption = info?.caption
+                    ? `<figcaption>${escapeHtmlText(info.caption)}</figcaption>`
                     : "";
                 const language =
                     typeof value?.language === "string" && value.language

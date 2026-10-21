@@ -47,7 +47,11 @@ export default function LogRow({
             </Title>
             {entry.dek ? <p className={styles.dek}>{entry.dek}</p> : null}
             {tags && entry.tagLinks.length > 0 ? (
-                <ul className={`tags ${styles.tags}`} aria-label={copy.tagList}>
+                <ul
+                    className={`tags ${styles.tags}`}
+                    aria-label={copy.tagList}
+                    role="list"
+                >
                     {entry.tagLinks.map((tag) => (
                         <li key={tag}>
                             <Link className="tag" href={`/blog/tags/${tag}`}>
