@@ -485,6 +485,15 @@
     html[data-route="/"] .site-footer .motion-ctl {
         display: none;
     }
+    /* Before RouteMarker has run (the first paint, a slow phone, a
+       crawler) the page says which it is: only one is mounted then, so
+       the home page's own root stands in for the route. */
+    html:not([data-route])
+        body:has([data-page="home"])
+        .site-footer
+        .motion-ctl {
+        display: none;
+    }
     /* Theme and motion controls need JavaScript. */
     html:not([data-js]) :is(.theme-switch, .theme-choice, .motion-ctl) {
         display: none;

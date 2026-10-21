@@ -13,7 +13,10 @@ import KeepWhole from "@/components/ui/keep-whole";
  * summary, under a hairline. The home page's rows after the flagship,
  * and /portfolio's least prominent projects. A cover adds a 3:2
  * thumbnail beside the line and title, its caption set as its credit
- * ("Illustration"), so the row stays smaller than the stage's plate.
+ * ("Illustration"), so the row stays smaller than the stage's plate. The
+ * cover follows the title in the source (the grid's `plate` area draws
+ * it beside the line and title), so a row reads line, title, then the
+ * image and its credit: the credit never leads the row.
  */
 export default function MissionRow({
     mission,
@@ -30,16 +33,6 @@ export default function MissionRow({
                 cover?.asset ? `${styles.row} ${styles.rowCovered}` : styles.row
             }
         >
-            {cover?.asset ? (
-                <Plate
-                    className={styles.rowPlate}
-                    image={cover}
-                    credit={cover.caption}
-                    ratio="3 / 2"
-                    sizes="(min-width: 60rem) 14vw, 32vw"
-                    width={600}
-                />
-            ) : null}
             <p className={styles.rowLine}>
                 <Status value={mission.statusValue}>
                     {mission.statusLabel}
@@ -53,6 +46,16 @@ export default function MissionRow({
                     {mission.title}
                 </Link>
             </Heading>
+            {cover?.asset ? (
+                <Plate
+                    className={styles.rowPlate}
+                    image={cover}
+                    credit={cover.caption}
+                    ratio="3 / 2"
+                    sizes="(min-width: 60rem) 14vw, 32vw"
+                    width={600}
+                />
+            ) : null}
             {mission.summary ? (
                 <p className={styles.rowSummary}>
                     <KeepWhole text={mission.summary} />

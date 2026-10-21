@@ -18,13 +18,16 @@ export function MissionTiles({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * A mission as a tile (contract §4): text first. Its line (type, status,
+ * A mission as a tile (contract §4): text first. Its line (status,
  * dates), its title as the heading (the link to its file, stretched over
  * the tile), its summary and its first four stack items, under a
  * hairline. Numbers stay on the file, beside their notes. A cover adds a
  * 3:2 thumbnail beside the title, its caption set as its credit
  * ("Illustration"), so the tile stays smaller than the stage's plate; a
  * mission without one is not given a stand-in. The arrow ends the line.
+ * The cover follows the title in the source (the grid's `plate` area
+ * draws it beside the title), so a card reads line, title, then the
+ * image and its credit: the credit never leads the card.
  */
 export default function MissionTile({
     mission,
@@ -43,6 +46,15 @@ export default function MissionTile({
                     : styles.tile
             }
         >
+            <div className={styles.tileHead}>
+                <MissionLine mission={mission} />
+                <Icon name="arrow" className={styles.tileArrow} />
+            </div>
+            <Heading className={styles.tileName}>
+                <Link className="stretch" href={mission.href}>
+                    {mission.title}
+                </Link>
+            </Heading>
             {cover?.asset ? (
                 <Plate
                     className={styles.tilePlate}
@@ -53,15 +65,6 @@ export default function MissionTile({
                     width={600}
                 />
             ) : null}
-            <div className={styles.tileHead}>
-                <MissionLine mission={mission} />
-                <Icon name="arrow" className={styles.tileArrow} />
-            </div>
-            <Heading className={styles.tileName}>
-                <Link className="stretch" href={mission.href}>
-                    {mission.title}
-                </Link>
-            </Heading>
             {mission.summary ? (
                 <p className={styles.tileSummary}>
                     <KeepWhole text={mission.summary} />
