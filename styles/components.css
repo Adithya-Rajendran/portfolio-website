@@ -1061,6 +1061,13 @@
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         white-space: nowrap;
+        /* The input, over the whole option, is its one hit target; the box
+           is the radio's drawing. The chosen box is lifted above its
+           neighbours' hairlines (z-index 1, below), which also puts it
+           above its own input: without this a pointer over the chosen
+           option was over the box (the label's cursor, not the control's),
+           and a click's hit test found the label, not the radio. */
+        pointer-events: none;
         transition:
             color var(--dur-hover) var(--ease-dock),
             background-color var(--dur-hover) var(--ease-dock);
