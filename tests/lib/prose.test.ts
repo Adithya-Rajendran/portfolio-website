@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
     LEAD_KEY,
-    LISTING_MEASURE,
     leadPlateIndex,
     calloutHeading,
     figureKind,
@@ -75,41 +74,13 @@ describe("listings", () => {
         expect(listings.a.label).toBe("Listing 1, Bash");
         expect(listings.b.label).toBe("Listing 2, install.sh");
         expect(listings.c.label).toBe("Listing 3, Text");
+        // The bar names a file or a language; plain text, nothing.
+        expect(listings.a.caption).toBe("Bash");
+        expect(listings.b.caption).toBe("install.sh");
+        expect(listings.c.caption).toBeNull();
         expect(new Set(Object.values(listings).map((l) => l.label)).size).toBe(
             3,
         );
-    });
-
-    it("measures the longest line, tabs counted as four", () => {
-        const { listings } = indexProse([
-            code("a", `short\n${"x".repeat(LISTING_MEASURE)}\n\n`),
-            code("tabs", `\t\t${"x".repeat(9)}`),
-            code("empty", ""),
-        ]);
-        expect(listings.a.longest).toBe(64);
-        expect(listings.tabs.longest).toBe(17);
-        expect(listings.empty.longest).toBe(0);
-    });
-
-    it("keeps every listing at the measure while each fits its 64 columns", () => {
-        const { listings } = indexProse([
-            code("at", `short\n${"x".repeat(LISTING_MEASURE)}`),
-            code("short", "echo 1"),
-        ]);
-        expect(LISTING_MEASURE).toBe(64);
-        expect(listings.at.wide).toBe(false);
-        expect(listings.short.wide).toBe(false);
-    });
-
-    it("breaks every listing out wide once one is past the measure, so they share one width", () => {
-        const { listings } = indexProse([
-            code("short", "echo 1"),
-            paragraph("p", ["Between."]),
-            code("tabs", `\t\t${"x".repeat(LISTING_MEASURE - 7)}`),
-        ]);
-        expect(listings.tabs.longest).toBe(LISTING_MEASURE + 1);
-        expect(listings.tabs.wide).toBe(true);
-        expect(listings.short.wide).toBe(true);
     });
 
     it("names languages for people", () => {

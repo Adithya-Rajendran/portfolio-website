@@ -4,16 +4,17 @@ import type { ListingInfo } from "@/lib/prose";
 
 /**
  * A code listing (G1): a bar with one label, the file name, else the
- * language (a file name already implies it), and, at its right, a
- * visible Copy button, over the highlighted code. Its number prints
- * nowhere (premium D3: nothing refers to it); it only keeps the names
- * apart: the scroll box is the focusable region, named "Listing 3,
- * install.sh", so a keyboard can scroll a long line and every listing on
- * a page has its own name. When any listing of a body is
- * longer than the text measure, they all break out wide
- * (`listing--wide`, lib/prose.ts). Highlighted lines arrive from Shiki as
- * `.line-highlight` (lib/highlight-code.ts). Ported from the mockup's
- * `.post-code` (writing.css) and site.css 4.15 Code.
+ * language (a file name already implies it; plain text has none), and,
+ * at its right, a visible Copy button, over the highlighted code. Its
+ * number prints nowhere (premium D3: nothing refers to it); it only
+ * keeps the names apart: the scroll box is the focusable region, named
+ * "Listing 3, install.sh", so a keyboard can scroll a long line and
+ * every listing on a page has its own name. A listing is the text's
+ * width: a longer line scrolls inside it, its edge fading where it
+ * continues (styles/prose.css), so no listing is wider than the text.
+ * Highlighted lines arrive from Shiki as `.line-highlight`
+ * (lib/highlight-code.ts). Ported from the mockup's `.post-code`
+ * (writing.css) and site.css 4.15 Code.
  */
 export default function Listing({
     info,
@@ -26,14 +27,13 @@ export default function Listing({
     html?: string;
 }) {
     return (
-        <div
-            className={info.wide ? "listing listing--wide" : "listing"}
-            data-listing={info.number}
-        >
+        <div className="listing" data-listing={info.number}>
             <div className="listing__bar">
-                <span className="listing__name" title={info.name}>
-                    {info.name}
-                </span>
+                {info.caption ? (
+                    <span className="listing__name" title={info.caption}>
+                        {info.caption}
+                    </span>
+                ) : null}
                 <CopyButton
                     text={code}
                     idle={copy.listing.copy}

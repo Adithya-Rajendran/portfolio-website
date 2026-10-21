@@ -1239,9 +1239,12 @@
         padding: 0;
         list-style: none;
     }
+    /* The site's bullet (styles/tokens.css `--list-gutter`,
+       `--list-mark`: the prose lists' and a project's highlight and
+       retrospective lists'), a border so paper keeps it. */
     .cv-item__lines li {
         position: relative;
-        padding-left: 1.35rem;
+        padding-left: var(--list-gutter);
         color: var(--ink-1);
         font: 400 var(--step-0) / 1.55 var(--font-display);
     }
@@ -1253,9 +1256,9 @@
         position: absolute;
         left: 0;
         top: 0.78em;
-        width: 0.7rem;
-        height: 1px;
-        background: var(--ink-3);
+        width: var(--list-mark);
+        height: 0;
+        border-top: var(--rule-hair) solid var(--ink-2);
     }
     /* The skills and the links, flush in the body column with no key: the
        mono names and the links' own words say what they are. */

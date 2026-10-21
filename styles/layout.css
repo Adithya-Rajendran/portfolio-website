@@ -1,5 +1,6 @@
 /*
- * The page frame: the shell, the 4 / 8 / 12 column grid (up to 1552px),
+ * The page frame: the shell (`--maxw`, 1408px, inside `--margin` on each
+ * side: styles/tokens.css), the 4 / 8 / 12 column grid,
  * named regions and rhythm helpers. Ported from d-deep-field-plus site.css
  * "3. LAYOUT".
  */

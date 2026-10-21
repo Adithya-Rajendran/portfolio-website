@@ -24,7 +24,7 @@ export default function Footnotes({
             <h2 className="notes__title" id="entry-notes">
                 {copy.notes.title}
             </h2>
-            <ol className="notes__list">
+            <ol className="notes__list" role="list">
                 {notes.map((note) => (
                     <li key={note.id} id={note.id} className="notes__item">
                         <span className="notes__n" aria-hidden="true">

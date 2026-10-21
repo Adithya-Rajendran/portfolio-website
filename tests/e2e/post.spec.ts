@@ -13,15 +13,17 @@ import { THEMES, storeTheme } from "./support/theme";
  * navigation (Cache Components keeps the previous entry mounted, hidden).
  * Premium WS3: one numbering per thing (the footnotes alone: no LOG
  * number, plate or figure number, margin number or line count), the type
- * (h2 at 32px or less, leading 1.52), the listings at one width, and one
- * close (no Author block). Premium D3: no printed listing number and no
- * numbers in the contents (the headings have names). The justify pass:
- * the crumb is Writing alone, the head carries no tags and names the
- * author once (By, linked to About; on paper the masthead), the contents
- * show from two sections, a listing's bar has one label, the revisions
- * are dated as the head dates, and the close is the end mark and the
- * follow line, then the pager ("Previous", "Next"). The fixture-only
- * tests read the fixture posts in lib/fixtures.ts.
+ * (h2 at 32px or less, leading 1.52), every listing at the text's width
+ * (a long line scrolling inside it), and one close (no Author block).
+ * Premium D3: no printed listing number and no numbers in the contents
+ * (the headings have names). The justify pass: the crumb is Writing
+ * alone, the head carries no tags and names the author once (By, linked
+ * to About; on paper the masthead), the contents show from two sections,
+ * a listing's bar has one label (none for plain text), a list's mark is
+ * the site's dash in its gutter, the revisions are dated as the head
+ * dates, and the close is the end mark and the follow line, then the
+ * pager ("Previous", "Next"). The fixture-only tests read the fixture
+ * posts in lib/fixtures.ts.
  */
 
 const FIXTURE_POST = "/blog/fixture-post-code-and-links";
@@ -521,7 +523,7 @@ test("printing an entry keeps the text and drops the rail and actions", async ({
     await expect(body(page).locator(":scope > p").first()).toBeVisible();
 });
 
-test("one listing past the measure takes every listing wide; a highlighted line is marked", async ({
+test("every listing is the text's width, a long line scrolling inside; a highlighted line is marked", async ({
     page,
 }, testInfo) => {
     test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
@@ -541,20 +543,140 @@ test("one listing past the measure takes every listing wide; a highlighted line 
     const text = await body(page).locator(":scope > p").first().boundingBox();
     const shortBox = await short.boundingBox();
     const wideBox = await wide.boundingBox();
-    // One width per entry, wider than the text, and no line cut.
-    expect(shortBox!.width).toBe(wideBox!.width);
-    expect(wideBox!.width).toBeGreaterThan(text!.width + 100);
-    for (const listing of await page
-        .locator('[data-page="post"]:visible .listing__code')
-        .all()) {
-        expect(
-            await listing.evaluate((el) => el.scrollWidth <= el.clientWidth),
-        ).toBe(true);
-    }
+    // Every listing is the text's width, whatever its longest line: a
+    // line past it scrolls inside the box, and a listing that fits
+    // scrolls nowhere.
+    expect(shortBox!.width).toBe(text!.width);
+    expect(wideBox!.width).toBe(text!.width);
+    const overflow = (listing: Locator) =>
+        listing.locator(".listing__code").evaluate((el) => ({
+            scrolls: el.scrollWidth > el.clientWidth,
+            overflowX: getComputedStyle(el).overflowX,
+        }));
+    expect(await overflow(short)).toEqual({
+        scrolls: false,
+        overflowX: "auto",
+    });
+    expect(await overflow(wide)).toEqual({ scrolls: true, overflowX: "auto" });
     await expect(wide.locator(".line-highlight")).toHaveCount(1);
     await expect(wide.locator(".line-highlight")).toContainText(
         "A fixture comment",
     );
+});
+
+test("a list's marks sit in a gutter at the column's edge, its text flush after them, the same on a phone", async ({
+    page,
+}, testInfo) => {
+    test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
+    const check = async () => {
+        const text = (await body(page)
+            .locator(":scope > p")
+            .first()
+            .boundingBox())!;
+        const bullets = body(page).getByRole("list").first();
+        const numbers = body(page).getByRole("list").last();
+        // The browser draws no marker: the marks are the stylesheet's.
+        for (const list of [bullets, numbers]) {
+            expect(
+                await list.evaluate((el) => getComputedStyle(el).listStyleType),
+            ).toBe("none");
+            expect(
+                await list.evaluate((el) => getComputedStyle(el).paddingLeft),
+            ).toBe("0px");
+        }
+        // The bullet is the site's hairline dash at the column's left
+        // edge; the text starts after the gutter and wraps to its own
+        // start, not the mark's.
+        const first = bullets.getByRole("listitem").first();
+        const mark = await first.evaluate((el) => {
+            const style = getComputedStyle(el, "::before");
+            return {
+                width: parseFloat(style.width),
+                height: style.height,
+                content: style.content,
+            };
+        });
+        expect(mark.content).toBe('""');
+        expect(mark.height).toBe("1px");
+        expect(mark.width).toBeGreaterThanOrEqual(10);
+        const item = (await first.boundingBox())!;
+        expect(Math.round(item.x)).toBe(Math.round(text.x));
+        // Every line of an item's own text (its nested list, a child,
+        // aside) starts after the gutter: the long plain item, and the
+        // item with a link and inline code, whose marks stay in the line
+        // (a grid would drop them into the gutter on a row of their own).
+        // The list's own items (`getByRole` would count the nested one).
+        const items = bullets.locator(":scope > li");
+        for (const index of [1, 2]) {
+            const lines = await items.nth(index).evaluate((el) => {
+                // The boxes of the item's text, links and code, merged
+                // into lines by their vertical overlap (a code span's box
+                // is not as tall as the text's beside it).
+                const boxes: DOMRect[] = [];
+                for (const node of el.childNodes) {
+                    if (
+                        node instanceof Element &&
+                        /^(UL|OL)$/.test(node.tagName)
+                    ) {
+                        continue;
+                    }
+                    const range = document.createRange();
+                    range.selectNode(node);
+                    for (const r of range.getClientRects()) {
+                        if (r.width) boxes.push(r);
+                    }
+                }
+                const rows: { top: number; bottom: number; left: number }[] =
+                    [];
+                for (const r of boxes.sort((a, b) => a.top - b.top)) {
+                    const row = rows.find(
+                        (line) => r.top < line.bottom && r.bottom > line.top,
+                    );
+                    if (row) {
+                        row.left = Math.min(row.left, r.left);
+                        row.bottom = Math.max(row.bottom, r.bottom);
+                    } else {
+                        rows.push({
+                            top: r.top,
+                            bottom: r.bottom,
+                            left: r.left,
+                        });
+                    }
+                }
+                return rows.map((line) => Math.round(line.left));
+            });
+            expect(lines.length, `item ${index} wraps`).toBeGreaterThan(1);
+            expect(new Set(lines), `item ${index} lines`).toEqual(
+                new Set([Math.round(text.x + 24)]),
+            );
+        }
+        const marked = items.nth(2);
+        await expect(marked.getByRole("link")).toBeVisible();
+        await expect(marked.locator("code")).toBeVisible();
+        // A nested item keeps the gutter under its parent's text.
+        const nested = bullets.locator("li li").first();
+        const nestedBox = (await nested.boundingBox())!;
+        expect(Math.round(nestedBox.x)).toBe(Math.round(text.x + 24));
+        // A number is DM Mono at the label size, the notes list's voice.
+        const number = await numbers
+            .getByRole("listitem")
+            .nth(1)
+            .evaluate((el) => {
+                const style = getComputedStyle(el, "::before");
+                return {
+                    content: style.content,
+                    family: style.fontFamily,
+                    size: style.fontSize,
+                };
+            });
+        expect(number.content).toMatch(/counter\(item\)/);
+        expect(number.family).toMatch(/DM Mono/);
+        expect(number.size).toBe("13px");
+    };
+    await page.goto(FIXTURE_POST);
+    await check();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await check();
 });
 
 test("footnotes: a raised number, a margin note on wide screens, the notes at the end", async ({

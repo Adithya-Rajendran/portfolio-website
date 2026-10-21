@@ -558,7 +558,7 @@ describe("renderFeedXml — the long-read types (PR 10)", () => {
             '<figure><figcaption>install.sh</figcaption><pre><code class="language-bash">echo one</code></pre></figure>',
         );
         expect(html).toContain(
-            "<figure><figcaption>Text</figcaption><pre><code>plain text</code></pre></figure>",
+            "<figure><pre><code>plain text</code></pre></figure>",
         );
         expect(html).not.toContain("Listing");
     });

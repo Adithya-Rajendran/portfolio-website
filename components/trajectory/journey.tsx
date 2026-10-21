@@ -512,6 +512,7 @@ export default function Journey({
                                 <ol
                                     className={styles.rail}
                                     aria-label={copy.rail}
+                                    role="list"
                                 >
                                     {data.chapters.map((chapter, i) => (
                                         <li key={chapter.id}>
