@@ -438,8 +438,12 @@ only live in comments or commit messages.
   cover's caption is the plate's credit line (`Plate credit`,
   `.caption__src`: DM Mono 13px in ink-3; the hero's credit, over the
   photograph, is the same mono in ink-2); the stage
-  keeps it as the owner's caption. A card's cover never outweighs the
-  stage's photograph (`home.spec.ts`, `missions.spec.ts`). `missionLayout` picks the page's layout: the full file
+  keeps it as the owner's caption. A card reads in the order it is
+  seen: the line, then the title, then the cover and its credit, so the
+  credit follows the image it credits and never leads the card (the
+  cover comes after the title in the source, and the card's grid areas
+  draw it beside the title; `missions.spec.ts`). A card's cover never
+  outweighs the stage's photograph (`home.spec.ts`, `missions.spec.ts`). `missionLayout` picks the page's layout: the full file
   where there is evidence (a brief that adds to the card, `briefAdds`;
   results, lessons or next steps, callouts, the model's poster, an essay
   in sections; a cover is no evidence of its own), otherwise the short
@@ -1199,7 +1203,9 @@ loaded, only when that run cannot.
   write-up or stand-in text, a stack item never split, a thin project is
   a short note (the Kubernetes note without a Stack row, one highlight a
   paragraph),
-  a cover leads its card, credited, opens the project and stays a
+  every card on `/portfolio` and home reading its line, then its title,
+  before its cover and the cover's credit (at 1440 and 390),
+  a cover drawn beside its card's title, credited, opens the project and stays a
   thumbnail narrower than the stage's plate and, with the other, smaller,
   at 390, 768, 960, 1440 and 1920 (where the build has covers: the
   fixtures have none),

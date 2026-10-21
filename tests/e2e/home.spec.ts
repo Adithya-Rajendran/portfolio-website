@@ -266,7 +266,7 @@ test("the starfield drifts only while it may", async ({ page }) => {
     await expect(stars).toHaveAttribute("data-state", "running");
 
     // Pause motion, beside it in the hero; the footer leaves it to the
-    // hero on home.
+    // hero on home (before hydration too: the test below).
     await expect(
         page.getByRole("contentinfo").getByRole("button", { name: /motion/ }),
     ).toBeHidden();
@@ -295,6 +295,33 @@ test("the starfield holds still under the OS reduce-motion setting", async ({
     // Nothing moves, so there is nothing to pause and no note reading the
     // setting back: the foot's right side is empty.
     await expect(hero(page).locator(".motion-ctl")).toBeHidden();
+});
+
+test("before the page has run, Pause motion shows once: in the hero on home, in the footer elsewhere", async ({
+    page,
+}) => {
+    // React is held back (no script file loads; the stylesheets do, and
+    // the inline boot script still runs): the first paint, a slow phone,
+    // a crawler.
+    await page.route("**/*", (route) =>
+        route.request().resourceType() === "script"
+            ? route.abort()
+            : route.fallback(),
+    );
+    const html = page.locator("html");
+    const footerControl = page
+        .getByRole("contentinfo")
+        .getByRole("button", { name: /motion/ });
+    await page.goto("/");
+    await expect(html).toHaveAttribute("data-js", "");
+    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(
+        hero(page).getByRole("button", { name: chromeCopy.holdDrift }),
+    ).toBeVisible();
+    await expect(footerControl).toBeHidden();
+    await page.goto("/about");
+    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(footerControl).toBeVisible();
 });
 
 test("the photograph is credited in Void; Manual draws the limb", async ({
