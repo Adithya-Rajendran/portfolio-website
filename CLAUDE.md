@@ -823,9 +823,13 @@ only live in comments or commit messages.
   the home description as its summary, then Writing, Projects, Profile
   and Policies, each a link with a line from that page's own meta
   description. It is kept by hand and under 2 KB, with no address or
-  number (`tests/lib/llms-txt.test.ts`): publishing, renaming or
-  unpublishing a post or project means editing it, or the smoke spec
-  fails on the next preview and in the weekly production run. It is not
+  number (`tests/lib/llms-txt.test.ts`, which also counts the Writing
+  and Projects links): publishing, renaming or unpublishing a post or
+  project means editing it (and the count), or the smoke spec fails on
+  the next preview and in the weekly production run. At four posts it
+  sits about 25 bytes under the limit, each line a shortened extract of
+  its page's description (the first clause), so the next post means
+  trimming the longer lines again. It is not
   in the sitemap, and `robots.txt` stays allow-all.
 - **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
   `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in

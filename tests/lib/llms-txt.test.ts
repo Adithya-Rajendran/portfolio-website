@@ -65,7 +65,7 @@ describe("llms.txt", () => {
     it("links by absolute URL, each under one of the site's routes", () => {
         const writing = paths("Writing");
         const projects = paths("Projects");
-        expect(writing).toHaveLength(3);
+        expect(writing).toHaveLength(4);
         expect(projects).toHaveLength(3);
         const served = new Set(
             ROUTE_TAGS.flatMap((route) =>

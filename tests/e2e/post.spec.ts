@@ -275,8 +275,11 @@ test("a listing is named, prints no number and copies its code", async ({
     await expect(
         page.locator('[data-page="post"]:visible .listing__bar').first(),
     ).not.toContainText(/listing/i);
+    // Exact: on an entry with ten listings or more, "Copy listing 1" is
+    // also the start of "Copy listing 10".
     const copy = page.getByRole("button", {
         name: postCopy.listing.copyLabel(1),
+        exact: true,
     });
     await expect(copy).toBeVisible();
     await expect(copy).toHaveText(postCopy.listing.copy);
