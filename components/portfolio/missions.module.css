@@ -167,7 +167,9 @@
    under the line, which keeps the tile's width and its arrow; the summary
    and the stack run under both. Two fifths of the tile on phones, a third
    from 600px (a row's measures), so the stage's plate stays the page's
-   largest image. */
+   largest image. The plate follows the title in the source, so the card
+   reads line, title, cover and credit; the areas draw it beside the
+   title. */
 .tileCovered {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
@@ -321,7 +323,8 @@
    title and the summary runs under both; from 600px the thumbnail (a
    third) stands beside the line, title and summary, and the empty track
    takes whatever it adds to their height. The stage's plate stays the
-   section's largest image. */
+   section's largest image. As on a tile, the plate follows the title in
+   the source; the areas place it. */
 .rowCovered {
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     grid-template-areas:

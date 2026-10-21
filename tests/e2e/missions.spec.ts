@@ -10,7 +10,9 @@ import { sitemapPages } from "./support/routes";
  * every project's page, the flagship first and the owner's last project
  * least prominent, with no counts, register or related pages; no project
  * name is set in capitals, and a card lists at most four stack items; a
- * cover leads its card, carries its caption as a credit, opens the project
+ * card reads its line, then its title, then its cover (drawn beside the
+ * title) and the cover's credit; a cover carries its caption as a
+ * credit, opens the project
  * and stays a thumbnail smaller than the stage's photograph (checked where
  * the build has covers; the fixtures have none); the quieter rows carry no
  * "Also" label.
@@ -110,7 +112,7 @@ test("/portfolio links every project, the flagship first and the last project qu
     }
 });
 
-test("a cover leads its card, credited, and opens the project", async ({
+test("a cover follows its card's title, credited, and opens the project", async ({
     page,
 }) => {
     await page.goto("/portfolio");
@@ -129,21 +131,32 @@ test("a cover leads its card, credited, and opens the project", async ({
                     box.x + box.width / 2,
                     box.y + box.height / 2,
                 );
+                const heading = card.querySelector(":scope > :is(h2, h3, h4)");
                 const credit = figure.querySelector("figcaption .caption__src");
+                const title = heading?.getBoundingClientRect();
                 return {
-                    first: card.firstElementChild === figure,
+                    // In the source after the title, drawn beside it.
+                    afterTitle: Boolean(
+                        heading &&
+                        heading.compareDocumentPosition(figure) &
+                            Node.DOCUMENT_POSITION_FOLLOWING,
+                    ),
+                    beside: Boolean(
+                        title &&
+                        box.top < title.bottom &&
+                        box.bottom > title.top,
+                    ),
                     caption: figure.querySelector("figcaption")?.textContent,
                     credit: credit?.textContent ?? null,
                     font: credit ? getComputedStyle(credit).fontFamily : "",
                     opens: hit?.closest("a")?.getAttribute("href") ?? null,
-                    href: card
-                        .querySelector(":is(h3, h4) a")
-                        ?.getAttribute("href"),
+                    href: heading?.querySelector("a")?.getAttribute("href"),
                 };
             }),
     );
     for (const cover of covers) {
-        expect(cover.first).toBe(true);
+        expect(cover.afterTitle).toBe(true);
+        expect(cover.beside).toBe(true);
         expect(cover.opens).toBe(cover.href);
         if (cover.caption) {
             expect(cover.credit).toBe(cover.caption);
@@ -151,6 +164,71 @@ test("a cover leads its card, credited, and opens the project", async ({
         }
     }
 });
+
+for (const [path, width] of [
+    ["/portfolio", 1440],
+    ["/portfolio", 390],
+    ["/", 1440],
+    ["/", 390],
+] as const) {
+    test(`a project card on ${path} reads its title before its cover's credit at ${width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        // Every card: the stage and the tiles (articles), the rows (list
+        // items holding a heading).
+        const cards = main(page)
+            .getByRole("article")
+            .or(
+                main(page)
+                    .getByRole("listitem")
+                    .filter({ has: page.getByRole("heading") }),
+            )
+            .filter({ has: page.locator('a[href^="/portfolio/"]') });
+        const count = await cards.count();
+        expect(count).toBeGreaterThan(0);
+        for (let i = 0; i < count; i++) {
+            const card = cards.nth(i);
+            const title = card.getByRole("heading").first();
+            const titleText = (await title.innerText()).trim();
+            const text = await card.innerText();
+            const before = text.slice(0, text.indexOf(titleText));
+            expect(text.indexOf(titleText), titleText).toBeGreaterThanOrEqual(
+                0,
+            );
+            // Only the line (● Status · dates) comes before the title: one
+            // or two short lines, never the cover or its credit.
+            expect(
+                before.trim().split(/\n+/).length,
+                titleText,
+            ).toBeLessThanOrEqual(2);
+            for (const figure of await card.getByRole("figure").all()) {
+                const caption = (await figure.innerText()).trim();
+                if (caption) {
+                    expect(before, titleText).not.toContain(caption);
+                    expect(text.indexOf(caption), titleText).toBeGreaterThan(
+                        text.indexOf(titleText),
+                    );
+                }
+                // Not by role: a cover without alt text is presentational.
+                const image = figure.locator("img");
+                const alt = await image.getAttribute("alt");
+                // The image itself follows the title in the source.
+                const follows = await title.evaluate(
+                    (heading, img) =>
+                        Boolean(
+                            img &&
+                            heading.compareDocumentPosition(img) &
+                                Node.DOCUMENT_POSITION_FOLLOWING,
+                        ),
+                    await image.elementHandle(),
+                );
+                expect(follows, `${titleText}: ${alt}`).toBe(true);
+            }
+        }
+    });
+}
 
 for (const width of [390, 768, 960, 1440, 1920]) {
     test(`a tile's cover is a credited thumbnail, smaller than the stage's plate, at ${width}px`, async ({
