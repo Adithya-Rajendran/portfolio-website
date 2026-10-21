@@ -23,6 +23,16 @@ export function fixturesEnabled(): boolean {
     return process.env.SANITY_USE_FIXTURES === "1";
 }
 
+/**
+ * Ordinary prose for the fixture posts' first paragraph: the post spec
+ * measures characters to the line from an entry's own paragraphs, and a
+ * one-line placeholder full of narrow letters reads several characters
+ * wider than real text at the same measure. Neutral, and about no real
+ * work.
+ */
+const FIXTURE_PROSE =
+    "A build without credentials still renders every part of a page, so this paragraph stands in for the text a real entry would carry. It runs over several lines at the reading measure, in ordinary words of ordinary length, and the layout treats it as it would any published paragraph: the line length, the leading and the space around it behave as they do on a real post, which is what the checks on this page are meant to see.";
+
 let sequence = 0;
 const nextKey = () => `fixture-${sequence++}`;
 
@@ -476,7 +486,7 @@ const fixturePosts: PostWithBody[] = [
         revisedAt: "2026-07-02",
         tags: ["fixture", "code"],
         projectIds: ["fixture-project-flagship"],
-        wordCount: 128,
+        wordCount: 208,
         changelog: [
             {
                 _key: "fixture-change-update",
@@ -493,7 +503,7 @@ const fixturePosts: PostWithBody[] = [
         ],
         body: [
             textBlock(
-                "This fixture post exists only in builds without Sanity credentials. It describes no real work.",
+                `This fixture post exists only in builds without Sanity credentials. It describes no real work. ${FIXTURE_PROSE}`,
             ),
             footnotedTextBlock(
                 "A fixture sentence that carries ",
@@ -585,10 +595,10 @@ const fixturePosts: PostWithBody[] = [
             "Fixture content for offline builds: a paragraph and a quotation.",
         publishedAt: "2026-05-12",
         tags: ["fixture", "notes"],
-        wordCount: 25,
+        wordCount: 105,
         body: [
             textBlock(
-                "This fixture post exists only in builds without Sanity credentials.",
+                `This fixture post exists only in builds without Sanity credentials. ${FIXTURE_PROSE}`,
             ),
             textBlock("A fixture quotation.", "blockquote"),
             // The same heading as the code-and-links fixture, so a test can
@@ -606,10 +616,10 @@ const fixturePosts: PostWithBody[] = [
         description: "Fixture content for offline builds: a single paragraph.",
         publishedAt: "2026-04-02",
         tags: ["fixture"],
-        wordCount: 10,
+        wordCount: 90,
         body: [
             textBlock(
-                "This fixture post exists only in builds without Sanity credentials.",
+                `This fixture post exists only in builds without Sanity credentials. ${FIXTURE_PROSE}`,
             ),
         ] as ContentBody,
     },
@@ -624,10 +634,10 @@ const fixturePosts: PostWithBody[] = [
             "Fixture content for offline builds: the oldest entry, filed the year before the others.",
         publishedAt: "2025-11-14",
         tags: ["fixture", "notes"],
-        wordCount: 16,
+        wordCount: 96,
         body: [
             textBlock(
-                "This fixture post exists only in builds without Sanity credentials. It is dated a year earlier.",
+                `This fixture post exists only in builds without Sanity credentials. It is dated a year earlier. ${FIXTURE_PROSE}`,
             ),
         ] as ContentBody,
     },

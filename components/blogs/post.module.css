@@ -13,7 +13,9 @@
 /* From 60rem the reading column is centred in the shell: three tracks,
    the rail's, the measure and the margin notes', the two sides equal
    (the rail's at least 12rem, so on a narrow laptop the measure sits a
-   little right of centre rather than squeeze it). The shell is a size
+   little right of centre, and where even that leaves too little room,
+   from 60rem to about 62rem, the measure gives way, never the rail and
+   never into a sideways scroll). The shell is a size
    container, so what may run past the measure (the title, a wide or
    full plate) is sized from the shell: it reaches right into the notes'
    track, never left into the rail's, and stops at the shell. */
@@ -51,7 +53,7 @@
         --reach: min(var(--prose-wide), var(--room));
         container-type: inline-size;
         grid-template-columns:
-            minmax(12rem, 1fr) var(--prose-measure)
+            minmax(12rem, 1fr) minmax(0, var(--prose-measure))
             minmax(0, 1fr);
         column-gap: var(--gutter);
     }
