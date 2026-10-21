@@ -11,7 +11,10 @@ import { useId, type ChangeEvent } from "react";
  * Directive-free: a Server Component renders it uncontrolled
  * (`defaultValue`) and a page island listens for `change` on the group's
  * `name`; a client component can pass `value` and `onChange`. The inputs
- * sit inside their labels; a description's ids come from `useId`, so a
+ * sit inside their labels, each covering its option as the one hit target
+ * (the box under it is the drawing and takes no pointer events, so the
+ * chosen box, lifted above its neighbours' hairlines, never takes a click
+ * from its own radio); a description's ids come from `useId`, so a
  * page kept mounted but hidden by Cache Components cannot collide with
  * the visible one. Radios need JavaScript to do anything, so callers add
  * `js-only` when nothing else reads them.

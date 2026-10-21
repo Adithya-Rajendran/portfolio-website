@@ -23,6 +23,16 @@ export function fixturesEnabled(): boolean {
     return process.env.SANITY_USE_FIXTURES === "1";
 }
 
+/**
+ * Ordinary prose for the fixture posts' first paragraph: the post spec
+ * measures characters to the line from an entry's own paragraphs, and a
+ * one-line placeholder full of narrow letters reads several characters
+ * wider than real text at the same measure. Neutral, and about no real
+ * work.
+ */
+const FIXTURE_PROSE =
+    "A build without credentials still renders every part of a page, so this paragraph stands in for the text a real entry would carry. It runs over several lines at the reading measure, in ordinary words of ordinary length, and the layout treats it as it would any published paragraph: the line length, the leading and the space around it behave as they do on a real post, which is what the checks on this page are meant to see.";
+
 let sequence = 0;
 const nextKey = () => `fixture-${sequence++}`;
 
@@ -41,15 +51,37 @@ function textBlock(
     };
 }
 
+/** A list item: a bullet or a number, nested by `level` (1 is the top);
+ *  a plain sentence, or a block with marks. */
+function listBlock(
+    text: string | ReturnType<typeof linkedTextBlock>,
+    listItem: "bullet" | "number",
+    level = 1,
+) {
+    const block = typeof text === "string" ? textBlock(text) : text;
+    return { ...block, listItem, level };
+}
+
 /**
  * A paragraph whose links are Studio-style `contentLink` annotations:
- * `[text, href]` pairs become linked spans between the plain `parts`.
+ * `[text, href]` pairs become linked spans between the plain `parts`,
+ * and `{ code }` an inline code span.
  */
-function linkedTextBlock(...parts: (string | [text: string, href: string])[]) {
+function linkedTextBlock(
+    ...parts: (string | [text: string, href: string] | { code: string })[]
+) {
     const markDefs: { _key: string; _type: "contentLink"; href: string }[] = [];
     const children = parts.map((part) => {
         if (typeof part === "string") {
             return { _key: nextKey(), _type: "span", text: part, marks: [] };
+        }
+        if (!Array.isArray(part)) {
+            return {
+                _key: nextKey(),
+                _type: "span",
+                text: part.code,
+                marks: ["code"],
+            };
         }
         const [text, href] = part;
         const mark = { _key: nextKey(), _type: "contentLink" as const, href };
@@ -454,7 +486,7 @@ const fixturePosts: PostWithBody[] = [
         revisedAt: "2026-07-02",
         tags: ["fixture", "code"],
         projectIds: ["fixture-project-flagship"],
-        wordCount: 128,
+        wordCount: 208,
         changelog: [
             {
                 _key: "fixture-change-update",
@@ -471,7 +503,7 @@ const fixturePosts: PostWithBody[] = [
         ],
         body: [
             textBlock(
-                "This fixture post exists only in builds without Sanity credentials. It describes no real work.",
+                `This fixture post exists only in builds without Sanity credentials. It describes no real work. ${FIXTURE_PROSE}`,
             ),
             footnotedTextBlock(
                 "A fixture sentence that carries ",
@@ -499,7 +531,7 @@ const fixturePosts: PostWithBody[] = [
                 language: "bash",
                 filename: "fixture-wide.sh",
                 highlightedLines: [2],
-                code: "echo fixture\n# A fixture comment long enough to carry this listing past the 72-column measure.\nls -la",
+                code: "echo fixture\n# A fixture comment long enough that this line scrolls inside the listing's box.\nls -la",
             },
             {
                 _key: nextKey(),
@@ -531,6 +563,27 @@ const fixturePosts: PostWithBody[] = [
                 language: "yaml",
                 code: "# A fixture namespace\napiVersion: v1\nkind: Namespace\nmetadata:\n  name: fixture",
             },
+            textBlock("A fixture list of three, the second nested:"),
+            listBlock("A fixture bullet item.", "bullet"),
+            listBlock(
+                "A fixture bullet item long enough to wrap under itself on a phone, and not under its mark.",
+                "bullet",
+            ),
+            listBlock("A fixture nested item.", "bullet", 2),
+            // An item with marks: its link and inline code stay in the line.
+            listBlock(
+                linkedTextBlock(
+                    "A fixture third item, with ",
+                    ["a fixture link", "/blog/fixture-post-short-note"],
+                    " and ",
+                    { code: "fixture code" },
+                    " in its line, long enough to wrap on a phone.",
+                ),
+                "bullet",
+            ),
+            textBlock("A fixture numbered list:"),
+            listBlock("A fixture first step.", "number"),
+            listBlock("A fixture second step.", "number"),
         ] as ContentBody,
     },
     {
@@ -542,10 +595,10 @@ const fixturePosts: PostWithBody[] = [
             "Fixture content for offline builds: a paragraph and a quotation.",
         publishedAt: "2026-05-12",
         tags: ["fixture", "notes"],
-        wordCount: 25,
+        wordCount: 105,
         body: [
             textBlock(
-                "This fixture post exists only in builds without Sanity credentials.",
+                `This fixture post exists only in builds without Sanity credentials. ${FIXTURE_PROSE}`,
             ),
             textBlock("A fixture quotation.", "blockquote"),
             // The same heading as the code-and-links fixture, so a test can
@@ -563,10 +616,10 @@ const fixturePosts: PostWithBody[] = [
         description: "Fixture content for offline builds: a single paragraph.",
         publishedAt: "2026-04-02",
         tags: ["fixture"],
-        wordCount: 10,
+        wordCount: 90,
         body: [
             textBlock(
-                "This fixture post exists only in builds without Sanity credentials.",
+                `This fixture post exists only in builds without Sanity credentials. ${FIXTURE_PROSE}`,
             ),
         ] as ContentBody,
     },
@@ -581,10 +634,10 @@ const fixturePosts: PostWithBody[] = [
             "Fixture content for offline builds: the oldest entry, filed the year before the others.",
         publishedAt: "2025-11-14",
         tags: ["fixture", "notes"],
-        wordCount: 16,
+        wordCount: 96,
         body: [
             textBlock(
-                "This fixture post exists only in builds without Sanity credentials. It is dated a year earlier.",
+                `This fixture post exists only in builds without Sanity credentials. It is dated a year earlier. ${FIXTURE_PROSE}`,
             ),
         ] as ContentBody,
     },

@@ -485,6 +485,15 @@
     html[data-route="/"] .site-footer .motion-ctl {
         display: none;
     }
+    /* Before RouteMarker has run (the first paint, a slow phone, a
+       crawler) the page says which it is: only one is mounted then, so
+       the home page's own root stands in for the route. */
+    html:not([data-route])
+        body:has([data-page="home"])
+        .site-footer
+        .motion-ctl {
+        display: none;
+    }
     /* Theme and motion controls need JavaScript. */
     html:not([data-js]) :is(.theme-switch, .theme-choice, .motion-ctl) {
         display: none;
@@ -1061,6 +1070,13 @@
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         white-space: nowrap;
+        /* The input, over the whole option, is its one hit target; the box
+           is the radio's drawing. The chosen box is lifted above its
+           neighbours' hairlines (z-index 1, below), which also puts it
+           above its own input: without this a pointer over the chosen
+           option was over the box (the label's cursor, not the control's),
+           and a click's hit test found the label, not the radio. */
+        pointer-events: none;
         transition:
             color var(--dur-hover) var(--ease-dock),
             background-color var(--dur-hover) var(--ease-dock);
@@ -1239,9 +1255,12 @@
         padding: 0;
         list-style: none;
     }
+    /* The site's bullet (styles/tokens.css `--list-gutter`,
+       `--list-mark`: the prose lists' and a project's highlight and
+       retrospective lists'), a border so paper keeps it. */
     .cv-item__lines li {
         position: relative;
-        padding-left: 1.35rem;
+        padding-left: var(--list-gutter);
         color: var(--ink-1);
         font: 400 var(--step-0) / 1.55 var(--font-display);
     }
@@ -1253,9 +1272,9 @@
         position: absolute;
         left: 0;
         top: 0.78em;
-        width: 0.7rem;
-        height: 1px;
-        background: var(--ink-3);
+        width: var(--list-mark);
+        height: 0;
+        border-top: var(--rule-hair) solid var(--ink-2);
     }
     /* The skills and the links, flush in the body column with no key: the
        mono names and the links' own words say what they are. */

@@ -11,17 +11,6 @@ import { calloutToneTitle } from "@/lib/post-fields";
 
 type Block = { _key?: string; _type: string; [key: string]: unknown };
 
-/**
- * The listings break out of the text measure (G1) when a line is longer
- * than this many characters: the measure fits 64 columns of mono at 13px
- * (66, less a little room), so a line that fits is never cut.
- * @internal Exported for tests.
- */
-export const LISTING_MEASURE = 64;
-
-/** A tab counts as this many columns when measuring a line. */
-const TAB_WIDTH = 4;
-
 /** Display names for the languages the Studio offers and a few aliases. */
 const LANGUAGE_NAMES: Record<string, string> = {
     bash: "Bash",
@@ -68,14 +57,12 @@ export function languageName(language?: string | null): string {
 
 export interface ListingInfo {
     number: number;
-    /** The bar's one label: the file name, else the language ("Bash",
-     *  "YAML", "Text"), which a file name already implies. */
+    /** The file name, else the language ("Bash", "YAML", "Text"), which
+     *  a file name already implies: the accessible name's part. */
     name: string;
-    /** The longest line, in columns (tabs count as four). */
-    longest: number;
-    /** Breaks out of the text measure: every listing of a body does when
-     *  any one is longer than it, so the listings share one width. */
-    wide: boolean;
+    /** The bar's label and the feed's caption: the name, except plain
+     *  text with no file name, which says nothing a reader needs. */
+    caption: string | null;
     /** The accessible name: "Listing 3, install.sh". */
     label: string;
 }
@@ -84,19 +71,6 @@ export interface ListingInfo {
  *  @internal Exported for tests. */
 export function listingLabel(number: number, name: string): string {
     return `Listing ${number}, ${name}`;
-}
-
-/** The lines of a listing as it is drawn: trailing blank lines dropped. */
-function listingLines(code: string): string[] {
-    return code.replace(/\s+$/, "").split("\n");
-}
-
-function columns(line: string): number {
-    let width = 0;
-    for (const char of line) {
-        width += char === "\t" ? TAB_WIDTH - (width % TAB_WIDTH) : 1;
-    }
-    return width;
 }
 
 type FigureKind = "plate" | "figure";
@@ -210,18 +184,14 @@ export function indexProse(
     const out = (body ?? []).map((block): Block => {
         if (!block || typeof block !== "object") return block;
         if (block._type === "code" && typeof block._key === "string") {
-            const code = typeof block.code === "string" ? block.code : "";
-            const longest = Math.max(0, ...listingLines(code).map(columns));
             const number = Object.keys(listings).length + 1;
-            const name =
-                typeof block.filename === "string" && block.filename.trim()
-                    ? block.filename.trim()
-                    : languageName(block.language as string);
+            const filename =
+                typeof block.filename === "string" ? block.filename.trim() : "";
+            const name = filename || languageName(block.language as string);
             listings[block._key] = {
                 number,
                 name,
-                longest,
-                wide: false,
+                caption: filename || name !== languageName() ? name : null,
                 label: listingLabel(number, name),
             };
             return block;
@@ -267,13 +237,6 @@ export function indexProse(
             ),
         };
     });
-
-    // One width per body: a narrow listing between wide ones would make
-    // the code column jump as the reader scrolls.
-    const wide = Object.values(listings).some(
-        (listing) => listing.longest > LISTING_MEASURE,
-    );
-    for (const listing of Object.values(listings)) listing.wide = wide;
 
     return { body: out, listings, figures, notes };
 }

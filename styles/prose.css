@@ -1,7 +1,7 @@
 /*
  * The long read (G1): what the rich-text renderers emit
  * (components/blogs/portable-text-components.tsx) under `.prose`, on the
- * post page and in the project essay. Newsreader at a 68-character measure,
+ * post page and in the project essay. Newsreader at a 74-character measure,
  * numbered listings with the one Shiki theme's colours, plates and figures,
  * quiet notes (a quotation and a callout share one rule), footnotes with
  * margin notes, and the notes list. A page decides the column around it
@@ -9,11 +9,40 @@
  * d-deep-field-plus site.css 4.15–4.17 and writing.css.
  */
 
+/* A listing's edge fades (.listing__code): 0 while the box does not
+   scroll, so a listing that fits fades nowhere. */
+@property --listing-fade-start {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+@property --listing-fade-end {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+@keyframes listing-fade {
+    0% {
+        --listing-fade-start: 0px;
+        --listing-fade-end: 2.5rem;
+    }
+    8% {
+        --listing-fade-start: 2.5rem;
+    }
+    92% {
+        --listing-fade-end: 2.5rem;
+    }
+    100% {
+        --listing-fade-start: 2.5rem;
+        --listing-fade-end: 0px;
+    }
+}
+
 @layer components {
-    /* The measure: 36rem, about 68 characters of Newsreader to the line at
-       18–20px (CSS `ch` counts the wide "0", so it reads 52ch). */
+    /* The measure (`--prose-measure`, styles/tokens.css): about 74
+       characters of Newsreader to the line at 18–20px (CSS `ch` counts the
+       wide "0", so it reads 56ch). */
     .prose {
-        --prose-measure: 36rem;
         color: var(--ink-1);
         font: 400 var(--step-long) / var(--lh-long) var(--font-long);
         font-variant-numeric: proportional-nums;
@@ -40,7 +69,7 @@
 
     /* ---- Headings ---------------------------------------------------- */
     .prose h2 {
-        margin-top: 2.4em;
+        margin-top: 2em;
         font: 400 var(--step-2) / 1.15 var(--font-display);
         letter-spacing: -0.01em;
         scroll-margin-top: calc(var(--header-h) + var(--s-5));
@@ -57,7 +86,7 @@
         scroll-margin-top: calc(var(--header-h) + var(--s-5));
     }
     .prose :is(h2, h3, h4) + * {
-        margin-top: 0.7em;
+        margin-top: 0.75rem;
     }
 
     /* ---- Text -------------------------------------------------------- */
@@ -65,32 +94,81 @@
     .prose strong {
         font-weight: 600;
     }
-    .prose :is(ul, ol) {
-        padding-left: 1.3em;
+    /* ---- Lists ------------------------------------------------------- */
+    /* One treatment on every width and page, and the site's one bullet
+       (the CV's lines and a project's highlight and retrospective lists
+       draw the same mark from the same tokens): the mark sits in a
+       gutter at the column's left edge (`--list-gutter`,
+       styles/tokens.css), the item's text starts after it and wraps
+       under itself, never under the mark. The item keeps its inline
+       flow (a link, inline code or a footnote's margin note in it stays
+       in the line, which a grid would break into cells): the gutter is
+       the item's padding and the mark an inline-block pulled back into
+       it on the first line. The marks are the stylesheet's, not the
+       browser's (`list-style: none`; the renderer keeps `role="list"`
+       for Safari): a bullet is the hairline dash (`--list-mark` wide,
+       ink-2; a border, so paper keeps it) a little above the baseline;
+       a number is DM Mono at the label size in ink-2, as the notes list
+       numbers (`.notes__n`), on the text's baseline. One level down the
+       dash is ink-3 and the numbers are letters. The classes are the
+       renderer's (components/blogs/portable-text-components.tsx), so
+       the notes list and a gallery, lists under `.prose` too, keep their
+       own rules. */
+    .list {
+        --list-col: var(--list-gutter);
+        margin-inline: 0;
+        padding: 0;
+        list-style: none;
     }
-    .prose ul {
-        list-style: disc;
+    .list--number {
+        --list-col: 1.75rem;
+        counter-reset: item;
     }
-    .prose ol {
-        list-style: decimal;
+    .list__item {
+        padding-left: var(--list-col);
     }
-    .prose li + li {
-        margin-top: 0.4em;
+    .list__item + .list__item,
+    .list__item > .list {
+        margin-top: 0.45em;
     }
-    .prose li::marker {
-        color: var(--ink-3);
-        font-family: var(--font-mono);
-        font-size: var(--step-0);
+    .list__item::before {
+        display: inline-block;
+        width: var(--list-col);
+        margin-left: calc(-1 * var(--list-col));
+    }
+    .list--bullet > .list__item::before {
+        content: "";
+        width: var(--list-mark);
+        height: 0;
+        margin-right: calc(var(--list-col) - var(--list-mark));
+        border-top: var(--rule-hair) solid var(--ink-2);
+        vertical-align: 0.3em;
+    }
+    .list .list--bullet > .list__item::before {
+        border-top-color: var(--ink-3);
+    }
+    .list--number > .list__item::before {
+        counter-increment: item;
+        content: counter(item) ".";
+        color: var(--ink-2);
+        font: 400 var(--label-size) / 1 var(--font-mono);
+        font-variant-numeric: tabular-nums slashed-zero;
+    }
+    .list .list--number > .list__item::before {
+        content: counter(item, lower-alpha) ".";
     }
     /* Inline code takes the UI text's step (17px beside the text's 20px
        at 1440), not a fraction of its line: the page keeps to its six
-       sizes. In a heading it is the heading's size. */
+       sizes. In a heading it is the heading's size. No box: a fill's
+       padding read as a space before the punctuation after it, and a
+       span that wrapped left half a box on each line. Its spaces are
+       kept as written; a long path may break anywhere rather than push
+       past the measure. */
     .prose :not(pre) > code {
-        padding: 0.08em 0.32em;
-        background: var(--surface-1);
         font-size: var(--step-0);
         font-variant-ligatures: none;
         white-space: break-spaces;
+        overflow-wrap: anywhere;
     }
     .prose :is(h2, h3, h4) code {
         font-size: inherit;
@@ -132,15 +210,20 @@
         --code-token-inserted: var(--ink-1);
         --code-token-deleted: var(--ink-2);
         --code-token-changed: var(--ink-1);
-        margin-block: var(--space-block);
         background: var(--surface-1);
         font: 400 var(--label-size) / 1.62 var(--font-mono);
     }
-    .prose > .listing--wide {
-        max-width: min(100%, 60rem);
+    /* A listing is the text's width (`.prose > *`), never wider: a long
+       line scrolls inside it (below). It sits a little further from the
+       text than a paragraph does (1.1em), the same above and below; 1.6em
+       of the text's size, since the listing's own em is the mono's 13px.
+       `:where` keeps the rule at a paragraph's weight, so under a heading
+       the heading's 0.75rem still wins. */
+    .prose > :where(.listing) {
+        margin-block: calc(1.6 * var(--step-long));
     }
-    /* One label (the file name, else the language), then Copy at the
-       right, in the listing's own mono. */
+    /* One label (the file name, else the language; none for plain
+       text), then Copy at the right, in the listing's own mono. */
     .listing__bar {
         display: flex;
         flex-wrap: wrap;
@@ -177,11 +260,32 @@
     .listing .copy__btn:focus-visible {
         color: var(--ink-1);
     }
-    /* The scroll box is the focusable, labelled region. */
+    /* The scroll box is the focusable, labelled region. A line longer
+       than the box fades out at the edge it continues past (and back in
+       at the start once scrolled), so it never reads as cut: overlay
+       scrollbars show nothing until touched. Where scroll-driven
+       animations are missing the scrollbar alone says it. */
     .listing__code {
         overflow-x: auto;
         scrollbar-width: thin;
-        scrollbar-color: var(--rule-2) transparent;
+        scrollbar-color: var(--ink-3) transparent;
+    }
+    @supports (animation-timeline: scroll()) {
+        .listing__code {
+            mask-image: linear-gradient(
+                to right,
+                transparent,
+                #000 var(--listing-fade-start),
+                #000 calc(100% - var(--listing-fade-end)),
+                transparent
+            );
+            animation: listing-fade linear both;
+            animation-timeline: scroll(self inline);
+        }
+        /* The focus ring runs round the whole box. */
+        .listing__code:focus-visible {
+            mask-image: none;
+        }
     }
     .listing__code:focus-visible {
         outline-offset: -2px;
@@ -245,7 +349,7 @@
         max-width: 60ch;
     }
     .prose > .plate--wide {
-        max-width: min(100%, 60rem);
+        max-width: min(100%, var(--prose-wide));
     }
     .prose > .plate--full {
         max-width: none;
@@ -384,7 +488,7 @@
             hyphens: manual;
         }
         /* Anything wider than the measure clears the margin notes. */
-        .prose > :is(.listing--wide, .plate--wide, .plate--full, .gallery) {
+        .prose > :is(.plate--wide, .plate--full, .gallery) {
             clear: right;
         }
     }
@@ -395,7 +499,7 @@
 
     /* The numbered notes at the end (components/prose/footnotes.tsx). */
     .notes {
-        max-width: var(--prose-measure, 36rem);
+        max-width: var(--prose-measure);
         padding-top: var(--s-5);
         border-top: var(--rule-hair) solid var(--rule-2);
         color: var(--ink-2);
@@ -471,6 +575,7 @@
         }
         .listing__code {
             overflow: visible;
+            mask-image: none;
         }
         .listing__code pre {
             width: auto;
