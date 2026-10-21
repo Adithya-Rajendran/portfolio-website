@@ -305,7 +305,23 @@ only live in comments or commit messages.
   the meta line's DM Mono; on screen only, as the print masthead's line
   names the author), the title and the standfirst: no tags (the index's
   rows carry them). The contents (the rail, the phone's box) show from two
-  sections; with one, the rail's column is space. A listing is one treatment (the surface fill; hairlines
+  sections; with one, the rail's column is space. From 60rem the
+  reading column is centred in the `.shell` (`post.module.css`
+  `.layout`: three tracks, the rail's, the measure and the margin
+  notes', the two sides equal), not set in grid columns 4–12 as a
+  record page's `g-main` body is: the measure sits as far from the
+  shell's left edge as from its right, except on a narrow laptop
+  (under 1136px), where the rail's track keeps its 12rem floor and the
+  measure sits that far in. The entry's `.layout` is a size container,
+  so the title and a wide or full plate, sized from it (`--room`, the
+  measure's left edge to the shell's right; `--reach`, the nearer of
+  that and the wide edge), reach right into the notes' track and never
+  left into the rail's, and never past the shell; the pager, the
+  project row and the related entries below (`.end`, in the entry's
+  second `.shell`) start at the measure's left edge by the same sums.
+  The `.shell` itself (`--maxw` 88rem, `--margin` 64px from 60rem and
+  96px from 80rem, styles/tokens.css) keeps every page a central band
+  with generous margins on a laptop and a wide screen. A listing is one treatment (the surface fill; hairlines
   above and below on paper); a callout is the quotation's quiet note (the
   ink rule) led by its tone and title in bold ("Caution: Back up first",
   `calloutHeading`), with no colour, frame or band; inline code has no
@@ -328,7 +344,7 @@ only live in comments or commit messages.
   (styles/tokens.css): `--prose-measure` (the text, every listing, the
   standfirst, the close) and `--prose-wide`, past the margin notes (the
   title, wide plates, and after the entry the pager, the project row and
-  the related entries). A revision is dated as the head
+  the related entries), or the shell's right edge where that is nearer. A revision is dated as the head
   dates ("30 Jun 2026 · Correction", on the page and in the feed; no
   `Rev` or triangle). The entry closes once, in its own column: End of
   entry, then "Follow: RSS · LinkedIn" (`FollowLinks`, also /blog's

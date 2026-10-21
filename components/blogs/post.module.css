@@ -10,6 +10,13 @@
 }
 
 /* ---- Layout: rows crumb · head · text; the rail spans head and text --- */
+/* From 60rem the reading column is centred in the shell: three tracks,
+   the rail's, the measure and the margin notes', the two sides equal
+   (the rail's at least 12rem, so on a narrow laptop the measure sits a
+   little right of centre rather than squeeze it). The shell is a size
+   container, so what may run past the measure (the title, a wide or
+   full plate) is sized from the shell: it reaches right into the notes'
+   track, never left into the rail's, and stops at the shell. */
 .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -29,7 +36,23 @@
 }
 @media (min-width: 60rem) {
     .layout {
-        grid-template-columns: repeat(12, minmax(0, 1fr));
+        /* The room from the measure's left edge to the shell's right
+           edge: the shell less the rail's track (half the rest, at least
+           12rem) and one gutter; a wide plate reaches that far, or the
+           wide edge, whichever is nearer. */
+        --room: calc(
+            100cqi -
+                max(
+                    12rem,
+                    (100cqi - var(--prose-measure) - 2 * var(--gutter)) / 2
+                ) -
+                var(--gutter)
+        );
+        --reach: min(var(--prose-wide), var(--room));
+        container-type: inline-size;
+        grid-template-columns:
+            minmax(12rem, 1fr) var(--prose-measure)
+            minmax(0, 1fr);
         column-gap: var(--gutter);
     }
     .crumbRow {
@@ -37,17 +60,29 @@
         grid-row: 1;
     }
     .head {
-        grid-column: 4 / -1;
+        grid-column: 2;
         grid-row: 2;
     }
     .main {
-        grid-column: 4 / -1;
+        grid-column: 2;
         grid-row: 3;
         margin-top: var(--s-7);
     }
+    .title {
+        width: min(21ch, var(--reach));
+        max-width: none;
+    }
+    .main :global(.prose > .plate--wide) {
+        width: var(--reach);
+        max-width: none;
+    }
+    .main :global(.prose > .plate--full) {
+        width: var(--room);
+        max-width: none;
+    }
     .rail {
         display: block;
-        grid-column: 1 / span 3;
+        grid-column: 1;
         grid-row: 2 / span 2;
         align-self: start;
         position: sticky;
@@ -80,7 +115,8 @@
     font-variant-numeric: tabular-nums slashed-zero;
     white-space: nowrap;
 }
-/* The title stops at the wide edge, with the wide plates and what
+/* The title stops at the wide edge, or at the shell where that is
+   nearer (`--reach`, above), with the wide plates and what
    follows the entry (the pager, the project row, the related entries);
    the standfirst, the text, the listings and the close at the measure. */
 .title {
@@ -247,10 +283,14 @@
     display: grid;
     gap: var(--s-8);
 }
+/* Aligned to the measure's left edge (the shell is `.endSec`): half the
+   shell less the measure, or the rail's 12rem floor and a gutter where
+   that binds, as `.layout`'s tracks. */
 @media (min-width: 60rem) {
     .end {
-        padding-left: calc(
-            (100% - 11 * var(--gutter)) / 12 * 3 + 3 * var(--gutter)
+        padding-left: max(
+            calc(12rem + var(--gutter)),
+            calc((100% - var(--prose-measure)) / 2)
         );
     }
 }
@@ -259,7 +299,7 @@
 }
 
 /* The pager, the project and the related entries stop at the wide edge,
-   as the title does. */
+   as the title does, or at the shell where that is nearer. */
 .end > * {
     max-width: var(--prose-wide);
 }
@@ -283,13 +323,21 @@
         display: block;
         width: auto;
         padding-top: 0;
+        container-type: normal;
     }
     .main {
         margin-top: 12pt;
     }
+    /* Paper has no shell to reach into: the title and the plates take
+       the page's width. */
     .title {
+        width: auto;
         max-width: none;
         font-size: 22pt;
+    }
+    .main :global(.prose > .plate--wide),
+    .main :global(.prose > .plate--full) {
+        width: auto;
     }
     .dek {
         font-size: 12pt;

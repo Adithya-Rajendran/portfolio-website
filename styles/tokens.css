@@ -79,8 +79,9 @@
            Newsreader at 18–20px), where the text, every listing and the
            close stop, and the wide edge, where a title, a wide plate and
            what follows the entry (the pager, the project row, the related
-           entries) stop, with the margin notes (styles/prose.css
-           .sidenote) inside it. */
+           entries) stop, or the shell's right edge where that is nearer
+           (post.module.css `--reach`), with the margin notes
+           (styles/prose.css .sidenote) inside it. */
         --prose-measure: 36rem;
         --prose-wide: 60rem;
         /* The site's one bullet: a hairline dash, `--list-mark` wide, in
@@ -93,7 +94,9 @@
         --margin: 16px;
         --gutter: 16px;
         --cols: 4;
-        --maxw: 97rem;
+        /* The shell: generous outer margins from a laptop up, and a cap
+           that keeps every page a central band on a wide screen. */
+        --maxw: 88rem;
         --measure: 37rem;
         /* An index or list beside its rail: the log index, the CV rows. */
         --measure-index: 61rem;
@@ -128,7 +131,7 @@
     }
     @media (min-width: 60rem) {
         :root {
-            --margin: 48px;
+            --margin: 64px;
             --gutter: 24px;
             --cols: 12;
             --header-h: 72px;
@@ -136,7 +139,7 @@
     }
     @media (min-width: 80rem) {
         :root {
-            --margin: 64px;
+            --margin: 96px;
             --gutter: 32px;
         }
     }
