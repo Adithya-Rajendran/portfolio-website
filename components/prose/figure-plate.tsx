@@ -1,9 +1,7 @@
-import Image from "next/image";
-import type { CSSProperties } from "react";
+import Plate from "@/components/ui/plate";
 import { minWidth } from "@/lib/breakpoints";
 import type { ImageWidth } from "@/lib/post-fields";
 import type { FigureInfo } from "@/lib/prose";
-import { urlForImage } from "@/lib/sanity-image";
 
 /**
  * An image in the text as a plate (G1, G7): a photograph, or a diagram,
@@ -12,9 +10,11 @@ import { urlForImage } from "@/lib/sanity-image";
  * caption is the owner's, verbatim, with the credit as its source line;
  * nothing is added. A tall or square plate at text width keeps its
  * caption beside it on wider screens. The photograph itself carries
- * nothing (the plate rule in styles/components.css, `.photo`). Ported
- * from the mockup's `DF.render.photo` (site.css 4.26) and writing.css
- * "Plates".
+ * nothing (the plate rule in styles/components.css, `.photo`). It is
+ * the one `Plate` (components/ui/plate.tsx), with the long read's layout
+ * and shape classes; a credit without a caption is the caption's source
+ * line alone. Ported from the mockup's `DF.render.photo` (site.css 4.26)
+ * and writing.css "Plates".
  */
 
 export type PlateImage = {
@@ -64,55 +64,16 @@ export default function FigurePlate({
     const height = value.dimensions?.height || 1067;
     const shape = shapeOf(width, height);
     const layout = layoutOf(value.width);
-    const request = layout === "prose" ? 1200 : 2000;
-    const src = urlForImage(value)
-        .width(Math.min(request, width))
-        .fit("max")
-        .auto("format")
-        .url();
-    const photo = info.kind === "plate";
-    const classes = [
-        "plate",
-        `plate--${layout}`,
-        `plate--${shape}`,
-        "photo",
-        photo ? "photo--real" : "photo--drawing",
-    ].join(" ");
-    const style = {
-        "--photo-ratio": `${width} / ${height}`,
-    } as CSSProperties;
-    const caption = value.caption?.trim();
-    const credit = value.credit?.trim();
-
     return (
-        <figure className={classes} style={style}>
-            <div className="photo__frame">
-                <Image
-                    className="photo__img"
-                    src={src}
-                    alt={value.alt || ""}
-                    width={width}
-                    height={height}
-                    sizes={sizesFor(layout, shape)}
-                    loading={priority ? "eager" : "lazy"}
-                    {...(value.lqip
-                        ? {
-                              placeholder: "blur" as const,
-                              blurDataURL: value.lqip,
-                          }
-                        : {})}
-                />
-            </div>
-            {caption || credit ? (
-                <figcaption className="caption">
-                    <span className="caption__body">
-                        {caption}
-                        {credit ? (
-                            <span className="caption__src">{credit}</span>
-                        ) : null}
-                    </span>
-                </figcaption>
-            ) : null}
-        </figure>
+        <Plate
+            image={{ ...value, dimensions: { width, height } }}
+            kind={info.kind === "plate" ? "photo" : "drawing"}
+            className={`plate plate--${layout} plate--${shape}`}
+            caption={value.caption?.trim() || null}
+            credit={value.credit?.trim() || null}
+            sizes={sizesFor(layout, shape)}
+            width={layout === "prose" ? 1200 : 2000}
+            loading={priority ? "eager" : "lazy"}
+        />
     );
 }

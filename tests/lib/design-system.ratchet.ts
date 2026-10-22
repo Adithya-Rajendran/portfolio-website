@@ -9,6 +9,4 @@
  */
 export const RATCHET: Readonly<Record<string, number>> = {
     "R12|components/home/hero.module.css|@media (max-width: 47.99rem)|.photo|bottom": 1,
-    "R12|styles/components.css||.route-row__num|padding-top": 1,
-    "R12|styles/components.css||.route-row|grid-template-columns": 1,
 };

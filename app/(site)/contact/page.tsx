@@ -68,11 +68,7 @@ export default async function ContactPage() {
                 intro={profile?.contactIntro?.trim() || null}
             >
                 {openTo ? (
-                    <Availability
-                        className={styles.openTo}
-                        label={copy.openTo}
-                        text={openTo}
-                    />
+                    <Availability label={copy.openTo} text={openTo} />
                 ) : null}
             </PageHead>
 

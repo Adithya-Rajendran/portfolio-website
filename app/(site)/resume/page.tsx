@@ -475,11 +475,7 @@ export default async function ResumePage() {
                     intro={summary}
                 >
                     {openTo ? (
-                        <Availability
-                            className={styles.openTo}
-                            label={copy.openTo}
-                            text={openTo}
-                        />
+                        <Availability label={copy.openTo} text={openTo} />
                     ) : null}
                     {hasPdf ? (
                         <div className="cluster page-head__actions">

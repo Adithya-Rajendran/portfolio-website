@@ -575,11 +575,7 @@ export const COMPONENT_PROPERTIES: Readonly<
         reason: "The hero's phone preview image, set inline from the encoded photograph.",
     },
     "--photo-ratio": {
-        files: [
-            "styles/components.css",
-            "components/prose/figure-plate.tsx",
-            "components/ui/plate.tsx",
-        ],
+        files: ["styles/components.css", "components/ui/plate.tsx"],
         reason: "A plate's aspect ratio, set inline from the image's own.",
     },
     "--photo-focus": {

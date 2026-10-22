@@ -21,8 +21,9 @@ export function OpenToItems({ text }: { text: string | readonly string[] }) {
 /**
  * What the owner is open to (the profile's `availability`, joined by
  * `availabilityLine`): the active status mark and its label over the line,
- * printed as written. The /resume and /contact heads; the home hero sets
- * its own, centred. Render it only when there is a line.
+ * printed as written. The /resume and /contact heads, which set it apart
+ * from the intro (`.page-head .availability`); the home hero sets its
+ * own, centred. Render it only when there is a line.
  */
 export default function Availability({
     label,
