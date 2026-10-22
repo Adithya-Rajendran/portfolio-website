@@ -20,7 +20,9 @@ import {
  * one of Michroma's two places, the header's wordmark and a page head's
  * themed tag; and 13px text is a label, a control or data, never UI text.
  * And every list under a head ends where the head's rule ends, from 390
- * to 3824 px: no list has a width of its own.
+ * to 3824 px: no list has a width of its own; and a page head's title
+ * sits directly under its tag, at one height on every page, however far
+ * the head's right column runs past it.
  */
 const WIDTHS = [320, 390, 600, 960, 1024, 1280, 1440, 1920];
 
@@ -163,6 +165,51 @@ test("the header fits a phone with the root text at 150%", async ({ page }) => {
                 .map((heading) => heading.textContent?.trim()),
         );
     expect(spilled, "titles past their column").toEqual([]);
+});
+
+test("every page head sets its title under its tag, at one height", async ({
+    page,
+    request,
+}, testInfo) => {
+    // The title hangs from the tag row: the head's right column (the
+    // intro, Open To, the actions) runs on past it as far as it needs,
+    // so going from one section to the next never moves the title.
+    const tagPage = (await contentPages(request, testInfo)).find((path) =>
+        path.startsWith("/blog/tags/"),
+    );
+    const paths = [
+        ...STATIC_PAGES.filter((path) => path !== "/"),
+        ...(tagPage ? [tagPage] : []),
+        MISSING_PAGES.unmatched,
+    ];
+    test.setTimeout(30_000 + paths.length * 5_000);
+    const widths = [390, 960, 1280, 1440, 1920];
+    const tops: number[][] = [];
+    for (const path of paths) {
+        await page.goto(path);
+        const main = page.getByRole("main");
+        const tag = main.locator(".page-head > .section-tag");
+        const title = main.getByRole("heading", { level: 1 });
+        const ys: number[] = [];
+        for (const width of widths) {
+            await page.setViewportSize({ width, height: 900 });
+            const row = (await tag.boundingBox())!;
+            const box = (await title.boundingBox())!;
+            expect(
+                box.y - (row.y + row.height),
+                `${path} at ${width}px: the title's distance under its tag`,
+            ).toBeLessThanOrEqual(24);
+            ys.push(Math.round(box.y));
+        }
+        tops.push(ys);
+    }
+    for (const [index, width] of widths.entries()) {
+        const ys = tops.map((row) => row[index]);
+        expect(
+            Math.max(...ys) - Math.min(...ys),
+            `the titles' tops at ${width}px (${paths.join(", ")}): ${ys.join(", ")}`,
+        ).toBeLessThanOrEqual(1);
+    }
 });
 
 /**

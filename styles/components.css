@@ -1373,7 +1373,11 @@
 
     /* ===== Page head, split (contract §1) ============================== */
     /* The title on the left half, the intro and the actions on the right
-       from 960px. */
+       from 960px, both hanging from the tag row: the title sits directly
+       under its tag, at the same height on every page, and the right
+       column runs on past it as far as it needs. Set at the column's foot
+       instead, it would sink as far as the column outgrows it, and move
+       from one section to the next. */
     .page-head--split {
         padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
         padding-bottom: var(--s-6);
@@ -1394,15 +1398,17 @@
             display: grid;
             grid-template-columns: repeat(12, minmax(0, 1fr));
             column-gap: var(--gutter);
-            align-items: end;
+            align-items: start;
         }
         .page-head--split > .section-tag {
             grid-column: 1 / -1;
         }
+        /* A title taller than the right column (a two-line 404) takes the
+           rows the column leaves empty, so the intro and the actions stay
+           together at the top beside it. */
         .page-head--split > .page-head__title {
             grid-column: 1 / span 6;
             grid-row: 2 / span 4;
-            align-self: end;
         }
         .page-head--split > :not(.section-tag, .page-head__title) {
             grid-column: 7 / -1;

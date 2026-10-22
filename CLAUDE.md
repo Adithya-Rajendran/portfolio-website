@@ -640,7 +640,11 @@ only live in comments or commit messages.
   Flight Log, Trajectory, Crew File, Comms) is only the small tag above
   its page's h1 (`PageHead tag`) and on its share card (`OgCard tag`).
   Section heads (`SectionTag`, `DocSection title`) are the plain name as
-  a Jost h2; nothing is numbered (no § numbers). A list under a head
+  a Jost h2; nothing is numbered (no § numbers). A page head's title
+  (`PageHead`) sits directly under its tag, at one height on every page:
+  from 960px the intro, Open To and the actions beside it run on past it
+  as far as they need, and the title never drops to meet their foot
+  (`.page-head--split`). A list under a head
   ends where the head's rule ends and has no width of its own: at the
   shell's edge (home's Latest writing, the index under /blog's and a tag
   page's head), at the main column's (a `DocSection`'s rows, table and
@@ -1116,7 +1120,9 @@ loaded, only when that run cannot.
   Michroma's two places, and 13px text only a label, a control or data;
   and on home, `/portfolio`, `/blog`, `/about`, the CV and every post,
   tag and project page, from 390 to 3824 px, every list under a head
-  ending where the head's rule ends),
+  ending where the head's rule ends; and every page head's title
+  directly under its tag, at one height on every page from 390 to
+  1920 px),
   `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
   Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440
