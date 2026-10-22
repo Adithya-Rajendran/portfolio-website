@@ -3,8 +3,9 @@
  * shared by /portfolio, the mission files and the home page's stage. Ported from the mockup's site.css 4.12 and
  * missions.css, held to the unified contract: orange only on the Active
  * dot, hairlines, no boxes; a project's title is its heading, in
- * sentence case. Hover is the site's one grammar: an ink rule, the title
- * underlined, the arrow nudged.
+ * sentence case. Hover is the site's one grammar (`lit`,
+ * styles/recipes.css): an ink rule, the title underlined, the arrow
+ * nudged, on hover and on the title's keyboard focus.
  */
 
 /* ---- The line: ● Status · dates, never wrapped ------------------------- */
@@ -21,9 +22,10 @@
 }
 .dates {
     flex: none;
-    color: var(--ink-1);
-    font: 400 var(--label-size) / 1 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    color: var(--text-quiet);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
+    line-height: var(--lh-solid);
 }
 
 .stack {
@@ -32,8 +34,9 @@
     gap: var(--s-1) var(--s-4);
     margin: 0;
     padding: 0;
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.5 var(--font-mono);
+    color: var(--text-quiet);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
     list-style: none;
 }
 /* An item never splits across lines ("Canonical OpenStack"). */
@@ -52,41 +55,25 @@
 }
 /* The title is the heading, in sentence case. */
 .stageHeading {
-    max-width: 22ch;
+    max-width: var(--measure-title);
     margin-top: var(--s-5);
-    font: 400 var(--step-4) / 1.08 var(--font-display);
-    letter-spacing: -0.015em;
+    font: var(--type-title-xl);
+    letter-spacing: var(--track-title);
     text-wrap: balance;
 }
-.stageHeading a {
-    text-decoration: none;
-}
-.stageHeading a:hover {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.12em;
-}
 .stageSummary {
-    max-width: 52ch;
+    max-width: var(--measure-lead);
     margin-top: var(--s-3);
-    color: var(--ink-2);
-    font: 400 var(--step-1) / 1.5 var(--font-long);
+    color: var(--text-quiet);
+    font: var(--type-dek);
     text-wrap: pretty;
 }
 /* The title links the page: the rows' arrow trails its last word, in
-   ink-3, and nudges with the underline on hover. */
+   ink-3, and nudges with the underline on hover and on its focus. */
 .stageArrow {
-    width: 0.42em;
-    height: 0.42em;
-    color: var(--ink-3);
-    vertical-align: 0.06em;
-    transition:
-        transform var(--dur-hover) var(--ease-dock),
-        color var(--dur-hover) var(--ease-dock);
-}
-.stageHeading a:hover .stageArrow {
-    color: var(--ink-1);
-    transform: translateX(4px);
+    width: var(--icon-display);
+    height: var(--icon-display);
+    vertical-align: var(--icon-out-shift);
 }
 .stageCopy > .stack {
     margin-top: var(--s-5);
@@ -127,40 +114,30 @@
     }
 }
 .tile {
+    --row-rest: var(--rule-firm);
     position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--s-3);
     min-width: 0;
     padding-top: var(--s-5);
-    border-top: var(--rule-hair) solid var(--rule-2);
+    border-top: var(--rule-hair) solid var(--row-rule);
     transition: border-color var(--dur-hover) var(--ease-dock);
-}
-.tile:hover {
-    border-top-color: var(--ink-1);
 }
 .tileName {
     margin-top: var(--s-2);
     padding-right: var(--s-6);
-    font: 400 var(--step-3) / 1.08 var(--font-display);
-    letter-spacing: -0.01em;
+    font: var(--type-title-lg);
+    letter-spacing: var(--track-title);
     text-wrap: balance;
     /* A word wider than a covered tile's title column (large or tracked
        text on a phone) breaks rather than runs past it. */
     overflow-wrap: break-word;
 }
-.tileName a {
-    text-decoration: none;
-}
-.tile:hover .tileName a {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.14em;
-}
 .tileSummary {
-    max-width: 52ch;
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.55 var(--font-long);
+    max-width: var(--measure-lead);
+    color: var(--text-quiet);
+    font: var(--type-note);
     text-wrap: pretty;
 }
 /* A tile with a cover: a 3:2 thumbnail with its credit beside the title,
@@ -257,14 +234,6 @@
     position: absolute;
     top: 0.1rem;
     right: 0;
-    color: var(--ink-3);
-    transition:
-        transform var(--dur-hover) var(--ease-dock),
-        color var(--dur-hover) var(--ease-dock);
-}
-.tile:hover .tileArrow {
-    transform: translateX(4px);
-    color: var(--ink-1);
 }
 
 /* ---- Rows: a project in a line or two (MissionRow) --------------------- */
@@ -282,12 +251,13 @@
     }
 }
 .row {
+    --row-rest: var(--rule-firm);
     position: relative;
     display: grid;
     align-content: start;
     gap: var(--s-2);
     padding: var(--s-4) var(--s-7) 0 0;
-    border-top: var(--rule-hair) solid var(--rule-2);
+    border-top: var(--rule-hair) solid var(--row-rule);
     transition: border-color var(--dur-hover) var(--ease-dock);
 }
 /* Under a section head (an entry's related project) the head's hairline
@@ -309,25 +279,22 @@
     gap: var(--s-1) var(--s-4);
 }
 .rowDates {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    color: var(--text-quiet);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
 }
 .rowTitle {
     margin-top: var(--s-1);
-    font: 400 var(--step-2) / 1.2 var(--font-display);
-    letter-spacing: -0.005em;
+    font: var(--type-title-md);
+    letter-spacing: var(--track-title);
     text-wrap: balance;
     /* As a tile's title: a word wider than the column breaks. */
     overflow-wrap: break-word;
 }
-.rowTitle a {
-    text-decoration: none;
-}
 .rowSummary {
-    max-width: 60ch;
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.5 var(--font-long);
+    max-width: var(--measure-copy);
+    color: var(--text-quiet);
+    font: var(--type-note);
     text-wrap: pretty;
 }
 /* A row with a cover: a 3:2 thumbnail with its credit. On phones the
@@ -414,22 +381,12 @@
     position: absolute;
     top: var(--s-4);
     right: 0;
-    width: 20px;
-    height: 20px;
-    color: var(--ink-3);
-    transition:
-        transform var(--dur-hover) var(--ease-dock),
-        color var(--dur-hover) var(--ease-dock);
-}
-.row:hover {
-    border-top-color: var(--ink-1);
+    width: var(--icon-row);
+    height: var(--icon-row);
 }
 /* Quiet rows: a step smaller, the hairline in the quieter rule. */
 .rowsQuiet .row {
-    border-top-color: var(--rule-1);
-}
-.rowsQuiet .row:hover {
-    border-top-color: var(--ink-1);
+    --row-rest: var(--rule-quiet);
 }
 .rowsQuiet .rowTitle {
     font-size: var(--step-1);
@@ -438,13 +395,4 @@
    as narrow as the text (a post's related project). */
 .rowsStacked .rowTitle {
     font-size: var(--step-1);
-}
-.row:hover .rowTitle a {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.16em;
-}
-.row:hover .rowArrow {
-    color: var(--ink-1);
-    transform: translateX(4px);
 }

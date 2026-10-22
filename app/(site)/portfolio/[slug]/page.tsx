@@ -6,6 +6,7 @@ import { BreadcrumbJsonLd, MissionJsonLd } from "@/components/json-ld";
 import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
 import KeepWhole from "@/components/ui/keep-whole";
 import ProjectEssay from "@/components/portfolio/project-essay";
+import Contents from "@/components/ui/contents";
 import CrumbRow from "@/components/ui/crumb-row";
 import DocSection from "@/components/ui/doc-section";
 import { Icon } from "@/components/ui/icon";
@@ -18,6 +19,7 @@ import Specs, { type SpecItem } from "@/components/ui/specs";
 import ViewerFigure, {
     ViewerCallouts,
 } from "@/components/viewer/viewer-figure";
+import { minWidth } from "@/lib/breakpoints";
 import { siteConfig } from "@/lib/config";
 import { missionsCopy as copy, pagerCopy } from "@/lib/copy";
 import { contentsHeadings, extractHeadings } from "@/lib/headings";
@@ -228,7 +230,7 @@ export default async function ProjectPage({
         <Plate
             image={mission.cover}
             credit={mission.cover.caption}
-            sizes="(min-width: 60rem) 36vw, 100vw"
+            sizes={`${minWidth("md")} 36vw, 100vw`}
             priority
         />
     ) : null;
@@ -327,22 +329,7 @@ export default async function ProjectPage({
             prose
             rail={
                 contents.length > 1 ? (
-                    <nav
-                        className={styles.contents}
-                        aria-label={copy.contentsLabel}
-                        data-contents
-                    >
-                        <p className={styles.contentsTitle}>{copy.contents}</p>
-                        <ol role="list">
-                            {contents.map((heading) => (
-                                <li key={heading.id}>
-                                    <a href={`#${heading.id}`}>
-                                        {heading.text}
-                                    </a>
-                                </li>
-                            ))}
-                        </ol>
-                    </nav>
+                    <Contents headings={contents} />
                 ) : undefined
             }
         >

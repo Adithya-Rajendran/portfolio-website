@@ -1,5 +1,5 @@
 import type { APIRequestContext, Page } from "@playwright/test";
-import { missionsCopy as copy, pagerCopy } from "@/lib/copy";
+import { missionsCopy as copy, pagerCopy, postCopy } from "@/lib/copy";
 import { FIXTURE_PROJECTS } from "@/lib/fixtures";
 import { expect, test } from "./support/test";
 import { isPostPage, sitemapPages } from "./support/routes";
@@ -734,14 +734,15 @@ test.describe("on the fixture build", () => {
         test.skip(testInfo.project.name !== "fixture", FIXTURE_ONLY);
         await page.goto("/portfolio/portable-text-project-fixture");
         const second = main(page)
-            .getByRole("navigation", { name: copy.contentsLabel })
+            .getByRole("navigation", { name: postCopy.contentsLabel })
             .getByRole("link")
             .nth(1);
         await second.click();
         await page.mouse.move(0, 0);
         await expect(second).toHaveAttribute("aria-current", "location");
-        // The 2px orange bar of post.module.css (once its colour has
-        // eased in), not a rule under the link.
+        // The 2px orange bar an entry's contents draw (the shared
+        // Contents, once its colour has eased in), not a rule under the
+        // link.
         await expect
             .poll(() =>
                 second.evaluate((link) => {

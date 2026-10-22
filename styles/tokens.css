@@ -1,15 +1,62 @@
 /*
- * Design tokens for both themes: Void (the default) and Flight Manual.
- * Ported from design/explorations/d-deep-field-plus/assets/site.css
- * "1. TOKENS" (mockup freeze sha256 0427267632dc…). Colours are defined
- * here and nowhere else: component CSS reads them through these custom
- * properties, and app/globals.css exposes the colour tokens to Tailwind
- * utilities through `@theme inline`.
+ * Design tokens for both themes: Void (the default) and Flight Manual,
+ * and for paper. Ported from design/explorations/d-deep-field-plus/assets/
+ * site.css "1. TOKENS" (mockup freeze sha256 0427267632dc…).
+ *
+ * Every literal value the site's CSS uses is written here, in three tiers:
+ *   1. primitives: the palette (read only in this file), the themed ladder
+ *      mapped onto it, and the scales (type, leading, tracking, weight,
+ *      numerals, space, size, shape, stroke, dashes, layers, motion);
+ *   2. roles: what a component reads: colour (--text-quiet,
+ *      --rule-quiet…), declared on `:root, [data-theme]` so a role
+ *      follows the theme wherever one is set, and type (--type-label…),
+ *      on `:root`, since a type role reads only scales and next/font's
+ *      variables on <html>;
+ *   3. component tokens: a value one component needs per theme or state,
+ *      or a one-off geometry it owns.
+ * Components read roles, never the palette or the ladder (--bg and
+ * --focus excepted). tests/lib/design-system.test.ts refuses a literal
+ * anywhere else, and lists the exceptions it allows, with their reasons,
+ * in tests/lib/design-system.allow.ts. app/globals.css exposes the colour
+ * roles to Tailwind through `@theme inline`.
  *
  * The font families come from next/font (lib/fonts.ts), whose variables
  * sit on <html>; each already carries a metric-matched fallback face.
  */
 @layer theme {
+    /* ==== 1. The palette: each theme's colours, written once =========== */
+    /* Read only in this file. The copies outside CSS (lib/og-card.tsx,
+       public/feed.xsl, lib/theme-boot.ts, scripts/generate-patch.mjs,
+       lib/patch.json, the starfield's fallback and flight-gl's) are
+       checked against these values. */
+    :root {
+        --void-bg: #050507; /* the void */
+        --void-surface-1: #0c0c10;
+        --void-surface-2: #15151a;
+        --void-ink-1: #ece8df; /* 16.65:1 on bg */
+        --void-ink-2: #bcb7ad; /* 10.20:1 */
+        --void-ink-3: #8f8a80; /*  5.93:1 */
+        --void-rule-1: #1f1f25;
+        --void-rule-2: #67635c; /*  3.3:1 */
+        --void-accent: #ff5a1f; /* 6.5:1 */
+        --void-star-rgb: 236 232 223;
+
+        --manual-bg: #f2ede3; /* warm paper */
+        --manual-surface-1: #e9e3d6;
+        --manual-surface-2: #dfd8c8;
+        --manual-ink-1: #17150f; /* 15.64:1 */
+        --manual-ink-2: #433e36; /*  9.09:1 */
+        --manual-ink-3: #5a554c; /*  6.34:1 */
+        --manual-rule-1: #d5cdbd;
+        --manual-rule-2: #7a7468; /*  3.98:1 */
+        --manual-accent: #e4501b; /* marks only: 3.3:1 on paper */
+        --manual-focus: #a13a0d; /* burnt orange: 5.76:1 */
+        --manual-star-rgb: 23 21 15;
+
+        --paper-white: #ffffff;
+    }
+
+    /* ==== 2. The scales ================================================= */
     :root {
         /* ---- families ------------------------------------------------
            Jost        display, headings, UI and the controls' caps
@@ -23,8 +70,9 @@
         --font-text: var(--font-display);
         --font-long:
             var(--font-newsreader), "Iowan Old Style", "Charter", Georgia, serif;
-        /* Newsreader's italic is a separate family (lib/fonts.ts): italic
-           serif text sets this with font-style: italic. */
+        /* Newsreader's italic is its own next/font call (lib/fonts.ts, not
+           preloaded); both calls declare the one "Newsreader" family, so
+           italic text in --font-long already sets the italic face. */
         --font-long-italic: var(--font-newsreader-italic), var(--font-long);
         --font-mono:
             var(--font-dm-mono), ui-monospace, "SFMono-Regular", Menlo,
@@ -32,11 +80,13 @@
         --font-label: var(--font-mono);
         --font-mark: var(--font-michroma), "Eurostile", var(--font-display);
 
-        /* ---- type: six sizes a page at most ------------------------
+        /* ---- size: six a page at most --------------------------------
            The small size (--label-size, 13px) sets every label, control
            and datum; --step-0 the UI text, summaries and captions (16px
            on a phone, 17px at 1440); the steps above it the heads and
-           the display. Nothing is set under 13px. Fluid 360 → 1440 px. */
+           the display. Nothing is set under 13px. Fluid 360 → 1440 px.
+           --size-hero is the hero's name alone, fitted to one line at
+           every width (97.5px at 1440), off the steps on purpose. */
         --label-size: 0.8125rem;
         --step-0: clamp(1rem, 0.979rem + 0.093vw, 1.0625rem);
         --step-1: clamp(1.2rem, 1.1rem + 0.444vw, 1.5rem);
@@ -46,22 +96,74 @@
         --step-5: clamp(2.488rem, 1.739rem + 3.328vw, 4.735rem);
         --step-6: clamp(2.75rem, 1.877rem + 4.927vw, 6.312rem);
         --step-long: clamp(1.125rem, 1.083rem + 0.185vw, 1.25rem);
+        --size-hero: clamp(2.3rem, 0.2rem + 6.55vw, 7rem);
 
-        --lh-heading: 1.14;
-        --lh-body: 1.55;
-        --lh-long: 1.52;
-        --lh-label: 1.4;
+        /* Paper (the CV's two sheets and a post's print): its own scale,
+           tuned to the two-sheet fit on A4 and Letter (print.spec), read
+           only inside @media print. */
+        --print-key: 7pt; /* keys, the CV's link addresses, section heads */
+        --print-skills: 7.2pt;
+        /* dates, the control line, the masthead links, a post's link
+           addresses */
+        --print-data: 7.6pt;
+        --print-note: 7.8pt;
+        --print-text: 8.4pt; /* rows, lines, deks */
+        --print-sub: 8.6pt;
+        --print-open: 8.8pt;
+        --print-summary: 9pt;
+        --print-base: 9.2pt;
+        --print-title: 9.6pt;
+        --print-role: 10.2pt;
+        --print-long: 10.5pt; /* a post's text */
+        --print-dek: 12pt;
+        --print-name: 21pt;
+        --print-display: 22pt; /* a post's title */
+        --print-code: 0.85em; /* inline code, from its line */
 
-        /* Labels: DM Mono caps, 0.08em, ink-2. Controls (the nav, the
-           buttons, the arrow links, segmented boxes): Jost 500 caps,
-           0.10em. Display (the page and item titles, 64px and up at
-           1440): Jost 350, tracked in. */
+        /* ---- leading ------------------------------------------------ */
+        --lh-solid: 1; /* display, a hung numeral or mark */
+        --lh-tight: 1.1; /* the large titles */
+        --lh-snug: 1.2; /* titles, controls */
+        --lh-compact: 1.4; /* labels, data, rows, leads */
+        --lh-text: 1.5; /* UI text, notes, deks */
+        --lh-long: 1.52; /* the long read (contract) */
+        --lh-code: 1.62; /* a listing */
+        --lh-paper-title: 1.25;
+        --lh-paper-tight: 1.3;
+        --lh-paper: 1.35;
+        --lh-paper-base: 1.38; /* the CV sheet's base, deks and facts */
+        --lh-paper-loose: 1.42; /* the masthead summary */
+        --lh-paper-key: 1.6; /* a specs key, inline under its row's strut */
+        --lh-paper-display: 1.04; /* a post's title on paper */
+        --lh-paper-dek: 1.45; /* its standfirst on paper */
+
+        /* ---- tracking -----------------------------------------------
+           Labels: DM Mono caps, 0.08em. Controls (the nav, the buttons,
+           the arrow links, segmented boxes): Jost 500 caps, 0.10em.
+           Display (64px and up at 1440): tracked in. Titles from 32px:
+           a hair in. The hero's name and the CV's masthead: tracked
+           wide. Michroma: the tag, and the wordmark wider still. */
         --track-label: 0.08em;
         --track-control: 0.1em;
-        --weight-display: 350;
         --track-display: -0.02em;
+        --track-title: -0.01em;
+        --track-name: 0.115em;
+        --track-mark: 0.16em;
+        --track-wordmark: 0.22em;
+        --track-paper-control: 0.04em; /* the CV's control line */
+        --track-paper-section: 0.14em; /* the CV's section heads */
+        --track-paper-rev: 0.02em; /* the Rev on the control line */
 
-        /* ---- space: 4px base --------------------------------------- */
+        /* ---- weight and numerals ------------------------------------ */
+        --weight-regular: 400;
+        --weight-medium: 500;
+        --weight-strong: 600;
+        --weight-display: 350;
+        --numerals-data: tabular-nums lining-nums slashed-zero;
+        --numerals-figures: tabular-nums lining-nums;
+        --numerals-text: proportional-nums;
+
+        /* ---- space: 4px base ---------------------------------------- */
         --s-1: 0.25rem;
         --s-2: 0.5rem;
         --s-3: 0.75rem;
@@ -73,6 +175,18 @@
         --s-9: 6rem;
         --space-block: clamp(2rem, 1.667rem + 1.481vw, 3rem);
         --space-section: clamp(5rem, 3.333rem + 7.407vw, 10rem);
+        --space-head: clamp(1.75rem, 1rem + 2.2vw, 3rem); /* above a head */
+        --space-group: clamp(3.5rem, 2rem + 4vw, 6rem); /* home's sections */
+        --section-head-gap: var(--s-7); /* under a document's section head */
+        /* Home's sections and an entry's end matter: the tighter rhythm
+           (app/(site)/home.module.css). */
+        --section-head-gap-tight: var(--s-6);
+        --prose-gap: 1.1em; /* between blocks of the long read */
+        --prose-gap-head: 2em; /* above an h2 or h3 */
+        --prose-gap-h4: 1.6em;
+        --prose-gap-item: 0.45em; /* between list items */
+        /* around a listing */
+        --prose-gap-listing: calc(1.6 * var(--step-long));
 
         /* ---- layout ------------------------------------------------ */
         /* The long read's two edges: the measure (about 74 characters of
@@ -91,45 +205,173 @@
            characters to the em at 18–19px than at 20px. */
         --prose-measure: clamp(35rem, 28.3rem + 11.875vw, 39rem);
         --prose-wide: 60rem;
+        /* Measures for text outside the long read, in the text's own ch. */
+        --measure-title: 22ch; /* a display title */
+        --measure-statement: 30ch; /* home's closing statement */
+        --measure-short: 44ch; /* a note beside a plate, the flight's line */
+        --measure-lead: 52ch; /* a dek, a summary, a lead */
+        --measure-copy: 60ch; /* captions, notes, row summaries */
+        --measure-list: 68ch; /* the CV's lines and facts */
+        --measure-form: 46rem; /* the contact form */
+        /* A project head's one column where no plate stands beside it: the
+           short note, and the facts under the title (mission.module.css).
+           A list under a section head has no width of its own: it runs to
+           where the head's rule ends. */
+        --measure-note: 61rem;
         /* The site's one bullet: a hairline dash, `--list-mark` wide, in
            a `--list-gutter` gutter at the column's edge, with the text
            after it (prose lists in styles/prose.css, the CV's lines in
            styles/components.css, a project's highlight and retrospective
-           lists in mission.module.css). */
+           lists in mission.module.css). An inline mark is lifted off the
+           baseline (--list-mark-lift); a placed one sits at
+           --list-mark-top from its line's top. */
         --list-gutter: 1.5rem;
+        --list-gutter-number: 1.75rem;
         --list-mark: 0.75rem;
+        --list-mark-lift: 0.3em;
+        --list-mark-top: 0.78em;
+        /* Key, date and meta columns beside a row's text. */
+        --col-term: 11rem;
+        --col-term-min: 8rem;
+        --col-date: 7.5rem;
+        --col-meta: 4.5rem;
+        --rail-min: 12rem; /* an entry's contents rail, at its narrowest */
         --margin: 16px;
         --gutter: 16px;
         --cols: 4;
         /* The shell: generous outer margins from a laptop up, and a cap
            that keeps every page a central band on a wide screen. */
         --maxw: 88rem;
-        --measure: 37rem;
-        /* A project head's one column where no plate stands beside it: the
-           short note, and the facts under the title (mission.module.css).
-           A list under a section head has no width of its own: it runs to
-           where the head's rule ends. */
-        --measure-note: 61rem;
         --header-h: 64px;
+        /* Where a fragment lands: under the header with a step of space
+           (the root's scroll padding and a target's margin). */
+        --anchor-offset: calc(var(--header-h) + var(--s-5));
+        /* Where a sticky rail stops under the header. */
+        --sticky-top: calc(var(--header-h) + var(--s-5));
+
+        /* ---- targets, controls, icons, marks ------------------------ */
+        --target: 44px; /* every control's hit area */
+        --target-inline: 32px; /* a link in a row of links */
+        --target-min: 24px; /* a footnote's way back */
+        --control-h: 48px; /* a boxed button, a field */
+        --control-pad: var(--s-4);
+        --control-pad-lg: 1.25rem;
+        --control-gap: var(--s-3);
+        /* The header bar's spacing is capped at its size under the default
+           text size, so a larger root text size grows the labels (never
+           under 13px) but not the space around them: the row still fits a
+           390px phone at 150%. */
+        --bar-gap: min(var(--s-3), 12px);
+        --bar-gap-sm: min(var(--s-2), 8px);
+        --bar-pad: min(var(--s-3), 12px);
+        --bar-pad-sm: min(var(--s-1), 4px);
+        --icon: 1.25em; /* an icon in text, with its drop */
+        --icon-drop: -0.25em;
+        --icon-sm: 1em;
+        --icon-drop-sm: -0.14em;
+        --icon-control: 16px; /* in a control */
+        --icon-row: 20px; /* a row's trailing arrow */
+        --icon-small: 14px;
+        --icon-mark: 10px; /* a status glyph */
+        --icon-out: 0.85em; /* the outbound mark after words */
+        --icon-out-title: 0.7em; /* … after a title */
+        --icon-out-shift: 0.05em;
+        --icon-display: 0.42em; /* the stage title's trailing arrow */
+        --icon-gap: 0.3em; /* a word and the mark that hangs off it */
+        --mark-gap: 0.55em; /* a status dot or an arrow and its words */
+        --dot: 7px; /* the status dot */
+        --dot-square: 6px;
+        --dot-bar: 8px;
 
         /* ---- shape: radius 0, hairlines, no shadows ----------------- */
         --radius-round: 50%;
         --rule-hair: 1px;
         --rule-strong: 2px;
+        --paper-faint: 0.4pt; /* the CV's row separators */
+        --paper-hair: 0.6pt;
+        --paper-strong: 1.25pt; /* the CV masthead's rule */
+        /* Strokes: CSS pixels on drawings that do not scale their stroke
+           (vector-effect: non-scaling-stroke), user units in the icons. */
+        --stroke-hair: 1px;
+        --stroke: 1.25px;
+        --stroke-firm: 1.5px;
+        --stroke-icon: 1.5;
+        --stroke-icon-strong: 2;
+        /* Dashes, in the drawing's own units: the trace's grid and its
+           lost signal (Loss of Signal), the flight's planned route, the
+           hero's sun halo in Flight Manual. */
+        --dash-grid: 1 4;
+        --dash-lost: 3 4;
+        --dash-plan: 4 5;
+        --dash-halo: 1.5 5;
 
         /* ---- motion: orbital, never elastic ------------------------- */
         --ease-dock: cubic-bezier(0.2, 0, 0, 1);
         --ease-transfer: cubic-bezier(0.65, 0, 0.35, 1);
-        --dur-2: 150ms;
-        --dur-3: 220ms;
-        --dur-5: 480ms;
-        --dur-6: 800ms;
-        --dur-hover: var(--dur-2);
+        --dur-hover: 150ms; /* a hover, a colour */
+        --dur-state: 220ms; /* a current mark, the theme cross-fade */
+        --dur-enter: 480ms; /* a card's entrance */
+        --dur-reveal: 800ms; /* the flight's fades */
+        --dur-instant: 1ms; /* the reduced-motion kill's animation length */
+        --stagger-step: 80ms;
+        --nudge: 4px; /* an arrow on hover */
+        --opacity-disabled: 0.5;
+        /* A card's rise as it enters the flight. Pause motion and the OS
+           reduce-motion setting still it with their own guards
+           (journey.module.css), which set transform: none. */
+        --rise: 12px;
+        /* The static stars' three magnitudes (components/sky/starfield.tsx
+           LOOK alphas; the design-system test checks they agree). */
+        --star-alpha-faint: 0.38;
+        --star-alpha-mid: 0.6;
+        --star-alpha-bright: 0.9;
+
+        /* ---- interaction -------------------------------------------- */
+        /* One hover grammar (contract §3): an ink-3 hairline that turns
+           ink-1 and 2px; the gap under the words is near-constant across
+           sizes; caps controls sit their line lower. */
+        --underline-w: var(--rule-hair);
+        --underline-w-lit: var(--rule-strong);
+        --underline-offset: calc(0.1em + 2px);
+        --underline-offset-caps: 0.5em;
+        --focus-offset: 3px;
+        --focus-offset-inset: calc(-1 * var(--rule-strong));
+        /* The phone rail: its ring must clear the stop dot 12px above. */
+        --focus-offset-tight: 2px;
+        --target-halo: 0.25em; /* a :target note's lit surround */
 
         /* ---- z ----------------------------------------------------- */
         --z-starfield: -1;
+        /* Inside a card or a row of boxes: a stretched link's cover, a
+           chosen box over its neighbours' edges; then what sits over
+           them, a link inside a stretched card, a focused box. */
+        --z-raised: 1;
+        --z-over: 2;
         --z-header: 100;
         --z-skip: 1000;
+
+        /* ---- component geometry ------------------------------------- */
+        --patch: 96px;
+        --patch-brand: 36px;
+        --nav-gap: clamp(1rem, 2.1vw, 2.5rem);
+        --sheet-row: 64px; /* a menu sheet row */
+        --textarea-h: 8.5rem;
+        --trace-h: clamp(3.5rem, 2.75rem + 2.2vw, 5rem); /* Loss of Signal */
+        --note-w: 12.5rem; /* a margin note */
+        --note-gutter: 1.4rem; /* its numeral's column */
+        --parts-gap: 0.9em; /* the dot's room between whole parts */
+        --parts-gap-data: 3ch; /* … in the mono voice, " · " */
+        --hero-min: 36rem;
+        --hero-frame-top: clamp(1.5rem, 0.5rem + 4svh, 4.5rem);
+        --hero-measure: 44rem;
+        --hero-measure-wide: 52rem;
+        --hero-measure-phone: 22rem;
+        --stage-max: 56rem; /* the flight's stage, at its tallest */
+        --record-w: 27rem; /* the flight's record column (RECORD_SHARE) */
+        --star-faint: 1.1px; /* the static stars (starfield.tsx's three) */
+        --star-mid: 1.6px;
+        --star-bright: 2.3px;
+        --size-card-title: 1.5rem; /* the flight card's title below 60rem */
     }
 
     @media (min-width: 37.5rem) {
@@ -153,56 +395,197 @@
             --gutter: 32px;
         }
     }
-
+    /* The hero's name: one line at every width. */
+    @media (max-width: 37.49rem) {
+        :root {
+            --size-hero: clamp(2.3rem, 11.4vw, 3.4rem);
+        }
+    }
+    @media (max-width: 23.99rem) {
+        :root {
+            --size-hero: 2.15rem;
+        }
+    }
+    /* ==== 3. The ladder, per theme, on the palette ====================== */
     /* ---- VOID (dark, default): near-total darkness, one distant sun -- */
     :root,
     [data-theme="void"] {
         color-scheme: dark;
-        --bg: #050507; /* the void */
-        --surface-1: #0c0c10; /* raised: code, callouts */
-        --surface-2: #15151a; /* hover and selected rows, inputs */
-        --ink-1: #ece8df; /* 16.65:1 on bg: body, headings */
-        --ink-2: #bcb7ad; /* 10.20:1: deks, captions, labels */
-        --ink-3: #8f8a80; /*  5.93:1: non-essential metadata only */
-        --rule-1: #1f1f25; /* decorative hairlines */
-        --rule-2: #67635c; /*  3.3:1: input borders, rules with meaning */
+        --bg: var(--void-bg);
+        --surface-1: var(--void-surface-1); /* raised: code, callouts */
+        --surface-2: var(--void-surface-2); /* hover and selected rows */
+        --ink-1: var(--void-ink-1); /* body, headings */
+        --ink-2: var(--void-ink-2); /* deks, captions, labels */
+        --ink-3: var(--void-ink-3); /* non-essential metadata only */
+        --rule-1: var(--void-rule-1); /* decorative hairlines */
+        --rule-2: var(--void-rule-2); /* input borders, rules with meaning */
         /* International Orange means "now": the Open To, Active and
            Current dots, the flight's flown path and its now mark, the
            contents' current bar; and focus. The patch's and the hero's
            suns are identity marks. Never text, a fill, a link or a hover. */
-        --accent: #ff5a1f; /* 6.5:1 */
+        --accent: var(--void-accent);
         --focus: var(--accent);
-        --star-rgb: 236 232 223;
+        --star-rgb: var(--void-star-rgb);
         --plate-bg: transparent;
-        --plate-border: transparent;
         /* Photographs (styles/components.css `.photo`): a hard edge in a
            hairline, and the owner's photos graded down into the void
            (exposure and saturation only, never content). */
         --photo-treatment: saturate(0.92) contrast(1.04);
         --photo-treatment-real: brightness(0.8) saturate(0.78) contrast(1.08);
         --photo-mount: 0px;
+        /* The title block (About): a firm head over quiet cells. */
+        --titleblock-head: var(--rule-2);
+        --titleblock-rule: var(--rule-1);
+        /* A focused first invalid field keeps its "now" rule. */
+        --mark-invalid-lit: var(--accent);
     }
 
     /* ---- FLIGHT MANUAL (light): expedition photo-book on warm paper -- */
     [data-theme="manual"] {
         color-scheme: light;
-        --bg: #f2ede3; /* warm paper */
-        --surface-1: #e9e3d6;
-        --surface-2: #dfd8c8;
-        --ink-1: #17150f; /* 15.64:1 */
-        --ink-2: #433e36; /*  9.09:1 */
-        --ink-3: #5a554c; /*  6.34:1 */
-        --rule-1: #d5cdbd;
-        --rule-2: #7a7468; /*  3.98:1 */
-        --accent: #e4501b; /* marks only: 3.3:1 on paper */
-        --focus: #a13a0d; /* burnt orange: 5.76:1 */
-        --star-rgb: 23 21 15;
+        --bg: var(--manual-bg);
+        --surface-1: var(--manual-surface-1);
+        --surface-2: var(--manual-surface-2);
+        --ink-1: var(--manual-ink-1);
+        --ink-2: var(--manual-ink-2);
+        --ink-3: var(--manual-ink-3);
+        --rule-1: var(--manual-rule-1);
+        --rule-2: var(--manual-rule-2);
+        --accent: var(--manual-accent);
+        --focus: var(--manual-focus);
+        --star-rgb: var(--manual-star-rgb);
         --plate-bg: var(--surface-1);
-        --plate-border: var(--rule-1);
         /* Photographs sit on an even card mat inside the hairline. */
         --photo-treatment: saturate(0.86) contrast(1.02);
         --photo-treatment-real: saturate(0.82) contrast(1.02);
         --photo-mount: 10px;
+        --titleblock-head: var(--ink-1);
+        --titleblock-rule: var(--rule-2);
+        /* The accent is under 3:1 on paper: a focused invalid field draws
+           its rule in the focus colour. */
+        --mark-invalid-lit: var(--focus);
+    }
+
+    /* ==== 4. Roles: what components read ================================ */
+    /* On `:root, [data-theme]`, so each resolves against the ladder of the
+       theme (or paper) in force where it is declared. */
+    :root,
+    [data-theme] {
+        /* text */
+        --text: var(--ink-1);
+        --text-quiet: var(--ink-2);
+        --text-faint: var(--ink-3);
+        /* fills: the primary button, the selection, the skip link */
+        --fill: var(--ink-1);
+        --fill-hover: var(--ink-2);
+        --surface-raised: var(--surface-1); /* code, callouts, fields */
+        --surface-lit: var(--surface-2); /* hovered, chosen, targeted */
+        /* rules: a hairline row or head, a control's edge and a rule with
+           meaning, a rule or edge lit by hover, a rule in ink */
+        --rule-quiet: var(--rule-1);
+        --rule-firm: var(--rule-2);
+        --rule-lit: var(--ink-1);
+        --rule-ink: var(--ink-1);
+        --underline: var(--ink-3);
+        --underline-lit: var(--ink-1);
+        /* marks: "now" (the accent's one meaning) and identity */
+        --mark-now: var(--accent);
+        --mark-identity: var(--accent);
+        --dot-on: var(--ink-1);
+        --dot-past: var(--ink-2);
+        --dot-ring: var(--ink-3);
+        --list-mark-ink: var(--ink-2);
+        --list-mark-ink-nested: var(--ink-3);
+        --icon-quiet: var(--ink-3); /* a trailing arrow, an outbound mark */
+        /* drawings: the hero's limb, the flight's scene, the trace */
+        --draw-strong: var(--ink-1);
+        --draw: var(--ink-2);
+        --draw-quiet: var(--ink-3);
+        --draw-faint: var(--rule-2);
+        --draw-grid: var(--rule-1);
+        --star: rgb(var(--star-rgb));
+        --scrollbar-thumb: var(--rule-2);
+        /* a map label's backing in the flight (flight.module.css .label) */
+        --label-knockout: color-mix(in oklab, var(--bg) 80%, transparent);
+        /* a chosen segmented box: read by .seg and by the views' default
+           before hydration (components/cv/experience-views.module.css) */
+        --chosen-edge: var(--ink-2);
+        --chosen-fill: var(--surface-2);
+        --chosen-ink: var(--ink-1);
+        --chosen-dot: var(--ink-1);
+        --focus-ring: var(--rule-strong) solid var(--focus);
+        /* The one Shiki theme (lib/highlight-code.ts) colours a listing's
+           tokens with these: monochrome, so every theme and paper follow
+           (contract §3: text, strokes and labels are never orange).
+           Keywords are ink at weight 500, strings quiet, links quiet and
+           underlined. Comments are faint: 5.7:1 (Void) and 5.8:1 (Flight
+           Manual) on the listing, 5.2:1 on a highlighted line. */
+        --code-foreground: var(--text);
+        --code-background: transparent;
+        --code-token-comment: var(--text-faint);
+        --code-token-keyword: var(--text);
+        --code-token-string: var(--text-quiet);
+        --code-token-string-expression: var(--text-quiet);
+        --code-token-constant: var(--text);
+        --code-token-function: var(--text);
+        --code-token-parameter: var(--text-quiet);
+        --code-token-punctuation: var(--text-faint);
+        --code-token-link: var(--text-quiet);
+        --code-token-inserted: var(--text);
+        --code-token-deleted: var(--text-quiet);
+        --code-token-changed: var(--text);
+    }
+
+    /* Type: each role a whole `font`. A rule that sets one also sets its
+       companions in the same rule (the `font` shorthand resets them): the
+       caps roles their tracking and `text-transform: uppercase`, the
+       titles from --type-title-md up --track-title, the display
+       --track-display, and --type-data `font-variant-numeric:
+       var(--numerals-data)`. Another leading follows as
+       `line-height: var(--lh-*)`. */
+    :root {
+        --type-label: var(--weight-regular) var(--label-size) /
+            var(--lh-compact) var(--font-label);
+        --type-control: var(--weight-medium) var(--label-size) / var(--lh-snug)
+            var(--font-display);
+        --type-data: var(--weight-regular) var(--label-size) / var(--lh-compact)
+            var(--font-mono);
+        --type-code: var(--weight-regular) var(--label-size) / var(--lh-code)
+            var(--font-mono);
+        --type-mark: var(--weight-regular) var(--label-size) / var(--lh-compact)
+            var(--font-mark);
+        --type-ui: var(--weight-regular) var(--step-0) / var(--lh-text)
+            var(--font-text);
+        --type-ui-row: var(--weight-regular) var(--step-0) / var(--lh-compact)
+            var(--font-text);
+        --type-ui-strong: var(--weight-medium) var(--step-0) / var(--lh-compact)
+            var(--font-text);
+        --type-note: var(--weight-regular) var(--step-0) / var(--lh-text)
+            var(--font-long);
+        --type-long: var(--weight-regular) var(--step-long) / var(--lh-long)
+            var(--font-long);
+        --type-dek: var(--weight-regular) var(--step-1) / var(--lh-text)
+            var(--font-long);
+        --type-lead: var(--weight-regular) var(--step-1) / var(--lh-compact)
+            var(--font-text);
+        --type-statement: var(--weight-regular) var(--step-2) / var(--lh-snug)
+            var(--font-long);
+        --type-title-sm: var(--weight-regular) var(--step-1) / var(--lh-snug)
+            var(--font-display);
+        --type-subhead: var(--weight-medium) var(--step-1) / var(--lh-snug)
+            var(--font-display);
+        --type-title-md: var(--weight-regular) var(--step-2) / var(--lh-snug)
+            var(--font-display);
+        --type-title-lg: var(--weight-regular) var(--step-3) / var(--lh-tight)
+            var(--font-display);
+        --type-title-xl: var(--weight-regular) var(--step-4) / var(--lh-tight)
+            var(--font-display);
+        --type-display: var(--weight-display) var(--step-5) / var(--lh-solid)
+            var(--font-display);
+        --type-display-lg: var(--weight-display) var(--step-6) / var(--lh-solid)
+            var(--font-display);
+        --type-name: var(--weight-display) var(--size-hero) / var(--lh-solid)
+            var(--font-display);
     }
 
     @media (prefers-contrast: more) {
@@ -211,6 +594,31 @@
             --ink-2: var(--ink-1);
             --ink-3: var(--ink-1);
             --rule-1: var(--rule-2);
+        }
+    }
+
+    /* ==== 5. Paper: Flight Manual's inks on white, last ================== */
+    /* Last in the layer, so it wins over both themes and over
+       prefers-contrast at equal specificity, as it did from the utilities
+       layer (styles/print.css before the design system). */
+    @media print {
+        :root,
+        [data-theme] {
+            color-scheme: light;
+            --bg: var(--paper-white);
+            --surface-1: var(--paper-white);
+            --surface-2: var(--paper-white);
+            --ink-1: var(--manual-ink-1);
+            --ink-2: var(--manual-ink-2);
+            --ink-3: var(--manual-ink-3);
+            --rule-1: var(--manual-rule-1);
+            --rule-2: var(--manual-rule-2);
+            --accent: var(--manual-accent);
+            --plate-bg: transparent;
+            --star-rgb: var(--manual-star-rgb);
+            --photo-treatment: grayscale(1) contrast(1.04);
+            --photo-treatment-real: grayscale(1) contrast(1.04);
+            --photo-mount: 0px;
         }
     }
 }

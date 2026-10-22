@@ -1,9 +1,11 @@
 /*
- * Print: Flight Manual tokens on white, no chrome. Per-page print layouts
- * are scoped to their page: a post's in components/blogs/post.module.css
- * (the masthead, one column) and styles/prose.css (listings, plates,
- * notes, link addresses); the CV's (G3) is the second block below, with
- * its page layout in app/(site)/resume/resume.module.css.
+ * Print: the paper layout, no chrome. The paper palette (Flight Manual's
+ * inks on white) is styles/tokens.css's last block, so paper reads the
+ * same roles as the screen. Per-page print layouts are scoped to their
+ * page: a post's in components/blogs/post.module.css (the masthead, one
+ * column) and styles/prose.css (listings, plates, notes, link addresses);
+ * the CV's (G3) is the second block below, with its page layout in
+ * app/(site)/resume/resume.module.css.
  * Ported from d-deep-field-plus site.css "7. PRINT".
  */
 @layer utilities {
@@ -13,31 +15,12 @@
         }
     }
     @media print {
-        :root,
-        [data-theme] {
-            color-scheme: light;
-            --bg: #ffffff;
-            --surface-1: #ffffff;
-            --surface-2: #ffffff;
-            --ink-1: #17150f;
-            --ink-2: #433e36;
-            --ink-3: #5a554c;
-            --rule-1: #d5cdbd;
-            --rule-2: #7a7468;
-            --accent: #e4501b;
-            --plate-bg: transparent;
-            --plate-border: #d5cdbd;
-            --star-rgb: 23 21 15;
-            --photo-treatment: grayscale(1) contrast(1.04);
-            --photo-treatment-real: grayscale(1) contrast(1.04);
-            --photo-mount: 0px;
-        }
         @page {
             margin: 18mm 16mm 20mm;
         }
         html,
         body {
-            background: #fff;
+            background: var(--bg);
         }
         .site-header,
         .site-footer,
@@ -89,7 +72,7 @@
             margin: 0 0 0.9mm;
             padding: 0 0 0.9mm;
             border: 0;
-            border-bottom: 0.4pt solid var(--rule-1);
+            border-bottom: var(--paper-faint) solid var(--rule-quiet);
             background: none;
             break-inside: avoid;
         }
@@ -104,13 +87,18 @@
         [data-page="resume"] .cv-item__aside {
             display: block;
             padding-top: 0.4mm;
-            font: 400 7.6pt / 1.4 var(--font-mono);
+            font: var(--weight-regular) var(--print-data) / var(--lh-compact)
+                var(--font-mono);
         }
         [data-page="resume"] .cv-item__aside > * {
             display: block;
         }
+        [data-page="resume"] .cv-item__dates {
+            color: var(--text);
+        }
         [data-page="resume"] .cv-item__title {
-            font: 500 9.6pt / 1.25 var(--font-display);
+            font: var(--weight-medium) var(--print-title) /
+                var(--lh-paper-title) var(--font-display);
             letter-spacing: 0;
             break-after: avoid;
         }
@@ -119,18 +107,21 @@
         }
         [data-page="resume"] .cv-item__sub {
             margin-top: 0.3mm;
-            color: var(--ink-1);
-            font: 400 8.6pt / 1.35 var(--font-display);
+            color: var(--text);
+            font: var(--weight-regular) var(--print-sub) / var(--lh-paper)
+                var(--font-display);
         }
         [data-page="resume"] .cv-item__note {
             margin-top: 0.2mm;
-            font: 400 7.8pt / 1.35 var(--font-display);
+            font: var(--weight-regular) var(--print-note) / var(--lh-paper)
+                var(--font-display);
         }
         [data-page="resume"] .cv-item__dek {
             max-width: none;
             margin-top: 0.6mm;
-            color: var(--ink-2);
-            font: 400 8.4pt / 1.38 var(--font-long);
+            color: var(--text-quiet);
+            font: var(--weight-regular) var(--print-text) / var(--lh-paper-base)
+                var(--font-long);
         }
         [data-page="resume"] .cv-item__lines {
             max-width: none;
@@ -138,7 +129,8 @@
         }
         [data-page="resume"] .cv-item__lines li {
             padding-left: 3.2mm;
-            font: 400 8.4pt / 1.3 var(--font-display);
+            font: var(--weight-regular) var(--print-text) /
+                var(--lh-paper-tight) var(--font-display);
             break-inside: avoid;
         }
         [data-page="resume"] .cv-item__lines li + li {
@@ -147,16 +139,17 @@
         [data-page="resume"] .cv-item__lines li::before {
             top: 0.66em;
             width: 1.9mm;
-            border-top-width: 0.6pt;
+            border-top-width: var(--paper-hair);
         }
         [data-page="resume"] .cv-item__facts {
             display: block;
             max-width: none;
             margin-top: 0.6mm;
-            font: 400 7.6pt / 1.38 var(--font-display);
+            font: var(--weight-regular) var(--print-data) / var(--lh-paper-base)
+                var(--font-display);
         }
         [data-page="resume"] .cv-item__skills {
-            font-size: 7.2pt;
+            font-size: var(--print-skills);
         }
         [data-page="resume"] .cv-item__links {
             display: inline;
@@ -164,12 +157,12 @@
         [data-page="resume"] .cv-item__link a {
             display: inline;
             min-height: 0;
-            color: var(--ink-1);
+            color: var(--text);
             text-decoration: none;
         }
         [data-page="resume"] .cv-item__link + .cv-item__link::before {
             content: " · ";
-            color: var(--ink-3);
+            color: var(--text-faint);
         }
         /* On paper a link is its address; a label prints only when the
            address is the label. */
@@ -177,8 +170,8 @@
             display: none;
         }
         [data-page="resume"] .cv-item__url {
-            color: var(--ink-1);
-            font-size: 7pt;
+            color: var(--text);
+            font-size: var(--print-key);
         }
         /* Sheet 2 runs compact: what follows a title (a project's role, a
            talk's venue) shares its line. A
@@ -193,7 +186,7 @@
             :is(#projects, #writing, #certifications)
             .cv-item__sub::before {
             content: " · ";
-            color: var(--ink-3);
+            color: var(--text-faint);
         }
         [data-page="resume"] .specs {
             padding-left: calc(31mm + 4.5mm);
@@ -209,13 +202,15 @@
             display: inline;
             margin-right: 1.8mm;
             padding: 0;
-            color: var(--ink-1);
-            font: 400 7pt / 1.6 var(--font-label);
+            color: var(--text);
+            font: var(--weight-regular) var(--print-key) / var(--lh-paper-key)
+                var(--font-label);
             letter-spacing: var(--track-label);
         }
         [data-page="resume"] .specs dd {
             display: inline;
-            font: 400 8.4pt / 1.4 var(--font-display);
+            font: var(--weight-regular) var(--print-text) / var(--lh-compact)
+                var(--font-display);
         }
     }
 }

@@ -4,6 +4,6 @@
  * not a control.
  */
 .follow {
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.5 var(--font-text);
+    color: var(--text-quiet);
+    font: var(--type-ui);
 }

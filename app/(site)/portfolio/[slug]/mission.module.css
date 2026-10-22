@@ -10,7 +10,7 @@
  */
 
 .crumb {
-    padding-top: clamp(1.75rem, 1rem + 2.2vw, 3rem);
+    padding-top: var(--space-head);
 }
 
 /* ---- Head -------------------------------------------------------------- */
@@ -28,18 +28,18 @@
 }
 /* The title is the heading, in sentence case, on both layouts. */
 .title {
-    max-width: 22ch;
+    max-width: var(--measure-title);
     margin-top: var(--s-5);
-    color: var(--ink-1);
-    font: var(--weight-display) var(--step-5) / 1.04 var(--font-display);
+    color: var(--text);
+    font: var(--type-display);
     letter-spacing: var(--track-display);
     text-wrap: balance;
 }
 .summary {
-    max-width: 52ch;
+    max-width: var(--measure-lead);
     margin-top: var(--s-4);
-    color: var(--ink-2);
-    font: 400 var(--step-1) / 1.5 var(--font-long);
+    color: var(--text-quiet);
+    font: var(--type-dek);
     text-wrap: pretty;
 }
 /* The quiet links: the original entry, then the repositories. */
@@ -70,14 +70,15 @@
 .factLinks a {
     display: inline-flex;
     align-items: center;
-    gap: 0.35em;
-    min-height: 32px;
-    color: var(--ink-1);
-    text-underline-offset: 0.2em;
+    gap: var(--icon-gap);
+    min-height: var(--target-inline);
+    color: var(--text);
+    text-underline-offset: var(--underline-offset);
 }
 .factLinks :global(.icon) {
-    width: 14px;
-    height: 14px;
+    width: var(--icon-out);
+    height: var(--icon-out);
+    color: var(--icon-quiet);
 }
 @media (min-width: 60rem) {
     .head {
@@ -95,7 +96,7 @@
         grid-column: 1 / -1;
     }
     .headText .summary {
-        max-width: 48ch;
+        max-width: var(--measure-lead);
     }
 }
 
@@ -116,9 +117,9 @@
 }
 /* A note's one highlight: a plain paragraph in the summary's measure. */
 .line {
-    max-width: 52ch;
-    color: var(--ink-1);
-    font: 400 var(--step-0) / 1.55 var(--font-display);
+    max-width: var(--measure-lead);
+    color: var(--text);
+    font: var(--type-ui);
     text-wrap: pretty;
 }
 
@@ -127,52 +128,13 @@
    end where the head's rule ends; only their text keeps a measure (a
    brief's sentences, a result's note, a callout's line). */
 
-.contents p {
-    margin: 0 0 var(--s-3);
-}
-.contentsTitle {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
-}
-.contents ol {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-.contents li {
-    border-top: var(--rule-hair) solid var(--rule-1);
-}
-.contents a {
-    display: block;
-    padding: var(--s-2) 0 var(--s-2) var(--s-4);
-    border-left: var(--rule-strong) solid transparent;
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.4 var(--font-display);
-    text-decoration: none;
-    transition: border-color var(--dur-3) var(--ease-dock);
-}
-.contents a:hover {
-    color: var(--ink-1);
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.2em;
-}
-/* The current section: the contents' one "now" mark, in orange, the 2px
-   bar an entry's rail draws (post.module.css), never a rule under a link. */
-.contents a[aria-current] {
-    border-left-color: var(--accent);
-    color: var(--ink-1);
-}
-
 .value {
-    color: var(--ink-1);
+    color: var(--text);
     font-size: var(--step-0);
 }
 .note {
-    max-width: 44ch;
-    color: var(--ink-2);
+    max-width: var(--measure-short);
+    color: var(--text-quiet);
 }
 /* The column heads are for screen readers: the row heading, the mono
    value and its note read without them, so the table opens on its first
@@ -189,7 +151,7 @@
         grid-template-columns: minmax(0, 1fr) auto;
     }
     .results tbody tr {
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
     }
     .results tbody :is(th, td) {
         border-bottom: 0;
@@ -216,8 +178,8 @@
 }
 .subhead {
     margin-bottom: var(--s-3);
-    color: var(--ink-2);
-    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+    color: var(--text-quiet);
+    font: var(--type-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
@@ -225,7 +187,7 @@
 .lines {
     margin: 0;
     padding: 0;
-    border-bottom: var(--rule-hair) solid var(--rule-1);
+    border-bottom: var(--rule-hair) solid var(--rule-quiet);
     list-style: none;
 }
 /* One list style for both columns, like the callouts: the subheads tell
@@ -236,9 +198,9 @@
 .lines li {
     position: relative;
     padding: var(--s-4) 0 var(--s-4) var(--list-gutter);
-    border-top: var(--rule-hair) solid var(--rule-1);
-    color: var(--ink-1);
-    font: 400 var(--step-0) / 1.55 var(--font-display);
+    border-top: var(--rule-hair) solid var(--rule-quiet);
+    color: var(--text);
+    font: var(--type-ui);
     text-wrap: pretty;
 }
 /* A lone list (`.single`) opens its section: the head's hairline is its
@@ -253,8 +215,8 @@
     content: "";
     position: absolute;
     left: 0;
-    top: calc(var(--s-4) + 0.78em);
+    top: calc(var(--s-4) + var(--list-mark-top));
     width: var(--list-mark);
     height: 0;
-    border-top: var(--rule-hair) solid var(--ink-2);
+    border-top: var(--rule-hair) solid var(--list-mark-ink);
 }

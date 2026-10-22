@@ -3,6 +3,7 @@ import ContactForm from "@/components/contact/contact-form";
 import ContactNoScript from "@/components/contact/contact-no-script";
 import { ContactPageJsonLd } from "@/components/json-ld";
 import Availability from "@/components/ui/availability";
+import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { contactRoutes, topicOptions } from "@/lib/contact";
@@ -67,36 +68,30 @@ export default async function ContactPage() {
                 intro={profile?.contactIntro?.trim() || null}
             >
                 {openTo ? (
-                    <Availability
-                        className={styles.openTo}
-                        label={copy.openTo}
-                        text={openTo}
-                    />
+                    <Availability label={copy.openTo} text={openTo} />
                 ) : null}
             </PageHead>
 
-            <section
-                className={`section ${styles.desk}`}
+            <DocSection
+                layout="plain"
+                titleHidden
+                className={styles.desk}
                 id="message"
-                aria-labelledby="contact-message-h"
-                data-contact-message
+                headingId="contact-message-h"
+                title={copy.message}
+                data={{ "data-contact-message": true }}
             >
-                <div className="shell">
-                    <h2 className="sr-only" id="contact-message-h">
-                        {copy.message}
-                    </h2>
-                    <div className="js-only">
-                        <ContactForm
-                            topics={topicOptions(contactRoutes(profile))}
-                            linkedIn={linkedIn}
-                        />
-                    </div>
-                    <ContactNoScript
+                <div className="js-only">
+                    <ContactForm
+                        topics={topicOptions(contactRoutes(profile))}
                         linkedIn={linkedIn}
-                        className={styles.noScript}
                     />
                 </div>
-            </section>
+                <ContactNoScript
+                    linkedIn={linkedIn}
+                    className={styles.noScript}
+                />
+            </DocSection>
         </div>
     );
 }

@@ -26,8 +26,8 @@ export default function Metrics({
     /** Across from 600px; always two on phones. Fewer stats keep the
      *  column width and leave the rest of the row empty. */
     columns?: 2 | 3 | 4;
-    /** `lg` on a mission head, `sm` on a tile. */
-    size?: "sm" | "md" | "lg";
+    /** `lg` on a mission head beside its plate. */
+    size?: "md" | "lg";
     className?: string;
 }) {
     const shown = items.slice(0, 4);

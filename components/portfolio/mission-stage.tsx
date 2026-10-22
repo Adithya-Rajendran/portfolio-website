@@ -6,6 +6,7 @@ import MissionLine, {
 import { Icon } from "@/components/ui/icon";
 import { LinkArrow } from "@/components/ui/marks";
 import Plate from "@/components/ui/plate";
+import { minWidth } from "@/lib/breakpoints";
 import { missionsCopy as copy } from "@/lib/copy";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
@@ -54,12 +55,15 @@ export default function MissionStage({
             <div className={styles.stageCopy}>
                 <MissionLine mission={mission} />
                 <Heading className={styles.stageHeading}>
-                    <Link href={mission.href}>
+                    <Link className="lit lit__title" href={mission.href}>
                         {mission.title}
                         {/* Glued to the last word: no line holds the
                             arrow alone. */}
                         {"\u00a0"}
-                        <Icon name="arrow" className={styles.stageArrow} />
+                        <Icon
+                            name="arrow"
+                            className={`lit__arrow ${styles.stageArrow}`}
+                        />
                     </Link>
                 </Heading>
                 {mission.summary ? (
@@ -85,7 +89,7 @@ export default function MissionStage({
                     caption={caption}
                     ratio={ratio}
                     focus="50% 40%"
-                    sizes="(min-width: 60rem) 36vw, 100vw"
+                    sizes={`${minWidth("md")} 36vw, 100vw`}
                     priority={priority}
                 />
             ) : null}

@@ -1,0 +1,52 @@
+/*
+ * The state hooks: one hover grammar, written once. An element with
+ * `.lit` (a Writing row, a project row or tile, the stage's title, a CV
+ * item, a link row, a pager item, the crumb) lights on hover, and while
+ * it or its own title link has keyboard focus: its rule turns ink
+ * (`--row-rule`, which a ruled row reads for its border; a tier's resting
+ * rule is `--row-rest`), its `.lit__title` is underlined in ink, 2px, and
+ * its `.lit__arrow` turns ink and nudges. A nested link (a tag, a CV
+ * row's links) is no title, so its focus leaves the row unlit. A ruled
+ * row reads `--row-rule` with no fallback, so it carries `.lit` (or sits
+ * inside one, whose value it inherits): with neither, the border is
+ * invalid at computed-value time and draws no rule.
+ * Modules read these properties and declare no hover of their own, and a
+ * title link sets no resting `text-decoration` (a row that is itself the
+ * link keeps `none`): modules are unlayered and would win. In forced
+ * colours the arrow takes its text's system colour (styles/base.css).
+ */
+@layer components {
+    .lit {
+        --row-rule: var(--row-rest, var(--rule-quiet));
+        --title-line: transparent;
+        --arrow-x: 0px;
+        --arrow-ink: var(--icon-quiet);
+    }
+    .lit:is(:focus-visible, :has(.lit__title:focus-visible)) {
+        --row-rule: var(--rule-lit);
+        --title-line: var(--underline-lit);
+        --arrow-x: var(--nudge);
+        --arrow-ink: var(--text);
+    }
+    /* Only where a pointer hovers: a tapped row does not stay lit. */
+    @media (hover: hover) {
+        .lit:hover {
+            --row-rule: var(--rule-lit);
+            --title-line: var(--underline-lit);
+            --arrow-x: var(--nudge);
+            --arrow-ink: var(--text);
+        }
+    }
+    .lit__title {
+        text-decoration: underline var(--underline-w-lit) var(--title-line);
+        text-underline-offset: var(--underline-offset);
+        transition: text-decoration-color var(--dur-hover) var(--ease-dock);
+    }
+    .lit__arrow {
+        color: var(--arrow-ink);
+        transform: translateX(var(--arrow-x));
+        transition:
+            transform var(--dur-hover) var(--ease-dock),
+            color var(--dur-hover) var(--ease-dock);
+    }
+}

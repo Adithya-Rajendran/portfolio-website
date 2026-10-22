@@ -8,16 +8,16 @@
 @layer components {
     /* The one label voice (contract §2): DM Mono caps, tracked, ink-2. */
     .label {
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
-        color: var(--ink-2);
+        color: var(--text-quiet);
     }
 
     /* Dates, metrics, codes. */
     .data {
-        font-family: var(--font-mono);
-        font-variant-numeric: tabular-nums lining-nums slashed-zero;
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
         letter-spacing: 0;
     }
 
@@ -30,28 +30,28 @@
     }
     .icon {
         display: inline-block;
-        width: 1.25em;
-        height: 1.25em;
-        vertical-align: -0.25em;
+        width: var(--icon);
+        height: var(--icon);
+        vertical-align: var(--icon-drop);
         fill: none;
         stroke: currentColor;
-        stroke-width: 1.5;
+        stroke-width: var(--stroke-icon);
         stroke-linecap: square;
         stroke-linejoin: miter;
         flex: none;
     }
     .icon--sm {
-        width: 1em;
-        height: 1em;
-        vertical-align: -0.14em;
+        width: var(--icon-sm);
+        height: var(--icon-sm);
+        vertical-align: var(--icon-drop-sm);
     }
     /* The patch's sun is an identity mark: orange at every size. */
     .patch {
         display: block;
-        width: 96px;
-        height: 96px;
-        color: var(--ink-1);
-        --patch-sun: var(--accent);
+        width: var(--patch);
+        height: var(--patch);
+        color: var(--text);
+        --patch-sun: var(--mark-identity);
     }
     .patch--mark {
         --patch-band: none;
@@ -61,60 +61,61 @@
     .status {
         display: inline-flex;
         align-items: center;
-        gap: 0.55em;
-        font: 400 var(--label-size) / 1 var(--font-label);
+        gap: var(--mark-gap);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
-        color: var(--ink-2);
+        line-height: var(--lh-solid);
+        color: var(--text-quiet);
         white-space: nowrap;
     }
     .status::before {
         content: "";
-        width: 7px;
-        height: 7px;
+        width: var(--dot);
+        height: var(--dot);
         border-radius: var(--radius-round);
-        background: var(--ink-1);
+        background: var(--dot-on);
         flex: none;
     }
     /* Active (Open to, Current): the label in ink, the dot the orange
        "now" mark (contract §3). */
     .status[data-status="active"] {
-        color: var(--ink-1);
+        color: var(--text);
     }
     .status[data-status="active"]::before {
-        background: var(--accent);
+        background: var(--mark-now);
     }
     .status:is([data-status="complete"], [data-status="lifetime"])::before {
         border-radius: 0;
-        width: 6px;
-        height: 6px;
+        width: var(--dot-square);
+        height: var(--dot-square);
     }
     .status[data-status="archived"] {
-        color: var(--ink-3);
+        color: var(--text-faint);
     }
     .status[data-status="archived"]::before {
         background: transparent;
-        box-shadow: inset 0 0 0 1px var(--ink-3);
+        box-shadow: inset 0 0 0 var(--rule-hair) var(--dot-ring);
     }
     .status[data-status="paused"]::before {
-        width: 6px;
-        height: 8px;
+        width: var(--dot-square);
+        height: var(--dot-bar);
         border-radius: 0;
         background: transparent;
-        border-inline: 2px solid var(--ink-1);
+        border-inline: var(--rule-strong) solid var(--dot-on);
     }
     .status[data-status="planned"]::before {
         background: transparent;
-        border: 1px dashed var(--ink-2);
+        border: var(--rule-hair) dashed var(--dot-past);
     }
     /* Stopped: the sprite's cross (marks.tsx) in place of the dot. */
     .status[data-status="stopped"]::before {
         content: none;
     }
     .status__icon {
-        width: 10px;
-        height: 10px;
-        stroke-width: 2;
+        width: var(--icon-mark);
+        height: var(--icon-mark);
+        stroke-width: var(--stroke-icon-strong);
     }
 
     /* ===== Header and navigation (site.css 4.2) ======================== */
@@ -126,7 +127,7 @@
         z-index: var(--z-header);
         height: var(--header-h);
         background: var(--bg);
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
     }
     .site-header__inner {
         height: 100%;
@@ -139,20 +140,21 @@
         display: inline-flex;
         align-items: center;
         gap: var(--s-3);
-        min-height: 44px;
+        min-height: var(--target);
         flex: none;
-        color: var(--ink-1);
+        color: var(--text);
         text-decoration: none;
     }
     .brand .patch {
-        width: 36px;
-        height: 36px;
+        width: var(--patch-brand);
+        height: var(--patch-brand);
         --patch-band: none;
     }
     /* The wordmark: one of the two places Michroma is set. */
     .brand__name {
-        font: 400 var(--label-size) / 1 var(--font-mark);
-        letter-spacing: 0.22em;
+        font: var(--type-mark);
+        line-height: var(--lh-solid);
+        letter-spacing: var(--track-wordmark);
         text-transform: uppercase;
         white-space: nowrap;
     }
@@ -163,7 +165,7 @@
     .nav__list {
         display: flex;
         align-items: center;
-        gap: clamp(1rem, 2.1vw, 2.5rem);
+        gap: var(--nav-gap);
         margin: 0;
         padding: 0;
         list-style: none;
@@ -172,10 +174,10 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
+        min-height: var(--target);
         padding-block: var(--s-1);
-        color: var(--ink-1);
-        font: 500 var(--label-size) / 1.2 var(--font-display);
+        color: var(--text);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -187,15 +189,17 @@
         position: absolute;
         left: 0;
         right: 0;
-        bottom: -2px;
+        bottom: calc(-1 * var(--rule-strong));
         height: var(--rule-strong);
-        background: var(--ink-1);
+        background: var(--rule-lit);
         transform: scaleX(0);
         transform-origin: left center;
-        transition: transform var(--dur-3) var(--ease-transfer);
+        transition: transform var(--dur-state) var(--ease-transfer);
     }
-    .nav__link:hover::after {
-        transform: scaleX(0.35);
+    @media (hover: hover) {
+        .nav__link:hover::after {
+            transform: scaleX(0.35);
+        }
     }
     .nav__link[aria-current]::after {
         transform: scaleX(1);
@@ -208,7 +212,7 @@
     .header-tools {
         display: flex;
         align-items: center;
-        gap: min(var(--s-3), 12px);
+        gap: var(--bar-gap);
         flex: none;
     }
 
@@ -218,13 +222,13 @@
     .header-cv {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
-        padding: 0 min(0.35rem, 5.6px);
-        color: var(--ink-1);
-        font: 500 var(--label-size) / 1 var(--font-display);
+        min-height: var(--target);
+        padding: 0 var(--bar-pad-sm);
+        color: var(--text);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
-        text-underline-offset: 0.55em;
+        text-underline-offset: var(--underline-offset-caps);
         white-space: nowrap;
     }
     @media (min-width: 60rem) {
@@ -244,14 +248,14 @@
         display: none;
         align-items: center;
         justify-content: center;
-        gap: min(0.5rem, 8px);
-        min-height: 44px;
-        min-width: 44px;
-        padding: 0 min(0.7rem, 11.2px);
+        gap: var(--bar-gap-sm);
+        min-height: var(--target);
+        min-width: var(--target);
+        padding: 0 var(--bar-pad);
         background: transparent;
-        border: var(--rule-hair) solid var(--rule-2);
-        color: var(--ink-1);
-        font: 500 var(--label-size) / 1 var(--font-display);
+        border: var(--rule-hair) solid var(--rule-firm);
+        color: var(--text);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -260,12 +264,14 @@
             background-color var(--dur-hover) var(--ease-dock);
     }
     .nav-toggle .icon {
-        width: 16px;
-        height: 16px;
+        width: var(--icon-control);
+        height: var(--icon-control);
     }
-    .nav-toggle:hover {
-        border-color: var(--ink-1);
-        background: var(--surface-2);
+    @media (hover: hover) {
+        .nav-toggle:hover {
+            border-color: var(--rule-lit);
+            background: var(--surface-lit);
+        }
     }
     .nav__sheet-extra {
         display: none;
@@ -285,31 +291,35 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
+        width: var(--target);
+        height: var(--target);
         flex: none;
         padding: 0;
         border: 0;
         background: transparent;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         cursor: pointer;
         transition: color var(--dur-hover) var(--ease-dock);
     }
     .theme-switch__button .icon {
-        width: 18px;
-        height: 18px;
+        width: var(--icon-control);
+        height: var(--icon-control);
     }
-    .theme-switch__button:hover,
     .theme-switch__button[aria-expanded="true"] {
-        color: var(--ink-1);
+        color: var(--text);
+    }
+    @media (hover: hover) {
+        .theme-switch__button:hover {
+            color: var(--text);
+        }
     }
     .theme-switch__popover {
         position: absolute;
-        top: calc(100% + (var(--header-h) - 44px) / 2);
+        top: calc(100% + (var(--header-h) - var(--target)) / 2);
         right: 0;
         width: max-content;
         padding: var(--s-3);
-        border: var(--rule-hair) solid var(--rule-1);
+        border: var(--rule-hair) solid var(--rule-quiet);
         border-top: 0;
         background: var(--bg);
     }
@@ -347,7 +357,7 @@
             gap: var(--s-4);
         }
         .nav__list {
-            gap: 1rem;
+            gap: var(--s-4);
         }
         .header-tools {
             gap: var(--s-2);
@@ -400,9 +410,9 @@
             margin: 0;
             padding: var(--s-6) var(--margin) var(--s-8);
             border: 0;
-            border-top: var(--rule-hair) solid var(--rule-1);
+            border-top: var(--rule-hair) solid var(--rule-quiet);
             background: var(--bg);
-            color: var(--ink-1);
+            color: var(--text);
             overflow-y: auto;
             overscroll-behavior: contain;
         }
@@ -412,16 +422,16 @@
             gap: 0;
         }
         .nav__list > li {
-            border-bottom: var(--rule-hair) solid var(--rule-1);
+            border-bottom: var(--rule-hair) solid var(--rule-quiet);
         }
         .nav__link {
             display: flex;
             padding-block: var(--s-4);
-            min-height: 64px;
+            min-height: var(--sheet-row);
             font-size: var(--step-0);
         }
         .nav__link::after {
-            bottom: -1px;
+            bottom: calc(-1 * var(--rule-hair));
         }
         .nav__sheet-extra {
             display: flex;
@@ -435,7 +445,7 @@
         /* phones: the patch alone is the brand; the bar sits at the end,
            so the gap only spaces the two when the row is full. */
         .site-header__inner {
-            gap: 8px;
+            gap: var(--bar-gap-sm);
         }
         .brand__name {
             display: none;
@@ -463,21 +473,23 @@
     .motion-toggle {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        min-height: 44px;
-        color: var(--ink-2);
-        font: 500 var(--label-size) / 1.2 var(--font-display);
+        gap: var(--s-2);
+        min-height: var(--target);
+        color: var(--text-quiet);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         white-space: nowrap;
         transition: color var(--dur-hover) var(--ease-dock);
     }
-    .motion-toggle:hover {
-        color: var(--ink-1);
+    @media (hover: hover) {
+        .motion-toggle:hover {
+            color: var(--text);
+        }
     }
     .motion-toggle .icon {
-        width: 16px;
-        height: 16px;
+        width: var(--icon-control);
+        height: var(--icon-control);
     }
     html:not([data-motion="reduced"]) .motion-toggle__off,
     html[data-motion="reduced"] .motion-toggle__on {
@@ -498,18 +510,18 @@
 
     /* ===== Buttons and links (site.css 4.4) ============================ */
     .btn {
-        --btn-h: 48px;
+        --btn-h: var(--control-h);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.7rem;
+        gap: var(--control-gap);
         min-height: var(--btn-h);
-        padding: 0 1.25rem;
-        border: var(--rule-hair) solid var(--rule-2);
+        padding: 0 var(--control-pad-lg);
+        border: var(--rule-hair) solid var(--rule-firm);
         border-radius: 0;
         background: transparent;
-        color: var(--ink-1);
-        font: 500 var(--label-size) / 1 var(--font-display);
+        color: var(--text);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -521,54 +533,64 @@
             color var(--dur-hover) var(--ease-dock);
     }
     .btn .icon {
-        width: 16px;
-        height: 16px;
+        width: var(--icon-control);
+        height: var(--icon-control);
         transition: transform var(--dur-hover) var(--ease-dock);
     }
-    .btn:hover {
-        border-color: var(--ink-1);
-        background: var(--surface-1);
-    }
-    .btn:hover .icon--nudge {
-        transform: translateX(4px);
+    @media (hover: hover) {
+        .btn:hover {
+            border-color: var(--rule-lit);
+            background: var(--surface-lit);
+        }
+        .btn:hover .icon--nudge {
+            transform: translateX(var(--nudge));
+        }
     }
     .btn:active {
-        background: var(--surface-2);
+        background: var(--surface-lit);
     }
     .btn[disabled],
     .btn[aria-disabled="true"] {
-        opacity: 0.45;
+        opacity: var(--opacity-disabled);
         cursor: not-allowed;
         background: transparent;
-        border-color: var(--rule-2);
+        border-color: var(--rule-firm);
     }
     /* The primary: an ink fill with a label in the page's colour (APCA
        Lc 90 and more in both themes). */
     .btn--primary {
-        background: var(--ink-1);
-        border-color: var(--ink-1);
+        background: var(--fill);
+        border-color: var(--fill);
         color: var(--bg);
     }
-    .btn--primary:hover,
+    @media (hover: hover) {
+        .btn--primary:hover {
+            background: var(--fill-hover);
+            border-color: var(--fill-hover);
+            color: var(--bg);
+        }
+    }
     .btn--primary:active {
-        background: var(--ink-2);
-        border-color: var(--ink-2);
+        background: var(--fill-hover);
+        border-color: var(--fill-hover);
         color: var(--bg);
     }
     .btn--quiet {
         border-color: transparent;
-        padding-inline: 0.25rem;
+        padding-inline: var(--s-1);
     }
-    .btn--quiet:hover {
-        background: transparent;
-        border-color: transparent;
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.45em;
+    @media (hover: hover) {
+        .btn--quiet:hover {
+            background: transparent;
+            border-color: transparent;
+            text-decoration: underline;
+            text-decoration-thickness: var(--underline-w-lit);
+            text-underline-offset: var(--underline-offset-caps);
+        }
     }
     .btn--sm {
-        --btn-h: 44px;
-        padding: 0 0.85rem;
+        --btn-h: var(--target);
+        padding: 0 var(--control-pad);
     }
 
     /* "All entries →": the controls' caps on the links' hairline, which
@@ -576,11 +598,11 @@
     .link-arrow {
         display: inline-flex;
         align-items: center;
-        gap: 0.55em;
-        min-height: 44px;
-        border-bottom: var(--rule-hair) solid var(--ink-3);
-        color: var(--ink-1);
-        font: 500 var(--label-size) / 1.2 var(--font-display);
+        gap: var(--mark-gap);
+        min-height: var(--target);
+        border-bottom: var(--rule-hair) solid var(--underline);
+        color: var(--text);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -589,16 +611,18 @@
             box-shadow var(--dur-hover) var(--ease-dock);
     }
     .link-arrow .icon {
-        width: 15px;
-        height: 15px;
+        width: var(--icon-control);
+        height: var(--icon-control);
         transition: transform var(--dur-hover) var(--ease-dock);
     }
-    .link-arrow:hover {
-        border-bottom-color: var(--ink-1);
-        box-shadow: 0 1px 0 var(--ink-1);
-    }
-    .link-arrow:hover .icon {
-        transform: translateX(4px);
+    @media (hover: hover) {
+        .link-arrow:hover {
+            border-bottom-color: var(--underline-lit);
+            box-shadow: 0 var(--rule-hair) 0 var(--underline-lit);
+        }
+        .link-arrow:hover .icon {
+            transform: translateX(var(--nudge));
+        }
     }
 
     /* Stretched link: the whole card is clickable, the title is the link. */
@@ -609,31 +633,34 @@
         content: "";
         position: absolute;
         inset: 0;
-        z-index: 1;
+        z-index: var(--z-raised);
     }
 
     /* ===== Tags (site.css 4.5) ========================================= */
     .tags {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem 0.9rem;
+        gap: var(--s-1) var(--s-4);
         margin: 0;
         padding: 0;
         list-style: none;
     }
     .tag {
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        color: var(--text-quiet);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
         text-decoration: none;
         white-space: nowrap;
     }
     a.tag {
         position: relative;
-        z-index: 2;
+        z-index: var(--z-over);
     }
-    a.tag:hover {
-        color: var(--ink-1);
-        text-decoration: underline;
+    @media (hover: hover) {
+        a.tag:hover {
+            color: var(--text);
+            text-decoration: underline;
+        }
     }
 
     /* ===== Section head and page head (site.css 4.6, 4.27) ============= */
@@ -647,8 +674,8 @@
         align-items: center;
         gap: var(--s-2) var(--s-3);
         margin: 0;
-        color: var(--ink-1);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        color: var(--text);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -657,21 +684,22 @@
         flex: 1;
         height: var(--rule-hair);
         min-width: var(--s-6);
-        background: var(--rule-1);
+        background: var(--rule-quiet);
     }
     .section-tag__h {
         display: inline-flex;
         min-width: 0;
         margin: 0;
-        color: var(--ink-1);
-        font: 400 var(--step-1) / 1.25 var(--font-display);
-        letter-spacing: -0.003em;
+        color: var(--text);
+        font: var(--type-title-sm);
+        letter-spacing: 0;
         text-transform: none;
     }
     .section-tag__meta {
         order: 3;
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        color: var(--text-quiet);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
         letter-spacing: 0;
         text-transform: none;
         white-space: nowrap;
@@ -710,27 +738,27 @@
        tag, the plain h1, then a serif intro. */
     .page-head {
         position: relative;
-        padding-top: clamp(2.5rem, 1rem + 4vw, 4.5rem);
+        padding-top: var(--space-head);
         padding-bottom: var(--space-block);
     }
     /* The section's themed tag: the other place Michroma is set. */
     .page-head__tag {
-        color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-mark);
-        letter-spacing: 0.16em;
+        color: var(--text-quiet);
+        font: var(--type-mark);
+        letter-spacing: var(--track-mark);
     }
     .page-head__title {
         margin-top: var(--s-4);
-        font: var(--weight-display) var(--step-6) / 0.98 var(--font-display);
+        font: var(--type-display-lg);
         letter-spacing: var(--track-display);
     }
     /* Set ragged, as prose: a balanced break can split a phrase ("or an /
        opportunity") where a full first line would not. */
     .page-head__intro {
-        max-width: 52ch;
+        max-width: var(--measure-lead);
         margin-top: var(--s-6);
-        color: var(--ink-2);
-        font: 400 var(--step-1) / 1.5 var(--font-long);
+        color: var(--text-quiet);
+        font: var(--type-dek);
         text-wrap: pretty;
     }
 
@@ -738,33 +766,36 @@
     .caption {
         display: flex;
         gap: var(--s-3);
-        max-width: 60ch;
+        max-width: var(--measure-copy);
         margin-top: var(--s-3);
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.5 var(--font-text);
+        color: var(--text-quiet);
+        font: var(--type-ui);
     }
     .caption__body {
         min-width: 0;
     }
     .caption__src {
         display: block;
-        margin-top: 0.3rem;
-        color: var(--ink-3);
-        font: 400 var(--label-size) / 1.45 var(--font-mono);
+        margin-top: var(--s-1);
+        color: var(--text-faint);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
         /* Under a thumbnail on a phone, at a large text size, a credit
            wider than the plate breaks rather than runs under the title. */
         overflow-wrap: break-word;
     }
-    /* A credit with no caption above it (a project's cover). */
+    /* A credit with no caption above it (a cover, or a long-read plate
+       with only a credit). */
     .caption > .caption__src {
         margin-top: 0;
     }
 
     /* "Rev 2026-09-24": the printed CV's revision. */
     .rev {
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1.2 var(--font-mono);
-        letter-spacing: 0.02em;
+        color: var(--text-quiet);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
+        letter-spacing: var(--track-paper-rev);
         white-space: nowrap;
     }
 
@@ -779,7 +810,7 @@
        either side; narrower they wrap, and on phones they stack. */
     .site-footer {
         padding-block: var(--s-4) var(--s-6);
-        border-top: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
     }
     .site-footer__strip {
         display: flex;
@@ -787,15 +818,15 @@
         align-items: center;
         justify-content: space-between;
         gap: 0 var(--s-6);
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1.6 var(--font-label);
+        color: var(--text-quiet);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .site-footer__strip a {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
+        min-height: var(--target);
     }
     .site-footer__name {
         white-space: nowrap;
@@ -837,30 +868,36 @@
         gap: var(--s-2);
     }
     .field__label {
-        color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        color: var(--text-quiet);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .field__error {
-        color: var(--ink-1);
-        font: 500 var(--step-0) / 1.45 var(--font-text);
+        color: var(--text);
+        font: var(--type-ui-strong);
     }
     /* Rendered empty, as a live region the words are added to: out of the
        field's flow until it has some, so it adds no gap. */
     .field__error:empty {
         position: absolute;
     }
+    /* The inset centres one line of the input's leading in the control's
+       height; the textarea, led looser, keeps the same inset. */
     .input,
     .textarea {
         width: 100%;
-        min-height: 48px;
-        padding: 0.7rem 0.9rem;
-        border: var(--rule-hair) solid var(--rule-2);
+        min-height: var(--control-h);
+        padding: calc(
+                (var(--control-h) - var(--step-0) * var(--lh-compact)) / 2 -
+                    var(--rule-hair)
+            )
+            var(--control-pad);
+        border: var(--rule-hair) solid var(--rule-firm);
         border-radius: 0;
-        background: var(--surface-1);
-        color: var(--ink-1);
-        font: 400 var(--step-0) / 1.4 var(--font-text);
+        background: var(--surface-raised);
+        color: var(--text);
+        font: var(--type-ui-row);
         -webkit-appearance: none;
         appearance: none;
         transition:
@@ -868,92 +905,96 @@
             background-color var(--dur-hover) var(--ease-dock);
     }
     .textarea {
-        min-height: 8.5rem;
-        line-height: 1.55;
+        min-height: var(--textarea-h);
+        line-height: var(--lh-text);
         resize: vertical;
     }
     .input::placeholder,
     .textarea::placeholder {
-        color: var(--ink-3);
+        color: var(--text-faint);
         opacity: 1;
     }
-    .input:hover,
-    .textarea:hover {
-        border-color: var(--ink-2);
+    @media (hover: hover) {
+        .input:hover,
+        .textarea:hover {
+            border-color: var(--rule-lit);
+        }
     }
     .input:focus-visible,
     .textarea:focus-visible {
-        outline: var(--rule-strong) solid var(--focus);
+        outline: var(--focus-ring);
         outline-offset: 0;
         border-color: var(--focus);
-        background: var(--surface-2);
+        background: var(--surface-lit);
     }
     .input[aria-invalid="true"],
     .textarea[aria-invalid="true"] {
-        box-shadow: inset var(--rule-strong) 0 0 var(--accent);
+        box-shadow: inset var(--rule-strong) 0 0 var(--mark-now);
     }
-    /* Flight Manual's accent is a mark on paper (3.3:1 on --bg), under 3:1
-       on the focused field's surface-2: there the rule takes the focus
-       colour, the same orange, darker. */
-    html[data-theme="manual"]
-        :is(.input, .textarea)[aria-invalid="true"]:focus-visible {
-        box-shadow: inset var(--rule-strong) 0 0 var(--focus);
+    /* Focused, the rule reads --mark-invalid-lit, which is the accent in
+       Void. Flight Manual's accent is under 3:1 on the focused field's
+       --surface-lit, so there it is the focus colour, the same orange,
+       darker (styles/tokens.css). */
+    :is(.input, .textarea)[aria-invalid="true"]:focus-visible {
+        box-shadow: inset var(--rule-strong) 0 0 var(--mark-invalid-lit);
     }
     /* Orange is the field to fix now, the first (it takes the focus); a
        later one's rule is ink, beside its words and cross. */
     .field:has([aria-invalid="true"])
         ~ .field
         :is(.input, .textarea)[aria-invalid="true"] {
-        box-shadow: inset var(--rule-strong) 0 0 var(--ink-1);
+        box-shadow: inset var(--rule-strong) 0 0 var(--rule-ink);
     }
     .input:disabled,
     .textarea:disabled {
-        opacity: 0.5;
+        opacity: var(--opacity-disabled);
         cursor: not-allowed;
     }
 
     /* ===== Title block (site.css, graft 6) ============================= */
     /* The drawing title block set in the dark: a hairline grid of cells,
        each a tiny label over a value. 12 internal columns from 960px
-       (--span), 2 on phones (--span-sm: 1 | 2). components/ui/title-block.tsx */
+       (--span), 2 on phones (--span-sm: 1 | 2). Its head and cell rules
+       read --titleblock-head and --titleblock-rule, which Flight Manual
+       sets firmer (styles/tokens.css). components/ui/title-block.tsx */
     .titleblock {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         margin: 0;
-        border-top: var(--rule-hair) solid var(--rule-2);
-        border-left: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--titleblock-head);
+        border-left: var(--rule-hair) solid var(--titleblock-rule);
         background: var(--plate-bg);
     }
     .titleblock__cell {
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
+        gap: var(--s-1);
         min-width: 0;
         grid-column: span var(--span-sm, 2);
         padding: var(--s-3) var(--s-4) var(--s-4);
-        border-right: var(--rule-hair) solid var(--rule-1);
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-right: var(--rule-hair) solid var(--titleblock-rule);
+        border-bottom: var(--rule-hair) solid var(--titleblock-rule);
     }
     .titleblock__cell > dt {
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1.3 var(--font-label);
+        color: var(--text-quiet);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .titleblock__cell > dd {
         margin: 0;
         overflow-wrap: break-word;
-        color: var(--ink-1);
-        font: 400 var(--step-0) / 1.45 var(--font-display);
+        color: var(--text);
+        font: var(--type-ui);
     }
     /* The quieter lines: a role's places and dates as data, then its
        note in the value's type. */
     .titleblock__cell > dd + dd {
-        color: var(--ink-2);
+        color: var(--text-quiet);
     }
     .titleblock__data {
-        font: 400 var(--label-size) / 1.5 var(--font-mono);
-        font-variant-numeric: tabular-nums slashed-zero;
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     @media (min-width: 60rem) {
         .titleblock {
@@ -972,22 +1013,15 @@
     .titleblock__links a {
         display: inline-flex;
         align-items: center;
-        gap: 0.3em;
-        min-height: 32px;
-        color: var(--ink-1);
-        text-underline-offset: 0.18em;
+        gap: var(--icon-gap);
+        min-height: var(--target-inline);
+        color: var(--text);
+        text-underline-offset: var(--underline-offset);
     }
     .titleblock__links .icon {
-        width: 0.85em;
-        height: 0.85em;
-        color: var(--ink-3);
-    }
-    [data-theme="manual"] .titleblock {
-        border-top-color: var(--ink-1);
-        border-left-color: var(--rule-2);
-    }
-    [data-theme="manual"] .titleblock__cell {
-        border-color: var(--rule-2);
+        width: var(--icon-out);
+        height: var(--icon-out);
+        color: var(--icon-quiet);
     }
 
     /* ===== Question rows (components/crew/questions.tsx) =============== */
@@ -1005,7 +1039,7 @@
         display: grid;
         row-gap: var(--s-2);
         padding-block: var(--s-4) var(--s-5);
-        border-top: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
     }
     .q-item:first-child {
         padding-top: 0;
@@ -1015,23 +1049,23 @@
         padding-bottom: 0;
     }
     .q-item__title {
-        color: var(--ink-1);
-        font: 400 var(--step-1) / 1.3 var(--font-display);
+        color: var(--text);
+        font: var(--type-title-sm);
         text-wrap: balance;
     }
     .q-item__title a {
-        text-underline-offset: 0.16em;
+        text-underline-offset: var(--underline-offset);
     }
     .q-item__title .icon {
-        width: 0.7em;
-        height: 0.7em;
-        margin-left: 0.3em;
-        color: var(--ink-3);
+        width: var(--icon-out-title);
+        height: var(--icon-out-title);
+        margin-left: var(--icon-gap);
+        color: var(--icon-quiet);
     }
     .q-item__note {
-        max-width: 60ch;
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.55 var(--font-long);
+        max-width: var(--measure-copy);
+        color: var(--text-quiet);
+        font: var(--type-note);
         text-wrap: pretty;
     }
 
@@ -1060,7 +1094,7 @@
         display: flex;
     }
     .seg__opt + .seg__opt {
-        margin-left: -1px;
+        margin-left: calc(-1 * var(--rule-hair));
     }
     .seg__input {
         position: absolute;
@@ -1074,13 +1108,13 @@
     .seg__box {
         display: inline-flex;
         align-items: center;
-        gap: 0.6rem;
+        gap: var(--control-gap);
         width: 100%;
-        min-height: 44px;
-        padding: 0 0.9rem;
-        border: var(--rule-hair) solid var(--rule-2);
-        color: var(--ink-2);
-        font: 500 var(--label-size) / 1.15 var(--font-display);
+        min-height: var(--target);
+        padding: 0 var(--control-pad);
+        border: var(--rule-hair) solid var(--rule-firm);
+        color: var(--text-quiet);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         white-space: nowrap;
@@ -1098,10 +1132,10 @@
     .seg__box::before {
         content: "";
         flex: none;
-        width: 7px;
-        height: 7px;
+        width: var(--dot);
+        height: var(--dot);
         border-radius: var(--radius-round);
-        box-shadow: inset 0 0 0 1px var(--ink-3);
+        box-shadow: inset 0 0 0 var(--rule-hair) var(--dot-ring);
     }
     /* With a description under the label (the contact form's topics):
        the dot on the label's line, the words under it in the reading
@@ -1110,36 +1144,38 @@
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
         row-gap: var(--s-2);
-        padding-block: 0.85rem;
+        padding-block: var(--s-3);
         white-space: normal;
     }
     .seg__note {
         grid-column: 2;
-        max-width: 60ch;
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.5 var(--font-long);
+        max-width: var(--measure-copy);
+        color: var(--text-quiet);
+        font: var(--type-note);
         letter-spacing: 0;
         text-transform: none;
         text-wrap: pretty;
     }
-    .seg__input:hover + .seg__box {
-        color: var(--ink-1);
+    @media (hover: hover) {
+        .seg__input:hover + .seg__box {
+            color: var(--text);
+        }
     }
     .seg__input:checked + .seg__box {
         position: relative;
-        z-index: 1;
-        border-color: var(--ink-2);
-        background: var(--surface-2);
-        color: var(--ink-1);
+        z-index: var(--z-raised);
+        border-color: var(--chosen-edge);
+        background: var(--chosen-fill);
+        color: var(--chosen-ink);
     }
     .seg__input:checked + .seg__box::before {
-        background: var(--ink-1);
+        background: var(--chosen-dot);
         box-shadow: none;
     }
     .seg__input:focus-visible + .seg__box {
-        z-index: 2;
-        outline: var(--rule-strong) solid var(--focus);
-        outline-offset: 2px;
+        z-index: var(--z-over);
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-offset);
     }
 
     /* ===== Key/value list (site.css 4.9) =============================== */
@@ -1147,14 +1183,14 @@
        hairline across each row; stacked on phones. */
     .specs {
         margin: 0;
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
     }
     .specs__row {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         gap: var(--s-1) var(--gutter);
         padding-block: var(--s-3);
-        border-top: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
     }
     /* Under a section head, the head's hairline is the first row's
        (`--first-rule`, above). */
@@ -1163,31 +1199,35 @@
     }
     @media (min-width: 37.5rem) {
         .specs__row {
-            grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+            grid-template-columns:
+                minmax(var(--col-term-min), var(--col-term))
+                minmax(0, 1fr);
         }
     }
     .specs dt {
-        padding-top: 0.2rem;
-        color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        padding-top: var(--s-1);
+        color: var(--text-quiet);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .specs dd {
         margin: 0;
-        color: var(--ink-1);
-        font: 400 var(--step-0) / 1.55 var(--font-display);
+        color: var(--text);
+        font: var(--type-ui);
     }
 
     /* ===== CV rows (site.css 4.13, on the log index's grammar) ========= */
     /* components/cv/cv-list.tsx: a mono column (dates, place) beside the
        title, organization, a serif line and the facts. A linked row is one
-       big target. The rows end where the section head's rule ends; the
-       serif line and the facts keep their own measures. */
+       big target, lit as a log row is (`lit`, styles/recipes.css: an ink
+       rule and the title underlined). The rows end where the section
+       head's rule ends; the serif line and the facts keep their own
+       measures. */
     .cv-list {
         margin: 0;
         padding: 0;
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
         list-style: none;
     }
     .cv-item {
@@ -1196,7 +1236,7 @@
         grid-template-columns: minmax(0, 1fr);
         gap: var(--s-3);
         padding-block: var(--s-5);
-        border-top: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--row-rule);
         transition:
             border-color var(--dur-hover) var(--ease-dock),
             background-color var(--dur-hover) var(--ease-dock);
@@ -1208,7 +1248,7 @@
     }
     @media (min-width: 37.5rem) {
         .cv-item {
-            grid-template-columns: 11rem minmax(0, 1fr);
+            grid-template-columns: var(--col-term) minmax(0, 1fr);
             column-gap: var(--gutter);
         }
     }
@@ -1217,27 +1257,24 @@
         flex-wrap: wrap;
         align-items: baseline;
         gap: var(--s-1) var(--s-4);
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1.5 var(--font-mono);
-        font-variant-numeric: tabular-nums slashed-zero;
+        color: var(--text-quiet);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     @media (min-width: 37.5rem) {
         .cv-item__aside {
             flex-direction: column;
             align-items: flex-start;
-            padding-top: 0.35rem;
+            padding-top: var(--s-1);
         }
-    }
-    .cv-item__dates {
-        color: var(--ink-1);
     }
     .cv-item__body {
         min-width: 0;
     }
     .cv-item__title {
         margin: 0;
-        font: 400 var(--step-2) / 1.18 var(--font-display);
-        letter-spacing: -0.005em;
+        font: var(--type-title-md);
+        letter-spacing: var(--track-title);
         text-wrap: pretty;
     }
     /* On a phone a two-line title balances, as Writing's rows do. */
@@ -1246,35 +1283,32 @@
             text-wrap: balance;
         }
     }
-    .cv-item__title a {
-        text-decoration: none;
-    }
     .cv-item__ext {
-        width: 0.7em;
-        height: 0.7em;
-        margin-left: 0.3em;
-        color: var(--ink-3);
-        vertical-align: 0.05em;
+        width: var(--icon-out-title);
+        height: var(--icon-out-title);
+        margin-left: var(--icon-gap);
+        color: var(--icon-quiet);
+        vertical-align: var(--icon-out-shift);
     }
     .cv-item__sub {
         margin-top: var(--s-1);
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.4 var(--font-display);
+        color: var(--text-quiet);
+        font: var(--type-ui-row);
     }
     .cv-item__note {
         margin-top: var(--s-1);
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.45 var(--font-display);
+        color: var(--text-quiet);
+        font: var(--type-ui);
     }
     .cv-item__dek {
-        max-width: 60ch;
+        max-width: var(--measure-copy);
         margin-top: var(--s-3);
-        color: var(--ink-2);
-        font: 400 var(--step-1) / 1.45 var(--font-long);
+        color: var(--text-quiet);
+        font: var(--type-dek);
         text-wrap: pretty;
     }
     .cv-item__lines {
-        max-width: 68ch;
+        max-width: var(--measure-list);
         margin: var(--s-3) 0 0;
         padding: 0;
         list-style: none;
@@ -1285,8 +1319,8 @@
     .cv-item__lines li {
         position: relative;
         padding-left: var(--list-gutter);
-        color: var(--ink-1);
-        font: 400 var(--step-0) / 1.55 var(--font-display);
+        color: var(--text);
+        font: var(--type-ui);
     }
     .cv-item__lines li + li {
         margin-top: var(--s-2);
@@ -1295,22 +1329,22 @@
         content: "";
         position: absolute;
         left: 0;
-        top: 0.78em;
+        top: var(--list-mark-top);
         width: var(--list-mark);
         height: 0;
-        border-top: var(--rule-hair) solid var(--ink-2);
+        border-top: var(--rule-hair) solid var(--list-mark-ink);
     }
     /* The skills and the links, flush in the body column with no key: the
        mono names and the links' own words say what they are. */
     .cv-item__facts {
-        max-width: 68ch;
+        max-width: var(--measure-list);
         margin-top: var(--s-3);
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.5 var(--font-display);
+        color: var(--text-quiet);
+        font: var(--type-ui);
     }
     .cv-item__skills {
-        font-family: var(--font-mono);
-        font-size: var(--label-size);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     .cv-item__links {
         display: flex;
@@ -1319,31 +1353,24 @@
     }
     .cv-item__link a {
         position: relative;
-        z-index: 2;
+        z-index: var(--z-over);
         display: inline-flex;
         align-items: center;
-        gap: 0.3em;
-        min-height: 32px;
-        color: var(--ink-1);
-        text-underline-offset: 0.18em;
+        gap: var(--icon-gap);
+        min-height: var(--target-inline);
+        color: var(--text);
+        text-underline-offset: var(--underline-offset);
     }
     .cv-item__link .icon {
-        width: 0.9em;
-        height: 0.9em;
+        width: var(--icon-out);
+        height: var(--icon-out);
+        color: var(--icon-quiet);
     }
     .cv-item__url {
-        margin-left: 0.4em;
-        color: var(--ink-2);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
-    }
-    /* Lit: the log row's hover (an ink rule and the title underlined). */
-    .cv-item:hover {
-        border-top-color: var(--ink-1);
-    }
-    .cv-item:hover .cv-item__title a {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.16em;
+        margin-left: var(--icon-gap);
+        color: var(--text-quiet);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
 
     /* ===== Photographs and plates (site.css 4.26, 4.27) ================= */
@@ -1363,7 +1390,7 @@
     .photo__frame {
         position: relative;
         padding: var(--photo-mount);
-        border: var(--rule-hair) solid var(--rule-1);
+        border: var(--rule-hair) solid var(--rule-quiet);
         background: var(--plate-bg);
     }
     .photo__img {
@@ -1373,7 +1400,7 @@
         aspect-ratio: var(--photo-ratio, auto);
         object-fit: cover;
         object-position: var(--photo-focus, 50% 50%);
-        background: var(--surface-1);
+        background: var(--surface-raised);
         filter: var(--photo-treatment);
     }
     .photo--real .photo__img {
@@ -1391,7 +1418,7 @@
        instead, it would sink as far as the column outgrows it, and move
        from one section to the next. */
     .page-head--split {
-        padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+        padding-top: var(--space-head);
         padding-bottom: var(--s-6);
     }
     .page-head--split > .page-head__intro {
@@ -1438,14 +1465,49 @@
     .crumb-row__home {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
-        color: var(--ink-1);
-        text-decoration: none;
+        min-height: var(--target);
+        color: var(--text);
     }
-    .crumb-row__home:hover {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.3em;
+
+    /* ===== Contents (G1; components/ui/contents.tsx) =================== */
+    /* An entry's rail and phone box, and a project essay's rail: the
+       headings by name, unnumbered (premium D3), each title centred in
+       its 44px target on the list's hairline. */
+    .toc {
+        font: var(--type-ui-row);
+    }
+    .toc__title {
+        margin-bottom: var(--s-3);
+    }
+    .toc__list {
+        margin: 0;
+        padding: 0;
+        border-left: var(--rule-hair) solid var(--rule-quiet);
+        list-style: none;
+    }
+    .toc__list a {
+        display: flex;
+        align-items: center;
+        min-height: var(--target);
+        margin-left: calc(-1 * var(--rule-hair));
+        padding: var(--s-1) 0 var(--s-1) var(--s-4);
+        border-left: var(--rule-strong) solid transparent;
+        color: var(--text-quiet);
+        text-decoration: none;
+        transition:
+            color var(--dur-hover) var(--ease-dock),
+            border-color var(--dur-state) var(--ease-dock);
+    }
+    @media (hover: hover) {
+        .toc__list a:hover {
+            color: var(--text);
+        }
+    }
+    /* The current section: the contents' one "now" mark, in orange, a 2px
+       bar on the list's hairline, never a rule under the link. */
+    .toc__list a[aria-current] {
+        border-left-color: var(--mark-now);
+        color: var(--text);
     }
 
     /* ===== Stats (site.css 4.9; components/ui/metrics.tsx) ============= */
@@ -1471,36 +1533,33 @@
         gap: var(--s-2);
         min-width: 0;
         padding-top: var(--s-3);
-        border-top: var(--rule-hair) solid var(--rule-2);
+        border-top: var(--rule-hair) solid var(--rule-firm);
     }
     .metric > dt {
-        color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        color: var(--text-quiet);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .metric > dd {
         order: -1;
         margin: 0;
-        color: var(--ink-1);
-        font: 400 var(--metric-size, var(--step-3)) / 1.05 var(--font-display);
-        letter-spacing: -0.01em;
-        font-variant-numeric: tabular-nums lining-nums;
+        color: var(--text);
+        font: var(--type-title-lg);
+        letter-spacing: var(--track-title);
+        font-variant-numeric: var(--numerals-figures);
         overflow-wrap: break-word;
         text-wrap: balance;
     }
     /* The unit a head's step, not a fraction of the value: the page
        keeps to its six sizes. */
     .metric__unit {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font-size: var(--step-1);
         letter-spacing: 0;
     }
-    .metrics--lg {
-        --metric-size: var(--step-4);
-    }
-    .metrics--sm {
-        --metric-size: var(--step-1);
+    .metrics--lg .metric > dd {
+        font-size: var(--step-4);
     }
 
     /* ===== Tables (site.css 4.14) ======================================= */
@@ -1516,28 +1575,28 @@
     .table {
         width: 100%;
         border-collapse: collapse;
-        font: 400 var(--step-0) / 1.45 var(--font-text);
-        font-variant-numeric: tabular-nums lining-nums;
+        font: var(--type-ui);
+        font-variant-numeric: var(--numerals-figures);
     }
     .table th,
     .table td {
         padding: var(--s-4) var(--s-4) var(--s-4) 0;
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
         text-align: left;
         vertical-align: top;
     }
     .table thead th {
         padding-block: var(--s-3);
-        border-bottom-color: var(--rule-2);
-        color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        border-bottom-color: var(--rule-firm);
+        color: var(--text-quiet);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
         vertical-align: bottom;
         white-space: nowrap;
     }
     .table tbody th {
-        font-weight: 400;
+        font-weight: var(--weight-regular);
     }
     .table .num {
         font-family: var(--font-mono);
@@ -1550,21 +1609,25 @@
     .table tbody tr {
         transition: background-color var(--dur-hover) var(--ease-dock);
     }
-    .table tbody tr:hover {
-        background: linear-gradient(
-            to right,
-            var(--surface-1),
-            transparent 85%
-        );
+    @media (hover: hover) {
+        .table tbody tr:hover {
+            background: linear-gradient(
+                to right,
+                var(--surface-lit),
+                transparent 85%
+            );
+        }
     }
     @media (forced-colors: active) {
-        .table tbody tr:hover {
-            background: none;
+        @media (hover: hover) {
+            .table tbody tr:hover {
+                background: none;
+            }
         }
     }
 
     /* ===== Link rows (contract §4; components/ui/route-list.tsx) ======= */
-    /* Numbered hairline rows, the whole row one link (from the 404's). */
+    /* Hairline rows, the whole row one link (from the 404's). */
     .route-list ol {
         display: grid;
         column-gap: var(--gutter);
@@ -1588,13 +1651,13 @@
     }
     .route-row {
         display: grid;
-        grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto;
         column-gap: var(--s-3);
         row-gap: var(--s-2);
         height: 100%;
         padding: var(--s-5) 0;
-        border-top: var(--rule-hair) solid var(--rule-2);
-        color: var(--ink-1);
+        border-top: var(--rule-hair) solid var(--row-rule);
+        color: var(--text);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);
     }
@@ -1614,66 +1677,27 @@
             border-top-width: var(--first-rule, var(--rule-hair));
         }
     }
-    .route-row__num {
-        grid-row: 1;
-        grid-column: 1;
-        padding-top: 0.1rem;
-        color: var(--ink-3);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
-    }
     .route-row__name {
         grid-row: 1;
-        grid-column: 2;
+        grid-column: 1;
         display: flex;
         flex-direction: column;
-        gap: 0.15rem;
         min-width: 0;
-    }
-    .route-row__themed {
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
-        letter-spacing: var(--track-label);
-        text-transform: uppercase;
     }
     .route-row__plain {
         overflow-wrap: anywhere;
-        font: 400 var(--step-0) / 1.3 var(--font-display);
+        font: var(--type-ui-row);
     }
     .route-row__blurb {
         grid-row: 2;
-        grid-column: 2;
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.45 var(--font-text);
+        grid-column: 1;
+        color: var(--text-quiet);
+        font: var(--type-ui);
     }
     .route-row__arrow {
         grid-row: 1 / span 2;
-        grid-column: 3;
-        align-self: center;
-        color: var(--ink-3);
-        transition:
-            transform var(--dur-hover) var(--ease-dock),
-            color var(--dur-hover) var(--ease-dock);
-    }
-    /* Unnumbered rows (profile links): no number column. */
-    .route-list--plain .route-row {
-        grid-template-columns: minmax(0, 1fr) auto;
-    }
-    .route-list--plain :is(.route-row__name, .route-row__blurb) {
-        grid-column: 1;
-    }
-    .route-list--plain .route-row__arrow {
         grid-column: 2;
-    }
-    .route-row:hover {
-        border-top-color: var(--ink-1);
-    }
-    .route-row:hover .route-row__plain {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.2em;
-    }
-    .route-row:hover .route-row__arrow {
-        transform: translateX(4px);
-        color: var(--ink-1);
+        align-self: center;
     }
 
     /* ===== Pager (contract §4; components/ui/pager.tsx) ================ */
@@ -1683,37 +1707,31 @@
         gap: var(--s-4) var(--gutter);
     }
     .pager__item {
+        --row-rest: var(--rule-firm);
         display: flex;
         flex-direction: column;
         gap: var(--s-2);
         min-width: 0;
         padding: var(--s-4) 0 var(--s-2);
-        border-top: var(--rule-strong) solid var(--rule-2);
-        color: var(--ink-1);
+        border-top: var(--rule-strong) solid var(--row-rule);
+        color: var(--text);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);
     }
-    .pager__item:hover {
-        border-top-color: var(--ink-1);
-    }
     .pager__label {
-        color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        color: var(--text-quiet);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .pager__title {
-        font: 400 var(--step-1) / 1.25 var(--font-display);
+        font: var(--type-title-sm);
         text-wrap: balance;
     }
-    .pager__item:hover .pager__title {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.18em;
-    }
     .pager__meta {
-        color: var(--ink-3);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        color: var(--text-faint);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     .pager__all {
         justify-self: start;
@@ -1747,8 +1765,8 @@
     /* ===== Key/value list, long values (components/ui/specs.tsx) ======= */
     /* A brief: the values are sentences, set in the serif. */
     .specs--read dd {
-        max-width: 60ch;
-        font: 400 var(--step-1) / 1.5 var(--font-long);
+        max-width: var(--measure-copy);
+        font: var(--type-dek);
         text-wrap: pretty;
     }
 
@@ -1766,10 +1784,13 @@
         justify-items: start;
         gap: var(--s-2);
     }
+    .page-head .availability {
+        margin-top: var(--s-6);
+    }
     .availability__text {
-        max-width: 60ch;
-        color: var(--ink-1);
-        font: 400 var(--step-1) / 1.35 var(--font-display);
+        max-width: var(--measure-copy);
+        color: var(--text);
+        font: var(--type-lead);
         text-wrap: balance;
     }
     /* An Open To line (here and in the home hero): each opening whole, a
@@ -1777,7 +1798,7 @@
        opening, so where the line wraps it lands left of the line's start,
        outside the box, and is clipped: a wrapped line reads as a list. */
     .open-to {
-        --open-to-gap: 0.9em;
+        --open-to-gap: var(--parts-gap);
         display: flex;
         flex-wrap: wrap;
         column-gap: var(--open-to-gap);
@@ -1798,7 +1819,7 @@
        characters: 0.9em left the dot touching its neighbours. */
     .open-to.data,
     .open-to.titleblock__data {
-        --open-to-gap: 3ch;
+        --open-to-gap: var(--parts-gap-data);
     }
 
     /* ===== Page head: actions (contract §1) ============================ */
@@ -1811,7 +1832,7 @@
     /* ===== Document sections (contract §1; components/ui/doc-section.tsx) */
     /* The full-width tag row, then the rail and the main column. */
     .doc-section__tag {
-        margin-bottom: var(--s-7);
+        margin-bottom: var(--section-head-gap);
     }
     .doc-section__body {
         row-gap: var(--s-6);

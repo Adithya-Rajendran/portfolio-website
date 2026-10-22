@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { minWidth } from "@/lib/breakpoints";
 import { chromeCopy } from "@/lib/copy";
 
 const FOCUSABLE =
@@ -102,7 +103,7 @@ export default function MenuButton({ panelId }: { panelId: string }) {
             items[(from + step + items.length) % items.length].focus();
         };
         const onResize = () => {
-            if (window.matchMedia("(min-width: 60rem)").matches) hide();
+            if (window.matchMedia(minWidth("md")).matches) hide();
         };
 
         panel.addEventListener("toggle", onToggle);

@@ -1,5 +1,4 @@
-import { Icon } from "@/components/ui/icon";
-import { buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { contactCopy } from "@/lib/copy";
 import type { ExternalLink } from "@/lib/sanity-client";
 
@@ -22,14 +21,15 @@ export default function ContactNoScript({
                 <p>{contactCopy.noScript}</p>
                 {linkedIn ? (
                     <p>
-                        <a
-                            className={buttonClass({})}
+                        <ButtonLink
+                            plain
+                            icon="external"
+                            iconAt="end"
                             href={linkedIn.url}
                             rel="noopener noreferrer"
                         >
                             {contactCopy.linkedIn}
-                            <Icon name="external" />
-                        </a>
+                        </ButtonLink>
                     </p>
                 ) : null}
             </div>

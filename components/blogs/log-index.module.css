@@ -7,17 +7,21 @@
    ends: the shell under /blog's page head and home's Latest writing, the
    main column under a project's section head, the text's under a
    post's Related entries. The read time and arrow stand at that edge,
-   under the head's link; only the standfirst keeps a measure (62ch). */
+   under the head's link; only the standfirst keeps a measure (60ch,
+   --measure-copy). */
 .index {
-    --log-cols: 7.5rem minmax(0, 1fr) 4.5rem 1.5rem;
+    --log-cols: var(--col-date) minmax(0, 1fr) var(--col-meta) var(--s-5);
     min-width: 0;
 }
 
 /* ---- Rows --------------------------------------------------------------- */
+/* Each row lights as one (`lit`, styles/recipes.css): on hover and on
+   its title's keyboard focus, an ink rule, the title underlined and the
+   arrow nudged. The whole row is the title's link. */
 .list {
     margin: 0;
     padding: 0;
-    border-bottom: var(--rule-hair) solid var(--rule-1);
+    border-bottom: var(--rule-hair) solid var(--rule-quiet);
     list-style: none;
 }
 .row {
@@ -26,7 +30,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s-2);
     padding-block: var(--s-5);
-    border-top: var(--rule-hair) solid var(--rule-1);
+    border-top: var(--rule-hair) solid var(--row-rule);
     transition:
         border-color var(--dur-hover) var(--ease-dock),
         background-color var(--dur-hover) var(--ease-dock);
@@ -41,19 +45,18 @@
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.25rem 1rem;
+    gap: var(--s-1) var(--s-4);
 }
 .date,
 .read {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    color: var(--text-quiet);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
     white-space: nowrap;
 }
 .title {
     margin: 0;
-    font: 400 var(--step-1) / 1.25 var(--font-display);
-    letter-spacing: -0.003em;
+    font: var(--type-title-sm);
     text-wrap: pretty;
 }
 /* A phone's column is too narrow for pretty to pull a word down, so a
@@ -63,13 +66,10 @@
         text-wrap: balance;
     }
 }
-.title a {
-    text-decoration: none;
-}
 .dek {
-    max-width: 62ch;
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.5 var(--font-long);
+    max-width: var(--measure-copy);
+    color: var(--text-quiet);
+    font: var(--type-note);
     text-wrap: pretty;
 }
 .tags {
@@ -77,17 +77,6 @@
 }
 .arrow {
     display: none;
-}
-
-/* Hover: an ink rule, the title underlined and the arrow nudged. The
-   whole row is the title's link. */
-.row:hover {
-    border-top-color: var(--ink-1);
-}
-.row:hover .title a {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.16em;
 }
 
 /* From 960px the rows go on shared tracks, unless stacked: a narrow
@@ -116,9 +105,8 @@
     }
     .index:not(.stacked) .title {
         grid-row: 1;
-        font-size: var(--step-2);
-        font-weight: 400;
-        line-height: 1.15;
+        font: var(--type-title-md);
+        letter-spacing: var(--track-title);
     }
     .index:not(.stacked) .arrow {
         display: block;
@@ -126,16 +114,8 @@
         grid-row: 1;
         align-self: center;
         justify-self: end;
-        width: 20px;
-        height: 20px;
-        color: var(--ink-3);
-        transition:
-            transform var(--dur-hover) var(--ease-dock),
-            color var(--dur-hover) var(--ease-dock);
-    }
-    .index:not(.stacked) .row:hover .arrow {
-        color: var(--ink-1);
-        transform: translateX(4px);
+        width: var(--icon-row);
+        height: var(--icon-row);
     }
 }
 

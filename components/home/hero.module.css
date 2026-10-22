@@ -15,7 +15,7 @@
     container-type: inline-size;
     display: flex;
     flex-direction: column;
-    min-height: max(calc(100svh - var(--header-h)), 36rem);
+    min-height: max(calc(100svh - var(--header-h)), var(--hero-min));
     --photo-h: min(100cqw * 1646 / 3840, 0.82 * (100svh - var(--header-h)));
     --limb-clear: calc(var(--photo-h) * 0.47);
 }
@@ -43,7 +43,7 @@
 .photo {
     position: absolute;
     right: 0;
-    bottom: calc(44px + var(--s-5) * 2);
+    bottom: calc(var(--target) + var(--s-5) * 2);
     left: 0;
     height: var(--photo-h);
 }
@@ -88,7 +88,7 @@
 }
 .sun {
     display: none;
-    fill: var(--accent);
+    fill: var(--mark-identity);
 }
 
 .picture {
@@ -145,19 +145,19 @@
 }
 :global([data-theme="manual"]) .rim {
     display: inline;
-    stroke: var(--ink-1);
-    stroke-width: 1.25px;
+    stroke: var(--draw-strong);
+    stroke-width: var(--stroke);
 }
 :global([data-theme="manual"]) .surface {
     display: inline;
-    stroke: var(--rule-2);
-    stroke-width: 1px;
+    stroke: var(--draw-faint);
+    stroke-width: var(--stroke-hair);
 }
 :global([data-theme="manual"]) .halo {
     display: inline;
-    stroke: var(--ink-2);
-    stroke-width: 1px;
-    stroke-dasharray: 1.5 5;
+    stroke: var(--draw);
+    stroke-width: var(--stroke-hair);
+    stroke-dasharray: var(--dash-halo);
 }
 :global([data-theme="manual"]) .sun {
     display: inline;
@@ -169,7 +169,7 @@
     .rim {
         display: inline;
         stroke: CanvasText;
-        stroke-width: 1.25px;
+        stroke-width: var(--stroke);
     }
 }
 
@@ -179,7 +179,7 @@
     display: flex;
     flex: 1 0 auto;
     flex-direction: column;
-    padding-top: clamp(1.5rem, 0.5rem + 4svh, 4.5rem);
+    padding-top: var(--hero-frame-top);
     padding-bottom: var(--s-5);
 }
 .centre {
@@ -194,11 +194,10 @@
 /* The one set piece in capitals: the display weight, tracked wide, at
    most 7rem (one line at 1440, within 1,400px at 1920). */
 .name {
-    margin: 0 -0.115em 0 0;
-    color: var(--ink-1);
-    font: var(--weight-display) clamp(2.3rem, 0.2rem + 6.55vw, 7rem) / 1
-        var(--font-display);
-    letter-spacing: 0.115em;
+    margin: 0 calc(-1 * var(--track-name)) 0 0;
+    color: var(--text);
+    font: var(--type-name);
+    letter-spacing: var(--track-name);
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -209,11 +208,10 @@
    whole (.open-to). */
 .headline {
     justify-content: center;
-    max-width: 44rem;
+    max-width: var(--hero-measure);
     margin-top: var(--s-5);
-    color: var(--ink-1);
-    font: 400 var(--step-1) / 1.4 var(--font-display);
-    letter-spacing: 0.005em;
+    color: var(--text);
+    font: var(--type-lead);
 }
 /* What the owner is open to: the active status mark, then the line. */
 .status {
@@ -222,10 +220,10 @@
     align-items: baseline;
     justify-content: center;
     gap: var(--s-1) var(--s-3);
-    max-width: 52rem;
+    max-width: var(--hero-measure-wide);
     margin-top: var(--s-4);
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.45 var(--font-display);
+    color: var(--text-quiet);
+    font: var(--type-ui);
 }
 /* The Open To line (.open-to): its openings, centred. */
 .openTo {
@@ -243,7 +241,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--s-2) var(--s-6);
-    max-width: 44rem;
+    max-width: var(--hero-measure);
     margin-top: var(--s-7);
 }
 /* A 44px target around one line. No width of its own: a wrapped box
@@ -252,20 +250,24 @@
    line's width, and goes under CV when that does not fit. */
 .latest {
     display: inline-block;
-    padding-block: calc((44px - 1.45em) / 2);
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.45 var(--font-display);
+    padding-block: calc((var(--target) - 1lh) / 2);
+    color: var(--text-quiet);
+    font: var(--type-ui);
     text-wrap: balance;
 }
-.latest:hover {
-    color: var(--ink-1);
+@media (hover: hover) {
+    .latest:hover {
+        color: var(--text);
+    }
 }
 /* Over the photograph the CV stays a hairline, and fills with ink on
    hover: no fill at rest. */
-.routes :global(.btn):hover {
-    border-color: var(--ink-1);
-    background: var(--ink-1);
-    color: var(--bg);
+@media (hover: hover) {
+    .routes :global(.btn):hover {
+        border-color: var(--rule-lit);
+        background: var(--fill);
+        color: var(--bg);
+    }
 }
 
 .foot {
@@ -276,19 +278,21 @@
     gap: var(--s-3) var(--s-5);
 }
 .credit {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.5 var(--font-mono);
-    letter-spacing: 0.02em;
+    color: var(--text-quiet);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
 }
 /* A 44px target around one line (two on phones). */
 .credit a {
     display: inline-block;
-    padding-block: calc((44px - 1.5em) / 2);
+    padding-block: calc((var(--target) - 1lh) / 2);
     color: inherit;
-    text-underline-offset: 0.3em;
+    text-underline-offset: var(--underline-offset);
 }
-.credit a:hover {
-    color: var(--ink-1);
+@media (hover: hover) {
+    .credit a:hover {
+        color: var(--text);
+    }
 }
 /* The credit's parts and the frame's NASA ID, each kept whole: on phones
    one a line, with no separator. */
@@ -313,12 +317,10 @@
     .headline {
         flex-direction: column;
         align-items: center;
-        max-width: 22rem;
+        max-width: var(--hero-measure-phone);
         font-size: var(--step-0);
     }
     .name {
-        font-size: clamp(2.3rem, 11.4vw, 3.4rem);
-        line-height: 1.02;
         white-space: normal;
     }
     .word {
@@ -359,11 +361,6 @@
         display: block;
     }
 }
-@media (max-width: 23.99rem) {
-    .name {
-        font-size: 2.15rem;
-    }
-}
 
 /* ---- Print: a title page drawn in ink -------------------------------- */
 @media print {
@@ -377,8 +374,8 @@
     }
     .rim {
         display: inline;
-        stroke: var(--ink-1);
-        stroke-width: 1.25px;
+        stroke: var(--draw-strong);
+        stroke-width: var(--stroke);
     }
     .sun {
         display: inline;

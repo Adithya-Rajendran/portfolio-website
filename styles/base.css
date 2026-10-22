@@ -7,14 +7,14 @@
 @layer base {
     html {
         background: var(--bg);
-        color: var(--ink-1);
+        color: var(--text);
         font-family: var(--font-text);
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
-        scroll-padding-top: calc(var(--header-h) + var(--s-5));
-        accent-color: var(--ink-1);
+        scroll-padding-top: var(--anchor-offset);
+        accent-color: var(--fill);
         caret-color: var(--focus);
-        scrollbar-color: var(--rule-2) var(--bg);
+        scrollbar-color: var(--scrollbar-thumb) var(--bg);
     }
 
     /* No body background: the page colour is the root's (html, above). */
@@ -23,10 +23,10 @@
         min-height: 100vh;
         /* The small viewport: a phone's toolbar never hides the footer. */
         min-height: 100svh;
-        color: var(--ink-1);
+        color: var(--text);
         font-size: var(--step-0);
-        line-height: var(--lh-body);
-        font-weight: 400;
+        line-height: var(--lh-text);
+        font-weight: var(--weight-regular);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
@@ -51,8 +51,8 @@
     h6 {
         margin: 0;
         font-family: var(--font-display);
-        font-weight: 400;
-        line-height: var(--lh-heading);
+        font-weight: var(--weight-regular);
+        line-height: var(--lh-snug);
         text-wrap: balance;
     }
     p,
@@ -63,21 +63,26 @@
     }
 
     /* One hover grammar, site-wide (contract §3): an ink-3 hairline that
-       turns ink-1 and 2px, in 150ms; an arrow beside it nudges 4px. */
+       turns ink-1 and 2px, in 150ms, where a pointer hovers; an arrow
+       beside it nudges 4px. A row, tile or title lights through `lit`
+       (styles/recipes.css). */
     a {
         color: inherit;
         text-decoration-line: underline;
-        text-decoration-color: var(--ink-3);
-        text-decoration-thickness: 1px;
-        text-underline-offset: 0.22em;
+        text-decoration-color: var(--underline);
+        text-decoration-thickness: var(--underline-w);
+        text-underline-offset: var(--underline-offset);
         transition:
             text-decoration-color var(--dur-hover) var(--ease-dock),
             text-decoration-thickness var(--dur-hover) var(--ease-dock),
             color var(--dur-hover) var(--ease-dock);
     }
-    a:hover {
-        text-decoration-color: var(--ink-1);
-        text-decoration-thickness: 2px;
+    @media (hover: hover) {
+        a:hover {
+            color: var(--text);
+            text-decoration-color: var(--underline-lit);
+            text-decoration-thickness: var(--underline-w-lit);
+        }
     }
 
     svg {
@@ -93,12 +98,12 @@
     }
     /* A 2px ring in the focus colour, never animated. */
     :focus-visible {
-        outline: var(--rule-strong) solid var(--focus);
-        outline-offset: 3px;
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-offset);
     }
 
     ::selection {
-        background: var(--ink-1);
+        background: var(--fill);
         color: var(--bg);
     }
 
@@ -106,7 +111,7 @@
         font-size: var(--label-size);
     }
     abbr[title] {
-        text-decoration: underline dotted var(--ink-3);
+        text-decoration: underline dotted var(--underline);
         cursor: help;
     }
     code,
@@ -114,7 +119,7 @@
     samp,
     pre {
         font-family: var(--font-mono);
-        font-size: 0.9em;
+        font-size: inherit;
     }
 
     /* The skip link: the first focusable element on every page. */
@@ -125,9 +130,9 @@
         z-index: var(--z-skip);
         transform: translateY(-120%);
         padding: var(--s-3) var(--s-4);
-        background: var(--ink-1);
+        background: var(--fill);
         color: var(--bg);
-        font: 500 var(--label-size) / 1 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -135,9 +140,16 @@
     .skip-link:focus-visible {
         transform: translateY(var(--s-3));
     }
+    /* Its label stays on its fill: `a:hover` (above, more specific)
+       would turn it ink on ink. */
+    @media (hover: hover) {
+        .skip-link:hover {
+            color: var(--bg);
+        }
+    }
 
     :target {
-        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+        scroll-margin-top: var(--anchor-offset);
     }
 
     main {
@@ -155,12 +167,18 @@
 }
 
 /* The theme switch is a same-document view transition (lib/prefs.ts): a
-   short cross-fade of the whole page, header included. Transitions on the
-   old snapshot would lag behind it, so they are off for its duration. */
+   short cross-fade of the whole page, header included, timed as a state
+   change (--dur-state, the dock ease). Transitions on the old snapshot
+   would lag behind it, so they are off for its duration. */
 html[data-vt="theme"] *,
 html[data-vt="theme"] *::before,
 html[data-vt="theme"] *::after {
     transition: none !important;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: var(--dur-state);
+    animation-timing-function: var(--ease-dock);
 }
 
 /* Spatial motion runs only with html[data-motion="full"] (set by the boot
@@ -169,7 +187,7 @@ html[data-vt="theme"] *::after {
     *,
     *::before,
     *::after {
-        animation-duration: 1ms !important;
+        animation-duration: var(--dur-instant) !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0s !important;
         transition-delay: 0s !important;
@@ -185,6 +203,13 @@ html[data-motion="reduced"] *::after {
 @media (forced-colors: active) {
     .status::before {
         forced-color-adjust: none;
+    }
+    /* An icon follows its text's system colour (LinkText in a link):
+       Chromium keeps an SVG's author colour in forced colours, and a
+       quiet or lit icon's ink can all but vanish on the system's Canvas.
+       Important, so a module's own icon colour gives way too. */
+    .icon {
+        color: inherit !important;
     }
     .btn,
     .seg__box,

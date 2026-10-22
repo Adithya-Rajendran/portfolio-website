@@ -7,13 +7,12 @@
  * the mission stage and the writing index.
  */
 .act {
-    --home-gap: clamp(3.5rem, 2rem + 4vw, 6rem);
-    padding-block: 0 var(--home-gap);
+    padding-block: 0 var(--space-group);
     scroll-margin-top: var(--header-h);
 }
 /* The first section after the hero opens with the same gap. */
 :global([data-drift-zone]) + .act {
-    padding-top: var(--home-gap);
+    padding-top: var(--space-group);
 }
 /* Flight Manual draws the planet to the hero's foot, so the first section
    follows it at a block's distance instead. */
@@ -26,7 +25,7 @@
    (`--first-rule`, styles/components.css); the rows under the stage
    keep theirs. */
 .act :global(.section-tag) {
-    margin-bottom: var(--s-6);
+    margin-bottom: var(--section-head-gap-tight);
 }
 /* Phones: the link to a section's page stays on its heading's line (the
    hairline runs under both), rather than a full row of its own. */
@@ -54,10 +53,9 @@
     padding-top: var(--s-6);
 }
 .tagline {
-    max-width: 30ch;
-    color: var(--ink-1);
-    font: 400 var(--step-2) / 1.3 var(--font-long);
-    letter-spacing: -0.005em;
+    max-width: var(--measure-statement);
+    color: var(--text);
+    font: var(--type-statement);
     text-wrap: balance;
 }
 .closeActions {

@@ -5,6 +5,7 @@ import { OpenToItems } from "@/components/ui/availability";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { LinkArrow, Status } from "@/components/ui/marks";
+import { BREAKPOINTS } from "@/lib/breakpoints";
 import { trajectoryCopy as copy } from "@/lib/copy";
 import {
     buildRoute,
@@ -261,7 +262,11 @@ export default function Journey({
                 parseFloat(
                     getComputedStyle(document.documentElement).fontSize,
                 ) || 16;
-            scene.resize(box.width, box.height, box.width >= 60 * rem);
+            scene.resize(
+                box.width,
+                box.height,
+                box.width >= BREAKPOINTS.md * rem,
+            );
             measure();
             request();
         };

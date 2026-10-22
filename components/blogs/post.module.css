@@ -22,7 +22,7 @@
 .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    padding-top: clamp(1.75rem, 1rem + 2.2vw, 3rem);
+    padding-top: var(--space-head);
 }
 .layout > * {
     min-width: 0;
@@ -45,7 +45,7 @@
         --room: calc(
             100cqi -
                 max(
-                    12rem,
+                    var(--rail-min),
                     (100cqi - var(--prose-measure) - 2 * var(--gutter)) / 2
                 ) -
                 var(--gutter)
@@ -53,7 +53,7 @@
         --reach: min(var(--prose-wide), var(--room));
         container-type: inline-size;
         grid-template-columns:
-            minmax(12rem, 1fr) minmax(0, var(--prose-measure))
+            minmax(var(--rail-min), 1fr) minmax(0, var(--prose-measure))
             minmax(0, 1fr);
         column-gap: var(--gutter);
     }
@@ -71,7 +71,7 @@
         margin-top: var(--s-7);
     }
     .title {
-        width: min(21ch, var(--reach));
+        width: min(var(--measure-title), var(--reach));
         max-width: none;
     }
     .main :global(.prose > .plate--wide) {
@@ -88,13 +88,13 @@
         grid-row: 2 / span 2;
         align-self: start;
         position: sticky;
-        top: calc(var(--header-h) + var(--s-5));
+        top: var(--sticky-top);
         max-height: calc(100vh - var(--header-h) - 2 * var(--s-5));
         padding-right: var(--s-4);
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-width: thin;
-        scrollbar-color: var(--rule-2) transparent;
+        scrollbar-color: var(--scrollbar-thumb) transparent;
     }
     .box {
         display: none;
@@ -112,9 +112,9 @@
     gap: var(--s-2) var(--s-4);
 }
 .metaData {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    color: var(--text-quiet);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
     white-space: nowrap;
 }
 /* The title stops at the wide edge, or at the shell where that is
@@ -122,57 +122,21 @@
    text, the listings, the close and what follows the entry (the pager,
    the project row, the related entries) at the measure. */
 .title {
-    max-width: min(21ch, var(--prose-wide));
+    max-width: min(var(--measure-title), var(--prose-wide));
     margin-top: var(--s-4);
-    font: var(--weight-display) var(--step-5) / 1.04 var(--font-display);
+    font: var(--type-display);
     letter-spacing: var(--track-display);
     text-wrap: balance;
 }
 .dek {
     max-width: var(--prose-measure);
     margin-top: var(--s-4);
-    color: var(--ink-2);
-    font: 400 var(--step-1) / 1.45 var(--font-long);
+    color: var(--text-quiet);
+    font: var(--type-dek);
     text-wrap: pretty;
 }
 
-/* ---- The contents: the rail (≥ 960) or a box ---------------------- */
-.contents {
-    font: 400 var(--step-0) / 1.4 var(--font-display);
-}
-.contentsTitle {
-    margin-bottom: var(--s-3);
-}
-/* The headings by name, unnumbered (premium D3): each title centred in its
-   44px target. */
-.contentsList {
-    margin: 0;
-    padding: 0;
-    border-left: var(--rule-hair) solid var(--rule-1);
-    list-style: none;
-}
-.contentsList a {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-    margin-left: -1px;
-    padding: 0.35rem 0 0.35rem 1rem;
-    border-left: var(--rule-strong) solid transparent;
-    color: var(--ink-2);
-    text-decoration: none;
-    transition:
-        color var(--dur-hover) var(--ease-dock),
-        border-color var(--dur-3) var(--ease-dock);
-}
-.contentsList a:hover {
-    color: var(--ink-1);
-}
-/* The current section: the contents' one "now" mark, in orange. */
-.contentsList a[aria-current] {
-    border-left-color: var(--accent);
-    color: var(--ink-1);
-}
-
+/* ---- The contents' box (the list: styles/components.css, .toc) ----- */
 /* The phone's box: a closed disclosure above the text. */
 .box {
     margin-bottom: var(--s-6);
@@ -182,9 +146,9 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--s-4);
-    min-height: 48px;
+    min-height: var(--control-h);
     padding: 0 var(--s-4);
-    border: var(--rule-hair) solid var(--rule-2);
+    border: var(--rule-hair) solid var(--rule-firm);
     cursor: pointer;
     list-style: none;
 }
@@ -194,17 +158,20 @@
 .boxSummary::after {
     content: "+";
     flex: none;
-    width: 1rem;
-    color: var(--ink-2);
-    font: 400 var(--step-1) / 1 var(--font-display);
+    width: var(--s-4);
+    color: var(--text-quiet);
+    font: var(--type-title-sm);
+    line-height: var(--lh-solid);
     text-align: center;
 }
 .box[open] > .boxSummary::after {
     content: "\2212";
 }
-.boxSummary:hover {
-    border-color: var(--ink-1);
-    background: var(--surface-1);
+@media (hover: hover) {
+    .boxSummary:hover {
+        border-color: var(--rule-lit);
+        background: var(--surface-lit);
+    }
 }
 .boxBody {
     padding-top: var(--s-4);
@@ -228,14 +195,14 @@
 }
 .endTitle {
     margin-bottom: var(--s-4);
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1 var(--font-label);
+    color: var(--text-quiet);
+    font: var(--type-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
 .revisions {
     padding-top: var(--s-5);
-    border-top: var(--rule-hair) solid var(--rule-2);
+    border-top: var(--rule-hair) solid var(--rule-quiet);
 }
 .revisionList {
     margin: 0;
@@ -248,17 +215,17 @@
 /* "30 Jun 2026 · Correction": the post head's date format; a
    correction's in ink. */
 .revisionHead {
-    color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    color: var(--text-quiet);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
 }
 .revision[data-kind="correction"] .revisionHead {
-    color: var(--ink-1);
+    color: var(--text);
 }
 .revisionNote {
     margin-top: var(--s-1);
-    color: var(--ink-2);
-    font: 400 var(--step-0) / 1.55 var(--font-text);
+    color: var(--text-quiet);
+    font: var(--type-ui);
 }
 .endmark {
     display: flex;
@@ -269,7 +236,7 @@
     content: "";
     flex: 1;
     height: var(--rule-hair);
-    background: var(--rule-1);
+    background: var(--rule-quiet);
 }
 .follow {
     margin-top: var(--s-5);
@@ -291,13 +258,13 @@
 @media (min-width: 60rem) {
     .end {
         padding-left: max(
-            calc(12rem + var(--gutter)),
+            calc(var(--rail-min) + var(--gutter)),
             calc((100% - var(--prose-measure)) / 2)
         );
     }
 }
 .endSection > :global(.section-tag) {
-    margin-bottom: var(--s-5);
+    margin-bottom: var(--section-head-gap-tight);
 }
 
 /* The pager, the project and the related entries stop where the text
@@ -307,8 +274,10 @@
 }
 
 /* ---- Print: one column, a masthead, no rail or actions -------------- */
+/* The masthead's address and byline: a datum in `.data`'s 13px on paper
+   too, the size of the label above it, not a --print-* size. */
 .printHead :global(.data) {
-    color: var(--ink-2);
+    color: var(--text-quiet);
 }
 @media print {
     .page {
@@ -319,7 +288,7 @@
         margin-inline: 0;
         margin-bottom: 12pt;
         padding-bottom: 6pt;
-        border-bottom: 1px solid var(--rule-2);
+        border-bottom: var(--paper-hair) solid var(--rule-firm);
     }
     .layout {
         display: block;
@@ -335,14 +304,16 @@
     .title {
         width: auto;
         max-width: none;
-        font-size: 22pt;
+        font-size: var(--print-display);
+        line-height: var(--lh-paper-display);
     }
     .main :global(.prose > .plate--wide),
     .main :global(.prose > .plate--full) {
         width: auto;
     }
     .dek {
-        font-size: 12pt;
+        font-size: var(--print-dek);
+        line-height: var(--lh-paper-dek);
     }
     .after {
         max-width: none;

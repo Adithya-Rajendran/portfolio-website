@@ -3,6 +3,7 @@ import { ProjectsJsonLd } from "@/components/json-ld";
 import MissionRow, { MissionRows } from "@/components/portfolio/mission-row";
 import MissionStage from "@/components/portfolio/mission-stage";
 import MissionTile, { MissionTiles } from "@/components/portfolio/mission-tile";
+import DocSection from "@/components/ui/doc-section";
 import PageHead from "@/components/ui/page-head";
 import { siteConfig } from "@/lib/config";
 import { missionsCopy as copy } from "@/lib/copy";
@@ -101,66 +102,61 @@ export default async function Portfolio() {
             />
 
             {flagship ? (
-                <section
-                    className={`section ${styles.first}`}
+                <DocSection
+                    layout="plain"
+                    titleHidden
+                    className={styles.first}
                     id={others ? undefined : "projects"}
-                    aria-labelledby="msn-flagship-h"
+                    headingId="msn-flagship-h"
+                    title={copy.flagship}
                 >
-                    <div className="shell">
-                        <h2 className="sr-only" id="msn-flagship-h">
-                            {copy.flagship}
-                        </h2>
-                        <MissionStage
-                            mission={flagship}
-                            image={cover ?? poster}
-                            caption={cover?.caption}
-                            writeUp={writeUpHref(
-                                flagship,
-                                detail,
-                                originals.get(flagship.id),
-                            )}
-                            priority
-                        />
-                    </div>
-                </section>
+                    <MissionStage
+                        mission={flagship}
+                        image={cover ?? poster}
+                        caption={cover?.caption}
+                        writeUp={writeUpHref(
+                            flagship,
+                            detail,
+                            originals.get(flagship.id),
+                        )}
+                        priority
+                    />
+                </DocSection>
             ) : null}
 
             {others ? (
-                <section
-                    className="section"
+                <DocSection
+                    layout="plain"
+                    titleHidden
                     id="projects"
-                    aria-labelledby="msn-more-h"
+                    headingId="msn-more-h"
+                    title={copy.more}
                 >
-                    <div className="shell">
-                        <h2 className="sr-only" id="msn-more-h">
-                            {copy.more}
-                        </h2>
-                        {tiles.length ? (
-                            <MissionTiles>
-                                {tiles.map((item) => (
-                                    <MissionTile
+                    {tiles.length ? (
+                        <MissionTiles>
+                            {tiles.map((item) => (
+                                <MissionTile
+                                    key={item.id}
+                                    mission={item}
+                                    cover={item.cover}
+                                />
+                            ))}
+                        </MissionTiles>
+                    ) : null}
+                    {rest.length ? (
+                        <div className={styles.rest}>
+                            <MissionRows quiet>
+                                {rest.map((item) => (
+                                    <MissionRow
                                         key={item.id}
                                         mission={item}
                                         cover={item.cover}
                                     />
                                 ))}
-                            </MissionTiles>
-                        ) : null}
-                        {rest.length ? (
-                            <div className={styles.rest}>
-                                <MissionRows quiet>
-                                    {rest.map((item) => (
-                                        <MissionRow
-                                            key={item.id}
-                                            mission={item}
-                                            cover={item.cover}
-                                        />
-                                    ))}
-                                </MissionRows>
-                            </div>
-                        ) : null}
-                    </div>
-                </section>
+                            </MissionRows>
+                        </div>
+                    ) : null}
+                </DocSection>
             ) : null}
         </div>
     );

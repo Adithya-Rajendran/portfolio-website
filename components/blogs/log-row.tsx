@@ -26,7 +26,7 @@ export default function LogRow({
     tags?: boolean;
 }) {
     return (
-        <li className={styles.row} data-slug={entry.slug}>
+        <li className={`lit ${styles.row}`} data-slug={entry.slug}>
             <div className={styles.meta}>
                 {entry.publishedAt ? (
                     <time className={styles.date} dateTime={entry.publishedAt}>
@@ -41,7 +41,10 @@ export default function LogRow({
                 ) : null}
             </div>
             <Title className={styles.title}>
-                <Link className="stretch" href={`/blog/${entry.slug}`}>
+                <Link
+                    className="stretch lit__title"
+                    href={`/blog/${entry.slug}`}
+                >
                     {entry.title}
                 </Link>
             </Title>
@@ -61,7 +64,7 @@ export default function LogRow({
                     ))}
                 </ul>
             ) : null}
-            <Icon name="arrow" className={styles.arrow} />
+            <Icon name="arrow" className={`lit__arrow ${styles.arrow}`} />
         </li>
     );
 }

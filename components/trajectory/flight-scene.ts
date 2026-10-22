@@ -1,3 +1,4 @@
+import { minWidth } from "@/lib/breakpoints";
 import { trajectoryCopy as copy } from "@/lib/copy";
 import type { Frame } from "@/lib/trajectory";
 import type { FlightGL } from "./flight-gl";
@@ -72,7 +73,7 @@ export const createFlightScene: CreateScene = (host, data, route) => {
         powerPreference: "default",
     });
     // Phones and narrow windows take the smaller maps (flight-maps.ts).
-    const maps = flightMaps(!window.matchMedia("(min-width: 60rem)").matches);
+    const maps = flightMaps(!window.matchMedia(minWidth("md")).matches);
     const images = new Map<string, MapImage>();
     if (context) {
         for (const f of firstMaps(maps, data.chapters.length))

@@ -1,4 +1,5 @@
 import Plate from "@/components/ui/plate";
+import { minWidth } from "@/lib/breakpoints";
 import type { Callout } from "@/lib/missions";
 import type { ProjectModel } from "@/lib/sanity-client";
 import styles from "./viewer.module.css";
@@ -34,7 +35,7 @@ export default function ViewerFigure({
                 image={model.poster}
                 ratio="4 / 5"
                 focus="50% 40%"
-                sizes="(min-width: 60rem) 36vw, 100vw"
+                sizes={`${minWidth("md")} 36vw, 100vw`}
                 priority={priority}
             />
         </div>

@@ -927,12 +927,26 @@ export const PROJECT_ESSAY_FIXTURE: ProjectWithBody = {
     endDate: "2026-02-01",
     technologies: ["Next.js", "Sanity"],
     highlights: ["Tests every safe rich-prose block."],
+    // Three links, more than the facts fold in, so the page has a
+    // References section (its link rows).
     links: [
         {
             _key: "fixture-project-link",
             _type: "externalLink",
             label: "Sanity",
             url: "https://www.sanity.io/",
+        },
+        {
+            _key: "fixture-project-link-portable-text",
+            _type: "externalLink",
+            label: "Portable Text",
+            url: "https://portabletext.org/",
+        },
+        {
+            _key: "fixture-project-link-next",
+            _type: "externalLink",
+            label: "Next.js",
+            url: "https://nextjs.org/",
         },
     ],
     body: [

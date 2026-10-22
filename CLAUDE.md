@@ -31,29 +31,102 @@ only live in comments or commit messages.
   `styles/`, and maps the tokens to utilities under `@theme inline`; the
   default palette and fonts are removed (`--color-*: initial`), so
   utilities use tokens only.
-    - `styles/tokens.css` (layer `theme`) holds every design token: both
-      themes (Void on `:root`/`[data-theme="void"]`, Flight Manual on
-      `[data-theme="manual"]`), type scale, space, motion. Colours are
-      defined there and nowhere else. `--accent`, International Orange,
-      means "now" (premium D1): the Open To, Active and Current status
-      dots, the flight's flown path and its now mark, a contents' current
-      section, the 2px rule on the first invalid field (the one to fix
-      now; a later one's is ink, and Flight Manual draws a focused one in
-      `--focus`: the accent is under 3:1 on its ground), and `--focus`; the
-      patch's and the hero's suns are identity marks (`data-identity`).
-      It is never text, a fill, a link rule, a hover or an error's words:
-      those are ink, the primary button an ink-1 fill with a `--bg`
-      label. A viewport carries two orange marks at most
-      (`tests/e2e/accent.spec.ts`). Type (premium D2): a page sets six
-      sizes at most, 13px (`--label-size`, every label, control and
-      datum) the smallest, then `--step-0` (UI text) and the heads; see
-      the fonts note below.
+    - **The design system.** Every literal in the stylesheets the site
+      ships is a named token; `tests/lib/design-system.test.ts` refuses
+      anything else. `styles/tokens.css` (layer `theme`) is the only
+      stylesheet with literal values, in three tiers. Primitives: the
+      palette (`--void-*`, `--manual-*`, `--paper-white`), read only there
+      (the copies in lib/og-card.tsx, public/feed.xsl, lib/theme-boot.ts,
+      scripts/generate-patch.mjs, lib/patch.json, and the starfield's and
+      flight-gl.ts's fallbacks are tested against it);
+      each theme's ladder mapped onto it (Void on
+      `:root`/`[data-theme="void"]`, Flight Manual on
+      `[data-theme="manual"]`, paper the file's last block, after
+      `prefers-contrast`); and the scales (sizes with `--size-hero` and the
+      paper `--print-*`, leading `--lh-*` and the paper `--lh-paper*`,
+      tracking `--track-*`, `--weight-*`, `--numerals-*`, space
+      `--s-*`/`--space-*`, measures and columns, targets, icons and dots,
+      rules, strokes and dashes, z-layers, durations and eases). Roles,
+      which components read: colour, on `:root, [data-theme]` (`--text`,
+      `--text-quiet`, `--text-faint`, `--fill`, `--surface-raised`,
+      `--surface-lit`, `--rule-quiet`, `--rule-firm`, `--rule-lit`,
+      `--rule-ink`, `--underline(-lit)`, `--mark-now`, `--mark-identity`,
+      `--dot-*`, `--list-mark-ink`, `--icon-quiet`, `--draw-*`,
+      `--label-knockout`, `--chosen-*`, `--code-*`), and type, on `:root`
+      (`--type-label` … `--type-name`, each a whole `font`, reading only
+      scales and next/font's variables on `<html>`). Component
+      tokens: one component's per-theme value or own geometry. Colours
+      are defined there and nowhere else, except the flight's scene art
+      drawn in code (its corona and atmosphere gradients and glows, the
+      ship's slate and plume: the test's `SCENE_COLOURS`) and the patch's
+      mask; `flight-gl.ts` (`--ink-*`, `--accent`) and the starfield
+      (`--star-rgb`) read the ladder through `getComputedStyle`, the one
+      exception to the next rule. The email template (`email/`) has its
+      own Tailwind and is outside it.
+        - Components read roles, never the palette or the ladder (`--bg`
+          and `--focus` excepted).
+        - A module rule sets a voice as `font: var(--type-<role>)` with its
+          companions in the same rule (the caps roles' `--track-*` and
+          `uppercase`; `--track-title` from title-md up; `--track-display`;
+          `--track-name`; `font-variant-numeric: var(--numerals-data)` for
+          data, because the shorthand resets it); another leading follows as
+          `line-height: var(--lh-*)`. `.label` and `.data` are the label and
+          data roles as classes: never on an element whose module class sets
+          type or colour (modules are unlayered and win). No global class
+          shares a name with a Tailwind utility (utilities win over
+          components: the contents are `.toc`).
+        - State travels through custom properties set by
+          `styles/recipes.css`: an element with `.lit` lights its rule
+          (`--row-rule`; a tier's resting rule is `--row-rest`), its
+          `.lit__title` underline and its `.lit__arrow` on hover and while
+          it or its title link has keyboard focus. Modules read these and
+          declare no `:hover`, and a title link sets no resting
+          `text-decoration` (a row that is itself the link keeps `none`);
+          every `:hover` sits under `@media (hover: hover)`. Pause motion
+          and the OS setting still the flight's cards with their own guards.
+        - Paper (`@media print`) builds its type from `--print-*`,
+          `--lh-paper*`/`--lh-*`, `--track-paper-*` and `--weight-*` (the
+          CV's own voice, tuned to its two sheets) and its rules from
+          `--paper-*`; its mm and pt spacing is outside the length rules.
+        - Shared parts before hand-rolled markup: `DocSection` (`plain`,
+          `titleHidden`), `Contents`, `Plate` (FigurePlate maps onto it),
+          `ButtonLink` (`plain` for a download or another site; only an
+          end arrow nudges), `OpenToItems`, `Status`, the `.list` bullet.
+          Where implementations differ in structure (the ruled rows, meta
+          lines, outbound marks, dots) they share tokens, not a component.
+        - Exceptions live only in `tests/lib/design-system.allow.ts`, each
+          with its reason and, for a declaration, its context and exact
+          value (one-off geometry, file-scoped custom properties, next/font's
+          variables, the scene's colours, the patch's mask, Tailwind's
+          `.grid` and `.table`); an entry that excuses nothing fails.
+        - Tailwind's `@theme` removes the default colour, font, type,
+          leading, tracking, weight, radius, shadow, ease and animate
+          namespaces, takes lib/breakpoints.ts's `sm`, `md`, `lg`, and maps
+          the colour roles under `@theme inline`.
+        - `--accent`, International Orange, means "now" (premium D1):
+          the Open To, Active and Current status dots, the flight's
+          flown path and its now mark, a contents' current section, the
+          2px rule on the first invalid field (the one to fix now; a
+          later one's is ink, and Flight Manual draws a focused one in
+          `--focus`: the accent is under 3:1 on its ground), and
+          `--focus`; the patch's and the hero's suns are identity marks
+          (`data-identity`). It is never text, a fill, a link rule, a
+          hover or an error's words: those are ink, the primary button
+          an ink-1 fill with a `--bg` label. A viewport carries two
+          orange marks at most (`tests/e2e/accent.spec.ts`). Type
+          (premium D2): a page sets six sizes at most, 13px
+          (`--label-size`, every label, control and datum) the smallest,
+          then `--step-0` (UI text) and the heads; see the fonts note
+          below.
     - `styles/base.css`, `layout.css`, `components.css` (the shared design
       system: header, footer, buttons, section tags, photographs and
-      plates…), `prose.css` (the long read under `.prose`: listings and the
-      Shiki token colours, plates, callouts, footnotes and margin notes,
-      the notes list, and their print rules), `los.css` (Loss of Signal)
-      and `print.css`.
+      plates…), `recipes.css` (the state hooks: `.lit`), `prose.css`
+      (the long read under `.prose`: listings (their
+      Shiki tokens' italics, weights and underlines; the `--code-*` colours
+      are tokens.css's), plates, callouts, footnotes and margin notes, the
+      notes list, and their print rules), `los.css` (Loss of Signal)
+      and `print.css` (paper layout; the paper palette is tokens.css's
+      last block).
     - Route- or feature-specific styles go in a CSS Module beside the
       component, or are scoped under the page's `[data-page="…"]`: global
       CSS is not removed on navigation and Cache Components keeps visited
@@ -62,9 +135,11 @@ only live in comments or commit messages.
       module imported by `app/global-not-found.tsx` is merged into the root
       layout's stylesheet, which the Studio loads, so the 404's styles are
       global (`styles/los.css`).
-    - Every media query is in rem, the JavaScript breakpoints too (the
-      flight's `wide` is `60rem`), so they all follow the visitor's text
-      size.
+    - Every media query is in rem, from `lib/breakpoints.ts` (a
+      min-width at its value, a max-width 0.01rem under it), which the
+      components' `matchMedia` and image `sizes` strings read too (the
+      flight's wide is `BREAKPOINTS.md`), so they all follow the
+      visitor's text size.
 - **Images.** `next/image` loads through `lib/sanity-image-loader.ts`
   (`images.loaderFile`): Sanity's CDN makes each srcset width, and
   Vercel's image optimizer is not used. Every `next/image` on the site is
@@ -383,7 +458,7 @@ only live in comments or commit messages.
   feed renderer in the same change. `components/blogs/post-reader.tsx`
   marks the current section and resolves in-page links (`#fn-1`, the
   contents) inside the visible entry, because a hidden, still-mounted
-  entry can hold the same ids. The header keeps its one `--rule-1`
+  entry can hold the same ids. The header keeps its one `--rule-quiet`
   hairline here as on every page (the firmer rule on reading pages is
   retired). Every writing route names the feed through `feedAlternates` (lib/feed.ts:
   a page's `alternates` replaces the layout's whole). `/feed.xml` is
@@ -624,8 +699,8 @@ only live in comments or commit messages.
   or tag chips) running straight into the rows, one list with even
   spacing (no year heads: each row's date carries its year), as wide as
   the head above it (the read time and arrow at the shell's edge, the
-  standfirst at 62ch), which ends on its closing rule. A row has one
-  date: a revision's "Updated" is the
+  standfirst at 60ch, `--measure-copy`), which ends on its closing
+  rule. A row has one date: a revision's "Updated" is the
   entry head's. `/blog/archive`, which repeated the list at a second
   address, answers 308 to `/blog` (next.config.mjs). A tag shows only
   when it links: once it gathers two entries
@@ -665,9 +740,9 @@ only live in comments or commit messages.
   page's head), at the main column's (a `DocSection`'s rows, table and
   lists: a project's sections, About's questions, the CV) or at the
   text's (a post's end matter, under its heads). Only its text
-  keeps a measure (a row's standfirst 62ch, a brief's sentences and a
-  question's note 60ch); a writing row's read time and arrow stand at
-  that edge, under the head's link.
+  keeps a measure (a row's standfirst, a brief's sentences and a
+  question's note 60ch, `--measure-copy`); a writing row's read time
+  and arrow stand at that edge, under the head's link.
 
 ## Layout: the `(site)` route group
 
@@ -832,8 +907,8 @@ only live in comments or commit messages.
   entry. Harmless (the old entry just goes cold), but worth knowing when a
   cache "isn't updating" after a query edit.
 - `lib/highlight-code.ts` has a `HIGHLIGHT_MARKUP_VERSION` constant (3: one
-  css-variables Shiki theme whose `--code-*` colours styles/prose.css maps
-  to the design tokens) that participates in its cache key. Bump it whenever the emitted markup's CSS
+  css-variables Shiki theme whose `--code-*` colours styles/tokens.css maps
+  to the colour roles) that participates in its cache key. Bump it whenever the emitted markup's CSS
   contract changes (themes, classes, structure) — the data cache persists
   across deploys, so a code-only change does not itself invalidate
   previously cached highlighted HTML.
@@ -1103,7 +1178,29 @@ loaded, only when that run cannot.
 ## Tests
 
 - **Vitest** (`pnpm test`, `tests/**/*.test.ts`) covers pure logic.
-  `vitest.config.ts` uses `environment: "node"` by design: there is no
+  `tests/lib/design-system.test.ts` parses every stylesheet with postcss
+  and refuses, outside styles/tokens.css: colour literals, `color-mix()`,
+  opacity off its tokens, and palette or ladder reads; a `font` that is
+  not a role (on paper, not built from tokens) or a role without its
+  companions; line-height, letter-spacing, size, weight, family and
+  numerals literals; durations and easings; length nudges and transform
+  origins; underline, outline and focus literals; border, outline and
+  stroke widths; 44px, 48px and ch measures; length literals and
+  non-integer factors in spacing, sizing, offsets, flex and grid, radii,
+  shadows, filters and vertical-align (paper exempt); custom properties
+  and var() names outside tokens.css or their files' allow-list entries;
+  media queries outside `lib/breakpoints.ts`; a bare `:hover`; Tailwind's
+  `@theme` beyond its fixed names; and a global class that is also a
+  Tailwind utility. It also checks role-class pairings in TSX, `style`
+  keys, TS breakpoints, and the colours outside CSS (each copy against
+  its own theme's palette). Inside tokens.css it keeps the tiers apart:
+  each theme's ladder reads only its own palette, paper only Flight
+  Manual's and paper white, and the roles no palette at all. Dashes and
+  z-index come from their tokens; media queries are parsed (no `not` or
+  `or`, so paper, forced colours and the hover guard mean what they
+  say); and the Tailwind probe compiles with the site's own `@theme`.
+  Exceptions are `tests/lib/design-system.allow.ts`'s, each with a
+  reason; a stale one fails. `vitest.config.ts` uses `environment: "node"` by design: there is no
   jsdom or component-rendering setup. Anything that needs a browser is a
   Playwright spec. A symbol exported only for a test carries the tag
   `@internal Exported for tests.`; an export with no importer anywhere is
@@ -1139,7 +1236,11 @@ loaded, only when that run cannot.
   under its tag, at one height on every page from 390 to 1920 px; and on
   home, `/about`, every post and project at 1440 and 390, no rule
   between a section head's hairline and the first words under it),
-  `accent`
+  `lit` (a Writing row, a project row, a tile, the stage title, a CV
+  item, a pager item, the crumb and a References row lighting its rule,
+  title underline and arrow on hover and on its own link's keyboard
+  focus, and not on a nested link's; in forced colours the arrow takes
+  its text's system colour), `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
   Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440
   and 390 in both themes, identity marks and focus aside, and on

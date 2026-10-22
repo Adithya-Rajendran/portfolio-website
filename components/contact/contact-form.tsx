@@ -12,7 +12,7 @@ import {
 } from "react";
 import { sendEmailAction } from "@/actions/sendEmail";
 import CopyButton from "@/components/blogs/copy-button";
-import { Button, buttonClass } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import Segmented from "@/components/ui/segmented";
 import {
@@ -395,18 +395,18 @@ export default function ContactForm({
                             announceFailed={copy.announceCopyFailed}
                         />
                         {linkedIn ? (
-                            <a
-                                className={buttonClass({
-                                    size: "sm",
-                                    variant: "quiet",
-                                })}
+                            <ButtonLink
+                                plain
+                                size="sm"
+                                variant="quiet"
+                                icon="external"
+                                iconAt="end"
                                 href={linkedIn.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 {contactCopy.linkedIn}
-                                <Icon name="external" />
-                            </a>
+                            </ButtonLink>
                         ) : null}
                     </div>
                 </div>

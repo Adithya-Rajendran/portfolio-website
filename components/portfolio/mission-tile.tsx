@@ -5,6 +5,7 @@ import MissionLine, {
 } from "@/components/portfolio/mission-line";
 import { Icon } from "@/components/ui/icon";
 import Plate from "@/components/ui/plate";
+import { minWidth } from "@/lib/breakpoints";
 import { missionsCopy as copy } from "@/lib/copy";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
@@ -42,16 +43,19 @@ export default function MissionTile({
         <article
             className={
                 cover?.asset
-                    ? `${styles.tile} ${styles.tileCovered}`
-                    : styles.tile
+                    ? `lit ${styles.tile} ${styles.tileCovered}`
+                    : `lit ${styles.tile}`
             }
         >
             <div className={styles.tileHead}>
                 <MissionLine mission={mission} />
-                <Icon name="arrow" className={styles.tileArrow} />
+                <Icon
+                    name="arrow"
+                    className={`lit__arrow ${styles.tileArrow}`}
+                />
             </div>
             <Heading className={styles.tileName}>
-                <Link className="stretch" href={mission.href}>
+                <Link className="stretch lit__title" href={mission.href}>
                     {mission.title}
                 </Link>
             </Heading>
@@ -61,7 +65,7 @@ export default function MissionTile({
                     image={cover}
                     credit={cover.caption}
                     ratio="3 / 2"
-                    sizes="(min-width: 60rem) 15vw, (min-width: 37.5rem) 30vw, 37vw"
+                    sizes={`${minWidth("md")} 15vw, ${minWidth("sm")} 30vw, 37vw`}
                     width={600}
                 />
             ) : null}

@@ -9,7 +9,7 @@ import { siteRoutes } from "@/lib/navigation";
  */
 
 const HOME_ACTS = ["projects", "writing", "contact"] as const;
-export type HomeAct = (typeof HOME_ACTS)[number];
+type HomeAct = (typeof HOME_ACTS)[number];
 
 export function homeActs(content: {
     projects: number;

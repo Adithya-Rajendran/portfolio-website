@@ -21,7 +21,7 @@ export default function CrumbRow({
     return (
         <div className={className} data-print="hide">
             <p className="section-tag crumb-row">
-                <Link className="crumb-row__home" href={href}>
+                <Link className="crumb-row__home lit lit__title" href={href}>
                     {label}
                 </Link>
             </p>

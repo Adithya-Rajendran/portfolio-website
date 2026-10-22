@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Status } from "@/components/ui/marks";
 import Plate from "@/components/ui/plate";
+import { minWidth } from "@/lib/breakpoints";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
@@ -30,7 +31,9 @@ export default function MissionRow({
     return (
         <li
             className={
-                cover?.asset ? `${styles.row} ${styles.rowCovered}` : styles.row
+                cover?.asset
+                    ? `lit ${styles.row} ${styles.rowCovered}`
+                    : `lit ${styles.row}`
             }
         >
             <p className={styles.rowLine}>
@@ -42,7 +45,7 @@ export default function MissionRow({
                 ) : null}
             </p>
             <Heading className={styles.rowTitle}>
-                <Link className="stretch" href={mission.href}>
+                <Link className="stretch lit__title" href={mission.href}>
                     {mission.title}
                 </Link>
             </Heading>
@@ -52,7 +55,7 @@ export default function MissionRow({
                     image={cover}
                     credit={cover.caption}
                     ratio="3 / 2"
-                    sizes="(min-width: 60rem) 14vw, 32vw"
+                    sizes={`${minWidth("md")} 14vw, 32vw`}
                     width={600}
                 />
             ) : null}
@@ -61,7 +64,7 @@ export default function MissionRow({
                     <KeepWhole text={mission.summary} />
                 </p>
             ) : null}
-            <Icon name="arrow" className={styles.rowArrow} />
+            <Icon name="arrow" className={`lit__arrow ${styles.rowArrow}`} />
         </li>
     );
 }

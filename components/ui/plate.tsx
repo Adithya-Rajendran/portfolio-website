@@ -4,13 +4,15 @@ import type { SanityImageValue } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 
 /**
- * A photograph as a plate outside the long read (contract §4, the
- * mockup's site.css 4.26): a mission's cover or its model's poster,
- * inside the grid (5 columns beside copy, at most 8 alone), on the one
- * plate rule (`.photo` in styles/components.css). No plate carries a
- * number. The caption is the owner's words, never an explanation; the
- * credit is its source line (`.caption__src`, the long read's and the
- * hero's mono voice). Returns nothing for an image without an asset.
+ * An image as a plate (contract §4, the mockup's site.css 4.26): a
+ * mission's cover or its model's poster, inside the grid (5 columns
+ * beside copy, at most 8 alone), and every image in the long read
+ * (components/prose/figure-plate.tsx, with its layout and shape
+ * classes), on the one plate rule (`.photo` in styles/components.css).
+ * No plate carries a number. The caption is the owner's words, never an
+ * explanation; the credit is its source line (`.caption__src`, the long
+ * read's and the hero's mono voice).
+ * Returns nothing for an image without an asset.
  */
 export default function Plate({
     image,
@@ -20,7 +22,9 @@ export default function Plate({
     focus,
     sizes,
     width = 1200,
+    kind = "photo",
     priority = false,
+    loading,
     className,
     children,
 }: {
@@ -35,7 +39,13 @@ export default function Plate({
     sizes: string;
     /** The widest file requested, in pixels. */
     width?: number;
+    /** A photograph, or a diagram, plot or screenshot, which keeps no
+     *  photographic grade. */
+    kind?: "photo" | "drawing";
+    /** Loads eagerly at high priority (the first viewport's plate). */
     priority?: boolean;
+    /** Eager without the high priority (a post's lead plate). */
+    loading?: "eager" | "lazy";
     className?: string;
     /** Extra parts inside the frame (PR 15: the viewer's controls). */
     children?: React.ReactNode;
@@ -56,11 +66,13 @@ export default function Plate({
     } as CSSProperties;
     return (
         <figure
-            className={
-                className
-                    ? `photo photo--real ${className}`
-                    : "photo photo--real"
-            }
+            className={[
+                "photo",
+                kind === "drawing" ? "photo--drawing" : "photo--real",
+                className,
+            ]
+                .filter(Boolean)
+                .join(" ")}
             style={style}
         >
             <div className="photo__frame">
@@ -71,7 +83,7 @@ export default function Plate({
                     width={natural.width}
                     height={natural.height}
                     sizes={sizes}
-                    loading={priority ? "eager" : "lazy"}
+                    loading={loading ?? (priority ? "eager" : "lazy")}
                     fetchPriority={priority ? "high" : undefined}
                     {...(image.lqip
                         ? {

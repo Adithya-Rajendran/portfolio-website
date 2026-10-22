@@ -64,7 +64,7 @@ export function CvItem({
 }) {
     const quiet = (meta ?? []).filter(Boolean) as string[];
     return (
-        <li className="cv-item" id={anchor}>
+        <li className="cv-item lit" id={anchor}>
             <div className="cv-item__aside">
                 {dates ? <span className="cv-item__dates">{dates}</span> : null}
                 {quiet.map((line) => (
@@ -77,7 +77,7 @@ export function CvItem({
                 <Title className="cv-item__title">
                     {href && /^https?:/.test(href) ? (
                         <a
-                            className="stretch"
+                            className="stretch lit__title"
                             href={href}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -86,7 +86,7 @@ export function CvItem({
                             <Icon name="external" className="cv-item__ext" />
                         </a>
                     ) : href ? (
-                        <Link className="stretch" href={href}>
+                        <Link className="stretch lit__title" href={href}>
                             {title}
                         </Link>
                     ) : (

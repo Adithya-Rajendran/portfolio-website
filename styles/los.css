@@ -17,23 +17,23 @@
         height: 100%;
         pointer-events: none;
         fill: none;
-        stroke: rgb(var(--star-rgb));
+        stroke: var(--star);
         stroke-linecap: round;
     }
     .static-stars path {
         vector-effect: non-scaling-stroke;
     }
     .static-stars__faint {
-        stroke-width: 1.1px;
-        opacity: 0.38;
+        stroke-width: var(--star-faint);
+        opacity: var(--star-alpha-faint);
     }
     .static-stars__mid {
-        stroke-width: 1.6px;
-        opacity: 0.6;
+        stroke-width: var(--star-mid);
+        opacity: var(--star-alpha-mid);
     }
     .static-stars__bright {
-        stroke-width: 2.3px;
-        opacity: 0.9;
+        stroke-width: var(--star-bright);
+        opacity: var(--star-alpha-bright);
     }
     /* Paper has no stars. */
     [data-theme="manual"] .static-stars {
@@ -55,7 +55,7 @@
     .los-trace {
         display: block;
         width: 100%;
-        height: clamp(3.5rem, 2.75rem + 2.2vw, 5rem);
+        height: var(--trace-h);
         margin-top: var(--s-4);
         overflow: visible;
     }
@@ -65,35 +65,35 @@
     }
     .los-grid-v,
     .los-grid-h {
-        stroke: var(--rule-1);
-        stroke-width: 1;
+        stroke: var(--draw-grid);
+        stroke-width: var(--stroke-hair);
     }
     .los-grid-v {
-        stroke-dasharray: 1 4;
+        stroke-dasharray: var(--dash-grid);
     }
     .los-axis {
-        stroke: var(--rule-2);
-        stroke-width: 1;
+        stroke: var(--draw-faint);
+        stroke-width: var(--stroke-hair);
     }
     .los-signal {
-        stroke: var(--ink-1);
-        stroke-width: 1.25;
+        stroke: var(--draw-strong);
+        stroke-width: var(--stroke);
         stroke-linejoin: round;
     }
     .los-dead {
-        stroke: var(--ink-3);
-        stroke-width: 1.25;
-        stroke-dasharray: 3 4;
+        stroke: var(--draw-quiet);
+        stroke-width: var(--stroke);
+        stroke-dasharray: var(--dash-lost);
     }
     .los-los-line {
-        stroke: var(--ink-2);
-        stroke-width: 1;
+        stroke: var(--draw);
+        stroke-width: var(--stroke-hair);
     }
 
     /* ---- The report ------------------------------------------------------- */
     .los-report {
         margin-top: var(--s-6);
-        color: var(--ink-2);
-        font: 400 var(--step-0) / 1.5 var(--font-text);
+        color: var(--text-quiet);
+        font: var(--type-ui);
     }
 }

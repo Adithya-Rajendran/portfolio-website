@@ -42,7 +42,7 @@
    (a 44px control) and its space, the head's and the band's space and
    the switch's bar (a 44px control and its space). */
 .list {
-    scroll-margin-top: calc(2 * 44px + var(--s-6) + 3 * var(--s-5));
+    scroll-margin-top: calc(2 * var(--target) + var(--s-6) + 3 * var(--s-5));
 }
 
 .list:focus,
@@ -51,7 +51,7 @@
 }
 
 .list [id] {
-    scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    scroll-margin-top: var(--anchor-offset);
 }
 
 /* ---- The switch: Timeline · List, where the head's tools sit ---------- */
@@ -80,14 +80,14 @@
    box's look (`.seg` in styles/components.css). */
 .views:not([data-view]) [value="list"] + :global(.seg__box) {
     position: relative;
-    z-index: 1;
-    border-color: var(--ink-2);
-    background: var(--surface-2);
-    color: var(--ink-1);
+    z-index: var(--z-raised);
+    border-color: var(--chosen-edge);
+    background: var(--chosen-fill);
+    color: var(--chosen-ink);
 }
 
 .views:not([data-view]) [value="list"] + :global(.seg__box)::before {
-    background: var(--ink-1);
+    background: var(--chosen-dot);
     box-shadow: none;
 }
 
@@ -97,16 +97,16 @@
         [value="timeline"]
         + :global(.seg__box) {
         position: relative;
-        z-index: 1;
-        border-color: var(--ink-2);
-        background: var(--surface-2);
-        color: var(--ink-1);
+        z-index: var(--z-raised);
+        border-color: var(--chosen-edge);
+        background: var(--chosen-fill);
+        color: var(--chosen-ink);
     }
     :global(html[data-motion="full"])
         .views:not([data-view], :has(.list:target, .list :target))
         [value="timeline"]
         + :global(.seg__box)::before {
-        background: var(--ink-1);
+        background: var(--chosen-dot);
         box-shadow: none;
     }
     :global(html[data-motion="full"])
@@ -114,16 +114,16 @@
         [value="list"]
         + :global(.seg__box) {
         z-index: auto;
-        border-color: var(--rule-2);
+        border-color: var(--rule-firm);
         background: none;
-        color: var(--ink-2);
+        color: var(--text-quiet);
     }
     :global(html[data-motion="full"])
         .views:not([data-view], :has(.list:target, .list :target))
         [value="list"]
         + :global(.seg__box)::before {
         background: none;
-        box-shadow: inset 0 0 0 1px var(--ink-3);
+        box-shadow: inset 0 0 0 var(--rule-hair) var(--dot-ring);
     }
 }
 

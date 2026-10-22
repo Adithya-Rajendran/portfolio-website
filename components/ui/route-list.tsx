@@ -3,18 +3,14 @@ import { Icon } from "@/components/ui/icon";
 
 /**
  * Link rows (contract §4, extracted from the 404's `.los-routes`): a
- * numbered hairline row per destination, its themed name over its plain
- * name (or the plain name alone), one line about it and an arrow; the
- * whole row is the link. Rows without numbers (profile links) drop the
- * number column.
+ * hairline row per destination, its name, one line about it and an
+ * arrow; the whole row is the link (a project's References).
  */
 
 interface RouteItem {
     /** Stable React key. */
     key: string;
     href: string;
-    num?: string;
-    themed?: string;
     plain: string;
     blurb?: string | null;
     /** Opens another site in a new tab. */
@@ -39,7 +35,6 @@ export default function RouteList({
     const classes = [
         "route-list",
         columns > 1 && `route-list--${columns}`,
-        items.every((item) => !item.num) && "route-list--plain",
         className,
     ]
         .filter(Boolean)
@@ -54,22 +49,8 @@ export default function RouteList({
                 {items.map((item) => {
                     const content = (
                         <>
-                            {item.num ? (
-                                <span
-                                    className="route-row__num"
-                                    aria-hidden="true"
-                                >
-                                    {item.num}
-                                </span>
-                            ) : null}
                             <span className="route-row__name">
-                                {item.themed ? (
-                                    <span className="route-row__themed">
-                                        {item.themed}
-                                        <span className="sr-only">, </span>
-                                    </span>
-                                ) : null}
-                                <span className="route-row__plain">
+                                <span className="route-row__plain lit__title">
                                     {item.plain}
                                 </span>
                             </span>
@@ -81,7 +62,7 @@ export default function RouteList({
                             ) : null}
                             <Icon
                                 name={item.external ? "external" : "arrow"}
-                                className="route-row__arrow"
+                                className="route-row__arrow lit__arrow"
                             />
                         </>
                     );
@@ -89,7 +70,7 @@ export default function RouteList({
                         <li key={item.key}>
                             {item.external ? (
                                 <a
-                                    className="route-row"
+                                    className="route-row lit"
                                     href={item.href}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -97,7 +78,10 @@ export default function RouteList({
                                     {content}
                                 </a>
                             ) : (
-                                <Link className="route-row" href={item.href}>
+                                <Link
+                                    className="route-row lit"
+                                    href={item.href}
+                                >
                                     {content}
                                 </Link>
                             )}
