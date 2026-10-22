@@ -7,14 +7,14 @@
 @layer base {
     html {
         background: var(--bg);
-        color: var(--ink-1);
+        color: var(--text);
         font-family: var(--font-text);
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
         scroll-padding-top: calc(var(--header-h) + var(--s-5));
-        accent-color: var(--ink-1);
+        accent-color: var(--fill);
         caret-color: var(--focus);
-        scrollbar-color: var(--rule-2) var(--bg);
+        scrollbar-color: var(--scrollbar-thumb) var(--bg);
     }
 
     /* No body background: the page colour is the root's (html, above). */
@@ -23,7 +23,7 @@
         min-height: 100vh;
         /* The small viewport: a phone's toolbar never hides the footer. */
         min-height: 100svh;
-        color: var(--ink-1);
+        color: var(--text);
         font-size: var(--step-0);
         line-height: var(--lh-text);
         font-weight: var(--weight-regular);
@@ -67,7 +67,7 @@
     a {
         color: inherit;
         text-decoration-line: underline;
-        text-decoration-color: var(--ink-3);
+        text-decoration-color: var(--underline);
         text-decoration-thickness: 1px;
         text-underline-offset: 0.22em;
         transition:
@@ -76,7 +76,7 @@
             color var(--dur-hover) var(--ease-dock);
     }
     a:hover {
-        text-decoration-color: var(--ink-1);
+        text-decoration-color: var(--underline-lit);
         text-decoration-thickness: 2px;
     }
 
@@ -98,7 +98,7 @@
     }
 
     ::selection {
-        background: var(--ink-1);
+        background: var(--fill);
         color: var(--bg);
     }
 
@@ -106,7 +106,7 @@
         font-size: var(--label-size);
     }
     abbr[title] {
-        text-decoration: underline dotted var(--ink-3);
+        text-decoration: underline dotted var(--underline);
         cursor: help;
     }
     code,
@@ -125,7 +125,7 @@
         z-index: var(--z-skip);
         transform: translateY(-120%);
         padding: var(--s-3) var(--s-4);
-        background: var(--ink-1);
+        background: var(--fill);
         color: var(--bg);
         font: var(--type-control);
         letter-spacing: var(--track-control);

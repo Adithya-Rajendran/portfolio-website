@@ -43,7 +43,7 @@
        characters of Newsreader to the line at 18–20px (CSS `ch` counts the
        wide "0", so it reads 56ch). */
     .prose {
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-long);
         font-variant-numeric: var(--numerals-text);
         text-wrap: pretty;
@@ -142,16 +142,16 @@
         width: var(--list-mark);
         height: 0;
         margin-right: calc(var(--list-col) - var(--list-mark));
-        border-top: var(--rule-hair) solid var(--ink-2);
+        border-top: var(--rule-hair) solid var(--list-mark-ink);
         vertical-align: 0.3em;
     }
     .list .list--bullet > .list__item::before {
-        border-top-color: var(--ink-3);
+        border-top-color: var(--list-mark-ink-nested);
     }
     .list--number > .list__item::before {
         counter-increment: item;
         content: counter(item) ".";
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         line-height: var(--lh-solid);
@@ -202,38 +202,25 @@
     .callout {
         margin-block: var(--s-6);
         padding: var(--s-1) 0 var(--s-1) var(--s-5);
-        border-left: var(--rule-strong) solid var(--rule-2);
-        color: var(--ink-2);
+        border-left: var(--rule-strong) solid var(--rule-firm);
+        color: var(--text-quiet);
         font: var(--type-note);
     }
     .prose blockquote strong,
     .callout strong {
-        color: var(--ink-1);
+        color: var(--text);
     }
 
     /* ---- Listings (components/prose/listing.tsx) --------------------- */
-    /* The one Shiki theme (lib/highlight-code.ts) colours tokens with
-       these variables: monochrome, from the tokens, so every theme and
-       print follow (contract §3: text, strokes and labels are never
-       orange). Keywords are ink-1 at weight 500, strings ink-2, links
-       ink-2 underlined. Comments are ink-3: 5.7:1 (Void) and 5.8:1
-       (Flight Manual) on the listing, 5.2:1 on a highlighted line. */
+    /* The one Shiki theme (lib/highlight-code.ts) colours tokens with the
+       --code-* variables, which styles/tokens.css maps to the colour
+       roles: monochrome, so every theme and print follow (contract §3:
+       text, strokes and labels are never orange). Keywords are ink at
+       weight 500, strings quiet, links quiet and underlined; comments
+       are faint: 5.7:1 (Void) and 5.8:1 (Flight Manual) on the listing,
+       5.2:1 on a highlighted line. */
     .listing {
-        --code-foreground: var(--ink-1);
-        --code-background: transparent;
-        --code-token-comment: var(--ink-3);
-        --code-token-keyword: var(--ink-1);
-        --code-token-string: var(--ink-2);
-        --code-token-string-expression: var(--ink-2);
-        --code-token-constant: var(--ink-1);
-        --code-token-function: var(--ink-1);
-        --code-token-parameter: var(--ink-2);
-        --code-token-punctuation: var(--ink-3);
-        --code-token-link: var(--ink-2);
-        --code-token-inserted: var(--ink-1);
-        --code-token-deleted: var(--ink-2);
-        --code-token-changed: var(--ink-1);
-        background: var(--surface-1);
+        background: var(--surface-raised);
         font: var(--type-code);
         font-variant-ligatures: none;
     }
@@ -259,7 +246,7 @@
     .listing__name {
         min-width: 0;
         overflow: hidden;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         line-height: var(--lh-solid);
@@ -273,7 +260,7 @@
         --btn-h: 40px;
         gap: 0.45rem;
         padding-inline: 0.6rem;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         line-height: var(--lh-solid);
@@ -286,7 +273,7 @@
     }
     .listing .copy__btn:hover,
     .listing .copy__btn:focus-visible {
-        color: var(--ink-1);
+        color: var(--text);
     }
     /* The scroll box is the focusable, labelled region. A line longer
        than the box fades out at the edge it continues past (and back in
@@ -355,7 +342,7 @@
        fill alone. */
     .listing__code .line-highlight {
         position: relative;
-        background: var(--surface-2);
+        background: var(--surface-lit);
     }
     .listing__code .line-highlight::before {
         content: "";
@@ -364,7 +351,7 @@
         top: 0;
         bottom: 0;
         width: 0.35rem;
-        background: var(--ink-2);
+        background: var(--list-mark-ink);
     }
 
     /* ---- Plates and figures (components/prose/figure-plate.tsx) ------ */
@@ -427,8 +414,8 @@
     .media__frame {
         position: relative;
         aspect-ratio: 16 / 9;
-        border: var(--rule-hair) solid var(--rule-1);
-        background: var(--surface-1);
+        border: var(--rule-hair) solid var(--rule-quiet);
+        background: var(--surface-raised);
     }
     .media__frame iframe {
         position: absolute;
@@ -441,19 +428,19 @@
         display: grid;
         gap: var(--s-1);
         padding: var(--s-4) var(--s-5);
-        border: var(--rule-hair) solid var(--rule-1);
+        border: var(--rule-hair) solid var(--rule-quiet);
         font: var(--type-ui);
     }
     .media-link a {
         font: var(--type-ui-strong);
     }
     .media-link__host {
-        color: var(--ink-3);
+        color: var(--text-faint);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
     }
     .media-link__caption {
-        color: var(--ink-2);
+        color: var(--text-quiet);
     }
 
     /* ---- Callouts ---------------------------------------------------- */
@@ -476,7 +463,7 @@
     }
     .fnref a {
         padding: 0 0.15em;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         line-height: var(--lh-solid);
@@ -484,18 +471,18 @@
     }
     .fnref a::before {
         content: "[";
-        color: var(--ink-3);
+        color: var(--text-faint);
     }
     .fnref a::after {
         content: "]";
-        color: var(--ink-3);
+        color: var(--text-faint);
     }
     .fnref a:hover {
         text-decoration: underline;
     }
     .fnref:target {
-        background: var(--surface-2);
-        outline: 0.2em solid var(--surface-2);
+        background: var(--surface-lit);
+        outline: 0.2em solid var(--surface-lit);
     }
     /* The margin copy of a note (≥ 1280px): floated into the space right
        of the measure, beside the line that cites it. Decorative; the
@@ -512,8 +499,8 @@
             width: 12.5rem;
             margin: 0.35rem -14.5rem var(--s-4) 0;
             padding-left: var(--s-4);
-            border-left: var(--rule-hair) solid var(--rule-1);
-            color: var(--ink-2);
+            border-left: var(--rule-hair) solid var(--rule-quiet);
+            color: var(--text-quiet);
             font: var(--type-ui);
             text-indent: 0;
             hyphens: manual;
@@ -524,7 +511,7 @@
         }
     }
     .sidenote__n {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         line-height: calc(var(--step-0) * var(--lh-text));
@@ -535,12 +522,12 @@
         max-width: var(--prose-measure);
         padding-top: var(--s-5);
         border-top: var(--rule-hair) solid var(--rule-2);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-ui);
     }
     .notes__title {
         margin-bottom: var(--s-4);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -559,7 +546,7 @@
         margin-top: var(--s-3);
     }
     .notes__n {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         line-height: calc(var(--step-0) * var(--lh-text));
@@ -574,15 +561,15 @@
         min-width: 24px;
         min-height: 24px;
         vertical-align: middle;
-        color: var(--ink-1);
+        color: var(--text);
     }
     .notes__back .icon {
         width: 14px;
         height: 14px;
     }
     .notes__item:target {
-        background: var(--surface-2);
-        outline: 0.3em solid var(--surface-2);
+        background: var(--surface-lit);
+        outline: 0.3em solid var(--surface-lit);
     }
 }
 
@@ -643,7 +630,7 @@
         }
         .prose a[href^="http"]::after {
             content: " (" attr(href) ")";
-            color: var(--ink-2);
+            color: var(--text-quiet);
             font: var(--weight-regular) var(--print-data) / normal
                 var(--font-mono);
             overflow-wrap: anywhere;

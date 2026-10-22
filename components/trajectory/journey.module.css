@@ -78,7 +78,7 @@
     margin: 0 0 var(--s-3);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
-    color: var(--ink-2);
+    color: var(--text-quiet);
 }
 
 /* In flight the readout ticks in the written dates' place. */
@@ -93,13 +93,13 @@
 
 .note {
     font: var(--type-ui);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     margin: var(--s-1) 0 0;
 }
 
 .line {
     font: var(--type-ui);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     margin: var(--s-4) 0 0;
     max-width: 42ch;
 }
@@ -222,7 +222,7 @@
     margin: 0;
     padding: 0;
     width: 100%;
-    border-left: var(--rule-hair) solid var(--rule-2);
+    border-left: var(--rule-hair) solid var(--rule-firm);
 }
 
 /* Each button is as wide as its words; its dot sits on the rail outside
@@ -239,7 +239,7 @@
     padding: 6px;
     background: none;
     border: 0;
-    color: var(--ink-3);
+    color: var(--text-faint);
     text-align: left;
     cursor: pointer;
 }
@@ -258,25 +258,25 @@
 }
 
 .rail button:hover {
-    color: var(--ink-1);
+    color: var(--text);
 }
 
 .rail button[data-past] {
-    color: var(--ink-2);
+    color: var(--text-quiet);
 }
 
 .rail button[data-past]::before {
-    background: var(--ink-2);
-    border-color: var(--ink-2);
+    background: var(--dot-past);
+    border-color: var(--dot-past);
 }
 
 .rail button[aria-current="step"] {
-    color: var(--ink-1);
+    color: var(--text);
 }
 
 .rail button[aria-current="step"]::before {
-    background: var(--ink-1);
-    border-color: var(--ink-1);
+    background: var(--dot-on);
+    border-color: var(--dot-on);
 }
 
 .year {
@@ -297,7 +297,7 @@
     margin: 0;
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
-    color: var(--ink-3);
+    color: var(--text-faint);
     pointer-events: none;
 }
 /* The maps' source and licence: the credit's links. */
@@ -467,7 +467,7 @@
     .rail {
         display: flex;
         border-left: 0;
-        border-top: var(--rule-hair) solid var(--rule-2);
+        border-top: var(--rule-hair) solid var(--rule-firm);
     }
     .rail li {
         flex: 1;

@@ -55,7 +55,7 @@
 }
 .tagline {
     max-width: 30ch;
-    color: var(--ink-1);
+    color: var(--text);
     font: var(--type-statement);
     text-wrap: balance;
 }

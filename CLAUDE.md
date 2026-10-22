@@ -55,9 +55,10 @@ only live in comments or commit messages.
       the fonts note below.
     - `styles/base.css`, `layout.css`, `components.css` (the shared design
       system: header, footer, buttons, section tags, photographs and
-      plates…), `prose.css` (the long read under `.prose`: listings and the
-      Shiki token colours, plates, callouts, footnotes and margin notes,
-      the notes list, and their print rules), `los.css` (Loss of Signal)
+      plates…), `prose.css` (the long read under `.prose`: listings (their
+      Shiki tokens' italics, weights and underlines; the `--code-*` colours
+      are tokens.css's), plates, callouts, footnotes and margin notes, the
+      notes list, and their print rules), `los.css` (Loss of Signal)
       and `print.css` (paper layout; the paper palette is tokens.css's
       last block).
     - Route- or feature-specific styles go in a CSS Module beside the
@@ -838,8 +839,8 @@ only live in comments or commit messages.
   entry. Harmless (the old entry just goes cold), but worth knowing when a
   cache "isn't updating" after a query edit.
 - `lib/highlight-code.ts` has a `HIGHLIGHT_MARKUP_VERSION` constant (3: one
-  css-variables Shiki theme whose `--code-*` colours styles/prose.css maps
-  to the design tokens) that participates in its cache key. Bump it whenever the emitted markup's CSS
+  css-variables Shiki theme whose `--code-*` colours styles/tokens.css maps
+  to the colour roles) that participates in its cache key. Bump it whenever the emitted markup's CSS
   contract changes (themes, classes, structure) — the data cache persists
   across deploys, so a code-only change does not itself invalidate
   previously cached highlighted HTML.

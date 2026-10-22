@@ -11,7 +11,7 @@
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
-        color: var(--ink-2);
+        color: var(--text-quiet);
     }
 
     /* Dates, metrics, codes. */
@@ -50,8 +50,8 @@
         display: block;
         width: 96px;
         height: 96px;
-        color: var(--ink-1);
-        --patch-sun: var(--accent);
+        color: var(--text);
+        --patch-sun: var(--mark-identity);
     }
     .patch--mark {
         --patch-band: none;
@@ -66,7 +66,7 @@
         letter-spacing: var(--track-label);
         text-transform: uppercase;
         line-height: var(--lh-solid);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         white-space: nowrap;
     }
     .status::before {
@@ -74,16 +74,16 @@
         width: 7px;
         height: 7px;
         border-radius: var(--radius-round);
-        background: var(--ink-1);
+        background: var(--dot-on);
         flex: none;
     }
     /* Active (Open to, Current): the label in ink, the dot the orange
        "now" mark (contract §3). */
     .status[data-status="active"] {
-        color: var(--ink-1);
+        color: var(--text);
     }
     .status[data-status="active"]::before {
-        background: var(--accent);
+        background: var(--mark-now);
     }
     .status:is([data-status="complete"], [data-status="lifetime"])::before {
         border-radius: 0;
@@ -91,22 +91,22 @@
         height: 6px;
     }
     .status[data-status="archived"] {
-        color: var(--ink-3);
+        color: var(--text-faint);
     }
     .status[data-status="archived"]::before {
         background: transparent;
-        box-shadow: inset 0 0 0 1px var(--ink-3);
+        box-shadow: inset 0 0 0 var(--rule-hair) var(--dot-ring);
     }
     .status[data-status="paused"]::before {
         width: 6px;
         height: 8px;
         border-radius: 0;
         background: transparent;
-        border-inline: 2px solid var(--ink-1);
+        border-inline: var(--rule-strong) solid var(--dot-on);
     }
     .status[data-status="planned"]::before {
         background: transparent;
-        border: 1px dashed var(--ink-2);
+        border: var(--rule-hair) dashed var(--dot-past);
     }
     /* Stopped: the sprite's cross (marks.tsx) in place of the dot. */
     .status[data-status="stopped"]::before {
@@ -127,7 +127,7 @@
         z-index: var(--z-header);
         height: var(--header-h);
         background: var(--bg);
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
     }
     .site-header__inner {
         height: 100%;
@@ -142,7 +142,7 @@
         gap: var(--s-3);
         min-height: 44px;
         flex: none;
-        color: var(--ink-1);
+        color: var(--text);
         text-decoration: none;
     }
     .brand .patch {
@@ -176,7 +176,7 @@
         align-items: center;
         min-height: 44px;
         padding-block: var(--s-1);
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
@@ -191,7 +191,7 @@
         right: 0;
         bottom: -2px;
         height: var(--rule-strong);
-        background: var(--ink-1);
+        background: var(--rule-lit);
         transform: scaleX(0);
         transform-origin: left center;
         transition: transform var(--dur-3) var(--ease-transfer);
@@ -222,7 +222,7 @@
         align-items: center;
         min-height: 44px;
         padding: 0 min(0.35rem, 5.6px);
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
@@ -251,8 +251,8 @@
         min-width: 44px;
         padding: 0 min(0.7rem, 11.2px);
         background: transparent;
-        border: var(--rule-hair) solid var(--rule-2);
-        color: var(--ink-1);
+        border: var(--rule-hair) solid var(--rule-firm);
+        color: var(--text);
         font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
@@ -266,8 +266,8 @@
         height: 16px;
     }
     .nav-toggle:hover {
-        border-color: var(--ink-1);
-        background: var(--surface-2);
+        border-color: var(--rule-lit);
+        background: var(--surface-lit);
     }
     .nav__sheet-extra {
         display: none;
@@ -293,7 +293,7 @@
         padding: 0;
         border: 0;
         background: transparent;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         cursor: pointer;
         transition: color var(--dur-hover) var(--ease-dock);
     }
@@ -303,7 +303,7 @@
     }
     .theme-switch__button:hover,
     .theme-switch__button[aria-expanded="true"] {
-        color: var(--ink-1);
+        color: var(--text);
     }
     .theme-switch__popover {
         position: absolute;
@@ -311,7 +311,7 @@
         right: 0;
         width: max-content;
         padding: var(--s-3);
-        border: var(--rule-hair) solid var(--rule-1);
+        border: var(--rule-hair) solid var(--rule-quiet);
         border-top: 0;
         background: var(--bg);
     }
@@ -402,9 +402,9 @@
             margin: 0;
             padding: var(--s-6) var(--margin) var(--s-8);
             border: 0;
-            border-top: var(--rule-hair) solid var(--rule-1);
+            border-top: var(--rule-hair) solid var(--rule-quiet);
             background: var(--bg);
-            color: var(--ink-1);
+            color: var(--text);
             overflow-y: auto;
             overscroll-behavior: contain;
         }
@@ -414,7 +414,7 @@
             gap: 0;
         }
         .nav__list > li {
-            border-bottom: var(--rule-hair) solid var(--rule-1);
+            border-bottom: var(--rule-hair) solid var(--rule-quiet);
         }
         .nav__link {
             display: flex;
@@ -467,7 +467,7 @@
         align-items: center;
         gap: 0.5rem;
         min-height: 44px;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
@@ -475,7 +475,7 @@
         transition: color var(--dur-hover) var(--ease-dock);
     }
     .motion-toggle:hover {
-        color: var(--ink-1);
+        color: var(--text);
     }
     .motion-toggle .icon {
         width: 16px;
@@ -507,10 +507,10 @@
         gap: 0.7rem;
         min-height: var(--btn-h);
         padding: 0 1.25rem;
-        border: var(--rule-hair) solid var(--rule-2);
+        border: var(--rule-hair) solid var(--rule-firm);
         border-radius: 0;
         background: transparent;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
@@ -528,33 +528,33 @@
         transition: transform var(--dur-hover) var(--ease-dock);
     }
     .btn:hover {
-        border-color: var(--ink-1);
+        border-color: var(--rule-lit);
         background: var(--surface-1);
     }
     .btn:hover .icon--nudge {
         transform: translateX(4px);
     }
     .btn:active {
-        background: var(--surface-2);
+        background: var(--surface-lit);
     }
     .btn[disabled],
     .btn[aria-disabled="true"] {
         opacity: 0.45;
         cursor: not-allowed;
         background: transparent;
-        border-color: var(--rule-2);
+        border-color: var(--rule-firm);
     }
     /* The primary: an ink fill with a label in the page's colour (APCA
        Lc 90 and more in both themes). */
     .btn--primary {
-        background: var(--ink-1);
-        border-color: var(--ink-1);
+        background: var(--fill);
+        border-color: var(--fill);
         color: var(--bg);
     }
     .btn--primary:hover,
     .btn--primary:active {
-        background: var(--ink-2);
-        border-color: var(--ink-2);
+        background: var(--fill-hover);
+        border-color: var(--fill-hover);
         color: var(--bg);
     }
     .btn--quiet {
@@ -580,8 +580,8 @@
         align-items: center;
         gap: 0.55em;
         min-height: 44px;
-        border-bottom: var(--rule-hair) solid var(--ink-3);
-        color: var(--ink-1);
+        border-bottom: var(--rule-hair) solid var(--underline);
+        color: var(--text);
         font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
@@ -596,8 +596,8 @@
         transition: transform var(--dur-hover) var(--ease-dock);
     }
     .link-arrow:hover {
-        border-bottom-color: var(--ink-1);
-        box-shadow: 0 1px 0 var(--ink-1);
+        border-bottom-color: var(--underline-lit);
+        box-shadow: 0 var(--rule-hair) 0 var(--underline-lit);
     }
     .link-arrow:hover .icon {
         transform: translateX(4px);
@@ -624,7 +624,7 @@
         list-style: none;
     }
     .tag {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         text-decoration: none;
@@ -635,7 +635,7 @@
         z-index: 2;
     }
     a.tag:hover {
-        color: var(--ink-1);
+        color: var(--text);
         text-decoration: underline;
     }
 
@@ -650,7 +650,7 @@
         align-items: center;
         gap: var(--s-2) var(--s-3);
         margin: 0;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -660,20 +660,20 @@
         flex: 1;
         height: var(--rule-hair);
         min-width: var(--s-6);
-        background: var(--rule-1);
+        background: var(--rule-quiet);
     }
     .section-tag__h {
         display: inline-flex;
         min-width: 0;
         margin: 0;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-title-sm);
         letter-spacing: 0;
         text-transform: none;
     }
     .section-tag__meta {
         order: 3;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         letter-spacing: 0;
@@ -719,7 +719,7 @@
     }
     /* The section's themed tag: the other place Michroma is set. */
     .page-head__tag {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-mark);
         letter-spacing: var(--track-mark);
     }
@@ -733,7 +733,7 @@
     .page-head__intro {
         max-width: 52ch;
         margin-top: var(--s-6);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-dek);
         text-wrap: pretty;
     }
@@ -744,7 +744,7 @@
         gap: var(--s-3);
         max-width: 60ch;
         margin-top: var(--s-3);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-ui);
     }
     .caption__body {
@@ -753,7 +753,7 @@
     .caption__src {
         display: block;
         margin-top: 0.3rem;
-        color: var(--ink-3);
+        color: var(--text-faint);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         /* Under a thumbnail on a phone, at a large text size, a credit
@@ -767,7 +767,7 @@
 
     /* "Rev 2026-09-24": the printed CV's revision. */
     .rev {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
         letter-spacing: var(--track-paper-rev);
@@ -785,7 +785,7 @@
        either side; narrower they wrap, and on phones they stack. */
     .site-footer {
         padding-block: var(--s-4) var(--s-6);
-        border-top: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
     }
     .site-footer__strip {
         display: flex;
@@ -793,7 +793,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 0 var(--s-6);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -843,13 +843,13 @@
         gap: var(--s-2);
     }
     .field__label {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .field__error {
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-ui-strong);
     }
     /* Rendered empty, as a live region the words are added to: out of the
@@ -862,10 +862,10 @@
         width: 100%;
         min-height: 48px;
         padding: 0.7rem 0.9rem;
-        border: var(--rule-hair) solid var(--rule-2);
+        border: var(--rule-hair) solid var(--rule-firm);
         border-radius: 0;
-        background: var(--surface-1);
-        color: var(--ink-1);
+        background: var(--surface-raised);
+        color: var(--text);
         font: var(--type-ui-row);
         -webkit-appearance: none;
         appearance: none;
@@ -880,7 +880,7 @@
     }
     .input::placeholder,
     .textarea::placeholder {
-        color: var(--ink-3);
+        color: var(--text-faint);
         opacity: 1;
     }
     .input:hover,
@@ -892,25 +892,25 @@
         outline: var(--rule-strong) solid var(--focus);
         outline-offset: 0;
         border-color: var(--focus);
-        background: var(--surface-2);
+        background: var(--surface-lit);
     }
     .input[aria-invalid="true"],
     .textarea[aria-invalid="true"] {
-        box-shadow: inset var(--rule-strong) 0 0 var(--accent);
+        box-shadow: inset var(--rule-strong) 0 0 var(--mark-now);
     }
-    /* Flight Manual's accent is a mark on paper (3.3:1 on --bg), under 3:1
-       on the focused field's surface-2: there the rule takes the focus
-       colour, the same orange, darker. */
-    html[data-theme="manual"]
-        :is(.input, .textarea)[aria-invalid="true"]:focus-visible {
-        box-shadow: inset var(--rule-strong) 0 0 var(--focus);
+    /* Focused, the rule reads --mark-invalid-lit: the accent in Void; in
+       Flight Manual, whose accent is a mark on paper (3.3:1 on --bg), under
+       3:1 on the focused field's --surface-lit, the focus colour, the same
+       orange, darker (styles/tokens.css). */
+    :is(.input, .textarea)[aria-invalid="true"]:focus-visible {
+        box-shadow: inset var(--rule-strong) 0 0 var(--mark-invalid-lit);
     }
     /* Orange is the field to fix now, the first (it takes the focus); a
        later one's rule is ink, beside its words and cross. */
     .field:has([aria-invalid="true"])
         ~ .field
         :is(.input, .textarea)[aria-invalid="true"] {
-        box-shadow: inset var(--rule-strong) 0 0 var(--ink-1);
+        box-shadow: inset var(--rule-strong) 0 0 var(--rule-ink);
     }
     .input:disabled,
     .textarea:disabled {
@@ -921,13 +921,15 @@
     /* ===== Title block (site.css, graft 6) ============================= */
     /* The drawing title block set in the dark: a hairline grid of cells,
        each a tiny label over a value. 12 internal columns from 960px
-       (--span), 2 on phones (--span-sm: 1 | 2). components/ui/title-block.tsx */
+       (--span), 2 on phones (--span-sm: 1 | 2). Its head and cell rules
+       read --titleblock-head and --titleblock-rule, which Flight Manual
+       sets firmer (styles/tokens.css). components/ui/title-block.tsx */
     .titleblock {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         margin: 0;
-        border-top: var(--rule-hair) solid var(--rule-2);
-        border-left: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--titleblock-head);
+        border-left: var(--rule-hair) solid var(--titleblock-rule);
         background: var(--plate-bg);
     }
     .titleblock__cell {
@@ -937,11 +939,11 @@
         min-width: 0;
         grid-column: span var(--span-sm, 2);
         padding: var(--s-3) var(--s-4) var(--s-4);
-        border-right: var(--rule-hair) solid var(--rule-1);
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-right: var(--rule-hair) solid var(--titleblock-rule);
+        border-bottom: var(--rule-hair) solid var(--titleblock-rule);
     }
     .titleblock__cell > dt {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -949,13 +951,13 @@
     .titleblock__cell > dd {
         margin: 0;
         overflow-wrap: break-word;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-ui);
     }
     /* The quieter lines: a role's places and dates as data, then its
        note in the value's type. */
     .titleblock__cell > dd + dd {
-        color: var(--ink-2);
+        color: var(--text-quiet);
     }
     .titleblock__data {
         font: var(--type-data);
@@ -980,20 +982,18 @@
         align-items: center;
         gap: 0.3em;
         min-height: 32px;
-        color: var(--ink-1);
+        color: var(--text);
         text-underline-offset: 0.18em;
     }
     .titleblock__links .icon {
         width: 0.85em;
         height: 0.85em;
-        color: var(--ink-3);
+        color: var(--icon-quiet);
     }
-    [data-theme="manual"] .titleblock {
-        border-top-color: var(--ink-1);
-        border-left-color: var(--rule-2);
-    }
+    /* Flight Manual colours a cell's unpainted top and left edges (0 wide)
+       as its rules; they draw nothing. */
     [data-theme="manual"] .titleblock__cell {
-        border-color: var(--rule-2);
+        border-color: var(--titleblock-rule);
     }
 
     /* ===== Question rows (components/crew/questions.tsx) =============== */
@@ -1011,7 +1011,7 @@
         display: grid;
         row-gap: var(--s-2);
         padding-block: var(--s-4) var(--s-5);
-        border-top: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
     }
     .q-item:first-child {
         padding-top: 0;
@@ -1021,7 +1021,7 @@
         padding-bottom: 0;
     }
     .q-item__title {
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-title-sm);
         text-wrap: balance;
     }
@@ -1032,11 +1032,11 @@
         width: 0.7em;
         height: 0.7em;
         margin-left: 0.3em;
-        color: var(--ink-3);
+        color: var(--icon-quiet);
     }
     .q-item__note {
         max-width: 60ch;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-note);
         text-wrap: pretty;
     }
@@ -1084,8 +1084,8 @@
         width: 100%;
         min-height: 44px;
         padding: 0 0.9rem;
-        border: var(--rule-hair) solid var(--rule-2);
-        color: var(--ink-2);
+        border: var(--rule-hair) solid var(--rule-firm);
+        color: var(--text-quiet);
         font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
@@ -1107,7 +1107,7 @@
         width: 7px;
         height: 7px;
         border-radius: var(--radius-round);
-        box-shadow: inset 0 0 0 1px var(--ink-3);
+        box-shadow: inset 0 0 0 var(--rule-hair) var(--dot-ring);
     }
     /* With a description under the label (the contact form's topics):
        the dot on the label's line, the words under it in the reading
@@ -1122,24 +1122,24 @@
     .seg__note {
         grid-column: 2;
         max-width: 60ch;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-note);
         letter-spacing: 0;
         text-transform: none;
         text-wrap: pretty;
     }
     .seg__input:hover + .seg__box {
-        color: var(--ink-1);
+        color: var(--text);
     }
     .seg__input:checked + .seg__box {
         position: relative;
         z-index: 1;
-        border-color: var(--ink-2);
-        background: var(--surface-2);
-        color: var(--ink-1);
+        border-color: var(--chosen-edge);
+        background: var(--chosen-fill);
+        color: var(--chosen-ink);
     }
     .seg__input:checked + .seg__box::before {
-        background: var(--ink-1);
+        background: var(--chosen-dot);
         box-shadow: none;
     }
     .seg__input:focus-visible + .seg__box {
@@ -1153,14 +1153,14 @@
        hairline across each row; stacked on phones. */
     .specs {
         margin: 0;
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
     }
     .specs__row {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         gap: var(--s-1) var(--gutter);
         padding-block: var(--s-3);
-        border-top: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
     }
     /* Under a section head, the head's hairline is the first row's
        (`--first-rule`, above). */
@@ -1174,14 +1174,14 @@
     }
     .specs dt {
         padding-top: 0.2rem;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .specs dd {
         margin: 0;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-ui);
     }
 
@@ -1193,7 +1193,7 @@
     .cv-list {
         margin: 0;
         padding: 0;
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
         list-style: none;
     }
     .cv-item {
@@ -1202,7 +1202,7 @@
         grid-template-columns: minmax(0, 1fr);
         gap: var(--s-3);
         padding-block: var(--s-5);
-        border-top: var(--rule-hair) solid var(--rule-1);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
         transition:
             border-color var(--dur-hover) var(--ease-dock),
             background-color var(--dur-hover) var(--ease-dock);
@@ -1223,7 +1223,7 @@
         flex-wrap: wrap;
         align-items: baseline;
         gap: var(--s-1) var(--s-4);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
     }
@@ -1259,23 +1259,23 @@
         width: 0.7em;
         height: 0.7em;
         margin-left: 0.3em;
-        color: var(--ink-3);
+        color: var(--icon-quiet);
         vertical-align: 0.05em;
     }
     .cv-item__sub {
         margin-top: var(--s-1);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-ui-row);
     }
     .cv-item__note {
         margin-top: var(--s-1);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-ui);
     }
     .cv-item__dek {
         max-width: 60ch;
         margin-top: var(--s-3);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-dek);
         text-wrap: pretty;
     }
@@ -1291,7 +1291,7 @@
     .cv-item__lines li {
         position: relative;
         padding-left: var(--list-gutter);
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-ui);
     }
     .cv-item__lines li + li {
@@ -1304,14 +1304,14 @@
         top: 0.78em;
         width: var(--list-mark);
         height: 0;
-        border-top: var(--rule-hair) solid var(--ink-2);
+        border-top: var(--rule-hair) solid var(--list-mark-ink);
     }
     /* The skills and the links, flush in the body column with no key: the
        mono names and the links' own words say what they are. */
     .cv-item__facts {
         max-width: 68ch;
         margin-top: var(--s-3);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-ui);
     }
     .cv-item__skills {
@@ -1330,7 +1330,7 @@
         align-items: center;
         gap: 0.3em;
         min-height: 32px;
-        color: var(--ink-1);
+        color: var(--text);
         text-underline-offset: 0.18em;
     }
     .cv-item__link .icon {
@@ -1339,13 +1339,13 @@
     }
     .cv-item__url {
         margin-left: 0.4em;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
     }
     /* Lit: the log row's hover (an ink rule and the title underlined). */
     .cv-item:hover {
-        border-top-color: var(--ink-1);
+        border-top-color: var(--rule-lit);
     }
     .cv-item:hover .cv-item__title a {
         text-decoration: underline;
@@ -1370,7 +1370,7 @@
     .photo__frame {
         position: relative;
         padding: var(--photo-mount);
-        border: var(--rule-hair) solid var(--rule-1);
+        border: var(--rule-hair) solid var(--rule-quiet);
         background: var(--plate-bg);
     }
     .photo__img {
@@ -1380,7 +1380,7 @@
         aspect-ratio: var(--photo-ratio, auto);
         object-fit: cover;
         object-position: var(--photo-focus, 50% 50%);
-        background: var(--surface-1);
+        background: var(--surface-raised);
         filter: var(--photo-treatment);
     }
     .photo--real .photo__img {
@@ -1446,7 +1446,7 @@
         display: inline-flex;
         align-items: center;
         min-height: 44px;
-        color: var(--ink-1);
+        color: var(--text);
         text-decoration: none;
     }
     .crumb-row__home:hover {
@@ -1478,10 +1478,10 @@
         gap: var(--s-2);
         min-width: 0;
         padding-top: var(--s-3);
-        border-top: var(--rule-hair) solid var(--rule-2);
+        border-top: var(--rule-hair) solid var(--rule-firm);
     }
     .metric > dt {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -1489,7 +1489,7 @@
     .metric > dd {
         order: -1;
         margin: 0;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-title-lg);
         letter-spacing: var(--track-title);
         font-variant-numeric: var(--numerals-figures);
@@ -1499,7 +1499,7 @@
     /* The unit a head's step, not a fraction of the value: the page
        keeps to its six sizes. */
     .metric__unit {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font-size: var(--step-1);
         letter-spacing: 0;
     }
@@ -1529,14 +1529,14 @@
     .table th,
     .table td {
         padding: var(--s-4) var(--s-4) var(--s-4) 0;
-        border-bottom: var(--rule-hair) solid var(--rule-1);
+        border-bottom: var(--rule-hair) solid var(--rule-quiet);
         text-align: left;
         vertical-align: top;
     }
     .table thead th {
         padding-block: var(--s-3);
-        border-bottom-color: var(--rule-2);
-        color: var(--ink-2);
+        border-bottom-color: var(--rule-firm);
+        color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -1601,7 +1601,7 @@
         height: 100%;
         padding: var(--s-5) 0;
         border-top: var(--rule-hair) solid var(--rule-2);
-        color: var(--ink-1);
+        color: var(--text);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);
     }
@@ -1625,7 +1625,7 @@
         grid-row: 1;
         grid-column: 1;
         padding-top: 0.1rem;
-        color: var(--ink-3);
+        color: var(--text-faint);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
     }
@@ -1649,14 +1649,14 @@
     .route-row__blurb {
         grid-row: 2;
         grid-column: 2;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-ui);
     }
     .route-row__arrow {
         grid-row: 1 / span 2;
         grid-column: 3;
         align-self: center;
-        color: var(--ink-3);
+        color: var(--icon-quiet);
         transition:
             transform var(--dur-hover) var(--ease-dock),
             color var(--dur-hover) var(--ease-dock);
@@ -1672,7 +1672,7 @@
         grid-column: 2;
     }
     .route-row:hover {
-        border-top-color: var(--ink-1);
+        border-top-color: var(--rule-lit);
     }
     .route-row:hover .route-row__plain {
         text-decoration: underline;
@@ -1681,7 +1681,7 @@
     }
     .route-row:hover .route-row__arrow {
         transform: translateX(4px);
-        color: var(--ink-1);
+        color: var(--text);
     }
 
     /* ===== Pager (contract §4; components/ui/pager.tsx) ================ */
@@ -1696,16 +1696,16 @@
         gap: var(--s-2);
         min-width: 0;
         padding: var(--s-4) 0 var(--s-2);
-        border-top: var(--rule-strong) solid var(--rule-2);
-        color: var(--ink-1);
+        border-top: var(--rule-strong) solid var(--rule-firm);
+        color: var(--text);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);
     }
     .pager__item:hover {
-        border-top-color: var(--ink-1);
+        border-top-color: var(--rule-lit);
     }
     .pager__label {
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -1720,7 +1720,7 @@
         text-underline-offset: 0.18em;
     }
     .pager__meta {
-        color: var(--ink-3);
+        color: var(--text-faint);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
     }
@@ -1777,7 +1777,7 @@
     }
     .availability__text {
         max-width: 60ch;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--type-lead);
         text-wrap: balance;
     }

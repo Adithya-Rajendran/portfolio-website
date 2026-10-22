@@ -94,7 +94,7 @@
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-width: thin;
-        scrollbar-color: var(--rule-2) transparent;
+        scrollbar-color: var(--scrollbar-thumb) transparent;
     }
     .box {
         display: none;
@@ -112,7 +112,7 @@
     gap: var(--s-2) var(--s-4);
 }
 .metaData {
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
     white-space: nowrap;
@@ -131,7 +131,7 @@
 .dek {
     max-width: var(--prose-measure);
     margin-top: var(--s-4);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-dek);
     text-wrap: pretty;
 }
@@ -148,7 +148,7 @@
 .contentsList {
     margin: 0;
     padding: 0;
-    border-left: var(--rule-hair) solid var(--rule-1);
+    border-left: var(--rule-hair) solid var(--rule-quiet);
     list-style: none;
 }
 .contentsList a {
@@ -158,19 +158,19 @@
     margin-left: -1px;
     padding: 0.35rem 0 0.35rem 1rem;
     border-left: var(--rule-strong) solid transparent;
-    color: var(--ink-2);
+    color: var(--text-quiet);
     text-decoration: none;
     transition:
         color var(--dur-hover) var(--ease-dock),
         border-color var(--dur-3) var(--ease-dock);
 }
 .contentsList a:hover {
-    color: var(--ink-1);
+    color: var(--text);
 }
 /* The current section: the contents' one "now" mark, in orange. */
 .contentsList a[aria-current] {
-    border-left-color: var(--accent);
-    color: var(--ink-1);
+    border-left-color: var(--mark-now);
+    color: var(--text);
 }
 
 /* The phone's box: a closed disclosure above the text. */
@@ -184,7 +184,7 @@
     gap: var(--s-4);
     min-height: 48px;
     padding: 0 var(--s-4);
-    border: var(--rule-hair) solid var(--rule-2);
+    border: var(--rule-hair) solid var(--rule-firm);
     cursor: pointer;
     list-style: none;
 }
@@ -195,7 +195,7 @@
     content: "+";
     flex: none;
     width: 1rem;
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-title-sm);
     line-height: var(--lh-solid);
     text-align: center;
@@ -204,7 +204,7 @@
     content: "\2212";
 }
 .boxSummary:hover {
-    border-color: var(--ink-1);
+    border-color: var(--rule-lit);
     background: var(--surface-1);
 }
 .boxBody {
@@ -229,7 +229,7 @@
 }
 .endTitle {
     margin-bottom: var(--s-4);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
@@ -249,16 +249,16 @@
 /* "30 Jun 2026 · Correction": the post head's date format; a
    correction's in ink. */
 .revisionHead {
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
 }
 .revision[data-kind="correction"] .revisionHead {
-    color: var(--ink-1);
+    color: var(--text);
 }
 .revisionNote {
     margin-top: var(--s-1);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-ui);
 }
 .endmark {
@@ -270,7 +270,7 @@
     content: "";
     flex: 1;
     height: var(--rule-hair);
-    background: var(--rule-1);
+    background: var(--rule-quiet);
 }
 .follow {
     margin-top: var(--s-5);
@@ -309,7 +309,7 @@
 
 /* ---- Print: one column, a masthead, no rail or actions -------------- */
 .printHead :global(.data) {
-    color: var(--ink-2);
+    color: var(--text-quiet);
 }
 @media print {
     .page {

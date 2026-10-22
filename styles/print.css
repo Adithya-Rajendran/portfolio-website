@@ -104,7 +104,7 @@
         }
         [data-page="resume"] .cv-item__sub {
             margin-top: 0.3mm;
-            color: var(--ink-1);
+            color: var(--text);
             font: var(--weight-regular) var(--print-sub) / var(--lh-paper)
                 var(--font-display);
         }
@@ -116,7 +116,7 @@
         [data-page="resume"] .cv-item__dek {
             max-width: none;
             margin-top: 0.6mm;
-            color: var(--ink-2);
+            color: var(--text-quiet);
             font: var(--weight-regular) var(--print-text) / var(--lh-paper-base)
                 var(--font-long);
         }
@@ -154,12 +154,12 @@
         [data-page="resume"] .cv-item__link a {
             display: inline;
             min-height: 0;
-            color: var(--ink-1);
+            color: var(--text);
             text-decoration: none;
         }
         [data-page="resume"] .cv-item__link + .cv-item__link::before {
             content: " · ";
-            color: var(--ink-3);
+            color: var(--text-faint);
         }
         /* On paper a link is its address; a label prints only when the
            address is the label. */
@@ -167,7 +167,7 @@
             display: none;
         }
         [data-page="resume"] .cv-item__url {
-            color: var(--ink-1);
+            color: var(--text);
             font-size: var(--print-key);
         }
         /* Sheet 2 runs compact: what follows a title (a project's role, a
@@ -183,7 +183,7 @@
             :is(#projects, #writing, #certifications)
             .cv-item__sub::before {
             content: " · ";
-            color: var(--ink-3);
+            color: var(--text-faint);
         }
         [data-page="resume"] .specs {
             padding-left: calc(31mm + 4.5mm);
@@ -199,7 +199,7 @@
             display: inline;
             margin-right: 1.8mm;
             padding: 0;
-            color: var(--ink-1);
+            color: var(--text);
             font: var(--weight-regular) var(--print-key) / var(--lh-paper-key)
                 var(--font-label);
             letter-spacing: var(--track-label);

@@ -46,7 +46,7 @@
     margin-left: 0;
 }
 .optional {
-    color: var(--ink-3);
+    color: var(--text-faint);
     font-weight: var(--weight-regular);
     letter-spacing: 0;
     text-transform: none;
@@ -63,7 +63,7 @@
 /* Shown only near the limit and past it, in ink: its appearing is the
    signal. */
 .count {
-    color: var(--ink-1);
+    color: var(--text);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
 }
@@ -81,7 +81,7 @@
 /* Where a message goes, closing the form: quiet UI text. */
 .privacy {
     max-width: 52ch;
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-ui);
     text-wrap: pretty;
 }
@@ -91,11 +91,11 @@
     display: grid;
     gap: var(--s-2);
     padding: var(--s-3) var(--s-4);
-    border-left: var(--rule-strong) solid var(--ink-1);
-    background: var(--surface-1);
+    border-left: var(--rule-strong) solid var(--rule-ink);
+    background: var(--surface-raised);
 }
 .failureText {
-    color: var(--ink-1);
+    color: var(--text);
     font: var(--type-ui);
 }
 /* The first control's label lines up with the text above; each control
@@ -110,7 +110,7 @@
     max-width: 46rem;
 }
 .receivedTitle {
-    color: var(--ink-1);
+    color: var(--text);
     font: var(--type-title-xl);
     letter-spacing: var(--track-title);
 }

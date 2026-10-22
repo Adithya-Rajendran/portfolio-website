@@ -17,7 +17,7 @@
 .list {
     margin: 0;
     padding: 0;
-    border-bottom: var(--rule-hair) solid var(--rule-1);
+    border-bottom: var(--rule-hair) solid var(--rule-quiet);
     list-style: none;
 }
 .row {
@@ -26,7 +26,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s-2);
     padding-block: var(--s-5);
-    border-top: var(--rule-hair) solid var(--rule-1);
+    border-top: var(--rule-hair) solid var(--rule-quiet);
     transition:
         border-color var(--dur-hover) var(--ease-dock),
         background-color var(--dur-hover) var(--ease-dock);
@@ -45,7 +45,7 @@
 }
 .date,
 .read {
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
     white-space: nowrap;
@@ -67,7 +67,7 @@
 }
 .dek {
     max-width: 62ch;
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-note);
     text-wrap: pretty;
 }
@@ -81,7 +81,7 @@
 /* Hover: an ink rule, the title underlined and the arrow nudged. The
    whole row is the title's link. */
 .row:hover {
-    border-top-color: var(--ink-1);
+    border-top-color: var(--rule-lit);
 }
 .row:hover .title a {
     text-decoration: underline;
@@ -126,13 +126,13 @@
         justify-self: end;
         width: 20px;
         height: 20px;
-        color: var(--ink-3);
+        color: var(--icon-quiet);
         transition:
             transform var(--dur-hover) var(--ease-dock),
             color var(--dur-hover) var(--ease-dock);
     }
     .index:not(.stacked) .row:hover .arrow {
-        color: var(--ink-1);
+        color: var(--text);
         transform: translateX(4px);
     }
 }

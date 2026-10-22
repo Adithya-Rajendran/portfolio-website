@@ -85,12 +85,12 @@
     height: 40px;
     display: none;
     fill: none;
-    stroke: var(--ink-1);
+    stroke: var(--draw-strong);
     stroke-width: 1.1;
 }
 
 .sunDot {
-    fill: var(--ink-1);
+    fill: var(--draw-strong);
     stroke: none;
 }
 
@@ -101,7 +101,7 @@
 }
 
 :global([data-theme="manual"]) .rim {
-    stroke: var(--ink-1);
+    stroke: var(--draw-strong);
     stroke-width: 1px;
 }
 
@@ -141,7 +141,7 @@
 }
 
 .hintSun {
-    fill: var(--ink-1);
+    fill: var(--draw-strong);
     stroke: none;
 }
 
@@ -225,14 +225,14 @@
     width: 1px;
     height: var(--rule-hair);
     margin-top: calc(var(--rule-hair) / -2);
-    background: var(--rule-2);
+    background: var(--draw-faint);
     transform-origin: 0 50%;
     opacity: 0;
     will-change: transform, opacity;
 }
 
 .leader[data-state="current"] {
-    background: var(--ink-3);
+    background: var(--draw-quiet);
 }
 
 .name {
@@ -245,16 +245,16 @@
     letter-spacing: var(--track-label);
     text-transform: uppercase;
     text-wrap: balance;
-    color: var(--ink-2);
+    color: var(--text-quiet);
 }
 
 .label[data-state="current"] .name {
-    color: var(--ink-1);
+    color: var(--text);
 }
 
 .label[data-state="future"] .name,
 .label[data-state="plan"] .name {
-    color: var(--ink-3);
+    color: var(--text-faint);
 }
 
 /* The ship's "now" mark in the overview, and the planned orbit's end. */
@@ -282,7 +282,7 @@
 .now::before {
     width: 7px;
     height: 7px;
-    background: var(--accent);
+    background: var(--mark-now);
     box-shadow: 0 0 0 2px var(--bg);
 }
 
@@ -290,13 +290,13 @@
 .world::before {
     width: var(--d, 11px);
     height: var(--d, 11px);
-    border: var(--rule-hair) solid var(--ink-3);
+    border: var(--rule-hair) solid var(--draw-quiet);
 }
 
 .target::before {
     width: 9px;
     height: 9px;
-    border: var(--rule-hair) solid var(--ink-2);
+    border: var(--rule-hair) solid var(--draw);
     background: var(--bg);
 }
 

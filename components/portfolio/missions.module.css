@@ -33,7 +33,7 @@
     gap: var(--s-1) var(--s-4);
     margin: 0;
     padding: 0;
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
     list-style: none;
@@ -71,7 +71,7 @@
 .stageSummary {
     max-width: 52ch;
     margin-top: var(--s-3);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-dek);
     text-wrap: pretty;
 }
@@ -80,14 +80,14 @@
 .stageArrow {
     width: 0.42em;
     height: 0.42em;
-    color: var(--ink-3);
+    color: var(--icon-quiet);
     vertical-align: 0.06em;
     transition:
         transform var(--dur-hover) var(--ease-dock),
         color var(--dur-hover) var(--ease-dock);
 }
 .stageHeading a:hover .stageArrow {
-    color: var(--ink-1);
+    color: var(--text);
     transform: translateX(4px);
 }
 .stageCopy > .stack {
@@ -135,11 +135,11 @@
     gap: var(--s-3);
     min-width: 0;
     padding-top: var(--s-5);
-    border-top: var(--rule-hair) solid var(--rule-2);
+    border-top: var(--rule-hair) solid var(--rule-firm);
     transition: border-color var(--dur-hover) var(--ease-dock);
 }
 .tile:hover {
-    border-top-color: var(--ink-1);
+    border-top-color: var(--rule-lit);
 }
 .tileName {
     margin-top: var(--s-2);
@@ -161,7 +161,7 @@
 }
 .tileSummary {
     max-width: 52ch;
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-note);
     text-wrap: pretty;
 }
@@ -259,14 +259,14 @@
     position: absolute;
     top: 0.1rem;
     right: 0;
-    color: var(--ink-3);
+    color: var(--icon-quiet);
     transition:
         transform var(--dur-hover) var(--ease-dock),
         color var(--dur-hover) var(--ease-dock);
 }
 .tile:hover .tileArrow {
     transform: translateX(4px);
-    color: var(--ink-1);
+    color: var(--text);
 }
 
 /* ---- Rows: a project in a line or two (MissionRow) --------------------- */
@@ -289,7 +289,7 @@
     align-content: start;
     gap: var(--s-2);
     padding: var(--s-4) var(--s-7) 0 0;
-    border-top: var(--rule-hair) solid var(--rule-2);
+    border-top: var(--rule-hair) solid var(--rule-firm);
     transition: border-color var(--dur-hover) var(--ease-dock);
 }
 /* Under a section head (an entry's related project) the head's hairline
@@ -311,7 +311,7 @@
     gap: var(--s-1) var(--s-4);
 }
 .rowDates {
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
 }
@@ -328,7 +328,7 @@
 }
 .rowSummary {
     max-width: 60ch;
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-note);
     text-wrap: pretty;
 }
@@ -418,20 +418,20 @@
     right: 0;
     width: 20px;
     height: 20px;
-    color: var(--ink-3);
+    color: var(--icon-quiet);
     transition:
         transform var(--dur-hover) var(--ease-dock),
         color var(--dur-hover) var(--ease-dock);
 }
 .row:hover {
-    border-top-color: var(--ink-1);
+    border-top-color: var(--rule-lit);
 }
 /* Quiet rows: a step smaller, the hairline in the quieter rule. */
 .rowsQuiet .row {
-    border-top-color: var(--rule-1);
+    border-top-color: var(--rule-quiet);
 }
 .rowsQuiet .row:hover {
-    border-top-color: var(--ink-1);
+    border-top-color: var(--rule-lit);
 }
 .rowsQuiet .rowTitle {
     font-size: var(--step-1);
@@ -447,6 +447,6 @@
     text-underline-offset: 0.16em;
 }
 .row:hover .rowArrow {
-    color: var(--ink-1);
+    color: var(--text);
     transform: translateX(4px);
 }

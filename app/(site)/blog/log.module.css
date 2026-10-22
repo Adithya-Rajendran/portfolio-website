@@ -32,7 +32,7 @@
     justify-items: start;
     gap: var(--s-3);
     padding: var(--s-7) 0;
-    border-top: var(--rule-hair) solid var(--rule-1);
+    border-top: var(--rule-hair) solid var(--rule-quiet);
 }
 .emptyTitle {
     font: var(--type-title-lg);

@@ -10,12 +10,12 @@
 .callouts {
     margin: 0;
     padding: 0;
-    border-bottom: var(--rule-hair) solid var(--rule-1);
+    border-bottom: var(--rule-hair) solid var(--rule-quiet);
     list-style: none;
 }
 .callout {
     padding-block: var(--s-4);
-    border-top: var(--rule-hair) solid var(--rule-1);
+    border-top: var(--rule-hair) solid var(--rule-quiet);
 }
 /* Under the section head its hairline is the first row's: the first
    callout draws none of its own (`--first-rule`, styles/components.css). */
@@ -28,7 +28,7 @@
 .calloutText {
     max-width: 62ch;
     margin-top: var(--s-1);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-ui);
     text-wrap: pretty;
 }

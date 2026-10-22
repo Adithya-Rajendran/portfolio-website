@@ -20,7 +20,7 @@
 .note {
     max-width: 52ch;
     margin-top: var(--s-4);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
     line-height: var(--lh-text);
@@ -63,8 +63,8 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s-1) var(--gutter);
     padding-block: var(--s-3);
-    border-top: var(--rule-hair) solid var(--rule-1);
-    color: var(--ink-1);
+    border-top: var(--rule-hair) solid var(--rule-quiet);
+    color: var(--text);
     font: var(--type-ui);
 }
 /* Under the section head its hairline is the first row's: the first row
@@ -79,12 +79,12 @@
     }
 }
 .rowDate {
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
 }
 .row a {
-    color: var(--ink-1);
+    color: var(--text);
     text-underline-offset: 0.18em;
 }
 /* A credential's verification page leaves the site: the outbound mark
@@ -93,12 +93,12 @@
     width: 0.7em;
     height: 0.7em;
     margin-left: 0.3em;
-    color: var(--ink-3);
+    color: var(--icon-quiet);
     vertical-align: 0.05em;
 }
 /* What follows the line's name: a credential's issuer. */
 .rowAside {
-    color: var(--ink-2);
+    color: var(--text-quiet);
 }
 
 /* Prior certifications, under the current ones. */
@@ -157,18 +157,18 @@
         margin: 0 0 4mm;
         padding-bottom: 1.4mm;
         border-bottom: var(--paper-hair) solid var(--rule-firm);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--weight-regular) var(--print-data) / var(--lh-snug)
             var(--font-mono);
         letter-spacing: var(--track-paper-control);
         text-transform: uppercase;
     }
     .sheetDoc {
-        color: var(--ink-1);
+        color: var(--text);
     }
     .sheetHead :global(.rev) {
         font: inherit;
-        color: var(--ink-1);
+        color: var(--text);
     }
     .sheetTwo {
         display: block !important;
@@ -187,7 +187,7 @@
     }
     .mastLinks {
         margin-top: 1.2mm;
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--weight-regular) var(--print-data) / var(--lh-compact)
             var(--font-mono);
     }
@@ -201,7 +201,7 @@
         align-items: center;
         gap: 1.2mm;
         margin-right: 2mm;
-        color: var(--ink-1);
+        color: var(--text);
         font: var(--weight-regular) var(--print-key) / var(--lh-solid)
             var(--font-label);
         letter-spacing: var(--track-label);
@@ -212,7 +212,7 @@
         width: 1.5mm;
         height: 1.5mm;
         border-radius: 50%;
-        background: var(--accent);
+        background: var(--mark-now);
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
     }
@@ -246,7 +246,7 @@
         display: none;
     }
     .cv :global(.doc-section__tag .section-tag__h) {
-        color: var(--ink-1);
+        color: var(--text);
         font: inherit;
         letter-spacing: inherit;
         text-transform: inherit;

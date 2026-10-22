@@ -88,7 +88,7 @@
 }
 .sun {
     display: none;
-    fill: var(--accent);
+    fill: var(--mark-identity);
 }
 
 .picture {
@@ -145,17 +145,17 @@
 }
 :global([data-theme="manual"]) .rim {
     display: inline;
-    stroke: var(--ink-1);
+    stroke: var(--draw-strong);
     stroke-width: 1.25px;
 }
 :global([data-theme="manual"]) .surface {
     display: inline;
-    stroke: var(--rule-2);
+    stroke: var(--draw-faint);
     stroke-width: 1px;
 }
 :global([data-theme="manual"]) .halo {
     display: inline;
-    stroke: var(--ink-2);
+    stroke: var(--draw);
     stroke-width: 1px;
     stroke-dasharray: 1.5 5;
 }
@@ -195,7 +195,7 @@
    most 7rem (one line at 1440, within 1,400px at 1920). */
 .name {
     margin: 0 calc(-1 * var(--track-name)) 0 0;
-    color: var(--ink-1);
+    color: var(--text);
     font: var(--type-name);
     letter-spacing: var(--track-name);
     text-transform: uppercase;
@@ -210,7 +210,7 @@
     justify-content: center;
     max-width: 44rem;
     margin-top: var(--s-5);
-    color: var(--ink-1);
+    color: var(--text);
     font: var(--type-lead);
 }
 /* What the owner is open to: the active status mark, then the line. */
@@ -222,7 +222,7 @@
     gap: var(--s-1) var(--s-3);
     max-width: 52rem;
     margin-top: var(--s-4);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-ui);
 }
 /* The Open To line (.open-to): its openings, centred. */
@@ -251,18 +251,18 @@
 .latest {
     display: inline-block;
     padding-block: calc((var(--target) - 1lh) / 2);
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-ui);
     text-wrap: balance;
 }
 .latest:hover {
-    color: var(--ink-1);
+    color: var(--text);
 }
 /* Over the photograph the CV stays a hairline, and fills with ink on
    hover: no fill at rest. */
 .routes :global(.btn):hover {
-    border-color: var(--ink-1);
-    background: var(--ink-1);
+    border-color: var(--rule-lit);
+    background: var(--fill);
     color: var(--bg);
 }
 
@@ -274,7 +274,7 @@
     gap: var(--s-3) var(--s-5);
 }
 .credit {
-    color: var(--ink-2);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
 }
@@ -286,7 +286,7 @@
     text-underline-offset: 0.3em;
 }
 .credit a:hover {
-    color: var(--ink-1);
+    color: var(--text);
 }
 /* The credit's parts and the frame's NASA ID, each kept whole: on phones
    one a line, with no separator. */
@@ -368,7 +368,7 @@
     }
     .rim {
         display: inline;
-        stroke: var(--ink-1);
+        stroke: var(--draw-strong);
         stroke-width: 1.25px;
     }
     .sun {

@@ -17,7 +17,7 @@
         height: 100%;
         pointer-events: none;
         fill: none;
-        stroke: rgb(var(--star-rgb));
+        stroke: var(--star);
         stroke-linecap: round;
     }
     .static-stars path {
@@ -65,35 +65,35 @@
     }
     .los-grid-v,
     .los-grid-h {
-        stroke: var(--rule-1);
+        stroke: var(--draw-grid);
         stroke-width: 1;
     }
     .los-grid-v {
         stroke-dasharray: 1 4;
     }
     .los-axis {
-        stroke: var(--rule-2);
+        stroke: var(--draw-faint);
         stroke-width: 1;
     }
     .los-signal {
-        stroke: var(--ink-1);
+        stroke: var(--draw-strong);
         stroke-width: 1.25;
         stroke-linejoin: round;
     }
     .los-dead {
-        stroke: var(--ink-3);
+        stroke: var(--draw-quiet);
         stroke-width: 1.25;
         stroke-dasharray: 3 4;
     }
     .los-los-line {
-        stroke: var(--ink-2);
+        stroke: var(--draw);
         stroke-width: 1;
     }
 
     /* ---- The report ------------------------------------------------------- */
     .los-report {
         margin-top: var(--s-6);
-        color: var(--ink-2);
+        color: var(--text-quiet);
         font: var(--type-ui);
     }
 }
