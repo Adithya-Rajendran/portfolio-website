@@ -538,10 +538,11 @@ only live in comments or commit messages.
   shows below the header (in both themes; the cleanup clears it), and the
   header's wordmark steps aside meanwhile, so the name is on screen once:
   never twice, and never not at all while the rest of the hero, or the
-  projects under it, fill the view. The observer first reports a frame
-  after the starfield starts (its `data-state`), so until then the
-  wordmark is aside on home from the first paint as well
-  (`styles/components.css`): a load never opens on the name twice.
+  projects under it, fill the view. The observer first reports long
+  after the first paint, so until that report (the starfield's
+  `data-observed`, set in the same callback) the wordmark is aside on
+  home as well (`styles/components.css`): a load never shows the name
+  twice, not even for a frame.
   Without JavaScript it stays. Over
   it: the name, the profile's headline and the availability line (only
   when set), each split into parts kept whole (`OpenToItems`) that stack

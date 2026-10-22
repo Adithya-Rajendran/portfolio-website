@@ -36,14 +36,15 @@ const LOOK: Record<Magnitude, { r: number; alpha: number }> = {
  * "full"]`, no OS reduce-motion setting): otherwise it holds a still
  * frame. Stars fade out around the zone's text (`[data-clear]`), measured
  * again on resize and once the fonts have loaded. `data-state` reports
- * `running` or `stopped` for tests; until the effect has set it (the
- * server renders none), styles/components.css keeps the header's
- * wordmark aside on home. A second observer, in both themes,
+ * `running` or `stopped` for tests. A second observer, in both themes,
  * sets `html[data-hero]` while the zone's name (its h1) shows below the
  * header, so the header's wordmark steps aside only while the hero names
- * the owner: the name is always on screen once. Cache Components hides a
- * visited page instead of unmounting it, so the effect's cleanup stops
- * the loop and clears the attribute.
+ * the owner: the name is always on screen once. Its first report marks
+ * the canvas `data-observed` in the same callback; until then (the
+ * server renders neither) styles/components.css keeps the wordmark aside
+ * on home, so it never shows between the first paint and that report.
+ * Cache Components hides a visited page instead of unmounting it, so the
+ * effect's cleanup stops the loop and clears both attributes.
  */
 export default function Starfield({ className }: { className?: string }) {
     const ref = useRef<HTMLCanvasElement>(null);
@@ -181,8 +182,10 @@ export default function Starfield({ className }: { className?: string }) {
             parseFloat(getComputedStyle(root).getPropertyValue("--header-h")) ||
             0;
         const named = new IntersectionObserver(
-            ([entry]) =>
-                root.toggleAttribute("data-hero", !!entry?.isIntersecting),
+            ([entry]) => {
+                root.toggleAttribute("data-hero", !!entry?.isIntersecting);
+                canvas.dataset.observed = "";
+            },
             { rootMargin: `-${header}px 0px 0px 0px` },
         );
         if (name) named.observe(name);
@@ -200,6 +203,7 @@ export default function Starfield({ className }: { className?: string }) {
             cancelled = true;
             stop();
             root.removeAttribute("data-hero");
+            delete canvas.dataset.observed;
             resize.disconnect();
             visible.disconnect();
             named.disconnect();

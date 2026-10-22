@@ -422,6 +422,40 @@ test("before the page has run, Pause motion shows once: in the hero on home, in 
     await expect(footerControl).toBeVisible();
 });
 
+test("loading home never shows the wordmark beside the hero's name, not even for a frame", async ({
+    page,
+}) => {
+    // Sampled every frame from the start of the load: the wordmark must
+    // stay aside until the hero's observer has reported, and then while
+    // the name is in view (a fade that starts and reverses still shows).
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() => {
+        const seen = { most: 0 };
+        Object.assign(window, { wordmarkSeen: seen });
+        const sample = () => {
+            const name = document.querySelector("header .brand__name");
+            if (name) {
+                const style = getComputedStyle(name);
+                if (style.visibility === "visible") {
+                    seen.most = Math.max(seen.most, parseFloat(style.opacity));
+                }
+            }
+            requestAnimationFrame(sample);
+        };
+        requestAnimationFrame(sample);
+    });
+    await page.goto("/");
+    await expect(hero(page).getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("data-hero", "");
+    await page.waitForTimeout(1000);
+    const most = await page.evaluate(
+        () =>
+            (window as unknown as { wordmarkSeen: { most: number } })
+                .wordmarkSeen.most,
+    );
+    expect(most, "the wordmark's opacity while loading").toBe(0);
+});
+
 test("before the page has run, the name shows once: the hero's on home, the wordmark elsewhere", async ({
     page,
 }) => {
