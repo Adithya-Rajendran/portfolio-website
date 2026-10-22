@@ -140,6 +140,13 @@
     .skip-link:focus-visible {
         transform: translateY(var(--s-3));
     }
+    /* Its label stays on its fill: `a:hover` (above, more specific)
+       would turn it ink on ink. */
+    @media (hover: hover) {
+        .skip-link:hover {
+            color: var(--bg);
+        }
+    }
 
     :target {
         scroll-margin-top: var(--anchor-offset);
@@ -196,6 +203,13 @@ html[data-motion="reduced"] *::after {
 @media (forced-colors: active) {
     .status::before {
         forced-color-adjust: none;
+    }
+    /* An icon follows its text's system colour (LinkText in a link):
+       Chromium keeps an SVG's author colour in forced colours, and a
+       quiet or lit icon's ink can all but vanish on the system's Canvas.
+       Important, so a module's own icon colour gives way too. */
+    .icon {
+        color: inherit !important;
     }
     .btn,
     .seg__box,

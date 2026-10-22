@@ -292,6 +292,13 @@
         --stroke-firm: 1.5px;
         --stroke-icon: 1.5;
         --stroke-icon-strong: 2;
+        /* Dashes, in the drawing's own units: the trace's grid and its
+           lost signal (Loss of Signal), the flight's planned route, the
+           hero's sun halo in Flight Manual. */
+        --dash-grid: 1 4;
+        --dash-lost: 3 4;
+        --dash-plan: 4 5;
+        --dash-halo: 1.5 5;
 
         /* ---- motion: orbital, never elastic ------------------------- */
         --ease-dock: cubic-bezier(0.2, 0, 0, 1);
@@ -330,6 +337,11 @@
 
         /* ---- z ----------------------------------------------------- */
         --z-starfield: -1;
+        /* Inside a card or a row of boxes: a stretched link's cover, a
+           chosen box over its neighbours' edges; then what sits over
+           them, a link inside a stretched card, a focused box. */
+        --z-raised: 1;
+        --z-over: 2;
         --z-header: 100;
         --z-skip: 1000;
 

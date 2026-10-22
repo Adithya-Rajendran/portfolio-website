@@ -633,7 +633,7 @@
         content: "";
         position: absolute;
         inset: 0;
-        z-index: 1;
+        z-index: var(--z-raised);
     }
 
     /* ===== Tags (site.css 4.5) ========================================= */
@@ -654,7 +654,7 @@
     }
     a.tag {
         position: relative;
-        z-index: 2;
+        z-index: var(--z-over);
     }
     @media (hover: hover) {
         a.tag:hover {
@@ -881,11 +881,16 @@
     .field__error:empty {
         position: absolute;
     }
+    /* The inset centres one line of the input's leading in the control's
+       height; the textarea, led looser, keeps the same inset. */
     .input,
     .textarea {
         width: 100%;
         min-height: var(--control-h);
-        padding: calc((var(--control-h) - 1lh) / 2 - var(--rule-hair))
+        padding: calc(
+                (var(--control-h) - var(--step-0) * var(--lh-compact)) / 2 -
+                    var(--rule-hair)
+            )
             var(--control-pad);
         border: var(--rule-hair) solid var(--rule-firm);
         border-radius: 0;
@@ -1162,7 +1167,7 @@
     }
     .seg__input:checked + .seg__box {
         position: relative;
-        z-index: 1;
+        z-index: var(--z-raised);
         border-color: var(--chosen-edge);
         background: var(--chosen-fill);
         color: var(--chosen-ink);
@@ -1172,7 +1177,7 @@
         box-shadow: none;
     }
     .seg__input:focus-visible + .seg__box {
-        z-index: 2;
+        z-index: var(--z-over);
         outline: var(--focus-ring);
         outline-offset: var(--focus-offset);
     }
@@ -1352,7 +1357,7 @@
     }
     .cv-item__link a {
         position: relative;
-        z-index: 2;
+        z-index: var(--z-over);
         display: inline-flex;
         align-items: center;
         gap: var(--icon-gap);

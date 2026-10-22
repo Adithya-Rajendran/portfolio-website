@@ -11,6 +11,12 @@ import { expect, test } from "./support/test";
  * a row (a tag) leaves the row unlit. A module that set its own resting
  * `text-decoration` or arrow colour would win over the recipe (modules are
  * unlayered), so each family is checked in the browser.
+ *
+ * Rows are reached by role where a role tells them apart; the recipe's own
+ * classes pick out what no role does (the arrow, a tile beside the stage,
+ * which are both articles, the stage's title link, a pager item's title).
+ * Each test loads its page afresh, so no hidden, still-mounted route can
+ * match them.
  */
 
 interface Lit {
@@ -109,6 +115,27 @@ test("a Writing row lights on hover and on its title's focus", async ({
     const row = writingRows(page).first();
     await expect(row).toBeVisible();
     await checkFamily(page, writingRow(row));
+});
+
+test("in forced colours a row's arrow takes its text's system colour", async ({
+    page,
+}) => {
+    await page.emulateMedia({ forcedColors: "active" });
+    await page.goto("/blog");
+    const row = writingRows(page).first();
+    await expect(row).toBeVisible();
+    const { link, arrow } = writingRow(row);
+    const own = () =>
+        arrow!.evaluate((el) => [
+            getComputedStyle(el).color,
+            getComputedStyle(el.parentElement!).color,
+        ]);
+    await page.mouse.move(0, 0);
+    const [rest, restText] = await own();
+    expect(rest, "the arrow at rest").toBe(restText);
+    await tabTo(page, link);
+    const [lit, litText] = await own();
+    expect(lit, "the arrow on its title's focus").toBe(litText);
 });
 
 test("a tag's focus in a Writing row leaves the row unlit", async ({

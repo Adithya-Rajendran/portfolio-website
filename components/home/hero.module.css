@@ -157,7 +157,7 @@
     display: inline;
     stroke: var(--draw);
     stroke-width: var(--stroke-hair);
-    stroke-dasharray: 1.5 5;
+    stroke-dasharray: var(--dash-halo);
 }
 :global([data-theme="manual"]) .sun {
     display: inline;

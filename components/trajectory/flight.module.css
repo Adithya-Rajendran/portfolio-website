@@ -136,7 +136,7 @@
 }
 
 .hintPlan {
-    stroke-dasharray: 4 5;
+    stroke-dasharray: var(--dash-plan);
 }
 
 .hintSun {

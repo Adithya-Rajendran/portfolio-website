@@ -102,6 +102,25 @@ function chainOf(node: { parent?: Container | undefined }): string[] {
     return chain;
 }
 
+/** Whether an at-rule is an @media every query of which holds `test`,
+ *  with no `not` or `or` in it: `@media not print` is no paper, and
+ *  `not all and (hover: hover)` no hover guard. */
+function mediaHolds(at: string, test: RegExp): boolean {
+    if (!at.startsWith("@media ")) return false;
+    return at
+        .slice("@media ".length)
+        .split(",")
+        .every((query) => {
+            const text = query.trim().toLowerCase();
+            return !/(?<![\w-])(not|or)(?![\w-])/.test(text) && test.test(text);
+        });
+}
+const PRINT_MEDIA = /^(only\s+)?print(?![\w-])/;
+const FORCED_MEDIA = /\(\s*forced-colors\s*:\s*active\s*\)/;
+const HOVER_MEDIA = /\(\s*hover\s*:\s*hover\s*\)/;
+const onPaper = (chain: string[]) =>
+    chain.some((at) => mediaHolds(at, PRINT_MEDIA) || at.startsWith("@page"));
+
 function declsOf(file: string, root: postcss.Root): Decl[] {
     const out: Decl[] = [];
     root.walkDecls((node: Declaration) => {
@@ -119,13 +138,9 @@ function declsOf(file: string, root: postcss.Root): Decl[] {
             selector,
             property: node.prop,
             value: collapse(node.value),
-            paper: chain.some(
-                (at) =>
-                    (at.startsWith("@media") && /\bprint\b/.test(at)) ||
-                    at.startsWith("@page"),
-            ),
-            forced: context.includes("forced-colors: active"),
-            hover: context.includes("(hover: hover)"),
+            paper: onPaper(chain),
+            forced: chain.some((at) => mediaHolds(at, FORCED_MEDIA)),
+            hover: chain.some((at) => mediaHolds(at, HOVER_MEDIA)),
             theme: chain.some((at) => at.startsWith("@theme")),
             parent,
         });
@@ -385,7 +400,11 @@ function missingCompanions(role: string, decl: Decl): string | null {
 }
 
 const R12_PROPERTY =
-    /^(margin(-.+)?|padding(-.+)?|gap|row-gap|column-gap|grid-gap|scroll-margin(-.+)?|scroll-padding(-.+)?|top|right|bottom|left|inset(-.+)?|width|height|min-.+|max-.+|inline-size|block-size|flex|flex-basis|grid|grid-template(-.+)?|grid-auto-.+|columns|column-width|border(-[a-z]+)*-radius|box-shadow|text-shadow|-webkit-text-stroke|contain-intrinsic-size|vertical-align|text-indent)$/;
+    /^(margin(-.+)?|padding(-.+)?|gap|row-gap|column-gap|grid-gap|scroll-margin(-.+)?|scroll-padding(-.+)?|top|right|bottom|left|inset(-.+)?|width|height|min-.+|max-.+|inline-size|block-size|flex|flex-basis|grid|grid-template(-.+)?|grid-auto-.+|columns|column-width|border(-[a-z]+)*-radius|box-shadow|text-shadow|-webkit-text-stroke|contain-intrinsic-size|vertical-align|text-indent|clip-path|shape-outside|object-position)$/;
+/** Backgrounds and masks: their lengths (a gradient's stops are a ramp's
+ *  shares, so their factors are not checked). */
+const R12_BACKGROUND =
+    /^(background|(-webkit-)?mask)(-(size|position(-[xy])?))?$/;
 const BORDER_WIDTH = /^(border|outline|column-rule)/;
 const NOT_A_WIDTH = /(radius|color|style|collapse|spacing|image|offset)/;
 
@@ -622,24 +641,53 @@ function declarationFailures(decl: Decl): Failure[] {
     )
         fail("R11", "a ch measure (use --measure-*)");
 
-    // R12: lengths in spacing, sizing, offsets, shapes and filters.
+    // R12: a dash pattern and a stacking order are tokens.
+    if (
+        /^stroke-dash(array|offset)$/.test(prop) &&
+        !["none", "0", "inherit"].includes(value) &&
+        !/^var\(--dash-[\w-]+\)$/.test(value)
+    )
+        fail("R12", "dash pattern is not a token");
+    if (
+        prop === "z-index" &&
+        !["auto", "0", "inherit"].includes(value) &&
+        !/^var\(--z-[\w-]+\)$/.test(value)
+    )
+        fail("R12", "z-index is not a token");
+
+    // R12: lengths in spacing, sizing, offsets, shapes, backgrounds and
+    // filters.
     if (!decl.paper) {
         const literal = R12_PROPERTY.test(prop)
             ? [...lengths(value), ...factors(value)]
-            : /^(backdrop-)?filter$/.test(prop)
-              ? [
-                    ...value.matchAll(
-                        /(?:blur|drop-shadow)\(([^()]*(?:\([^()]*\))*)\)/g,
-                    ),
-                ].flatMap(([, args]) => [...lengths(args), ...factors(args)])
-              : [];
+            : R12_BACKGROUND.test(prop)
+              ? lengths(value)
+              : /^(backdrop-)?filter$/.test(prop)
+                ? [
+                      ...value.matchAll(
+                          /(?:blur|drop-shadow)\(([^()]*(?:\([^()]*\))*)\)/g,
+                      ),
+                  ].flatMap(([, args]) => [...lengths(args), ...factors(args)])
+                : [];
         if (literal.length) fail("R12", `length literal ${literal.join(" ")}`);
     }
     return out;
 }
 
+/** The palette a declaration in tokens.css may read: a theme's ladder
+ *  its own palette, paper Flight Manual's inks and white; the scales, the
+ *  roles and prefers-contrast none (they read the ladder). */
+function paletteReadable(decl: Decl): RegExp | null {
+    if (decl.paper) return /^--(manual|paper)-/;
+    if (decl.context !== "") return null;
+    if (decl.selector === ':root, [data-theme="void"]') return /^--void-/;
+    if (decl.selector === '[data-theme="manual"]') return /^--manual-/;
+    return null;
+}
+
 /** tokens.css holds the tokens only: custom properties (and
- *  color-scheme) on the root or a theme, in @layer and @media blocks. */
+ *  color-scheme) on the root or a theme, in @layer and @media blocks,
+ *  each tier reading the one below it. */
 function tokensFileFailures(): Failure[] {
     const out: Failure[] = [];
     const allowedSelector = new Set([
@@ -677,9 +725,18 @@ function tokensFileFailures(): Failure[] {
         if (decl.file !== TOKENS_FILE) continue;
         if (!decl.property.startsWith("--") && decl.property !== "color-scheme")
             out.push(declFailure(decl, "TOK", "only custom properties"));
+        const readable = paletteReadable(decl);
         for (const name of varNames(decl.value)) {
             if (!TOKENS.has(name) && !RUNTIME.has(name))
                 out.push(declFailure(decl, "R13", `reads ${name}`));
+            if (/^--(void|manual|paper)-/.test(name) && !readable?.test(name))
+                out.push(
+                    declFailure(
+                        decl,
+                        "TOK",
+                        `reads ${name} (a role reads the ladder; a ladder its own theme's palette)`,
+                    ),
+                );
         }
     }
     return out;
@@ -799,7 +856,7 @@ function hoverFailures(): Failure[] {
         root.walkRules((node) => {
             if (!node.selector.includes(":hover")) return;
             const chain = chainOf(node);
-            if (chain.some((at) => at.includes("(hover: hover)"))) return;
+            if (chain.some((at) => mediaHolds(at, HOVER_MEDIA))) return;
             const context = chain.join(" > ");
             const selector = collapse(node.selector);
             out.push({
@@ -831,12 +888,7 @@ function globalClasses(): Map<string, ClassSite> {
     for (const [file, root] of ROOTS) {
         if (!file.startsWith("styles/")) continue;
         root.walkRules((node) => {
-            if (
-                chainOf(node).some(
-                    (at) => at.startsWith("@media") && /\bprint\b/.test(at),
-                )
-            )
-                return;
+            if (onPaper(chainOf(node))) return;
             const selector = node.selector
                 .replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, "")
                 .replace(/\[[^\]]*\]/g, "");
@@ -856,10 +908,21 @@ function globalClasses(): Map<string, ClassSite> {
     return classes;
 }
 
-/** G1: the global classes Tailwind also generates a utility for. */
+/** G1: the global classes Tailwind also generates a utility for, with
+ *  the site's theme (app/globals.css's @theme blocks and variants), so a
+ *  utility the site removes is no collision and one it adds is checked. */
 async function tailwindCollisions(): Promise<Map<string, ClassSite>> {
     const classes = globalClasses();
-    const css = `@import "tailwindcss" source(none);\n@source inline("${[
+    const theme: string[] = [];
+    ROOTS.get(GLOBALS_FILE)!.each((node) => {
+        if (
+            node.type === "atrule" &&
+            ["theme", "custom-variant"].includes(node.name)
+        )
+            theme.push(node.nodes ? node.toString() : `${node.toString()};`);
+    });
+    expect(theme.length, "app/globals.css's @theme blocks").toBeGreaterThan(1);
+    const css = `@import "tailwindcss" source(none);\n${theme.join("\n")}\n@source inline("${[
         ...classes.keys(),
     ].join(" ")}");\n`;
     const result = await postcss([tailwind({ base: ROOT })]).process(css, {
@@ -1115,10 +1178,18 @@ function styleFailures(): Failure[] {
     return out;
 }
 
+const COMPARISON = new Set([
+    ts.SyntaxKind.LessThanToken,
+    ts.SyntaxKind.LessThanEqualsToken,
+    ts.SyntaxKind.GreaterThanToken,
+    ts.SyntaxKind.GreaterThanEqualsToken,
+]);
+
 /** T3: TypeScript names no breakpoint of its own. */
 function breakpointFailures(): Failure[] {
     const out: Failure[] = [];
     const values = new Set<number>(Object.values(BREAKPOINTS));
+    const pixels = new Set([...values].map((v) => v * 16));
     for (const [file, source] of SOURCE_FILES) {
         if (file === "lib/breakpoints.ts") continue;
         visit(source, (node) => {
@@ -1157,16 +1228,40 @@ function breakpointFailures(): Failure[] {
                         ),
                     );
             }
+            // The viewport's width compared with a breakpoint in pixels
+            // (`innerWidth >= 960`). A scene's own box in pixels (the
+            // flight's map) is geometry, not a breakpoint.
+            if (
+                ts.isBinaryExpression(node) &&
+                COMPARISON.has(node.operatorToken.kind) &&
+                [node.left, node.right].some(
+                    (side) =>
+                        ts.isNumericLiteral(side) &&
+                        pixels.has(Number(side.text)),
+                ) &&
+                /\b(innerWidth|outerWidth|clientWidth|visualViewport|screen\.width)\b/.test(
+                    node.getText(source),
+                )
+            )
+                out.push(
+                    sourceFailure(
+                        "T3",
+                        file,
+                        lineOf(source, node),
+                        collapse(node.getText(source)),
+                        "a breakpoint in pixels (read lib/breakpoints.ts)",
+                    ),
+                );
         });
     }
     return out;
 }
 
-/** The palette's colours, from tokens.css. */
-function paletteHexes(): Set<string> {
+/** The palette's colours, from tokens.css: the names `names` matches. */
+function paletteHexes(names = /^--(void|manual)-/): Set<string> {
     const out = new Set<string>();
     for (const [name, values] of TOKENS) {
-        if (!/^--(void|manual)-/.test(name)) continue;
+        if (!names.test(name)) continue;
         for (const value of values)
             for (const [hex] of value.matchAll(HEX)) out.add(expandHex(hex));
     }
@@ -1180,14 +1275,34 @@ function expandHex(hex: string): string {
         : `#${h}`;
 }
 
-/** The copies of the palette outside CSS. */
-const PALETTE_COPIES = [
-    "lib/og-card.tsx",
-    "public/feed.xsl",
-    "lib/theme-boot.ts",
-    "scripts/generate-patch.mjs",
-    "lib/patch.json",
-];
+/** The copies of the palette outside CSS, each with the theme it
+ *  copies: the share card, the feed's page and the patch are Void's. */
+const PALETTE_COPIES: Record<string, RegExp> = {
+    "lib/og-card.tsx": /^--void-/,
+    "public/feed.xsl": /^--void-/,
+    "lib/theme-boot.ts": /^--(void|manual)-/,
+    "scripts/generate-patch.mjs": /^--void-/,
+    "lib/patch.json": /^--void-/,
+};
+/** The copies that name their colours (`ink1: "#…"`, `const SUN =
+ *  "#…"`): each name holds its own token's value, not another step's. */
+const NAMED_COPIES: Record<string, Record<string, string>> = {
+    "lib/og-card.tsx": {
+        bg: "--void-bg",
+        ink1: "--void-ink-1",
+        ink2: "--void-ink-2",
+        ink3: "--void-ink-3",
+        rule1: "--void-rule-1",
+        rule2: "--void-rule-2",
+        accent: "--void-accent",
+    },
+    "lib/theme-boot.ts": { void: "--void-bg", manual: "--manual-bg" },
+    "scripts/generate-patch.mjs": {
+        VOID: "--void-bg",
+        INK: "--void-ink-1",
+        SUN: "--void-accent",
+    },
+};
 const lineAt = (text: string, index: number) =>
     text.slice(0, index).split("\n").length;
 
@@ -1200,8 +1315,25 @@ function colourCopyFailures(): {
     const failures: Failure[] = [];
     const palette = paletteHexes();
     const masks = new Map<string, Set<string>>();
-    for (const file of PALETTE_COPIES) {
+    for (const [file, theme] of Object.entries(PALETTE_COPIES)) {
+        const own = paletteHexes(theme);
         const text = read(file);
+        for (const [key, token] of Object.entries(NAMED_COPIES[file] ?? {})) {
+            const named = new RegExp(
+                `(?<![\\w-])${key}\\s*[:=]\\s*["'](#[0-9a-fA-F]{3,8})["']`,
+            ).exec(text);
+            const value = TOKENS.get(token)?.[0];
+            if (!named || !value || expandHex(named[1]) !== expandHex(value))
+                failures.push(
+                    sourceFailure(
+                        "T4",
+                        file,
+                        named ? lineAt(text, named.index) : 0,
+                        named?.[0] ?? key,
+                        `${key} is not ${token}`,
+                    ),
+                );
+        }
         const spans = [...text.matchAll(/<mask\b[\s\S]*?<\/mask>/g)].map(
             (m) => [m.index, m.index + m[0].length],
         );
@@ -1214,21 +1346,21 @@ function colourCopyFailures(): {
                 masks.get(file)!.add(match[0]);
                 continue;
             }
-            if (!palette.has(expandHex(match[0])))
+            if (!own.has(expandHex(match[0])))
                 failures.push(
                     sourceFailure(
                         "T4",
                         file,
                         lineAt(text, match.index),
                         match[0],
-                        "a copy of the palette that is not the palette",
+                        "a copy of the palette that is not its theme's palette",
                     ),
                 );
         }
     }
     const scene = new Map<string, Set<string>>();
     for (const [file, source] of SOURCE_FILES) {
-        if (PALETTE_COPIES.includes(file)) continue;
+        if (Object.hasOwn(PALETTE_COPIES, file)) continue;
         if (!file.startsWith("components/") && !file.startsWith("lib/"))
             continue;
         const found: [string, ts.Node][] = [];
@@ -1293,8 +1425,23 @@ function colourCopyFailures(): {
             );
         }
     }
-    // The static stars' alphas are the starfield's.
+    // The static stars' alphas are the starfield's, and its colour before
+    // it reads --star-rgb is Void's.
     const look = read("components/sky/starfield.tsx");
+    const fallback = /let colour = "([\d ]+)"/.exec(look)?.[1];
+    if (
+        fallback === undefined ||
+        collapse(fallback) !== TOKENS.get("--void-star-rgb")?.[0]
+    )
+        failures.push(
+            sourceFailure(
+                "T4",
+                "components/sky/starfield.tsx",
+                0,
+                fallback ?? "colour",
+                "the starfield's fallback colour is not --void-star-rgb",
+            ),
+        );
     const alpha = (magnitude: number) =>
         new RegExp(`${magnitude}: \\{ r: [\\d.]+, alpha: ([\\d.]+) \\}`).exec(
             look,
@@ -1445,9 +1592,31 @@ describe("the design system", () => {
                 ))
                     used.add(Number(raw));
             });
+        // TypeScript reads one through minWidth, maxWidth or BREAKPOINTS.
+        const named = new Set<string>();
+        for (const [file, source] of SOURCE_FILES) {
+            if (file === "lib/breakpoints.ts") continue;
+            visit(source, (node) => {
+                if (
+                    ts.isCallExpression(node) &&
+                    ts.isIdentifier(node.expression) &&
+                    ["minWidth", "maxWidth"].includes(node.expression.text) &&
+                    node.arguments.length === 1 &&
+                    ts.isStringLiteral(node.arguments[0])
+                )
+                    named.add(node.arguments[0].text);
+                if (
+                    ts.isPropertyAccessExpression(node) &&
+                    ts.isIdentifier(node.expression) &&
+                    ["BREAKPOINTS", "HEIGHTS"].includes(node.expression.text)
+                )
+                    named.add(node.name.text);
+            });
+        }
         const unused = Object.entries({ ...BREAKPOINTS, ...HEIGHTS })
             .filter(
-                ([, value]) =>
+                ([name, value]) =>
+                    !named.has(name) &&
                     !used.has(value) &&
                     !used.has(Math.round((value - 0.01) * 100) / 100),
             )

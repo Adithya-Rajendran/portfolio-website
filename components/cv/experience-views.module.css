@@ -80,7 +80,7 @@
    box's look (`.seg` in styles/components.css). */
 .views:not([data-view]) [value="list"] + :global(.seg__box) {
     position: relative;
-    z-index: 1;
+    z-index: var(--z-raised);
     border-color: var(--chosen-edge);
     background: var(--chosen-fill);
     color: var(--chosen-ink);
@@ -97,7 +97,7 @@
         [value="timeline"]
         + :global(.seg__box) {
         position: relative;
-        z-index: 1;
+        z-index: var(--z-raised);
         border-color: var(--chosen-edge);
         background: var(--chosen-fill);
         color: var(--chosen-ink);
