@@ -79,9 +79,11 @@ only live in comments or commit messages.
   missing means Void, except on a post, `/blog/<slug>` (`POST_PATH`),
   which follows the OS like `auto`, so a light system reads it in Flight
   Manual: premium D3) and `ar-motion`
-  (`full` | `reduced`), and sets `data-theme`, `data-motion` and `data-js`
-  on `<html>` before the first paint. After a client navigation
-  `RouteMarker` applies the new path's default the same way
+  (`full` | `reduced`), and sets `data-theme`, `data-motion`,
+  `data-route` (the path, so the first paint knows the page: home's
+  wordmark and Pause motion) and `data-js` on `<html>` before the first
+  paint. After a client navigation `RouteMarker` updates `data-route`
+  and applies the new path's default the same way
   (`applyRouteTheme` in `lib/prefs.ts`), and the theme choice shows the
   preference in force there (`themePref`: System on a post, Dark
   elsewhere, until one is stored). The server renders the literal
@@ -207,7 +209,7 @@ only live in comments or commit messages.
   links) sit flush in the body column with no "Skills" or "Links" key:
   the mono names and the links' own words say what they are. A section's
   first row draws no rule: the section head's hairline is the division
-  (`resume.module.css`). Project rows carry no status, stack or type:
+  (as under every section head: Heads and names). Project rows carry no status, stack or type:
   the dates, else "Ongoing" for an active project, then the role (when
   set), the lines and the links (every project is listed, so no "All
   projects"). A link to the site itself is never an external link
@@ -328,14 +330,26 @@ only live in comments or commit messages.
   that and the wide edge), reach right into the notes' track and never
   left into the rail's, and never past the shell; the pager, the
   project row and the related entries below (`.end`, in the entry's
-  second `.shell`) start at the measure's left edge by the same sums.
+  second `.shell`) start at the measure's left edge by the same sums and
+  stop at its right, so the end matter reads as the entry's last part:
+  their rows stacked as on a phone (`LogIndex stacked` and
+  `MissionRows stacked`), the titles a step down.
   The `.shell` itself (`--maxw` 88rem, `--margin` 64px from 60rem and
   96px from 80rem, styles/tokens.css) keeps every page a central band
   with generous margins on a laptop and a wide screen. A listing is one treatment (the surface fill; hairlines
   above and below on paper); a callout is the quotation's quiet note (the
   ink rule) led by its tone and title in bold ("Caution: Back up first",
   `calloutHeading`), with no colour, frame or band; inline code has no
-  box (no fill or padding). A list has one treatment on every width and
+  box (no fill or padding), keeps its spaces as written (one that ends a
+  line hangs there) and is never hyphenated, and each run of it a line
+  could end inside (a flag, a path), up to 24 characters, is kept whole
+  (`CodeMark` in portable-text-components.tsx, `.keep-whole`), so a line
+  breaks the code at its spaces; a longer run still breaks rather than
+  pass the measure, as any run does where 24 characters outrun the line
+  (below 20rem, and in an h2 or a list three deep below 23rem). On paper
+  inline code is 0.85em of its line. On phones the text hyphenates only
+  words of ten letters or more, five kept on each side (Chrome sets no
+  limit on hyphens in a row). A list has one treatment on every width and
   page (`.list`, `.list--bullet`, `.list--number`, `.list__item` in
   styles/prose.css, the renderer's classes; its `ul`/`ol` carry
   `role="list"`): the mark in a gutter at the column's left edge
@@ -352,9 +366,9 @@ only live in comments or commit messages.
   margin note out of the line. Prose h2 are `--step-2` (32px at most), the leading 1.52
   (`--lh-long`), figures proportional. An entry has two right edges
   (styles/tokens.css): `--prose-measure` (the text, every listing, the
-  standfirst, the close) and `--prose-wide`, past the margin notes (the
-  title, wide plates, and after the entry the pager, the project row and
-  the related entries), or the shell's right edge where that is nearer. A revision is dated as the head
+  standfirst, the close, and after the entry the pager, the project row
+  and the related entries) and `--prose-wide`, past the margin notes (the
+  title and wide plates), or the shell's right edge where that is nearer. A revision is dated as the head
   dates ("30 Jun 2026 · Correction", on the page and in the feed; no
   `Rev` or triangle). The entry closes once, in its own column: End of
   entry, then "Follow: RSS · LinkedIn" (`FollowLinks`, also /blog's
@@ -429,7 +443,10 @@ only live in comments or commit messages.
   third of the card from 600px, two fifths on phones, beside the title
   under the line (tiles, like rows, are one column below 960px; from
   there a lone tile spans both columns, its title, beside the thumbnail,
-  in one and its summary and stack in the other), the
+  in one and its summary and stack in the other, and a lone row, on home
+  or `/portfolio`, the same: its title, beside any thumbnail, in one and
+  its summary in the other; a post's project rows stack in the text
+  column), the
   stage's plate when the flagship
   has one, and the plate beside a project's head in either layout; the
   stage takes the model's poster without one (with no caption: the
@@ -523,16 +540,24 @@ only live in comments or commit messages.
   shows below the header (in both themes; the cleanup clears it), and the
   header's wordmark steps aside meanwhile, so the name is on screen once:
   never twice, and never not at all while the rest of the hero, or the
-  projects under it, fill the view. Without JavaScript it stays. Over
+  projects under it, fill the view. The observer first reports long
+  after the first paint, so until that report (`html[data-hero-seen]`,
+  set in the same callback) the wordmark is aside on home as well,
+  from the first paint, which the boot script's `data-route` names
+  (`styles/components.css`): a load never shows the name twice, not
+  even for a frame.
+  Without JavaScript it stays. Over
   it: the name, the profile's headline and the availability line (only
   when set), each split into parts kept whole (`OpenToItems`) that stack
   on phones, then one action, centred in space (CV, the hairline `.btn`,
   no fill or blur; the header's Projects is the way to the work, so no
   link points down the page), and beside it, while there is an entry, a
   quiet text link to the newest, "Latest: <title>" (`heroLatest` in
-  `lib/home.ts`, in the Open To line's voice, the title balanced and its
-  short names whole, `KeepWhole`; it wraps under CV where the two do not
-  fit, and is a phone's way to Writing, which its bar lacks). The foot:
+  `lib/home.ts`, in the Open To line's voice, its short names whole,
+  `KeepWhole`; beside CV only on one line, so the pair shares the name's
+  axis, and under CV, centred, its title balanced, where the two do not
+  fit a row as wide as the headline; it is a phone's way to Writing,
+  which its bar lacks). The foot:
   the credit with the frame's ID
   ("Photo: NASA / Expedition 72 · ISS072-E-30246", `id` in
   `lib/hero-sunrise.json`; on phones its parts one a line, without the
@@ -597,8 +622,10 @@ only live in comments or commit messages.
 - **Writing's lists** (G8, `/blog`, a tag page). The index is the head
   (the writing description and the follow line; no search, boxed buttons
   or tag chips) running straight into the rows, one list with even
-  spacing (no year heads: each row's date carries its year), which ends
-  on its closing rule. A row has one date: a revision's "Updated" is the
+  spacing (no year heads: each row's date carries its year), as wide as
+  the head above it (the read time and arrow at the shell's edge, the
+  standfirst at 62ch), which ends on its closing rule. A row has one
+  date: a revision's "Updated" is the
   entry head's. `/blog/archive`, which repeated the list at a second
   address, answers 308 to `/blog` (next.config.mjs). A tag shows only
   when it links: once it gathers two entries
@@ -617,7 +644,30 @@ only live in comments or commit messages.
   Flight Log, Trajectory, Crew File, Comms) is only the small tag above
   its page's h1 (`PageHead tag`) and on its share card (`OgCard tag`).
   Section heads (`SectionTag`, `DocSection title`) are the plain name as
-  a Jost h2; nothing is numbered (no § numbers).
+  a Jost h2; nothing is numbered (no § numbers). A head's hairline is the
+  division above its section, so the list that opens one draws no rule
+  over its first row (nor over the rest of that line where its rows run
+  in columns): the block next after a head's tag row, or first in a
+  `DocSection`'s column, sets `--first-rule` (styles/components.css),
+  which Writing's rows, the project rows, specs, the callouts, link rows,
+  a lone retrospective list and the CV's rows read for that rule's width.
+  A list after other content (home's rows under the stage, a
+  retrospective's two lists under their subheads) or under no section
+  head (`/blog`) keeps its rule; About's questions never rule their
+  first. Home's sections set their content straight after the tag row,
+  as an entry's end matter does, with no wrapper between. A page head's title
+  (`PageHead`) sits directly under its tag, at one height on every page:
+  from 960px the intro, Open To and the actions beside it run on past it
+  as far as they need, and the title never drops to meet their foot
+  (`.page-head--split`). A list under a head
+  ends where the head's rule ends and has no width of its own: at the
+  shell's edge (home's Latest writing, the index under /blog's and a tag
+  page's head), at the main column's (a `DocSection`'s rows, table and
+  lists: a project's sections, About's questions, the CV) or at the
+  text's (a post's end matter, under its heads). Only its text
+  keeps a measure (a row's standfirst 62ch, a brief's sentences and a
+  question's note 60ch); a writing row's read time and arrow stand at
+  that edge, under the head's link.
 
 ## Layout: the `(site)` route group
 
@@ -646,7 +696,10 @@ only live in comments or commit messages.
   lookups must resolve inside the visible page, not with
   `document.getElementById`.
 - Navigation labels and URLs come from `lib/navigation.ts` (header, menu
-  sheet and the 404's primary). Below 960px the header nav is a native
+  sheet and the 404's primary). The header's wordmark is beside the
+  patch from 600px (a phone's bar is the patch alone): from 960px the
+  five links and the theme switch leave it room at every width, so only
+  the home hero's name sets it aside. Below 960px the header nav is a native
   `popover` sheet, so it opens without JavaScript (Baseline since 2024:
   there is no fallback link); `MenuButton` adds focus, `inert` and the
   Tab loop (the brand, the button, then the sheet, as a browser tabs a
@@ -1073,13 +1126,19 @@ loaded, only when that run cannot.
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
   Flight Manual, every page in full, and both kinds of 404), `layout` (no
   sideways scroll at 320–1920 px, the header's parts fit without
-  overlapping, also at 320–414 px with the root text at 150% (labels
+  overlapping (the wordmark beside the patch from 600 px), also at 320–414 px with the root text at 150% (labels
   13px or more, no title spilling its column), and no visible text under 12 px, generated text included,
   on home, every post and project, `/resume` and `/contact` (with the
   message counter near its limit) at 1440 and 390; on home, every post
   and project, `/resume`, `/about` and `/contact`, six font sizes at
   most, every caps line a label, a control, the hero's name or
-  Michroma's two places, and 13px text only a label, a control or data),
+  Michroma's two places, and 13px text only a label, a control or data;
+  and on home, `/portfolio`, `/blog`, `/about`, the CV and every post,
+  tag and project page, from 390 to 3824 px, every list under a head
+  ending where the head's rule ends; every page head's title directly
+  under its tag, at one height on every page from 390 to 1920 px; and on
+  home, `/about`, every post and project at 1440 and 390, no rule
+  between a section head's hairline and the first words under it),
   `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
   Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440
@@ -1149,7 +1208,9 @@ loaded, only when that run cannot.
   link, All writing, Author block or pager heading, the pager's
   "Previous" and "Next" by name), Copy on a listing, the
   phone's contents box, the header's one hairline, print (a masthead with no date), BlogPosting and
-  BreadcrumbList; on the
+  BreadcrumbList, inline code's kept runs each on one line at 390 and
+  1440, its spaces kept and never hyphenated, and 0.85em of its line on
+  paper; on the
   fixture build also every listing at the text's width, a long line
   scrolling inside it and a short one not, one
   label on the bar and the highlighted line, a list's marks (the dash,
@@ -1204,7 +1265,10 @@ loaded, only when that run cannot.
   build the others follow exactly the index's order; a lone side
   spanning the measure)
   and no close, title block, revision, "Table 1", jump to its own
-  write-up or stand-in text, a stack item never split, a thin project is
+  write-up or stand-in text, a stack item never split, a lone project
+  row (on home or `/portfolio`) spanning its list from 960px with its
+  summary beside its title and a post's rows stacked, its summary under
+  its title, a thin project is
   a short note (the Kubernetes note without a Stack row, one highlight a
   paragraph),
   every card on `/portfolio` and home reading its line, then its title,
@@ -1223,12 +1287,16 @@ loaded, only when that run cannot.
   in a featured slot, it is a quiet row, not the stage or a tile, and
   its pager keeps the slot's place), `home` (the
   hero's name, availability and its one action, CV (to `/resume#cv`), with
-  Latest beside it (a quiet link to the newest entry, no button), in the first
+  Latest beside it (a quiet link to the newest entry, no button; on one
+  line with the pair on the name's axis, else centred under CV, for the
+  newest title and stand-ins of production's length and longer), in the first
   viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
   the name at 350, tracked 0.11–0.12em, on one line at 1440 and 1,400px
   wide at most at 1920; the header's wordmark hidden only while the hero's name is in view: back
-  at 400px down and with the projects in view; the starfield
+  at 400px down and with the projects in view, aside on home and shown
+  on About before the page has run (its scripts held back), and kept
+  without JavaScript; the starfield
   `running` only on screen, in a visible tab, in Void and with motion
   allowed, and nothing in Pause motion's place under the OS setting; the
   stars in the hero only, and not on paper; the credit with its frame ID,

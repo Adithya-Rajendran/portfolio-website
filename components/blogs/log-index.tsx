@@ -9,24 +9,28 @@ import styles from "./log-index.module.css";
  *
  * `level` is the entry titles' heading level. `tags={false}` leaves the
  * rows' tags out where a few entries are listed beside other work (the
- * home page, a project's related writing).
+ * home page, a project's related writing). `stacked` keeps the phone's
+ * rows at every width, for a column as narrow as the text (a post's
+ * related entries).
  */
 export default function LogIndex({
     entries,
     level = 3,
     tags = true,
+    stacked = false,
     className,
 }: {
     entries: readonly LogEntry[];
     level?: 2 | 3;
     tags?: boolean;
+    stacked?: boolean;
     className?: string;
 }) {
     return (
         <div
-            className={
-                className ? `${styles.index} ${className}` : styles.index
-            }
+            className={[styles.index, stacked && styles.stacked, className]
+                .filter(Boolean)
+                .join(" ")}
         >
             <ol className={styles.list} role="list">
                 {entries.map((entry) => (

@@ -80,7 +80,6 @@
             page: cv;
         }
         [data-page="resume"] .cv-list {
-            max-width: none;
             border: 0;
         }
         [data-page="resume"] .cv-item {

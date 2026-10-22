@@ -435,7 +435,7 @@ export default async function ProjectPage({
                     {brief.length ? (
                         <DocSection id="brief" title={copy.overview}>
                             <Specs
-                                className={`specs--read ${styles.brief}`}
+                                className="specs--read"
                                 items={brief.map(([key, text]) => ({
                                     id: key,
                                     term: copy.brief[key],

@@ -277,7 +277,7 @@
     list-style: none;
 }
 @media (min-width: 60rem) {
-    .rows {
+    .rows:not(.rowsStacked) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -289,6 +289,18 @@
     padding: var(--s-4) var(--s-7) 0 0;
     border-top: var(--rule-hair) solid var(--rule-2);
     transition: border-color var(--dur-hover) var(--ease-dock);
+}
+/* Under a section head (an entry's related project) the head's hairline
+   is the first line's: its rows draw none of their own (`--first-rule`,
+   styles/components.css), the first and, two across (not stacked), the
+   second. Home's rows, under the stage, and /portfolio's keep theirs. */
+.row:first-child {
+    border-top-width: var(--first-rule, var(--rule-hair));
+}
+@media (min-width: 60rem) {
+    .rows:not(.rowsStacked) > .row:nth-child(2) {
+        border-top-width: var(--first-rule, var(--rule-hair));
+    }
 }
 .rowLine {
     display: flex;
@@ -357,6 +369,47 @@
         column-gap: var(--gutter);
     }
 }
+/* A lone row (home's one project after the stage, /portfolio's one quiet
+   project) spans both columns rather than
+   leave one empty, as a lone tile does: its hairline runs the width, its
+   title (beside its thumbnail, in a row's proportions) keeps the list's
+   first column and its summary takes the second. The row's right padding
+   keeps the arrow clear, so the last track is half the content box less
+   half the gutter and that padding: the summary starts and ends where a
+   second row's text would, so no measure grows. */
+@media (min-width: 60rem) {
+    .rows:not(.rowsStacked) > .row:only-child {
+        grid-column: 1 / -1;
+        grid-template-columns:
+            minmax(0, 1fr)
+            calc(50% - (var(--gutter) + var(--s-7)) / 2);
+        grid-template-areas:
+            "line line"
+            "title summary";
+        column-gap: var(--gutter);
+    }
+    .rows:not(.rowsStacked) > .rowCovered:only-child {
+        grid-template-columns:
+            minmax(0, 1fr) minmax(0, 2fr)
+            calc(50% - (var(--gutter) + var(--s-7)) / 2);
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            "plate line line"
+            "plate title summary"
+            "plate . .";
+    }
+    .rows:not(.rowsStacked) > .row:only-child .rowLine {
+        grid-area: line;
+    }
+    .rows:not(.rowsStacked) > .row:only-child .rowTitle {
+        grid-area: title;
+    }
+    /* The summary starts level with the title. */
+    .rows:not(.rowsStacked) > .row:only-child .rowSummary {
+        grid-area: summary;
+        margin-top: var(--s-1);
+    }
+}
 .rowArrow {
     position: absolute;
     top: var(--s-4);
@@ -379,6 +432,11 @@
     border-top-color: var(--ink-1);
 }
 .rowsQuiet .rowTitle {
+    font-size: var(--step-1);
+}
+/* Stacked rows: one column at every width, a step smaller, for a column
+   as narrow as the text (a post's related project). */
+.rowsStacked .rowTitle {
     font-size: var(--step-1);
 }
 .row:hover .rowTitle a {

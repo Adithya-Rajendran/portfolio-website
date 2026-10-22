@@ -10,8 +10,9 @@ import { storeTheme } from "./support/theme";
  * Home (plan §6.2 PR 13, contract §9; premium WS2): the hero's name,
  * headline, what the owner is open to and its one action (CV) are in the
  * first viewport with and without JavaScript, with the newest entry beside
- * CV as a quiet link (Latest), no second button; the header's wordmark steps aside while the hero
- * names the owner; the starfield drifts only while it may (on screen, in
+ * CV as a quiet link (Latest), no second button, the pair on the name's axis; the header's wordmark steps aside while the hero
+ * names the owner, and before the page has run on home alone (kept without
+ * JavaScript); the starfield drifts only while it may (on screen, in
  * a visible tab, in Void, with motion allowed) and reports `stopped`
  * otherwise; the stars are the hero's alone, and Void's; the photograph is
  * credited with its frame ID and Flight Manual draws the limb instead;
@@ -110,6 +111,15 @@ for (const [width, height] of [
             );
             await expect(page.locator(".static-stars").first()).toBeVisible();
         });
+        test("the header's wordmark stays", async ({ page }) => {
+            // Nothing would bring it back once the hero had gone; a
+            // phone's bar is the patch alone.
+            await page.setViewportSize({ width, height });
+            await page.goto("/");
+            await expect(
+                page.getByRole("banner").locator(".brand__name"),
+            ).toBeVisible({ visible: width >= 600 });
+        });
     });
 }
 
@@ -160,6 +170,94 @@ for (const width of [320, 360, 390]) {
         expect(link!.x).toBeGreaterThanOrEqual(16);
         expect(link!.x + link!.width).toBeLessThanOrEqual(width - 16);
         expect(link!.y).toBeGreaterThanOrEqual(cv!.y + cv!.height);
+    });
+}
+
+/**
+ * Stand-ins for the newest title, set in place of the build's: one as long
+ * as production's when the hero was measured, which shares a row with CV
+ * from 640px, and one too long for a row as wide as the headline, which
+ * goes under CV at every width. The fixture build's newest is short enough
+ * to fit any box, so without them a box wider than its words passes unseen.
+ */
+const LATEST_STAND_INS = [
+    {
+        title: "Keeping a DGX Spark alive when unified memory runs out",
+        besideFrom: 768,
+    },
+    {
+        title: "A stand-in title long enough that it never shares a row with CV, at any width the hero is drawn at",
+        besideFrom: Infinity,
+    },
+];
+
+/**
+ * The hero's action row as drawn, with `title` in place of the newest's
+ * when given: CV's box, the words of Latest and the hero's centre line.
+ * The words, not the link's box: a wrapped box keeps its full width while
+ * balance narrows its lines, so the box can sit on the axis while its
+ * words do not.
+ */
+async function actionRow(page: Page, title?: string) {
+    if (title) {
+        await latest(page).evaluate((link, text) => {
+            link.textContent = text;
+        }, `${copy.latest} ${title}`);
+    }
+    const axis = await hero(page).evaluate((section) => {
+        const box = section.getBoundingClientRect();
+        return box.left + box.width / 2;
+    });
+    const cv = await hero(page)
+        .getByRole("link", { name: copy.cv, exact: true })
+        .boundingBox();
+    const words = await latest(page).evaluate((link) => {
+        const range = document.createRange();
+        range.selectNodeContents(link);
+        const box = range.getBoundingClientRect();
+        const lines = new Set(
+            [...range.getClientRects()].map((rect) => Math.round(rect.top)),
+        );
+        return {
+            left: box.left,
+            right: box.right,
+            top: box.top,
+            lines: lines.size,
+        };
+    });
+    return { axis, cv: cv!, words, beside: words.top < cv!.y + cv!.height };
+}
+
+/** Beside CV: one line, the row's 32px from it, the pair centred on the
+ *  axis. Under CV (always on phones): CV and the words each centred. */
+function expectOnAxis(row: Awaited<ReturnType<typeof actionRow>>) {
+    const { axis, cv, words } = row;
+    if (row.beside) {
+        const gap = words.left - (cv.x + cv.width);
+        expect(words.lines).toBe(1);
+        expect(gap).toBeGreaterThanOrEqual(31);
+        expect(gap).toBeLessThanOrEqual(33);
+        expect(Math.abs((cv.x + words.right) / 2 - axis)).toBeLessThan(2);
+    } else {
+        const centre = (words.left + words.right) / 2;
+        expect(Math.abs(cv.x + cv.width / 2 - axis)).toBeLessThan(2);
+        expect(Math.abs(centre - axis)).toBeLessThan(2);
+    }
+}
+
+for (const width of [390, 768, 960, 1280, 1440, 1920, 3824]) {
+    test(`CV and Latest share the name's axis at ${width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto("/");
+        if (!(await latest(page).count())) return;
+        expectOnAxis(await actionRow(page));
+        for (const { title, besideFrom } of LATEST_STAND_INS) {
+            const row = await actionRow(page, title);
+            expect(row.beside, title).toBe(width >= besideFrom);
+            expectOnAxis(row);
+        }
     });
 }
 
@@ -301,8 +399,8 @@ test("before the page has run, Pause motion shows once: in the hero on home, in 
     page,
 }) => {
     // React is held back (no script file loads; the stylesheets do, and
-    // the inline boot script still runs): the first paint, a slow phone,
-    // a crawler.
+    // the inline boot script still runs, naming the route): the first
+    // paint, a slow phone, a crawler.
     await page.route("**/*", (route) =>
         route.request().resourceType() === "script"
             ? route.abort()
@@ -314,14 +412,74 @@ test("before the page has run, Pause motion shows once: in the hero on home, in 
         .getByRole("button", { name: /motion/ });
     await page.goto("/");
     await expect(html).toHaveAttribute("data-js", "");
-    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(html).toHaveAttribute("data-route", "/");
     await expect(
         hero(page).getByRole("button", { name: chromeCopy.holdDrift }),
     ).toBeVisible();
     await expect(footerControl).toBeHidden();
     await page.goto("/about");
-    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(html).toHaveAttribute("data-route", "/about");
     await expect(footerControl).toBeVisible();
+});
+
+test("loading home never shows the wordmark beside the hero's name, not even for a frame", async ({
+    page,
+}) => {
+    // Sampled every frame from the start of the load, the header's first
+    // paint included (it can paint before the hero arrives): the wordmark
+    // stays aside until the hero's observer has reported, and then while
+    // the name is in view (a fade that starts and reverses still shows).
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() => {
+        const seen = { most: 0 };
+        Object.assign(window, { wordmarkSeen: seen });
+        const sample = () => {
+            const name = document.querySelector("header .brand__name");
+            if (name) {
+                const style = getComputedStyle(name);
+                if (style.visibility === "visible") {
+                    seen.most = Math.max(seen.most, parseFloat(style.opacity));
+                }
+            }
+            requestAnimationFrame(sample);
+        };
+        requestAnimationFrame(sample);
+    });
+    await page.goto("/");
+    await expect(hero(page).getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("data-hero", "");
+    await page.waitForTimeout(1000);
+    const most = await page.evaluate(
+        () =>
+            (window as unknown as { wordmarkSeen: { most: number } })
+                .wordmarkSeen.most,
+    );
+    expect(most, "the wordmark's opacity while loading").toBe(0);
+});
+
+test("before the page has run, the name shows once: the hero's on home, the wordmark elsewhere", async ({
+    page,
+}) => {
+    // React is held back, as above: the boot script has run (data-js and
+    // the route), but the hero's observer has not reported (no data-hero
+    // or data-hero-seen), as at the first paint.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.route("**/*", (route) =>
+        route.request().resourceType() === "script"
+            ? route.abort()
+            : route.fallback(),
+    );
+    const html = page.locator("html");
+    const wordmark = page.getByRole("banner").locator(".brand__name");
+    await page.goto("/");
+    await expect(html).toHaveAttribute("data-js", "");
+    await expect(html).toHaveAttribute("data-route", "/");
+    await expect(html).not.toHaveAttribute("data-hero-seen", /.*/);
+    await expect(hero(page).getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(wordmark).toBeHidden();
+    await page.goto("/about");
+    await expect(html).toHaveAttribute("data-route", "/about");
+    await expect(wordmark).toBeVisible();
 });
 
 test("the photograph is credited in Void; Manual draws the limb", async ({

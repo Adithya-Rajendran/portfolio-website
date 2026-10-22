@@ -76,10 +76,11 @@
 
         /* ---- layout ------------------------------------------------ */
         /* The long read's two edges: the measure (about 74 characters of
-           Newsreader to the line at every width), where the text, every listing and the
-           close stop, and the wide edge, where a title, a wide plate and
-           what follows the entry (the pager, the project row, the related
-           entries) stop, or the shell's right edge where that is nearer
+           Newsreader to the line at every width), where the text, every
+           listing, the close and what follows the entry (the pager, the
+           project row, the related entries) stop, and the wide edge, where
+           a title and a wide plate stop, or the shell's right edge where
+           that is nearer
            (post.module.css `--reach`), with the margin notes
            (styles/prose.css .sidenote) inside it. */
         /* The measure follows the text: 39rem from 1440px, where the text
@@ -104,8 +105,11 @@
            that keeps every page a central band on a wide screen. */
         --maxw: 88rem;
         --measure: 37rem;
-        /* An index or list beside its rail: the log index, the CV rows. */
-        --measure-index: 61rem;
+        /* A project head's one column where no plate stands beside it: the
+           short note, and the facts under the title (mission.module.css).
+           A list under a section head has no width of its own: it runs to
+           where the head's rule ends. */
+        --measure-note: 61rem;
         --header-h: 64px;
 
         /* ---- shape: radius 0, hairlines, no shadows ----------------- */

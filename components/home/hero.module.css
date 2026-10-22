@@ -233,20 +233,25 @@
 }
 /* One action, centred under the Open To line: CV, a hairline button over
    the photograph (no fill), and beside it the newest entry, a quiet
-   link in the Open To line's voice; it wraps under CV where the two do
-   not fit one line (always on phones), and its title wraps balanced. */
+   link in the Open To line's voice. Beside CV it keeps one line, so the
+   pair shares the name's axis; where the two do not fit one row as wide
+   as the headline (always on phones), it goes under CV, centred, and a
+   title that wraps there wraps balanced. */
 .routes {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: var(--s-2) var(--s-6);
+    max-width: 44rem;
     margin-top: var(--s-7);
 }
-/* A 44px target around one line. */
+/* A 44px target around one line. No width of its own: a wrapped box
+   keeps its full width while balance narrows its lines, so beside CV its
+   empty side would set the pair off the axis. Uncapped, it is its one
+   line's width, and goes under CV when that does not fit. */
 .latest {
     display: inline-block;
-    max-width: 26rem;
     padding-block: calc((44px - 1.45em) / 2);
     color: var(--ink-2);
     font: 400 var(--step-0) / 1.45 var(--font-display);

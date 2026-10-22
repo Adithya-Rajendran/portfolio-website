@@ -62,10 +62,12 @@ export function resolveTheme(pref: ThemePref, prefersLight: boolean): Theme {
  * parsed. It reads both keys inside `try` (storage can throw in private
  * modes), resolves `auto` and a post with no choice (`themePref`, inlined),
  * applies the reduced-motion setting, sets
- * `data-theme`, `data-motion` and `data-js` on <html>, and adds the
+ * `data-theme`, `data-motion`, `data-route` (the path, which RouteMarker
+ * keeps after a client navigation) and `data-js` on <html>, so the first
+ * paint already knows the page (home's wordmark and Pause motion), and adds the
  * `color-scheme` and `theme-color` meta tags. It adds them, rather than
  * updating tags React rendered: React 19 matches a hoisted <meta> by its
  * attributes, so after the script changed one it would insert a second.
  * Kept under 700 bytes (tests/lib/theme-boot.test.ts).
  */
-export const THEME_MOTION_BOOT = `(function(d,w){var r=d.documentElement.dataset,s,m="full",t="void",q=function(x){return w.matchMedia(x).matches},g=function(n,v){var e=d.createElement("meta");e.name=n;e.content=v;d.head.append(e)};try{var L=w.localStorage;s=L.getItem("${THEME_KEY}");if(L.getItem("${MOTION_KEY}")=="reduced")m="reduced"}catch(e){}if(s=="manual"||s=="flight-manual"||(s=="auto"||s!="void"&&${POST_PATH}.test(w.location.pathname))&&q("${PREFERS_LIGHT}"))t="manual";if(q("${PREFERS_REDUCED_MOTION}"))m="reduced";r.theme=t;r.motion=m;r.js="";g("color-scheme",t=="manual"?"light":"dark");g("theme-color",t=="manual"?"${THEME_COLORS.manual}":"${THEME_COLORS.void}")})(document,window)`;
+export const THEME_MOTION_BOOT = `(function(d,w){var r=d.documentElement.dataset,p=w.location.pathname,s,m="full",t="void",q=function(x){return w.matchMedia(x).matches},g=function(n,v){var e=d.createElement("meta");e.name=n;e.content=v;d.head.append(e)};try{var L=w.localStorage;s=L.getItem("${THEME_KEY}");if(L.getItem("${MOTION_KEY}")=="reduced")m="reduced"}catch(e){}if(s=="manual"||s=="flight-manual"||(s=="auto"||s!="void"&&${POST_PATH}.test(p))&&q("${PREFERS_LIGHT}"))t="manual";if(q("${PREFERS_REDUCED_MOTION}"))m="reduced";r.theme=t;r.motion=m;r.route=p;r.js="";g("color-scheme",t=="manual"?"light":"dark");g("theme-color",t=="manual"?"${THEME_COLORS.manual}":"${THEME_COLORS.void}")})(document,window)`;

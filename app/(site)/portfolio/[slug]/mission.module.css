@@ -56,7 +56,7 @@
 /* The facts: the stack, the role, named parameters (and a note's links).
    The repositories' links are the head's actions. */
 .facts {
-    max-width: var(--measure-index);
+    max-width: var(--measure-note);
     margin-top: var(--s-7);
 }
 .factLinks {
@@ -101,11 +101,11 @@
 
 /* ---- The short note: one column, no sections --------------------------- */
 .noteHead {
-    max-width: var(--measure-index);
+    max-width: var(--measure-note);
     padding-top: var(--s-7);
 }
 .noteBody {
-    max-width: var(--measure-index);
+    max-width: var(--measure-note);
     margin-top: var(--s-7);
 }
 .noteBody > .facts {
@@ -123,10 +123,9 @@
 }
 
 /* ---- Sections (components/ui/doc-section.tsx) -------------------------- */
-
-.brief {
-    max-width: var(--measure-index);
-}
+/* A section's rows, table and lists fill the main column, so their rules
+   end where the head's rule ends; only their text keeps a measure (a
+   brief's sentences, a result's note, a callout's line). */
 
 .contents p {
     margin: 0 0 var(--s-3);
@@ -167,9 +166,6 @@
     color: var(--ink-1);
 }
 
-.results {
-    max-width: var(--measure-index);
-}
 .value {
     color: var(--ink-1);
     font-size: var(--step-0);
@@ -212,7 +208,6 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s-7) var(--gutter);
-    max-width: var(--measure-index);
 }
 @media (min-width: 60rem) {
     .debrief {
@@ -225,10 +220,6 @@
     font: 400 var(--label-size) / var(--lh-label) var(--font-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
-}
-/* One list alone takes the section's measure. */
-.single {
-    max-width: var(--measure-index);
 }
 .lessons,
 .lines {
@@ -249,6 +240,13 @@
     color: var(--ink-1);
     font: 400 var(--step-0) / 1.55 var(--font-display);
     text-wrap: pretty;
+}
+/* A lone list (`.single`) opens its section: the head's hairline is its
+   first row's (`--first-rule`, styles/components.css). Two lists keep
+   their first rules under their subheads, though they inherit the
+   property from `.debrief`. */
+.single > li:first-child {
+    border-top-width: var(--first-rule, var(--rule-hair));
 }
 .lessons li::before,
 .lines li::before {

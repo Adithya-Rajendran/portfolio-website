@@ -314,14 +314,6 @@
         background: var(--bg);
     }
 
-    /* Width budget, measured with the real labels from 320 to 1920px: the
-       brand name at >= 1360px (and 600–959px). CV and Menu keep their
-       words wherever they show (the bar's CV steps aside under 360px). */
-    @media (max-width: 84.99rem) {
-        .brand__name {
-            display: none;
-        }
-    }
     /* On home the hero names the owner: the wordmark steps aside while the
        hero's name shows below the header (html[data-hero], set by the
        starfield's observer; without JavaScript it stays). */
@@ -334,6 +326,22 @@
         visibility: hidden;
         opacity: 0;
     }
+    /* The observer first reports long after the first paint, so until
+       then (html[data-hero-seen], set with that report) the wordmark is
+       aside on home too: a load never shows the name twice, not even for
+       a frame. The boot script names the route before the header is
+       parsed, while the hero has yet to arrive; without JavaScript there
+       is no route, and the wordmark stays. */
+    html[data-route="/"]:not([data-hero-seen]) .brand__name {
+        visibility: hidden;
+        opacity: 0;
+    }
+    /* Width budget, measured with the real labels from 320 to 1920px: the
+       brand name from 600px (a phone's bar is the patch alone). At 960px
+       the patch, the name, the five links and the theme switch take about
+       790px of the bar's 832px with these gaps (to 1199px), and every
+       wider bar has more room. CV and Menu keep their words wherever they
+       show (the bar's CV steps aside under 360px). */
     @media (min-width: 60rem) and (max-width: 74.99rem) {
         .site-header__inner {
             gap: var(--s-4);
@@ -364,9 +372,6 @@
         }
     }
     @media (max-width: 59.99rem) {
-        .brand__name {
-            display: inline;
-        }
         .nav-toggle {
             display: inline-flex;
         }
@@ -447,8 +452,9 @@
     /* Pause motion (WCAG 2.2.2): in the footer and the home hero. Its
        label names the action; under the OS reduce-motion setting nothing
        moves, so it shows nothing. On home the hero's control, beside the
-       starfield, is the one shown (html[data-route] is set by
-       RouteMarker). Unboxed: the icon and the label in ink-2, in the
+       starfield, is the one shown (html[data-route] is set by the boot
+       script before the first paint, and by RouteMarker after a client
+       navigation). Unboxed: the icon and the label in ink-2, in the
        controls' voice, a 44px target. */
     .motion-ctl {
         display: inline-flex;
@@ -483,15 +489,6 @@
         }
     }
     html[data-route="/"] .site-footer .motion-ctl {
-        display: none;
-    }
-    /* Before RouteMarker has run (the first paint, a slow phone, a
-       crawler) the page says which it is: only one is mounted then, so
-       the home page's own root stands in for the route. */
-    html:not([data-route])
-        body:has([data-page="home"])
-        .site-footer
-        .motion-ctl {
         display: none;
     }
     /* Theme and motion controls need JavaScript. */
@@ -690,6 +687,23 @@
             flex-basis: 100%;
             white-space: normal;
         }
+    }
+
+    /* A section's first row draws no rule: the head's hairline is the
+       division above it. The block that opens a section (next after a
+       section head's tag row, or first in a document section's column)
+       sets `--first-rule` to nothing, and each ruled list reads it for
+       its first row's top rule, and for the rest of that line where its
+       rows run in columns: Writing's rows, the project rows, specs, the
+       callouts, link rows, a lone retrospective list and the CV's rows (a
+       property, because most of those rows are styled in CSS Modules,
+       which no layered rule overrides). A list after other content
+       (home's rows under the stage, a retrospective's two lists under
+       their subheads) or under no section head (/blog's index) keeps its
+       rule. */
+    .section-tag:has(> .section-tag__h) + :not(.doc-section__body),
+    .doc-section__body > :not(.g-rail) > :first-child {
+        --first-rule: 0;
     }
 
     /* One page head per page: the tag row with the section's small themed
@@ -980,9 +994,9 @@
     /* The owner's current questions: the question, the note in the serif,
        with a hairline between rows only: none over the first (the section
        head's rule is just above) and none under the last (About's last
-       section, so the footer's hairline follows). */
+       section, so the footer's hairline follows). The hairlines end where
+       the section head's rule ends; the note keeps its own measure. */
     .q-list {
-        max-width: var(--measure-index);
         margin: 0;
         padding: 0;
         list-style: none;
@@ -1142,6 +1156,11 @@
         padding-block: var(--s-3);
         border-top: var(--rule-hair) solid var(--rule-1);
     }
+    /* Under a section head, the head's hairline is the first row's
+       (`--first-rule`, above). */
+    .specs__row:first-child {
+        border-top-width: var(--first-rule, var(--rule-hair));
+    }
     @media (min-width: 37.5rem) {
         .specs__row {
             grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
@@ -1163,9 +1182,9 @@
     /* ===== CV rows (site.css 4.13, on the log index's grammar) ========= */
     /* components/cv/cv-list.tsx: a mono column (dates, place) beside the
        title, organization, a serif line and the facts. A linked row is one
-       big target. */
+       big target. The rows end where the section head's rule ends; the
+       serif line and the facts keep their own measures. */
     .cv-list {
-        max-width: var(--measure-index);
         margin: 0;
         padding: 0;
         border-bottom: var(--rule-hair) solid var(--rule-1);
@@ -1181,6 +1200,11 @@
         transition:
             border-color var(--dur-hover) var(--ease-dock),
             background-color var(--dur-hover) var(--ease-dock);
+    }
+    /* Under a section head, the head's hairline is the first row's
+       (`--first-rule`, above). */
+    .cv-item:first-child {
+        border-top-width: var(--first-rule, var(--rule-hair));
     }
     @media (min-width: 37.5rem) {
         .cv-item {
@@ -1361,7 +1385,11 @@
 
     /* ===== Page head, split (contract §1) ============================== */
     /* The title on the left half, the intro and the actions on the right
-       from 960px. */
+       from 960px, both hanging from the tag row: the title sits directly
+       under its tag, at the same height on every page, and the right
+       column runs on past it as far as it needs. Set at the column's foot
+       instead, it would sink as far as the column outgrows it, and move
+       from one section to the next. */
     .page-head--split {
         padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
         padding-bottom: var(--s-6);
@@ -1382,15 +1410,17 @@
             display: grid;
             grid-template-columns: repeat(12, minmax(0, 1fr));
             column-gap: var(--gutter);
-            align-items: end;
+            align-items: start;
         }
         .page-head--split > .section-tag {
             grid-column: 1 / -1;
         }
+        /* A title taller than the right column (a two-line 404) takes the
+           rows the column leaves empty, so the intro and the actions stay
+           together at the top beside it. */
         .page-head--split > .page-head__title {
             grid-column: 1 / span 6;
             grid-row: 2 / span 4;
-            align-self: end;
         }
         .page-head--split > :not(.section-tag, .page-head__title) {
             grid-column: 7 / -1;
@@ -1567,6 +1597,22 @@
         color: var(--ink-1);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);
+    }
+    /* Under a section head, the head's hairline is the first line's
+       (`--first-rule`, above): the first row, and the second and third
+       where the rows run two or three across. */
+    .route-list li:first-child > .route-row {
+        border-top-width: var(--first-rule, var(--rule-hair));
+    }
+    @media (min-width: 37.5rem) {
+        :is(.route-list--2, .route-list--3) li:nth-child(2) > .route-row {
+            border-top-width: var(--first-rule, var(--rule-hair));
+        }
+    }
+    @media (min-width: 60rem) {
+        .route-list--3 li:nth-child(3) > .route-row {
+            border-top-width: var(--first-rule, var(--rule-hair));
+        }
     }
     .route-row__num {
         grid-row: 1;

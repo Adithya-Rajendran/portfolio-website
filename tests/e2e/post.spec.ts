@@ -526,6 +526,43 @@ test("printing an entry keeps the text and drops the rail and actions", async ({
     await expect(body(page).locator(":scope > p").first()).toBeVisible();
 });
 
+test("inline code keeps each breakable run on one line, its spaces, no hyphens, and 0.85em on paper", async ({
+    page,
+    request,
+}, testInfo) => {
+    for (const path of await postPaths(request, testInfo)) {
+        await page.goto(path);
+        for (const width of [390, 1440]) {
+            await page.setViewportSize({ width, height: 900 });
+            // A kept run (a flag, a path) never ends a line inside itself.
+            const split = await body(page).evaluate((root) =>
+                [...root.querySelectorAll(":not(pre) > code .keep-whole")]
+                    .filter((run) => {
+                        const tops = [...run.getClientRects()]
+                            .filter((rect) => rect.width > 0)
+                            .map((rect) => Math.round(rect.top));
+                        return new Set(tops).size > 1;
+                    })
+                    .map((run) => run.textContent),
+            );
+            expect(split, `${path} at ${width}px`).toEqual([]);
+        }
+        const code = body(page).locator(":scope > p > code").first();
+        if (!(await code.count())) continue;
+        await expect(code).toHaveCSS("white-space", "pre-wrap");
+        await expect(code).toHaveCSS("hyphens", "none");
+        // On paper it is set from its line, as on screen (17px beside 20px).
+        await page.emulateMedia({ media: "print" });
+        const ratio = await code.evaluate(
+            (element) =>
+                parseFloat(getComputedStyle(element).fontSize) /
+                parseFloat(getComputedStyle(element.parentElement!).fontSize),
+        );
+        await page.emulateMedia({ media: "screen" });
+        expect(ratio, path).toBeCloseTo(0.85, 2);
+    }
+});
+
 test("every listing is the text's width, a long line scrolling inside; a highlighted line is marked", async ({
     page,
 }, testInfo) => {

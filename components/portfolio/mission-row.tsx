@@ -66,20 +66,30 @@ export default function MissionRow({
     );
 }
 
-/** The rows' list: one column, two across from 960px. `quiet` sets
- *  them a step smaller (/portfolio's least prominent projects). */
+/** The rows' list: one column, two across from 960px, where a row alone
+ *  in it spans both, as a lone tile does (unless stacked). `quiet` sets them a step
+ *  smaller (/portfolio's least prominent projects); `stacked` keeps one
+ *  column at every width, a step smaller, for a column as narrow as the
+ *  text (a post's related project). */
 export function MissionRows({
     children,
     quiet = false,
+    stacked = false,
     className,
 }: {
     children: React.ReactNode;
     quiet?: boolean;
+    stacked?: boolean;
     className?: string;
 }) {
     return (
         <ul
-            className={[styles.rows, quiet && styles.rowsQuiet, className]
+            className={[
+                styles.rows,
+                quiet && styles.rowsQuiet,
+                stacked && styles.rowsStacked,
+                className,
+            ]
                 .filter(Boolean)
                 .join(" ")}
             role="list"

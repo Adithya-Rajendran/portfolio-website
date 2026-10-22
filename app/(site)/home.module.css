@@ -20,8 +20,13 @@
 :global([data-theme="manual"]) :global([data-drift-zone]) + .act {
     padding-top: var(--s-8);
 }
-.content {
-    margin-top: var(--s-6);
+/* The tag row holds the gap to its content, which follows it with no
+   wrapper: the block that opens a section is the head's next sibling,
+   and the head's hairline stands for its first row's rule
+   (`--first-rule`, styles/components.css); the rows under the stage
+   keep theirs. */
+.act :global(.section-tag) {
+    margin-bottom: var(--s-6);
 }
 /* Phones: the link to a section's page stays on its heading's line (the
    hairline runs under both), rather than a full row of its own. */
