@@ -4,14 +4,14 @@ import type { SanityImageValue } from "@/lib/sanity-client";
 import { urlForImage } from "@/lib/sanity-image";
 
 /**
- * A photograph as a plate outside the long read (contract §4, the
- * mockup's site.css 4.26): a mission's cover or its model's poster,
- * inside the grid (5 columns beside copy, at most 8 alone), on the one
- * plate rule (`.photo` in styles/components.css). No plate carries a
- * number. The caption is the owner's words, never an explanation; the
- * credit is its source line (`.caption__src`, the long read's and the
- * hero's mono voice). An image in the long read is a plate too
- * (components/prose/figure-plate.tsx, with its layout and shape classes).
+ * An image as a plate (contract §4, the mockup's site.css 4.26): a
+ * mission's cover or its model's poster, inside the grid (5 columns
+ * beside copy, at most 8 alone), and every image in the long read
+ * (components/prose/figure-plate.tsx, with its layout and shape
+ * classes), on the one plate rule (`.photo` in styles/components.css).
+ * No plate carries a number. The caption is the owner's words, never an
+ * explanation; the credit is its source line (`.caption__src`, the long
+ * read's and the hero's mono voice).
  * Returns nothing for an image without an asset.
  */
 export default function Plate({

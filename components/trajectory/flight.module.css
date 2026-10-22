@@ -152,10 +152,12 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    /* An eased ramp (a smoothstep in twelfths, so no bands show) that
-       holds the record's column to --scrim-a and clears at --scrim-b
-       (--scrim-from, then --scrim-span on): on a wide stage the renderer
-       sets them from the column (flight-gl.ts). */
+    /* An eased ramp (a smoothstep in twelfths, so no bands show), at 96%
+       of --bg to --scrim-from and clear at --scrim-from + --scrim-span. From is
+       --scrim-a (24% unset) and the span --scrim-b (58% unset) less it:
+       on a wide stage the renderer sets --scrim-a and --scrim-b from the
+       record's column (flight-gl.ts). A phone sets --scrim-from and
+       --scrim-span itself (below), past the renderer's a and b. */
     background: linear-gradient(
         var(--scrim-dir, 90deg),
         color-mix(in oklab, var(--bg) 96%, transparent) var(--scrim-from),

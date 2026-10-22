@@ -52,10 +52,11 @@ export async function generateMetadata(): Promise<Metadata> {
  * then one way to /contact: the profile's button that
  * answers what the owner is open to (the one primary, while both are
  * set), else Send a message. Everything is server-rendered; the
- * starfield and Pause motion are the only islands. Each section is a
- * plain DocSection: the tag row (the plain h2, a hairline and, while the
- * section's page holds more than home shows, one link to it), then its
- * content straight after it, as in an entry's end matter. The ids are
+ * starfield and Pause motion are the only islands. Projects and Writing
+ * are plain DocSections: the tag row (the plain h2, a hairline and, while
+ * the section's page holds more than home shows, one link to it), then
+ * its content straight after it, as in an entry's end matter; the close
+ * is its own section, headed by the tagline. The ids are
  * prefixed, because a visited page that stays mounted can own the same
  * fragment (/portfolio's #projects).
  */

@@ -37,7 +37,8 @@ only live in comments or commit messages.
       stylesheet with literal values, in three tiers. Primitives: the
       palette (`--void-*`, `--manual-*`, `--paper-white`), read only there
       (the copies in lib/og-card.tsx, public/feed.xsl, lib/theme-boot.ts,
-      flight-gl.ts's fallbacks and lib/patch.json are tested against it);
+      scripts/generate-patch.mjs, lib/patch.json, and the starfield's and
+      flight-gl.ts's fallbacks are tested against it);
       each theme's ladder mapped onto it (Void on
       `:root`/`[data-theme="void"]`, Flight Manual on
       `[data-theme="manual"]`, paper the file's last block, after
@@ -45,14 +46,15 @@ only live in comments or commit messages.
       paper `--print-*`, leading `--lh-*` and the paper `--lh-paper*`,
       tracking `--track-*`, `--weight-*`, `--numerals-*`, space
       `--s-*`/`--space-*`, measures and columns, targets, icons and dots,
-      rules and strokes, durations and eases). Roles, on
-      `:root, [data-theme]`, which components read: colour (`--text`,
+      rules, strokes and dashes, z-layers, durations and eases). Roles,
+      which components read: colour, on `:root, [data-theme]` (`--text`,
       `--text-quiet`, `--text-faint`, `--fill`, `--surface-raised`,
       `--surface-lit`, `--rule-quiet`, `--rule-firm`, `--rule-lit`,
       `--rule-ink`, `--underline(-lit)`, `--mark-now`, `--mark-identity`,
       `--dot-*`, `--list-mark-ink`, `--icon-quiet`, `--draw-*`,
-      `--label-knockout`, `--chosen-*`, `--code-*`) and type
-      (`--type-label` … `--type-name`, each a whole `font`). Component
+      `--label-knockout`, `--chosen-*`, `--code-*`), and type, on `:root`
+      (`--type-label` … `--type-name`, each a whole `font`, reading only
+      scales and next/font's variables on `<html>`). Component
       tokens: one component's per-theme value or own geometry. Colours
       are defined there and nowhere else, except the flight's scene art
       drawn in code (its corona and atmosphere gradients and glows, the
@@ -456,7 +458,7 @@ only live in comments or commit messages.
   feed renderer in the same change. `components/blogs/post-reader.tsx`
   marks the current section and resolves in-page links (`#fn-1`, the
   contents) inside the visible entry, because a hidden, still-mounted
-  entry can hold the same ids. The header keeps its one `--rule-1`
+  entry can hold the same ids. The header keeps its one `--rule-quiet`
   hairline here as on every page (the firmer rule on reading pages is
   retired). Every writing route names the feed through `feedAlternates` (lib/feed.ts:
   a page's `alternates` replaces the layout's whole). `/feed.xml` is
@@ -1190,9 +1192,15 @@ loaded, only when that run cannot.
   media queries outside `lib/breakpoints.ts`; a bare `:hover`; Tailwind's
   `@theme` beyond its fixed names; and a global class that is also a
   Tailwind utility. It also checks role-class pairings in TSX, `style`
-  keys, TS breakpoints, and the colours outside CSS. Exceptions are
-  `tests/lib/design-system.allow.ts`'s, each with a reason; a stale one
-  fails. `vitest.config.ts` uses `environment: "node"` by design: there is no
+  keys, TS breakpoints, and the colours outside CSS (each copy against
+  its own theme's palette). Inside tokens.css it keeps the tiers apart:
+  each theme's ladder reads only its own palette, paper only Flight
+  Manual's and paper white, and the roles no palette at all. Dashes and
+  z-index come from their tokens; media queries are parsed (no `not` or
+  `or`, so paper, forced colours and the hover guard mean what they
+  say); and the Tailwind probe compiles with the site's own `@theme`.
+  Exceptions are `tests/lib/design-system.allow.ts`'s, each with a
+  reason; a stale one fails. `vitest.config.ts` uses `environment: "node"` by design: there is no
   jsdom or component-rendering setup. Anything that needs a browser is a
   Playwright spec. A symbol exported only for a test carries the tag
   `@internal Exported for tests.`; an export with no importer anywhere is
@@ -1231,7 +1239,8 @@ loaded, only when that run cannot.
   `lit` (a Writing row, a project row, a tile, the stage title, a CV
   item, a pager item, the crumb and a References row lighting its rule,
   title underline and arrow on hover and on its own link's keyboard
-  focus, and not on a nested link's), `accent`
+  focus, and not on a nested link's; in forced colours the arrow takes
+  its text's system colour), `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
   Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440
   and 390 in both themes, identity marks and focus aside, and on

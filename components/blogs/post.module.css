@@ -274,6 +274,8 @@
 }
 
 /* ---- Print: one column, a masthead, no rail or actions -------------- */
+/* The masthead's address and byline: a datum in `.data`'s 13px on paper
+   too, the size of the label above it, not a --print-* size. */
 .printHead :global(.data) {
     color: var(--text-quiet);
 }

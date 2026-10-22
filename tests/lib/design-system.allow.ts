@@ -280,7 +280,7 @@ export const ALLOWANCES: readonly Allowance[] = [
         selector: ".label",
         property: "gap",
         value: "3px",
-        reason: "A map label's knockout: a feathered plate a few pixels past the text (the site's one radius and shadow).",
+        reason: "A map label's knockout: a feathered plate a few pixels past the text (the site's one feathered shadow and rounded plate).",
     },
     {
         file: "components/trajectory/flight.module.css",
@@ -288,7 +288,7 @@ export const ALLOWANCES: readonly Allowance[] = [
         selector: ".label",
         property: "padding",
         value: "1px 4px",
-        reason: "A map label's knockout: a feathered plate a few pixels past the text (the site's one radius and shadow).",
+        reason: "A map label's knockout: a feathered plate a few pixels past the text (the site's one feathered shadow and rounded plate).",
     },
     {
         file: "components/trajectory/flight.module.css",
@@ -296,7 +296,7 @@ export const ALLOWANCES: readonly Allowance[] = [
         selector: ".label",
         property: "border-radius",
         value: "4px",
-        reason: "A map label's knockout: a feathered plate a few pixels past the text (the site's one radius and shadow).",
+        reason: "A map label's knockout: a feathered plate a few pixels past the text (the site's one feathered shadow and rounded plate).",
     },
     {
         file: "components/trajectory/flight.module.css",
@@ -304,7 +304,7 @@ export const ALLOWANCES: readonly Allowance[] = [
         selector: ".label",
         property: "box-shadow",
         value: "0 0 8px 6px var(--label-knockout)",
-        reason: "A map label's knockout: a feathered plate a few pixels past the text (the site's one radius and shadow).",
+        reason: "A map label's knockout: a feathered plate a few pixels past the text (the site's one feathered shadow and rounded plate).",
     },
     {
         file: "components/trajectory/flight.module.css",

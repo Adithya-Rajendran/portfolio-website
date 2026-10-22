@@ -784,7 +784,8 @@
            wider than the plate breaks rather than runs under the title. */
         overflow-wrap: break-word;
     }
-    /* A credit with no caption above it (a project's cover). */
+    /* A credit with no caption above it (a cover, or a long-read plate
+       with only a credit). */
     .caption > .caption__src {
         margin-top: 0;
     }
@@ -930,10 +931,10 @@
     .textarea[aria-invalid="true"] {
         box-shadow: inset var(--rule-strong) 0 0 var(--mark-now);
     }
-    /* Focused, the rule reads --mark-invalid-lit: the accent in Void; in
-       Flight Manual, whose accent is a mark on paper (3.3:1 on --bg), under
-       3:1 on the focused field's --surface-lit, the focus colour, the same
-       orange, darker (styles/tokens.css). */
+    /* Focused, the rule reads --mark-invalid-lit, which is the accent in
+       Void. Flight Manual's accent is under 3:1 on the focused field's
+       --surface-lit, so there it is the focus colour, the same orange,
+       darker (styles/tokens.css). */
     :is(.input, .textarea)[aria-invalid="true"]:focus-visible {
         box-shadow: inset var(--rule-strong) 0 0 var(--mark-invalid-lit);
     }
@@ -1021,11 +1022,6 @@
         width: var(--icon-out);
         height: var(--icon-out);
         color: var(--icon-quiet);
-    }
-    /* Flight Manual colours a cell's unpainted top and left edges (0 wide)
-       as its rules; they draw nothing. */
-    [data-theme="manual"] .titleblock__cell {
-        border-color: var(--titleblock-rule);
     }
 
     /* ===== Question rows (components/crew/questions.tsx) =============== */
@@ -1686,7 +1682,6 @@
         grid-column: 1;
         display: flex;
         flex-direction: column;
-        gap: var(--s-1);
         min-width: 0;
     }
     .route-row__plain {

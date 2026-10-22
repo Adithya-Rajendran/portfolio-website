@@ -6,10 +6,14 @@
  * (`--row-rule`, which a ruled row reads for its border; a tier's resting
  * rule is `--row-rest`), its `.lit__title` is underlined in ink, 2px, and
  * its `.lit__arrow` turns ink and nudges. A nested link (a tag, a CV
- * row's links) is no title, so its focus leaves the row unlit. Modules
- * read these properties and declare no hover of their own, and a title
- * link sets no resting `text-decoration` (a row that is itself the link
- * keeps `none`): modules are unlayered and would win.
+ * row's links) is no title, so its focus leaves the row unlit. A ruled
+ * row reads `--row-rule` with no fallback, so it carries `.lit` (or sits
+ * inside one, whose value it inherits): with neither, the border is
+ * invalid at computed-value time and draws no rule.
+ * Modules read these properties and declare no hover of their own, and a
+ * title link sets no resting `text-decoration` (a row that is itself the
+ * link keeps `none`): modules are unlayered and would win. In forced
+ * colours the arrow takes its text's system colour (styles/base.css).
  */
 @layer components {
     .lit {

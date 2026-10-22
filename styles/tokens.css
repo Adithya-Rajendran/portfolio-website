@@ -6,10 +6,12 @@
  * Every literal value the site's CSS uses is written here, in three tiers:
  *   1. primitives: the palette (read only in this file), the themed ladder
  *      mapped onto it, and the scales (type, leading, tracking, weight,
- *      numerals, space, size, shape, stroke, motion);
- *   2. roles: what a component reads (--text-quiet, --rule-quiet,
- *      --type-label, --target…), declared on `:root, [data-theme]` so a
- *      role follows the theme wherever one is set;
+ *      numerals, space, size, shape, stroke, dashes, layers, motion);
+ *   2. roles: what a component reads: colour (--text-quiet,
+ *      --rule-quiet…), declared on `:root, [data-theme]` so a role
+ *      follows the theme wherever one is set, and type (--type-label…),
+ *      on `:root`, since a type role reads only scales and next/font's
+ *      variables on <html>;
  *   3. component tokens: a value one component needs per theme or state,
  *      or a one-off geometry it owns.
  * Components read roles, never the palette or the ladder (--bg and
@@ -24,8 +26,9 @@
 @layer theme {
     /* ==== 1. The palette: each theme's colours, written once =========== */
     /* Read only in this file. The copies outside CSS (lib/og-card.tsx,
-       public/feed.xsl, lib/theme-boot.ts, the starfield, flight-gl's
-       fallbacks, lib/patch.json) are checked against these values. */
+       public/feed.xsl, lib/theme-boot.ts, scripts/generate-patch.mjs,
+       lib/patch.json, the starfield's fallback and flight-gl's) are
+       checked against these values. */
     :root {
         --void-bg: #050507; /* the void */
         --void-surface-1: #0c0c10;
@@ -98,9 +101,11 @@
         /* Paper (the CV's two sheets and a post's print): its own scale,
            tuned to the two-sheet fit on A4 and Letter (print.spec), read
            only inside @media print. */
-        --print-key: 7pt; /* keys, link addresses, section heads */
+        --print-key: 7pt; /* keys, the CV's link addresses, section heads */
         --print-skills: 7.2pt;
-        --print-data: 7.6pt; /* dates, the control line, the masthead links */
+        /* dates, the control line, the masthead links, a post's link
+           addresses */
+        --print-data: 7.6pt;
         --print-note: 7.8pt;
         --print-text: 8.4pt; /* rows, lines, deks */
         --print-sub: 8.6pt;
