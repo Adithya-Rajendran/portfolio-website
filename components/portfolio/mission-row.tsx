@@ -66,8 +66,9 @@ export default function MissionRow({
     );
 }
 
-/** The rows' list: one column, two across from 960px. `quiet` sets
- *  them a step smaller (/portfolio's least prominent projects). */
+/** The rows' list: one column, two across from 960px, where a row alone
+ *  in it spans both, as a lone tile does. `quiet` sets them a step
+ *  smaller (/portfolio's least prominent projects). */
 export function MissionRows({
     children,
     quiet = false,

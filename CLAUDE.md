@@ -429,7 +429,9 @@ only live in comments or commit messages.
   third of the card from 600px, two fifths on phones, beside the title
   under the line (tiles, like rows, are one column below 960px; from
   there a lone tile spans both columns, its title, beside the thumbnail,
-  in one and its summary and stack in the other), the
+  in one and its summary and stack in the other, and a lone row, on home,
+  `/portfolio` or a post, the same: its title, beside any thumbnail, in
+  one and its summary in the other), the
   stage's plate when the flagship
   has one, and the plate beside a project's head in either layout; the
   stage takes the model's poster without one (with no caption: the
@@ -1204,7 +1206,9 @@ loaded, only when that run cannot.
   build the others follow exactly the index's order; a lone side
   spanning the measure)
   and no close, title block, revision, "Table 1", jump to its own
-  write-up or stand-in text, a stack item never split, a thin project is
+  write-up or stand-in text, a stack item never split, a lone project
+  row (on home, `/portfolio` or a post) spanning its list from 960px
+  with its summary beside its title, a thin project is
   a short note (the Kubernetes note without a Stack row, one highlight a
   paragraph),
   every card on `/portfolio` and home reading its line, then its title,

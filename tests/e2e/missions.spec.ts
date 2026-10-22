@@ -2,7 +2,7 @@ import type { APIRequestContext, Page } from "@playwright/test";
 import { missionsCopy as copy, pagerCopy } from "@/lib/copy";
 import { FIXTURE_PROJECTS } from "@/lib/fixtures";
 import { expect, test } from "./support/test";
-import { sitemapPages } from "./support/routes";
+import { isPostPage, sitemapPages } from "./support/routes";
 
 /**
  * Projects (G5; plan §6.2 PR 12, contract §9; premium WS2): /portfolio
@@ -15,7 +15,9 @@ import { sitemapPages } from "./support/routes";
  * credit, opens the project
  * and stays a thumbnail smaller than the stage's photograph (checked where
  * the build has covers; the fixtures have none); the quieter rows carry no
- * "Also" label.
+ * "Also" label, and a row alone in its list (home's, /portfolio's, a
+ * post's Related project) spans the list from 960px, its summary beside
+ * its title, as a lone tile does.
  * Each project page has its crumb (Projects alone: no number or name),
  * its title as the heading and the pager ("Previous", "Next", in mission
  * order: the index's, but a quiet project keeps its slot's place), with
@@ -270,6 +272,73 @@ for (const width of [390, 768, 960, 1440, 1920]) {
         }
     });
 }
+
+test("a lone project row spans its list from 960px, its summary beside its title", async ({
+    page,
+    request,
+}, testInfo) => {
+    // Home's rows, /portfolio's quiet rows and a post's Related project:
+    // a row alone in its list takes the list's width, as a lone tile
+    // does, and two or more go two across.
+    const posts = (await sitemapPages(request)).filter(isPostPage);
+    let lone = 0;
+    for (const path of ["/", "/portfolio", ...posts]) {
+        await page.goto(path);
+        for (const width of [960, 1440, 1920]) {
+            await page.setViewportSize({ width, height: 900 });
+            const lists = await main(page).evaluate((root) => {
+                const heading = ":scope > :is(h3, h4)";
+                const project = `${heading} > a[href^="/portfolio/"]`;
+                const summary = `${heading} ~ p`;
+                const rect = (element: Element | null) =>
+                    element?.getBoundingClientRect();
+                // A list of project rows: every item's heading links a
+                // project.
+                return [...root.querySelectorAll("ul")]
+                    .filter(
+                        (list) =>
+                            list.getClientRects().length > 0 &&
+                            list.children.length > 0 &&
+                            [...list.children].every((item) =>
+                                item.querySelector(project),
+                            ),
+                    )
+                    .map((list) => ({
+                        width: list.getBoundingClientRect().width,
+                        rows: [...list.children].map((item) => {
+                            const title = rect(item.querySelector(heading))!;
+                            const text = rect(item.querySelector(summary));
+                            return {
+                                width: item.getBoundingClientRect().width,
+                                // Right of the title, and level with it.
+                                beside: text
+                                    ? text.left > title.right &&
+                                      text.top < title.bottom
+                                    : null,
+                            };
+                        }),
+                    }));
+            });
+            for (const list of lists) {
+                const where = `${path} at ${width}px`;
+                if (list.rows.length > 1) {
+                    for (const row of list.rows) {
+                        expect(row.width, where).toBeLessThan(list.width / 2);
+                    }
+                    continue;
+                }
+                const [row] = list.rows;
+                lone += 1;
+                expect(row.width, where).toBeCloseTo(list.width, 0);
+                if (row.beside !== null) expect(row.beside, where).toBe(true);
+            }
+        }
+    }
+    // The fixture build has one: a fixture post's one related project.
+    if (testInfo.project.name === "fixture") {
+        expect(lone, "lone rows checked").toBeGreaterThan(0);
+    }
+});
 
 test("/portfolio shows the flagship's title, its link, in the first viewport", async ({
     page,
