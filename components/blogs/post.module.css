@@ -205,7 +205,7 @@
 }
 .boxSummary:hover {
     border-color: var(--rule-lit);
-    background: var(--surface-1);
+    background: var(--surface-lit);
 }
 .boxBody {
     padding-top: var(--s-4);
@@ -236,7 +236,7 @@
 }
 .revisions {
     padding-top: var(--s-5);
-    border-top: var(--rule-hair) solid var(--rule-2);
+    border-top: var(--rule-hair) solid var(--rule-quiet);
 }
 .revisionList {
     margin: 0;

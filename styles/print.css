@@ -93,6 +93,9 @@
         [data-page="resume"] .cv-item__aside > * {
             display: block;
         }
+        [data-page="resume"] .cv-item__dates {
+            color: var(--text);
+        }
         [data-page="resume"] .cv-item__title {
             font: var(--weight-medium) var(--print-title) /
                 var(--lh-paper-title) var(--font-display);

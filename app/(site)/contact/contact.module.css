@@ -22,7 +22,7 @@
     gap: var(--s-4);
     max-width: 46rem;
     padding-top: var(--s-4);
-    border-top: var(--rule-hair) solid var(--rule-2);
+    border-top: var(--rule-hair) solid var(--rule-quiet);
     color: var(--text);
     font: var(--type-dek);
 }

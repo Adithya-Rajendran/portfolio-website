@@ -118,9 +118,8 @@
     display: none;
     overflow: visible;
     fill: none;
-    stroke: var(--ink-3);
+    stroke: var(--draw-faint);
     stroke-width: 1;
-    opacity: 0.55;
 }
 
 .hint ellipse {

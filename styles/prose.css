@@ -283,7 +283,7 @@
     .listing__code {
         overflow-x: auto;
         scrollbar-width: thin;
-        scrollbar-color: var(--ink-3) transparent;
+        scrollbar-color: var(--scrollbar-thumb) transparent;
     }
     @supports (animation-timeline: scroll()) {
         .listing__code {
@@ -333,7 +333,7 @@
     }
     .listing__code span[style*="--code-token-link"] {
         text-decoration: underline;
-        text-decoration-color: var(--rule-2);
+        text-decoration-color: var(--underline);
         text-decoration-thickness: 1px;
         text-underline-offset: 0.2em;
     }
@@ -521,7 +521,7 @@
     .notes {
         max-width: var(--prose-measure);
         padding-top: var(--s-5);
-        border-top: var(--rule-hair) solid var(--rule-2);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
         color: var(--text-quiet);
         font: var(--type-ui);
     }

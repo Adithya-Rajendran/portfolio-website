@@ -206,7 +206,7 @@
     .rail
     button[aria-current="step"]::before {
     background: var(--bg);
-    border-color: var(--rule-2);
+    border-color: var(--dot-ring);
 }
 
 :global(html[data-js]) .controls {
@@ -254,7 +254,7 @@
     margin-top: -3.5px;
     border-radius: 50%;
     background: var(--bg);
-    border: var(--rule-hair) solid var(--rule-2);
+    border: var(--rule-hair) solid var(--dot-ring);
 }
 
 .rail button:hover {

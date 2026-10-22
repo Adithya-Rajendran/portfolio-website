@@ -529,7 +529,7 @@
     }
     .btn:hover {
         border-color: var(--rule-lit);
-        background: var(--surface-1);
+        background: var(--surface-lit);
     }
     .btn:hover .icon--nudge {
         transform: translateX(4px);
@@ -885,7 +885,7 @@
     }
     .input:hover,
     .textarea:hover {
-        border-color: var(--ink-2);
+        border-color: var(--rule-lit);
     }
     .input:focus-visible,
     .textarea:focus-visible {
@@ -1234,9 +1234,6 @@
             padding-top: 0.35rem;
         }
     }
-    .cv-item__dates {
-        color: var(--ink-1);
-    }
     .cv-item__body {
         min-width: 0;
     }
@@ -1336,6 +1333,7 @@
     .cv-item__link .icon {
         width: 0.9em;
         height: 0.9em;
+        color: var(--icon-quiet);
     }
     .cv-item__url {
         margin-left: 0.4em;
@@ -1560,7 +1558,7 @@
     .table tbody tr:hover {
         background: linear-gradient(
             to right,
-            var(--surface-1),
+            var(--surface-lit),
             transparent 85%
         );
     }
@@ -1600,7 +1598,7 @@
         row-gap: var(--s-2);
         height: 100%;
         padding: var(--s-5) 0;
-        border-top: var(--rule-hair) solid var(--rule-2);
+        border-top: var(--rule-hair) solid var(--rule-quiet);
         color: var(--text);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);

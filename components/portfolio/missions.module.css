@@ -21,7 +21,7 @@
 }
 .dates {
     flex: none;
-    color: var(--ink-1);
+    color: var(--text-quiet);
     font: var(--type-data);
     font-variant-numeric: var(--numerals-data);
     line-height: var(--lh-solid);
