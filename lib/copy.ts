@@ -263,8 +263,6 @@ export const missionsCopy = {
         outcome: "Outcome",
     },
     writeUp: "Case study",
-    contents: "Contents",
-    contentsLabel: "On this page",
     results: "Results",
     /** The results' column heads, for screen readers. */
     resultColumns: { metric: "Metric", value: "Value", note: "Note" },

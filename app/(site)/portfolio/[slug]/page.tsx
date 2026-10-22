@@ -6,6 +6,7 @@ import { BreadcrumbJsonLd, MissionJsonLd } from "@/components/json-ld";
 import MissionLine, { MissionStack } from "@/components/portfolio/mission-line";
 import KeepWhole from "@/components/ui/keep-whole";
 import ProjectEssay from "@/components/portfolio/project-essay";
+import Contents from "@/components/ui/contents";
 import CrumbRow from "@/components/ui/crumb-row";
 import DocSection from "@/components/ui/doc-section";
 import { Icon } from "@/components/ui/icon";
@@ -328,22 +329,7 @@ export default async function ProjectPage({
             prose
             rail={
                 contents.length > 1 ? (
-                    <nav
-                        className={styles.contents}
-                        aria-label={copy.contentsLabel}
-                        data-contents
-                    >
-                        <p className={styles.contentsTitle}>{copy.contents}</p>
-                        <ol role="list">
-                            {contents.map((heading) => (
-                                <li key={heading.id}>
-                                    <a href={`#${heading.id}`}>
-                                        {heading.text}
-                                    </a>
-                                </li>
-                            ))}
-                        </ol>
-                    </nav>
+                    <Contents headings={contents} />
                 ) : undefined
             }
         >

@@ -128,47 +128,6 @@
    end where the head's rule ends; only their text keeps a measure (a
    brief's sentences, a result's note, a callout's line). */
 
-.contents p {
-    margin: 0 0 var(--s-3);
-}
-.contentsTitle {
-    color: var(--text-quiet);
-    font: var(--type-label);
-    letter-spacing: var(--track-label);
-    text-transform: uppercase;
-}
-.contents ol {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-.contents li {
-    border-top: var(--rule-hair) solid var(--rule-quiet);
-}
-.contents a {
-    display: block;
-    padding: var(--s-2) 0 var(--s-2) var(--s-4);
-    border-left: var(--rule-strong) solid transparent;
-    color: var(--text-quiet);
-    font: var(--type-ui-row);
-    text-decoration: none;
-    transition: border-color var(--dur-state) var(--ease-dock);
-}
-@media (hover: hover) {
-    .contents a:hover {
-        color: var(--text);
-        text-decoration: underline;
-        text-decoration-thickness: var(--underline-w-lit);
-        text-underline-offset: var(--underline-offset);
-    }
-}
-/* The current section: the contents' one "now" mark, in orange, the 2px
-   bar an entry's rail draws (post.module.css), never a rule under a link. */
-.contents a[aria-current] {
-    border-left-color: var(--mark-now);
-    color: var(--text);
-}
-
 .value {
     color: var(--text);
     font-size: var(--step-0);

@@ -136,45 +136,7 @@
     text-wrap: pretty;
 }
 
-/* ---- The contents: the rail (≥ 960) or a box ---------------------- */
-.contents {
-    font: var(--type-ui-row);
-}
-.contentsTitle {
-    margin-bottom: var(--s-3);
-}
-/* The headings by name, unnumbered (premium D3): each title centred in its
-   44px target. */
-.contentsList {
-    margin: 0;
-    padding: 0;
-    border-left: var(--rule-hair) solid var(--rule-quiet);
-    list-style: none;
-}
-.contentsList a {
-    display: flex;
-    align-items: center;
-    min-height: var(--target);
-    margin-left: calc(-1 * var(--rule-hair));
-    padding: var(--s-1) 0 var(--s-1) var(--s-4);
-    border-left: var(--rule-strong) solid transparent;
-    color: var(--text-quiet);
-    text-decoration: none;
-    transition:
-        color var(--dur-hover) var(--ease-dock),
-        border-color var(--dur-state) var(--ease-dock);
-}
-@media (hover: hover) {
-    .contentsList a:hover {
-        color: var(--text);
-    }
-}
-/* The current section: the contents' one "now" mark, in orange. */
-.contentsList a[aria-current] {
-    border-left-color: var(--mark-now);
-    color: var(--text);
-}
-
+/* ---- The contents' box (the list: styles/components.css, .toc) ----- */
 /* The phone's box: a closed disclosure above the text. */
 .box {
     margin-bottom: var(--s-6);

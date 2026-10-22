@@ -1468,6 +1468,47 @@
         color: var(--text);
     }
 
+    /* ===== Contents (G1; components/ui/contents.tsx) =================== */
+    /* An entry's rail and phone box, and a project essay's rail: the
+       headings by name, unnumbered (premium D3), each title centred in
+       its 44px target on the list's hairline. */
+    .toc {
+        font: var(--type-ui-row);
+    }
+    .toc__title {
+        margin-bottom: var(--s-3);
+    }
+    .toc__list {
+        margin: 0;
+        padding: 0;
+        border-left: var(--rule-hair) solid var(--rule-quiet);
+        list-style: none;
+    }
+    .toc__list a {
+        display: flex;
+        align-items: center;
+        min-height: var(--target);
+        margin-left: calc(-1 * var(--rule-hair));
+        padding: var(--s-1) 0 var(--s-1) var(--s-4);
+        border-left: var(--rule-strong) solid transparent;
+        color: var(--text-quiet);
+        text-decoration: none;
+        transition:
+            color var(--dur-hover) var(--ease-dock),
+            border-color var(--dur-state) var(--ease-dock);
+    }
+    @media (hover: hover) {
+        .toc__list a:hover {
+            color: var(--text);
+        }
+    }
+    /* The current section: the contents' one "now" mark, in orange, a 2px
+       bar on the list's hairline, never a rule under the link. */
+    .toc__list a[aria-current] {
+        border-left-color: var(--mark-now);
+        color: var(--text);
+    }
+
     /* ===== Stats (site.css 4.9; components/ui/metrics.tsx) ============= */
     /* The value over its label, a meaningful hairline on top; the unit
        smaller and quieter. Two across on phones. */
