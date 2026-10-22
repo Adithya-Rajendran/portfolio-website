@@ -85,7 +85,7 @@
 }
 .row a {
     color: var(--text);
-    text-underline-offset: 0.18em;
+    text-underline-offset: var(--underline-offset);
 }
 /* A credential's verification page leaves the site: the outbound mark
    of the CV's other links. */

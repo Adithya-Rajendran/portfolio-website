@@ -73,7 +73,7 @@
     gap: var(--icon-gap);
     min-height: var(--target-inline);
     color: var(--text);
-    text-underline-offset: 0.2em;
+    text-underline-offset: var(--underline-offset);
 }
 .factLinks :global(.icon) {
     width: var(--icon-out);
@@ -152,13 +152,15 @@
     color: var(--text-quiet);
     font: var(--type-ui-row);
     text-decoration: none;
-    transition: border-color var(--dur-3) var(--ease-dock);
+    transition: border-color var(--dur-state) var(--ease-dock);
 }
-.contents a:hover {
-    color: var(--text);
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.2em;
+@media (hover: hover) {
+    .contents a:hover {
+        color: var(--text);
+        text-decoration: underline;
+        text-decoration-thickness: var(--underline-w-lit);
+        text-underline-offset: var(--underline-offset);
+    }
 }
 /* The current section: the contents' one "now" mark, in orange, the 2px
    bar an entry's rail draws (post.module.css), never a rule under a link. */

@@ -55,7 +55,8 @@ only live in comments or commit messages.
       the fonts note below.
     - `styles/base.css`, `layout.css`, `components.css` (the shared design
       system: header, footer, buttons, section tags, photographs and
-      plates…), `prose.css` (the long read under `.prose`: listings (their
+      plates…), `recipes.css` (the state hooks: `.lit`), `prose.css`
+      (the long read under `.prose`: listings (their
       Shiki tokens' italics, weights and underlines; the `--code-*` colours
       are tokens.css's), plates, callouts, footnotes and margin notes, the
       notes list, and their print rules), `los.css` (Loss of Signal)
@@ -1166,7 +1167,10 @@ loaded, only when that run cannot.
   under its tag, at one height on every page from 390 to 1920 px; and on
   home, `/about`, every post and project at 1440 and 390, no rule
   between a section head's hairline and the first words under it),
-  `accent`
+  `lit` (a Writing row, a project row, a tile, the stage title, a CV
+  item, a pager item, the crumb and a References row lighting its rule,
+  title underline and arrow on hover and on its own link's keyboard
+  focus, and not on a nested link's), `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
   Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440
   and 390 in both themes, identity marks and focus aside, and on

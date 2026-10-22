@@ -34,12 +34,12 @@ export default function Pager({
     if (!previous && !next && !all) return null;
     const item = (link: PagerLink, side: "previous" | "next") => (
         <Link
-            className={`pager__item pager__item--${side}`}
+            className={`pager__item pager__item--${side} lit`}
             href={link.href}
             rel={side === "next" ? "next" : "prev"}
         >
             <span className="pager__label">{link.label}</span>
-            <span className="pager__title">{link.title}</span>
+            <span className="pager__title lit__title">{link.title}</span>
             {link.meta ? (
                 <span className="pager__meta">{link.meta}</span>
             ) : null}

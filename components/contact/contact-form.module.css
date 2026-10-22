@@ -118,8 +118,8 @@
     outline: none;
 }
 .receivedTitle:focus-visible {
-    outline: var(--rule-strong) solid var(--focus);
-    outline-offset: 4px;
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-offset);
 }
 .again {
     margin-top: var(--s-5);

@@ -14,6 +14,9 @@
 }
 
 /* ---- Rows --------------------------------------------------------------- */
+/* Each row lights as one (`lit`, styles/recipes.css): on hover and on
+   its title's keyboard focus, an ink rule, the title underlined and the
+   arrow nudged. The whole row is the title's link. */
 .list {
     margin: 0;
     padding: 0;
@@ -26,7 +29,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s-2);
     padding-block: var(--s-5);
-    border-top: var(--rule-hair) solid var(--rule-quiet);
+    border-top: var(--rule-hair) solid var(--row-rule);
     transition:
         border-color var(--dur-hover) var(--ease-dock),
         background-color var(--dur-hover) var(--ease-dock);
@@ -62,9 +65,6 @@
         text-wrap: balance;
     }
 }
-.title a {
-    text-decoration: none;
-}
 .dek {
     max-width: var(--measure-copy);
     color: var(--text-quiet);
@@ -76,17 +76,6 @@
 }
 .arrow {
     display: none;
-}
-
-/* Hover: an ink rule, the title underlined and the arrow nudged. The
-   whole row is the title's link. */
-.row:hover {
-    border-top-color: var(--rule-lit);
-}
-.row:hover .title a {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.16em;
 }
 
 /* From 960px the rows go on shared tracks, unless stacked: a narrow
@@ -126,14 +115,6 @@
         justify-self: end;
         width: var(--icon-row);
         height: var(--icon-row);
-        color: var(--icon-quiet);
-        transition:
-            transform var(--dur-hover) var(--ease-dock),
-            color var(--dur-hover) var(--ease-dock);
-    }
-    .index:not(.stacked) .row:hover .arrow {
-        color: var(--text);
-        transform: translateX(var(--nudge));
     }
 }
 

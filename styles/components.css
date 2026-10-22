@@ -194,10 +194,12 @@
         background: var(--rule-lit);
         transform: scaleX(0);
         transform-origin: left center;
-        transition: transform var(--dur-3) var(--ease-transfer);
+        transition: transform var(--dur-state) var(--ease-transfer);
     }
-    .nav__link:hover::after {
-        transform: scaleX(0.35);
+    @media (hover: hover) {
+        .nav__link:hover::after {
+            transform: scaleX(0.35);
+        }
     }
     .nav__link[aria-current]::after {
         transform: scaleX(1);
@@ -226,7 +228,7 @@
         font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
-        text-underline-offset: 0.55em;
+        text-underline-offset: var(--underline-offset-caps);
         white-space: nowrap;
     }
     @media (min-width: 60rem) {
@@ -265,9 +267,11 @@
         width: var(--icon-control);
         height: var(--icon-control);
     }
-    .nav-toggle:hover {
-        border-color: var(--rule-lit);
-        background: var(--surface-lit);
+    @media (hover: hover) {
+        .nav-toggle:hover {
+            border-color: var(--rule-lit);
+            background: var(--surface-lit);
+        }
     }
     .nav__sheet-extra {
         display: none;
@@ -301,9 +305,13 @@
         width: var(--icon-control);
         height: var(--icon-control);
     }
-    .theme-switch__button:hover,
     .theme-switch__button[aria-expanded="true"] {
         color: var(--text);
+    }
+    @media (hover: hover) {
+        .theme-switch__button:hover {
+            color: var(--text);
+        }
     }
     .theme-switch__popover {
         position: absolute;
@@ -474,8 +482,10 @@
         white-space: nowrap;
         transition: color var(--dur-hover) var(--ease-dock);
     }
-    .motion-toggle:hover {
-        color: var(--text);
+    @media (hover: hover) {
+        .motion-toggle:hover {
+            color: var(--text);
+        }
     }
     .motion-toggle .icon {
         width: var(--icon-control);
@@ -527,19 +537,21 @@
         height: var(--icon-control);
         transition: transform var(--dur-hover) var(--ease-dock);
     }
-    .btn:hover {
-        border-color: var(--rule-lit);
-        background: var(--surface-lit);
-    }
-    .btn:hover .icon--nudge {
-        transform: translateX(var(--nudge));
+    @media (hover: hover) {
+        .btn:hover {
+            border-color: var(--rule-lit);
+            background: var(--surface-lit);
+        }
+        .btn:hover .icon--nudge {
+            transform: translateX(var(--nudge));
+        }
     }
     .btn:active {
         background: var(--surface-lit);
     }
     .btn[disabled],
     .btn[aria-disabled="true"] {
-        opacity: 0.45;
+        opacity: var(--opacity-disabled);
         cursor: not-allowed;
         background: transparent;
         border-color: var(--rule-firm);
@@ -551,7 +563,13 @@
         border-color: var(--fill);
         color: var(--bg);
     }
-    .btn--primary:hover,
+    @media (hover: hover) {
+        .btn--primary:hover {
+            background: var(--fill-hover);
+            border-color: var(--fill-hover);
+            color: var(--bg);
+        }
+    }
     .btn--primary:active {
         background: var(--fill-hover);
         border-color: var(--fill-hover);
@@ -561,12 +579,14 @@
         border-color: transparent;
         padding-inline: var(--s-1);
     }
-    .btn--quiet:hover {
-        background: transparent;
-        border-color: transparent;
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.45em;
+    @media (hover: hover) {
+        .btn--quiet:hover {
+            background: transparent;
+            border-color: transparent;
+            text-decoration: underline;
+            text-decoration-thickness: var(--underline-w-lit);
+            text-underline-offset: var(--underline-offset-caps);
+        }
     }
     .btn--sm {
         --btn-h: var(--target);
@@ -595,12 +615,14 @@
         height: var(--icon-control);
         transition: transform var(--dur-hover) var(--ease-dock);
     }
-    .link-arrow:hover {
-        border-bottom-color: var(--underline-lit);
-        box-shadow: 0 var(--rule-hair) 0 var(--underline-lit);
-    }
-    .link-arrow:hover .icon {
-        transform: translateX(var(--nudge));
+    @media (hover: hover) {
+        .link-arrow:hover {
+            border-bottom-color: var(--underline-lit);
+            box-shadow: 0 var(--rule-hair) 0 var(--underline-lit);
+        }
+        .link-arrow:hover .icon {
+            transform: translateX(var(--nudge));
+        }
     }
 
     /* Stretched link: the whole card is clickable, the title is the link. */
@@ -634,9 +656,11 @@
         position: relative;
         z-index: 2;
     }
-    a.tag:hover {
-        color: var(--text);
-        text-decoration: underline;
+    @media (hover: hover) {
+        a.tag:hover {
+            color: var(--text);
+            text-decoration: underline;
+        }
     }
 
     /* ===== Section head and page head (site.css 4.6, 4.27) ============= */
@@ -884,13 +908,15 @@
         color: var(--text-faint);
         opacity: 1;
     }
-    .input:hover,
-    .textarea:hover {
-        border-color: var(--rule-lit);
+    @media (hover: hover) {
+        .input:hover,
+        .textarea:hover {
+            border-color: var(--rule-lit);
+        }
     }
     .input:focus-visible,
     .textarea:focus-visible {
-        outline: var(--rule-strong) solid var(--focus);
+        outline: var(--focus-ring);
         outline-offset: 0;
         border-color: var(--focus);
         background: var(--surface-lit);
@@ -915,7 +941,7 @@
     }
     .input:disabled,
     .textarea:disabled {
-        opacity: 0.5;
+        opacity: var(--opacity-disabled);
         cursor: not-allowed;
     }
 
@@ -984,7 +1010,7 @@
         gap: var(--icon-gap);
         min-height: var(--target-inline);
         color: var(--text);
-        text-underline-offset: 0.18em;
+        text-underline-offset: var(--underline-offset);
     }
     .titleblock__links .icon {
         width: var(--icon-out);
@@ -1027,7 +1053,7 @@
         text-wrap: balance;
     }
     .q-item__title a {
-        text-underline-offset: 0.16em;
+        text-underline-offset: var(--underline-offset);
     }
     .q-item__title .icon {
         width: var(--icon-out-title);
@@ -1129,8 +1155,10 @@
         text-transform: none;
         text-wrap: pretty;
     }
-    .seg__input:hover + .seg__box {
-        color: var(--text);
+    @media (hover: hover) {
+        .seg__input:hover + .seg__box {
+            color: var(--text);
+        }
     }
     .seg__input:checked + .seg__box {
         position: relative;
@@ -1145,8 +1173,8 @@
     }
     .seg__input:focus-visible + .seg__box {
         z-index: 2;
-        outline: var(--rule-strong) solid var(--focus);
-        outline-offset: 2px;
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-offset);
     }
 
     /* ===== Key/value list (site.css 4.9) =============================== */
@@ -1191,8 +1219,10 @@
     /* ===== CV rows (site.css 4.13, on the log index's grammar) ========= */
     /* components/cv/cv-list.tsx: a mono column (dates, place) beside the
        title, organization, a serif line and the facts. A linked row is one
-       big target. The rows end where the section head's rule ends; the
-       serif line and the facts keep their own measures. */
+       big target, lit as a log row is (`lit`, styles/recipes.css: an ink
+       rule and the title underlined). The rows end where the section
+       head's rule ends; the serif line and the facts keep their own
+       measures. */
     .cv-list {
         margin: 0;
         padding: 0;
@@ -1205,7 +1235,7 @@
         grid-template-columns: minmax(0, 1fr);
         gap: var(--s-3);
         padding-block: var(--s-5);
-        border-top: var(--rule-hair) solid var(--rule-quiet);
+        border-top: var(--rule-hair) solid var(--row-rule);
         transition:
             border-color var(--dur-hover) var(--ease-dock),
             background-color var(--dur-hover) var(--ease-dock);
@@ -1251,9 +1281,6 @@
         .cv-item__title {
             text-wrap: balance;
         }
-    }
-    .cv-item__title a {
-        text-decoration: none;
     }
     .cv-item__ext {
         width: var(--icon-out-title);
@@ -1331,7 +1358,7 @@
         gap: var(--icon-gap);
         min-height: var(--target-inline);
         color: var(--text);
-        text-underline-offset: 0.18em;
+        text-underline-offset: var(--underline-offset);
     }
     .cv-item__link .icon {
         width: var(--icon-out);
@@ -1343,15 +1370,6 @@
         color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
-    }
-    /* Lit: the log row's hover (an ink rule and the title underlined). */
-    .cv-item:hover {
-        border-top-color: var(--rule-lit);
-    }
-    .cv-item:hover .cv-item__title a {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.16em;
     }
 
     /* ===== Photographs and plates (site.css 4.26, 4.27) ================= */
@@ -1448,12 +1466,6 @@
         align-items: center;
         min-height: var(--target);
         color: var(--text);
-        text-decoration: none;
-    }
-    .crumb-row__home:hover {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.3em;
     }
 
     /* ===== Stats (site.css 4.9; components/ui/metrics.tsx) ============= */
@@ -1558,16 +1570,20 @@
     .table tbody tr {
         transition: background-color var(--dur-hover) var(--ease-dock);
     }
-    .table tbody tr:hover {
-        background: linear-gradient(
-            to right,
-            var(--surface-lit),
-            transparent 85%
-        );
+    @media (hover: hover) {
+        .table tbody tr:hover {
+            background: linear-gradient(
+                to right,
+                var(--surface-lit),
+                transparent 85%
+            );
+        }
     }
     @media (forced-colors: active) {
-        .table tbody tr:hover {
-            background: none;
+        @media (hover: hover) {
+            .table tbody tr:hover {
+                background: none;
+            }
         }
     }
 
@@ -1601,7 +1617,7 @@
         row-gap: var(--s-2);
         height: 100%;
         padding: var(--s-5) 0;
-        border-top: var(--rule-hair) solid var(--rule-quiet);
+        border-top: var(--rule-hair) solid var(--row-rule);
         color: var(--text);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);
@@ -1657,10 +1673,6 @@
         grid-row: 1 / span 2;
         grid-column: 3;
         align-self: center;
-        color: var(--icon-quiet);
-        transition:
-            transform var(--dur-hover) var(--ease-dock),
-            color var(--dur-hover) var(--ease-dock);
     }
     /* Unnumbered rows (profile links): no number column. */
     .route-list--plain .route-row {
@@ -1672,18 +1684,6 @@
     .route-list--plain .route-row__arrow {
         grid-column: 2;
     }
-    .route-row:hover {
-        border-top-color: var(--rule-lit);
-    }
-    .route-row:hover .route-row__plain {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.2em;
-    }
-    .route-row:hover .route-row__arrow {
-        transform: translateX(var(--nudge));
-        color: var(--text);
-    }
 
     /* ===== Pager (contract §4; components/ui/pager.tsx) ================ */
     .pager {
@@ -1692,18 +1692,16 @@
         gap: var(--s-4) var(--gutter);
     }
     .pager__item {
+        --row-rest: var(--rule-firm);
         display: flex;
         flex-direction: column;
         gap: var(--s-2);
         min-width: 0;
         padding: var(--s-4) 0 var(--s-2);
-        border-top: var(--rule-strong) solid var(--rule-firm);
+        border-top: var(--rule-strong) solid var(--row-rule);
         color: var(--text);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);
-    }
-    .pager__item:hover {
-        border-top-color: var(--rule-lit);
     }
     .pager__label {
         color: var(--text-quiet);
@@ -1714,11 +1712,6 @@
     .pager__title {
         font: var(--type-title-sm);
         text-wrap: balance;
-    }
-    .pager__item:hover .pager__title {
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 0.18em;
     }
     .pager__meta {
         color: var(--text-faint);

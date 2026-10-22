@@ -55,12 +55,15 @@ export default function MissionStage({
             <div className={styles.stageCopy}>
                 <MissionLine mission={mission} />
                 <Heading className={styles.stageHeading}>
-                    <Link href={mission.href}>
+                    <Link className="lit lit__title" href={mission.href}>
                         {mission.title}
                         {/* Glued to the last word: no line holds the
                             arrow alone. */}
                         {"\u00a0"}
-                        <Icon name="arrow" className={styles.stageArrow} />
+                        <Icon
+                            name="arrow"
+                            className={`lit__arrow ${styles.stageArrow}`}
+                        />
                     </Link>
                 </Heading>
                 {mission.summary ? (

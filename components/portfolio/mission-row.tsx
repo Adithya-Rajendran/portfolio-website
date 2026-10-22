@@ -31,7 +31,9 @@ export default function MissionRow({
     return (
         <li
             className={
-                cover?.asset ? `${styles.row} ${styles.rowCovered}` : styles.row
+                cover?.asset
+                    ? `lit ${styles.row} ${styles.rowCovered}`
+                    : `lit ${styles.row}`
             }
         >
             <p className={styles.rowLine}>
@@ -43,7 +45,7 @@ export default function MissionRow({
                 ) : null}
             </p>
             <Heading className={styles.rowTitle}>
-                <Link className="stretch" href={mission.href}>
+                <Link className="stretch lit__title" href={mission.href}>
                     {mission.title}
                 </Link>
             </Heading>
@@ -62,7 +64,7 @@ export default function MissionRow({
                     <KeepWhole text={mission.summary} />
                 </p>
             ) : null}
-            <Icon name="arrow" className={styles.rowArrow} />
+            <Icon name="arrow" className={`lit__arrow ${styles.rowArrow}`} />
         </li>
     );
 }

@@ -501,6 +501,35 @@ export const COMPONENT_PROPERTIES: Readonly<
         ],
         reason: "A section head hands its hairline to its first row: it sets this to 0, and each ruled list's first row reads it for its rule's width.",
     },
+    "--row-rest": {
+        files: [
+            "styles/components.css",
+            "styles/recipes.css",
+            "components/portfolio/missions.module.css",
+        ],
+        reason: "A lit row's resting rule, per tier: the firm rule for project rows, tiles and the pager (the quiet rule unset); `lit` (styles/recipes.css) reads it.",
+    },
+    "--row-rule": {
+        files: [
+            "styles/components.css",
+            "styles/recipes.css",
+            "components/blogs/log-index.module.css",
+            "components/portfolio/missions.module.css",
+        ],
+        reason: "A lit row's rule colour: `lit` sets it, at rest and lit, and each ruled row reads it for its border.",
+    },
+    "--title-line": {
+        files: ["styles/recipes.css"],
+        reason: "A lit row's title underline colour: transparent at rest, the ink lit.",
+    },
+    "--arrow-x": {
+        files: ["styles/recipes.css"],
+        reason: "A lit row's arrow nudge: none at rest, --nudge lit.",
+    },
+    "--arrow-ink": {
+        files: ["styles/recipes.css"],
+        reason: "A lit row's arrow colour: the quiet icon ink at rest, the text's lit.",
+    },
     "--open-to-gap": {
         files: ["styles/components.css"],
         reason: "OpenToItems: the room the separating dot takes between whole parts, per voice.",

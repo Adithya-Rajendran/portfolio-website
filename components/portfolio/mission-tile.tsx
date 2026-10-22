@@ -43,16 +43,19 @@ export default function MissionTile({
         <article
             className={
                 cover?.asset
-                    ? `${styles.tile} ${styles.tileCovered}`
-                    : styles.tile
+                    ? `lit ${styles.tile} ${styles.tileCovered}`
+                    : `lit ${styles.tile}`
             }
         >
             <div className={styles.tileHead}>
                 <MissionLine mission={mission} />
-                <Icon name="arrow" className={styles.tileArrow} />
+                <Icon
+                    name="arrow"
+                    className={`lit__arrow ${styles.tileArrow}`}
+                />
             </div>
             <Heading className={styles.tileName}>
-                <Link className="stretch" href={mission.href}>
+                <Link className="stretch lit__title" href={mission.href}>
                     {mission.title}
                 </Link>
             </Heading>

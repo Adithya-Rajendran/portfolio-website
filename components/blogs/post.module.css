@@ -162,10 +162,12 @@
     text-decoration: none;
     transition:
         color var(--dur-hover) var(--ease-dock),
-        border-color var(--dur-3) var(--ease-dock);
+        border-color var(--dur-state) var(--ease-dock);
 }
-.contentsList a:hover {
-    color: var(--text);
+@media (hover: hover) {
+    .contentsList a:hover {
+        color: var(--text);
+    }
 }
 /* The current section: the contents' one "now" mark, in orange. */
 .contentsList a[aria-current] {
@@ -203,9 +205,11 @@
 .box[open] > .boxSummary::after {
     content: "\2212";
 }
-.boxSummary:hover {
-    border-color: var(--rule-lit);
-    background: var(--surface-lit);
+@media (hover: hover) {
+    .boxSummary:hover {
+        border-color: var(--rule-lit);
+        background: var(--surface-lit);
+    }
 }
 .boxBody {
     padding-top: var(--s-4);

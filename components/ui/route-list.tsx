@@ -69,7 +69,7 @@ export default function RouteList({
                                         <span className="sr-only">, </span>
                                     </span>
                                 ) : null}
-                                <span className="route-row__plain">
+                                <span className="route-row__plain lit__title">
                                     {item.plain}
                                 </span>
                             </span>
@@ -81,7 +81,7 @@ export default function RouteList({
                             ) : null}
                             <Icon
                                 name={item.external ? "external" : "arrow"}
-                                className="route-row__arrow"
+                                className="route-row__arrow lit__arrow"
                             />
                         </>
                     );
@@ -89,7 +89,7 @@ export default function RouteList({
                         <li key={item.key}>
                             {item.external ? (
                                 <a
-                                    className="route-row"
+                                    className="route-row lit"
                                     href={item.href}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -97,7 +97,10 @@ export default function RouteList({
                                     {content}
                                 </a>
                             ) : (
-                                <Link className="route-row" href={item.href}>
+                                <Link
+                                    className="route-row lit"
+                                    href={item.href}
+                                >
                                     {content}
                                 </Link>
                             )}

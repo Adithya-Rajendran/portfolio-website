@@ -271,9 +271,13 @@
         width: var(--icon-control);
         height: var(--icon-control);
     }
-    .listing .copy__btn:hover,
     .listing .copy__btn:focus-visible {
         color: var(--text);
+    }
+    @media (hover: hover) {
+        .listing .copy__btn:hover {
+            color: var(--text);
+        }
     }
     /* The scroll box is the focusable, labelled region. A line longer
        than the box fades out at the edge it continues past (and back in
@@ -303,7 +307,7 @@
         }
     }
     .listing__code:focus-visible {
-        outline-offset: -2px;
+        outline-offset: var(--focus-offset-inset);
     }
     .listing__code pre {
         margin: 0;
@@ -334,8 +338,8 @@
     .listing__code span[style*="--code-token-link"] {
         text-decoration: underline;
         text-decoration-color: var(--underline);
-        text-decoration-thickness: 1px;
-        text-underline-offset: 0.2em;
+        text-decoration-thickness: var(--underline-w);
+        text-underline-offset: var(--underline-offset);
     }
     /* Highlighted lines (the Studio's `highlightedLines`): a lit surface
        and an ink mark in the gutter, so the line is not told apart by its
@@ -477,12 +481,14 @@
         content: "]";
         color: var(--text-faint);
     }
-    .fnref a:hover {
-        text-decoration: underline;
+    @media (hover: hover) {
+        .fnref a:hover {
+            text-decoration: underline;
+        }
     }
     .fnref:target {
         background: var(--surface-lit);
-        outline: 0.2em solid var(--surface-lit);
+        outline: var(--target-halo) solid var(--surface-lit);
     }
     /* The margin copy of a note (≥ 1280px): floated into the space right
        of the measure, beside the line that cites it. Decorative; the
@@ -570,7 +576,7 @@
     }
     .notes__item:target {
         background: var(--surface-lit);
-        outline: 0.3em solid var(--surface-lit);
+        outline: var(--target-halo) solid var(--surface-lit);
     }
 }
 

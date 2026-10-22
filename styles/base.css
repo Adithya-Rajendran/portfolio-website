@@ -63,21 +63,26 @@
     }
 
     /* One hover grammar, site-wide (contract §3): an ink-3 hairline that
-       turns ink-1 and 2px, in 150ms; an arrow beside it nudges 4px. */
+       turns ink-1 and 2px, in 150ms, where a pointer hovers; an arrow
+       beside it nudges 4px. A row, tile or title lights through `lit`
+       (styles/recipes.css). */
     a {
         color: inherit;
         text-decoration-line: underline;
         text-decoration-color: var(--underline);
-        text-decoration-thickness: 1px;
-        text-underline-offset: 0.22em;
+        text-decoration-thickness: var(--underline-w);
+        text-underline-offset: var(--underline-offset);
         transition:
             text-decoration-color var(--dur-hover) var(--ease-dock),
             text-decoration-thickness var(--dur-hover) var(--ease-dock),
             color var(--dur-hover) var(--ease-dock);
     }
-    a:hover {
-        text-decoration-color: var(--underline-lit);
-        text-decoration-thickness: 2px;
+    @media (hover: hover) {
+        a:hover {
+            color: var(--text);
+            text-decoration-color: var(--underline-lit);
+            text-decoration-thickness: var(--underline-w-lit);
+        }
     }
 
     svg {
@@ -93,8 +98,8 @@
     }
     /* A 2px ring in the focus colour, never animated. */
     :focus-visible {
-        outline: var(--rule-strong) solid var(--focus);
-        outline-offset: 3px;
+        outline: var(--focus-ring);
+        outline-offset: var(--focus-offset);
     }
 
     ::selection {
@@ -155,12 +160,18 @@
 }
 
 /* The theme switch is a same-document view transition (lib/prefs.ts): a
-   short cross-fade of the whole page, header included. Transitions on the
-   old snapshot would lag behind it, so they are off for its duration. */
+   short cross-fade of the whole page, header included, timed as a state
+   change (--dur-state, the dock ease). Transitions on the old snapshot
+   would lag behind it, so they are off for its duration. */
 html[data-vt="theme"] *,
 html[data-vt="theme"] *::before,
 html[data-vt="theme"] *::after {
     transition: none !important;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: var(--dur-state);
+    animation-timing-function: var(--ease-dock);
 }
 
 /* Spatial motion runs only with html[data-motion="full"] (set by the boot

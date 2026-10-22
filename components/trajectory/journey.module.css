@@ -170,9 +170,9 @@
     visibility: hidden;
     transform: translateY(var(--rise));
     transition:
-        opacity var(--dur-5) var(--ease-dock),
-        transform var(--dur-5) var(--ease-dock),
-        visibility 0s linear var(--dur-5);
+        opacity var(--dur-enter) var(--ease-dock),
+        transform var(--dur-enter) var(--ease-dock),
+        visibility 0s linear var(--dur-enter);
 }
 
 :global(html[data-js]) .card[data-on] {
@@ -180,8 +180,8 @@
     visibility: visible;
     transform: none;
     transition:
-        opacity var(--dur-5) var(--ease-dock) 0.08s,
-        transform var(--dur-5) var(--ease-dock) 0.08s,
+        opacity var(--dur-enter) var(--ease-dock) var(--stagger-step),
+        transform var(--dur-enter) var(--ease-dock) var(--stagger-step),
         visibility 0s;
 }
 
@@ -257,8 +257,10 @@
     border: var(--rule-hair) solid var(--dot-ring);
 }
 
-.rail button:hover {
-    color: var(--text);
+@media (hover: hover) {
+    .rail button:hover {
+        color: var(--text);
+    }
 }
 
 .rail button[data-past] {
@@ -480,7 +482,7 @@
         padding: 6px 0 4px;
     }
     .rail button:focus-visible {
-        outline-offset: 2px;
+        outline-offset: var(--focus-offset-tight);
     }
     .rail button::before {
         left: 0;

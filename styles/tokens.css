@@ -355,13 +355,6 @@
         --star-mid: 1.6px;
         --star-bright: 2.3px;
         --size-card-title: 1.5rem; /* the flight card's title below 60rem */
-
-        /* ---- migration aliases ------------------------------------- */
-        /* The old names, kept while a stylesheet still reads them; each
-           goes in the change that moves its last reader to the scale. */
-        --dur-3: var(--dur-state);
-        --dur-5: var(--dur-enter);
-        --dur-6: var(--dur-reveal);
     }
 
     @media (min-width: 37.5rem) {

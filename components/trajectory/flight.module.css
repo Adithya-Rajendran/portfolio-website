@@ -22,7 +22,7 @@
        edge, set when the stage is sized). */
     clip-path: inset(0 0 calc(100% - var(--record, 100%)) 0);
     opacity: 0;
-    transition: opacity var(--dur-6) var(--ease-dock);
+    transition: opacity var(--dur-reveal) var(--ease-dock);
 }
 
 .host[data-ready] > canvas {
@@ -37,7 +37,7 @@
     overflow: hidden;
     container-type: size;
     pointer-events: none;
-    transition: opacity var(--dur-6) var(--ease-dock);
+    transition: opacity var(--dur-reveal) var(--ease-dock);
 }
 
 .host[data-ready] > .poster {
@@ -189,7 +189,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    transition: opacity var(--dur-6) var(--ease-dock);
+    transition: opacity var(--dur-reveal) var(--ease-dock);
 }
 
 /* No label before its world is drawn, nor over a lost scene. */

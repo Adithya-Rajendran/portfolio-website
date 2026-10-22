@@ -255,15 +255,19 @@
     font: var(--type-ui);
     text-wrap: balance;
 }
-.latest:hover {
-    color: var(--text);
+@media (hover: hover) {
+    .latest:hover {
+        color: var(--text);
+    }
 }
 /* Over the photograph the CV stays a hairline, and fills with ink on
    hover: no fill at rest. */
-.routes :global(.btn):hover {
-    border-color: var(--rule-lit);
-    background: var(--fill);
-    color: var(--bg);
+@media (hover: hover) {
+    .routes :global(.btn):hover {
+        border-color: var(--rule-lit);
+        background: var(--fill);
+        color: var(--bg);
+    }
 }
 
 .foot {
@@ -283,10 +287,12 @@
     display: inline-block;
     padding-block: calc((var(--target) - 1lh) / 2);
     color: inherit;
-    text-underline-offset: 0.3em;
+    text-underline-offset: var(--underline-offset);
 }
-.credit a:hover {
-    color: var(--text);
+@media (hover: hover) {
+    .credit a:hover {
+        color: var(--text);
+    }
 }
 /* The credit's parts and the frame's NASA ID, each kept whole: on phones
    one a line, with no separator. */
