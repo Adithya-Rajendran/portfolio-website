@@ -589,8 +589,8 @@
 @layer utilities {
     @media print {
         .prose {
-            font-size: 10.5pt;
-            line-height: 1.5;
+            font-size: var(--print-long);
+            line-height: var(--lh-text);
         }
         .prose > * {
             max-width: none;
@@ -600,7 +600,7 @@
            than the 10.5pt text. A heading's code keeps the heading's
            size. */
         .prose :not(pre) > code {
-            font-size: 0.85em;
+            font-size: var(--print-code);
         }
         .prose :is(h2, h3, h4) code {
             font-size: inherit;
@@ -611,7 +611,7 @@
         }
         /* Paper drops the fill: hairlines above and below instead. */
         .listing {
-            border-block: 1px solid var(--rule-2);
+            border-block: var(--paper-hair) solid var(--rule-firm);
             break-inside: auto;
         }
         .listing__bar {
@@ -644,7 +644,8 @@
         .prose a[href^="http"]::after {
             content: " (" attr(href) ")";
             color: var(--ink-2);
-            font: 7.5pt var(--font-mono);
+            font: var(--weight-regular) var(--print-data) / normal
+                var(--font-mono);
             overflow-wrap: anywhere;
         }
     }

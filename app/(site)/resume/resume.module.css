@@ -130,8 +130,8 @@
    ====================================================================== */
 @media print {
     .page {
-        font-size: 9.2pt;
-        line-height: 1.38;
+        font-size: var(--print-base);
+        line-height: var(--lh-paper-base);
     }
     .band {
         display: none !important;
@@ -144,7 +144,7 @@
 
     .mast {
         padding-bottom: 3mm;
-        border-bottom: 1.25pt solid var(--ink-1);
+        border-bottom: var(--paper-strong) solid var(--rule-ink);
     }
     .mast > * {
         display: block;
@@ -156,10 +156,11 @@
         gap: 4mm;
         margin: 0 0 4mm;
         padding-bottom: 1.4mm;
-        border-bottom: 0.6pt solid var(--rule-2);
+        border-bottom: var(--paper-hair) solid var(--rule-firm);
         color: var(--ink-2);
-        font: 400 7.6pt / 1.2 var(--font-mono);
-        letter-spacing: 0.04em;
+        font: var(--weight-regular) var(--print-data) / var(--lh-snug)
+            var(--font-mono);
+        letter-spacing: var(--track-paper-control);
         text-transform: uppercase;
     }
     .sheetDoc {
@@ -174,22 +175,26 @@
         break-before: page;
     }
     .mastName {
-        font: var(--weight-display) 21pt / 1 var(--font-display);
-        letter-spacing: 0.115em;
+        font: var(--weight-display) var(--print-name) / var(--lh-solid)
+            var(--font-display);
+        letter-spacing: var(--track-name);
         text-transform: uppercase;
     }
     .mastRole {
         margin-top: 2mm;
-        font: 400 10.2pt / 1.3 var(--font-display);
+        font: var(--weight-regular) var(--print-role) / var(--lh-paper-tight)
+            var(--font-display);
     }
     .mastLinks {
         margin-top: 1.2mm;
         color: var(--ink-2);
-        font: 400 7.6pt / 1.4 var(--font-mono);
+        font: var(--weight-regular) var(--print-data) / var(--lh-compact)
+            var(--font-mono);
     }
     .mastOpen {
         margin-top: 1.4mm;
-        font: 400 8.8pt / 1.35 var(--font-display);
+        font: var(--weight-regular) var(--print-open) / var(--lh-paper)
+            var(--font-display);
     }
     .mastKey {
         display: inline-flex;
@@ -197,7 +202,8 @@
         gap: 1.2mm;
         margin-right: 2mm;
         color: var(--ink-1);
-        font: 400 7pt / 1 var(--font-label);
+        font: var(--weight-regular) var(--print-key) / var(--lh-solid)
+            var(--font-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -212,7 +218,8 @@
     }
     .mastSummary {
         margin-top: 2.2mm;
-        font: 400 9pt / 1.42 var(--font-long);
+        font: var(--weight-regular) var(--print-summary) / var(--lh-paper-loose)
+            var(--font-long);
     }
 
     .cvBody {
@@ -230,9 +237,9 @@
     .cv :global(.doc-section__tag) {
         margin-bottom: 1.3mm;
         padding: 0 0 0.7mm;
-        border-bottom: 0.6pt solid var(--rule-2);
-        font-size: 7pt;
-        letter-spacing: 0.14em;
+        border-bottom: var(--paper-hair) solid var(--rule-firm);
+        font-size: var(--print-key);
+        letter-spacing: var(--track-paper-section);
         break-after: avoid;
     }
     .cv :global(.doc-section__tag)::after {
@@ -255,11 +262,12 @@
         column-gap: 4.5mm;
         padding: 0 0 0.6mm;
         border: 0;
-        font: 400 8.4pt / 1.35 var(--font-display);
+        font: var(--weight-regular) var(--print-text) / var(--lh-paper)
+            var(--font-display);
         break-inside: avoid;
     }
     .rowDate {
-        font-size: 7.6pt;
+        font-size: var(--print-data);
         line-height: var(--lh-text);
     }
     .row a {
@@ -270,7 +278,8 @@
     }
     .subhead {
         margin: 1.2mm 0 0.6mm;
-        font: 500 8.4pt / 1.3 var(--font-display);
+        font: var(--weight-medium) var(--print-text) / var(--lh-paper-tight)
+            var(--font-display);
         letter-spacing: 0;
         text-transform: none;
         color: var(--text);

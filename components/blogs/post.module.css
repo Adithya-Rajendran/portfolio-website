@@ -320,7 +320,7 @@
         margin-inline: 0;
         margin-bottom: 12pt;
         padding-bottom: 6pt;
-        border-bottom: 1px solid var(--rule-2);
+        border-bottom: var(--paper-hair) solid var(--rule-firm);
     }
     .layout {
         display: block;
@@ -336,7 +336,7 @@
     .title {
         width: auto;
         max-width: none;
-        font-size: 22pt;
+        font-size: var(--print-display);
         line-height: var(--lh-paper-display);
     }
     .main :global(.prose > .plate--wide),
@@ -344,7 +344,7 @@
         width: auto;
     }
     .dek {
-        font-size: 12pt;
+        font-size: var(--print-dek);
         line-height: var(--lh-paper-dek);
     }
     .after {
