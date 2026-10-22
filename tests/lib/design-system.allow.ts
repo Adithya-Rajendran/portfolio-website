@@ -163,6 +163,14 @@ export const ALLOWANCES: readonly Allowance[] = [
         reason: "The hero copy's clearance above the drawn limb: a share of the same crop.",
     },
     {
+        file: "components/home/hero.module.css",
+        context: "@media (max-width: 47.99rem)",
+        selector: ".photo",
+        property: "bottom",
+        value: "calc(var(--photo-h) * -0.06)",
+        reason: "The hero photograph's crop on a phone: its box sinks a share of its own height below the hero's foot (the crop's night side is deep enough).",
+    },
+    {
         file: "components/portfolio/missions.module.css",
         context: "",
         selector: ".tileArrow",

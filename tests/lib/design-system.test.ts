@@ -18,7 +18,6 @@ import {
     SCENE_COLOURS,
     TAILWIND_COLLISIONS,
 } from "./design-system.allow";
-import { RATCHET } from "./design-system.ratchet";
 
 /**
  * The design system's contract (CLAUDE.md, styles/tokens.css): every
@@ -29,13 +28,6 @@ import { RATCHET } from "./design-system.ratchet";
  * refuses what the contract does not allow. Exceptions are
  * tests/lib/design-system.allow.ts's, each with its reason; an exception
  * that excuses nothing fails.
- *
- * Until the migration ends, tests/lib/design-system.ratchet.ts lists the
- * failures still to fix, keyed `rule|file|context|selector|property` (or
- * `T<n>|file|snippet`) with a count. A failure beyond its key's count
- * fails, and so does a key whose count fell: a change that fixes one
- * deletes or lowers its key. `DS_PRINT_RATCHET=1 pnpm exec vitest run
- * tests/lib/design-system.test.ts` prints the ratchet for this tree.
  */
 
 const ROOT = process.cwd();
@@ -314,8 +306,6 @@ interface Failure {
     property: string;
     value: string;
     why: string;
-    /** The ratchet's key. */
-    key: string;
 }
 
 const declFailure = (
@@ -332,7 +322,6 @@ const declFailure = (
     property,
     value: decl.value,
     why,
-    key: [rule, decl.file, decl.context, decl.selector, property].join("|"),
 });
 
 const sourceFailure = (
@@ -350,7 +339,6 @@ const sourceFailure = (
     property: snippet,
     value: "",
     why,
-    key: [rule, file, snippet].join("|"),
 });
 
 const componentFiles = (name: string): readonly string[] =>
@@ -798,13 +786,6 @@ function mediaFailures(): Failure[] {
                     property: params,
                     value: "",
                     why: `not a breakpoint: ${bad.join(", ")}`,
-                    key: [
-                        "R14",
-                        file,
-                        chainOf(node).join(" > "),
-                        "@media",
-                        params,
-                    ].join("|"),
                 });
         });
     }
@@ -830,16 +811,23 @@ function hoverFailures(): Failure[] {
                 property: ":hover",
                 value: "",
                 why: "a :hover outside @media (hover: hover)",
-                key: ["R15", file, context, selector, ":hover"].join("|"),
             });
         });
     }
     return out;
 }
 
+/** Where a global class first appears. */
+interface ClassSite {
+    file: string;
+    line: number;
+    context: string;
+    selector: string;
+}
+
 /** The global classes of styles/*.css, outside paper. */
-function globalClasses(): Map<string, string> {
-    const classes = new Map<string, string>();
+function globalClasses(): Map<string, ClassSite> {
+    const classes = new Map<string, ClassSite>();
     for (const [file, root] of ROOTS) {
         if (!file.startsWith("styles/")) continue;
         root.walkRules((node) => {
@@ -855,7 +843,13 @@ function globalClasses(): Map<string, string> {
             for (const [, name] of selector.matchAll(
                 /\.(-?[_a-zA-Z][\w-]*)/g,
             )) {
-                if (!classes.has(name)) classes.set(name, file);
+                if (!classes.has(name))
+                    classes.set(name, {
+                        file,
+                        line: node.source?.start?.line ?? 0,
+                        context: chainOf(node).join(" > "),
+                        selector: collapse(node.selector),
+                    });
             }
         });
     }
@@ -863,7 +857,7 @@ function globalClasses(): Map<string, string> {
 }
 
 /** G1: the global classes Tailwind also generates a utility for. */
-async function tailwindCollisions(): Promise<Map<string, string>> {
+async function tailwindCollisions(): Promise<Map<string, ClassSite>> {
     const classes = globalClasses();
     const css = `@import "tailwindcss" source(none);\n@source inline("${[
         ...classes.keys(),
@@ -1328,7 +1322,7 @@ function colourCopyFailures(): {
 // ---- the run ----------------------------------------------------------
 
 let failures: Failure[] = [];
-let collisions = new Map<string, string>();
+let collisions = new Map<string, ClassSite>();
 let scene = new Map<string, Set<string>>();
 let masks = new Map<string, Set<string>>();
 const excused = new Set<number>();
@@ -1360,15 +1354,16 @@ beforeAll(async () => {
         ...hoverFailures(),
         ...[...collisions]
             .filter(([name]) => !Object.hasOwn(TAILWIND_COLLISIONS, name))
-            .map(([name, file]) =>
-                sourceFailure(
-                    "G1",
-                    file,
-                    0,
-                    `.${name}`,
-                    "a global class that is also a Tailwind utility",
-                ),
-            ),
+            .map(([name, { file, line, context, selector }]): Failure => ({
+                rule: "G1",
+                file,
+                line,
+                context,
+                selector,
+                property: `.${name}`,
+                value: "",
+                why: "a global class that is also a Tailwind utility",
+            })),
         ...pairingFailures(),
         ...styleFailures(),
         ...breakpointFailures(),
@@ -1382,13 +1377,6 @@ beforeAll(async () => {
     });
 }, 60_000);
 
-const counts = () => {
-    const map = new Map<string, number>();
-    for (const failure of failures)
-        map.set(failure.key, (map.get(failure.key) ?? 0) + 1);
-    return map;
-};
-
 const describeFailure = (f: Failure) =>
     `${f.rule} ${f.file}:${f.line} ${[f.context, f.selector]
         .filter(Boolean)
@@ -1397,51 +1385,8 @@ const describeFailure = (f: Failure) =>
         )} { ${f.property}${f.value ? `: ${f.value}` : ""} }: ${f.why}`;
 
 describe("the design system", () => {
-    it("refuses every failure the ratchet does not list", () => {
-        if (process.env.DS_PRINT_RATCHET) {
-            const keys = [...counts()].sort(([a], [b]) => (a < b ? -1 : 1));
-            process.stdout.write(
-                [
-                    "---- design-system.ratchet.ts ----",
-                    "/**",
-                    " * The design-system test's failures still to fix at this tree",
-                    " * (tests/lib/design-system.test.ts), keyed",
-                    " * `rule|file|context|selector|property` (or `T<n>|file|snippet`),",
-                    " * with their counts. A change that fixes one deletes or lowers its",
-                    " * key; nothing is ever added. Generated by `DS_PRINT_RATCHET=1",
-                    " * pnpm exec vitest run tests/lib/design-system.test.ts`. The",
-                    " * migration's last step deletes this file.",
-                    " */",
-                    "export const RATCHET: Readonly<Record<string, number>> = {",
-                    ...keys.map(
-                        ([key, count]) =>
-                            `    ${JSON.stringify(key)}: ${count},`,
-                    ),
-                    "};",
-                    "---- end ----",
-                    "",
-                ].join("\n"),
-            );
-            return;
-        }
-        const now = counts();
-        const over = failures.filter(
-            (failure) =>
-                (now.get(failure.key) ?? 0) >
-                (Object.hasOwn(RATCHET, failure.key)
-                    ? RATCHET[failure.key]
-                    : 0),
-        );
-        expect(over.map(describeFailure)).toEqual([]);
-    });
-
-    it("keeps the ratchet current: a fixed failure's key goes", () => {
-        if (process.env.DS_PRINT_RATCHET) return;
-        const now = counts();
-        const fell = Object.entries(RATCHET)
-            .filter(([key, count]) => (now.get(key) ?? 0) < count)
-            .map(([key, count]) => `${key} (${count} → ${now.get(key) ?? 0})`);
-        expect(fell).toEqual([]);
+    it("refuses everything the allow-list does not excuse", () => {
+        expect(failures.map(describeFailure)).toEqual([]);
     });
 
     it("allows nothing stale", () => {
