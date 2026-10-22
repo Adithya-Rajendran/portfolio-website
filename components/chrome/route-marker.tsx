@@ -6,8 +6,9 @@ import { movedFragment } from "@/lib/navigation";
 import { applyRouteTheme } from "@/lib/prefs";
 
 /**
- * Sets `html[data-route]` to the current path, for route-aware chrome
- * styles; applies the path's theme when the visitor has chosen none (a
+ * Keeps `html[data-route]` on the current path after a client navigation
+ * (the boot script sets it on a full load, lib/theme-boot.ts), for
+ * route-aware chrome styles; applies the path's theme when the visitor has chosen none (a
  * post follows the OS, lib/theme-boot.ts), as the boot script does on a
  * full load; and sends an old /portfolio fragment on to the page that
  * section moved to (`movedFragment`).

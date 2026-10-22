@@ -79,9 +79,11 @@ only live in comments or commit messages.
   missing means Void, except on a post, `/blog/<slug>` (`POST_PATH`),
   which follows the OS like `auto`, so a light system reads it in Flight
   Manual: premium D3) and `ar-motion`
-  (`full` | `reduced`), and sets `data-theme`, `data-motion` and `data-js`
-  on `<html>` before the first paint. After a client navigation
-  `RouteMarker` applies the new path's default the same way
+  (`full` | `reduced`), and sets `data-theme`, `data-motion`,
+  `data-route` (the path, so the first paint knows the page: home's
+  wordmark and Pause motion) and `data-js` on `<html>` before the first
+  paint. After a client navigation `RouteMarker` updates `data-route`
+  and applies the new path's default the same way
   (`applyRouteTheme` in `lib/prefs.ts`), and the theme choice shows the
   preference in force there (`themePref`: System on a post, Dark
   elsewhere, until one is stored). The server renders the literal
@@ -539,10 +541,11 @@ only live in comments or commit messages.
   header's wordmark steps aside meanwhile, so the name is on screen once:
   never twice, and never not at all while the rest of the hero, or the
   projects under it, fill the view. The observer first reports long
-  after the first paint, so until that report (the starfield's
-  `data-observed`, set in the same callback) the wordmark is aside on
-  home as well (`styles/components.css`): a load never shows the name
-  twice, not even for a frame.
+  after the first paint, so until that report (`html[data-hero-seen]`,
+  set in the same callback) the wordmark is aside on home as well,
+  from the first paint, which the boot script's `data-route` names
+  (`styles/components.css`): a load never shows the name twice, not
+  even for a frame.
   Without JavaScript it stays. Over
   it: the name, the profile's headline and the availability line (only
   when set), each split into parts kept whole (`OpenToItems`) that stack

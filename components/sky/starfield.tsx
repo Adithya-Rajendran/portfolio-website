@@ -39,12 +39,12 @@ const LOOK: Record<Magnitude, { r: number; alpha: number }> = {
  * `running` or `stopped` for tests. A second observer, in both themes,
  * sets `html[data-hero]` while the zone's name (its h1) shows below the
  * header, so the header's wordmark steps aside only while the hero names
- * the owner: the name is always on screen once. Its first report marks
- * the canvas `data-observed` in the same callback; until then (the
- * server renders neither) styles/components.css keeps the wordmark aside
- * on home, so it never shows between the first paint and that report.
- * Cache Components hides a visited page instead of unmounting it, so the
- * effect's cleanup stops the loop and clears both attributes.
+ * the owner: the name is always on screen once. Its first report also
+ * sets `html[data-hero-seen]`; until then styles/components.css keeps the
+ * wordmark aside on home (the boot script's `data-route`), so it never
+ * shows between the first paint and that report. Cache Components hides
+ * a visited page instead of unmounting it, so the effect's cleanup stops
+ * the loop and clears both attributes.
  */
 export default function Starfield({ className }: { className?: string }) {
     const ref = useRef<HTMLCanvasElement>(null);
@@ -184,7 +184,7 @@ export default function Starfield({ className }: { className?: string }) {
         const named = new IntersectionObserver(
             ([entry]) => {
                 root.toggleAttribute("data-hero", !!entry?.isIntersecting);
-                canvas.dataset.observed = "";
+                root.toggleAttribute("data-hero-seen", true);
             },
             { rootMargin: `-${header}px 0px 0px 0px` },
         );
@@ -203,7 +203,7 @@ export default function Starfield({ className }: { className?: string }) {
             cancelled = true;
             stop();
             root.removeAttribute("data-hero");
-            delete canvas.dataset.observed;
+            root.removeAttribute("data-hero-seen");
             resize.disconnect();
             visible.disconnect();
             named.disconnect();

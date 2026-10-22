@@ -327,20 +327,12 @@
         opacity: 0;
     }
     /* The observer first reports long after the first paint, so until
-       then (the starfield's `data-observed`, set with that report) the
-       wordmark is aside on home too: a load never shows the name twice,
-       not even for the frames between the starfield starting and the
-       report. Only once the boot script has run (data-js): without
-       JavaScript nothing would bring it back. Before RouteMarker has run
-       only one page is mounted (as for Pause motion, below), so home's
-       starfield stands in for the route; after it, the route says home.
-       A rule of its own, so a browser without :has() drops only this. */
-    html[data-js]:not([data-route])
-        body:has([data-starfield]:not([data-observed]))
-        .brand__name,
-    html[data-route="/"]
-        body:has([data-starfield]:not([data-observed]))
-        .brand__name {
+       then (html[data-hero-seen], set with that report) the wordmark is
+       aside on home too: a load never shows the name twice, not even for
+       a frame. The boot script names the route before the header is
+       parsed, while the hero has yet to arrive; without JavaScript there
+       is no route, and the wordmark stays. */
+    html[data-route="/"]:not([data-hero-seen]) .brand__name {
         visibility: hidden;
         opacity: 0;
     }
@@ -460,8 +452,9 @@
     /* Pause motion (WCAG 2.2.2): in the footer and the home hero. Its
        label names the action; under the OS reduce-motion setting nothing
        moves, so it shows nothing. On home the hero's control, beside the
-       starfield, is the one shown (html[data-route] is set by
-       RouteMarker). Unboxed: the icon and the label in ink-2, in the
+       starfield, is the one shown (html[data-route] is set by the boot
+       script before the first paint, and by RouteMarker after a client
+       navigation). Unboxed: the icon and the label in ink-2, in the
        controls' voice, a 44px target. */
     .motion-ctl {
         display: inline-flex;
@@ -496,15 +489,6 @@
         }
     }
     html[data-route="/"] .site-footer .motion-ctl {
-        display: none;
-    }
-    /* Before RouteMarker has run (the first paint, a slow phone, a
-       crawler) the page says which it is: only one is mounted then, so
-       the home page's own root stands in for the route. */
-    html:not([data-route])
-        body:has([data-page="home"])
-        .site-footer
-        .motion-ctl {
         display: none;
     }
     /* Theme and motion controls need JavaScript. */

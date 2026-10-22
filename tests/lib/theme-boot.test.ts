@@ -68,6 +68,7 @@ describe("the theme boot script", () => {
             expect(dataset, path).toEqual({
                 theme: "void",
                 motion: "full",
+                route: path,
                 js: "",
             });
             expect(meta, path).toEqual({
@@ -137,6 +138,7 @@ describe("the theme boot script", () => {
         expect(boot({ storageThrows: true }).dataset).toEqual({
             theme: "void",
             motion: "full",
+            route: "/",
             js: "",
         });
     });

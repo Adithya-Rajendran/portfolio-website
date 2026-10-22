@@ -399,8 +399,8 @@ test("before the page has run, Pause motion shows once: in the hero on home, in 
     page,
 }) => {
     // React is held back (no script file loads; the stylesheets do, and
-    // the inline boot script still runs): the first paint, a slow phone,
-    // a crawler.
+    // the inline boot script still runs, naming the route): the first
+    // paint, a slow phone, a crawler.
     await page.route("**/*", (route) =>
         route.request().resourceType() === "script"
             ? route.abort()
@@ -412,21 +412,22 @@ test("before the page has run, Pause motion shows once: in the hero on home, in 
         .getByRole("button", { name: /motion/ });
     await page.goto("/");
     await expect(html).toHaveAttribute("data-js", "");
-    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(html).toHaveAttribute("data-route", "/");
     await expect(
         hero(page).getByRole("button", { name: chromeCopy.holdDrift }),
     ).toBeVisible();
     await expect(footerControl).toBeHidden();
     await page.goto("/about");
-    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(html).toHaveAttribute("data-route", "/about");
     await expect(footerControl).toBeVisible();
 });
 
 test("loading home never shows the wordmark beside the hero's name, not even for a frame", async ({
     page,
 }) => {
-    // Sampled every frame from the start of the load: the wordmark must
-    // stay aside until the hero's observer has reported, and then while
+    // Sampled every frame from the start of the load, the header's first
+    // paint included (it can paint before the hero arrives): the wordmark
+    // stays aside until the hero's observer has reported, and then while
     // the name is in view (a fade that starts and reverses still shows).
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.addInitScript(() => {
@@ -459,8 +460,9 @@ test("loading home never shows the wordmark beside the hero's name, not even for
 test("before the page has run, the name shows once: the hero's on home, the wordmark elsewhere", async ({
     page,
 }) => {
-    // React is held back, as above: the boot script has run (data-js),
-    // but nothing has set data-route or data-hero, as at the first paint.
+    // React is held back, as above: the boot script has run (data-js and
+    // the route), but the hero's observer has not reported (no data-hero
+    // or data-hero-seen), as at the first paint.
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.route("**/*", (route) =>
         route.request().resourceType() === "script"
@@ -471,12 +473,12 @@ test("before the page has run, the name shows once: the hero's on home, the word
     const wordmark = page.getByRole("banner").locator(".brand__name");
     await page.goto("/");
     await expect(html).toHaveAttribute("data-js", "");
-    await expect(html).not.toHaveAttribute("data-route", /.*/);
-    await expect(html).not.toHaveAttribute("data-hero", /.*/);
+    await expect(html).toHaveAttribute("data-route", "/");
+    await expect(html).not.toHaveAttribute("data-hero-seen", /.*/);
     await expect(hero(page).getByRole("heading", { level: 1 })).toBeVisible();
     await expect(wordmark).toBeHidden();
     await page.goto("/about");
-    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(html).toHaveAttribute("data-route", "/about");
     await expect(wordmark).toBeVisible();
 });
 
