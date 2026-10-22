@@ -44,8 +44,8 @@
        wide "0", so it reads 56ch). */
     .prose {
         color: var(--ink-1);
-        font: 400 var(--step-long) / var(--lh-long) var(--font-long);
-        font-variant-numeric: proportional-nums;
+        font: var(--type-long);
+        font-variant-numeric: var(--numerals-text);
         text-wrap: pretty;
         hanging-punctuation: first;
         hyphenate-limit-chars: 10 5 5;
@@ -72,19 +72,18 @@
     /* ---- Headings ---------------------------------------------------- */
     .prose h2 {
         margin-top: 2em;
-        font: 400 var(--step-2) / 1.15 var(--font-display);
-        letter-spacing: -0.01em;
+        font: var(--type-title-md);
+        letter-spacing: var(--track-title);
         scroll-margin-top: calc(var(--header-h) + var(--s-5));
     }
     .prose h3 {
         margin-top: 1.9em;
-        font: 500 var(--step-1) / 1.25 var(--font-display);
+        font: var(--type-subhead);
         scroll-margin-top: calc(var(--header-h) + var(--s-5));
     }
     .prose h4 {
         margin-top: 1.6em;
-        font: 500 var(--step-0) / 1.35 var(--font-display);
-        letter-spacing: 0.01em;
+        font: var(--type-ui-strong);
         scroll-margin-top: calc(var(--header-h) + var(--s-5));
     }
     .prose :is(h2, h3, h4) + * {
@@ -94,7 +93,7 @@
     /* ---- Text -------------------------------------------------------- */
     /* Links keep the site's hairline (styles/base.css). */
     .prose strong {
-        font-weight: 600;
+        font-weight: var(--weight-strong);
     }
     /* ---- Lists ------------------------------------------------------- */
     /* One treatment on every width and page, and the site's one bullet
@@ -153,8 +152,9 @@
         counter-increment: item;
         content: counter(item) ".";
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1 var(--font-mono);
-        font-variant-numeric: tabular-nums slashed-zero;
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
+        line-height: var(--lh-solid);
     }
     .list .list--number > .list__item::before {
         content: counter(item, lower-alpha) ".";
@@ -204,7 +204,7 @@
         padding: var(--s-1) 0 var(--s-1) var(--s-5);
         border-left: var(--rule-strong) solid var(--rule-2);
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.6 var(--font-long);
+        font: var(--type-note);
     }
     .prose blockquote strong,
     .callout strong {
@@ -234,7 +234,8 @@
         --code-token-deleted: var(--ink-2);
         --code-token-changed: var(--ink-1);
         background: var(--surface-1);
-        font: 400 var(--label-size) / 1.62 var(--font-mono);
+        font: var(--type-code);
+        font-variant-ligatures: none;
     }
     /* A listing is the text's width (`.prose > *`), never wider: a long
        line scrolls inside it (below). It sits a little further from the
@@ -259,7 +260,9 @@
         min-width: 0;
         overflow: hidden;
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
+        line-height: var(--lh-solid);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
@@ -271,7 +274,9 @@
         gap: 0.45rem;
         padding-inline: 0.6rem;
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
+        line-height: var(--lh-solid);
         letter-spacing: 0;
         text-transform: none;
     }
@@ -337,7 +342,7 @@
         font-style: italic;
     }
     .listing__code span[style*="--code-token-keyword"] {
-        font-weight: 500;
+        font-weight: var(--weight-medium);
     }
     .listing__code span[style*="--code-token-link"] {
         text-decoration: underline;
@@ -437,14 +442,15 @@
         gap: var(--s-1);
         padding: var(--s-4) var(--s-5);
         border: var(--rule-hair) solid var(--rule-1);
-        font: 400 var(--step-0) / 1.5 var(--font-text);
+        font: var(--type-ui);
     }
     .media-link a {
-        font: 500 var(--step-0) / 1.35 var(--font-display);
+        font: var(--type-ui-strong);
     }
     .media-link__host {
         color: var(--ink-3);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     .media-link__caption {
         color: var(--ink-2);
@@ -471,7 +477,9 @@
     .fnref a {
         padding: 0 0.15em;
         color: var(--ink-1);
-        font: 400 var(--label-size) / 1 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
+        line-height: var(--lh-solid);
         text-decoration: none;
     }
     .fnref a::before {
@@ -506,7 +514,7 @@
             padding-left: var(--s-4);
             border-left: var(--rule-hair) solid var(--rule-1);
             color: var(--ink-2);
-            font: 400 var(--step-0) / 1.5 var(--font-text);
+            font: var(--type-ui);
             text-indent: 0;
             hyphens: manual;
         }
@@ -517,7 +525,9 @@
     }
     .sidenote__n {
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.8 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
+        line-height: calc(var(--step-0) * var(--lh-text));
     }
 
     /* The numbered notes at the end (components/prose/footnotes.tsx). */
@@ -526,12 +536,12 @@
         padding-top: var(--s-5);
         border-top: var(--rule-hair) solid var(--rule-2);
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.55 var(--font-text);
+        font: var(--type-ui);
     }
     .notes__title {
         margin-bottom: var(--s-4);
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1 var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -550,7 +560,9 @@
     }
     .notes__n {
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.9 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
+        line-height: calc(var(--step-0) * var(--lh-text));
     }
     .notes__text {
         margin: 0;

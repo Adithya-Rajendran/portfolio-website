@@ -25,8 +25,8 @@
         min-height: 100svh;
         color: var(--ink-1);
         font-size: var(--step-0);
-        line-height: var(--lh-body);
-        font-weight: 400;
+        line-height: var(--lh-text);
+        font-weight: var(--weight-regular);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
@@ -51,8 +51,8 @@
     h6 {
         margin: 0;
         font-family: var(--font-display);
-        font-weight: 400;
-        line-height: var(--lh-heading);
+        font-weight: var(--weight-regular);
+        line-height: var(--lh-snug);
         text-wrap: balance;
     }
     p,
@@ -114,7 +114,7 @@
     samp,
     pre {
         font-family: var(--font-mono);
-        font-size: 0.9em;
+        font-size: inherit;
     }
 
     /* The skip link: the first focusable element on every page. */
@@ -127,7 +127,7 @@
         padding: var(--s-3) var(--s-4);
         background: var(--ink-1);
         color: var(--bg);
-        font: 500 var(--label-size) / 1 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;

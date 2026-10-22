@@ -8,7 +8,7 @@
 @layer components {
     /* The one label voice (contract §2): DM Mono caps, tracked, ink-2. */
     .label {
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
         color: var(--ink-2);
@@ -16,8 +16,8 @@
 
     /* Dates, metrics, codes. */
     .data {
-        font-family: var(--font-mono);
-        font-variant-numeric: tabular-nums lining-nums slashed-zero;
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
         letter-spacing: 0;
     }
 
@@ -62,9 +62,10 @@
         display: inline-flex;
         align-items: center;
         gap: 0.55em;
-        font: 400 var(--label-size) / 1 var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
+        line-height: var(--lh-solid);
         color: var(--ink-2);
         white-space: nowrap;
     }
@@ -151,8 +152,9 @@
     }
     /* The wordmark: one of the two places Michroma is set. */
     .brand__name {
-        font: 400 var(--label-size) / 1 var(--font-mark);
-        letter-spacing: 0.22em;
+        font: var(--type-mark);
+        line-height: var(--lh-solid);
+        letter-spacing: var(--track-wordmark);
         text-transform: uppercase;
         white-space: nowrap;
     }
@@ -175,7 +177,7 @@
         min-height: 44px;
         padding-block: var(--s-1);
         color: var(--ink-1);
-        font: 500 var(--label-size) / 1.2 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -221,7 +223,7 @@
         min-height: 44px;
         padding: 0 min(0.35rem, 5.6px);
         color: var(--ink-1);
-        font: 500 var(--label-size) / 1 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-underline-offset: 0.55em;
@@ -251,7 +253,7 @@
         background: transparent;
         border: var(--rule-hair) solid var(--rule-2);
         color: var(--ink-1);
-        font: 500 var(--label-size) / 1 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -466,7 +468,7 @@
         gap: 0.5rem;
         min-height: 44px;
         color: var(--ink-2);
-        font: 500 var(--label-size) / 1.2 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         white-space: nowrap;
@@ -509,7 +511,7 @@
         border-radius: 0;
         background: transparent;
         color: var(--ink-1);
-        font: 500 var(--label-size) / 1 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -580,7 +582,7 @@
         min-height: 44px;
         border-bottom: var(--rule-hair) solid var(--ink-3);
         color: var(--ink-1);
-        font: 500 var(--label-size) / 1.2 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         text-decoration: none;
@@ -623,7 +625,8 @@
     }
     .tag {
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
         text-decoration: none;
         white-space: nowrap;
     }
@@ -648,7 +651,7 @@
         gap: var(--s-2) var(--s-3);
         margin: 0;
         color: var(--ink-1);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -664,14 +667,15 @@
         min-width: 0;
         margin: 0;
         color: var(--ink-1);
-        font: 400 var(--step-1) / 1.25 var(--font-display);
-        letter-spacing: -0.003em;
+        font: var(--type-title-sm);
+        letter-spacing: 0;
         text-transform: none;
     }
     .section-tag__meta {
         order: 3;
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
         letter-spacing: 0;
         text-transform: none;
         white-space: nowrap;
@@ -716,12 +720,12 @@
     /* The section's themed tag: the other place Michroma is set. */
     .page-head__tag {
         color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-mark);
-        letter-spacing: 0.16em;
+        font: var(--type-mark);
+        letter-spacing: var(--track-mark);
     }
     .page-head__title {
         margin-top: var(--s-4);
-        font: var(--weight-display) var(--step-6) / 0.98 var(--font-display);
+        font: var(--type-display-lg);
         letter-spacing: var(--track-display);
     }
     /* Set ragged, as prose: a balanced break can split a phrase ("or an /
@@ -730,7 +734,7 @@
         max-width: 52ch;
         margin-top: var(--s-6);
         color: var(--ink-2);
-        font: 400 var(--step-1) / 1.5 var(--font-long);
+        font: var(--type-dek);
         text-wrap: pretty;
     }
 
@@ -741,7 +745,7 @@
         max-width: 60ch;
         margin-top: var(--s-3);
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.5 var(--font-text);
+        font: var(--type-ui);
     }
     .caption__body {
         min-width: 0;
@@ -750,7 +754,8 @@
         display: block;
         margin-top: 0.3rem;
         color: var(--ink-3);
-        font: 400 var(--label-size) / 1.45 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
         /* Under a thumbnail on a phone, at a large text size, a credit
            wider than the plate breaks rather than runs under the title. */
         overflow-wrap: break-word;
@@ -763,8 +768,9 @@
     /* "Rev 2026-09-24": the printed CV's revision. */
     .rev {
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.2 var(--font-mono);
-        letter-spacing: 0.02em;
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
+        letter-spacing: var(--track-paper-rev);
         white-space: nowrap;
     }
 
@@ -788,7 +794,7 @@
         justify-content: space-between;
         gap: 0 var(--s-6);
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.6 var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -838,13 +844,13 @@
     }
     .field__label {
         color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .field__error {
         color: var(--ink-1);
-        font: 500 var(--step-0) / 1.45 var(--font-text);
+        font: var(--type-ui-strong);
     }
     /* Rendered empty, as a live region the words are added to: out of the
        field's flow until it has some, so it adds no gap. */
@@ -860,7 +866,7 @@
         border-radius: 0;
         background: var(--surface-1);
         color: var(--ink-1);
-        font: 400 var(--step-0) / 1.4 var(--font-text);
+        font: var(--type-ui-row);
         -webkit-appearance: none;
         appearance: none;
         transition:
@@ -869,7 +875,7 @@
     }
     .textarea {
         min-height: 8.5rem;
-        line-height: 1.55;
+        line-height: var(--lh-text);
         resize: vertical;
     }
     .input::placeholder,
@@ -936,7 +942,7 @@
     }
     .titleblock__cell > dt {
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.3 var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -944,7 +950,7 @@
         margin: 0;
         overflow-wrap: break-word;
         color: var(--ink-1);
-        font: 400 var(--step-0) / 1.45 var(--font-display);
+        font: var(--type-ui);
     }
     /* The quieter lines: a role's places and dates as data, then its
        note in the value's type. */
@@ -952,8 +958,8 @@
         color: var(--ink-2);
     }
     .titleblock__data {
-        font: 400 var(--label-size) / 1.5 var(--font-mono);
-        font-variant-numeric: tabular-nums slashed-zero;
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     @media (min-width: 60rem) {
         .titleblock {
@@ -1016,7 +1022,7 @@
     }
     .q-item__title {
         color: var(--ink-1);
-        font: 400 var(--step-1) / 1.3 var(--font-display);
+        font: var(--type-title-sm);
         text-wrap: balance;
     }
     .q-item__title a {
@@ -1031,7 +1037,7 @@
     .q-item__note {
         max-width: 60ch;
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.55 var(--font-long);
+        font: var(--type-note);
         text-wrap: pretty;
     }
 
@@ -1080,7 +1086,7 @@
         padding: 0 0.9rem;
         border: var(--rule-hair) solid var(--rule-2);
         color: var(--ink-2);
-        font: 500 var(--label-size) / 1.15 var(--font-display);
+        font: var(--type-control);
         letter-spacing: var(--track-control);
         text-transform: uppercase;
         white-space: nowrap;
@@ -1117,7 +1123,7 @@
         grid-column: 2;
         max-width: 60ch;
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.5 var(--font-long);
+        font: var(--type-note);
         letter-spacing: 0;
         text-transform: none;
         text-wrap: pretty;
@@ -1169,14 +1175,14 @@
     .specs dt {
         padding-top: 0.2rem;
         color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .specs dd {
         margin: 0;
         color: var(--ink-1);
-        font: 400 var(--step-0) / 1.55 var(--font-display);
+        font: var(--type-ui);
     }
 
     /* ===== CV rows (site.css 4.13, on the log index's grammar) ========= */
@@ -1218,8 +1224,8 @@
         align-items: baseline;
         gap: var(--s-1) var(--s-4);
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.5 var(--font-mono);
-        font-variant-numeric: tabular-nums slashed-zero;
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     @media (min-width: 37.5rem) {
         .cv-item__aside {
@@ -1236,8 +1242,8 @@
     }
     .cv-item__title {
         margin: 0;
-        font: 400 var(--step-2) / 1.18 var(--font-display);
-        letter-spacing: -0.005em;
+        font: var(--type-title-md);
+        letter-spacing: var(--track-title);
         text-wrap: pretty;
     }
     /* On a phone a two-line title balances, as Writing's rows do. */
@@ -1259,18 +1265,18 @@
     .cv-item__sub {
         margin-top: var(--s-1);
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.4 var(--font-display);
+        font: var(--type-ui-row);
     }
     .cv-item__note {
         margin-top: var(--s-1);
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.45 var(--font-display);
+        font: var(--type-ui);
     }
     .cv-item__dek {
         max-width: 60ch;
         margin-top: var(--s-3);
         color: var(--ink-2);
-        font: 400 var(--step-1) / 1.45 var(--font-long);
+        font: var(--type-dek);
         text-wrap: pretty;
     }
     .cv-item__lines {
@@ -1286,7 +1292,7 @@
         position: relative;
         padding-left: var(--list-gutter);
         color: var(--ink-1);
-        font: 400 var(--step-0) / 1.55 var(--font-display);
+        font: var(--type-ui);
     }
     .cv-item__lines li + li {
         margin-top: var(--s-2);
@@ -1306,11 +1312,11 @@
         max-width: 68ch;
         margin-top: var(--s-3);
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.5 var(--font-display);
+        font: var(--type-ui);
     }
     .cv-item__skills {
-        font-family: var(--font-mono);
-        font-size: var(--label-size);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     .cv-item__links {
         display: flex;
@@ -1334,7 +1340,8 @@
     .cv-item__url {
         margin-left: 0.4em;
         color: var(--ink-2);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     /* Lit: the log row's hover (an ink rule and the title underlined). */
     .cv-item:hover {
@@ -1475,7 +1482,7 @@
     }
     .metric > dt {
         color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
@@ -1483,9 +1490,9 @@
         order: -1;
         margin: 0;
         color: var(--ink-1);
-        font: 400 var(--metric-size, var(--step-3)) / 1.05 var(--font-display);
-        letter-spacing: -0.01em;
-        font-variant-numeric: tabular-nums lining-nums;
+        font: var(--type-title-lg);
+        letter-spacing: var(--track-title);
+        font-variant-numeric: var(--numerals-figures);
         overflow-wrap: break-word;
         text-wrap: balance;
     }
@@ -1496,11 +1503,11 @@
         font-size: var(--step-1);
         letter-spacing: 0;
     }
-    .metrics--lg {
-        --metric-size: var(--step-4);
+    .metrics--lg .metric > dd {
+        font-size: var(--step-4);
     }
-    .metrics--sm {
-        --metric-size: var(--step-1);
+    .metrics--sm .metric > dd {
+        font-size: var(--step-1);
     }
 
     /* ===== Tables (site.css 4.14) ======================================= */
@@ -1516,8 +1523,8 @@
     .table {
         width: 100%;
         border-collapse: collapse;
-        font: 400 var(--step-0) / 1.45 var(--font-text);
-        font-variant-numeric: tabular-nums lining-nums;
+        font: var(--type-ui);
+        font-variant-numeric: var(--numerals-figures);
     }
     .table th,
     .table td {
@@ -1530,14 +1537,14 @@
         padding-block: var(--s-3);
         border-bottom-color: var(--rule-2);
         color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
         vertical-align: bottom;
         white-space: nowrap;
     }
     .table tbody th {
-        font-weight: 400;
+        font-weight: var(--weight-regular);
     }
     .table .num {
         font-family: var(--font-mono);
@@ -1619,7 +1626,8 @@
         grid-column: 1;
         padding-top: 0.1rem;
         color: var(--ink-3);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     .route-row__name {
         grid-row: 1;
@@ -1630,19 +1638,19 @@
         min-width: 0;
     }
     .route-row__themed {
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .route-row__plain {
         overflow-wrap: anywhere;
-        font: 400 var(--step-0) / 1.3 var(--font-display);
+        font: var(--type-ui-row);
     }
     .route-row__blurb {
         grid-row: 2;
         grid-column: 2;
         color: var(--ink-2);
-        font: 400 var(--step-0) / 1.45 var(--font-text);
+        font: var(--type-ui);
     }
     .route-row__arrow {
         grid-row: 1 / span 2;
@@ -1698,12 +1706,12 @@
     }
     .pager__label {
         color: var(--ink-2);
-        font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+        font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
     }
     .pager__title {
-        font: 400 var(--step-1) / 1.25 var(--font-display);
+        font: var(--type-title-sm);
         text-wrap: balance;
     }
     .pager__item:hover .pager__title {
@@ -1713,7 +1721,8 @@
     }
     .pager__meta {
         color: var(--ink-3);
-        font: 400 var(--label-size) / 1.4 var(--font-mono);
+        font: var(--type-data);
+        font-variant-numeric: var(--numerals-data);
     }
     .pager__all {
         justify-self: start;
@@ -1748,7 +1757,7 @@
     /* A brief: the values are sentences, set in the serif. */
     .specs--read dd {
         max-width: 60ch;
-        font: 400 var(--step-1) / 1.5 var(--font-long);
+        font: var(--type-dek);
         text-wrap: pretty;
     }
 
@@ -1769,7 +1778,7 @@
     .availability__text {
         max-width: 60ch;
         color: var(--ink-1);
-        font: 400 var(--step-1) / 1.35 var(--font-display);
+        font: var(--type-lead);
         text-wrap: balance;
     }
     /* An Open To line (here and in the home hero): each opening whole, a
