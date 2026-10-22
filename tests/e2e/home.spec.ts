@@ -10,7 +10,7 @@ import { storeTheme } from "./support/theme";
  * Home (plan §6.2 PR 13, contract §9; premium WS2): the hero's name,
  * headline, what the owner is open to and its one action (CV) are in the
  * first viewport with and without JavaScript, with the newest entry beside
- * CV as a quiet link (Latest), no second button; the header's wordmark steps aside while the hero
+ * CV as a quiet link (Latest), no second button, the pair on the name's axis; the header's wordmark steps aside while the hero
  * names the owner; the starfield drifts only while it may (on screen, in
  * a visible tab, in Void, with motion allowed) and reports `stopped`
  * otherwise; the stars are the hero's alone, and Void's; the photograph is
@@ -160,6 +160,94 @@ for (const width of [320, 360, 390]) {
         expect(link!.x).toBeGreaterThanOrEqual(16);
         expect(link!.x + link!.width).toBeLessThanOrEqual(width - 16);
         expect(link!.y).toBeGreaterThanOrEqual(cv!.y + cv!.height);
+    });
+}
+
+/**
+ * Stand-ins for the newest title, set in place of the build's: one as long
+ * as production's when the hero was measured, which shares a row with CV
+ * from 640px, and one too long for a row as wide as the headline, which
+ * goes under CV at every width. The fixture build's newest is short enough
+ * to fit any box, so without them a box wider than its words passes unseen.
+ */
+const LATEST_STAND_INS = [
+    {
+        title: "Keeping a DGX Spark alive when unified memory runs out",
+        besideFrom: 768,
+    },
+    {
+        title: "A stand-in title long enough that it never shares a row with CV, at any width the hero is drawn at",
+        besideFrom: Infinity,
+    },
+];
+
+/**
+ * The hero's action row as drawn, with `title` in place of the newest's
+ * when given: CV's box, the words of Latest and the hero's centre line.
+ * The words, not the link's box: a wrapped box keeps its full width while
+ * balance narrows its lines, so the box can sit on the axis while its
+ * words do not.
+ */
+async function actionRow(page: Page, title?: string) {
+    if (title) {
+        await latest(page).evaluate((link, text) => {
+            link.textContent = text;
+        }, `${copy.latest} ${title}`);
+    }
+    const axis = await hero(page).evaluate((section) => {
+        const box = section.getBoundingClientRect();
+        return box.left + box.width / 2;
+    });
+    const cv = await hero(page)
+        .getByRole("link", { name: copy.cv, exact: true })
+        .boundingBox();
+    const words = await latest(page).evaluate((link) => {
+        const range = document.createRange();
+        range.selectNodeContents(link);
+        const box = range.getBoundingClientRect();
+        const lines = new Set(
+            [...range.getClientRects()].map((rect) => Math.round(rect.top)),
+        );
+        return {
+            left: box.left,
+            right: box.right,
+            top: box.top,
+            lines: lines.size,
+        };
+    });
+    return { axis, cv: cv!, words, beside: words.top < cv!.y + cv!.height };
+}
+
+/** Beside CV: one line, the row's 32px from it, the pair centred on the
+ *  axis. Under CV (always on phones): CV and the words each centred. */
+function expectOnAxis(row: Awaited<ReturnType<typeof actionRow>>) {
+    const { axis, cv, words } = row;
+    if (row.beside) {
+        const gap = words.left - (cv.x + cv.width);
+        expect(words.lines).toBe(1);
+        expect(gap).toBeGreaterThanOrEqual(31);
+        expect(gap).toBeLessThanOrEqual(33);
+        expect(Math.abs((cv.x + words.right) / 2 - axis)).toBeLessThan(2);
+    } else {
+        const centre = (words.left + words.right) / 2;
+        expect(Math.abs(cv.x + cv.width / 2 - axis)).toBeLessThan(2);
+        expect(Math.abs(centre - axis)).toBeLessThan(2);
+    }
+}
+
+for (const width of [390, 768, 960, 1280, 1440, 1920, 3824]) {
+    test(`CV and Latest share the name's axis at ${width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto("/");
+        if (!(await latest(page).count())) return;
+        expectOnAxis(await actionRow(page));
+        for (const { title, besideFrom } of LATEST_STAND_INS) {
+            const row = await actionRow(page, title);
+            expect(row.beside, title).toBe(width >= besideFrom);
+            expectOnAxis(row);
+        }
     });
 }
 

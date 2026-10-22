@@ -532,9 +532,11 @@ only live in comments or commit messages.
   no fill or blur; the header's Projects is the way to the work, so no
   link points down the page), and beside it, while there is an entry, a
   quiet text link to the newest, "Latest: <title>" (`heroLatest` in
-  `lib/home.ts`, in the Open To line's voice, the title balanced and its
-  short names whole, `KeepWhole`; it wraps under CV where the two do not
-  fit, and is a phone's way to Writing, which its bar lacks). The foot:
+  `lib/home.ts`, in the Open To line's voice, its short names whole,
+  `KeepWhole`; beside CV only on one line, so the pair shares the name's
+  axis, and under CV, centred, its title balanced, where the two do not
+  fit a row as wide as the headline; it is a phone's way to Writing,
+  which its bar lacks). The foot:
   the credit with the frame's ID
   ("Photo: NASA / Expedition 72 · ISS072-E-30246", `id` in
   `lib/hero-sunrise.json`; on phones its parts one a line, without the
@@ -1227,7 +1229,9 @@ loaded, only when that run cannot.
   in a featured slot, it is a quiet row, not the stage or a tile, and
   its pager keeps the slot's place), `home` (the
   hero's name, availability and its one action, CV (to `/resume#cv`), with
-  Latest beside it (a quiet link to the newest entry, no button), in the first
+  Latest beside it (a quiet link to the newest entry, no button; on one
+  line with the pair on the name's axis, else centred under CV, for the
+  newest title and stand-ins of production's length and longer), in the first
   viewport at 1280×800 and 390×844 with and without
   JavaScript, each part of the headline and the Open To line on one line;
   the name at 350, tracked 0.11–0.12em, on one line at 1440 and 1,400px
