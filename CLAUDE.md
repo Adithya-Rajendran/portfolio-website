@@ -31,10 +31,15 @@ only live in comments or commit messages.
   `styles/`, and maps the tokens to utilities under `@theme inline`; the
   default palette and fonts are removed (`--color-*: initial`), so
   utilities use tokens only.
-    - `styles/tokens.css` (layer `theme`) holds every design token: both
-      themes (Void on `:root`/`[data-theme="void"]`, Flight Manual on
-      `[data-theme="manual"]`), type scale, space, motion. Colours are
-      defined there and nowhere else. `--accent`, International Orange,
+    - `styles/tokens.css` (layer `theme`) holds every design token: the
+      palette (`--void-*`, `--manual-*`, `--paper-white`), written once;
+      each theme's ladder on it (Void on `:root`/`[data-theme="void"]`,
+      Flight Manual on `[data-theme="manual"]`, and paper, the file's last
+      block); the scales (type, leading, tracking, weight, space,
+      measures, targets, motion); and the roles components read
+      (`--text`, `--rule-quiet`, `--type-label`…), on
+      `:root, [data-theme]`. Colours are defined there and nowhere else.
+      `--accent`, International Orange,
       means "now" (premium D1): the Open To, Active and Current status
       dots, the flight's flown path and its now mark, a contents' current
       section, the 2px rule on the first invalid field (the one to fix
@@ -53,7 +58,8 @@ only live in comments or commit messages.
       plates…), `prose.css` (the long read under `.prose`: listings and the
       Shiki token colours, plates, callouts, footnotes and margin notes,
       the notes list, and their print rules), `los.css` (Loss of Signal)
-      and `print.css`.
+      and `print.css` (paper layout; the paper palette is tokens.css's
+      last block).
     - Route- or feature-specific styles go in a CSS Module beside the
       component, or are scoped under the page's `[data-page="…"]`: global
       CSS is not removed on navigation and Cache Components keeps visited
@@ -1103,7 +1109,25 @@ loaded, only when that run cannot.
 ## Tests
 
 - **Vitest** (`pnpm test`, `tests/**/*.test.ts`) covers pure logic.
-  `vitest.config.ts` uses `environment: "node"` by design: there is no
+  `tests/lib/design-system.test.ts` parses every stylesheet with postcss
+  and refuses, outside styles/tokens.css: colour literals, `color-mix()`,
+  opacity off its tokens, and palette or ladder reads; a `font` that is
+  not a role (on paper, not built from tokens) or a role without its
+  companions; line-height, letter-spacing, size, weight, family and
+  numerals literals; durations and easings; length nudges and transform
+  origins; underline, outline and focus literals; border, outline and
+  stroke widths; 44px, 48px and ch measures; length literals and
+  non-integer factors in spacing, sizing, offsets, flex and grid, radii,
+  shadows, filters and vertical-align (paper exempt); custom properties
+  and var() names outside tokens.css or their files' allow-list entries;
+  media queries outside `lib/breakpoints.ts`; a bare `:hover`; Tailwind's
+  `@theme` beyond its fixed names; and a global class that is also a
+  Tailwind utility. It also checks role-class pairings in TSX, `style`
+  keys, TS breakpoints, and the colours outside CSS. Exceptions are
+  `tests/lib/design-system.allow.ts`'s, each with a reason; a stale one
+  fails (until the migration ends, `tests/lib/design-system.ratchet.ts`
+  lists the failures still to fix; a step that fixes one deletes its
+  key). `vitest.config.ts` uses `environment: "node"` by design: there is no
   jsdom or component-rendering setup. Anything that needs a browser is a
   Playwright spec. A symbol exported only for a test carries the tag
   `@internal Exported for tests.`; an export with no importer anywhere is

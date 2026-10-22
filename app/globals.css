@@ -24,32 +24,44 @@
 /* Any leftover dark: utility follows Void. */
 @custom-variant dark (&:where([data-theme="void"], [data-theme="void"] *));
 
-/* No default palette or fonts: utilities use the design tokens only. The
-   breakpoints are the grid's (styles/tokens.css); every media query is in
-   rem, so all of them follow the visitor's text size together. A width
-   only one component needs (the hero's 24rem and 48rem, the header's
-   75rem) stays in that component's rules. */
+/* No default palette, fonts or type, and none of Tailwind's leading,
+   tracking, weight, radius, shadow, ease or animate scales: utilities use
+   the design tokens only (the site uses sr-only alone). The breakpoints
+   are the grid's (styles/tokens.css). Every width a media query uses is
+   named in lib/breakpoints.ts, in rem, so all of them follow the
+   visitor's text size together. */
 @theme {
     --color-*: initial;
     --font-*: initial;
+    --text-*: initial;
+    --leading-*: initial;
+    --tracking-*: initial;
+    --font-weight-*: initial;
+    --radius-*: initial;
+    --shadow-*: initial;
+    --inset-shadow-*: initial;
+    --drop-shadow-*: initial;
+    --text-shadow-*: initial;
+    --ease-*: initial;
+    --animate-*: initial;
     --breakpoint-sm: 37.5rem;
     --breakpoint-md: 60rem;
     --breakpoint-lg: 80rem;
     --breakpoint-xl: 90rem;
 }
 
-/* Utilities that follow the theme: the values are the tokens in
-   styles/tokens.css, resolved where the utility is used. */
+/* Utilities that follow the theme: the colour roles in styles/tokens.css,
+   resolved where the utility is used. */
 @theme inline {
     --color-bg: var(--bg);
-    --color-surface-1: var(--surface-1);
-    --color-surface-2: var(--surface-2);
-    --color-ink-1: var(--ink-1);
-    --color-ink-2: var(--ink-2);
-    --color-ink-3: var(--ink-3);
-    --color-rule-1: var(--rule-1);
-    --color-rule-2: var(--rule-2);
-    --color-accent: var(--accent);
+    --color-text: var(--text);
+    --color-text-quiet: var(--text-quiet);
+    --color-text-faint: var(--text-faint);
+    --color-surface-raised: var(--surface-raised);
+    --color-surface-lit: var(--surface-lit);
+    --color-rule-quiet: var(--rule-quiet);
+    --color-rule-firm: var(--rule-firm);
+    --color-mark-now: var(--mark-now);
     --font-sans: var(--font-display);
     --font-serif: var(--font-long);
 }

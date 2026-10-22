@@ -1,9 +1,11 @@
 /*
- * Print: Flight Manual tokens on white, no chrome. Per-page print layouts
- * are scoped to their page: a post's in components/blogs/post.module.css
- * (the masthead, one column) and styles/prose.css (listings, plates,
- * notes, link addresses); the CV's (G3) is the second block below, with
- * its page layout in app/(site)/resume/resume.module.css.
+ * Print: the paper layout, no chrome. The paper palette (Flight Manual's
+ * inks on white) is styles/tokens.css's last block, so paper reads the
+ * same roles as the screen. Per-page print layouts are scoped to their
+ * page: a post's in components/blogs/post.module.css (the masthead, one
+ * column) and styles/prose.css (listings, plates, notes, link addresses);
+ * the CV's (G3) is the second block below, with its page layout in
+ * app/(site)/resume/resume.module.css.
  * Ported from d-deep-field-plus site.css "7. PRINT".
  */
 @layer utilities {
@@ -13,31 +15,12 @@
         }
     }
     @media print {
-        :root,
-        [data-theme] {
-            color-scheme: light;
-            --bg: #ffffff;
-            --surface-1: #ffffff;
-            --surface-2: #ffffff;
-            --ink-1: #17150f;
-            --ink-2: #433e36;
-            --ink-3: #5a554c;
-            --rule-1: #d5cdbd;
-            --rule-2: #7a7468;
-            --accent: #e4501b;
-            --plate-bg: transparent;
-            --plate-border: #d5cdbd;
-            --star-rgb: 23 21 15;
-            --photo-treatment: grayscale(1) contrast(1.04);
-            --photo-treatment-real: grayscale(1) contrast(1.04);
-            --photo-mount: 0px;
-        }
         @page {
             margin: 18mm 16mm 20mm;
         }
         html,
         body {
-            background: #fff;
+            background: var(--bg);
         }
         .site-header,
         .site-footer,
