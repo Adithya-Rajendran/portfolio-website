@@ -207,7 +207,7 @@ only live in comments or commit messages.
   links) sit flush in the body column with no "Skills" or "Links" key:
   the mono names and the links' own words say what they are. A section's
   first row draws no rule: the section head's hairline is the division
-  (`resume.module.css`). Project rows carry no status, stack or type:
+  (as under every section head: Heads and names). Project rows carry no status, stack or type:
   the dates, else "Ongoing" for an active project, then the role (when
   set), the lines and the links (every project is listed, so no "All
   projects"). A link to the site itself is never an external link
@@ -640,7 +640,18 @@ only live in comments or commit messages.
   Flight Log, Trajectory, Crew File, Comms) is only the small tag above
   its page's h1 (`PageHead tag`) and on its share card (`OgCard tag`).
   Section heads (`SectionTag`, `DocSection title`) are the plain name as
-  a Jost h2; nothing is numbered (no § numbers). A page head's title
+  a Jost h2; nothing is numbered (no § numbers). A head's hairline is the
+  division above its section, so the list that opens one draws no rule
+  over its first row (nor over the rest of that line where its rows run
+  in columns): the block next after a head's tag row, or first in a
+  `DocSection`'s column, sets `--first-rule` (styles/components.css),
+  which Writing's rows, the project rows, specs, the callouts, link rows,
+  a lone retrospective list and the CV's rows read for that rule's width.
+  A list after other content (home's rows under the stage, a
+  retrospective's two lists under their subheads) or under no section
+  head (`/blog`) keeps its rule; About's questions never rule their
+  first. Home's sections set their content straight after the tag row,
+  as an entry's end matter does, with no wrapper between. A page head's title
   (`PageHead`) sits directly under its tag, at one height on every page:
   from 960px the intro, Open To and the actions beside it run on past it
   as far as they need, and the title never drops to meet their foot
@@ -1120,9 +1131,10 @@ loaded, only when that run cannot.
   Michroma's two places, and 13px text only a label, a control or data;
   and on home, `/portfolio`, `/blog`, `/about`, the CV and every post,
   tag and project page, from 390 to 3824 px, every list under a head
-  ending where the head's rule ends; and every page head's title
-  directly under its tag, at one height on every page from 390 to
-  1920 px),
+  ending where the head's rule ends; every page head's title directly
+  under its tag, at one height on every page from 390 to 1920 px; and on
+  home, `/about`, every post and project at 1440 and 390, no rule
+  between a section head's hairline and the first words under it),
   `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
   Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440

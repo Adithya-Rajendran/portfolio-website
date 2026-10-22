@@ -241,6 +241,13 @@
     font: 400 var(--step-0) / 1.55 var(--font-display);
     text-wrap: pretty;
 }
+/* A lone list (`.single`) opens its section: the head's hairline is its
+   first row's (`--first-rule`, styles/components.css). Two lists keep
+   their first rules under their subheads, though they inherit the
+   property from `.debrief`. */
+.single > li:first-child {
+    border-top-width: var(--first-rule, var(--rule-hair));
+}
 .lessons li::before,
 .lines li::before {
     content: "";

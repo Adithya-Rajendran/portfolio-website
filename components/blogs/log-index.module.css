@@ -31,6 +31,12 @@
         border-color var(--dur-hover) var(--ease-dock),
         background-color var(--dur-hover) var(--ease-dock);
 }
+/* Under a section head (home, an entry's or a project's related
+   writing) the head's hairline is the first row's: it draws none of its
+   own (`--first-rule`, styles/components.css). /blog's rows keep it. */
+.row:first-child {
+    border-top-width: var(--first-rule, var(--rule-hair));
+}
 .meta {
     display: flex;
     flex-wrap: wrap;

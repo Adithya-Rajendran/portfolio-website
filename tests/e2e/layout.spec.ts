@@ -22,7 +22,9 @@ import {
  * And every list under a head ends where the head's rule ends, from 390
  * to 3824 px: no list has a width of its own; and a page head's title
  * sits directly under its tag, at one height on every page, however far
- * the head's right column runs past it.
+ * the head's right column runs past it. And under a section head its
+ * hairline is the only rule over the first row: no list draws one of its
+ * own above the first words (contract §1).
  */
 const WIDTHS = [320, 390, 600, 960, 1024, 1280, 1440, 1920];
 
@@ -391,6 +393,86 @@ test("home, the posts, the projects, the CV, About and Contact keep to six sizes
                 `${path} at ${width}px sets ${sizes.join(", ")} px`,
             ).toBeLessThanOrEqual(6);
             expect(offVoice, `${path} at ${width}px`).toEqual([]);
+        }
+    }
+});
+
+/**
+ * Under each visible section head, the rules (a top border alone, not a
+ * box's edge) in the block that opens the section that sit above its
+ * first words: the head's hairline is the division, so there are none.
+ */
+function rulesOverFirstRows(page: Page): Promise<string[]> {
+    return page.evaluate(() =>
+        Array.from(
+            document.querySelectorAll(".section-tag:has(> .section-tag__h)"),
+        )
+            .filter((head) => head.checkVisibility())
+            .flatMap((head) => {
+                const next = head.nextElementSibling;
+                const block = next?.matches(".doc-section__body")
+                    ? next.querySelector(
+                          ":scope > :not(.g-rail) > :first-child",
+                      )
+                    : next;
+                if (!block) return [];
+                const parts = [
+                    block,
+                    ...Array.from(block.querySelectorAll("*")),
+                ].filter((element) => element.checkVisibility());
+                const top = (element: Element) =>
+                    element.getBoundingClientRect().top;
+                const words = parts
+                    .filter((element) =>
+                        Array.from(element.childNodes).some(
+                            (node) =>
+                                node.nodeType === Node.TEXT_NODE &&
+                                Boolean(node.textContent?.trim()),
+                        ),
+                    )
+                    .map(top);
+                if (!words.length) return [];
+                const first = Math.min(...words);
+                return parts
+                    .filter((element) => {
+                        const style = getComputedStyle(element);
+                        return (
+                            style.borderTopStyle !== "none" &&
+                            parseFloat(style.borderTopWidth) > 0 &&
+                            parseFloat(style.borderLeftWidth) === 0 &&
+                            top(element) < first - 1
+                        );
+                    })
+                    .map(
+                        (element) =>
+                            `${head.textContent?.trim()}: <${element.localName} class="${element.getAttribute("class") ?? ""}">`,
+                    );
+            }),
+    );
+}
+
+test("a section head's hairline is the only rule over its first row", async ({
+    page,
+    request,
+}, testInfo) => {
+    const content = await contentPages(request, testInfo);
+    const paths = [
+        "/",
+        "/about",
+        ...content.filter(
+            (path) => isPostPage(path) || /^\/portfolio\/[^/]+$/.test(path),
+        ),
+    ];
+    test.setTimeout(30_000 + paths.length * 6_000);
+    for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        for (const path of paths) {
+            await page.goto(path);
+            await page.waitForLoadState("networkidle");
+            expect(
+                await rulesOverFirstRows(page),
+                `${path} at ${width}px`,
+            ).toEqual([]);
         }
     }
 });

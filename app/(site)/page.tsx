@@ -45,8 +45,12 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * One section of the home page (contract §1, §9): the tag row (the
  * plain h2, a hairline and, while the section's page holds more than
- * home shows, one link to it), then its content. The ids are prefixed, because a visited page that
- * stays mounted can own the same fragment (/portfolio's #projects).
+ * home shows, one link to it), then its content, straight after the tag
+ * row with no wrapper between, as in an entry's end matter: the block
+ * that opens a section is the head's next sibling, and the head's
+ * hairline stands for its first row's rule (`--first-rule`,
+ * styles/components.css). The ids are prefixed, because a visited page
+ * that stays mounted can own the same fragment (/portfolio's #projects).
  */
 function Act({
     id,
@@ -71,7 +75,7 @@ function Act({
                         {title}
                     </h2>
                 </SectionTag>
-                <div className={styles.content}>{children}</div>
+                {children}
             </div>
         </section>
     );

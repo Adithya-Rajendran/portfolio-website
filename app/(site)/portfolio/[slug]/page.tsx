@@ -539,7 +539,10 @@ export default async function ProjectPage({
                                 lessons.length ? copy.lessons : copy.nextSteps
                             }
                         >
-                            <ul className={styles.lessons} role="list">
+                            <ul
+                                className={`${styles.lessons} ${styles.single}`}
+                                role="list"
+                            >
                                 {[...lessons, ...nextSteps].map((line) => (
                                     <li key={line}>{line}</li>
                                 ))}

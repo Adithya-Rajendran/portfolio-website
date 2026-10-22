@@ -36,14 +36,11 @@
     padding-bottom: var(--space-section);
 }
 /* The next section's head parts each list from the one before, so lists
-   drop their closing rule; and the section head's hairline is the
-   division above, so a section's first row draws no second rule under
-   it. */
+   drop their closing rule. (A section's first row draws none over it:
+   the head's hairline is the division, as under every section head:
+   `--first-rule` in styles/components.css.) */
 .cv :global(:is(.cv-list, .specs)) {
     border-bottom: 0;
-}
-.cv :global(.g-main) > :first-child > :first-child {
-    border-top: 0;
 }
 .after {
     margin-top: var(--s-5);
@@ -67,6 +64,11 @@
     border-top: var(--rule-hair) solid var(--rule-1);
     color: var(--ink-1);
     font: 400 var(--step-0) / 1.45 var(--font-display);
+}
+/* Under the section head its hairline is the first row's: the first row
+   draws none of its own (`--first-rule`, styles/components.css). */
+.row:first-child {
+    border-top-width: var(--first-rule, var(--rule-hair));
 }
 @media (min-width: 37.5rem) {
     .row {

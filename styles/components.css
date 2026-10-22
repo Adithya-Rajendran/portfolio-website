@@ -704,6 +704,23 @@
         }
     }
 
+    /* A section's first row draws no rule: the head's hairline is the
+       division above it. The block that opens a section (next after a
+       section head's tag row, or first in a document section's column)
+       sets `--first-rule` to nothing, and each ruled list reads it for
+       its first row's top rule, and for the rest of that line where its
+       rows run in columns: Writing's rows, the project rows, specs, the
+       callouts, link rows, a lone retrospective list and the CV's rows (a
+       property, because most of those rows are styled in CSS Modules,
+       which no layered rule overrides). A list after other content
+       (home's rows under the stage, a retrospective's two lists under
+       their subheads) or under no section head (/blog's index) keeps its
+       rule. */
+    .section-tag:has(> .section-tag__h) + :not(.doc-section__body),
+    .doc-section__body > :not(.g-rail) > :first-child {
+        --first-rule: 0;
+    }
+
     /* One page head per page: the tag row with the section's small themed
        tag, the plain h1, then a serif intro. */
     .page-head {
@@ -1154,6 +1171,11 @@
         padding-block: var(--s-3);
         border-top: var(--rule-hair) solid var(--rule-1);
     }
+    /* Under a section head, the head's hairline is the first row's
+       (`--first-rule`, above). */
+    .specs__row:first-child {
+        border-top-width: var(--first-rule, var(--rule-hair));
+    }
     @media (min-width: 37.5rem) {
         .specs__row {
             grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
@@ -1193,6 +1215,11 @@
         transition:
             border-color var(--dur-hover) var(--ease-dock),
             background-color var(--dur-hover) var(--ease-dock);
+    }
+    /* Under a section head, the head's hairline is the first row's
+       (`--first-rule`, above). */
+    .cv-item:first-child {
+        border-top-width: var(--first-rule, var(--rule-hair));
     }
     @media (min-width: 37.5rem) {
         .cv-item {
@@ -1585,6 +1612,22 @@
         color: var(--ink-1);
         text-decoration: none;
         transition: border-color var(--dur-hover) var(--ease-dock);
+    }
+    /* Under a section head, the head's hairline is the first line's
+       (`--first-rule`, above): the first row, and the second and third
+       where the rows run two or three across. */
+    .route-list li:first-child > .route-row {
+        border-top-width: var(--first-rule, var(--rule-hair));
+    }
+    @media (min-width: 37.5rem) {
+        :is(.route-list--2, .route-list--3) li:nth-child(2) > .route-row {
+            border-top-width: var(--first-rule, var(--rule-hair));
+        }
+    }
+    @media (min-width: 60rem) {
+        .route-list--3 li:nth-child(3) > .route-row {
+            border-top-width: var(--first-rule, var(--rule-hair));
+        }
     }
     .route-row__num {
         grid-row: 1;

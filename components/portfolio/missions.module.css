@@ -290,6 +290,18 @@
     border-top: var(--rule-hair) solid var(--rule-2);
     transition: border-color var(--dur-hover) var(--ease-dock);
 }
+/* Under a section head (an entry's related project) the head's hairline
+   is the first line's: its rows draw none of their own (`--first-rule`,
+   styles/components.css), the first and, two across (not stacked), the
+   second. Home's rows, under the stage, and /portfolio's keep theirs. */
+.row:first-child {
+    border-top-width: var(--first-rule, var(--rule-hair));
+}
+@media (min-width: 60rem) {
+    .rows:not(.rowsStacked) > .row:nth-child(2) {
+        border-top-width: var(--first-rule, var(--rule-hair));
+    }
+}
 .rowLine {
     display: flex;
     flex-wrap: wrap;
