@@ -35,5 +35,6 @@
     border-top: var(--rule-hair) solid var(--rule-1);
 }
 .emptyTitle {
-    font: 400 var(--step-3) / 1.1 var(--font-display);
+    font: var(--type-title-lg);
+    letter-spacing: var(--track-title);
 }

@@ -113,8 +113,8 @@
 }
 .metaData {
     color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
     white-space: nowrap;
 }
 /* The title stops at the wide edge, or at the shell where that is
@@ -124,7 +124,7 @@
 .title {
     max-width: min(21ch, var(--prose-wide));
     margin-top: var(--s-4);
-    font: var(--weight-display) var(--step-5) / 1.04 var(--font-display);
+    font: var(--type-display);
     letter-spacing: var(--track-display);
     text-wrap: balance;
 }
@@ -132,13 +132,13 @@
     max-width: var(--prose-measure);
     margin-top: var(--s-4);
     color: var(--ink-2);
-    font: 400 var(--step-1) / 1.45 var(--font-long);
+    font: var(--type-dek);
     text-wrap: pretty;
 }
 
 /* ---- The contents: the rail (≥ 960) or a box ---------------------- */
 .contents {
-    font: 400 var(--step-0) / 1.4 var(--font-display);
+    font: var(--type-ui-row);
 }
 .contentsTitle {
     margin-bottom: var(--s-3);
@@ -196,7 +196,8 @@
     flex: none;
     width: 1rem;
     color: var(--ink-2);
-    font: 400 var(--step-1) / 1 var(--font-display);
+    font: var(--type-title-sm);
+    line-height: var(--lh-solid);
     text-align: center;
 }
 .box[open] > .boxSummary::after {
@@ -229,7 +230,7 @@
 .endTitle {
     margin-bottom: var(--s-4);
     color: var(--ink-2);
-    font: 400 var(--label-size) / 1 var(--font-label);
+    font: var(--type-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
@@ -249,8 +250,8 @@
    correction's in ink. */
 .revisionHead {
     color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
 }
 .revision[data-kind="correction"] .revisionHead {
     color: var(--ink-1);
@@ -258,7 +259,7 @@
 .revisionNote {
     margin-top: var(--s-1);
     color: var(--ink-2);
-    font: 400 var(--step-0) / 1.55 var(--font-text);
+    font: var(--type-ui);
 }
 .endmark {
     display: flex;
@@ -336,6 +337,7 @@
         width: auto;
         max-width: none;
         font-size: 22pt;
+        line-height: var(--lh-paper-display);
     }
     .main :global(.prose > .plate--wide),
     .main :global(.prose > .plate--full) {
@@ -343,6 +345,7 @@
     }
     .dek {
         font-size: 12pt;
+        line-height: var(--lh-paper-dek);
     }
     .after {
         max-width: none;

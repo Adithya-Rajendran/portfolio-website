@@ -21,7 +21,9 @@
     max-width: 52ch;
     margin-top: var(--s-4);
     color: var(--ink-2);
-    font: 400 var(--label-size) / 1.5 var(--font-mono);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
+    line-height: var(--lh-text);
 }
 /* Space alone sets the Open To line apart from the intro. */
 .openTo {
@@ -63,7 +65,7 @@
     padding-block: var(--s-3);
     border-top: var(--rule-hair) solid var(--rule-1);
     color: var(--ink-1);
-    font: 400 var(--step-0) / 1.45 var(--font-display);
+    font: var(--type-ui);
 }
 /* Under the section head its hairline is the first row's: the first row
    draws none of its own (`--first-rule`, styles/components.css). */
@@ -78,8 +80,8 @@
 }
 .rowDate {
     color: var(--ink-2);
-    font: 400 var(--label-size) / 1.5 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
 }
 .row a {
     color: var(--ink-1);
@@ -102,8 +104,10 @@
 /* Prior certifications, under the current ones. */
 .subhead {
     margin: var(--s-6) 0 var(--s-3);
-    color: var(--ink-1);
-    font: 400 var(--step-0) / 1.4 var(--font-display);
+    color: var(--text-quiet);
+    font: var(--type-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
 }
 
 /* An address or an opening on the masthead, or a credential's last word
@@ -256,6 +260,7 @@
     }
     .rowDate {
         font-size: 7.6pt;
+        line-height: var(--lh-text);
     }
     .row a {
         text-decoration: none;
@@ -266,6 +271,9 @@
     .subhead {
         margin: 1.2mm 0 0.6mm;
         font: 500 8.4pt / 1.3 var(--font-display);
+        letter-spacing: 0;
+        text-transform: none;
+        color: var(--text);
         break-after: avoid;
     }
 }

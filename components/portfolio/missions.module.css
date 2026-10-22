@@ -22,8 +22,9 @@
 .dates {
     flex: none;
     color: var(--ink-1);
-    font: 400 var(--label-size) / 1 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
+    line-height: var(--lh-solid);
 }
 
 .stack {
@@ -33,7 +34,8 @@
     margin: 0;
     padding: 0;
     color: var(--ink-2);
-    font: 400 var(--label-size) / 1.5 var(--font-mono);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
     list-style: none;
 }
 /* An item never splits across lines ("Canonical OpenStack"). */
@@ -54,8 +56,8 @@
 .stageHeading {
     max-width: 22ch;
     margin-top: var(--s-5);
-    font: 400 var(--step-4) / 1.08 var(--font-display);
-    letter-spacing: -0.015em;
+    font: var(--type-title-xl);
+    letter-spacing: var(--track-title);
     text-wrap: balance;
 }
 .stageHeading a {
@@ -70,7 +72,7 @@
     max-width: 52ch;
     margin-top: var(--s-3);
     color: var(--ink-2);
-    font: 400 var(--step-1) / 1.5 var(--font-long);
+    font: var(--type-dek);
     text-wrap: pretty;
 }
 /* The title links the page: the rows' arrow trails its last word, in
@@ -142,8 +144,8 @@
 .tileName {
     margin-top: var(--s-2);
     padding-right: var(--s-6);
-    font: 400 var(--step-3) / 1.08 var(--font-display);
-    letter-spacing: -0.01em;
+    font: var(--type-title-lg);
+    letter-spacing: var(--track-title);
     text-wrap: balance;
     /* A word wider than a covered tile's title column (large or tracked
        text on a phone) breaks rather than runs past it. */
@@ -160,7 +162,7 @@
 .tileSummary {
     max-width: 52ch;
     color: var(--ink-2);
-    font: 400 var(--step-0) / 1.55 var(--font-long);
+    font: var(--type-note);
     text-wrap: pretty;
 }
 /* A tile with a cover: a 3:2 thumbnail with its credit beside the title,
@@ -310,13 +312,13 @@
 }
 .rowDates {
     color: var(--ink-2);
-    font: 400 var(--label-size) / 1.4 var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
 }
 .rowTitle {
     margin-top: var(--s-1);
-    font: 400 var(--step-2) / 1.2 var(--font-display);
-    letter-spacing: -0.005em;
+    font: var(--type-title-md);
+    letter-spacing: var(--track-title);
     text-wrap: balance;
     /* As a tile's title: a word wider than the column breaks. */
     overflow-wrap: break-word;
@@ -327,7 +329,7 @@
 .rowSummary {
     max-width: 60ch;
     color: var(--ink-2);
-    font: 400 var(--step-0) / 1.5 var(--font-long);
+    font: var(--type-note);
     text-wrap: pretty;
 }
 /* A row with a cover: a 3:2 thumbnail with its credit. On phones the

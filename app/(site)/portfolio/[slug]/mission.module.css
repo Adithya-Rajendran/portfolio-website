@@ -31,7 +31,7 @@
     max-width: 22ch;
     margin-top: var(--s-5);
     color: var(--ink-1);
-    font: var(--weight-display) var(--step-5) / 1.04 var(--font-display);
+    font: var(--type-display);
     letter-spacing: var(--track-display);
     text-wrap: balance;
 }
@@ -39,7 +39,7 @@
     max-width: 52ch;
     margin-top: var(--s-4);
     color: var(--ink-2);
-    font: 400 var(--step-1) / 1.5 var(--font-long);
+    font: var(--type-dek);
     text-wrap: pretty;
 }
 /* The quiet links: the original entry, then the repositories. */
@@ -118,7 +118,7 @@
 .line {
     max-width: 52ch;
     color: var(--ink-1);
-    font: 400 var(--step-0) / 1.55 var(--font-display);
+    font: var(--type-ui);
     text-wrap: pretty;
 }
 
@@ -132,7 +132,7 @@
 }
 .contentsTitle {
     color: var(--ink-2);
-    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+    font: var(--type-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
@@ -149,7 +149,7 @@
     padding: var(--s-2) 0 var(--s-2) var(--s-4);
     border-left: var(--rule-strong) solid transparent;
     color: var(--ink-2);
-    font: 400 var(--step-0) / 1.4 var(--font-display);
+    font: var(--type-ui-row);
     text-decoration: none;
     transition: border-color var(--dur-3) var(--ease-dock);
 }
@@ -217,7 +217,7 @@
 .subhead {
     margin-bottom: var(--s-3);
     color: var(--ink-2);
-    font: 400 var(--label-size) / var(--lh-label) var(--font-label);
+    font: var(--type-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
 }
@@ -238,7 +238,7 @@
     padding: var(--s-4) 0 var(--s-4) var(--list-gutter);
     border-top: var(--rule-hair) solid var(--rule-1);
     color: var(--ink-1);
-    font: 400 var(--step-0) / 1.55 var(--font-display);
+    font: var(--type-ui);
     text-wrap: pretty;
 }
 /* A lone list (`.single`) opens its section: the head's hairline is its

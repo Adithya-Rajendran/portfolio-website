@@ -57,8 +57,8 @@
 }
 
 .title {
-    font: 400 var(--step-3) / var(--lh-heading) var(--font-display);
-    letter-spacing: -0.01em;
+    font: var(--type-title-lg);
+    letter-spacing: var(--track-title);
     margin: 0 0 var(--s-2);
     text-wrap: balance;
 }
@@ -76,10 +76,9 @@
     align-items: baseline;
     gap: var(--s-1) var(--s-4);
     margin: 0 0 var(--s-3);
-    font-size: var(--label-size);
-    line-height: 1.4;
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
     color: var(--ink-2);
-    font-variant-numeric: tabular-nums;
 }
 
 /* In flight the readout ticks in the written dates' place. */
@@ -88,18 +87,18 @@
 }
 
 .org {
-    font: 400 var(--step-0) / 1.4 var(--font-display);
+    font: var(--type-ui-row);
     margin: 0;
 }
 
 .note {
-    font: 400 var(--step-0) / 1.45 var(--font-display);
+    font: var(--type-ui);
     color: var(--ink-2);
     margin: var(--s-1) 0 0;
 }
 
 .line {
-    font: 400 var(--step-0) / 1.55 var(--font-display);
+    font: var(--type-ui);
     color: var(--ink-2);
     margin: var(--s-4) 0 0;
     max-width: 42ch;
@@ -281,20 +280,23 @@
 }
 
 .year {
-    font: 400 var(--label-size) / 1 var(--font-mono);
-    font-variant-numeric: tabular-nums;
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
+    line-height: var(--lh-solid);
 }
 
 .name {
-    font: 400 var(--label-size) / 1 var(--font-label);
+    font: var(--type-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
+    line-height: var(--lh-solid);
 }
 
 /* The caption sits in the scene's column, flush with the shell's edge. */
 .figure {
     margin: 0;
-    font: 400 var(--label-size) / 1.4 var(--font-mono);
+    font: var(--type-data);
+    font-variant-numeric: var(--numerals-data);
     color: var(--ink-3);
     pointer-events: none;
 }
@@ -412,7 +414,7 @@
         gap: var(--s-3);
     }
     :global(html[data-js]) .title {
-        font-size: 1.5rem;
+        font-size: var(--size-card-title);
         margin-bottom: var(--s-1);
     }
     /* No line, so the record stays in the stage's lower part and no

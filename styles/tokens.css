@@ -129,6 +129,8 @@
         --lh-paper-base: 1.38; /* the CV sheet's base, deks and facts */
         --lh-paper-loose: 1.42; /* the masthead summary */
         --lh-paper-key: 1.6; /* a specs key, inline under its row's strut */
+        --lh-paper-display: 1.04; /* a post's title on paper */
+        --lh-paper-dek: 1.45; /* its standfirst on paper */
 
         /* ---- tracking -----------------------------------------------
            Labels: DM Mono caps, 0.08em. Controls (the nav, the buttons,
@@ -357,8 +359,6 @@
         /* ---- migration aliases ------------------------------------- */
         /* The old names, kept while a stylesheet still reads them; each
            goes in the change that moves its last reader to the scale. */
-        --lh-heading: 1.14;
-        --lh-label: var(--lh-compact);
         --dur-3: var(--dur-state);
         --dur-5: var(--dur-enter);
         --dur-6: var(--dur-reveal);
