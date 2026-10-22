@@ -18,7 +18,7 @@
     padding-bottom: var(--s-5);
 }
 .note {
-    max-width: 52ch;
+    max-width: var(--measure-lead);
     margin-top: var(--s-4);
     color: var(--text-quiet);
     font: var(--type-data);
@@ -74,7 +74,7 @@
 }
 @media (min-width: 37.5rem) {
     .row {
-        grid-template-columns: 11rem minmax(0, 1fr);
+        grid-template-columns: var(--col-term) minmax(0, 1fr);
         align-items: baseline;
     }
 }
@@ -92,9 +92,9 @@
 .row a :global(.icon) {
     width: 0.7em;
     height: 0.7em;
-    margin-left: 0.3em;
+    margin-left: var(--icon-gap);
     color: var(--icon-quiet);
-    vertical-align: 0.05em;
+    vertical-align: var(--icon-out-shift);
 }
 /* What follows the line's name: a credential's issuer. */
 .rowAside {
@@ -211,7 +211,7 @@
         content: "";
         width: 1.5mm;
         height: 1.5mm;
-        border-radius: 50%;
+        border-radius: var(--radius-round);
         background: var(--mark-now);
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;

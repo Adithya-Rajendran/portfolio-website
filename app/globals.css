@@ -44,10 +44,10 @@
     --text-shadow-*: initial;
     --ease-*: initial;
     --animate-*: initial;
+    --breakpoint-*: initial;
     --breakpoint-sm: 37.5rem;
     --breakpoint-md: 60rem;
     --breakpoint-lg: 80rem;
-    --breakpoint-xl: 90rem;
 }
 
 /* Utilities that follow the theme: the colour roles in styles/tokens.css,

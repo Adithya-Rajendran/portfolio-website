@@ -13,7 +13,7 @@
 .form {
     display: grid;
     gap: var(--s-5);
-    max-width: 46rem;
+    max-width: var(--measure-form);
 }
 @media (min-width: 60rem) {
     .form {
@@ -42,7 +42,7 @@
     flex: 1 1 100%;
 }
 .topics :global(.seg__opt + .seg__opt) {
-    margin-top: -1px;
+    margin-top: calc(-1 * var(--rule-hair));
     margin-left: 0;
 }
 .optional {
@@ -80,7 +80,7 @@
 
 /* Where a message goes, closing the form: quiet UI text. */
 .privacy {
-    max-width: 52ch;
+    max-width: var(--measure-lead);
     color: var(--text-quiet);
     font: var(--type-ui);
     text-wrap: pretty;
@@ -107,7 +107,7 @@
 
 /* ---- Received: the heading and the way back, after the head's space ---- */
 .received {
-    max-width: 46rem;
+    max-width: var(--measure-form);
 }
 .receivedTitle {
     color: var(--text);

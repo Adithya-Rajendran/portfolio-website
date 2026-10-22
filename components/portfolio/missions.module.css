@@ -54,7 +54,7 @@
 }
 /* The title is the heading, in sentence case. */
 .stageHeading {
-    max-width: 22ch;
+    max-width: var(--measure-title);
     margin-top: var(--s-5);
     font: var(--type-title-xl);
     letter-spacing: var(--track-title);
@@ -69,7 +69,7 @@
     text-underline-offset: 0.12em;
 }
 .stageSummary {
-    max-width: 52ch;
+    max-width: var(--measure-lead);
     margin-top: var(--s-3);
     color: var(--text-quiet);
     font: var(--type-dek);
@@ -78,8 +78,8 @@
 /* The title links the page: the rows' arrow trails its last word, in
    ink-3, and nudges with the underline on hover. */
 .stageArrow {
-    width: 0.42em;
-    height: 0.42em;
+    width: var(--icon-display);
+    height: var(--icon-display);
     color: var(--icon-quiet);
     vertical-align: 0.06em;
     transition:
@@ -88,7 +88,7 @@
 }
 .stageHeading a:hover .stageArrow {
     color: var(--text);
-    transform: translateX(4px);
+    transform: translateX(var(--nudge));
 }
 .stageCopy > .stack {
     margin-top: var(--s-5);
@@ -160,7 +160,7 @@
     text-underline-offset: 0.14em;
 }
 .tileSummary {
-    max-width: 52ch;
+    max-width: var(--measure-lead);
     color: var(--text-quiet);
     font: var(--type-note);
     text-wrap: pretty;
@@ -265,7 +265,7 @@
         color var(--dur-hover) var(--ease-dock);
 }
 .tile:hover .tileArrow {
-    transform: translateX(4px);
+    transform: translateX(var(--nudge));
     color: var(--text);
 }
 
@@ -327,7 +327,7 @@
     text-decoration: none;
 }
 .rowSummary {
-    max-width: 60ch;
+    max-width: var(--measure-copy);
     color: var(--text-quiet);
     font: var(--type-note);
     text-wrap: pretty;
@@ -416,8 +416,8 @@
     position: absolute;
     top: var(--s-4);
     right: 0;
-    width: 20px;
-    height: 20px;
+    width: var(--icon-row);
+    height: var(--icon-row);
     color: var(--icon-quiet);
     transition:
         transform var(--dur-hover) var(--ease-dock),
@@ -448,5 +448,5 @@
 }
 .row:hover .rowArrow {
     color: var(--text);
-    transform: translateX(4px);
+    transform: translateX(var(--nudge));
 }

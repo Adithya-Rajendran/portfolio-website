@@ -8,6 +8,7 @@ import { OpenToItems } from "@/components/ui/availability";
 import { Icon } from "@/components/ui/icon";
 import KeepWhole from "@/components/ui/keep-whole";
 import { Status } from "@/components/ui/marks";
+import { maxWidth, minWidth } from "@/lib/breakpoints";
 import { homeCopy as copy } from "@/lib/copy";
 import sunrise from "@/lib/hero-sunrise.json";
 import { cvLink } from "@/lib/navigation";
@@ -37,8 +38,8 @@ import styles from "./hero.module.css";
 
 type Crop = "desktop" | "mobile";
 
-const MOBILE = "(max-width: 47.99rem)";
-const DESKTOP = "(min-width: 48rem)";
+const MOBILE = maxWidth("tablet");
+const DESKTOP = minWidth("tablet");
 const SIZES = "100vw";
 
 /** The credit's parts ("Photo: NASA", "Expedition 72"): on one line from

@@ -16,7 +16,7 @@
 
 .journey {
     position: relative;
-    --stage-h: min(calc(100svh - var(--header-h)), 56rem);
+    --stage-h: min(calc(100svh - var(--header-h)), var(--stage-max));
 }
 
 .stage {
@@ -131,7 +131,7 @@
 /* One definite row, so the record's max-height resolves against it. */
 :global(html[data-js]) .grid {
     height: 100%;
-    grid-template-columns: minmax(0, 27rem) 1fr;
+    grid-template-columns: minmax(0, var(--record-w)) 1fr;
     grid-template-rows: minmax(0, 1fr);
     column-gap: var(--s-6);
     align-items: center;
@@ -168,7 +168,7 @@
     flex-direction: column;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(12px);
+    transform: translateY(var(--rise));
     transition:
         opacity var(--dur-5) var(--ease-dock),
         transform var(--dur-5) var(--ease-dock),
@@ -249,10 +249,10 @@
     position: absolute;
     left: -16px;
     top: 50%;
-    width: 7px;
-    height: 7px;
-    margin-top: -3.5px;
-    border-radius: 50%;
+    width: var(--dot);
+    height: var(--dot);
+    margin-top: calc(var(--dot) / -2);
+    border-radius: var(--radius-round);
     background: var(--bg);
     border: var(--rule-hair) solid var(--dot-ring);
 }
@@ -384,7 +384,7 @@
         padding-top: var(--s-3);
     }
     :global(html[data-js]) .entry {
-        min-height: 32px;
+        min-height: var(--target-inline);
     }
     /* Play beside the rail's last row, not on a row of its own. */
     :global(html[data-js]) .controls {

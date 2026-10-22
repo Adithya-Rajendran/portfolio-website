@@ -69,9 +69,11 @@ only live in comments or commit messages.
       module imported by `app/global-not-found.tsx` is merged into the root
       layout's stylesheet, which the Studio loads, so the 404's styles are
       global (`styles/los.css`).
-    - Every media query is in rem, the JavaScript breakpoints too (the
-      flight's `wide` is `60rem`), so they all follow the visitor's text
-      size.
+    - Every media query is in rem, from `lib/breakpoints.ts` (a
+      min-width at its value, a max-width 0.01rem under it), which the
+      components' `matchMedia` and image `sizes` strings read too (the
+      flight's wide is `BREAKPOINTS.md`), so they all follow the
+      visitor's text size.
 - **Images.** `next/image` loads through `lib/sanity-image-loader.ts`
   (`images.loaderFile`): Sanity's CDN makes each srcset width, and
   Vercel's image optimizer is not used. Every `next/image` on the site is

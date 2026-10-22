@@ -15,7 +15,7 @@
     container-type: inline-size;
     display: flex;
     flex-direction: column;
-    min-height: max(calc(100svh - var(--header-h)), 36rem);
+    min-height: max(calc(100svh - var(--header-h)), var(--hero-min));
     --photo-h: min(100cqw * 1646 / 3840, 0.82 * (100svh - var(--header-h)));
     --limb-clear: calc(var(--photo-h) * 0.47);
 }
@@ -43,7 +43,7 @@
 .photo {
     position: absolute;
     right: 0;
-    bottom: calc(44px + var(--s-5) * 2);
+    bottom: calc(var(--target) + var(--s-5) * 2);
     left: 0;
     height: var(--photo-h);
 }
@@ -146,17 +146,17 @@
 :global([data-theme="manual"]) .rim {
     display: inline;
     stroke: var(--draw-strong);
-    stroke-width: 1.25px;
+    stroke-width: var(--stroke);
 }
 :global([data-theme="manual"]) .surface {
     display: inline;
     stroke: var(--draw-faint);
-    stroke-width: 1px;
+    stroke-width: var(--stroke-hair);
 }
 :global([data-theme="manual"]) .halo {
     display: inline;
     stroke: var(--draw);
-    stroke-width: 1px;
+    stroke-width: var(--stroke-hair);
     stroke-dasharray: 1.5 5;
 }
 :global([data-theme="manual"]) .sun {
@@ -169,7 +169,7 @@
     .rim {
         display: inline;
         stroke: CanvasText;
-        stroke-width: 1.25px;
+        stroke-width: var(--stroke);
     }
 }
 
@@ -179,7 +179,7 @@
     display: flex;
     flex: 1 0 auto;
     flex-direction: column;
-    padding-top: clamp(1.5rem, 0.5rem + 4svh, 4.5rem);
+    padding-top: var(--hero-frame-top);
     padding-bottom: var(--s-5);
 }
 .centre {
@@ -208,7 +208,7 @@
    whole (.open-to). */
 .headline {
     justify-content: center;
-    max-width: 44rem;
+    max-width: var(--hero-measure);
     margin-top: var(--s-5);
     color: var(--text);
     font: var(--type-lead);
@@ -220,7 +220,7 @@
     align-items: baseline;
     justify-content: center;
     gap: var(--s-1) var(--s-3);
-    max-width: 52rem;
+    max-width: var(--hero-measure-wide);
     margin-top: var(--s-4);
     color: var(--text-quiet);
     font: var(--type-ui);
@@ -241,7 +241,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--s-2) var(--s-6);
-    max-width: 44rem;
+    max-width: var(--hero-measure);
     margin-top: var(--s-7);
 }
 /* A 44px target around one line. No width of its own: a wrapped box
@@ -311,7 +311,7 @@
     .headline {
         flex-direction: column;
         align-items: center;
-        max-width: 22rem;
+        max-width: var(--hero-measure-phone);
         font-size: var(--step-0);
     }
     .name {
@@ -369,7 +369,7 @@
     .rim {
         display: inline;
         stroke: var(--draw-strong);
-        stroke-width: 1.25px;
+        stroke-width: var(--stroke);
     }
     .sun {
         display: inline;

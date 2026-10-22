@@ -6,6 +6,7 @@ import MissionLine, {
 import { Icon } from "@/components/ui/icon";
 import { LinkArrow } from "@/components/ui/marks";
 import Plate from "@/components/ui/plate";
+import { minWidth } from "@/lib/breakpoints";
 import { missionsCopy as copy } from "@/lib/copy";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
@@ -85,7 +86,7 @@ export default function MissionStage({
                     caption={caption}
                     ratio={ratio}
                     focus="50% 40%"
-                    sizes="(min-width: 60rem) 36vw, 100vw"
+                    sizes={`${minWidth("md")} 36vw, 100vw`}
                     priority={priority}
                 />
             ) : null}

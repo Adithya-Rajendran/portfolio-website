@@ -30,26 +30,26 @@
     }
     .icon {
         display: inline-block;
-        width: 1.25em;
-        height: 1.25em;
-        vertical-align: -0.25em;
+        width: var(--icon);
+        height: var(--icon);
+        vertical-align: var(--icon-drop);
         fill: none;
         stroke: currentColor;
-        stroke-width: 1.5;
+        stroke-width: var(--stroke-icon);
         stroke-linecap: square;
         stroke-linejoin: miter;
         flex: none;
     }
     .icon--sm {
-        width: 1em;
-        height: 1em;
-        vertical-align: -0.14em;
+        width: var(--icon-sm);
+        height: var(--icon-sm);
+        vertical-align: var(--icon-drop-sm);
     }
     /* The patch's sun is an identity mark: orange at every size. */
     .patch {
         display: block;
-        width: 96px;
-        height: 96px;
+        width: var(--patch);
+        height: var(--patch);
         color: var(--text);
         --patch-sun: var(--mark-identity);
     }
@@ -61,7 +61,7 @@
     .status {
         display: inline-flex;
         align-items: center;
-        gap: 0.55em;
+        gap: var(--mark-gap);
         font: var(--type-label);
         letter-spacing: var(--track-label);
         text-transform: uppercase;
@@ -71,8 +71,8 @@
     }
     .status::before {
         content: "";
-        width: 7px;
-        height: 7px;
+        width: var(--dot);
+        height: var(--dot);
         border-radius: var(--radius-round);
         background: var(--dot-on);
         flex: none;
@@ -87,8 +87,8 @@
     }
     .status:is([data-status="complete"], [data-status="lifetime"])::before {
         border-radius: 0;
-        width: 6px;
-        height: 6px;
+        width: var(--dot-square);
+        height: var(--dot-square);
     }
     .status[data-status="archived"] {
         color: var(--text-faint);
@@ -98,8 +98,8 @@
         box-shadow: inset 0 0 0 var(--rule-hair) var(--dot-ring);
     }
     .status[data-status="paused"]::before {
-        width: 6px;
-        height: 8px;
+        width: var(--dot-square);
+        height: var(--dot-bar);
         border-radius: 0;
         background: transparent;
         border-inline: var(--rule-strong) solid var(--dot-on);
@@ -113,9 +113,9 @@
         content: none;
     }
     .status__icon {
-        width: 10px;
-        height: 10px;
-        stroke-width: 2;
+        width: var(--icon-mark);
+        height: var(--icon-mark);
+        stroke-width: var(--stroke-icon-strong);
     }
 
     /* ===== Header and navigation (site.css 4.2) ======================== */
@@ -140,14 +140,14 @@
         display: inline-flex;
         align-items: center;
         gap: var(--s-3);
-        min-height: 44px;
+        min-height: var(--target);
         flex: none;
         color: var(--text);
         text-decoration: none;
     }
     .brand .patch {
-        width: 36px;
-        height: 36px;
+        width: var(--patch-brand);
+        height: var(--patch-brand);
         --patch-band: none;
     }
     /* The wordmark: one of the two places Michroma is set. */
@@ -165,7 +165,7 @@
     .nav__list {
         display: flex;
         align-items: center;
-        gap: clamp(1rem, 2.1vw, 2.5rem);
+        gap: var(--nav-gap);
         margin: 0;
         padding: 0;
         list-style: none;
@@ -174,7 +174,7 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
+        min-height: var(--target);
         padding-block: var(--s-1);
         color: var(--text);
         font: var(--type-control);
@@ -189,7 +189,7 @@
         position: absolute;
         left: 0;
         right: 0;
-        bottom: -2px;
+        bottom: calc(-1 * var(--rule-strong));
         height: var(--rule-strong);
         background: var(--rule-lit);
         transform: scaleX(0);
@@ -210,7 +210,7 @@
     .header-tools {
         display: flex;
         align-items: center;
-        gap: min(var(--s-3), 12px);
+        gap: var(--bar-gap);
         flex: none;
     }
 
@@ -220,7 +220,7 @@
     .header-cv {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
+        min-height: var(--target);
         padding: 0 min(0.35rem, 5.6px);
         color: var(--text);
         font: var(--type-control);
@@ -246,9 +246,9 @@
         display: none;
         align-items: center;
         justify-content: center;
-        gap: min(0.5rem, 8px);
-        min-height: 44px;
-        min-width: 44px;
+        gap: var(--bar-gap-sm);
+        min-height: var(--target);
+        min-width: var(--target);
         padding: 0 min(0.7rem, 11.2px);
         background: transparent;
         border: var(--rule-hair) solid var(--rule-firm);
@@ -262,8 +262,8 @@
             background-color var(--dur-hover) var(--ease-dock);
     }
     .nav-toggle .icon {
-        width: 16px;
-        height: 16px;
+        width: var(--icon-control);
+        height: var(--icon-control);
     }
     .nav-toggle:hover {
         border-color: var(--rule-lit);
@@ -287,8 +287,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
+        width: var(--target);
+        height: var(--target);
         flex: none;
         padding: 0;
         border: 0;
@@ -307,7 +307,7 @@
     }
     .theme-switch__popover {
         position: absolute;
-        top: calc(100% + (var(--header-h) - 44px) / 2);
+        top: calc(100% + (var(--header-h) - var(--target)) / 2);
         right: 0;
         width: max-content;
         padding: var(--s-3);
@@ -349,7 +349,7 @@
             gap: var(--s-4);
         }
         .nav__list {
-            gap: 1rem;
+            gap: var(--s-4);
         }
         .header-tools {
             gap: var(--s-2);
@@ -419,11 +419,11 @@
         .nav__link {
             display: flex;
             padding-block: var(--s-4);
-            min-height: 64px;
+            min-height: var(--sheet-row);
             font-size: var(--step-0);
         }
         .nav__link::after {
-            bottom: -1px;
+            bottom: calc(-1 * var(--rule-hair));
         }
         .nav__sheet-extra {
             display: flex;
@@ -437,7 +437,7 @@
         /* phones: the patch alone is the brand; the bar sits at the end,
            so the gap only spaces the two when the row is full. */
         .site-header__inner {
-            gap: 8px;
+            gap: var(--bar-gap-sm);
         }
         .brand__name {
             display: none;
@@ -465,8 +465,8 @@
     .motion-toggle {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        min-height: 44px;
+        gap: var(--s-2);
+        min-height: var(--target);
         color: var(--text-quiet);
         font: var(--type-control);
         letter-spacing: var(--track-control);
@@ -478,8 +478,8 @@
         color: var(--text);
     }
     .motion-toggle .icon {
-        width: 16px;
-        height: 16px;
+        width: var(--icon-control);
+        height: var(--icon-control);
     }
     html:not([data-motion="reduced"]) .motion-toggle__off,
     html[data-motion="reduced"] .motion-toggle__on {
@@ -500,13 +500,13 @@
 
     /* ===== Buttons and links (site.css 4.4) ============================ */
     .btn {
-        --btn-h: 48px;
+        --btn-h: var(--control-h);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.7rem;
         min-height: var(--btn-h);
-        padding: 0 1.25rem;
+        padding: 0 var(--control-pad-lg);
         border: var(--rule-hair) solid var(--rule-firm);
         border-radius: 0;
         background: transparent;
@@ -523,8 +523,8 @@
             color var(--dur-hover) var(--ease-dock);
     }
     .btn .icon {
-        width: 16px;
-        height: 16px;
+        width: var(--icon-control);
+        height: var(--icon-control);
         transition: transform var(--dur-hover) var(--ease-dock);
     }
     .btn:hover {
@@ -532,7 +532,7 @@
         background: var(--surface-lit);
     }
     .btn:hover .icon--nudge {
-        transform: translateX(4px);
+        transform: translateX(var(--nudge));
     }
     .btn:active {
         background: var(--surface-lit);
@@ -559,7 +559,7 @@
     }
     .btn--quiet {
         border-color: transparent;
-        padding-inline: 0.25rem;
+        padding-inline: var(--s-1);
     }
     .btn--quiet:hover {
         background: transparent;
@@ -569,7 +569,7 @@
         text-underline-offset: 0.45em;
     }
     .btn--sm {
-        --btn-h: 44px;
+        --btn-h: var(--target);
         padding: 0 0.85rem;
     }
 
@@ -578,8 +578,8 @@
     .link-arrow {
         display: inline-flex;
         align-items: center;
-        gap: 0.55em;
-        min-height: 44px;
+        gap: var(--mark-gap);
+        min-height: var(--target);
         border-bottom: var(--rule-hair) solid var(--underline);
         color: var(--text);
         font: var(--type-control);
@@ -600,7 +600,7 @@
         box-shadow: 0 var(--rule-hair) 0 var(--underline-lit);
     }
     .link-arrow:hover .icon {
-        transform: translateX(4px);
+        transform: translateX(var(--nudge));
     }
 
     /* Stretched link: the whole card is clickable, the title is the link. */
@@ -714,7 +714,7 @@
        tag, the plain h1, then a serif intro. */
     .page-head {
         position: relative;
-        padding-top: clamp(2.5rem, 1rem + 4vw, 4.5rem);
+        padding-top: var(--space-head);
         padding-bottom: var(--space-block);
     }
     /* The section's themed tag: the other place Michroma is set. */
@@ -731,7 +731,7 @@
     /* Set ragged, as prose: a balanced break can split a phrase ("or an /
        opportunity") where a full first line would not. */
     .page-head__intro {
-        max-width: 52ch;
+        max-width: var(--measure-lead);
         margin-top: var(--s-6);
         color: var(--text-quiet);
         font: var(--type-dek);
@@ -742,7 +742,7 @@
     .caption {
         display: flex;
         gap: var(--s-3);
-        max-width: 60ch;
+        max-width: var(--measure-copy);
         margin-top: var(--s-3);
         color: var(--text-quiet);
         font: var(--type-ui);
@@ -801,7 +801,7 @@
     .site-footer__strip a {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
+        min-height: var(--target);
     }
     .site-footer__name {
         white-space: nowrap;
@@ -860,7 +860,7 @@
     .input,
     .textarea {
         width: 100%;
-        min-height: 48px;
+        min-height: var(--control-h);
         padding: 0.7rem 0.9rem;
         border: var(--rule-hair) solid var(--rule-firm);
         border-radius: 0;
@@ -874,7 +874,7 @@
             background-color var(--dur-hover) var(--ease-dock);
     }
     .textarea {
-        min-height: 8.5rem;
+        min-height: var(--textarea-h);
         line-height: var(--lh-text);
         resize: vertical;
     }
@@ -980,14 +980,14 @@
     .titleblock__links a {
         display: inline-flex;
         align-items: center;
-        gap: 0.3em;
-        min-height: 32px;
+        gap: var(--icon-gap);
+        min-height: var(--target-inline);
         color: var(--text);
         text-underline-offset: 0.18em;
     }
     .titleblock__links .icon {
-        width: 0.85em;
-        height: 0.85em;
+        width: var(--icon-out);
+        height: var(--icon-out);
         color: var(--icon-quiet);
     }
     /* Flight Manual colours a cell's unpainted top and left edges (0 wide)
@@ -1029,13 +1029,13 @@
         text-underline-offset: 0.16em;
     }
     .q-item__title .icon {
-        width: 0.7em;
-        height: 0.7em;
-        margin-left: 0.3em;
+        width: var(--icon-out-title);
+        height: var(--icon-out-title);
+        margin-left: var(--icon-gap);
         color: var(--icon-quiet);
     }
     .q-item__note {
-        max-width: 60ch;
+        max-width: var(--measure-copy);
         color: var(--text-quiet);
         font: var(--type-note);
         text-wrap: pretty;
@@ -1066,7 +1066,7 @@
         display: flex;
     }
     .seg__opt + .seg__opt {
-        margin-left: -1px;
+        margin-left: calc(-1 * var(--rule-hair));
     }
     .seg__input {
         position: absolute;
@@ -1082,7 +1082,7 @@
         align-items: center;
         gap: 0.6rem;
         width: 100%;
-        min-height: 44px;
+        min-height: var(--target);
         padding: 0 0.9rem;
         border: var(--rule-hair) solid var(--rule-firm);
         color: var(--text-quiet);
@@ -1104,8 +1104,8 @@
     .seg__box::before {
         content: "";
         flex: none;
-        width: 7px;
-        height: 7px;
+        width: var(--dot);
+        height: var(--dot);
         border-radius: var(--radius-round);
         box-shadow: inset 0 0 0 var(--rule-hair) var(--dot-ring);
     }
@@ -1121,7 +1121,7 @@
     }
     .seg__note {
         grid-column: 2;
-        max-width: 60ch;
+        max-width: var(--measure-copy);
         color: var(--text-quiet);
         font: var(--type-note);
         letter-spacing: 0;
@@ -1169,7 +1169,9 @@
     }
     @media (min-width: 37.5rem) {
         .specs__row {
-            grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+            grid-template-columns:
+                minmax(var(--col-term-min), var(--col-term))
+                minmax(0, 1fr);
         }
     }
     .specs dt {
@@ -1214,7 +1216,7 @@
     }
     @media (min-width: 37.5rem) {
         .cv-item {
-            grid-template-columns: 11rem minmax(0, 1fr);
+            grid-template-columns: var(--col-term) minmax(0, 1fr);
             column-gap: var(--gutter);
         }
     }
@@ -1253,11 +1255,11 @@
         text-decoration: none;
     }
     .cv-item__ext {
-        width: 0.7em;
-        height: 0.7em;
-        margin-left: 0.3em;
+        width: var(--icon-out-title);
+        height: var(--icon-out-title);
+        margin-left: var(--icon-gap);
         color: var(--icon-quiet);
-        vertical-align: 0.05em;
+        vertical-align: var(--icon-out-shift);
     }
     .cv-item__sub {
         margin-top: var(--s-1);
@@ -1270,14 +1272,14 @@
         font: var(--type-ui);
     }
     .cv-item__dek {
-        max-width: 60ch;
+        max-width: var(--measure-copy);
         margin-top: var(--s-3);
         color: var(--text-quiet);
         font: var(--type-dek);
         text-wrap: pretty;
     }
     .cv-item__lines {
-        max-width: 68ch;
+        max-width: var(--measure-list);
         margin: var(--s-3) 0 0;
         padding: 0;
         list-style: none;
@@ -1298,7 +1300,7 @@
         content: "";
         position: absolute;
         left: 0;
-        top: 0.78em;
+        top: var(--list-mark-top);
         width: var(--list-mark);
         height: 0;
         border-top: var(--rule-hair) solid var(--list-mark-ink);
@@ -1306,7 +1308,7 @@
     /* The skills and the links, flush in the body column with no key: the
        mono names and the links' own words say what they are. */
     .cv-item__facts {
-        max-width: 68ch;
+        max-width: var(--measure-list);
         margin-top: var(--s-3);
         color: var(--text-quiet);
         font: var(--type-ui);
@@ -1325,8 +1327,8 @@
         z-index: 2;
         display: inline-flex;
         align-items: center;
-        gap: 0.3em;
-        min-height: 32px;
+        gap: var(--icon-gap);
+        min-height: var(--target-inline);
         color: var(--text);
         text-underline-offset: 0.18em;
     }
@@ -1443,7 +1445,7 @@
     .crumb-row__home {
         display: inline-flex;
         align-items: center;
-        min-height: 44px;
+        min-height: var(--target);
         color: var(--text);
         text-decoration: none;
     }
@@ -1678,7 +1680,7 @@
         text-underline-offset: 0.2em;
     }
     .route-row:hover .route-row__arrow {
-        transform: translateX(4px);
+        transform: translateX(var(--nudge));
         color: var(--text);
     }
 
@@ -1754,7 +1756,7 @@
     /* ===== Key/value list, long values (components/ui/specs.tsx) ======= */
     /* A brief: the values are sentences, set in the serif. */
     .specs--read dd {
-        max-width: 60ch;
+        max-width: var(--measure-copy);
         font: var(--type-dek);
         text-wrap: pretty;
     }
@@ -1774,7 +1776,7 @@
         gap: var(--s-2);
     }
     .availability__text {
-        max-width: 60ch;
+        max-width: var(--measure-copy);
         color: var(--text);
         font: var(--type-lead);
         text-wrap: balance;
@@ -1784,7 +1786,7 @@
        opening, so where the line wraps it lands left of the line's start,
        outside the box, and is clipped: a wrapped line reads as a list. */
     .open-to {
-        --open-to-gap: 0.9em;
+        --open-to-gap: var(--parts-gap);
         display: flex;
         flex-wrap: wrap;
         column-gap: var(--open-to-gap);
@@ -1805,7 +1807,7 @@
        characters: 0.9em left the dot touching its neighbours. */
     .open-to.data,
     .open-to.titleblock__data {
-        --open-to-gap: 3ch;
+        --open-to-gap: var(--parts-gap-data);
     }
 
     /* ===== Page head: actions (contract §1) ============================ */
@@ -1818,7 +1820,7 @@
     /* ===== Document sections (contract §1; components/ui/doc-section.tsx) */
     /* The full-width tag row, then the rail and the main column. */
     .doc-section__tag {
-        margin-bottom: var(--s-7);
+        margin-bottom: var(--section-head-gap);
     }
     .doc-section__body {
         row-gap: var(--s-6);

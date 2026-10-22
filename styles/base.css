@@ -11,7 +11,7 @@
         font-family: var(--font-text);
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
-        scroll-padding-top: calc(var(--header-h) + var(--s-5));
+        scroll-padding-top: var(--anchor-offset);
         accent-color: var(--fill);
         caret-color: var(--focus);
         scrollbar-color: var(--scrollbar-thumb) var(--bg);
@@ -137,7 +137,7 @@
     }
 
     :target {
-        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+        scroll-margin-top: var(--anchor-offset);
     }
 
     main {
@@ -169,7 +169,7 @@ html[data-vt="theme"] *::after {
     *,
     *::before,
     *::after {
-        animation-duration: 1ms !important;
+        animation-duration: var(--dur-instant) !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0s !important;
         transition-delay: 0s !important;

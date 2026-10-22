@@ -20,7 +20,7 @@
 .noScript {
     display: grid;
     gap: var(--s-4);
-    max-width: 46rem;
+    max-width: var(--measure-form);
     padding-top: var(--s-4);
     border-top: var(--rule-hair) solid var(--rule-quiet);
     color: var(--text);

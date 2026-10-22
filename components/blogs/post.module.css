@@ -22,7 +22,7 @@
 .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    padding-top: clamp(1.75rem, 1rem + 2.2vw, 3rem);
+    padding-top: var(--space-head);
 }
 .layout > * {
     min-width: 0;
@@ -45,7 +45,7 @@
         --room: calc(
             100cqi -
                 max(
-                    12rem,
+                    var(--rail-min),
                     (100cqi - var(--prose-measure) - 2 * var(--gutter)) / 2
                 ) -
                 var(--gutter)
@@ -53,7 +53,7 @@
         --reach: min(var(--prose-wide), var(--room));
         container-type: inline-size;
         grid-template-columns:
-            minmax(12rem, 1fr) minmax(0, var(--prose-measure))
+            minmax(var(--rail-min), 1fr) minmax(0, var(--prose-measure))
             minmax(0, 1fr);
         column-gap: var(--gutter);
     }
@@ -88,7 +88,7 @@
         grid-row: 2 / span 2;
         align-self: start;
         position: sticky;
-        top: calc(var(--header-h) + var(--s-5));
+        top: var(--sticky-top);
         max-height: calc(100vh - var(--header-h) - 2 * var(--s-5));
         padding-right: var(--s-4);
         overflow-y: auto;
@@ -154,8 +154,8 @@
 .contentsList a {
     display: flex;
     align-items: center;
-    min-height: 44px;
-    margin-left: -1px;
+    min-height: var(--target);
+    margin-left: calc(-1 * var(--rule-hair));
     padding: 0.35rem 0 0.35rem 1rem;
     border-left: var(--rule-strong) solid transparent;
     color: var(--text-quiet);
@@ -182,7 +182,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--s-4);
-    min-height: 48px;
+    min-height: var(--control-h);
     padding: 0 var(--s-4);
     border: var(--rule-hair) solid var(--rule-firm);
     cursor: pointer;
@@ -194,7 +194,7 @@
 .boxSummary::after {
     content: "+";
     flex: none;
-    width: 1rem;
+    width: var(--s-4);
     color: var(--text-quiet);
     font: var(--type-title-sm);
     line-height: var(--lh-solid);
@@ -292,7 +292,7 @@
 @media (min-width: 60rem) {
     .end {
         padding-left: max(
-            calc(12rem + var(--gutter)),
+            calc(var(--rail-min) + var(--gutter)),
             calc((100% - var(--prose-measure)) / 2)
         );
     }

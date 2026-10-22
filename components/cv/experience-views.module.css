@@ -42,7 +42,7 @@
    (a 44px control) and its space, the head's and the band's space and
    the switch's bar (a 44px control and its space). */
 .list {
-    scroll-margin-top: calc(2 * 44px + var(--s-6) + 3 * var(--s-5));
+    scroll-margin-top: calc(2 * var(--target) + var(--s-6) + 3 * var(--s-5));
 }
 
 .list:focus,
@@ -51,7 +51,7 @@
 }
 
 .list [id] {
-    scroll-margin-top: calc(var(--header-h) + var(--s-5));
+    scroll-margin-top: var(--anchor-offset);
 }
 
 /* ---- The switch: Timeline · List, where the head's tools sit ---------- */

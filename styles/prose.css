@@ -54,7 +54,7 @@
         max-width: var(--prose-measure);
     }
     .prose > * + * {
-        margin-top: 1.1em;
+        margin-top: var(--prose-gap);
     }
     /* Phones: hyphenate long words only, ten letters or more with five
        kept on each side (`hyphenate-limit-chars` above: Chrome sets no
@@ -71,23 +71,23 @@
 
     /* ---- Headings ---------------------------------------------------- */
     .prose h2 {
-        margin-top: 2em;
+        margin-top: var(--prose-gap-head);
         font: var(--type-title-md);
         letter-spacing: var(--track-title);
-        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+        scroll-margin-top: var(--anchor-offset);
     }
     .prose h3 {
         margin-top: 1.9em;
         font: var(--type-subhead);
-        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+        scroll-margin-top: var(--anchor-offset);
     }
     .prose h4 {
-        margin-top: 1.6em;
+        margin-top: var(--prose-gap-h4);
         font: var(--type-ui-strong);
-        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+        scroll-margin-top: var(--anchor-offset);
     }
     .prose :is(h2, h3, h4) + * {
-        margin-top: 0.75rem;
+        margin-top: var(--s-3);
     }
 
     /* ---- Text -------------------------------------------------------- */
@@ -122,7 +122,7 @@
         list-style: none;
     }
     .list--number {
-        --list-col: 1.75rem;
+        --list-col: var(--list-gutter-number);
         counter-reset: item;
     }
     .list__item {
@@ -130,7 +130,7 @@
     }
     .list__item + .list__item,
     .list__item > .list {
-        margin-top: 0.45em;
+        margin-top: var(--prose-gap-item);
     }
     .list__item::before {
         display: inline-block;
@@ -143,7 +143,7 @@
         height: 0;
         margin-right: calc(var(--list-col) - var(--list-mark));
         border-top: var(--rule-hair) solid var(--list-mark-ink);
-        vertical-align: 0.3em;
+        vertical-align: var(--list-mark-lift);
     }
     .list .list--bullet > .list__item::before {
         border-top-color: var(--list-mark-ink-nested);
@@ -231,7 +231,7 @@
        `:where` keeps the rule at a paragraph's weight, so under a heading
        the heading's 0.75rem still wins. */
     .prose > :where(.listing) {
-        margin-block: calc(1.6 * var(--step-long));
+        margin-block: var(--prose-gap-listing);
     }
     /* One label (the file name, else the language; none for plain
        text), then Copy at the right, in the listing's own mono. */
@@ -240,7 +240,7 @@
         flex-wrap: wrap;
         align-items: center;
         gap: 0 var(--s-4);
-        min-height: 44px;
+        min-height: var(--target);
         padding: 0 var(--s-2) 0 var(--s-5);
     }
     .listing__name {
@@ -361,7 +361,7 @@
         margin-block: var(--space-block);
     }
     .plate > .caption {
-        max-width: 60ch;
+        max-width: var(--measure-copy);
     }
     .prose > .plate--wide {
         max-width: min(100%, var(--prose-wide));
@@ -493,10 +493,10 @@
     @media (min-width: 80rem) {
         .prose :is(p, li) .sidenote {
             display: grid;
-            grid-template-columns: 1.4rem minmax(0, 1fr);
+            grid-template-columns: var(--note-gutter) minmax(0, 1fr);
             float: right;
             clear: right;
-            width: 12.5rem;
+            width: var(--note-w);
             margin: 0.35rem -14.5rem var(--s-4) 0;
             padding-left: var(--s-4);
             border-left: var(--rule-hair) solid var(--rule-quiet);
@@ -539,8 +539,8 @@
     }
     .notes__item {
         display: grid;
-        grid-template-columns: 1.75rem minmax(0, 1fr);
-        scroll-margin-top: calc(var(--header-h) + var(--s-5));
+        grid-template-columns: var(--list-gutter-number) minmax(0, 1fr);
+        scroll-margin-top: var(--anchor-offset);
     }
     .notes__item + .notes__item {
         margin-top: var(--s-3);
@@ -558,14 +558,14 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 24px;
-        min-height: 24px;
+        min-width: var(--target-min);
+        min-height: var(--target-min);
         vertical-align: middle;
         color: var(--text);
     }
     .notes__back .icon {
-        width: 14px;
-        height: 14px;
+        width: var(--icon-small);
+        height: var(--icon-small);
     }
     .notes__item:target {
         background: var(--surface-lit);

@@ -18,6 +18,7 @@ import Specs, { type SpecItem } from "@/components/ui/specs";
 import ViewerFigure, {
     ViewerCallouts,
 } from "@/components/viewer/viewer-figure";
+import { minWidth } from "@/lib/breakpoints";
 import { siteConfig } from "@/lib/config";
 import { missionsCopy as copy, pagerCopy } from "@/lib/copy";
 import { contentsHeadings, extractHeadings } from "@/lib/headings";
@@ -228,7 +229,7 @@ export default async function ProjectPage({
         <Plate
             image={mission.cover}
             credit={mission.cover.caption}
-            sizes="(min-width: 60rem) 36vw, 100vw"
+            sizes={`${minWidth("md")} 36vw, 100vw`}
             priority
         />
     ) : null;

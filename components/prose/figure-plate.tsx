@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
+import { minWidth } from "@/lib/breakpoints";
 import type { ImageWidth } from "@/lib/post-fields";
 import type { FigureInfo } from "@/lib/prose";
 import { urlForImage } from "@/lib/sanity-image";
@@ -43,10 +44,10 @@ function layoutOf(width: unknown): ImageWidth {
 
 /** What the plate is drawn at, for the browser's choice of file. */
 function sizesFor(layout: ImageWidth, shape: Shape): string {
-    if (layout === "full") return "(min-width: 60rem) 70vw, 100vw";
-    if (layout === "wide") return "(min-width: 60rem) 60rem, 100vw";
-    if (shape === "landscape") return "(min-width: 37.5rem) 37rem, 100vw";
-    return "(min-width: 37.5rem) 24rem, 100vw";
+    if (layout === "full") return `${minWidth("md")} 70vw, 100vw`;
+    if (layout === "wide") return `${minWidth("md")} 60rem, 100vw`;
+    if (shape === "landscape") return `${minWidth("sm")} 37rem, 100vw`;
+    return `${minWidth("sm")} 24rem, 100vw`;
 }
 
 export default function FigurePlate({

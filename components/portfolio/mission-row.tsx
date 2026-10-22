@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Status } from "@/components/ui/marks";
 import Plate from "@/components/ui/plate";
+import { minWidth } from "@/lib/breakpoints";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
 import styles from "./missions.module.css";
@@ -52,7 +53,7 @@ export default function MissionRow({
                     image={cover}
                     credit={cover.caption}
                     ratio="3 / 2"
-                    sizes="(min-width: 60rem) 14vw, 32vw"
+                    sizes={`${minWidth("md")} 14vw, 32vw`}
                     width={600}
                 />
             ) : null}

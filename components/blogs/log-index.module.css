@@ -9,7 +9,7 @@
    post's Related entries. The read time and arrow stand at that edge,
    under the head's link; only the standfirst keeps a measure (62ch). */
 .index {
-    --log-cols: 7.5rem minmax(0, 1fr) 4.5rem 1.5rem;
+    --log-cols: var(--col-date) minmax(0, 1fr) var(--col-meta) var(--s-5);
     min-width: 0;
 }
 
@@ -41,7 +41,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.25rem 1rem;
+    gap: var(--s-1) var(--s-4);
 }
 .date,
 .read {
@@ -124,8 +124,8 @@
         grid-row: 1;
         align-self: center;
         justify-self: end;
-        width: 20px;
-        height: 20px;
+        width: var(--icon-row);
+        height: var(--icon-row);
         color: var(--icon-quiet);
         transition:
             transform var(--dur-hover) var(--ease-dock),
@@ -133,7 +133,7 @@
     }
     .index:not(.stacked) .row:hover .arrow {
         color: var(--text);
-        transform: translateX(4px);
+        transform: translateX(var(--nudge));
     }
 }
 

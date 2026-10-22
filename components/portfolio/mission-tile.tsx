@@ -5,6 +5,7 @@ import MissionLine, {
 } from "@/components/portfolio/mission-line";
 import { Icon } from "@/components/ui/icon";
 import Plate from "@/components/ui/plate";
+import { minWidth } from "@/lib/breakpoints";
 import { missionsCopy as copy } from "@/lib/copy";
 import type { Mission } from "@/lib/missions";
 import type { SanityImageValue } from "@/lib/sanity-client";
@@ -61,7 +62,7 @@ export default function MissionTile({
                     image={cover}
                     credit={cover.caption}
                     ratio="3 / 2"
-                    sizes="(min-width: 60rem) 15vw, (min-width: 37.5rem) 30vw, 37vw"
+                    sizes={`${minWidth("md")} 15vw, ${minWidth("sm")} 30vw, 37vw`}
                     width={600}
                 />
             ) : null}

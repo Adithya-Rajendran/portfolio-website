@@ -73,7 +73,7 @@
 }
 
 .rim {
-    stroke-width: 1.5px;
+    stroke-width: var(--stroke-firm);
     vector-effect: non-scaling-stroke;
 }
 
@@ -102,7 +102,7 @@
 
 :global([data-theme="manual"]) .rim {
     stroke: var(--draw-strong);
-    stroke-width: 1px;
+    stroke-width: var(--stroke-hair);
 }
 
 :global([data-theme="manual"]) .sunMark {
@@ -113,13 +113,13 @@
     position: absolute;
     left: 65%;
     top: 50%;
-    width: min(60%, 56rem);
+    width: min(60%, var(--stage-max));
     transform: translate(-50%, -50%);
     display: none;
     overflow: visible;
     fill: none;
     stroke: var(--draw-faint);
-    stroke-width: 1;
+    stroke-width: var(--stroke-hair);
 }
 
 .hint ellipse {
@@ -147,38 +147,39 @@
 /* ---- the scrim under the record --------------------------------------- */
 
 .scrim {
-    --a: var(--scrim-a, 24%);
-    --s: calc(var(--scrim-b, 58%) - var(--a));
+    --scrim-from: var(--scrim-a, 24%);
+    --scrim-span: calc(var(--scrim-b, 58%) - var(--scrim-from));
     position: absolute;
     inset: 0;
     pointer-events: none;
     /* An eased ramp (a smoothstep in twelfths, so no bands show) that
-       holds the record's column to --a and clears at --b: on a wide
-       stage the renderer sets them from the column (flight-gl.ts). */
+       holds the record's column to --scrim-a and clears at --scrim-b
+       (--scrim-from, then --scrim-span on): on a wide stage the renderer
+       sets them from the column (flight-gl.ts). */
     background: linear-gradient(
-        var(--to, 90deg),
-        color-mix(in oklab, var(--bg) 96%, transparent) var(--a),
+        var(--scrim-dir, 90deg),
+        color-mix(in oklab, var(--bg) 96%, transparent) var(--scrim-from),
         color-mix(in oklab, var(--bg) 93.9%, transparent)
-            calc(var(--a) + var(--s) * 0.088),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.088),
         color-mix(in oklab, var(--bg) 88.1%, transparent)
-            calc(var(--a) + var(--s) * 0.176),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.176),
         color-mix(in oklab, var(--bg) 79.4%, transparent)
-            calc(var(--a) + var(--s) * 0.265),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.265),
         color-mix(in oklab, var(--bg) 68.5%, transparent)
-            calc(var(--a) + var(--s) * 0.353),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.353),
         color-mix(in oklab, var(--bg) 56.4%, transparent)
-            calc(var(--a) + var(--s) * 0.441),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.441),
         color-mix(in oklab, var(--bg) 43.9%, transparent)
-            calc(var(--a) + var(--s) * 0.529),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.529),
         color-mix(in oklab, var(--bg) 31.4%, transparent)
-            calc(var(--a) + var(--s) * 0.618),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.618),
         color-mix(in oklab, var(--bg) 20%, transparent)
-            calc(var(--a) + var(--s) * 0.706),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.706),
         color-mix(in oklab, var(--bg) 10.6%, transparent)
-            calc(var(--a) + var(--s) * 0.794),
+            calc(var(--scrim-from) + var(--scrim-span) * 0.794),
         color-mix(in oklab, var(--bg) 3.8%, transparent)
-            calc(var(--a) + var(--s) * 0.882),
-        transparent calc(var(--a) + var(--s))
+            calc(var(--scrim-from) + var(--scrim-span) * 0.882),
+        transparent calc(var(--scrim-from) + var(--scrim-span))
     );
 }
 
@@ -202,7 +203,6 @@
    reaches a few pixels past the text and feathers out, so over the sky it
    reads as a soft plate, not a box. */
 .label {
-    --knockout: color-mix(in oklab, var(--bg) 80%, transparent);
     position: absolute;
     left: 0;
     top: 0;
@@ -210,8 +210,8 @@
     gap: 3px;
     padding: 1px 4px;
     border-radius: 4px;
-    background: var(--knockout);
-    box-shadow: 0 0 8px 6px var(--knockout);
+    background: var(--label-knockout);
+    box-shadow: 0 0 8px 6px var(--label-knockout);
     opacity: 0;
     will-change: transform, opacity;
 }
@@ -221,7 +221,7 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 1px;
+    width: var(--rule-hair);
     height: var(--rule-hair);
     margin-top: calc(var(--rule-hair) / -2);
     background: var(--draw-faint);
@@ -274,15 +274,15 @@
 .world::before {
     content: "";
     position: absolute;
-    border-radius: 50%;
+    border-radius: var(--radius-round);
     transform: translate(-50%, -50%);
 }
 
 .now::before {
-    width: 7px;
-    height: 7px;
+    width: var(--dot);
+    height: var(--dot);
     background: var(--mark-now);
-    box-shadow: 0 0 0 2px var(--bg);
+    box-shadow: 0 0 0 var(--rule-strong) var(--bg);
 }
 
 /* Sized round the world's drawn disc (--d, set per frame). */
@@ -321,9 +321,9 @@
     }
     /* From the foot up, holding the record below the scene. */
     .scrim {
-        --to: 0deg;
-        --a: 30%;
-        --s: 34%;
+        --scrim-dir: 0deg;
+        --scrim-from: 30%;
+        --scrim-span: 34%;
     }
 }
 
