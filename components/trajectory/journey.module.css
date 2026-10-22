@@ -101,7 +101,7 @@
     font: var(--type-ui);
     color: var(--text-quiet);
     margin: var(--s-4) 0 0;
-    max-width: 42ch;
+    max-width: var(--measure-short);
 }
 
 /* The card's action: Full entry, or the Open To card's Contact. */

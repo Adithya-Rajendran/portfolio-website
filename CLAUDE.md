@@ -633,8 +633,8 @@ only live in comments or commit messages.
   or tag chips) running straight into the rows, one list with even
   spacing (no year heads: each row's date carries its year), as wide as
   the head above it (the read time and arrow at the shell's edge, the
-  standfirst at 62ch), which ends on its closing rule. A row has one
-  date: a revision's "Updated" is the
+  standfirst at 60ch, `--measure-copy`), which ends on its closing
+  rule. A row has one date: a revision's "Updated" is the
   entry head's. `/blog/archive`, which repeated the list at a second
   address, answers 308 to `/blog` (next.config.mjs). A tag shows only
   when it links: once it gathers two entries
@@ -674,9 +674,9 @@ only live in comments or commit messages.
   page's head), at the main column's (a `DocSection`'s rows, table and
   lists: a project's sections, About's questions, the CV) or at the
   text's (a post's end matter, under its heads). Only its text
-  keeps a measure (a row's standfirst 62ch, a brief's sentences and a
-  question's note 60ch); a writing row's read time and arrow stand at
-  that edge, under the head's link.
+  keeps a measure (a row's standfirst, a brief's sentences and a
+  question's note 60ch, `--measure-copy`); a writing row's read time
+  and arrow stand at that edge, under the head's link.
 
 ## Layout: the `(site)` route group
 

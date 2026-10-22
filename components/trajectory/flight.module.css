@@ -86,7 +86,7 @@
     display: none;
     fill: none;
     stroke: var(--draw-strong);
-    stroke-width: 1.1;
+    stroke-width: var(--stroke-hair);
 }
 
 .sunDot {

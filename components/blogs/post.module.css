@@ -71,7 +71,7 @@
         margin-top: var(--s-7);
     }
     .title {
-        width: min(21ch, var(--reach));
+        width: min(var(--measure-title), var(--reach));
         max-width: none;
     }
     .main :global(.prose > .plate--wide) {
@@ -122,7 +122,7 @@
    text, the listings, the close and what follows the entry (the pager,
    the project row, the related entries) at the measure. */
 .title {
-    max-width: min(21ch, var(--prose-wide));
+    max-width: min(var(--measure-title), var(--prose-wide));
     margin-top: var(--s-4);
     font: var(--type-display);
     letter-spacing: var(--track-display);
@@ -156,7 +156,7 @@
     align-items: center;
     min-height: var(--target);
     margin-left: calc(-1 * var(--rule-hair));
-    padding: 0.35rem 0 0.35rem 1rem;
+    padding: var(--s-1) 0 var(--s-1) var(--s-4);
     border-left: var(--rule-strong) solid transparent;
     color: var(--text-quiet);
     text-decoration: none;
@@ -298,7 +298,7 @@
     }
 }
 .endSection > :global(.section-tag) {
-    margin-bottom: var(--s-5);
+    margin-bottom: var(--section-head-gap-tight);
 }
 
 /* The pager, the project and the related entries stop where the text

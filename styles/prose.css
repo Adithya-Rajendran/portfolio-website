@@ -77,7 +77,7 @@
         scroll-margin-top: var(--anchor-offset);
     }
     .prose h3 {
-        margin-top: 1.9em;
+        margin-top: var(--prose-gap-head);
         font: var(--type-subhead);
         scroll-margin-top: var(--anchor-offset);
     }
@@ -257,9 +257,9 @@
         margin-left: auto;
     }
     .listing .copy__btn {
-        --btn-h: 40px;
-        gap: 0.45rem;
-        padding-inline: 0.6rem;
+        --btn-h: var(--target);
+        gap: var(--s-2);
+        padding-inline: var(--s-2);
         color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
@@ -268,8 +268,8 @@
         text-transform: none;
     }
     .listing .copy__btn .icon {
-        width: 15px;
-        height: 15px;
+        width: var(--icon-control);
+        height: var(--icon-control);
     }
     .listing .copy__btn:hover,
     .listing .copy__btn:focus-visible {
@@ -350,7 +350,7 @@
         left: 0;
         top: 0;
         bottom: 0;
-        width: 0.35rem;
+        width: var(--s-1);
         background: var(--list-mark-ink);
     }
 
@@ -497,7 +497,8 @@
             float: right;
             clear: right;
             width: var(--note-w);
-            margin: 0.35rem -14.5rem var(--s-4) 0;
+            margin: var(--s-1) calc(-1 * (var(--note-w) + var(--s-6)))
+                var(--s-4) 0;
             padding-left: var(--s-4);
             border-left: var(--rule-hair) solid var(--rule-quiet);
             color: var(--text-quiet);

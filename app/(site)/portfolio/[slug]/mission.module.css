@@ -70,14 +70,14 @@
 .factLinks a {
     display: inline-flex;
     align-items: center;
-    gap: 0.35em;
+    gap: var(--icon-gap);
     min-height: var(--target-inline);
     color: var(--text);
     text-underline-offset: 0.2em;
 }
 .factLinks :global(.icon) {
-    width: 14px;
-    height: 14px;
+    width: var(--icon-out);
+    height: var(--icon-out);
     color: var(--icon-quiet);
 }
 @media (min-width: 60rem) {
@@ -96,7 +96,7 @@
         grid-column: 1 / -1;
     }
     .headText .summary {
-        max-width: 48ch;
+        max-width: var(--measure-lead);
     }
 }
 

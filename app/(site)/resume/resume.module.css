@@ -90,8 +90,8 @@
 /* A credential's verification page leaves the site: the outbound mark
    of the CV's other links. */
 .row a :global(.icon) {
-    width: 0.7em;
-    height: 0.7em;
+    width: var(--icon-out);
+    height: var(--icon-out);
     margin-left: var(--icon-gap);
     color: var(--icon-quiet);
     vertical-align: var(--icon-out-shift);

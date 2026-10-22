@@ -221,7 +221,7 @@
         display: inline-flex;
         align-items: center;
         min-height: var(--target);
-        padding: 0 min(0.35rem, 5.6px);
+        padding: 0 var(--bar-pad-sm);
         color: var(--text);
         font: var(--type-control);
         letter-spacing: var(--track-control);
@@ -249,7 +249,7 @@
         gap: var(--bar-gap-sm);
         min-height: var(--target);
         min-width: var(--target);
-        padding: 0 min(0.7rem, 11.2px);
+        padding: 0 var(--bar-pad);
         background: transparent;
         border: var(--rule-hair) solid var(--rule-firm);
         color: var(--text);
@@ -298,8 +298,8 @@
         transition: color var(--dur-hover) var(--ease-dock);
     }
     .theme-switch__button .icon {
-        width: 18px;
-        height: 18px;
+        width: var(--icon-control);
+        height: var(--icon-control);
     }
     .theme-switch__button:hover,
     .theme-switch__button[aria-expanded="true"] {
@@ -504,7 +504,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.7rem;
+        gap: var(--control-gap);
         min-height: var(--btn-h);
         padding: 0 var(--control-pad-lg);
         border: var(--rule-hair) solid var(--rule-firm);
@@ -570,7 +570,7 @@
     }
     .btn--sm {
         --btn-h: var(--target);
-        padding: 0 0.85rem;
+        padding: 0 var(--control-pad);
     }
 
     /* "All entries →": the controls' caps on the links' hairline, which
@@ -591,8 +591,8 @@
             box-shadow var(--dur-hover) var(--ease-dock);
     }
     .link-arrow .icon {
-        width: 15px;
-        height: 15px;
+        width: var(--icon-control);
+        height: var(--icon-control);
         transition: transform var(--dur-hover) var(--ease-dock);
     }
     .link-arrow:hover {
@@ -618,7 +618,7 @@
     .tags {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem 0.9rem;
+        gap: var(--s-1) var(--s-4);
         margin: 0;
         padding: 0;
         list-style: none;
@@ -752,7 +752,7 @@
     }
     .caption__src {
         display: block;
-        margin-top: 0.3rem;
+        margin-top: var(--s-1);
         color: var(--text-faint);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
@@ -861,7 +861,8 @@
     .textarea {
         width: 100%;
         min-height: var(--control-h);
-        padding: 0.7rem 0.9rem;
+        padding: calc((var(--control-h) - 1lh) / 2 - var(--rule-hair))
+            var(--control-pad);
         border: var(--rule-hair) solid var(--rule-firm);
         border-radius: 0;
         background: var(--surface-raised);
@@ -935,7 +936,7 @@
     .titleblock__cell {
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
+        gap: var(--s-1);
         min-width: 0;
         grid-column: span var(--span-sm, 2);
         padding: var(--s-3) var(--s-4) var(--s-4);
@@ -1080,10 +1081,10 @@
     .seg__box {
         display: inline-flex;
         align-items: center;
-        gap: 0.6rem;
+        gap: var(--control-gap);
         width: 100%;
         min-height: var(--target);
-        padding: 0 0.9rem;
+        padding: 0 var(--control-pad);
         border: var(--rule-hair) solid var(--rule-firm);
         color: var(--text-quiet);
         font: var(--type-control);
@@ -1116,7 +1117,7 @@
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
         row-gap: var(--s-2);
-        padding-block: 0.85rem;
+        padding-block: var(--s-3);
         white-space: normal;
     }
     .seg__note {
@@ -1175,7 +1176,7 @@
         }
     }
     .specs dt {
-        padding-top: 0.2rem;
+        padding-top: var(--s-1);
         color: var(--text-quiet);
         font: var(--type-label);
         letter-spacing: var(--track-label);
@@ -1233,7 +1234,7 @@
         .cv-item__aside {
             flex-direction: column;
             align-items: flex-start;
-            padding-top: 0.35rem;
+            padding-top: var(--s-1);
         }
     }
     .cv-item__body {
@@ -1333,12 +1334,12 @@
         text-underline-offset: 0.18em;
     }
     .cv-item__link .icon {
-        width: 0.9em;
-        height: 0.9em;
+        width: var(--icon-out);
+        height: var(--icon-out);
         color: var(--icon-quiet);
     }
     .cv-item__url {
-        margin-left: 0.4em;
+        margin-left: var(--icon-gap);
         color: var(--text-quiet);
         font: var(--type-data);
         font-variant-numeric: var(--numerals-data);
@@ -1398,7 +1399,7 @@
        instead, it would sink as far as the column outgrows it, and move
        from one section to the next. */
     .page-head--split {
-        padding-top: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+        padding-top: var(--space-head);
         padding-bottom: var(--s-6);
     }
     .page-head--split > .page-head__intro {
@@ -1634,7 +1635,7 @@
         grid-column: 2;
         display: flex;
         flex-direction: column;
-        gap: 0.15rem;
+        gap: var(--s-1);
         min-width: 0;
     }
     .route-row__themed {

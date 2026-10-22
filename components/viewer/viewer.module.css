@@ -26,7 +26,7 @@
     font: var(--type-title-sm);
 }
 .calloutText {
-    max-width: 62ch;
+    max-width: var(--measure-copy);
     margin-top: var(--s-1);
     color: var(--text-quiet);
     font: var(--type-ui);

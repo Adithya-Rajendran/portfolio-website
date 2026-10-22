@@ -7,7 +7,7 @@
    ends: the shell under /blog's page head and home's Latest writing, the
    main column under a project's section head, the text's under a
    post's Related entries. The read time and arrow stand at that edge,
-   under the head's link; only the standfirst keeps a measure (62ch). */
+   under the head's link; only the standfirst keeps a measure (--measure-copy). */
 .index {
     --log-cols: var(--col-date) minmax(0, 1fr) var(--col-meta) var(--s-5);
     min-width: 0;
@@ -66,7 +66,7 @@
     text-decoration: none;
 }
 .dek {
-    max-width: 62ch;
+    max-width: var(--measure-copy);
     color: var(--text-quiet);
     font: var(--type-note);
     text-wrap: pretty;

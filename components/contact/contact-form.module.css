@@ -102,7 +102,7 @@
    is already a 44px target, so wrapped rows need no gap. */
 .recover {
     row-gap: 0;
-    margin-inline-start: -0.85rem;
+    margin-inline-start: calc(-1 * var(--control-pad));
 }
 
 /* ---- Received: the heading and the way back, after the head's space ---- */

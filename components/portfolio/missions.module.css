@@ -81,7 +81,7 @@
     width: var(--icon-display);
     height: var(--icon-display);
     color: var(--icon-quiet);
-    vertical-align: 0.06em;
+    vertical-align: var(--icon-out-shift);
     transition:
         transform var(--dur-hover) var(--ease-dock),
         color var(--dur-hover) var(--ease-dock);
