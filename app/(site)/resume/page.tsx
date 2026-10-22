@@ -4,7 +4,7 @@ import { Fragment } from "react";
 import { CvItem, CvList } from "@/components/cv/cv-list";
 import ExperienceViews from "@/components/cv/experience-views";
 import Availability, { OpenToItems } from "@/components/ui/availability";
-import { buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { LinkArrow, Rev } from "@/components/ui/marks";
 import DocSection from "@/components/ui/doc-section";
@@ -483,16 +483,15 @@ export default async function ResumePage() {
                     ) : null}
                     {hasPdf ? (
                         <div className="cluster page-head__actions">
-                            <a
-                                className={buttonClass({
-                                    variant: "primary",
-                                    size: "sm",
-                                })}
+                            <ButtonLink
+                                plain
+                                variant="primary"
+                                size="sm"
+                                icon="download"
                                 href="/resume/download"
                             >
-                                <Icon name="download" />
                                 {copy.download}
-                            </a>
+                            </ButtonLink>
                         </div>
                     ) : null}
                     {profile?.resumeNote?.trim() ? (

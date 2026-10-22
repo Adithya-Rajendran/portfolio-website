@@ -6,7 +6,9 @@ import { Icon, type IconName } from "@/components/ui/icon";
  * Buttons (the mockup's `.btn`): a hairline box, the controls' Jost caps,
  * radius 0. `primary` is an ink fill with a label in the page's colour,
  * `quiet` drops the box. Links that look like buttons stay real
- * links (<ButtonLink>), so middle-click and "open in new tab" work.
+ * links (<ButtonLink>), so middle-click and "open in new tab" work;
+ * `plain` renders a plain <a> in place of next/link's, for an address
+ * the router does not serve (a download, another site).
  */
 
 type Variant = "default" | "primary" | "quiet";
@@ -16,7 +18,8 @@ interface Look {
     variant?: Variant;
     size?: Size;
     icon?: IconName;
-    /** Where the icon sits; a trailing arrow nudges on hover. */
+    /** Where the icon sits; a trailing arrow nudges on hover (an
+     *  outbound ↗ never does). */
     iconAt?: "start" | "end";
 }
 
@@ -42,7 +45,12 @@ function Content({
 }: Look & { children: React.ReactNode }) {
     if (!icon) return <>{children}</>;
     const glyph = (
-        <Icon name={icon} className={iconAt === "end" ? "icon--nudge" : ""} />
+        <Icon
+            name={icon}
+            className={
+                iconAt === "end" && icon === "arrow" ? "icon--nudge" : undefined
+            }
+        />
     );
     return iconAt === "end" ? (
         <>
@@ -80,7 +88,11 @@ export function Button({
     );
 }
 
+type LinkProps = Look & { plain?: false } & ComponentProps<typeof Link>;
+type AnchorProps = Look & { plain: true } & ComponentProps<"a">;
+
 export function ButtonLink({
+    plain,
     variant,
     size,
     icon,
@@ -88,12 +100,22 @@ export function ButtonLink({
     className,
     children,
     ...props
-}: Look & ComponentProps<typeof Link>) {
-    return (
-        <Link className={buttonClass({ variant, size, className })} {...props}>
-            <Content icon={icon} iconAt={iconAt}>
-                {children}
-            </Content>
+}: LinkProps | AnchorProps) {
+    const look = buttonClass({ variant, size, className });
+    const content = (
+        <Content icon={icon} iconAt={iconAt}>
+            {children}
+        </Content>
+    );
+    // The rest of a union does not narrow with `plain`: each branch names
+    // the props it was given.
+    return plain ? (
+        <a className={look} {...(props as ComponentProps<"a">)}>
+            {content}
+        </a>
+    ) : (
+        <Link className={look} {...(props as ComponentProps<typeof Link>)}>
+            {content}
         </Link>
     );
 }

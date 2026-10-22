@@ -5,7 +5,7 @@ import HeroPreload from "@/components/home/hero-preload";
 import StaticStars from "@/components/sky/static-stars";
 import Starfield from "@/components/sky/starfield";
 import { OpenToItems } from "@/components/ui/availability";
-import { Icon } from "@/components/ui/icon";
+import { ButtonLink } from "@/components/ui/button";
 import KeepWhole from "@/components/ui/keep-whole";
 import { Status } from "@/components/ui/marks";
 import { maxWidth, minWidth } from "@/lib/breakpoints";
@@ -228,10 +228,13 @@ export default function Hero({
                         aria-label={copy.routesLabel}
                         data-clear
                     >
-                        <Link className="btn" href={cvLink.href}>
+                        <ButtonLink
+                            href={cvLink.href}
+                            icon="arrow"
+                            iconAt="end"
+                        >
                             <span>{copy.cv}</span>
-                            <Icon name="arrow" className="icon--nudge" />
-                        </Link>
+                        </ButtonLink>
                         {/* Home's Latest writing lists it too: no second
                             prefetch. */}
                         {latest ? (

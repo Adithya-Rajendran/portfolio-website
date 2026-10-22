@@ -8,6 +8,14 @@ import SectionTag from "@/components/ui/section-tag";
  * width (`wide`). Every page's sections use it, so a section head sits in
  * one place site-wide. The h2's id is `headingId`, else `<id>-h`; `data`
  * adds data attributes to the section (a hook for an island).
+ *
+ * `layout="plain"` sets the body straight after the tag row in the
+ * shell, with no grid or wrapper between (home's sections, /portfolio's
+ * and /contact's): the block that opens the section is the head's next
+ * sibling, so the head's hairline stands for its first row's rule
+ * (`--first-rule`, styles/components.css). `titleHidden` names the
+ * section for screen readers only (an `sr-only` h2 in place of the tag
+ * row), where the page title already says what it holds.
  */
 export default function DocSection({
     id,
@@ -17,6 +25,8 @@ export default function DocSection({
     rail,
     prose = false,
     wide = false,
+    layout = "doc",
+    titleHidden = false,
     className,
     data,
     children,
@@ -29,11 +39,30 @@ export default function DocSection({
     rail?: React.ReactNode;
     prose?: boolean;
     wide?: boolean;
+    /** `doc`: the body on the grid; `plain`: the body as given. */
+    layout?: "doc" | "plain";
+    /** Name the section for screen readers only: no tag row. */
+    titleHidden?: boolean;
     className?: string;
     data?: Record<`data-${string}`, string | boolean | undefined>;
     children: React.ReactNode;
 }) {
     const labelId = headingId ?? `${id}-h`;
+    const plain = layout === "plain";
+    const head = titleHidden ? (
+        <h2 className="sr-only" id={labelId}>
+            {title}
+        </h2>
+    ) : (
+        <SectionTag
+            className={plain ? undefined : "doc-section__tag"}
+            meta={meta}
+        >
+            <h2 className="section-tag__h" id={labelId}>
+                {title}
+            </h2>
+        </SectionTag>
+    );
     return (
         <section
             className={className ? `section ${className}` : "section"}
@@ -42,23 +71,25 @@ export default function DocSection({
             {...data}
         >
             <div className="shell">
-                <SectionTag className="doc-section__tag" meta={meta}>
-                    <h2 className="section-tag__h" id={labelId}>
-                        {title}
-                    </h2>
-                </SectionTag>
-                <div className="grid doc-section__body">
-                    {rail ? (
-                        <div className="g-rail doc-section__rail">{rail}</div>
-                    ) : null}
-                    <div
-                        className={
-                            wide ? "g-wide" : prose ? "g-prose" : "g-main"
-                        }
-                    >
-                        {children}
+                {head}
+                {plain ? (
+                    children
+                ) : (
+                    <div className="grid doc-section__body">
+                        {rail ? (
+                            <div className="g-rail doc-section__rail">
+                                {rail}
+                            </div>
+                        ) : null}
+                        <div
+                            className={
+                                wide ? "g-wide" : prose ? "g-prose" : "g-main"
+                            }
+                        >
+                            {children}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </section>
     );
