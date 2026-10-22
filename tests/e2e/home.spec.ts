@@ -11,7 +11,8 @@ import { storeTheme } from "./support/theme";
  * headline, what the owner is open to and its one action (CV) are in the
  * first viewport with and without JavaScript, with the newest entry beside
  * CV as a quiet link (Latest), no second button, the pair on the name's axis; the header's wordmark steps aside while the hero
- * names the owner; the starfield drifts only while it may (on screen, in
+ * names the owner, and before the page has run on home alone (kept without
+ * JavaScript); the starfield drifts only while it may (on screen, in
  * a visible tab, in Void, with motion allowed) and reports `stopped`
  * otherwise; the stars are the hero's alone, and Void's; the photograph is
  * credited with its frame ID and Flight Manual draws the limb instead;
@@ -109,6 +110,15 @@ for (const [width, height] of [
                 /.*/,
             );
             await expect(page.locator(".static-stars").first()).toBeVisible();
+        });
+        test("the header's wordmark stays", async ({ page }) => {
+            // Nothing would bring it back once the hero had gone; a
+            // phone's bar is the patch alone.
+            await page.setViewportSize({ width, height });
+            await page.goto("/");
+            await expect(
+                page.getByRole("banner").locator(".brand__name"),
+            ).toBeVisible({ visible: width >= 600 });
         });
     });
 }
@@ -410,6 +420,30 @@ test("before the page has run, Pause motion shows once: in the hero on home, in 
     await page.goto("/about");
     await expect(html).not.toHaveAttribute("data-route", /.*/);
     await expect(footerControl).toBeVisible();
+});
+
+test("before the page has run, the name shows once: the hero's on home, the wordmark elsewhere", async ({
+    page,
+}) => {
+    // React is held back, as above: the boot script has run (data-js),
+    // but nothing has set data-route or data-hero, as at the first paint.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.route("**/*", (route) =>
+        route.request().resourceType() === "script"
+            ? route.abort()
+            : route.fallback(),
+    );
+    const html = page.locator("html");
+    const wordmark = page.getByRole("banner").locator(".brand__name");
+    await page.goto("/");
+    await expect(html).toHaveAttribute("data-js", "");
+    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(html).not.toHaveAttribute("data-hero", /.*/);
+    await expect(hero(page).getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(wordmark).toBeHidden();
+    await page.goto("/about");
+    await expect(html).not.toHaveAttribute("data-route", /.*/);
+    await expect(wordmark).toBeVisible();
 });
 
 test("the photograph is credited in Void; Manual draws the limb", async ({

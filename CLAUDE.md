@@ -538,7 +538,11 @@ only live in comments or commit messages.
   shows below the header (in both themes; the cleanup clears it), and the
   header's wordmark steps aside meanwhile, so the name is on screen once:
   never twice, and never not at all while the rest of the hero, or the
-  projects under it, fill the view. Without JavaScript it stays. Over
+  projects under it, fill the view. The observer first reports a frame
+  after the starfield starts (its `data-state`), so until then the
+  wordmark is aside on home from the first paint as well
+  (`styles/components.css`): a load never opens on the name twice.
+  Without JavaScript it stays. Over
   it: the name, the profile's headline and the availability line (only
   when set), each split into parts kept whole (`OpenToItems`) that stack
   on phones, then one action, centred in space (CV, the hairline `.btn`,
@@ -673,7 +677,10 @@ only live in comments or commit messages.
   lookups must resolve inside the visible page, not with
   `document.getElementById`.
 - Navigation labels and URLs come from `lib/navigation.ts` (header, menu
-  sheet and the 404's primary). Below 960px the header nav is a native
+  sheet and the 404's primary). The header's wordmark is beside the
+  patch from 600px (a phone's bar is the patch alone): from 960px the
+  five links and the theme switch leave it room at every width, so only
+  the home hero's name sets it aside. Below 960px the header nav is a native
   `popover` sheet, so it opens without JavaScript (Baseline since 2024:
   there is no fallback link); `MenuButton` adds focus, `inert` and the
   Tab loop (the brand, the button, then the sheet, as a browser tabs a
@@ -1100,7 +1107,7 @@ loaded, only when that run cannot.
   (axe, WCAG 2.2 AA + best practice, at 390 and 1440 px, in Void and
   Flight Manual, every page in full, and both kinds of 404), `layout` (no
   sideways scroll at 320–1920 px, the header's parts fit without
-  overlapping, also at 320–414 px with the root text at 150% (labels
+  overlapping (the wordmark beside the patch from 600 px), also at 320–414 px with the root text at 150% (labels
   13px or more, no title spilling its column), and no visible text under 12 px, generated text included,
   on home, every post and project, `/resume` and `/contact` (with the
   message counter near its limit) at 1440 and 390; on home, every post
@@ -1265,7 +1272,9 @@ loaded, only when that run cannot.
   JavaScript, each part of the headline and the Open To line on one line;
   the name at 350, tracked 0.11–0.12em, on one line at 1440 and 1,400px
   wide at most at 1920; the header's wordmark hidden only while the hero's name is in view: back
-  at 400px down and with the projects in view; the starfield
+  at 400px down and with the projects in view, aside on home and shown
+  on About before the page has run (its scripts held back), and kept
+  without JavaScript; the starfield
   `running` only on screen, in a visible tab, in Void and with motion
   allowed, and nothing in Pause motion's place under the OS setting; the
   stars in the hero only, and not on paper; the credit with its frame ID,

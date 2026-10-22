@@ -314,14 +314,6 @@
         background: var(--bg);
     }
 
-    /* Width budget, measured with the real labels from 320 to 1920px: the
-       brand name at >= 1360px (and 600–959px). CV and Menu keep their
-       words wherever they show (the bar's CV steps aside under 360px). */
-    @media (max-width: 84.99rem) {
-        .brand__name {
-            display: none;
-        }
-    }
     /* On home the hero names the owner: the wordmark steps aside while the
        hero's name shows below the header (html[data-hero], set by the
        starfield's observer; without JavaScript it stays). */
@@ -334,6 +326,29 @@
         visibility: hidden;
         opacity: 0;
     }
+    /* The observer first reports a frame after the starfield starts (its
+       `data-state`), long after the first paint, so until then the
+       wordmark is aside on home too: a load never opens on the name
+       twice. Only once the boot script has run (data-js): without
+       JavaScript nothing would bring it back. Before RouteMarker has run
+       only one page is mounted (as for Pause motion, below), so home's
+       starfield stands in for the route; after it, the route says home.
+       A rule of its own, so a browser without :has() drops only this. */
+    html[data-js]:not([data-route])
+        body:has([data-starfield]:not([data-state]))
+        .brand__name,
+    html[data-route="/"]
+        body:has([data-starfield]:not([data-state]))
+        .brand__name {
+        visibility: hidden;
+        opacity: 0;
+    }
+    /* Width budget, measured with the real labels from 320 to 1920px: the
+       brand name from 600px (a phone's bar is the patch alone). At 960px
+       the patch, the name, the five links and the theme switch take about
+       790px of the bar's 832px with these gaps (to 1199px), and every
+       wider bar has more room. CV and Menu keep their words wherever they
+       show (the bar's CV steps aside under 360px). */
     @media (min-width: 60rem) and (max-width: 74.99rem) {
         .site-header__inner {
             gap: var(--s-4);
@@ -364,9 +379,6 @@
         }
     }
     @media (max-width: 59.99rem) {
-        .brand__name {
-            display: inline;
-        }
         .nav-toggle {
             display: inline-flex;
         }

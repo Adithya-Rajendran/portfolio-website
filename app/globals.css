@@ -28,7 +28,7 @@
    breakpoints are the grid's (styles/tokens.css); every media query is in
    rem, so all of them follow the visitor's text size together. A width
    only one component needs (the hero's 24rem and 48rem, the header's
-   75rem and 85rem) stays in that component's rules. */
+   75rem) stays in that component's rules. */
 @theme {
     --color-*: initial;
     --font-*: initial;

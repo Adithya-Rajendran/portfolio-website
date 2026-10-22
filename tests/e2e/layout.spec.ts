@@ -10,8 +10,9 @@ import {
 /**
  * No page scrolls sideways from 320 to 1920 px (plan §7.2), and the header
  * fits at every width: its parts stay inside the viewport without
- * overlapping. `body` clips horizontal overflow, which would hide a
- * sideways scroll, so the body's own scroll width is measured too. No
+ * overlapping, with the owner's name beside the patch from 600 px. `body`
+ * clips horizontal overflow, which would hide a sideways scroll, so the
+ * body's own scroll width is measured too. No
  * visible text is set under 12 px (the type floor, contract §2). And the
  * type voice (premium D2): home, the posts, the projects, the CV, About
  * and Contact set six sizes at most; every caps line is a label (DM Mono
@@ -101,9 +102,15 @@ function headerProblems(page: Page): Promise<string[]> {
 test("the header fits from 320 to 1920 px", async ({ page }) => {
     await page.goto("/blog");
     await page.waitForLoadState("networkidle");
+    const wordmark = page.getByRole("banner").locator(".brand__name");
     for (const width of WIDTHS) {
         await page.setViewportSize({ width, height: 900 });
         expect(await headerProblems(page), `header at ${width}px`).toEqual([]);
+        // The owner's name beside the patch wherever the bar has room for
+        // it, which is everywhere but a phone (the patch alone there).
+        await expect(wordmark, `wordmark at ${width}px`).toBeVisible({
+            visible: width >= 600,
+        });
     }
 });
 
