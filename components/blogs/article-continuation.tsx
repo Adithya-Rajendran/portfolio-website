@@ -16,8 +16,10 @@ import styles from "./post.module.css";
  * one, as the shared project row) and other entries that share a tag
  * (only when there are any; their rows leave the shared tags out). The
  * end matter above it closes the entry itself; the footer carries the
- * author. Every block is server-rendered links; empty blocks are left
- * out. Ported from the mockup's post.html `.post-end`.
+ * author. It keeps the text column's edges, so it reads as the entry's
+ * last part: the rows stack, their titles a step down. Every block is
+ * server-rendered links; empty blocks are left out. Ported from the
+ * mockup's post.html `.post-end`.
  */
 
 /** A neighbouring entry as a pager side: "Next", then its title. */
@@ -87,7 +89,7 @@ export default function ArticleContinuation({
                         id="entry-mission"
                         title={copy.projects(missions.length)}
                     >
-                        <MissionRows>
+                        <MissionRows stacked>
                             {missions.map((project) => (
                                 <MissionRow
                                     key={project._id}
@@ -99,7 +101,12 @@ export default function ArticleContinuation({
                 ) : null}
                 {related.length > 0 ? (
                     <Block id="entry-related" title={copy.related}>
-                        <LogIndex entries={related} level={3} tags={false} />
+                        <LogIndex
+                            entries={related}
+                            level={3}
+                            tags={false}
+                            stacked
+                        />
                     </Block>
                 ) : null}
             </div>

@@ -15,9 +15,9 @@ import { isPostPage, sitemapPages } from "./support/routes";
  * credit, opens the project
  * and stays a thumbnail smaller than the stage's photograph (checked where
  * the build has covers; the fixtures have none); the quieter rows carry no
- * "Also" label, and a row alone in its list (home's, /portfolio's, a
- * post's Related project) spans the list from 960px, its summary beside
- * its title, as a lone tile does.
+ * "Also" label, and a row alone in its list (home's, /portfolio's) spans
+ * the list from 960px, its summary beside its title, as a lone tile
+ * does, while a post's Related project rows stack in its text column.
  * Each project page has its crumb (Projects alone: no number or name),
  * its title as the heading and the pager ("Previous", "Next", in mission
  * order: the index's, but a quiet project keeps its slot's place), with
@@ -273,13 +273,14 @@ for (const width of [390, 768, 960, 1440, 1920]) {
     });
 }
 
-test("a lone project row spans its list from 960px, its summary beside its title", async ({
+test("a lone project row spans its list from 960px, its summary beside its title; a post's stack", async ({
     page,
     request,
 }, testInfo) => {
-    // Home's rows, /portfolio's quiet rows and a post's Related project:
-    // a row alone in its list takes the list's width, as a lone tile
-    // does, and two or more go two across.
+    // Home's rows and /portfolio's quiet rows: a row alone in its list
+    // takes the list's width, as a lone tile does, and two or more go two
+    // across. A post's Related project keeps its text column: every row
+    // takes the list's width, its summary under its title.
     const posts = (await sitemapPages(request)).filter(isPostPage);
     let lone = 0;
     for (const path of ["/", "/portfolio", ...posts]) {
@@ -321,6 +322,16 @@ test("a lone project row spans its list from 960px, its summary beside its title
             });
             for (const list of lists) {
                 const where = `${path} at ${width}px`;
+                if (isPostPage(path)) {
+                    if (list.rows.length === 1) lone += 1;
+                    for (const row of list.rows) {
+                        expect(row.width, where).toBeCloseTo(list.width, 0);
+                        if (row.beside !== null) {
+                            expect(row.beside, where).toBe(false);
+                        }
+                    }
+                    continue;
+                }
                 if (list.rows.length > 1) {
                     for (const row of list.rows) {
                         expect(row.width, where).toBeLessThan(list.width / 2);

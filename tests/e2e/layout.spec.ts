@@ -18,6 +18,8 @@ import {
  * 13px, 0.08em), a control (Jost 500 13px, 0.10em), the hero's name, or
  * one of Michroma's two places, the header's wordmark and a page head's
  * themed tag; and 13px text is a label, a control or data, never UI text.
+ * And every list under a head ends where the head's rule ends, from 390
+ * to 3824 px: no list has a width of its own.
  */
 const WIDTHS = [320, 390, 600, 960, 1024, 1280, 1440, 1920];
 
@@ -335,6 +337,94 @@ test("home, the posts, the projects, the CV, About and Contact keep to six sizes
                 `${path} at ${width}px sets ${sizes.join(", ")} px`,
             ).toBeLessThanOrEqual(6);
             expect(offVoice, `${path} at ${width}px`).toEqual([]);
+        }
+    }
+});
+
+/**
+ * Each list under a head that does not end where the head's rule ends: a
+ * section's tag row (home's sections, a DocSection, a post's end matter)
+ * against the lists beside it, and a page head's against its page's
+ * (/blog's index). Only the outermost lists that draw a rule count (a
+ * stack or a row's tags draws none), and none in a reading column or its
+ * rail, which keep the measure's edge.
+ */
+async function listsOffTheirHead(page: Page): Promise<string[]> {
+    return page.evaluate(() => {
+        const found: string[] = [];
+        const lists = "ol, ul, dl, table";
+        const shown = (element: Element) =>
+            element.checkVisibility() &&
+            element.getBoundingClientRect().width > 1;
+        // A border's computed width is 0 wherever its style is none.
+        const ruled = (list: Element) =>
+            [list, ...list.querySelectorAll("*")].some((element) => {
+                const style = getComputedStyle(element);
+                return (
+                    parseFloat(style.borderTopWidth) > 0 ||
+                    parseFloat(style.borderBottomWidth) > 0
+                );
+            });
+        for (const head of document.querySelectorAll(
+            ".section-tag:not(.crumb-row)",
+        )) {
+            if (!shown(head)) continue;
+            const scope = head.closest(".page-head")
+                ? head.closest("[data-page]")
+                : head.parentElement;
+            if (!scope) continue;
+            const ends = [...scope.querySelectorAll(lists)]
+                .filter(
+                    (list) =>
+                        shown(list) &&
+                        !scope.contains(
+                            list.parentElement?.closest(lists) ?? null,
+                        ) &&
+                        !list.closest(".g-prose, .g-rail") &&
+                        ruled(list),
+                )
+                .map((list) => list.getBoundingClientRect().right);
+            if (!ends.length) continue;
+            const end = Math.max(...ends);
+            const rule = head.getBoundingClientRect().right;
+            if (Math.abs(end - rule) > 1) {
+                const name = head.textContent?.trim().slice(0, 30);
+                found.push(
+                    `"${name}": the list ends at ${Math.round(end)}px, the head at ${Math.round(rule)}px`,
+                );
+            }
+        }
+        return found;
+    });
+}
+
+test("every list under a head ends where the head's rule ends, from 390 to 3824 px", async ({
+    page,
+    request,
+}, testInfo) => {
+    const content = await contentPages(request, testInfo);
+    // The CV's address opens the list, whatever view the visit picked.
+    const paths = [
+        "/",
+        "/portfolio",
+        "/blog",
+        "/about",
+        "/resume#cv",
+        ...content,
+    ];
+    test.setTimeout(30_000 + paths.length * 6_000);
+    for (const path of paths) {
+        await page.goto(path);
+        await page.waitForLoadState("networkidle");
+        if (path === "/resume#cv") {
+            await expect(page.locator("#cv h2").first()).toBeVisible();
+        }
+        for (const width of [390, 768, 960, 1280, 1440, 1920, 3824]) {
+            await page.setViewportSize({ width, height: 900 });
+            expect(
+                await listsOffTheirHead(page),
+                `${path} at ${width}px`,
+            ).toEqual([]);
         }
     }
 });

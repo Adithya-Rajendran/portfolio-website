@@ -328,7 +328,10 @@ only live in comments or commit messages.
   that and the wide edge), reach right into the notes' track and never
   left into the rail's, and never past the shell; the pager, the
   project row and the related entries below (`.end`, in the entry's
-  second `.shell`) start at the measure's left edge by the same sums.
+  second `.shell`) start at the measure's left edge by the same sums and
+  stop at its right, so the end matter reads as the entry's last part:
+  their rows stacked as on a phone (`LogIndex stacked` and
+  `MissionRows stacked`), the titles a step down.
   The `.shell` itself (`--maxw` 88rem, `--margin` 64px from 60rem and
   96px from 80rem, styles/tokens.css) keeps every page a central band
   with generous margins on a laptop and a wide screen. A listing is one treatment (the surface fill; hairlines
@@ -352,9 +355,9 @@ only live in comments or commit messages.
   margin note out of the line. Prose h2 are `--step-2` (32px at most), the leading 1.52
   (`--lh-long`), figures proportional. An entry has two right edges
   (styles/tokens.css): `--prose-measure` (the text, every listing, the
-  standfirst, the close) and `--prose-wide`, past the margin notes (the
-  title, wide plates, and after the entry the pager, the project row and
-  the related entries), or the shell's right edge where that is nearer. A revision is dated as the head
+  standfirst, the close, and after the entry the pager, the project row
+  and the related entries) and `--prose-wide`, past the margin notes (the
+  title and wide plates), or the shell's right edge where that is nearer. A revision is dated as the head
   dates ("30 Jun 2026 · Correction", on the page and in the feed; no
   `Rev` or triangle). The entry closes once, in its own column: End of
   entry, then "Follow: RSS · LinkedIn" (`FollowLinks`, also /blog's
@@ -429,9 +432,10 @@ only live in comments or commit messages.
   third of the card from 600px, two fifths on phones, beside the title
   under the line (tiles, like rows, are one column below 960px; from
   there a lone tile spans both columns, its title, beside the thumbnail,
-  in one and its summary and stack in the other, and a lone row, on home,
-  `/portfolio` or a post, the same: its title, beside any thumbnail, in
-  one and its summary in the other), the
+  in one and its summary and stack in the other, and a lone row, on home
+  or `/portfolio`, the same: its title, beside any thumbnail, in one and
+  its summary in the other; a post's project rows stack in the text
+  column), the
   stage's plate when the flagship
   has one, and the plate beside a project's head in either layout; the
   stage takes the model's poster without one (with no caption: the
@@ -601,8 +605,10 @@ only live in comments or commit messages.
 - **Writing's lists** (G8, `/blog`, a tag page). The index is the head
   (the writing description and the follow line; no search, boxed buttons
   or tag chips) running straight into the rows, one list with even
-  spacing (no year heads: each row's date carries its year), which ends
-  on its closing rule. A row has one date: a revision's "Updated" is the
+  spacing (no year heads: each row's date carries its year), as wide as
+  the head above it (the read time and arrow at the shell's edge, the
+  standfirst at 62ch), which ends on its closing rule. A row has one
+  date: a revision's "Updated" is the
   entry head's. `/blog/archive`, which repeated the list at a second
   address, answers 308 to `/blog` (next.config.mjs). A tag shows only
   when it links: once it gathers two entries
@@ -621,7 +627,15 @@ only live in comments or commit messages.
   Flight Log, Trajectory, Crew File, Comms) is only the small tag above
   its page's h1 (`PageHead tag`) and on its share card (`OgCard tag`).
   Section heads (`SectionTag`, `DocSection title`) are the plain name as
-  a Jost h2; nothing is numbered (no § numbers).
+  a Jost h2; nothing is numbered (no § numbers). A list under a head
+  ends where the head's rule ends and has no width of its own: at the
+  shell's edge (home's Latest writing, the index under /blog's and a tag
+  page's head), at the main column's (a `DocSection`'s rows, table and
+  lists: a project's sections, About's questions, the CV) or at the
+  text's (a post's end matter, under its heads). Only its text
+  keeps a measure (a row's standfirst 62ch, a brief's sentences and a
+  question's note 60ch); a writing row's read time and arrow stand at
+  that edge, under the head's link.
 
 ## Layout: the `(site)` route group
 
@@ -1083,7 +1097,10 @@ loaded, only when that run cannot.
   message counter near its limit) at 1440 and 390; on home, every post
   and project, `/resume`, `/about` and `/contact`, six font sizes at
   most, every caps line a label, a control, the hero's name or
-  Michroma's two places, and 13px text only a label, a control or data),
+  Michroma's two places, and 13px text only a label, a control or data;
+  and on home, `/portfolio`, `/blog`, `/about`, the CV and every post,
+  tag and project page, from 390 to 3824 px, every list under a head
+  ending where the head's rule ends),
   `accent`
   (two orange marks at most in the first viewport of home, `/portfolio`,
   Homelab, a post, `/resume` (the flight), `/contact` and `/about`, at 1440
@@ -1209,8 +1226,9 @@ loaded, only when that run cannot.
   spanning the measure)
   and no close, title block, revision, "Table 1", jump to its own
   write-up or stand-in text, a stack item never split, a lone project
-  row (on home, `/portfolio` or a post) spanning its list from 960px
-  with its summary beside its title, a thin project is
+  row (on home or `/portfolio`) spanning its list from 960px with its
+  summary beside its title and a post's rows stacked, its summary under
+  its title, a thin project is
   a short note (the Kubernetes note without a Stack row, one highlight a
   paragraph),
   every card on `/portfolio` and home reading its line, then its title,

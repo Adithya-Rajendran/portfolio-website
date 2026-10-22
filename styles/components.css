@@ -980,9 +980,9 @@
     /* The owner's current questions: the question, the note in the serif,
        with a hairline between rows only: none over the first (the section
        head's rule is just above) and none under the last (About's last
-       section, so the footer's hairline follows). */
+       section, so the footer's hairline follows). The hairlines end where
+       the section head's rule ends; the note keeps its own measure. */
     .q-list {
-        max-width: var(--measure-index);
         margin: 0;
         padding: 0;
         list-style: none;
@@ -1163,9 +1163,9 @@
     /* ===== CV rows (site.css 4.13, on the log index's grammar) ========= */
     /* components/cv/cv-list.tsx: a mono column (dates, place) beside the
        title, organization, a serif line and the facts. A linked row is one
-       big target. */
+       big target. The rows end where the section head's rule ends; the
+       serif line and the facts keep their own measures. */
     .cv-list {
-        max-width: var(--measure-index);
         margin: 0;
         padding: 0;
         border-bottom: var(--rule-hair) solid var(--rule-1);

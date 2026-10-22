@@ -435,7 +435,7 @@ export default async function ProjectPage({
                     {brief.length ? (
                         <DocSection id="brief" title={copy.overview}>
                             <Specs
-                                className={`specs--read ${styles.brief}`}
+                                className="specs--read"
                                 items={brief.map(([key, text]) => ({
                                     id: key,
                                     term: copy.brief[key],
@@ -539,10 +539,7 @@ export default async function ProjectPage({
                                 lessons.length ? copy.lessons : copy.nextSteps
                             }
                         >
-                            <ul
-                                className={`${styles.lessons} ${styles.single}`}
-                                role="list"
-                            >
+                            <ul className={styles.lessons} role="list">
                                 {[...lessons, ...nextSteps].map((line) => (
                                     <li key={line}>{line}</li>
                                 ))}

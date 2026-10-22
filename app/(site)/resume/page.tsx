@@ -418,7 +418,6 @@ export default async function ResumePage() {
             {skills.length ? (
                 <CvSection id="skills" title={copy.skills}>
                     <Specs
-                        className={styles.skills}
                         items={skills.map((group) => ({
                             id: group._key,
                             term: group.title,

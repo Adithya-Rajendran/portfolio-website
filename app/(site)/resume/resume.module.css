@@ -51,14 +51,10 @@
 .talks {
     margin-top: var(--s-6);
 }
-.skills {
-    max-width: var(--measure-index);
-}
 
 /* Plain rows on the CV's columns: the date in the mono column, then one
    line (a linked title, or a credential's name and issuer). */
 .rows {
-    max-width: var(--measure-index);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -247,9 +243,6 @@
     }
     .talks {
         margin-top: 1.2mm;
-    }
-    .skills {
-        max-width: none;
     }
     .row {
         grid-template-columns: 31mm minmax(0, 1fr);

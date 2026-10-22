@@ -3,13 +3,14 @@
  * spacing. Ported from the mockup's site.css 4.10 (Post row) and 4.27
  * (Scannable log index). Below 960px the tracks fold into a stacked row.
  */
-/* As wide as the mockup's index beside its preview plate (8 of 12
-   columns at 1440px), so the read time and arrow stay by the standfirst,
-   which stops at 62ch, instead of drifting to the page's far edge. */
+/* As wide as the head above it, so the rows' rules end where its rule
+   ends: the shell under /blog's page head and home's Latest writing, the
+   main column under a project's section head, the text's under a
+   post's Related entries. The read time and arrow stand at that edge,
+   under the head's link; only the standfirst keeps a measure (62ch). */
 .index {
     --log-cols: 7.5rem minmax(0, 1fr) 4.5rem 1.5rem;
     min-width: 0;
-    max-width: var(--measure-index);
 }
 
 /* ---- Rows --------------------------------------------------------------- */
@@ -83,34 +84,37 @@
     text-underline-offset: 0.16em;
 }
 
+/* From 960px the rows go on shared tracks, unless stacked: a narrow
+   column (a post's end matter, at the text's width) keeps the phone's
+   rows, the date and read time over the title. */
 @media (min-width: 60rem) {
-    .row {
+    .index:not(.stacked) .row {
         grid-template-columns: var(--log-cols);
         column-gap: var(--gutter);
         align-items: baseline;
     }
-    .meta {
+    .index:not(.stacked) .meta {
         display: contents;
     }
-    .date {
+    .index:not(.stacked) .date {
         grid-column: 1;
         grid-row: 1;
     }
-    .read {
+    .index:not(.stacked) .read {
         grid-column: 3;
         grid-row: 1;
         text-align: right;
     }
-    .row > :not(.meta):not(.arrow) {
+    .index:not(.stacked) .row > :not(.meta):not(.arrow) {
         grid-column: 2;
     }
-    .title {
+    .index:not(.stacked) .title {
         grid-row: 1;
         font-size: var(--step-2);
         font-weight: 400;
         line-height: 1.15;
     }
-    .arrow {
+    .index:not(.stacked) .arrow {
         display: block;
         grid-column: 4;
         grid-row: 1;
@@ -123,7 +127,7 @@
             transform var(--dur-hover) var(--ease-dock),
             color var(--dur-hover) var(--ease-dock);
     }
-    .row:hover .arrow {
+    .index:not(.stacked) .row:hover .arrow {
         color: var(--ink-1);
         transform: translateX(4px);
     }

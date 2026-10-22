@@ -277,7 +277,7 @@
     list-style: none;
 }
 @media (min-width: 60rem) {
-    .rows {
+    .rows:not(.rowsStacked) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -358,7 +358,7 @@
     }
 }
 /* A lone row (home's one project after the stage, /portfolio's one quiet
-   project, a post's one related project) spans both columns rather than
+   project) spans both columns rather than
    leave one empty, as a lone tile does: its hairline runs the width, its
    title (beside its thumbnail, in a row's proportions) keeps the list's
    first column and its summary takes the second. The row's right padding
@@ -366,7 +366,7 @@
    half the gutter and that padding: the summary starts and ends where a
    second row's text would, so no measure grows. */
 @media (min-width: 60rem) {
-    .row:only-child {
+    .rows:not(.rowsStacked) > .row:only-child {
         grid-column: 1 / -1;
         grid-template-columns:
             minmax(0, 1fr)
@@ -376,7 +376,7 @@
             "title summary";
         column-gap: var(--gutter);
     }
-    .rowCovered:only-child {
+    .rows:not(.rowsStacked) > .rowCovered:only-child {
         grid-template-columns:
             minmax(0, 1fr) minmax(0, 2fr)
             calc(50% - (var(--gutter) + var(--s-7)) / 2);
@@ -386,14 +386,14 @@
             "plate title summary"
             "plate . .";
     }
-    .row:only-child .rowLine {
+    .rows:not(.rowsStacked) > .row:only-child .rowLine {
         grid-area: line;
     }
-    .row:only-child .rowTitle {
+    .rows:not(.rowsStacked) > .row:only-child .rowTitle {
         grid-area: title;
     }
     /* The summary starts level with the title. */
-    .row:only-child .rowSummary {
+    .rows:not(.rowsStacked) > .row:only-child .rowSummary {
         grid-area: summary;
         margin-top: var(--s-1);
     }
@@ -420,6 +420,11 @@
     border-top-color: var(--ink-1);
 }
 .rowsQuiet .rowTitle {
+    font-size: var(--step-1);
+}
+/* Stacked rows: one column at every width, a step smaller, for a column
+   as narrow as the text (a post's related project). */
+.rowsStacked .rowTitle {
     font-size: var(--step-1);
 }
 .row:hover .rowTitle a {
