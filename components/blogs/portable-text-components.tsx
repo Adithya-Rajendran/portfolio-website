@@ -1,4 +1,5 @@
 import { PortableText, type PortableTextComponents } from "@portabletext/react";
+import { Children } from "react";
 import FigurePlate, { type PlateImage } from "@/components/prose/figure-plate";
 import Listing from "@/components/prose/listing";
 import { postCopy as copy } from "@/lib/copy";
@@ -59,12 +60,53 @@ function LinkMark({
     );
 }
 
+/**
+ * A run of inline code kept whole: no space, a character a line may end
+ * after (a hyphen, a slash, a bracket: anything but letters, digits and
+ * `_ . , : =`), and 24 characters at most, which a list item two levels
+ * deep holds at 320px in the code's 16px mono (styles/prose.css).
+ */
+const CODE_WORD = /^(?=.*[^\w.,:=])\S{1,24}$/;
+
+/**
+ * Inline code. A line that ends inside a flag or a path, at a hyphen or
+ * a slash, prints another token ("-" over "-gpu-memory-utilization"
+ * reads as a single-dash flag), and readers copy these: each such run is
+ * a `.keep-whole` span, as KeepWhole keeps a short hyphenated name, so
+ * the line breaks at the code's spaces. Only plain text is split: a
+ * link, a line break or another mark inside the code renders as it is.
+ */
+function CodeMark({
+    children,
+    text,
+}: {
+    children: React.ReactNode;
+    text: string;
+}) {
+    const nodes = Children.toArray(children);
+    if (!nodes.every((node) => typeof node === "string")) {
+        return <code>{children}</code>;
+    }
+    return (
+        <code>
+            {text.split(/(\s+)/).map((part, index) => {
+                if (!CODE_WORD.test(part)) return part;
+                return (
+                    <span className="keep-whole" key={index}>
+                        {part}
+                    </span>
+                );
+            })}
+        </code>
+    );
+}
+
 const calloutBodyComponents: PortableTextComponents = {
     block: { normal: ({ children }) => <p>{children}</p> },
     marks: {
         strong: ({ children }) => <strong>{children}</strong>,
         em: ({ children }) => <em>{children}</em>,
-        code: ({ children }) => <code>{children}</code>,
+        code: CodeMark,
         contentLink: LinkMark,
         link: LinkMark,
     },
@@ -256,7 +298,7 @@ export function createPortableTextComponents({
         marks: {
             strong: ({ children }) => <strong>{children}</strong>,
             em: ({ children }) => <em>{children}</em>,
-            code: ({ children }) => <code>{children}</code>,
+            code: CodeMark,
             underline: ({ children }) => <u>{children}</u>,
             "strike-through": ({ children }) => <s>{children}</s>,
             contentLink: LinkMark,

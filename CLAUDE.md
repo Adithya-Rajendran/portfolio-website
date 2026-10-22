@@ -338,7 +338,16 @@ only live in comments or commit messages.
   above and below on paper); a callout is the quotation's quiet note (the
   ink rule) led by its tone and title in bold ("Caution: Back up first",
   `calloutHeading`), with no colour, frame or band; inline code has no
-  box (no fill or padding). A list has one treatment on every width and
+  box (no fill or padding), keeps its spaces as written (one that ends a
+  line hangs there) and is never hyphenated, and each run of it a line
+  could end inside (a flag, a path), up to 24 characters, is kept whole
+  (`CodeMark` in portable-text-components.tsx, `.keep-whole`), so a line
+  breaks the code at its spaces; a longer run still breaks rather than
+  pass the measure, as any run does where 24 characters outrun the line
+  (below 20rem, and in an h2 or a list three deep below 23rem). On paper
+  inline code is 0.85em of its line. On phones the text hyphenates only
+  words of ten letters or more, five kept on each side (Chrome sets no
+  limit on hyphens in a row). A list has one treatment on every width and
   page (`.list`, `.list--bullet`, `.list--number`, `.list__item` in
   styles/prose.css, the renderer's classes; its `ul`/`ol` carry
   `role="list"`): the mark in a gutter at the column's left edge
@@ -1170,7 +1179,9 @@ loaded, only when that run cannot.
   link, All writing, Author block or pager heading, the pager's
   "Previous" and "Next" by name), Copy on a listing, the
   phone's contents box, the header's one hairline, print (a masthead with no date), BlogPosting and
-  BreadcrumbList; on the
+  BreadcrumbList, inline code's kept runs each on one line at 390 and
+  1440, its spaces kept and never hyphenated, and 0.85em of its line on
+  paper; on the
   fixture build also every listing at the text's width, a long line
   scrolling inside it and a short one not, one
   label on the bar and the highlighted line, a list's marks (the dash,

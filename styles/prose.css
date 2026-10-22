@@ -48,7 +48,7 @@
         font-variant-numeric: proportional-nums;
         text-wrap: pretty;
         hanging-punctuation: first;
-        hyphenate-limit-chars: 8 4 4;
+        hyphenate-limit-chars: 10 5 5;
     }
     .prose > * {
         max-width: var(--prose-measure);
@@ -56,8 +56,10 @@
     .prose > * + * {
         margin-top: 1.1em;
     }
-    /* Phones: hyphenate long words only, never in lists, quotes, callouts,
-       captions or headings. */
+    /* Phones: hyphenate long words only, ten letters or more with five
+       kept on each side (`hyphenate-limit-chars` above: Chrome sets no
+       limit on hyphens in a row, so the length is the limit), never in
+       lists, quotes, callouts, captions, headings or code. */
     @media (max-width: 37.49rem) {
         .prose {
             hyphens: auto;
@@ -162,16 +164,37 @@
        sizes. In a heading it is the heading's size. No box: a fill's
        padding read as a space before the punctuation after it, and a
        span that wrapped left half a box on each line. Its spaces are
-       kept as written; a long path may break anywhere rather than push
-       past the measure. */
+       kept as written; one that ends a line hangs there, so no line
+       starts with a space ("-s" over " 5"). It is never hyphenated, and
+       the renderer keeps each run of it a line could end inside (a flag,
+       a path) whole, up to 24 characters (`.keep-whole`): "-" over
+       "-gpu-memory-utilization" reads as another flag, and readers copy
+       these. So the line breaks at the code's spaces; a longer run may
+       still break anywhere rather than push past the measure. */
     .prose :not(pre) > code {
         font-size: var(--step-0);
         font-variant-ligatures: none;
-        white-space: break-spaces;
+        white-space: pre-wrap;
         overflow-wrap: anywhere;
+        hyphens: none;
     }
     .prose :is(h2, h3, h4) code {
         font-size: inherit;
+    }
+    /* 24 characters of the 16px mono fit a list item two deep at 320px.
+       Where a line holds fewer, a run may break inside rather than run
+       past the measure: in an h2 (its code is the heading's size) or a
+       list three deep below 23rem, and anywhere below 20rem (a larger
+       text size on a phone). */
+    @media (max-width: 22.99rem) {
+        .prose :is(h2, .list .list .list) code .keep-whole {
+            white-space: inherit;
+        }
+    }
+    @media (max-width: 19.99rem) {
+        .prose code .keep-whole {
+            white-space: inherit;
+        }
     }
     /* The owner's asides: a quiet note, not a pull quote. A callout is
        the same note with a bold lead-in (below). */
@@ -559,6 +582,16 @@
         }
         .prose > * {
             max-width: none;
+        }
+        /* Inline code on paper is set from its line, in the screen's
+           proportion (17px beside 20px): the screen's step stood larger
+           than the 10.5pt text. A heading's code keeps the heading's
+           size. */
+        .prose :not(pre) > code {
+            font-size: 0.85em;
+        }
+        .prose :is(h2, h3, h4) code {
+            font-size: inherit;
         }
         .sidenote,
         .copy {

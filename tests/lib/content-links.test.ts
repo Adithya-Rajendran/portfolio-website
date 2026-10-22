@@ -1,3 +1,5 @@
+import { createElement, type ComponentType, type ReactNode } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { LINK_MARK_TYPES, resolveLinkMark } from "@/lib/content-links";
 import { indexProse } from "@/lib/prose";
@@ -111,5 +113,33 @@ describe("web Portable Text renderer", () => {
 
         expect(renderers[0]).toBeTypeOf("function");
         expect(new Set(renderers).size).toBe(1);
+    });
+
+    it("keeps each run of inline code a line could end inside whole", () => {
+        const { marks } = createPortableTextComponents({
+            index: indexProse([]),
+            highlightedCode: {},
+            headingIds: {},
+        });
+        const code = (marks as Record<string, unknown>).code as ComponentType<{
+            text: string;
+            children?: ReactNode;
+        }>;
+        const render = (text: string, children: ReactNode = text) =>
+            renderToStaticMarkup(createElement(code, { text }, children));
+        const path = "/var/lib/rancher/k3s/agent/containerd/xy.d";
+
+        // A flag is kept whole; a number has no break point.
+        expect(render("--gpu-memory-utilization 0.85")).toBe(
+            '<code><span class="keep-whole">--gpu-memory-utilization</span> 0.85</code>',
+        );
+        // Longer than 24 characters, a path may still break.
+        expect(path).toHaveLength(42);
+        expect(render(path)).toBe(`<code>${path}</code>`);
+        // A link inside the code renders as given.
+        const link = createElement("a", { href: "/blog/x" }, "a-b");
+        expect(render("a-b", link)).toBe(
+            '<code><a href="/blog/x">a-b</a></code>',
+        );
     });
 });
