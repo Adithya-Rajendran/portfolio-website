@@ -213,7 +213,7 @@ export const cvCopy = {
     /** The sections' plain names, on screen and on paper. */
     education: "Education",
     experience: "Experience",
-    projects: "Projects",
+    projects: "Selected research and engineering",
     writing: {
         title: "Writing",
         withTalks: "Writing & talks",
@@ -287,12 +287,10 @@ export const pagerCopy = {
 /**
  * The home page: the hero and its sections. UI copy only: the name, the
  * headline, what the owner is open to and the button that answers it,
- * the tagline that heads the close, the projects and the entries are the
- * owner's.
+ * the research focus, the projects and the entries are the owner's.
  */
 export const homeCopy = {
-    /** The hero's one action (CV), and the quiet link to the newest
-     *  entry beside it: "Latest: <title>". */
+    /** The hero's navigation to research and the CV. */
     routesLabel: "Start here",
     cv: "CV",
     latest: "Latest:",
@@ -307,10 +305,9 @@ export const homeCopy = {
         /** Only while /blog lists more than home's three. */
         all: "All writing",
     },
-    /** The close: the owner's tagline is its heading (`title` names it
-     *  for screen readers when the profile has none). */
+    /** The close leads to the owner's current focus and contact details. */
     contactAct: {
-        title: "Contact",
+        title: "Research and collaboration",
         now: "Current focus",
         /** The way to /contact while there is no Open To answer. */
         message: "Send a message",

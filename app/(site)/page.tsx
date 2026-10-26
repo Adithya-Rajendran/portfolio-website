@@ -9,7 +9,7 @@ import { LinkArrow } from "@/components/ui/marks";
 import { siteConfig } from "@/lib/config";
 import { homeCopy as copy } from "@/lib/copy";
 import { questions, taglineOf } from "@/lib/crew";
-import { heroLatest, homeActs, homeProjects } from "@/lib/home";
+import { homeActs, homeProjects } from "@/lib/home";
 import { logEntries } from "@/lib/log-index";
 import { missionOrder, toMission } from "@/lib/missions";
 import { contactHref, siteRoutes } from "@/lib/navigation";
@@ -42,24 +42,8 @@ export async function generateMetadata(): Promise<Metadata> {
     };
 }
 
-/**
- * Home: the hero (the name, the profile's headline and availability, and
- * CV, with the newest entry beside it), then, each only with content,
- * the strongest project on its stage with the next two as rows, and the
- * latest three entries, each linking
- * its section's page only while that page holds more; then the close: the
- * owner's tagline as its heading with the way to his current focus,
- * then one way to /contact: the profile's button that
- * answers what the owner is open to (the one primary, while both are
- * set), else Send a message. Everything is server-rendered; the
- * starfield and Pause motion are the only islands. Projects and Writing
- * are plain DocSections: the tag row (the plain h2, a hairline and, while
- * the section's page holds more than home shows, one link to it), then
- * its content straight after it, as in an entry's end matter; the close
- * is its own section, headed by the tagline. The ids are
- * prefixed, because a visited page that stays mounted can own the same
- * fragment (/portfolio's #projects).
- */
+/** Research introduction, selected projects, recent writing, and contact links.
+ * Section ids are prefixed because visited routes may stay mounted. */
 export default async function Home() {
     const [profile, posts, projects] = await Promise.all([
         getProfile(),
@@ -106,7 +90,15 @@ export default async function Home() {
                 name={name}
                 headline={profile?.headline?.trim() || null}
                 openTo={open}
-                latest={heroLatest(entries)}
+                focus={tagline}
+                finding={
+                    flagship && detail?.brief?.outcome?.trim()
+                        ? {
+                              text: detail.brief.outcome.trim(),
+                              href: flagship.href,
+                          }
+                        : null
+                }
             />
 
             {acts.includes("projects") && flagship ? (
@@ -130,7 +122,7 @@ export default async function Home() {
                         mission={flagship}
                         image={cover ?? poster}
                         caption={cover?.caption}
-                        ratio="5 / 4"
+                        ratio="3 / 2"
                     />
                     {rows.length ? (
                         <MissionRows className={styles.projects}>
@@ -171,12 +163,12 @@ export default async function Home() {
             >
                 <div className="shell">
                     <div className={styles.close}>
-                        <h2
-                            className={tagline ? styles.tagline : "sr-only"}
-                            id="home-contact-h"
-                        >
-                            {tagline ?? copy.contactAct.title}
+                        <h2 className={styles.tagline} id="home-contact-h">
+                            {copy.contactAct.title}
                         </h2>
+                        {profile?.contactInvitation?.trim() ? (
+                            <p>{profile.contactInvitation.trim()}</p>
+                        ) : null}
                         {asked ? (
                             <LinkArrow href={`${siteRoutes.about}#crew-now`}>
                                 {copy.contactAct.now}

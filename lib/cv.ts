@@ -247,7 +247,11 @@ export function cvProjects(
 ): CvProject[] {
     return [...(projects ?? [])]
         .filter((project) => project.slug && project.title)
-        .sort((a, b) => a.designation - b.designation)
+        .sort(
+            (a, b) =>
+                (a.featured ?? Infinity) - (b.featured ?? Infinity) ||
+                a.designation - b.designation,
+        )
         .map((project) => {
             const highlights = (project.highlights ?? []).filter((line) =>
                 line.trim(),

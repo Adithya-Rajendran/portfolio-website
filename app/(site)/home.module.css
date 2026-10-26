@@ -12,7 +12,7 @@
 }
 /* The first section after the hero opens with the same gap. */
 :global([data-drift-zone]) + .act {
-    padding-top: var(--space-group);
+    padding-top: var(--s-6);
 }
 /* Flight Manual draws the planet to the hero's foot, so the first section
    follows it at a block's distance instead. */

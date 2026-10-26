@@ -6,40 +6,13 @@ import { cvLink } from "@/lib/navigation";
 import { expect, test } from "./support/test";
 import { storeTheme } from "./support/theme";
 
-/**
- * Home (plan §6.2 PR 13, contract §9; premium WS2): the hero's name,
- * headline, what the owner is open to and its one action (CV) are in the
- * first viewport with and without JavaScript, with the newest entry beside
- * CV as a quiet link (Latest), no second button, the pair on the name's axis; the header's wordmark steps aside while the hero
- * names the owner, and before the page has run on home alone (kept without
- * JavaScript); the starfield drifts only while it may (on screen, in
- * a visible tab, in Void, with motion allowed) and reports `stopped`
- * otherwise; the stars are the hero's alone, and Void's; the photograph is
- * credited with its frame ID and Flight Manual draws the limb instead;
- * the name keeps one line at 1440 and spans 1,400px at most at 1920;
- * the sections follow in order, unnumbered, and lead to their pages
- * only while those hold more; a quiet project gets no row (checked on the
- * fixture build); the flagship's title is its one link, and
- * it shows no stats and at most four stack items; a row's cover is
- * a thumbnail, credited, that never outweighs the stage's photograph
- * (checked where the build has covers; the fixtures have none); the close is the
- * owner's tagline, the Timeline by that name and one way to /contact (the
- * profile's primary, else Send a message); the page stays short; and it
- * says nothing about what is missing.
- */
+/** Home keeps the research direction, selected work, and CV accessible
+ * on the first screen. Motion and theme behavior remain independently tested. */
 
 function hero(page: Page) {
     return page
         .getByRole("main")
         .getByRole("region", { name: /Rajendran|Adithya/ });
-}
-
-/** The hero's quiet link to the newest entry, "Latest: <title>". */
-function latest(page: Page) {
-    return page
-        .getByRole("main")
-        .getByRole("navigation", { name: copy.routesLabel })
-        .getByRole("link", { name: new RegExp(`^${copy.latest} `) });
 }
 
 function starfield(page: Page) {
@@ -51,20 +24,17 @@ async function firstViewport(page: Page) {
     await expect(main.getByRole("heading", { level: 1 })).toBeInViewport({
         ratio: 1,
     });
-    // One action, CV, to the CV itself (/resume's list, not the flight):
-    // the header's Projects is the way to the work. Latest, beside it, is
-    // a quiet link, not a second button.
     const links = main.getByRole("navigation", { name: copy.routesLabel });
     const cv = links.getByRole("link", { name: copy.cv, exact: true });
+    const research = links.getByRole("link", {
+        name: "Research projects",
+        exact: true,
+    });
     await expect(cv).toHaveAttribute("href", cvLink.href);
     await expect(cv).toBeInViewport({ ratio: 1 });
-    await expect(hero(page).locator(".btn")).toHaveCount(1);
-    await expect(links.getByRole("link")).toHaveCount(
-        (await latest(page).count()) + 1,
-    );
-    if (await latest(page).count()) {
-        await expect(latest(page)).toBeInViewport({ ratio: 1 });
-    }
+    await expect(research).toHaveAttribute("href", "#home-projects");
+    await expect(research).toBeInViewport({ ratio: 1 });
+    await expect(links.getByRole("link")).toHaveCount(2);
     // What the owner is open to, when the profile says.
     const open = hero(page).getByText(copy.openTo, { exact: true });
     if (await open.count()) await expect(open).toBeInViewport({ ratio: 1 });
@@ -123,141 +93,36 @@ for (const [width, height] of [
     });
 }
 
-test("beside CV, a quiet link leads to the newest entry", async ({ page }) => {
-    // The newest entry: the index's first row (log.spec checks its order).
-    await page.goto("/blog");
-    const first = page
-        .getByRole("main")
-        .getByRole("listitem")
-        .filter({ has: page.getByRole("heading") })
-        .first()
-        .getByRole("heading")
-        .getByRole("link");
-    const entries = await first.count();
-    const title = entries ? ((await first.textContent()) ?? "").trim() : "";
-    const href = entries ? await first.getAttribute("href") : null;
-
+test("research projects is an immediate route to the selected work", async ({
+    page,
+}) => {
     await page.goto("/");
-    // None without an entry: it says nothing about what is missing.
-    await expect(latest(page)).toHaveCount(entries && title ? 1 : 0);
-    if (!entries || !title) return;
-    await expect(latest(page)).toHaveAttribute("href", href!);
-    await expect(latest(page)).toHaveText(`${copy.latest} ${title}`);
-    // A text link in ink, not a button: the hero keeps CV its one action.
-    await expect(latest(page)).not.toHaveClass(/\bbtn\b/);
-    await expect(latest(page)).toHaveCSS("text-transform", "none");
-    await expect(hero(page).locator(".btn")).toHaveCount(1);
-    await expect(hero(page).locator(".btn--primary")).toHaveCount(0);
-    await latest(page).click();
-    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await hero(page)
+        .getByRole("link", { name: "Research projects", exact: true })
+        .click();
+    await expect(page).toHaveURL(/#home-projects$/);
     await expect(
-        page.getByRole("heading", { level: 1, name: title, exact: true }),
-    ).toBeVisible();
+        page.getByRole("heading", {
+            name: copy.projectsAct.title,
+            exact: true,
+        }),
+    ).toBeInViewport();
 });
 
-for (const width of [320, 360, 390]) {
-    test(`Latest wraps inside the hero at ${width}px`, async ({ page }) => {
-        await page.setViewportSize({ width, height: 844 });
-        await page.goto("/");
-        if (!(await latest(page).count())) return;
-        // Under CV, centred, within the page's gutters.
-        const [link, cv] = await Promise.all([
-            latest(page).boundingBox(),
-            hero(page)
-                .getByRole("link", { name: copy.cv, exact: true })
-                .boundingBox(),
-        ]);
-        expect(link!.x).toBeGreaterThanOrEqual(16);
-        expect(link!.x + link!.width).toBeLessThanOrEqual(width - 16);
-        expect(link!.y).toBeGreaterThanOrEqual(cv!.y + cv!.height);
-    });
-}
-
-/**
- * Stand-ins for the newest title, set in place of the build's: one as long
- * as production's when the hero was measured, which shares a row with CV
- * from 640px, and one too long for a row as wide as the headline, which
- * goes under CV at every width. The fixture build's newest is short enough
- * to fit any box, so without them a box wider than its words passes unseen.
- */
-const LATEST_STAND_INS = [
-    {
-        title: "Keeping a DGX Spark alive when unified memory runs out",
-        besideFrom: 768,
-    },
-    {
-        title: "A stand-in title long enough that it never shares a row with CV, at any width the hero is drawn at",
-        besideFrom: Infinity,
-    },
-];
-
-/**
- * The hero's action row as drawn, with `title` in place of the newest's
- * when given: CV's box, the words of Latest and the hero's centre line.
- * The words, not the link's box: a wrapped box keeps its full width while
- * balance narrows its lines, so the box can sit on the axis while its
- * words do not.
- */
-async function actionRow(page: Page, title?: string) {
-    if (title) {
-        await latest(page).evaluate((link, text) => {
-            link.textContent = text;
-        }, `${copy.latest} ${title}`);
-    }
-    const axis = await hero(page).evaluate((section) => {
-        const box = section.getBoundingClientRect();
-        return box.left + box.width / 2;
-    });
-    const cv = await hero(page)
-        .getByRole("link", { name: copy.cv, exact: true })
-        .boundingBox();
-    const words = await latest(page).evaluate((link) => {
-        const range = document.createRange();
-        range.selectNodeContents(link);
-        const box = range.getBoundingClientRect();
-        const lines = new Set(
-            [...range.getClientRects()].map((rect) => Math.round(rect.top)),
-        );
-        return {
-            left: box.left,
-            right: box.right,
-            top: box.top,
-            lines: lines.size,
-        };
-    });
-    return { axis, cv: cv!, words, beside: words.top < cv!.y + cv!.height };
-}
-
-/** Beside CV: one line, the row's 32px from it, the pair centred on the
- *  axis. Under CV (always on phones): CV and the words each centred. */
-function expectOnAxis(row: Awaited<ReturnType<typeof actionRow>>) {
-    const { axis, cv, words } = row;
-    if (row.beside) {
-        const gap = words.left - (cv.x + cv.width);
-        expect(words.lines).toBe(1);
-        expect(gap).toBeGreaterThanOrEqual(31);
-        expect(gap).toBeLessThanOrEqual(33);
-        expect(Math.abs((cv.x + words.right) / 2 - axis)).toBeLessThan(2);
-    } else {
-        const centre = (words.left + words.right) / 2;
-        expect(Math.abs(cv.x + cv.width / 2 - axis)).toBeLessThan(2);
-        expect(Math.abs(centre - axis)).toBeLessThan(2);
-    }
-}
-
-for (const width of [390, 768, 960, 1280, 1440, 1920, 3824]) {
-    test(`CV and Latest share the name's axis at ${width}px`, async ({
-        page,
-    }) => {
+for (const width of [320, 390, 768, 1440]) {
+    test(`research introduction fits at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/");
-        if (!(await latest(page).count())) return;
-        expectOnAxis(await actionRow(page));
-        for (const { title, besideFrom } of LATEST_STAND_INS) {
-            const row = await actionRow(page, title);
-            expect(row.beside, title).toBe(width >= besideFrom);
-            expectOnAxis(row);
-        }
+        const overflow = await page.evaluate(
+            () => document.documentElement.scrollWidth > window.innerWidth,
+        );
+        expect(overflow).toBe(false);
+        await expect(
+            hero(page).getByRole("link", {
+                name: "Research projects",
+                exact: true,
+            }),
+        ).toBeInViewport();
     });
 }
 
@@ -644,9 +509,8 @@ test("the close answers what the owner is open to only in the profile's words", 
     if (!open) await expect(answer).toHaveCount(0);
     if (testInfo.project.name === "fixture") {
         await expect(answer).toHaveText(FIXTURE_PROFILE.availability!.cta!);
-        // The owner's tagline heads the close.
         await expect(close.getByRole("heading", { level: 2 })).toHaveText(
-            FIXTURE_PROFILE.tagline!,
+            copy.contactAct.title,
         );
     }
     // One way to /contact: the profile's answer, the one primary, while

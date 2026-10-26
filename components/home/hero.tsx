@@ -14,27 +14,8 @@ import sunrise from "@/lib/hero-sunrise.json";
 import { cvLink } from "@/lib/navigation";
 import styles from "./hero.module.css";
 
-/**
- * The home hero (contract §9): the only full-bleed image on the site.
- * NASA's orbital sunrise (ISS072-E-30246) is screen-blended over the
- * drifting starfield in Void; under it, and alone in Flight Manual and in
- * print, the same limb is drawn as SVG from the circles fitted to the
- * photograph (lib/hero-sunrise.json), so the first paint is right before
- * the photograph arrives, and without it. Centred over the black above
- * the limb: the name (the page's h1), the profile's one-line headline,
- * what the owner is open to (the profile's availability, only when set)
- * and one action, CV (a hairline button over the photograph, to /resume's
- * list: `cvLink`), with beside it, while there is an entry, a quiet text
- * link to the newest, "Latest: <title>" (the way to the writing on a
- * phone, whose bar has no Writing). The
- * headline's and the Open To line's parts are kept whole, and stack on
- * phones. At the foot, the credit with the frame's NASA ID, and Pause
- * motion (nothing under the OS reduce-motion setting). The header's
- * wordmark steps aside while the hero's name shows below the header (the
- * starfield sets `html[data-hero]`). Everything is server-rendered;
- * the starfield and the motion control are the only islands (with the
- * photograph's preload, which draws nothing: components/home/hero-preload.tsx).
- */
+/** Research introduction and primary links over the existing sunrise artwork.
+ * The featured project's finding is read from the same CMS record as its page. */
 
 type Crop = "desktop" | "mobile";
 
@@ -173,14 +154,15 @@ export default function Hero({
     name,
     headline,
     openTo,
-    latest,
+    focus,
+    finding,
 }: {
     name: string;
     headline: string | null;
     /** The availability line: "Summer 2027 internships · …". */
     openTo: string | null;
-    /** The newest entry (`heroLatest` in lib/home.ts), or none. */
-    latest: { title: string; href: string } | null;
+    focus: string | null;
+    finding: { text: string; href: string } | null;
 }) {
     const words = name.split(/\s+/).filter(Boolean);
     return (
@@ -215,6 +197,11 @@ export default function Hero({
                             <OpenToItems text={headline} />
                         </p>
                     ) : null}
+                    {focus ? (
+                        <p className={styles.focus} data-clear>
+                            {focus}
+                        </p>
+                    ) : null}
                     {openTo ? (
                         <p className={styles.status} data-clear>
                             <Status value="active">{copy.openTo}</Status>{" "}
@@ -229,24 +216,29 @@ export default function Hero({
                         data-clear
                     >
                         <ButtonLink
+                            href="#home-projects"
+                            icon="arrow"
+                            iconAt="end"
+                        >
+                            Research projects
+                        </ButtonLink>
+                        <ButtonLink
                             href={cvLink.href}
                             icon="arrow"
                             iconAt="end"
                         >
                             <span>{copy.cv}</span>
                         </ButtonLink>
-                        {/* Home's Latest writing lists it too: no second
-                            prefetch. */}
-                        {latest ? (
-                            <Link
-                                className={styles.latest}
-                                href={latest.href}
-                                prefetch={false}
-                            >
-                                {copy.latest} <KeepWhole text={latest.title} />
-                            </Link>
-                        ) : null}
                     </nav>
+                    {finding ? (
+                        <Link
+                            className={styles.finding}
+                            href={finding.href}
+                            data-clear
+                        >
+                            <KeepWhole text={finding.text} />
+                        </Link>
+                    ) : null}
                 </div>
 
                 <div className={styles.foot}>

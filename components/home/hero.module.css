@@ -15,14 +15,15 @@
     container-type: inline-size;
     display: flex;
     flex-direction: column;
-    min-height: max(calc(100svh - var(--header-h)), var(--hero-min));
-    --photo-h: min(100cqw * 1646 / 3840, 0.82 * (100svh - var(--header-h)));
-    --limb-clear: calc(var(--photo-h) * 0.47);
+    min-height: calc(var(--hero-min) + var(--s-9));
+    --photo-h: min(100cqw * 1646 / 3840, var(--hero-measure-phone));
+    --limb-clear: calc(2 * var(--s-8));
 }
 @media (max-width: 47.99rem) {
     .hero {
-        --photo-h: min(100cqw * 16 / 9, 0.94 * (100svh - var(--header-h)));
-        --limb-clear: calc(var(--photo-h) * 0.3);
+        min-height: 0;
+        --photo-h: calc(var(--hero-measure-phone) - var(--s-7));
+        --limb-clear: calc(var(--s-8) + var(--s-7));
     }
 }
 
@@ -37,13 +38,11 @@
     background: var(--bg);
     pointer-events: none;
 }
-/* From 48rem the box stands on the foot row (the credit and Pause motion
-   sit on the night side, under the limb); the drawn planet runs on below
-   it. On phones the crop's own night side is deep enough. */
+/* Anchor the horizon below the research finding so the text stays on sky. */
 .photo {
     position: absolute;
     right: 0;
-    bottom: calc(var(--target) + var(--s-5) * 2);
+    bottom: 0;
     left: 0;
     height: var(--photo-h);
 }
@@ -209,9 +208,25 @@
 .headline {
     justify-content: center;
     max-width: var(--hero-measure);
-    margin-top: var(--s-5);
+    margin-top: var(--s-4);
     color: var(--text);
     font: var(--type-lead);
+}
+.focus {
+    max-width: var(--hero-measure);
+    margin-top: var(--s-4);
+    color: var(--text);
+    font: var(--type-lead);
+    text-wrap: balance;
+}
+.finding {
+    max-width: var(--hero-measure);
+    margin-top: var(--s-4);
+    padding-block: var(--s-2);
+    color: var(--text-quiet);
+    font: var(--type-ui);
+    text-wrap: balance;
+    text-underline-offset: var(--underline-offset);
 }
 /* What the owner is open to: the active status mark, then the line. */
 .status {
@@ -242,23 +257,7 @@
     justify-content: center;
     gap: var(--s-2) var(--s-6);
     max-width: var(--hero-measure);
-    margin-top: var(--s-7);
-}
-/* A 44px target around one line. No width of its own: a wrapped box
-   keeps its full width while balance narrows its lines, so beside CV its
-   empty side would set the pair off the axis. Uncapped, it is its one
-   line's width, and goes under CV when that does not fit. */
-.latest {
-    display: inline-block;
-    padding-block: calc((var(--target) - 1lh) / 2);
-    color: var(--text-quiet);
-    font: var(--type-ui);
-    text-wrap: balance;
-}
-@media (hover: hover) {
-    .latest:hover {
-        color: var(--text);
-    }
+    margin-top: var(--s-4);
 }
 /* Over the photograph the CV stays a hairline, and fills with ink on
    hover: no fill at rest. */
@@ -343,8 +342,9 @@
     }
     /* Latest under CV, whatever the title's length. */
     .routes {
-        flex-direction: column;
-        margin-top: var(--s-6);
+        flex-direction: row;
+        gap: var(--s-3);
+        margin-top: var(--s-4);
     }
     /* The credit (its parts and its frame ID one a line, without their
        separators) and Pause motion share one row; at a large text size
