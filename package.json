@@ -55,7 +55,7 @@
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
         "react-email": "^6.9.3",
-        "resend": "^6.26.0",
+        "resend": "^6.34.1",
         "sanity": "^6.19.0",
         "server-only": "^0.0.1",
         "shiki": "^4.5.0",
