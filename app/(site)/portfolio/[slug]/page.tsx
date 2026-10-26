@@ -410,7 +410,6 @@ export default async function ProjectPage({
                                 className={styles.metrics}
                                 items={stats}
                                 columns={media ? 2 : 4}
-                                size={media ? "lg" : "md"}
                             />
                             {mission.statusNote ? (
                                 <p className={styles.stage}>

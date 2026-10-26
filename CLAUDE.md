@@ -950,14 +950,14 @@ only live in comments or commit messages.
 - **`llms.txt`** (`public/llms.txt`, the llms.txt convention): the name,
   the home description as its summary, then Writing, Projects, Profile
   and Policies, each a link with a line from that page's own meta
-  description. It is kept by hand and under 2 KB, with no address or
+  description. It is kept by hand and under 4 KB, with no address or
   number (`tests/lib/llms-txt.test.ts`, which also counts the Writing
   and Projects links): publishing, renaming or unpublishing a post or
   project means editing it (and the count), or the smoke spec fails on
-  the next preview and in the weekly production run. At four posts it
-  sits about 25 bytes under the limit, each line a shortened extract of
-  its page's description (the first clause), so the next post means
-  trimming the longer lines again. It is not
+  the next preview and in the weekly production run. At four posts and
+  ten projects it is about 3.4 KB, each line a shortened extract of its
+  page's description (2 KB could not hold ten projects' absolute URLs:
+  2026-10-26, the owner's choice). It is not
   in the sitemap, and `robots.txt` stays allow-all.
 - **Vercel WAF rate limiting** — `actions/sendEmail.ts` calls
   `checkRateLimit()` (`@vercel/firewall`) against the `contact-form` rule in

@@ -764,8 +764,10 @@ function fixtureFromSeed(seed: SeedProject): ProjectWithBody {
  * fixture stand-ins for shapes the real missions lack. The stand-ins' names
  * say they are fixtures and they describe no real work: one fills every
  * mission field and links callouts to its essay and to a fixture post, one
- * has estimated years ("c. 2023"), and one is planned, without dates, and
- * quiet in a featured slot (a quiet row on /portfolio, not on home).
+ * has estimated years ("c. 2023"), one sets stats in its head beside an
+ * essay's h2s (the six sizes a page keeps to), and one is planned, without
+ * dates, and quiet in a featured slot (a quiet row on /portfolio, not on
+ * home).
  * @internal Exported for tests.
  */
 export const FIXTURE_PROJECTS: ProjectWithBody[] = [
@@ -871,6 +873,34 @@ export const FIXTURE_PROJECTS: ProjectWithBody[] = [
         ],
         hasModel: false,
         body: [textBlock("A fixture essay without headings.")] as ContentBody,
+    },
+    {
+        _id: "fixture-project-stats",
+        _updatedAt: "2026-05-15T00:00:00Z",
+        designation: 8,
+        title: "Fixture mission with head stats",
+        slug: "fixture-stats-mission",
+        summary:
+            "A fixture project with stats in its head and an essay in sections.",
+        status: "completed",
+        types: ["software"],
+        startDate: "2025-03-01",
+        endDate: "2025-09-30",
+        technologies: ["Fixture technology E"],
+        highlights: ["Sets its stats in the head, beside an essay's h2s."],
+        // Quantities and no results: the head carries the stats, which
+        // with the essay's h2s must keep the page to six sizes.
+        parameters: [
+            { _key: "parameter-d", label: "Parameter D", value: "3" },
+            { _key: "parameter-e", label: "Parameter E", value: "12 ms" },
+        ],
+        hasModel: false,
+        body: [
+            textBlock("Fixture stats section", "h2"),
+            textBlock(FIXTURE_PROSE),
+            textBlock("Fixture stats second section", "h2"),
+            textBlock("A fixture paragraph under the second heading."),
+        ] as ContentBody,
     },
     {
         _id: "fixture-project-planned",
