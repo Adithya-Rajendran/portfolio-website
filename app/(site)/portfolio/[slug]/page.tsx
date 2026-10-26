@@ -238,7 +238,9 @@ export default async function ProjectPage({
     const brief = [
         ["problem", project.brief?.problem],
         ["approach", project.brief?.approach],
-        ["outcome", project.brief?.outcome],
+        ...(!project.results?.length
+            ? [["outcome", project.brief?.outcome]]
+            : []),
     ].filter((row): row is [keyof typeof copy.brief, string] =>
         Boolean(row[1]?.trim()),
     );
@@ -256,14 +258,23 @@ export default async function ProjectPage({
     // The head links the original entry quietly; the file's own write-up
     // is already on the page, so nothing points down to it.
     const writeUp = writeUpHref(mission, null, original);
-    const code = mission.links.filter((link) => link.code);
+    const paperIds = new Set(
+        (project.links ?? [])
+            .filter((link) => link.kind === "paper")
+            .map((link) => link._key),
+    );
+    const code = mission.links.filter(
+        (link) => link.code || paperIds.has(link.id),
+    );
 
     // The short note: the highlights that add to the summary.
     const lines = noteLines(mission.summary, mission.highlights);
     // The links: the repositories are the head's; the rest join the
     // facts while there are two links or fewer (always on a note), else
     // they are the References section.
-    const others = mission.links.filter((link) => !link.code);
+    const others = mission.links.filter(
+        (link) => !link.code && !paperIds.has(link.id),
+    );
     const folded =
         layout === "note" || mission.links.length <= FACT_LINKS ? others : [];
     const references = folded.length ? [] : others;
@@ -287,6 +298,12 @@ export default async function ProjectPage({
                 {code.length ? <FactLinks links={code} /> : null}
             </div>
         ) : null;
+    const details = facts.length ? (
+        <details className={styles.details}>
+            <summary>Tools and project details</summary>
+            <Specs className={styles.facts} items={facts} />
+        </details>
+    ) : null;
 
     // The short note: its line, title, summary and quiet links, then the
     // highlights that add to the summary (one is a plain paragraph) and
@@ -318,7 +335,7 @@ export default async function ProjectPage({
                     <KeepWhole text={lines[0]} />
                 </p>
             ) : null}
-            <Specs className={styles.facts} items={facts} />
+            {details}
         </div>
     );
 
@@ -395,7 +412,12 @@ export default async function ProjectPage({
                                 columns={media ? 2 : 4}
                                 size={media ? "lg" : "md"}
                             />
-                            <Specs className={styles.facts} items={facts} />
+                            {mission.statusNote ? (
+                                <p className={styles.stage}>
+                                    {mission.statusNote}
+                                </p>
+                            ) : null}
+                            {details}
                         </div>
                         {media ? (
                             <div className={styles.headMedia}>{media}</div>

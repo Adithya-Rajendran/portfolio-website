@@ -121,7 +121,7 @@
 /* ======================================================================
    Paper (G3): Flight Manual tokens on white (styles/print.css), two
    sheets on A4 and on Letter. Sheet 1: the masthead, education and
-   experience; sheet 2: projects, writing, skills and certifications. No
+   selected projects; sheet 2: experience, writing, skills and certifications. No
    chrome, no controls; every link prints its address.
    ====================================================================== */
 @media print {

@@ -96,7 +96,7 @@
         --step-5: clamp(2.488rem, 1.739rem + 3.328vw, 4.735rem);
         --step-6: clamp(2.75rem, 1.877rem + 4.927vw, 6.312rem);
         --step-long: clamp(1.125rem, 1.083rem + 0.185vw, 1.25rem);
-        --size-hero: clamp(2.3rem, 0.2rem + 6.55vw, 7rem);
+        --size-hero: clamp(2.5rem, 6vw, 5.5rem);
 
         /* Paper (the CV's two sheets and a post's print): its own scale,
            tuned to the two-sheet fit on A4 and Letter (print.spec), read

@@ -222,7 +222,7 @@ function credentialRow(credential: CvCredential) {
  * the record in two views
  * (components/cv/experience-views.tsx): Timeline, the flight through it
  * (the default where motion runs), and List, the CV a hiring reader can
- * scan (education, experience, projects, writing and talks, skills,
+ * scan (education, selected projects, experience, writing and talks, skills,
  * certifications), which is always in the HTML and shows without
  * JavaScript, under reduced motion and on paper. The PDF is downloadable,
  * and the browser's Print gives the two-sheet controlled document. There
@@ -247,10 +247,16 @@ export default async function ResumePage() {
     const flight = trajectoryData(timeline.all, profile?.availability, today);
     const entries = logEntries(posts);
     const writing = entries.slice(0, WRITING_ROWS);
-    const missions = cvProjects(projects, {
-        url: siteConfig.url,
-        posts: new Set(entries.map((entry) => entry.slug)),
-    });
+    const selectedProjects = projects.filter(
+        (project) => project.featured && !project.quiet,
+    );
+    const missions = cvProjects(
+        selectedProjects.length ? selectedProjects : projects,
+        {
+            url: siteConfig.url,
+            posts: new Set(entries.map((entry) => entry.slug)),
+        },
+    );
     const talks = cvTalks(profile?.talksAndPapers);
     const skills = (profile?.skillGroups ?? []).filter(
         (group) => group.title && group.skills?.length,
@@ -259,12 +265,12 @@ export default async function ResumePage() {
     const linkedIn = getProfileLink(profile, "linkedin");
     const gitHub = getProfileLink(profile, "github");
 
-    // An empty section is absent. Paper: education and experience on
+    // An empty section is absent. Paper: education and selected projects on
     // sheet 1, the rest on sheet 2.
     const present = {
         education: timeline.education.length > 0,
-        experience: timeline.experience.length > 0,
         projects: missions.length > 0,
+        experience: timeline.experience.length > 0,
         writing: writing.length + talks.length > 0,
         skills: skills.length > 0,
         certifications:
@@ -273,12 +279,12 @@ export default async function ResumePage() {
     const order = (Object.keys(present) as (keyof typeof present)[]).filter(
         (id) => present[id],
     );
-    const sheetOne = present.education || present.experience;
+    const sheetOne = present.education || present.projects;
     // Paper leaves the Flight Log off: writing prints only with talks.
     const sheetTwo = order.some(
         (id) =>
             id !== "education" &&
-            id !== "experience" &&
+            id !== "projects" &&
             (id !== "writing" || talks.length > 0),
     );
     const sheets = sheetOne && sheetTwo ? 2 : 1;
@@ -312,22 +318,17 @@ export default async function ResumePage() {
                 </CvSection>
             ) : null}
 
-            {timeline.experience.length ? (
-                <CvSection id="experience" title={copy.experience}>
-                    <CvList>{timeline.experience.map(roleRow)}</CvList>
-                </CvSection>
-            ) : null}
-
-            {sheets === 2 ? (
-                <div className={`shell ${styles.sheetTwo}`} data-print="only">
-                    <SheetHead sheet={2} sheets={sheets} rev={rev} />
-                </div>
-            ) : null}
-
-            {/* Every project is here; the header's Projects is one
-                click away. */}
+            {/* Featured projects lead; the full index remains one click away. */}
             {missions.length ? (
-                <CvSection id="projects" title={copy.projects}>
+                <CvSection
+                    id="projects"
+                    title={copy.projects}
+                    after={
+                        <LinkArrow href={siteRoutes.portfolio}>
+                            All projects
+                        </LinkArrow>
+                    }
+                >
                     <CvList>
                         {missions.map((mission) => (
                             <CvItem
@@ -342,6 +343,18 @@ export default async function ResumePage() {
                             />
                         ))}
                     </CvList>
+                </CvSection>
+            ) : null}
+
+            {sheets === 2 ? (
+                <div className={`shell ${styles.sheetTwo}`} data-print="only">
+                    <SheetHead sheet={2} sheets={sheets} rev={rev} />
+                </div>
+            ) : null}
+
+            {timeline.experience.length ? (
+                <CvSection id="experience" title={copy.experience}>
+                    <CvList>{timeline.experience.map(roleRow)}</CvList>
                 </CvSection>
             ) : null}
 

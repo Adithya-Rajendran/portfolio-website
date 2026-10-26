@@ -199,6 +199,28 @@ describe("projects, talks and credentials", () => {
         ).toBeNull();
     });
 
+    it("puts featured research before older project numbers", () => {
+        const rows = cvProjects(
+            [
+                project({ _id: "old", designation: 1, slug: "old" }),
+                project({
+                    _id: "second",
+                    designation: 6,
+                    slug: "second",
+                    featured: 2,
+                }),
+                project({
+                    _id: "first",
+                    designation: 5,
+                    slug: "first",
+                    featured: 1,
+                }),
+            ],
+            SITE,
+        );
+        expect(rows.map((row) => row.slug)).toEqual(["first", "second", "old"]);
+    });
+
     it("links the site's own posts in place and leaves out its address", () => {
         const [row] = cvProjects(
             [

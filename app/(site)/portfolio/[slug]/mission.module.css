@@ -59,6 +59,25 @@
     max-width: var(--measure-note);
     margin-top: var(--s-7);
 }
+.stage {
+    margin-top: var(--s-4);
+    max-width: var(--measure-lead);
+    color: var(--text-quiet);
+    font: var(--type-ui);
+}
+.details {
+    margin-top: var(--s-4);
+    color: var(--text-quiet);
+    font: var(--type-ui);
+}
+.details summary {
+    padding-block: var(--s-3);
+    cursor: pointer;
+    width: fit-content;
+}
+.details .facts {
+    margin-top: var(--s-3);
+}
 .factLinks {
     display: flex;
     flex-wrap: wrap;
