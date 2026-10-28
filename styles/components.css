@@ -1545,7 +1545,7 @@
         order: -1;
         margin: 0;
         color: var(--text);
-        font: var(--type-title-lg);
+        font: var(--type-title-md);
         letter-spacing: var(--track-title);
         font-variant-numeric: var(--numerals-figures);
         overflow-wrap: break-word;
@@ -1557,9 +1557,6 @@
         color: var(--text-quiet);
         font-size: var(--step-1);
         letter-spacing: 0;
-    }
-    .metrics--lg .metric > dd {
-        font-size: var(--step-4);
     }
 
     /* ===== Tables (site.css 4.14) ======================================= */

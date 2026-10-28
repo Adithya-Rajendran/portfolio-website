@@ -35,8 +35,8 @@ const paths = (section: string) =>
     (sections().get(section) ?? []).map(({ url }) => new URL(url).pathname);
 
 describe("llms.txt", () => {
-    it("stays under 2 KB", () => {
-        expect(Buffer.byteLength(TEXT, "utf8")).toBeLessThan(2048);
+    it("stays under 4 KB", () => {
+        expect(Buffer.byteLength(TEXT, "utf8")).toBeLessThan(4096);
     });
 
     it("opens with the name and a one-paragraph summary", () => {
@@ -66,7 +66,7 @@ describe("llms.txt", () => {
         const writing = paths("Writing");
         const projects = paths("Projects");
         expect(writing).toHaveLength(4);
-        expect(projects).toHaveLength(3);
+        expect(projects).toHaveLength(10);
         const served = new Set(
             ROUTE_TAGS.flatMap((route) =>
                 expandRoute(route, {

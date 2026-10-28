@@ -4,16 +4,23 @@
 
 ## Writing
 
-- [Keeping a DGX Spark alive when unified memory runs out](https://adithya-rajendran.com/blog/dgx-spark-unified-memory-oom-hardening): Why an over-committed model load livelocks a GB10 instead of failing.
+- [Keeping a DGX Spark reachable under memory pressure](https://adithya-rajendran.com/blog/dgx-spark-unified-memory-oom-hardening): Why model loads made my GB10 host unresponsive, and how a memory guard intervenes.
 - [A Homelab Built to Be Rebuilt](https://adithya-rajendran.com/blog/my-homelab): How three Raspberry Pis, an old Dell laptop, and three mini PCs bootstrap my OpenStack lab.
-- [Running GUI Apps in LXD Containers](https://adithya-rajendran.com/blog/running-gui-apps-in-lxc-containers): The LXD profile I use to run GUI tools on my Linux desktop.
-- [Sharing the DGX Spark GPU with MicroK8s](https://adithya-rajendran.com/blog/kubernetes-on-the-nvidia-dgx-spark): MicroK8s, the NVIDIA GPU Operator, and GPU time-slicing on my DGX Spark.
+- [Running GUI apps in LXD containers](https://adithya-rajendran.com/blog/running-gui-apps-in-lxc-containers): The LXD profile I use to run GUI tools on my Linux desktop.
+- [Sharing the ASUS GX10 GPU with MicroK8s](https://adithya-rajendran.com/blog/kubernetes-on-the-nvidia-dgx-spark): MicroK8s and the NVIDIA GPU Operator on an ASUS Ascent GX10, with GPU time-slicing.
 
 ## Projects
 
-- [Homelab with segmented networks and high availability](https://adithya-rajendran.com/portfolio/homelab): PXE bare-metal provisioning, segmented networking, and storage outside the cluster.
-- [Kubernetes cluster with NFS and OIDC](https://adithya-rajendran.com/portfolio/kubernetes-cluster): A highly available three-node Kubernetes cluster.
-- [Gmail filter with an experimental spam classifier](https://adithya-rajendran.com/portfolio/gmail-spam-filter): Built with a student team in 2022, extended in 2025 with a TF-IDF spam classifier.
+- [When should a robot look again?](https://adithya-rajendran.com/portfolio/robot-scene-memory): A camera pilot for checking whether a remembered object has been removed or is hidden.
+- [Local coding agents: task success and resource use](https://adithya-rajendran.com/portfolio/local-coding-agent-benchmarks): Seven model/server configurations on one GX10, measured by completed bug fixes, time, energy and memory.
+- [Evaluating detectors on driving scenes](https://adithya-rajendran.com/portfolio/driving-detection-evaluation): A CMPE 249 study of evaluation settings, domain shift, and inference latency.
+- [Juju tools with server-enforced limits](https://adithya-rajendran.com/portfolio/juju-agent-mcps): MCP servers for Juju operations, documentation, and metrics.
+- [Agentbox: local agent work as a reviewable branch](https://adithya-rajendran.com/portfolio/agentbox): A local coding-agent runner that returns a branch, diff, and report.
+- [A memory-pressure guard for GB10 Docker workloads](https://adithya-rajendran.com/portfolio/gb10-memory-guard): A Linux guard that stops selected Docker workloads when memory pressure crosses configured limits.
+- [Rebuildable OpenStack homelab](https://adithya-rajendran.com/portfolio/homelab): A personal cloud with PXE bare-metal provisioning and segmented networking.
+- [Kubernetes cluster with NFS and OIDC](https://adithya-rajendran.com/portfolio/kubernetes-cluster): A three-node Kubernetes lab with Okta OIDC and NFS-backed persistent storage.
+- [Gmail filter with an experimental spam classifier](https://adithya-rajendran.com/portfolio/gmail-spam-filter): A Gmail API tool that reports suspected spam, with a TF-IDF classifier pipeline.
+- [Personal website and technical notebook](https://adithya-rajendran.com/portfolio/personal-website): My Next.js and Sanity portfolio, with project records, technical posts, and a résumé.
 
 ## Profile
 
