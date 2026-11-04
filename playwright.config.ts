@@ -23,7 +23,7 @@ export default defineConfig({
     webServer: process.env.BASE_URL
         ? undefined
         : {
-              command: `SANITY_STUDIO_PROJECT_ID=fallback SANITY_STUDIO_DATASET=production node scripts/build-studio.mjs && pnpm exec astro build --mode test && pnpm exec wrangler dev --local --ip 127.0.0.1 --port ${port} --var ENVIRONMENT:test --var SANITY_USE_FIXTURES:1`,
+              command: `SANITY_STUDIO_PROJECT_ID=fallback SANITY_STUDIO_DATASET=production node scripts/build-studio.mjs && pnpm exec astro build --mode test && pnpm exec wrangler dev --local --ip 127.0.0.1 --port ${port} --env-file tests/v2/browser/worker.env`,
               url: `${baseURL}/robots.txt`,
               reuseExistingServer: false,
               timeout: 600_000,

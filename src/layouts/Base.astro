@@ -1,5 +1,6 @@
 ---
 import "../styles.css";
+import "../styles/journey.css";
 import { siteConfig } from "../../lib/config";
 import { env } from "cloudflare:workers";
 const config = env as unknown as Record<string, string | undefined>;
@@ -25,6 +26,13 @@ Astro.response.headers.set("Cache-Control", "no-store");
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width" />
+        <link
+            rel="preload"
+            href="/fonts/Manrope-Variable.ttf"
+            as="font"
+            type="font/ttf"
+            crossorigin
+        />
         <title>{title === siteConfig.title ? title : `${title} · ${siteConfig.title}`}</title>
         <meta name="description" content={description} />
         {config.GOOGLE_SITE_VERIFICATION && (

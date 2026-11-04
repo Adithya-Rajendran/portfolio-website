@@ -11,45 +11,43 @@ const timeline = p?.timeline || [];
 
 <Base title="Experience" pageClass="experience-page">
     <div class="trajectory-shell">
+        <div class="trajectory-intro">
+            <p class="trajectory-kicker">Experience &amp; education</p>
+            <h1>A trajectory of building.</h1>
+            {p?.headline && <p class="trajectory-intro__lead">{p.headline}</p>}
+            <div class="trajectory-intro__links">
+                <a class="trajectory-jump" href="#cv">
+                    Explore the record ↓
+                </a>
+                <a href="/resume/view">View résumé ↗</a>
+                <a href="/resume/download">Download ↓</a>
+                <details class="trajectory-chapters">
+                    <summary>Explore chapters</summary>
+                    <nav
+                        class="trajectory-progress"
+                        aria-label="Experience chapters"
+                    >
+                        {timeline.map((entry, index) => (
+                            <a href={`#${cvAnchor(entry._key)}`}>
+                                <span>
+                                    {String(index + 1).padStart(2, "0")}
+                                </span>{" "}
+                                {entry.organization}
+                            </a>
+                        ))}
+                    </nav>
+                </details>
+            </div>
+        </div>
         <div class="trajectory-grid">
             <div class="trajectory-story">
-                <div class="trajectory-intro">
-                    <p class="trajectory-kicker">Experience &amp; education</p>
-                    <h1>A trajectory of building.</h1>
-                    {p?.headline && (
-                        <p class="trajectory-intro__lead">{p.headline}</p>
-                    )}
-                    <div class="trajectory-intro__links">
-                        <a class="trajectory-jump" href="#cv">
-                            Explore the record ↓
-                        </a>
-                        <a href="/resume/view">View résumé ↗</a>
-                        <a href="/resume/download">Download ↓</a>
-                        <details class="trajectory-chapters">
-                            <summary>Explore chapters</summary>
-                            <nav
-                                class="trajectory-progress"
-                                aria-label="Experience chapters"
-                            >
-                                {timeline.map((entry, index) => (
-                                    <a href={`#${cvAnchor(entry._key)}`}>
-                                        <span>
-                                            {String(index + 1).padStart(2, "0")}
-                                        </span>{" "}
-                                        {entry.organization}
-                                    </a>
-                                ))}
-                            </nav>
-                        </details>
-                    </div>
-                </div>
                 <section id="cv" aria-labelledby="experience">
                     <div class="trajectory-section-head">
                         <h2 id="experience">Experience and education</h2>
                     </div>
                     <ol class="trajectory-entries">
                         {timeline.map((e, index) => (
-                            <li id={cvAnchor(e._key)}>
+                            <li id={cvAnchor(e._key)} data-journey-step>
                                 <p class="trajectory-entry__number">
                                     {String(index + 1).padStart(2, "0")} /{" "}
                                     {e.kind === "education"
@@ -67,7 +65,18 @@ const timeline = p?.timeline || [];
                                           ? " – Present"
                                           : ""}
                                 </p>
-                                <h3>{e.title}</h3>
+                                <h3>
+                                    {e.title.split(" (")[0]}
+                                    {e.title.includes(" (") && (
+                                        <span class="role-detail">
+                                            (
+                                            {e.title
+                                                .split(" (")
+                                                .slice(1)
+                                                .join(" (")}
+                                        </span>
+                                    )}
+                                </h3>
                                 <p class="trajectory-entry__org">
                                     <SafeLink href={e.orgUrl}>
                                         {e.organization}

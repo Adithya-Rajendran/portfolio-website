@@ -1,0 +1,15 @@
+EXPLORATORY LANDSCAPES & MECHANICAL STUDIES
+
+Homepage: an illustrative Mars landscape assembled, modeled, lit and rendered in Blender/Cycles for this portfolio. It is not a mission photograph or hardware built by the portfolio owner.
+
+Rover geometry: NASA/JPL-Caltech, Mars 2020 Perseverance Rover. Adapted pose and neutral arm graphics. No affiliation or endorsement is implied.
+https://science.nasa.gov/3d-resources/mars-2020-perseverance-rover/
+https://www.nasa.gov/nasa-brand-center/images-and-media/
+
+Rock material: Rocks Ground 06, Poly Haven, CC0. Adapted color, scale and bump mapping.
+https://polyhaven.com/a/rocks_ground_06
+https://polyhaven.com/license
+
+Terrain, composition, lighting, stereo camera and antenna studies: original Blender scenes created for this portfolio. The camera and antenna are illustrative design studies.
+
+The website uses the finished rendered artwork with a depth map for gentle camera motion. The experience page's planets are separate interactive Three.js scenes.

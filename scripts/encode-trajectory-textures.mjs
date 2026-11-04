@@ -3,9 +3,8 @@ import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-// The maps for the 3D flight, /resume's Timeline view
-// (components/trajectory/flight-maps.ts picks them per screen, flight-gl.ts
-// draws them): Solar System Scope's
+// Maps for /resume's scroll-driven orbital view
+// (src/scripts/planet-materials.ts chooses them per device): Solar System Scope's
 // equirectangular textures (CC BY 4.0) and NASA's Earth layers (public
 // domain), credited in the figure line and in
 // public/images/trajectory/README.md. Downloads each source once into the
@@ -42,6 +41,12 @@ const SUNRISE = { lon: [-130, -30], lat: [5, 55] };
  *   components/trajectory/flight-maps.ts's NIGHT_WINDOW names too.
  */
 const MAPS = [
+    {
+        out: "earth-cinematic-4k.webp",
+        src: SSS + "8k_earth_daymap.jpg",
+        w: 4096,
+        q: 90,
+    },
     { out: "earth-2k.webp", src: SSS + "2k_earth_daymap.jpg", w: 2048, q: 74 },
     { out: "earth-1k.webp", src: SSS + "2k_earth_daymap.jpg", w: 1024, q: 72 },
     { out: "mars-2k.webp", src: SSS + "2k_mars.jpg", w: 2048, q: 66 },

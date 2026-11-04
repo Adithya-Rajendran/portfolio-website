@@ -1,14 +1,18 @@
 import type * as Three from "three";
+import {
+    makePlanet,
+    disposePlanet,
+    worldNames,
+    type World,
+} from "./planet-materials";
 
 const section = document.querySelector<HTMLElement>(".experience-visual");
+const stage = section?.querySelector<HTMLElement>("[data-experience-stage]");
 const start = section?.querySelector<HTMLButtonElement>(
     "[data-experience-start]",
 );
-const stage = section?.querySelector<HTMLElement>("[data-experience-stage]");
 const status = section?.querySelector<HTMLElement>("[data-experience-status]");
-const controlsPanel = section?.querySelector<HTMLElement>(
-    "[data-experience-controls]",
-);
+const panel = section?.querySelector<HTMLElement>("[data-experience-controls]");
 const motionButton = section?.querySelector<HTMLButtonElement>(
     "[data-experience-motion]",
 );
@@ -19,454 +23,270 @@ const current = section?.querySelector<HTMLElement>(
     "[data-experience-current]",
 );
 const poster = section?.querySelector<HTMLElement>("[data-experience-poster]");
-const worlds = [
+const buttons = [
     ...(section?.querySelectorAll<HTMLButtonElement>(
         "[data-experience-world]",
-    ) ?? []),
+    ) || []),
 ];
-type World = "earth" | "moon" | "mars" | "jupiter" | "saturn";
-const names: Record<World, string> = {
-    earth: "Earth",
-    moon: "Moon",
-    mars: "Mars",
-    jupiter: "Jupiter",
-    saturn: "Saturn",
-};
+const worldIds = worldNames.map((name) => name.toLowerCase() as World);
 
 if (
-    start &&
+    section &&
     stage &&
+    start &&
     status &&
-    controlsPanel &&
+    panel &&
     motionButton &&
     resetButton &&
     current
 ) {
     let cleanup: (() => void) | undefined;
-    let loading = false;
-    let paused = false;
-    start.addEventListener("click", async () => {
-        if (cleanup) {
-            cleanup();
-            cleanup = undefined;
-            return;
-        }
-        if (loading) return;
+    let generation = 0,
+        loading = false,
+        pageActive = true;
+    const initialize = async () => {
+        if (cleanup || loading) return;
+        const ticket = ++generation;
         loading = true;
-        start.disabled = true;
-        status.textContent = "Loading the orbital visual…";
+        start.hidden = true;
         let renderer: Three.WebGLRenderer | undefined;
         try {
-            const THREE = await import("three");
+            const T = await import("three");
             const { OrbitControls } =
                 await import("three/addons/controls/OrbitControls.js");
-            renderer = new THREE.WebGLRenderer({
+            if (ticket !== generation) return;
+            const render = new T.WebGLRenderer({
                 antialias: true,
+                alpha: true,
                 powerPreference: "high-performance",
             });
-            const render = renderer;
-            render.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-            render.outputColorSpace = THREE.SRGBColorSpace;
-            render.toneMapping = THREE.ACESFilmicToneMapping;
-            render.toneMappingExposure = 1.15;
-            render.setClearColor(0x101719);
+            renderer = render;
+            render.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+            render.outputColorSpace = T.SRGBColorSpace;
+            render.toneMapping = T.ACESFilmicToneMapping;
+            render.toneMappingExposure = 1.05;
+            render.setClearColor(0x080f12, 0);
             render.shadowMap.enabled = true;
-            render.shadowMap.type = THREE.PCFSoftShadowMap;
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 200);
-            camera.position.set(0, 0.3, 4.1);
+            render.shadowMap.type = T.PCFShadowMap;
+            const scene = new T.Scene();
+            const camera = new T.PerspectiveCamera(36, 1, 0.05, 160);
+            camera.position.set(0, 0.18, 3.45);
             const orbit = new OrbitControls(camera, render.domElement);
             orbit.enableDamping = true;
-            orbit.dampingFactor = 0.08;
+            orbit.dampingFactor = 0.075;
             orbit.enablePan = false;
+            // The page wheel always controls the journey. Deliberate zoom uses +/-.
+            orbit.enableZoom = false;
+            orbit.rotateSpeed = 0.5;
             orbit.minDistance = 2.2;
             orbit.maxDistance = 14;
-            orbit.rotateSpeed = 0.6;
-            orbit.zoomSpeed = 0.7;
-            // Page scrolling stays native until the viewer receives keyboard focus.
-            orbit.enableZoom = false;
-            const narrow = matchMedia("(max-width: 700px)");
+            const narrow = matchMedia("(max-width: 800px)");
             const configureTouch = () => {
-                render.domElement.style.touchAction = narrow.matches
-                    ? "pan-y"
-                    : "none";
+                render.domElement.style.touchAction = "pan-y";
                 orbit.touches.ONE = narrow.matches
                     ? (null as unknown as Three.TOUCH)
-                    : THREE.TOUCH.ROTATE;
-                orbit.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+                    : T.TOUCH.ROTATE;
+                orbit.touches.TWO = T.TOUCH.DOLLY_ROTATE;
             };
             configureTouch();
-            const sun = new THREE.DirectionalLight(0xfff1dc, 3.2);
-            sun.position.set(-4, 2.4, 4);
+            const sunlight = new T.Vector3(5, 2, 1.8).normalize();
+            const sun = new T.DirectionalLight(0xffedda, 2.6);
+            sun.position.copy(sunlight).multiplyScalar(8);
             sun.castShadow = true;
             sun.shadow.mapSize.set(1024, 1024);
-            sun.shadow.camera.left = -3;
-            sun.shadow.camera.right = 3;
-            sun.shadow.camera.top = 3;
-            sun.shadow.camera.bottom = -3;
+            Object.assign(sun.shadow.camera, {
+                left: -3,
+                right: 3,
+                top: 3,
+                bottom: -3,
+            });
             sun.shadow.bias = -0.0002;
             scene.add(sun);
-            scene.add(new THREE.AmbientLight(0x8899bb, 0.09));
-            const loader = new THREE.TextureLoader();
-            const small =
-                matchMedia("(max-width: 700px)").matches ||
-                ((navigator as Navigator & { deviceMemory?: number })
-                    .deviceMemory !== undefined &&
-                    (navigator as Navigator & { deviceMemory?: number })
-                        .deviceMemory! <= 4);
-            const texture = async (name: string, color = true) => {
-                const t = await loader.loadAsync(
-                    `/images/trajectory/${name}.webp`,
-                );
-                if (color) t.colorSpace = THREE.SRGBColorSpace;
-                t.anisotropy = Math.min(
-                    4,
-                    render.capabilities.getMaxAnisotropy(),
-                );
-                return t;
-            };
-            const owned = new Set<Three.Texture>();
-            const textureCache = new Map<string, Promise<Three.Texture>>();
+            scene.add(new T.AmbientLight(0x8cadd3, 0.055));
+            const loader = new T.TextureLoader(),
+                textures = new Map<string, Promise<Three.Texture>>(),
+                owned = new Set<Three.Texture>();
+            const planets = new Map<number, Three.Group>(),
+                pending = new Map<number, Promise<Three.Group>>();
             let disposed = false;
-            const getTexture = (name: string, color = true) => {
-                let promise = textureCache.get(name);
-                if (!promise) {
-                    promise = texture(name, color)
+            const texture = async (name: string, color = true) => {
+                let value = textures.get(name);
+                if (!value) {
+                    value = loader
+                        .loadAsync(`/images/trajectory/${name}.webp`)
                         .then((t) => {
+                            if (color) t.colorSpace = T.SRGBColorSpace;
+                            t.anisotropy = Math.min(
+                                8,
+                                render.capabilities.getMaxAnisotropy(),
+                            );
                             if (disposed) t.dispose();
                             else owned.add(t);
                             return t;
                         })
+                        .catch((e) => {
+                            textures.delete(name);
+                            throw e;
+                        });
+                    textures.set(name, value);
+                }
+                return value;
+            };
+            const small =
+                narrow.matches ||
+                ((navigator as Navigator & { deviceMemory?: number })
+                    .deviceMemory || 8) <= 4;
+            const failed = new Set<number>();
+            const ensurePlanet = (index: number) => {
+                let value = pending.get(index);
+                if (!value) {
+                    value = makePlanet(
+                        T,
+                        worldIds[index],
+                        small,
+                        texture,
+                        sunlight,
+                    )
+                        .then((group) => {
+                            if (disposed) {
+                                disposePlanet(group);
+                                return group;
+                            }
+                            group.visible = false;
+                            planets.set(index, group);
+                            scene.add(group);
+                            schedule();
+                            return group;
+                        })
                         .catch((error) => {
-                            textureCache.delete(name);
+                            pending.delete(index);
+                            failed.add(index);
                             throw error;
                         });
-                    textureCache.set(name, promise);
+                    pending.set(index, value);
                 }
-                return promise;
+                return value;
             };
-            const stars = new Float32Array(600 * 3);
-            let seed = 32517;
+            let seed = 412;
             const random = () => {
                 seed = (seed * 16807) % 2147483647;
                 return (seed - 1) / 2147483646;
             };
-            for (let i = 0; i < stars.length; i += 3) {
+            const starPoints = new Float32Array(1600 * 3),
+                starColors = new Float32Array(1600 * 3);
+            for (let i = 0; i < starPoints.length; i += 3) {
                 const y = random() * 2 - 1,
                     a = random() * Math.PI * 2,
-                    r = Math.sqrt(1 - y * y) * 60;
-                stars[i] = Math.cos(a) * r;
-                stars[i + 1] = y * 60;
-                stars[i + 2] = Math.sin(a) * r;
+                    r = Math.sqrt(1 - y * y) * 55;
+                starPoints[i] = Math.cos(a) * r;
+                starPoints[i + 1] = y * 55;
+                starPoints[i + 2] = Math.sin(a) * r;
+                const light = 0.25 + random() * 0.7;
+                starColors[i] = light * 0.82;
+                starColors[i + 1] = light * 0.9;
+                starColors[i + 2] = light;
             }
-            const starsGeometry = new THREE.BufferGeometry();
-            starsGeometry.setAttribute(
+            const starsGeo = new T.BufferGeometry();
+            starsGeo.setAttribute(
                 "position",
-                new THREE.BufferAttribute(stars, 3),
+                new T.BufferAttribute(starPoints, 3),
             );
-            const starsMaterial = new THREE.PointsMaterial({
-                color: 0xc8d0d4,
-                size: 0.055,
-                sizeAttenuation: true,
+            starsGeo.setAttribute(
+                "color",
+                new T.BufferAttribute(starColors, 3),
+            );
+            const starsMat = new T.PointsMaterial({
+                size: 0.065,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                depthWrite: false,
             });
-            scene.add(new THREE.Points(starsGeometry, starsMaterial));
-            const root = new THREE.Group();
-            scene.add(root);
-            let active: Three.Group | undefined,
-                activeWorld: World = "earth",
-                version = 0,
+            scene.add(new T.Points(starsGeo, starsMat));
+            let frame = 0,
                 visible = true,
-                frame = 0;
+                paused = false,
+                dragging = false,
+                target = 0,
+                progress = 0,
+                manualZoom = 1,
+                lastTime = 0,
+                lastWorld = -1;
+            let knots: number[] = [];
             const motion = matchMedia("(prefers-reduced-motion: reduce)");
-            const disposeObject = (object: Three.Object3D) => {
-                object.traverse((item) => {
-                    const mesh = item as Three.Mesh;
-                    mesh.geometry?.dispose();
-                    const materials = Array.isArray(mesh.material)
-                        ? mesh.material
-                        : mesh.material
-                          ? [mesh.material]
-                          : [];
-                    materials.forEach((m) => m.dispose());
+            const entries = [
+                ...document.querySelectorAll<HTMLElement>(
+                    "[data-journey-step]",
+                ),
+            ];
+            const record = document.querySelector<HTMLElement>("#cv");
+            const measure = () => {
+                const offset = narrow.matches
+                    ? innerHeight * 0.48
+                    : innerHeight * 0.36;
+                const positions = entries.map((entry) =>
+                    Math.max(
+                        0,
+                        entry.getBoundingClientRect().top + scrollY - offset,
+                    ),
+                );
+                const end = Math.max(
+                    innerHeight * 2,
+                    (record?.getBoundingClientRect().bottom || 0) +
+                        scrollY -
+                        innerHeight * 0.7,
+                );
+                knots = worldIds.map((_, i) => {
+                    if (!i) return 0;
+                    if (positions.length >= 5)
+                        return Math.max(
+                            i * 120,
+                            positions[
+                                Math.round((i * (positions.length - 1)) / 4)
+                            ],
+                        );
+                    return (end * i) / 4;
                 });
             };
-            const resize = () => {
-                const w = stage.clientWidth,
-                    h = stage.clientHeight;
-                if (!w || !h) return;
-                render.setSize(w, h, false);
-                camera.aspect = w / h;
-                camera.updateProjectionMatrix();
-                if (activeWorld === "saturn") {
-                    const minimum = Math.min(
-                        13,
-                        2.35 /
-                            (Math.tan(
-                                THREE.MathUtils.degToRad(camera.fov / 2),
-                            ) *
-                                Math.min(1, camera.aspect)),
-                    );
-                    const offset = camera.position.clone().sub(orbit.target);
-                    if (offset.length() < minimum)
-                        camera.position
-                            .copy(orbit.target)
-                            .add(offset.setLength(minimum));
-                }
-                orbit.update();
-                render.render(scene, camera);
-            };
-            const draw = () => {
-                frame = 0;
-                if (disposed || !visible || document.hidden) return;
-                orbit.autoRotate = !paused && !motion.matches;
-                orbit.autoRotateSpeed = 0.24;
-                orbit.update();
-                render.render(scene, camera);
-                if (!paused && !motion.matches)
-                    frame = requestAnimationFrame(draw);
-            };
-            const wake = () => {
-                if (!frame && visible && !document.hidden && !disposed) draw();
-            };
-            const reset = () => {
-                const distance =
-                    activeWorld === "saturn"
-                        ? Math.min(
-                              13,
-                              2.35 /
-                                  (Math.tan(
-                                      THREE.MathUtils.degToRad(camera.fov / 2),
-                                  ) *
-                                      Math.min(1, camera.aspect)),
-                          )
-                        : Math.max(
-                              4.1,
-                              1.15 /
-                                  (Math.tan(
-                                      THREE.MathUtils.degToRad(camera.fov / 2),
-                                  ) *
-                                      Math.min(1, camera.aspect)),
-                          );
-                const elevation = activeWorld === "saturn" ? 0.34 : 0.073;
-                camera.position.set(
-                    0,
-                    Math.sin(elevation) * distance,
-                    Math.cos(elevation) * distance,
+            const readScroll = () => {
+                if (!knots.length) return;
+                let i = 0;
+                while (i < 3 && scrollY >= knots[i + 1]) i++;
+                target = Math.min(
+                    4,
+                    Math.max(
+                        0,
+                        i +
+                            (scrollY - knots[i]) /
+                                Math.max(1, knots[i + 1] - knots[i]),
+                    ),
                 );
-                orbit.target.set(0, 0, 0);
-                orbit.update();
-                render.render(scene, camera);
+                schedule();
             };
-            const syncMotion = () => {
-                orbit.enableDamping = !paused && !motion.matches;
-                motionButton.disabled = motion.matches;
-                motionButton.textContent = motion.matches
+            const updateControl = () => {
+                const reduced = motion.matches;
+                const label = reduced
                     ? "Motion reduced by system"
                     : paused
                       ? "Resume motion"
                       : "Pause motion";
-                if ((paused || motion.matches) && frame) {
-                    cancelAnimationFrame(frame);
-                    frame = 0;
-                }
-                wake();
+                if (motionButton.textContent !== label)
+                    motionButton.textContent = label;
+                if (motionButton.disabled !== reduced)
+                    motionButton.disabled = reduced;
+                motionButton.setAttribute("aria-pressed", String(paused));
+                orbit.enableDamping = !reduced && !paused;
             };
-            const toggleMotion = () => {
-                paused = !paused;
-                syncMotion();
+            const baseDistance = (world: number) => {
+                const radius = world === 4 ? 2.25 : 1.08;
+                return Math.max(
+                    world === 4 ? 6.3 : 3.35,
+                    radius /
+                        (Math.tan(T.MathUtils.degToRad(18)) *
+                            Math.min(1, camera.aspect)),
+                );
             };
-            const loadWorld = async (world: World) => {
-                const ticket = ++version;
-                status.textContent = `Loading ${names[world]}…`;
-                const group = new THREE.Group();
-                try {
-                    const suffix = small ? "1k" : "2k";
-                    const file =
-                        world === "moon"
-                            ? "moon-1k"
-                            : world === "saturn"
-                              ? "saturn-strip-v1"
-                              : `${world}-${suffix}`;
-                    const map = await getTexture(file);
-                    const surface = new THREE.Mesh(
-                        new THREE.SphereGeometry(1, 96, 64),
-                        new THREE.MeshStandardMaterial({
-                            map,
-                            roughness: 0.92,
-                            metalness: 0,
-                        }),
-                    );
-                    surface.castShadow = world === "saturn";
-                    surface.receiveShadow = world === "saturn";
-                    group.add(surface);
-                    if (world === "earth") {
-                        const [clouds, night] = await Promise.all([
-                            getTexture(`earth-clouds-${suffix}`, false),
-                            getTexture("earth-night-2k"),
-                        ]);
-                        const cloud = new THREE.Mesh(
-                            new THREE.SphereGeometry(1.008, 96, 64),
-                            new THREE.MeshStandardMaterial({
-                                color: 0xffffff,
-                                alphaMap: clouds,
-                                transparent: true,
-                                opacity: 0.7,
-                                depthWrite: false,
-                                roughness: 1,
-                            }),
-                        );
-                        group.add(cloud);
-                        const nightMat = new THREE.ShaderMaterial({
-                            uniforms: {
-                                nightMap: { value: night },
-                                sunDirection: {
-                                    value: new THREE.Vector3(
-                                        -4,
-                                        2.4,
-                                        4,
-                                    ).normalize(),
-                                },
-                            },
-                            vertexShader: `varying vec2 vUv; varying vec3 vNormalWorld; void main(){vUv=uv; vNormalWorld=normalize(mat3(modelMatrix)*normal); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-                            fragmentShader: `uniform sampler2D nightMap; uniform vec3 sunDirection; varying vec2 vUv; varying vec3 vNormalWorld; void main(){float n=1.0-smoothstep(-0.18,0.16,dot(normalize(vNormalWorld),sunDirection)); vec3 c=texture2D(nightMap,vUv).rgb; gl_FragColor=vec4(c*vec3(1.0,0.69,0.38)*n,1.0);}`,
-                            blending: THREE.AdditiveBlending,
-                            transparent: true,
-                            depthWrite: false,
-                        });
-                        group.add(
-                            new THREE.Mesh(
-                                new THREE.SphereGeometry(1.002, 96, 64),
-                                nightMat,
-                            ),
-                        );
-                        const atmosphere = new THREE.ShaderMaterial({
-                            uniforms: {},
-                            vertexShader: `varying vec3 vN; varying vec3 vV; void main(){vec4 p=modelViewMatrix*vec4(position,1.); vN=normalize(normalMatrix*normal); vV=normalize(-p.xyz); gl_Position=projectionMatrix*p;}`,
-                            fragmentShader: `varying vec3 vN; varying vec3 vV; void main(){float rim=pow(1.0-abs(dot(normalize(vN),normalize(vV))),3.5); gl_FragColor=vec4(0.24,0.52,0.88,rim*0.35);}`,
-                            transparent: true,
-                            blending: THREE.AdditiveBlending,
-                            depthWrite: false,
-                            side: THREE.FrontSide,
-                        });
-                        group.add(
-                            new THREE.Mesh(
-                                new THREE.SphereGeometry(1.035, 96, 64),
-                                atmosphere,
-                            ),
-                        );
-                    }
-                    if (world === "saturn") {
-                        const ringMap = await getTexture("saturn-ring-1k");
-                        const geometry = new THREE.RingGeometry(
-                            1.25,
-                            2.15,
-                            160,
-                            1,
-                        );
-                        const pos = geometry.attributes.position,
-                            uv = geometry.attributes.uv;
-                        for (let i = 0; i < pos.count; i++) {
-                            const radius = Math.hypot(pos.getX(i), pos.getY(i));
-                            uv.setXY(i, (radius - 1.25) / 0.9, 0.5);
-                        }
-                        const rings = new THREE.Mesh(
-                            geometry,
-                            new THREE.MeshStandardMaterial({
-                                map: ringMap,
-                                transparent: true,
-                                side: THREE.DoubleSide,
-                                roughness: 1,
-                                depthWrite: true,
-                                alphaTest: 0.08,
-                            }),
-                        );
-                        rings.rotation.x = Math.PI / 2;
-                        rings.castShadow = true;
-                        rings.receiveShadow = true;
-                        group.add(rings);
-                        group.rotation.z = 0.22;
-                    }
-                    if (disposed || ticket !== version) {
-                        disposeObject(group);
-                        return;
-                    }
-                    if (active) {
-                        root.remove(active);
-                        disposeObject(active);
-                    }
-                    active = group;
-                    root.add(group);
-                    activeWorld = world;
-                    worlds.forEach((button) =>
-                        button.setAttribute(
-                            "aria-pressed",
-                            String(button.dataset.experienceWorld === world),
-                        ),
-                    );
-                    current.textContent = names[world];
-                    stage.dataset.world = world;
-                    status.textContent = "";
-                    reset();
-                    if (poster) poster.hidden = true;
-                    start.hidden = true;
-                    wake();
-                } catch {
-                    disposeObject(group);
-                    if (!disposed && ticket === version) {
-                        if (!active) {
-                            cleanup?.();
-                            cleanup = undefined;
-                            start.hidden = false;
-                            start.textContent = "Try again";
-                        }
-                        status.textContent = `Could not load ${names[world]}. Please try again.`;
-                    }
-                }
-            };
-            const key = (event: KeyboardEvent) => {
-                const step = 0.16;
-                if (event.key === "Home") {
-                    event.preventDefault();
-                    reset();
-                    return;
-                }
-                const v = camera.position.clone().sub(orbit.target);
-                const s = new THREE.Spherical().setFromVector3(v);
-                if (event.key === "ArrowLeft") s.theta -= step;
-                else if (event.key === "ArrowRight") s.theta += step;
-                else if (event.key === "ArrowUp")
-                    s.phi = Math.max(0.1, s.phi - step);
-                else if (event.key === "ArrowDown")
-                    s.phi = Math.min(Math.PI - 0.1, s.phi + step);
-                else if (event.key === "+" || event.key === "=")
-                    s.radius = Math.max(orbit.minDistance, s.radius * 0.85);
-                else if (event.key === "-")
-                    s.radius = Math.min(orbit.maxDistance, s.radius / 0.85);
-                else return;
-                event.preventDefault();
-                camera.position.setFromSpherical(s).add(orbit.target);
-                orbit.update();
-                render.render(scene, camera);
-            };
-            const selections = worlds.map((button) => {
-                const listener = () => {
-                    const world = button.dataset.experienceWorld as World;
-                    if (world in names) void loadWorld(world);
-                };
-                button.addEventListener("click", listener);
-                return listener;
-            });
-            const observer = new IntersectionObserver((entries) => {
-                visible = entries[0]?.isIntersecting ?? false;
-                if (!visible && frame) {
-                    cancelAnimationFrame(frame);
-                    frame = 0;
-                } else wake();
-            });
-            observer.observe(stage);
-            const ro = new ResizeObserver(resize);
-            ro.observe(stage);
-            const changed = () => {
+            const telemetry = () => {
                 stage.dataset.camera = [
                     camera.position.x,
                     camera.position.y,
@@ -477,103 +297,308 @@ if (
                 stage.dataset.distance = camera.position
                     .distanceTo(orbit.target)
                     .toFixed(4);
-                render.render(scene, camera);
             };
-            const lost = (e: Event) => {
-                e.preventDefault();
+            const setLabel = (index: number) => {
+                if (index === lastWorld) return;
+                lastWorld = index;
+                current.textContent = worldNames[index];
+                stage.dataset.world = worldIds[index];
+                buttons.forEach((button, i) =>
+                    button.setAttribute("aria-pressed", String(i === index)),
+                );
+                entries.forEach((entry, i) =>
+                    entry.classList.toggle(
+                        "is-current",
+                        Math.round(
+                            (i * 4) / Math.max(1, entries.length - 1),
+                        ) === index,
+                    ),
+                );
+            };
+            function schedule() {
+                if (!frame && !disposed && visible && !document.hidden)
+                    frame = requestAnimationFrame(tick);
+            }
+            const tick = (time: number) => {
+                frame = 0;
+                if (disposed || !visible || document.hidden) return;
+                const dt = Math.min(0.05, (time - (lastTime || time)) / 1000);
+                lastTime = time;
+                updateControl();
+                const still = paused || motion.matches;
+                if (still) progress = Math.round(target);
+                else if (!dragging)
+                    progress += (target - progress) * (1 - Math.exp(-dt * 7));
+                if (Math.abs(target - progress) < 0.001 && !still)
+                    progress = target;
+                let from = Math.min(4, Math.floor(progress)),
+                    to = Math.min(4, from + 1);
+                const part = progress - from;
+                let travel = T.MathUtils.smoothstep(part, 0.38, 1);
+                if (still) {
+                    from = Math.round(target);
+                    to = from;
+                    travel = 0;
+                }
+                for (const group of planets.values()) group.visible = false;
+                const first = planets.get(from),
+                    second = planets.get(to);
+                if (!first && !failed.has(from))
+                    void ensurePlanet(from).catch(() => {});
+                if (!second && to !== from && !failed.has(to))
+                    void ensurePlanet(to).catch(() => {});
+                // Both planets occupy one continuous 3D scene during the pullback.
+                const ready =
+                    first && (to === from || second || travel < 0.002);
+                if (ready) {
+                    first.visible = true;
+                    first.position.set(
+                        -3.6 * travel,
+                        -0.12 * Math.sin(travel * Math.PI),
+                        -1.5 * travel,
+                    );
+                    if (to !== from && second) {
+                        second.visible = travel > 0.002;
+                        second.position.set(
+                            3.6 * (1 - travel),
+                            0.12 * Math.sin(travel * Math.PI),
+                            -1.5 * (1 - travel),
+                        );
+                    }
+                    const distance =
+                        T.MathUtils.lerp(
+                            baseDistance(from),
+                            baseDistance(to),
+                            travel,
+                        ) +
+                        Math.sin(travel * Math.PI) * 3.8;
+                    const direction = camera.position
+                        .clone()
+                        .sub(orbit.target)
+                        .normalize();
+                    camera.position
+                        .copy(orbit.target)
+                        .addScaledVector(direction, distance * manualZoom);
+                    setLabel(travel > 0.5 ? to : from);
+                    status.textContent = "";
+                } else {
+                    const retained = planets.get(lastWorld);
+                    if (retained) {
+                        retained.visible = true;
+                        retained.position.set(0, 0, 0);
+                    }
+                    if (!retained)
+                        status.textContent = "Loading the orbital view…";
+                    const unavailable = !first ? from : to;
+                    if (failed.has(unavailable))
+                        status.textContent = `${worldNames[unavailable]} could not load. Select it below to retry.`;
+                }
+                orbit.autoRotate =
+                    !still && !dragging && Math.abs(target - progress) < 0.01;
+                orbit.autoRotateSpeed = 0.12;
+                orbit.update();
+                telemetry();
+                render.render(scene, camera);
+                stage.dataset.progress = progress.toFixed(4);
+                stage.dataset.transition = travel.toFixed(4);
+                stage.dataset.state = still ? "paused" : "running";
+                if (!still) schedule();
+            };
+            const resize = () => {
+                const w = stage.clientWidth,
+                    h = stage.clientHeight;
+                if (!w || !h) return;
+                render.setSize(w, h, false);
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                measure();
+                readScroll();
+                schedule();
+            };
+            const syncMotion = () => {
+                updateControl();
+                schedule();
+            };
+            const toggleMotion = () => {
+                paused = !paused;
+                syncMotion();
+            };
+            const reset = () => {
+                manualZoom = 1;
+                camera.position.set(
+                    0,
+                    0.18,
+                    baseDistance(Math.max(0, lastWorld)),
+                );
+                orbit.target.set(0, 0, 0);
+                orbit.update();
+                schedule();
+            };
+            const key = (event: KeyboardEvent) => {
+                if (event.key === "Home") {
+                    event.preventDefault();
+                    reset();
+                    return;
+                }
+                const s = new T.Spherical().setFromVector3(
+                    camera.position.clone().sub(orbit.target),
+                );
+                if (event.key === "ArrowLeft") s.theta -= 0.16;
+                else if (event.key === "ArrowRight") s.theta += 0.16;
+                else if (event.key === "ArrowUp")
+                    s.phi = Math.max(0.1, s.phi - 0.16);
+                else if (event.key === "ArrowDown")
+                    s.phi = Math.min(Math.PI - 0.1, s.phi + 0.16);
+                else if (event.key === "+" || event.key === "=")
+                    manualZoom = Math.max(0.7, manualZoom * 0.85);
+                else if (event.key === "-")
+                    manualZoom = Math.min(2.2, manualZoom / 0.85);
+                else return;
+                event.preventDefault();
+                camera.position.setFromSpherical(s).add(orbit.target);
+                orbit.update();
+                schedule();
+            };
+            const selections = buttons.map((button, i) => {
+                const select = () => {
+                    failed.delete(i);
+                    void ensurePlanet(i).catch(() => {});
+                    window.scrollTo({
+                        top: knots[i] || 0,
+                        behavior: "instant",
+                    });
+                    readScroll();
+                };
+                button.addEventListener("click", select);
+                return select;
+            });
+            const beginDrag = () => {
+                dragging = true;
+            };
+            const endDrag = () => {
+                dragging = false;
+                schedule();
+            };
+            orbit.addEventListener("start", beginDrag);
+            orbit.addEventListener("end", endDrag);
+            orbit.addEventListener("change", telemetry);
+            const observer = new IntersectionObserver((items) => {
+                visible = items[0]?.isIntersecting ?? false;
+                if (!visible && frame) {
+                    cancelAnimationFrame(frame);
+                    frame = 0;
+                } else schedule();
+            });
+            observer.observe(stage);
+            const sizes = new ResizeObserver(resize);
+            sizes.observe(stage);
+            if (record) sizes.observe(record);
+            const visibility = () => {
+                if (document.hidden && frame) {
+                    cancelAnimationFrame(frame);
+                    frame = 0;
+                } else schedule();
+            };
+            let lastReduced = motion.matches;
+            const preferenceTimer = setInterval(() => {
+                if (!document.hidden && lastReduced !== motion.matches) {
+                    lastReduced = motion.matches;
+                    syncMotion();
+                }
+            }, 500);
+            const lost = (event: Event) => {
+                event.preventDefault();
                 cleanup?.();
                 cleanup = undefined;
+                status.textContent =
+                    "The visual is unavailable. Your experience record remains readable.";
                 start.textContent = "Try again";
                 start.hidden = false;
-                status.textContent =
-                    "The visual is unavailable. The experience record remains below.";
             };
-            const focusViewer = () => {
-                orbit.enableZoom = true;
-            };
-            const blurViewer = () => {
-                orbit.enableZoom = false;
-            };
-            const pointerEnter = () => {
-                orbit.enableZoom = stage.contains(document.activeElement);
-            };
-            const pointerLeave = () => {
-                orbit.enableZoom = false;
-            };
-            stage.addEventListener("pointerenter", pointerEnter);
-            stage.addEventListener("pointerleave", pointerLeave);
-            stage.addEventListener("focusin", focusViewer);
-            stage.addEventListener("focusout", blurViewer);
-            narrow.addEventListener("change", configureTouch);
-            orbit.addEventListener("change", changed);
-            stage.addEventListener("keydown", key);
-            render.domElement.addEventListener("webglcontextlost", lost);
-            document.addEventListener("visibilitychange", wake);
+            window.addEventListener("scroll", readScroll, { passive: true });
+            window.addEventListener("resize", resize);
+            document.addEventListener("visibilitychange", visibility);
             motion.addEventListener("change", syncMotion);
+            narrow.addEventListener("change", configureTouch);
             motionButton.addEventListener("click", toggleMotion);
             resetButton.addEventListener("click", reset);
+            stage.addEventListener("keydown", key);
+            render.domElement.addEventListener("webglcontextlost", lost);
+            let preloadTimer = 0;
             cleanup = () => {
                 disposed = true;
-                version++;
                 cancelAnimationFrame(frame);
+                clearInterval(preferenceTimer);
+                clearTimeout(preloadTimer);
                 observer.disconnect();
-                ro.disconnect();
-                stage.removeEventListener("pointerenter", pointerEnter);
-                stage.removeEventListener("pointerleave", pointerLeave);
-                stage.removeEventListener("focusin", focusViewer);
-                stage.removeEventListener("focusout", blurViewer);
-                narrow.removeEventListener("change", configureTouch);
-                orbit.removeEventListener("change", changed);
-                orbit.dispose();
-                stage.removeEventListener("keydown", key);
-                render.domElement.removeEventListener("webglcontextlost", lost);
-                document.removeEventListener("visibilitychange", wake);
+                sizes.disconnect();
+                window.removeEventListener("scroll", readScroll);
+                window.removeEventListener("resize", resize);
+                document.removeEventListener("visibilitychange", visibility);
                 motion.removeEventListener("change", syncMotion);
+                narrow.removeEventListener("change", configureTouch);
                 motionButton.removeEventListener("click", toggleMotion);
                 resetButton.removeEventListener("click", reset);
-                worlds.forEach((button, i) =>
+                stage.removeEventListener("keydown", key);
+                render.domElement.removeEventListener("webglcontextlost", lost);
+                buttons.forEach((button, i) =>
                     button.removeEventListener("click", selections[i]),
                 );
-                if (active) disposeObject(active);
-                starsGeometry.dispose();
-                starsMaterial.dispose();
-                sun.shadow.dispose();
+                orbit.dispose();
+                planets.forEach(disposePlanet);
                 owned.forEach((t) => t.dispose());
+                starsGeo.dispose();
+                starsMat.dispose();
+                sun.shadow.dispose();
                 render.dispose();
                 render.domElement.remove();
                 stage.hidden = true;
-                controlsPanel.hidden = true;
+                panel.hidden = true;
                 if (poster) poster.hidden = false;
-                start.textContent = "Start exploring";
-                status.textContent = "";
             };
-            stage.hidden = false;
             stage.appendChild(render.domElement);
-            controlsPanel.hidden = false;
-            start.hidden = true;
+            stage.hidden = false;
+            panel.hidden = false;
             resize();
-            syncMotion();
-            await loadWorld("earth");
+            await ensurePlanet(0);
+            if (disposed) return;
+            if (poster) poster.hidden = true;
+            start.hidden = true;
+            status.textContent = "";
+            schedule();
+            // Warm the remaining worlds after the first frame, so scrolling never swaps a blank globe.
+            preloadTimer = window.setTimeout(() => {
+                void (async () => {
+                    for (let i = 1; i < worldIds.length && !disposed; i++)
+                        await ensurePlanet(i).catch(() => {});
+                })();
+            }, 350);
         } catch {
+            cleanup?.();
+            cleanup = undefined;
             renderer?.dispose();
             stage.hidden = true;
-            controlsPanel.hidden = true;
+            panel.hidden = true;
             if (poster) poster.hidden = false;
-            status.textContent =
-                "The visual could not be loaded. The experience record remains below.";
-            start.textContent = "Try again";
             start.hidden = false;
+            start.textContent = "Try again";
+            status.textContent =
+                "The visual could not be loaded. The experience record is available below.";
         } finally {
             loading = false;
-            start.disabled = false;
+            if (ticket !== generation && pageActive) void initialize();
         }
-    });
-    start.click();
+    };
+    start.addEventListener("click", () => void initialize());
+    void initialize();
     window.addEventListener("pagehide", () => {
+        pageActive = false;
+        generation++;
         cleanup?.();
         cleanup = undefined;
     });
     window.addEventListener("pageshow", (event) => {
-        if (event.persisted && !cleanup && !loading) start.click();
+        pageActive = true;
+        if (event.persisted) void initialize();
     });
 }

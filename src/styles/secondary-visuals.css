@@ -1,0 +1,192 @@
+.technical-study {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: #c7d4c1;
+}
+.technical-study .study-grid {
+    stroke: #9db69e;
+    stroke-opacity: 0.07;
+    stroke-width: 1;
+}
+.technical-study .study-faint {
+    stroke: #91aa98;
+    stroke-opacity: 0.25;
+    stroke-width: 1;
+}
+.technical-study .study-thin {
+    stroke: #adbfac;
+    stroke-opacity: 0.58;
+    stroke-width: 1.4;
+}
+.technical-study .study-edge {
+    stroke: #d6e0ce;
+    stroke-opacity: 0.82;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.technical-study .study-green {
+    stroke: #86aa86;
+    stroke-opacity: 0.85;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+.technical-study .study-accent {
+    stroke: #dfa05d;
+    stroke-opacity: 0.9;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+.technical-study .study-fill {
+    fill: #2e4038;
+    stroke: #aabca8;
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+.technical-study .study-panel {
+    fill: #182824;
+    stroke: #b8cbb5;
+    stroke-width: 2;
+}
+.technical-study .study-joint {
+    fill: #172622;
+    stroke: #b4c7b2;
+    stroke-width: 2;
+}
+.technical-study .study-optic {
+    fill: #101b1b;
+    stroke: #dfa05d;
+    stroke-width: 1.5;
+}
+.technical-study .study-light {
+    fill: #f3dfb7;
+}
+.technical-study .study-accent-fill {
+    fill: #dfa05d;
+}
+.technical-study .study-green-fill {
+    fill: #8bb18d;
+}
+.secondary-illustration {
+    background: radial-gradient(
+        ellipse at 58% 45%,
+        #2a3b31,
+        #152321 65%,
+        #101a1a
+    );
+    overflow: hidden;
+}
+.about-lead-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: center;
+}
+.about-portrait {
+    min-height: 420px;
+    aspect-ratio: 1.5;
+}
+.contact-signal {
+    margin-top: 2.75rem;
+    height: 230px;
+    max-width: 31rem;
+}
+.projects-intro-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.65fr);
+    align-items: center;
+    gap: 3rem;
+}
+.projects-intro-art {
+    height: 210px;
+}
+.project-card__media--study {
+    background: radial-gradient(
+        ellipse at 58% 45%,
+        #2a3b31,
+        #152321 65%,
+        #101a1a
+    );
+}
+.project-card__media--study .technical-study {
+    transition: transform 0.4s ease;
+}
+.project-card__link:hover .technical-study {
+    transform: scale(1.035);
+}
+@media (max-width: 800px) {
+    .about-lead-grid,
+    .projects-intro-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .about-lead-grid {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .about-lead-copy {
+        display: contents;
+    }
+    .about-lead-copy > * {
+        order: 0;
+    }
+    .about-portrait {
+        order: 1;
+    }
+    .about-lead-copy > .editorial-lead__body {
+        order: 2;
+    }
+    .about-portrait {
+        min-height: 0;
+        aspect-ratio: 1.6;
+    }
+    .projects-intro-art {
+        height: 160px;
+    }
+    .contact-signal {
+        height: 180px;
+        margin-top: 1.5rem;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .project-card__media--study .technical-study {
+        transition: none;
+    }
+}
+@media print {
+    .secondary-illustration,
+    .project-card__media--study {
+        display: none;
+    }
+}
+
+.writing-head {
+    position: relative;
+    overflow: hidden;
+}
+.writing-head__copy {
+    position: relative;
+    z-index: 1;
+}
+.writing-head__graphic {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 40%;
+    height: 100%;
+    opacity: 0.55;
+    pointer-events: none;
+}
+@media (max-width: 800px) {
+    .writing-head__graphic {
+        width: 48%;
+        opacity: 0.24;
+    }
+}
+@media print {
+    .writing-head__graphic {
+        display: none;
+    }
+}

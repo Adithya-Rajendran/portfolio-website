@@ -36,6 +36,8 @@ and Earth Observatory:
 
 The maps and sky are lossy WebP; the ring, Saturn strip and water mask are lossless. Actual transferred bytes depend on the selected world and device.
 
+The enlarged desktop Earth also uses `earth-cinematic-4k.webp` (4096×2048), resized and encoded at WebP quality 90 from Solar System Scope's [8K Earth day map](https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg). The same CC BY 4.0 attribution applies. The shader adjusts saturation, ocean reflectance and directional lighting; mobile retains the smaller map.
+
 `node scripts/encode-trajectory-textures.mjs` downloads the sources and writes
 these files with sharp. Files in `/public` are cached immutably, so rename a
 file when you re-encode it.

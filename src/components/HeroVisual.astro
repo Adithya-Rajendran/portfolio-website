@@ -1,13 +1,18 @@
 <div class="hero-visual" data-home-visual aria-hidden="true">
-    <div class="hero-visual__poster" data-home-poster>
-        <div class="hero-visual__planet"></div>
-        <div class="hero-visual__ridge"></div>
-        <div class="hero-visual__rover">
-            <i></i>
-            <b></b>
-            <span></span>
-        </div>
-    </div>
+    <picture class="hero-visual__poster" data-home-poster>
+        <source
+            media="(max-width: 650px)"
+            srcset="/images/scenes/horizon-mobile-v1.webp"
+        />
+        <img
+            src="/images/scenes/horizon-v1.webp"
+            width="2400"
+            height="1350"
+            alt=""
+            fetchpriority="high"
+            decoding="async"
+        />
+    </picture>
     <div class="hero-visual__stage" data-home-stage hidden></div>
 </div>
 <script>
@@ -26,139 +31,32 @@
     .hero-visual__stage {
         position: absolute;
         inset: 0;
-        overflow: hidden;
+        width: 100%;
+        height: 100%;
     }
     .hero-visual__poster[hidden],
     .hero-visual__stage[hidden] {
         display: none;
+    }
+    .hero-visual__poster img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 72% 50%;
     }
     .hero-visual__stage :global(canvas) {
         display: block;
         width: 100%;
         height: 100%;
     }
-    .hero-visual__poster {
-        background: radial-gradient(
-            ellipse at 68% 54%,
-            #9b6344 0%,
-            #3b302a 24%,
-            #171d20 52%,
-            #0b1113 85%
-        );
-    }
-    .hero-visual__planet {
-        position: absolute;
-        width: clamp(270px, 38vw, 620px);
-        aspect-ratio: 1;
-        right: 5%;
-        top: -26%;
-        border-radius: 50%;
-        background: radial-gradient(
-            circle at 30% 75%,
-            #bd8768,
-            #675752 35%,
-            #252c31 66%,
-            #12191c 76%
-        );
-        box-shadow:
-            inset -25px -20px 60px #0d131a,
-            0 0 0 1px #bf9d7855;
-    }
-    .hero-visual__ridge {
-        position: absolute;
-        inset: 63% 0 0;
-        background: linear-gradient(
-            158deg,
-            transparent 0 21%,
-            #302722 21.2% 30%,
-            #1c201f 30.2% 48%,
-            #101818 48.2%
-        );
-    }
-    .hero-visual__rover {
-        position: absolute;
-        right: 15%;
-        bottom: 16%;
-        width: clamp(150px, 19vw, 310px);
-        height: clamp(55px, 7vw, 110px);
-        background: linear-gradient(165deg, #79806c, #353f3b 45%, #1a2524);
-        border: 3px solid #101817;
-        border-radius: 18% 28% 16% 16%;
-        box-shadow: 0 15px 24px #070b0b;
-        transform: rotate(-4deg);
-    }
-    .hero-visual__rover::before,
-    .hero-visual__rover::after {
-        content: "";
-        position: absolute;
-        width: 26%;
-        aspect-ratio: 1;
-        background: radial-gradient(
-            circle,
-            #797b6b 0 17%,
-            #222d2a 19% 32%,
-            #0d1212 34% 66%,
-            #596058 68% 72%,
-            #0d1212 74%
-        );
-        border-radius: 50%;
-        bottom: -48%;
-    }
-    .hero-visual__rover::before {
-        left: 6%;
-    }
-    .hero-visual__rover::after {
-        right: 7%;
-    }
-    .hero-visual__rover i {
-        position: absolute;
-        width: 5%;
-        height: 82%;
-        background: #293833;
-        right: 26%;
-        bottom: 85%;
-        transform: rotate(-3deg);
-    }
-    .hero-visual__rover b {
-        position: absolute;
-        width: 27%;
-        height: 36%;
-        right: 15%;
-        bottom: 151%;
-        border-radius: 20%;
-        background: linear-gradient(#89907b, #35423c);
-        border: 3px solid #172320;
-    }
-    .hero-visual__rover b::before,
-    .hero-visual__rover b::after {
-        content: "";
-        position: absolute;
-        top: 19%;
-        width: 25%;
-        aspect-ratio: 1;
-        border-radius: 50%;
-        background: #101d20;
-        border: 2px solid #70857d;
-    }
-    .hero-visual__rover b::before {
-        left: 14%;
-    }
-    .hero-visual__rover b::after {
-        right: 14%;
-    }
     @media (max-width: 650px) {
         .hero-visual {
-            bottom: auto;
             height: 390px;
+            bottom: auto;
         }
-        .hero-visual__planet {
-            width: 70%;
-            right: -10%;
-            top: -28%;
-        }
-        .hero-visual__rover {
-            right: 10%;
-            bottom: 23%;
+        .hero-visual__poster img {
+            object-position: 65% 50%;
         }
     }
     @media print {

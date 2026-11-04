@@ -35,9 +35,9 @@ const availability = availabilityLine(profile?.availability);
                     </>
                 )}
             </p>
-            {profile?.introduction && (
-                <p class="home-hero__intro">{profile.introduction}</p>
-            )}
+            <p class="home-hero__intro">
+                Exploring how machines see, understand, and act in the world.
+            </p>
             <div class="home-hero__actions">
                 <a class="hero-button hero-button--primary" href="/portfolio">
                     Explore the work <span aria-hidden="true">↗</span>
@@ -59,19 +59,21 @@ const availability = availabilityLine(profile?.availability);
                     <span aria-hidden="true"></span> Open to: {availability}
                 </p>
             )}
-            <p class="home-hero__map-credit">
-                Planet map:{" "}
-                <a href="https://www.solarsystemscope.com/textures/">
-                    Solar System Scope
-                </a>{" "}
-                (
-                <a href="https://creativecommons.org/licenses/by/4.0/">
-                    CC BY 4.0
-                </a>
-                ), adapted.
-            </p>
+        </div>
+        <div class="home-hero__caption">
+            <span>Beyond the familiar.</span>
+            <a href="/images/scenes/credits.txt">Scene credits ↗</a>
         </div>
     </section>
+    {profile?.introduction && (
+        <section class="home-introduction" aria-label="Introduction">
+            <p class="eyebrow">A little context</p>
+            <p>{profile.introduction}</p>
+            <a class="section-link" href="/about">
+                More about me ↗
+            </a>
+        </section>
+    )}
     <section
         class="home-section home-section--work"
         aria-labelledby="work-title"

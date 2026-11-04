@@ -1,0 +1,232 @@
+---
+import "../styles/secondary-visuals.css";
+interface Props {
+    variant:
+        "robotics" | "signal" | "systems" | "vision" | "network" | "writing";
+}
+const { variant } = Astro.props;
+---
+
+<svg
+    class:list={["technical-study", `technical-study--${variant}`]}
+    viewBox="0 0 600 400"
+    fill="none"
+    aria-hidden="true"
+    focusable="false"
+>
+    <path
+        class="study-grid"
+        d="M0 80H600M0 160H600M0 240H600M0 320H600M100 0V400M200 0V400M300 0V400M400 0V400M500 0V400"
+    />
+    {variant === "robotics" && (
+        <g>
+            <circle class="study-faint" cx="321" cy="199" r="154" />
+            <circle
+                class="study-faint"
+                cx="321"
+                cy="199"
+                r="118"
+                stroke-dasharray="3 9"
+            />
+            <path
+                class="study-thin"
+                d="M113 325H489M153 335H449M123 317L148 286H232L254 317M145 286L162 268H223L240 286"
+            />
+            <path class="study-fill" d="M172 271L176 242L225 234L235 269Z" />
+            <path
+                class="study-edge"
+                d="M182 243L195 205L222 200L225 235M199 205L240 137L269 146L222 213Z"
+            />
+            <path class="study-fill" d="M231 145L252 121L314 146L300 174Z" />
+            <path
+                class="study-edge"
+                d="M258 122L292 94L317 103L309 145M314 146L359 113L379 132L325 167Z"
+            />
+            <circle class="study-joint" cx="210" cy="222" r="18" />
+            <circle class="study-edge" cx="210" cy="222" r="8" />
+            <circle class="study-joint" cx="252" cy="145" r="20" />
+            <circle class="study-edge" cx="252" cy="145" r="9" />
+            <circle class="study-joint" cx="314" cy="150" r="17" />
+            <circle class="study-edge" cx="314" cy="150" r="7" />
+            <path
+                class="study-fill"
+                d="M349 108L379 96L427 110L428 145L394 157L358 145Z"
+            />
+            <path
+                class="study-edge"
+                d="M379 96L380 137L394 157M380 137L428 124M359 112L379 118M361 136L379 141"
+            />
+            <circle class="study-optic" cx="401" cy="121" r="13" />
+            <circle class="study-edge" cx="401" cy="121" r="7" />
+            <circle class="study-light" cx="398" cy="118" r="2" />
+            <path
+                class="study-accent"
+                d="M438 111L463 96M438 128H472M438 144L464 158"
+            />
+            <path
+                class="study-faint"
+                d="M87 201H137M455 201H520M321 18V49M321 350V381"
+            />
+            <circle class="study-accent-fill" cx="467" cy="96" r="3" />
+            <circle class="study-green-fill" cx="475" cy="128" r="3" />
+        </g>
+    )}
+    {variant === "signal" && (
+        <g>
+            <circle class="study-faint" cx="300" cy="200" r="154" />
+            <circle class="study-faint" cx="300" cy="200" r="114" />
+            <circle class="study-faint" cx="300" cy="200" r="73" />
+            <path
+                class="study-green"
+                d="M84 278C152 278 160 133 244 133S369 260 454 194S511 119 543 119"
+            />
+            <path
+                class="study-thin"
+                d="M84 279C154 279 170 155 244 155S368 278 454 215S513 140 543 140"
+                stroke-dasharray="5 8"
+            />
+            <circle class="study-joint" cx="84" cy="278" r="10" />
+            <circle class="study-joint" cx="244" cy="133" r="10" />
+            <circle class="study-joint" cx="454" cy="194" r="10" />
+            <circle class="study-accent-fill" cx="543" cy="119" r="5" />
+            <path class="study-edge" d="M278 171L321 188L278 209L285 190Z" />
+            <path class="study-accent" d="M321 188L348 179M321 198L340 205" />
+            <path
+                class="study-faint"
+                d="M31 325H168M432 68H567M49 312V338M551 55V81"
+            />
+        </g>
+    )}
+    {variant === "systems" && (
+        <g>
+            <path
+                class="study-faint"
+                d="M74 91H526M74 309H526M74 91V309M526 91V309"
+            />
+            <path
+                class="study-green"
+                d="M166 161H262V107H366V161H446M166 239H262V293H366V239H446M262 161V239M366 161V239"
+            />
+            <rect
+                class="study-fill"
+                x="102"
+                y="128"
+                width="112"
+                height="68"
+                rx="3"
+            />
+            <rect
+                class="study-fill"
+                x="102"
+                y="205"
+                width="112"
+                height="68"
+                rx="3"
+            />
+            <rect
+                class="study-fill"
+                x="384"
+                y="128"
+                width="112"
+                height="68"
+                rx="3"
+            />
+            <rect
+                class="study-fill"
+                x="384"
+                y="205"
+                width="112"
+                height="68"
+                rx="3"
+            />
+            <rect
+                class="study-panel"
+                x="252"
+                y="139"
+                width="116"
+                height="122"
+                rx="4"
+            />
+            <path
+                class="study-edge"
+                d="M272 168H348M272 189H328M272 210H345M272 231H315"
+            />
+            <path
+                class="study-thin"
+                d="M121 147H184M121 162H173M121 177H151M121 225H184M121 240H173M121 255H151M404 147H467M404 162H456M404 177H434M404 225H467M404 240H456M404 255H434"
+            />
+            <circle class="study-accent-fill" cx="262" cy="107" r="5" />
+            <circle class="study-green-fill" cx="366" cy="293" r="5" />
+        </g>
+    )}
+    {variant === "vision" && (
+        <g>
+            <path
+                class="study-faint"
+                d="M76 72H524V328H76ZM96 92H504V308H96Z"
+            />
+            <path
+                class="study-thin"
+                d="M300 93V130M300 270V307M97 200H134M466 200H503"
+            />
+            <circle class="study-green" cx="300" cy="200" r="112" />
+            <circle class="study-faint" cx="300" cy="200" r="86" />
+            <circle class="study-edge" cx="300" cy="200" r="58" />
+            <circle class="study-joint" cx="300" cy="200" r="31" />
+            <circle class="study-optic" cx="300" cy="200" r="15" />
+            <circle class="study-light" cx="294" cy="193" r="4" />
+            <path
+                class="study-accent"
+                d="M171 119L194 132M429 119L406 132M171 281L194 268M429 281L406 268"
+            />
+            <path
+                class="study-faint"
+                d="M136 133V106H163M437 106H464V133M136 267V294H163M437 294H464V267"
+            />
+        </g>
+    )}
+    {variant === "network" && (
+        <g>
+            <path
+                class="study-faint"
+                d="M86 304L174 115L306 223L419 97L519 265L306 223L178 293L174 115L419 97M86 304L178 293L519 265"
+            />
+            <path
+                class="study-green"
+                d="M86 304L174 115L306 223L419 97L519 265"
+            />
+            <path class="study-accent" d="M178 293L306 223L519 265" />
+            <circle class="study-joint" cx="86" cy="304" r="13" />
+            <circle class="study-joint" cx="174" cy="115" r="18" />
+            <circle class="study-joint" cx="306" cy="223" r="23" />
+            <circle class="study-joint" cx="419" cy="97" r="16" />
+            <circle class="study-joint" cx="519" cy="265" r="13" />
+            <circle class="study-joint" cx="178" cy="293" r="12" />
+            <circle class="study-accent-fill" cx="174" cy="115" r="4" />
+            <circle class="study-green-fill" cx="306" cy="223" r="5" />
+            <circle class="study-accent-fill" cx="419" cy="97" r="4" />
+            <path
+                class="study-faint"
+                d="M145 115H120M174 86V60M335 223H363M419 70V44M519 295V320"
+            />
+        </g>
+    )}
+    {variant === "writing" && (
+        <g>
+            <path
+                class="study-faint"
+                d="M92 300C160 212 200 276 268 169S400 103 508 68"
+            />
+            <path
+                class="study-green"
+                d="M98 310C170 222 212 278 278 178S407 116 500 83"
+            />
+            <circle class="study-accent-fill" cx="278" cy="178" r="5" />
+            <circle class="study-green-fill" cx="500" cy="83" r="4" />
+            <path
+                class="study-thin"
+                d="M98 125H220M98 145H188M98 165H215M380 264H501M410 284H501"
+            />
+        </g>
+    )}
+</svg>

@@ -92,6 +92,32 @@ test("home's decorative scene starts automatically and respects reduced motion",
     await expect(page.locator("[data-home-poster]")).toBeHidden();
 });
 
+test("home uses the finished Blender scene without downloading authoring models", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const urls: string[] = [];
+    page.on("request", (request) => urls.push(request.url()));
+    await page.goto("/");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-home-stage]");
+    await expect(stage).toHaveAttribute("data-artwork", "blender", {
+        timeout: 30000,
+    });
+    expect(
+        urls.some((url) => url.includes("/images/scenes/horizon-v1.webp")),
+    ).toBe(true);
+    expect(urls.some((url) => /\.glb|\/three\/draco\//.test(url))).toBe(false);
+    expect(
+        urls.some((url) =>
+            url.includes("/images/scenes/horizon-depth-v1.webp"),
+        ),
+    ).toBe(true);
+});
+
 test("home scene motion can be paused and resumed", async ({ page }) => {
     await page.goto("/");
     const supported = await page.evaluate(() =>
@@ -373,8 +399,8 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     await expect
         .poll(() => stage.getAttribute("data-camera"))
         .not.toBe(beforeDrag);
-    await page.mouse.move(x, y);
-    await page.mouse.wheel(0, -350);
+    await stage.focus();
+    await page.keyboard.press("+");
     await expect
         .poll(async () => Number(await stage.getAttribute("data-distance")))
         .toBeLessThan(initialDistance);
@@ -422,6 +448,125 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     }
 });
 
+test("scrolling moves between planets with a pullback and reverses", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await expect(stage).toHaveAttribute("data-world", "earth");
+    await expect
+        .poll(async () => Number(await stage.getAttribute("data-distance")))
+        .toBeGreaterThan(0);
+    const restDistance = Number(await stage.getAttribute("data-distance"));
+    const nextKnot = await page.evaluate(() => {
+        const entries = [
+            ...document.querySelectorAll<HTMLElement>("[data-journey-step]"),
+        ];
+        const positions = entries.map((entry) =>
+            Math.max(
+                0,
+                entry.getBoundingClientRect().top +
+                    scrollY -
+                    innerHeight * 0.36,
+            ),
+        );
+        const end = Math.max(
+            innerHeight * 2,
+            (document.querySelector("#cv")?.getBoundingClientRect().bottom ||
+                0) +
+                scrollY -
+                innerHeight * 0.7,
+        );
+        return positions.length >= 5
+            ? Math.max(120, positions[Math.round((positions.length - 1) / 4)])
+            : end / 4;
+    });
+    await page.evaluate(
+        (y) => window.scrollTo({ top: y, behavior: "instant" }),
+        nextKnot * 0.69,
+    );
+    await expect
+        .poll(async () => Number(await stage.getAttribute("data-transition")), {
+            timeout: 15000,
+        })
+        .toBeGreaterThan(0.3);
+    await expect
+        .poll(async () => Number(await stage.getAttribute("data-distance")), {
+            timeout: 15000,
+        })
+        .toBeGreaterThan(restDistance + 0.5);
+    await page.evaluate(
+        (y) => window.scrollTo({ top: y, behavior: "instant" }),
+        nextKnot,
+    );
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 15000,
+    });
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await expect(stage).toHaveAttribute("data-world", "earth", {
+        timeout: 15000,
+    });
+});
+
+test("reduced-motion scrolling switches planets without a travelling animation", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 15000,
+    });
+    await expect(stage).toHaveAttribute("data-transition", "0.0000");
+    await expect(stage).toHaveAttribute("data-state", "paused");
+});
+
+test("a missing later planet keeps the current view and can be retried", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    let unavailable = true;
+    let attempts = 0;
+    await page.route("**/images/trajectory/moon-1k.webp", async (route) => {
+        attempts++;
+        if (unavailable) await route.abort();
+        else await route.continue();
+    });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage).toHaveAttribute("data-world", "earth", {
+        timeout: 20000,
+    });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(page.locator("[data-experience-status]")).toContainText(
+        "Moon could not load",
+    );
+    await expect(stage).toHaveAttribute("data-world", "earth");
+    await expect(stage.locator("canvas")).toBeVisible();
+    expect(attempts).toBeLessThanOrEqual(2);
+    unavailable = false;
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 15000,
+    });
+});
+
 test("experience chapter links reach the record and scrolling over the scene moves the page", async ({
     page,
 }) => {
@@ -439,6 +584,31 @@ test("experience chapter links reach the record and scrolling over the scene mov
     await first.click();
     await expect(page).toHaveURL(new RegExp(`${target}$`));
     await expect(page.locator(target!)).toBeVisible();
+    const stage = page.locator("[data-experience-stage]");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    await stage.scrollIntoViewIfNeeded();
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    const bounds = await stage.boundingBox();
+    expect(bounds).not.toBeNull();
+    await page.mouse.move(
+        bounds!.x + bounds!.width / 2,
+        bounds!.y + bounds!.height / 2,
+    );
+    const before = await page.evaluate(() => window.scrollY);
+    await page.mouse.wheel(0, 300);
+    await expect
+        .poll(() => page.evaluate(() => window.scrollY))
+        .toBeGreaterThan(before);
+});
+
+test("experience remains scrollable over the visual on a narrow screen", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/resume");
     const stage = page.locator("[data-experience-stage]");
     const supported = await page.evaluate(() =>
         Boolean(document.createElement("canvas").getContext("webgl2")),
@@ -514,7 +684,7 @@ test("ordinary articles do not download the orbital renderer or maps", async ({
     page.on("request", (request) => {
         const url = request.url();
         if (
-            /\/images\/trajectory\/|\/three\.module\.|\/OrbitControls\.|\/ExperienceVisual\.|\/HeroVisual\./i.test(
+            /\/images\/trajectory\/|\/models\/nasa-perseverance\.glb|\/three\/draco\/|\/three\.module\.|\/GLTFLoader\.|\/DRACOLoader\.|\/OrbitControls\.|\/ExperienceVisual\.|\/HeroVisual\./i.test(
                 url,
             )
         )

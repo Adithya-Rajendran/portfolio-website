@@ -1,4 +1,5 @@
 ---
+import TechnicalStudy from "../../components/TechnicalStudy.astro";
 import Base from "../../layouts/Base.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
 import { getAllProjects, getProfile } from "../../lib/sanity";
@@ -6,11 +7,18 @@ const [projects, profile] = await Promise.all([getAllProjects(), getProfile()]);
 ---
 
 <Base title="Projects" pageClass="projects-page">
-    <p class="eyebrow">Selected work / Projects</p>
-    <h1>Projects</h1>
-    {profile?.projectsIntro && (
-        <p class="page-intro">{profile.projectsIntro}</p>
-    )}
+    <div class="projects-intro-grid">
+        <div>
+            <p class="eyebrow">Selected work / Projects</p>
+            <h1>Projects</h1>
+            {profile?.projectsIntro && (
+                <p class="page-intro">{profile.projectsIntro}</p>
+            )}
+        </div>
+        <div class="secondary-illustration projects-intro-art">
+            <TechnicalStudy variant="network" />
+        </div>
+    </div>
     <ul class="project-grid" id="projects">
         {projects.map((project, index) => (
             <ProjectCard project={project} index={index} heading="h2" />
