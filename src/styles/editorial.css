@@ -100,6 +100,10 @@
 .editorial-article .prose {
     font-size: 1.02rem;
     line-height: 1.85;
+    overflow-wrap: anywhere;
+}
+.editorial-article .prose pre {
+    overflow-wrap: normal;
 }
 .editorial-article .prose :is(h2, h3, h4) {
     scroll-margin-top: 1.5rem;
