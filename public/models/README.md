@@ -14,3 +14,7 @@ Ground photography: Poly Haven, [Rocks Ground 06](https://polyhaven.com/a/rocks_
 The lunar rail exports `launch_start` and `launch_exit` anchors for the browser's repeating satellite departure. The carriage, deployable satellite and fading trajectory are original Three.js geometry in `src/scripts/lunar-launch.ts`. Terrain has smooth normals, broad rolling slopes and a graded settlement area. The browser conforms the models to the Moon/Mars sphere and keeps them attached during the orbital descent. The v2 districts add annular habitats, research towers, elevated transit, illuminated cargo berths and a larger Martian biosphere. Scale and architecture are illustrative.
 
 The scene geometry follows the repository's MIT license. The bundled Draco decoder is Apache-2.0; see `/draco/LICENSE`.
+
+## Homepage rover
+
+`home-rover-v1.glb` is an adapted, posed and compressed NASA/JPL-Caltech Mars 2020 Perseverance model. It is an illustrative depiction, with no implied affiliation or endorsement. See `assets/scenes/models/README.md` for the source and acknowledgment. The source Blender scene and export script are retained in the repository; the surrounding homepage landscape is original Three.js geometry.

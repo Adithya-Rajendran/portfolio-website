@@ -92,40 +92,190 @@ test("home's decorative scene starts automatically and respects reduced motion",
     await expect(page.locator("[data-home-poster]")).toBeHidden();
 });
 
-test("home uses the finished Blender scene without downloading authoring models", async ({
-    page,
-}) => {
+test("home loads the native rover scene", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     const urls: string[] = [];
+    const errors: string[] = [];
     page.on("request", (request) => urls.push(request.url()));
+    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("console", (message) => {
+        if (message.type() === "error") errors.push(message.text());
+    });
     await page.goto("/");
-    const supported = await page.evaluate(() =>
-        Boolean(document.createElement("canvas").getContext("webgl2")),
-    );
-    test.skip(!supported, "WebGL2 is unavailable in this browser");
     const stage = page.locator("[data-home-stage]");
-    await expect(stage).toHaveAttribute("data-artwork", "blender", {
+    await expect(stage).toHaveAttribute("data-artwork", "rover-3d", {
         timeout: 30000,
     });
     expect(
-        urls.some((url) => url.includes("/images/scenes/horizon-v1.webp")),
-    ).toBe(true);
-    expect(urls.some((url) => /\.glb|\/three\/draco\//.test(url))).toBe(false);
-    expect(
-        urls.some((url) =>
-            url.includes("/images/scenes/horizon-depth-v1.webp"),
+        urls.some(
+            (url) => new URL(url).pathname === "/models/home-rover-v1.glb",
         ),
     ).toBe(true);
+    expect(errors).toEqual([]);
+});
+
+test("home scene follows the mouse, returns to center and freezes motion", async ({
+    page,
+}) => {
+    test.setTimeout(150_000);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/");
+    const stage = page.locator("[data-home-stage]");
+    const hero = page.locator(".home-hero");
+    const motion = page.locator("[data-home-motion]");
+    await expect(stage).toHaveAttribute("data-artwork", "rover-3d", {
+        timeout: 60000,
+    });
+    const box = await hero.boundingBox();
+    expect(box).not.toBeNull();
+    if (!box) throw new Error("Home hero has no bounds");
+    await page.mouse.move(box.x + box.width * 0.85, box.y + box.height * 0.3);
+    await expect
+        .poll(async () => Number(await stage.getAttribute("data-view-x")), {
+            timeout: 15000,
+        })
+        .toBeGreaterThan(0.2);
+    await page.mouse.move(0, 0);
+    await expect
+        .poll(
+            async () =>
+                Math.abs(Number(await stage.getAttribute("data-view-x"))),
+            { timeout: 45000 },
+        )
+        .toBeLessThan(0.05);
+    await motion.click();
+    await expect(stage).toHaveAttribute("data-state", "paused");
+    const paused = await stage.getAttribute("data-view-x");
+    await page.mouse.move(box.x + box.width * 0.85, box.y + box.height * 0.3);
+    await page.waitForTimeout(700);
+    expect(await stage.getAttribute("data-view-x")).toBe(paused);
+    await motion.click();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(stage).toHaveAttribute("data-state", "paused");
+    const reduced = await stage.getAttribute("data-view-x");
+    await page.mouse.move(box.x + box.width * 0.15, box.y + box.height * 0.7);
+    await page.waitForTimeout(700);
+    expect(await stage.getAttribute("data-view-x")).toBe(reduced);
+});
+
+for (const width of [320, 390, 768, 1440]) {
+    test(`home remains stable while the rover loads at ${width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.emulateMedia({ reducedMotion: "reduce" });
+        let release!: () => void;
+        const blocked = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        let requested!: () => void;
+        const requestSeen = new Promise<void>((resolve) => {
+            requested = resolve;
+        });
+        await page.route("**/models/home-rover-v1.glb", async (route) => {
+            requested();
+            await blocked;
+            await route.continue();
+        });
+        await page.goto("/", { waitUntil: "domcontentloaded" });
+        await requestSeen;
+        const hero = page.locator(".home-hero");
+        const heading = page.getByRole("heading", {
+            level: 1,
+            name: "Building toward the unknown.",
+        });
+        await expect(page.locator("[data-home-poster]")).toBeVisible();
+        const before = await hero.boundingBox();
+        const headingBefore = await heading.boundingBox();
+        release();
+        await expect(page.locator("[data-home-stage]")).toHaveAttribute(
+            "data-artwork",
+            "rover-3d",
+            { timeout: 30000 },
+        );
+        expect(await hero.boundingBox()).toEqual(before);
+        expect(await heading.boundingBox()).toEqual(headingBefore);
+        await expect(
+            page.getByRole("link", { name: "Explore the work" }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole("link", { name: "Enter orbit" }),
+        ).toBeVisible();
+        const dimensions = await page.evaluate(() => ({
+            width: document.documentElement.clientWidth,
+            scroll: document.documentElement.scrollWidth,
+        }));
+        expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width + 1);
+    });
+}
+
+test("home recovers when a page is restored while the rover is loading", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    let release!: () => void;
+    const blocked = new Promise<void>((resolve) => {
+        release = resolve;
+    });
+    let requested!: () => void;
+    const requestSeen = new Promise<void>((resolve) => {
+        requested = resolve;
+    });
+    await page.route("**/models/home-rover-v1.glb", async (route) => {
+        requested();
+        await blocked;
+        await route.continue();
+    });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await requestSeen;
+    await page.evaluate(() => {
+        window.dispatchEvent(
+            new PageTransitionEvent("pagehide", { persisted: true }),
+        );
+        window.dispatchEvent(
+            new PageTransitionEvent("pageshow", { persisted: true }),
+        );
+    });
+    release();
+    const stage = page.locator("[data-home-stage]");
+    await expect(stage).toHaveAttribute("data-artwork", "rover-3d", {
+        timeout: 30000,
+    });
+    await expect(stage.locator("canvas")).toHaveCount(1);
+    await expect(page.locator("[data-home-poster]")).toBeHidden();
+});
+
+test("home keeps its poster and content if the rover model fails", async ({
+    page,
+}) => {
+    await page.route("**/models/home-rover-v1.glb", (route) => route.abort());
+    await page.goto("/");
+    await expect(page.locator("[data-home-stage]")).toHaveAttribute(
+        "data-state",
+        "error",
+        { timeout: 30000 },
+    );
+    await expect(page.locator("[data-home-poster]")).toBeVisible();
+    await expect(
+        page.getByRole("heading", {
+            level: 1,
+            name: "Building toward the unknown.",
+        }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole("link", { name: "Explore the work" }),
+    ).toBeVisible();
 });
 
 test("home scene motion can be paused and resumed", async ({ page }) => {
+    test.setTimeout(120_000);
     await page.goto("/");
     const supported = await page.evaluate(() =>
         Boolean(document.createElement("canvas").getContext("webgl2")),
     );
     test.skip(!supported, "WebGL2 is unavailable in this browser");
     const stage = page.locator("[data-home-stage]");
-    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 60000 });
     await expect(stage).toHaveAttribute("data-state", "running");
     const motion = page.locator("[data-home-motion]");
     await motion.click();
@@ -138,6 +288,7 @@ test("home scene motion can be paused and resumed", async ({ page }) => {
 test("home follows live motion preferences and preserves a manual pause", async ({
     page,
 }) => {
+    test.setTimeout(120_000);
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto("/");
     const supported = await page.evaluate(() =>
@@ -146,7 +297,7 @@ test("home follows live motion preferences and preserves a manual pause", async 
     test.skip(!supported, "WebGL2 is unavailable in this browser");
     const stage = page.locator("[data-home-stage]");
     const motion = page.locator("[data-home-motion]");
-    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 60000 });
     await expect(stage).toHaveAttribute("data-state", "running");
     await page.emulateMedia({ reducedMotion: "reduce" });
     await expect(motion).toBeDisabled();
@@ -370,7 +521,7 @@ test("article, CV and contact fallback are readable without JavaScript", async (
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/#article-contents$/);
     await expect(summary).toBeVisible();
-    for (const width of [320, 390, 1440]) {
+    for (const width of [320, 390, 768, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         await expect(
             article.getByRole("heading", { name: "Fixture section in a post" }),

@@ -1,39 +1,42 @@
-# Robotics landscape and mechanical studies
+# Interactive rover landscape
 
-The current homepage uses a Blender/Cycles render of a grounded rover on an illustrative Mars landscape. The user requested this direct design pass after the procedural scene fell short of the planning image. The final scene removes the oversized background planet: its scale and local shadow made the composition physically incoherent.
+The homepage is a real Three.js scene: a detailed NASA/JPL-Caltech Perseverance rover on a smooth, textured, illustrative Mars landscape. A small perspective-camera movement follows the mouse within the hero, with exponential easing and a gentle return to center on leaving. The rover, rocks and distant ridgelines have independent parallax. The scene is illustrative, not hardware built by the portfolio owner or a mission photograph.
 
-The main scene combines NASA/JPL-Caltech's Perseverance geometry, scanned CC0 rock material, original terrain, atmospheric dust and consistent low sunlight. The camera and antenna on About and Contact are original mechanical studies modeled in Blender. They are illustrative, not hardware built by the portfolio owner.
+The model is posed in Blender, baked into a static mesh, batched by material, and Draco-compressed to approximately 2.6 MB. The landscape, rock instances, dusty horizon, sky, lights and camera are built in TypeScript. Small rover lenses use reflective materials without a costly full-scene refraction pass. The existing amber, terracotta and charcoal palette carries into the lighting.
 
-The browser displays the finished compressed artwork immediately. A small Three.js shader uses a matching depth map for gentle automatic camera drift. Pause, reduced-motion preferences, visibility and context-loss fallback are supported. Visitors do not download Blender, the source model or Draco decoders. The experience page remains a separate interactive, scroll-driven 3D scene.
+A matching rendered poster appears immediately while the model loads and remains available without JavaScript, on loading failure or after graphics-context loss. Once ready, the native 3D scene replaces it. Touch devices retain natural scrolling and use a centered composition. Pause and the system reduced-motion setting freeze the camera. Rendering stops offscreen, in hidden tabs and when the pointer-driven camera settles; shadows render once. Graphics resources and listeners are released on page exit, including exit during asset loading.
 
-## Editable sources
+## Reproducible sources
 
-- `scripts/artwork/render-horizon.py`: deterministic terrain, imported rover pose, lighting, atmosphere, camera and color/depth output.
-- `scripts/artwork/render-studies.py`: original stereo camera and antenna geometry, materials and lighting.
-- `assets/scenes/horizon.blend`: packed, editable final homepage scene.
-- `assets/scenes/optics-study.blend` and `assets/scenes/signal-study.blend`: editable mechanical studies.
-- `assets/scenes/models/`: original NASA source and provenance.
+- `src/scripts/home-landscape.ts`: terrain, materials, lighting, model loading and responsive camera composition.
+- `src/scripts/home-visual.ts`: pointer easing, loading, motion preferences, visibility and resource lifecycle.
+- `scripts/artwork/prepare-home-rover.py`: export the posed rover from the editable Blender source.
+- `scripts/artwork/prepare-home-materials.mjs`: prepare the compact tiling terrain textures.
+- `scripts/artwork/capture-home-posters.mjs`: capture the actual 3D scene without its HTML overlays and encode fallback posters.
+- `assets/scenes/horizon.blend`: packed Blender 4.5.4 source for the rover's deployed pose.
+- `assets/scenes/models/`: original NASA model and provenance.
 - `assets/scenes/textures/`: Poly Haven Rocks Ground 06 source maps.
-- `public/images/scenes/`: optimized website deliveries and public credits.
+- `public/models/home-rover-v1.glb`: compressed browser delivery.
 
-Built with Blender 4.5.4 LTS, downloaded from Blender's official mirror and checked against its published SHA-256. These scenes use Cycles on the CPU and do not depend on an Isaac Sim installation or access to the Ascent.
-
-From the repository root, using a local Blender executable:
+From the repository root:
 
 ```sh
-blender -b --python scripts/artwork/render-horizon.py
-blender -b --python scripts/artwork/render-studies.py
-node scripts/artwork/encode-scenes.mjs
+blender -b --python scripts/artwork/prepare-home-rover.py
+node scripts/artwork/prepare-home-materials.mjs
+ARTWORK_URL=http://127.0.0.1:4321 node scripts/artwork/capture-home-posters.mjs
 ```
 
-The rendering scripts write to `/tmp/portfolio-artwork`. The homepage script accepts `-- --preview` for a smaller composition check. Re-render, inspect the actual output and encode it before deployment. Delivered filenames are versioned because public assets are cached immutably; increment their version when replacing published images.
+Start the local site before capturing posters. Review the actual desktop and mobile browser renders before deployment. Public asset filenames are versioned because they are cached immutably; increment their version when replacing published assets.
+
+The earlier `render-horizon.py`, `render-studies.py` and `encode-scenes.mjs` scripts retain the Blender/Cycles authoring workflow. The old depth-map shader is no longer used by the homepage. Projects, Writing, About and Contact now have their own native Three.js studies; the experience page remains a separate scroll-driven orbital scene.
 
 ## Sources and credit
 
 - [NASA/JPL-Caltech Perseverance model](https://science.nasa.gov/3d-resources/mars-2020-perseverance-rover/), adapted pose and neutral arm graphics; [NASA media guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). No affiliation or endorsement is implied.
 - [Rocks Ground 06](https://polyhaven.com/a/rocks_ground_06), Poly Haven, [CC0](https://polyhaven.com/license). Adapted color, scale and bump mapping.
-- Manrope font: [Google Fonts source](https://github.com/google/fonts/tree/main/ofl/manrope), SIL Open Font License included beside the font.
+- Milky Way photography: ESO/S. Brunier, as credited with the orbital texture assets.
+- The locally hosted Draco decoder is distributed under Apache-2.0; see `public/draco/LICENSE`.
 
 ## Planning references
 
-`assets/artwork/robotics-horizon-v1.png` and `assets/artwork/experience-flow-v1.png` are earlier image-generation references. They are retained for art direction and are not served as production artwork. The final homepage follows the user's later request to build its visuals in Blender; its environment is deliberately more physically coherent than the speculative planet backdrop in the concept.
+`assets/artwork/robotics-horizon-v1.png` and `assets/artwork/experience-flow-v1.png` are earlier image-generation references. They are retained for art direction and are not served as production artwork. The current landscape removes the physically incoherent oversized background planet from the early concept.

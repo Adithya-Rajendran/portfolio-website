@@ -453,6 +453,7 @@ body > footer {
 }
 .home-hero__veil {
     background:
+        linear-gradient(180deg, #101719 0, transparent 80px),
         linear-gradient(
             90deg,
             #0b1215f5 0%,
@@ -697,12 +698,14 @@ body > footer {
         font-size: 0.69rem;
     }
     .home-hero__veil {
-        background: linear-gradient(
-            to bottom,
-            transparent 170px,
-            #101719cf 255px,
-            #101719 310px
-        );
+        background:
+            linear-gradient(to bottom, #101719 0, transparent 65px),
+            linear-gradient(
+                to bottom,
+                transparent 170px,
+                #101719cf 255px,
+                #101719 310px
+            );
     }
     .home-hero__motion {
         top: 1rem;
@@ -724,6 +727,35 @@ body > footer {
     }
     .contact-signal img {
         max-height: 200px;
+    }
+}
+@media (min-width: 651px) and (max-width: 1100px) and (max-aspect-ratio: 4/3) {
+    .home-hero {
+        min-height: 0;
+        display: block;
+    }
+    .home-hero__content {
+        padding: 350px 0 2.5rem;
+    }
+    .home-hero__veil {
+        background:
+            linear-gradient(to bottom, #101719 0, transparent 80px),
+            linear-gradient(
+                to bottom,
+                transparent 270px,
+                #101719cf 360px,
+                #101719 420px
+            );
+    }
+    .home-hero__motion {
+        top: 1rem;
+        bottom: auto;
+        right: 1.5rem;
+    }
+    .home-hero__caption {
+        top: 320px;
+        bottom: auto;
+        right: 1.5rem;
     }
 }
 @media print {

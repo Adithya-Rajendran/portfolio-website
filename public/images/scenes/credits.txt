@@ -1,6 +1,6 @@
 EXPLORATORY LANDSCAPES & MECHANICAL STUDIES
 
-Homepage: an illustrative Mars landscape assembled, modeled, lit and rendered in Blender/Cycles for this portfolio. It is not a mission photograph or hardware built by the portfolio owner.
+Homepage: an interactive illustrative Mars landscape with original Three.js terrain, lighting and camera motion, and a rover posed and prepared in Blender. It is not a mission photograph or hardware built by the portfolio owner.
 
 Rover geometry: NASA/JPL-Caltech, Mars 2020 Perseverance Rover. Adapted pose and neutral arm graphics. No affiliation or endorsement is implied.
 https://science.nasa.gov/3d-resources/mars-2020-perseverance-rover/
@@ -12,4 +12,9 @@ https://polyhaven.com/license
 
 Terrain, composition, lighting, stereo camera and antenna studies: original Blender scenes created for this portfolio. The camera and antenna are illustrative design studies.
 
-The website uses the finished rendered artwork with a depth map for gentle camera motion. The experience page's planets are separate interactive Three.js scenes.
+The homepage uses real 3D geometry with gentle pointer-driven perspective movement. The loading and fallback images are captured from this same scene. Projects, Writing, About and Contact feature original Three.js mechanical studies; the experience page has separate interactive orbital scenes.
+
+Milky Way photography: ESO/S. Brunier, CC BY 4.0. Adapted projection, color and brightness.
+https://www.eso.org/public/images/eso0932a/
+https://www.eso.org/public/outreach/copyright/
+Full sky provenance: /images/trajectory/README.md

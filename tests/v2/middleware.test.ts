@@ -18,14 +18,14 @@ function directive(csp: string, name: string): string {
 }
 
 describe("experience asset security policy", () => {
-    it.each(["/resume", "/resume/"])(
+    it.each(["/", "/resume", "/resume/"])(
         "allows embedded model blob fetches on %s",
         async (path) => {
             const csp = await policy(path);
             expect(directive(csp, "connect-src").split(" ")).toContain("blob:");
         },
     );
-    it.each(["/", "/about", "/blog/example", "/resume/view", "/resume-extra"])(
+    it.each(["/about", "/blog/example", "/resume/view", "/resume-extra"])(
         "keeps blob connections disallowed on %s",
         async (path) => {
             const csp = await policy(path);

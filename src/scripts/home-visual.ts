@@ -1,159 +1,168 @@
 import type * as Three from "three";
 
-// Blender supplies the lighting and terrain. This small depth pass adds a quiet
-// camera drift without replacing the finished composition with a different scene.
 const wrapper = document.querySelector<HTMLElement>("[data-home-visual]");
 const stage = wrapper?.querySelector<HTMLElement>("[data-home-stage]");
 const poster = wrapper?.querySelector<HTMLElement>("[data-home-poster]");
-const photograph = poster?.querySelector<HTMLImageElement>("img");
+const hero = wrapper?.closest<HTMLElement>(".home-hero");
 const motionButton =
     document.querySelector<HTMLButtonElement>("[data-home-motion]");
+const hint = document.querySelector<HTMLElement>("[data-home-hint]");
 
-if (wrapper && stage && poster && photograph) {
+if (wrapper && stage && poster && hero) {
     let cleanup: (() => void) | undefined;
     let loading = false;
     let generation = 0;
     let pageActive = true;
     let paused = false;
     const initialize = async () => {
-        if (cleanup || loading) return;
+        if (cleanup || loading || !pageActive) return;
         loading = true;
         const ticket = ++generation;
         let renderer: Three.WebGLRenderer | undefined;
-        const resources: Three.Texture[] = [];
+        let teardown: (() => void) | undefined;
         try {
-            await photograph.decode();
-            const T = await import("three");
-            if (ticket !== generation) return;
+            const [T, { makeHomeLandscape }] = await Promise.all([
+                import("three"),
+                import("./home-landscape"),
+            ]);
+            if (ticket !== generation || !pageActive) return;
             const render = new T.WebGLRenderer({
-                antialias: false,
+                antialias: true,
                 alpha: false,
                 powerPreference: "low-power",
             });
             renderer = render;
             render.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
             render.outputColorSpace = T.SRGBColorSpace;
-            const loader = new T.TextureLoader();
-            const mobile = matchMedia("(max-width: 650px)");
-            const source = await loader.loadAsync(photograph.currentSrc);
-            resources.push(source);
-            source.colorSpace = T.SRGBColorSpace;
-            const depth = await loader.loadAsync(
-                mobile.matches
-                    ? "/images/scenes/horizon-depth-mobile-v1.webp"
-                    : "/images/scenes/horizon-depth-v1.webp",
-            );
-            resources.push(depth);
-            if (ticket !== generation) {
-                resources.forEach((t) => t.dispose());
-                render.dispose();
-                return;
-            }
-            const scene = new T.Scene();
-            const camera = new T.OrthographicCamera(-1, 1, 1, -1, 0, 2);
-            camera.position.z = 1;
-            const uniforms = {
-                sceneImage: { value: source },
-                depthImage: { value: depth },
-                crop: { value: new T.Vector2(1, 1) },
-                shift: { value: new T.Vector2(0, 0) },
-                center: { value: new T.Vector2(0.5, 0.5) },
-            };
-            const material = new T.ShaderMaterial({
-                uniforms,
-                vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.);}`,
-                fragmentShader: `uniform sampler2D sceneImage,depthImage;uniform vec2 crop,shift,center;varying vec2 vUv;
-                void main(){vec2 uv=(vUv-.5)*crop*.986+center;float depth=texture2D(depthImage,uv).r;uv+=shift*(.3+(1.-depth)*.7);gl_FragColor=vec4(texture2D(sceneImage,clamp(uv,vec2(.001),vec2(.999))).rgb,1.);
-                #include <colorspace_fragment>
-                }`,
-                depthTest: false,
-                depthWrite: false,
+            render.toneMapping = T.ACESFilmicToneMapping;
+            render.toneMappingExposure = 1;
+            render.shadowMap.enabled = true;
+            render.shadowMap.type = T.PCFShadowMap;
+            const landscape = makeHomeLandscape(render);
+            let endLifetime: () => void = () => {};
+            const lifetime = new Promise<void>((resolve) => {
+                endLifetime = resolve;
             });
-            const geometry = new T.PlaneGeometry(2, 2);
-            scene.add(new T.Mesh(geometry, material));
-            stage.appendChild(render.domElement);
-            stage.hidden = false;
             let disposed = false,
+                ready = false,
                 frame = 0,
-                visible = true,
-                elapsed = 0,
-                lastTime = 0;
+                visible = true;
+            let lastTime = 0,
+                lastDraw = 0;
             const pointer = new T.Vector2(),
-                drift = new T.Vector2();
+                current = new T.Vector2();
             const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+            const finePointer = matchMedia(
+                "(hover: hover) and (pointer: fine)",
+            );
             const updateButton = () => {
-                if (!motionButton) return;
-                motionButton.hidden = false;
-                motionButton.disabled = reduced.matches;
-                motionButton.textContent = reduced.matches
-                    ? "Motion reduced by system"
-                    : paused
-                      ? "Resume motion"
-                      : "Pause motion";
-                motionButton.setAttribute("aria-pressed", String(paused));
+                if (motionButton) {
+                    motionButton.hidden = false;
+                    motionButton.disabled = reduced.matches;
+                    motionButton.textContent = reduced.matches
+                        ? "Motion reduced by system"
+                        : paused
+                          ? "Resume motion"
+                          : "Pause motion";
+                    motionButton.setAttribute("aria-pressed", String(paused));
+                }
+                if (hint)
+                    hint.hidden =
+                        reduced.matches || paused || !finePointer.matches;
             };
-            const draw = () => render.render(scene, camera);
+            const draw = () => {
+                render.render(landscape.scene, landscape.camera);
+                // All objects and lights are static. Only the camera moves, so
+                // one shadow pass is sufficient for the lifetime of the scene.
+                render.shadowMap.autoUpdate = false;
+            };
+            const pose = () => {
+                landscape.position(
+                    stage.clientWidth / stage.clientHeight,
+                    current.x,
+                    current.y,
+                    wrapper.clientHeight <= 420,
+                );
+                stage.dataset.viewX = current.x.toFixed(4);
+                stage.dataset.viewY = current.y.toFixed(4);
+            };
             const tick = (time: number) => {
                 frame = 0;
-                if (disposed || !visible || document.hidden) {
+                if (disposed || !ready || !visible || document.hidden) {
                     lastTime = 0;
                     return;
                 }
-                updateButton();
                 const still = reduced.matches || paused;
+                if (!still && time - lastDraw < 1000 / 30) {
+                    frame = requestAnimationFrame(tick);
+                    return;
+                }
+                // Camera easing follows elapsed time even on a slow renderer;
+                // visibility changes reset the clock before it can jump.
+                const delta = Math.min((time - (lastTime || time)) / 1000, 0.5);
+                lastTime = time;
+                lastDraw = time;
                 stage.dataset.state = still ? "paused" : "running";
                 if (!still) {
-                    const delta = Math.min(
-                        (time - (lastTime || time)) / 1000,
-                        0.1,
-                    );
-                    elapsed += delta;
-                    lastTime = time;
-                    drift.set(
-                        Math.sin(elapsed * 0.12) * 0.003 + pointer.x * 0.002,
-                        Math.cos(elapsed * 0.09) * 0.0015 + pointer.y * 0.001,
-                    );
-                    uniforms.shift.value.lerp(drift, 1 - Math.exp(-delta * 3));
-                } else lastTime = 0;
+                    current.lerp(pointer, 1 - Math.exp(-delta * 3.8));
+                    pose();
+                }
                 draw();
-                if (!still) frame = requestAnimationFrame(tick);
+                // The image rests when the camera settles. Pointer movement
+                // wakes it again without spending GPU time on unchanged frames.
+                if (!still && current.distanceToSquared(pointer) > 0.000001)
+                    frame = requestAnimationFrame(tick);
+                else lastTime = 0;
             };
             const wake = () => {
-                if (!frame && visible && !document.hidden && !disposed)
+                if (!frame && ready && visible && !document.hidden && !disposed)
                     frame = requestAnimationFrame(tick);
             };
             const sync = () => {
-                if (frame) cancelAnimationFrame(frame);
+                cancelAnimationFrame(frame);
                 frame = 0;
+                lastTime = 0;
                 updateButton();
                 wake();
             };
             const resize = () => {
-                const width = stage.clientWidth,
-                    height = stage.clientHeight;
-                if (!width || !height) return;
-                render.setSize(width, height, false);
-                const aspect = width / height,
-                    imageAspect =
-                        photograph.naturalWidth / photograph.naturalHeight;
-                uniforms.crop.value.set(
-                    Math.min(1, aspect / imageAspect),
-                    Math.min(1, imageAspect / aspect),
-                );
-                uniforms.center.value.set(
-                    0.5 + (1 - uniforms.crop.value.x) * 0.22,
-                    0.5,
-                );
+                if (
+                    !ready ||
+                    disposed ||
+                    !stage.clientWidth ||
+                    !stage.clientHeight
+                )
+                    return;
+                render.setSize(stage.clientWidth, stage.clientHeight, false);
+                pose();
                 draw();
             };
             const onPointer = (event: PointerEvent) => {
-                if (event.pointerType !== "mouse" || reduced.matches || paused)
+                if (
+                    event.pointerType !== "mouse" ||
+                    !finePointer.matches ||
+                    reduced.matches ||
+                    paused
+                )
                     return;
-                const rect = stage.getBoundingClientRect();
+                const rect = hero.getBoundingClientRect();
                 pointer.set(
-                    (event.clientX - rect.left) / rect.width - 0.5,
-                    0.5 - (event.clientY - rect.top) / rect.height,
+                    T.MathUtils.clamp(
+                        ((event.clientX - rect.left) / rect.width - 0.5) * 2,
+                        -1,
+                        1,
+                    ),
+                    T.MathUtils.clamp(
+                        (0.5 - (event.clientY - rect.top) / rect.height) * 2,
+                        -1,
+                        1,
+                    ),
                 );
+                wake();
+            };
+            const leave = () => {
+                pointer.set(0, 0);
+                wake();
             };
             const toggle = () => {
                 paused = !paused;
@@ -161,7 +170,7 @@ if (wrapper && stage && poster && photograph) {
             };
             const visibility = () => {
                 if (document.hidden) {
-                    if (frame) cancelAnimationFrame(frame);
+                    cancelAnimationFrame(frame);
                     frame = 0;
                     lastTime = 0;
                     stage.dataset.state = "paused";
@@ -170,24 +179,17 @@ if (wrapper && stage && poster && photograph) {
             const observer = new IntersectionObserver((items) => {
                 visible = items[0]?.isIntersecting ?? false;
                 if (!visible) {
-                    if (frame) cancelAnimationFrame(frame);
+                    cancelAnimationFrame(frame);
                     frame = 0;
                     lastTime = 0;
                     stage.dataset.state = "paused";
                 } else wake();
             });
-            observer.observe(stage);
             const sizes = new ResizeObserver(resize);
-            sizes.observe(stage);
             const lost = (event: Event) => {
                 event.preventDefault();
-                cleanup?.();
+                teardown?.();
                 cleanup = undefined;
-            };
-            const responsive = () => {
-                cleanup?.();
-                cleanup = undefined;
-                void initialize();
             };
             let previousMotion = reduced.matches;
             const preferenceTimer = window.setInterval(() => {
@@ -197,48 +199,74 @@ if (wrapper && stage && poster && photograph) {
                 }
             }, 500);
             motionButton?.addEventListener("click", toggle);
-            window.addEventListener("pointermove", onPointer, {
-                passive: true,
-            });
+            hero.addEventListener("pointermove", onPointer, { passive: true });
+            hero.addEventListener("pointerleave", leave);
             document.addEventListener("visibilitychange", visibility);
             reduced.addEventListener("change", sync);
-            mobile.addEventListener("change", responsive);
+            finePointer.addEventListener("change", sync);
             render.domElement.addEventListener("webglcontextlost", lost);
-            cleanup = () => {
+            teardown = () => {
+                if (disposed) return;
                 disposed = true;
+                endLifetime();
                 cancelAnimationFrame(frame);
                 clearInterval(preferenceTimer);
                 observer.disconnect();
                 sizes.disconnect();
                 motionButton?.removeEventListener("click", toggle);
-                window.removeEventListener("pointermove", onPointer);
+                hero.removeEventListener("pointermove", onPointer);
+                hero.removeEventListener("pointerleave", leave);
                 document.removeEventListener("visibilitychange", visibility);
                 reduced.removeEventListener("change", sync);
-                mobile.removeEventListener("change", responsive);
+                finePointer.removeEventListener("change", sync);
                 render.domElement.removeEventListener("webglcontextlost", lost);
-                geometry.dispose();
-                material.dispose();
-                resources.forEach((t) => t.dispose());
+                landscape.dispose();
                 render.dispose();
                 render.domElement.remove();
                 stage.hidden = true;
                 poster.hidden = false;
                 stage.dataset.state = "paused";
                 if (motionButton) motionButton.hidden = true;
+                if (hint) hint.hidden = true;
             };
+            cleanup = teardown;
+            await Promise.race([landscape.ready, lifetime]);
+            if (disposed || ticket !== generation || !pageActive) {
+                teardown();
+                return;
+            }
+            landscape.position(
+                wrapper.clientWidth / wrapper.clientHeight,
+                0,
+                0,
+                wrapper.clientHeight <= 420,
+            );
+            await Promise.race([
+                render.compileAsync(landscape.scene, landscape.camera),
+                lifetime,
+            ]);
+            if (disposed || ticket !== generation || !pageActive) {
+                teardown();
+                return;
+            }
+            ready = true;
+            stage.appendChild(render.domElement);
+            stage.hidden = false;
             resize();
             poster.hidden = true;
-            stage.dataset.artwork = "blender";
+            stage.dataset.artwork = "rover-3d";
+            observer.observe(stage);
+            sizes.observe(stage);
             sync();
         } catch {
-            cleanup?.();
-            cleanup = undefined;
-            resources.forEach((t) => t.dispose());
+            teardown?.();
             renderer?.dispose();
+            cleanup = undefined;
             stage.hidden = true;
             poster.hidden = false;
             stage.dataset.state = "error";
             if (motionButton) motionButton.hidden = true;
+            if (hint) hint.hidden = true;
         } finally {
             loading = false;
             if (ticket !== generation && pageActive) void initialize();
