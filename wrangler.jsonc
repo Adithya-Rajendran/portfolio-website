@@ -3,6 +3,17 @@
     "name": "portfolio-v2",
     "compatibility_date": "2026-11-01",
     "compatibility_flags": ["nodejs_compat"],
+    "workers_dev": true,
+    "keep_vars": true,
+    "routes": [
+        { "pattern": "adithya-rajendran.com", "custom_domain": true },
+        { "pattern": "www.adithya-rajendran.com", "custom_domain": true },
+    ],
+    "observability": {
+        "enabled": true,
+        "redact_query_string": true,
+        "logs": { "enabled": true },
+    },
     "ratelimits": [
         {
             "name": "CONTACT_RATE_LIMIT",
