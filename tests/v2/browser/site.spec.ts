@@ -794,3 +794,91 @@ test("ordinary articles do not download the orbital renderer or maps", async ({
     await page.waitForLoadState("networkidle");
     expect(sceneRequests).toEqual([]);
 });
+
+test("lunar launch moves and loops, freezes for motion settings, and stops after leaving", async ({
+    page,
+}) => {
+    test.setTimeout(300000);
+    await page.setViewportSize({ width: 1000, height: 700 });
+    await page.addInitScript(() =>
+        Object.defineProperty(navigator, "deviceMemory", {
+            configurable: true,
+            value: 4,
+        }),
+    );
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 30000,
+    });
+    await expect(stage).toHaveAttribute("data-view", "surface", {
+        timeout: 30000,
+    });
+    await expect(stage).toHaveAttribute("data-launch-state", "running", {
+        timeout: 90000,
+    });
+    const initialCycle = Number(await stage.getAttribute("data-launch-cycle"));
+    await expect(stage).toHaveAttribute("data-launch-phase", "accelerating", {
+        timeout: 60000,
+    });
+    const firstPosition = await stage.getAttribute("data-launch-position");
+    await expect
+        .poll(() => stage.getAttribute("data-launch-position"), {
+            timeout: 30000,
+        })
+        .not.toBe(firstPosition);
+    await expect
+        .poll(
+            async () => Number(await stage.getAttribute("data-launch-cycle")),
+            { timeout: 130000 },
+        )
+        .toBeGreaterThan(initialCycle);
+
+    await page.getByRole("button", { name: "Pause motion" }).click();
+    await expect(stage).toHaveAttribute("data-launch-state", "paused");
+    const pausedPosition = await stage.getAttribute("data-launch-position");
+    const pausedCycle = await stage.getAttribute("data-launch-cycle");
+    await page.waitForTimeout(1200);
+    expect(await stage.getAttribute("data-launch-position")).toBe(
+        pausedPosition,
+    );
+    expect(await stage.getAttribute("data-launch-cycle")).toBe(pausedCycle);
+
+    await page.getByRole("button", { name: "Resume motion" }).click();
+    await expect(stage).toHaveAttribute("data-launch-state", "running");
+    await expect
+        .poll(() => stage.getAttribute("data-launch-position"), {
+            timeout: 30000,
+        })
+        .not.toBe(pausedPosition);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(
+        page.getByRole("button", { name: "Motion reduced by system" }),
+    ).toBeDisabled();
+    await expect(stage).toHaveAttribute("data-launch-state", "paused");
+    const reducedPosition = await stage.getAttribute("data-launch-position");
+    const reducedCycle = await stage.getAttribute("data-launch-cycle");
+    await page.waitForTimeout(1200);
+    expect(await stage.getAttribute("data-launch-position")).toBe(
+        reducedPosition,
+    );
+    expect(await stage.getAttribute("data-launch-cycle")).toBe(reducedCycle);
+    await page.getByRole("button", { name: "Mars", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "mars", {
+        timeout: 30000,
+    });
+    await expect(stage).toHaveAttribute("data-launch-state", "inactive");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.waitForTimeout(1200);
+    expect(await stage.getAttribute("data-launch-position")).toBe(
+        reducedPosition,
+    );
+    expect(await stage.getAttribute("data-launch-cycle")).toBe(reducedCycle);
+});

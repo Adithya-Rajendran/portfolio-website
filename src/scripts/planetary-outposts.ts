@@ -5,8 +5,8 @@ import type * as Three from "three";
 const tours = {
     moon: [
         [
-            [90, 62, 140],
-            [-15, 5, -12],
+            [65, 110, 235],
+            [-5, 8, -12],
         ],
         [
             [-90, 40, 75],
@@ -23,8 +23,8 @@ const tours = {
     ],
     mars: [
         [
-            [105, 72, 150],
-            [-12, 6, -8],
+            [125, 88, 180],
+            [-12, 10, -8],
         ],
         [
             [-80, 35, 100],
@@ -102,10 +102,29 @@ export async function loadOutpost(world: "moon" | "mars", anisotropy: number) {
             const physical = material as Three.MeshStandardMaterial;
             if (physical.map) physical.map.anisotropy = anisotropy;
             if (material.name.includes("regolith")) {
+                mesh.renderOrder = -1;
+                material.userData.keepTransparent = true;
                 physical.roughness = 1;
                 physical.color.setHex(world === "moon" ? 0x959da7 : 0xc9a58b);
                 physical.bumpMap = physical.map;
-                physical.bumpScale = 0.0025;
+                physical.bumpScale = 0.0002;
+                physical.alphaTest = 0.01;
+                // Dissolve the distant ground into the shared sky rather than
+                // exposing the rectangular boundary of a finite terrain tile.
+                physical.onBeforeCompile = (shader) => {
+                    shader.vertexShader =
+                        "varying float vGroundRadius;\n" +
+                        shader.vertexShader.replace(
+                            "#include <begin_vertex>",
+                            "#include <begin_vertex>\nvGroundRadius = length((modelMatrix * vec4(position, 1.0)).xz);",
+                        );
+                    shader.fragmentShader =
+                        "varying float vGroundRadius;\n" +
+                        shader.fragmentShader.replace(
+                            "#include <color_fragment>",
+                            "#include <color_fragment>\ndiffuseColor.a *= 1.0 - smoothstep(1.5, 3.8, vGroundRadius);",
+                        );
+                };
             }
         }
     });
@@ -115,18 +134,20 @@ export async function loadOutpost(world: "moon" | "mars", anisotropy: number) {
 export function fadeObject(group: Three.Object3D, opacity: number) {
     group.traverse((o) => {
         const mesh = o as Three.Mesh;
-        if (!mesh.isMesh) return;
+        if (!mesh.isMesh && !(o as Three.Line).isLine) return;
         for (const material of Array.isArray(mesh.material)
             ? mesh.material
             : [mesh.material]) {
             material.userData.baseOpacity ??= material.opacity;
-            if (!material.transparent) {
-                material.transparent = true;
+            const effectiveOpacity = material.userData.baseOpacity * opacity;
+            const transparent =
+                effectiveOpacity < 0.995 || !!material.userData.keepTransparent;
+            if (material.transparent !== transparent) {
+                material.transparent = transparent;
                 material.needsUpdate = true;
             }
-            material.opacity = material.userData.baseOpacity * opacity;
-            material.depthWrite =
-                opacity > 0.995 && material.userData.baseOpacity > 0.995;
+            material.opacity = effectiveOpacity;
+            material.depthWrite = effectiveOpacity > 0.995;
         }
     });
 }

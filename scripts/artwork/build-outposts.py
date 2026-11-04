@@ -38,12 +38,16 @@ def beam(name,a,b,r,material):
     d=Vector(b)-Vector(a);o=cylinder(name,(Vector(a)+Vector(b))/2,r,d.length,material,vertices=12)
     o.rotation_euler=d.to_track_quat('Z','Y').to_euler();return o
 def terrain(world):
-    N=128;size=320
+    N=256;size=640
     def height(x,y):
-        base=noise.fractal(Vector((x*.025,y*.025,2)),1.1,2.1,4)*3
-        flat=1-math.exp(-((x/110)**8+(y/105)**8))
-        mountains=13*abs(math.sin(x*.023+1))*math.exp(-((y-110)/30)**2)
-        return (base+mountains)*flat
+        # Broad, continuously sloping landforms. The settled district is graded;
+        # fine regolith belongs in the material, not in spiky mesh displacement.
+        edge=math.sqrt(((x+16)/112)**2+((y-15)/112)**2)
+        blend=max(0,min(1,(edge-.72)/.55));blend=blend*blend*(3-2*blend)
+        base=noise.fractal(Vector((x*.009,y*.009,2)),1.1,2.1,2)*1.4
+        ridge=9*(.65+.35*math.sin(x*.017+1))*math.exp(-((y-125)/40)**2)
+        shoulder=4*math.exp(-((x+133)/42)**2-((y-15)/100)**2)
+        return (base+ridge+shoulder)*blend
     verts=[(-size/2+i*size/N,-size/2+j*size/N,height(-size/2+i*size/N,-size/2+j*size/N)) for j in range(N+1) for i in range(N+1)]
     faces=[]
     for j in range(N):
@@ -64,8 +68,9 @@ def terrain(world):
     for i in range(180):
         x=random.uniform(-140,140);y=random.uniform(-130,130)
         if abs(x)<65 and abs(y)<70:continue
-        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,radius=1,location=(x,y,height(x,y)))
-        o=finish(bpy.context.object,'Weathered boulder',rock);s=random.uniform(.3,2.5);o.scale=(s,s*.7,s*.5);o.rotation_euler=(random.random(),random.random(),random.random())
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,radius=1,location=(x,y,height(x,y)))
+        o=finish(bpy.context.object,'Weathered boulder',rock);s=random.uniform(.2,1.8);o.scale=(s,s*.7,s*.5);o.rotation_euler=(random.random(),random.random(),random.random())
+        for p in o.data.polygons:p.use_smooth=True
     return height
 
 def solar(x,y,rows=2,cols=4):
@@ -185,10 +190,13 @@ for world in ['moon','mars']:
         for x in [-74,-68,-62]:box('Workshop radiator',(x,-27,12.2),(4,22,.3),dark)
         dish(-73,68,13)
         solar(-89,70,2,5)
-        # Cargo mass driver: twin acceleration rails, repeated coil frames,
-        # service pylons and a container sled. The operational rail continues
+        # Cargo mass driver: twin acceleration rails and repeated coil frames.
+        # Named anchors keep the browser's animated payload exactly on the rail.
+        # The operational rail continues
         # beyond this architectural close-up; it is not an engineering blueprint.
-        a=Vector((43,-85,2.2));b=Vector((60,120,12));direction=(b-a).normalized();side=Vector((-direction.y,direction.x,0)).normalized()
+        a=Vector((43,-85,2.2));b=Vector((60,120,34));direction=(b-a).normalized();side=Vector((-direction.y,direction.x,0)).normalized()
+        for name,p in [('launch_start',a),('launch_exit',b)]:
+            anchor=bpy.data.objects.new(name,None);anchor.location=p+Vector((0,0,1.45));bpy.context.scene.collection.objects.link(anchor)
         for sign in [-1,1]:beam('Mass driver rail',a+side*sign*2,b+side*sign*2,.32,metal)
         for i in range(34):
             t=i/33;p=a.lerp(b,t)
@@ -199,7 +207,6 @@ for world in ['moon','mars']:
                 sphere('Active coil indicator',p+side*sign*2.5+Vector((0,0,2)),(.1,.1,.28),cyan)
             beam('Coil arch',p-side*2.9+Vector((0,0,4)),p+side*2.9+Vector((0,0,4)),.24,white)
             beam('Track bed',p-side*3.5,p+side*3.5,.25,dark)
-        pod=box('Cargo sled',a.lerp(b,.12)+Vector((0,0,1.8)),(2.8,5,2.1),gold,.3);pod.rotation_euler[2]=-math.atan2(direction.x,direction.y)
         for i in range(6):box('Power capacitor',(-103+i*7,-55,2),(3.7,6,4),white,.3)
     else:
         # NASA MSH-inspired hybrid softgoods pressure volume and service lander.

@@ -1,6 +1,7 @@
 import type * as Three from "three";
 import { getScenePhase, type ScenePhase } from "../lib/scene-time";
 import { addSatellites } from "./orbital-satellites";
+import { addLunarLaunch } from "./lunar-launch";
 import {
     loadOutpost,
     fadeObject,
@@ -211,6 +212,7 @@ if (
             const outposts = new Map<number, Three.Group>();
             const outpostRequests = new Map<number, Promise<void>>();
             const outpostFailures = new Set<number>();
+            let lunarLaunch: ReturnType<typeof addLunarLaunch>;
             const ensureOutpost = (index: number) => {
                 if (index !== 1 && index !== 2) return Promise.resolve();
                 let request = outpostRequests.get(index);
@@ -226,6 +228,8 @@ if (
                             }
                             group.visible = false;
                             group.renderOrder = 2;
+                            if (index === 1)
+                                lunarLaunch = addLunarLaunch(T, group);
                             outposts.set(index, group);
                             scene.add(group);
                             schedule();
@@ -483,7 +487,11 @@ if (
             const tick = (time: number) => {
                 frame = 0;
                 if (disposed || !visible || document.hidden) return;
-                const dt = Math.min(0.05, (time - (lastTime || time)) / 1000);
+                const elapsedDelta = Math.min(
+                    0.25,
+                    (time - (lastTime || time)) / 1000,
+                );
+                const dt = Math.min(0.05, elapsedDelta);
                 lastTime = time;
                 updateControl();
                 const still = paused || motion.matches;
@@ -610,6 +618,25 @@ if (
                     approachTarget.copy(orbit.target);
                     tourElapsed = 0;
                 }
+                if (lunarLaunch) {
+                    const active = surfaceWorld === 1 && surfaceMix > 0.5;
+                    // Payload timing follows elapsed time even when a device
+                    // draws below 20fps; camera damping keeps its smaller step.
+                    const launch = lunarLaunch.update(
+                        active && !still ? elapsedDelta : 0,
+                    );
+                    stage.dataset.launchState = active
+                        ? still
+                            ? "paused"
+                            : "running"
+                        : "inactive";
+                    stage.dataset.launchPhase = launch.phase;
+                    stage.dataset.launchCycle = String(launch.cycle);
+                    stage.dataset.launchPosition = launch.position
+                        .toArray()
+                        .map((n) => n.toFixed(3))
+                        .join(",");
+                }
                 for (const [index, group] of outposts) {
                     group.visible =
                         index === surfaceWorld && surfaceMix > 0.001;
@@ -701,6 +728,7 @@ if (
                 schedule();
             };
             const syncMotion = () => {
+                lastTime = 0;
                 updateControl();
                 schedule();
             };
@@ -798,6 +826,7 @@ if (
             };
             orbit.addEventListener("change", orbitChanged);
             const observer = new IntersectionObserver((items) => {
+                lastTime = 0;
                 visible = items[0]?.isIntersecting ?? false;
                 if (!visible && frame) {
                     cancelAnimationFrame(frame);
@@ -809,6 +838,7 @@ if (
             sizes.observe(stage);
             if (record) sizes.observe(record);
             const visibility = () => {
+                lastTime = 0;
                 if (document.hidden && frame) {
                     cancelAnimationFrame(frame);
                     frame = 0;

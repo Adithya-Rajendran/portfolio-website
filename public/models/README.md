@@ -9,6 +9,8 @@ Architectural references:
 - [Gerard O'Neill / SSI mass-driver research](https://nss.org/l5-news-mass-driver-update/).
 - SpaceX, [lunar manufacturing and electromagnetic launch concept](https://www.spacex.com/updates).
 
-Ground photography: Poly Haven, [Rocks Ground 06](https://polyhaven.com/a/rocks_ground_06), CC0; resized, desaturated and tinted separately for lunar and Martian regolith. Original photographs are in `assets/scenes/textures/`.
+Ground photography: Poly Haven, [Rocks Ground 06](https://polyhaven.com/a/rocks_ground_06), CC0; resized, desaturated, softened and blended with fine procedural grain at low contrast, then tinted separately for lunar and Martian regolith. Original photographs are in `assets/scenes/textures/`.
+
+The lunar rail exports `launch_start` and `launch_exit` anchors for the browser's repeating satellite departure. The carriage, deployable satellite and fading trajectory are original Three.js geometry in `src/scripts/lunar-launch.ts`. Terrain has smooth normals, broad rolling slopes and a graded settlement area.
 
 The scene geometry follows the repository's MIT license. The bundled Draco decoder is Apache-2.0; see `/draco/LICENSE`.

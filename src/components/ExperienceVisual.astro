@@ -125,6 +125,9 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
             clock. Lighting is illustrative; it does not use your location or
             live weather. Satellites are enlarged for visibility. Moon and Mars
             arrivals reveal original architectural concepts at surface scale.
+            The lunar rail launches a satellite, unfolds its solar panels, and
+            returns the carriage for the next departure. This repeating sequence
+            pauses with the other motion.
         </p>
         <p>
             Surface references:{" "}
@@ -218,10 +221,10 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     }
     .observatory__stage[data-view="surface"] {
         mask-image: radial-gradient(
-            ellipse 75% 65% at 52% 45%,
-            #000 40%,
-            #000d 66%,
-            transparent 98%
+            ellipse 50% 55% at 50% 43%,
+            #000 50%,
+            #000d 70%,
+            transparent 100%
         );
     }
     .observatory__controls[hidden],
