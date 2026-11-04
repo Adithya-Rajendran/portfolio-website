@@ -13,7 +13,7 @@ import {
 } from "@/lib/contact";
 import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
-import type { Availability, ProfileData } from "@/lib/sanity-client";
+import type { Availability, ProfileData } from "@/lib/content-types";
 
 function profileOf(overrides: Partial<ProfileData> = {}): ProfileData {
     return {

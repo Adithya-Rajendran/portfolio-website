@@ -1,0 +1,23 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getAllPosts } from "../../lib/sanity";
+const posts = await getAllPosts();
+---
+
+<Base title="Writing">
+    <p class="eyebrow">Ideas and notes</p>
+    <h1>Writing</h1>
+    <ul class="list">
+        {posts.map((p) => (
+            <li>
+                <time datetime={p.publishedAt}>
+                    {p.publishedAt.slice(0, 10)}
+                </time>
+                <h2>
+                    <a href={`/blog/${p.slug}`}>{p.title}</a>
+                </h2>
+                <p>{p.description}</p>
+            </li>
+        ))}
+    </ul>
+</Base>

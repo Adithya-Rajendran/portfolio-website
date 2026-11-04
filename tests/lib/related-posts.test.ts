@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { logEntries } from "@/lib/log-index";
 import { adjacentEntries, relatedEntries } from "@/lib/related-posts";
-import type { PostListItem } from "@/lib/sanity-client";
+import type { PostListItem } from "@/lib/content-types";
 
 function post(
     slug: string,

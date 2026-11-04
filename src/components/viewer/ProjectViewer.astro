@@ -1,0 +1,63 @@
+---
+interface Props {
+    model: {
+        kind: string;
+        procedural?: string | null;
+        fileUrl?: string | null;
+        alt: string;
+    };
+}
+const { model } = Astro.props;
+---
+
+{((model.kind === "procedural" && model.procedural === "homelab-rack") ||
+    (model.kind === "gltf" && model.fileUrl)) && (
+    <section
+        class="project-viewer"
+        hidden
+        data-project-viewer
+        data-kind={model.kind}
+        data-procedural={model.procedural}
+        data-url={model.fileUrl}
+    >
+        <button type="button" data-viewer-start>
+            Explore 3D model
+        </button>
+        <p>
+            Use the pointer or arrow keys to rotate the model. The project image
+            remains available above.
+        </p>
+        <div
+            class="project-viewer__stage"
+            data-viewer-stage
+            tabindex="0"
+            aria-label={model.alt + ". Use arrow keys to rotate."}
+            hidden
+        ></div>
+        <p data-viewer-status role="status"></p>
+    </section>
+)}
+<script>
+    import "../../scripts/viewer/project-viewer";
+</script>
+<style>
+    .project-viewer {
+        margin-block: 2rem;
+    }
+    .project-viewer__stage {
+        height: clamp(300px, 55vw, 600px);
+        background: #101a24;
+        overflow: hidden;
+        touch-action: none;
+    }
+    .project-viewer__stage :global(canvas) {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+    @media print {
+        .project-viewer {
+            display: none;
+        }
+    }
+</style>

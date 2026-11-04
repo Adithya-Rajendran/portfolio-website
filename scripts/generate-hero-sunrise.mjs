@@ -1,4 +1,4 @@
-import { createRequire } from "node:module";
+import sharp from "sharp";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
@@ -13,8 +13,6 @@ import { fileURLToPath } from "node:url";
 // /public images are cached immutably: bump VERSION on every re-encode.
 const VERSION = "v1";
 
-const require = createRequire(import.meta.url);
-const sharp = createRequire(require.resolve("next/package.json"))("sharp");
 const root = new URL("../", import.meta.url);
 const spec = JSON.parse(
     await readFile(new URL("assets/artwork/hero-sunrise.json", root), "utf8"),

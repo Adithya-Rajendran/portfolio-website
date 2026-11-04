@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
     toHTML,
     uriLooksSafe,
@@ -16,7 +15,7 @@ import {
     type NumberedFootnote,
     type ProseIndex,
 } from "@/lib/prose";
-import type { PostWithBody } from "@/lib/sanity-client";
+import type { PostWithBody } from "@/lib/content-types";
 import { tagLabel } from "@/lib/tags";
 
 /** The exact projection consumed by the RSS renderer.
@@ -39,7 +38,7 @@ const FEED_STYLESHEET = "/feed.xsl";
  * whole, so the site layout and every writing route (/blog, the tag
  * pages and each entry) name both through this one helper.
  */
-export function feedAlternates(canonical: string): Metadata["alternates"] {
+export function feedAlternates(canonical: string) {
     return {
         canonical,
         types: {

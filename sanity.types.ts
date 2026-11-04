@@ -659,12 +659,7 @@ export type AllSanitySchemaTypes =
     | SanityImageAsset
     | Geopoint;
 
-// Source: app/api/cron/publish-due/route.ts
-// Variable: DUE_POSTS_QUERY
-// Query: *[    _type == "post" &&    defined(publishedAt) &&    publishedAt > $since &&    publishedAt <= $today].slug.current
-export type DUE_POSTS_QUERY_RESULT = Array<string>;
-
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: PROFILE_QUERY
 // Query: *[_id == "profile"][0]{    _id,    _createdAt,    _updatedAt,    name,    headline,    tagline,    introduction,    bio,    availability{        status, "seeking": seeking[]{_key, label}, openTo, cta,        consultingOpen, updatedAt    },    launch{date, precision, event},    focusAreas,    workSummary,    writingDescription,    contactInvitation,    projectsIntro,    contactIntro,    contactRoutes{        hiring{title, prompt},        research{title, prompt},        consulting{title, prompt},        hello{title, prompt}    },    seoDescription,    "featuredPostId": featuredPost._ref,    "startHereIds": startHere[]._ref,    location,    "resumeUrl": resume.asset->url,    "resumeUploadedAt": resume.asset->_createdAt,    resumeNote,    socialLinks[]{_key, _type, label, url, kind},    currentCuriosities[]{        _key, _type, kind, title, note, url,        "projectId": project._ref,        "postId": post._ref    },    curiositiesUpdatedAt,    timeline[]{        _key, _type, kind, title, organization, orgShort, orgUrl, employment,        location, startDate, startPrecision, endDate, endPrecision,        isCurrent, expectedEndYear,        summary, highlights, skills, logo, burn{label, note}    },    skillGroups[]{_key, _type, title, skills},    credentials[]{        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,        credentialId, verificationUrl, badge,        "lifecycleStatus": select(            lifetime == true => "lifetime",            defined(expiresOn) && expiresOn < $today => "expired",            "active"        )    },    talksAndPapers[]{        _key, _type, title, kind, venue, date, authors,        links[]{_key, _type, label, url, kind},        abstract,        "projectId": project._ref    }}
 export type PROFILE_QUERY_RESULT =
@@ -920,7 +915,7 @@ export type PROFILE_QUERY_RESULT =
       }
     | null;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: POST_LIST_QUERY
 // Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc){    _id,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " "))}
 export type POST_LIST_QUERY_RESULT = Array<{
@@ -952,7 +947,7 @@ export type POST_LIST_QUERY_RESULT = Array<{
     wordCount: number;
 }>;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: POSTS_BY_PROJECT_QUERY
 // Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today &&    references($projectId)] | order(publishedAt desc){    _id,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " "))}
 export type POSTS_BY_PROJECT_QUERY_RESULT = Array<{
@@ -984,7 +979,7 @@ export type POSTS_BY_PROJECT_QUERY_RESULT = Array<{
     wordCount: number;
 }>;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: RECENT_POSTS_QUERY
 // Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today] | order(publishedAt desc)[0...$limit]{    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " ")),    changelog[]{_key, date, kind, note},    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type RECENT_POSTS_QUERY_RESULT = Array<{
@@ -1123,7 +1118,7 @@ export type RECENT_POSTS_QUERY_RESULT = Array<{
     >;
 }>;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: POST_BY_SLUG_QUERY
 // Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _id,    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " ")),    changelog[]{_key, date, kind, note},    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type POST_BY_SLUG_QUERY_RESULT = {
@@ -1262,7 +1257,7 @@ export type POST_BY_SLUG_QUERY_RESULT = {
     >;
 } | null;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: POST_META_QUERY
 // Query: *[    _type == "post" && slug.current == $slug &&    defined(publishedAt) && publishedAt <= $today][0]{    _updatedAt,    title,    "slug": slug.current,    description,    publishedAt,    revisedAt,    tags,    "projectIds": projects[]._ref,    cover{        ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height},    "bg": asset->metadata.palette.dominant.background},    "wordCount": length(string::split(pt::text(body), " "))}
 export type POST_META_QUERY_RESULT = {
@@ -1294,12 +1289,12 @@ export type POST_META_QUERY_RESULT = {
     wordCount: number;
 } | null;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: POST_SLUGS_QUERY
 // Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today].slug.current
 export type POST_SLUGS_QUERY_RESULT = Array<string>;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: POST_SLUGS_WITH_DATES_QUERY
 // Query: *[    _type == "post" && defined(publishedAt) && publishedAt <= $today]{"slug": slug.current, publishedAt, revisedAt, "changes": changelog[].date}
 export type POST_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
@@ -1309,7 +1304,7 @@ export type POST_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
     changes: Array<string> | null;
 }>;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: PROJECT_LIST_QUERY
 // Query: *[    _type == "project" && defined(slug.current)] | order(coalesce(endDate, startDate, _createdAt) desc){    _id,    _updatedAt,    designation,    title,    name,    "slug": slug.current,    summary,    status,    statusNote,    types,    featured,    quiet,    myRole,    startDate,    endDate,    datePrecision,    datesApproximate,    technologies,    highlights,    parameters[]{_key, label, value},    cover{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    coverPortrait{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    links[]{_key, _type, label, url, kind},    "hasModel": defined(model)}
 export type PROJECT_LIST_QUERY_RESULT = Array<{
@@ -1385,7 +1380,7 @@ export type PROJECT_LIST_QUERY_RESULT = Array<{
     hasModel: false | true;
 }>;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: PROJECT_BY_SLUG_QUERY
 // Query: *[    _type == "project" && slug.current == $slug][0]{    _id,    _updatedAt,    designation,    title,    name,    "slug": slug.current,    summary,    status,    statusNote,    types,    featured,    quiet,    myRole,    startDate,    endDate,    datePrecision,    datesApproximate,    technologies,    highlights,    parameters[]{_key, label, value},    cover{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    coverPortrait{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    links[]{_key, _type, label, url, kind},    "hasModel": defined(model),    brief{problem, approach, outcome},    results[]{_key, metric, value, note},    lessons,    next,    model{        kind,        procedural,        "fileUrl": file.asset->url,        poster{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},        title,        alt,        realWorld{dimension, value, unit},        hotspots[]{            _key, label, title, body, part,            position{x, y, z},            anchor{heading, "postId": post._ref}        }    },    body[]{    ...,    _type == "image" => {    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}},    _type == "gallery" => {        ...,        images[]{    ...,    "lqip": asset->metadata.lqip,    "dimensions": asset->metadata.dimensions{width, height}}    }}}
 export type PROJECT_BY_SLUG_QUERY_RESULT = {
@@ -1615,12 +1610,12 @@ export type PROJECT_BY_SLUG_QUERY_RESULT = {
     >;
 } | null;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: PROJECT_SLUGS_QUERY
 // Query: *[_type == "project" && defined(slug.current)].slug.current
 export type PROJECT_SLUGS_QUERY_RESULT = Array<string>;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: PROJECT_SLUGS_WITH_DATES_QUERY
 // Query: *[    _type == "project" && defined(slug.current)]{"slug": slug.current, "updatedAt": _updatedAt}
 export type PROJECT_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
@@ -1628,7 +1623,7 @@ export type PROJECT_SLUGS_WITH_DATES_QUERY_RESULT = Array<{
     updatedAt: string;
 }>;
 
-// Source: lib/sanity-client.ts
+// Source: src/lib/sanity.ts
 // Variable: WARM_LISTS_QUERY
 // Query: {    "posts": *[        _type == "post" && defined(publishedAt) && publishedAt <= $today    ]{"slug": slug.current, tags},    "projectSlugs": *[_type == "project" && defined(slug.current)].slug.current}
 export type WARM_LISTS_QUERY_RESULT = {
@@ -1642,7 +1637,6 @@ export type WARM_LISTS_QUERY_RESULT = {
 // Query TypeMap
 declare global {
     interface SanityQueries {
-        '*[\n    _type == "post" &&\n    defined(publishedAt) &&\n    publishedAt > $since &&\n    publishedAt <= $today\n].slug.current': DUE_POSTS_QUERY_RESULT;
         '*[_id == "profile"][0]{\n    _id,\n    _createdAt,\n    _updatedAt,\n    name,\n    headline,\n    tagline,\n    introduction,\n    bio,\n    availability{\n        status, "seeking": seeking[]{_key, label}, openTo, cta,\n        consultingOpen, updatedAt\n    },\n    launch{date, precision, event},\n    focusAreas,\n    workSummary,\n    writingDescription,\n    contactInvitation,\n    projectsIntro,\n    contactIntro,\n    contactRoutes{\n        hiring{title, prompt},\n        research{title, prompt},\n        consulting{title, prompt},\n        hello{title, prompt}\n    },\n    seoDescription,\n    "featuredPostId": featuredPost._ref,\n    "startHereIds": startHere[]._ref,\n    location,\n    "resumeUrl": resume.asset->url,\n    "resumeUploadedAt": resume.asset->_createdAt,\n    resumeNote,\n    socialLinks[]{_key, _type, label, url, kind},\n    currentCuriosities[]{\n        _key, _type, kind, title, note, url,\n        "projectId": project._ref,\n        "postId": post._ref\n    },\n    curiositiesUpdatedAt,\n    timeline[]{\n        _key, _type, kind, title, organization, orgShort, orgUrl, employment,\n        location, startDate, startPrecision, endDate, endPrecision,\n        isCurrent, expectedEndYear,\n        summary, highlights, skills, logo, burn{label, note}\n    },\n    skillGroups[]{_key, _type, title, skills},\n    credentials[]{\n        _key, _type, title, issuer, issuedOn, lifetime, expiresOn,\n        credentialId, verificationUrl, badge,\n        "lifecycleStatus": select(\n            lifetime == true => "lifetime",\n            defined(expiresOn) && expiresOn < $today => "expired",\n            "active"\n        )\n    },\n    talksAndPapers[]{\n        _key, _type, title, kind, venue, date, authors,\n        links[]{_key, _type, label, url, kind},\n        abstract,\n        "projectId": project._ref\n    }\n}': PROFILE_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POST_LIST_QUERY_RESULT;
         '*[\n    _type == "post" && defined(publishedAt) && publishedAt <= $today &&\n    references($projectId)\n] | order(publishedAt desc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    publishedAt,\n    revisedAt,\n    tags,\n    "projectIds": projects[]._ref,\n    cover{\n    \n    ...,\n    "lqip": asset->metadata.lqip,\n    "dimensions": asset->metadata.dimensions{width, height}\n,\n    "bg": asset->metadata.palette.dominant.background\n},\n    "wordCount": length(string::split(pt::text(body), " "))\n}': POSTS_BY_PROJECT_QUERY_RESULT;

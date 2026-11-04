@@ -1,0 +1,29 @@
+---
+import { urlForImage } from "../lib/images";
+const { image } = Astro.props;
+const src = image?.asset?._ref ? urlForImage(image).width(1400).url() : null;
+const srcset = src
+    ? [480, 800, 1400]
+          .map((width) => `${urlForImage(image).width(width).url()} ${width}w`)
+          .join(", ")
+    : undefined;
+---
+
+{src && (
+    <figure>
+        <img
+            src={src}
+            srcset={srcset}
+            sizes="(max-width: 700px) 100vw, 700px"
+            alt={image.alt || ""}
+            loading="lazy"
+            width={image.dimensions?.width}
+            height={image.dimensions?.height}
+        />
+        {(image.caption || image.credit) && (
+            <figcaption>
+                {[image.caption, image.credit].filter(Boolean).join(" · ")}
+            </figcaption>
+        )}
+    </figure>
+)}

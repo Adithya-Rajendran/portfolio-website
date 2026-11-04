@@ -1,0 +1,141 @@
+---
+import {
+    buildBlogPosting,
+    buildBreadcrumbList,
+} from "../../../lib/structured-data";
+import Base from "../../layouts/Base.astro";
+import CmsImage from "../../components/CmsImage.astro";
+import { urlForImage } from "../../lib/images";
+import { extractHeadings, contentsHeadings } from "../../../lib/headings";
+import { getPostBySlug, getAllPosts, getAllProjects } from "../../lib/sanity";
+import { renderProse } from "../../lib/prose";
+import { highlight } from "../../lib/highlight";
+const post = await getPostBySlug(Astro.params.slug || "");
+if (!post) return Astro.rewrite("/404");
+const highlighted = await highlight(post.body || []).catch(() => ({}));
+const [posts, projects] = await Promise.all([getAllPosts(), getAllProjects()]);
+const relatedProjects = projects.filter((p) =>
+    post.projectIds?.includes(p._id),
+);
+const headings = contentsHeadings(extractHeadings({ body: post.body }));
+const related = posts
+    .filter(
+        (p) =>
+            p.slug !== post.slug && p.tags?.some((t) => post.tags?.includes(t)),
+    )
+    .slice(0, 3);
+---
+
+<Base
+    image={
+        post.cover?.asset?._ref
+            ? urlForImage(post.cover).width(1200).height(630).fit("crop").url()
+            : undefined
+    }
+    ogType="article"
+    structuredData={[
+        {
+            "@context": "https://schema.org",
+            ...buildBlogPosting({
+                title: post.title,
+                description: post.description,
+                publishedAt: post.publishedAt,
+                slug: post.slug,
+                revisedAt: post.revisedAt,
+                tags: post.tags || [],
+                wordCount: post.wordCount,
+                imageUrl: post.cover?.asset?._ref
+                    ? urlForImage(post.cover).width(1200).url()
+                    : "https://adithya-rajendran.com/share.png",
+            }),
+        },
+        buildBreadcrumbList([
+            { name: "Writing", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` },
+        ]),
+    ]}
+    title={post.title}
+    description={post.description}
+>
+    <article>
+        <p>
+            <a href="/blog">Writing</a>
+        </p>
+        <h1>{post.title}</h1>
+        <p>{post.description}</p>
+        <p>
+            <time datetime={post.publishedAt}>
+                {post.publishedAt.slice(0, 10)}
+            </time>{" "}
+            · <a href="/about">Adithya Rajendran</a>
+        </p>
+        <CmsImage image={post.cover} />
+        {headings.length > 1 && (
+            <details class="contents">
+                <summary>Contents</summary>
+                <nav aria-label="Contents">
+                    <ol>
+                        {headings.map((h) => (
+                            <li>
+                                <a href={`#${h.id}`}>{h.text}</a>
+                            </li>
+                        ))}
+                    </ol>
+                </nav>
+            </details>
+        )}
+        <div
+            class="prose"
+            set:html={renderProse(post.body || [], highlighted)}
+        />
+        {post.changelog?.length && (
+            <section>
+                <h2>Revisions</h2>
+                <ul>
+                    {post.changelog.map((c) => (
+                        <li>
+                            <time datetime={c.date}>{c.date}</time> · {c.note}
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
+        {post.tags?.length && (
+            <p>
+                Topics:{" "}
+                {post.tags.map((t) => (
+                    <>
+                        {" "}
+                        <a href={`/blog/tags/${t}`}>{t}</a>
+                    </>
+                ))}
+            </p>
+        )}
+        {relatedProjects.length > 0 && (
+            <section>
+                <h2>Related projects</h2>
+                <ul>
+                    {relatedProjects.map((project) => (
+                        <li>
+                            <a href={`/portfolio/${project.slug}`}>
+                                {project.title}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
+        {related.length > 0 && (
+            <section>
+                <h2>Related writing</h2>
+                <ul>
+                    {related.map((p) => (
+                        <li>
+                            <a href={`/blog/${p.slug}`}>{p.title}</a>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
+    </article>
+</Base>

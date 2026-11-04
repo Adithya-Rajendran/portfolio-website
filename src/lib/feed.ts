@@ -1,0 +1,360 @@
+import {
+    toHTML,
+    uriLooksSafe,
+    type PortableTextHtmlComponents,
+} from "@portabletext/to-html";
+import { siteConfig } from "@/lib/config";
+import { dateOnly } from "@/lib/dates";
+import { formatEntryDate, lastRevised } from "@/lib/log-index";
+import { urlForImage } from "./images";
+import { changeKindTitle } from "@/lib/post-fields";
+import { SAFE_SLUG } from "@/lib/slugs";
+import {
+    calloutHeading,
+    indexProse,
+    type NumberedFootnote,
+    type ProseIndex,
+} from "@/lib/prose";
+import type { PostWithBody } from "@/lib/content-types";
+import { tagLabel } from "@/lib/tags";
+
+/** The exact projection consumed by the RSS renderer.
+ *  @internal Exported for tests. */
+export type FeedPost = Pick<
+    PostWithBody,
+    "title" | "slug" | "description" | "publishedAt" | "body"
+> &
+    Partial<Pick<PostWithBody, "changelog" | "revisedAt" | "tags" | "cover">>;
+
+const FEED_PATH = "/feed.xml";
+/** The section's plain name, as the nav names it. */
+const FEED_TITLE = `${siteConfig.author} — Writing`;
+/** The stylesheet a browser shows the feed with (public/feed.xsl). */
+const FEED_STYLESHEET = "/feed.xsl";
+
+/**
+ * A page's `alternates`: its canonical address and the feed, so a reader's
+ * app finds the feed from it. A page's `alternates` replaces the layout's
+ * whole, so the site layout and every writing route (/blog, the tag
+ * pages and each entry) name both through this one helper.
+ */
+export function feedAlternates(canonical: string) {
+    return {
+        canonical,
+        types: {
+            "application/rss+xml": [{ url: FEED_PATH, title: FEED_TITLE }],
+        },
+    };
+}
+
+const XML_ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g;
+
+function escapeXml(value: string): string {
+    return value
+        .replace(XML_ILLEGAL, "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+/**
+ * Deliberately avoid @portabletext/to-html's prose-oriented space
+ * replacement here: non-breaking spaces would corrupt copied code.
+ */
+function escapeHtmlText(value: string): string {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function escapeHtmlAttr(value: string): string {
+    return escapeHtmlText(value).replace(/"/g, "&quot;");
+}
+
+/** Accept both legacy date-only values and the V3 datetime field. */
+function toRfc822(value: string): string | null {
+    const bare = dateOnly(value) === value;
+    const parsed = new Date(bare ? `${value}T00:00:00Z` : value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    if (bare && parsed.toISOString().slice(0, 10) !== value) return null;
+    return parsed.toUTCString();
+}
+
+function safeLinkTarget(href: unknown): string | null {
+    if (typeof href !== "string" || !href || !uriLooksSafe(href)) return null;
+    if (href.startsWith("/")) return `${siteConfig.url}${href}`;
+
+    try {
+        const parsed = new URL(href);
+        // No mailto: the site publishes no email address (lib/content-links.ts).
+        if (!["http:", "https:"].includes(parsed.protocol)) return null;
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
+
+function safeHttpTarget(url: unknown): string | null {
+    if (typeof url !== "string" || !uriLooksSafe(url)) return null;
+    try {
+        const parsed = new URL(url);
+        return ["http:", "https:"].includes(parsed.protocol)
+            ? parsed.toString()
+            : null;
+    } catch {
+        return null;
+    }
+}
+
+function renderImage(value: Record<string, unknown>): string {
+    if (!value.asset) return "";
+
+    try {
+        const src = urlForImage(value)
+            .width(1000)
+            .fit("max")
+            .auto("format")
+            .url();
+        const alt = typeof value.alt === "string" ? value.alt : "";
+        const caption =
+            typeof value.caption === "string" ? value.caption.trim() : "";
+        const credit =
+            typeof value.credit === "string" ? value.credit.trim() : "";
+        const parts = [
+            caption ? escapeHtmlText(caption) : "",
+            credit ? `<small>${escapeHtmlText(credit)}</small>` : "",
+        ].filter(Boolean);
+        const figcaption = parts.length
+            ? `<figcaption>${parts.join(" ")}</figcaption>`
+            : "";
+        return `<figure><img src="${escapeHtmlAttr(src)}" alt="${escapeHtmlAttr(
+            alt,
+        )}"/>${figcaption}</figure>`;
+    } catch {
+        return "";
+    }
+}
+
+function renderLink(
+    children: string,
+    value: Record<string, unknown> | undefined,
+): string {
+    const href = safeLinkTarget(value?.href);
+    return href
+        ? `<a href="${escapeHtmlAttr(href)}">${children}</a>`
+        : children;
+}
+
+/**
+ * Portable Text to conservative feed HTML. Video URLs are links, never
+ * iframe markup; malformed links and images degrade to readable text.
+ * The feed matches the page (lib/prose.ts): a plate's caption carries no
+ * number, a footnote its raised number linking to the Notes list at the
+ * end, and a listing the one label its bar prints, the file name, else
+ * the language, and none for plain text.
+ */
+function feedComponents(
+    index: ProseIndex,
+): Partial<PortableTextHtmlComponents> {
+    const components: Partial<PortableTextHtmlComponents> = {
+        types: {
+            image: ({ value }) => renderImage(value),
+            gallery: ({ value }) => {
+                const images = Array.isArray(value?.images)
+                    ? value.images
+                          .filter(
+                              (
+                                  image: unknown,
+                              ): image is Record<string, unknown> =>
+                                  Boolean(image) && typeof image === "object",
+                          )
+                          .map((image: Record<string, unknown>) =>
+                              renderImage(image),
+                          )
+                          .filter(Boolean)
+                          .join("")
+                    : "";
+                if (!images) return "";
+                const caption =
+                    typeof value?.caption === "string" && value.caption
+                        ? `<p>${escapeHtmlText(value.caption)}</p>`
+                        : "";
+                return `<section>${images}${caption}</section>`;
+            },
+            code: ({ value }) => {
+                const info =
+                    typeof value?._key === "string"
+                        ? index.listings[value._key]
+                        : undefined;
+                const figcaption = info?.caption
+                    ? `<figcaption>${escapeHtmlText(info.caption)}</figcaption>`
+                    : "";
+                const language =
+                    typeof value?.language === "string" && value.language
+                        ? ` class="language-${escapeHtmlAttr(value.language)}"`
+                        : "";
+                return `<figure>${figcaption}<pre><code${language}>${escapeHtmlText(
+                    typeof value?.code === "string" ? value.code : "",
+                )}</code></pre></figure>`;
+            },
+            callout: ({ value }) => {
+                const heading = `<p><strong>${escapeHtmlText(
+                    calloutHeading(value ?? {}),
+                )}</strong></p>`;
+                const body = Array.isArray(value?.body)
+                    ? toHTML(value.body, {
+                          components,
+                          onMissingComponent: false,
+                      })
+                    : "";
+                return `<aside>${heading}${body}</aside>`;
+            },
+            mediaEmbed: ({ value }) => {
+                const href = safeHttpTarget(value?.url);
+                const title =
+                    typeof value?.title === "string" && value.title
+                        ? value.title
+                        : href || "Linked media";
+                const caption =
+                    typeof value?.caption === "string" && value.caption
+                        ? `<p>${escapeHtmlText(value.caption)}</p>`
+                        : "";
+                if (!href) return caption;
+                return `<aside><a href="${escapeHtmlAttr(href)}">${escapeHtmlText(
+                    title,
+                )}</a>${caption}</aside>`;
+            },
+        },
+        marks: {
+            contentLink: ({ children, value }) => renderLink(children, value),
+            // Keep legacy documents readable during the additive-migration phase.
+            link: ({ children, value }) => renderLink(children, value),
+            underline: ({ children }) => `<u>${children}</u>`,
+            "strike-through": ({ children }) => `<del>${children}</del>`,
+            footnote: ({ children, value }) => {
+                const number = (value as NumberedFootnote | undefined)?.number;
+                const note = number ? index.notes[number - 1] : undefined;
+                if (!note) return children;
+                return `${children}<sup><a href="#${note.id}" id="${note.refId}">${note.number}</a></sup>`;
+            },
+        },
+    };
+    return components;
+}
+
+/** The Notes list after the text, each note linking back to its number. */
+function renderNotes(index: ProseIndex): string {
+    if (!index.notes.length) return "";
+    const items = index.notes
+        .map(
+            (note) =>
+                `<li id="${note.id}">${escapeHtmlText(note.text)} <a href="#${note.refId}">↩</a></li>`,
+        )
+        .join("");
+    return `<section><h2>Notes</h2><ol>${items}</ol></section>`;
+}
+
+/** The post's recorded updates and corrections, oldest first, each
+ *  dated as the page dates it ("30 Jun 2026 · Correction"). */
+function renderRevisions(changelog: FeedPost["changelog"]): string {
+    const changes = (changelog ?? [])
+        .filter((change) => change?.date && change.note)
+        .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    if (!changes.length) return "";
+    const items = changes
+        .map(
+            (change) =>
+                `<li><strong>${escapeHtmlText(formatEntryDate(change.date))} · ${escapeHtmlText(
+                    changeKindTitle(change.kind),
+                )}.</strong> ${escapeHtmlText(change.note)}</li>`,
+        )
+        .join("");
+    return `<section><h2>Revisions</h2><ul>${items}</ul></section>`;
+}
+
+/** The post's cover leads it, as the page's lead plate does. */
+function renderPostHtml(post: FeedPost): string {
+    if (!post.body) return "";
+    const index = indexProse(post.body);
+    return (
+        (post.cover ? renderImage(post.cover as Record<string, unknown>) : "") +
+        toHTML(index.body as typeof post.body, {
+            components: feedComponents(index),
+            onMissingComponent: false,
+        }) +
+        renderNotes(index) +
+        renderRevisions(post.changelog)
+    );
+}
+
+/**
+ * The feed. RSS requires a channel description: the owner's description
+ * of his writing, or the feed's own title when the profile has none. Each
+ * item names its author (`dc:creator`: RSS's own `<author>` is an email
+ * address, which the site never publishes) and its tags, in words. The
+ * channel's lastBuildDate is the newest date a post records, a revision
+ * included (`lastRevised`); an item's pubDate stays its publication. A
+ * browser shows it through public/feed.xsl, as a plain page; a feed
+ * reader ignores the stylesheet.
+ */
+export function renderFeedXml(
+    posts: FeedPost[],
+    description?: string | null,
+): string {
+    const feedUrl = `${siteConfig.url}${FEED_PATH}`;
+    const publishable = posts.filter(
+        (post) => post.title && post.slug && SAFE_SLUG.test(post.slug),
+    );
+
+    const items = publishable.map((post) => {
+        const url = `${siteConfig.url}/blog/${post.slug}`;
+        const pubDate = toRfc822(post.publishedAt);
+        const lines = [
+            `<title>${escapeXml(post.title)}</title>`,
+            `<link>${escapeXml(url)}</link>`,
+            `<guid isPermaLink="true">${escapeXml(url)}</guid>`,
+            ...(pubDate ? [`<pubDate>${pubDate}</pubDate>`] : []),
+            `<dc:creator>${escapeXml(siteConfig.author)}</dc:creator>`,
+            ...(post.tags ?? [])
+                .filter(Boolean)
+                .map(
+                    (tag) => `<category>${escapeXml(tagLabel(tag))}</category>`,
+                ),
+            `<description>${escapeXml(post.description)}</description>`,
+            `<content:encoded>${escapeXml(renderPostHtml(post))}</content:encoded>`,
+        ];
+        return `        <item>\n            ${lines.join("\n            ")}\n        </item>`;
+    });
+
+    const newest = lastRevised({
+        changes: publishable.flatMap((post) => [
+            post.publishedAt,
+            post.revisedAt,
+            ...(post.changelog ?? []).map((change) => change?.date),
+        ]),
+    });
+    const lastBuildDate = newest ? toRfc822(newest) : null;
+    const channelLines = [
+        `<title>${escapeXml(FEED_TITLE)}</title>`,
+        `<link>${escapeXml(`${siteConfig.url}/blog`)}</link>`,
+        `<description>${escapeXml(description?.trim() || FEED_TITLE)}</description>`,
+        `<language>en-us</language>`,
+        ...(lastBuildDate
+            ? [`<lastBuildDate>${lastBuildDate}</lastBuildDate>`]
+            : []),
+        `<atom:link href="${escapeXml(feedUrl)}" rel="self" type="application/rss+xml"/>`,
+        ...items,
+    ];
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="${FEED_STYLESHEET}"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        ${channelLines.join("\n        ")}
+    </channel>
+</rss>
+`;
+}

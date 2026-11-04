@@ -1,5 +1,5 @@
 import { PROJECT_STATUSES, type ProjectStatus } from "@/lib/project-fields";
-import type { ProjectListItem } from "@/lib/sanity-client";
+import type { ProjectListItem } from "@/lib/content-types";
 
 /** "Active", "Complete", "Planned"…: the label the Studio shows too. */
 export function projectStatusLabel(status: ProjectStatus): string {

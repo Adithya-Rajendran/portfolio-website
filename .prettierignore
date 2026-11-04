@@ -11,6 +11,14 @@ playwright-report
 test-results
 blob-report
 
+dist
+public/studio
+.astro
+.wrangler
+.sanity
+.claude
+worker-configuration.d.ts
+
 # Generated files
 sanity.types.ts
 schema.json

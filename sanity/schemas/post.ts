@@ -53,7 +53,7 @@ export default defineType({
             type: "date",
             group: "editorial",
             description:
-                "A calendar date in UTC. The post goes live at about 00:05 UTC on this date, which is the evening before in US time zones.",
+                "A calendar date in UTC. The post becomes public at 00:00 UTC on this date, which is the evening before in US time zones.",
             validation: (Rule) => Rule.required(),
         }),
         defineField({

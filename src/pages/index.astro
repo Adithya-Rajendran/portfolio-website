@@ -1,0 +1,53 @@
+---
+import Base from "../layouts/Base.astro";
+import { getProfile, getAllPosts, getAllProjects } from "../lib/sanity";
+import { availabilityLine } from "../../lib/profile-content";
+const [profile, posts, projects] = await Promise.all([
+    getProfile(),
+    getAllPosts(),
+    getAllProjects(),
+]);
+---
+
+<Base description={profile?.seoDescription || ""}>
+    <p class="eyebrow">Portfolio</p>
+    <h1>{profile?.name || "Adithya Rajendran"}</h1>
+    {profile?.headline && <p>{profile.headline}</p>}
+    {profile?.introduction && <p>{profile.introduction}</p>}
+    {availabilityLine(profile?.availability) && (
+        <p>Open to: {availabilityLine(profile?.availability)}</p>
+    )}
+    <p>
+        <a href="/resume">Experience</a> · <a href="/contact">Get in touch</a>
+    </p>
+    <section>
+        <h2>Selected projects</h2>
+        <ul class="list">
+            {projects
+                .filter((p) => p.featured && !p.quiet)
+                .map((p) => (
+                    <li>
+                        <h3>
+                            <a href={`/portfolio/${p.slug}`}>{p.title}</a>
+                        </h3>
+                        <p>{p.summary}</p>
+                    </li>
+                ))}
+        </ul>
+        <a href="/portfolio">All projects →</a>
+    </section>
+    <section>
+        <h2>Latest writing</h2>
+        <ul class="list">
+            {posts.slice(0, 3).map((p) => (
+                <li>
+                    <h3>
+                        <a href={`/blog/${p.slug}`}>{p.title}</a>
+                    </h3>
+                    <p>{p.description}</p>
+                </li>
+            ))}
+        </ul>
+        <a href="/blog">All writing →</a>
+    </section>
+</Base>

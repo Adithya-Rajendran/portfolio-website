@@ -20,7 +20,7 @@ import type {
     CredentialListItem,
     ProfileData,
     TimelineEntry,
-} from "@/lib/sanity-client";
+} from "@/lib/content-types";
 import type {
     Blog,
     BlogPosting,

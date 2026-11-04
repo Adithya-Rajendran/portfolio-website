@@ -24,11 +24,10 @@
         }
     },
     "include": [
-        "next-env.d.ts",
-        "**/*.ts",
-        "**/*.tsx",
-        ".next/types/**/*.ts",
-        ".next/dev/types/**/*.ts"
+        ".astro/types.d.ts",
+        "src/**/*",
+        "worker-configuration.d.ts",
+        "sanity/**/*"
     ],
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", "dist", ".next"]
 }

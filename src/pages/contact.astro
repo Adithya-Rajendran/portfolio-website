@@ -1,0 +1,134 @@
+---
+import Base from "../layouts/Base.astro";
+import { env } from "cloudflare:workers";
+import { getProfile } from "../lib/sanity";
+import { contactRoutes } from "../../lib/contact";
+const p = await getProfile();
+const routes = contactRoutes(p);
+const config = env as unknown as Record<string, string | undefined>;
+const testFixture =
+    import.meta.env.MODE === "test" &&
+    config.ENVIRONMENT === "test" &&
+    config.SANITY_USE_FIXTURES === "1";
+const ready =
+    testFixture ||
+    [
+        "TURNSTILE_SITE_KEY",
+        "TURNSTILE_SECRET",
+        "TURNSTILE_HOSTNAMES",
+        "RESEND_API_KEY",
+        "CONTACT_FORM_TO_EMAIL",
+        "CONTACT_FROM_EMAIL",
+        "CONTACT_RATE_LIMIT",
+    ].every((key) => Boolean(config[key]));
+---
+
+<Base title="Contact">
+    <h1>Contact</h1>
+    {p?.contactIntro && <p>{p.contactIntro}</p>}
+    {ready ? (
+        <>
+            <form action="/api/contact" method="post" id="contact-form">
+                <fieldset>
+                    <legend>Topic</legend>
+                    {routes.map((route) => (
+                        <label>
+                            <input
+                                type="radio"
+                                name="topic"
+                                value={route.topic}
+                                checked={route.topic === "hello"}
+                            />{" "}
+                            {route.title}
+                        </label>
+                    ))}
+                </fieldset>
+                <p>
+                    <label for="senderEmail">Your email</label>
+                    <br />
+                    <input
+                        id="senderEmail"
+                        name="senderEmail"
+                        type="text"
+                        inputmode="email"
+                        autocomplete="email"
+                        maxlength="254"
+                        required
+                    />
+                </p>
+                <p>
+                    <label for="message">Message</label>
+                    <br />
+                    <textarea
+                        id="message"
+                        name="message"
+                        rows="8"
+                        maxlength="2000"
+                        required
+                    ></textarea>
+                </p>
+                {config.TURNSTILE_SITE_KEY && (
+                    <div
+                        class="cf-turnstile"
+                        data-sitekey={config.TURNSTILE_SITE_KEY}
+                        data-action="contact"
+                    ></div>
+                )}
+                <p>
+                    <button type="submit">Send message</button>
+                </p>
+            </form>
+            <noscript>
+                <p>
+                    The verification step requires JavaScript. You can also
+                    connect via{" "}
+                    <a href="https://www.linkedin.com/in/adithya-rajendran">
+                        LinkedIn
+                    </a>
+                    .
+                </p>
+            </noscript>
+        </>
+    ) : (
+        <p>
+            The contact form is temporarily unavailable. You can connect via{" "}
+            <a href="https://www.linkedin.com/in/adithya-rajendran">LinkedIn</a>
+            .
+        </p>
+    )}
+    {ready && (
+        <script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            async
+            defer
+            is:inline
+        ></script>
+    )}
+    <script>
+        const form = document.querySelector<HTMLFormElement>("#contact-form");
+        if (form) {
+            const topic = location.hash.slice(1);
+            const radio = [
+                ...form.querySelectorAll<HTMLInputElement>(
+                    'input[name="topic"]',
+                ),
+            ].find((input) => input.value === topic);
+            if (radio) radio.checked = true;
+            const fields = [
+                ...form.querySelectorAll<
+                    HTMLInputElement | HTMLTextAreaElement
+                >('input[name="senderEmail"], textarea[name="message"]'),
+            ];
+            for (const field of fields) {
+                field.value =
+                    sessionStorage.getItem(`contact:${field.name}`) || "";
+                field.addEventListener("input", () =>
+                    sessionStorage.setItem(
+                        `contact:${field.name}`,
+                        field.value,
+                    ),
+                );
+            }
+        }
+    </script>
+</Base>

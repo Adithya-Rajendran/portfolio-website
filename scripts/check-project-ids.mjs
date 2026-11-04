@@ -2,11 +2,11 @@
 /**
  * Pre-commit check (lint-staged passes the staged files): refuses a file
  * that writes down a concrete Sanity project id, as an env assignment
- * (`NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=…`, in a shell line, a .env file
+ * (`SANITY_PROJECT_ID=…`, in a shell line, a .env file
  * or YAML) or a client option (`projectId: "…"`), and refuses the id this
  * machine actually uses wherever it appears (a URL, JSON, prose), read
  * from the environment and the local env files. The ids live in the
- * local env and Vercel's, never in the repository (CLAUDE.md, Sanity
+ * local env and Cloudflare bindings, never in the repository (CLAUDE.md, Sanity
  * schema changes); `fallback`, the sentinel the builds use, is allowed.
  * It prints where, never the value.
  */
@@ -19,9 +19,9 @@ const ID = "([a-z0-9]{8})";
 const ID_SHAPE = new RegExp(`^${ID}$`);
 
 const ASSIGNMENTS = [
-    // Shell and .env: NEXT_PUBLIC_STORE_SANITY_PROJECT_ID=<id>
+    // Shell and .env: SANITY_PROJECT_ID=<id>
     new RegExp(`\\b\\w*PROJECT_ID\\s*=\\s*["']?${ID}\\b`, "g"),
-    // YAML: NEXT_PUBLIC_STORE_SANITY_PROJECT_ID: <id>
+    // YAML: SANITY_PROJECT_ID: <id>
     new RegExp(`\\b\\w*PROJECT_ID\\s*:\\s*["']?${ID}["']?[ \\t]*$`, "gm"),
     // Code: projectId: "<id>"
     new RegExp(`\\bprojectId\\s*:\\s*["'\`]${ID}["'\`]`, "g"),
@@ -32,7 +32,7 @@ const ALLOWED = new Set(["fallback"]);
 /** The env names that hold a Sanity project id. */
 const ID_KEY = /SANITY\w*PROJECT_ID$/;
 
-/** The local env files Next.js and the Sanity CLI read, in the repo root. */
+/** The local env files used for development, in the repo root. */
 const ENV_FILES = [".env.local", ".env"];
 
 function readEnvFile(path) {
@@ -107,7 +107,7 @@ function main(paths) {
         for (const line of projectIdLines(text, knownIds)) {
             found += 1;
             console.error(
-                `${path}:${line}: a Sanity project id is written here. Keep it in .env.local and Vercel's env.`,
+                `${path}:${line}: a Sanity project id is written here. Keep it in local env and Cloudflare bindings.`,
             );
         }
     }

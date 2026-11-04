@@ -5,7 +5,8 @@ import {
 } from "@/scripts/check-project-ids.mjs";
 
 // Built here, so this file never holds an assignment the hook would refuse.
-const KEY = "NEXT_PUBLIC_STORE_SANITY_PROJECT_ID";
+const KEY = "SANITY_PROJECT_ID";
+const STUDIO_KEY = "SANITY_STUDIO_PROJECT_ID";
 const ID = ["ab12", "cd34"].join("");
 
 describe("the pre-commit project-id check", () => {
@@ -13,6 +14,7 @@ describe("the pre-commit project-id check", () => {
         for (const text of [
             `${KEY}=${ID} \\\n    pnpm build`,
             `# Sanity\n${KEY}="${ID}"`,
+            `${STUDIO_KEY}=${ID}`,
             `env:\n    ${KEY}: ${ID}\n`,
             `createClient({ projectId: "${ID}", dataset })`,
         ]) {

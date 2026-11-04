@@ -1,0 +1,640 @@
+import { describe, expect, it, vi } from "vitest";
+import { env } from "./worker-env";
+vi.mock("cloudflare:workers", () => ({ env }));
+import {
+    feedAlternates,
+    renderFeedXml,
+    type FeedPost,
+} from "../../src/lib/feed";
+
+type Body = NonNullable<FeedPost["body"]>;
+
+function paragraph(text: string, key = "b1"): Body[number] {
+    return {
+        _type: "block",
+        _key: key,
+        style: "normal",
+        markDefs: [],
+        children: [{ _type: "span", _key: `${key}s`, text, marks: [] }],
+    } as unknown as Body[number];
+}
+
+function linkedParagraph(text: string, href: string): Body[number] {
+    return {
+        _type: "block",
+        _key: "lb",
+        style: "normal",
+        markDefs: [{ _key: "l1", _type: "link", href }],
+        children: [{ _type: "span", _key: "lbs", text, marks: ["l1"] }],
+    } as unknown as Body[number];
+}
+
+function contentLinkedParagraph(text: string, href: string): Body[number] {
+    return {
+        _type: "block",
+        _key: "clb",
+        style: "normal",
+        markDefs: [{ _key: "cl1", _type: "contentLink", href }],
+        children: [{ _type: "span", _key: "cls", text, marks: ["cl1"] }],
+    } as unknown as Body[number];
+}
+
+function postOf(overrides: Partial<FeedPost>): FeedPost {
+    return {
+        title: "A post",
+        slug: "a-post",
+        description: "A description",
+        publishedAt: "2026-01-15T00:00:00.000Z",
+        body: [paragraph("Hello world")] as Body,
+        ...overrides,
+    };
+}
+
+describe("renderFeedXml — channel", () => {
+    it("escapes the CMS channel description", () => {
+        expect(renderFeedXml([], "Robotics & <AI>")).toContain(
+            "<description>Robotics &amp; &lt;AI&gt;</description>",
+        );
+    });
+    it("describes the channel by its title when the profile has no description", () => {
+        for (const description of [undefined, null, "  "]) {
+            expect(renderFeedXml([], description)).toContain(
+                "<description>Adithya Rajendran — Writing</description>",
+            );
+        }
+    });
+    it("renders a valid empty channel when there are no posts (CI fallback path)", () => {
+        const xml = renderFeedXml([]);
+
+        expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+        expect(xml).toContain('<rss version="2.0"');
+        expect(xml).toContain("<channel>");
+        expect(xml).toContain("<title>");
+        expect(xml).toContain("<description>");
+        expect(xml).toContain("<language>en-us</language>");
+        expect(xml).not.toContain("<item>");
+        expect(xml).not.toContain("<lastBuildDate>");
+    });
+
+    it("names the stylesheet a browser shows it with, before the rss root", () => {
+        const xml = renderFeedXml([]);
+        expect(xml).toMatch(
+            /^<\?xml [^\n]+\n<\?xml-stylesheet type="text\/xsl" href="\/feed\.xsl"\?>\n<rss /,
+        );
+    });
+
+    it("names the feed in every page's alternates beside its canonical address", () => {
+        expect(feedAlternates("https://adithya-rajendran.com/blog")).toEqual({
+            canonical: "https://adithya-rajendran.com/blog",
+            types: {
+                "application/rss+xml": [
+                    { url: "/feed.xml", title: "Adithya Rajendran — Writing" },
+                ],
+            },
+        });
+    });
+
+    it("includes an atom:link self reference to the feed URL", () => {
+        const xml = renderFeedXml([]);
+
+        expect(xml).toContain(
+            '<atom:link href="https://adithya-rajendran.com/feed.xml" rel="self" type="application/rss+xml"/>',
+        );
+    });
+
+    it("uses the newest post date as lastBuildDate", () => {
+        const xml = renderFeedXml([
+            postOf({
+                slug: "new",
+                publishedAt: "2026-02-01T12:30:00.000Z",
+            }),
+            postOf({
+                slug: "old",
+                publishedAt: "2026-01-01T00:00:00.000Z",
+            }),
+        ]);
+
+        expect(xml).toContain(
+            "<lastBuildDate>Sun, 01 Feb 2026 12:30:00 GMT</lastBuildDate>",
+        );
+    });
+});
+
+describe("renderFeedXml — dates, authors and tags", () => {
+    it("dates the channel by the newest revision, an item by its publication", () => {
+        const xml = renderFeedXml([
+            postOf({
+                slug: "revised",
+                publishedAt: "2026-01-15",
+                revisedAt: "2026-03-01",
+                changelog: [
+                    {
+                        _key: "c1",
+                        date: "2026-03-20",
+                        kind: "update",
+                        note: "Added a section.",
+                    },
+                ] as FeedPost["changelog"],
+            }),
+            postOf({ slug: "newer", publishedAt: "2026-02-01" }),
+        ]);
+
+        expect(xml).toContain(
+            "<lastBuildDate>Fri, 20 Mar 2026 00:00:00 GMT</lastBuildDate>",
+        );
+        expect(xml).toContain(
+            "<pubDate>Thu, 15 Jan 2026 00:00:00 GMT</pubDate>",
+        );
+    });
+
+    it("names each item's author and its tags in words, never an email address", () => {
+        const xml = renderFeedXml([
+            postOf({ tags: ["gpu-computing", "homelab"] }),
+        ]);
+
+        expect(xml).toContain('xmlns:dc="http://purl.org/dc/elements/1.1/"');
+        expect(xml).toContain("<dc:creator>Adithya Rajendran</dc:creator>");
+        expect(xml).toContain("<category>GPU computing</category>");
+        expect(xml).toContain("<category>Homelab</category>");
+        expect(xml).not.toContain("<author>");
+    });
+
+    it("leads an item's content with the post's cover, as the page does", () => {
+        const xml = renderFeedXml([
+            postOf({
+                cover: {
+                    _type: "image",
+                    asset: {
+                        _type: "reference",
+                        _ref: "image-abc123def456-1200x800-png",
+                    },
+                    alt: "The rack, front",
+                    credit: "Illustration",
+                } as unknown as FeedPost["cover"],
+            }),
+        ]);
+        const content = /<content:encoded>([\s\S]*?)<\/content:encoded>/.exec(
+            xml,
+        )![1];
+
+        expect(content.startsWith("&lt;figure&gt;&lt;img src=")).toBe(true);
+        expect(content).toContain("The rack, front");
+        expect(content.indexOf("cdn.sanity.io")).toBeLessThan(
+            content.indexOf("Hello world"),
+        );
+    });
+});
+
+describe("renderFeedXml — items", () => {
+    it("renders absolute link and permaLink guid per item", () => {
+        const xml = renderFeedXml([postOf({ slug: "k8s-deep-dive" })]);
+
+        expect(xml).toContain(
+            "<link>https://adithya-rajendran.com/blog/k8s-deep-dive</link>",
+        );
+        expect(xml).toContain(
+            '<guid isPermaLink="true">https://adithya-rajendran.com/blog/k8s-deep-dive</guid>',
+        );
+    });
+
+    it("formats pubDate as RFC-822 from the published datetime", () => {
+        const xml = renderFeedXml([
+            postOf({ publishedAt: "2026-01-15T09:45:00.000Z" }),
+        ]);
+
+        expect(xml).toContain(
+            "<pubDate>Thu, 15 Jan 2026 09:45:00 GMT</pubDate>",
+        );
+    });
+
+    it("drops posts whose slug fails the safe-slug pattern", () => {
+        const xml = renderFeedXml([
+            postOf({ slug: "../evil", title: "Evil" }),
+            postOf({ slug: "fine", title: "Fine" }),
+        ]);
+
+        expect(xml).not.toContain("Evil");
+        expect(xml).not.toContain("../");
+        expect(xml).toContain("Fine");
+    });
+
+    it("escapes XML metacharacters in title and description", () => {
+        const xml = renderFeedXml([
+            postOf({
+                title: 'Zero-days & <script>alert("x")</script>',
+                description: "5 < 6 & 7 > 2",
+            }),
+        ]);
+
+        expect(xml).toContain(
+            "<title>Zero-days &amp; &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</title>",
+        );
+        expect(xml).toContain(
+            "<description>5 &lt; 6 &amp; 7 &gt; 2</description>",
+        );
+        expect(xml).not.toContain("<script>");
+    });
+});
+
+describe("renderFeedXml — content:encoded", () => {
+    it("carries the full body as double-escaped HTML", () => {
+        const xml = renderFeedXml([
+            postOf({ body: [paragraph("Hello & <world>")] as Body }),
+        ]);
+
+        // toHTML escapes the text into HTML, then the XML layer escapes
+        // that HTML into the element — so "&" arrives as &amp;amp;.
+        expect(xml).toContain("<content:encoded>&lt;p&gt;");
+        expect(xml).toContain("Hello &amp;amp; &amp;lt;world&amp;gt;");
+    });
+
+    it("escapes code block content so markup inside code can't leak out", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    {
+                        _type: "code",
+                        _key: "c1",
+                        language: "typescript",
+                        filename: "exploit.ts",
+                        code: 'const x = "</content:encoded><script>1</script>";',
+                    },
+                ] as unknown as Body,
+            }),
+        ]);
+
+        expect(xml).not.toContain("<script>");
+        // The literal close tag from the code must not appear unescaped.
+        expect(xml.split("</content:encoded>")).toHaveLength(
+            2, // exactly the one real closing tag
+        );
+        expect(xml).toContain("language-typescript");
+        expect(xml).toContain("exploit.ts");
+    });
+
+    it("preserves multi-space indentation in code blocks (no &nbsp; collapsing)", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    {
+                        _type: "code",
+                        _key: "c2",
+                        language: "python",
+                        code: "def f():\n    if True:\n        return 1",
+                    },
+                ] as unknown as Body,
+            }),
+        ]);
+
+        expect(xml).not.toContain("nbsp");
+        expect(xml).toContain("    if True:");
+        expect(xml).toContain("        return 1");
+    });
+
+    it("strips XML-illegal control characters instead of emitting them", () => {
+        const xml = renderFeedXml([
+            postOf({ title: "Terminal\u0007 escape\u001b artifacts" }),
+        ]);
+
+        expect(xml).toContain("<title>Terminal escape artifacts</title>");
+        expect(xml).not.toContain("\u0007");
+        expect(xml).not.toContain("\u001b");
+    });
+
+    it("omits pubDate rather than emitting 'Invalid Date' for malformed dates", () => {
+        const xml = renderFeedXml([postOf({ publishedAt: "not-a-date" })]);
+
+        expect(xml).not.toContain("Invalid Date");
+        expect(xml).not.toContain("<pubDate>");
+        expect(xml).not.toContain("<lastBuildDate>");
+    });
+
+    it("drops javascript: links but keeps their text", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    linkedParagraph("click me", "javascript:alert(1)"),
+                ] as Body,
+            }),
+        ]);
+
+        expect(xml).not.toContain("javascript:");
+        expect(xml).toContain("click me");
+    });
+
+    it("drops mailto and tel links but keeps their text", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    contentLinkedParagraph(
+                        "write to me",
+                        "mailto:someone@example.com",
+                    ),
+                    linkedParagraph("call me", "tel:+15555550100"),
+                ] as Body,
+            }),
+        ]);
+
+        expect(xml).not.toMatch(/mailto:|tel:|someone@example\.com/);
+        expect(xml).toContain("write to me");
+        expect(xml).toContain("call me");
+    });
+
+    it("absolutizes relative links against the site URL", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    contentLinkedParagraph("other post", "/blog/other"),
+                ] as Body,
+            }),
+        ]);
+
+        expect(xml).toContain("https://adithya-rajendran.com/blog/other");
+    });
+
+    it("renders images as absolute CDN URLs with alt and caption", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    {
+                        _type: "image",
+                        _key: "i1",
+                        asset: {
+                            _type: "reference",
+                            _ref: "image-abc123def456-1000x500-png",
+                        },
+                        alt: "Rack diagram",
+                        caption: "The homelab rack",
+                    },
+                ] as unknown as Body,
+            }),
+        ]);
+
+        expect(xml).toContain("https://cdn.sanity.io/");
+        expect(xml).toContain("Rack diagram");
+        expect(xml).toContain("The homelab rack");
+    });
+
+    it("renders media embeds as safe links rather than executable markup", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    {
+                        _type: "mediaEmbed",
+                        _key: "m1",
+                        url: "https://www.youtube.com/watch?v=example",
+                        title: "A documentary",
+                        caption: "Worth revisiting.",
+                    },
+                ] as unknown as Body,
+            }),
+        ]);
+
+        expect(xml).toContain("https://www.youtube.com/watch?v=example");
+        expect(xml).toContain("A documentary");
+        expect(xml).not.toContain("iframe");
+        expect(xml).not.toContain("<script");
+    });
+
+    it("drops unsafe media URLs while preserving the caption", () => {
+        const xml = renderFeedXml([
+            postOf({
+                body: [
+                    {
+                        _type: "mediaEmbed",
+                        _key: "m2",
+                        url: "javascript:alert(1)",
+                        caption: "A readable fallback.",
+                    },
+                ] as unknown as Body,
+            }),
+        ]);
+
+        expect(xml).not.toContain("javascript:");
+        expect(xml).toContain("A readable fallback.");
+    });
+});
+
+/** Decodes the item HTML out of content:encoded (XML-escaped once). */
+function itemHtml(xml: string): string {
+    const match = /<content:encoded>([\s\S]*?)<\/content:encoded>/.exec(xml);
+    return (match?.[1] ?? "")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, "&");
+}
+
+function footnotedParagraph(
+    key: string,
+    parts: (string | [text: string, note: string])[],
+): Body[number] {
+    const markDefs: { _key: string; _type: string; text: string }[] = [];
+    const children = parts.map((part, index) => {
+        if (typeof part === "string") {
+            return {
+                _type: "span",
+                _key: `${key}s${index}`,
+                text: part,
+                marks: [],
+            };
+        }
+        const mark = {
+            _key: `${key}n${index}`,
+            _type: "footnote",
+            text: part[1],
+        };
+        markDefs.push(mark);
+        return {
+            _type: "span",
+            _key: `${key}s${index}`,
+            text: part[0],
+            marks: [mark._key],
+        };
+    });
+    return {
+        _type: "block",
+        _key: key,
+        style: "normal",
+        markDefs,
+        children,
+    } as unknown as Body[number];
+}
+
+describe("renderFeedXml — the long-read types (PR 10)", () => {
+    it("numbers footnotes in reading order and lists them as Notes with back-links", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        footnotedParagraph("p1", [
+                            "A claim",
+                            [
+                                " with a source",
+                                "The first note & its <source>.",
+                            ],
+                            ".",
+                        ]),
+                        footnotedParagraph("p2", [
+                            ["Another", "The second note."],
+                        ]),
+                    ] as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            'A claim with a source<sup><a href="#fn-1" id="fnref-1">1</a></sup>.',
+        );
+        expect(html).toContain(
+            'Another<sup><a href="#fn-2" id="fnref-2">2</a></sup>',
+        );
+        expect(html).toContain(
+            '<section><h2>Notes</h2><ol><li id="fn-1">The first note &amp; its &lt;source&gt;. <a href="#fnref-1">↩</a></li><li id="fn-2">The second note. <a href="#fnref-2">↩</a></li></ol></section>',
+        );
+    });
+
+    it("prints a footnote without a note as its text alone", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        footnotedParagraph("p1", [["Plain words", "  "]]),
+                    ] as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain("<p>Plain words</p>");
+        expect(html).not.toContain("<sup>");
+        expect(html).not.toContain("Notes");
+    });
+
+    it("labels a caution callout with its tone and title", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "callout",
+                            _key: "c1",
+                            tone: "caution",
+                            title: "Back up first",
+                            body: [paragraph("This wipes the disk.", "cb")],
+                        },
+                        {
+                            _type: "callout",
+                            _key: "c2",
+                            tone: "note",
+                            body: [paragraph("A plain note.", "nb")],
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<aside><p><strong>Caution: Back up first</strong></p><p>This wipes the disk.</p></aside>",
+        );
+        expect(html).toContain(
+            "<aside><p><strong>Note</strong></p><p>A plain note.</p></aside>",
+        );
+    });
+
+    it("names a listing by its file, else its language, as its bar does, with no number", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "code",
+                            _key: "k1",
+                            language: "bash",
+                            filename: "install.sh",
+                            code: "echo one",
+                        },
+                        {
+                            _type: "code",
+                            _key: "k2",
+                            code: "plain text",
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            '<figure><figcaption>install.sh</figcaption><pre><code class="language-bash">echo one</code></pre></figure>',
+        );
+        expect(html).toContain(
+            "<figure><pre><code>plain text</code></pre></figure>",
+        );
+        expect(html).not.toContain("Listing");
+    });
+
+    it("prints a plate's caption and credit, and numbers no plate or figure", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    body: [
+                        {
+                            _type: "image",
+                            _key: "i1",
+                            asset: {
+                                _type: "reference",
+                                _ref: "image-abc123def456-1000x500-png",
+                            },
+                            alt: "A photograph",
+                            caption: "The rack",
+                            credit: "Photo: the author",
+                        },
+                        {
+                            _type: "image",
+                            _key: "i2",
+                            kind: "diagram",
+                            asset: {
+                                _type: "reference",
+                                _ref: "image-abc123def456-1000x500-png",
+                            },
+                            alt: "A diagram",
+                        },
+                    ] as unknown as Body,
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<figcaption>The rack <small>Photo: the author</small></figcaption>",
+        );
+        expect(html).toContain('alt="A diagram"/></figure>');
+        expect(html).not.toMatch(/Pl\. I|Fig\. 1/);
+    });
+
+    it("lists the post's revisions, oldest first, dated as the page dates them", () => {
+        const html = itemHtml(
+            renderFeedXml([
+                postOf({
+                    changelog: [
+                        {
+                            _key: "r2",
+                            date: "2026-03-01",
+                            kind: "update",
+                            note: "Added a section.",
+                        },
+                        {
+                            _key: "r1",
+                            date: "2026-02-01",
+                            kind: "correction",
+                            note: "Fixed a <wrong> path.",
+                        },
+                    ],
+                }),
+            ]),
+        );
+        expect(html).toContain(
+            "<section><h2>Revisions</h2><ul><li><strong>1 Feb 2026 · Correction.</strong> Fixed a &lt;wrong&gt; path.</li><li><strong>1 Mar 2026 · Update.</strong> Added a section.</li></ul></section>",
+        );
+    });
+
+    it("adds no Notes or Revisions to a post without them", () => {
+        const html = itemHtml(renderFeedXml([postOf({})]));
+        expect(html).not.toContain("Notes");
+        expect(html).not.toContain("Revisions");
+    });
+});

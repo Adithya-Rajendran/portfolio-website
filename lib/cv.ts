@@ -6,7 +6,7 @@ import type {
     ProjectListItem,
     TalkOrPaper,
     TimelineEntry,
-} from "@/lib/sanity-client";
+} from "@/lib/content-types";
 import { decimalYear } from "@/lib/trajectory";
 
 /**

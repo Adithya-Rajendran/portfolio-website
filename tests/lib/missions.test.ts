@@ -25,7 +25,7 @@ import {
     toMission,
     writeUpHref,
 } from "@/lib/missions";
-import type { ContentBody, ProjectListItem } from "@/lib/sanity-client";
+import type { ContentBody, ProjectListItem } from "@/lib/content-types";
 import { buildMission } from "@/lib/structured-data";
 
 const SITE = "https://adithya-rajendran.com";

@@ -1,4 +1,11 @@
-import type { StatusValue } from "@/components/ui/marks";
+type StatusValue =
+    | "active"
+    | "complete"
+    | "paused"
+    | "archived"
+    | "planned"
+    | "stopped"
+    | "lifetime";
 import { hostOf, siteUrlOf, sitePostSlug } from "@/lib/cv";
 import { dateOnly } from "@/lib/dates";
 import { formatMissionDesignation } from "@/lib/designations";
@@ -18,7 +25,7 @@ import type {
     ProjectListItem,
     ProjectWithBody,
     SanityImageValue,
-} from "@/lib/sanity-client";
+} from "@/lib/content-types";
 
 /**
  * Missions (G5, G6): the projects as the /portfolio index, the mission

@@ -1,0 +1,13 @@
+---
+import { resolveLinkMark } from "../../lib/content-links";
+const { href } = Astro.props;
+const link = resolveLinkMark({ href });
+---
+
+{link ? (
+    <a href={link.href}>
+        <slot />
+    </a>
+) : (
+    <slot />
+)}

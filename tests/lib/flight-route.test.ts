@@ -27,7 +27,6 @@ import {
     viewAxes,
     worldKinds,
     type Box,
-    type LabelSide,
     type Pose,
     type Stage,
     type Vec3,
@@ -75,7 +74,6 @@ describe("the 3D flight", () => {
                 3 * Math.max(steps[i - 2], steps[i + 2]) + 0.005,
             );
         ps.forEach((p, i) => {
-            const t = frameAt(route, p).t;
             for (const w of flight.worlds) {
                 const clear =
                     w.kind === "saturn" ? w.radius * 2.4 : w.radius * 1.6;

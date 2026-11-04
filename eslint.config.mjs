@@ -1,39 +1,53 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
+import globals from "globals";
 
-const eslintConfig = defineConfig([
-    ...nextVitals,
-    globalIgnores([
-        ".next/**",
-        "out/**",
-        "build/**",
-        "next-env.d.ts",
-        "playwright-report/**",
-        "test-results/**",
-        "blob-report/**",
-    ]),
+export default tseslint.config(
     {
-        rules: {
-            "react/no-unescaped-entities": 0,
+        ignores: [
+            "node_modules/**",
+            ".next/**",
+            "dist/**",
+            "public/studio/**",
+            ".astro/**",
+            ".wrangler/**",
+            ".sanity/**",
+            ".claude/**",
+            "worker-configuration.d.ts",
+            "sanity.types.ts",
+            "coverage/**",
+            "playwright-report/**",
+            "test-results/**",
+            "blob-report/**",
+            "out/**",
+            "build/**",
+            "next-env.d.ts",
+        ],
+    },
+    js.configs.recommended,
+    ...tseslint.configs.recommended,
+    {
+        languageOptions: {
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+                ...globals.serviceworker,
+            },
         },
     },
     {
-        // A browser context's request client skips its routes, so it
-        // never carries the preview's protection-bypass header
-        // (tests/e2e/support/test.ts).
-        files: ["tests/e2e/**/*.ts"],
+        files: ["**/*.{ts,tsx}"],
         rules: {
-            "no-restricted-syntax": [
+            "no-undef": "off",
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-unused-vars": [
                 "error",
-                {
-                    selector:
-                        "MemberExpression[object.name=/^(page|context)$/][property.name='request']",
-                    message:
-                        "Use the request fixture: page.request and context.request reach a protected preview without the bypass header.",
-                },
+                { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
             ],
         },
     },
-]);
-
-export default eslintConfig;
+    {
+        files: ["lib/feed.ts", "src/lib/feed.ts"],
+        rules: { "no-control-regex": "off" },
+    },
+);

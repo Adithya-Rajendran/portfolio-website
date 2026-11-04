@@ -5,7 +5,7 @@ import {
     checkAvailabilitySeeking,
     checkTimelineRange,
 } from "@/lib/profile-fields";
-import type { ProfileData } from "@/lib/sanity-client";
+import type { ProfileData } from "@/lib/content-types";
 import type { PROFILE_QUERY_RESULT } from "@/sanity.types";
 
 describe("profile schema rules", () => {

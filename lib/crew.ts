@@ -7,7 +7,7 @@ import type {
     ExternalLink,
     ProfileData,
     TimelineEntry,
-} from "@/lib/sanity-client";
+} from "@/lib/content-types";
 
 /**
  * The owner as the home page and About (/about) present him: the

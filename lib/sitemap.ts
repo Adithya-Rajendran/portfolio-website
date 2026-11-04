@@ -1,6 +1,6 @@
 import { siteConfig } from "@/lib/config";
 import { lastRevised } from "@/lib/log-index";
-import type { PostDates } from "@/lib/sanity-client";
+import type { PostDates } from "@/lib/content-types";
 
 const BASE_URL = siteConfig.url;
 

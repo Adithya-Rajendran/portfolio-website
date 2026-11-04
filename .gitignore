@@ -48,3 +48,13 @@ token.txt
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Astro and Workers output
+.astro/
+.wrangler/
+dist/
+.dev.vars*
+public/studio/
+
+# Local Sanity CLI state
+.sanity/

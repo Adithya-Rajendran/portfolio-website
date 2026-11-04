@@ -7,7 +7,7 @@ import type {
     PostListItem,
     ProfileData,
     TimelineEntry,
-} from "@/lib/sanity-client";
+} from "@/lib/content-types";
 
 type ProfilePlatform = "linkedin" | "github";
 

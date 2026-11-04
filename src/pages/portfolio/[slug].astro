@@ -1,0 +1,180 @@
+---
+import SafeLink from "../../components/SafeLink.astro";
+import { buildBreadcrumbList } from "../../../lib/structured-data";
+import Base from "../../layouts/Base.astro";
+import CmsImage from "../../components/CmsImage.astro";
+import { urlForImage } from "../../lib/images";
+import ProjectViewer from "../../components/viewer/ProjectViewer.astro";
+import {
+    getProjectBySlug,
+    getPostsByProject,
+    getAllProjects,
+} from "../../lib/sanity";
+import { renderProse } from "../../lib/prose";
+import { highlight } from "../../lib/highlight";
+const project = await getProjectBySlug(Astro.params.slug || "");
+if (!project) return Astro.rewrite("/404");
+const highlighted = await highlight(project.body || []).catch(() => ({}));
+const [posts, projects] = await Promise.all([
+    getPostsByProject(project._id),
+    getAllProjects(),
+]);
+const position = projects.findIndex((item) => item._id === project._id);
+const previous = position > 0 ? projects[position - 1] : null;
+const next = position >= 0 ? projects[position + 1] : null;
+---
+
+<Base
+    image={
+        project.cover?.asset?._ref
+            ? urlForImage(project.cover)
+                  .width(1200)
+                  .height(630)
+                  .fit("crop")
+                  .url()
+            : undefined
+    }
+    structuredData={[
+        {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            name: project.title,
+            description: project.summary,
+            url: `https://adithya-rajendran.com/portfolio/${project.slug}`,
+            creator: { "@type": "Person", name: "Adithya Rajendran" },
+        },
+        buildBreadcrumbList([
+            { name: "Projects", path: "/portfolio" },
+            { name: project.title, path: `/portfolio/${project.slug}` },
+        ]),
+    ]}
+    title={project.title}
+    description={project.summary}
+>
+    <article>
+        <p>
+            <a href="/portfolio">Projects</a>
+        </p>
+        <h1>{project.title}</h1>
+        <p>{project.summary}</p>
+        <CmsImage image={project.cover} />
+        {project.model?.poster && (
+            <CmsImage image={project.model.poster} />
+        )}{" "}
+        {project.model && <ProjectViewer model={project.model} />}{" "}
+        {project.statusNote && <p>{project.statusNote}</p>}
+        {project.startDate && (
+            <p>
+                {project.startDate}
+                {project.endDate && ` – ${project.endDate}`}
+            </p>
+        )}
+        {project.parameters?.length && (
+            <dl>
+                {project.parameters.map((item) => (
+                    <>
+                        <dt>{item.label}</dt>
+                        <dd>{item.value}</dd>
+                    </>
+                ))}
+            </dl>
+        )}
+        {project.highlights?.length && (
+            <section>
+                <h2>Highlights</h2>
+                <ul>
+                    {project.highlights.map((item) => (
+                        <li>{item}</li>
+                    ))}
+                </ul>
+            </section>
+        )}
+        {project.myRole && <p>{project.myRole}</p>}
+        {project.technologies?.length && (
+            <p>{project.technologies.join(" · ")}</p>
+        )}
+        {project.brief && (
+            <section>
+                <h2>Overview</h2>
+                {project.brief.problem && <p>{project.brief.problem}</p>}
+                {project.brief.approach && <p>{project.brief.approach}</p>}
+                {project.brief.outcome && <p>{project.brief.outcome}</p>}
+            </section>
+        )}
+        {project.results?.length && (
+            <section>
+                <h2>Results</h2>
+                <ul>
+                    {project.results.map((r) => (
+                        <li>
+                            <strong>
+                                {r.metric}: {r.value}
+                            </strong>{" "}
+                            {r.note}
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
+        <div
+            class="prose"
+            set:html={renderProse(project.body || [], highlighted)}
+        />
+        {project.lessons?.length && (
+            <section>
+                <h2>Lessons</h2>
+                <ul>
+                    {project.lessons.map((l) => (
+                        <li>{l}</li>
+                    ))}
+                </ul>
+            </section>
+        )}
+        {project.next?.length && (
+            <section>
+                <h2>Next</h2>
+                <ul>
+                    {project.next.map((l) => (
+                        <li>{l}</li>
+                    ))}
+                </ul>
+            </section>
+        )}
+        {project.links?.length && (
+            <section>
+                <h2>Links</h2>
+                <ul>
+                    {project.links.map((l) => (
+                        <li>
+                            <SafeLink href={l.url}>{l.label}</SafeLink>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
+        {posts.length > 0 && (
+            <section>
+                <h2>Related writing</h2>
+                <ul>
+                    {posts.map((p) => (
+                        <li>
+                            <a href={`/blog/${p.slug}`}>{p.title}</a>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
+        {(previous || next) && (
+            <nav aria-label="Project navigation">
+                {previous && (
+                    <a href={`/portfolio/${previous.slug}`}>
+                        Previous: {previous.title}
+                    </a>
+                )}{" "}
+                {next && (
+                    <a href={`/portfolio/${next.slug}`}>Next: {next.title}</a>
+                )}
+            </nav>
+        )}
+    </article>
+</Base>

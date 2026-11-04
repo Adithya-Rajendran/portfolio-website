@@ -12,7 +12,7 @@ import type {
     CredentialListItem,
     ProjectListItem,
     TimelineEntry,
-} from "@/lib/sanity-client";
+} from "@/lib/content-types";
 
 const entry = (fields: Partial<TimelineEntry>): TimelineEntry => ({
     _key: "k",

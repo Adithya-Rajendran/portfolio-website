@@ -10,7 +10,7 @@ import {
     LD_IDS,
 } from "@/lib/structured-data";
 import { siteConfig, socialProfiles } from "@/lib/config";
-import type { CredentialListItem, ProfileData } from "@/lib/sanity-client";
+import type { CredentialListItem, ProfileData } from "@/lib/content-types";
 
 function profileOf(overrides: Partial<ProfileData> = {}): ProfileData {
     return {

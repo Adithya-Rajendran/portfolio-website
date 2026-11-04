@@ -1,4 +1,4 @@
-import { createRequire } from "node:module";
+import sharp from "sharp";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,12 +10,10 @@ import { join } from "node:path";
 // domain), credited in the figure line and in
 // public/images/trajectory/README.md. Downloads each source once into the
 // OS temp directory, then writes public/images/trajectory/*.webp with sharp
-// (the encoder installed with Next.js). Run from any directory with:
+// (the direct project dependency). Run from any directory with:
 //   node scripts/encode-trajectory-textures.mjs [file.webp …]
 // /public images are cached immutably: rename a file when re-encoding it.
 
-const require = createRequire(import.meta.url);
-const sharp = createRequire(require.resolve("next/package.json"))("sharp");
 const root = new URL("../", import.meta.url);
 const outDir = new URL("public/images/trajectory/", root);
 const cache = join(tmpdir(), "trajectory-textures");

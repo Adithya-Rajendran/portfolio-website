@@ -1,5 +1,5 @@
-import type { PostListItem } from "@/lib/sanity-client";
-import { readingTimeFromWordCount } from "@/components/blogs/utils";
+import type { PostListItem } from "@/lib/content-types";
+import { readingTimeFromWordCount } from "@/lib/reading-time";
 import { dateOnly, MONTHS } from "@/lib/dates";
 import { logNumbers } from "@/lib/designations";
 import { collectTags, linkedTags, TAG_PATTERN } from "@/lib/tags";

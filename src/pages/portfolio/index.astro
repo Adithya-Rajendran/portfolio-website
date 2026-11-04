@@ -1,0 +1,29 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getAllProjects } from "../../lib/sanity";
+const projects = await getAllProjects();
+---
+
+<Base title="Projects">
+    <p class="eyebrow">Selected work</p>
+    <h1>Projects</h1>
+    <ul class="list" id="projects">
+        {projects.map((p) => (
+            <li>
+                <h2>
+                    <a href={`/portfolio/${p.slug}`}>{p.title}</a>
+                </h2>
+                <p>{p.summary}</p>
+            </li>
+        ))}
+    </ul>
+    <script>
+        import { movedFragment } from "../../../lib/navigation";
+        const follow = () => {
+            const target = movedFragment(location.pathname, location.hash);
+            if (target) location.replace(target);
+        };
+        follow();
+        window.addEventListener("hashchange", follow);
+    </script>
+</Base>

@@ -17,7 +17,7 @@ import { contactCopy } from "@/lib/copy";
 import { REPORT_PARAM } from "@/lib/navigation";
 import { availabilityLine } from "@/lib/profile-content";
 import { EMAIL_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/lib/contact-constants";
-import type { ProfileData } from "@/lib/sanity-client";
+import type { ProfileData } from "@/lib/content-types";
 
 /** Every topic the form accepts, in route order. */
 export const CONTACT_TOPICS = [

@@ -6,6 +6,6 @@ The MIT License in `LICENSE` covers the code. It does not cover the site's conte
 
 These third-party works keep their own licences:
 
-- **Fonts.** DM Mono, Jost, Michroma and Newsreader, under the SIL Open Font License 1.1. The copies of the first three in `assets/fonts/og/` sit beside their licences (`OFL-DMMono.txt`, `OFL-Jost.txt`, `OFL-Michroma.txt`); Newsreader is fetched at build time through `next/font`.
+- **Fonts.** DM Mono, Jost and Michroma are under the SIL Open Font License 1.1. The copies in `assets/fonts/og/` sit beside their licences; the Jost and DM Mono files shipped by v2 also include their licences in `public/fonts/`.
 - **Planet maps.** The flight's maps from Solar System Scope, under Creative Commons Attribution 4.0 International (CC BY 4.0), and NASA's Earth layers, in the public domain. `public/images/trajectory/README.md` lists each file's source, licence and changes.
 - **The home photograph.** NASA's ISS072-E-30246 (Expedition 72), in the public domain (`assets/artwork/`).

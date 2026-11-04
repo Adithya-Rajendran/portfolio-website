@@ -18,10 +18,8 @@ export default defineConfig({
             // tests' (tests/e2e).
             include: [
                 "lib/**/*.{ts,tsx}",
-                "actions/**/*.ts",
-                "app/api/**/*.ts",
-                "app/sitemap.xml/**/*.ts",
-                "app/feed.xml/**/*.ts",
+                "src/lib/**/*.ts",
+                "src/pages/api/**/*.ts",
             ],
             reporter: ["text", "json-summary"],
             // Under today's totals (86% of statements, 83% of branches,

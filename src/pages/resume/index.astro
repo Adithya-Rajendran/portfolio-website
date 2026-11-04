@@ -1,0 +1,107 @@
+---
+import SafeLink from "../../components/SafeLink.astro";
+import Base from "../../layouts/Base.astro";
+import ExperienceVisual from "../../components/ExperienceVisual.astro";
+import { cvAnchor } from "../../../lib/cv";
+import { formatTimelineDate } from "../../../lib/profile-content";
+import { getProfile } from "../../lib/sanity";
+const p = await getProfile();
+const timeline = (p?.timeline || []).map((e) => ({
+    id: cvAnchor(e._key),
+    title: e.title,
+    organization: e.organization,
+    dates: `${formatTimelineDate(e.startDate, e.startPrecision) || ""}${e.endDate ? ` – ${formatTimelineDate(e.endDate, e.endPrecision)}` : e.isCurrent ? " – Present" : ""}`,
+}));
+---
+
+<Base title="Experience" pageClass="experience-page">
+    <p class="eyebrow">Experience</p>
+    <h1>Experience</h1>
+    <p>
+        <a href="/resume/view">View PDF</a> ·{" "}
+        <a href="/resume/download">Download PDF</a>
+    </p>
+    <ExperienceVisual entries={timeline} />
+    <section id="cv">
+        <h2 id="experience">Experience and education</h2>
+        <ul class="list">
+            {p?.timeline?.map((e) => (
+                <li id={cvAnchor(e._key)}>
+                    <h3>{e.title}</h3>
+                    <p>
+                        <SafeLink href={e.orgUrl}>{e.organization}</SafeLink>
+                        {e.location ? ` · ${e.location}` : ""}
+                    </p>
+                    <p>
+                        {formatTimelineDate(e.startDate, e.startPrecision)}
+                        {e.endDate
+                            ? ` – ${formatTimelineDate(e.endDate, e.endPrecision)}`
+                            : e.isCurrent
+                              ? " – Present"
+                              : ""}
+                    </p>
+                    {e.summary && <p>{e.summary}</p>}
+                    {e.skills?.length && <p>{e.skills.join(" · ")}</p>}
+                    {e.highlights?.length && (
+                        <ul>
+                            {e.highlights.map((h) => (
+                                <li>{h}</li>
+                            ))}
+                        </ul>
+                    )}
+                </li>
+            ))}
+        </ul>
+    </section>
+    {p?.credentials?.length && (
+        <section>
+            <h2 id="certifications">Credentials</h2>
+            <ul>
+                {p.credentials.map((c) => (
+                    <li>
+                        <SafeLink href={c.verificationUrl}>{c.title}</SafeLink>{" "}
+                        · {c.issuer}
+                        {c.issuedOn && ` · ${c.issuedOn}`}
+                        {c.lifetime
+                            ? " · Lifetime"
+                            : c.expiresOn
+                              ? ` · Expires ${c.expiresOn}`
+                              : ""}
+                    </li>
+                ))}
+            </ul>
+        </section>
+    )}
+    {p?.skillGroups?.length && (
+        <section>
+            <h2 id="skills">Skills</h2>
+            {p.skillGroups.map((g) => (
+                <div>
+                    <h3>{g.title}</h3>
+                    <p>{g.skills.join(" · ")}</p>
+                </div>
+            ))}
+        </section>
+    )}
+    {p?.talksAndPapers?.length && (
+        <section>
+            <h2>Talks and papers</h2>
+            <ul>
+                {p.talksAndPapers.map((t) => (
+                    <li>
+                        <strong>{t.title}</strong>
+                        {t.venue && <> · {t.venue}</>}
+                        {t.date && <> · {t.date}</>}
+                        {t.abstract && <p>{t.abstract}</p>}
+                        {t.links?.map((l) => (
+                            <>
+                                {" "}
+                                <SafeLink href={l.url}>{l.label}</SafeLink>
+                            </>
+                        ))}
+                    </li>
+                ))}
+            </ul>
+        </section>
+    )}
+</Base>

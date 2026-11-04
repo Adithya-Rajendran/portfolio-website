@@ -6,7 +6,7 @@ import type {
     ProfileData,
     ProjectListItem,
     ProjectWithBody,
-} from "@/lib/sanity-client";
+} from "@/lib/content-types";
 import { siteConfig } from "@/lib/config";
 import { newestFirst } from "@/lib/content-rules";
 import { sitePostSlug } from "@/lib/cv";

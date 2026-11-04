@@ -3,7 +3,7 @@ import { availabilityLine } from "@/lib/profile-content";
 import { monthYear } from "@/lib/dates";
 import { contactHref } from "@/lib/navigation";
 import type { TimelineDatePrecision } from "@/lib/profile-fields";
-import type { Availability } from "@/lib/sanity-client";
+import type { Availability } from "@/lib/content-types";
 
 /**
  * The flight, /resume's Timeline view: the profile's timeline as

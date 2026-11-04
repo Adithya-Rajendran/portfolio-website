@@ -1,4 +1,4 @@
-import type { PostListItem } from "@/lib/sanity-client";
+import type { PostListItem } from "@/lib/content-types";
 
 /**
  * Pure helpers for the blog tag taxonomy. Tags are plain lowercase

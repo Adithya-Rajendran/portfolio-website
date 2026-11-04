@@ -27,12 +27,15 @@ import {
     PROJECT_SLUGS_QUERY,
     PROJECT_SLUGS_WITH_DATES_QUERY,
     RECENT_POSTS_QUERY,
-    type PostListItem,
-    type PostMeta,
-    type PostWithBody,
-    type ProjectListItem,
-    type ProjectWithBody,
-} from "@/lib/sanity-client";
+} from "@/src/lib/sanity";
+import type {
+    PostListItem,
+    PostMeta,
+    PostWithBody,
+    ProjectListItem,
+    ProjectWithBody,
+} from "@/lib/content-types";
+vi.mock("cloudflare:workers", () => ({ env: {} }));
 import { checkModelPart } from "@/lib/viewer/registry";
 import { planSeed } from "@/migrations/seed-resume-projects/build";
 import { SEED_PROJECTS } from "@/migrations/seed-resume-projects/data";
@@ -45,12 +48,6 @@ import type {
     PROJECT_LIST_QUERY_RESULT,
     RECENT_POSTS_QUERY_RESULT,
 } from "@/sanity.types";
-
-// The query strings are read, never fetched: keep the server-only client out.
-vi.mock("@/lib/sanity-config", () => ({
-    client: {},
-    isSanityConfigured: false,
-}));
 
 describe("mission numbers", () => {
     it("offers one after the highest number in use", () => {

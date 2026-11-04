@@ -7,7 +7,7 @@ import {
     taglineOf,
 } from "@/lib/crew";
 import { FIXTURE_PROFILE } from "@/lib/fixtures";
-import type { ProfileData, TimelineEntry } from "@/lib/sanity-client";
+import type { ProfileData, TimelineEntry } from "@/lib/content-types";
 
 const entry = (fields: Partial<TimelineEntry>): TimelineEntry => ({
     _key: "k",

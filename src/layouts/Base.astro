@@ -1,0 +1,129 @@
+---
+import "../styles.css";
+import { siteConfig } from "../../lib/config";
+import { env } from "cloudflare:workers";
+const config = env as unknown as Record<string, string | undefined>;
+const {
+    title = siteConfig.title,
+    description = "",
+    image = `${siteConfig.url}/share.png`,
+    pageClass = "",
+    structuredData = [],
+    ogType = "website",
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, siteConfig.url);
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>{title === siteConfig.title ? title : `${title} · ${siteConfig.title}`}</title>
+        <meta name="description" content={description} />
+        {config.GOOGLE_SITE_VERIFICATION && (
+            <meta
+                name="google-site-verification"
+                content={config.GOOGLE_SITE_VERIFICATION}
+            />
+        )}
+        <link rel="canonical" href={canonical} />
+        <link
+            rel="alternate"
+            type="application/rss+xml"
+            title="Writing RSS"
+            href="/feed.xml"
+        />
+        <meta property="og:type" content={ogType} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:image" content={image} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="icon" href="/icon.svg" />
+        {structuredData.map((item: unknown) => (
+            <script
+                type="application/ld+json"
+                set:html={JSON.stringify(item).replace(/</g, "\\u003c")}
+            />
+        ))}
+    </head>
+    <script is:inline>
+        try {
+            const theme = localStorage.getItem("theme");
+            if (theme === "light" || theme === "dark")
+                document.documentElement.dataset.theme = theme;
+        } catch {}
+    </script>
+    <body>
+        <a class="skip" href="#main">
+            Skip to content
+        </a>
+        <header>
+            <a class="brand" href="/">
+                Adithya Rajendran
+            </a>
+            <nav aria-label="Main navigation">
+                <a href="/portfolio">Projects</a>
+                <a href="/blog">Writing</a>
+                <a href="/resume">Experience</a>
+                <a href="/about">About</a>
+                <a href="/contact">Contact</a>
+            </nav>
+            <button
+                type="button"
+                id="theme-switch"
+                aria-label="Change color theme"
+                hidden
+            >
+                Theme
+            </button>
+        </header>
+        <main id="main" class={pageClass}>
+            <slot />
+        </main>
+        <footer>
+            <span>Adithya Rajendran</span>
+            <a href="/feed.xml">RSS</a>
+            <a href={siteConfig.source}>Source</a>
+        </footer>
+        <script>
+            const themeButton =
+                document.querySelector<HTMLButtonElement>("#theme-switch");
+            if (themeButton) {
+                themeButton.hidden = false;
+                themeButton.addEventListener("click", () => {
+                    const current =
+                        document.documentElement.dataset.theme ||
+                        (matchMedia("(prefers-color-scheme: dark)").matches
+                            ? "dark"
+                            : "light");
+                    const next = current === "dark" ? "light" : "dark";
+                    document.documentElement.dataset.theme = next;
+                    try {
+                        localStorage.setItem("theme", next);
+                    } catch {}
+                });
+            }
+            document
+                .querySelectorAll<HTMLButtonElement>(".copy-code")
+                .forEach((button) => {
+                    button.hidden = false;
+                    button.addEventListener("click", async () => {
+                        const status =
+                            button.parentElement?.querySelector(".copy-status");
+                        const code =
+                            button.parentElement?.querySelector("code")
+                                ?.textContent || "";
+                        try {
+                            await navigator.clipboard.writeText(code);
+                            if (status) status.textContent = "Copied.";
+                        } catch {
+                            if (status) status.textContent = "Copy failed.";
+                        }
+                    });
+                });
+        </script>
+    </body>
+</html>

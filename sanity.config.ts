@@ -6,8 +6,8 @@ import { defineConfig } from "sanity";
 import { structureTool, type StructureBuilder } from "sanity/structure";
 import { schemaTypes } from "./sanity/schemas";
 
-const projectId = process.env.NEXT_PUBLIC_STORE_SANITY_PROJECT_ID!;
-const dataset = process.env.NEXT_PUBLIC_STORE_SANITY_DATASET || "production";
+const projectId = import.meta.env.SANITY_STUDIO_PROJECT_ID;
+const dataset = import.meta.env.SANITY_STUDIO_DATASET || "production";
 
 const PROFILE_ID = "profile";
 

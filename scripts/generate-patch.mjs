@@ -1,4 +1,4 @@
-import { createRequire } from "node:module";
+import sharp from "sharp";
 import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
@@ -29,8 +29,6 @@ import { fileURLToPath } from "node:url";
  * art, so a launch year goes in only once the owner confirms one.
  */
 
-const require = createRequire(import.meta.url);
-const sharp = createRequire(require.resolve("next/package.json"))("sharp");
 const root = new URL("../", import.meta.url);
 
 const VOID = "#050507";

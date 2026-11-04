@@ -1,0 +1,28 @@
+---
+import Base from "../../../layouts/Base.astro";
+import { getAllPosts } from "../../../lib/sanity";
+import { TAG_PATTERN, tagLabel } from "../../../../lib/tags";
+const tag = Astro.params.tag || "";
+const posts = (await getAllPosts()).filter((p) => p.tags?.includes(tag));
+if (!TAG_PATTERN.test(tag) || !posts.length) return Astro.rewrite("/404");
+---
+
+<Base title={tagLabel(tag)} description={`Writing tagged ${tagLabel(tag)}`}>
+    <p>
+        <a href="/blog">Writing</a>
+    </p>
+    <h1>{tagLabel(tag)}</h1>
+    <ul class="list">
+        {posts.map((p) => (
+            <li>
+                <time datetime={p.publishedAt}>
+                    {p.publishedAt.slice(0, 10)}
+                </time>
+                <h2>
+                    <a href={`/blog/${p.slug}`}>{p.title}</a>
+                </h2>
+                <p>{p.description}</p>
+            </li>
+        ))}
+    </ul>
+</Base>

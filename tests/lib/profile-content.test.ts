@@ -13,7 +13,7 @@ import type {
     PostListItem,
     ProfileData,
     TimelineEntry,
-} from "@/lib/sanity-client";
+} from "@/lib/content-types";
 
 function profileOf(overrides: Partial<ProfileData> = {}): ProfileData {
     return {

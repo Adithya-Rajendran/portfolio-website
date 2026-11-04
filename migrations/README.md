@@ -22,7 +22,7 @@ migration and after any large edit, and keep a copy off this machine.
 pnpm exec sanity login                    # once
 set -a; . ./.env.local; set +a            # the project id and dataset, from the environment
 mkdir -p ~/backups
-pnpm exec sanity dataset export "$NEXT_PUBLIC_STORE_SANITY_DATASET" ~/backups/site-$(date +%F).tar.gz
+pnpm exec sanity dataset export "$SANITY_STUDIO_DATASET" ~/backups/site-$(date +%F).tar.gz
 ```
 
 The tarball holds every document, drafts included, and the dataset's image
@@ -38,7 +38,7 @@ and file assets.
   `--missing`, which skips every document that still exists:
 
     ```bash
-    pnpm exec sanity dataset import ~/backups/site-<date>.tar.gz "$NEXT_PUBLIC_STORE_SANITY_DATASET" --missing
+    pnpm exec sanity dataset import ~/backups/site-<date>.tar.gz "$SANITY_STUDIO_DATASET" --missing
     ```
 
     To roll documents back to the backup, use `--replace` instead: it overwrites
