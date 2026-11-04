@@ -1,20 +1,19 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { getAllProjects } from "../../lib/sanity";
-const projects = await getAllProjects();
+import ProjectCard from "../../components/ProjectCard.astro";
+import { getAllProjects, getProfile } from "../../lib/sanity";
+const [projects, profile] = await Promise.all([getAllProjects(), getProfile()]);
 ---
 
-<Base title="Projects">
-    <p class="eyebrow">Selected work</p>
+<Base title="Projects" pageClass="projects-page">
+    <p class="eyebrow">Selected work / Projects</p>
     <h1>Projects</h1>
-    <ul class="list" id="projects">
-        {projects.map((p) => (
-            <li>
-                <h2>
-                    <a href={`/portfolio/${p.slug}`}>{p.title}</a>
-                </h2>
-                <p>{p.summary}</p>
-            </li>
+    {profile?.projectsIntro && (
+        <p class="page-intro">{profile.projectsIntro}</p>
+    )}
+    <ul class="project-grid" id="projects">
+        {projects.map((project, index) => (
+            <ProjectCard project={project} index={index} heading="h2" />
         ))}
     </ul>
     <script>

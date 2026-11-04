@@ -1,5 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import HeroVisual from "../components/HeroVisual.astro";
 import { getProfile, getAllPosts, getAllProjects } from "../lib/sanity";
 import { availabilityLine } from "../../lib/profile-content";
 const [profile, posts, projects] = await Promise.all([
@@ -7,47 +9,123 @@ const [profile, posts, projects] = await Promise.all([
     getAllPosts(),
     getAllProjects(),
 ]);
+const selected = projects.filter((p) => p.featured && !p.quiet);
+const availability = availabilityLine(profile?.availability);
 ---
 
-<Base description={profile?.seoDescription || ""}>
-    <p class="eyebrow">Portfolio</p>
-    <h1>{profile?.name || "Adithya Rajendran"}</h1>
-    {profile?.headline && <p>{profile.headline}</p>}
-    {profile?.introduction && <p>{profile.introduction}</p>}
-    {availabilityLine(profile?.availability) && (
-        <p>Open to: {availabilityLine(profile?.availability)}</p>
-    )}
-    <p>
-        <a href="/resume">Experience</a> · <a href="/contact">Get in touch</a>
-    </p>
-    <section>
-        <h2>Selected projects</h2>
-        <ul class="list">
-            {projects
-                .filter((p) => p.featured && !p.quiet)
-                .map((p) => (
-                    <li>
-                        <h3>
-                            <a href={`/portfolio/${p.slug}`}>{p.title}</a>
-                        </h3>
-                        <p>{p.summary}</p>
-                    </li>
-                ))}
-        </ul>
-        <a href="/portfolio">All projects →</a>
+<Base description={profile?.seoDescription || ""} pageClass="home-page">
+    <section class="home-hero" aria-labelledby="hero-title">
+        <HeroVisual />
+        <div class="home-hero__veil"></div>
+        <div class="home-hero__content">
+            <p class="home-hero__kicker">
+                Robotics <span>·</span> Perception <span>·</span> Systems
+            </p>
+            <h1 id="hero-title">
+                Building toward
+                <br />
+                the <em>unknown.</em>
+            </h1>
+            <p class="home-hero__identity">
+                {profile?.name || "Adithya Rajendran"}
+                {profile?.headline && (
+                    <>
+                        {" "}
+                        <span>—</span> {profile.headline}
+                    </>
+                )}
+            </p>
+            {profile?.introduction && (
+                <p class="home-hero__intro">{profile.introduction}</p>
+            )}
+            <div class="home-hero__actions">
+                <a class="hero-button hero-button--primary" href="/portfolio">
+                    Explore the work <span aria-hidden="true">↗</span>
+                </a>
+                <a class="hero-button hero-button--secondary" href="/resume">
+                    Enter orbit <span aria-hidden="true">↗</span>
+                </a>
+            </div>
+            <button
+                class="home-hero__motion"
+                type="button"
+                data-home-motion
+                hidden
+            >
+                Pause scene
+            </button>
+            {availability && (
+                <p class="home-hero__availability">
+                    <span aria-hidden="true"></span> Open to: {availability}
+                </p>
+            )}
+            <p class="home-hero__map-credit">
+                Planet map:{" "}
+                <a href="https://www.solarsystemscope.com/textures/">
+                    Solar System Scope
+                </a>{" "}
+                (
+                <a href="https://creativecommons.org/licenses/by/4.0/">
+                    CC BY 4.0
+                </a>
+                ), adapted.
+            </p>
+        </div>
     </section>
-    <section>
-        <h2>Latest writing</h2>
-        <ul class="list">
-            {posts.slice(0, 3).map((p) => (
+    <section
+        class="home-section home-section--work"
+        aria-labelledby="work-title"
+    >
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">01 / Selected work</p>
+                <h2 id="work-title">Ideas made tangible.</h2>
+            </div>
+            <a class="section-link" href="/portfolio">
+                All projects <span aria-hidden="true">↗</span>
+            </a>
+        </div>
+        <ul class="project-grid">
+            {selected.map((project, index) => (
+                <ProjectCard project={project} index={index} />
+            ))}
+        </ul>
+    </section>
+    <section
+        class="home-section home-section--writing"
+        aria-labelledby="writing-title"
+    >
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">02 / Writing</p>
+                <h2 id="writing-title">Notes along the way.</h2>
+            </div>
+            <a class="section-link" href="/blog">
+                All writing <span aria-hidden="true">↗</span>
+            </a>
+        </div>
+        <ul class="writing-list">
+            {posts.slice(0, 3).map((post) => (
                 <li>
-                    <h3>
-                        <a href={`/blog/${p.slug}`}>{p.title}</a>
-                    </h3>
-                    <p>{p.description}</p>
+                    <a href={`/blog/${post.slug}`}>
+                        <time datetime={post.publishedAt}>
+                            {post.publishedAt.slice(0, 10)}
+                        </time>
+                        <div>
+                            <h3>{post.title}</h3>
+                            <p>{post.description}</p>
+                        </div>
+                        <span aria-hidden="true">↗</span>
+                    </a>
                 </li>
             ))}
         </ul>
-        <a href="/blog">All writing →</a>
+    </section>
+    <section class="home-close">
+        <p class="eyebrow">Start a conversation</p>
+        <h2>{profile?.tagline || "Curious about what comes next?"}</h2>
+        <a class="section-link" href="/contact">
+            Get in touch <span aria-hidden="true">↗</span>
+        </a>
     </section>
 </Base>

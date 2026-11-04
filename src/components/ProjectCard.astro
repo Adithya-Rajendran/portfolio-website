@@ -1,0 +1,55 @@
+---
+import { urlForImage } from "../lib/images";
+import type { ProjectListItem } from "../../lib/content-types";
+interface Props {
+    project: ProjectListItem;
+    index?: number;
+    heading?: "h2" | "h3";
+}
+const { project, index = 0, heading: Heading = "h3" } = Astro.props;
+const image = project.cover as typeof project.cover & {
+    credit?: string | null;
+};
+const cover = image?.asset?._ref
+    ? urlForImage(image).width(1000).height(650).fit("crop").url()
+    : null;
+---
+
+<li class="project-card">
+    <a class="project-card__link" href={`/portfolio/${project.slug}`}>
+        <div
+            class:list={[
+                "project-card__media",
+                { "project-card__media--empty": !cover },
+            ]}
+        >
+            {cover ? (
+                <img
+                    src={cover}
+                    alt=""
+                    loading="lazy"
+                    width="1000"
+                    height="650"
+                />
+            ) : (
+                <span aria-hidden="true" class="project-card__orbit"></span>
+            )}
+            <span class="project-card__index" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
+            </span>
+        </div>
+        <div class="project-card__body">
+            <div class="project-card__heading">
+                <Heading>{project.title}</Heading>
+                <span aria-hidden="true">↗</span>
+            </div>
+            <p>{project.summary}</p>
+            {project.technologies?.length && (
+                <p class="project-card__tags">
+                    {project.technologies.slice(0, 3).join(" / ")}
+                </p>
+            )}
+        </div>
+    </a>
+    {image?.credit && <p class="project-card__credit">{image.credit}</p>}
+</li>

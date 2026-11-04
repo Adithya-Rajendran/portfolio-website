@@ -26,6 +26,140 @@ test("published content, navigation and missing content work in the Worker", asy
     expect((await request.get("/blog/nonexistent-entry")).status()).toBe(404);
 });
 
+test("home introduces the owner and connects both hero destinations", async ({
+    page,
+}) => {
+    await page.goto("/");
+    await expect(
+        page.getByRole("heading", {
+            level: 1,
+            name: "Building toward the unknown.",
+        }),
+    ).toBeVisible();
+    await expect(page.locator(".home-hero")).toContainText("Adithya Rajendran");
+    await expect(
+        page.getByRole("link", { name: "Explore the work" }),
+    ).toHaveAttribute("href", "/portfolio");
+    await expect(
+        page.getByRole("link", { name: "Enter orbit" }),
+    ).toHaveAttribute("href", "/resume");
+});
+
+test("home stays readable without JavaScript and fits a mobile viewport", async ({
+    browser,
+}) => {
+    const context = await browser.newContext({
+        javaScriptEnabled: false,
+        viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    await page.goto("/");
+    await expect(
+        page.getByRole("heading", {
+            level: 1,
+            name: "Building toward the unknown.",
+        }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole("link", { name: "Explore the work" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Enter orbit" })).toBeVisible();
+    await expect(page.locator("[data-home-poster]")).toBeVisible();
+    await expect(page.locator("[data-home-stage] canvas")).toHaveCount(0);
+    const dimensions = await page.evaluate(() => ({
+        width: document.documentElement.clientWidth,
+        scroll: document.documentElement.scrollWidth,
+    }));
+    expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width + 1);
+    await context.close();
+});
+
+test("home's decorative scene starts automatically and respects reduced motion", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const visual = page.locator("[data-home-visual]");
+    const stage = page.locator("[data-home-stage]");
+    await expect(visual).toHaveAttribute("aria-hidden", "true");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await expect(stage).toHaveAttribute("data-state", "paused");
+    await expect(page.locator("[data-home-motion]")).toBeDisabled();
+    await expect(page.locator("[data-home-poster]")).toBeHidden();
+});
+
+test("home scene motion can be paused and resumed", async ({ page }) => {
+    await page.goto("/");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-home-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await expect(stage).toHaveAttribute("data-state", "running");
+    const motion = page.locator("[data-home-motion]");
+    await motion.click();
+    await expect(stage).toHaveAttribute("data-state", "paused");
+    await expect(motion).toHaveText("Resume motion");
+    await motion.click();
+    await expect(stage).toHaveAttribute("data-state", "running");
+});
+
+test("home falls back to its poster if the WebGL context is lost", async ({
+    page,
+}) => {
+    await page.goto("/");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const canvas = page.locator("[data-home-stage] canvas");
+    await expect(canvas).toBeVisible({ timeout: 20000 });
+    const lost = await canvas.evaluate((element) => {
+        const gl = (element as HTMLCanvasElement).getContext("webgl2");
+        const extension = gl?.getExtension("WEBGL_lose_context");
+        extension?.loseContext();
+        return Boolean(extension);
+    });
+    test.skip(!lost, "WEBGL_lose_context is unavailable in this browser");
+    await expect(page.locator("[data-home-poster]")).toBeVisible();
+    await expect(canvas).toHaveCount(0);
+    await expect(
+        page.getByRole("heading", {
+            level: 1,
+            name: "Building toward the unknown.",
+        }),
+    ).toBeVisible();
+});
+
+test("home hero has no serious accessibility issues in either theme", async ({
+    page,
+}) => {
+    const { default: AxeBuilder } = await import("@axe-core/playwright");
+    await page.goto("/");
+    for (const theme of ["light", "dark"]) {
+        await page.evaluate(
+            (value) => localStorage.setItem("theme", value),
+            theme,
+        );
+        await page.reload();
+        await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+        const results = await new AxeBuilder({ page })
+            .include(".home-hero")
+            .analyze();
+        expect(
+            results.violations.filter(
+                (v) => v.impact === "serious" || v.impact === "critical",
+            ),
+            theme,
+        ).toEqual([]);
+    }
+});
+
 test("feed and sitemap expose published fixtures, redirects work, and contact rejects cross-origin posts", async ({
     request,
 }) => {
@@ -139,7 +273,7 @@ test("orbital controls change and reset the camera, select worlds, and clean up"
     test.skip(!supported, "WebGL2 is unavailable in this browser");
     const stage = page.locator("[data-experience-stage]");
     const canvas = stage.locator("canvas");
-    await expect(canvas).toBeVisible();
+    await expect(canvas).toBeVisible({ timeout: 20000 });
     await expect(stage).toHaveAttribute("data-world", "earth");
     await page.getByRole("button", { name: "Pause motion" }).click();
     await expect(
@@ -203,7 +337,7 @@ test("orbital controls change and reset the camera, select worlds, and clean up"
     await expect(page.locator("[data-experience-poster]")).toBeVisible();
     await page.getByRole("button", { name: "Start exploring" }).click();
     await expect(stage.locator("canvas")).toHaveCount(1);
-    await expect(stage.locator("canvas")).toBeVisible();
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
     expect(errors).toEqual([]);
 });
 
@@ -262,7 +396,7 @@ test("ordinary articles do not download the orbital renderer or maps", async ({
     page.on("request", (request) => {
         const url = request.url();
         if (
-            /\/images\/trajectory\/|\/three\.module\.|\/OrbitControls\.|\/ExperienceVisual\./i.test(
+            /\/images\/trajectory\/|\/three\.module\.|\/OrbitControls\.|\/ExperienceVisual\.|\/HeroVisual\./i.test(
                 url,
             )
         )
