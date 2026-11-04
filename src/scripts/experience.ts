@@ -69,12 +69,12 @@ if (
             render.outputColorSpace = THREE.SRGBColorSpace;
             render.toneMapping = THREE.ACESFilmicToneMapping;
             render.toneMappingExposure = 1.15;
-            render.setClearColor(0x030609);
+            render.setClearColor(0x101719);
             render.shadowMap.enabled = true;
             render.shadowMap.type = THREE.PCFSoftShadowMap;
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 200);
-            camera.position.set(0, 0.35, 4.8);
+            camera.position.set(0, 0.3, 4.1);
             const orbit = new OrbitControls(camera, render.domElement);
             orbit.enableDamping = true;
             orbit.dampingFactor = 0.08;
@@ -83,6 +83,19 @@ if (
             orbit.maxDistance = 14;
             orbit.rotateSpeed = 0.6;
             orbit.zoomSpeed = 0.7;
+            // Page scrolling stays native until the viewer receives keyboard focus.
+            orbit.enableZoom = false;
+            const narrow = matchMedia("(max-width: 700px)");
+            const configureTouch = () => {
+                render.domElement.style.touchAction = narrow.matches
+                    ? "pan-y"
+                    : "none";
+                orbit.touches.ONE = narrow.matches
+                    ? (null as unknown as Three.TOUCH)
+                    : THREE.TOUCH.ROTATE;
+                orbit.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+            };
+            configureTouch();
             const sun = new THREE.DirectionalLight(0xfff1dc, 3.2);
             sun.position.set(-4, 2.4, 4);
             sun.castShadow = true;
@@ -226,7 +239,14 @@ if (
                                   ) *
                                       Math.min(1, camera.aspect)),
                           )
-                        : 4.8;
+                        : Math.max(
+                              4.1,
+                              1.15 /
+                                  (Math.tan(
+                                      THREE.MathUtils.degToRad(camera.fov / 2),
+                                  ) *
+                                      Math.min(1, camera.aspect)),
+                          );
                 const elevation = activeWorld === "saturn" ? 0.34 : 0.073;
                 camera.position.set(
                     0,
@@ -388,7 +408,7 @@ if (
                     status.textContent = "";
                     reset();
                     if (poster) poster.hidden = true;
-                    start.hidden = false;
+                    start.hidden = true;
                     wake();
                 } catch {
                     disposeObject(group);
@@ -463,9 +483,28 @@ if (
                 e.preventDefault();
                 cleanup?.();
                 cleanup = undefined;
+                start.textContent = "Try again";
+                start.hidden = false;
                 status.textContent =
                     "The visual is unavailable. The experience record remains below.";
             };
+            const focusViewer = () => {
+                orbit.enableZoom = true;
+            };
+            const blurViewer = () => {
+                orbit.enableZoom = false;
+            };
+            const pointerEnter = () => {
+                orbit.enableZoom = stage.contains(document.activeElement);
+            };
+            const pointerLeave = () => {
+                orbit.enableZoom = false;
+            };
+            stage.addEventListener("pointerenter", pointerEnter);
+            stage.addEventListener("pointerleave", pointerLeave);
+            stage.addEventListener("focusin", focusViewer);
+            stage.addEventListener("focusout", blurViewer);
+            narrow.addEventListener("change", configureTouch);
             orbit.addEventListener("change", changed);
             stage.addEventListener("keydown", key);
             render.domElement.addEventListener("webglcontextlost", lost);
@@ -479,6 +518,11 @@ if (
                 cancelAnimationFrame(frame);
                 observer.disconnect();
                 ro.disconnect();
+                stage.removeEventListener("pointerenter", pointerEnter);
+                stage.removeEventListener("pointerleave", pointerLeave);
+                stage.removeEventListener("focusin", focusViewer);
+                stage.removeEventListener("focusout", blurViewer);
+                narrow.removeEventListener("change", configureTouch);
                 orbit.removeEventListener("change", changed);
                 orbit.dispose();
                 stage.removeEventListener("keydown", key);
@@ -506,7 +550,7 @@ if (
             stage.hidden = false;
             stage.appendChild(render.domElement);
             controlsPanel.hidden = false;
-            start.textContent = "Close visual";
+            start.hidden = true;
             resize();
             syncMotion();
             await loadWorld("earth");

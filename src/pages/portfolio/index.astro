@@ -16,6 +16,12 @@ const [projects, profile] = await Promise.all([getAllProjects(), getProfile()]);
             <ProjectCard project={project} index={index} heading="h2" />
         ))}
     </ul>
+    <section class="projects-next">
+        <p class="eyebrow">Keep exploring</p>
+        <h2>More to discover.</h2>
+        <a href="/blog">Read the writing ↗</a>
+        <a href="/contact">Get in touch ↗</a>
+    </section>
     <script>
         import { movedFragment } from "../../../lib/navigation";
         const follow = () => {

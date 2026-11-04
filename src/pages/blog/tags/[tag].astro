@@ -1,4 +1,5 @@
 ---
+import "../../../styles/editorial.css";
 import Base from "../../../layouts/Base.astro";
 import { getAllPosts } from "../../../lib/sanity";
 import { TAG_PATTERN, tagLabel } from "../../../../lib/tags";
@@ -8,11 +9,13 @@ if (!TAG_PATTERN.test(tag) || !posts.length) return Astro.rewrite("/404");
 ---
 
 <Base title={tagLabel(tag)} description={`Writing tagged ${tagLabel(tag)}`}>
-    <p>
-        <a href="/blog">Writing</a>
-    </p>
-    <h1>{tagLabel(tag)}</h1>
-    <ul class="list">
+    <div class="editorial-head">
+        <p class="editorial-eyebrow">
+            <a href="/blog">← Writing</a> / Topic
+        </p>
+        <h1>{tagLabel(tag)}</h1>
+    </div>
+    <ul class="editorial-list">
         {posts.map((p) => (
             <li>
                 <time datetime={p.publishedAt}>

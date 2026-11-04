@@ -8,6 +8,7 @@ const p = await getProfile();
 
 <Base
     title="About"
+    pageClass="about-page"
     structuredData={[
         {
             "@context": "https://schema.org",
@@ -15,53 +16,77 @@ const p = await getProfile();
         },
     ]}
 >
-    <h1>About</h1>
-    {p?.bio && <p>{p.bio}</p>}
-    {p?.focusAreas?.length && (
-        <section>
-            <h2>Current focus</h2>
-            <ul>
-                {p.focusAreas.map((a) => (
-                    <li>{a}</li>
-                ))}
-            </ul>
-        </section>
-    )}
-    {p?.workSummary && (
-        <section>
-            <h2>Work</h2>
-            <p>{p.workSummary}</p>
-        </section>
-    )}
-    {p?.currentCuriosities?.length && (
-        <section>
-            <h2>Curiosities</h2>
-            <ul>
-                {p.currentCuriosities.map((c) => (
-                    <li>
-                        <strong>{c.title}</strong>
-                        {c.note && <> · {c.note}</>}
-                        {c.url && (
-                            <>
-                                {" "}
-                                · <SafeLink href={c.url}>Read more</SafeLink>
-                            </>
-                        )}
-                    </li>
-                ))}
-            </ul>
-        </section>
-    )}
-    {p?.socialLinks?.length && (
-        <section>
-            <h2>Elsewhere</h2>
-            <ul>
-                {p.socialLinks.map((l) => (
-                    <li>
-                        <SafeLink href={l.url}>{l.label}</SafeLink>
-                    </li>
-                ))}
-            </ul>
-        </section>
-    )}
+    <div class="editorial-lead">
+        <p class="eyebrow">The person behind the work</p>
+        <h1>About</h1>
+        {p?.headline && <p class="editorial-lead__headline">{p.headline}</p>}
+        {p?.bio && <p class="editorial-lead__body">{p.bio}</p>}
+    </div>
+    <div class="about-grid">
+        <div>
+            {p?.focusAreas?.length && (
+                <section class="editorial-section">
+                    <p class="eyebrow">01 / What I’m exploring</p>
+                    <h2>Current focus</h2>
+                    <ul class="about-focus">
+                        {p.focusAreas.map((a) => (
+                            <li>{a}</li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+            {p?.workSummary && (
+                <section class="editorial-section">
+                    <p class="eyebrow">02 / The work</p>
+                    <h2>Experience in context.</h2>
+                    <p>{p.workSummary}</p>
+                    <a class="section-link" href="/resume">
+                        Explore the experience ↗
+                    </a>
+                </section>
+            )}
+            {p?.currentCuriosities?.length && (
+                <section class="editorial-section">
+                    <p class="eyebrow">03 / Open questions</p>
+                    <h2>Curiosities</h2>
+                    <ul class="editorial-rows">
+                        {p.currentCuriosities.map((c) => (
+                            <li>
+                                <strong>{c.title}</strong>
+                                {c.note && <p>{c.note}</p>}
+                                {c.url && (
+                                    <SafeLink href={c.url}>
+                                        Read more ↗
+                                    </SafeLink>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+        </div>
+        <aside class="about-aside">
+            <p class="eyebrow">Elsewhere</p>
+            {p?.socialLinks?.length && (
+                <ul>
+                    {p.socialLinks.map((l) => (
+                        <li>
+                            <SafeLink href={l.url}>{l.label} ↗</SafeLink>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            <p>See the projects and questions taking shape.</p>
+            <a class="section-link" href="/portfolio">
+                Explore projects ↗
+            </a>
+        </aside>
+    </div>
+    <section class="editorial-next">
+        <p class="eyebrow">Continue the conversation</p>
+        <h2>Let’s connect.</h2>
+        <a class="section-link" href="/contact">
+            Get in touch ↗
+        </a>
+    </section>
 </Base>

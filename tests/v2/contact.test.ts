@@ -147,6 +147,13 @@ describe("contact Worker", () => {
             text: expect.stringContaining("Hello there"),
         });
         expect(response.headers.get("cache-control")).toBe("no-store");
+        const html = await response.text();
+        expect(html).toContain("<h1>Message sent</h1>");
+        expect(html).toContain("Thank you for getting in touch.");
+        expect(html).toContain(
+            'sessionStorage.removeItem("contact:senderEmail")',
+        );
+        expect(html).toContain('sessionStorage.removeItem("contact:message")');
     });
     it.each([
         new Response("refused", { status: 400 }),
@@ -171,6 +178,12 @@ describe("contact Worker", () => {
         const response = await request();
         const text = await response.text();
         expect(response.status).toBe(502);
+        expect(text).toContain("<h1>Contact</h1>");
+        expect(text).toContain(
+            "The message could not be sent. Please try again later.",
+        );
+        expect(text).toContain('href="/contact"');
+        expect(text).not.toContain("sessionStorage.removeItem");
         for (const secret of Object.values(secrets)) {
             expect(text).not.toContain(secret);
             expect(JSON.stringify(log.mock.calls)).not.toContain(secret);

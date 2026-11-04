@@ -488,6 +488,19 @@ if (wrapper && stage) {
                 visible = true,
                 paused = false;
             const motion = matchMedia("(prefers-reduced-motion: reduce)");
+            const updateMotionControl = () => {
+                if (!motionButton) return;
+                const label = motion.matches
+                    ? "Motion reduced by system"
+                    : paused
+                      ? "Resume motion"
+                      : "Pause motion";
+                if (motionButton.disabled !== motion.matches)
+                    motionButton.disabled = motion.matches;
+                if (motionButton.textContent !== label)
+                    motionButton.textContent = label;
+                if (motionButton.hidden) motionButton.hidden = false;
+            };
             const resize = () => {
                 const w = stage.clientWidth,
                     h = stage.clientHeight;
@@ -504,6 +517,7 @@ if (wrapper && stage) {
                     stage.dataset.state = "paused";
                     return;
                 }
+                updateMotionControl();
                 stage.dataset.state =
                     motion.matches || paused ? "paused" : "running";
                 if (!motion.matches && !paused) {
@@ -532,21 +546,21 @@ if (wrapper && stage) {
             const ro = new ResizeObserver(resize);
             ro.observe(stage);
             const syncMotion = () => {
-                if (motionButton) {
-                    motionButton.disabled = motion.matches;
-                    motionButton.textContent = motion.matches
-                        ? "Motion reduced by system"
-                        : paused
-                          ? "Resume motion"
-                          : "Pause motion";
-                    motionButton.hidden = false;
-                }
+                updateMotionControl();
                 if ((motion.matches || paused) && frame) {
                     cancelAnimationFrame(frame);
                     frame = 0;
                 }
                 wake();
             };
+            // Some browsers do not dispatch MediaQueryList changes reliably after
+            // the animation has stopped; recheck while the page is visible.
+            let lastReduced = motion.matches;
+            const preferenceTimer = window.setInterval(() => {
+                if (document.hidden || lastReduced === motion.matches) return;
+                lastReduced = motion.matches;
+                syncMotion();
+            }, 500);
             const toggleMotion = () => {
                 paused = !paused;
                 syncMotion();
@@ -563,6 +577,7 @@ if (wrapper && stage) {
             cleanup = () => {
                 disposed = true;
                 cancelAnimationFrame(frame);
+                window.clearInterval(preferenceTimer);
                 observer.disconnect();
                 ro.disconnect();
                 document.removeEventListener("visibilitychange", wake);

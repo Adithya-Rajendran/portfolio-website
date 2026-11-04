@@ -1,13 +1,19 @@
 ---
+import "../../styles/editorial.css";
 import Base from "../../layouts/Base.astro";
 import { getAllPosts } from "../../lib/sanity";
 const posts = await getAllPosts();
 ---
 
 <Base title="Writing">
-    <p class="eyebrow">Ideas and notes</p>
-    <h1>Writing</h1>
-    <ul class="list">
+    <div class="editorial-head">
+        <p class="editorial-eyebrow">Ideas and notes</p>
+        <h1>Writing</h1>
+        <p class="editorial-intro">
+            Notes on projects, systems, and what I’m learning.
+        </p>
+    </div>
+    <ul class="editorial-list">
         {posts.map((p) => (
             <li>
                 <time datetime={p.publishedAt}>

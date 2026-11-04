@@ -1,5 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
+import SafeLink from "../components/SafeLink.astro";
+import { availabilityLine } from "../../lib/profile-content";
 import { env } from "cloudflare:workers";
 import { getProfile } from "../lib/sanity";
 import { contactRoutes } from "../../lib/contact";
@@ -23,79 +25,106 @@ const ready =
     ].every((key) => Boolean(config[key]));
 ---
 
-<Base title="Contact">
-    <h1>Contact</h1>
-    {p?.contactIntro && <p>{p.contactIntro}</p>}
-    {ready ? (
-        <>
-            <form action="/api/contact" method="post" id="contact-form">
-                <fieldset>
-                    <legend>Topic</legend>
-                    {routes.map((route) => (
-                        <label>
-                            <input
-                                type="radio"
-                                name="topic"
-                                value={route.topic}
-                                checked={route.topic === "hello"}
-                            />{" "}
-                            {route.title}
-                        </label>
+<Base title="Contact" pageClass="contact-page">
+    <div class="contact-grid">
+        <section class="contact-intro">
+            <p class="eyebrow">Start a conversation</p>
+            <h1>Contact</h1>
+            {p?.contactIntro && (
+                <p class="contact-intro__lead">{p.contactIntro}</p>
+            )}
+            {availabilityLine(p?.availability) && (
+                <p class="contact-availability">
+                    Open to: {availabilityLine(p?.availability)}
+                </p>
+            )}
+            {p?.socialLinks?.length && (
+                <div class="contact-elsewhere">
+                    <p class="eyebrow">Elsewhere</p>
+                    {p.socialLinks.map((l) => (
+                        <SafeLink href={l.url}>{l.label} ↗</SafeLink>
                     ))}
-                </fieldset>
+                </div>
+            )}
+        </section>
+        <div class="contact-form-panel">
+            <p class="eyebrow">Send a note</p>
+            <h2>What’s on your mind?</h2>
+            {ready ? (
+                <>
+                    <form action="/api/contact" method="post" id="contact-form">
+                        <fieldset>
+                            <legend>Topic</legend>
+                            {routes.map((route) => (
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name="topic"
+                                        value={route.topic}
+                                        checked={route.topic === "hello"}
+                                    />{" "}
+                                    {route.title}
+                                </label>
+                            ))}
+                        </fieldset>
+                        <p>
+                            <label for="senderEmail">Your email</label>
+                            <br />
+                            <input
+                                id="senderEmail"
+                                name="senderEmail"
+                                type="text"
+                                inputmode="email"
+                                autocomplete="email"
+                                maxlength="254"
+                                required
+                            />
+                        </p>
+                        <p>
+                            <label for="message">Message</label>
+                            <br />
+                            <textarea
+                                id="message"
+                                name="message"
+                                rows="8"
+                                maxlength="2000"
+                                required
+                            ></textarea>
+                        </p>
+                        {config.TURNSTILE_SITE_KEY && (
+                            <div
+                                class="cf-turnstile"
+                                data-sitekey={config.TURNSTILE_SITE_KEY}
+                                data-action="contact"
+                            ></div>
+                        )}
+                        <p>
+                            <button type="submit">Send message</button>
+                        </p>
+                    </form>
+                    <noscript>
+                        <p>
+                            The verification step requires JavaScript. You can
+                            also connect via{" "}
+                            <a href="https://www.linkedin.com/in/adithya-rajendran">
+                                LinkedIn
+                            </a>
+                            .
+                        </p>
+                    </noscript>
+                </>
+            ) : (
                 <p>
-                    <label for="senderEmail">Your email</label>
-                    <br />
-                    <input
-                        id="senderEmail"
-                        name="senderEmail"
-                        type="text"
-                        inputmode="email"
-                        autocomplete="email"
-                        maxlength="254"
-                        required
-                    />
-                </p>
-                <p>
-                    <label for="message">Message</label>
-                    <br />
-                    <textarea
-                        id="message"
-                        name="message"
-                        rows="8"
-                        maxlength="2000"
-                        required
-                    ></textarea>
-                </p>
-                {config.TURNSTILE_SITE_KEY && (
-                    <div
-                        class="cf-turnstile"
-                        data-sitekey={config.TURNSTILE_SITE_KEY}
-                        data-action="contact"
-                    ></div>
-                )}
-                <p>
-                    <button type="submit">Send message</button>
-                </p>
-            </form>
-            <noscript>
-                <p>
-                    The verification step requires JavaScript. You can also
-                    connect via{" "}
+                    The contact form is temporarily unavailable. You can connect
+                    via{" "}
                     <a href="https://www.linkedin.com/in/adithya-rajendran">
                         LinkedIn
                     </a>
                     .
                 </p>
-            </noscript>
-        </>
-    ) : (
-        <p>
-            The contact form is temporarily unavailable. You can connect via{" "}
-            <a href="https://www.linkedin.com/in/adithya-rajendran">LinkedIn</a>
-            .
-        </p>
-    )}
+            )}
+        </div>
+    </div>
     {ready && (
         <script
             src="https://challenges.cloudflare.com/turnstile/v0/api.js"

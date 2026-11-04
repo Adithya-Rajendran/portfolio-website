@@ -52,7 +52,7 @@ export const onRequest = defineMiddleware(async ({ url }, next) => {
         "Content-Security-Policy",
         [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://core.sanity-cdn.com",
+            "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://core.sanity-cdn.com https://static.cloudflareinsights.com",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://cdn.sanity.io",
             "font-src 'self' data: https://design-system-static.sanity.io",

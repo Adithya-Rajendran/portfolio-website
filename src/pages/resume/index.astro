@@ -6,103 +6,159 @@ import { cvAnchor } from "../../../lib/cv";
 import { formatTimelineDate } from "../../../lib/profile-content";
 import { getProfile } from "../../lib/sanity";
 const p = await getProfile();
-const timeline = (p?.timeline || []).map((e) => ({
-    id: cvAnchor(e._key),
-    title: e.title,
-    organization: e.organization,
-    dates: `${formatTimelineDate(e.startDate, e.startPrecision) || ""}${e.endDate ? ` – ${formatTimelineDate(e.endDate, e.endPrecision)}` : e.isCurrent ? " – Present" : ""}`,
-}));
+const timeline = p?.timeline || [];
 ---
 
 <Base title="Experience" pageClass="experience-page">
-    <div class="experience-page__head">
-        <h1>Experience</h1>
-        <p>
-            <a href="/resume/view">View PDF</a> ·{" "}
-            <a href="/resume/download">Download PDF</a>
-        </p>
-    </div>
-    <ExperienceVisual entries={timeline} />
-    <section id="cv">
-        <h2 id="experience">Experience and education</h2>
-        <ul class="list">
-            {p?.timeline?.map((e) => (
-                <li id={cvAnchor(e._key)}>
-                    <h3>{e.title}</h3>
-                    <p>
-                        <SafeLink href={e.orgUrl}>{e.organization}</SafeLink>
-                        {e.location ? ` · ${e.location}` : ""}
-                    </p>
-                    <p>
-                        {formatTimelineDate(e.startDate, e.startPrecision)}
-                        {e.endDate
-                            ? ` – ${formatTimelineDate(e.endDate, e.endPrecision)}`
-                            : e.isCurrent
-                              ? " – Present"
-                              : ""}
-                    </p>
-                    {e.summary && <p>{e.summary}</p>}
-                    {e.skills?.length && <p>{e.skills.join(" · ")}</p>}
-                    {e.highlights?.length && (
+    <div class="trajectory-shell">
+        <div class="trajectory-grid">
+            <div class="trajectory-story">
+                <div class="trajectory-intro">
+                    <p class="trajectory-kicker">Experience &amp; education</p>
+                    <h1>A trajectory of building.</h1>
+                    {p?.headline && (
+                        <p class="trajectory-intro__lead">{p.headline}</p>
+                    )}
+                    <div class="trajectory-intro__links">
+                        <a class="trajectory-jump" href="#cv">
+                            Explore the record ↓
+                        </a>
+                        <a href="/resume/view">View résumé ↗</a>
+                        <a href="/resume/download">Download ↓</a>
+                        <details class="trajectory-chapters">
+                            <summary>Explore chapters</summary>
+                            <nav
+                                class="trajectory-progress"
+                                aria-label="Experience chapters"
+                            >
+                                {timeline.map((entry, index) => (
+                                    <a href={`#${cvAnchor(entry._key)}`}>
+                                        <span>
+                                            {String(index + 1).padStart(2, "0")}
+                                        </span>{" "}
+                                        {entry.organization}
+                                    </a>
+                                ))}
+                            </nav>
+                        </details>
+                    </div>
+                </div>
+                <section id="cv" aria-labelledby="experience">
+                    <div class="trajectory-section-head">
+                        <h2 id="experience">Experience and education</h2>
+                    </div>
+                    <ol class="trajectory-entries">
+                        {timeline.map((e, index) => (
+                            <li id={cvAnchor(e._key)}>
+                                <p class="trajectory-entry__number">
+                                    {String(index + 1).padStart(2, "0")} /{" "}
+                                    {e.kind === "education"
+                                        ? "Education"
+                                        : "Experience"}
+                                </p>
+                                <p class="trajectory-entry__dates">
+                                    {formatTimelineDate(
+                                        e.startDate,
+                                        e.startPrecision,
+                                    )}
+                                    {e.endDate
+                                        ? ` – ${formatTimelineDate(e.endDate, e.endPrecision)}`
+                                        : e.isCurrent
+                                          ? " – Present"
+                                          : ""}
+                                </p>
+                                <h3>{e.title}</h3>
+                                <p class="trajectory-entry__org">
+                                    <SafeLink href={e.orgUrl}>
+                                        {e.organization}
+                                    </SafeLink>
+                                    {e.location && ` · ${e.location}`}
+                                </p>
+                                {e.summary && <p>{e.summary}</p>}
+                                {e.highlights?.length && (
+                                    <ul>
+                                        {e.highlights.map((h) => (
+                                            <li>{h}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                                {e.skills?.length && (
+                                    <p class="trajectory-entry__skills">
+                                        {e.skills.join(" / ")}
+                                    </p>
+                                )}
+                            </li>
+                        ))}
+                    </ol>
+                </section>
+                {p?.credentials?.length && (
+                    <section class="trajectory-extra">
+                        <p class="trajectory-kicker">Learning &amp; practice</p>
+                        <h2 id="certifications">Credentials</h2>
                         <ul>
-                            {e.highlights.map((h) => (
-                                <li>{h}</li>
+                            {p.credentials.map((c) => (
+                                <li>
+                                    <SafeLink href={c.verificationUrl}>
+                                        {c.title}
+                                    </SafeLink>{" "}
+                                    · {c.issuer}
+                                    {c.issuedOn && ` · ${c.issuedOn}`}
+                                    {c.lifetime
+                                        ? " · Lifetime"
+                                        : c.expiresOn
+                                          ? ` · Expires ${c.expiresOn}`
+                                          : ""}
+                                </li>
                             ))}
                         </ul>
-                    )}
-                </li>
-            ))}
-        </ul>
-    </section>
-    {p?.credentials?.length && (
-        <section>
-            <h2 id="certifications">Credentials</h2>
-            <ul>
-                {p.credentials.map((c) => (
-                    <li>
-                        <SafeLink href={c.verificationUrl}>{c.title}</SafeLink>{" "}
-                        · {c.issuer}
-                        {c.issuedOn && ` · ${c.issuedOn}`}
-                        {c.lifetime
-                            ? " · Lifetime"
-                            : c.expiresOn
-                              ? ` · Expires ${c.expiresOn}`
-                              : ""}
-                    </li>
-                ))}
-            </ul>
-        </section>
-    )}
-    {p?.skillGroups?.length && (
-        <section>
-            <h2 id="skills">Skills</h2>
-            {p.skillGroups.map((g) => (
-                <div>
-                    <h3>{g.title}</h3>
-                    <p>{g.skills.join(" · ")}</p>
-                </div>
-            ))}
-        </section>
-    )}
-    {p?.talksAndPapers?.length && (
-        <section>
-            <h2>Talks and papers</h2>
-            <ul>
-                {p.talksAndPapers.map((t) => (
-                    <li>
-                        <strong>{t.title}</strong>
-                        {t.venue && <> · {t.venue}</>}
-                        {t.date && <> · {t.date}</>}
-                        {t.abstract && <p>{t.abstract}</p>}
-                        {t.links?.map((l) => (
-                            <>
-                                {" "}
-                                <SafeLink href={l.url}>{l.label}</SafeLink>
-                            </>
+                    </section>
+                )}
+                {p?.skillGroups?.length && (
+                    <section class="trajectory-extra">
+                        <h2 id="skills">Skills</h2>
+                        {p.skillGroups.map((g) => (
+                            <div>
+                                <h3>{g.title}</h3>
+                                <p>{g.skills.join(" · ")}</p>
+                            </div>
                         ))}
-                    </li>
-                ))}
-            </ul>
-        </section>
-    )}
+                    </section>
+                )}
+                {p?.talksAndPapers?.length && (
+                    <section class="trajectory-extra">
+                        <h2>Talks and papers</h2>
+                        <ul>
+                            {p.talksAndPapers.map((t) => (
+                                <li>
+                                    <strong>{t.title}</strong>
+                                    {t.venue && <> · {t.venue}</>}
+                                    {t.date && <> · {t.date}</>}
+                                    {t.abstract && <p>{t.abstract}</p>}
+                                    {t.links?.map((l) => (
+                                        <>
+                                            {" "}
+                                            <SafeLink href={l.url}>
+                                                {l.label}
+                                            </SafeLink>
+                                        </>
+                                    ))}
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
+                <section class="trajectory-next">
+                    <p class="trajectory-kicker">Keep exploring</p>
+                    <h2>From experience to work.</h2>
+                    <a href="/portfolio">Explore projects ↗</a>
+                </section>
+            </div>
+            <aside
+                class="trajectory-orbit"
+                aria-label="Interactive orbital view"
+            >
+                <ExperienceVisual />
+            </aside>
+        </div>
+    </div>
 </Base>

@@ -24,17 +24,23 @@ const schema = z.object({
     message: z.string().trim().min(1).max(MESSAGE_MAX_LENGTH),
     topic: z.enum(CONTACT_TOPICS).default(DEFAULT_CONTACT_TOPIC),
 });
+// All messages and labels passed to this shell are fixed strings from this module.
+const page = (
+    title: string,
+    message: string,
+    href: string,
+    label: string,
+    clearDraft = false,
+) =>
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title} · Adithya Rajendran</title><style>@font-face{font-family:Jost;src:url(/fonts/Jost-Regular.ttf)}*{box-sizing:border-box}body{margin:0;background:#101719;color:#f2e9d7;font:1rem/1.6 Jost,system-ui,sans-serif}header,main{width:min(100% - 2.5rem,72rem);margin:auto}header{padding:1.5rem 0;border-bottom:1px solid #59635b}header a{color:inherit;text-decoration:none;font-weight:700}main{padding:clamp(4rem,12vh,8rem) 0}h1{font-size:clamp(3rem,7vw,5rem);line-height:1.05;letter-spacing:-.04em;margin:.4em 0}p{max-width:44ch}a{color:#f0b87c;text-underline-offset:.25em}a:focus-visible{outline:3px solid #f4c487;outline-offset:4px}.eyebrow{color:#b7d2ae;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}</style></head><body><header><a href="/">Adithya Rajendran</a></header><main><p class="eyebrow">Contact</p><h1>${title}</h1><p>${message}</p><p><a href="${href}">${label} ↗</a></p></main>${clearDraft ? '<script>sessionStorage.removeItem("contact:senderEmail");sessionStorage.removeItem("contact:message");</script>' : ""}</body></html>`;
 const reply = (status: number, message: string) =>
-    new Response(
-        `<!doctype html><html lang="en"><meta charset="utf-8"><title>Contact</title><main><h1>Contact</h1><p>${message}</p><p><a href="/contact">Return to contact</a></p></main></html>`,
-        {
-            status,
-            headers: {
-                "Content-Type": "text/html; charset=utf-8",
-                "Cache-Control": "no-store",
-            },
+    new Response(page("Contact", message, "/contact", "Return to contact"), {
+        status,
+        headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "no-store",
         },
-    );
+    });
 export const POST: APIRoute = async ({ request, url }) => {
     const config = env as unknown as Record<string, any>;
     if (request.headers.get("origin") !== url.origin)
@@ -181,7 +187,13 @@ export const POST: APIRoute = async ({ request, url }) => {
         );
     }
     return new Response(
-        '<!doctype html><html lang="en"><meta charset="utf-8"><title>Message sent</title><main><h1>Message sent</h1><p>Thank you for getting in touch.</p><a href="/">Return home</a></main><script>sessionStorage.removeItem("contact:senderEmail");sessionStorage.removeItem("contact:message");</script></html>',
+        page(
+            "Message sent",
+            "Thank you for getting in touch.",
+            "/",
+            "Return home",
+            true,
+        ),
         {
             status: 200,
             headers: {

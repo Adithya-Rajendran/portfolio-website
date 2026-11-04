@@ -11,6 +11,11 @@ const {
     structuredData = [],
     ogType = "website",
 } = Astro.props;
+const currentPath = Astro.url.pathname;
+const current = (path: string) =>
+    currentPath === path || currentPath.startsWith(`${path}/`)
+        ? "page"
+        : undefined;
 const canonical = new URL(Astro.url.pathname, siteConfig.url);
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
@@ -65,11 +70,21 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 Adithya Rajendran
             </a>
             <nav aria-label="Main navigation">
-                <a href="/portfolio">Projects</a>
-                <a href="/blog">Writing</a>
-                <a href="/resume">Experience</a>
-                <a href="/about">About</a>
-                <a href="/contact">Contact</a>
+                <a href="/portfolio" aria-current={current("/portfolio")}>
+                    Projects
+                </a>
+                <a href="/blog" aria-current={current("/blog")}>
+                    Writing
+                </a>
+                <a href="/resume" aria-current={current("/resume")}>
+                    Experience
+                </a>
+                <a href="/about" aria-current={current("/about")}>
+                    About
+                </a>
+                <a href="/contact" aria-current={current("/contact")}>
+                    Contact
+                </a>
             </nav>
             <button
                 type="button"
@@ -95,10 +110,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 themeButton.hidden = false;
                 themeButton.addEventListener("click", () => {
                     const current =
-                        document.documentElement.dataset.theme ||
-                        (matchMedia("(prefers-color-scheme: dark)").matches
-                            ? "dark"
-                            : "light");
+                        document.documentElement.dataset.theme || "dark";
                     const next = current === "dark" ? "light" : "dark";
                     document.documentElement.dataset.theme = next;
                     try {

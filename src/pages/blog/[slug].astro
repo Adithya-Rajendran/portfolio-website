@@ -1,4 +1,5 @@
 ---
+import "../../styles/editorial.css";
 import {
     buildBlogPosting,
     buildBreadcrumbList,
@@ -57,18 +58,20 @@ const related = posts
     title={post.title}
     description={post.description}
 >
-    <article>
-        <p>
-            <a href="/blog">Writing</a>
-        </p>
-        <h1>{post.title}</h1>
-        <p>{post.description}</p>
-        <p>
-            <time datetime={post.publishedAt}>
-                {post.publishedAt.slice(0, 10)}
-            </time>{" "}
-            · <a href="/about">Adithya Rajendran</a>
-        </p>
+    <article class="editorial-article">
+        <div class="editorial-article-head">
+            <p class="editorial-eyebrow">
+                <a href="/blog">← Writing</a>
+            </p>
+            <h1>{post.title}</h1>
+            <p class="editorial-deck">{post.description}</p>
+            <p class="editorial-meta">
+                <time datetime={post.publishedAt}>
+                    {post.publishedAt.slice(0, 10)}
+                </time>{" "}
+                · <a href="/about">Adithya Rajendran</a>
+            </p>
+        </div>
         <CmsImage image={post.cover} />
         {headings.length > 1 && (
             <details class="contents">

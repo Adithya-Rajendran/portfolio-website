@@ -109,6 +109,38 @@ test("home scene motion can be paused and resumed", async ({ page }) => {
     await expect(stage).toHaveAttribute("data-state", "running");
 });
 
+test("home follows live motion preferences and preserves a manual pause", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-home-stage]");
+    const motion = page.locator("[data-home-motion]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await expect(stage).toHaveAttribute("data-state", "running");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(motion).toBeDisabled();
+    await expect(motion).toHaveText("Motion reduced by system");
+    await expect(stage).toHaveAttribute("data-state", "paused");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(motion).toBeEnabled();
+    await expect(motion).toHaveText("Pause motion");
+    await expect(stage).toHaveAttribute("data-state", "running");
+    await motion.click();
+    await expect(stage).toHaveAttribute("data-state", "paused");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(motion).toBeDisabled();
+    await expect(motion).toHaveText("Motion reduced by system");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(motion).toBeEnabled();
+    await expect(motion).toHaveText("Resume motion");
+    await expect(stage).toHaveAttribute("data-state", "paused");
+});
+
 test("home falls back to its poster if the WebGL context is lost", async ({
     page,
 }) => {
@@ -157,6 +189,27 @@ test("home hero has no serious accessibility issues in either theme", async ({
             ),
             theme,
         ).toEqual([]);
+    }
+});
+
+test("security policy permits Cloudflare's injected analytics beacon", async ({
+    request,
+}) => {
+    for (const path of ["/", "/studio/"]) {
+        const response = await request.get(path);
+        const policy = response.headers()["content-security-policy"];
+        expect(policy).toBeTruthy();
+        const directives = Object.fromEntries(
+            policy.split(";").map((part) => {
+                const [name, ...values] = part.trim().split(/\s+/);
+                return [name, values];
+            }),
+        );
+        expect(directives["script-src"]).toContain(
+            "https://static.cloudflareinsights.com",
+        );
+        expect(directives["script-src"]).not.toContain("*");
+        expect(directives["connect-src"]).toContain("'self'");
     }
 });
 
@@ -211,6 +264,26 @@ test("theme is keyboard operable and navigation remains available on mobile", as
     ).toBeVisible();
 });
 
+test("dark is the default, an explicit light choice persists and navigation marks the current page", async ({
+    page,
+}) => {
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveCSS("color-scheme", "dark");
+    await page.getByRole("button", { name: "Change color theme" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await page
+        .getByRole("navigation", { name: "Main navigation" })
+        .getByRole("link", { name: "Experience" })
+        .click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(
+        page
+            .getByRole("navigation", { name: "Main navigation" })
+            .getByRole("link", { name: "Experience" }),
+    ).toHaveAttribute("aria-current", "page");
+});
+
 test("article, CV and contact fallback are readable without JavaScript", async ({
     browser,
 }) => {
@@ -254,7 +327,7 @@ test("reduced motion renders a static visual while retaining the experience list
     ).toBeDisabled();
 });
 
-test("orbital controls change and reset the camera, select worlds, and clean up", async ({
+test("orbital controls change and reset the camera, select worlds, and retain the record on context loss", async ({
     page,
 }) => {
     const errors: string[] = [];
@@ -332,13 +405,58 @@ test("orbital controls change and reset the camera, select worlds, and clean up"
     ).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "Earth", exact: true }).click();
     await expect(stage).toHaveAttribute("data-world", "earth");
-    await page.getByRole("button", { name: "Close visual" }).click();
-    await expect(stage.locator("canvas")).toHaveCount(0);
-    await expect(page.locator("[data-experience-poster]")).toBeVisible();
-    await page.getByRole("button", { name: "Start exploring" }).click();
-    await expect(stage.locator("canvas")).toHaveCount(1);
-    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
     expect(errors).toEqual([]);
+    const canLoseContext = await stage.locator("canvas").evaluate((element) => {
+        const gl = (element as HTMLCanvasElement).getContext("webgl2");
+        const extension = gl?.getExtension("WEBGL_lose_context");
+        extension?.loseContext();
+        return Boolean(extension);
+    });
+    if (canLoseContext) {
+        await expect(stage.locator("canvas")).toHaveCount(0);
+        await expect(page.locator("[data-experience-poster]")).toBeVisible();
+        await expect(page.locator("#cv")).toBeVisible();
+        await page.getByRole("button", { name: "Try again" }).click();
+        await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+        await expect(stage.locator("canvas")).toHaveCount(1);
+    }
+});
+
+test("experience chapter links reach the record and scrolling over the scene moves the page", async ({
+    page,
+}) => {
+    await page.goto("/resume");
+    await expect(
+        page.getByRole("link", { name: /Explore projects/ }),
+    ).toHaveAttribute("href", "/portfolio");
+    await page.getByText("Explore chapters", { exact: true }).click();
+    const chapters = page.getByRole("navigation", {
+        name: "Experience chapters",
+    });
+    const first = chapters.locator('a[href^="#"]').first();
+    const target = await first.getAttribute("href");
+    expect(target).toBeTruthy();
+    await first.click();
+    await expect(page).toHaveURL(new RegExp(`${target}$`));
+    await expect(page.locator(target!)).toBeVisible();
+    const stage = page.locator("[data-experience-stage]");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    await stage.scrollIntoViewIfNeeded();
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    const bounds = await stage.boundingBox();
+    expect(bounds).not.toBeNull();
+    await page.mouse.move(
+        bounds!.x + bounds!.width / 2,
+        bounds!.y + bounds!.height / 2,
+    );
+    const before = await page.evaluate(() => window.scrollY);
+    await page.mouse.wheel(0, 300);
+    await expect
+        .poll(() => page.evaluate(() => window.scrollY))
+        .toBeGreaterThan(before);
 });
 
 test("Studio deep links serve the standalone shell", async ({ request }) => {
