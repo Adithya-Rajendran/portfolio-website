@@ -35,7 +35,6 @@ const resetButton = section?.querySelector<HTMLButtonElement>(
 const current = section?.querySelector<HTMLElement>(
     "[data-experience-current]",
 );
-const poster = section?.querySelector<HTMLElement>("[data-experience-poster]");
 const lightingLabel = section?.querySelector<HTMLElement>(
     "[data-experience-lighting]",
 );
@@ -83,7 +82,6 @@ if (
             stage.dataset.phase = initialClock.phase;
             section.dataset.phase = initialClock.phase;
             if (page) page.dataset.phase = initialClock.phase;
-            if (poster) poster.dataset.phase = initialClock.phase;
             if (ticket !== generation) return;
             const T = await import("three");
             const { OrbitControls } =
@@ -197,7 +195,6 @@ if (
                 targetColor.setHex(looks[phase].color);
                 stage.dataset.phase = phase;
                 section.dataset.phase = phase;
-                if (poster) poster.dataset.phase = phase;
                 if (page) page.dataset.phase = phase;
                 if (lightingLabel)
                     lightingLabel.textContent = `${phase.charAt(0).toUpperCase() + phase.slice(1)} · your local time`;
@@ -854,7 +851,6 @@ if (
                 if (!firstFrameDrawn && ready) {
                     firstFrameDrawn = true;
                     render.domElement.style.visibility = "visible";
-                    if (poster) poster.hidden = true;
                     stage.dataset.firstFramePhase = phase;
                     stage.dataset.ready = "true";
                 }
@@ -1071,7 +1067,6 @@ if (
                 render.domElement.remove();
                 stage.hidden = true;
                 panel.hidden = true;
-                if (poster) poster.hidden = false;
             };
             stage.appendChild(render.domElement);
             stage.hidden = false;
@@ -1096,7 +1091,6 @@ if (
             renderer?.dispose();
             stage.hidden = true;
             panel.hidden = true;
-            if (poster) poster.hidden = false;
             start.hidden = false;
             start.textContent = "Try again";
             status.textContent =

@@ -38,13 +38,6 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
                 <circle cx="786" cy="615" r="3" />
             </svg>
             <div
-                class="observatory__poster"
-                data-experience-poster
-                aria-hidden="true"
-            >
-                <div class="observatory__earth"></div>
-            </div>
-            <div
                 class="observatory__stage"
                 data-experience-stage
                 tabindex="0"
@@ -233,8 +226,7 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     .experience-visual[data-surface="true"] .observatory__paths {
         opacity: 0;
     }
-    .observatory__stage,
-    .observatory__poster {
+    .observatory__stage {
         position: absolute;
         inset: 0;
     }
@@ -265,41 +257,8 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         mask-composite: intersect;
     }
     .observatory__controls[hidden],
-    .observatory__stage[hidden],
-    .observatory__poster[hidden] {
+    .observatory__stage[hidden] {
         display: none;
-    }
-    .observatory__earth {
-        position: absolute;
-        width: 83%;
-        max-width: 660px;
-        aspect-ratio: 1;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        background: url("/images/trajectory/earth-poster-v2-day.webp") center /
-            contain no-repeat;
-    }
-    :global(html[data-scene-clock="pending"]) .observatory__poster {
-        visibility: hidden;
-    }
-    :global(html[data-scene-phase="dawn"]) .observatory__earth {
-        background-image: url("/images/trajectory/earth-poster-v2-dawn.webp");
-    }
-    :global(html[data-scene-phase="dusk"]) .observatory__earth {
-        background-image: url("/images/trajectory/earth-poster-v2-dusk.webp");
-    }
-    :global(html[data-scene-phase="night"]) .observatory__earth {
-        background-image: url("/images/trajectory/earth-poster-v2-night.webp");
-    }
-    .experience-visual[data-phase="dawn"] .observatory__earth {
-        background-image: url("/images/trajectory/earth-poster-v2-dawn.webp");
-    }
-    .experience-visual[data-phase="dusk"] .observatory__earth {
-        background-image: url("/images/trajectory/earth-poster-v2-dusk.webp");
-    }
-    .experience-visual[data-phase="night"] .observatory__earth {
-        background-image: url("/images/trajectory/earth-poster-v2-night.webp");
     }
     .observatory__controls {
         position: relative;

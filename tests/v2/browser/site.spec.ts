@@ -266,8 +266,11 @@ test("core pages remain usable without JavaScript", async ({ browser }) => {
     await page.goto("/resume");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.locator("#cv")).toBeVisible();
-    await expect(page.locator("[data-experience-poster]")).toBeVisible();
+    await expect(page.locator("[data-experience-poster]")).toHaveCount(0);
     await expect(page.locator("[data-experience-stage] canvas")).toHaveCount(0);
+    expect(await page.locator("body").innerText()).toContain(
+        "The interactive orbital view requires JavaScript.",
+    );
     await context.close();
 });
 
@@ -451,7 +454,10 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     });
     if (canLoseContext) {
         await expect(stage.locator("canvas")).toHaveCount(0);
-        await expect(page.locator("[data-experience-poster]")).toBeVisible();
+        await expect(page.locator("[data-experience-poster]")).toHaveCount(0);
+        await expect(page.locator("[data-experience-status]")).toContainText(
+            "The visual is unavailable",
+        );
         await expect(page.locator("#cv")).toBeVisible();
         await page.getByRole("button", { name: "Try again" }).click();
         await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });

@@ -38,29 +38,72 @@ test.describe("local-time Earth lighting", () => {
         }
     });
 
-    test("home initializes the local clock before visiting the experience", async ({
+    test("home initializes the clock and the first Earth frame matches without a placeholder", async ({
         page,
     }) => {
+        test.setTimeout(120000);
         await page.clock.setFixedTime(new Date("2026-01-16T01:00:00Z"));
-        await page.goto("/");
-        const root = page.locator("html");
-        await expect(root).toHaveAttribute("data-scene-clock", "ready");
-        await expect(root).toHaveAttribute(
-            "data-scene-timezone",
-            "America/Los_Angeles",
-        );
-        await expect(root).toHaveAttribute("data-scene-phase", "dusk");
-        await page.getByRole("link", { name: "Enter orbit" }).click();
-        await expect(root).toHaveAttribute("data-scene-phase", "dusk");
-        const poster = page.locator("[data-experience-poster]");
-        const stage = page.locator("[data-experience-stage]");
-        await expect(poster).toHaveAttribute("data-phase", "dusk");
-        await expect(stage).toHaveAttribute("data-ready", "true", {
-            timeout: 30000,
+        let releaseTexture!: () => void;
+        const holdTexture = new Promise<void>((resolve) => {
+            releaseTexture = resolve;
         });
-        await expect(stage).toHaveAttribute("data-first-frame-phase", "dusk");
-        await expect(stage).toHaveAttribute("data-phase", "dusk");
-        await expect(stage).toHaveAttribute("data-near-plane", "0.050000");
+        let earthRequests = 0;
+        const placeholderRequests: string[] = [];
+        page.on("request", (request) => {
+            if (
+                /\/(?:earth[-_]?poster|earth[-_]?placeholder)/i.test(
+                    new URL(request.url()).pathname,
+                )
+            )
+                placeholderRequests.push(request.url());
+        });
+        await page.route(
+            "**/images/trajectory/earth-surface-v2-*.webp",
+            async (route) => {
+                earthRequests++;
+                await holdTexture;
+                await route.continue();
+            },
+        );
+        try {
+            await page.goto("/");
+            const root = page.locator("html");
+            await expect(root).toHaveAttribute("data-scene-clock", "ready");
+            await expect(root).toHaveAttribute(
+                "data-scene-timezone",
+                "America/Los_Angeles",
+            );
+            await expect(root).toHaveAttribute("data-scene-phase", "dusk");
+            await page.getByRole("link", { name: "Enter orbit" }).click();
+            await expect(root).toHaveAttribute("data-scene-phase", "dusk");
+            const stage = page.locator("[data-experience-stage]");
+            await expect.poll(() => earthRequests, { timeout: 30000 }).toBe(1);
+            await expect(page.locator("[data-experience-poster]")).toHaveCount(
+                0,
+            );
+            await expect(
+                page.locator(
+                    ".observatory__viewport img, .observatory__viewport svg image",
+                ),
+            ).toHaveCount(0);
+            await expect(stage.locator("canvas:visible")).toHaveCount(0);
+            await expect(stage).not.toHaveAttribute("data-ready", "true");
+            expect(placeholderRequests).toEqual([]);
+            releaseTexture();
+            await expect(stage).toHaveAttribute("data-ready", "true", {
+                timeout: 60000,
+            });
+            await expect(stage.locator("canvas")).toBeVisible();
+            await expect(stage).toHaveAttribute(
+                "data-first-frame-phase",
+                "dusk",
+            );
+            await expect(stage).toHaveAttribute("data-phase", "dusk");
+            await expect(stage).toHaveAttribute("data-near-plane", "0.050000");
+            expect(earthRequests).toBe(1);
+        } finally {
+            releaseTexture();
+        }
     });
 
     test("local clock initialization works when session storage is blocked", async ({
@@ -118,7 +161,10 @@ test.describe("local-time Earth lighting", () => {
             !canLoseContext,
             "WEBGL_lose_context is unavailable in this browser",
         );
-        await expect(page.locator("[data-experience-poster]")).toBeVisible();
+        await expect(page.locator("[data-experience-poster]")).toHaveCount(0);
+        await expect(page.locator("[data-experience-status]")).toContainText(
+            "The visual is unavailable",
+        );
         await page.getByRole("button", { name: "Try again" }).click();
         await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
         await expect(stage).toHaveAttribute("data-phase", "dusk");
