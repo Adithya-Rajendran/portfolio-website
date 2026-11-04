@@ -313,15 +313,77 @@ test("dark is the default, an explicit light choice persists and navigation mark
     ).toHaveAttribute("aria-current", "page");
 });
 
+test("featured non-quiet projects lead the linked project list", async ({
+    page,
+}) => {
+    await page.goto("/portfolio");
+    const projectLinks = page.locator('main a[href^="/portfolio/"]');
+    await expect(projectLinks.nth(0)).toHaveAttribute(
+        "href",
+        "/portfolio/homelab",
+    );
+    await expect(projectLinks.nth(1)).toHaveAttribute(
+        "href",
+        "/portfolio/fixture-flagship-mission",
+    );
+    const links = await projectLinks.evaluateAll((elements) =>
+        elements.map((element) => element.getAttribute("href")),
+    );
+    expect(links.indexOf("/portfolio/fixture-planned-mission")).toBeGreaterThan(
+        1,
+    );
+    await projectLinks.nth(1).click();
+    await expect(page).toHaveURL(/\/portfolio\/fixture-flagship-mission$/);
+    await expect(
+        page.getByRole("heading", {
+            level: 1,
+            name: "Fixture flagship mission",
+        }),
+    ).toBeVisible();
+});
+
 test("article, CV and contact fallback are readable without JavaScript", async ({
     browser,
 }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto("/blog/fixture-post-code-and-links");
-    await expect(page.locator("article")).toContainText(
+    const article = page.locator("article");
+    await expect(article).toContainText(
         "Fixture post: code listings and links",
     );
+    await expect(article).toContainText("Fixture caution");
+    await expect(article).toContainText("Fixture footnote one");
+    const summary = article.locator("summary").filter({ hasText: "Contents" });
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    const contents = page.getByRole("navigation", { name: "Contents" });
+    const link = contents.getByRole("link", { name: "Fixture second section" });
+    const target = await link.getAttribute("href");
+    expect(target).toBeTruthy();
+    await link.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(new RegExp(`${target}$`));
+    await expect(page.locator(target!)).toBeVisible();
+    const back = article.getByRole("link", { name: "Back to contents" });
+    await back.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/#article-contents$/);
+    await expect(summary).toBeVisible();
+    for (const width of [320, 390, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect(
+            article.getByRole("heading", { name: "Fixture section in a post" }),
+        ).toBeVisible();
+        await expect(
+            article.getByRole("heading", { name: "Fixture second section" }),
+        ).toBeVisible();
+        const dimensions = await page.evaluate(() => ({
+            width: document.documentElement.clientWidth,
+            scroll: document.documentElement.scrollWidth,
+        }));
+        expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width + 1);
+    }
     await page.goto("/resume");
     await expect(page.locator("#cv")).toContainText("Field Software Engineer");
     await page.goto("/contact");
@@ -334,8 +396,37 @@ test("article, CV and contact fallback are readable without JavaScript", async (
 test("contact validates required fields without sending mail", async ({
     page,
 }) => {
+    await page.setViewportSize({ width: 320, height: 844 });
     await page.goto("/contact");
-    await page.getByRole("button", { name: "Send message" }).click();
+    const form = page.locator("#contact-form");
+    const image = page.locator("main figure img").first();
+    const linkedIn = page.getByRole("link", { name: /LinkedIn/ }).first();
+    await expect(form).toBeVisible();
+    await expect(image).toBeAttached();
+    await expect(linkedIn).toBeAttached();
+    const formPrecedes = await form.evaluate((element) => {
+        const image = document.querySelector("main figure img");
+        const linkedIn = document.querySelector('main a[href*="linkedin.com"]');
+        return Boolean(
+            image &&
+            linkedIn &&
+            element.compareDocumentPosition(image) &
+                Node.DOCUMENT_POSITION_FOLLOWING &&
+            element.compareDocumentPosition(linkedIn) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        );
+    });
+    expect(formPrecedes).toBe(true);
+    for (const width of [320, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        const dimensions = await page.evaluate(() => ({
+            width: document.documentElement.clientWidth,
+            scroll: document.documentElement.scrollWidth,
+        }));
+        expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width + 1);
+    }
+    await page.getByRole("button", { name: "Send message" }).focus();
+    await page.keyboard.press("Enter");
     await expect(page.locator("#senderEmail:invalid")).toBeVisible();
     await expect(page).toHaveURL(/\/contact$/);
 });
@@ -896,19 +987,32 @@ test("Studio deep links serve the standalone shell", async ({ request }) => {
     expect(await response.text()).toContain("/studio/static/");
 });
 
-test("home, article and contact have no serious accessibility violations", async ({
+test("public pages have no serious accessibility violations in either theme", async ({
     page,
 }) => {
+    test.setTimeout(120000);
     const { default: AxeBuilder } = await import("@axe-core/playwright");
-    for (const path of ["/", "/blog/fixture-post-code-and-links", "/contact"]) {
+    for (const path of [
+        "/",
+        "/portfolio",
+        "/blog",
+        "/blog/fixture-post-code-and-links",
+        "/about",
+        "/contact",
+    ]) {
         await page.goto(path);
-        const results = await new AxeBuilder({ page }).analyze();
-        expect(
-            results.violations.filter(
-                (v) => v.impact === "critical" || v.impact === "serious",
-            ),
-            path,
-        ).toEqual([]);
+        for (const theme of ["light", "dark"]) {
+            await page.locator("html").evaluate((element, value) => {
+                element.dataset.theme = value;
+            }, theme);
+            const results = await new AxeBuilder({ page }).analyze();
+            expect(
+                results.violations.filter(
+                    (v) => v.impact === "critical" || v.impact === "serious",
+                ),
+                `${path} ${theme}`,
+            ).toEqual([]);
+        }
     }
 });
 

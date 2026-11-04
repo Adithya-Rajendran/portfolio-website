@@ -87,6 +87,30 @@
     min-height: 420px;
     aspect-ratio: 1.5;
 }
+.about-research {
+    margin: 4rem 0 0;
+    padding: 1.5rem 0;
+    border-block: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+}
+.about-research > .eyebrow {
+    margin: 0 0 1.5rem;
+}
+.about-research img {
+    width: 100%;
+    height: auto;
+}
+.about-research figcaption {
+    margin-top: 1.2rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+.about-research figcaption > a {
+    font-weight: 600;
+}
+.about-research figcaption p {
+    color: var(--secondary-text);
+    font-size: 0.8rem;
+}
 .contact-signal {
     margin-top: 2.75rem;
     height: 230px;
@@ -122,18 +146,20 @@
         gap: 1.5rem;
     }
     .about-lead-grid {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
+        display: grid;
+        grid-template-columns: 1fr;
     }
     .about-lead-copy {
-        display: contents;
+        display: block;
     }
     .about-lead-copy > * {
         order: 0;
     }
     .about-portrait {
         order: 1;
+    }
+    .about-research {
+        margin: 0 0 1.5rem;
     }
     .about-lead-copy > .editorial-lead__body {
         order: 2;

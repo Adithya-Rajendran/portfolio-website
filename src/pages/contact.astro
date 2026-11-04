@@ -39,25 +39,6 @@ const ready =
                     Open to: {availabilityLine(p?.availability)}
                 </p>
             )}
-            {p?.socialLinks?.length && (
-                <div class="contact-elsewhere">
-                    <p class="eyebrow">Elsewhere</p>
-                    {p.socialLinks.map((l) => (
-                        <SafeLink href={l.url}>{l.label} ↗</SafeLink>
-                    ))}
-                </div>
-            )}
-            <figure class="contact-signal mechanical-study">
-                <img
-                    src="/images/scenes/signal-study-v1.webp"
-                    width="1200"
-                    height="900"
-                    alt="A parabolic antenna pointed toward the sky."
-                />
-                <figcaption>
-                    <span>02 / Connection</span> An open channel.
-                </figcaption>
-            </figure>
         </section>
         <div class="contact-form-panel">
             <p class="eyebrow">Send a note</p>
@@ -65,10 +46,10 @@ const ready =
             {ready ? (
                 <>
                     <form action="/api/contact" method="post" id="contact-form">
-                        <fieldset>
+                        <fieldset class="contact-topics">
                             <legend>Topic</legend>
                             {routes.map((route) => (
-                                <label>
+                                <label class="contact-topic">
                                     <input
                                         type="radio"
                                         name="topic"
@@ -98,7 +79,7 @@ const ready =
                             <textarea
                                 id="message"
                                 name="message"
-                                rows="8"
+                                rows="6"
                                 maxlength="2000"
                                 required
                             ></textarea>
@@ -136,6 +117,27 @@ const ready =
                 </p>
             )}
         </div>
+        <aside class="contact-support" aria-label="Other ways to connect">
+            {p?.socialLinks?.length && (
+                <div class="contact-elsewhere">
+                    <p class="eyebrow">Elsewhere</p>
+                    {p.socialLinks.map((l) => (
+                        <SafeLink href={l.url}>{l.label} ↗</SafeLink>
+                    ))}
+                </div>
+            )}
+            <figure class="contact-signal mechanical-study">
+                <img
+                    src="/images/scenes/signal-study-v1.webp"
+                    width="1200"
+                    height="900"
+                    alt="A parabolic antenna pointed toward the sky."
+                />
+                <figcaption>
+                    <span>02 / Connection</span> An open channel.
+                </figcaption>
+            </figure>
+        </aside>
     </div>
     {ready && (
         <script

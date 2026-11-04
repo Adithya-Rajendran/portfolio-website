@@ -1,8 +1,13 @@
 ---
 import Base from "../../layouts/Base.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
+import ProjectRow from "../../components/ProjectRow.astro";
 import { getAllProjects, getProfile } from "../../lib/sanity";
+import { homeProjects } from "../../../lib/home";
+import { missionOrder } from "../../../lib/missions";
 const [projects, profile] = await Promise.all([getAllProjects(), getProfile()]);
+const { flagship, rows, also } = homeProjects(missionOrder(projects));
+const selected = flagship ? [flagship, ...rows] : [];
 ---
 
 <Base title="Projects" pageClass="projects-page">
@@ -15,11 +20,30 @@ const [projects, profile] = await Promise.all([getAllProjects(), getProfile()]);
             )}
         </div>
     </div>
-    <ul class="project-grid" id="projects">
-        {projects.map((project, index) => (
-            <ProjectCard project={project} index={index} heading="h2" />
+    <ul class="project-collection" id="projects">
+        {selected.map((project, index) => (
+            <ProjectCard
+                project={project}
+                index={index}
+                heading="h2"
+                featured={index === 0}
+            />
         ))}
     </ul>
+    {also.length > 0 && (
+        <section class="project-archive" aria-labelledby="more-projects-title">
+            <p class="eyebrow">The wider body of work</p>
+            <h2 id="more-projects-title">Experiments &amp; systems.</h2>
+            <ul class="project-rows">
+                {also.map((project, index) => (
+                    <ProjectRow
+                        project={project}
+                        index={selected.length + index}
+                    />
+                ))}
+            </ul>
+        </section>
+    )}
     <section class="projects-next">
         <p class="eyebrow">Keep exploring</p>
         <h2>More to discover.</h2>

@@ -423,11 +423,11 @@ body > footer {
     border-color: color-mix(in srgb, var(--ink) 18%, transparent);
 }
 .home-hero {
-    min-height: clamp(740px, calc(100svh - 80px), 1020px);
+    min-height: clamp(620px, calc(90svh - 80px), 800px);
 }
 .home-hero__content {
     width: min(calc(100% - 6rem), 1480px);
-    padding: 4rem 0 7rem;
+    padding: 3rem 0 5rem;
 }
 .home-hero h1 {
     font-size: clamp(3.8rem, 6.4vw, 6.7rem);
@@ -456,12 +456,12 @@ body > footer {
         linear-gradient(
             90deg,
             #0b1215f5 0%,
-            #0b1215e8 24%,
-            #0b1215a3 44%,
-            #0b121524 68%,
+            #0b1215dd 24%,
+            #0b121580 44%,
+            #0b121510 68%,
             transparent
         ),
-        linear-gradient(0deg, #101719 0%, transparent 24%);
+        linear-gradient(0deg, #101719 0%, transparent 17%);
 }
 .home-hero__availability {
     font-size: 0.77rem;
@@ -500,7 +500,9 @@ body > footer {
     text-decoration: none;
 }
 .home-introduction {
-    padding: 4rem 0 3rem;
+    padding: 3rem 0;
+    margin-top: 4rem;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
     display: grid;
     grid-template-columns: 0.6fr 1.5fr 0.6fr;
     gap: 3rem;
@@ -665,10 +667,10 @@ body > footer {
     }
     .home-hero__content {
         width: calc(100% - 2.5rem);
-        padding: 310px 0 3rem;
+        padding: 225px 0 2.5rem;
     }
     .home-hero h1 {
-        font-size: clamp(3.1rem, 12.5vw, 4.8rem);
+        font-size: clamp(2.6rem, 11.5vw, 3.8rem);
         max-width: 12ch;
         line-height: 1.02;
     }
@@ -676,14 +678,14 @@ body > footer {
         font-size: 0.59rem;
     }
     .home-hero__identity {
-        font-size: 0.91rem;
+        font-size: 0.85rem;
     }
     .home-hero__intro {
         font-size: 0.95rem;
     }
     .home-hero__actions {
         gap: 0.6rem;
-        margin-top: 1.5rem;
+        margin-top: 1.2rem;
     }
     .hero-button {
         font-size: 0.83rem;
@@ -691,15 +693,15 @@ body > footer {
         gap: 1.1rem;
     }
     .home-hero__availability {
-        margin-top: 1.5rem;
+        margin-top: 1.1rem;
         font-size: 0.69rem;
     }
     .home-hero__veil {
         background: linear-gradient(
-            0deg,
-            #101719 0%,
-            #101719 55%,
-            transparent 81%
+            to bottom,
+            transparent 170px,
+            #101719cf 255px,
+            #101719 310px
         );
     }
     .home-hero__motion {
@@ -709,7 +711,7 @@ body > footer {
         font-size: 0.6rem;
     }
     .home-hero__caption {
-        top: 280px;
+        top: 200px;
         bottom: auto;
         right: 1.25rem;
         font-size: 0.54rem;

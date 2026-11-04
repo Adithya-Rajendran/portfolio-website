@@ -4,12 +4,15 @@ import ProjectCard from "../components/ProjectCard.astro";
 import HeroVisual from "../components/HeroVisual.astro";
 import { getProfile, getAllPosts, getAllProjects } from "../lib/sanity";
 import { availabilityLine } from "../../lib/profile-content";
+import { homeProjects } from "../../lib/home";
+import { missionOrder } from "../../lib/missions";
 const [profile, posts, projects] = await Promise.all([
     getProfile(),
     getAllPosts(),
     getAllProjects(),
 ]);
-const selected = projects.filter((p) => p.featured && !p.quiet);
+const { flagship, rows } = homeProjects(missionOrder(projects));
+const selected = flagship ? [flagship, ...rows] : [];
 const availability = availabilityLine(profile?.availability);
 ---
 
@@ -65,15 +68,6 @@ const availability = availabilityLine(profile?.availability);
             <a href="/images/scenes/credits.txt">Scene credits ↗</a>
         </div>
     </section>
-    {profile?.introduction && (
-        <section class="home-introduction" aria-label="Introduction">
-            <p class="eyebrow">A little context</p>
-            <p>{profile.introduction}</p>
-            <a class="section-link" href="/about">
-                More about me ↗
-            </a>
-        </section>
-    )}
     <section
         class="home-section home-section--work"
         aria-labelledby="work-title"
@@ -87,12 +81,25 @@ const availability = availabilityLine(profile?.availability);
                 All projects <span aria-hidden="true">↗</span>
             </a>
         </div>
-        <ul class="project-grid">
+        <ul class="project-collection">
             {selected.map((project, index) => (
-                <ProjectCard project={project} index={index} />
+                <ProjectCard
+                    project={project}
+                    index={index}
+                    featured={index === 0}
+                />
             ))}
         </ul>
     </section>
+    {profile?.introduction && (
+        <section class="home-introduction" aria-label="Introduction">
+            <p class="eyebrow">Behind the work</p>
+            <p>{profile.introduction}</p>
+            <a class="section-link" href="/about">
+                More about me ↗
+            </a>
+        </section>
+    )}
     <section
         class="home-section home-section--writing"
         aria-labelledby="writing-title"
@@ -125,7 +132,11 @@ const availability = availabilityLine(profile?.availability);
     </section>
     <section class="home-close">
         <p class="eyebrow">Start a conversation</p>
-        <h2>{profile?.tagline || "Curious about what comes next?"}</h2>
+        <h2>Let’s build what comes next.</h2>
+        <p class="home-close__intro">
+            {profile?.contactIntro ||
+                "An idea, a question, or an opportunity. I’d like to hear from you."}
+        </p>
         <a class="section-link" href="/contact">
             Get in touch <span aria-hidden="true">↗</span>
         </a>

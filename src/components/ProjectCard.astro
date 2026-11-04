@@ -1,23 +1,39 @@
 ---
 import TechnicalStudy from "./TechnicalStudy.astro";
+import "../styles/projects.css";
 import { urlForImage } from "../lib/images";
 import type { ProjectListItem } from "../../lib/content-types";
+import { projectStatusLabel } from "../../lib/project-content";
 interface Props {
     project: ProjectListItem;
     index?: number;
     heading?: "h2" | "h3";
+    featured?: boolean;
 }
-const { project, index = 0, heading: Heading = "h3" } = Astro.props;
+const {
+    project,
+    index = 0,
+    heading: Heading = "h3",
+    featured = false,
+} = Astro.props;
 const image = project.cover as typeof project.cover & {
     credit?: string | null;
 };
 const variants = ["systems", "vision", "network"] as const;
 const cover = image?.asset?._ref
-    ? urlForImage(image).width(1000).height(650).fit("crop").url()
+    ? urlForImage(image).width(1200).fit("max").url()
     : null;
+const srcset = cover
+    ? [480, 800, 1200]
+          .map(
+              (width) =>
+                  `${urlForImage(image).width(width).fit("max").url()} ${width}w`,
+          )
+          .join(", ")
+    : undefined;
 ---
 
-<li class="project-card">
+<li class:list={["project-card", { "project-card--feature": featured }]}>
     <a class="project-card__link" href={`/portfolio/${project.slug}`}>
         <div
             class:list={[
@@ -28,19 +44,25 @@ const cover = image?.asset?._ref
             {cover ? (
                 <img
                     src={cover}
+                    srcset={srcset}
+                    sizes="(max-width: 700px) calc(100vw - 40px), (max-width: 1400px) 55vw, 720px"
                     alt=""
-                    loading="lazy"
-                    width="1000"
-                    height="650"
+                    loading={featured ? "eager" : "lazy"}
+                    width={image?.dimensions?.width || 1200}
+                    height={image?.dimensions?.height || 800}
                 />
             ) : (
                 <TechnicalStudy variant={variants[index % variants.length]} />
             )}
-            <span class="project-card__index" aria-hidden="true">
-                {String(index + 1).padStart(2, "0")}
-            </span>
         </div>
         <div class="project-card__body">
+            <p class="project-card__meta">
+                <span>
+                    {String(index + 1).padStart(2, "0")} /{" "}
+                    {featured ? "In focus" : "Selected work"}
+                </span>
+                <span>{projectStatusLabel(project.status)}</span>
+            </p>
             <div class="project-card__heading">
                 <Heading>{project.title}</Heading>
                 <span aria-hidden="true">↗</span>
@@ -51,6 +73,9 @@ const cover = image?.asset?._ref
                     {project.technologies.slice(0, 3).join(" / ")}
                 </p>
             )}
+            <span class="project-card__read">
+                Explore project <span aria-hidden="true">↗</span>
+            </span>
         </div>
     </a>
     {image?.credit && <p class="project-card__credit">{image.credit}</p>}

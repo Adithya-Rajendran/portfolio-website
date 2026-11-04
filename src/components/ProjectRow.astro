@@ -1,0 +1,29 @@
+---
+import "../styles/projects.css";
+import type { ProjectListItem } from "../../lib/content-types";
+interface Props {
+    project: ProjectListItem;
+    index: number;
+}
+const { project, index } = Astro.props;
+---
+
+<li class="project-row">
+    <a href={`/portfolio/${project.slug}`}>
+        <span class="project-row__number" aria-hidden="true">
+            {String(index + 1).padStart(2, "0")}
+        </span>
+        <div>
+            <h3>{project.title}</h3>
+            <p>{project.summary}</p>
+            {project.technologies?.length && (
+                <p class="project-row__stack">
+                    {project.technologies.slice(0, 3).join(" / ")}
+                </p>
+            )}
+        </div>
+        <span class="project-row__arrow" aria-hidden="true">
+            ↗
+        </span>
+    </a>
+</li>

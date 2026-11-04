@@ -74,8 +74,13 @@ const related = posts
         </div>
         <CmsImage image={post.cover} />
         {headings.length > 1 && (
-            <details class="contents">
-                <summary>Contents</summary>
+            <details class="contents" id="article-contents">
+                <summary>
+                    Contents{" "}
+                    <span class="contents__count">
+                        {headings.length} sections
+                    </span>
+                </summary>
                 <nav aria-label="Contents">
                     <ol>
                         {headings.map((h) => (
@@ -91,6 +96,11 @@ const related = posts
             class="prose"
             set:html={renderProse(post.body || [], highlighted)}
         />
+        {headings.length > 1 && (
+            <p class="article-return">
+                <a href="#article-contents">Back to contents ↑</a>
+            </p>
+        )}
         {post.changelog?.length && (
             <section>
                 <h2>Revisions</h2>
