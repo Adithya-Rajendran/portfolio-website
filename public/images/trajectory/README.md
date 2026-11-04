@@ -1,5 +1,21 @@
 # Trajectory textures
 
+## Current Earth and Milky Way assets
+
+The v2 Earth uses Solar System Scope's 8K [day map](https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg), [clouds](https://www.solarsystemscope.com/textures/download/8k_earth_clouds.jpg), [night map](https://www.solarsystemscope.com/textures/download/8k_earth_nightmap.jpg), 2K [normal map](https://www.solarsystemscope.com/textures/download/2k_earth_normal_map.tif), and [specular map](https://www.solarsystemscope.com/textures/download/2k_earth_specular_map.tif), under CC BY 4.0. Adaptations: resized and encoded as WebP, then shaded with original lighting, cloud relief, ocean reflectance and atmosphere shaders.
+
+- `earth-surface-v2-{8k,2k}.webp`: surface color.
+- `earth-clouds-v2-{4k,2k}.webp`: separate cloud layer and surface shadows.
+- `earth-lights-v2-{4k,2k}.webp`: cities on the unlit hemisphere.
+- `earth-normal-v2-2k.webp`, `earth-water-v2-2k.webp`: relief and ocean reflectance.
+- `earth-poster-v2-{dawn,day,dusk,night}.webp`: original Blender/Cycles CUDA renders using those maps, for loading and graphics fallback.
+
+`milky-way-v2-{4k,2k}.webp` uses **ESO/S. Brunier**, [The Milky Way panorama, eso0932a](https://www.eso.org/public/images/eso0932a/), [CC BY 4.0](https://www.eso.org/public/outreach/copyright/). Adaptations: JavaScript perspective projection of the celestial sphere, 32-degree camera roll, resizing, reduced saturation/brightness and WebP encoding. Its visible page credit preserves the source's full wording. No AI image editing was used.
+
+These assets are prepared with `scripts/artwork/prepare-orbit-assets.mjs`. Older maps below remain used by other planets or archived source components.
+
+## Earlier planetary layers
+
 The orbital experience on `/resume` uses these adapted NASA and Solar System Scope maps. The renderer selects smaller or larger maps according to device conditions and loads planetary resources when the orbital view starts. The page displays attribution beside the visual. The poster uses the Earth day map.
 
 **Solar System Scope** (by INOVE), <https://www.solarsystemscope.com/textures/>,

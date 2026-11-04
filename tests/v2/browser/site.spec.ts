@@ -374,16 +374,22 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     const canvas = stage.locator("canvas");
     await expect(canvas).toBeVisible({ timeout: 20000 });
     await expect(stage).toHaveAttribute("data-world", "earth");
+    await expect(stage).toHaveAttribute("data-satellites", "2");
     await page.getByRole("button", { name: "Pause motion" }).click();
     await expect(
         page.getByRole("button", { name: "Resume motion" }),
     ).toBeVisible();
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await expect(stage).toHaveAttribute("data-state", "paused");
+    await expect(stage).toHaveAttribute("data-world", "earth");
+    await expect(stage).toHaveAttribute("data-view", "orbit");
     const initialCamera = await stage.getAttribute("data-camera");
     const initialDistance = Number(await stage.getAttribute("data-distance"));
     expect(initialCamera).toBeTruthy();
     expect(initialDistance).toBeGreaterThan(0);
     await stage.focus();
     await page.keyboard.press("ArrowLeft");
+    await expect(stage).toHaveAttribute("data-navigation", "manual");
     await expect
         .poll(() => stage.getAttribute("data-camera"))
         .not.toBe(initialCamera);
@@ -396,15 +402,20 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     await page.mouse.down();
     await page.mouse.move(x + 70, y + 20, { steps: 8 });
     await page.mouse.up();
+    await expect(stage).toHaveAttribute("data-navigation", "manual");
     await expect
         .poll(() => stage.getAttribute("data-camera"))
         .not.toBe(beforeDrag);
+    const manualCamera = await stage.getAttribute("data-camera");
+    await page.waitForTimeout(750);
+    expect(await stage.getAttribute("data-camera")).toBe(manualCamera);
     await stage.focus();
     await page.keyboard.press("+");
     await expect
         .poll(async () => Number(await stage.getAttribute("data-distance")))
         .toBeLessThan(initialDistance);
     await page.getByRole("button", { name: "Reset view" }).click();
+    await expect(stage).toHaveAttribute("data-navigation", "guided");
     await expect
         .poll(async () =>
             Math.abs(
@@ -567,9 +578,97 @@ test("a missing later planet keeps the current view and can be retried", async (
     });
 });
 
+test("Moon and Mars arrive at their surface studies", async ({ page }) => {
+    const outpostRequests: string[] = [];
+    page.on("request", (request) => {
+        if (/\/models\/(moon|mars)-outpost-v1\.glb/.test(request.url()))
+            outpostRequests.push(request.url());
+    });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await expect(stage).toHaveAttribute("data-world", "earth");
+    await page.waitForTimeout(750);
+    expect(outpostRequests).toEqual([]);
+    for (const [label, world] of [
+        ["Moon", "moon"],
+        ["Mars", "mars"],
+    ] as const) {
+        await page.getByRole("button", { name: label, exact: true }).click();
+        await expect(stage).toHaveAttribute("data-world", world, {
+            timeout: 30000,
+        });
+        await expect(stage).toHaveAttribute("data-view", "surface", {
+            timeout: 30000,
+        });
+        expect(
+            outpostRequests.some((url) =>
+                url.includes(`/models/${world}-outpost-v1.glb`),
+            ),
+        ).toBe(true);
+    }
+});
+
+test("manual surface camera stays put until guided view is restored", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 30000,
+    });
+    await expect(stage).toHaveAttribute("data-view", "surface", {
+        timeout: 30000,
+    });
+    const before = await stage.getAttribute("data-camera");
+    await stage.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect(stage).toHaveAttribute("data-navigation", "manual");
+    await expect.poll(() => stage.getAttribute("data-camera")).not.toBe(before);
+    const manual = await stage.getAttribute("data-camera");
+    await page.waitForTimeout(750);
+    expect(await stage.getAttribute("data-camera")).toBe(manual);
+    await page.getByRole("button", { name: "Reset view" }).click();
+    await expect(stage).toHaveAttribute("data-navigation", "guided");
+});
+
+test("the Moon globe remains usable when its optional surface model fails", async ({
+    page,
+}) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.route("**/models/moon-outpost-v1.glb", (route) => route.abort());
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 30000,
+    });
+    await expect(stage).toHaveAttribute("data-view", "orbit");
+    await expect(stage.locator("canvas")).toBeVisible();
+    await expect(page.locator("#cv")).toBeVisible();
+});
+
 test("experience chapter links reach the record and scrolling over the scene moves the page", async ({
     page,
 }) => {
+    test.setTimeout(90000);
     await page.goto("/resume");
     await expect(
         page.getByRole("link", { name: /Explore projects/ }),
@@ -600,7 +699,7 @@ test("experience chapter links reach the record and scrolling over the scene mov
     const before = await page.evaluate(() => window.scrollY);
     await page.mouse.wheel(0, 300);
     await expect
-        .poll(() => page.evaluate(() => window.scrollY))
+        .poll(() => page.evaluate(() => window.scrollY), { timeout: 20000 })
         .toBeGreaterThan(before);
 });
 

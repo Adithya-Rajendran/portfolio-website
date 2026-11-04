@@ -56,7 +56,7 @@ export const onRequest = defineMiddleware(async ({ url }, next) => {
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://cdn.sanity.io",
             "font-src 'self' data: https://design-system-static.sanity.io",
-            "connect-src 'self' https://*.api.sanity.io https://*.sanity.io https://cdn.sanity.io https://challenges.cloudflare.com wss://*.api.sanity.io",
+            `connect-src 'self'${/^\/resume\/?$/.test(url.pathname) ? " blob:" : ""} https://*.api.sanity.io https://*.sanity.io https://cdn.sanity.io https://challenges.cloudflare.com wss://*.api.sanity.io`,
             "frame-src 'self' https://challenges.cloudflare.com https://www.youtube-nocookie.com https://player.vimeo.com https://cdn.sanity.io https://*.sanity.io",
             "worker-src 'self' blob:",
             "frame-ancestors 'none'",

@@ -72,6 +72,20 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
                 ))}
             </div>
             <div class="observatory__actions">
+                <button
+                    type="button"
+                    data-experience-zoom="+"
+                    aria-label="Zoom in"
+                >
+                    +
+                </button>
+                <button
+                    type="button"
+                    data-experience-zoom="-"
+                    aria-label="Zoom out"
+                >
+                    −
+                </button>
                 <button type="button" data-experience-reset>
                     Reset view
                 </button>
@@ -84,7 +98,17 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     </div>
     <p class="experience-visual__hint">
         Scroll to travel <span aria-hidden="true">↓</span>{" "}
-        <span>Drag to orbit</span>
+        <span data-experience-navigation>Drag to orbit</span>
+    </p>
+    <p class="experience-visual__lighting" data-experience-lighting>
+        An Earth for every hour.
+    </p>
+    <p class="experience-visual__destination" data-experience-destination>
+        Earth · Two paths around our home
+    </p>
+    <p class="experience-visual__sky-credit">
+        Milky Way:{" "}
+        <a href="https://www.eso.org/public/images/eso0932a/">ESO/S. Brunier</a>
     </p>
     <noscript>
         <p>
@@ -97,7 +121,21 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         <p>
             Scroll through the record to move between worlds. Use arrow keys to
             orbit, + / − to zoom, and Home to reset. On touch, drag with two
-            fingers. Worlds are illustrative.
+            fingers. Dawn, day, dusk, and night follow your device's local
+            clock. Lighting is illustrative; it does not use your location or
+            live weather. Satellites are enlarged for visibility. Moon and Mars
+            arrivals reveal original architectural concepts at surface scale.
+        </p>
+        <p>
+            Surface references:{" "}
+            <a href="https://ntrs.nasa.gov/citations/20230014593">
+                NASA Mars Surface Habitat
+            </a>
+            ,<a href="https://www.spacex.com/mars">SpaceX Mission: Mars</a>, and
+            <a href="https://nss.org/l5-news-mass-driver-update/">
+                O’Neill’s mass-driver research
+            </a>
+            . These are imagined future settlements.
         </p>
         <p class="experience-visual__credit">
             Maps: <a href="https://visibleearth.nasa.gov/">NASA</a> and{" "}
@@ -119,17 +157,6 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         position: relative;
         color: #f2e9d7;
         isolation: isolate;
-    }
-    .experience-visual::before {
-        content: "";
-        position: absolute;
-        inset: 0 -8% 10%;
-        background: url("/images/trajectory/milky-way-band-2k.webp") 65% 50% /
-            cover;
-        opacity: 0.13;
-        z-index: -1;
-        mask-image: radial-gradient(ellipse, #000 10%, transparent 72%);
-        pointer-events: none;
     }
     .experience-visual__head h2 {
         position: absolute;
@@ -173,6 +200,9 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         fill: #94aa70;
         stroke: none;
     }
+    .experience-visual[data-view="surface"] .observatory__paths {
+        opacity: 0;
+    }
     .observatory__stage,
     .observatory__poster {
         position: absolute;
@@ -185,6 +215,14 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         display: block;
         width: 100%;
         height: 100%;
+    }
+    .observatory__stage[data-view="surface"] {
+        mask-image: radial-gradient(
+            ellipse 75% 65% at 52% 45%,
+            #000 40%,
+            #000d 66%,
+            transparent 98%
+        );
     }
     .observatory__controls[hidden],
     .observatory__stage[hidden],
@@ -199,14 +237,26 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-        border-radius: 50%;
-        background:
-            linear-gradient(105deg, #02080be6, transparent 72%),
-            url("/images/trajectory/earth-2k.webp") 47% 48% / auto 100%;
-        box-shadow:
-            inset 10px 0 38px #02080be6,
-            inset -3px 1px 8px #92c6ed80,
-            3px -1px 14px #5da9e44d;
+        background: url("/images/trajectory/earth-poster-v2-day.webp") center /
+            contain no-repeat;
+    }
+    .experience-visual[data-phase="dawn"] .observatory__earth {
+        background-image: url("/images/trajectory/earth-poster-v2-dawn.webp");
+    }
+    .experience-visual[data-phase="dusk"] .observatory__earth {
+        background-image: url("/images/trajectory/earth-poster-v2-dusk.webp");
+    }
+    .experience-visual[data-phase="night"] .observatory__earth {
+        background-image: url("/images/trajectory/earth-poster-v2-night.webp");
+    }
+    .experience-visual__destination {
+        font:
+            0.65rem DMMono,
+            monospace;
+        text-align: center;
+        color: #bdcbb5;
+        margin: 0.5rem 0;
+        max-width: none;
     }
     .observatory__label {
         position: absolute;
@@ -272,6 +322,12 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         content: "↺";
         font-size: 1.35rem;
     }
+    .observatory__actions [data-experience-zoom="+"]::before {
+        content: "+";
+    }
+    .observatory__actions [data-experience-zoom="-"]::before {
+        content: "−";
+    }
     .observatory__status {
         font-size: 0.75rem;
         text-align: center;
@@ -288,6 +344,41 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     }
     .experience-visual__hint span:last-child {
         margin-left: 1.5rem;
+    }
+    .experience-visual__lighting {
+        color: #c8c0ad;
+        text-align: center;
+        font:
+            0.67rem DMMono,
+            monospace;
+        letter-spacing: 0.06em;
+        margin: 0.8rem 0 0.55rem;
+        max-width: none;
+    }
+    .experience-visual__lighting::before {
+        content: "";
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #dfa05d;
+        margin: 0 0.6rem 0.1rem 0;
+        box-shadow: 0 0 10px #dfa05d55;
+    }
+    .experience-visual[data-phase="night"]
+        .experience-visual__lighting::before {
+        background: #98b8d6;
+    }
+    .experience-visual__sky-credit {
+        font-size: 0.65rem;
+        color: #aab3b7;
+        text-align: center;
+        max-width: none;
+        margin: 0.25rem 0 0.5rem;
+    }
+    .experience-visual__sky-credit a {
+        color: #c6c8c1;
+        text-underline-offset: 0.2em;
     }
     .experience-visual__details {
         font-size: 0.67rem;
@@ -306,6 +397,17 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     .experience-visual__details a {
         color: #c5ac89;
     }
+    @media (min-width: 801px) and (max-height: 850px) {
+        .observatory__viewport {
+            height: max(280px, calc(100svh - 365px));
+        }
+        .experience-visual__hint {
+            margin-top: 0.6rem;
+        }
+        .experience-visual__lighting {
+            margin-top: 0.5rem;
+        }
+    }
     @media (max-width: 800px) {
         .observatory__viewport {
             height: clamp(220px, 62vw, 340px);
@@ -316,9 +418,13 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         .observatory__controls {
             margin-top: -0.6rem;
             gap: 0.3rem;
+            flex-wrap: wrap;
         }
         .observatory__worlds {
             gap: 0.1rem;
+            flex-basis: 100%;
+            justify-content: center;
+            order: 1;
         }
         .observatory__controls button {
             font-size: 0.63rem;
@@ -326,8 +432,10 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
             min-width: 44px;
         }
         .observatory__actions {
-            padding-right: 0.5rem;
+            padding-right: 0;
             gap: 0;
+            border: 0;
+            order: 2;
         }
         .observatory__actions button {
             font-size: 0;

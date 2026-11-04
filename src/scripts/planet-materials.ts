@@ -13,96 +13,173 @@ export type TextureLoader = (
     color?: boolean,
 ) => Promise<Three.Texture>;
 
+export interface PlanetLighting {
+    sunDirection: { value: Three.Vector3 };
+    sunColor: { value: Three.Color };
+    sunStrength: { value: number };
+    ambientStrength: { value: number };
+    twilightStrength: { value: number };
+    cloudOffset: { value: number };
+}
+
+const earthVertex = `
+    varying vec2 vUv;
+    varying vec3 vNormal, vPosition, vTangent;
+    void main() {
+        vUv = uv;
+        vec4 p = modelMatrix * vec4(position, 1.);
+        vPosition = p.xyz;
+        vNormal = normalize(mat3(modelMatrix) * normal);
+        vTangent = normalize(mat3(modelMatrix) * vec3(normal.z, 0., -normal.x));
+        gl_Position = projectionMatrix * viewMatrix * p;
+    }`;
+const lightUniforms = `
+    uniform vec3 sunDirection, sunColor;
+    uniform float sunStrength, ambientStrength, twilightStrength, cloudOffset;
+    varying vec2 vUv;
+    varying vec3 vNormal, vPosition, vTangent;`;
+
 // The same world-space light direction drives the surface, cities and atmosphere.
 export async function makePlanet(
     T: typeof Three,
     world: World,
     small: boolean,
     texture: TextureLoader,
-    sunlight: Three.Vector3,
+    lighting: PlanetLighting,
 ) {
     const group = new T.Group();
     const suffix = small ? "1k" : "2k";
     try {
         const map = await texture(
-            world === "earth" && !small
-                ? "earth-cinematic-4k"
+            world === "earth"
+                ? `earth-surface-v2-${small ? "2k" : "8k"}`
                 : world === "saturn"
                   ? "saturn-strip-v1"
                   : world === "moon"
                     ? "moon-1k"
                     : `${world}-${suffix}`,
         );
-        const geometry = new T.SphereGeometry(1, 128, 96);
         if (world === "earth") {
-            const [clouds, night, water] = await Promise.all([
-                texture(`earth-clouds-${suffix}`, false),
-                texture("earth-night-2k"),
-                texture("earth-water-1k", false),
+            const [clouds, night, water, normal] = await Promise.all([
+                texture(`earth-clouds-v2-${small ? "2k" : "4k"}`, false),
+                texture(`earth-lights-v2-${small ? "2k" : "4k"}`),
+                texture("earth-water-v2-2k", false),
+                texture("earth-normal-v2-2k", false),
             ]);
+            clouds.wrapS = T.RepeatWrapping;
             const surface = new T.ShaderMaterial({
                 uniforms: {
+                    ...lighting,
                     dayMap: { value: map },
                     cloudMap: { value: clouds },
                     nightMap: { value: night },
                     waterMap: { value: water },
-                    sunDirection: { value: sunlight },
+                    normalMap: { value: normal },
                 },
-                vertexShader: `varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition;
-                void main(){vUv=uv; vec4 p=modelMatrix*vec4(position,1.); vNormal=normalize(mat3(modelMatrix)*normal); vPosition=p.xyz; gl_Position=projectionMatrix*viewMatrix*p;}`,
-                fragmentShader: `uniform sampler2D dayMap,cloudMap,nightMap,waterMap; uniform vec3 sunDirection; varying vec2 vUv; varying vec3 vNormal,vPosition;
+                vertexShader: earthVertex,
+                fragmentShader: `${lightUniforms}
+                uniform sampler2D dayMap, cloudMap, nightMap, waterMap, normalMap;
                 void main(){
-                    vec3 n=normalize(vNormal), v=normalize(cameraPosition-vPosition), l=normalize(sunDirection);
-                    float nl=dot(n,l), daylight=smoothstep(-.12,.22,nl);
-                    vec3 land=texture2D(dayMap,vUv).rgb;
-                    float luminance=dot(land,vec3(.2126,.7152,.0722));
-                    land=mix(vec3(luminance),land,.78);
-                    float ocean=texture2D(waterMap,vUv).r;
-                    land=mix(land,land*vec3(.35,.55,.7),ocean*.85);
-                    float diffuse=max(nl,0.);
-                    vec3 color=land*(.012+diffuse*1.35);
-                    float spec=pow(max(dot(reflect(-l,n),v),0.),95.)*ocean;
-                    color+=vec3(.52,.68,.8)*spec*.10;
-                    float cloudShadow=texture2D(cloudMap,vUv+vec2(.002,-.001)).r;
-                    color*=1.-cloudShadow*.24*daylight;
-                    vec3 cities=texture2D(nightMap,vUv).rgb;
-                    color+=cities*vec3(2.7,1.45,.55)*(1.-smoothstep(-.2,.12,nl));
-                    float rim=pow(1.-max(dot(n,v),0.),3.8);
-                    color+=vec3(.12,.38,.65)*rim*daylight*.35;
+                    vec3 n = normalize(vNormal), v = normalize(cameraPosition-vPosition), l = normalize(sunDirection);
+                    vec3 t = normalize(vTangent), b = normalize(cross(n,t));
+                    vec3 relief = texture2D(normalMap,vUv).xyz * 2. - 1.;
+                    float ocean = texture2D(waterMap,vUv).r;
+                    vec3 detailed = normalize(mat3(t,b,n) * normalize(vec3(relief.xy*.38*(1.-ocean),relief.z)));
+                    float nl = dot(n,l), diffuse = max(dot(detailed,l),0.);
+                    float daylight = smoothstep(-.08,.18,nl);
+                    vec3 albedo = texture2D(dayMap,vUv).rgb;
+                    float luminance = dot(albedo,vec3(.2126,.7152,.0722));
+                    albedo = mix(vec3(luminance),albedo,.86);
+                    albedo = mix(albedo,albedo*vec3(.38,.62,.78),ocean*.72);
+                    vec3 color = albedo*(vec3(.35,.56,.8)*ambientStrength + sunColor*diffuse*sunStrength);
+                    vec2 cloudUv = vUv + vec2(cloudOffset,0.);
+                    vec2 shadowOffset = vec2(dot(l,t),dot(l,b))*.0032;
+                    float shadow = texture2D(cloudMap,cloudUv+shadowOffset).r;
+                    color *= 1. - shadow*.38*daylight;
+                    float fresnel = .025 + .30*pow(1.-max(dot(n,v),0.),5.);
+                    float spec = pow(max(dot(normalize(l+v),n),0.),160.)*ocean*daylight;
+                    color += sunColor*spec*fresnel*sunStrength*.65*(1.-shadow);
+                    vec3 cities = texture2D(nightMap,vUv).rgb;
+                    // Black ocean pixels stay black; small warm settlements survive the terminator.
+                    cities = max(cities-vec3(.004),vec3(0.));
+                    color += cities*vec3(1.9,1.35,.8)*(1.-smoothstep(-.15,.1,nl))*(1.-shadow*.65);
+                    float rim = pow(1.-max(dot(n,v),0.),3.2);
+                    float sunset = exp(-abs(nl)*14.)*twilightStrength;
+                    color += vec3(.08,.27,.52)*rim*(.08+daylight*.32);
+                    color += vec3(.65,.21,.055)*sunset*rim*.28;
                     gl_FragColor=vec4(color,1.);
                     #include <tonemapping_fragment>
                     #include <colorspace_fragment>
                 }`,
             });
-            group.add(new T.Mesh(geometry, surface));
+            group.add(
+                new T.Mesh(
+                    new T.SphereGeometry(1, small ? 128 : 192, 128),
+                    surface,
+                ),
+            );
             const cloud = new T.Mesh(
-                new T.SphereGeometry(1.006, 128, 96),
-                new T.MeshStandardMaterial({
-                    color: 0xe8edf1,
-                    alphaMap: clouds,
+                new T.SphereGeometry(1.008, small ? 128 : 192, 128),
+                new T.ShaderMaterial({
+                    uniforms: {
+                        ...lighting,
+                        cloudMap: { value: clouds },
+                        texel: { value: 1 / (small ? 2048 : 4096) },
+                    },
+                    vertexShader: earthVertex,
+                    fragmentShader: `${lightUniforms}
+                        uniform sampler2D cloudMap; uniform float texel;
+                        void main() {
+                            vec2 uv = vUv + vec2(cloudOffset,0.);
+                            float density = texture2D(cloudMap,uv).r;
+                            vec3 n=normalize(vNormal), l=normalize(sunDirection);
+                            vec3 t=normalize(vTangent), b=normalize(cross(n,t));
+                            vec2 gradient=vec2(texture2D(cloudMap,uv+vec2(texel,0.)).r-texture2D(cloudMap,uv-vec2(texel,0.)).r,
+                                texture2D(cloudMap,uv+vec2(0.,texel)).r-texture2D(cloudMap,uv-vec2(0.,texel)).r);
+                            vec3 puff=normalize(n-t*gradient.x*.8-b*gradient.y*.8);
+                            float nl=dot(n,l);
+                            float light=max(dot(puff,l),0.);
+                            float twilight=exp(-abs(nl)*12.)*twilightStrength;
+                            vec3 color=vec3(.32,.49,.7)*ambientStrength*1.8 + sunColor*light*sunStrength;
+                            color+=vec3(.48,.12,.028)*twilight*.26;
+                            gl_FragColor=vec4(color,smoothstep(.035,.86,density)*.96);
+                            #include <tonemapping_fragment>
+                            #include <colorspace_fragment>
+                        }`,
                     transparent: true,
-                    opacity: 0.85,
                     depthWrite: false,
-                    roughness: 1,
                 }),
             );
             group.add(cloud);
             const atmosphere = new T.ShaderMaterial({
-                uniforms: { sunDirection: { value: sunlight } },
-                vertexShader: `varying vec3 vNormal,vPosition; void main(){vec4 p=modelMatrix*vec4(position,1.);vNormal=normalize(mat3(modelMatrix)*normal);vPosition=p.xyz;gl_Position=projectionMatrix*viewMatrix*p;}`,
-                fragmentShader: `uniform vec3 sunDirection;varying vec3 vNormal,vPosition;void main(){vec3 n=normalize(vNormal),v=normalize(cameraPosition-vPosition);float rim=pow(1.-abs(dot(n,v)),4.5);float light=smoothstep(-.3,.7,dot(n,sunDirection));gl_FragColor=vec4(mix(vec3(.09,.24,.48),vec3(.28,.65,1.),light),rim*(.12+light*.62));}`,
+                uniforms: { ...lighting },
+                vertexShader: earthVertex,
+                fragmentShader: `${lightUniforms}
+                    void main(){
+                        vec3 n=normalize(vNormal),v=normalize(cameraPosition-vPosition);
+                        float facing=abs(dot(n,v));
+                        float rim=pow(1.-facing,5.5);
+                        float nl=dot(n,normalize(sunDirection));
+                        float light=smoothstep(-.35,.5,nl);
+                        float twilight=exp(-abs(nl)*9.)*twilightStrength;
+                        vec3 scattering=mix(vec3(.08,.2,.42),vec3(.19,.54,.92),light);
+                        scattering=mix(scattering,vec3(.95,.38,.12),twilight*.5);
+                        gl_FragColor=vec4(scattering,rim*(.13+light*.7));
+                        #include <colorspace_fragment>
+                    }`,
                 transparent: true,
                 blending: T.AdditiveBlending,
                 depthWrite: false,
+                side: T.BackSide,
             });
             group.add(
-                new T.Mesh(new T.SphereGeometry(1.022, 128, 96), atmosphere),
+                new T.Mesh(new T.SphereGeometry(1.025, 192, 128), atmosphere),
             );
             group.rotation.y = 0;
             group.rotation.z = -0.14;
         } else {
             const surface = new T.Mesh(
-                geometry,
+                new T.SphereGeometry(1, small ? 128 : 192, 128),
                 new T.MeshStandardMaterial({
                     map,
                     roughness: 0.95,

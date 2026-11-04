@@ -39,8 +39,67 @@ body > header #theme-switch {
     --accent-text: #dfa05d;
     --secondary-text: #aac490;
     color: #f2e9d7;
-    background: #0b1215;
+    background: #070c10;
     overflow: clip;
+    position: relative;
+    isolation: isolate;
+}
+.experience-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background: url("/images/trajectory/milky-way-v2-4k.webp") 60% 50% / cover;
+    opacity: 0.7;
+    transition: opacity 2s;
+}
+.experience-page::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            90deg,
+            #080e12e8 0%,
+            #080e12c9 32%,
+            #080e1240 63%,
+            #080e1214
+        ),
+        linear-gradient(
+            0deg,
+            #070c10b3,
+            transparent 28%,
+            transparent 80%,
+            #070c1073
+        );
+}
+.experience-page[data-phase="day"]::before {
+    opacity: 0.55;
+}
+.experience-page[data-phase="night"]::before {
+    opacity: 0.9;
+}
+@media (max-width: 800px) {
+    .experience-page::before {
+        background-image: url("/images/trajectory/milky-way-v2-2k.webp");
+        background-position: 64% 20%;
+    }
+    .experience-page::after {
+        background: linear-gradient(
+            0deg,
+            #080e12ee,
+            #080e12c9 25%,
+            #080e1259 65%
+        );
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .experience-page::before {
+        transition: none;
+    }
 }
 .trajectory-shell {
     width: min(calc(100% - 6rem), 1480px);
@@ -265,10 +324,13 @@ body > header #theme-switch {
         order: 1;
         position: sticky;
         top: 0;
-        width: 100%;
-        margin: 0 0 2rem;
+        width: calc(100% + 2.5rem);
+        margin: 0 -1.25rem 2rem;
+        padding: 0 1.25rem;
         z-index: 3;
-        background: #0b1215f5;
+        background:
+            linear-gradient(0deg, #080e12 0%, #080e1233 52%, #080e1299),
+            url("/images/trajectory/milky-way-v2-2k.webp") 65% 40% / cover;
     }
     .trajectory-entries {
         padding-left: 1.3rem;
@@ -290,11 +352,6 @@ body > header #theme-switch {
     }
     .trajectory-extra h2 {
         font-size: 1.8rem;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    .trajectory-orbit {
-        position: static;
     }
 }
 @media print {

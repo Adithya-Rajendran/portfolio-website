@@ -1,9 +1,18 @@
 import type * as Three from "three";
+import { getScenePhase, type ScenePhase } from "../lib/scene-time";
+import { addSatellites } from "./orbital-satellites";
+import {
+    loadOutpost,
+    fadeObject,
+    disposeOutpost,
+    outpostCamera,
+} from "./planetary-outposts";
 import {
     makePlanet,
     disposePlanet,
     worldNames,
     type World,
+    type PlanetLighting,
 } from "./planet-materials";
 
 const section = document.querySelector<HTMLElement>(".experience-visual");
@@ -23,6 +32,16 @@ const current = section?.querySelector<HTMLElement>(
     "[data-experience-current]",
 );
 const poster = section?.querySelector<HTMLElement>("[data-experience-poster]");
+const lightingLabel = section?.querySelector<HTMLElement>(
+    "[data-experience-lighting]",
+);
+const page = document.querySelector<HTMLElement>(".experience-page");
+const destinationLabel = section?.querySelector<HTMLElement>(
+    "[data-experience-destination]",
+);
+const navigationLabel = section?.querySelector<HTMLElement>(
+    "[data-experience-navigation]",
+);
 const buttons = [
     ...(section?.querySelectorAll<HTMLButtonElement>(
         "[data-experience-world]",
@@ -61,7 +80,7 @@ if (
                 powerPreference: "high-performance",
             });
             renderer = render;
-            render.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+            render.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
             render.outputColorSpace = T.SRGBColorSpace;
             render.toneMapping = T.ACESFilmicToneMapping;
             render.toneMappingExposure = 1.05;
@@ -69,6 +88,19 @@ if (
             render.shadowMap.enabled = true;
             render.shadowMap.type = T.PCFShadowMap;
             const scene = new T.Scene();
+            const { RoomEnvironment } =
+                await import("three/addons/environments/RoomEnvironment.js");
+            if (ticket !== generation) {
+                render.dispose();
+                return;
+            }
+            const room = new RoomEnvironment();
+            const generator = new T.PMREMGenerator(render);
+            const reflection = generator.fromScene(room, 0.04);
+            scene.environment = reflection.texture;
+            scene.environmentIntensity = 0.28;
+            room.dispose();
+            generator.dispose();
             const camera = new T.PerspectiveCamera(36, 1, 0.05, 160);
             camera.position.set(0, 0.18, 3.45);
             const orbit = new OrbitControls(camera, render.domElement);
@@ -89,9 +121,75 @@ if (
                 orbit.touches.TWO = T.TOUCH.DOLLY_ROTATE;
             };
             configureTouch();
-            const sunlight = new T.Vector3(5, 2, 1.8).normalize();
+            const looks: Record<
+                ScenePhase,
+                {
+                    direction: number[];
+                    color: number;
+                    strength: number;
+                    ambient: number;
+                    twilight: number;
+                }
+            > = {
+                dawn: {
+                    direction: [-4, 1.4, 1.3],
+                    color: 0xffdab4,
+                    strength: 1.65,
+                    ambient: 0.028,
+                    twilight: 1,
+                },
+                day: {
+                    direction: [3.5, 2.4, 4],
+                    color: 0xfff5e8,
+                    strength: 1.6,
+                    ambient: 0.025,
+                    twilight: 0.2,
+                },
+                dusk: {
+                    direction: [4, 1.1, 0.65],
+                    color: 0xffcd9f,
+                    strength: 1.65,
+                    ambient: 0.023,
+                    twilight: 1,
+                },
+                night: {
+                    direction: [-3.5, 1.2, -2.4],
+                    color: 0xd6e8ff,
+                    strength: 1.5,
+                    ambient: 0.022,
+                    twilight: 0.35,
+                },
+            };
+            let phase = getScenePhase();
+            const initialLook = looks[phase];
+            const sunlight = new T.Vector3()
+                .fromArray(initialLook.direction)
+                .normalize();
+            const lighting: PlanetLighting = {
+                sunDirection: { value: sunlight },
+                sunColor: { value: new T.Color(initialLook.color) },
+                sunStrength: { value: initialLook.strength },
+                ambientStrength: { value: initialLook.ambient },
+                twilightStrength: { value: initialLook.twilight },
+                cloudOffset: { value: 0 },
+            };
+            const targetDirection = sunlight.clone(),
+                targetColor = new T.Color(initialLook.color);
+            const refreshPhase = () => {
+                phase = getScenePhase();
+                targetDirection.fromArray(looks[phase].direction).normalize();
+                targetColor.setHex(looks[phase].color);
+                stage.dataset.phase = phase;
+                section.dataset.phase = phase;
+                if (page) page.dataset.phase = phase;
+                if (lightingLabel)
+                    lightingLabel.textContent = `${phase.charAt(0).toUpperCase() + phase.slice(1)} · your local time`;
+            };
+            refreshPhase();
             const sun = new T.DirectionalLight(0xffedda, 2.6);
-            sun.position.copy(sunlight).multiplyScalar(8);
+            // Other worlds keep their legible three-quarter key light. Earth's
+            // layered shaders share the visitor's local-time lighting above.
+            sun.position.set(5, 2, 1.8).normalize().multiplyScalar(8);
             sun.castShadow = true;
             sun.shadow.mapSize.set(1024, 1024);
             Object.assign(sun.shadow.camera, {
@@ -102,13 +200,45 @@ if (
             });
             sun.shadow.bias = -0.0002;
             scene.add(sun);
-            scene.add(new T.AmbientLight(0x8cadd3, 0.055));
+            const ambient = new T.AmbientLight(0x8cadd3, 0.055);
+            scene.add(ambient);
             const loader = new T.TextureLoader(),
                 textures = new Map<string, Promise<Three.Texture>>(),
                 owned = new Set<Three.Texture>();
             const planets = new Map<number, Three.Group>(),
                 pending = new Map<number, Promise<Three.Group>>();
             let disposed = false;
+            const outposts = new Map<number, Three.Group>();
+            const outpostRequests = new Map<number, Promise<void>>();
+            const outpostFailures = new Set<number>();
+            const ensureOutpost = (index: number) => {
+                if (index !== 1 && index !== 2) return Promise.resolve();
+                let request = outpostRequests.get(index);
+                if (!request) {
+                    request = loadOutpost(
+                        index === 1 ? "moon" : "mars",
+                        Math.min(8, render.capabilities.getMaxAnisotropy()),
+                    )
+                        .then((group) => {
+                            if (disposed) {
+                                disposeOutpost(group);
+                                return;
+                            }
+                            group.visible = false;
+                            group.renderOrder = 2;
+                            outposts.set(index, group);
+                            scene.add(group);
+                            schedule();
+                        })
+                        .catch(() => {
+                            // A surface study is optional: its globe always remains usable.
+                            outpostRequests.delete(index);
+                            outpostFailures.add(index);
+                        });
+                    outpostRequests.set(index, request);
+                }
+                return request;
+            };
             const texture = async (name: string, color = true) => {
                 let value = textures.get(name);
                 if (!value) {
@@ -134,9 +264,16 @@ if (
             };
             const small =
                 narrow.matches ||
+                render.capabilities.maxTextureSize < 8192 ||
+                (
+                    navigator as Navigator & {
+                        connection?: { saveData?: boolean };
+                    }
+                ).connection?.saveData ||
                 ((navigator as Navigator & { deviceMemory?: number })
                     .deviceMemory || 8) <= 4;
             const failed = new Set<number>();
+            let satellites: ReturnType<typeof addSatellites> | undefined;
             const ensurePlanet = (index: number) => {
                 let value = pending.get(index);
                 if (!value) {
@@ -145,7 +282,7 @@ if (
                         worldIds[index],
                         small,
                         texture,
-                        sunlight,
+                        lighting,
                     )
                         .then((group) => {
                             if (disposed) {
@@ -154,6 +291,12 @@ if (
                             }
                             group.visible = false;
                             planets.set(index, group);
+                            if (index === 0) {
+                                satellites = addSatellites(T, group);
+                                stage.dataset.satellites = String(
+                                    satellites.count,
+                                );
+                            }
                             scene.add(group);
                             schedule();
                             return group;
@@ -212,6 +355,13 @@ if (
                 manualZoom = 1,
                 lastTime = 0,
                 lastWorld = -1;
+            let surfaceMix = 0,
+                surfaceWorld = -1,
+                freeLook = false,
+                tourElapsed = 0;
+            const approachDirection = new T.Vector3();
+            const surfaceDirection = new T.Vector3(0.48, 0.42, 0.9).normalize();
+            const approachTarget = new T.Vector3();
             let knots: number[] = [];
             const motion = matchMedia("(prefers-reduced-motion: reduce)");
             const entries = [
@@ -301,7 +451,18 @@ if (
             const setLabel = (index: number) => {
                 if (index === lastWorld) return;
                 lastWorld = index;
+                freeLook = false;
+                tourElapsed = 0;
+                manualZoom = 1;
                 current.textContent = worldNames[index];
+                if (lightingLabel) {
+                    lightingLabel.style.visibility =
+                        index === 0 ? "visible" : "hidden";
+                    lightingLabel.setAttribute(
+                        "aria-hidden",
+                        String(index !== 0),
+                    );
+                }
                 stage.dataset.world = worldIds[index];
                 buttons.forEach((button, i) =>
                     button.setAttribute("aria-pressed", String(i === index)),
@@ -326,6 +487,29 @@ if (
                 lastTime = time;
                 updateControl();
                 const still = paused || motion.matches;
+                const look = looks[phase],
+                    blend = still ? 1 : 1 - Math.exp(-dt * 1.8);
+                sunlight.lerp(targetDirection, blend).normalize();
+                lighting.sunColor.value.lerp(targetColor, blend);
+                lighting.sunStrength.value = T.MathUtils.lerp(
+                    lighting.sunStrength.value,
+                    look.strength,
+                    blend,
+                );
+                lighting.ambientStrength.value = T.MathUtils.lerp(
+                    lighting.ambientStrength.value,
+                    look.ambient,
+                    blend,
+                );
+                lighting.twilightStrength.value = T.MathUtils.lerp(
+                    lighting.twilightStrength.value,
+                    look.twilight,
+                    blend,
+                );
+                if (!still)
+                    lighting.cloudOffset.value =
+                        (lighting.cloudOffset.value + dt * 0.00022) % 1;
+                satellites?.update(still ? 0 : dt);
                 if (still) progress = Math.round(target);
                 else if (!dragging)
                     progress += (target - progress) * (1 - Math.exp(-dt * 7));
@@ -376,9 +560,10 @@ if (
                         .clone()
                         .sub(orbit.target)
                         .normalize();
-                    camera.position
-                        .copy(orbit.target)
-                        .addScaledVector(direction, distance * manualZoom);
+                    if (!freeLook)
+                        camera.position
+                            .copy(orbit.target)
+                            .addScaledVector(direction, distance * manualZoom);
                     setLabel(travel > 0.5 ? to : from);
                     status.textContent = "";
                 } else {
@@ -393,8 +578,108 @@ if (
                     if (failed.has(unavailable))
                         status.textContent = `${worldNames[unavailable]} could not load. Select it below to retry.`;
                 }
+                // Arriving at Moon or Mars opens an architectural surface study.
+                // The globe stays behind it during a continuous camera approach.
+                const near = Math.round(progress);
+                if (
+                    (near === 1 || near === 2) &&
+                    !outposts.has(near) &&
+                    !outpostFailures.has(near)
+                ) {
+                    void ensureOutpost(near);
+                }
+                const surfaceReady = outposts.has(near) && planets.has(near);
+                const desiredSurface = surfaceReady
+                    ? 1 -
+                      T.MathUtils.smoothstep(
+                          Math.abs(progress - near),
+                          0.04,
+                          0.24,
+                      )
+                    : 0;
+                surfaceMix = still
+                    ? desiredSurface
+                    : T.MathUtils.damp(surfaceMix, desiredSurface, 5, dt);
+                if (surfaceMix < 0.001) surfaceMix = 0;
+                if (desiredSurface > 0 && surfaceWorld !== near) {
+                    surfaceWorld = near;
+                    approachDirection
+                        .copy(camera.position)
+                        .sub(orbit.target)
+                        .normalize();
+                    approachTarget.copy(orbit.target);
+                    tourElapsed = 0;
+                }
+                for (const [index, group] of outposts) {
+                    group.visible =
+                        index === surfaceWorld && surfaceMix > 0.001;
+                    if (group.visible) fadeObject(group, surfaceMix);
+                }
+                for (const index of [1, 2]) {
+                    const globe = planets.get(index);
+                    if (globe)
+                        fadeObject(
+                            globe,
+                            index === surfaceWorld ? 1 - surfaceMix : 1,
+                        );
+                }
+                const outpost = outposts.get(surfaceWorld);
+                if (surfaceMix > 0.001 && outpost && !freeLook && !dragging) {
+                    if (!still && surfaceMix > 0.99) tourElapsed += dt;
+                    const pose = outpostCamera(
+                        T,
+                        outpost,
+                        surfaceWorld === 1 ? "moon" : "mars",
+                        tourElapsed,
+                    );
+                    const origin = approachTarget
+                        .clone()
+                        .addScaledVector(
+                            approachDirection,
+                            baseDistance(Math.max(0, lastWorld)),
+                        );
+                    camera.position
+                        .copy(origin)
+                        .lerp(pose.position, surfaceMix);
+                    orbit.target
+                        .copy(approachTarget)
+                        .lerp(pose.target, surfaceMix);
+                } else if (!freeLook && surfaceMix === 0) {
+                    orbit.target.lerp(
+                        new T.Vector3(),
+                        still ? 1 : 1 - Math.exp(-dt * 5),
+                    );
+                }
+                ambient.intensity = 0.055 + surfaceMix * 0.34;
+                sun.intensity = 2.6 - surfaceMix * 0.7;
+                orbit.minDistance = surfaceMix > 0.5 ? 0.45 : 2.2;
+                orbit.maxPolarAngle =
+                    surfaceMix > 0.5 ? Math.PI * 0.48 : Math.PI;
+                stage.dataset.view = surfaceMix > 0.5 ? "surface" : "orbit";
+                section.dataset.view = stage.dataset.view;
+                stage.dataset.navigation = freeLook ? "manual" : "guided";
+                if (navigationLabel)
+                    navigationLabel.textContent = freeLook
+                        ? "Free exploration · Reset to resume the tour"
+                        : surfaceMix > 0.5
+                          ? "Guided tour · Drag to explore freely"
+                          : "Drag to orbit";
+                if (destinationLabel)
+                    destinationLabel.textContent =
+                        surfaceMix > 0.5
+                            ? surfaceWorld === 1
+                                ? "Lunar outpost · Electromagnetic cargo launcher"
+                                : "Mars settlement · Habitats, mobility, exploration"
+                            : lastWorld === 0
+                              ? "Earth · Two paths around our home"
+                              : `${worldNames[Math.max(0, lastWorld)]} · Orbital approach`;
                 orbit.autoRotate =
-                    !still && !dragging && Math.abs(target - progress) < 0.01;
+                    !still &&
+                    !dragging &&
+                    !freeLook &&
+                    surfaceMix < 0.01 &&
+                    Math.abs(target - progress) < 0.01;
+                orbit.enableDamping = !still && freeLook;
                 orbit.autoRotateSpeed = 0.12;
                 orbit.update();
                 telemetry();
@@ -424,6 +709,8 @@ if (
                 syncMotion();
             };
             const reset = () => {
+                freeLook = false;
+                tourElapsed = 0;
                 manualZoom = 1;
                 camera.position.set(
                     0,
@@ -431,6 +718,8 @@ if (
                     baseDistance(Math.max(0, lastWorld)),
                 );
                 orbit.target.set(0, 0, 0);
+                if (surfaceMix > 0.5)
+                    camera.position.copy(surfaceDirection).multiplyScalar(3.55);
                 orbit.update();
                 schedule();
             };
@@ -449,20 +738,41 @@ if (
                     s.phi = Math.max(0.1, s.phi - 0.16);
                 else if (event.key === "ArrowDown")
                     s.phi = Math.min(Math.PI - 0.1, s.phi + 0.16);
-                else if (event.key === "+" || event.key === "=")
+                else if (event.key === "+" || event.key === "=") {
                     manualZoom = Math.max(0.7, manualZoom * 0.85);
-                else if (event.key === "-")
+                    s.radius = Math.max(orbit.minDistance, s.radius * 0.85);
+                } else if (event.key === "-") {
                     manualZoom = Math.min(2.2, manualZoom / 0.85);
-                else return;
+                    s.radius = Math.min(14, s.radius / 0.85);
+                } else return;
+                freeLook = true;
                 event.preventDefault();
                 camera.position.setFromSpherical(s).add(orbit.target);
                 orbit.update();
                 schedule();
             };
+            const zoomButtons = [
+                ...section.querySelectorAll<HTMLButtonElement>(
+                    "[data-experience-zoom]",
+                ),
+            ];
+            const zoomHandlers = zoomButtons.map((button) => {
+                const handler = () =>
+                    key(
+                        new KeyboardEvent("keydown", {
+                            key: button.dataset.experienceZoom,
+                            cancelable: true,
+                        }),
+                    );
+                button.addEventListener("click", handler);
+                return handler;
+            });
             const selections = buttons.map((button, i) => {
                 const select = () => {
                     failed.delete(i);
+                    outpostFailures.delete(i);
                     void ensurePlanet(i).catch(() => {});
+                    void ensureOutpost(i);
                     window.scrollTo({
                         top: knots[i] || 0,
                         behavior: "instant",
@@ -474,6 +784,7 @@ if (
             });
             const beginDrag = () => {
                 dragging = true;
+                freeLook = true;
             };
             const endDrag = () => {
                 dragging = false;
@@ -481,7 +792,11 @@ if (
             };
             orbit.addEventListener("start", beginDrag);
             orbit.addEventListener("end", endDrag);
-            orbit.addEventListener("change", telemetry);
+            const orbitChanged = () => {
+                telemetry();
+                if (dragging || freeLook) schedule();
+            };
+            orbit.addEventListener("change", orbitChanged);
             const observer = new IntersectionObserver((items) => {
                 visible = items[0]?.isIntersecting ?? false;
                 if (!visible && frame) {
@@ -497,8 +812,17 @@ if (
                 if (document.hidden && frame) {
                     cancelAnimationFrame(frame);
                     frame = 0;
-                } else schedule();
+                } else {
+                    refreshPhase();
+                    schedule();
+                }
             };
+            const phaseTimer = setInterval(() => {
+                if (!document.hidden && getScenePhase() !== phase) {
+                    refreshPhase();
+                    schedule();
+                }
+            }, 60000);
             let lastReduced = motion.matches;
             const preferenceTimer = setInterval(() => {
                 if (!document.hidden && lastReduced !== motion.matches) {
@@ -529,6 +853,7 @@ if (
                 disposed = true;
                 cancelAnimationFrame(frame);
                 clearInterval(preferenceTimer);
+                clearInterval(phaseTimer);
                 clearTimeout(preloadTimer);
                 observer.disconnect();
                 sizes.disconnect();
@@ -544,12 +869,17 @@ if (
                 buttons.forEach((button, i) =>
                     button.removeEventListener("click", selections[i]),
                 );
+                zoomButtons.forEach((button, i) =>
+                    button.removeEventListener("click", zoomHandlers[i]),
+                );
                 orbit.dispose();
                 planets.forEach(disposePlanet);
+                outposts.forEach(disposeOutpost);
                 owned.forEach((t) => t.dispose());
                 starsGeo.dispose();
                 starsMat.dispose();
                 sun.shadow.dispose();
+                reflection.dispose();
                 render.dispose();
                 render.domElement.remove();
                 stage.hidden = true;

@@ -9,6 +9,7 @@ export default tseslint.config(
             ".next/**",
             "dist/**",
             "public/studio/**",
+            "public/draco/**",
             ".astro/**",
             ".wrangler/**",
             ".sanity/**",
