@@ -1,0 +1,403 @@
+/* A shared sky connects the destinations; content remains on a quiet surface. */
+body.space-site {
+    position: relative;
+    isolation: isolate;
+}
+.site-cosmos {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: url("/images/trajectory/milky-way-v2-2k.webp") 70% 25% / cover;
+    opacity: 0.26;
+    view-transition-name: cosmic-sky;
+    mask-image: linear-gradient(180deg, #000 0%, #0009 55%, #0003);
+}
+.site-cosmos::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--surface) 2%, transparent 80%);
+}
+:root[data-theme="light"] .site-cosmos {
+    opacity: 0.11;
+    mix-blend-mode: multiply;
+}
+.space-site > header {
+    position: relative;
+}
+body > header {
+    view-transition-name: site-navigation;
+}
+.space-site > main {
+    position: relative;
+}
+.space-site > footer {
+    position: relative;
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+.scene-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: center;
+    min-height: 560px;
+    margin: -1.5rem -2rem 2.5rem 0;
+    gap: 0;
+    position: relative;
+}
+.scene-hero__copy {
+    position: relative;
+    z-index: 1;
+    padding-block: 2rem;
+}
+.scene-hero__copy > .eyebrow {
+    color: var(--secondary-text);
+    font-size: 0.73rem;
+    letter-spacing: 0.17em;
+}
+.scene-hero h1 {
+    font-size: clamp(3.5rem, 6.5vw, 6.5rem);
+    letter-spacing: -0.055em;
+    line-height: 1.02;
+    margin: 0.25em 0;
+    max-width: 12ch;
+    text-wrap: balance;
+}
+.scene-hero h1 em,
+.contact-intro h1 em {
+    color: var(--accent-text);
+    font-style: normal;
+}
+.space-site .sky-credit {
+    margin-left: auto;
+    font-size: 0.65rem;
+    align-self: center;
+    color: var(--secondary-text);
+}
+.scene-hero__lede {
+    font-size: clamp(1.05rem, 1.45vw, 1.25rem);
+    line-height: 1.75;
+    max-width: 38ch;
+    margin-top: 1.7rem;
+}
+.scene-hero__link {
+    display: inline-block;
+    margin-top: 1.2rem;
+    text-decoration: none;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--accent-text);
+    font-size: 0.85rem;
+}
+.space-study {
+    position: relative;
+    margin: 0;
+    min-width: 0;
+    isolation: isolate;
+}
+.space-study__art {
+    position: relative;
+    overflow: clip;
+    height: clamp(380px, 39vw, 580px);
+}
+.space-study__stage {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    touch-action: pan-y;
+}
+.space-study[data-ready] .space-study__stage {
+    opacity: 1;
+}
+.space-study__stage canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.space-study__orbits {
+    position: absolute;
+    inset: 12% 10%;
+    border: 1px solid color-mix(in srgb, var(--accent-green) 23%, transparent);
+    border-radius: 50%;
+    transform: rotate(-28deg) scaleY(0.68);
+    pointer-events: none;
+}
+.space-study__orbits::before {
+    content: "";
+    position: absolute;
+    inset: -14% -5%;
+    border: 1px solid color-mix(in srgb, var(--accent-amber) 17%, transparent);
+    border-radius: 50%;
+    transform: rotate(45deg);
+}
+.space-study__orbits::after {
+    content: "";
+    position: absolute;
+    top: 12%;
+    left: 12%;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-amber);
+    box-shadow: 0 0 14px #dfa05d55;
+}
+.space-study__caption {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font:
+        0.67rem/1.7 DMMono,
+        monospace;
+    padding: 0.7rem 0;
+    color: var(--secondary-text);
+}
+.space-study__coordinate {
+    color: var(--accent-text);
+}
+.space-study__caption button {
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    padding: 0.5rem;
+    min-height: 44px;
+    border-left: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+    border-radius: 0;
+}
+.space-study__caption button:disabled {
+    opacity: 0.65;
+}
+.space-study__hint {
+    text-align: center;
+    font:
+        0.62rem/1.6 DMMono,
+        monospace;
+    color: var(--secondary-text);
+    margin: 0;
+}
+.space-study__credits {
+    display: block;
+    text-align: center;
+    font:
+        0.6rem/1.8 DMMono,
+        monospace;
+    color: var(--secondary-text);
+    margin-top: 0.4rem;
+}
+.scene-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1.5rem;
+    margin: 0 0 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+}
+.scene-section-head h2 {
+    font-size: clamp(1.5rem, 2vw, 2.2rem);
+    margin: 0;
+}
+.scene-section-head p {
+    margin: 0;
+    font:
+        0.72rem/1.6 DMMono,
+        monospace;
+    color: var(--secondary-text);
+}
+.space-site .editorial-list li {
+    transition: background 0.3s;
+}
+.space-site .editorial-list li:hover {
+    background: color-mix(in srgb, var(--surface) 75%, transparent);
+}
+.space-site .editorial-list time::before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    margin-right: 0.7rem;
+    background: var(--accent-amber);
+    vertical-align: middle;
+}
+.space-site .editorial-article {
+    position: relative;
+}
+.space-site .editorial-article-head {
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+    margin-bottom: 2rem;
+    padding-bottom: 2.5rem;
+}
+.space-site .editorial-article > .prose {
+    background: color-mix(in srgb, var(--surface) 91%, transparent);
+    box-shadow: 0 0 4rem 2rem
+        color-mix(in srgb, var(--surface) 90%, transparent);
+}
+.space-site .project-card__body,
+.space-site .project-row {
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+.space-site .home-close {
+    background:
+        linear-gradient(100deg, #152521f2, #15252155),
+        url("/images/trajectory/milky-way-v2-2k.webp") 50% 50% / cover;
+}
+.space-site .home-close::after {
+    width: 32rem;
+    height: 32rem;
+    border-color: #a7c79b55;
+    right: -4rem;
+    top: -12rem;
+}
+.space-site .home-introduction {
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+}
+.about-page .about-narrative {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+    gap: clamp(2rem, 7vw, 7rem);
+    padding-block: 2rem 4rem;
+    border-top: 1px solid var(--rule);
+    align-items: start;
+}
+.about-narrative__copy > p {
+    font-size: 1.05rem;
+    line-height: 1.9;
+    max-width: 55ch;
+}
+.about-narrative .about-research {
+    margin-top: 0;
+    border-top: 0;
+}
+.contact-page .contact-intro {
+    position: relative;
+}
+.contact-page .space-study {
+    grid-area: artwork;
+}
+.contact-page .contact-grid {
+    grid-template-areas: "intro form" "artwork form" "support form";
+    row-gap: 1rem;
+}
+.contact-page .contact-intro h1 {
+    font-size: clamp(3.5rem, 6vw, 5.7rem);
+}
+.contact-page .space-study__art {
+    height: 350px;
+}
+.contact-page .contact-support {
+    padding-top: 0;
+}
+.contact-page .contact-elsewhere {
+    margin-top: 0;
+    padding-top: 1.4rem;
+}
+.contact-page .contact-form-panel {
+    position: relative;
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    padding: 2rem;
+    border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+    border-top: 2px solid var(--accent-amber);
+    box-shadow: 0 16px 60px #0000000d;
+}
+@media (max-width: 800px) {
+    .scene-hero {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        margin: -1rem 0 2rem;
+    }
+    .scene-hero__copy {
+        padding-block: 0;
+    }
+    .scene-hero h1 {
+        font-size: clamp(3.2rem, 12vw, 4.7rem);
+        max-width: 14ch;
+    }
+    .scene-hero__lede {
+        margin-top: 1.2rem;
+        max-width: 47ch;
+        font-size: 1rem;
+    }
+    .scene-hero > .space-study {
+        margin: -1rem -0.8rem 0;
+    }
+    .space-study__art {
+        height: clamp(280px, 75vw, 430px);
+    }
+    .space-study__caption {
+        flex-wrap: wrap;
+        column-gap: 0.8rem;
+        row-gap: 0;
+        font-size: 0.62rem;
+    }
+    .space-study__name {
+        max-width: 21ch;
+    }
+    .space-study__hint {
+        display: none;
+    }
+    .scene-section-head {
+        margin-bottom: 1.5rem;
+    }
+    .scene-section-head p {
+        max-width: 20ch;
+        text-align: right;
+    }
+    .space-site > footer {
+        flex-wrap: wrap;
+    }
+    .space-site .sky-credit {
+        margin-left: 0;
+    }
+    .about-page .about-narrative {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding-top: 1.3rem;
+    }
+    .contact-page .contact-grid {
+        grid-template-areas: "intro" "form" "artwork" "support";
+        row-gap: 2rem;
+    }
+    .contact-page .contact-form-panel {
+        padding: 1.4rem;
+    }
+    .contact-page .space-study__art {
+        height: 300px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .space-study__stage,
+    .space-site .editorial-list li {
+        transition: none;
+    }
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none;
+    }
+}
+@media (max-width: 380px) {
+    body > header nav {
+        gap: 0.45rem;
+        justify-content: space-between;
+    }
+    body > header nav a {
+        font-size: 0.73rem;
+        letter-spacing: 0;
+    }
+}
+@media print {
+    .site-cosmos,
+    .space-study {
+        display: none;
+    }
+    .scene-hero,
+    .about-page .about-narrative {
+        display: block;
+        min-height: 0;
+    }
+    .space-site .editorial-article > .prose {
+        box-shadow: none;
+        background: transparent;
+    }
+}

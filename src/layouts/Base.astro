@@ -1,6 +1,7 @@
 ---
 import "../styles.css";
 import "../styles/journey.css";
+import "../styles/space.css";
 import { siteConfig } from "../../lib/config";
 import { sceneClockBoot } from "../lib/scene-clock";
 import { env } from "cloudflare:workers";
@@ -14,6 +15,7 @@ const {
     ogType = "website",
 } = Astro.props;
 const currentPath = Astro.url.pathname;
+const sharedSky = pageClass !== "experience-page";
 const current = (path: string) =>
     currentPath === path || currentPath.startsWith(`${path}/`)
         ? "page"
@@ -71,7 +73,8 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 document.documentElement.dataset.theme = theme;
         } catch {}
     </script>
-    <body>
+    <body class:list={{ "space-site": sharedSky }}>
+        {sharedSky && <div class="site-cosmos" aria-hidden="true"></div>}
         <a class="skip" href="#main">
             Skip to content
         </a>
@@ -112,6 +115,14 @@ Astro.response.headers.set("Cache-Control", "no-store");
             <span>Adithya Rajendran</span>
             <a href="/feed.xml">RSS</a>
             <a href={siteConfig.source}>Source</a>
+            {sharedSky && (
+                <a
+                    class="sky-credit"
+                    href="https://www.eso.org/public/images/eso0932a/"
+                >
+                    Sky: ESO / S. Brunier
+                </a>
+            )}
         </footer>
         <script>
             const themeButton =

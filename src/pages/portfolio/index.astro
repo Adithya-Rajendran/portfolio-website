@@ -2,6 +2,7 @@
 import Base from "../../layouts/Base.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
 import ProjectRow from "../../components/ProjectRow.astro";
+import SpaceStudy from "../../components/SpaceStudy.astro";
 import { getAllProjects, getProfile } from "../../lib/sanity";
 import { homeProjects } from "../../../lib/home";
 import { missionOrder } from "../../../lib/missions";
@@ -11,21 +12,31 @@ const selected = flagship ? [flagship, ...rows] : [];
 ---
 
 <Base title="Projects" pageClass="projects-page">
-    <div class="projects-intro-grid projects-intro-grid--work">
-        <div>
+    <div class="scene-hero">
+        <div class="scene-hero__copy">
             <p class="eyebrow">Selected work / Projects</p>
-            <h1>Projects</h1>
+            <h1>
+                Ideas, made <em>real.</em>
+            </h1>
             {profile?.projectsIntro && (
-                <p class="page-intro">{profile.projectsIntro}</p>
+                <p class="scene-hero__lede">{profile.projectsIntro}</p>
             )}
+            <a class="scene-hero__link" href="#projects">
+                Explore the projects ↓
+            </a>
         </div>
+        <SpaceStudy kind="workshop" />
+    </div>
+    <div class="scene-section-head">
+        <h2>Selected projects</h2>
+        <p>Research → Experiments → Systems</p>
     </div>
     <ul class="project-collection" id="projects">
         {selected.map((project, index) => (
             <ProjectCard
                 project={project}
                 index={index}
-                heading="h2"
+                heading="h3"
                 featured={index === 0}
             />
         ))}
@@ -60,22 +71,3 @@ const selected = flagship ? [flagship, ...rows] : [];
         window.addEventListener("hashchange", follow);
     </script>
 </Base>
-
-<style>
-    .projects-intro-grid--work {
-        display: block;
-        margin-bottom: 2.4rem;
-        min-height: 0;
-    }
-    .projects-intro-grid--work h1 {
-        margin-bottom: 0.25em;
-    }
-    .projects-intro-grid--work .page-intro {
-        max-width: 52rem;
-    }
-    @media (max-width: 800px) {
-        .projects-intro-grid--work {
-            margin-bottom: 1.6rem;
-        }
-    }
-</style>

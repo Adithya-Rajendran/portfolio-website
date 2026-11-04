@@ -1,26 +1,30 @@
 ---
 import "../../styles/editorial.css";
-import TechnicalStudy from "../../components/TechnicalStudy.astro";
+import SpaceStudy from "../../components/SpaceStudy.astro";
 import Base from "../../layouts/Base.astro";
 import { getAllPosts } from "../../lib/sanity";
 const posts = await getAllPosts();
 ---
 
-<Base title="Writing">
-    <div class="editorial-head writing-head">
-        <div class="writing-head__graphic">
-            <TechnicalStudy variant="writing" />
-        </div>
-        <div class="writing-head__copy">
-            <p class="editorial-eyebrow">Ideas and notes</p>
-            <h1>Writing</h1>
-            <p class="editorial-intro">
+<Base title="Writing" pageClass="writing-page">
+    <div class="scene-hero">
+        <div class="scene-hero__copy">
+            <p class="eyebrow">Writing / Field notes</p>
+            <h1>
+                A little <em>further.</em>
+            </h1>
+            <p class="scene-hero__lede">
                 Notes on projects, systems, and what I’m learning.
             </p>
-            <a class="writing-feed" href="/feed.xml">
+            <a class="scene-hero__link" href="/feed.xml">
                 Follow via RSS ↗
             </a>
         </div>
+        <SpaceStudy kind="observatory" />
+    </div>
+    <div class="scene-section-head">
+        <h2>From the notebook</h2>
+        <p>Questions worth following</p>
     </div>
     <ul class="editorial-list">
         {posts.map((p) => (

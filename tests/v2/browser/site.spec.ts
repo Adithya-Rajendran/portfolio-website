@@ -399,18 +399,20 @@ test("contact validates required fields without sending mail", async ({
     await page.setViewportSize({ width: 320, height: 844 });
     await page.goto("/contact");
     const form = page.locator("#contact-form");
-    const image = page.locator("main figure img").first();
+    const study = page.locator('figure[data-space-study="relay"]');
     const linkedIn = page.getByRole("link", { name: /LinkedIn/ }).first();
     await expect(form).toBeVisible();
-    await expect(image).toBeAttached();
+    await expect(study).toBeAttached();
     await expect(linkedIn).toBeAttached();
     const formPrecedes = await form.evaluate((element) => {
-        const image = document.querySelector("main figure img");
+        const study = document.querySelector(
+            'figure[data-space-study="relay"]',
+        );
         const linkedIn = document.querySelector('main a[href*="linkedin.com"]');
         return Boolean(
-            image &&
+            study &&
             linkedIn &&
-            element.compareDocumentPosition(image) &
+            element.compareDocumentPosition(study) &
                 Node.DOCUMENT_POSITION_FOLLOWING &&
             element.compareDocumentPosition(linkedIn) &
                 Node.DOCUMENT_POSITION_FOLLOWING,
@@ -1047,8 +1049,10 @@ test("ordinary articles do not download the orbital renderer or maps", async ({
     const sceneRequests: string[] = [];
     page.on("request", (request) => {
         const url = request.url();
+        if (new URL(url).pathname === "/images/trajectory/milky-way-v2-2k.webp")
+            return;
         if (
-            /\/images\/trajectory\/|\/models\/nasa-perseverance\.glb|\/three\/draco\/|\/three\.module\.|\/GLTFLoader\.|\/DRACOLoader\.|\/OrbitControls\.|\/ExperienceVisual\.|\/HeroVisual\./i.test(
+            /\/images\/trajectory\/|\/models\/nasa-perseverance\.glb|\/three\/draco\/|\/three\.module\.|\/GLTFLoader\.|\/DRACOLoader\.|\/OrbitControls\.|\/ExperienceVisual\.|\/HeroVisual\.|\/SpaceStudy\.|\/space-studies\./i.test(
                 url,
             )
         )

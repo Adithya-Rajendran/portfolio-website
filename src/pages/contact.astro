@@ -2,6 +2,7 @@
 import "../styles/secondary-visuals.css";
 import Base from "../layouts/Base.astro";
 import SafeLink from "../components/SafeLink.astro";
+import SpaceStudy from "../components/SpaceStudy.astro";
 import { availabilityLine } from "../../lib/profile-content";
 import { env } from "cloudflare:workers";
 import { getProfile } from "../lib/sanity";
@@ -30,7 +31,9 @@ const ready =
     <div class="contact-grid">
         <section class="contact-intro">
             <p class="eyebrow">Start a conversation</p>
-            <h1>Contact</h1>
+            <h1>
+                Let’s make <em>contact.</em>
+            </h1>
             {p?.contactIntro && (
                 <p class="contact-intro__lead">{p.contactIntro}</p>
             )}
@@ -117,6 +120,7 @@ const ready =
                 </p>
             )}
         </div>
+        <SpaceStudy kind="relay" compact />
         <aside class="contact-support" aria-label="Other ways to connect">
             {p?.socialLinks?.length && (
                 <div class="contact-elsewhere">
@@ -126,17 +130,6 @@ const ready =
                     ))}
                 </div>
             )}
-            <figure class="contact-signal mechanical-study">
-                <img
-                    src="/images/scenes/signal-study-v1.webp"
-                    width="1200"
-                    height="900"
-                    alt="A parabolic antenna pointed toward the sky."
-                />
-                <figcaption>
-                    <span>02 / Connection</span> An open channel.
-                </figcaption>
-            </figure>
         </aside>
     </div>
     {ready && (

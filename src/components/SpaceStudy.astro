@@ -1,0 +1,64 @@
+---
+import "../styles/space.css";
+import type { SpaceStudy } from "../scripts/space-studies";
+interface Props {
+    kind: SpaceStudy;
+    compact?: boolean;
+}
+const { kind, compact = false } = Astro.props;
+const scenes = {
+    workshop: {
+        name: "The orbital workshop",
+        note: "An imagined research station above the Moon.",
+        coordinate: "01 / Build",
+    },
+    observatory: {
+        name: "Signals from the unknown",
+        note: "A deep-space observatory, looking a little further.",
+        coordinate: "02 / Discover",
+    },
+    robotics: {
+        name: "A different way of seeing",
+        note: "A robotic instrument, made for a world beyond our own.",
+        coordinate: "03 / Explore",
+    },
+    relay: {
+        name: "An open channel",
+        note: "A communications relay above our home planet.",
+        coordinate: "04 / Connect",
+    },
+};
+const scene = scenes[kind];
+---
+
+<figure
+    class:list={["space-study", { "space-study--compact": compact }]}
+    data-space-study={kind}
+    data-state="loading"
+>
+    <div class="space-study__art">
+        <div class="space-study__orbits" aria-hidden="true"></div>
+        <div
+            class="space-study__stage"
+            data-space-stage
+            role="img"
+            aria-label={scene.note}
+        ></div>
+    </div>
+    <figcaption class="space-study__caption">
+        <span class="space-study__coordinate">{scene.coordinate}</span>
+        <span class="space-study__name">{scene.name}</span>
+        <button type="button" data-space-motion aria-pressed="false" hidden>
+            Pause motion
+        </button>
+    </figcaption>
+    <p class="space-study__hint" data-space-hint hidden>
+        Move your pointer to look around
+    </p>
+    <a class="space-study__credits" href="/images/trajectory/README.md">
+        Scene credits ↗
+    </a>
+</figure>
+<script>
+    import "../scripts/space-scene";
+</script>

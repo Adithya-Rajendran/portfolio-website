@@ -1,6 +1,7 @@
 ---
 import "../styles/secondary-visuals.css";
 import SafeLink from "../components/SafeLink.astro";
+import SpaceStudy from "../components/SpaceStudy.astro";
 import { buildProfilePage } from "../../lib/structured-data";
 import Base from "../layouts/Base.astro";
 import { getProfile, getAllProjects } from "../lib/sanity";
@@ -24,18 +25,25 @@ const biography =
         },
     ]}
 >
-    <div class="editorial-lead about-lead-grid">
-        <div class="about-lead-copy">
+    <div class="scene-hero">
+        <div class="scene-hero__copy">
             <p class="eyebrow">The person behind the work</p>
-            <h1>About</h1>
-            {p?.headline && (
-                <p class="editorial-lead__headline">{p.headline}</p>
-            )}
-            <div class="editorial-lead__body">
-                {biography.map((paragraph) => (
-                    <p>{paragraph.trim()}</p>
-                ))}
-            </div>
+            <h1>
+                Driven by <em>curiosity.</em>
+            </h1>
+            {p?.headline && <p class="scene-hero__lede">{p.headline}</p>}
+            <a class="scene-hero__link" href="#my-story">
+                A little about me ↓
+            </a>
+        </div>
+        <SpaceStudy kind="robotics" />
+    </div>
+    <div class="about-narrative" id="my-story">
+        <div class="about-narrative__copy">
+            <p class="eyebrow">The story so far</p>
+            {biography.map((paragraph) => (
+                <p>{paragraph.trim()}</p>
+            ))}
         </div>
         {research?.cover && (
             <figure class="about-research">
