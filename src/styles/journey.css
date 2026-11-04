@@ -298,6 +298,9 @@ body > header #theme-switch {
         width: calc(100% - 2.5rem);
         padding-top: 2rem;
     }
+    .trajectory-intro {
+        z-index: 4;
+    }
     .trajectory-intro h1 {
         font-size: clamp(2.7rem, 8vw, 4rem);
         line-height: 1.06;
@@ -328,9 +331,26 @@ body > header #theme-switch {
         margin: 0 -1.25rem 2rem;
         padding: 0 1.25rem;
         z-index: 3;
+        isolation: isolate;
+    }
+    /* Blend only the backdrop so the globe and controls remain crisp. The
+       opaque middle still covers the record while this panel is sticky. */
+    .trajectory-orbit::before {
+        content: "";
+        position: absolute;
+        inset: -3.5rem 0 -1.5rem;
+        z-index: -1;
+        pointer-events: none;
         background:
             linear-gradient(0deg, #080e12 0%, #080e1233 52%, #080e1299),
             url("/images/trajectory/milky-way-v2-2k.webp") 65% 40% / cover;
+        mask-image: linear-gradient(
+            to bottom,
+            transparent,
+            #000 3.5rem,
+            #000 calc(100% - 1.5rem),
+            transparent
+        );
     }
     .trajectory-entries {
         padding-left: 1.3rem;
