@@ -69,12 +69,12 @@ if (section && start && stage && status && controls && motionButton) {
                 curve.getPoints(200),
             );
             const lineMaterial = new THREE.LineBasicMaterial({
-                color: 0x7dbbb4,
+                color: 0x658761,
             });
             group.add(new THREE.Line(lineGeometry, lineMaterial));
             const nodeGeometry = new THREE.SphereGeometry(0.09, 16, 12);
             const nodeMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffbd7d,
+                color: 0xdfa05d,
             });
             const nodes: Three.Mesh[] = [];
             for (let i = 0; i < entries.length; i++) {
@@ -99,7 +99,7 @@ if (section && start && stage && status && controls && motionButton) {
                 new THREE.BufferAttribute(points, 3),
             );
             const pointsMaterial = new THREE.PointsMaterial({
-                color: 0x9cb5bc,
+                color: 0xc6b8a4,
                 size: 0.025,
             });
             scene.add(new THREE.Points(pointsGeometry, pointsMaterial));

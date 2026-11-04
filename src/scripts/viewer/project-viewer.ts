@@ -59,7 +59,7 @@ for (const section of document.querySelectorAll<HTMLElement>(
             const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 100);
             camera.position.set(3, 2.3, 4.5);
             camera.lookAt(0, 0, 0);
-            scene.add(new THREE.HemisphereLight(0xd9f4ff, 0x27313d, 2));
+            scene.add(new THREE.HemisphereLight(0xf5ead8, 0x302c28, 2));
             const light = new THREE.DirectionalLight(0xffffff, 2);
             light.position.set(3, 5, 4);
             scene.add(light);
@@ -67,18 +67,18 @@ for (const section of document.querySelectorAll<HTMLElement>(
             scene.add(group);
             if (section.dataset.kind === "procedural") {
                 const dark = new THREE.MeshStandardMaterial({
-                    color: 0x293641,
+                    color: 0x363a32,
                     metalness: 0.45,
                     roughness: 0.55,
                 });
                 const panel = new THREE.MeshStandardMaterial({
-                    color: 0x526672,
+                    color: 0x6c7460,
                     metalness: 0.45,
                     roughness: 0.45,
                 });
                 const accent = new THREE.MeshStandardMaterial({
-                    color: 0x80c3b4,
-                    emissive: 0x224b42,
+                    color: 0xdfa05d,
+                    emissive: 0xac5045,
                 });
                 const box = (
                     w: number,
