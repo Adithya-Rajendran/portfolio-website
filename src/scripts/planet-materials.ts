@@ -55,8 +55,8 @@ export async function makePlanet(
                 ? `earth-surface-v2-${small ? "2k" : "8k"}`
                 : world === "saturn"
                   ? "saturn-strip-v1"
-                  : world === "moon"
-                    ? "moon-1k"
+                  : world === "moon" || world === "mars"
+                    ? `${world}-surface-v2-${small ? "2k" : "4k"}`
                     : `${world}-${suffix}`,
         );
         if (world === "earth") {
@@ -175,6 +175,7 @@ export async function makePlanet(
             group.add(
                 new T.Mesh(new T.SphereGeometry(1.025, 192, 128), atmosphere),
             );
+            group.children[0].castShadow = true;
             group.rotation.y = 0;
             group.rotation.z = -0.14;
         } else {
@@ -182,6 +183,12 @@ export async function makePlanet(
                 new T.SphereGeometry(1, small ? 128 : 192, 128),
                 new T.MeshStandardMaterial({
                     map,
+                    color:
+                        world === "moon"
+                            ? 0xa6abb0
+                            : world === "mars"
+                              ? 0xc9a58b
+                              : 0xffffff,
                     roughness: 0.95,
                     metalness: 0,
                 }),

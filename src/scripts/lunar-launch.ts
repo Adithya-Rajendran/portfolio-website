@@ -1,4 +1,5 @@
 import type * as Three from "three";
+import { curveSurfacePoint } from "./planetary-outposts";
 
 /** A reusable payload and sled, aligned to anchors exported with the lunar rail. */
 export function addLunarLaunch(T: typeof Three, outpost: Three.Group) {
@@ -12,6 +13,12 @@ export function addLunarLaunch(T: typeof Three, outpost: Three.Group) {
     const exit = outpost.worldToLocal(
         exitAnchor.getWorldPosition(new T.Vector3()),
     );
+    const railStart = startAnchor.userData.uncurved
+        ? new T.Vector3().fromArray(startAnchor.userData.uncurved)
+        : start.clone();
+    const railExit = exitAnchor.userData.uncurved
+        ? new T.Vector3().fromArray(exitAnchor.userData.uncurved)
+        : exit.clone();
     const direction = exit.clone().sub(start).normalize();
     const velocity = exit.clone().sub(start).multiplyScalar(0.5);
     const rotation = new T.Quaternion().setFromUnitVectors(
@@ -143,36 +150,46 @@ export function addLunarLaunch(T: typeof Three, outpost: Three.Group) {
         tangent = new T.Vector3(),
         forward = new T.Vector3(0, 0, -1);
     const pose = (time: number, target: Three.Vector3) => {
-        if (time <= 2) return target.copy(start);
-        if (time < 6)
-            return target.copy(start).lerp(exit, Math.pow((time - 2) / 4, 2));
-        const flight = Math.min(8, time - 6);
+        if (time <= 5) return target.copy(start);
+        if (time < 10)
+            return curveSurfacePoint(
+                target
+                    .copy(railStart)
+                    .lerp(railExit, Math.pow((time - 5) / 5, 2)),
+            );
+        const flight = Math.min(9, time - 10);
         target.copy(exit).addScaledVector(velocity, flight);
         target.y -= 0.45 * flight * flight;
         return target;
     };
-    let elapsed = 0;
+    let previousElapsed = -1;
     let lastState:
         { phase: string; cycle: number; position: Three.Vector3 } | undefined;
-    const update = (delta: number) => {
-        if (delta === 0 && lastState) return lastState;
-        elapsed += delta;
-        const cycle = Math.floor(elapsed / 18),
-            time = elapsed % 18;
+    const update = (elapsed: number) => {
+        if (elapsed === previousElapsed && lastState) return lastState;
+        previousElapsed = elapsed;
+        const cycle = Math.floor(elapsed / 36),
+            time = elapsed % 36;
         const phase =
-            time < 2
+            time < 5
                 ? "ready"
-                : time < 6
+                : time < 10
                   ? "accelerating"
-                  : time < 14
+                  : time < 19
                     ? "coasting"
-                    : "resetting";
-        payload.visible = time < 14;
-        pose(time, payload.position);
+                    : time < 24
+                      ? "resetting"
+                      : "ready";
+        payload.visible = time < 19 || time >= 24;
+        pose(time >= 24 ? 0 : time, payload.position);
         tangent.copy(velocity);
-        if (time > 6) tangent.y -= 0.9 * Math.min(8, time - 6);
+        if (time > 10) tangent.y -= 0.9 * Math.min(9, time - 10);
         payload.quaternion.setFromUnitVectors(forward, tangent.normalize());
-        const unfold = T.MathUtils.smoothstep(time, 6.25, 8.25);
+        const unfold = T.MathUtils.smoothstep(
+            time >= 24 ? 0 : time,
+            10.25,
+            12.25,
+        );
         for (const { group, side, segment } of wings) {
             group.position.set(
                 side * (1.45 + segment * (0.1 + 1.16 * unfold)),
@@ -180,21 +197,24 @@ export function addLunarLaunch(T: typeof Three, outpost: Three.Group) {
                 0,
             );
         }
-        if (time < 6) pose(time, sled.position);
-        else if (time < 14) sled.position.copy(exit);
+        if (time < 10) pose(time, sled.position);
+        else if (time < 19) sled.position.copy(exit);
         else
-            sled.position
-                .copy(exit)
-                .lerp(start, T.MathUtils.smoothstep(time, 14, 17.5));
-        const opacity = 1 - T.MathUtils.smoothstep(time, 10.5, 14);
+            curveSurfacePoint(
+                sled.position
+                    .copy(railExit)
+                    .lerp(railStart, T.MathUtils.smoothstep(time, 19, 23.5)),
+            );
+        const opacity =
+            time >= 24 ? 1 : 1 - T.MathUtils.smoothstep(time, 15.5, 19);
         payloadMaterials.forEach((m) => {
-            m.userData.baseOpacity = opacity;
+            m.opacity = opacity;
         });
         sledLight.emissiveIntensity = phase === "accelerating" ? 3.5 : 1;
-        trail.visible = time >= 2 && time < 14;
-        trailMaterial.userData.baseOpacity = opacity * 0.55;
+        trail.visible = time >= 5 && time < 19;
+        trailMaterial.opacity = opacity * 0.55;
         for (let i = 0; i < 48; i++) {
-            pose(Math.max(2, time - (1 - i / 47) * 1.2), point);
+            pose(Math.max(5, time - (1 - i / 47) * 1.2), point);
             point.toArray(trailPositions, i * 3);
         }
         trailGeometry.attributes.position.needsUpdate = true;
@@ -202,5 +222,8 @@ export function addLunarLaunch(T: typeof Three, outpost: Three.Group) {
         return lastState;
     };
     update(0);
-    return { update };
+    return {
+        update,
+        positionAt: (second: number) => pose(second, new T.Vector3()),
+    };
 }

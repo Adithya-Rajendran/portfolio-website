@@ -14,6 +14,10 @@ The v2 Earth uses Solar System Scope's 8K [day map](https://www.solarsystemscope
 
 These assets are prepared with `scripts/artwork/prepare-orbit-assets.mjs`. Older maps below remain used by other planets or archived source components.
 
+## Surface approaches
+
+`moon-surface-v2-{4k,2k}.webp` and `mars-surface-v2-{4k,2k}.webp` are resized, WebP-encoded versions of Solar System Scope's [8K Moon](https://www.solarsystemscope.com/textures/download/8k_moon.jpg) and [8K Mars](https://www.solarsystemscope.com/textures/download/8k_mars.jpg) maps (CC BY 4.0). The larger maps preserve terrain detail during the descent into the planet-mounted settlements; small devices use 2K. Prepared by `scripts/artwork/prepare-orbit-assets.mjs`.
+
 ## Earlier planetary layers
 
 The orbital experience on `/resume` uses these adapted NASA and Solar System Scope maps. The renderer selects smaller or larger maps according to device conditions and loads planetary resources when the orbital view starts. The page displays attribution beside the visual. The poster uses the Earth day map.

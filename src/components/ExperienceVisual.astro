@@ -2,7 +2,11 @@
 const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
 ---
 
-<section class="experience-visual" aria-labelledby="experience-visual-title">
+<section
+    class="experience-visual"
+    data-layout="arrival"
+    aria-labelledby="experience-visual-title"
+>
     <div class="experience-visual__head">
         <h2 id="experience-visual-title">Orbital view</h2>
         <button type="button" data-experience-start hidden>
@@ -72,40 +76,56 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
                 ))}
             </div>
             <div class="observatory__actions">
-                <button
-                    type="button"
-                    data-experience-zoom="+"
-                    aria-label="Zoom in"
-                >
-                    +
-                </button>
-                <button
-                    type="button"
-                    data-experience-zoom="-"
-                    aria-label="Zoom out"
-                >
-                    −
-                </button>
-                <button type="button" data-experience-reset>
-                    Reset view
-                </button>
                 <button type="button" data-experience-motion>
                     Pause motion
+                </button>
+                <div
+                    class="observatory__camera-controls"
+                    role="group"
+                    aria-label="Adjust the view"
+                >
+                    <button
+                        type="button"
+                        data-experience-zoom="+"
+                        aria-label="Zoom in"
+                    >
+                        +
+                    </button>
+                    <button
+                        type="button"
+                        data-experience-zoom="-"
+                        aria-label="Zoom out"
+                    >
+                        −
+                    </button>
+                    <button
+                        type="button"
+                        data-experience-reset
+                        aria-label="Replay the guided tour"
+                    >
+                        ↺ <span>Replay</span>
+                    </button>
+                </div>
+                <button
+                    type="button"
+                    data-experience-expand
+                    aria-expanded="false"
+                >
+                    Explore <span aria-hidden="true">↗</span>
                 </button>
             </div>
         </div>
         <p class="observatory__status" data-experience-status role="status"></p>
     </div>
-    <p class="experience-visual__hint">
-        Scroll to travel <span aria-hidden="true">↓</span>{" "}
-        <span data-experience-navigation>Drag to orbit</span>
-    </p>
-    <p class="experience-visual__lighting" data-experience-lighting>
-        An Earth for every hour.
-    </p>
-    <p class="experience-visual__destination" data-experience-destination>
-        Earth · Two paths around our home
-    </p>
+    <div class="experience-visual__caption">
+        <p class="experience-visual__destination" data-experience-destination>
+            Earth · Our starting point
+        </p>
+        <p class="experience-visual__hint">
+            <span data-experience-navigation>Scroll to travel</span>
+            <span data-experience-lighting>Day · your local time</span>
+        </p>
+    </div>
     <p class="experience-visual__sky-credit">
         Milky Way:{" "}
         <a href="https://www.eso.org/public/images/eso0932a/">ESO/S. Brunier</a>
@@ -124,10 +144,11 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
             fingers. Dawn, day, dusk, and night follow your device's local
             clock. Lighting is illustrative; it does not use your location or
             live weather. Satellites are enlarged for visibility. Moon and Mars
-            arrivals reveal original architectural concepts at surface scale.
-            The lunar rail launches a satellite, unfolds its solar panels, and
-            returns the carriage for the next departure. This repeating sequence
-            pauses with the other motion.
+            arrivals reveal original architectural concepts at an illustrated
+            scale, attached to their planet’s curved surface. The lunar rail
+            launches a satellite, unfolds its solar panels, and returns the
+            carriage for the next departure. This repeating sequence pauses with
+            the other motion.
         </p>
         <p>
             Surface references:{" "}
@@ -154,6 +175,15 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
 </section>
 <script>
     import "../scripts/experience";
+    import { setupExperienceLayout } from "../scripts/experience-layout";
+    const visual = document.querySelector<HTMLElement>(".experience-visual");
+    if (visual) {
+        let disposeLayout = setupExperienceLayout(visual);
+        window.addEventListener("pagehide", () => disposeLayout());
+        window.addEventListener("pageshow", (event) => {
+            if (event.persisted) disposeLayout = setupExperienceLayout(visual);
+        });
+    }
 </script>
 <style>
     .experience-visual {
@@ -161,7 +191,8 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         color: #f2e9d7;
         isolation: isolate;
     }
-    .experience-visual__head h2 {
+    .experience-visual__head h2,
+    .observatory__label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -176,13 +207,9 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         transform: translate(-50%, -50%);
         z-index: 5;
     }
-    .observatory {
-        background: transparent;
-    }
     .observatory__viewport {
         position: relative;
-        height: clamp(500px, 43vw, 670px);
-        overflow: visible;
+        height: clamp(430px, 43vw, 650px);
         background: transparent;
     }
     .observatory__paths {
@@ -192,8 +219,8 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         height: 100%;
         fill: none;
         stroke: #8a9d59;
-        stroke-width: 0.7;
-        opacity: 0.3;
+        stroke-width: 0.6;
+        opacity: 0.2;
         pointer-events: none;
     }
     .observatory__paths ellipse:first-child {
@@ -203,7 +230,7 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         fill: #94aa70;
         stroke: none;
     }
-    .experience-visual[data-view="surface"] .observatory__paths {
+    .experience-visual[data-surface="true"] .observatory__paths {
         opacity: 0;
     }
     .observatory__stage,
@@ -219,13 +246,23 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         width: 100%;
         height: 100%;
     }
-    .observatory__stage[data-view="surface"] {
-        mask-image: radial-gradient(
-            ellipse 50% 55% at 50% 43%,
-            #000 50%,
-            #000d 70%,
-            transparent 100%
-        );
+    .observatory__stage[data-surface="true"] {
+        mask-image:
+            linear-gradient(
+                to bottom,
+                transparent,
+                #000 7%,
+                #000 82%,
+                transparent
+            ),
+            linear-gradient(
+                to right,
+                transparent,
+                #000 7%,
+                #000 94%,
+                transparent
+            );
+        mask-composite: intersect;
     }
     .observatory__controls[hidden],
     .observatory__stage[hidden],
@@ -243,6 +280,18 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         background: url("/images/trajectory/earth-poster-v2-day.webp") center /
             contain no-repeat;
     }
+    :global(html[data-scene-clock="pending"]) .observatory__poster {
+        visibility: hidden;
+    }
+    :global(html[data-scene-phase="dawn"]) .observatory__earth {
+        background-image: url("/images/trajectory/earth-poster-v2-dawn.webp");
+    }
+    :global(html[data-scene-phase="dusk"]) .observatory__earth {
+        background-image: url("/images/trajectory/earth-poster-v2-dusk.webp");
+    }
+    :global(html[data-scene-phase="night"]) .observatory__earth {
+        background-image: url("/images/trajectory/earth-poster-v2-night.webp");
+    }
     .experience-visual[data-phase="dawn"] .observatory__earth {
         background-image: url("/images/trajectory/earth-poster-v2-dawn.webp");
     }
@@ -252,222 +301,204 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     .experience-visual[data-phase="night"] .observatory__earth {
         background-image: url("/images/trajectory/earth-poster-v2-night.webp");
     }
-    .experience-visual__destination {
-        font:
-            0.65rem DMMono,
-            monospace;
-        text-align: center;
-        color: #bdcbb5;
-        margin: 0.5rem 0;
-        max-width: none;
-    }
-    .observatory__label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-    }
     .observatory__controls {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1.4rem;
-        background: transparent;
-        margin-top: -1rem;
         position: relative;
         z-index: 4;
+        width: min(100%, 37rem);
+        margin: -0.5rem auto 0;
     }
     .observatory__worlds {
         display: flex;
-        gap: clamp(0.4rem, 1.8vw, 1.6rem);
-        order: 2;
-    }
-    .observatory__actions {
-        display: flex;
-        gap: 0.2rem;
-        order: 1;
-        border-right: 1px solid #66726055;
-        padding-right: 1rem;
+        justify-content: space-between;
+        gap: 0.35rem;
+        border-bottom: 1px solid #c1cfbc29;
     }
     .observatory__controls button {
-        color: #d7ded7;
-        font-family: DMMono, monospace;
-        font-size: 0.75rem;
-        padding: 0.6rem 0.15rem;
         min-height: 44px;
         border: 0;
         border-radius: 0;
+        color: #d7ded7;
         background: transparent;
+        font:
+            0.82rem DMMono,
+            monospace;
+        padding: 0.5rem 0.65rem;
+        cursor: pointer;
     }
-    .observatory__controls button[aria-pressed="true"] {
-        color: #dfa05d;
-        background: transparent;
-        box-shadow: 0 1px #dfa05d;
+    .observatory__worlds button {
+        border-bottom: 2px solid transparent;
+    }
+    .observatory__worlds button[aria-pressed="true"] {
+        color: #edb575;
+        border-bottom-color: #dfa05d;
     }
     .observatory__controls button:hover {
-        color: #f4c58e;
-        background: transparent;
+        color: #ffcf95;
     }
-    .observatory__actions button {
-        font-size: 0;
-        min-width: 32px;
+    .observatory__controls button:focus-visible {
+        outline: 2px solid #dfa05d;
+        outline-offset: 2px;
     }
-    .observatory__actions button::before {
-        font-size: 1rem;
-        content: "Ⅱ";
+    .observatory__actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.6rem;
+        padding-top: 0.2rem;
     }
-    .observatory__actions
-        [data-experience-motion][aria-pressed="true"]::before {
-        content: "▷";
+    .observatory__camera-controls {
+        display: flex;
+        align-items: center;
     }
-    .observatory__actions [data-experience-reset]::before {
-        content: "↺";
-        font-size: 1.35rem;
+    .observatory__camera-controls [data-experience-zoom] {
+        font-size: 1.15rem;
+        min-width: 44px;
     }
-    .observatory__actions [data-experience-zoom="+"]::before {
-        content: "+";
+    .observatory__actions [data-experience-motion] {
+        color: #f2d1a7;
+        font-family: inherit;
     }
-    .observatory__actions [data-experience-zoom="-"]::before {
-        content: "−";
+    .observatory__actions [data-experience-expand] {
+        display: none;
+        color: #f2d1a7;
+    }
+    .observatory__status:empty {
+        display: none;
     }
     .observatory__status {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         text-align: center;
         color: #c1cbbf;
     }
-    .experience-visual__hint {
-        font-family: DMMono, monospace;
-        font-size: 0.64rem;
-        letter-spacing: 0.08em;
+    .experience-visual__caption {
         text-align: center;
-        color: #9aa99f;
-        margin: 1.3rem 0 0.4rem;
-        max-width: none;
+        margin: 0.7rem auto 0.4rem;
     }
-    .experience-visual__hint span:last-child {
-        margin-left: 1.5rem;
-    }
-    .experience-visual__lighting {
-        color: #c8c0ad;
-        text-align: center;
+    .experience-visual__destination {
         font:
-            0.67rem DMMono,
+            0.78rem DMMono,
             monospace;
-        letter-spacing: 0.06em;
-        margin: 0.8rem 0 0.55rem;
+        color: #d3dccb;
+        margin: 0 0 0.4rem;
         max-width: none;
     }
-    .experience-visual__lighting::before {
-        content: "";
-        display: inline-block;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: #dfa05d;
-        margin: 0 0.6rem 0.1rem 0;
-        box-shadow: 0 0 10px #dfa05d55;
-    }
-    .experience-visual[data-phase="night"]
-        .experience-visual__lighting::before {
-        background: #98b8d6;
+    .experience-visual__hint {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.3rem 1.2rem;
+        font:
+            0.72rem DMMono,
+            monospace;
+        color: #a8b5ac;
+        margin: 0;
+        max-width: none;
     }
     .experience-visual__sky-credit {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
         color: #aab3b7;
         text-align: center;
         max-width: none;
-        margin: 0.25rem 0 0.5rem;
+        margin: 0.6rem 0 0.3rem;
     }
     .experience-visual__sky-credit a {
         color: #c6c8c1;
         text-underline-offset: 0.2em;
     }
     .experience-visual__details {
-        font-size: 0.67rem;
-        color: #8f9e95;
+        font-size: 0.78rem;
+        color: #a8b5ac;
         text-align: center;
         max-width: 38rem;
         margin: auto;
     }
     .experience-visual__details summary {
         cursor: pointer;
-        min-height: 32px;
+        min-height: 40px;
+        padding: 0.5rem;
     }
     .experience-visual__details p {
         margin: 0.5rem auto;
+        text-align: left;
     }
     .experience-visual__details a {
-        color: #c5ac89;
+        color: #d4b58c;
     }
     @media (min-width: 801px) and (max-height: 850px) {
         .observatory__viewport {
-            height: max(280px, calc(100svh - 365px));
-        }
-        .experience-visual__hint {
-            margin-top: 0.6rem;
-        }
-        .experience-visual__lighting {
-            margin-top: 0.5rem;
+            height: max(280px, calc(100svh - 290px));
         }
     }
     @media (max-width: 800px) {
         .observatory__viewport {
-            height: clamp(220px, 62vw, 340px);
+            height: clamp(230px, 64vw, 330px);
+            transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .observatory__paths {
-            opacity: 0.18;
+            opacity: 0.15;
         }
         .observatory__controls {
-            margin-top: -0.6rem;
-            gap: 0.3rem;
-            flex-wrap: wrap;
+            margin-top: 0;
         }
         .observatory__worlds {
-            gap: 0.1rem;
-            flex-basis: 100%;
-            justify-content: center;
-            order: 1;
+            gap: 0;
+        }
+        .observatory__worlds button {
+            font-size: 0.8rem;
+            padding-inline: 0.45rem;
+            min-width: 44px;
+        }
+        .observatory__actions {
+            gap: 0.15rem;
         }
         .observatory__controls button {
-            font-size: 0.63rem;
-            min-height: 44px;
+            font-size: 0.78rem;
+            padding-inline: 0.4rem;
+        }
+        .observatory__actions [data-experience-expand] {
+            display: block;
+        }
+        [data-experience-reset] span {
+            display: none;
+        }
+        .observatory__camera-controls [data-experience-reset] {
+            font-size: 1.1rem;
             min-width: 44px;
         }
-        .observatory__actions {
-            padding-right: 0;
-            gap: 0;
-            border: 0;
-            order: 2;
+        .experience-visual__caption {
+            margin-top: 0.4rem;
         }
-        .observatory__actions button {
-            font-size: 0;
-            min-width: 44px;
+        .experience-visual__destination {
+            font-size: 0.72rem;
         }
         .experience-visual__hint {
-            margin: 0.4rem 0 0.1rem;
-            font-size: 0.58rem;
+            font-size: 0.68rem;
         }
-        .experience-visual__details {
-            font-size: 0.6rem;
+        .experience-visual[data-layout="compact"] .observatory__viewport {
+            height: 142px;
         }
-        .experience-visual__details summary {
-            min-height: 32px;
+        .experience-visual[data-layout="compact"] .experience-visual__caption,
+        .experience-visual[data-layout="compact"] .experience-visual__details {
+            display: none;
+        }
+        .experience-visual[data-layout="compact"]
+            .experience-visual__sky-credit {
+            margin: 0.2rem 0 0.5rem;
+            font-size: 0.65rem;
+        }
+        .experience-visual[data-layout="expanded"] .observatory__viewport {
+            height: max(260px, calc(82svh - 160px));
+        }
+        .experience-visual[data-layout="expanded"] .experience-visual__details {
+            display: none;
+        }
+        .experience-visual[data-layout="expanded"] [data-experience-expand] {
+            font-size: 0.7rem;
         }
     }
-    @media (max-width: 380px) {
-        .observatory__controls {
-            flex-wrap: wrap;
-        }
-        .observatory__worlds {
-            flex-basis: 100%;
-            justify-content: center;
-            order: 1;
-        }
-        .observatory__actions {
-            order: 2;
-            border: 0;
-            padding-right: 0;
+    @media (prefers-reduced-motion: reduce) {
+        .observatory__viewport {
+            transition: none;
         }
     }
     @media print {

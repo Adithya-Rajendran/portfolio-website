@@ -10,6 +10,10 @@ const output = new URL("public/images/trajectory/", root);
 const cache = join(tmpdir(), "portfolio-orbit-sources");
 const solar = "https://www.solarsystemscope.com/textures/download/";
 const maps = [
+    ["moon-surface-v2-4k", "8k_moon.jpg", 4096, 90],
+    ["moon-surface-v2-2k", "8k_moon.jpg", 2048, 90],
+    ["mars-surface-v2-4k", "8k_mars.jpg", 4096, 90],
+    ["mars-surface-v2-2k", "8k_mars.jpg", 2048, 90],
     ["earth-surface-v2-8k", "8k_earth_daymap.jpg", 8192, 91],
     ["earth-surface-v2-2k", "8k_earth_daymap.jpg", 2048, 88],
     ["earth-clouds-v2-4k", "8k_earth_clouds.jpg", 4096, 89],

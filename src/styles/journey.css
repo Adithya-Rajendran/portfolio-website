@@ -134,7 +134,10 @@ body > header #theme-switch {
     margin: 0.2em 0 0.25em;
 }
 .trajectory-intro__lead {
-    display: none;
+    display: block;
+    color: #b7c5b0;
+    font-size: 1rem;
+    margin: 0.8rem 0 0;
 }
 .trajectory-intro__links {
     margin-top: 1.1rem;
@@ -333,24 +336,24 @@ body > header #theme-switch {
         z-index: 3;
         isolation: isolate;
     }
-    /* Blend only the backdrop so the globe and controls remain crisp. The
-       opaque middle still covers the record while this panel is sticky. */
-    .trajectory-orbit::before {
-        content: "";
-        position: absolute;
-        inset: -3.5rem 0 -1.5rem;
-        z-index: -1;
-        pointer-events: none;
-        background:
-            linear-gradient(0deg, #080e12 0%, #080e1233 52%, #080e1299),
-            url("/images/trajectory/milky-way-v2-2k.webp") 65% 40% / cover;
+    /* One page-owned sky. Hide only the record as it passes underneath the
+       transparent sticky scene, so no second sky texture can create a seam. */
+    .trajectory-story {
         mask-image: linear-gradient(
             to bottom,
-            transparent,
-            #000 3.5rem,
-            #000 calc(100% - 1.5rem),
-            transparent
+            transparent var(--story-occlusion, 0px),
+            #000 calc(var(--story-occlusion, 0px) + 16px)
         );
+    }
+    .trajectory-orbit::before {
+        content: none;
+    }
+    .trajectory-intro__lead {
+        font-size: 0.88rem;
+        margin-top: 0.8rem;
+    }
+    .trajectory-intro__links {
+        gap: 0.9rem;
     }
     .trajectory-entries {
         padding-left: 1.3rem;
@@ -358,7 +361,7 @@ body > header #theme-switch {
     .trajectory-entries > li {
         padding-left: 1.5rem;
         padding-bottom: 3rem;
-        scroll-margin-top: 24rem;
+        scroll-margin-top: 17rem;
     }
     .trajectory-entries h3 {
         font-size: 1.35rem;

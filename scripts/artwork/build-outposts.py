@@ -157,6 +157,59 @@ def plaza(x,y,w=30,h=25):
         cylinder('Walkway light mast',(x+off,y-h/2,1.1),.07,2.2,metal,vertices=8)
         box('Walkway light',(x+off,y-h/2,2.25),(.6,.25,.1),warm)
 
+
+def ring(name,x,y,z,r,minor,material):
+    bpy.ops.mesh.primitive_torus_add(major_segments=80,minor_segments=10,location=(x,y,z),major_radius=r,minor_radius=minor)
+    o=finish(bpy.context.object,name,material)
+    for f in o.data.polygons:f.use_smooth=True
+    return o
+
+def ring_habitat(x,y,r=16):
+    # A raised annular district: inhabited decks, an open courtyard, and radial
+    # pressure spokes. Its silhouette remains readable from the orbital descent.
+    cylinder('Annular foundation',(x,y,1),r+3,2,dark,vertices=64)
+    for z in [5,9]:
+        ring('Ring habitat pressure deck',x,y,z,r,2.1,white)
+        ring('Continuous observation ribbon',x,y,z+.1,r+1.99,.32,glass)
+        ring('District navigation ribbon',x,y,z-1.1,r+1.82,.075,cyan)
+    for i in range(12):
+        a=i/12*math.tau;px=x+r*math.cos(a);py=y+r*math.sin(a)
+        beam('Habitat buttress',(px,py,0),(px,py,11),.32,metal)
+        if i%3==0:
+            beam('Radial pressure gallery',(x,y,4),(px,py,4),1.1,white)
+            beam('Transit guide light',(x,y,5.12),(px,py,5.12),.045,warm)
+    dome(x,y,7)
+
+def spire(x,y,height=38):
+    cylinder('Science tower plinth',(x,y,2),8,4,white,vertices=12)
+    cylinder('Science tower core',(x,y,height/2),3.4,height,metal,vertices=12)
+    for z in [height*.4,height*.62,height*.82]:
+        cylinder('Terraced research deck',(x,y,z),7.3,2.8,white,vertices=12)
+        cylinder('Research deck glazing',(x,y,z+.1),7.4,1.3,glass,vertices=12)
+        ring('Science deck beacon',x,y,z-1.2,7.2,.065,cyan)
+    for i in range(3):
+        a=i*math.tau/3
+        beam('Tower stabilizer',(x+10*math.cos(a),y+10*math.sin(a),0),(x+3*math.cos(a),y+3*math.sin(a),height*.7),.48,white)
+    cylinder('Laser communications mast',(x,y,height+6),.3,12,metal,vertices=12)
+    sphere('Navigation beacon',(x,y,height+12),(.28,.28,.4),warm)
+
+def transit(a,b):
+    # Elevated enclosed transit with a legible light strip and real supports.
+    beam('Elevated transit tube',(*a,5.5),(*b,5.5),1.3,white)
+    beam('Transit observation strip',(*a,6.65),(*b,6.65),.15,glass)
+    beam('Transit wayfinding',(*a,6.86),(*b,6.86),.055,cyan)
+    for i in range(1,5):
+        t=i/5;x=a[0]*(1-t)+b[0]*t;y=a[1]*(1-t)+b[1]*t
+        beam('Transit pylon',(x,y,-1),(x,y,4.3),.45,metal)
+
+def landing_berth(x,y,r=12):
+    cylinder('Cargo landing berth',(x,y,.3),r,.6,dark,vertices=64)
+    ring('Berth perimeter',x,y,.66,r-.5,.095,cyan)
+    ring('Berth guidance circle',x,y,.67,r*.56,.07,warm)
+    for i in range(8):
+        a=i/8*math.tau
+        box('Berth approach light',(x+(r+1.2)*math.cos(a),y+(r+1.2)*math.sin(a),.6),(.4,.4,.3),warm)
+
 for world in ['moon','mars']:
     bpy.ops.wm.read_factory_settings(use_empty=True);random.seed(61)
     white=mat('Ceramic pressure skin',(.76,.79,.78),.2,.48)
@@ -208,6 +261,21 @@ for world in ['moon','mars']:
             beam('Coil arch',p-side*2.9+Vector((0,0,4)),p+side*2.9+Vector((0,0,4)),.24,white)
             beam('Track bed',p-side*3.5,p+side*3.5,.25,dark)
         for i in range(6):box('Power capacitor',(-103+i*7,-55,2),(3.7,6,4),white,.3)
+        ring_habitat(-113,32,17);ring_habitat(-101,91,13)
+        spire(-35,111,38)
+        transit((-113,32),(-52,43));transit((-101,91),(-52,65))
+        transit((-52,65),(-35,111))
+        landing_berth(15,-65,13);landing_berth(-14,-78,11)
+        # Segmented launchport radiators and cargo loading aprons.
+        for x in [77,87,97]:
+            box('Launchport thermal radiator',(x,-53,7),(6,.4,14),dark,.15)
+            beam('Radiator support',(x,-53,0),(x,-53,7),.3,metal)
+            for z in [2,5,8,11]:box('Radiator fin',(x,-53,z),(6.2,.8,.09),metal)
+        box('Launchport control cabin',(70,-79,4),(12,12,8),white,.8)
+        box('Launchport glazing',(70,-85.1,5.7),(9,.15,2),glass)
+        for i in range(7):
+            box('Cargo thermal container',(77+(i%3)*6,-22+(i//3)*8,2),(4.7,6,4),gold,.25)
+
     else:
         # NASA MSH-inspired hybrid softgoods pressure volume and service lander.
         for x,y in [(-15,12),(13,17)]:
@@ -254,6 +322,20 @@ for world in ['moon','mars']:
             fin=box('Aft control surface',(x+4.6*math.cos(a),y+4.6*math.sin(a),7),(1,6,9),metal,.2);fin.rotation_euler[2]=a
         for z in range(7,35,3):
             bpy.ops.mesh.primitive_torus_add(major_segments=40,minor_segments=4,location=(x,y,z),major_radius=4.52,minor_radius=.04);finish(bpy.context.object,'Hull section seam',dark)
+    if world=='mars':
+        dome(-20,113,23)
+        ring('Biosphere perimeter',-20,113,1.5,23.6,.14,cyan)
+        ring_habitat(-109,80,18);ring_habitat(-105,17,14)
+        spire(12,113,44)
+        transit((-109,80),(-55,81));transit((-105,17),(-60,27))
+        transit((-55,81),(-20,113));transit((-20,113),(12,113))
+        landing_berth(83,18,15);landing_berth(89,64,12)
+        for x in [-56,-42,-28]:
+            greenhouse(x,150,24)
+        for x in [18,32,46]:
+            cylinder('Atmospheric processing tower',(x,153,8),3,16,white,vertices=16)
+            ring('Processing tower service band',x,153,10,3.1,.13,cyan)
+            dish(x,153,19)
     # Merge by material: dozens of draw calls, rather than hundreds of bolts.
     meshes=[o for o in bpy.context.scene.objects if o.type=='MESH']
     groups={}
@@ -263,7 +345,7 @@ for world in ['moon','mars']:
         for o in objects:o.select_set(True)
         bpy.context.view_layer.objects.active=objects[0]
         bpy.ops.object.join();bpy.context.object.name=name
-    bpy.ops.export_scene.gltf(filepath=str(output/f'{world}-outpost-v1.glb'),export_format='GLB',export_cameras=False,export_lights=False,export_animations=False,export_materials='EXPORT',export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6)
+    bpy.ops.export_scene.gltf(filepath=str(output/f'{world}-outpost-v2.glb'),export_format='GLB',export_cameras=False,export_lights=False,export_animations=False,export_materials='EXPORT',export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6)
     if render:
         scene=bpy.context.scene;scene.render.engine='CYCLES';prefs=bpy.context.preferences.addons['cycles'].preferences;prefs.compute_device_type='CUDA';prefs.get_devices()
         for d in prefs.devices:d.use=d.type=='CUDA'

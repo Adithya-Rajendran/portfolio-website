@@ -2,6 +2,7 @@
 import "../styles.css";
 import "../styles/journey.css";
 import { siteConfig } from "../../lib/config";
+import { sceneClockBoot } from "../lib/scene-clock";
 import { env } from "cloudflare:workers";
 const config = env as unknown as Record<string, string | undefined>;
 const {
@@ -26,6 +27,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width" />
+        <script is:inline set:html={sceneClockBoot} />
         <link
             rel="preload"
             href="/fonts/Manrope-Variable.ttf"

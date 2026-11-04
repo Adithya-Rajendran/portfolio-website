@@ -1,10 +1,13 @@
 import type * as Three from "three";
-import { getScenePhase, type ScenePhase } from "../lib/scene-time";
+import type { ScenePhase } from "../lib/scene-time";
+import { waitForSceneClock, refreshSceneClock } from "../lib/scene-clock";
+import { createJourneyPlayback } from "../lib/journey-playback";
 import { addSatellites } from "./orbital-satellites";
 import { addLunarLaunch } from "./lunar-launch";
 import {
     loadOutpost,
-    fadeObject,
+    attachOutpost,
+    OUTPOST_SCALE,
     disposeOutpost,
     outpostCamera,
 } from "./planetary-outposts";
@@ -70,7 +73,18 @@ if (
         loading = true;
         start.hidden = true;
         let renderer: Three.WebGLRenderer | undefined;
+        let firstFrameDrawn = false;
+        stage.dataset.ready = "false";
+        delete stage.dataset.firstFramePhase;
         try {
+            // The first page resolves the local timezone before any planet is
+            // requested. Direct links/recovery share the same safe bootstrap.
+            const initialClock = await waitForSceneClock();
+            stage.dataset.phase = initialClock.phase;
+            section.dataset.phase = initialClock.phase;
+            if (page) page.dataset.phase = initialClock.phase;
+            if (poster) poster.dataset.phase = initialClock.phase;
+            if (ticket !== generation) return;
             const T = await import("three");
             const { OrbitControls } =
                 await import("three/addons/controls/OrbitControls.js");
@@ -81,6 +95,7 @@ if (
                 powerPreference: "high-performance",
             });
             renderer = render;
+            render.domElement.style.visibility = "hidden";
             render.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
             render.outputColorSpace = T.SRGBColorSpace;
             render.toneMapping = T.ACESFilmicToneMapping;
@@ -161,7 +176,7 @@ if (
                     twilight: 0.35,
                 },
             };
-            let phase = getScenePhase();
+            let phase = initialClock.phase;
             const initialLook = looks[phase];
             const sunlight = new T.Vector3()
                 .fromArray(initialLook.direction)
@@ -177,11 +192,12 @@ if (
             const targetDirection = sunlight.clone(),
                 targetColor = new T.Color(initialLook.color);
             const refreshPhase = () => {
-                phase = getScenePhase();
+                phase = refreshSceneClock().phase;
                 targetDirection.fromArray(looks[phase].direction).normalize();
                 targetColor.setHex(looks[phase].color);
                 stage.dataset.phase = phase;
                 section.dataset.phase = phase;
+                if (poster) poster.dataset.phase = phase;
                 if (page) page.dataset.phase = phase;
                 if (lightingLabel)
                     lightingLabel.textContent = `${phase.charAt(0).toUpperCase() + phase.slice(1)} · your local time`;
@@ -192,14 +208,19 @@ if (
             // layered shaders share the visitor's local-time lighting above.
             sun.position.set(5, 2, 1.8).normalize().multiplyScalar(8);
             sun.castShadow = true;
-            sun.shadow.mapSize.set(1024, 1024);
+            sun.shadow.mapSize.set(
+                narrow.matches ? 1024 : 2048,
+                narrow.matches ? 1024 : 2048,
+            );
             Object.assign(sun.shadow.camera, {
                 left: -3,
                 right: 3,
                 top: 3,
                 bottom: -3,
             });
-            sun.shadow.bias = -0.0002;
+            sun.shadow.bias = -0.000008;
+            sun.shadow.normalBias = 0.00002;
+            scene.add(sun.target);
             scene.add(sun);
             const ambient = new T.AmbientLight(0x8cadd3, 0.055);
             scene.add(ambient);
@@ -213,6 +234,8 @@ if (
             const outpostRequests = new Map<number, Promise<void>>();
             const outpostFailures = new Set<number>();
             let lunarLaunch: ReturnType<typeof addLunarLaunch>;
+            let lunarElapsed = 0;
+            const playback = createJourneyPlayback();
             const ensureOutpost = (index: number) => {
                 if (index !== 1 && index !== 2) return Promise.resolve();
                 let request = outpostRequests.get(index);
@@ -226,12 +249,17 @@ if (
                                 disposeOutpost(group);
                                 return;
                             }
-                            group.visible = false;
-                            group.renderOrder = 2;
+                            const globe = planets.get(index);
+                            if (globe)
+                                attachOutpost(
+                                    T,
+                                    group,
+                                    globe,
+                                    index === 1 ? "moon" : "mars",
+                                );
                             if (index === 1)
                                 lunarLaunch = addLunarLaunch(T, group);
                             outposts.set(index, group);
-                            scene.add(group);
                             schedule();
                         })
                         .catch(() => {
@@ -295,6 +323,14 @@ if (
                             }
                             group.visible = false;
                             planets.set(index, group);
+                            const outpost = outposts.get(index);
+                            if (outpost)
+                                attachOutpost(
+                                    T,
+                                    outpost,
+                                    group,
+                                    index === 1 ? "moon" : "mars",
+                                );
                             if (index === 0) {
                                 satellites = addSatellites(T, group);
                                 stage.dataset.satellites = String(
@@ -361,10 +397,9 @@ if (
                 lastWorld = -1;
             let surfaceMix = 0,
                 surfaceWorld = -1,
-                freeLook = false,
-                tourElapsed = 0;
+                freeLook = false;
+            let orbitalDistance = 3.45;
             const approachDirection = new T.Vector3();
-            const surfaceDirection = new T.Vector3(0.48, 0.42, 0.9).normalize();
             const approachTarget = new T.Vector3();
             let knots: number[] = [];
             const motion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -403,7 +438,8 @@ if (
                 });
             };
             const readScroll = () => {
-                if (!knots.length) return;
+                if (!knots.length || section.dataset.layout === "expanded")
+                    return;
                 let i = 0;
                 while (i < 3 && scrollY >= knots[i + 1]) i++;
                 target = Math.min(
@@ -456,7 +492,7 @@ if (
                 if (index === lastWorld) return;
                 lastWorld = index;
                 freeLook = false;
-                tourElapsed = 0;
+                playback.setWorld(worldIds[index]);
                 manualZoom = 1;
                 current.textContent = worldNames[index];
                 if (lightingLabel) {
@@ -517,7 +553,7 @@ if (
                 if (!still)
                     lighting.cloudOffset.value =
                         (lighting.cloudOffset.value + dt * 0.00022) % 1;
-                satellites?.update(still ? 0 : dt);
+                satellites?.update(still ? 0 : elapsedDelta);
                 if (still) progress = Math.round(target);
                 else if (!dragging)
                     progress += (target - progress) * (1 - Math.exp(-dt * 7));
@@ -568,10 +604,11 @@ if (
                         .clone()
                         .sub(orbit.target)
                         .normalize();
-                    if (!freeLook)
+                    orbitalDistance = distance * manualZoom;
+                    if (!freeLook && surfaceMix < 0.001)
                         camera.position
                             .copy(orbit.target)
-                            .addScaledVector(direction, distance * manualZoom);
+                            .addScaledVector(direction, orbitalDistance);
                     setLabel(travel > 0.5 ? to : from);
                     status.textContent = "";
                 } else {
@@ -586,16 +623,15 @@ if (
                     if (failed.has(unavailable))
                         status.textContent = `${worldNames[unavailable]} could not load. Select it below to retry.`;
                 }
-                // Arriving at Moon or Mars opens an architectural surface study.
-                // The globe stays behind it during a continuous camera approach.
+                // The base is a child of its planet. Only the camera moves:
+                // the globe and curved local ground remain opaque throughout.
                 const near = Math.round(progress);
                 if (
                     (near === 1 || near === 2) &&
                     !outposts.has(near) &&
                     !outpostFailures.has(near)
-                ) {
+                )
                     void ensureOutpost(near);
-                }
                 const surfaceReady = outposts.has(near) && planets.has(near);
                 const desiredSurface = surfaceReady
                     ? 1 -
@@ -605,26 +641,148 @@ if (
                           0.24,
                       )
                     : 0;
-                surfaceMix = still
-                    ? desiredSurface
-                    : T.MathUtils.damp(surfaceMix, desiredSurface, 5, dt);
-                if (surfaceMix < 0.001) surfaceMix = 0;
                 if (desiredSurface > 0 && surfaceWorld !== near) {
                     surfaceWorld = near;
                     approachDirection
                         .copy(camera.position)
                         .sub(orbit.target)
                         .normalize();
-                    approachTarget.copy(orbit.target);
-                    tourElapsed = 0;
+                    approachTarget.set(0, 0, 0);
+                }
+                surfaceMix = still
+                    ? desiredSurface
+                    : T.MathUtils.damp(
+                          surfaceMix,
+                          desiredSurface,
+                          desiredSurface > surfaceMix ? 1.35 : 5,
+                          elapsedDelta,
+                      );
+                if (surfaceMix < 0.001) surfaceMix = 0;
+                if (surfaceMix > 0.9995) surfaceMix = 1;
+                playback.setWorld(worldIds[Math.max(0, lastWorld)]);
+                playback.setActive(surfaceMix >= 0.98 && desiredSurface > 0.9);
+                playback.setVisibility(visible && !document.hidden);
+                playback.setPaused(paused);
+                playback.setReducedMotion(motion.matches);
+                playback.setManualOrbit(freeLook);
+                const play = playback.tick(time);
+                stage.dataset.journeyTime = play.elapsed.toFixed(3);
+                stage.dataset.guidedTime = play.guidedElapsed.toFixed(3);
+                stage.dataset.surfaceProgress = surfaceMix.toFixed(4);
+                stage.dataset.surface = String(surfaceMix > 0.02);
+                section.dataset.surface = stage.dataset.surface;
+                const outpost = outposts.get(surfaceWorld);
+                let landmark = "";
+                if (outpost && surfaceMix > 0) {
+                    const pose = outpostCamera(
+                        T,
+                        outpost,
+                        surfaceWorld === 1 ? "moon" : "mars",
+                        play.guidedElapsed,
+                        lunarLaunch?.positionAt,
+                    );
+                    landmark = pose.landmark;
+                    if (!freeLook && !dragging) {
+                        const globe = planets.get(surfaceWorld)!;
+                        const origin = approachTarget
+                            .clone()
+                            .addScaledVector(
+                                approachDirection,
+                                orbitalDistance,
+                            );
+                        const fromDirection = origin
+                            .clone()
+                            .sub(globe.position);
+                        const toDirection = pose.position
+                            .clone()
+                            .sub(globe.position);
+                        const radius = Math.exp(
+                            T.MathUtils.lerp(
+                                Math.log(fromDirection.length()),
+                                Math.log(toDirection.length()),
+                                surfaceMix,
+                            ),
+                        );
+                        fromDirection
+                            .normalize()
+                            .lerp(
+                                toDirection.normalize(),
+                                T.MathUtils.smoothstep(surfaceMix, 0, 0.5),
+                            )
+                            .normalize();
+                        const desiredPosition = globe.position
+                            .clone()
+                            .addScaledVector(fromDirection, radius);
+                        const desiredTarget = approachTarget
+                            .clone()
+                            .lerp(
+                                pose.target,
+                                T.MathUtils.smoothstep(surfaceMix, 0, 0.45),
+                            );
+                        // This final ease also absorbs a manual -> guided replay.
+                        const follow = still
+                            ? 1
+                            : 1 - Math.exp(-elapsedDelta * 5);
+                        camera.position.lerp(desiredPosition, follow);
+                        orbit.target.lerp(desiredTarget, follow);
+                    }
+                    const surfaceUp = new T.Vector3(0, 1, 0).applyQuaternion(
+                        outpost.getWorldQuaternion(new T.Quaternion()),
+                    );
+                    camera.up
+                        .set(0, 1, 0)
+                        .lerp(surfaceUp, surfaceMix)
+                        .normalize();
+                    const anchor = outpost.getWorldPosition(new T.Vector3());
+                    sun.target.position.copy(anchor);
+                    sun.position
+                        .copy(anchor)
+                        .add(new T.Vector3(0.7, 1.1, 0.65));
+                    const shadowSize = 0.22;
+                    Object.assign(sun.shadow.camera, {
+                        left: -shadowSize,
+                        right: shadowSize,
+                        top: shadowSize,
+                        bottom: -shadowSize,
+                        near: 0.05,
+                        far: 3,
+                    });
+                    sun.shadow.camera.updateProjectionMatrix();
+                    stage.dataset.surfaceAnchor = anchor
+                        .toArray()
+                        .map((n) => n.toFixed(5))
+                        .join(",");
+                    stage.dataset.settlementAttached = String(
+                        outpost.parent === planets.get(surfaceWorld),
+                    );
+                } else if (!freeLook) {
+                    camera.up.set(0, 1, 0);
+                    orbit.target.lerp(
+                        new T.Vector3(),
+                        still ? 1 : 1 - Math.exp(-dt * 5),
+                    );
+                    sun.target.position.set(0, 0, 0);
+                    if (lastWorld === 0)
+                        sun.position.copy(sunlight).multiplyScalar(8);
+                    else
+                        sun.position
+                            .set(5, 2, 1.8)
+                            .normalize()
+                            .multiplyScalar(8);
+                    Object.assign(sun.shadow.camera, {
+                        left: -3,
+                        right: 3,
+                        top: 3,
+                        bottom: -3,
+                        near: 0.5,
+                        far: 20,
+                    });
+                    sun.shadow.camera.updateProjectionMatrix();
                 }
                 if (lunarLaunch) {
-                    const active = surfaceWorld === 1 && surfaceMix > 0.5;
-                    // Payload timing follows elapsed time even when a device
-                    // draws below 20fps; camera damping keeps its smaller step.
-                    const launch = lunarLaunch.update(
-                        active && !still ? elapsedDelta : 0,
-                    );
+                    const active = lastWorld === 1 && surfaceMix >= 0.98;
+                    if (lastWorld === 1) lunarElapsed = play.elapsed;
+                    const launch = lunarLaunch.update(lunarElapsed);
                     stage.dataset.launchState = active
                         ? still
                             ? "paused"
@@ -637,69 +795,26 @@ if (
                         .map((n) => n.toFixed(3))
                         .join(",");
                 }
-                for (const [index, group] of outposts) {
-                    group.visible =
-                        index === surfaceWorld && surfaceMix > 0.001;
-                    if (group.visible) fadeObject(group, surfaceMix);
-                }
-                for (const index of [1, 2]) {
-                    const globe = planets.get(index);
-                    if (globe)
-                        fadeObject(
-                            globe,
-                            index === surfaceWorld ? 1 - surfaceMix : 1,
-                        );
-                }
-                const outpost = outposts.get(surfaceWorld);
-                if (surfaceMix > 0.001 && outpost && !freeLook && !dragging) {
-                    if (!still && surfaceMix > 0.99) tourElapsed += dt;
-                    const pose = outpostCamera(
-                        T,
-                        outpost,
-                        surfaceWorld === 1 ? "moon" : "mars",
-                        tourElapsed,
-                    );
-                    const origin = approachTarget
-                        .clone()
-                        .addScaledVector(
-                            approachDirection,
-                            baseDistance(Math.max(0, lastWorld)),
-                        );
-                    camera.position
-                        .copy(origin)
-                        .lerp(pose.position, surfaceMix);
-                    orbit.target
-                        .copy(approachTarget)
-                        .lerp(pose.target, surfaceMix);
-                } else if (!freeLook && surfaceMix === 0) {
-                    orbit.target.lerp(
-                        new T.Vector3(),
-                        still ? 1 : 1 - Math.exp(-dt * 5),
-                    );
-                }
-                ambient.intensity = 0.055 + surfaceMix * 0.34;
-                sun.intensity = 2.6 - surfaceMix * 0.7;
-                orbit.minDistance = surfaceMix > 0.5 ? 0.45 : 2.2;
-                orbit.maxPolarAngle =
-                    surfaceMix > 0.5 ? Math.PI * 0.48 : Math.PI;
-                stage.dataset.view = surfaceMix > 0.5 ? "surface" : "orbit";
+                ambient.intensity = 0.055 + surfaceMix * 0.24;
+                sun.intensity = 2.6 - surfaceMix * 0.2;
+                orbit.minDistance = surfaceMix > 0.5 ? 22 * OUTPOST_SCALE : 2.2;
+                orbit.maxPolarAngle = Math.PI;
+                stage.dataset.view = surfaceMix > 0.98 ? "surface" : "orbit";
                 section.dataset.view = stage.dataset.view;
                 stage.dataset.navigation = freeLook ? "manual" : "guided";
                 if (navigationLabel)
                     navigationLabel.textContent = freeLook
-                        ? "Free exploration · Reset to resume the tour"
-                        : surfaceMix > 0.5
-                          ? "Guided tour · Drag to explore freely"
-                          : "Drag to orbit";
+                        ? "Free exploration"
+                        : surfaceMix > 0.98
+                          ? "Guided exploration"
+                          : "Scroll to travel";
                 if (destinationLabel)
                     destinationLabel.textContent =
-                        surfaceMix > 0.5
-                            ? surfaceWorld === 1
-                                ? "Lunar outpost · Electromagnetic cargo launcher"
-                                : "Mars settlement · Habitats, mobility, exploration"
+                        surfaceMix > 0.98
+                            ? landmark
                             : lastWorld === 0
-                              ? "Earth · Two paths around our home"
-                              : `${worldNames[Math.max(0, lastWorld)]} · Orbital approach`;
+                              ? "Earth · Our starting point"
+                              : `${worldNames[Math.max(0, lastWorld)]} · ${surfaceMix > 0.1 ? "Descending to the settlement" : "Orbital approach"}`;
                 orbit.autoRotate =
                     !still &&
                     !dragging &&
@@ -708,9 +823,41 @@ if (
                     Math.abs(target - progress) < 0.01;
                 orbit.enableDamping = !still && freeLook;
                 orbit.autoRotateSpeed = 0.12;
-                orbit.update();
+                orbit.update(dt);
+                if (surfaceMix > 0.5) {
+                    // Keep free exploration above the curved surface.
+                    const globe = planets.get(surfaceWorld);
+                    if (globe) {
+                        const offset = camera.position
+                            .clone()
+                            .sub(globe.position);
+                        if (offset.length() < 1.003)
+                            camera.position
+                                .copy(globe.position)
+                                .add(offset.setLength(1.003));
+                    }
+                }
+                // Preserve depth precision in orbit. A surface-sized near
+                // plane makes Earth's closely spaced cloud/surface layers flicker.
+                const nearPlane = T.MathUtils.clamp(
+                    camera.position.distanceTo(orbit.target) * 0.02,
+                    0.00008,
+                    0.05,
+                );
+                if (Math.abs(camera.near - nearPlane) > 0.000001) {
+                    camera.near = nearPlane;
+                    camera.updateProjectionMatrix();
+                }
+                stage.dataset.nearPlane = camera.near.toFixed(6);
                 telemetry();
                 render.render(scene, camera);
+                if (!firstFrameDrawn && ready) {
+                    firstFrameDrawn = true;
+                    render.domElement.style.visibility = "visible";
+                    if (poster) poster.hidden = true;
+                    stage.dataset.firstFramePhase = phase;
+                    stage.dataset.ready = "true";
+                }
                 stage.dataset.progress = progress.toFixed(4);
                 stage.dataset.transition = travel.toFixed(4);
                 stage.dataset.state = still ? "paused" : "running";
@@ -724,11 +871,14 @@ if (
                 camera.aspect = w / h;
                 camera.updateProjectionMatrix();
                 measure();
-                readScroll();
+                // A size/font/layout change must not move the selected world.
+                // Only actual page scrolling updates the journey destination.
                 schedule();
             };
             const syncMotion = () => {
                 lastTime = 0;
+                playback.setPaused(paused);
+                playback.setReducedMotion(motion.matches);
                 updateControl();
                 schedule();
             };
@@ -737,18 +887,18 @@ if (
                 syncMotion();
             };
             const reset = () => {
+                playback.setManualOrbit(true);
+                playback.setManualOrbit(false);
                 freeLook = false;
-                tourElapsed = 0;
                 manualZoom = 1;
-                camera.position.set(
-                    0,
-                    0.18,
-                    baseDistance(Math.max(0, lastWorld)),
-                );
-                orbit.target.set(0, 0, 0);
-                if (surfaceMix > 0.5)
-                    camera.position.copy(surfaceDirection).multiplyScalar(3.55);
-                orbit.update();
+                if (surfaceMix < 0.01) {
+                    camera.position.set(
+                        0,
+                        0.18,
+                        baseDistance(Math.max(0, lastWorld)),
+                    );
+                    orbit.target.set(0, 0, 0);
+                }
                 schedule();
             };
             const key = (event: KeyboardEvent) => {
@@ -805,7 +955,8 @@ if (
                         top: knots[i] || 0,
                         behavior: "instant",
                     });
-                    readScroll();
+                    target = i;
+                    schedule();
                 };
                 button.addEventListener("click", select);
                 return select;
@@ -828,6 +979,7 @@ if (
             const observer = new IntersectionObserver((items) => {
                 lastTime = 0;
                 visible = items[0]?.isIntersecting ?? false;
+                playback.setVisibility(visible && !document.hidden);
                 if (!visible && frame) {
                     cancelAnimationFrame(frame);
                     frame = 0;
@@ -839,6 +991,7 @@ if (
             if (record) sizes.observe(record);
             const visibility = () => {
                 lastTime = 0;
+                playback.setVisibility(visible && !document.hidden);
                 if (document.hidden && frame) {
                     cancelAnimationFrame(frame);
                     frame = 0;
@@ -848,7 +1001,7 @@ if (
                 }
             };
             const phaseTimer = setInterval(() => {
-                if (!document.hidden && getScenePhase() !== phase) {
+                if (!document.hidden && refreshSceneClock().phase !== phase) {
                     refreshPhase();
                     schedule();
                 }
@@ -903,8 +1056,12 @@ if (
                     button.removeEventListener("click", zoomHandlers[i]),
                 );
                 orbit.dispose();
+                outposts.forEach((group) => {
+                    group.removeFromParent();
+                    disposeOutpost(group);
+                });
+                satellites?.dispose();
                 planets.forEach(disposePlanet);
-                outposts.forEach(disposeOutpost);
                 owned.forEach((t) => t.dispose());
                 starsGeo.dispose();
                 starsMat.dispose();
@@ -920,9 +1077,9 @@ if (
             stage.hidden = false;
             panel.hidden = false;
             resize();
+            readScroll();
             await ensurePlanet(0);
             if (disposed) return;
-            if (poster) poster.hidden = true;
             start.hidden = true;
             status.textContent = "";
             schedule();

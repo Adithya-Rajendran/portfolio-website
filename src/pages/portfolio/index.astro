@@ -1,5 +1,4 @@
 ---
-import TechnicalStudy from "../../components/TechnicalStudy.astro";
 import Base from "../../layouts/Base.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
 import { getAllProjects, getProfile } from "../../lib/sanity";
@@ -7,16 +6,13 @@ const [projects, profile] = await Promise.all([getAllProjects(), getProfile()]);
 ---
 
 <Base title="Projects" pageClass="projects-page">
-    <div class="projects-intro-grid">
+    <div class="projects-intro-grid projects-intro-grid--work">
         <div>
             <p class="eyebrow">Selected work / Projects</p>
             <h1>Projects</h1>
             {profile?.projectsIntro && (
                 <p class="page-intro">{profile.projectsIntro}</p>
             )}
-        </div>
-        <div class="secondary-illustration projects-intro-art">
-            <TechnicalStudy variant="network" />
         </div>
     </div>
     <ul class="project-grid" id="projects">
@@ -40,3 +36,22 @@ const [projects, profile] = await Promise.all([getAllProjects(), getProfile()]);
         window.addEventListener("hashchange", follow);
     </script>
 </Base>
+
+<style>
+    .projects-intro-grid--work {
+        display: block;
+        margin-bottom: 2.4rem;
+        min-height: 0;
+    }
+    .projects-intro-grid--work h1 {
+        margin-bottom: 0.25em;
+    }
+    .projects-intro-grid--work .page-intro {
+        max-width: 52rem;
+    }
+    @media (max-width: 800px) {
+        .projects-intro-grid--work {
+            margin-bottom: 1.6rem;
+        }
+    }
+</style>

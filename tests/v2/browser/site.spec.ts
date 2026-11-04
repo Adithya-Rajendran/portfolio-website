@@ -414,7 +414,7 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     await expect
         .poll(async () => Number(await stage.getAttribute("data-distance")))
         .toBeLessThan(initialDistance);
-    await page.getByRole("button", { name: "Reset view" }).click();
+    await page.getByRole("button", { name: "Replay the guided tour" }).click();
     await expect(stage).toHaveAttribute("data-navigation", "guided");
     await expect
         .poll(async () =>
@@ -550,11 +550,14 @@ test("a missing later planet keeps the current view and can be retried", async (
     await page.emulateMedia({ reducedMotion: "reduce" });
     let unavailable = true;
     let attempts = 0;
-    await page.route("**/images/trajectory/moon-1k.webp", async (route) => {
-        attempts++;
-        if (unavailable) await route.abort();
-        else await route.continue();
-    });
+    await page.route(
+        "**/images/trajectory/moon-surface-v2-*.webp",
+        async (route) => {
+            attempts++;
+            if (unavailable) await route.abort();
+            else await route.continue();
+        },
+    );
     await page.goto("/resume");
     const supported = await page.evaluate(() =>
         Boolean(document.createElement("canvas").getContext("webgl2")),
@@ -581,7 +584,7 @@ test("a missing later planet keeps the current view and can be retried", async (
 test("Moon and Mars arrive at their surface studies", async ({ page }) => {
     const outpostRequests: string[] = [];
     page.on("request", (request) => {
-        if (/\/models\/(moon|mars)-outpost-v1\.glb/.test(request.url()))
+        if (/\/models\/(moon|mars)-outpost-v2\.glb/.test(request.url()))
             outpostRequests.push(request.url());
     });
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -606,12 +609,65 @@ test("Moon and Mars arrive at their surface studies", async ({ page }) => {
         await expect(stage).toHaveAttribute("data-view", "surface", {
             timeout: 30000,
         });
+        await expect(stage).toHaveAttribute("data-settlement-attached", "true");
+        const anchor = await stage.getAttribute("data-surface-anchor");
+        const coordinates = anchor?.split(",").map(Number) ?? [];
+        expect(coordinates).toHaveLength(3);
+        expect(coordinates.every(Number.isFinite)).toBe(true);
         expect(
             outpostRequests.some((url) =>
-                url.includes(`/models/${world}-outpost-v1.glb`),
+                url.includes(`/models/${world}-outpost-v2.glb`),
             ),
         ).toBe(true);
     }
+});
+
+test("Moon settlement stays attached during a continuous surface descent", async ({
+    page,
+}) => {
+    test.setTimeout(120000);
+    await page.setViewportSize({ width: 1000, height: 700 });
+    await page.addInitScript(() =>
+        Object.defineProperty(navigator, "deviceMemory", {
+            configurable: true,
+            value: 4,
+        }),
+    );
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 30000,
+    });
+    await expect(stage).toHaveAttribute("data-settlement-attached", "true", {
+        timeout: 30000,
+    });
+    await expect
+        .poll(
+            async () =>
+                Number(await stage.getAttribute("data-surface-progress")),
+            { timeout: 30000 },
+        )
+        .toBeGreaterThan(0.05);
+    const intermediate = Number(
+        await stage.getAttribute("data-surface-progress"),
+    );
+    expect(intermediate).toBeLessThan(0.98);
+    await expect
+        .poll(
+            async () =>
+                Number(await stage.getAttribute("data-surface-progress")),
+            { timeout: 60000 },
+        )
+        .toBeGreaterThan(0.98);
+    await expect(stage).toHaveAttribute("data-view", "surface");
+    await expect(stage).toHaveAttribute("data-settlement-attached", "true");
 });
 
 test("manual surface camera stays put until guided view is restored", async ({
@@ -640,7 +696,7 @@ test("manual surface camera stays put until guided view is restored", async ({
     const manual = await stage.getAttribute("data-camera");
     await page.waitForTimeout(750);
     expect(await stage.getAttribute("data-camera")).toBe(manual);
-    await page.getByRole("button", { name: "Reset view" }).click();
+    await page.getByRole("button", { name: "Replay the guided tour" }).click();
     await expect(stage).toHaveAttribute("data-navigation", "guided");
 });
 
@@ -648,7 +704,7 @@ test("the Moon globe remains usable when its optional surface model fails", asyn
     page,
 }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.route("**/models/moon-outpost-v1.glb", (route) => route.abort());
+    await page.route("**/models/moon-outpost-v2.glb", (route) => route.abort());
     await page.goto("/resume");
     const supported = await page.evaluate(() =>
         Boolean(document.createElement("canvas").getContext("webgl2")),
@@ -728,6 +784,105 @@ test("experience remains scrollable over the visual on a narrow screen", async (
         .toBeGreaterThan(before);
 });
 
+test("mobile experience compacts for reading, expands, and closes with Escape", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/resume");
+    const visual = page.locator(".experience-visual");
+    const viewport = visual.locator(".observatory__viewport");
+    const expand = page.locator("[data-experience-expand]");
+    await expect(visual).toHaveAttribute("data-layout", "arrival");
+    const initialHeight = (await viewport.boundingBox())!.height;
+    await page.evaluate(() => {
+        const grid = document.querySelector<HTMLElement>(".trajectory-grid")!;
+        window.scrollTo({
+            top: grid.getBoundingClientRect().top + scrollY + 120,
+            behavior: "instant",
+        });
+    });
+    await expect(visual).toHaveAttribute("data-layout", "compact");
+    const compactHeight = (await viewport.boundingBox())!.height;
+    expect(compactHeight).toBeLessThan(initialHeight);
+    await expect(expand).toHaveAttribute("aria-expanded", "false");
+    await expand.click();
+    await expect(visual).toHaveAttribute("data-layout", "expanded");
+    await expect(expand).toHaveAttribute("aria-expanded", "true");
+    await expect(expand).toHaveText("Back to reading");
+    expect((await viewport.boundingBox())!.height).toBeGreaterThan(
+        compactHeight,
+    );
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 30000,
+    });
+    await page.evaluate(() =>
+        window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: "instant",
+        }),
+    );
+    await expect(visual).toHaveAttribute("data-layout", "expanded");
+    await page.waitForTimeout(750);
+    await expect(stage).toHaveAttribute("data-world", "moon");
+    await page.evaluate(() => {
+        const grid = document.querySelector<HTMLElement>(".trajectory-grid")!;
+        window.scrollTo({
+            top: grid.getBoundingClientRect().top + scrollY + 120,
+            behavior: "instant",
+        });
+    });
+    await expect(stage).toHaveAttribute("data-world", "moon");
+    await page.keyboard.press("Escape");
+    await expect(visual).toHaveAttribute("data-layout", "compact");
+    await expect(expand).toHaveAttribute("aria-expanded", "false");
+    const bounds = await viewport.boundingBox();
+    expect(bounds).not.toBeNull();
+    await page.mouse.move(
+        bounds!.x + bounds!.width / 2,
+        bounds!.y + bounds!.height / 2,
+    );
+    const before = await page.evaluate(() => scrollY);
+    await page.mouse.wheel(0, 250);
+    await expect
+        .poll(() => page.evaluate(() => scrollY), { timeout: 20000 })
+        .toBeGreaterThan(before);
+});
+
+test("mobile Moon selection reaches the surface through compact resizing", async ({
+    page,
+}) => {
+    test.setTimeout(180000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 30000 });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(page.locator(".experience-visual")).toHaveAttribute(
+        "data-layout",
+        "compact",
+        { timeout: 30000 },
+    );
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 30000,
+    });
+    await expect(stage).toHaveAttribute("data-view", "surface", {
+        timeout: 120000,
+    });
+    await expect(stage).toHaveAttribute("data-settlement-attached", "true");
+    const nearPlane = Number(await stage.getAttribute("data-near-plane"));
+    expect(nearPlane).toBeGreaterThan(0);
+    expect(nearPlane).toBeLessThan(0.01);
+});
+
 test("Studio deep links serve the standalone shell", async ({ request }) => {
     const response = await request.get("/studio/structure/post");
     expect(response.status()).toBe(200);
@@ -795,7 +950,52 @@ test("ordinary articles do not download the orbital renderer or maps", async ({
     expect(sceneRequests).toEqual([]);
 });
 
-test("lunar launch moves and loops, freezes for motion settings, and stops after leaving", async ({
+test("lunar launch moves and completes a loop", async ({ page }) => {
+    test.setTimeout(600000);
+    await page.setViewportSize({ width: 1000, height: 700 });
+    await page.addInitScript(() =>
+        Object.defineProperty(navigator, "deviceMemory", {
+            configurable: true,
+            value: 4,
+        }),
+    );
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/resume");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await page.getByRole("button", { name: "Moon", exact: true }).click();
+    await expect(stage).toHaveAttribute("data-world", "moon", {
+        timeout: 30000,
+    });
+    await expect(stage).toHaveAttribute("data-view", "surface", {
+        timeout: 90000,
+    });
+    await expect(stage).toHaveAttribute("data-launch-state", "running", {
+        timeout: 90000,
+    });
+    const initialCycle = Number(await stage.getAttribute("data-launch-cycle"));
+    await expect(stage).toHaveAttribute("data-launch-phase", "accelerating", {
+        timeout: 60000,
+    });
+    const firstPosition = await stage.getAttribute("data-launch-position");
+    await expect
+        .poll(() => stage.getAttribute("data-launch-position"), {
+            timeout: 30000,
+        })
+        .not.toBe(firstPosition);
+    await expect
+        .poll(
+            async () => Number(await stage.getAttribute("data-launch-cycle")),
+            { timeout: 400000 },
+        )
+        .toBeGreaterThan(initialCycle);
+});
+
+test("lunar playback replays exactly and freezes for pause, reduced motion and departure", async ({
     page,
 }) => {
     test.setTimeout(300000);
@@ -819,30 +1019,40 @@ test("lunar launch moves and loops, freezes for motion settings, and stops after
         timeout: 30000,
     });
     await expect(stage).toHaveAttribute("data-view", "surface", {
-        timeout: 30000,
+        timeout: 90000,
     });
     await expect(stage).toHaveAttribute("data-launch-state", "running", {
         timeout: 90000,
     });
-    const initialCycle = Number(await stage.getAttribute("data-launch-cycle"));
-    await expect(stage).toHaveAttribute("data-launch-phase", "accelerating", {
-        timeout: 60000,
-    });
-    const firstPosition = await stage.getAttribute("data-launch-position");
-    await expect
-        .poll(() => stage.getAttribute("data-launch-position"), {
-            timeout: 30000,
-        })
-        .not.toBe(firstPosition);
+    await stage.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect(stage).toHaveAttribute("data-navigation", "manual");
+    const guided = Number(await stage.getAttribute("data-guided-time"));
+    const journey = Number(await stage.getAttribute("data-journey-time"));
     await expect
         .poll(
-            async () => Number(await stage.getAttribute("data-launch-cycle")),
-            { timeout: 130000 },
+            async () => Number(await stage.getAttribute("data-journey-time")),
+            { timeout: 30000 },
         )
-        .toBeGreaterThan(initialCycle);
-
+        .toBeGreaterThan(journey);
+    expect(Number(await stage.getAttribute("data-guided-time"))).toBe(guided);
     await page.getByRole("button", { name: "Pause motion" }).click();
     await expect(stage).toHaveAttribute("data-launch-state", "paused");
+    const preReplayJourney = Number(
+        await stage.getAttribute("data-journey-time"),
+    );
+    const boundary = Math.ceil(preReplayJourney / 36) * 36;
+    await page.getByRole("button", { name: "Replay the guided tour" }).click();
+    await expect(stage).toHaveAttribute("data-navigation", "guided");
+    await expect
+        .poll(() =>
+            stage.evaluate((element) => ({
+                journey: Number(element.getAttribute("data-journey-time")),
+                guided: Number(element.getAttribute("data-guided-time")),
+            })),
+        )
+        .toEqual({ journey: boundary, guided: boundary });
+    expect(boundary % 36).toBe(0);
     const pausedPosition = await stage.getAttribute("data-launch-position");
     const pausedCycle = await stage.getAttribute("data-launch-cycle");
     await page.waitForTimeout(1200);
@@ -855,7 +1065,7 @@ test("lunar launch moves and loops, freezes for motion settings, and stops after
     await expect(stage).toHaveAttribute("data-launch-state", "running");
     await expect
         .poll(() => stage.getAttribute("data-launch-position"), {
-            timeout: 30000,
+            timeout: 90000,
         })
         .not.toBe(pausedPosition);
     await page.emulateMedia({ reducedMotion: "reduce" });

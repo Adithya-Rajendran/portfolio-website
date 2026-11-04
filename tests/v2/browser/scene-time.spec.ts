@@ -38,6 +38,60 @@ test.describe("local-time Earth lighting", () => {
         }
     });
 
+    test("home initializes the local clock before visiting the experience", async ({
+        page,
+    }) => {
+        await page.clock.setFixedTime(new Date("2026-01-16T01:00:00Z"));
+        await page.goto("/");
+        const root = page.locator("html");
+        await expect(root).toHaveAttribute("data-scene-clock", "ready");
+        await expect(root).toHaveAttribute(
+            "data-scene-timezone",
+            "America/Los_Angeles",
+        );
+        await expect(root).toHaveAttribute("data-scene-phase", "dusk");
+        await page.getByRole("link", { name: "Enter orbit" }).click();
+        await expect(root).toHaveAttribute("data-scene-phase", "dusk");
+        const poster = page.locator("[data-experience-poster]");
+        const stage = page.locator("[data-experience-stage]");
+        await expect(poster).toHaveAttribute("data-phase", "dusk");
+        await expect(stage).toHaveAttribute("data-ready", "true", {
+            timeout: 30000,
+        });
+        await expect(stage).toHaveAttribute("data-first-frame-phase", "dusk");
+        await expect(stage).toHaveAttribute("data-phase", "dusk");
+        await expect(stage).toHaveAttribute("data-near-plane", "0.050000");
+    });
+
+    test("local clock initialization works when session storage is blocked", async ({
+        page,
+    }) => {
+        await page.clock.setFixedTime(new Date("2026-01-16T01:00:00Z"));
+        await page.addInitScript(() => {
+            Object.defineProperty(window, "sessionStorage", {
+                configurable: true,
+                get() {
+                    throw new DOMException("Blocked", "SecurityError");
+                },
+            });
+        });
+        await page.goto("/");
+        await expect(page.locator("html")).toHaveAttribute(
+            "data-scene-clock",
+            "ready",
+        );
+        await expect(page.locator("html")).toHaveAttribute(
+            "data-scene-phase",
+            "dusk",
+        );
+        await page.getByRole("link", { name: "Enter orbit" }).click();
+        await expect(page.locator("[data-experience-stage]")).toHaveAttribute(
+            "data-phase",
+            "dusk",
+            { timeout: 30000 },
+        );
+    });
+
     test("retains the local phase after graphics recovery under reduced motion", async ({
         page,
     }) => {
