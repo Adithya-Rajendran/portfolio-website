@@ -15,12 +15,13 @@ const timeline = (p?.timeline || []).map((e) => ({
 ---
 
 <Base title="Experience" pageClass="experience-page">
-    <p class="eyebrow">Experience</p>
-    <h1>Experience</h1>
-    <p>
-        <a href="/resume/view">View PDF</a> ·{" "}
-        <a href="/resume/download">Download PDF</a>
-    </p>
+    <div class="experience-page__head">
+        <h1>Experience</h1>
+        <p>
+            <a href="/resume/view">View PDF</a> ·{" "}
+            <a href="/resume/download">Download PDF</a>
+        </p>
+    </div>
     <ExperienceVisual entries={timeline} />
     <section id="cv">
         <h2 id="experience">Experience and education</h2>

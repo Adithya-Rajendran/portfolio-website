@@ -1,6 +1,6 @@
 # Repository guide
 
-The public application is Astro on Cloudflare Workers. Sanity is the editorial source, and the Studio is built separately into the static `/studio` assets. TypeScript supplies request handlers and browser enhancements; Three.js is loaded only after a visitor activates a visual. Preserve the HTML content and keyboard paths when JavaScript, WebGL, or motion is unavailable.
+The public application is Astro on Cloudflare Workers. Sanity is the editorial source, and the Studio is built separately into the static `/studio` assets. TypeScript supplies request handlers and browser enhancements; The orbital view loads Three.js automatically on the experience page; project viewers load it on activation. Preserve the HTML content and keyboard paths when JavaScript, WebGL, or motion is unavailable.
 
 Read [the migration plan](docs/v2-rewrite-plan.md), [implementation report](docs/v2-implementation-report.md), and [README](README.md) for route contracts, current limitations, environment configuration, and deployment/rollback steps. User instructions take precedence over old Next/Vercel design assumptions. Do not mutate Sanity content or deploy its schema as part of routine code changes.
 

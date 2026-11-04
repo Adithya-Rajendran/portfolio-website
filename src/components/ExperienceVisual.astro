@@ -8,120 +8,311 @@ interface Props {
     }[];
 }
 const { entries } = Astro.props;
+const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
 ---
 
-{entries.length > 0 && (
-    <section
-        class="experience-visual"
-        hidden
-        aria-labelledby="experience-visual-title"
-    >
-        <div class="experience-visual__head">
-            <div>
-                <p class="experience-visual__eyebrow">An interactive view</p>
-                <h2 id="experience-visual-title">A trajectory of work</h2>
-            </div>
-            <button type="button" data-experience-start>
-                Start visual
-            </button>
+<section class="experience-visual" aria-labelledby="experience-visual-title">
+    <div class="experience-visual__intro">
+        <div>
+            <h2 id="experience-visual-title">Explore in orbit</h2>
+            <p>Drag to orbit · Scroll or pinch to zoom</p>
         </div>
-        <p class="experience-visual__help">
-            Explore the visual with your pointer or arrow keys. The complete
-            experience is available in the list below.
+        <button type="button" data-experience-start hidden>
+            Start exploring
+        </button>
+    </div>
+    <div class="observatory">
+        <div class="observatory__viewport">
+            <div
+                class="observatory__poster"
+                data-experience-poster
+                aria-hidden="true"
+            >
+                <div class="observatory__earth"></div>
+            </div>
+            <div
+                class="observatory__stage"
+                data-experience-stage
+                tabindex="0"
+                aria-label="Orbital view. Drag or use arrow keys to orbit; use plus and minus to zoom and Home to reset."
+                hidden
+            ></div>
+            <div
+                class="observatory__label"
+                aria-live="polite"
+                data-experience-current
+            >
+                Earth
+            </div>
+        </div>
+        <div class="observatory__controls" data-experience-controls hidden>
+            <div
+                class="observatory__worlds"
+                role="group"
+                aria-label="Choose a world"
+            >
+                {worlds.map((world) => (
+                    <button
+                        type="button"
+                        data-experience-world={world.toLowerCase()}
+                        aria-pressed={world === "Earth"}
+                    >
+                        {world}
+                    </button>
+                ))}
+            </div>
+            <div class="observatory__actions">
+                <button type="button" data-experience-reset>
+                    Reset view
+                </button>
+                <button type="button" data-experience-motion>
+                    Pause motion
+                </button>
+            </div>
+        </div>
+        <p class="observatory__status" data-experience-status role="status"></p>
+    </div>
+    <noscript>
+        <p>
+            The interactive orbital view requires JavaScript. The full
+            experience record is available below.
         </p>
-        <div
-            class="experience-visual__controls"
-            data-experience-controls
-            hidden
-        >
-            <button type="button" data-experience-motion>
-                Pause motion
-            </button>
-            <p>
-                Select an entry to highlight it in the visual and read its
-                details.
-            </p>
-            <ol>
-                {entries.map((entry, index) => (
-                    <li>
-                        <button
-                            type="button"
-                            data-experience-entry={index}
-                            aria-pressed="false"
-                        >
-                            {entry.title}
-                        </button>
-                    </li>
-                ))}
-            </ol>
-            <div aria-live="polite">
-                {entries.map((entry, index) => (
-                    <div data-experience-detail={index} hidden>
-                        <strong>{entry.title}</strong>
-                        {entry.organization && <> · {entry.organization}</>}
-                        {entry.dates && <> · {entry.dates}</>}{" "}
-                        <a href={`#${entry.id}`}>View full entry</a>
-                    </div>
-                ))}
-            </div>
-        </div>
-        <div
-            class="experience-visual__stage"
-            data-experience-stage
-            tabindex="0"
-            aria-label="Interactive experience visual. Use arrow keys to rotate."
-            hidden
-        ></div>
-        <p data-experience-status role="status"></p>
-    </section>
-)}
+    </noscript>
+    <div class="experience-visual__notes">
+        <p>
+            A visual journey through the experience record. Worlds and distances
+            are illustrative.
+        </p>
+        {entries.length > 0 && (
+            <details class="experience-visual__record">
+                <summary>Explore the experience record</summary>
+                <ol>
+                    {entries.map((entry) => (
+                        <li>
+                            <a href={`#${entry.id}`}>{entry.title}</a>
+                            {entry.organization && <> · {entry.organization}</>}
+                            {entry.dates && <> · {entry.dates}</>}
+                        </li>
+                    ))}
+                </ol>
+            </details>
+        )}
+    </div>
+    <p class="experience-visual__credit">
+        Maps: <a href="https://visibleearth.nasa.gov/">NASA</a> and{" "}
+        <a href="https://www.solarsystemscope.com/textures/">
+            Solar System Scope
+        </a>{" "}
+        (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>);
+        adapted. <a href="/images/trajectory/README.md">Image credits</a>.
+    </p>
+</section>
 <script>
     import "../scripts/experience";
 </script>
 <style>
     .experience-visual {
-        margin: 3rem 0;
-        border-block: 1px solid currentColor;
-        padding: 1.5rem 0;
+        margin: 0.5rem 0 4rem;
     }
-    .experience-visual__head {
+    .experience-visual__intro {
         display: flex;
         align-items: end;
         justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
+        gap: 2rem;
+        margin-bottom: 0.75rem;
     }
-    .experience-visual__head h2 {
+    .experience-visual__intro h2 {
         margin: 0;
+        font-size: 1.4rem;
+    }
+    .experience-visual__intro p {
+        margin: 0.15rem 0 0;
+    }
+    .observatory__controls[hidden],
+    .observatory__stage[hidden],
+    .observatory__poster[hidden] {
+        display: none;
     }
     .experience-visual__eyebrow {
-        font-size: 0.8rem;
+        color: var(--secondary-text);
+        font:
+            0.75rem DMMono,
+            monospace;
         letter-spacing: 0.12em;
         text-transform: uppercase;
     }
-    .experience-visual__help {
-        max-width: 60ch;
+    .experience-visual__intro button {
+        flex: none;
     }
-    .experience-visual__stage {
-        height: clamp(280px, 45vw, 520px);
-        background: #262923;
+    .observatory {
+        background: #111719;
+        color: #f2e9d7;
+    }
+    .observatory__viewport {
+        position: relative;
+        height: clamp(480px, 55vw, 700px);
+        overflow: hidden;
+        background: #080d12;
+    }
+    .observatory__poster {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: radial-gradient(
+            ellipse at 53% 50%,
+            #1b2a30 0%,
+            #0a1116 45%,
+            #05090e 100%
+        );
+    }
+    .observatory__poster::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: url("/images/trajectory/milky-way-band-2k.webp") center
+            46% / cover;
+        opacity: 0.16;
+    }
+    .observatory__earth {
+        position: absolute;
+        width: min(50%, 390px);
+        aspect-ratio: 1;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background:
+            radial-gradient(
+                circle at 31% 28%,
+                transparent 9%,
+                rgba(5, 13, 24, 0.3) 53%,
+                #040b13 79%
+            ),
+            url("/images/trajectory/earth-2k.webp") 30% 48% / auto 100%;
+        box-shadow:
+            inset -25px -14px 45px #030913,
+            inset 5px 2px 14px #b9dcf366,
+            0 0 0 2px #7ab5d126,
+            0 0 18px #7ab5d12c;
+    }
+    .observatory__stage {
+        position: absolute;
+        inset: 0;
         overflow: hidden;
         touch-action: none;
     }
-    .experience-visual__stage :global(canvas) {
+    .observatory__stage :global(canvas) {
         display: block;
         width: 100%;
         height: 100%;
     }
-    .experience-visual__controls ol {
+    .observatory__label {
+        position: absolute;
+        left: 1.5rem;
+        bottom: 1.25rem;
+        font:
+            0.8rem DMMono,
+            monospace;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #f2e9d7;
+        pointer-events: none;
+    }
+    .observatory__controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1rem 1.25rem;
+        border-top: 1px solid #53605a;
+    }
+    .observatory__worlds,
+    .observatory__actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
-        padding: 0;
-        list-style: none;
+        gap: 0.35rem;
     }
-    .experience-visual__controls button[aria-pressed="true"] {
-        outline: 2px solid currentColor;
+    .observatory__controls button {
+        color: #f2e9d7;
+        border-color: #84928a;
+    }
+    .observatory__controls button[aria-pressed="true"] {
+        color: #171915;
+        background: var(--accent-amber);
+        border-color: var(--accent-amber);
+    }
+    .observatory__controls button:hover {
+        color: #171915;
+    }
+    .observatory__status {
+        margin: 0;
+        padding: 0 1.25rem;
+        color: #f2e9d7;
+    }
+    .observatory__status:not(:empty) {
+        padding-block: 1rem;
+    }
+    .experience-visual__notes {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 2rem;
+        margin-top: 1rem;
+    }
+    .experience-visual__notes p {
+        margin: 0;
+        max-width: 40ch;
+    }
+    .experience-visual__record {
+        max-width: 34rem;
+    }
+    .experience-visual__record summary {
+        min-height: 44px;
+        cursor: pointer;
+        color: var(--accent-text);
+    }
+    .experience-visual__record ol {
+        padding-left: 1.3rem;
+    }
+    .experience-visual__record li {
+        margin-bottom: 0.5rem;
+    }
+    .experience-visual__credit {
+        margin-top: 1.5rem;
+        color: var(--secondary-text);
+        font-size: 0.85rem;
+    }
+    @media (max-width: 700px) {
+        .experience-visual__intro {
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .experience-visual__intro p {
+            font-size: 0.85rem;
+        }
+        .experience-visual__intro button {
+            padding-inline: 0.7rem;
+        }
+        .experience-visual__notes {
+            align-items: start;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .observatory__viewport {
+            height: 360px;
+        }
+        .observatory__earth {
+            width: min(70%, 270px);
+        }
+        .observatory__controls {
+            align-items: start;
+            flex-direction: column;
+        }
+        .observatory__worlds button,
+        .observatory__actions button {
+            padding-inline: 0.75rem;
+        }
     }
     @media print {
         .experience-visual {

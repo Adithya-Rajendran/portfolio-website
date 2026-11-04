@@ -2,6 +2,8 @@
 
 Prepared November 3, 2026. Implementation owner: GPT-6.1-Terra. Branch: `v2-rewrite`.
 
+Design follow-up: the owner supplied amber/brick/green colors, requested high-fidelity real planets with orbit controls, and explicitly required the visual to start automatically as the default experience. The detailed [orbital experience brief](v2-orbital-experience-design.md) supersedes the earlier abstract timeline and explicit-activation requirements below. Ordinary article pages still do not load Three.js.
+
 Deployment authorization update: the owner subsequently requested use of the Cloudflare plugin to create/configure Workers and authorized moving `adithya-rajendran.com` to the Worker. Deploy and route the domain after verification when account access and required configuration are available. This supersedes the local-only deployment restriction below; publishing the verified `v2-rewrite` branch for the configured GitHub build is part of deployment. No merge to `main` is required. No further launch approval is required, although automatic review separately requested explicit approval to transfer existing private credentials. The planning agent coordinates hosting while GPT-6.1-Terra owns application implementation.
 
 Replace Next.js and Vercel with Astro, TypeScript, and Cloudflare Workers. Use Three.js for the experience timeline and existing project models. Retain Sanity as the content source and Resend for contact delivery. Redesign the presentation while preserving the owner's content, public URLs, accessibility, and editorial capabilities.

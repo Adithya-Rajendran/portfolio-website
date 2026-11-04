@@ -275,10 +275,21 @@ fieldset input {
     z-index: 10;
 }
 .experience-page {
-    padding-top: 2rem;
+    padding-top: 1rem;
 }
 .experience-page h1 {
-    margin: 0.35em 0;
+    margin: 0;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+}
+.experience-page__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.experience-page__head p {
+    margin: 0;
 }
 .contents {
     margin: 2rem 0;
@@ -319,6 +330,21 @@ pre {
     }
     nav {
         gap: 0.8rem;
+    }
+    body:has(.experience-page) header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 0.5rem 1rem;
+        padding-block: 0.75rem;
+    }
+    body:has(.experience-page) header nav {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+    body:has(.experience-page) #theme-switch {
+        grid-column: 2;
+        grid-row: 1;
     }
     main {
         padding: 2.5rem 0;

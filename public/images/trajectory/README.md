@@ -1,19 +1,6 @@
 # Trajectory textures
 
-The maps for the 3D flight, `/resume`'s Timeline view (option C · Flight,
-`components/trajectory/flight-gl.ts` and `flight-bodies.ts`).
-`components/trajectory/flight-maps.ts` picks them: a wide screen loads the
-2k maps and the 4k sky; a phone or a window under 960px loads the 1k maps
-and the 2k sky, with the night lights at 2k (the sunrise magnifies them,
-and at 1k the cities blur into soft blobs). The lands the sunrise looks
-over (longitudes 130°W–30°W, latitudes 5°N–55°N: `NIGHT_WINDOW` in
-`flight-maps.ts`) have night lights of their own, finer still: 3k across
-that window on a wide screen, 2k on a phone. The scene requests the maps
-its first frame needs as it mounts, beside the renderer's code. Flight
-Manual never loads the sky.
-
-The page credits them in the figure line under the scene: "Maps: NASA,
-Solar System Scope (CC BY 4.0)".
+The orbital experience on `/resume` uses these adapted NASA and Solar System Scope maps. The renderer selects smaller or larger maps according to device conditions and loads planetary resources when the orbital view starts. The page displays attribution beside the visual. The poster uses the Earth day map.
 
 **Solar System Scope** (by INOVE), <https://www.solarsystemscope.com/textures/>,
 distributed under the **Creative Commons Attribution 4.0 International**
@@ -47,9 +34,7 @@ and Earth Observatory:
 | `earth-night-sunrise-3k.webp` | 3072×1536 | 121.8 KB | Black Marble 2016 (id 144897), <https://eoimages.gsfc.nasa.gov/images/imagerecords/144000/144897/BlackMarble_2016_3km_gray.jpg>   | Cut to 130°W–30°W, 5°N–55°N        |
 | `earth-night-sunrise-2k.webp` | 2048×1024 | 63.5 KB  | Black Marble 2016 (id 144897), <https://eoimages.gsfc.nasa.gov/images/imagerecords/144000/144897/BlackMarble_2016_3km_gray.jpg>   | Cut to 130°W–30°W, 5°N–55°N        |
 
-A wide screen loads 737.7 KB of these in Void (654.9 KB in Flight Manual); a
-phone 322.0 KB. The maps and the
-sky are lossy WebP; the ring, the Saturn strip and the water mask lossless.
+The maps and sky are lossy WebP; the ring, Saturn strip and water mask are lossless. Actual transferred bytes depend on the selected world and device.
 
 `node scripts/encode-trajectory-textures.mjs` downloads the sources and writes
 these files with sharp. Files in `/public` are cached immutably, so rename a
