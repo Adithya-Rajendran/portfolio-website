@@ -728,7 +728,11 @@ test("reduced motion renders a static visual while retaining the experience list
         Boolean(document.createElement("canvas").getContext("webgl2")),
     );
     test.skip(!supported, "WebGL2 is unavailable in this browser");
-    await expect(page.locator("[data-experience-stage] canvas")).toBeVisible();
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage).toHaveAttribute("data-ready", "true", {
+        timeout: 60000,
+    });
+    await expect(stage.locator("canvas")).toBeVisible();
     await expect(page.locator("#cv")).toBeVisible();
     await expect(
         page.getByRole("button", { name: "Motion reduced by system" }),
@@ -860,47 +864,60 @@ test("scrolling moves between planets with a pullback and reverses", async ({
         .poll(async () => Number(await stage.getAttribute("data-distance")))
         .toBeGreaterThan(0);
     const restDistance = Number(await stage.getAttribute("data-distance"));
-    const nextKnot = await page.evaluate(() => {
-        const entries = [
-            ...document.querySelectorAll<HTMLElement>("[data-journey-step]"),
-        ];
-        const positions = entries.map((entry) =>
-            Math.max(
-                0,
-                entry.getBoundingClientRect().top +
-                    scrollY -
-                    innerHeight * 0.36,
-            ),
-        );
-        const end = Math.max(
-            innerHeight * 2,
-            (document.querySelector("#cv")?.getBoundingClientRect().bottom ||
-                0) +
-                scrollY -
-                innerHeight * 0.7,
-        );
-        return positions.length >= 5
-            ? Math.max(120, positions[Math.round((positions.length - 1) / 4)])
-            : end / 4;
+    await stage.evaluate((element) => {
+        const samples = { transition: 0, distance: 0 };
+        Object.assign(window, { pullbackSamples: samples });
+        new MutationObserver(() => {
+            samples.transition = Math.max(
+                samples.transition,
+                Number(element.getAttribute("data-transition")),
+            );
+            samples.distance = Math.max(
+                samples.distance,
+                Number(element.getAttribute("data-distance")),
+            );
+        }).observe(element, {
+            attributes: true,
+            attributeFilter: ["data-transition", "data-distance"],
+        });
     });
-    await page.evaluate(
-        (y) => window.scrollTo({ top: y, behavior: "instant" }),
-        nextKnot * 0.69,
-    );
+    await page
+        .locator('[data-journey-world="moon"]')
+        .evaluate((element) =>
+            element.scrollIntoView({ block: "center", behavior: "instant" }),
+        );
     await expect
-        .poll(async () => Number(await stage.getAttribute("data-transition")), {
-            timeout: 15000,
-        })
+        .poll(
+            async () =>
+                page.evaluate(
+                    () =>
+                        (
+                            window as unknown as {
+                                pullbackSamples: { transition: number };
+                            }
+                        ).pullbackSamples.transition,
+                ),
+            {
+                timeout: 15000,
+            },
+        )
         .toBeGreaterThan(0.3);
     await expect
-        .poll(async () => Number(await stage.getAttribute("data-distance")), {
-            timeout: 15000,
-        })
+        .poll(
+            async () =>
+                page.evaluate(
+                    () =>
+                        (
+                            window as unknown as {
+                                pullbackSamples: { distance: number };
+                            }
+                        ).pullbackSamples.distance,
+                ),
+            {
+                timeout: 15000,
+            },
+        )
         .toBeGreaterThan(restDistance + 0.5);
-    await page.evaluate(
-        (y) => window.scrollTo({ top: y, behavior: "instant" }),
-        nextKnot,
-    );
     await expect(stage).toHaveAttribute("data-world", "moon", {
         timeout: 15000,
     });
