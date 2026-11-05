@@ -191,29 +191,165 @@ pre {
     color: #f5eedf;
 }
 .listing {
-    --code-background: #25231f;
-    --code-foreground: #f5eedf;
-    --code-token-comment: #c8c0ae;
+    --code-background: #111b1d;
+    --code-foreground: #e6e9dd;
+    --code-bar: #192426;
+    --code-border: #3c4c4d;
+    --code-muted: #afc1b8;
+    --code-highlight: #343b2f;
+    --code-token-comment: #acb8af;
     --code-token-keyword: #f3bb80;
     --code-token-string: #c6dcb5;
     --code-token-string-expression: #c6dcb5;
     --code-token-function: #f0b6a7;
-    --code-token-parameter: #f5eedf;
-    --code-token-punctuation: #f5eedf;
-}
-.listing pre {
+    --code-token-parameter: var(--code-foreground);
+    --code-token-punctuation: var(--code-foreground);
+    position: relative;
+    min-width: 0;
+    border: 1px solid var(--code-border);
+    border-radius: 0.6rem;
     background: var(--code-background);
     color: var(--code-foreground);
-    overflow: auto;
+}
+:root[data-theme="light"] .listing {
+    --code-background: #f1ebdf;
+    --code-foreground: #272522;
+    --code-bar: #e8e0d1;
+    --code-border: #c6bba9;
+    --code-muted: #4d5a50;
+    --code-highlight: #e1d4bd;
+    --code-token-comment: #536153;
+    --code-token-keyword: #8f422e;
+    --code-token-string: #326044;
+    --code-token-string-expression: #326044;
+    --code-token-function: #754568;
+}
+.prose .listing {
+    margin-block: 1.5rem;
+}
+.prose .listing__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 45px;
+    margin: 0;
+    padding-inline: 1rem 0.25rem;
+    border-bottom: 1px solid var(--code-border);
+    border-radius: 0.6rem 0.6rem 0 0;
+    background: var(--code-bar);
+    color: var(--code-muted);
+    font:
+        0.75rem/1.5 DMMono,
+        monospace;
+}
+.listing__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.listing__scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border-radius: 0 0 0.6rem 0.6rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--code-border) var(--code-background);
+}
+.listing__scroll:focus-visible {
+    outline-offset: -3px;
+}
+.listing pre {
+    width: max-content;
+    min-width: 100%;
+    margin: 0;
+    background: var(--code-background);
+    color: var(--code-foreground);
+    overflow: visible;
     padding: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.8;
+    tab-size: 4;
 }
 .listing .line-highlight {
     display: inline-block;
-    background: #514338;
+    background: var(--code-highlight);
     width: 100%;
 }
+.listing .copy-code {
+    flex: 0 0 6rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.4rem;
+    border: 0;
+    border-radius: 0.3rem;
+    background: transparent;
+    color: var(--code-muted);
+    font:
+        0.75rem/1.5 Manrope,
+        system-ui,
+        sans-serif;
+}
+.listing .copy-code:not([hidden]) {
+    display: inline-flex;
+}
+.listing .copy-code:is(:hover, :focus-visible) {
+    background: color-mix(in srgb, var(--code-foreground) 8%, transparent);
+    color: var(--code-foreground);
+}
+.listing .copy-code:focus-visible {
+    outline-offset: -3px;
+}
+.listing .copy-code[data-copy-state="copied"] {
+    color: var(--code-token-string);
+}
+.listing .copy-code[data-copy-state="error"] {
+    color: var(--code-token-keyword);
+}
+.copy-code__check,
+.copy-code[data-copy-state="copied"] .copy-code__icon {
+    display: none;
+}
+.copy-code[data-copy-state="copied"] .copy-code__check {
+    display: block;
+}
 .copy-status {
-    margin-left: 0.5rem;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+@media print {
+    :root .listing {
+        --code-background: #fff;
+        --code-foreground: #111;
+        --code-bar: #fff;
+        --code-border: #aaa;
+        --code-muted: #444;
+        --code-highlight: #eee;
+        --code-token-comment: #444;
+        --code-token-keyword: #111;
+        --code-token-string: #111;
+        --code-token-string-expression: #111;
+        --code-token-function: #111;
+    }
+    .listing .copy-code:not([hidden]),
+    .copy-status {
+        display: none;
+    }
+    .listing__scroll {
+        overflow: visible;
+    }
+    .editorial-article .prose .listing pre {
+        width: auto;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
 }
 button,
 input,
