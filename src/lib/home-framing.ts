@@ -4,8 +4,8 @@ export type HomeFraming = "desktop" | "tablet" | "mobile";
 // Keep the perspective camera and the picture's object-fit: cover crop aligned.
 export const HOME_FRAMES = {
     desktop: { width: 1440, height: 730, anchorX: 0.72 },
-    tablet: { width: 768, height: 420, anchorX: 0.5 },
-    mobile: { width: 390, height: 300, anchorX: 0.5 },
+    tablet: { width: 768, height: 460, anchorX: 0.5 },
+    mobile: { width: 390, height: 340, anchorX: 0.5 },
 } as const;
 
 export function homeCoverFrame(

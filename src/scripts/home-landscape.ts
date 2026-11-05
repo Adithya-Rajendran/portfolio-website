@@ -5,6 +5,8 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { ImprovedNoise } from "three/addons/math/ImprovedNoise.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { homeCoverFrame, type HomeFraming } from "../lib/home-framing";
+import { makeHomeFrontier } from "./home-frontier";
+import { makeHomeRendering } from "./home-rendering";
 
 // Real geometry gives the wheels, mast, foreground and horizon independent
 // parallax. The camera only travels a few centimetres around this composition.
@@ -25,9 +27,21 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
         noise.noise(x * 0.8, z * 0.8, 4) * 0.07;
     const heightAt = (x: number, z: number) => {
         const t = T.MathUtils.smoothstep(Math.hypot(x - 2, z), 3.4, 9);
-        return (roughness(x, z) - Math.max(0, -z - 7) * 0.035) * t - 0.035;
+        const terrain =
+            (roughness(x, z) - Math.max(0, -z - 7) * 0.035) * t - 0.035;
+        const district =
+            1 -
+            T.MathUtils.smoothstep(Math.hypot((x + 10) / 1.25, z + 31), 12, 22);
+        // A shallow graded pad keeps the launch footing on continuous terrain.
+        const launchRidge =
+            1 - T.MathUtils.smoothstep(Math.hypot(x + 1, z + 78), 5, 13);
+        return T.MathUtils.lerp(
+            T.MathUtils.lerp(terrain, -0.3, district),
+            -1.5,
+            launchRidge,
+        );
     };
-    scene.fog = new T.FogExp2(0x684b38, 0.006);
+    scene.fog = new T.FogExp2(0x353d42, 0.003);
 
     const room = new RoomEnvironment();
     const pmrem = new T.PMREMGenerator(renderer);
@@ -36,31 +50,31 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
     // uses direct and sky light, avoiding expensive reflection samples per pixel.
     room.dispose();
     pmrem.dispose();
-    scene.add(new T.HemisphereLight(0xbacadd, 0x5c3020, 0.8));
-    const sun = new T.DirectionalLight(0xffcca0, 3.3);
-    sun.position.set(-16, 10, -24);
-    sun.target.position.set(2, 0, 0);
+    scene.add(new T.HemisphereLight(0xb9b1aa, 0x71482f, 1.15));
+    const sun = new T.DirectionalLight(0xffb977, 2.3);
+    sun.position.set(-16, 18, -100);
+    sun.target.position.set(-4, 0, -15);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     Object.assign(sun.shadow.camera, {
-        left: -11,
-        right: 11,
-        top: 11,
-        bottom: -11,
+        left: -30,
+        right: 30,
+        top: 30,
+        bottom: -30,
         near: 1,
-        far: 80,
+        far: 110,
     });
     sun.shadow.bias = -0.00008;
-    sun.shadow.normalBias = 0.025;
+    sun.shadow.normalBias = 0.065;
     scene.add(sun, sun.target);
-    const fill = new T.DirectionalLight(0xb7d9ff, 0.7);
+    const fill = new T.DirectionalLight(0xd9b18a, 0.3);
     fill.position.set(4, 6, 10);
     scene.add(fill);
 
     const groundMaterial = new T.MeshStandardMaterial({
-        color: 0x986e51,
+        color: 0xb08b6b,
         roughness: 0.98,
-        bumpScale: 0.09,
+        bumpScale: 0.14,
     });
     const groundGeometry = new T.PlaneGeometry(180, 180, 220, 220);
     groundGeometry.rotateX(-Math.PI / 2);
@@ -86,7 +100,7 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
     // the faceted terrain and sharp joins of isolated low-poly mountain pieces.
     const ridgeMaterials: T.MeshStandardMaterial[] = [];
     for (let layer = 0; layer < 4; layer++) {
-        const geometry = new T.PlaneGeometry(680, 110, 240, 80);
+        const geometry = new T.PlaneGeometry(680, 110, 240, 60);
         geometry.rotateX(-Math.PI / 2);
         geometry.translate(0, 0, -105 - layer * 65);
         const positions = geometry.attributes.position;
@@ -95,8 +109,8 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
                 z = positions.getZ(i);
             let ridge = 0,
                 amplitude = 1,
-                frequency = 0.022;
-            for (let octave = 0; octave < 5; octave++) {
+                frequency = 0.014;
+            for (let octave = 0; octave < 3; octave++) {
                 ridge +=
                     (1 -
                         Math.abs(
@@ -115,7 +129,7 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             );
             positions.setY(
                 i,
-                -8 + envelope * Math.max(0, ridge - 0.9) * (18 + layer * 5),
+                -8 + envelope * Math.max(0, ridge - 0.65) * (13 + layer * 3),
             );
         }
         geometry.computeVertexNormals();
@@ -191,14 +205,14 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             void main(){
                 vec3 d=normalize(vDirection);
                 float h=max(0.,d.y);
-                vec3 sky=mix(vec3(.19,.085,.04),vec3(.006,.012,.019),smoothstep(0.,.16,h));
-                vec3 sunDir=normalize(vec3(-.42,.075,-1.));
+                vec3 sky=mix(vec3(.035,.033,.032),vec3(.005,.012,.021),smoothstep(0.,.19,h));
+                vec3 sunDir=normalize(vec3(-.15,.018,-1.));
                 float angle=max(0.,1.-dot(d,sunDir));
-                sky+=vec3(1.,.43,.13)*(.12*exp(-angle*65.)+.12*exp(-angle*340.));
-                sky+=vec3(1.,.78,.49)*2.5*exp(-angle*65000.);
+                sky+=vec3(1.,.43,.13)*(.10*exp(-angle*14.)+.18*exp(-angle*340.));
+                sky+=vec3(1.,.78,.49)*2.2*exp(-angle*65000.);
                 vec2 uv=vec2(atan(d.z,d.x)/6.283185+.5,asin(d.y)/3.14159+.5);
-                vec3 stars=texture2D(galaxy,vec2(fract((uv.x+.27)*2.4),clamp(.5+(uv.y-.5)*2.4,0.,1.))).rgb;
-                sky+=stars*.16*smoothstep(.06,.18,h);
+                vec3 stars=texture2D(galaxy,vec2(fract((uv.x-.08)*5.2),clamp(.45+(uv.y-.5)*5.6,0.,1.))).rgb;
+                sky+=stars*.28*smoothstep(.015,.16,h);
                 gl_FragColor=vec4(sky,1.);
                 #include <tonemapping_fragment>
                 #include <colorspace_fragment>
@@ -207,6 +221,9 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
     const sky = new T.Mesh(new T.SphereGeometry(550, 32, 24), skyMaterial);
     sky.renderOrder = -1;
     scene.add(sky);
+
+    const frontier = makeHomeFrontier(heightAt, environment.texture);
+    scene.add(frontier.root);
 
     const draco = new DRACOLoader();
     draco.setDecoderPath("/draco/");
@@ -285,7 +302,7 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
                                     original,
                                 );
                                 material.envMap = environment.texture;
-                                material.envMapIntensity = 0.34;
+                                material.envMapIntensity = 0.2;
                                 if (original.name.includes("glass")) {
                                     material.color.setHex(0x23383d);
                                     material.metalness = 0.7;
@@ -345,29 +362,44 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
                 material.needsUpdate = true;
             });
         }),
-        texture("/images/trajectory/milky-way-v2-2k.webp", true).then((map) => {
+        texture("/images/trajectory/milky-way-v2-4k.webp", true).then((map) => {
             if (!disposed) skyMaterial.uniforms.galaxy.value = map;
         }),
     ]);
     const target = new T.Vector3();
+    const views = {
+        desktop: [
+            {
+                eye: new T.Vector3(9, 4.6, 16),
+                aim: new T.Vector3(-4, 1.6, -8),
+            },
+            { eye: new T.Vector3(7, 8, 5), aim: new T.Vector3(-15, 3, -25) },
+            { eye: new T.Vector3(3, 9, 1), aim: new T.Vector3(-15, 6.2, -26) },
+        ],
+        compact: [
+            { eye: new T.Vector3(9, 5.8, 14), aim: new T.Vector3(0, 1.9, -9) },
+            { eye: new T.Vector3(4, 8, 5), aim: new T.Vector3(-7, 2.4, -22) },
+            { eye: new T.Vector3(2, 8, -3), aim: new T.Vector3(-8, 5.5, -24) },
+        ],
+    };
     const position = (
         width: number,
         height: number,
         framing: HomeFraming,
         x = 0,
         y = 0,
+        focus = 0,
     ) => {
         const view = homeCoverFrame(width, height, framing);
         const narrow = framing !== "desktop";
-        camera.fov = narrow ? 33 : 30;
-        camera.position.set(narrow ? 9 : 8, narrow ? 4.3 : 3.9, 12);
+        camera.fov = narrow ? 36 : 33;
+        const stops = narrow ? views.compact : views.desktop;
+        const from = Math.min(1, Math.floor(focus));
+        const mix = focus - from;
+        camera.position.lerpVectors(stops[from].eye, stops[from + 1].eye, mix);
         camera.position.x += x * 0.52;
         camera.position.y += y * 0.25;
-        target.set(
-            narrow ? 1.2 : -3.1,
-            narrow ? 1.35 : 2.05,
-            narrow ? -0.2 : -4,
-        );
+        target.lerpVectors(stops[from].aim, stops[from + 1].aim, mix);
         camera.lookAt(target);
         camera.setViewOffset(
             view.fullWidth,
@@ -378,14 +410,20 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             view.height,
         );
     };
+    const rendering = makeHomeRendering(renderer, scene, camera);
     return {
         scene,
         camera,
         ready,
         position,
+        target,
+        update: frontier.update,
+        render: rendering.render,
+        resize: rendering.resize,
         dispose() {
             if (disposed) return;
             disposed = true;
+            rendering.dispose();
             disposeObject(scene);
             disposeTextures();
             environment.dispose();

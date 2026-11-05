@@ -8,6 +8,17 @@ const hero = wrapper?.closest<HTMLElement>(".home-hero");
 const motionButton =
     document.querySelector<HTMLButtonElement>("[data-home-motion]");
 const hint = document.querySelector<HTMLElement>("[data-home-hint]");
+const controls = document.querySelector<HTMLElement>("[data-home-controls]");
+const note = document.querySelector<HTMLElement>("[data-home-note]");
+const destinations = [
+    ...document.querySelectorAll<HTMLButtonElement>("[data-home-destination]"),
+];
+const focusNames = ["rover", "outpost", "signal"];
+const focusNotes = [
+    "Small machines. Uncharted possibilities.",
+    "A place to live, learn, and look further.",
+    "Stay curious. Stay connected.",
+];
 
 if (wrapper && stage && poster && hero) {
     let cleanup: (() => void) | undefined;
@@ -31,7 +42,7 @@ if (wrapper && stage && poster && hero) {
             const render = new T.WebGLRenderer({
                 antialias: true,
                 alpha: false,
-                powerPreference: "low-power",
+                powerPreference: "high-performance",
             });
             renderer = render;
             // This Three.js renderer creates WebGL2 contexts exclusively.
@@ -42,6 +53,7 @@ if (wrapper && stage && poster && hero) {
             render.toneMappingExposure = 1;
             render.shadowMap.enabled = true;
             render.shadowMap.type = T.PCFShadowMap;
+            render.info.autoReset = false;
             const landscape = makeHomeLandscape(render);
             let endLifetime: () => void = () => {};
             const lifetime = new Promise<void>((resolve) => {
@@ -53,9 +65,14 @@ if (wrapper && stage && poster && hero) {
                 frame = 0,
                 visible = true;
             let lastTime = 0,
+                lastDraw = 0,
+                elapsed = 0,
+                focus = 0,
+                desiredFocus = 0,
                 revealFrame = 0,
                 renderedWidth = 0,
                 renderedHeight = 0;
+            let dirty = false;
             let reveal: Animation | undefined;
             let firstFrameFence: WebGLSync | null = null;
             const pointer = new T.Vector2(),
@@ -66,6 +83,7 @@ if (wrapper && stage && poster && hero) {
             );
             const updateButton = () => {
                 if (!revealed) return;
+                if (controls) controls.hidden = false;
                 if (motionButton) {
                     motionButton.hidden = false;
                     motionButton.disabled = reduced.matches;
@@ -81,10 +99,21 @@ if (wrapper && stage && poster && hero) {
                         reduced.matches || paused || !finePointer.matches;
             };
             const draw = () => {
-                render.render(landscape.scene, landscape.camera);
-                // All objects and lights are static. Only the camera moves, so
-                // one shadow pass is sufficient for the lifetime of the scene.
+                render.info.reset();
+                landscape.render();
+                // The moving dish and drone do not cast into this static map.
+                // Terrain, rover and buildings only need one shadow pass.
                 render.shadowMap.autoUpdate = false;
+                stage.dataset.camera = landscape.camera.position
+                    .toArray()
+                    .map((v) => v.toFixed(4))
+                    .join(",");
+                stage.dataset.target = landscape.target
+                    .toArray()
+                    .map((v) => v.toFixed(4))
+                    .join(",");
+                stage.dataset.sceneTime = elapsed.toFixed(3);
+                stage.dataset.drawCalls = String(render.info.render.calls);
             };
             const pose = () => {
                 // Read the same media queries as <picture>, including portrait
@@ -100,6 +129,7 @@ if (wrapper && stage && poster && hero) {
                     framing,
                     current.x,
                     current.y,
+                    focus,
                 );
                 stage.dataset.viewX = current.x.toFixed(4);
                 stage.dataset.viewY = current.y.toFixed(4);
@@ -113,18 +143,37 @@ if (wrapper && stage && poster && hero) {
                 const still = reduced.matches || paused;
                 // Camera easing follows elapsed time even on a slow renderer;
                 // visibility changes reset the clock before it can jump.
-                const delta = Math.min((time - (lastTime || time)) / 1000, 0.5);
+                const delta = Math.min((time - (lastTime || time)) / 1000, 0.1);
                 lastTime = time;
                 stage.dataset.state = still ? "paused" : "running";
-                if (!still && current.distanceToSquared(pointer) > 0.000001) {
+                const moving =
+                    current.distanceToSquared(pointer) > 0.000001 ||
+                    Math.abs(focus - desiredFocus) > 0.0001;
+                if (!still) {
+                    elapsed += delta;
                     current.lerp(pointer, 1 - Math.exp(-delta * 3.8));
+                    focus = T.MathUtils.lerp(
+                        focus,
+                        desiredFocus,
+                        1 - Math.exp(-delta * 2.1),
+                    );
+                    if (Math.abs(focus - desiredFocus) < 0.0001)
+                        focus = desiredFocus;
+                    landscape.update(elapsed);
+                }
+                // Ambient detail runs at 30fps; pointer/camera movement follows
+                // the display cadence. No time is consumed outside the viewport.
+                if (
+                    dirty ||
+                    moving ||
+                    (!still && time - lastDraw >= 1000 / 30)
+                ) {
                     pose();
                     draw();
+                    dirty = false;
+                    lastDraw = time;
                 }
-                // The image rests when the camera settles. Pointer movement
-                // wakes it again without spending GPU time on unchanged frames.
-                if (!still && current.distanceToSquared(pointer) > 0.000001)
-                    frame = requestAnimationFrame(tick);
+                if (!still) frame = requestAnimationFrame(tick);
                 else lastTime = 0;
             };
             const wake = () => {
@@ -143,6 +192,10 @@ if (wrapper && stage && poster && hero) {
                 lastTime = 0;
                 if (reduced.matches && reveal?.playState === "running")
                     reveal.finish();
+                if (reduced.matches) {
+                    focus = desiredFocus;
+                    dirty = true;
+                }
                 updateButton();
                 wake();
             };
@@ -162,6 +215,7 @@ if (wrapper && stage && poster && hero) {
                 renderedWidth = stage.clientWidth;
                 renderedHeight = stage.clientHeight;
                 render.setSize(renderedWidth, renderedHeight, false);
+                landscape.resize(renderedWidth, renderedHeight);
                 pose();
                 draw();
             };
@@ -197,6 +251,23 @@ if (wrapper && stage && poster && hero) {
                 paused = !paused;
                 sync();
             };
+            const selections = destinations.map((button, index) => {
+                const select = () => {
+                    if (!revealed) return;
+                    desiredFocus = index;
+                    pointer.set(0, 0);
+                    if (paused || reduced.matches) focus = desiredFocus;
+                    destinations.forEach((item, i) =>
+                        item.setAttribute("aria-pressed", String(i === index)),
+                    );
+                    stage.dataset.homeFocus = focusNames[index];
+                    if (note) note.textContent = focusNotes[index];
+                    dirty = true;
+                    wake();
+                };
+                button.addEventListener("click", select);
+                return select;
+            });
             const visibility = () => {
                 if (document.hidden) {
                     cancelAnimationFrame(frame);
@@ -247,6 +318,9 @@ if (wrapper && stage && poster && hero) {
                 observer.disconnect();
                 sizes.disconnect();
                 motionButton?.removeEventListener("click", toggle);
+                destinations.forEach((button, i) =>
+                    button.removeEventListener("click", selections[i]),
+                );
                 hero.removeEventListener("pointermove", onPointer);
                 hero.removeEventListener("pointerleave", leave);
                 document.removeEventListener("visibilitychange", visibility);
@@ -263,6 +337,7 @@ if (wrapper && stage && poster && hero) {
                 delete stage.dataset.artwork;
                 if (motionButton) motionButton.hidden = true;
                 if (hint) hint.hidden = true;
+                if (controls) controls.hidden = true;
             };
             cleanup = teardown;
             await Promise.race([
@@ -341,6 +416,11 @@ if (wrapper && stage && poster && hero) {
             poster.hidden = true;
             revealed = true;
             stage.dataset.artwork = "rover-3d";
+            stage.dataset.homeFocus = "rover";
+            destinations.forEach((button, i) =>
+                button.setAttribute("aria-pressed", String(i === 0)),
+            );
+            if (note) note.textContent = focusNotes[0];
             observer.observe(stage);
             sync();
         } catch {
@@ -353,6 +433,7 @@ if (wrapper && stage && poster && hero) {
             stage.dataset.reveal = "poster";
             if (motionButton) motionButton.hidden = true;
             if (hint) hint.hidden = true;
+            if (controls) controls.hidden = true;
         } finally {
             loading = false;
             if (ticket !== generation && pageActive) void initialize();

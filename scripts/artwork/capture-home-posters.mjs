@@ -5,12 +5,13 @@ import { join } from "node:path";
 
 // Capture native Three.js output, not an illustration of the intended result.
 // Increment the version before replacing an already published poster.
-const version = "v1";
+const version = "v2";
 const url = process.env.ARTWORK_URL || "http://127.0.0.1:4321";
 const browser = await chromium.launch({
     headless: true,
     args: ["--no-sandbox", "--enable-unsafe-swiftshader"],
 });
+const captures = [];
 try {
     for (const [name, width, height] of [
         ["desktop", 1440, 900],
@@ -46,16 +47,18 @@ try {
         );
         const overlays = await page.addStyleTag({
             content:
-                ".home-hero__content,.home-hero__veil,.home-hero__caption{visibility:hidden!important} astro-dev-toolbar{display:none!important}",
+                ".home-hero__content,.home-hero__veil,.home-hero__caption,.frontier-console{visibility:hidden!important} astro-dev-toolbar{display:none!important}",
         });
         const png = await page.locator("[data-home-stage] canvas").screenshot();
         if (errors.length) throw new Error(errors.join("\n"));
         const path = `public/images/scenes/horizon-3d-${name}-${version}.webp`;
-        await sharp(png).webp({ quality: 88, effort: 6 }).toFile(path);
-        console.log(`Captured ${name}: ${path}`);
+        captures.push({ png, path, name });
         if (process.env.ARTWORK_REVIEW_DIR) {
             await mkdir(process.env.ARTWORK_REVIEW_DIR, { recursive: true });
             await overlays.evaluate((element) => element.remove());
+            await page.addStyleTag({
+                content: "astro-dev-toolbar{display:none!important}",
+            });
             await page.screenshot({
                 path: join(process.env.ARTWORK_REVIEW_DIR, `${name}.png`),
             });
@@ -64,4 +67,10 @@ try {
     }
 } finally {
     await browser.close();
+}
+// Publish the files only after closing the browser. Writing into public/ while
+// it is open would let a development server reload the page mid-capture.
+for (const { png, path, name } of captures) {
+    await sharp(png).webp({ quality: 88, effort: 6 }).toFile(path);
+    console.log(`Captured ${name}: ${path}`);
 }

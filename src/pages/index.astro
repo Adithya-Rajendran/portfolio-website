@@ -6,6 +6,7 @@ import { getProfile, getAllPosts, getAllProjects } from "../lib/sanity";
 import { availabilityLine } from "../../lib/profile-content";
 import { homeProjects } from "../../lib/home";
 import { missionOrder } from "../../lib/missions";
+import "../styles/home-frontier.css";
 const [profile, posts, projects] = await Promise.all([
     getProfile(),
     getAllPosts(),
@@ -49,23 +50,61 @@ const availability = availabilityLine(profile?.availability);
                     Enter orbit <span aria-hidden="true">↗</span>
                 </a>
             </div>
-            <button
-                class="home-hero__motion"
-                type="button"
-                data-home-motion
-                hidden
-            >
-                Pause scene
-            </button>
             {availability && (
                 <p class="home-hero__availability">
                     <span aria-hidden="true"></span> Open to: {availability}
                 </p>
             )}
         </div>
+        <div class="frontier-console">
+            <div class="frontier-console__story">
+                <span class="frontier-console__mark" aria-hidden="true"></span>
+                <div>
+                    <p class="frontier-console__eyebrow">
+                        An imagined frontier
+                    </p>
+                    <p data-home-note>
+                        Small machines. Uncharted possibilities.
+                    </p>
+                </div>
+            </div>
+            <div class="frontier-console__controls" data-home-controls hidden>
+                <div role="group" aria-label="Explore the frontier">
+                    <button
+                        type="button"
+                        data-home-destination="rover"
+                        aria-pressed="true"
+                    >
+                        Rover
+                    </button>
+                    <button
+                        type="button"
+                        data-home-destination="outpost"
+                        aria-pressed="false"
+                    >
+                        Outpost
+                    </button>
+                    <button
+                        type="button"
+                        data-home-destination="signal"
+                        aria-pressed="false"
+                    >
+                        Signal
+                    </button>
+                </div>
+                <button
+                    type="button"
+                    class="home-hero__motion"
+                    data-home-motion
+                    hidden
+                >
+                    Pause motion
+                </button>
+            </div>
+        </div>
         <div class="home-hero__caption">
             <span data-home-hint hidden>
-                Move your cursor to explore
+                Move your cursor to look around
             </span>
             <a href="/images/scenes/credits.txt">Scene credits ↗</a>
         </div>
@@ -74,6 +113,17 @@ const availability = availabilityLine(profile?.availability);
         class="home-section home-section--work"
         aria-labelledby="work-title"
     >
+        <svg
+            class="home-transfer"
+            viewBox="0 0 1280 180"
+            fill="none"
+            aria-hidden="true"
+        >
+            <path d="M-80 165C240 165 345 18 710 40S1120 155 1370 96" />
+            <path d="M-80 179C240 179 345 32 710 54S1120 169 1370 110" />
+            <circle cx="710" cy="40" r="4" />
+            <circle cx="710" cy="40" r="12" />
+        </svg>
         <div class="section-heading">
             <div>
                 <p class="eyebrow">01 / Selected work</p>
@@ -95,11 +145,26 @@ const availability = availabilityLine(profile?.availability);
     </section>
     {profile?.introduction && (
         <section class="home-introduction" aria-label="Introduction">
-            <p class="eyebrow">Behind the work</p>
-            <p>{profile.introduction}</p>
-            <a class="section-link" href="/about">
-                More about me ↗
-            </a>
+            <div class="home-introduction__heading">
+                <p class="eyebrow">Behind the work</p>
+                <h2>
+                    Curiosity, with
+                    <br />
+                    <em>both feet on the ground.</em>
+                </h2>
+                <div class="home-aperture" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <i></i>
+                </div>
+            </div>
+            <div class="home-introduction__copy">
+                <p>{profile.introduction}</p>
+                <a class="section-link" href="/about">
+                    More about me ↗
+                </a>
+            </div>
         </section>
     )}
     <section
@@ -109,7 +174,7 @@ const availability = availabilityLine(profile?.availability);
         <div class="section-heading">
             <div>
                 <p class="eyebrow">02 / Writing</p>
-                <h2 id="writing-title">Notes along the way.</h2>
+                <h2 id="writing-title">Notes from the field.</h2>
             </div>
             <a class="section-link" href="/blog">
                 All writing <span aria-hidden="true">↗</span>

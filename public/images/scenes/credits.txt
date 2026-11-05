@@ -1,6 +1,6 @@
 EXPLORATORY LANDSCAPES & MECHANICAL STUDIES
 
-Homepage: an interactive illustrative Mars landscape with original Three.js terrain, lighting and camera motion, and a rover posed and prepared in Blender. It is not a mission photograph or hardware built by the portfolio owner.
+Homepage: an interactive illustrative Mars research landscape with original JavaScript-authored terrain, connected habitats, geodesic greenhouses and interiors, parabolic dish, distant launch structure, drone, terrain-following scan, lighting and camera motion, and a rover posed and prepared in Blender. It is not a mission photograph or hardware built by the portfolio owner.
 
 Rover geometry: NASA/JPL-Caltech, Mars 2020 Perseverance Rover. Adapted pose and neutral arm graphics. No affiliation or endorsement is implied.
 https://science.nasa.gov/3d-resources/mars-2020-perseverance-rover/
@@ -12,7 +12,7 @@ https://polyhaven.com/license
 
 Terrain, composition, lighting, stereo camera and antenna studies: original Blender scenes created for this portfolio. The camera and antenna are illustrative design studies.
 
-The homepage uses real 3D geometry with gentle pointer-driven perspective movement. The loading and fallback images are captured from this same scene. Projects, Writing, About and Contact feature original Three.js mechanical studies; the experience page has separate interactive orbital scenes.
+The homepage uses real 3D geometry, subtle optical bloom and three smooth camera selections (Rover, Outpost and Signal), with gentle pointer-driven perspective movement. Version 2 desktop, tablet and mobile loading/fallback posters are captured from the same scene. The first rendered GPU frame is ready before a 900 ms fade over the poster; reduced motion skips the fade. Ambient motion renders at up to 30 frames per second while camera movement follows display cadence. The scene clock freezes offscreen, in hidden tabs, while paused and under reduced motion. Projects, Writing, About and Contact feature original Three.js mechanical studies; the experience page has separate interactive orbital scenes.
 
 Milky Way photography: ESO/S. Brunier, CC BY 4.0. Adapted projection, color and brightness.
 https://www.eso.org/public/images/eso0932a/

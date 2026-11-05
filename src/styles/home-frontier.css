@@ -1,0 +1,501 @@
+/* Landing-page art direction; the other pages retain their own compositions. */
+.home-page .home-hero {
+    min-height: clamp(680px, calc(90svh - 80px), 860px);
+    align-items: flex-start;
+}
+.home-page .home-hero__content {
+    padding: clamp(3.6rem, 7vh, 6rem) 0 8.5rem;
+    margin-block: 0;
+    margin-inline: auto;
+}
+.home-page .home-hero h1 {
+    font-size: clamp(3.35rem, 5.05vw, 5.65rem);
+    max-width: 12ch;
+    line-height: 1.05;
+    letter-spacing: -0.065em;
+    margin: 0.5em 0 0.55em;
+}
+.home-page .home-hero__kicker {
+    font-size: 0.66rem;
+    letter-spacing: 0.19em;
+}
+.home-page .home-hero__identity {
+    max-width: 33ch;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.8;
+}
+.home-page .home-hero__intro {
+    max-width: 32ch;
+    font-size: 0.94rem;
+    color: #bcc7c6;
+}
+.home-page .home-hero__veil {
+    background:
+        linear-gradient(180deg, #101719 0, #10171900 90px),
+        linear-gradient(
+            90deg,
+            #0b1215f5 0%,
+            #0b1215d9 24%,
+            #0b121580 39%,
+            #0b121508 62%,
+            transparent
+        ),
+        linear-gradient(0deg, #101719 0%, #101719c4 9%, transparent 28%);
+}
+.home-page .home-hero__actions {
+    margin-top: 1.6rem;
+    gap: 1.3rem;
+}
+.home-page .hero-button {
+    min-height: 46px;
+    font-size: 0.87rem;
+    padding: 0.65rem 1rem;
+}
+.home-page .hero-button--secondary {
+    border: 0;
+    border-bottom: 1px solid #d6bd9666;
+    padding-inline: 0;
+    gap: 1.5rem;
+}
+.home-page .hero-button--secondary:hover {
+    background: transparent;
+    color: #dfa05d;
+}
+.home-page .home-hero__availability {
+    max-width: 39ch;
+    font-size: 0.67rem;
+    margin-top: 1.6rem;
+    color: #adb8b1;
+}
+.frontier-console {
+    position: absolute;
+    bottom: 3.1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(calc(100% - 6rem), 1480px);
+    min-height: 4.15rem;
+    border-top: 1px solid #c7d1c82c;
+    padding-top: 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.frontier-console__story {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.frontier-console__story p {
+    margin: 0;
+}
+.frontier-console__story [data-home-note] {
+    font-size: 0.78rem;
+    color: #d2d5c9;
+    margin-top: 0.25rem;
+}
+.frontier-console__eyebrow {
+    font:
+        0.57rem DMMono,
+        monospace;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #9eb391;
+}
+.frontier-console__mark {
+    width: 25px;
+    height: 25px;
+    border: 1px solid #dfa05d88;
+    border-radius: 50%;
+    position: relative;
+}
+.frontier-console__mark::before,
+.frontier-console__mark::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -5px;
+    right: -5px;
+    border-top: 1px solid #dfa05d88;
+}
+.frontier-console__mark::after {
+    transform: rotate(90deg);
+}
+.frontier-console__controls {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+}
+.frontier-console__controls[hidden] {
+    display: none;
+}
+.frontier-console__controls [role="group"] {
+    display: flex;
+    gap: 0.75rem;
+}
+.frontier-console button {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    border-bottom: 1px solid transparent;
+    color: #c4c9bf;
+    font:
+        0.7rem DMMono,
+        monospace;
+    min-height: 44px;
+    padding: 0.5rem 0.7rem;
+    cursor: pointer;
+}
+.frontier-console button:hover {
+    color: #f6ead3;
+    border-bottom-color: #f6ead366;
+}
+.frontier-console button[aria-pressed="true"] {
+    color: #efb572;
+    border-bottom-color: #dfa05d;
+}
+.frontier-console button:focus-visible {
+    outline: 2px solid #dfa05d;
+    outline-offset: 4px;
+}
+.home-page .frontier-console .home-hero__motion {
+    position: static;
+    margin: 0;
+    padding-inline: 1.2rem 0;
+    border-left: 1px solid #c7d1c82c;
+    border-bottom: 0;
+    font-size: 0.6rem;
+    color: #aeb9b4;
+    max-width: 11rem;
+}
+.home-page .home-hero__caption {
+    bottom: 1.15rem;
+    font-size: 0.53rem;
+    opacity: 0.75;
+}
+.home-page .home-section--work {
+    position: relative;
+    padding-top: 7.5rem;
+}
+.home-transfer {
+    position: absolute;
+    top: -1.8rem;
+    left: 0;
+    width: 100%;
+    height: 155px;
+    overflow: hidden;
+    pointer-events: none;
+}
+.home-transfer path:first-child {
+    stroke: #dfa05d55;
+    stroke-width: 0.8;
+}
+.home-transfer path:nth-child(2) {
+    stroke: #65876130;
+    stroke-width: 0.8;
+}
+.home-transfer circle {
+    fill: #dfa05d;
+}
+.home-transfer circle:last-child {
+    fill: none;
+    stroke: #dfa05d44;
+    stroke-width: 0.8;
+}
+.home-page .project-card--feature {
+    border-block: 1px solid #96a59c30;
+    padding-block: 2rem;
+}
+.home-page .project-card--feature .project-card__body {
+    background: radial-gradient(
+        ellipse at 100% 20%,
+        #65876112,
+        transparent 70%
+    );
+}
+.home-page .home-introduction {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(3rem, 9vw, 8rem);
+    padding-block: 4.5rem;
+    background: none;
+}
+.home-page .home-introduction h2 {
+    font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+    line-height: 1.2;
+    letter-spacing: -0.045em;
+    margin-block: 1.1rem;
+    max-width: 22ch;
+}
+.home-page .home-introduction h2 em {
+    font-style: normal;
+    color: #a4bd92;
+}
+.home-introduction__copy {
+    padding-top: 2rem;
+}
+.home-introduction__copy > p {
+    font-size: 1.02rem;
+    line-height: 1.9;
+    color: #bdc8c3;
+}
+.home-page .home-introduction .section-link {
+    display: inline-block;
+    margin-top: 1.5rem;
+}
+.home-aperture {
+    position: relative;
+    width: 120px;
+    height: 76px;
+    margin-top: 1.8rem;
+}
+.home-aperture span {
+    position: absolute;
+    width: 66px;
+    height: 66px;
+    top: 0;
+    left: 0;
+    border: 1px solid #8eaaa75c;
+    border-radius: 50%;
+    transform: rotateX(55deg) rotate(-25deg);
+}
+.home-aperture span:nth-child(2) {
+    left: 25px;
+    border-color: #dfa05d99;
+}
+.home-aperture span:nth-child(3) {
+    left: 50px;
+}
+.home-aperture i {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    left: 70px;
+    top: 31px;
+    background: #dfa05d;
+    border-radius: 50%;
+}
+.home-page .home-section--writing {
+    padding-top: 5rem;
+}
+.home-page .writing-list {
+    border-top-color: #a8b5ad55;
+}
+.home-page .writing-list > li {
+    border-bottom-color: #a8b5ad33;
+}
+.home-page .writing-list > li > a {
+    padding-block: 1.7rem;
+}
+.home-page .home-close {
+    margin-top: 6rem;
+    padding-block: 4.5rem;
+    background: radial-gradient(ellipse at 90% 40%, #46625238, transparent 60%);
+    border-block: 1px solid #96a59c30;
+}
+.home-page .home-close::after {
+    border-color: #dfa05d55;
+    right: -9rem;
+    top: -8rem;
+}
+
+@media (max-width: 1000px) {
+    .frontier-console {
+        width: calc(100% - 3rem);
+    }
+    .frontier-console__story [data-home-note] {
+        max-width: 26ch;
+    }
+    .frontier-console__controls {
+        gap: 0.5rem;
+    }
+    .frontier-console__controls [role="group"] {
+        gap: 0.25rem;
+    }
+    .home-page .home-hero__content {
+        padding-top: 3.6rem;
+    }
+    .home-page .home-hero__caption {
+        right: 1.5rem;
+    }
+}
+@media (min-width: 651px) and (max-width: 1100px) and (max-aspect-ratio: 4/3) {
+    .home-page .home-hero {
+        display: block;
+        min-height: 0;
+    }
+    .home-page .home-hero__content {
+        padding: 495px 0 2rem;
+    }
+    .home-page .home-hero__veil {
+        background: linear-gradient(
+            180deg,
+            #101719 0,
+            transparent 70px,
+            transparent 300px,
+            #101719 455px
+        );
+    }
+    .frontier-console {
+        top: 410px;
+        bottom: auto;
+        min-height: 44px;
+        border-top: 0;
+        padding: 0;
+    }
+    .frontier-console__story {
+        display: none;
+    }
+    .frontier-console__controls {
+        justify-content: space-between;
+        width: 100%;
+    }
+    .home-page .home-hero__caption {
+        top: 466px;
+        bottom: auto;
+    }
+    .home-page .home-section--work {
+        padding-top: 6rem;
+    }
+}
+@media (max-width: 650px) {
+    .home-page .home-hero {
+        display: block;
+        min-height: 0;
+    }
+    .home-page .home-hero__content {
+        width: calc(100% - 2.5rem);
+        padding: 380px 0 1.5rem;
+    }
+    .home-page .home-hero h1 {
+        font-size: clamp(2.6rem, 11.5vw, 3.6rem);
+        margin-top: 0.4em;
+    }
+    .home-page .home-hero__kicker {
+        font-size: 0.55rem;
+    }
+    .home-page .home-hero__identity {
+        font-size: 0.84rem;
+        max-width: 39ch;
+    }
+    .home-page .home-hero__intro {
+        font-size: 0.89rem;
+        max-width: 38ch;
+    }
+    .home-page .home-hero__actions {
+        margin-top: 1.2rem;
+        gap: 1.1rem;
+    }
+    .home-page .hero-button {
+        font-size: 0.8rem;
+        gap: 1.2rem;
+    }
+    .home-page .home-hero__availability {
+        margin-top: 1.2rem;
+        max-width: 46ch;
+        font-size: 0.64rem;
+    }
+    .home-page .home-hero__veil {
+        background: linear-gradient(
+            180deg,
+            #101719 0,
+            transparent 55px,
+            transparent 230px,
+            #101719 338px
+        );
+    }
+    .frontier-console {
+        top: 300px;
+        bottom: auto;
+        min-height: 44px;
+        width: calc(100% - 2.5rem);
+        border-top: 0;
+        padding: 0;
+    }
+    .frontier-console__story {
+        display: none;
+    }
+    .frontier-console__controls {
+        width: 100%;
+        gap: 0.4rem;
+        justify-content: space-between;
+    }
+    .frontier-console__controls [role="group"] {
+        gap: 0.1rem;
+    }
+    .frontier-console button {
+        padding-inline: 0.5rem;
+        font-size: 0.65rem;
+    }
+    .home-page .frontier-console .home-hero__motion {
+        padding-left: 0.6rem;
+        max-width: 7.7rem;
+        font-size: 0.51rem;
+    }
+    .home-page .home-hero__caption {
+        top: 355px;
+        bottom: auto;
+        right: 1.25rem;
+        font-size: 0.5rem;
+    }
+    .home-page .home-section--work {
+        padding-top: 5rem;
+    }
+    .home-transfer {
+        height: 95px;
+        top: -0.5rem;
+        width: 100%;
+    }
+    .home-page .section-heading h2 {
+        font-size: 2.1rem;
+        max-width: 14ch;
+    }
+    .home-page .section-heading .section-link {
+        font-size: 0.75rem;
+    }
+    .home-page .project-card--feature {
+        padding-block: 1.3rem;
+    }
+    .home-page .home-introduction {
+        display: block;
+        padding-block: 3rem;
+    }
+    .home-page .home-introduction h2 {
+        font-size: 2rem;
+    }
+    .home-aperture {
+        margin-top: 0.4rem;
+        height: 60px;
+    }
+    .home-introduction__copy {
+        padding-top: 0.5rem;
+    }
+    .home-introduction__copy > p {
+        font-size: 0.95rem;
+    }
+    .home-page .home-section--writing {
+        padding-top: 3rem;
+    }
+    .home-page .home-close {
+        padding: 3rem 1.5rem;
+        margin-top: 4rem;
+    }
+}
+@media print {
+    .frontier-console,
+    .home-transfer,
+    .home-aperture {
+        display: none;
+    }
+    .home-page .home-hero__content {
+        padding: 0;
+    }
+    .home-page .home-hero {
+        min-height: 0;
+    }
+    .home-page .home-introduction {
+        display: block;
+    }
+}
