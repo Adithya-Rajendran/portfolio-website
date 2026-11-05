@@ -31,17 +31,23 @@ const page = (
     href: string,
     label: string,
     clearDraft = false,
+    nonce = "",
 ) =>
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title} · Adithya Rajendran</title><style>@font-face{font-family:Jost;src:url(/fonts/Jost-Regular.ttf)}*{box-sizing:border-box}body{margin:0;background:#101719;color:#f2e9d7;font:1rem/1.6 Jost,system-ui,sans-serif}header,main{width:min(100% - 2.5rem,72rem);margin:auto}header{padding:1.5rem 0;border-bottom:1px solid #59635b}header a{color:inherit;text-decoration:none;font-weight:700}main{padding:clamp(4rem,12vh,8rem) 0}h1{font-size:clamp(3rem,7vw,5rem);line-height:1.05;letter-spacing:-.04em;margin:.4em 0}p{max-width:44ch}a{color:#f0b87c;text-underline-offset:.25em}a:focus-visible{outline:3px solid #f4c487;outline-offset:4px}.eyebrow{color:#b7d2ae;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}</style></head><body><header><a href="/">Adithya Rajendran</a></header><main><p class="eyebrow">Contact</p><h1>${title}</h1><p>${message}</p><p><a href="${href}">${label} ↗</a></p></main>${clearDraft ? '<script>sessionStorage.removeItem("contact:senderEmail");sessionStorage.removeItem("contact:message");</script>' : ""}</body></html>`;
-const reply = (status: number, message: string) =>
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title} · Adithya Rajendran</title><style>@font-face{font-family:Jost;src:url(/fonts/Jost-Regular.ttf)}*{box-sizing:border-box}body{margin:0;background:#101719;color:#f2e9d7;font:1rem/1.6 Jost,system-ui,sans-serif}header,main{width:min(100% - 2.5rem,72rem);margin:auto}header{padding:1.5rem 0;border-bottom:1px solid #59635b}header a{color:inherit;text-decoration:none;font-weight:700}main{padding:clamp(4rem,12vh,8rem) 0}h1{font-size:clamp(3rem,7vw,5rem);line-height:1.05;letter-spacing:-.04em;margin:.4em 0}p{max-width:44ch}a{color:#f0b87c;text-underline-offset:.25em}a:focus-visible{outline:3px solid #f4c487;outline-offset:4px}.eyebrow{color:#b7d2ae;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}</style></head><body><header><a href="/">Adithya Rajendran</a></header><main><p class="eyebrow">Contact</p><h1>${title}</h1><p>${message}</p><p><a href="${href}">${label} ↗</a></p></main>${clearDraft ? `<script nonce="${nonce}">sessionStorage.removeItem("contact:senderEmail");sessionStorage.removeItem("contact:message");</script>` : ""}</body></html>`;
+const reply = (
+    status: number,
+    message: string,
+    headers: Record<string, string> = {},
+) =>
     new Response(page("Contact", message, "/contact", "Return to contact"), {
         status,
         headers: {
             "Content-Type": "text/html; charset=utf-8",
             "Cache-Control": "no-store",
+            ...headers,
         },
     });
-export const POST: APIRoute = async ({ request, url }) => {
+export const POST: APIRoute = async ({ request, url, locals }) => {
     const config = env as unknown as Record<string, any>;
     if (request.headers.get("origin") !== url.origin)
         return reply(403, "The request could not be verified.");
@@ -51,6 +57,23 @@ export const POST: APIRoute = async ({ request, url }) => {
         )
     )
         return reply(415, "The request could not be read.");
+    const ip = request.headers.get("CF-Connecting-IP");
+    if (!ip || !config.CONTACT_RATE_LIMIT)
+        return reply(
+            503,
+            "The message could not be sent. Please try again later.",
+        );
+    try {
+        if (!(await config.CONTACT_RATE_LIMIT.limit({ key: ip })).success)
+            return reply(429, "Too many requests. Please try again later.", {
+                "Retry-After": "60",
+            });
+    } catch {
+        return reply(
+            503,
+            "The message could not be sent. Please try again later.",
+        );
+    }
     const reader = request.body?.getReader();
     if (!reader) return reply(400, "The request could not be read.");
     let size = 0;
@@ -79,21 +102,6 @@ export const POST: APIRoute = async ({ request, url }) => {
     });
     if (!input.success)
         return reply(400, "Check your email and message and try again.");
-    const ip = request.headers.get("CF-Connecting-IP");
-    if (!ip || !config.CONTACT_RATE_LIMIT)
-        return reply(
-            503,
-            "The message could not be sent. Please try again later.",
-        );
-    try {
-        if (!(await config.CONTACT_RATE_LIMIT.limit({ key: ip })).success)
-            return reply(429, "Too many requests. Please try again later.");
-    } catch {
-        return reply(
-            503,
-            "The message could not be sent. Please try again later.",
-        );
-    }
     const token = form.get("cf-turnstile-response");
     const hosts = (config.TURNSTILE_HOSTNAMES || "")
         .split(",")
@@ -193,6 +201,7 @@ export const POST: APIRoute = async ({ request, url }) => {
             "/",
             "Return home",
             true,
+            locals?.cspNonce,
         ),
         {
             status: 200,

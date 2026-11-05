@@ -5,4 +5,5 @@ export default defineConfig({
     site: "https://adithya-rajendran.com",
     output: "server",
     adapter: cloudflare(),
+    vite: { build: { assetsInlineLimit: 0 } },
 });

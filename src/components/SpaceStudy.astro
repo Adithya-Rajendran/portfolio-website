@@ -78,7 +78,7 @@ const scene = scenes[kind];
     >
         Scene credits ↗
     </a>
-    {kind === "relay" && <script is:inline>
+    {kind === "relay" && <script is:inline nonce={Astro.locals.cspNonce}>
         {
             const picture = document.currentScript
                 ?.closest("figure")

@@ -2,6 +2,8 @@
 
 Updated November 4, 2026 (UTC). The owner explicitly authorized credential transfer, contact-inbox testing, and moving the domain to Cloudflare. The site is now live on Cloudflare Workers.
 
+Security update, November 5, 2026: public Worker and version preview URLs are now disabled, Turnstile is restricted to the production domain, and domain-wide protections have been hardened. See [Cloudflare security configuration](cloudflare-security.md) for the current settings; the preview and rollback details below record the original migration.
+
 ## Prepared resources
 
 | Resource             | Configuration                                                                                                                                                                                   |

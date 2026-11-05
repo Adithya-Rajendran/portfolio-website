@@ -29,7 +29,11 @@ Astro.response.headers.set("Cache-Control", "no-store");
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width" />
-        <script is:inline set:html={sceneClockBoot} />
+        <script
+            is:inline
+            nonce={Astro.locals.cspNonce}
+            set:html={sceneClockBoot}
+        />
         <link
             rel="preload"
             href="/fonts/Manrope-Variable.ttf"
@@ -62,11 +66,12 @@ Astro.response.headers.set("Cache-Control", "no-store");
         {structuredData.map((item: unknown) => (
             <script
                 type="application/ld+json"
+                nonce={Astro.locals.cspNonce}
                 set:html={JSON.stringify(item).replace(/</g, "\\u003c")}
             />
         ))}
     </head>
-    <script is:inline>
+    <script is:inline nonce={Astro.locals.cspNonce}>
         try {
             const theme = localStorage.getItem("theme");
             if (theme === "light" || theme === "dark")

@@ -42,9 +42,11 @@ function request(
         },
         body,
     });
-    return POST({ request: req, url: new URL(req.url) } as Parameters<
-        typeof POST
-    >[0]);
+    return POST({
+        request: req,
+        url: new URL(req.url),
+        locals: { cspNonce: "test-nonce" },
+    } as Parameters<typeof POST>[0]);
 }
 function provider(input: string | URL | Request) {
     const url = String(input);
@@ -92,13 +94,15 @@ describe("contact Worker", () => {
         expect((await request({}, { body: "a".repeat(16385) })).status).toBe(
             413,
         );
+        expect(limit).toHaveBeenCalledTimes(1);
         expect(fetchMock).not.toHaveBeenCalled();
     });
     it.each([{ senderEmail: "bad" }, { message: "   " }, { topic: "invalid" }])(
         "rejects invalid input %o",
         async (invalid) => {
             expect((await request(invalid)).status).toBe(400);
-            expect(limit).not.toHaveBeenCalled();
+            expect(limit).toHaveBeenCalledWith({ key: "192.0.2.1" });
+            expect(fetchMock).not.toHaveBeenCalled();
         },
     );
     it("fails closed when rate limiting is unavailable, fails, or exceeds the limit", async () => {
@@ -109,7 +113,29 @@ describe("contact Worker", () => {
         limit.mockRejectedValueOnce(new Error("limiter down"));
         expect((await request()).status).toBe(503);
         limit.mockResolvedValueOnce({ success: false });
-        expect((await request()).status).toBe(429);
+        const limited = await request();
+        expect(limited.status).toBe(429);
+        expect(limited.headers.get("retry-after")).toBe("60");
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+    it("does not read the body or contact providers when the limit is exhausted", async () => {
+        limit.mockResolvedValueOnce({ success: false });
+        const req = new Request("https://example.com/api/contact", {
+            method: "POST",
+            headers: {
+                origin: "https://example.com",
+                "content-type": "application/x-www-form-urlencoded",
+                "CF-Connecting-IP": "192.0.2.1",
+            },
+            body: "message=hello",
+        });
+        const getReader = vi.spyOn(req.body!, "getReader");
+        const response = await POST({
+            request: req,
+            url: new URL(req.url),
+        } as Parameters<typeof POST>[0]);
+        expect(response.status).toBe(429);
+        expect(getReader).not.toHaveBeenCalled();
         expect(fetchMock).not.toHaveBeenCalled();
     });
     it("rejects missing verification and does not contact providers", async () => {
@@ -154,6 +180,7 @@ describe("contact Worker", () => {
             'sessionStorage.removeItem("contact:senderEmail")',
         );
         expect(html).toContain('sessionStorage.removeItem("contact:message")');
+        expect(html).toContain('<script nonce="test-nonce">');
     });
     it.each([
         new Response("refused", { status: 400 }),
