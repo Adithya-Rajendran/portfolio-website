@@ -3,10 +3,12 @@
         <source
             media="(min-width: 651px) and (max-width: 1100px) and (max-aspect-ratio: 4/3)"
             srcset="/images/scenes/horizon-3d-tablet-v1.webp"
+            data-home-framing="tablet"
         />
         <source
             media="(max-width: 650px)"
             srcset="/images/scenes/horizon-3d-mobile-v1.webp"
+            data-home-framing="mobile"
         />
         <img
             src="/images/scenes/horizon-3d-desktop-v1.webp"
@@ -53,6 +55,12 @@
         display: block;
         width: 100%;
         height: 100%;
+    }
+    .hero-visual__stage {
+        opacity: 0;
+    }
+    .hero-visual__stage[data-reveal="ready"] {
+        opacity: 1;
     }
     @media (min-width: 651px) and (max-width: 1100px) and (max-aspect-ratio: 4/3) {
         .hero-visual {

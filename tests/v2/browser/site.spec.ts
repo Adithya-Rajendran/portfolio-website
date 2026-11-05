@@ -86,7 +86,10 @@ test("home's decorative scene starts automatically and respects reduced motion",
     const visual = page.locator("[data-home-visual]");
     const stage = page.locator("[data-home-stage]");
     await expect(visual).toHaveAttribute("aria-hidden", "true");
-    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    await expect(stage).toHaveAttribute("data-reveal", "ready", {
+        timeout: 60000,
+    });
+    await expect(stage.locator("canvas")).toBeVisible();
     await expect(stage).toHaveAttribute("data-state", "paused");
     await expect(page.locator("[data-home-motion]")).toBeDisabled();
     await expect(page.locator("[data-home-poster]")).toBeHidden();
@@ -103,9 +106,10 @@ test("home loads the native rover scene", async ({ page }) => {
     });
     await page.goto("/");
     const stage = page.locator("[data-home-stage]");
-    await expect(stage).toHaveAttribute("data-artwork", "rover-3d", {
+    await expect(stage).toHaveAttribute("data-reveal", "ready", {
         timeout: 30000,
     });
+    await expect(stage).toHaveAttribute("data-artwork", "rover-3d");
     expect(
         urls.some(
             (url) => new URL(url).pathname === "/models/home-rover-v1.glb",
@@ -123,7 +127,7 @@ test("home scene follows the mouse, returns to center and freezes motion", async
     const stage = page.locator("[data-home-stage]");
     const hero = page.locator(".home-hero");
     const motion = page.locator("[data-home-motion]");
-    await expect(stage).toHaveAttribute("data-artwork", "rover-3d", {
+    await expect(stage).toHaveAttribute("data-reveal", "ready", {
         timeout: 60000,
     });
     const box = await hero.boundingBox();
@@ -189,8 +193,8 @@ for (const width of [320, 390, 768, 1440]) {
         const headingBefore = await heading.boundingBox();
         release();
         await expect(page.locator("[data-home-stage]")).toHaveAttribute(
-            "data-artwork",
-            "rover-3d",
+            "data-reveal",
+            "ready",
             { timeout: 30000 },
         );
         expect(await hero.boundingBox()).toEqual(before);
@@ -208,6 +212,126 @@ for (const width of [320, 390, 768, 1440]) {
         expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width + 1);
     });
 }
+
+test("home retains its poster during reveal and ignores pointer input while loading", async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    let release!: () => void;
+    const blocked = new Promise<void>((resolve) => {
+        release = resolve;
+    });
+    let requested!: () => void;
+    const requestSeen = new Promise<void>((resolve) => {
+        requested = resolve;
+    });
+    await page.route("**/models/home-rover-v1.glb", async (route) => {
+        requested();
+        await blocked;
+        await route.continue();
+    });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await requestSeen;
+    const stage = page.locator("[data-home-stage]");
+    const poster = page.locator("[data-home-poster]");
+    await expect(poster).toBeVisible();
+    await page.evaluate(() => {
+        const stage = document.querySelector<HTMLElement>("[data-home-stage]")!;
+        const poster =
+            document.querySelector<HTMLElement>("[data-home-poster]")!;
+        const snapshots: Array<{
+            phase: string | undefined;
+            posterHidden: boolean;
+            x: string | undefined;
+            y: string | undefined;
+        }> = [];
+        Object.assign(window, { homeRevealSnapshots: snapshots });
+        new MutationObserver(() =>
+            snapshots.push({
+                phase: stage.dataset.reveal,
+                posterHidden: poster.hidden,
+                x: stage.dataset.viewX,
+                y: stage.dataset.viewY,
+            }),
+        ).observe(stage, {
+            attributes: true,
+            attributeFilter: ["data-reveal"],
+        });
+    });
+    const hero = await page.locator(".home-hero").boundingBox();
+    expect(hero).not.toBeNull();
+    if (!hero) throw new Error("Home hero has no bounds");
+    await page.mouse.move(
+        hero.x + hero.width * 0.85,
+        hero.y + hero.height * 0.3,
+    );
+    release();
+    await expect(stage).toHaveAttribute("data-reveal", "ready", {
+        timeout: 60000,
+    });
+    const snapshots = await page.evaluate(
+        () =>
+            (
+                window as unknown as {
+                    homeRevealSnapshots: Array<{
+                        phase: string;
+                        posterHidden: boolean;
+                        x?: string;
+                        y?: string;
+                    }>;
+                }
+            ).homeRevealSnapshots,
+    );
+    const fading = snapshots.find((snapshot) => snapshot.phase === "fading");
+    const ready = snapshots.find((snapshot) => snapshot.phase === "ready");
+    expect(fading).toMatchObject({
+        posterHidden: false,
+        x: "0.0000",
+        y: "0.0000",
+    });
+    expect(ready).toMatchObject({
+        posterHidden: true,
+        x: "0.0000",
+        y: "0.0000",
+    });
+    await expect(poster).toBeHidden();
+});
+
+test("home poster and first rover frame stay aligned at desktop cover crop", async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    const stage = page.locator("[data-home-stage]");
+    await expect(stage).toHaveAttribute("data-reveal", "ready", {
+        timeout: 60000,
+    });
+    await page.addStyleTag({
+        content:
+            ".home-hero__content, .home-hero__veil, .home-hero__motion, .home-hero__map-credit { visibility: hidden !important; }",
+    });
+    const clip = { x: 900, y: 370, width: 720, height: 450 };
+    const actual = await page.screenshot({ clip });
+    await page.evaluate(() => {
+        document.querySelector<HTMLElement>("[data-home-poster]")!.hidden =
+            false;
+        document.querySelector<HTMLElement>(
+            "[data-home-stage]",
+        )!.style.opacity = "0";
+    });
+    const poster = await page.screenshot({ clip });
+    const { default: sharp } = await import("sharp");
+    const renderedPixels = await sharp(actual).removeAlpha().raw().toBuffer();
+    const posterPixels = await sharp(poster).removeAlpha().raw().toBuffer();
+    expect(renderedPixels.length).toBe(posterPixels.length);
+    let difference = 0;
+    for (let i = 0; i < renderedPixels.length; i++)
+        difference += Math.abs(renderedPixels[i] - posterPixels[i]);
+    expect(difference / renderedPixels.length).toBeLessThan(10);
+});
 
 test("home recovers when a page is restored while the rover is loading", async ({
     page,
@@ -238,7 +362,7 @@ test("home recovers when a page is restored while the rover is loading", async (
     });
     release();
     const stage = page.locator("[data-home-stage]");
-    await expect(stage).toHaveAttribute("data-artwork", "rover-3d", {
+    await expect(stage).toHaveAttribute("data-reveal", "ready", {
         timeout: 30000,
     });
     await expect(stage.locator("canvas")).toHaveCount(1);
@@ -275,7 +399,10 @@ test("home scene motion can be paused and resumed", async ({ page }) => {
     );
     test.skip(!supported, "WebGL2 is unavailable in this browser");
     const stage = page.locator("[data-home-stage]");
-    await expect(stage.locator("canvas")).toBeVisible({ timeout: 60000 });
+    await expect(stage).toHaveAttribute("data-reveal", "ready", {
+        timeout: 60000,
+    });
+    await expect(stage.locator("canvas")).toBeVisible();
     await expect(stage).toHaveAttribute("data-state", "running");
     const motion = page.locator("[data-home-motion]");
     await motion.click();
@@ -297,7 +424,10 @@ test("home follows live motion preferences and preserves a manual pause", async 
     test.skip(!supported, "WebGL2 is unavailable in this browser");
     const stage = page.locator("[data-home-stage]");
     const motion = page.locator("[data-home-motion]");
-    await expect(stage.locator("canvas")).toBeVisible({ timeout: 60000 });
+    await expect(stage).toHaveAttribute("data-reveal", "ready", {
+        timeout: 60000,
+    });
+    await expect(stage.locator("canvas")).toBeVisible();
     await expect(stage).toHaveAttribute("data-state", "running");
     await page.emulateMedia({ reducedMotion: "reduce" });
     await expect(motion).toBeDisabled();
@@ -327,7 +457,12 @@ test("home falls back to its poster if the WebGL context is lost", async ({
     );
     test.skip(!supported, "WebGL2 is unavailable in this browser");
     const canvas = page.locator("[data-home-stage] canvas");
-    await expect(canvas).toBeVisible({ timeout: 20000 });
+    await expect(page.locator("[data-home-stage]")).toHaveAttribute(
+        "data-reveal",
+        "ready",
+        { timeout: 60000 },
+    );
+    await expect(canvas).toBeVisible();
     const lost = await canvas.evaluate((element) => {
         const gl = (element as HTMLCanvasElement).getContext("webgl2");
         const extension = gl?.getExtension("WEBGL_lose_context");

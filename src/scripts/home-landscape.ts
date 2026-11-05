@@ -4,6 +4,7 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { ImprovedNoise } from "three/addons/math/ImprovedNoise.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import { homeCoverFrame, type HomeFraming } from "../lib/home-framing";
 
 // Real geometry gives the wheels, mast, foreground and horizon independent
 // parallax. The camera only travels a few centimetres around this composition.
@@ -349,9 +350,15 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
         }),
     ]);
     const target = new T.Vector3();
-    const position = (aspect: number, x = 0, y = 0, compact = false) => {
-        camera.aspect = aspect;
-        const narrow = compact || aspect < 1.45;
+    const position = (
+        width: number,
+        height: number,
+        framing: HomeFraming,
+        x = 0,
+        y = 0,
+    ) => {
+        const view = homeCoverFrame(width, height, framing);
+        const narrow = framing !== "desktop";
         camera.fov = narrow ? 33 : 30;
         camera.position.set(narrow ? 9 : 8, narrow ? 4.3 : 3.9, 12);
         camera.position.x += x * 0.52;
@@ -362,7 +369,14 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             narrow ? -0.2 : -4,
         );
         camera.lookAt(target);
-        camera.updateProjectionMatrix();
+        camera.setViewOffset(
+            view.fullWidth,
+            view.fullHeight,
+            view.x,
+            view.y,
+            view.width,
+            view.height,
+        );
     };
     return {
         scene,

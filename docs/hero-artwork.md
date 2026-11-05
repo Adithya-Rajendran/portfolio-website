@@ -4,12 +4,15 @@ The homepage is a real Three.js scene: a detailed NASA/JPL-Caltech Perseverance 
 
 The model is posed in Blender, baked into a static mesh, batched by material, and Draco-compressed to approximately 2.6 MB. The landscape, rock instances, dusty horizon, sky, lights and camera are built in TypeScript. Small rover lenses use reflective materials without a costly full-scene refraction pass. The existing amber, terracotta and charcoal palette carries into the lighting.
 
-A matching rendered poster appears immediately while the model loads and remains available without JavaScript, on loading failure or after graphics-context loss. Once ready, the native 3D scene replaces it. Touch devices retain natural scrolling and use a centered composition. Pause and the system reduced-motion setting freeze the camera. Rendering stops offscreen, in hidden tabs and when the pointer-driven camera settles; shadows render once. Graphics resources and listeners are released on page exit, including exit during asset loading.
+A matching rendered poster appears immediately while the model loads and remains available without JavaScript, on loading failure or after graphics-context loss. The perspective camera uses the same reference dimensions and cover crop as that poster, so the rover retains its size and position across viewport sizes. After fonts, textures, shaders and the first GPU frame are ready, the scene fades over the retained poster for 900 ms. Pointer input begins after the transition, so movements made while loading cannot pull the camera away from its initial composition. Reduced motion skips the fade.
+
+Touch devices retain natural scrolling and use a centered composition. Pause and the system reduced-motion setting freeze the camera. Mouse movement follows the display's animation cadence. Rendering stops offscreen, in hidden tabs and when the pointer-driven camera settles; shadows render once and unchanged sizes do not trigger a second startup draw. Graphics resources, pending fades and listeners are released on page exit, including exit during asset loading.
 
 ## Reproducible sources
 
 - `src/scripts/home-landscape.ts`: terrain, materials, lighting, model loading and responsive camera composition.
 - `src/scripts/home-visual.ts`: pointer easing, loading, motion preferences, visibility and resource lifecycle.
+- `src/lib/home-framing.ts`: shared capture dimensions and cover-crop calculation. Update these dimensions if the source posters change.
 - `scripts/artwork/prepare-home-rover.py`: export the posed rover from the editable Blender source.
 - `scripts/artwork/prepare-home-materials.mjs`: prepare the compact tiling terrain textures.
 - `scripts/artwork/capture-home-posters.mjs`: capture the actual 3D scene without its HTML overlays and encode fallback posters.
