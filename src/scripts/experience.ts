@@ -2,6 +2,8 @@ import type * as Three from "three";
 import type { ScenePhase } from "../lib/scene-time";
 import { waitForSceneClock, refreshSceneClock } from "../lib/scene-clock";
 import { createJourneyPlayback } from "../lib/journey-playback";
+import { createScrollJourney } from "../lib/scroll-journey";
+import { createExperienceNavigation } from "./experience-navigation";
 import {
     arcPosition,
     createExperienceCamera,
@@ -410,7 +412,9 @@ if (
             let returnTime = 0;
             let pendingTravel: number | undefined;
             let selectionScroll: number | undefined;
+            let centeredWorld: number | undefined;
             let navigationDirty = false;
+            const scrollJourney = createScrollJourney();
             let knots: number[] = [];
             const motion = matchMedia("(prefers-reduced-motion: reduce)");
             const entries = [
@@ -418,34 +422,43 @@ if (
                     "[data-journey-step]",
                 ),
             ];
+            const navigation = createExperienceNavigation(section, worldIds);
             const record = document.querySelector<HTMLElement>("#cv");
             const measure = () => {
-                const offset = narrow.matches
-                    ? innerHeight * 0.48
-                    : innerHeight * 0.36;
-                const positions = entries.map((entry) =>
-                    Math.max(
-                        0,
-                        entry.getBoundingClientRect().top + scrollY - offset,
-                    ),
+                knots = worldIds.map((_, i) =>
+                    i ? navigation.positionFor(i, narrow.matches) : 0,
                 );
-                const end = Math.max(
-                    innerHeight * 2,
-                    (record?.getBoundingClientRect().bottom || 0) +
-                        scrollY -
-                        innerHeight * 0.7,
+                for (let i = 1; i < knots.length; i++)
+                    knots[i] = Math.max(knots[i - 1] + 1, knots[i]);
+            };
+            const alignSelection = () => {
+                if (centeredWorld === undefined) return;
+                const top = navigation.positionFor(
+                    centeredWorld,
+                    narrow.matches,
                 );
-                knots = worldIds.map((_, i) => {
-                    if (!i) return 0;
-                    if (positions.length >= 5)
-                        return Math.max(
-                            i * 120,
-                            positions[
-                                Math.round((i * (positions.length - 1)) / 4)
-                            ],
-                        );
-                    return (end * i) / 4;
-                });
+                if (Math.abs(top - scrollY) <= 1) return;
+                window.scrollTo({ top, behavior: "instant" });
+                selectionScroll = scrollY;
+            };
+            const releaseAlignment = () => {
+                centeredWorld = undefined;
+                selectionScroll = undefined;
+            };
+            const releaseOnKey = (event: KeyboardEvent) => {
+                if (
+                    !event.defaultPrevented &&
+                    [
+                        "ArrowDown",
+                        "ArrowUp",
+                        "PageDown",
+                        "PageUp",
+                        "Home",
+                        "End",
+                        " ",
+                    ].includes(event.key)
+                )
+                    releaseAlignment();
             };
             const resumeGuide = () => {
                 if (freeLook) {
@@ -456,17 +469,13 @@ if (
             };
             const requestTravel = (value: number, explicit = false) => {
                 if (explicit) pendingTravel = undefined;
-                const nearest = Math.round(value);
-                // A small reading window around each chapter keeps a trackpad
-                // nudge from repeatedly entering and leaving a settlement.
-                const next = Math.abs(value - nearest) < 0.12 ? nearest : value;
                 if (dragging && !explicit) {
-                    pendingTravel = next;
+                    pendingTravel = value;
                     return;
                 }
-                const changed = explicit || Math.abs(next - target) > 0.015;
+                const changed = explicit || Math.abs(value - target) > 0.015;
                 if (changed) resumeGuide();
-                target = next;
+                target = value;
                 navigationDirty ||= changed;
                 schedule();
             };
@@ -482,19 +491,16 @@ if (
                     }
                     selectionScroll = undefined;
                 }
-                let i = 0;
-                while (i < 3 && scrollY >= knots[i + 1]) i++;
-                requestTravel(
-                    Math.min(
-                        4,
-                        Math.max(
-                            0,
-                            i +
-                                (scrollY - knots[i]) /
-                                    Math.max(1, knots[i + 1] - knots[i]),
-                        ),
-                    ),
+                centeredWorld = undefined;
+                const previous = scrollJourney.current;
+                const destination = scrollJourney.update(
+                    scrollY,
+                    knots,
+                    innerHeight,
                 );
+                // A reading scroll inside the current region must not take
+                // over manual exploration or interrupt an unfinished arrival.
+                if (destination !== previous) requestTravel(destination);
             };
             const updateControl = () => {
                 const reduced = motion.matches;
@@ -569,12 +575,10 @@ if (
                 buttons.forEach((button, i) =>
                     button.setAttribute("aria-pressed", String(i === index)),
                 );
-                entries.forEach((entry, i) =>
+                entries.forEach((entry) =>
                     entry.classList.toggle(
                         "is-current",
-                        Math.round(
-                            (i * 4) / Math.max(1, entries.length - 1),
-                        ) === index,
+                        entry === navigation.targets[index],
                     ),
                 );
             };
@@ -981,6 +985,7 @@ if (
                 camera.aspect = w / h;
                 camera.updateProjectionMatrix();
                 measure();
+                alignSelection();
                 // A size/font/layout change must not move the selected world.
                 // Only actual page scrolling updates the journey destination.
                 schedule();
@@ -1075,15 +1080,14 @@ if (
             });
             const selections = buttons.map((button, i) => {
                 const select = () => {
+                    scrollJourney.select(i);
                     failed.delete(i);
                     outpostFailures.delete(i);
                     void ensurePlanet(i).catch(() => {});
                     void ensureOutpost(i);
-                    window.scrollTo({
-                        top: knots[i] || 0,
-                        behavior: "instant",
-                    });
-                    selectionScroll = scrollY;
+                    centeredWorld = i;
+                    measure();
+                    alignSelection();
                     requestTravel(i, true);
                 };
                 button.addEventListener("click", select);
@@ -1155,7 +1159,18 @@ if (
                 start.hidden = false;
             };
             window.addEventListener("scroll", readScroll, { passive: true });
+            window.addEventListener("wheel", releaseAlignment, {
+                passive: true,
+            });
+            window.addEventListener("touchstart", releaseAlignment, {
+                passive: true,
+            });
+            window.addEventListener("pointerdown", releaseAlignment, {
+                passive: true,
+            });
+            window.addEventListener("keydown", releaseOnKey);
             window.addEventListener("resize", resize);
+            window.visualViewport?.addEventListener("resize", resize);
             document.addEventListener("visibilitychange", visibility);
             motion.addEventListener("change", syncMotion);
             narrow.addEventListener("change", configureTouch);
@@ -1173,7 +1188,12 @@ if (
                 observer.disconnect();
                 sizes.disconnect();
                 window.removeEventListener("scroll", readScroll);
+                window.removeEventListener("wheel", releaseAlignment);
+                window.removeEventListener("touchstart", releaseAlignment);
+                window.removeEventListener("pointerdown", releaseAlignment);
+                window.removeEventListener("keydown", releaseOnKey);
                 window.removeEventListener("resize", resize);
+                window.visualViewport?.removeEventListener("resize", resize);
                 document.removeEventListener("visibilitychange", visibility);
                 motion.removeEventListener("change", syncMotion);
                 narrow.removeEventListener("change", configureTouch);

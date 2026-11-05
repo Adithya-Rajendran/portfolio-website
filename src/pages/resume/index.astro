@@ -5,6 +5,7 @@ import ExperienceVisual from "../../components/ExperienceVisual.astro";
 import { cvAnchor } from "../../../lib/cv";
 import { formatTimelineDate } from "../../../lib/profile-content";
 import { getProfile } from "../../lib/sanity";
+import { experienceWorld } from "../../lib/scroll-journey";
 const p = await getProfile();
 const timeline = p?.timeline || [];
 ---
@@ -47,7 +48,11 @@ const timeline = p?.timeline || [];
                     </div>
                     <ol class="trajectory-entries">
                         {timeline.map((e, index) => (
-                            <li id={cvAnchor(e._key)} data-journey-step>
+                            <li
+                                id={cvAnchor(e._key)}
+                                data-journey-step
+                                data-journey-world={experienceWorld(e)}
+                            >
                                 <p class="trajectory-entry__number">
                                     {String(index + 1).padStart(2, "0")} /{" "}
                                     {e.kind === "education"
@@ -77,13 +82,18 @@ const timeline = p?.timeline || [];
                                         </span>
                                     )}
                                 </h3>
-                                <p class="trajectory-entry__org">
+                                <p
+                                    class="trajectory-entry__org"
+                                    data-journey-focus-end
+                                >
                                     <SafeLink href={e.orgUrl}>
                                         {e.organization}
                                     </SafeLink>
                                     {e.location && ` · ${e.location}`}
                                 </p>
-                                {e.summary && <p>{e.summary}</p>}
+                                {e.summary && (
+                                    <p data-journey-focus-end>{e.summary}</p>
+                                )}
                                 {e.highlights?.length && (
                                     <ul>
                                         {e.highlights.map((h) => (
@@ -101,9 +111,14 @@ const timeline = p?.timeline || [];
                     </ol>
                 </section>
                 {p?.credentials?.length && (
-                    <section class="trajectory-extra">
+                    <section
+                        class="trajectory-extra"
+                        data-journey-world="saturn"
+                    >
                         <p class="trajectory-kicker">Learning &amp; practice</p>
-                        <h2 id="certifications">Credentials</h2>
+                        <h2 id="certifications" data-journey-focus-end>
+                            Credentials
+                        </h2>
                         <ul>
                             {p.credentials.map((c) => (
                                 <li>
@@ -156,7 +171,12 @@ const timeline = p?.timeline || [];
                         </ul>
                     </section>
                 )}
-                <section class="trajectory-next">
+                <section
+                    class="trajectory-next"
+                    data-journey-world={
+                        p?.credentials?.length ? undefined : "saturn"
+                    }
+                >
                     <p class="trajectory-kicker">Keep exploring</p>
                     <h2>From experience to work.</h2>
                     <a href="/portfolio">Explore projects ↗</a>
