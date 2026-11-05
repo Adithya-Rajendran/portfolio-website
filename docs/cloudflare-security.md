@@ -52,6 +52,12 @@ Sources reviewed: [ESET's 2026 research](https://www.welivesecurity.com/en/eset-
 
 The additions are preventive policy choices. The initial attempt to read recent Cloudflare security-event analytics returned a temporary GraphQL budget-limit error. No claim is made that these locations were observed attacking this website. Source-IP geography can also reflect proxies or compromised infrastructure; the WAF, Access and contact controls apply independently of this geographic filter. Further expansion should use actual security events and the cost of blocking legitimate visitors.
 
+## Public reading and human-only contact
+
+The public HTML contains its text and navigation without requiring JavaScript or WebGL. `/llms.txt` now provides a request-time index of all published posts and projects, the main reading pages, the full RSS feed and sitemap. HTML head links and a robots.txt comment make that guide discoverable. The index shares the site's published perspective, date filtering and `no-store` freshness contract; an upstream failure remains an error.
+
+Crawler directions exclude `/contact`, its legacy `/comms` alias, `/api/` and `/studio`; contact is also omitted from the sitemap and agent guide. These directions do not grant a security bypass. Contact submissions still require same-origin input, the existing rate limits and a server-verified Turnstile token for the exact hostname and `contact` action. No user-agent string grants submission privileges. The unused Turnstile widget is retained; the live contact widget and its credentials are unchanged.
+
 ## Application browser policy
 
 Public production HTML uses a fresh cryptographic nonce for each response. Only explicitly trusted clock, theme, structured-data, relay-preview and contact-success scripts receive the nonce. Astro's processed scripts remain external assets. Arbitrary response HTML is never rewritten to grant script execution.
