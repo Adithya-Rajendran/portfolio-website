@@ -23,18 +23,21 @@ for (const figure of document.querySelectorAll<HTMLElement>(
         const ticket = ++generation;
         let renderer: Three.WebGLRenderer | undefined;
         let teardown: (() => void) | undefined;
+        const startupCleanup: Array<() => void> = [];
         const owned = new Set<Three.Texture>();
         try {
             const clock = await waitForSceneClock();
             const [
                 T,
-                { RoomEnvironment },
+                { makeStudyEnvironment },
+                { makeStudyRendering },
                 { makeSpaceStudy },
                 { makeStudySetting },
                 { makePlanet, disposePlanet },
             ] = await Promise.all([
                 import("three"),
-                import("three/addons/environments/RoomEnvironment.js"),
+                import("./study-lighting"),
+                import("./study-rendering"),
                 import("./space-studies"),
                 import("./space-settings"),
                 import("./planet-materials"),
@@ -43,13 +46,14 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             renderer = new T.WebGLRenderer({
                 alpha: true,
                 antialias: true,
-                powerPreference: "low-power",
+                powerPreference: "high-performance",
             });
             const render = renderer;
-            render.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+            render.info.autoReset = false;
+            render.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
             render.outputColorSpace = T.SRGBColorSpace;
             render.toneMapping = T.ACESFilmicToneMapping;
-            render.toneMappingExposure = 1.1;
+            render.toneMappingExposure = 1.05;
             render.shadowMap.enabled = true;
             render.shadowMap.type = T.PCFShadowMap;
             render.autoClear = false;
@@ -61,26 +65,23 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             planetarySun.position.set(-6, 4, 0);
             planetScene.add(planetarySun, new T.AmbientLight(0xabc6e5, 0.025));
             const camera = new T.PerspectiveCamera(36, 1, 0.1, 150);
-            camera.position.set(0, kind === "robotics" ? 1.1 : 0.3, 11.4);
+            const eyeHeight =
+                kind === "workshop" ? 3.7 : kind === "robotics" ? 1.1 : 0.3;
+            camera.position.set(0, eyeHeight, 11.4);
             const aim = new T.Vector3(
                 0,
                 kind === "observatory" ? -0.4 : -0.1,
                 0,
             );
             camera.lookAt(aim);
-            const room = new RoomEnvironment();
-            const pmrem = new T.PMREMGenerator(render);
-            const environment = pmrem.fromScene(room, 0.04, 0.1, 100, {
-                size: 128,
-            });
+            const environment = makeStudyEnvironment(render, scene);
+            startupCleanup.push(() => environment.dispose());
             scene.environment = environment.texture;
-            scene.environmentIntensity = 0.3;
-            room.dispose();
-            pmrem.dispose();
-            const key = new T.DirectionalLight(0xffd3a0, 3.4);
-            key.position.set(-5, 6, 3);
+            scene.environmentIntensity = 0.4;
+            const key = new T.DirectionalLight(0xffc58c, 2.8);
+            key.position.set(-5, 5, 1);
             key.castShadow = true;
-            key.shadow.mapSize.set(1024, 1024);
+            key.shadow.mapSize.set(2048, 2048);
             Object.assign(key.shadow.camera, {
                 left: -7,
                 right: 7,
@@ -89,24 +90,39 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 near: 0.1,
                 far: 45,
             });
+            key.shadow.camera.updateProjectionMatrix();
             key.shadow.bias = -0.0002;
-            key.shadow.normalBias = 0.015;
+            key.shadow.normalBias = 0.008;
             scene.add(key);
-            const rim = new T.DirectionalLight(0x8db4d2, 1.6);
+            const rim = new T.DirectionalLight(0x8db4d2, 0.85);
             rim.position.set(4, 2, -3);
             scene.add(rim);
-            scene.add(new T.HemisphereLight(0xb1c7e0, 0x352318, 0.22));
+            scene.add(new T.HemisphereLight(0xb1c7e0, 0x352318, 0.08));
             const model = makeSpaceStudy(kind);
+            startupCleanup.push(() => model.dispose());
             const setting = makeStudySetting(kind);
-            const complete = Promise.all([setting.ready, model.ready]);
+            startupCleanup.push(() => setting.dispose());
+            const complete = Promise.all([
+                setting.ready,
+                model.ready,
+                environment.ready,
+            ]);
             // Register rejection immediately while optional planetary maps load.
             // The awaited promise still sends failures to the static-art fallback.
             void complete.catch(() => {});
             scene.add(model.root);
             scene.add(setting.root);
             const originalRotation = model.root.rotation.clone();
+            const rendering = makeStudyRendering(
+                render,
+                scene,
+                planetScene,
+                camera,
+            );
+            startupCleanup.push(() => rendering.dispose());
             let planet: Three.Group | undefined;
             let disposed = false,
+                compiled = false,
                 frame = 0,
                 elapsed = 0,
                 lastTime = 0,
@@ -115,15 +131,20 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             let revealFrame = 0;
             let reveal: Animation | undefined;
             let firstFrameFence: WebGLSync | null = null;
+            let renderFence: WebGLSync | null = null;
+            let lastWidth = 0,
+                lastHeight = 0;
             let endLifetime: () => void = () => {};
             const lifetime = new Promise<void>((resolve) => {
                 endLifetime = resolve;
             });
             const gl = render.getContext() as WebGL2RenderingContext;
             const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+            let reflectedReduced = reduced.matches;
             const pointer = new T.Vector2(),
                 currentPointer = new T.Vector2();
             const syncButton = () => {
+                reflectedReduced = reduced.matches;
                 button.hidden = false;
                 button.disabled = reduced.matches;
                 button.textContent = reduced.matches
@@ -138,9 +159,13 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                     reduced.matches || paused ? "paused" : "running";
             };
             const draw = () => {
-                render.clear();
-                render.render(planetScene, camera);
-                render.render(scene, camera);
+                render.info.reset();
+                rendering.render();
+                // Keep at most one frame in flight; slow GPUs must not queue work
+                // until the command buffer blocks keyboard and scrolling events.
+                if (renderFence) gl.deleteSync(renderFence);
+                renderFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+                gl.flush();
                 figure.dataset.sceneTime = elapsed.toFixed(3);
                 figure.dataset.drawCalls = String(render.info.render.calls);
             };
@@ -149,6 +174,18 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 if (disposed || !visible || document.hidden) {
                     lastTime = 0;
                     return;
+                }
+                if (reduced.matches !== reflectedReduced) syncButton();
+                if (renderFence) {
+                    if (
+                        gl.clientWaitSync(renderFence, 0, 0) ===
+                        gl.TIMEOUT_EXPIRED
+                    ) {
+                        frame = requestAnimationFrame(tick);
+                        return;
+                    }
+                    gl.deleteSync(renderFence);
+                    renderFence = null;
                 }
                 const still = reduced.matches || paused;
                 if (!still && time - lastDraw < 1000 / 30) {
@@ -171,9 +208,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                             ? 0
                             : Math.sin(elapsed * 0.22) * 0.025;
                     camera.position.x = currentPointer.x * 0.65;
-                    camera.position.y =
-                        (kind === "robotics" ? 1.1 : 0.3) +
-                        currentPointer.y * 0.3;
+                    camera.position.y = eyeHeight + currentPointer.y * 0.3;
                     camera.lookAt(aim);
                     model.update(elapsed);
                     if (planet) planet.rotation.y += dt * 0.007;
@@ -196,15 +231,26 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 const width = stage.clientWidth,
                     height = stage.clientHeight;
                 if (!width || !height) return;
+                const distance = matchMedia("(max-width: 800px)").matches
+                    ? 12.7
+                    : 11.4;
+                if (
+                    width === lastWidth &&
+                    height === lastHeight &&
+                    camera.position.z === distance
+                )
+                    return;
+                lastWidth = width;
+                lastHeight = height;
                 camera.aspect = width / height;
                 // Match the picture breakpoint, including narrow desktop windows,
                 // so the still and first live frame use the same camera distance.
-                camera.position.z = matchMedia("(max-width: 800px)").matches
-                    ? 12.7
-                    : 11.4;
+                camera.position.z = distance;
+                camera.lookAt(aim);
                 camera.updateProjectionMatrix();
                 render.setSize(width, height, false);
-                draw();
+                rendering.resize(width, height);
+                if (compiled) wake();
             };
             const move = (event: PointerEvent) => {
                 if (event.pointerType !== "mouse" || reduced.matches || paused)
@@ -259,6 +305,8 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 reveal?.cancel();
                 if (firstFrameFence) gl.deleteSync(firstFrameFence);
                 firstFrameFence = null;
+                if (renderFence) gl.deleteSync(renderFence);
+                renderFence = null;
                 sizes.disconnect();
                 observer.disconnect();
                 stage.removeEventListener("pointermove", move);
@@ -267,6 +315,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 reduced.removeEventListener("change", sync);
                 document.removeEventListener("visibilitychange", visibility);
                 render.domElement.removeEventListener("webglcontextlost", lost);
+                rendering.dispose();
                 model.dispose();
                 setting.dispose();
                 if (planet) disposePlanet(planet);
@@ -327,7 +376,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                     const pendingGlobe = makePlanet(
                         T,
                         world,
-                        true,
+                        matchMedia("(max-width: 800px)").matches,
                         texture,
                         lighting,
                     ).then((globe) => {
@@ -348,12 +397,12 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                             ? 8.5
                             : kind === "observatory"
                               ? 3.1
-                              : 9,
+                              : 18,
                     );
                     if (kind === "relay") globe.position.set(0.8, -8.7, -6.5);
                     else if (kind === "observatory")
                         globe.position.set(11, 2.5, -12);
-                    else globe.position.set(5.5, -7.7, -8);
+                    else globe.position.set(6.0, -15, -14);
                     globe.rotation.set(
                         0.1,
                         kind === "relay" ? -1.5 : 0.8,
@@ -384,6 +433,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 teardown();
                 return;
             }
+            compiled = true;
             draw();
             firstFrameFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
             gl.flush();
@@ -448,6 +498,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
         } catch {
             teardown?.();
             if (!teardown) {
+                startupCleanup.reverse().forEach((dispose) => dispose());
                 owned.forEach((t) => t.dispose());
                 renderer?.dispose();
             }

@@ -17,7 +17,10 @@ try {
         ["robotics", "/about"],
         ["relay", "/contact"],
     ]) {
-        if (process.env.ARTWORK_KIND && process.env.ARTWORK_KIND !== kind)
+        if (
+            process.env.ARTWORK_KIND &&
+            !process.env.ARTWORK_KIND.split(",").includes(kind)
+        )
             continue;
         for (const phase of kind === "relay"
             ? ["day", "dawn", "dusk", "night"]
@@ -26,6 +29,11 @@ try {
                 ["desktop", 1440, 1000],
                 ["mobile", 800, 1000],
             ]) {
+                if (
+                    process.env.ARTWORK_VIEW &&
+                    process.env.ARTWORK_VIEW !== view
+                )
+                    continue;
                 const page = await browser.newPage({
                     viewport: { width, height },
                     deviceScaleFactor: 1.5,
@@ -40,7 +48,7 @@ try {
                 );
                 await page.routeWebSocket("**", (ws) => ws.close());
                 // Posters are intentionally absent on their very first capture.
-                await page.route("**/images/scenes/*-v1.webp", (route) =>
+                await page.route("**/images/scenes/*.webp", (route) =>
                     /\/(workshop|observatory|robotics|relay)/.test(
                         route.request().url(),
                     )
@@ -72,12 +80,12 @@ try {
                             .ready === "true",
                 );
                 await page.addStyleTag({
-                    content: `:root,body,main{background:transparent!important} .site-cosmos,astro-dev-toolbar,.scene-hero__copy{visibility:hidden!important} .space-study__art{mask-image:none!important;background:none!important} .space-study__poster{display:none!important} .space-study__stage{opacity:1!important}`,
+                    content: `body *{visibility:hidden!important} .space-study,.space-study *{visibility:visible!important} body::before,body::after{display:none!important} :root,body,main{background:transparent!important} .site-cosmos,astro-dev-toolbar,.scene-hero__copy{visibility:hidden!important} .space-study__art{mask-image:none!important;background:none!important} .space-study__poster{display:none!important} .space-study__stage{opacity:1!important}`,
                 });
                 const png = await figure
                     .locator("canvas")
                     .screenshot({ omitBackground: true });
-                const name = `${kind}${kind === "relay" ? `-${phase}` : ""}-${view}-v1.webp`;
+                const name = `${kind}${kind === "relay" ? `-${phase}` : ""}-${view}-v2.webp`;
                 shots.push({ name, png });
                 console.log(`Captured ${name}`);
                 await page.close();
@@ -93,9 +101,9 @@ for (const { name, png } of shots)
         .webp({ quality: 90, alphaQuality: 100, effort: 6 })
         .toFile(`public/images/scenes/${name}`);
 for (const view of ["desktop", "mobile"]) {
-    if (shots.some((s) => s.name === `relay-day-${view}-v1.webp`))
+    if (shots.some((s) => s.name === `relay-day-${view}-v2.webp`))
         await copyFile(
-            `public/images/scenes/relay-day-${view}-v1.webp`,
-            `public/images/scenes/relay-${view}-v1.webp`,
+            `public/images/scenes/relay-day-${view}-v2.webp`,
+            `public/images/scenes/relay-${view}-v2.webp`,
         );
 }

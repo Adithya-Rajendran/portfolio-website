@@ -2,9 +2,11 @@
 
 ## Secondary scenes
 
-The orbital workshop, communications satellite, robotic instrument, calibration deck and laboratory are original TypeScript geometry. Their panel, optical, foil and solar-cell textures are generated in JavaScript. The backgrounds use the planetary and Milky Way sources credited below.
+The orbital workshop, communications satellite, robotic instrument, calibration deck and laboratory are original geometry authored in TypeScript. Their panel, optical, foil and solar-cell textures are generated in JavaScript. The backgrounds use the planetary and Milky Way sources credited below.
 
-The Writing page uses **NASA/Goddard Space Flight Center**, [James Webb Space Telescope (A)](https://science.nasa.gov/3d-resources/james-webb-space-telescope-a/), from NASA's 3D Resources collection. The original GLB is served as `/models/webb-observatory-v1.glb`; scale, orientation, material settings and lighting are adapted in the renderer. Static geometry is batched at runtime. The composition with Saturn is imaginative artwork, not Webb's actual orbital location.
+The Writing page uses **NASA/Goddard Space Flight Center**, [James Webb Space Telescope (A)](https://science.nasa.gov/3d-resources/james-webb-space-telescope-a/), from NASA's 3D Resources collection. The original GLB is served as `/models/webb-observatory-v1.glb`; scale, orientation, materials and lighting are adapted in the renderer. At runtime the mirror optics and sunshield foil surfaces are refined and static geometry is batched. The composition with Saturn is imaginative artwork, not Webb's actual orbital location.
+
+The scenes use [Studio Small 09](https://polyhaven.com/a/studio_small_09) by Sergej Majboroda, from Poly Haven, as a high-dynamic-range environment for material reflections. It is distributed under [CC0](https://polyhaven.com/license). The local `/lighting/studio-small-09-v1.hdr` (1,615,248 bytes) is the [1K HDR source](https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr). The renderer combines environment lighting with scene lights and ground-truth ambient occlusion (GTAO).
 
 The `workshop-*`, `observatory-*`, `robotics-*` and `relay-*` WebP files in `/images/scenes/` are transparent captures of these same live Three.js scenes, made with `scripts/artwork/capture-space-posters.mjs`. They provide the loading and no-WebGL views. Contact has matching dawn, day, dusk and night variants.
 
