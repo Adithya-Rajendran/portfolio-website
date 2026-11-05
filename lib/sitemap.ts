@@ -92,12 +92,6 @@ export function sitemapEntries({
             priority: 0.8,
         },
         {
-            url: `${BASE_URL}/contact`,
-            lastModified: profileDate,
-            changeFrequency: "monthly",
-            priority: 0.7,
-        },
-        {
             url: `${BASE_URL}/blog`,
             lastModified: newestPostDate,
             changeFrequency: "weekly",
