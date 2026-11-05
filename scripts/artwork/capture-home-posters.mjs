@@ -47,7 +47,7 @@ try {
         );
         const overlays = await page.addStyleTag({
             content:
-                ".home-hero__content,.home-hero__veil,.home-hero__caption,.frontier-console{visibility:hidden!important} astro-dev-toolbar{display:none!important}",
+                ".home-hero__content,.home-hero__veil,.home-hero__caption,.frontier-console,.home-camera-tools{visibility:hidden!important} astro-dev-toolbar{display:none!important}",
         });
         const png = await page.locator("[data-home-stage] canvas").screenshot();
         if (errors.length) throw new Error(errors.join("\n"));

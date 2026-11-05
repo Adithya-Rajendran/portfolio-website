@@ -8,8 +8,7 @@ import { homeCoverFrame, type HomeFraming } from "../lib/home-framing";
 import { makeHomeFrontier } from "./home-frontier";
 import { makeHomeRendering } from "./home-rendering";
 
-// Real geometry gives the wheels, mast, foreground and horizon independent
-// parallax. The camera only travels a few centimetres around this composition.
+// The composed view and freely explorable scene share the same real geometry.
 export function makeHomeLandscape(renderer: T.WebGLRenderer) {
     const scene = new T.Scene();
     const camera = new T.PerspectiveCamera(34, 1, 0.1, 650);
@@ -82,10 +81,22 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
     const vertices = groundGeometry.attributes.position;
     const colors = new Float32Array(vertices.count * 3);
     const dust = new T.Color();
+    const distantHeight = (x: number, z: number) =>
+        -12 +
+        T.MathUtils.smoothstep(Math.hypot(x, z + 30), 90, 190) *
+            (6 + noise.noise(x * 0.018, z * 0.018, 17) * 8);
     for (let i = 0; i < vertices.count; i++) {
         const x = vertices.getX(i),
             z = vertices.getZ(i);
-        vertices.setY(i, heightAt(x, z));
+        const edge = Math.min(90 - Math.abs(x), 90 - Math.abs(z + 50));
+        vertices.setY(
+            i,
+            T.MathUtils.lerp(
+                distantHeight(x, z),
+                heightAt(x, z),
+                T.MathUtils.smoothstep(edge, 0, 18),
+            ),
+        );
         dust.setScalar(0.72 + noise.noise(x * 0.14, z * 0.14, 6) * 0.22);
         dust.toArray(colors, i * 3);
     }
@@ -96,8 +107,56 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
     ground.receiveShadow = true;
     scene.add(ground);
 
+    // Complete the terrain behind the authored view so a full orbit never
+    // reveals the edge of the detailed foreground mesh.
+    const distantGeometry = new T.PlaneGeometry(1200, 1200, 140, 140);
+    distantGeometry.rotateX(-Math.PI / 2);
+    const distantPoints = distantGeometry.attributes.position;
+    const distantUv = distantGeometry.attributes.uv;
+    for (let i = 0; i < distantPoints.count; i++) {
+        const x = distantPoints.getX(i),
+            z = distantPoints.getZ(i);
+        distantPoints.setY(i, distantHeight(x, z));
+        distantUv.setXY(
+            i,
+            (distantUv.getX(i) * 1200) / 180,
+            (distantUv.getY(i) * 1200) / 180,
+        );
+    }
+    distantGeometry.computeVertexNormals();
+    distantGeometry.setAttribute(
+        "color",
+        new T.BufferAttribute(
+            new Float32Array(distantPoints.count * 3).fill(0.72),
+            3,
+        ),
+    );
+    const distantGround = new T.Mesh(distantGeometry, groundMaterial);
+    scene.add(distantGround);
+
     // Layered, continuous ridges fade into the haze. Smooth vertex normals avoid
     // the faceted terrain and sharp joins of isolated low-poly mountain pieces.
+    const ridgeHeight = (x: number, z: number, layer: number) => {
+        let ridge = 0,
+            amplitude = 1,
+            frequency = 0.014;
+        for (let octave = 0; octave < 3; octave++) {
+            ridge +=
+                (1 -
+                    Math.abs(
+                        noise.noise(
+                            x * frequency,
+                            z * frequency,
+                            3 + layer * 7,
+                        ),
+                    )) *
+                amplitude;
+            frequency *= 2.05;
+            amplitude *= 0.48;
+        }
+        const envelope = Math.exp(-Math.pow((z + 105 + layer * 65) / 31, 2));
+        return -8 + envelope * Math.max(0, ridge - 0.65) * (13 + layer * 3);
+    };
     const ridgeMaterials: T.MeshStandardMaterial[] = [];
     for (let layer = 0; layer < 4; layer++) {
         const geometry = new T.PlaneGeometry(680, 110, 240, 60);
@@ -107,30 +166,7 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
         for (let i = 0; i < positions.count; i++) {
             const x = positions.getX(i),
                 z = positions.getZ(i);
-            let ridge = 0,
-                amplitude = 1,
-                frequency = 0.014;
-            for (let octave = 0; octave < 3; octave++) {
-                ridge +=
-                    (1 -
-                        Math.abs(
-                            noise.noise(
-                                x * frequency,
-                                z * frequency,
-                                3 + layer * 7,
-                            ),
-                        )) *
-                    amplitude;
-                frequency *= 2.05;
-                amplitude *= 0.48;
-            }
-            const envelope = Math.exp(
-                -Math.pow((z + 105 + layer * 65) / 31, 2),
-            );
-            positions.setY(
-                i,
-                -8 + envelope * Math.max(0, ridge - 0.65) * (13 + layer * 3),
-            );
+            positions.setY(i, ridgeHeight(x, z, layer));
         }
         geometry.computeVertexNormals();
         const material = new T.MeshStandardMaterial({
@@ -382,25 +418,9 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             { eye: new T.Vector3(2, 8, -3), aim: new T.Vector3(-8, 5.5, -24) },
         ],
     };
-    const position = (
-        width: number,
-        height: number,
-        framing: HomeFraming,
-        x = 0,
-        y = 0,
-        focus = 0,
-    ) => {
+    const frame = (width: number, height: number, framing: HomeFraming) => {
         const view = homeCoverFrame(width, height, framing);
-        const narrow = framing !== "desktop";
-        camera.fov = narrow ? 36 : 33;
-        const stops = narrow ? views.compact : views.desktop;
-        const from = Math.min(1, Math.floor(focus));
-        const mix = focus - from;
-        camera.position.lerpVectors(stops[from].eye, stops[from + 1].eye, mix);
-        camera.position.x += x * 0.52;
-        camera.position.y += y * 0.25;
-        target.lerpVectors(stops[from].aim, stops[from + 1].aim, mix);
-        camera.lookAt(target);
+        camera.fov = framing !== "desktop" ? 36 : 33;
         camera.setViewOffset(
             view.fullWidth,
             view.fullHeight,
@@ -410,12 +430,88 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             view.height,
         );
     };
+    const homePose = (framing: HomeFraming, focus: number) => {
+        const stops = framing !== "desktop" ? views.compact : views.desktop;
+        const from = Math.min(1, Math.floor(focus));
+        const mix = focus - from;
+        return {
+            eye: new T.Vector3().lerpVectors(
+                stops[from].eye,
+                stops[from + 1].eye,
+                mix,
+            ),
+            aim: new T.Vector3().lerpVectors(
+                stops[from].aim,
+                stops[from + 1].aim,
+                mix,
+            ),
+        };
+    };
+    const explorationPose = (focus: number) =>
+        [
+            { eye: new T.Vector3(11, 5, 18), aim: new T.Vector3(2, 1.3, 0) },
+            {
+                eye: new T.Vector3(9, 10, -10),
+                aim: new T.Vector3(-9, 2.6, -31),
+            },
+            { eye: new T.Vector3(2, 11, -19), aim: new T.Vector3(-10, 6, -33) },
+        ][Math.round(focus)];
+    const cameraFloor = (x: number, z: number) => {
+        const station =
+            1 -
+            T.MathUtils.smoothstep(Math.hypot((x + 10) / 1.3, z + 31), 10, 20);
+        const dish =
+            1 - T.MathUtils.smoothstep(Math.hypot(x + 10, z + 33), 3, 7);
+        const launch =
+            1 - T.MathUtils.smoothstep(Math.hypot(x + 1, z + 78), 4, 10);
+        let terrain = distantHeight(x, z);
+        const edge = Math.min(90 - Math.abs(x), 90 - Math.abs(z + 50));
+        if (edge >= 0)
+            terrain = Math.max(
+                terrain,
+                T.MathUtils.lerp(
+                    distantHeight(x, z),
+                    heightAt(x, z),
+                    T.MathUtils.smoothstep(edge, 0, 18),
+                ),
+            );
+        for (let layer = 0; layer < 4; layer++) {
+            if (Math.abs(x) <= 340 && Math.abs(z + 105 + layer * 65) <= 55)
+                terrain = Math.max(terrain, ridgeHeight(x, z, layer));
+        }
+        return Math.max(
+            terrain + 1.2,
+            station * 6.8,
+            dish * 11.5,
+            launch * 11.5,
+        );
+    };
+    const position = (
+        width: number,
+        height: number,
+        framing: HomeFraming,
+        x = 0,
+        y = 0,
+        focus = 0,
+    ) => {
+        const pose = homePose(framing, focus);
+        camera.position.copy(pose.eye);
+        camera.position.x += x * 0.52;
+        camera.position.y += y * 0.25;
+        target.copy(pose.aim);
+        camera.lookAt(target);
+        frame(width, height, framing);
+    };
     const rendering = makeHomeRendering(renderer, scene, camera);
     return {
         scene,
         camera,
         ready,
         position,
+        frame,
+        homePose,
+        explorationPose,
+        cameraFloor,
         target,
         update: frontier.update,
         render: rendering.render,

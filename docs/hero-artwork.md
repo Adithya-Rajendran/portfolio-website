@@ -4,6 +4,8 @@ The homepage is an illustrative Three.js research landscape with a NASA/JPL-Calt
 
 The rover is posed in Blender, baked into a static mesh, batched by material, and Draco-compressed to approximately 2.6 MB. The terrain, habitats, greenhouses, dish, launch structure, lighting and camera are authored in TypeScript. Three scene selections—Rover, Outpost and Signal—move the camera smoothly between points of interest. Pointer movement adds gentle perspective motion, while touch devices retain native scrolling.
 
+“Explore scene” opens deliberate camera control. Drag to orbit, right-drag or Shift-drag to pan, and use the wheel or zoom buttons to move closer. Touch uses one finger to orbit and two fingers to pan or pinch. These gestures are captured only inside the scene while exploration is open; normal page scrolling remains available outside it. Arrow keys orbit, Shift + arrows pan, +/− zoom, Home resets the selected view, and Escape or Done restores the page composition. Preset travel yields immediately to manual input. Broad target and distance limits, smooth terrain clearance and surrounding ground keep the camera within the landscape. Manual controls remain available with ambient motion paused or reduced motion enabled.
+
 Version 2 desktop, tablet and mobile posters are captured from the scene. The matching poster appears immediately and remains available without JavaScript, on loading failure or after graphics-context loss. The perspective camera uses the same reference dimensions and cover crop as the poster. After assets, shaders and the first GPU frame are ready, the scene fades over the retained poster for 900 ms; reduced motion skips the fade. Pointer input begins after the transition, so movement during loading cannot displace the initial composition.
 
 Ambient detail renders at up to 30 frames per second; camera movement follows the display cadence. The scene clock freezes while paused, offscreen, in hidden tabs or under reduced motion. A destination can still be selected while paused or under reduced motion, producing a static view. Graphics resources, pending fades and listeners are released on page exit, including exit during loading. A restored page starts at Rover so the first scene matches its fallback; a manual pause remains in effect.
@@ -14,6 +16,7 @@ Ambient detail renders at up to 30 frames per second; camera movement follows th
 - `src/scripts/home-frontier.ts`: original architecture, greenhouse interiors, dish, launch structure, procedural panel materials and ambient animation. Static details are merged by material.
 - `src/scripts/home-rendering.ts`: antialiased HDR rendering, subtle light spread and final tone/color conversion.
 - `src/scripts/home-visual.ts`: destination selection, pointer easing, loading, motion preferences, visibility and resource lifecycle.
+- `src/scripts/home-camera.ts`: orbit/pan/zoom input, interrupted guided travel, bounds and keyboard control.
 - `src/lib/home-framing.ts`: shared capture dimensions and cover-crop calculation. Update these dimensions if the source posters change.
 - `scripts/artwork/prepare-home-rover.py`: export the posed rover from the editable Blender source.
 - `scripts/artwork/prepare-home-materials.mjs`: prepare the compact tiling terrain textures.

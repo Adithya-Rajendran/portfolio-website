@@ -10,6 +10,28 @@ const motionButton =
 const hint = document.querySelector<HTMLElement>("[data-home-hint]");
 const controls = document.querySelector<HTMLElement>("[data-home-controls]");
 const note = document.querySelector<HTMLElement>("[data-home-note]");
+const cameraSurface = document.querySelector<HTMLElement>(
+    "[data-home-camera-surface]",
+);
+const cameraTools = document.querySelector<HTMLElement>(
+    "[data-home-camera-tools]",
+);
+const cameraActions = document.querySelector<HTMLElement>(
+    "[data-home-camera-actions]",
+);
+const cameraHelp = document.querySelector<HTMLElement>(
+    "[data-home-camera-help]",
+);
+const exploreButton = document.querySelector<HTMLButtonElement>(
+    "[data-home-explore]",
+);
+const resetButton = document.querySelector<HTMLButtonElement>(
+    "[data-home-camera-reset]",
+);
+const zoomButtons = [
+    ...document.querySelectorAll<HTMLButtonElement>("[data-home-zoom]"),
+];
+const heroContent = hero?.querySelector<HTMLElement>(".home-hero__content");
 const destinations = [
     ...document.querySelectorAll<HTMLButtonElement>("[data-home-destination]"),
 ];
@@ -20,7 +42,7 @@ const focusNotes = [
     "Stay curious. Stay connected.",
 ];
 
-if (wrapper && stage && poster && hero) {
+if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
     let cleanup: (() => void) | undefined;
     let loading = false;
     let generation = 0;
@@ -34,10 +56,12 @@ if (wrapper && stage && poster && hero) {
         let renderer: Three.WebGLRenderer | undefined;
         let teardown: (() => void) | undefined;
         try {
-            const [T, { makeHomeLandscape }] = await Promise.all([
-                import("three"),
-                import("./home-landscape"),
-            ]);
+            const [T, { makeHomeLandscape }, { makeHomeCamera }] =
+                await Promise.all([
+                    import("three"),
+                    import("./home-landscape"),
+                    import("./home-camera"),
+                ]);
             if (ticket !== generation || !pageActive) return;
             const render = new T.WebGLRenderer({
                 antialias: true,
@@ -55,6 +79,7 @@ if (wrapper && stage && poster && hero) {
             render.shadowMap.type = T.PCFShadowMap;
             render.info.autoReset = false;
             const landscape = makeHomeLandscape(render);
+            let navigation: ReturnType<typeof makeHomeCamera> | undefined;
             let endLifetime: () => void = () => {};
             const lifetime = new Promise<void>((resolve) => {
                 endLifetime = resolve;
@@ -73,6 +98,7 @@ if (wrapper && stage && poster && hero) {
                 renderedWidth = 0,
                 renderedHeight = 0;
             let dirty = false;
+            let ticking = false;
             let reveal: Animation | undefined;
             let firstFrameFence: WebGLSync | null = null;
             const pointer = new T.Vector2(),
@@ -84,6 +110,7 @@ if (wrapper && stage && poster && hero) {
             const updateButton = () => {
                 if (!revealed) return;
                 if (controls) controls.hidden = false;
+                if (cameraTools) cameraTools.hidden = false;
                 if (motionButton) {
                     motionButton.hidden = false;
                     motionButton.disabled = reduced.matches;
@@ -96,7 +123,10 @@ if (wrapper && stage && poster && hero) {
                 }
                 if (hint)
                     hint.hidden =
-                        reduced.matches || paused || !finePointer.matches;
+                        reduced.matches ||
+                        paused ||
+                        !finePointer.matches ||
+                        Boolean(navigation?.active);
             };
             const draw = () => {
                 render.info.reset();
@@ -108,29 +138,47 @@ if (wrapper && stage && poster && hero) {
                     .toArray()
                     .map((v) => v.toFixed(4))
                     .join(",");
-                stage.dataset.target = landscape.target
+                const target = navigation?.ownsCamera
+                    ? navigation.target
+                    : landscape.target;
+                stage.dataset.target = target
                     .toArray()
                     .map((v) => v.toFixed(4))
                     .join(",");
                 stage.dataset.sceneTime = elapsed.toFixed(3);
                 stage.dataset.drawCalls = String(render.info.render.calls);
+                stage.dataset.cameraDistance = landscape.camera.position
+                    .distanceTo(target)
+                    .toFixed(3);
+                stage.dataset.cameraMoving = String(
+                    Boolean(navigation?.transitioning),
+                );
             };
-            const pose = () => {
+            const framing = () => {
                 // Read the same media queries as <picture>, including portrait
                 // tablets; aspect alone must not switch the camera composition.
                 const source = Array.from(
                     poster.querySelectorAll("source"),
                 ).find((item) => matchMedia(item.media).matches);
-                const framing = (source?.dataset.homeFraming ??
+                return (source?.dataset.homeFraming ??
                     "desktop") as HomeFraming;
-                landscape.position(
-                    wrapper.clientWidth,
-                    wrapper.clientHeight,
-                    framing,
-                    current.x,
-                    current.y,
-                    focus,
-                );
+            };
+            const pose = () => {
+                if (navigation?.ownsCamera)
+                    landscape.frame(
+                        wrapper.clientWidth,
+                        wrapper.clientHeight,
+                        framing(),
+                    );
+                else
+                    landscape.position(
+                        wrapper.clientWidth,
+                        wrapper.clientHeight,
+                        framing(),
+                        current.x,
+                        current.y,
+                        focus,
+                    );
                 stage.dataset.viewX = current.x.toFixed(4);
                 stage.dataset.viewY = current.y.toFixed(4);
             };
@@ -141,24 +189,32 @@ if (wrapper && stage && poster && hero) {
                     return;
                 }
                 const still = reduced.matches || paused;
+                ticking = true;
                 // Camera easing follows elapsed time even on a slow renderer;
                 // visibility changes reset the clock before it can jump.
                 const delta = Math.min((time - (lastTime || time)) / 1000, 0.1);
                 lastTime = time;
                 stage.dataset.state = still ? "paused" : "running";
+                const manualMovement = navigation?.ownsCamera
+                    ? navigation.update(delta)
+                    : false;
                 const moving =
+                    manualMovement ||
+                    Boolean(navigation?.transitioning) ||
                     current.distanceToSquared(pointer) > 0.000001 ||
                     Math.abs(focus - desiredFocus) > 0.0001;
                 if (!still) {
                     elapsed += delta;
-                    current.lerp(pointer, 1 - Math.exp(-delta * 3.8));
-                    focus = T.MathUtils.lerp(
-                        focus,
-                        desiredFocus,
-                        1 - Math.exp(-delta * 2.1),
-                    );
-                    if (Math.abs(focus - desiredFocus) < 0.0001)
-                        focus = desiredFocus;
+                    if (!navigation?.ownsCamera) {
+                        current.lerp(pointer, 1 - Math.exp(-delta * 3.8));
+                        focus = T.MathUtils.lerp(
+                            focus,
+                            desiredFocus,
+                            1 - Math.exp(-delta * 2.1),
+                        );
+                        if (Math.abs(focus - desiredFocus) < 0.0001)
+                            focus = desiredFocus;
+                    }
                     landscape.update(elapsed);
                 }
                 // Ambient detail runs at 30fps; pointer/camera movement follows
@@ -173,7 +229,8 @@ if (wrapper && stage && poster && hero) {
                     dirty = false;
                     lastDraw = time;
                 }
-                if (!still) frame = requestAnimationFrame(tick);
+                ticking = false;
+                if (!still || navigation?.transitioning) wake();
                 else lastTime = 0;
             };
             const wake = () => {
@@ -186,6 +243,88 @@ if (wrapper && stage && poster && hero) {
                 )
                     frame = requestAnimationFrame(tick);
             };
+            const syncExplorationUI = () => {
+                const active = Boolean(navigation?.active);
+                hero.dataset.exploring = String(active);
+                stage.dataset.cameraMode = active ? "explore" : "composed";
+                cameraSurface.hidden = !active;
+                if (cameraActions) cameraActions.hidden = !active;
+                if (cameraHelp) cameraHelp.hidden = !active;
+                exploreButton.textContent = active ? "Done" : "Explore scene";
+                exploreButton.setAttribute("aria-expanded", String(active));
+                if (heroContent) {
+                    const covered = active && framing() === "desktop";
+                    heroContent.inert = covered;
+                    if (covered)
+                        heroContent.setAttribute("aria-hidden", "true");
+                    else heroContent.removeAttribute("aria-hidden");
+                }
+                updateButton();
+            };
+            const exitExploration = () => {
+                if (!navigation?.active) return;
+                focus = desiredFocus;
+                pointer.set(0, 0);
+                current.set(0, 0);
+                navigation.deactivate(landscape.homePose(framing(), focus));
+                syncExplorationUI();
+                exploreButton.focus({ preventScroll: true });
+            };
+            const explore = () => {
+                if (!revealed) return;
+                if (navigation?.active) {
+                    exitExploration();
+                    return;
+                }
+                navigation ??= makeHomeCamera(
+                    landscape.camera,
+                    cameraSurface,
+                    landscape.target,
+                    landscape.cameraFloor,
+                    () => {
+                        dirty = true;
+                        if (!ticking) wake();
+                    },
+                );
+                const wasNavigating = navigation.ownsCamera;
+                navigation.setInstant(reduced.matches || paused);
+                navigation.activate(
+                    wasNavigating
+                        ? navigation.target.clone()
+                        : landscape.target,
+                    landscape.explorationPose(desiredFocus),
+                );
+                focus = desiredFocus;
+                pointer.set(0, 0);
+                current.set(0, 0);
+                syncExplorationUI();
+                cameraSurface.focus({ preventScroll: true });
+            };
+            const resetCamera = () => {
+                if (navigation?.active)
+                    navigation.goTo(landscape.explorationPose(desiredFocus));
+            };
+            const cameraKey = (event: KeyboardEvent) => {
+                if (!navigation?.active) return;
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    exitExploration();
+                } else if (
+                    event.key === "Home" &&
+                    event.target === cameraSurface
+                ) {
+                    event.preventDefault();
+                    resetCamera();
+                }
+            };
+            const zoomSelections = zoomButtons.map((button) => {
+                const zoom = () => {
+                    if (navigation?.active)
+                        navigation.zoom(button.dataset.homeZoom === "in");
+                };
+                button.addEventListener("click", zoom);
+                return zoom;
+            });
             const sync = () => {
                 cancelAnimationFrame(frame);
                 frame = 0;
@@ -196,6 +335,7 @@ if (wrapper && stage && poster && hero) {
                     focus = desiredFocus;
                     dirty = true;
                 }
+                navigation?.setInstant(reduced.matches || paused);
                 updateButton();
                 wake();
             };
@@ -216,6 +356,7 @@ if (wrapper && stage && poster && hero) {
                 renderedHeight = stage.clientHeight;
                 render.setSize(renderedWidth, renderedHeight, false);
                 landscape.resize(renderedWidth, renderedHeight);
+                syncExplorationUI();
                 pose();
                 draw();
             };
@@ -225,7 +366,8 @@ if (wrapper && stage && poster && hero) {
                     !revealed ||
                     !finePointer.matches ||
                     reduced.matches ||
-                    paused
+                    paused ||
+                    navigation?.ownsCamera
                 )
                     return;
                 const rect = hero.getBoundingClientRect();
@@ -256,7 +398,10 @@ if (wrapper && stage && poster && hero) {
                     if (!revealed) return;
                     desiredFocus = index;
                     pointer.set(0, 0);
-                    if (paused || reduced.matches) focus = desiredFocus;
+                    if (navigation?.active) {
+                        focus = desiredFocus;
+                        navigation.goTo(landscape.explorationPose(index));
+                    } else if (paused || reduced.matches) focus = desiredFocus;
                     destinations.forEach((item, i) =>
                         item.setAttribute("aria-pressed", String(i === index)),
                     );
@@ -299,6 +444,9 @@ if (wrapper && stage && poster && hero) {
                 }
             }, 500);
             motionButton?.addEventListener("click", toggle);
+            exploreButton.addEventListener("click", explore);
+            resetButton?.addEventListener("click", resetCamera);
+            hero.addEventListener("keydown", cameraKey);
             hero.addEventListener("pointermove", onPointer, { passive: true });
             hero.addEventListener("pointerleave", leave);
             document.addEventListener("visibilitychange", visibility);
@@ -318,6 +466,20 @@ if (wrapper && stage && poster && hero) {
                 observer.disconnect();
                 sizes.disconnect();
                 motionButton?.removeEventListener("click", toggle);
+                exploreButton.removeEventListener("click", explore);
+                resetButton?.removeEventListener("click", resetCamera);
+                hero.removeEventListener("keydown", cameraKey);
+                zoomButtons.forEach((button, i) =>
+                    button.removeEventListener("click", zoomSelections[i]),
+                );
+                const wasExploring = navigation?.active;
+                navigation?.dispose();
+                navigation = undefined;
+                syncExplorationUI();
+                if (wasExploring && hero.contains(document.activeElement))
+                    hero.querySelector<HTMLAnchorElement>(
+                        ".home-hero__actions a",
+                    )?.focus({ preventScroll: true });
                 destinations.forEach((button, i) =>
                     button.removeEventListener("click", selections[i]),
                 );
@@ -338,6 +500,7 @@ if (wrapper && stage && poster && hero) {
                 if (motionButton) motionButton.hidden = true;
                 if (hint) hint.hidden = true;
                 if (controls) controls.hidden = true;
+                if (cameraTools) cameraTools.hidden = true;
             };
             cleanup = teardown;
             await Promise.race([
@@ -417,6 +580,7 @@ if (wrapper && stage && poster && hero) {
             revealed = true;
             stage.dataset.artwork = "rover-3d";
             stage.dataset.homeFocus = "rover";
+            stage.dataset.cameraMode = "composed";
             destinations.forEach((button, i) =>
                 button.setAttribute("aria-pressed", String(i === 0)),
             );
@@ -434,6 +598,7 @@ if (wrapper && stage && poster && hero) {
             if (motionButton) motionButton.hidden = true;
             if (hint) hint.hidden = true;
             if (controls) controls.hidden = true;
+            if (cameraTools) cameraTools.hidden = true;
         } finally {
             loading = false;
             if (ticket !== generation && pageActive) void initialize();
