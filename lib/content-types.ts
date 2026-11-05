@@ -211,6 +211,7 @@ export type PostListItem = {
     /** Related projects, as ids: join against the project list. */
     projectIds?: string[] | null;
     cover?: PostCover | null;
+    socialImage?: SanityImageValue | null;
     wordCount: number;
 };
 
@@ -224,6 +225,9 @@ export type PostChange = {
 
 export type PostWithBody = PostListItem & {
     body: ContentBody;
+    takeaways?: string[] | null;
+    nextPostId?: string | null;
+    nextReadReason?: string | null;
     _updatedAt?: string;
     /** Dated updates and corrections, oldest first as authored. */
     changelog?: PostChange[] | null;

@@ -14,6 +14,7 @@ import {
 } from "../../lib/sanity";
 import { renderProse } from "../../lib/prose";
 import { highlight } from "../../lib/highlight";
+import { formatProjectDates } from "../../../lib/project-content";
 const project = await getProjectBySlug(Astro.params.slug || "");
 if (!project) return Astro.rewrite("/404");
 const highlighted = await highlight(project.body || []).catch(() => ({}));
@@ -24,6 +25,7 @@ const [posts, projects] = await Promise.all([
 const position = projects.findIndex((item) => item._id === project._id);
 const previous = position > 0 ? projects[position - 1] : null;
 const next = position >= 0 ? projects[position + 1] : null;
+const dates = formatProjectDates(project);
 ---
 
 <Base
@@ -76,12 +78,7 @@ const next = position >= 0 ? projects[position + 1] : null;
         )}{" "}
         {project.model && <ProjectViewer model={project.model} />}{" "}
         {project.statusNote && <p>{project.statusNote}</p>}
-        {project.startDate && (
-            <p>
-                {project.startDate}
-                {project.endDate && ` – ${project.endDate}`}
-            </p>
-        )}
+        {dates && <p class="project-dates">{dates}</p>}
         {project.parameters?.length && (
             <dl>
                 {project.parameters.map((item) => (

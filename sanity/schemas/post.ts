@@ -48,6 +48,57 @@ export default defineType({
             validation: (Rule) => Rule.required().max(300),
         }),
         defineField({
+            name: "takeaways",
+            title: "Key Takeaways",
+            type: "array",
+            group: "content",
+            description:
+                "Optional. Two to four findings or useful decisions for a reader arriving from a shared link. Keep material conditions with each claim; do not repeat the introduction.",
+            of: [
+                defineArrayMember({
+                    type: "string",
+                    validation: (Rule) => Rule.required().max(240),
+                }),
+            ],
+            validation: (Rule) => Rule.min(2).max(4).unique(),
+        }),
+        defineField({
+            name: "socialImage",
+            title: "Sharing Image",
+            type: "image",
+            group: "editorial",
+            description:
+                "Optional 1200 × 630 image for shared links. Use the article topic and a readable title. This does not add a cover above the article. Regenerate it when the title changes.",
+            options: { hotspot: true },
+            fields: [
+                defineField({
+                    name: "alt",
+                    title: "Image Description",
+                    type: "string",
+                    validation: (Rule) => Rule.required().max(240),
+                }),
+            ],
+        }),
+        defineField({
+            name: "nextPost",
+            title: "Suggested Next Article",
+            type: "reference",
+            to: [{ type: "post" }],
+            weak: true,
+            group: "editorial",
+            description:
+                "Optional. Choose the most useful next read. The site links only published articles and otherwise chooses by shared topics.",
+        }),
+        defineField({
+            name: "nextReadReason",
+            title: "Why Read It Next",
+            type: "string",
+            group: "editorial",
+            description:
+                "Optional. Explain what the selected next article helps the reader understand or do. Used only when that article is public.",
+            validation: (Rule) => Rule.max(220),
+        }),
+        defineField({
             name: "publishedAt",
             title: "Published At",
             type: "date",
