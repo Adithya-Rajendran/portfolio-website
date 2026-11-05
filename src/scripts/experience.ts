@@ -2,12 +2,17 @@ import type * as Three from "three";
 import type { ScenePhase } from "../lib/scene-time";
 import { waitForSceneClock, refreshSceneClock } from "../lib/scene-clock";
 import { createJourneyPlayback } from "../lib/journey-playback";
+import {
+    arcPosition,
+    createExperienceCamera,
+    type CameraPose,
+    TERRAIN_RADIUS,
+} from "./experience-camera";
 import { addSatellites } from "./orbital-satellites";
 import { addLunarLaunch } from "./lunar-launch";
 import {
     loadOutpost,
     attachOutpost,
-    OUTPOST_SCALE,
     disposeOutpost,
     outpostCamera,
 } from "./planetary-outposts";
@@ -117,7 +122,9 @@ if (
             generator.dispose();
             const camera = new T.PerspectiveCamera(36, 1, 0.05, 160);
             camera.position.set(0, 0.18, 3.45);
-            const orbit = new OrbitControls(camera, render.domElement);
+            const inputCamera = camera.clone();
+            const orbit = new OrbitControls(inputCamera, render.domElement);
+            const rig = createExperienceCamera(T, camera, orbit);
             orbit.enableDamping = true;
             orbit.dampingFactor = 0.075;
             orbit.enablePan = false;
@@ -389,15 +396,21 @@ if (
                 dragging = false,
                 target = 0,
                 progress = 0,
-                manualZoom = 1,
                 lastTime = 0,
                 lastWorld = -1;
             let surfaceMix = 0,
                 surfaceWorld = -1,
                 freeLook = false;
             let orbitalDistance = 3.45;
-            const approachDirection = new T.Vector3();
-            const approachTarget = new T.Vector3();
+            const worldUp = new T.Vector3(0, 1, 0);
+            const origin = new T.Vector3();
+            const orbitDirection = camera.position.clone().normalize();
+            const approachDirection = orbitDirection.clone();
+            let departure: { pose: CameraPose; mix: number } | undefined;
+            let returnTime = 0;
+            let pendingTravel: number | undefined;
+            let selectionScroll: number | undefined;
+            let navigationDirty = false;
             let knots: number[] = [];
             const motion = matchMedia("(prefers-reduced-motion: reduce)");
             const entries = [
@@ -434,21 +447,54 @@ if (
                     return (end * i) / 4;
                 });
             };
+            const resumeGuide = () => {
+                if (freeLook) {
+                    orbitDirection.copy(camera.position).normalize();
+                    returnTime = 1.4;
+                }
+                freeLook = false;
+            };
+            const requestTravel = (value: number, explicit = false) => {
+                if (explicit) pendingTravel = undefined;
+                const nearest = Math.round(value);
+                // A small reading window around each chapter keeps a trackpad
+                // nudge from repeatedly entering and leaving a settlement.
+                const next = Math.abs(value - nearest) < 0.12 ? nearest : value;
+                if (dragging && !explicit) {
+                    pendingTravel = next;
+                    return;
+                }
+                const changed = explicit || Math.abs(next - target) > 0.015;
+                if (changed) resumeGuide();
+                target = next;
+                navigationDirty ||= changed;
+                schedule();
+            };
             const readScroll = () => {
                 if (!knots.length || section.dataset.layout === "expanded")
                     return;
+                if (selectionScroll !== undefined) {
+                    // The scroll event queued by a destination click must not
+                    // overwrite that selection after the mobile layout resizes.
+                    if (Math.abs(scrollY - selectionScroll) < 2) {
+                        selectionScroll = undefined;
+                        return;
+                    }
+                    selectionScroll = undefined;
+                }
                 let i = 0;
                 while (i < 3 && scrollY >= knots[i + 1]) i++;
-                target = Math.min(
-                    4,
-                    Math.max(
-                        0,
-                        i +
-                            (scrollY - knots[i]) /
-                                Math.max(1, knots[i + 1] - knots[i]),
+                requestTravel(
+                    Math.min(
+                        4,
+                        Math.max(
+                            0,
+                            i +
+                                (scrollY - knots[i]) /
+                                    Math.max(1, knots[i + 1] - knots[i]),
+                        ),
                     ),
                 );
-                schedule();
             };
             const updateControl = () => {
                 const reduced = motion.matches;
@@ -462,7 +508,6 @@ if (
                 if (motionButton.disabled !== reduced)
                     motionButton.disabled = reduced;
                 motionButton.setAttribute("aria-pressed", String(paused));
-                orbit.enableDamping = !reduced && !paused;
             };
             const baseDistance = (world: number) => {
                 const radius = world === 4 ? 2.25 : 1.08;
@@ -482,15 +527,35 @@ if (
                     .map((n) => n.toFixed(4))
                     .join(",");
                 stage.dataset.distance = camera.position
-                    .distanceTo(orbit.target)
+                    .distanceTo(rig.target)
                     .toFixed(4);
+                stage.dataset.cameraTarget = rig.target
+                    .toArray()
+                    .map((n) => n.toFixed(6))
+                    .join(",");
+                stage.dataset.cameraUp = camera.up
+                    .toArray()
+                    .map((n) => n.toFixed(6))
+                    .join(",");
+                stage.dataset.cameraQuaternion = camera.quaternion
+                    .toArray()
+                    .map((n) => n.toFixed(7))
+                    .join(",");
+                stage.dataset.cameraClearance = Math.min(
+                    ...[...planets.values()]
+                        .filter((g) => g.visible)
+                        .map((g) => camera.position.distanceTo(g.position) - 1),
+                ).toFixed(6);
+                stage.dataset.cameraOwner = freeLook
+                    ? "manual"
+                    : returnTime > 0
+                      ? "returning"
+                      : "guided";
             };
             const setLabel = (index: number) => {
                 if (index === lastWorld) return;
                 lastWorld = index;
-                freeLook = false;
                 playback.setWorld(worldIds[index]);
-                manualZoom = 1;
                 current.textContent = worldNames[index];
                 if (lightingLabel) {
                     lightingLabel.style.visibility =
@@ -524,10 +589,11 @@ if (
                     0.25,
                     (time - (lastTime || time)) / 1000,
                 );
-                const dt = Math.min(0.05, elapsedDelta);
+                const dt = Math.min(0.1, elapsedDelta);
                 lastTime = time;
                 updateControl();
                 const still = paused || motion.matches;
+                const settle = motion.matches || (paused && navigationDirty);
                 const look = looks[phase],
                     blend = still ? 1 : 1 - Math.exp(-dt * 1.8);
                 sunlight.lerp(targetDirection, blend).normalize();
@@ -551,16 +617,43 @@ if (
                     lighting.cloudOffset.value =
                         (lighting.cloudOffset.value + dt * 0.00022) % 1;
                 satellites?.update(still ? 0 : elapsedDelta);
-                if (still) progress = Math.round(target);
-                else if (!dragging)
-                    progress += (target - progress) * (1 - Math.exp(-dt * 7));
-                if (Math.abs(target - progress) < 0.001 && !still)
+                // Finish the ascent before translating the planets. Otherwise
+                // the ground moves underneath a camera still metres above it.
+                const leavingSurface =
+                    surfaceMix > 0 && target !== surfaceWorld;
+                if (leavingSurface && !departure && !freeLook) {
+                    departure = {
+                        pose: {
+                            position: camera.position.clone(),
+                            target: rig.target.clone(),
+                            up: camera.up.clone(),
+                        },
+                        mix: surfaceMix,
+                    };
+                }
+                if (settle && !freeLook) {
+                    progress = Math.round(target);
+                    departure = undefined;
+                    orbitDirection.set(0, 0.18, 3.45).normalize();
+                } else if (
+                    !dragging &&
+                    !freeLook &&
+                    !still &&
+                    surfaceMix === 0 &&
+                    !departure
+                )
+                    progress += T.MathUtils.clamp(
+                        (target - progress) * (1 - Math.exp(-dt * 4)),
+                        -dt * 0.9,
+                        dt * 0.9,
+                    );
+                if (Math.abs(target - progress) < 0.001 && !still && !freeLook)
                     progress = target;
                 let from = Math.min(4, Math.floor(progress)),
                     to = Math.min(4, from + 1);
                 const part = progress - from;
                 let travel = T.MathUtils.smoothstep(part, 0.38, 1);
-                if (still) {
+                if (settle && !freeLook) {
                     from = Math.round(target);
                     to = from;
                     travel = 0;
@@ -597,15 +690,7 @@ if (
                             travel,
                         ) +
                         Math.sin(travel * Math.PI) * 3.8;
-                    const direction = camera.position
-                        .clone()
-                        .sub(orbit.target)
-                        .normalize();
-                    orbitalDistance = distance * manualZoom;
-                    if (!freeLook && surfaceMix < 0.001)
-                        camera.position
-                            .copy(orbit.target)
-                            .addScaledVector(direction, orbitalDistance);
+                    orbitalDistance = distance;
                     setLabel(travel > 0.5 ? to : from);
                     status.textContent = "";
                 } else {
@@ -630,32 +715,32 @@ if (
                 )
                     void ensureOutpost(near);
                 const surfaceReady = outposts.has(near) && planets.has(near);
-                const desiredSurface = surfaceReady
-                    ? 1 -
-                      T.MathUtils.smoothstep(
-                          Math.abs(progress - near),
-                          0.04,
-                          0.24,
-                      )
-                    : 0;
-                if (desiredSurface > 0 && surfaceWorld !== near) {
+                const desiredSurface =
+                    surfaceReady &&
+                    target === near &&
+                    Math.abs(progress - near) < 0.001
+                        ? 1
+                        : 0;
+                if (desiredSurface > 0 && surfaceWorld !== near && !freeLook) {
                     surfaceWorld = near;
-                    approachDirection
-                        .copy(camera.position)
-                        .sub(orbit.target)
-                        .normalize();
-                    approachTarget.set(0, 0, 0);
+                    approachDirection.copy(orbitDirection);
                 }
-                surfaceMix = still
-                    ? desiredSurface
-                    : T.MathUtils.damp(
-                          surfaceMix,
-                          desiredSurface,
-                          desiredSurface > surfaceMix ? 1.35 : 5,
-                          elapsedDelta,
-                      );
+                if (!freeLook && (!still || settle))
+                    surfaceMix = settle
+                        ? desiredSurface
+                        : T.MathUtils.damp(
+                              surfaceMix,
+                              desiredSurface,
+                              desiredSurface > surfaceMix ? 1.35 : 3,
+                              elapsedDelta,
+                          );
                 if (surfaceMix < 0.001) surfaceMix = 0;
                 if (surfaceMix > 0.9995) surfaceMix = 1;
+                if (
+                    surfaceMix === 0 &&
+                    camera.position.length() >= orbitalDistance * 0.96
+                )
+                    departure = undefined;
                 playback.setWorld(worldIds[Math.max(0, lastWorld)]);
                 playback.setActive(surfaceMix >= 0.98 && desiredSurface > 0.9);
                 playback.setVisibility(visible && !document.hidden);
@@ -670,6 +755,28 @@ if (
                 section.dataset.surface = stage.dataset.surface;
                 const outpost = outposts.get(surfaceWorld);
                 let landmark = "";
+                if (!freeLook && surfaceMix === 0 && !still) {
+                    if (Math.abs(target - progress) > 0.01)
+                        orbitDirection
+                            .copy(
+                                arcPosition(
+                                    T,
+                                    orbitDirection,
+                                    new T.Vector3(0, 0.18, 3.45).normalize(),
+                                    origin,
+                                    1 - Math.exp(-dt * 1.5),
+                                ),
+                            )
+                            .normalize();
+                    else orbitDirection.applyAxisAngle(worldUp, -dt * 0.0126);
+                }
+                const goal: CameraPose = {
+                    position: orbitDirection
+                        .clone()
+                        .multiplyScalar(orbitalDistance),
+                    target: origin.clone(),
+                    up: worldUp.clone(),
+                };
                 if (outpost && surfaceMix > 0) {
                     const pose = outpostCamera(
                         T,
@@ -679,57 +786,56 @@ if (
                         lunarLaunch?.positionAt,
                     );
                     landmark = pose.landmark;
-                    if (!freeLook && !dragging) {
-                        const globe = planets.get(surfaceWorld)!;
-                        const origin = approachTarget
-                            .clone()
-                            .addScaledVector(
-                                approachDirection,
-                                orbitalDistance,
-                            );
-                        const fromDirection = origin
-                            .clone()
-                            .sub(globe.position);
-                        const toDirection = pose.position
-                            .clone()
-                            .sub(globe.position);
-                        const radius = Math.exp(
-                            T.MathUtils.lerp(
-                                Math.log(fromDirection.length()),
-                                Math.log(toDirection.length()),
-                                surfaceMix,
-                            ),
-                        );
-                        fromDirection
-                            .normalize()
-                            .lerp(
-                                toDirection.normalize(),
-                                T.MathUtils.smoothstep(surfaceMix, 0, 0.5),
-                            )
-                            .normalize();
-                        const desiredPosition = globe.position
-                            .clone()
-                            .addScaledVector(fromDirection, radius);
-                        const desiredTarget = approachTarget
-                            .clone()
-                            .lerp(
-                                pose.target,
-                                T.MathUtils.smoothstep(surfaceMix, 0, 0.45),
-                            );
-                        // This final ease also absorbs a manual -> guided replay.
-                        const follow = still
-                            ? 1
-                            : 1 - Math.exp(-elapsedDelta * 5);
-                        camera.position.lerp(desiredPosition, follow);
-                        orbit.target.lerp(desiredTarget, follow);
-                    }
                     const surfaceUp = new T.Vector3(0, 1, 0).applyQuaternion(
                         outpost.getWorldQuaternion(new T.Quaternion()),
                     );
-                    camera.up
-                        .set(0, 1, 0)
-                        .lerp(surfaceUp, surfaceMix)
-                        .normalize();
+                    const globe = planets.get(surfaceWorld)!;
+                    if (
+                        departure &&
+                        target === surfaceWorld &&
+                        surfaceMix >= departure.mix
+                    )
+                        departure = undefined;
+                    if (departure) {
+                        const lift = T.MathUtils.smoothstep(
+                            1 - surfaceMix / departure.mix,
+                            0,
+                            1,
+                        );
+                        goal.position.copy(
+                            arcPosition(
+                                T,
+                                departure.pose.position,
+                                goal.position,
+                                globe.position,
+                                lift,
+                            ),
+                        );
+                        goal.target
+                            .copy(departure.pose.target)
+                            .lerp(origin, lift);
+                        goal.up
+                            .copy(departure.pose.up)
+                            .lerp(worldUp, lift)
+                            .normalize();
+                    } else {
+                        goal.position.copy(
+                            arcPosition(
+                                T,
+                                approachDirection
+                                    .clone()
+                                    .multiplyScalar(orbitalDistance),
+                                pose.position,
+                                globe.position,
+                                surfaceMix,
+                            ),
+                        );
+                        goal.target.lerp(
+                            pose.target,
+                            T.MathUtils.smoothstep(surfaceMix, 0, 0.7),
+                        );
+                        goal.up.lerp(surfaceUp, surfaceMix).normalize();
+                    }
                     const anchor = outpost.getWorldPosition(new T.Vector3());
                     sun.target.position.copy(anchor);
                     sun.position
@@ -753,11 +859,6 @@ if (
                         outpost.parent === planets.get(surfaceWorld),
                     );
                 } else if (!freeLook) {
-                    camera.up.set(0, 1, 0);
-                    orbit.target.lerp(
-                        new T.Vector3(),
-                        still ? 1 : 1 - Math.exp(-dt * 5),
-                    );
                     sun.target.position.set(0, 0, 0);
                     if (lastWorld === 0)
                         sun.position.copy(sunlight).multiplyScalar(8);
@@ -794,8 +895,6 @@ if (
                 }
                 ambient.intensity = 0.055 + surfaceMix * 0.24;
                 sun.intensity = 2.6 - surfaceMix * 0.2;
-                orbit.minDistance = surfaceMix > 0.5 ? 22 * OUTPOST_SCALE : 2.2;
-                orbit.maxPolarAngle = Math.PI;
                 stage.dataset.view = surfaceMix > 0.98 ? "surface" : "orbit";
                 section.dataset.view = stage.dataset.view;
                 stage.dataset.navigation = freeLook ? "manual" : "guided";
@@ -812,32 +911,47 @@ if (
                             : lastWorld === 0
                               ? "Earth · Our starting point"
                               : `${worldNames[Math.max(0, lastWorld)]} · ${surfaceMix > 0.1 ? "Descending to the settlement" : "Orbital approach"}`;
-                orbit.autoRotate =
-                    !still &&
-                    !dragging &&
-                    !freeLook &&
-                    surfaceMix < 0.01 &&
-                    Math.abs(target - progress) < 0.01;
-                orbit.enableDamping = !still && freeLook;
-                orbit.autoRotateSpeed = 0.12;
-                orbit.update(dt);
-                if (surfaceMix > 0.5) {
-                    // Keep free exploration above the curved surface.
-                    const globe = planets.get(surfaceWorld);
-                    if (globe) {
-                        const offset = camera.position
-                            .clone()
-                            .sub(globe.position);
-                        if (offset.length() < 1.003)
-                            camera.position
-                                .copy(globe.position)
-                                .add(offset.setLength(1.003));
-                    }
+                if (freeLook) {
+                    orbit.enableDamping = !still;
+                    orbit.dampingFactor =
+                        1 - Math.exp(-Math.max(dt, 1 / 60) * 10);
+                    orbit.update(dt);
                 }
+                if (!paused || freeLook || settle)
+                    rig.move(freeLook ? rig.manualPose() : goal, dt, {
+                        instant: settle || (still && freeLook),
+                        manual: freeLook,
+                        center:
+                            surfaceMix > 0
+                                ? planets.get(surfaceWorld)?.position
+                                : undefined,
+                        globes: [...planets.values()].filter((g) => g.visible),
+                    });
+                returnTime = settle ? 0 : Math.max(0, returnTime - dt);
+                navigationDirty =
+                    navigationDirty &&
+                    (!ready ||
+                        ((near === 1 || near === 2) &&
+                            !outposts.has(near) &&
+                            !outpostFailures.has(near)));
                 // Preserve depth precision in orbit. A surface-sized near
                 // plane makes Earth's closely spaced cloud/surface layers flicker.
+                // Close free exploration also needs to clear the ground, even
+                // when its orbit pivot is still deep inside the globe.
+                const groundClearance = Math.min(
+                    ...[...planets.values()]
+                        .filter((g) => g.visible)
+                        .map(
+                            (g) =>
+                                camera.position.distanceTo(g.position) -
+                                TERRAIN_RADIUS,
+                        ),
+                );
                 const nearPlane = T.MathUtils.clamp(
-                    camera.position.distanceTo(orbit.target) * 0.02,
+                    Math.min(
+                        camera.position.distanceTo(rig.target) * 0.02,
+                        groundClearance * 0.25,
+                    ),
                     0.00008,
                     0.05,
                 );
@@ -872,6 +986,9 @@ if (
                 schedule();
             };
             const syncMotion = () => {
+                if (paused) navigationDirty = false;
+                if (freeLook && (paused || motion.matches))
+                    rig.beginManual(surfaceMix > 0.02);
                 lastTime = 0;
                 playback.setPaused(paused);
                 playback.setReducedMotion(motion.matches);
@@ -885,17 +1002,22 @@ if (
             const reset = () => {
                 playback.setManualOrbit(true);
                 playback.setManualOrbit(false);
-                freeLook = false;
-                manualZoom = 1;
+                resumeGuide();
+                target = Math.max(0, lastWorld);
+                navigationDirty = true;
                 if (surfaceMix < 0.01) {
-                    camera.position.set(
-                        0,
-                        0.18,
-                        baseDistance(Math.max(0, lastWorld)),
-                    );
-                    orbit.target.set(0, 0, 0);
+                    orbitDirection.set(0, 0.18, 3.45).normalize();
                 }
                 schedule();
+            };
+            const beginManual = () => {
+                if (freeLook) return;
+                rig.beginManual(surfaceMix > 0.02);
+                freeLook = true;
+                returnTime = 0;
+                departure = undefined;
+                target = surfaceMix > 0 ? Math.round(progress) : progress;
+                pendingTravel = undefined;
             };
             const key = (event: KeyboardEvent) => {
                 if (event.key === "Home") {
@@ -903,8 +1025,21 @@ if (
                     reset();
                     return;
                 }
+                if (
+                    ![
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "ArrowUp",
+                        "ArrowDown",
+                        "+",
+                        "=",
+                        "-",
+                    ].includes(event.key)
+                )
+                    return;
+                beginManual();
                 const s = new T.Spherical().setFromVector3(
-                    camera.position.clone().sub(orbit.target),
+                    inputCamera.position.clone().sub(orbit.target),
                 );
                 if (event.key === "ArrowLeft") s.theta -= 0.16;
                 else if (event.key === "ArrowRight") s.theta += 0.16;
@@ -913,15 +1048,12 @@ if (
                 else if (event.key === "ArrowDown")
                     s.phi = Math.min(Math.PI - 0.1, s.phi + 0.16);
                 else if (event.key === "+" || event.key === "=") {
-                    manualZoom = Math.max(0.7, manualZoom * 0.85);
                     s.radius = Math.max(orbit.minDistance, s.radius * 0.85);
                 } else if (event.key === "-") {
-                    manualZoom = Math.min(2.2, manualZoom / 0.85);
                     s.radius = Math.min(14, s.radius / 0.85);
                 } else return;
-                freeLook = true;
                 event.preventDefault();
-                camera.position.setFromSpherical(s).add(orbit.target);
+                inputCamera.position.setFromSpherical(s).add(orbit.target);
                 orbit.update();
                 schedule();
             };
@@ -951,24 +1083,28 @@ if (
                         top: knots[i] || 0,
                         behavior: "instant",
                     });
-                    target = i;
-                    schedule();
+                    selectionScroll = scrollY;
+                    requestTravel(i, true);
                 };
                 button.addEventListener("click", select);
                 return select;
             });
             const beginDrag = () => {
+                beginManual();
                 dragging = true;
-                freeLook = true;
             };
             const endDrag = () => {
                 dragging = false;
+                if (pendingTravel !== undefined) {
+                    const next = pendingTravel;
+                    pendingTravel = undefined;
+                    requestTravel(next);
+                }
                 schedule();
             };
             orbit.addEventListener("start", beginDrag);
             orbit.addEventListener("end", endDrag);
             const orbitChanged = () => {
-                telemetry();
                 if (dragging || freeLook) schedule();
             };
             orbit.addEventListener("change", orbitChanged);
