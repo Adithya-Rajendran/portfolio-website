@@ -1,6 +1,6 @@
 # Adithya Rajendran writing guide
 
-Version 1.0 · 5 November 2026
+Version 1.1 · 5 November 2026
 
 Use this guide when drafting, editing, or reviewing my technical posts. It applies to human collaborators and AI assistants. The intended voice is a measured first-person engineering notebook: personal decisions, clear evidence, and occasional dry humor.
 
@@ -22,6 +22,7 @@ The promise: **I will show what I tried, why I chose it, what the evidence suppo
 - Admit uncertainty exactly where it matters. “I did not retest this configuration” is more useful than a paragraph of vague caution.
 - Use contractions when they sound natural. Formality is optional; precision is not.
 - Let rhythm vary. A short sentence can deliver a result. A longer sentence can connect the conditions that make it true.
+- Do not use em dashes (Unicode U+2014) in authored writing, including titles, descriptions, body text, takeaways, captions, and alternative text. Rewrite with a full stop, comma, colon, semicolon, or parentheses as the sentence requires. Do not substitute a double hyphen or an en dash as a sentence break. Preserve exact code and command options; paraphrase and cite a quotation rather than silently changing its punctuation.
 - Use dry humor sparingly, after the technical point is clear. It should arise from the situation, never ridicule a reader or disguise a limitation. Zero jokes is a valid draft.
 
 Avoid forced enthusiasm, “game-changing,” “seamless,” “unlock,” “delve,” “ultimate guide,” generic technology history, and dramatic openings that delay the actual subject. Do not announce that a result is impressive; give the reader enough evidence to judge it.
@@ -183,6 +184,7 @@ An article is ready when all of these are true:
 - An expert can inspect the evidence and identify the limits without hunting for a disclaimer.
 - The ending offers a useful continuation. It does not repeat the whole post or stack several competing requests.
 - Dates and revision notes describe the actual work. No internal verification markers remain.
+- A final search finds no em dashes in the authored prose or publishing fields. Hyphens in technical terms and commands, and en dashes in numeric or date ranges, remain valid.
 
 Then read the opening and ending aloud. Remove sentences that sound like promotion, apologize for ordinary uncertainty, or repeat something the reader already knows.
 
@@ -211,6 +213,6 @@ Copy this prompt with the guide and the source material:
 > Evidence and references: [artifacts and links].
 > Known limitations and untested changes: [list].
 >
-> First identify any missing facts that would materially change the article. Ask focused questions for those facts; make reasonable minor editorial choices. Do not invent measurements, personal experiences, quotations, test results, or citations. Preserve technical terminology and exact code. Separate observation, inference, proposal, and uncertainty. Use STE’s clarity principles without claiming compliance or flattening the voice. Include occasional dry humor only if it arises naturally.
+> First identify any missing facts that would materially change the article. Ask focused questions for those facts; make reasonable minor editorial choices. Do not invent measurements, personal experiences, quotations, test results, or citations. Preserve technical terminology and exact code. Separate observation, inference, proposal, and uncertainty. Use STE’s clarity principles without claiming compliance or flattening the voice. Include occasional dry humor only if it arises naturally. Do not use em dashes in any authored prose or publishing fields. Rewrite the sentence instead of substituting another dash as a sentence break, and check the final draft for Unicode U+2014.
 >
 > Return a title, description, optional two-to-four key takeaways, article body, and one suggested next read with a reason. Keep unresolved evidence questions separate from the draft. Check that the title and takeaways preserve the result’s most important limits.

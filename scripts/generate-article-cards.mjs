@@ -79,7 +79,7 @@ for (const post of posts) {
         slug,
         title: post.title,
         filename,
-        alt: `${post.title} — an engineering note by Adithya Rajendran.`,
+        alt: `${post.title}. An engineering note by Adithya Rajendran.`,
     });
 }
 await writeFile(resolve(output, "cards.json"), JSON.stringify(cards, null, 2));

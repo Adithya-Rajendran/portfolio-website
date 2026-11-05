@@ -2,6 +2,8 @@
 
 Use these with [the writing guide](writing-style.md). Choose the shape that matches the work, then remove unused headings and every bracketed instruction. The templates are prompts for evidence, not a requirement to make every post the same length.
 
+Do not use em dashes in the draft or its publishing fields. Rewrite with ordinary punctuation, then search the final text for Unicode U+2014. Preserve exact code and command options.
+
 ## Brief and publishing fields
 
 ```text
