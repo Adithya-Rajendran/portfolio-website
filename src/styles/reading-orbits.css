@@ -1,0 +1,194 @@
+.reading-orbit {
+    display: block;
+    width: 100%;
+    overflow: visible;
+    color: var(--accent-text);
+}
+.reading-orbit__trail {
+    stroke: currentColor;
+    stroke-width: 1;
+    opacity: 0.65;
+}
+.reading-orbit__echo {
+    stroke: var(--accent-green);
+    stroke-width: 1;
+    opacity: 0.4;
+}
+.reading-orbit__node {
+    fill: var(--accent-text);
+}
+.reading-orbit__tick {
+    stroke: var(--secondary-text);
+    stroke-width: 1;
+}
+.reading-orbit__trail--dashed {
+    stroke-dasharray: 5 8;
+}
+.reading-orbit__core {
+    fill: var(--surface);
+    stroke: var(--accent-green);
+    stroke-width: 1;
+}
+.reading-orbit__craft {
+    fill: var(--accent-text);
+}
+.editorial-article-head {
+    position: relative;
+    isolation: isolate;
+}
+.editorial-article-head > .reading-orbit--project {
+    position: absolute;
+    right: -3rem;
+    top: 2rem;
+    width: 32%;
+    opacity: 0.65;
+    z-index: -1;
+}
+.editorial-article-head > .reading-orbit--article {
+    height: 80px;
+    margin-block: 1.5rem -1.5rem;
+    opacity: 0.6;
+}
+.article-page .editorial-article,
+.project-detail-page .editorial-article {
+    margin-inline: auto;
+}
+.article-page .editorial-article-head,
+.project-detail-page .editorial-article-head {
+    padding-top: 1.5rem;
+}
+.project-detail-page .editorial-article-head h1 {
+    max-width: 22ch;
+}
+.project-detail-page .editorial-deck {
+    max-width: 62ch;
+}
+.project-detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.5rem 0 0;
+}
+.project-detail-tags span {
+    border: 1px solid color-mix(in srgb, var(--accent-green) 45%, transparent);
+    padding: 0.3rem 0.65rem;
+    font:
+        0.7rem/1.5 DMMono,
+        monospace;
+    color: var(--secondary-text);
+}
+.article-page
+    .editorial-article
+    > :is(.prose, section, .contents, .article-return),
+.project-detail-page .editorial-article > :is(.prose, section, dl, p) {
+    max-width: 76ch;
+}
+.article-page .prose h2,
+.project-detail-page .editorial-article > section > h2 {
+    position: relative;
+    padding-left: 1.35rem;
+}
+.article-page .prose h2::before,
+.project-detail-page .editorial-article > section > h2::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.7rem;
+    height: 2px;
+    background: var(--accent-amber);
+}
+.project-detail-page .editorial-article > dl {
+    display: grid;
+    grid-template-columns: minmax(8rem, 0.5fr) minmax(0, 1fr);
+    gap: 0.65rem 1.5rem;
+    padding-block: 1.4rem;
+    border-block: 1px solid var(--rule);
+}
+.project-detail-page .editorial-article > dl dt {
+    color: var(--secondary-text);
+    font:
+        0.75rem/1.7 DMMono,
+        monospace;
+}
+.project-detail-page .editorial-article > dl dd {
+    margin: 0;
+}
+.topic-page .editorial-head {
+    position: relative;
+    padding-bottom: 3rem;
+}
+.topic-page .editorial-head > .reading-orbit {
+    position: absolute;
+    right: 0;
+    bottom: -1.2rem;
+    width: 36%;
+    height: 150px;
+    opacity: 0.5;
+    pointer-events: none;
+}
+.topic-page .editorial-list {
+    border-left: 1px solid
+        color-mix(in srgb, var(--accent-green) 35%, transparent);
+    padding-left: 1.5rem;
+}
+.topic-page .editorial-list li {
+    position: relative;
+}
+.topic-page .editorial-list li::before {
+    content: "";
+    position: absolute;
+    left: calc(-1.5rem - 4px);
+    top: 2.5rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-amber);
+}
+.not-found-page {
+    position: relative;
+    max-width: 64rem;
+    padding-block: 4rem;
+}
+.not-found-page > .reading-orbit {
+    max-width: 46rem;
+    margin-block: 1rem;
+    height: clamp(150px, 25vw, 260px);
+}
+.not-found-page .not-found-links a {
+    border: 1px solid var(--accent-green);
+    padding: 0.8rem 1.25rem;
+    text-decoration: none;
+}
+.not-found-page .not-found-links a:first-child {
+    background: var(--accent-amber);
+    border-color: var(--accent-amber);
+    color: #182021;
+}
+.not-found-page .not-found-links a:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 4px;
+}
+@media (max-width: 800px) {
+    .editorial-article-head > .reading-orbit--project {
+        right: 0;
+        top: 0;
+        width: 45%;
+        opacity: 0.25;
+    }
+    .editorial-article-head > .reading-orbit--article {
+        height: 55px;
+    }
+    .topic-page .editorial-head > .reading-orbit {
+        opacity: 0.2;
+        width: 60%;
+    }
+    .not-found-page {
+        padding-block: 2.5rem;
+    }
+}
+@media print {
+    .reading-orbit {
+        display: none;
+    }
+}

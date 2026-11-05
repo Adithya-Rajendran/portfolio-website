@@ -394,6 +394,12 @@
     line-height: 1.9;
     color: #bdc8c3;
 }
+:root[data-theme="light"] .home-page .home-introduction h2 em {
+    color: var(--secondary-text);
+}
+:root[data-theme="light"] .home-introduction__copy > p {
+    color: var(--ink);
+}
 .home-page .home-introduction .section-link {
     display: inline-block;
     margin-top: 1.5rem;

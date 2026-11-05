@@ -1,6 +1,7 @@
 ---
 import "../../../styles/editorial.css";
 import Base from "../../../layouts/Base.astro";
+import ReadingOrbit from "../../../components/ReadingOrbit.astro";
 import { getAllPosts } from "../../../lib/sanity";
 import { TAG_PATTERN, tagLabel } from "../../../../lib/tags";
 const tag = Astro.params.tag || "";
@@ -8,12 +9,17 @@ const posts = (await getAllPosts()).filter((p) => p.tags?.includes(tag));
 if (!TAG_PATTERN.test(tag) || !posts.length) return Astro.rewrite("/404");
 ---
 
-<Base title={tagLabel(tag)} description={`Writing tagged ${tagLabel(tag)}`}>
+<Base
+    title={tagLabel(tag)}
+    description={`Writing tagged ${tagLabel(tag)}`}
+    pageClass="topic-page"
+>
     <div class="editorial-head">
         <p class="editorial-eyebrow">
             <a href="/blog">← Writing</a> / Topic
         </p>
         <h1>{tagLabel(tag)}</h1>
+        <ReadingOrbit />
     </div>
     <ul class="editorial-list">
         {posts.map((p) => (

@@ -1,5 +1,6 @@
 ---
 import "../../styles/editorial.css";
+import ReadingOrbit from "../../components/ReadingOrbit.astro";
 import {
     buildBlogPosting,
     buildBreadcrumbList,
@@ -28,6 +29,7 @@ const related = posts
 ---
 
 <Base
+    pageClass="article-page"
     image={
         post.cover?.asset?._ref
             ? urlForImage(post.cover).width(1200).height(630).fit("crop").url()
@@ -71,6 +73,7 @@ const related = posts
                 </time>{" "}
                 · <a href="/about">Adithya Rajendran</a>
             </p>
+            <ReadingOrbit />
         </div>
         <CmsImage image={post.cover} />
         {headings.length > 1 && (

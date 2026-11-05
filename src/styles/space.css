@@ -37,18 +37,41 @@ body > header {
     background: color-mix(in srgb, var(--surface) 90%, transparent);
 }
 .scene-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    display: flex;
     align-items: center;
-    min-height: 560px;
-    margin: -1.5rem -2rem 2.5rem 0;
-    gap: 0;
+    min-height: clamp(580px, 48vw, 720px);
+    margin: -3rem 0 2.5rem;
     position: relative;
 }
 .scene-hero__copy {
     position: relative;
     z-index: 1;
-    padding-block: 2rem;
+    padding-block: 3rem 5rem;
+    width: 45%;
+    pointer-events: none;
+}
+.scene-hero__copy a {
+    pointer-events: auto;
+}
+.scene-hero > .space-study {
+    position: absolute;
+    inset: 0 -4.5rem 0 30%;
+    right: max(-4.5rem, calc((100% - 100vw) / 2));
+}
+.scene-hero > .space-study .space-study__art {
+    height: calc(100% - 4rem);
+}
+.scene-hero > .space-study .space-study__caption {
+    justify-content: flex-end;
+    padding-right: 4rem;
+}
+.scene-hero > .space-study .space-study__credits {
+    text-align: right;
+    padding-right: 4rem;
+}
+.scene-hero > .space-study .space-study__hint {
+    text-align: right;
+    padding-right: 4rem;
 }
 .scene-hero__copy > .eyebrow {
     color: var(--secondary-text);
@@ -56,7 +79,7 @@ body > header {
     letter-spacing: 0.17em;
 }
 .scene-hero h1 {
-    font-size: clamp(3.5rem, 6.5vw, 6.5rem);
+    font-size: clamp(3.5rem, 6.1vw, 6.1rem);
     letter-spacing: -0.055em;
     line-height: 1.02;
     margin: 0.25em 0;
@@ -98,12 +121,33 @@ body > header {
     position: relative;
     overflow: clip;
     height: clamp(380px, 39vw, 580px);
+    background: radial-gradient(ellipse at 60% 40%, #24303945, transparent 70%);
+    mask-image:
+        linear-gradient(90deg, transparent, #000 12%, #000 94%, transparent),
+        linear-gradient(180deg, transparent, #000 10%, #000 83%, transparent);
+    mask-composite: intersect;
+}
+.space-study__poster {
+    position: absolute;
+    inset: 0;
+    display: block;
+}
+.space-study__poster img {
+    position: absolute;
+    left: 50%;
+    display: block;
+    width: auto;
+    max-width: none;
+    height: 100%;
+    transform: translateX(-50%);
+}
+.space-study__poster[hidden] {
+    display: none;
 }
 .space-study__stage {
     position: absolute;
     inset: 0;
     opacity: 0;
-    transition: opacity 1.2s ease;
     touch-action: pan-y;
 }
 .space-study[data-ready] .space-study__stage {
@@ -113,33 +157,6 @@ body > header {
     display: block;
     width: 100%;
     height: 100%;
-}
-.space-study__orbits {
-    position: absolute;
-    inset: 12% 10%;
-    border: 1px solid color-mix(in srgb, var(--accent-green) 23%, transparent);
-    border-radius: 50%;
-    transform: rotate(-28deg) scaleY(0.68);
-    pointer-events: none;
-}
-.space-study__orbits::before {
-    content: "";
-    position: absolute;
-    inset: -14% -5%;
-    border: 1px solid color-mix(in srgb, var(--accent-amber) 17%, transparent);
-    border-radius: 50%;
-    transform: rotate(45deg);
-}
-.space-study__orbits::after {
-    content: "";
-    position: absolute;
-    top: 12%;
-    left: 12%;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--accent-amber);
-    box-shadow: 0 0 14px #dfa05d55;
 }
 .space-study__caption {
     display: flex;
@@ -194,9 +211,19 @@ body > header {
     padding-top: 1.5rem;
     border-top: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
 }
+.scene-section-head::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border: 1px solid var(--accent-amber);
+    border-radius: 50%;
+    align-self: center;
+    box-shadow: 0 0 0 5px #dfa05d0c;
+}
 .scene-section-head h2 {
     font-size: clamp(1.5rem, 2vw, 2.2rem);
-    margin: 0;
+    margin: 0 auto 0 0;
 }
 .scene-section-head p {
     margin: 0;
@@ -210,6 +237,26 @@ body > header {
 }
 .space-site .editorial-list li:hover {
     background: color-mix(in srgb, var(--surface) 75%, transparent);
+}
+.writing-page .editorial-list li {
+    padding-block: 2.4rem;
+    grid-template-columns: minmax(8rem, 0.65fr) minmax(0, 3fr);
+}
+.writing-page .editorial-list h2 a::after {
+    content: "↗";
+    display: inline-block;
+    margin-left: 0.75rem;
+    color: var(--accent-text);
+    font-size: 0.6em;
+    vertical-align: middle;
+}
+.writing-page .editorial-list li > p {
+    color: var(--secondary-text);
+    line-height: 1.8;
+    margin-top: 0.5rem;
+}
+.writing-page .editorial-list li:first-child h2 {
+    font-size: clamp(1.6rem, 2.7vw, 2.4rem);
 }
 .space-site .editorial-list time::before {
     content: "";
@@ -270,6 +317,43 @@ body > header {
     margin-top: 0;
     border-top: 0;
 }
+.about-page .about-focus {
+    counter-reset: focus;
+}
+.about-page .about-focus li {
+    counter-increment: focus;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    padding-block: 1.4rem;
+}
+.about-page .about-focus li::before {
+    content: "0" counter(focus);
+    color: var(--accent-text);
+    font:
+        0.7rem DMMono,
+        monospace;
+}
+.projects-next,
+.about-page .editorial-next {
+    position: relative;
+    overflow: hidden;
+    padding: 3rem 0;
+    background: radial-gradient(ellipse at 90% 90%, #65876112, transparent 65%);
+}
+.projects-next::after,
+.about-page .editorial-next::after {
+    content: "";
+    position: absolute;
+    right: -2rem;
+    top: 1rem;
+    width: 24rem;
+    height: 10rem;
+    border: 1px solid #65876144;
+    border-radius: 50%;
+    transform: rotate(-20deg);
+    pointer-events: none;
+}
 .contact-page .contact-intro {
     position: relative;
 }
@@ -284,7 +368,10 @@ body > header {
     font-size: clamp(3.5rem, 6vw, 5.7rem);
 }
 .contact-page .space-study__art {
-    height: 350px;
+    height: 390px;
+}
+.contact-page .space-study {
+    margin-inline: -2.5rem;
 }
 .contact-page .contact-support {
     padding-top: 0;
@@ -299,16 +386,27 @@ body > header {
     padding: 2rem;
     border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
     border-top: 2px solid var(--accent-amber);
-    box-shadow: 0 16px 60px #0000000d;
+    box-shadow: 0 16px 60px #00000020;
+    backdrop-filter: blur(16px);
+}
+.contact-page .contact-form-panel h2 {
+    font-size: clamp(1.6rem, 2.8vw, 2.5rem);
+    letter-spacing: -0.04em;
+}
+.contact-page .contact-form-panel input:not([type="radio"]),
+.contact-page .contact-form-panel textarea {
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    border-color: color-mix(in srgb, var(--ink) 28%, transparent);
 }
 @media (max-width: 800px) {
     .scene-hero {
-        grid-template-columns: 1fr;
+        display: block;
         min-height: 0;
         margin: -1rem 0 2rem;
     }
     .scene-hero__copy {
         padding-block: 0;
+        width: 100%;
     }
     .scene-hero h1 {
         font-size: clamp(3.2rem, 12vw, 4.7rem);
@@ -320,16 +418,34 @@ body > header {
         font-size: 1rem;
     }
     .scene-hero > .space-study {
+        position: relative;
+        inset: auto;
         margin: -1rem -0.8rem 0;
     }
-    .space-study__art {
-        height: clamp(280px, 75vw, 430px);
+    .space-study__art,
+    .scene-hero > .space-study .space-study__art {
+        height: clamp(310px, 84vw, 470px);
+        mask-image: linear-gradient(
+            180deg,
+            transparent,
+            #000 8%,
+            #000 86%,
+            transparent
+        );
     }
     .space-study__caption {
         flex-wrap: wrap;
         column-gap: 0.8rem;
         row-gap: 0;
         font-size: 0.62rem;
+    }
+    .scene-hero > .space-study .space-study__caption {
+        justify-content: center;
+        padding-right: 0;
+    }
+    .scene-hero > .space-study .space-study__credits {
+        text-align: center;
+        padding-right: 0;
     }
     .space-study__name {
         max-width: 21ch;
@@ -343,6 +459,15 @@ body > header {
     .scene-section-head p {
         max-width: 20ch;
         text-align: right;
+    }
+    .writing-page .editorial-list li {
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+        padding-block: 1.6rem;
+    }
+    .writing-page .editorial-list li > p {
+        grid-column: 1;
+        margin-top: 0;
     }
     .space-site > footer {
         flex-wrap: wrap;
@@ -363,7 +488,10 @@ body > header {
         padding: 1.4rem;
     }
     .contact-page .space-study__art {
-        height: 300px;
+        height: 330px;
+    }
+    .contact-page .space-study {
+        margin-inline: -0.8rem;
     }
 }
 @media (prefers-reduced-motion: reduce) {

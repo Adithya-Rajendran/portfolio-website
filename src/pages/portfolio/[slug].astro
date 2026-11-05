@@ -1,5 +1,6 @@
 ---
 import "../../styles/editorial.css";
+import ReadingOrbit from "../../components/ReadingOrbit.astro";
 import SafeLink from "../../components/SafeLink.astro";
 import { buildBreadcrumbList } from "../../../lib/structured-data";
 import Base from "../../layouts/Base.astro";
@@ -26,6 +27,7 @@ const next = position >= 0 ? projects[position + 1] : null;
 ---
 
 <Base
+    pageClass="project-detail-page"
     image={
         project.cover?.asset?._ref
             ? urlForImage(project.cover)
@@ -59,6 +61,14 @@ const next = position >= 0 ? projects[position + 1] : null;
             </p>
             <h1>{project.title}</h1>
             <p class="editorial-deck">{project.summary}</p>
+            {project.technologies?.length && (
+                <div class="project-detail-tags">
+                    {project.technologies.map((t) => (
+                        <span>{t}</span>
+                    ))}
+                </div>
+            )}
+            <ReadingOrbit variant="project" />
         </div>
         <CmsImage image={project.cover} />
         {project.model?.poster && (
@@ -93,9 +103,6 @@ const next = position >= 0 ? projects[position + 1] : null;
             </section>
         )}
         {project.myRole && <p>{project.myRole}</p>}
-        {project.technologies?.length && (
-            <p>{project.technologies.join(" · ")}</p>
-        )}
         {project.brief && (
             <section>
                 <h2>Overview</h2>

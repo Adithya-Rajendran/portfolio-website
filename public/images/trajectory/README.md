@@ -1,5 +1,13 @@
 # Trajectory textures
 
+## Secondary scenes
+
+The orbital workshop, communications satellite, robotic instrument, calibration deck and laboratory are original TypeScript geometry. Their panel, optical, foil and solar-cell textures are generated in JavaScript. The backgrounds use the planetary and Milky Way sources credited below.
+
+The Writing page uses **NASA/Goddard Space Flight Center**, [James Webb Space Telescope (A)](https://science.nasa.gov/3d-resources/james-webb-space-telescope-a/), from NASA's 3D Resources collection. The original GLB is served as `/models/webb-observatory-v1.glb`; scale, orientation, material settings and lighting are adapted in the renderer. Static geometry is batched at runtime. The composition with Saturn is imaginative artwork, not Webb's actual orbital location.
+
+The `workshop-*`, `observatory-*`, `robotics-*` and `relay-*` WebP files in `/images/scenes/` are transparent captures of these same live Three.js scenes, made with `scripts/artwork/capture-space-posters.mjs`. They provide the loading and no-WebGL views. Contact has matching dawn, day, dusk and night variants.
+
 ## Current Earth and Milky Way assets
 
 The v2 Earth uses Solar System Scope's 8K [day map](https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg), [clouds](https://www.solarsystemscope.com/textures/download/8k_earth_clouds.jpg), [night map](https://www.solarsystemscope.com/textures/download/8k_earth_nightmap.jpg), 2K [normal map](https://www.solarsystemscope.com/textures/download/2k_earth_normal_map.tif), and [specular map](https://www.solarsystemscope.com/textures/download/2k_earth_specular_map.tif), under CC BY 4.0. Adaptations: resized and encoded as WebP, then shaded with original lighting, cloud relief, ocean reflectance and atmosphere shaders.

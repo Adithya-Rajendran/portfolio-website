@@ -1,0 +1,85 @@
+---
+import "../styles/reading-orbits.css";
+interface Props {
+    variant?: "article" | "project" | "lost";
+}
+const { variant = "article" } = Astro.props;
+---
+
+<svg
+    class:list={["reading-orbit", `reading-orbit--${variant}`]}
+    viewBox="0 0 720 240"
+    fill="none"
+    aria-hidden="true"
+    focusable="false"
+>
+    {variant === "article" ? (
+        <>
+            <path
+                class="reading-orbit__trail"
+                d="M-40 164C107 42 188 211 329 122S535 62 762 97"
+            />
+            <path
+                class="reading-orbit__echo"
+                d="M-40 180C107 58 188 227 329 138S535 78 762 113"
+            />
+            <circle class="reading-orbit__node" cx="105" cy="117" r="3" />
+            <circle class="reading-orbit__node" cx="329" cy="122" r="4" />
+            <circle class="reading-orbit__node" cx="576" cy="75" r="3" />
+            <path
+                class="reading-orbit__tick"
+                d="M105 100V108M329 137V154M576 55V65"
+            />
+        </>
+    ) : (
+        <>
+            <ellipse
+                class="reading-orbit__trail"
+                cx="320"
+                cy="140"
+                rx="240"
+                ry="67"
+                transform="rotate(-12 320 140)"
+            />
+            <ellipse
+                class="reading-orbit__echo"
+                cx="320"
+                cy="140"
+                rx="225"
+                ry="84"
+                transform="rotate(16 320 140)"
+            />
+            <ellipse
+                class="reading-orbit__echo"
+                cx="320"
+                cy="140"
+                rx="190"
+                ry="100"
+                transform="rotate(-25 320 140)"
+            />
+            <circle class="reading-orbit__node" cx="188" cy="73" r="4" />
+            <circle class="reading-orbit__node" cx="452" cy="190" r="3" />
+            <circle class="reading-orbit__core" cx="320" cy="140" r="24" />
+            <path
+                class="reading-orbit__echo"
+                d="M298 143C314 121 328 123 341 136M306 158C316 144 330 145 342 144"
+            />
+            {variant === "lost" && (
+                <>
+                    <path
+                        class="reading-orbit__trail reading-orbit__trail--dashed"
+                        d="M548 114Q585 79 627 50"
+                    />
+                    <path
+                        class="reading-orbit__craft"
+                        d="M628 37L653 40L635 55L638 44Z"
+                    />
+                    <path
+                        class="reading-orbit__tick"
+                        d="M659 32Q671 35 673 48M663 23Q682 27 684 47"
+                    />
+                </>
+            )}
+        </>
+    )}
+</svg>

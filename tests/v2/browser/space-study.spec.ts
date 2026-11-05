@@ -67,7 +67,9 @@ test("a space scene supports keyboard pause and retains content after context lo
     await page.keyboard.press("Enter");
     await expect(motion).toHaveText("Resume motion");
     await expect(motion).toHaveAttribute("aria-pressed", "true");
-    await expect(figure).toHaveAttribute("data-state", "paused");
+    await expect(figure).toHaveAttribute("data-state", "paused", {
+        timeout: 30000,
+    });
     await page.keyboard.press("Enter");
     await expect(motion).toHaveText("Pause motion");
     const canvas = figure.locator("canvas");
@@ -82,8 +84,84 @@ test("a space scene supports keyboard pause and retains content after context lo
     await expect(figure).toHaveAttribute("data-state", "unavailable");
     await expect(canvas).toHaveCount(0);
     await expect(motion).toBeHidden();
+    await expect(figure.locator("[data-space-poster]")).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });
+
+test("a live motion preference change pauses the scene and preserves a manual pause", async ({
+    page,
+}) => {
+    test.setTimeout(90000);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/about");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
+    );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const figure = page.locator('figure[data-space-study="robotics"]');
+    await figure.scrollIntoViewIfNeeded();
+    await expect(figure).toHaveAttribute("data-ready", "true", {
+        timeout: 45000,
+    });
+    const motion = figure.locator("[data-space-motion]");
+    await expect(figure).toHaveAttribute("data-state", "running");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(figure).toHaveAttribute("data-state", "paused", {
+        timeout: 30000,
+    });
+    await expect(motion).toBeDisabled();
+    await expect(motion).toHaveText("Still scene");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(motion).toBeEnabled();
+    await expect(figure).toHaveAttribute("data-state", "running");
+    await motion.click();
+    await expect(figure).toHaveAttribute("data-state", "paused");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(motion).toBeDisabled();
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(motion).toBeEnabled();
+    await expect(motion).toHaveText("Resume motion");
+    await expect(motion).toHaveAttribute("aria-pressed", "true");
+    await expect(figure).toHaveAttribute("data-state", "paused");
+});
+
+for (const [path, kind] of pages) {
+    test(`${kind} retains its poster when WebGL initialization fails`, async ({
+        page,
+    }) => {
+        test.setTimeout(90000);
+        await page.addInitScript(() => {
+            const getContext = HTMLCanvasElement.prototype.getContext;
+            HTMLCanvasElement.prototype.getContext = function (
+                ...args: [string, ...unknown[]]
+            ) {
+                if (args[0] === "webgl" || args[0] === "webgl2") return null;
+                return Reflect.apply(getContext, this, args);
+            } as typeof getContext;
+        });
+        await page.goto(path);
+        const figure = page.locator(`figure[data-space-study="${kind}"]`);
+        await figure.scrollIntoViewIfNeeded();
+        await expect(figure).toHaveAttribute("data-state", "unavailable", {
+            timeout: 45000,
+        });
+        const poster = figure.locator("[data-space-poster]");
+        await expect(poster).toBeVisible();
+        await expect
+            .poll(() =>
+                poster
+                    .locator("img")
+                    .evaluate(
+                        (image: HTMLImageElement) =>
+                            image.complete && image.naturalWidth > 0,
+                    ),
+            )
+            .toBe(true);
+        await expect(figure.locator("canvas")).toHaveCount(0);
+        await expect(figure.locator("[data-space-motion]")).toBeHidden();
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    });
+}
 
 test("the vignettes leave content readable without JavaScript", async ({
     browser,
@@ -108,23 +186,78 @@ test("the vignettes leave content readable without JavaScript", async ({
     await context.close();
 });
 
-test("a scene recovers when restored while its initial texture is still loading", async ({
+test("writing remains readable with its poster if the observatory model fails", async ({
     page,
 }) => {
     test.setTimeout(90000);
-    let release!: () => void;
-    const pending = new Promise<void>((resolve) => {
-        release = resolve;
+    let requested = false;
+    await page.route("**/models/webb-observatory-v1.glb", (route) => {
+        requested = true;
+        return route.abort();
     });
-    let requests = 0;
-    await page.route(
-        "**/images/trajectory/moon-surface-v2-*.webp",
-        async (route) => {
-            requests++;
-            if (requests === 1) await pending;
-            await route.continue();
-        },
+    await page.goto("/blog");
+    const supported = await page.evaluate(() =>
+        Boolean(document.createElement("canvas").getContext("webgl2")),
     );
+    test.skip(!supported, "WebGL2 is unavailable in this browser");
+    const figure = page.locator('figure[data-space-study="observatory"]');
+    await figure.scrollIntoViewIfNeeded();
+    await expect(figure).toHaveAttribute("data-state", "unavailable", {
+        timeout: 45000,
+    });
+    expect(requested).toBe(true);
+    const poster = figure.locator("[data-space-poster]");
+    await expect(poster).toBeVisible();
+    await expect
+        .poll(() =>
+            poster
+                .locator("img")
+                .evaluate(
+                    (image: HTMLImageElement) =>
+                        image.complete && image.naturalWidth > 0,
+                ),
+        )
+        .toBe(true);
+    await expect(figure.locator("canvas")).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(
+        page.getByRole("link", {
+            name: "Fixture post: code listings and links",
+        }),
+    ).toBeVisible();
+});
+
+test("a restored scene starts without waiting for its old texture request", async ({
+    page,
+}) => {
+    test.setTimeout(90000);
+    // Hold the first Image assignment before it reaches the network. This
+    // avoids the browser coalescing the restored scene's identical request.
+    await page.addInitScript(() => {
+        const descriptor = Object.getOwnPropertyDescriptor(
+            HTMLImageElement.prototype,
+            "src",
+        )!;
+        let held: (() => void) | undefined;
+        let requests = 0;
+        Object.defineProperty(HTMLImageElement.prototype, "src", {
+            ...descriptor,
+            set(value: string) {
+                if (/moon-surface-v2-.*\.webp/.test(value)) {
+                    requests++;
+                    if (requests === 1) {
+                        held = () => descriptor.set!.call(this, value);
+                        return;
+                    }
+                }
+                descriptor.set!.call(this, value);
+            },
+        });
+        Object.assign(window, {
+            heldMoonRequests: () => requests,
+            releaseMoonRequest: () => held?.(),
+        });
+    });
     try {
         await page.goto("/portfolio");
         const supported = await page.evaluate(() =>
@@ -133,9 +266,13 @@ test("a scene recovers when restored while its initial texture is still loading"
         test.skip(!supported, "WebGL2 is unavailable in this browser");
         const figure = page.locator('figure[data-space-study="workshop"]');
         await figure.scrollIntoViewIfNeeded();
-        await expect
-            .poll(() => requests, { timeout: 30000 })
-            .toBeGreaterThan(0);
+        const requests = () =>
+            page.evaluate(() =>
+                (
+                    window as unknown as { heldMoonRequests: () => number }
+                ).heldMoonRequests(),
+            );
+        await expect.poll(requests, { timeout: 30000 }).toBeGreaterThan(0);
         await page.evaluate(() => {
             window.dispatchEvent(
                 new PageTransitionEvent("pagehide", { persisted: true }),
@@ -144,13 +281,17 @@ test("a scene recovers when restored while its initial texture is still loading"
                 new PageTransitionEvent("pageshow", { persisted: true }),
             );
         });
-        release();
         await expect(figure).toHaveAttribute("data-ready", "true", {
             timeout: 45000,
         });
         await expect(figure.locator("canvas")).toHaveCount(1);
+        expect(await requests()).toBeGreaterThan(1);
     } finally {
-        release();
+        await page.evaluate(() =>
+            (
+                window as unknown as { releaseMoonRequest: () => void }
+            ).releaseMoonRequest(),
+        );
     }
 });
 

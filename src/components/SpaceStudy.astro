@@ -19,7 +19,7 @@ const scenes = {
     },
     robotics: {
         name: "A different way of seeing",
-        note: "A robotic instrument, made for a world beyond our own.",
+        note: "A robotic perception instrument on a research workbench overlooking an imagined Martian landscape.",
         coordinate: "03 / Explore",
     },
     relay: {
@@ -37,7 +37,24 @@ const scene = scenes[kind];
     data-state="loading"
 >
     <div class="space-study__art">
-        <div class="space-study__orbits" aria-hidden="true"></div>
+        <picture
+            class="space-study__poster"
+            data-space-poster
+            aria-hidden="true"
+        >
+            <source
+                media="(max-width: 800px)"
+                srcset={`/images/scenes/${kind}-mobile-v1.webp`}
+            />
+            <img
+                src={`/images/scenes/${kind}-desktop-v1.webp`}
+                alt=""
+                width="1440"
+                height="1080"
+                decoding="async"
+                fetchpriority="high"
+            />
+        </picture>
         <div
             class="space-study__stage"
             data-space-stage
@@ -55,9 +72,29 @@ const scene = scenes[kind];
     <p class="space-study__hint" data-space-hint hidden>
         Move your pointer to look around
     </p>
-    <a class="space-study__credits" href="/images/trajectory/README.md">
+    <a
+        class="space-study__credits"
+        href="/images/trajectory/README.md#secondary-scenes"
+    >
         Scene credits ↗
     </a>
+    {kind === "relay" && <script is:inline>
+        {
+            const picture = document.currentScript
+                ?.closest("figure")
+                ?.querySelector("[data-space-poster]");
+            const phase = document.documentElement.dataset.scenePhase;
+            if (
+                picture &&
+                ["dawn", "day", "dusk", "night"].includes(phase || "")
+            ) {
+                picture.querySelector("source").srcset =
+                    `/images/scenes/relay-${phase}-mobile-v1.webp`;
+                picture.querySelector("img").src =
+                    `/images/scenes/relay-${phase}-desktop-v1.webp`;
+            }
+        }
+    </script>}
 </figure>
 <script>
     import "../scripts/space-scene";
