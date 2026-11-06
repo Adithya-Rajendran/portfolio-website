@@ -1,4 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
+import { discoveryLinkHeader } from "./lib/discovery";
 const redirects: Record<string, [string, number]> = {
     "/blogs": ["/blog", 308],
     "/resume.pdf": ["/resume/view", 308],
@@ -12,7 +13,8 @@ const redirects: Record<string, [string, number]> = {
     "/apple-touch-icon.png": ["/apple-icon.png", 308],
     "/apple-touch-icon-precomposed.png": ["/apple-icon.png", 308],
 };
-export const onRequest = defineMiddleware(async ({ url, locals }, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
+    const { url, locals, request } = context;
     const nonce = btoa(
         String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))),
     );
@@ -55,6 +57,12 @@ export const onRequest = defineMiddleware(async ({ url, locals }, next) => {
     }
     // Redirect responses and some adapter responses have immutable headers.
     response = new Response(response.body, response);
+    if (
+        url.pathname === "/" &&
+        (request.method === "GET" || request.method === "HEAD") &&
+        response.ok
+    )
+        response.headers.append("Link", discoveryLinkHeader);
     if (url.hostname !== "adithya-rajendran.com")
         response.headers.set("X-Robots-Tag", "noindex, nofollow");
     if (
