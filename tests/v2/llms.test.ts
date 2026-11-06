@@ -61,6 +61,8 @@ describe("agent discovery", () => {
             "/blog",
             "/resume",
             "/about",
+            "/.well-known/api-catalog",
+            "/openapi.json",
             "/sitemap.xml",
             "/feed.xml",
             "/robots.txt",
@@ -68,6 +70,9 @@ describe("agent discovery", () => {
             expect(body).toContain(`https://adithya-rajendran.com${path}`);
         expect(body).toMatch(/without JavaScript or WebGL/);
         expect(body).toMatch(/Contact is for humans only/);
+        expect(body).toContain(
+            "do not submit forms automatically or access /api/contact or /studio",
+        );
         expect(body).not.toMatch(
             /\]\(https:\/\/adithya-rajendran\.com\/(?:contact|api|studio)/i,
         );

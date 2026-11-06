@@ -16,6 +16,8 @@ CMS-backed pages and XML fetch published content on each request without a share
 
 Agents can start at `/llms.txt`, a request-time index of the published writing, projects and main pages. Every public page advertises the guide and sitemap in its HTML head. The existing HTML pages and full RSS feed are readable without JavaScript or WebGL. The guide uses the same published-content queries as the site and returns upstream errors rather than stale or incomplete success responses.
 
+Successful homepage GET and HEAD responses also advertise `api-catalog`, `service-desc`, `service-doc` and `describedby` Link relations through the Worker middleware. `/.well-known/api-catalog` serves an RFC 9727 JSON Linkset, and `/openapi.json` describes the existing read-only guide, RSS feed and sitemap. Their shared resource list lives in `src/lib/discovery.ts`; keep it aligned with those routes. These metadata documents contain no CMS content, require no CMS fetch and return `Cache-Control: no-store`. The catalog's HEAD response includes discovery links as required by RFC 9727.
+
 Contact is for humans: robots.txt excludes `/contact`, its `/comms` alias, `/api/` and `/studio`, and the sitemap and agent guide omit those destinations. These are crawler directions, not access controls. The contact handler independently requires a valid Turnstile token with the exact action and hostname, origin validation and rate limiting; there is no agent bypass. Cloudflare access settings are documented in [the security configuration](docs/cloudflare-security.md).
 
 ## Deployment and rollback

@@ -8,7 +8,9 @@ import { onRequest } from "../../src/middleware";
 async function policy(path: string): Promise<string> {
     const url = new URL(path, "https://adithya-rajendran.com");
     const response = await onRequest(
-        { url, locals: {} } as Parameters<typeof onRequest>[0],
+        { url, locals: {}, request: new Request(url) } as Parameters<
+            typeof onRequest
+        >[0],
         async () => new Response("ok"),
     );
     return response.headers.get("content-security-policy") ?? "";
@@ -48,7 +50,9 @@ describe("response security", () => {
         const locals: Record<string, string> = {};
         const url = new URL(path, "https://adithya-rajendran.com");
         const response = await onRequest(
-            { url, locals } as Parameters<typeof onRequest>[0],
+            { url, locals, request: new Request(url) } as Parameters<
+                typeof onRequest
+            >[0],
             next,
         );
         return { response, locals };
@@ -127,4 +131,74 @@ describe("response security", () => {
             "'unsafe-inline'",
         );
     });
+});
+
+describe("homepage response discovery", () => {
+    async function run(path: string, method: string, status = 200) {
+        const url = new URL(path, "https://adithya-rajendran.com");
+        return onRequest(
+            {
+                url,
+                locals: {},
+                request: new Request(url, { method }),
+            } as Parameters<typeof onRequest>[0],
+            async () =>
+                new Response(method === "HEAD" ? null : "homepage", {
+                    status,
+                    headers: {
+                        "Content-Type": "text/html; charset=utf-8",
+                        Link: '</font.woff2>; rel="preload"; as="font"',
+                    },
+                }),
+        );
+    }
+
+    it.each(["GET", "HEAD"])(
+        "advertises registered discovery links on homepage %s without replacing existing links",
+        async (method) => {
+            const response = await run("/?source=reader", method);
+            expect(response.status).toBe(200);
+            expect(await response.text()).toBe(
+                method === "HEAD" ? "" : "homepage",
+            );
+            const header = response.headers.get("link");
+            expect(header).toContain('</font.woff2>; rel="preload"; as="font"');
+            for (const [path, relation] of [
+                ["/.well-known/api-catalog", "api-catalog"],
+                ["/openapi.json", "service-desc"],
+                ["/llms.txt", "service-doc"],
+                ["/llms.txt", "describedby"],
+            ])
+                expect(header).toContain(`<${path}>; rel="${relation}"`);
+            expect(response.headers.get("cache-control")).toBe("no-store");
+            expect(response.headers.get("content-security-policy")).toContain(
+                "form-action 'self'",
+            );
+            expect(response.headers.get("strict-transport-security")).toContain(
+                "max-age=",
+            );
+            expect(response.headers.get("x-content-type-options")).toBe(
+                "nosniff",
+            );
+        },
+    );
+
+    it.each([
+        ["/", "GET", 500],
+        ["/", "GET", 404],
+        ["/", "POST", 200],
+        ["/about", "GET", 200],
+        ["/contact", "GET", 200],
+        ["/api/contact", "POST", 200],
+        ["/studio", "GET", 200],
+        ["https://www.adithya-rajendran.com/", "GET", 200],
+    ])(
+        "does not advertise homepage discovery on %s %s (%i)",
+        async (path, method, status) => {
+            const response = await run(path, method, status);
+            expect(response.headers.get("link") ?? "").not.toMatch(
+                /rel="(?:api-catalog|service-desc|service-doc|describedby)"/,
+            );
+        },
+    );
 });
