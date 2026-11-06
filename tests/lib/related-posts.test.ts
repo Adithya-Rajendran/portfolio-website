@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { logEntries } from "@/lib/log-index";
-import { adjacentEntries, relatedEntries } from "@/lib/related-posts";
+import {
+    adjacentEntries,
+    relatedEntries,
+    nextArticle,
+} from "@/lib/related-posts";
 import type { PostListItem } from "@/lib/content-types";
 
 function post(
@@ -78,4 +82,42 @@ describe("relatedEntries", () => {
     it("keeps to the limit", () => {
         expect(relatedEntries(entries, "e5", { limit: 1 })).toHaveLength(1);
     });
+});
+
+describe("nextArticle", () => {
+    const published = [
+        post("current", "2026-01-01", ["robotics"]),
+        {
+            ...post("related", "2026-01-02", ["robotics"]),
+            description: "Related summary",
+        },
+        post("curated", "2026-01-03", ["linux"]),
+        { ...post("", "2026-01-04", ["robotics"]), _id: "missing-slug" },
+    ];
+    const navigable = logEntries(published);
+
+    it("uses a navigable curated article and its authored reason", () => {
+        const result = nextArticle(navigable, published, {
+            slug: "current",
+            nextPostId: "curated",
+            nextReadReason: "Continue with Linux",
+        });
+        expect(result.entry?.slug).toBe("curated");
+        expect(result.reason).toBe("Continue with Linux");
+        expect(result.more.map((entry) => entry.slug)).toEqual(["related"]);
+    });
+
+    it.each(["missing-slug", "not-published", "current"])(
+        "falls back to a related article when the curated target is %s",
+        (nextPostId) => {
+            const result = nextArticle(navigable, published, {
+                slug: "current",
+                nextPostId,
+                nextReadReason: "Must not describe the fallback",
+            });
+            expect(result.entry?.slug).toBe("related");
+            expect(result.reason).toBe("Related summary");
+            expect(result.more).toEqual([]);
+        },
+    );
 });

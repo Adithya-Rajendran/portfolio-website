@@ -13,7 +13,7 @@ import { getPostBySlug, getAllPosts, getAllProjects } from "../../lib/sanity";
 import { getProfile } from "../../lib/sanity";
 import { siteConfig } from "../../../lib/config";
 import { formatEntryDate, logEntries } from "../../../lib/log-index";
-import { relatedEntries } from "../../../lib/related-posts";
+import { nextArticle } from "../../../lib/related-posts";
 import { readingTimeFromWordCount } from "../../../lib/reading-time";
 import { renderProse } from "../../lib/prose";
 import { highlight } from "../../lib/highlight";
@@ -30,23 +30,20 @@ const relatedProjects = projects.filter((p) =>
 );
 const headings = contentsHeadings(extractHeadings({ body: post.body }));
 const entries = logEntries(posts);
-const related = relatedEntries(entries, post.slug);
-const selectedNext = posts.find(
-    (p) => p._id === post.nextPostId && p.slug !== post.slug,
-);
-const nextEntry = selectedNext
-    ? entries.find((entry) => entry.slug === selectedNext.slug)
-    : related[0];
-const nextReason =
-    selectedNext && post.nextReadReason ? post.nextReadReason : nextEntry?.dek;
-const moreReading = related.filter((entry) => entry.slug !== nextEntry?.slug);
+const {
+    entry: nextEntry,
+    reason: nextReason,
+    more: moreReading,
+} = nextArticle(entries, posts, post);
 const sharingImage = post.socialImage?.asset?._ref
     ? post.socialImage
     : post.cover;
 const sharingUrl = sharingImage?.asset?._ref
     ? urlForImage(sharingImage).width(1200).height(630).fit("crop").url()
     : `${siteConfig.url}/share.png`;
-const takeaways = (post.takeaways || []).filter((text) => text.trim());
+const takeaways = Array.isArray(post.takeaways)
+    ? post.takeaways.filter((text) => typeof text === "string" && text.trim())
+    : [];
 const readMinutes =
     post.wordCount > 0 ? readingTimeFromWordCount(post.wordCount) : null;
 ---
