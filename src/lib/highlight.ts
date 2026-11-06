@@ -64,7 +64,8 @@ export async function highlight(
             result[block._key!] = highlighter.codeToHtml(block.code as string, {
                 lang: selected,
                 theme: "portfolio",
-                tabindex: 0,
+                // The labelled outer region owns scrolling and keyboard focus.
+                tabindex: false,
                 transformers: [
                     {
                         line(node, line) {
