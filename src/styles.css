@@ -1,17 +1,17 @@
 @font-face {
     font-family: Manrope;
-    src: url(/fonts/Manrope-Variable.ttf) format("truetype");
+    src: url(/fonts/Manrope-Variable.woff2) format("woff2");
     font-weight: 200 800;
     font-display: swap;
 }
 @font-face {
     font-family: Jost;
-    src: url(/fonts/Jost-Regular.ttf) format("truetype");
+    src: url(/fonts/Jost-Regular.woff2) format("woff2");
     font-display: swap;
 }
 @font-face {
     font-family: DMMono;
-    src: url(/fonts/DMMono-Regular.ttf) format("truetype");
+    src: url(/fonts/DMMono-Regular.woff2) format("woff2");
     font-display: swap;
 }
 :root {
@@ -305,6 +305,11 @@ fieldset input {
 }
 #theme-switch {
     white-space: nowrap;
+}
+#theme-switch[hidden] {
+    /* Reserve the control's space before its script makes it available. */
+    display: inline-block;
+    visibility: hidden;
 }
 figure img {
     display: block;
