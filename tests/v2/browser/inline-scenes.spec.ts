@@ -188,3 +188,50 @@ test("a project model loads inline and remains inspectable with reduced motion",
         "Fixture flagship mission",
     );
 });
+
+test("late scripts do not move navigation or the project text", async ({
+    page,
+}) => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+        release = resolve;
+    });
+    await page.route(/\/_astro\/.*\.js(?:\?.*)?$/, async (route) => {
+        await gate;
+        await route.continue();
+    });
+    try {
+        await page.goto("/portfolio/fixture-flagship-mission", {
+            waitUntil: "commit",
+        });
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        const positions = () =>
+            page.evaluate(() => ({
+                main: document.querySelector("main")!.getBoundingClientRect()
+                    .top,
+                nav: document
+                    .querySelector("header nav")!
+                    .getBoundingClientRect().left,
+                highlights: Array.from(document.querySelectorAll("h2"))
+                    .find((h) => h.textContent === "Highlights")!
+                    .getBoundingClientRect().top,
+            }));
+        const before = await positions();
+        expect(
+            await page
+                .locator("[data-viewer-stage]")
+                .evaluate((el) => el.clientHeight),
+        ).toBeGreaterThanOrEqual(300);
+        release();
+        await expect(
+            page.getByRole("button", { name: "Change color theme" }),
+        ).toBeVisible();
+        await page.waitForLoadState("domcontentloaded");
+        const after = await positions();
+        for (const key of ["main", "nav", "highlights"] as const)
+            expect(Math.abs(after[key] - before[key])).toBeLessThan(1);
+    } finally {
+        release();
+    }
+});

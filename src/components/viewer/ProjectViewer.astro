@@ -14,7 +14,6 @@ const { model } = Astro.props;
     (model.kind === "gltf" && model.fileUrl)) && (
     <section
         class="project-viewer"
-        hidden
         data-project-viewer
         data-kind={model.kind}
         data-procedural={model.procedural}
@@ -61,6 +60,13 @@ const { model } = Astro.props;
         </button>
     </section>
 )}
+<noscript>
+    <style is:inline>
+        .project-viewer {
+            display: none;
+        }
+    </style>
+</noscript>
 <script>
     import "../../scripts/viewer/project-viewer";
 </script>
@@ -101,6 +107,7 @@ const { model } = Astro.props;
     }
     .project-viewer p {
         text-align: center;
+        max-width: none;
         font-size: 0.8rem;
         min-height: 1.5em;
         margin: 0.25rem 0;

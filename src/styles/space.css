@@ -219,6 +219,7 @@ body > header {
 }
 .space-study__hint {
     text-align: center;
+    max-width: none;
     font:
         0.62rem/1.6 DMMono,
         monospace;

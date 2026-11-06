@@ -306,6 +306,11 @@ fieldset input {
 #theme-switch {
     white-space: nowrap;
 }
+#theme-switch[hidden] {
+    /* Reserve the control's space before its script makes it available. */
+    display: inline-block;
+    visibility: hidden;
+}
 figure img {
     display: block;
     max-width: 100%;

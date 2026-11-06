@@ -20,7 +20,6 @@ for (const section of document.querySelectorAll<HTMLElement>(
     const furtherButton = section.querySelector<HTMLButtonElement>(
         "[data-viewer-further]",
     )!;
-    section.hidden = false;
     let cleanup: (() => void) | undefined;
     let generation = 0,
         active = true,
