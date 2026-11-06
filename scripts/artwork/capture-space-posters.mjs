@@ -25,6 +25,11 @@ try {
         for (const phase of kind === "relay"
             ? ["day", "dawn", "dusk", "night"]
             : ["day"]) {
+            if (
+                process.env.ARTWORK_PHASE &&
+                !process.env.ARTWORK_PHASE.split(",").includes(phase)
+            )
+                continue;
             for (const [view, width, height] of [
                 ["desktop", 1440, 1000],
                 ["mobile", 800, 1000],
@@ -98,7 +103,7 @@ try {
 // Avoid development HMR interrupting an in-progress capture.
 for (const { name, png } of shots)
     await sharp(png)
-        .webp({ quality: 90, alphaQuality: 100, effort: 6 })
+        .webp({ quality: 90, alphaQuality: 100, effort: 4 })
         .toFile(`public/images/scenes/${name}`);
 for (const view of ["desktop", "mobile"]) {
     if (shots.some((s) => s.name === `relay-day-${view}-v3.webp`))
