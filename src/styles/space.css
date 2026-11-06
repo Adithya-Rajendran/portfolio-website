@@ -59,11 +59,15 @@ body > header {
     right: max(-4.5rem, calc((100% - 100vw) / 2));
 }
 .scene-hero > .space-study .space-study__art {
-    height: calc(100% - 4rem);
+    height: calc(100% - 8.5rem);
 }
 .scene-hero > .space-study .space-study__caption {
     justify-content: flex-end;
     padding-right: 4rem;
+}
+.scene-hero > .space-study .space-study__controls {
+    justify-content: flex-end;
+    padding-right: 3.5rem;
 }
 .scene-hero > .space-study .space-study__credits {
     text-align: right;
@@ -148,10 +152,20 @@ body > header {
     position: absolute;
     inset: 0;
     opacity: 0;
-    touch-action: pan-y;
+    touch-action: pan-y pinch-zoom;
+    pointer-events: none;
 }
 .space-study[data-ready] .space-study__stage {
     opacity: 1;
+    pointer-events: auto;
+    cursor: grab;
+}
+.space-study__stage[data-dragging] {
+    cursor: grabbing;
+}
+.space-study__stage:focus-visible {
+    outline: 1px solid var(--accent-text);
+    outline-offset: -2rem;
 }
 .space-study__stage canvas {
     display: block;
@@ -172,26 +186,50 @@ body > header {
 .space-study__coordinate {
     color: var(--accent-text);
 }
-.space-study__caption button {
+.space-study__controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 44px;
+    font:
+        0.67rem/1.7 DMMono,
+        monospace;
+    visibility: hidden;
+}
+.space-study[data-ready] .space-study__controls {
+    visibility: visible;
+}
+.space-study__controls button {
     border: 0;
     background: transparent;
     color: var(--ink);
     font: inherit;
     padding: 0.5rem;
     min-height: 44px;
+    min-width: 44px;
     border-left: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
     border-radius: 0;
 }
-.space-study__caption button:disabled {
+.space-study__controls button:first-child {
+    border-left: 0;
+    min-width: 8.5rem;
+}
+.space-study__controls button:disabled {
     opacity: 0.65;
 }
 .space-study__hint {
     text-align: center;
+    max-width: none;
     font:
         0.62rem/1.6 DMMono,
         monospace;
     color: var(--secondary-text);
     margin: 0;
+    min-height: 1.6em;
+}
+.space-study__hint[hidden] {
+    display: block;
+    visibility: hidden;
 }
 .space-study__credits {
     display: block;
@@ -439,6 +477,11 @@ body > header {
         justify-content: center;
         padding-right: 0;
     }
+    .scene-hero > .space-study .space-study__controls {
+        justify-content: center;
+        padding-right: 0;
+        font-size: 0.62rem;
+    }
     .scene-hero > .space-study .space-study__credits {
         text-align: center;
         padding-right: 0;
@@ -446,8 +489,10 @@ body > header {
     .space-study__name {
         max-width: 21ch;
     }
-    .space-study__hint {
-        display: none;
+    .scene-hero > .space-study .space-study__hint {
+        text-align: center;
+        padding-right: 0;
+        font-size: 0.55rem;
     }
     .scene-section-head {
         margin-bottom: 1.5rem;

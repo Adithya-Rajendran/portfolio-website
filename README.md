@@ -14,6 +14,10 @@ The contact form requires `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET`, `TURNSTILE_H
 
 CMS-backed pages and XML fetch published content on each request without a shared content cache, so edits, deletions, and scheduled dates take effect on the next request at the cost of additional origin calls. A missing CMS configuration or an upstream failure surfaces as an error rather than an empty site. Measure before introducing caching, and define publication and deletion guarantees first.
 
+Agents can start at `/llms.txt`, a request-time index of the published writing, projects and main pages. Every public page advertises the guide and sitemap in its HTML head. The existing HTML pages and full RSS feed are readable without JavaScript or WebGL. The guide uses the same published-content queries as the site and returns upstream errors rather than stale or incomplete success responses.
+
+Contact is for humans: robots.txt excludes `/contact`, its `/comms` alias, `/api/` and `/studio`, and the sitemap and agent guide omit those destinations. These are crawler directions, not access controls. The contact handler independently requires a valid Turnstile token with the exact action and hostname, origin validation and rate limiting; there is no agent bypass. Cloudflare access settings are documented in [the security configuration](docs/cloudflare-security.md).
+
 ## Deployment and rollback
 
 The Cloudflare adapter produces the Worker and static assets in `dist`. Run `pnpm build` and `pnpm exec wrangler deploy --dry-run` before deployment; `pnpm exec wrangler deploy` deploys the built Worker. Cloudflare Builds supplies the public Studio build variables and runtime public identifiers. Configure secrets separately, configure the rate-limit binding, and allow the exact preview and production Studio origins in Sanity CORS. The preview must remain noindex.

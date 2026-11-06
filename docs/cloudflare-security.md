@@ -1,6 +1,6 @@
 # Cloudflare security configuration
 
-Reviewed November 5, 2026 (America/Los_Angeles). Applies to `adithya-rajendran.com`, its `www` alias, and Worker `portfolio-v2` on branch `v2-rewrite`. The owner authorized domain-wide hardening, keeping the non-US challenge for Studio, and retaining every existing country block. No paid upgrade was added.
+Reviewed November 5, 2026 (America/Los_Angeles). Applies to `adithya-rajendran.com`, its `www` alias, and Worker `portfolio-v2` on branch `v2-rewrite`. The owner authorized domain-wide hardening, keeping the non-US challenge for Studio, retaining every existing country block, and subsequently allowing agents to read public content using free-tier settings. The zone remains on Free Website; no paid upgrade was added.
 
 ## Edge protections
 
@@ -11,7 +11,8 @@ Reviewed November 5, 2026 (America/Los_Angeles). Applies to `adithya-rajendran.c
 | HSTS                  | Two years, including subdomains; existing preload directive retained. No new preload-list submission was made.                                                              |
 | DNSSEC                | Already active; public DS record and validating resolver AD flag verified.                                                                                                  |
 | Managed WAF           | Cloudflare Free Managed Ruleset explicitly deployed with its default rules and automatic version updates.                                                                   |
-| DDoS / bots           | Existing DDoS protection, Bot Fight Mode, Browser Integrity Check and crawler policy retained.                                                                              |
+| DDoS / bots           | DDoS protection and Browser Integrity Check retained. Bot Fight Mode and its JavaScript detection disabled to allow automated public reading.                               |
+| Agent reading         | AI search and user agents allowed; legacy blanket AI-crawler block and AI Labyrinth disabled. Training remains disallowed with managed robots.txt and preference sync.      |
 | Contact burst limit   | Five requests per IP per Cloudflare data center in ten seconds; block for ten seconds. Replaces the unused `/login` rate limit.                                             |
 | Contact Worker limit  | Five submissions per IP per minute, now before body parsing; fail closed when the binding or client IP is unavailable. 429 replies include `Retry-After: 60`.               |
 | Contact validation    | Same-origin URL-encoded submissions only, 16 KiB streaming body cap, bounded fields, Turnstile action and hostname verification, fixed mail recipient.                      |
@@ -51,6 +52,18 @@ Four additions bring the total to 19 geographic codes:
 Sources reviewed: [ESET's 2026 research](https://www.welivesecurity.com/en/eset-research/frostyneighbor-fresh-mischief-digital-shenanigans/), [Mandiant attribution research](https://cloud.google.com/blog/topics/threat-intelligence/unc1151-linked-to-belarus-government), [DOJ compliance guide](https://www.justice.gov/opa/media/1396356/dl), and [OFAC FAQ 10](https://ofac.treasury.gov/faqs/10). OFAC describes jurisdictional and targeted programs; this blocklist is the owner's combined geographic risk policy, not an authoritative OFAC list or a complete sanctions-compliance mechanism.
 
 The additions are preventive policy choices. The initial attempt to read recent Cloudflare security-event analytics returned a temporary GraphQL budget-limit error. No claim is made that these locations were observed attacking this website. Source-IP geography can also reflect proxies or compromised infrastructure; the WAF, Access and contact controls apply independently of this geographic filter. Further expansion should use actual security events and the cost of blocking legitimate visitors.
+
+## Public reading and human-only contact
+
+With the owner's explicit approval, `fight_mode` and `enable_js` are now `false`, and `ai_bots_protection` and `crawler_protection` are `disabled`. AI search, user agents and the configured personal agents are allowed (`disabled` means their block is off). `ai_training` remains `disallow`, with managed robots.txt and Bot Preference Sync enabled. The legacy AI-block toggle also reset the training preference during the update; it was immediately restored and verified. Final readback differs from the saved baseline only in the four approved settings. The custom firewall, managed WAF and contact rate-limit rulesets match the baseline exactly.
+
+These controls are available on the [Cloudflare Free plan](https://developers.cloudflare.com/bots/plans/free/). Cloudflare's automatic [Markdown for Agents conversion](https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/#availability-and-pricing) requires an eligible paid zone plan or SSL for SaaS, so it was not enabled. The existing agent guide, HTML and RSS provide free reading paths. Country blocks and other security rules still apply to public traffic.
+
+The public HTML contains its text and navigation without requiring JavaScript or WebGL. `/llms.txt` now provides a request-time index of all published posts and projects, the main reading pages, the full RSS feed and sitemap. HTML head links and a robots.txt comment make that guide discoverable. The index shares the site's published perspective, date filtering and `no-store` freshness contract; an upstream failure remains an error.
+
+Crawler directions exclude `/contact`, its legacy `/comms` alias, `/api/` and `/studio`; contact is also omitted from the sitemap and agent guide. These directions do not grant a security bypass. Contact submissions still require same-origin input, the existing rate limits and a server-verified Turnstile token for the exact hostname and `contact` action. No user-agent string grants submission privileges. The unused Turnstile widget is retained; the live contact widget and its credentials are unchanged.
+
+After the settings update, an explicitly identified HTTP reader verified all 22 links in the live guide. A live contact submission without a Turnstile token returned the application's verification-failed response with HTTP 403; no email was sent. The non-secret before/after snapshots and verification report are saved under `/tmp/portfolio-agent-navigation/` on the working host. To restore the prior bot settings, set the four toggles back to the saved values and explicitly retain `ai_training: disallow`; verify the resulting policy because the legacy toggle can alter it.
 
 ## Application browser policy
 

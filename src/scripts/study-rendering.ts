@@ -9,6 +9,8 @@ export function makeStudyRendering(
     planets: T.Scene,
     camera: T.PerspectiveCamera,
 ) {
+    const originalShadowAutoUpdate = renderer.shadowMap.autoUpdate;
+    renderer.shadowMap.autoUpdate = false;
     const color = new T.WebGLRenderTarget(1, 1, {
         type: T.HalfFloatType,
         samples: 4,
@@ -55,10 +57,13 @@ export function makeStudyRendering(
                 Math.round(height * scale),
             );
         },
-        render() {
+        render(updateShadows = true) {
             renderer.setRenderTarget(color);
             renderer.clear();
             renderer.render(planets, camera);
+            // The lighting pass owns shadow updates. GTAO's normals pass can
+            // reuse them; camera-only movement also leaves world shadows intact.
+            renderer.shadowMap.needsUpdate = updateShadows;
             renderer.render(scene, camera);
             occlusion.render(renderer, color, color, 0, false);
             renderer.setRenderTarget(null);
@@ -66,6 +71,7 @@ export function makeStudyRendering(
             quad.render(renderer);
         },
         dispose() {
+            renderer.shadowMap.autoUpdate = originalShadowAutoUpdate;
             color.dispose();
             occlusion.dispose();
             // The Three.js pass currently leaves these public materials allocated.

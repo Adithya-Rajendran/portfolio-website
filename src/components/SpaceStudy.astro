@@ -60,17 +60,34 @@ const scene = scenes[kind];
             data-space-stage
             role="img"
             aria-label={scene.note}
+            aria-describedby={`space-instructions-${kind}`}
         ></div>
     </div>
     <figcaption class="space-study__caption">
         <span class="space-study__coordinate">{scene.coordinate}</span>
         <span class="space-study__name">{scene.name}</span>
+    </figcaption>
+    <div class="space-study__controls" role="group" aria-label="Scene controls">
         <button type="button" data-space-motion aria-pressed="false" hidden>
             Pause motion
         </button>
-    </figcaption>
-    <p class="space-study__hint" data-space-hint hidden>
-        Move your pointer to look around
+        <button type="button" data-space-closer aria-label="Zoom in">
+            +
+        </button>
+        <button type="button" data-space-further aria-label="Zoom out">
+            −
+        </button>
+        <button type="button" data-space-reset>
+            Reset view
+        </button>
+    </div>
+    <p
+        class="space-study__hint"
+        id={`space-instructions-${kind}`}
+        data-space-hint
+        hidden
+    >
+        Drag to orbit · Arrow keys to look · Scroll to keep reading
     </p>
     <a
         class="space-study__credits"

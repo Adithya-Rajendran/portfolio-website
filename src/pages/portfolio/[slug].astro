@@ -17,8 +17,8 @@ import { highlight } from "../../lib/highlight";
 import { formatProjectDates } from "../../../lib/project-content";
 const project = await getProjectBySlug(Astro.params.slug || "");
 if (!project) return Astro.rewrite("/404");
-const highlighted = await highlight(project.body || []).catch(() => ({}));
-const [posts, projects] = await Promise.all([
+const [highlighted, posts, projects] = await Promise.all([
+    highlight(project.body || []).catch(() => ({})),
     getPostsByProject(project._id),
     getAllProjects(),
 ]);

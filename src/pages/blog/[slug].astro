@@ -19,8 +19,8 @@ import { renderProse } from "../../lib/prose";
 import { highlight } from "../../lib/highlight";
 const post = await getPostBySlug(Astro.params.slug || "");
 if (!post) return Astro.rewrite("/404");
-const highlighted = await highlight(post.body || []).catch(() => ({}));
-const [posts, projects, profile] = await Promise.all([
+const [highlighted, posts, projects, profile] = await Promise.all([
+    highlight(post.body || []).catch(() => ({})),
     getAllPosts(),
     getAllProjects(),
     getProfile(),
