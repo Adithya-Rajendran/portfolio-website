@@ -50,7 +50,9 @@ export function renderProse(
                     `<div class="gallery">${(value.images || []).map(figure).join("")}${value.caption ? `<p>${escape(value.caption)}</p>` : ""}</div>`,
                 code: ({ value }: any) => {
                     const info = index.listings[value._key];
-                    return `<figure class="listing">${info?.caption ? `<figcaption>${escape(info.caption)}</figcaption>` : ""}<button class="copy-code" type="button" hidden>Copy code</button><span class="copy-status" role="status"></span><div tabindex="0" role="region" aria-label="${escape(info?.label || "Code listing")}">${highlighted[value._key] || `<pre><code>${escape(value.code)}</code></pre>`}</div></figure>`;
+                    const label = escape(info?.label || "Code listing");
+                    const caption = escape(info?.caption || "Code");
+                    return `<figure class="listing"><figcaption class="listing__bar"><span class="listing__name" title="${caption}">${caption}</span><button class="copy-code" type="button" aria-label="Copy code from ${label}" title="Copy code" hidden><svg class="copy-code__icon" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M12 7V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h3"/></svg><svg class="copy-code__check" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg><span class="copy-code__label" aria-hidden="true">Copy</span></button><span class="copy-status" role="status" aria-atomic="true"></span></figcaption><div class="listing__scroll" tabindex="0" role="region" aria-label="${label}">${highlighted[value._key] || `<pre><code>${escape(value.code)}</code></pre>`}</div></figure>`;
                 },
                 callout: ({ value }: any) =>
                     `<aside role="note"><strong>${escape(calloutHeading(value))}</strong>${renderProse(value.body || [])}</aside>`,

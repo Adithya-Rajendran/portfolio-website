@@ -154,18 +154,46 @@ Astro.response.headers.set("Cache-Control", "no-store");
             document
                 .querySelectorAll<HTMLButtonElement>(".copy-code")
                 .forEach((button) => {
+                    const listing = button.closest(".listing");
+                    const code = listing?.querySelector("code");
+                    const status = listing?.querySelector(".copy-status");
+                    const label = button.querySelector(".copy-code__label");
+                    if (!code || !label || !navigator.clipboard?.writeText)
+                        return;
+                    let reset: ReturnType<typeof setTimeout> | undefined;
+                    let copying = false;
                     button.hidden = false;
                     button.addEventListener("click", async () => {
-                        const status =
-                            button.parentElement?.querySelector(".copy-status");
-                        const code =
-                            button.parentElement?.querySelector("code")
-                                ?.textContent || "";
+                        if (copying) return;
+                        copying = true;
+                        clearTimeout(reset);
+                        button.setAttribute("aria-busy", "true");
+                        if (status) status.textContent = "";
                         try {
-                            await navigator.clipboard.writeText(code);
-                            if (status) status.textContent = "Copied.";
+                            await navigator.clipboard.writeText(
+                                code.textContent || "",
+                            );
+                            button.dataset.copyState = "copied";
+                            button.title = "Copied to clipboard";
+                            label.textContent = "Copied";
+                            if (status)
+                                status.textContent =
+                                    "Code copied to clipboard.";
+                            reset = setTimeout(() => {
+                                delete button.dataset.copyState;
+                                button.title = "Copy code";
+                                label.textContent = "Copy";
+                                if (status) status.textContent = "";
+                            }, 2500);
                         } catch {
-                            if (status) status.textContent = "Copy failed.";
+                            button.dataset.copyState = "error";
+                            button.title =
+                                "Couldn't copy. Try again, or select the code to copy it.";
+                            label.textContent = "Retry";
+                            if (status) status.textContent = button.title;
+                        } finally {
+                            copying = false;
+                            button.removeAttribute("aria-busy");
                         }
                     });
                 });
