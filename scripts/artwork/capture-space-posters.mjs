@@ -85,7 +85,7 @@ try {
                 const png = await figure
                     .locator("canvas")
                     .screenshot({ omitBackground: true });
-                const name = `${kind}${kind === "relay" ? `-${phase}` : ""}-${view}-v2.webp`;
+                const name = `${kind}${kind === "relay" ? `-${phase}` : ""}-${view}-v3.webp`;
                 shots.push({ name, png });
                 console.log(`Captured ${name}`);
                 await page.close();
@@ -101,9 +101,9 @@ for (const { name, png } of shots)
         .webp({ quality: 90, alphaQuality: 100, effort: 6 })
         .toFile(`public/images/scenes/${name}`);
 for (const view of ["desktop", "mobile"]) {
-    if (shots.some((s) => s.name === `relay-day-${view}-v2.webp`))
+    if (shots.some((s) => s.name === `relay-day-${view}-v3.webp`))
         await copyFile(
-            `public/images/scenes/relay-day-${view}-v2.webp`,
-            `public/images/scenes/relay-${view}-v2.webp`,
+            `public/images/scenes/relay-day-${view}-v3.webp`,
+            `public/images/scenes/relay-${view}-v3.webp`,
         );
 }

@@ -321,3 +321,62 @@ test("mobile page scrolling remains available over the scene", async ({
         .poll(() => page.evaluate(() => scrollY), { timeout: 20000 })
         .toBeGreaterThan(before);
 });
+
+for (const failure of ["failed", "stalled"] as const) {
+    test(`About remains interactive when its landscape panorama is ${failure}`, async ({
+        page,
+    }) => {
+        test.setTimeout(90000);
+        let requested = false;
+        let release = () => {};
+        const pending = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+        let finish = () => {};
+        const routeFinished = new Promise<void>((resolve) => {
+            finish = resolve;
+        });
+        await page.route(
+            "**/images/scenes/mars-lab-panorama*.webp",
+            async (route) => {
+                requested = true;
+                try {
+                    if (failure === "stalled") await pending;
+                    await route.abort();
+                } finally {
+                    finish();
+                }
+            },
+        );
+        try {
+            await page.emulateMedia({ reducedMotion: "reduce" });
+            await page.goto("/about");
+            await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+            const supported = await page.evaluate(() =>
+                Boolean(document.createElement("canvas").getContext("webgl2")),
+            );
+            test.skip(!supported, "WebGL2 is unavailable in this browser");
+            const figure = page.locator('figure[data-space-study="robotics"]');
+            await figure.scrollIntoViewIfNeeded();
+            await expect(figure).toHaveAttribute("data-ready", "true", {
+                timeout: 45000,
+            });
+            expect(requested).toBe(true);
+            await expect(figure).toHaveAttribute("data-state", "paused");
+            const stage = figure.locator("[data-space-stage]");
+            await expect(stage.locator("canvas")).toHaveCount(1);
+            await expect(
+                figure.getByRole("button", { name: "Still scene" }),
+            ).toBeDisabled();
+            await stage.focus();
+            await page.keyboard.press("ArrowRight");
+            await expect(stage).toHaveAttribute("data-view-yaw", "0.120");
+            await figure.getByRole("button", { name: "Reset view" }).click();
+            await expect(stage).toHaveAttribute("data-view-yaw", "0.000");
+            await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        } finally {
+            release();
+            if (requested) await routeFinished;
+        }
+    });
+}

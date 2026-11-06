@@ -2,7 +2,7 @@ import * as T from "three";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { ImprovedNoise } from "three/addons/math/ImprovedNoise.js";
 
-/** A local landscape reflection for the coated optical elements. */
+/** Broad window reflections for the coated optics, matching the observation lab. */
 export function makeOpticalEnvironment() {
     const canvas = document.createElement("canvas");
     canvas.width = 1024;
@@ -10,10 +10,10 @@ export function makeOpticalEnvironment() {
     const ctx = canvas.getContext("2d")!;
     const sky = ctx.createLinearGradient(0, 0, 0, 512);
     sky.addColorStop(0, "#030b16");
-    sky.addColorStop(0.36, "#36566e");
-    sky.addColorStop(0.48, "#d4ae7b");
-    sky.addColorStop(0.51, "#a06d40");
-    sky.addColorStop(0.64, "#4e3728");
+    sky.addColorStop(0.36, "#263c48");
+    sky.addColorStop(0.48, "#7d776e");
+    sky.addColorStop(0.51, "#61594e");
+    sky.addColorStop(0.64, "#363234");
     sky.addColorStop(1, "#10141a");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, 1024, 512);
@@ -27,20 +27,23 @@ export function makeOpticalEnvironment() {
         for (let x = 0; x <= 1024; x += 2) {
             const u = (x / 1024) * Math.PI * 2;
             const peak =
-                noise.noise(Math.cos(u) * 6, Math.sin(u) * 6, layer * 3) * 22 +
-                noise.noise(Math.cos(u) * 19, Math.sin(u) * 19, layer * 3) * 8;
+                noise.noise(Math.cos(u) * 3, Math.sin(u) * 3, layer * 3) * 12 +
+                noise.noise(Math.cos(u) * 8, Math.sin(u) * 8, layer * 3) * 2;
             ctx.lineTo(x, 252 + layer * 25 + peak);
         }
         ctx.lineTo(1024, 512);
         ctx.fill();
     }
-    const sun = ctx.createRadialGradient(720, 240, 2, 720, 240, 70);
-    sun.addColorStop(0, "#ffefc1");
-    sun.addColorStop(0.06, "#ffe2a2");
-    sun.addColorStop(0.35, "#fbb45444");
-    sun.addColorStop(1, "#fbb45400");
-    ctx.fillStyle = sun;
-    ctx.fillRect(650, 170, 140, 140);
+    for (const x of [135, 450, 780]) {
+        ctx.fillStyle = "#0b121b";
+        ctx.fillRect(x, 85, 12, 248);
+        const reflection = ctx.createLinearGradient(x - 30, 0, x + 40, 0);
+        reflection.addColorStop(0, "#c1d8e500");
+        reflection.addColorStop(0.5, "#c1d8e577");
+        reflection.addColorStop(1, "#c1d8e500");
+        ctx.fillStyle = reflection;
+        ctx.fillRect(x - 30, 110, 70, 100);
+    }
     const texture = new T.CanvasTexture(canvas);
     texture.colorSpace = T.SRGBColorSpace;
     texture.mapping = T.EquirectangularReflectionMapping;
@@ -110,7 +113,8 @@ export function finishSurface(
             .replace(
                 "#include <color_fragment>",
                 `#include <color_fragment>
-                float surfaceGrain=surfaceNoise(vStudySurface*130.);
+                float grainFootprint=max(length(dFdx(vStudySurface)),length(dFdy(vStudySurface)))*130.;
+                float surfaceGrain=mix(surfaceNoise(vStudySurface*130.),.5,smoothstep(.45,1.8,grainFootprint));
                 float surfacePatina=surfaceNoise(vStudySurface*9.);
                 diffuseColor.rgb*=1.-${strength}*(.4*surfaceGrain+.6*surfacePatina);
             `,
@@ -122,6 +126,6 @@ export function finishSurface(
             `,
             );
     };
-    material.customProgramCacheKey = () => `study-surface-${finish}-1`;
+    material.customProgramCacheKey = () => `study-surface-${finish}-2`;
     return material;
 }

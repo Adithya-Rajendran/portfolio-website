@@ -46,23 +46,28 @@ export async function makePlanet(
     small: boolean,
     texture: TextureLoader,
     lighting: PlanetLighting,
+    detail: "close" | "distant" = "close",
 ) {
     const group = new T.Group();
-    const suffix = small ? "1k" : "2k";
+    const distant = detail === "distant";
+    const smallMaps = small || distant;
+    const widthSegments = distant ? 64 : small ? 128 : 192;
+    const heightSegments = distant ? 48 : 128;
+    const suffix = smallMaps ? "1k" : "2k";
     try {
         const map = await texture(
             world === "earth"
-                ? `earth-surface-v2-${small ? "2k" : "8k"}`
+                ? `earth-surface-v2-${smallMaps ? "2k" : "8k"}`
                 : world === "saturn"
                   ? "saturn-strip-v1"
                   : world === "moon" || world === "mars"
-                    ? `${world}-surface-v2-${small ? "2k" : "4k"}`
+                    ? `${world}-surface-v2-${smallMaps ? "2k" : "4k"}`
                     : `${world}-${suffix}`,
         );
         if (world === "earth") {
             const [clouds, night, water, normal] = await Promise.all([
-                texture(`earth-clouds-v2-${small ? "2k" : "4k"}`, false),
-                texture(`earth-lights-v2-${small ? "2k" : "4k"}`),
+                texture(`earth-clouds-v2-${smallMaps ? "2k" : "4k"}`, false),
+                texture(`earth-lights-v2-${smallMaps ? "2k" : "4k"}`),
                 texture("earth-water-v2-2k", false),
                 texture("earth-normal-v2-2k", false),
             ]);
@@ -114,17 +119,17 @@ export async function makePlanet(
             });
             group.add(
                 new T.Mesh(
-                    new T.SphereGeometry(1, small ? 128 : 192, 128),
+                    new T.SphereGeometry(1, widthSegments, heightSegments),
                     surface,
                 ),
             );
             const cloud = new T.Mesh(
-                new T.SphereGeometry(1.008, small ? 128 : 192, 128),
+                new T.SphereGeometry(1.008, widthSegments, heightSegments),
                 new T.ShaderMaterial({
                     uniforms: {
                         ...lighting,
                         cloudMap: { value: clouds },
-                        texel: { value: 1 / (small ? 2048 : 4096) },
+                        texel: { value: 1 / (smallMaps ? 2048 : 4096) },
                     },
                     vertexShader: earthVertex,
                     fragmentShader: `${lightUniforms}
@@ -173,14 +178,21 @@ export async function makePlanet(
                 side: T.BackSide,
             });
             group.add(
-                new T.Mesh(new T.SphereGeometry(1.025, 192, 128), atmosphere),
+                new T.Mesh(
+                    new T.SphereGeometry(
+                        1.025,
+                        distant ? 64 : 192,
+                        heightSegments,
+                    ),
+                    atmosphere,
+                ),
             );
             group.children[0].castShadow = true;
             group.rotation.y = 0;
             group.rotation.z = -0.14;
         } else {
             const surface = new T.Mesh(
-                new T.SphereGeometry(1, small ? 128 : 192, 128),
+                new T.SphereGeometry(1, widthSegments, heightSegments),
                 new T.MeshStandardMaterial({
                     map,
                     color:
@@ -199,7 +211,12 @@ export async function makePlanet(
         }
         if (world === "saturn") {
             const ringMap = await texture("saturn-ring-1k");
-            const ringGeometry = new T.RingGeometry(1.25, 2.15, 192, 1);
+            const ringGeometry = new T.RingGeometry(
+                1.25,
+                2.15,
+                distant ? 128 : 192,
+                1,
+            );
             const positions = ringGeometry.attributes.position,
                 uv = ringGeometry.attributes.uv;
             for (let i = 0; i < positions.count; i++)
