@@ -3,14 +3,31 @@ import { defineConfig, devices } from "@playwright/test";
 const port = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = process.env.BASE_URL || `http://127.0.0.1:${port}`;
 const isCI = Boolean(process.env.CI);
+const experienceTests =
+    /(?:^|[\\/])(?:camera-handoffs|experience-centering)\.spec\.ts$/;
+const homeTests = /(?:^|[\\/])(?:home-camera|home-frontier)\.spec\.ts$/;
 
 export default defineConfig({
     testDir: "tests/v2/browser",
     fullyParallel: true,
     forbidOnly: isCI,
     retries: isCI ? 1 : 0,
-    workers: isCI ? 2 : undefined,
+    workers: isCI ? 1 : undefined,
     timeout: 60_000,
+    projects: [
+        {
+            name: "experience",
+            testMatch: experienceTests,
+        },
+        {
+            name: "home",
+            testMatch: homeTests,
+        },
+        {
+            name: "site",
+            testIgnore: [experienceTests, homeTests],
+        },
+    ],
     reporter: isCI
         ? [["list"], ["github"], ["html", { open: "never" }]]
         : [["list"], ["html", { open: "never" }]],

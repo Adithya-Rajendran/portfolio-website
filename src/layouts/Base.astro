@@ -36,9 +36,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
         />
         <link
             rel="preload"
-            href="/fonts/Manrope-Variable.ttf"
+            href="/fonts/Manrope-Variable.woff2"
             as="font"
-            type="font/ttf"
+            type="font/woff2"
             crossorigin
         />
         <title>{title === siteConfig.title ? title : `${title} · ${siteConfig.title}`}</title>
@@ -50,6 +50,13 @@ Astro.response.headers.set("Cache-Control", "no-store");
             />
         )}
         <link rel="canonical" href={canonical} />
+        <link
+            rel="describedby"
+            type="text/plain"
+            title="Site guide for agents"
+            href="/llms.txt"
+        />
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
         <link
             rel="alternate"
             type="application/rss+xml"

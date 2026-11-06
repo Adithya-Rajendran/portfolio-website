@@ -27,6 +27,22 @@ function lastmod(url: string) {
 }
 
 describe("sitemapEntries", () => {
+    it("lists public reading destinations without advertising human-only contact or private routes", () => {
+        const urls = sitemapEntries(source).map(({ url }) => url);
+        expect(urls).toEqual(
+            expect.arrayContaining([
+                SITE,
+                `${SITE}/about`,
+                `${SITE}/resume`,
+                `${SITE}/blog`,
+                `${SITE}/portfolio`,
+            ]),
+        );
+        expect(
+            urls.some((url) => /\/(contact|comms|api|studio)(\/|$)/.test(url)),
+        ).toBe(false);
+    });
+
     it("dates a post by its publication, revision or changelog, never a document edit", () => {
         expect(lastmod(`${SITE}/blog/my-homelab`)).toBe(
             "2026-03-30T00:00:00.000Z",

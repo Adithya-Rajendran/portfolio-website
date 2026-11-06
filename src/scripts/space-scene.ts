@@ -34,6 +34,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 { makeSpaceStudy },
                 { makeStudySetting },
                 { makePlanet, disposePlanet },
+                { makeInlineOrbit },
             ] = await Promise.all([
                 import("three"),
                 import("./study-lighting"),
@@ -41,6 +42,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 import("./space-studies"),
                 import("./space-settings"),
                 import("./planet-materials"),
+                import("./inline-orbit"),
             ]);
             if (!active || ticket !== generation) return;
             renderer = new T.WebGLRenderer({
@@ -141,8 +143,15 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             const gl = render.getContext() as WebGL2RenderingContext;
             const reduced = matchMedia("(prefers-reduced-motion: reduce)");
             let reflectedReduced = reduced.matches;
-            const pointer = new T.Vector2(),
-                currentPointer = new T.Vector2();
+            let orbit: ReturnType<typeof makeInlineOrbit> | undefined;
+            const resetButton =
+                figure.querySelector<HTMLButtonElement>("[data-space-reset]")!;
+            const zoomIn = figure.querySelector<HTMLButtonElement>(
+                "[data-space-closer]",
+            )!;
+            const zoomOut = figure.querySelector<HTMLButtonElement>(
+                "[data-space-further]",
+            )!;
             const syncButton = () => {
                 reflectedReduced = reduced.matches;
                 button.hidden = false;
@@ -153,14 +162,13 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                       ? "Resume motion"
                       : "Pause motion";
                 button.setAttribute("aria-pressed", String(paused));
-                hint.hidden =
-                    reduced.matches || !matchMedia("(hover: hover)").matches;
+                hint.hidden = false;
                 figure.dataset.state =
                     reduced.matches || paused ? "paused" : "running";
             };
-            const draw = () => {
+            const draw = (updateShadows = true) => {
                 render.info.reset();
-                rendering.render();
+                rendering.render(updateShadows);
                 // Keep at most one frame in flight; slow GPUs must not queue work
                 // until the command buffer blocks keyboard and scrolling events.
                 if (renderFence) gl.deleteSync(renderFence);
@@ -188,16 +196,16 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                     renderFence = null;
                 }
                 const still = reduced.matches || paused;
-                if (!still && time - lastDraw < 1000 / 30) {
+                if (time - lastDraw < 1000 / 30) {
                     frame = requestAnimationFrame(tick);
                     return;
                 }
                 lastDraw = time;
-                const dt = Math.min((time - (lastTime || time)) / 1000, 0.05);
+                const cameraDelta = (time - (lastTime || time)) / 1000;
+                const dt = Math.min(cameraDelta, 0.05);
                 lastTime = time;
                 if (!still) {
                     elapsed += dt;
-                    currentPointer.lerp(pointer, 1 - Math.exp(-dt * 2.5));
                     model.root.rotation.y =
                         originalRotation.y +
                         (kind === "robotics"
@@ -207,18 +215,26 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                         kind === "robotics"
                             ? 0
                             : Math.sin(elapsed * 0.22) * 0.025;
-                    camera.position.x = currentPointer.x * 0.65;
-                    camera.position.y = eyeHeight + currentPointer.y * 0.3;
-                    camera.lookAt(aim);
                     model.update(elapsed);
                     if (planet) planet.rotation.y += dt * 0.007;
                 }
-                draw();
-                if (!still) frame = requestAnimationFrame(tick);
+                // Input follows wall time even when a slow GPU skips frames;
+                // only ambient animation uses the capped simulation step.
+                const moving = orbit?.update(cameraDelta, reduced.matches);
+                draw(!still);
+                if (!still || moving) frame = requestAnimationFrame(tick);
             };
             const wake = () => {
-                if (!frame && !disposed && visible && !document.hidden)
+                if (
+                    compiled &&
+                    !frame &&
+                    !disposed &&
+                    visible &&
+                    !document.hidden
+                ) {
+                    lastTime = performance.now();
                     frame = requestAnimationFrame(tick);
+                }
             };
             const sync = () => {
                 cancelAnimationFrame(frame);
@@ -234,34 +250,27 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 const distance = matchMedia("(max-width: 800px)").matches
                     ? 12.7
                     : 11.4;
-                if (
-                    width === lastWidth &&
-                    height === lastHeight &&
-                    camera.position.z === distance
-                )
-                    return;
+                if (width === lastWidth && height === lastHeight) return;
                 lastWidth = width;
                 lastHeight = height;
                 camera.aspect = width / height;
                 // Match the picture breakpoint, including narrow desktop windows,
                 // so the still and first live frame use the same camera distance.
-                camera.position.z = distance;
-                camera.lookAt(aim);
+                if (orbit) {
+                    orbit.setHome(new T.Vector3(0, eyeHeight, distance));
+                    orbit.update(0, reduced.matches);
+                } else {
+                    camera.position.set(0, eyeHeight, distance);
+                    camera.lookAt(aim);
+                }
                 camera.updateProjectionMatrix();
                 render.setSize(width, height, false);
                 rendering.resize(width, height);
                 if (compiled) wake();
             };
-            const move = (event: PointerEvent) => {
-                if (event.pointerType !== "mouse" || reduced.matches || paused)
-                    return;
-                const bounds = stage.getBoundingClientRect();
-                pointer.set(
-                    (event.clientX - bounds.left) / bounds.width - 0.5,
-                    (event.clientY - bounds.top) / bounds.height - 0.5,
-                );
-            };
-            const leave = () => pointer.set(0, 0);
+            const reset = () => orbit?.reset();
+            const closer = () => orbit?.zoom(true);
+            const further = () => orbit?.zoom(false);
             const toggle = () => {
                 paused = !paused;
                 sync();
@@ -309,8 +318,11 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 renderFence = null;
                 sizes.disconnect();
                 observer.disconnect();
-                stage.removeEventListener("pointermove", move);
-                stage.removeEventListener("pointerleave", leave);
+                orbit?.dispose();
+                orbit = undefined;
+                resetButton.removeEventListener("click", reset);
+                zoomIn.removeEventListener("click", closer);
+                zoomOut.removeEventListener("click", further);
                 button.removeEventListener("click", toggle);
                 reduced.removeEventListener("change", sync);
                 document.removeEventListener("visibilitychange", visibility);
@@ -482,10 +494,21 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                     return;
                 }
             }
+            orbit = makeInlineOrbit({
+                element: stage,
+                camera,
+                target: aim,
+                wake,
+                minPolar: 0.35,
+                maxPolar: Math.PI / 2 - 0.035,
+                maxYaw: kind === "robotics" ? 1.35 : Math.PI,
+            });
+            orbit.update(0, true);
             sizes.observe(stage);
             observer.observe(stage);
-            stage.addEventListener("pointermove", move, { passive: true });
-            stage.addEventListener("pointerleave", leave);
+            resetButton.addEventListener("click", reset);
+            zoomIn.addEventListener("click", closer);
+            zoomOut.addEventListener("click", further);
             button.addEventListener("click", toggle);
             reduced.addEventListener("change", sync);
             document.addEventListener("visibilitychange", visibility);
