@@ -120,3 +120,54 @@ test("code remains readable without JavaScript or a clipboard API", async ({
         await context.close();
     }
 });
+
+test("a delayed clipboard permission response keeps keyboard focus and suppresses duplicate writes", async ({
+    page,
+}) => {
+    await page.addInitScript(() => {
+        const state = { attempts: 0, refuse: () => {} };
+        Object.assign(window, { clipboardTest: state });
+        Object.defineProperty(navigator, "clipboard", {
+            value: {
+                writeText: () => {
+                    state.attempts++;
+                    if (state.attempts > 1) return Promise.resolve();
+                    return new Promise<void>((_resolve, reject) => {
+                        state.refuse = () =>
+                            reject(
+                                new DOMException(
+                                    "Permission denied",
+                                    "NotAllowedError",
+                                ),
+                            );
+                    });
+                },
+            },
+        });
+    });
+    await page.goto(article);
+    const listing = page.locator(".listing").first();
+    const button = listing.getByRole("button", { name: /Copy code from/ });
+    const attempts = () =>
+        page.evaluate(
+            () =>
+                (window as unknown as { clipboardTest: { attempts: number } })
+                    .clipboardTest.attempts,
+        );
+    await button.focus();
+    await page.keyboard.press("Enter");
+    await expect.poll(attempts).toBe(1);
+    await expect(button).toBeFocused();
+    await page.keyboard.press("Enter");
+    expect(await attempts()).toBe(1);
+    await page.evaluate(() =>
+        (
+            window as unknown as { clipboardTest: { refuse: () => void } }
+        ).clipboardTest.refuse(),
+    );
+    await expect(button).toHaveText("Retry");
+    await expect(button).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(button).toHaveText("Copied");
+    expect(await attempts()).toBe(2);
+});

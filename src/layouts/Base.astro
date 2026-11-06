@@ -161,10 +161,13 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     if (!code || !label || !navigator.clipboard?.writeText)
                         return;
                     let reset: ReturnType<typeof setTimeout> | undefined;
+                    let copying = false;
                     button.hidden = false;
                     button.addEventListener("click", async () => {
+                        if (copying) return;
+                        copying = true;
                         clearTimeout(reset);
-                        button.disabled = true;
+                        button.setAttribute("aria-busy", "true");
                         if (status) status.textContent = "";
                         try {
                             await navigator.clipboard.writeText(
@@ -189,7 +192,8 @@ Astro.response.headers.set("Cache-Control", "no-store");
                             label.textContent = "Retry";
                             if (status) status.textContent = button.title;
                         } finally {
-                            button.disabled = false;
+                            copying = false;
+                            button.removeAttribute("aria-busy");
                         }
                     });
                 });
