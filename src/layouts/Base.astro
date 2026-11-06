@@ -10,6 +10,7 @@ const {
     title = siteConfig.title,
     description = "",
     image = `${siteConfig.url}/share.png`,
+    imageAlt = `${siteConfig.author}: projects, writing and experience`,
     pageClass = "",
     structuredData = [],
     ogType = "website",
@@ -68,7 +69,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonical} />
         <meta property="og:image" content={image} />
+        <meta property="og:image:alt" content={imageAlt} />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content={image} />
+        <meta name="twitter:image:alt" content={imageAlt} />
         <link rel="icon" href="/icon.svg" />
         {structuredData.map((item: unknown) => (
             <script
@@ -85,7 +89,12 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 document.documentElement.dataset.theme = theme;
         } catch {}
     </script>
-    <body class:list={{ "space-site": sharedSky }}>
+    <body
+        class:list={{
+            "space-site": sharedSky,
+            "reading-page": pageClass === "article-page",
+        }}
+    >
         {sharedSky && <div class="site-cosmos" aria-hidden="true"></div>}
         <a class="skip" href="#main">
             Skip to content

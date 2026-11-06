@@ -480,6 +480,10 @@ const fixturePosts: PostWithBody[] = [
         _updatedAt: "2026-07-02T00:00:00Z",
         title: "Fixture post: code listings and links",
         slug: "fixture-post-code-and-links",
+        takeaways: [
+            "This fixture checks the article summary and its reading layout.",
+            "The next article and follow links remain available without JavaScript.",
+        ],
         description:
             "Fixture content for offline builds: sections, code listings, footnotes, a caution callout, links and a changelog.",
         publishedAt: "2026-06-26",

@@ -25,3 +25,7 @@ The Cloudflare adapter produces the Worker and static assets in `dist`. Run `pnp
 Before routing the domain, compare live pages and assets, validate Studio authentication and PDF delivery, test a permitted contact send and Turnstile replay rejection, check headers and redirects, and monitor Worker limits and latency. At cutover disable the old Sanity revalidation webhook and Vercel publishing cron. Retain the old deployment and configuration until the replacement is stable. Roll back by restoring the prior domain routing and the webhook/cron configuration; this migration does not alter Sanity content.
 
 Source code is MIT licensed; authored content has a separate license in [LICENSE-CONTENT.md](LICENSE-CONTENT.md). Font and imagery licenses remain with their assets.
+
+## Editorial workflow
+
+Use the [writing guide](docs/writing-style.md) for voice, evidence, and review, and the [article templates](docs/article-template.md) for drafting and publishing fields. Sanity owns article takeaways, dedicated sharing images, and an optional suggested next article. The article page renders these alongside the author and follow links; missing optional fields have useful fallbacks.

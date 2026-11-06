@@ -2,22 +2,23 @@ name: Sanity schema
 permissions:
     contents: read
 
-# After each merge to main, `pnpm schema:deploy` registers the embedded
+# After each merge to the production branch, `pnpm schema:deploy` registers the embedded
 # Studio and deploys its schema, so the copy Sanity's dashboard and tools
 # read matches the repository (CLAUDE.md, the Sanity schema paragraph). It
 # runs in the Production environment (Settings → Environments), whose
-# deployment branches are limited to protected branches, that is main, so
-# no other branch's run can reach its secrets: SANITY_AUTH_TOKEN (a Sanity
+# deployment branches are limited to protected branches. The active
+# v2-rewrite branch is protected; feature branches cannot reach its secrets:
+# SANITY_AUTH_TOKEN (a Sanity
 # API token with the Deploy Studio role), SANITY_STUDIO_PROJECT_ID
 # and SANITY_STUDIO_DATASET. A manual run is for the first
 # deploy or a retry.
 on:
     push:
-        branches: ["main"]
+        branches: ["v2-rewrite"]
     workflow_dispatch:
 
 # One deploy at a time, in order: a queued run waits rather than cancels,
-# so the latest merge always deploys last.
+# so the latest production merge always deploys last.
 concurrency:
     group: ${{ github.workflow }}
     cancel-in-progress: false

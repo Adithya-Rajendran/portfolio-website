@@ -1,4 +1,5 @@
 import type { LogEntry } from "@/lib/log-index";
+import type { PostListItem, PostWithBody } from "@/lib/content-types";
 
 /**
  * What a Flight Log entry points to after its last line (G1): the entries
@@ -53,4 +54,28 @@ export function relatedEntries(
         )
         .sort((a, b) => shared(b) - shared(a) || b.number - a.number)
         .slice(0, limit);
+}
+
+/** Resolve a curated link against published, navigable entries before using its reason. */
+export function nextArticle(
+    entries: readonly LogEntry[],
+    publishedPosts: readonly PostListItem[],
+    current: Pick<PostWithBody, "slug" | "nextPostId" | "nextReadReason">,
+) {
+    const related = relatedEntries(entries, current.slug);
+    const selected = publishedPosts.find(
+        (post) => post._id === current.nextPostId && post.slug !== current.slug,
+    );
+    const curated = selected
+        ? entries.find((entry) => entry.slug === selected.slug)
+        : undefined;
+    const entry = curated ?? related[0];
+    return {
+        entry,
+        reason:
+            curated && current.nextReadReason
+                ? current.nextReadReason
+                : entry?.dek,
+        more: related.filter((item) => item.slug !== entry?.slug),
+    };
 }

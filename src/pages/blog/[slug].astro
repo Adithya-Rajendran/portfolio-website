@@ -10,34 +10,48 @@ import CmsImage from "../../components/CmsImage.astro";
 import { urlForImage } from "../../lib/images";
 import { extractHeadings, contentsHeadings } from "../../../lib/headings";
 import { getPostBySlug, getAllPosts, getAllProjects } from "../../lib/sanity";
+import { getProfile } from "../../lib/sanity";
+import { siteConfig } from "../../../lib/config";
+import { formatEntryDate, logEntries } from "../../../lib/log-index";
+import { nextArticle } from "../../../lib/related-posts";
+import { readingTimeFromWordCount } from "../../../lib/reading-time";
 import { renderProse } from "../../lib/prose";
 import { highlight } from "../../lib/highlight";
 const post = await getPostBySlug(Astro.params.slug || "");
 if (!post) return Astro.rewrite("/404");
-const [highlighted, posts, projects] = await Promise.all([
+const [highlighted, posts, projects, profile] = await Promise.all([
     highlight(post.body || []).catch(() => ({})),
     getAllPosts(),
     getAllProjects(),
+    getProfile(),
 ]);
 const relatedProjects = projects.filter((p) =>
     post.projectIds?.includes(p._id),
 );
 const headings = contentsHeadings(extractHeadings({ body: post.body }));
-const related = posts
-    .filter(
-        (p) =>
-            p.slug !== post.slug && p.tags?.some((t) => post.tags?.includes(t)),
-    )
-    .slice(0, 3);
+const entries = logEntries(posts);
+const {
+    entry: nextEntry,
+    reason: nextReason,
+    more: moreReading,
+} = nextArticle(entries, posts, post);
+const sharingImage = post.socialImage?.asset?._ref
+    ? post.socialImage
+    : post.cover;
+const sharingUrl = sharingImage?.asset?._ref
+    ? urlForImage(sharingImage).width(1200).height(630).fit("crop").url()
+    : `${siteConfig.url}/share.png`;
+const takeaways = Array.isArray(post.takeaways)
+    ? post.takeaways.filter((text) => typeof text === "string" && text.trim())
+    : [];
+const readMinutes =
+    post.wordCount > 0 ? readingTimeFromWordCount(post.wordCount) : null;
 ---
 
 <Base
     pageClass="article-page"
-    image={
-        post.cover?.asset?._ref
-            ? urlForImage(post.cover).width(1200).height(630).fit("crop").url()
-            : undefined
-    }
+    image={sharingUrl}
+    imageAlt={sharingImage?.alt || post.title}
     ogType="article"
     structuredData={[
         {
@@ -50,9 +64,7 @@ const related = posts
                 revisedAt: post.revisedAt,
                 tags: post.tags || [],
                 wordCount: post.wordCount,
-                imageUrl: post.cover?.asset?._ref
-                    ? urlForImage(post.cover).width(1200).url()
-                    : "https://adithya-rajendran.com/share.png",
+                imageUrl: sharingUrl,
             }),
         },
         buildBreadcrumbList([
@@ -72,13 +84,32 @@ const related = posts
             <p class="editorial-deck">{post.description}</p>
             <p class="editorial-meta">
                 <time datetime={post.publishedAt}>
-                    {post.publishedAt.slice(0, 10)}
+                    {formatEntryDate(post.publishedAt)}
                 </time>{" "}
                 · <a href="/about">Adithya Rajendran</a>
+                {readMinutes && <span> · {readMinutes} min read</span>}
+                {post.revisedAt && post.revisedAt > post.publishedAt && (
+                    <span class="editorial-updated">
+                        Updated{" "}
+                        <time datetime={post.revisedAt}>
+                            {formatEntryDate(post.revisedAt)}
+                        </time>
+                    </span>
+                )}
             </p>
             <ReadingOrbit />
         </div>
         <CmsImage image={post.cover} />
+        {takeaways.length > 0 && (
+            <aside class="article-takeaways" aria-labelledby="takeaways-title">
+                <h2 id="takeaways-title">Key takeaways</h2>
+                <ul>
+                    {takeaways.map((text) => (
+                        <li>{text}</li>
+                    ))}
+                </ul>
+            </aside>
+        )}
         {headings.length > 1 && (
             <details class="contents" id="article-contents">
                 <summary>
@@ -144,17 +175,61 @@ const related = posts
                 </ul>
             </section>
         )}
-        {related.length > 0 && (
-            <section>
-                <h2>Related writing</h2>
-                <ul>
-                    {related.map((p) => (
-                        <li>
-                            <a href={`/blog/${p.slug}`}>{p.title}</a>
-                        </li>
-                    ))}
-                </ul>
+        {nextEntry && (
+            <section class="article-next" aria-labelledby="read-next-title">
+                <h2 id="read-next-title">Read next</h2>
+                <h3>
+                    <a href={`/blog/${nextEntry.slug}`}>
+                        {nextEntry.title} <span aria-hidden="true">↗</span>
+                    </a>
+                </h3>
+                {nextReason && <p>{nextReason}</p>}
+                {nextEntry.readMinutes && (
+                    <p class="article-next__time">
+                        {nextEntry.readMinutes} min read
+                    </p>
+                )}
+                {moreReading.length > 0 && (
+                    <details class="article-more">
+                        <summary>More on these topics</summary>
+                        <ul>
+                            {moreReading.map((p) => (
+                                <li>
+                                    <a href={`/blog/${p.slug}`}>{p.title}</a>
+                                </li>
+                            ))}
+                        </ul>
+                    </details>
+                )}
             </section>
         )}
+        <section class="article-author" aria-labelledby="article-author-title">
+            <p class="editorial-eyebrow">Behind the work</p>
+            <h2 id="article-author-title">
+                <a href="/about">{profile?.name || siteConfig.author}</a>
+            </h2>
+            {profile?.introduction && <p>{profile.introduction}</p>}
+            <p>
+                <a href="/about">More about me</a> ·{" "}
+                <a href="/portfolio">Explore my projects</a>
+            </p>
+            <div class="article-follow">
+                <h3>Follow my work</h3>
+                <p>
+                    Get new posts through RSS, or connect with me on LinkedIn.
+                </p>
+                <div class="article-follow__links">
+                    <a
+                        class="article-follow__primary"
+                        href={siteConfig.profiles.linkedin}
+                    >
+                        Follow on LinkedIn <span aria-hidden="true">↗</span>
+                    </a>
+                    <a href="/feed.xml">
+                        Subscribe via RSS <span aria-hidden="true">↗</span>
+                    </a>
+                </div>
+            </div>
+        </section>
     </article>
 </Base>

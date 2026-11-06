@@ -28,6 +28,16 @@ test("explore mode supports orbit, pan, bounded zoom, reset and Escape", async (
     test.setTimeout(150_000);
     await page.setViewportSize({ width: 960, height: 720 });
     const { stage, surface } = await enter(page);
+    // The exploration UI changes before the next camera draw. Let that
+    // frame finish before recording the pose that Reset must restore.
+    await page.evaluate(
+        () =>
+            new Promise<void>((resolve) =>
+                requestAnimationFrame(() =>
+                    requestAnimationFrame(() => resolve()),
+                ),
+            ),
+    );
     const time = await stage.getAttribute("data-scene-time");
     const baselineCamera = await stage.getAttribute("data-camera");
     const baselineTarget = await stage.getAttribute("data-target");
