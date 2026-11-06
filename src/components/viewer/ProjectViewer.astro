@@ -20,21 +20,45 @@ const { model } = Astro.props;
         data-procedural={model.procedural}
         data-url={model.fileUrl}
     >
-        <button type="button" data-viewer-start>
-            Explore 3D model
-        </button>
-        <p>
-            Use the pointer or arrow keys to rotate the model. The project image
-            remains available above.
-        </p>
         <div
             class="project-viewer__stage"
             data-viewer-stage
-            tabindex="0"
+            role="img"
             aria-label={model.alt + ". Use arrow keys to rotate."}
-            hidden
+            aria-describedby="project-viewer-instructions"
         ></div>
-        <p data-viewer-status role="status"></p>
+        <div
+            class="project-viewer__controls"
+            role="group"
+            aria-label="Model controls"
+        >
+            <button type="button" data-viewer-motion aria-pressed="false">
+                Pause motion
+            </button>
+            <button type="button" data-viewer-closer aria-label="Zoom in">
+                +
+            </button>
+            <button type="button" data-viewer-further aria-label="Zoom out">
+                −
+            </button>
+            <button type="button" data-viewer-reset>
+                Reset view
+            </button>
+        </div>
+        <p id="project-viewer-instructions">
+            Drag to orbit · Arrow keys to look · Scroll to keep reading
+        </p>
+        <p data-viewer-status role="status">
+            Loading model…
+        </p>
+        <button
+            class="project-viewer__retry"
+            type="button"
+            data-viewer-retry
+            hidden
+        >
+            Try model again
+        </button>
     </section>
 )}
 <script>
@@ -48,12 +72,50 @@ const { model } = Astro.props;
         height: clamp(300px, 55vw, 600px);
         background: #262923;
         overflow: hidden;
-        touch-action: none;
+        touch-action: pan-y pinch-zoom;
+        cursor: grab;
+    }
+    .project-viewer__stage[data-dragging] {
+        cursor: grabbing;
+    }
+    .project-viewer__stage:focus-visible {
+        outline: 2px solid var(--accent-text);
+        outline-offset: -2px;
+    }
+    .project-viewer__controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        margin-top: 0.5rem;
+        visibility: hidden;
+    }
+    [data-ready] .project-viewer__controls {
+        visibility: visible;
+    }
+    .project-viewer__controls button {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 0.8rem;
+    }
+    .project-viewer p {
+        text-align: center;
+        font-size: 0.8rem;
+        min-height: 1.5em;
+        margin: 0.25rem 0;
     }
     .project-viewer__stage :global(canvas) {
         display: block;
         width: 100%;
         height: 100%;
+    }
+    .project-viewer__retry {
+        display: block;
+        margin: 0.5rem auto;
+    }
+    .project-viewer__retry[hidden] {
+        display: none;
     }
     @media print {
         .project-viewer {

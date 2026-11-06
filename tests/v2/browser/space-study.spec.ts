@@ -27,8 +27,13 @@ for (const [path, kind] of pages) {
         });
         await expect(figure).toHaveAttribute("data-state", "paused");
         const stage = figure.locator("[data-space-stage]");
-        await expect(stage).toHaveAttribute("role", "img");
+        await expect(stage).toHaveAttribute("role", "region");
         await expect(stage).toHaveAttribute("aria-label", /.+/);
+        await stage.focus();
+        await page.keyboard.press("ArrowRight");
+        await expect(stage).toHaveAttribute("data-view-yaw", "0.120");
+        await figure.getByRole("button", { name: "Reset view" }).click();
+        await expect(stage).toHaveAttribute("data-view-yaw", "0.000");
         await expect(stage.locator("canvas")).toHaveAttribute(
             "aria-hidden",
             "true",

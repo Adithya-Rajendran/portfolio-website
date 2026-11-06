@@ -3,238 +3,268 @@ import type * as Three from "three";
 for (const section of document.querySelectorAll<HTMLElement>(
     "[data-project-viewer]",
 )) {
-    const button = section.querySelector<HTMLButtonElement>(
-        "[data-viewer-start]",
-    );
-    const stage = section.querySelector<HTMLElement>("[data-viewer-stage]");
-    const status = section.querySelector<HTMLElement>("[data-viewer-status]");
-    if (!button || !stage || !status) continue;
+    const stage = section.querySelector<HTMLElement>("[data-viewer-stage]")!;
+    const status = section.querySelector<HTMLElement>("[data-viewer-status]")!;
+    const retryButton = section.querySelector<HTMLButtonElement>(
+        "[data-viewer-retry]",
+    )!;
+    const motionButton = section.querySelector<HTMLButtonElement>(
+        "[data-viewer-motion]",
+    )!;
+    const resetButton = section.querySelector<HTMLButtonElement>(
+        "[data-viewer-reset]",
+    )!;
+    const closerButton = section.querySelector<HTMLButtonElement>(
+        "[data-viewer-closer]",
+    )!;
+    const furtherButton = section.querySelector<HTMLButtonElement>(
+        "[data-viewer-further]",
+    )!;
     section.hidden = false;
-    const disposeScene = (scene: Three.Scene) => {
-        scene.traverse((object) => {
-            const mesh = object as Three.Mesh;
-            mesh.geometry?.dispose();
-            const materials = Array.isArray(mesh.material)
-                ? mesh.material
-                : mesh.material
-                  ? [mesh.material]
-                  : [];
-            for (const material of materials) {
-                for (const value of Object.values(material))
-                    if (
-                        value &&
-                        typeof value === "object" &&
-                        "isTexture" in value
-                    )
-                        (value as Three.Texture).dispose();
-                material.dispose();
-            }
-        });
-    };
-    let cleanup: (() => void) | undefined,
-        loading = false;
-    button.addEventListener("click", async () => {
-        if (cleanup) {
-            cleanup();
-            cleanup = undefined;
-            stage.hidden = true;
-            button.textContent = "Explore 3D model";
-            return;
-        }
-        if (loading) return;
+    let cleanup: (() => void) | undefined;
+    let generation = 0,
+        active = true,
+        loading = false,
+        paused = false;
+    const initialize = async () => {
+        if (!active || loading || cleanup) return;
         loading = true;
-        button.disabled = true;
-        status.textContent = "Loading model…";
+        const ticket = ++generation;
         let renderer: Three.WebGLRenderer | undefined;
-        let failedScene: Three.Scene | undefined;
+        let teardown: (() => void) | undefined;
+        status.textContent = "Loading model…";
+        retryButton.hidden = true;
         try {
-            const THREE = await import("three");
-            renderer = new THREE.WebGLRenderer({
+            const [T, { makeInlineOrbit }, { loadProjectModel, disposeScene }] =
+                await Promise.all([
+                    import("three"),
+                    import("../inline-orbit"),
+                    import("./project-model"),
+                ]);
+            if (!active || ticket !== generation) return;
+            const render = (renderer = new T.WebGLRenderer({
                 antialias: true,
                 alpha: true,
-            });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-            const scene = new THREE.Scene();
-            failedScene = scene;
-            const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 100);
+            }));
+            render.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+            const scene = new T.Scene();
+            const camera = new T.PerspectiveCamera(38, 1, 0.01, 100);
             camera.position.set(3, 2.3, 4.5);
             camera.lookAt(0, 0, 0);
-            scene.add(new THREE.HemisphereLight(0xf5ead8, 0x302c28, 2));
-            const light = new THREE.DirectionalLight(0xffffff, 2);
+            scene.add(new T.HemisphereLight(0xf5ead8, 0x302c28, 2));
+            const light = new T.DirectionalLight(0xffffff, 2);
             light.position.set(3, 5, 4);
             scene.add(light);
-            const group = new THREE.Group();
+            const group = new T.Group();
             scene.add(group);
-            if (section.dataset.kind === "procedural") {
-                const dark = new THREE.MeshStandardMaterial({
-                    color: 0x363a32,
-                    metalness: 0.45,
-                    roughness: 0.55,
-                });
-                const panel = new THREE.MeshStandardMaterial({
-                    color: 0x6c7460,
-                    metalness: 0.45,
-                    roughness: 0.45,
-                });
-                const accent = new THREE.MeshStandardMaterial({
-                    color: 0xdfa05d,
-                    emissive: 0xac5045,
-                });
-                const box = (
-                    w: number,
-                    h: number,
-                    d: number,
-                    x: number,
-                    y: number,
-                    z: number,
-                    material: Three.Material,
-                ) => {
-                    const mesh = new THREE.Mesh(
-                        new THREE.BoxGeometry(w, h, d),
-                        material,
-                    );
-                    mesh.position.set(x, y, z);
-                    group.add(mesh);
-                };
-                for (const x of [-0.75, 0.75])
-                    for (const z of [-0.5, 0.5])
-                        box(0.08, 2.6, 0.08, x, 0, z, dark);
-                for (const y of [-1.25, 1.25])
-                    box(1.6, 0.08, 1.08, 0, y, 0, dark);
-                for (let i = 0; i < 6; i++) {
-                    const y = -0.95 + i * 0.38;
-                    box(1.4, 0.26, 0.85, 0, y, 0, panel);
-                    for (let j = 0; j < 4; j++)
-                        box(0.05, 0.05, 0.02, -0.5 + j * 0.13, y, 0.44, accent);
-                }
-            } else {
-                const url = section.dataset.url;
-                if (!url) throw new Error("Missing model");
-                const parsed = new URL(url, location.href);
-                if (
-                    parsed.protocol !== "https:" &&
-                    parsed.origin !== location.origin
-                )
-                    throw new Error("Invalid model URL");
-                const { GLTFLoader } =
-                    await import("three/addons/loaders/GLTFLoader.js");
-                const gltf = await new GLTFLoader().loadAsync(parsed.href);
-                group.add(gltf.scene);
-                const bounds = new THREE.Box3().setFromObject(gltf.scene);
-                const size = bounds.getSize(new THREE.Vector3());
-                const center = bounds.getCenter(new THREE.Vector3());
-                const scale = 2.5 / Math.max(size.x, size.y, size.z, 0.001);
-                gltf.scene.position.sub(center);
-                group.scale.setScalar(scale);
-            }
-            stage.hidden = false;
-            stage.appendChild(renderer.domElement);
-            let frame = 0,
+            const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+            let disposed = false,
+                compiled = false,
                 visible = true,
-                dragging = false,
-                lastX = 0;
-            const motion = matchMedia("(prefers-reduced-motion: reduce)");
-            const resize = () => {
-                const w = stage.clientWidth,
-                    h = stage.clientHeight;
-                if (!w || !h || !renderer) return;
-                renderer.setSize(w, h, false);
-                camera.aspect = w / h;
-                camera.updateProjectionMatrix();
-                renderer.render(scene, camera);
+                frame = 0,
+                lastTime = 0,
+                lastDraw = 0;
+            let fence: WebGLSync | null = null;
+            let orbit: ReturnType<typeof makeInlineOrbit> | undefined;
+            const gl = render.getContext() as WebGL2RenderingContext;
+            let endLifetime: () => void = () => {};
+            const lifetime = new Promise<void>((resolve) => {
+                endLifetime = resolve;
+            });
+            const syncButton = () => {
+                motionButton.disabled = reduced.matches;
+                motionButton.textContent = reduced.matches
+                    ? "Still scene"
+                    : paused
+                      ? "Resume motion"
+                      : "Pause motion";
+                motionButton.setAttribute("aria-pressed", String(paused));
+                section.dataset.state =
+                    reduced.matches || paused ? "paused" : "running";
             };
-            const draw = () => {
+            const tick = (time: number) => {
                 frame = 0;
-                if (!visible || document.hidden || !renderer) return;
-                if (!motion.matches) group.rotation.y += 0.003;
-                renderer.render(scene, camera);
-                if (!motion.matches) frame = requestAnimationFrame(draw);
+                if (disposed || !visible || document.hidden) {
+                    lastTime = 0;
+                    return;
+                }
+                if (fence) {
+                    if (gl.clientWaitSync(fence, 0, 0) === gl.TIMEOUT_EXPIRED) {
+                        frame = requestAnimationFrame(tick);
+                        return;
+                    }
+                    gl.deleteSync(fence);
+                    fence = null;
+                }
+                if (time - lastDraw < 1000 / 30) {
+                    frame = requestAnimationFrame(tick);
+                    return;
+                }
+                const cameraDelta = (time - (lastTime || time)) / 1000;
+                const delta = Math.min(cameraDelta, 0.05);
+                lastTime = lastDraw = time;
+                const still = paused || reduced.matches;
+                if (!still) group.rotation.y += delta * 0.18;
+                const moving = orbit?.update(cameraDelta, reduced.matches);
+                render.render(scene, camera);
+                fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+                gl.flush();
+                if (!still || moving) frame = requestAnimationFrame(tick);
             };
             const wake = () => {
-                if (!frame && visible && !document.hidden) draw();
-            };
-            const observer = new IntersectionObserver((entries) => {
-                visible = entries[0]?.isIntersecting ?? false;
-                if (!visible && frame) {
-                    cancelAnimationFrame(frame);
-                    frame = 0;
-                } else wake();
-            });
-            observer.observe(stage);
-            const ro = new ResizeObserver(resize);
-            ro.observe(stage);
-            const down = (e: PointerEvent) => {
-                dragging = true;
-                lastX = e.clientX;
-                stage.setPointerCapture(e.pointerId);
-            };
-            const move = (e: PointerEvent) => {
-                if (!dragging || !renderer) return;
-                group.rotation.y += (e.clientX - lastX) * 0.01;
-                lastX = e.clientX;
-                renderer.render(scene, camera);
-            };
-            const up = () => {
-                dragging = false;
-            };
-            const key = (e: KeyboardEvent) => {
                 if (
-                    (e.key !== "ArrowLeft" && e.key !== "ArrowRight") ||
-                    !renderer
-                )
-                    return;
-                e.preventDefault();
-                group.rotation.y += e.key === "ArrowLeft" ? -0.15 : 0.15;
-                renderer.render(scene, camera);
+                    compiled &&
+                    !disposed &&
+                    !frame &&
+                    visible &&
+                    !document.hidden
+                ) {
+                    lastTime = performance.now();
+                    frame = requestAnimationFrame(tick);
+                }
             };
-            const canvas = renderer.domElement;
-            const lost = (e: Event) => {
-                e.preventDefault();
-                status.textContent =
-                    "The model is unavailable. The project image remains available.";
-                cleanup?.();
-                cleanup = undefined;
-                stage.hidden = true;
-                button.textContent = "Try model again";
-            };
-            stage.addEventListener("pointerdown", down);
-            stage.addEventListener("pointermove", move);
-            stage.addEventListener("pointerup", up);
-            stage.addEventListener("pointercancel", up);
-            stage.addEventListener("keydown", key);
-            canvas.addEventListener("webglcontextlost", lost);
-            document.addEventListener("visibilitychange", wake);
-            motion.addEventListener("change", wake);
-            cleanup = () => {
+            const sync = () => {
                 cancelAnimationFrame(frame);
-                observer.disconnect();
-                ro.disconnect();
-                stage.removeEventListener("pointerdown", down);
-                stage.removeEventListener("pointermove", move);
-                stage.removeEventListener("pointerup", up);
-                stage.removeEventListener("pointercancel", up);
-                stage.removeEventListener("keydown", key);
-                canvas.removeEventListener("webglcontextlost", lost);
-                document.removeEventListener("visibilitychange", wake);
-                motion.removeEventListener("change", wake);
-                disposeScene(scene);
-                renderer?.dispose();
-                canvas.remove();
+                frame = 0;
+                lastTime = 0;
+                syncButton();
+                wake();
             };
+            const resize = () => {
+                const width = stage.clientWidth,
+                    height = stage.clientHeight;
+                if (!width || !height) return;
+                render.setSize(width, height, false);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                wake();
+            };
+            const toggle = () => {
+                paused = !paused;
+                sync();
+            };
+            const reset = () => {
+                group.rotation.y = 0;
+                orbit?.reset();
+            };
+            const closer = () => orbit?.zoom(true);
+            const further = () => orbit?.zoom(false);
+            const lost = (event: Event) => {
+                event.preventDefault();
+                teardown?.();
+                cleanup = undefined;
+                section.dataset.state = "unavailable";
+                status.textContent =
+                    "The 3D model is unavailable. You can still read the project below.";
+                retryButton.hidden = false;
+            };
+            const sizes = new ResizeObserver(resize);
+            const observer = new IntersectionObserver(([entry]) => {
+                visible = entry.isIntersecting;
+                sync();
+            });
+            teardown = () => {
+                if (disposed) return;
+                disposed = true;
+                endLifetime();
+                cancelAnimationFrame(frame);
+                if (fence) gl.deleteSync(fence);
+                sizes.disconnect();
+                observer.disconnect();
+                orbit?.dispose();
+                orbit = undefined;
+                motionButton.removeEventListener("click", toggle);
+                resetButton.removeEventListener("click", reset);
+                closerButton.removeEventListener("click", closer);
+                furtherButton.removeEventListener("click", further);
+                document.removeEventListener("visibilitychange", sync);
+                reduced.removeEventListener("change", sync);
+                render.domElement.removeEventListener("webglcontextlost", lost);
+                disposeScene(scene);
+                render.dispose();
+                render.domElement.remove();
+                delete section.dataset.ready;
+            };
+            cleanup = teardown;
+            const model = loadProjectModel(
+                T,
+                group,
+                section.dataset.kind,
+                section.dataset.url,
+                () => disposed,
+            );
+            await Promise.race([model, lifetime]);
+            if (disposed || !active || ticket !== generation) {
+                teardown();
+                return;
+            }
             resize();
-            wake();
+            await Promise.race([render.compileAsync(scene, camera), lifetime]);
+            if (disposed || !active || ticket !== generation) {
+                teardown();
+                return;
+            }
+            orbit = makeInlineOrbit({
+                element: stage,
+                camera,
+                target: new T.Vector3(),
+                wake,
+                onInteract: () => {
+                    paused = true;
+                    syncButton();
+                },
+            });
+            orbit.update(0, true);
+            render.domElement.setAttribute("aria-hidden", "true");
+            stage.appendChild(render.domElement);
+            render.domElement.addEventListener("webglcontextlost", lost);
+            motionButton.addEventListener("click", toggle);
+            resetButton.addEventListener("click", reset);
+            closerButton.addEventListener("click", closer);
+            furtherButton.addEventListener("click", further);
+            document.addEventListener("visibilitychange", sync);
+            reduced.addEventListener("change", sync);
+            compiled = true;
+            section.dataset.ready = "true";
             status.textContent = "";
-            button.textContent = "Close model";
+            sizes.observe(stage);
+            observer.observe(stage);
+            sync();
         } catch {
-            if (failedScene) disposeScene(failedScene);
-            renderer?.dispose();
-            stage.hidden = true;
+            teardown?.();
+            if (!teardown) renderer?.dispose();
+            cleanup = undefined;
+            section.dataset.state = "unavailable";
             status.textContent =
-                "The model could not be loaded. The project image remains available.";
+                "The 3D model could not be loaded. You can still read the project below.";
+            retryButton.hidden = false;
         } finally {
             loading = false;
-            button.disabled = false;
+            if (ticket !== generation && active) void initialize();
+        }
+    };
+    retryButton.addEventListener("click", () => void initialize());
+    const observer = new IntersectionObserver(
+        ([entry]) => {
+            if (entry.isIntersecting) {
+                observer.disconnect();
+                void initialize();
+            }
+        },
+        { rootMargin: "200px" },
+    );
+    observer.observe(stage);
+    window.addEventListener("pagehide", () => {
+        active = false;
+        generation++;
+        observer.disconnect();
+        cleanup?.();
+        cleanup = undefined;
+    });
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+            active = true;
+            observer.observe(stage);
         }
     });
-    window.addEventListener("pagehide", () => cleanup?.(), { once: true });
 }
