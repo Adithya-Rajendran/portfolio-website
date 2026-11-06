@@ -95,7 +95,7 @@ export function makeObservationLab({
         mat: T.Material,
     ) => {
         const points = Array.from({ length: 81 }, (_, i) => {
-            const angle = -1.95 + (i / 80) * 3.9;
+            const angle = -1.4 + (i / 80) * 2.8;
             return new T.Vector3(
                 Math.sin(angle) * radius,
                 height,
@@ -114,15 +114,15 @@ export function makeObservationLab({
             [0, 0, 0],
         );
     };
-    // A continuous sill and widely spaced ribs frame the landscape without a
-    // fence across the robot. Their curvature stays legible from either side.
+    // Keep every support behind the inspection area. The widest orbit and
+    // dolly must not move the camera outside a forward-curving window frame.
     arc(10.2, -1.85, 0.18, graphite);
     arc(10.15, -1.64, 0.045, trim);
     arc(10.07, -1.71, 0.018, light);
     arc(10.4, -2.1, 0.1, graphite);
     arc(8.6, 4.9, 0.28, graphite);
     arc(8.44, 4.66, 0.045, trim);
-    for (const angle of [-1.72, -0.74, 0.74, 1.72]) {
+    for (const angle of [-1.27, -0.74, 0.74, 1.27]) {
         const point = (radius: number, y: number) =>
             new T.Vector3(
                 Math.sin(angle) * radius,
