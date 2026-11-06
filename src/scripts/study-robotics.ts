@@ -104,10 +104,10 @@ export function makePerceptionArm(k: MachineryKit) {
     const opticsEnvironment = makeOpticalEnvironment();
     k.textures.push(opticsEnvironment);
     optic.envMap = opticsEnvironment;
-    optic.envMapIntensity = 1.8;
-    optic.color.set(0x4b6173);
-    optic.metalness = 0.95;
-    optic.roughness = 0.035;
+    optic.envMapIntensity = 1.35;
+    optic.color.set(0x395966);
+    optic.metalness = 0.78;
+    optic.roughness = 0.045;
     const machining = makeMachiningRelief();
     k.textures.push(machining);
     const brushed = titanium.clone();
@@ -411,11 +411,14 @@ export function makePerceptionArm(k: MachineryKit) {
         ] as const)
             ring(head, r, 0.013, [x, 0.38, z], mat);
         faceCylinder(head, 0.35, 0.025, [x, 0.38, 0.854], rubber);
-        const lens = mesh(head, new T.SphereGeometry(0.34, 64, 40), optic, [
-            x,
-            0.38,
-            0.887,
-        ]);
+        // The barrel permanently hides the rear hemisphere. Spend those
+        // segments on the curved optical face that the visitor can inspect.
+        const lens = mesh(
+            head,
+            new T.SphereGeometry(0.34, 64, 40, 0, Math.PI),
+            optic,
+            [x, 0.38, 0.887],
+        );
         lens.scale.z = 0.16;
         for (const r of [0.29, 0.315, 0.344])
             ring(head, r, 0.006, [x, 0.38, 0.92], r === 0.315 ? bronze : dark);

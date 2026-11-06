@@ -25,6 +25,11 @@ try {
         for (const phase of kind === "relay"
             ? ["day", "dawn", "dusk", "night"]
             : ["day"]) {
+            if (
+                process.env.ARTWORK_PHASE &&
+                !process.env.ARTWORK_PHASE.split(",").includes(phase)
+            )
+                continue;
             for (const [view, width, height] of [
                 ["desktop", 1440, 1000],
                 ["mobile", 800, 1000],
@@ -85,7 +90,7 @@ try {
                 const png = await figure
                     .locator("canvas")
                     .screenshot({ omitBackground: true });
-                const name = `${kind}${kind === "relay" ? `-${phase}` : ""}-${view}-v2.webp`;
+                const name = `${kind}${kind === "relay" ? `-${phase}` : ""}-${view}-v3.webp`;
                 shots.push({ name, png });
                 console.log(`Captured ${name}`);
                 await page.close();
@@ -98,12 +103,12 @@ try {
 // Avoid development HMR interrupting an in-progress capture.
 for (const { name, png } of shots)
     await sharp(png)
-        .webp({ quality: 90, alphaQuality: 100, effort: 6 })
+        .webp({ quality: 90, alphaQuality: 100, effort: 4 })
         .toFile(`public/images/scenes/${name}`);
 for (const view of ["desktop", "mobile"]) {
-    if (shots.some((s) => s.name === `relay-day-${view}-v2.webp`))
+    if (shots.some((s) => s.name === `relay-day-${view}-v3.webp`))
         await copyFile(
-            `public/images/scenes/relay-day-${view}-v2.webp`,
-            `public/images/scenes/relay-${view}-v2.webp`,
+            `public/images/scenes/relay-day-${view}-v3.webp`,
+            `public/images/scenes/relay-${view}-v3.webp`,
         );
 }

@@ -1,6 +1,7 @@
 import type * as Three from "three";
 import { waitForSceneClock } from "../lib/scene-clock";
 import type { SpaceStudy } from "./space-studies";
+import { studyWorlds } from "./study-worlds";
 
 for (const figure of document.querySelectorAll<HTMLElement>(
     "[data-space-study]",
@@ -61,12 +62,13 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             render.autoClear = false;
             render.setClearColor(0x000000, 0);
             const scene = new T.Scene();
-            if (kind === "robotics") scene.fog = new T.FogExp2(0x101719, 0.025);
+            if (kind === "robotics")
+                scene.fog = new T.FogExp2(0x45464d, 0.0065);
             const planetScene = new T.Scene();
             const planetarySun = new T.DirectionalLight(0xffedd8, 1.8);
             planetarySun.position.set(-6, 4, 0);
             planetScene.add(planetarySun, new T.AmbientLight(0xabc6e5, 0.025));
-            const camera = new T.PerspectiveCamera(36, 1, 0.1, 150);
+            const camera = new T.PerspectiveCamera(36, 1, 0.1, 2400);
             const eyeHeight =
                 kind === "workshop" ? 3.7 : kind === "robotics" ? 1.1 : 0.3;
             camera.position.set(0, eyeHeight, 11.4);
@@ -176,6 +178,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 gl.flush();
                 figure.dataset.sceneTime = elapsed.toFixed(3);
                 figure.dataset.drawCalls = String(render.info.render.calls);
+                figure.dataset.triangles = String(render.info.render.triangles);
             };
             const tick = (time: number) => {
                 frame = 0;
@@ -391,6 +394,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                         matchMedia("(max-width: 800px)").matches,
                         texture,
                         lighting,
+                        "distant",
                     ).then((globe) => {
                         if (disposed || ticket !== generation || !active) {
                             disposePlanet(globe);
@@ -404,19 +408,11 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                     ]);
                     if (!globe) return;
                     planet = globe;
-                    globe.scale.setScalar(
-                        kind === "relay"
-                            ? 8.5
-                            : kind === "observatory"
-                              ? 3.1
-                              : 18,
-                    );
-                    if (kind === "relay") globe.position.set(0.8, -8.7, -6.5);
-                    else if (kind === "observatory")
-                        globe.position.set(11, 2.5, -12);
-                    else globe.position.set(6.0, -15, -14);
+                    const worldPlacement = studyWorlds[kind];
+                    globe.scale.setScalar(worldPlacement.radius);
+                    globe.position.fromArray(worldPlacement.position);
                     globe.rotation.set(
-                        0.1,
+                        kind === "observatory" ? 0.5 : 0.1,
                         kind === "relay" ? -1.5 : 0.8,
                         kind === "observatory" ? 0.15 : 0,
                     );

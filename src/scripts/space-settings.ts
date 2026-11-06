@@ -1,8 +1,8 @@
 import * as T from "three";
-import { ImprovedNoise } from "three/addons/math/ImprovedNoise.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { SpaceStudy } from "./space-studies";
+import { makeObservationLab } from "./study-lab";
 
 /** Context gives the instruments a place and a useful sense of scale. */
 export function makeStudySetting(kind: SpaceStudy) {
@@ -45,7 +45,12 @@ export function makeStudySetting(kind: SpaceStudy) {
         parent.add(m);
         return m;
     };
-    const box = (size: number[], xyz: number[], mat = metal, parent = root) =>
+    const box = (
+        size: number[],
+        xyz: number[],
+        mat: T.Material = metal,
+        parent = root,
+    ) =>
         mesh(
             new RoundedBoxGeometry(
                 ...(size as [number, number, number]),
@@ -56,169 +61,14 @@ export function makeStudySetting(kind: SpaceStudy) {
             xyz,
             parent,
         );
-    const line = (a: T.Vector3, b: T.Vector3, radius: number, mat = metal) => {
-        const m = mesh(
-            new T.CylinderGeometry(radius, radius, a.distanceTo(b), 8),
-            mat,
-            a.clone().add(b).multiplyScalar(0.5).toArray(),
-        );
-        m.quaternion.setFromUnitVectors(
-            new T.Vector3(0, 1, 0),
-            b.clone().sub(a).normalize(),
-        );
-    };
     let ready = Promise.resolve();
     if (kind === "robotics") {
-        root.position.y = -0.25;
-        const deck = new T.MeshStandardMaterial({
-            color: 0x55605e,
-            metalness: 0.55,
-            roughness: 0.65,
+        ready = makeObservationLab({
+            mesh,
+            box,
+            textures,
+            isDisposed: () => disposed,
         });
-        const panelCanvas = document.createElement("canvas");
-        panelCanvas.width = panelCanvas.height = 512;
-        const panel = panelCanvas.getContext("2d")!;
-        panel.fillStyle = "#9b9f9b";
-        panel.fillRect(0, 0, 512, 512);
-        panel.strokeStyle = "#4c5556";
-        panel.lineWidth = 2;
-        panel.strokeRect(3, 3, 506, 506);
-        for (const x of [12, 500])
-            for (const y of [12, 500]) {
-                panel.fillStyle = "#414b4d";
-                panel.beginPath();
-                panel.arc(x, y, 3, 0, Math.PI * 2);
-                panel.fill();
-            }
-        const deckMap = new T.CanvasTexture(panelCanvas);
-        deckMap.colorSpace = T.SRGBColorSpace;
-        deckMap.wrapS = deckMap.wrapT = T.RepeatWrapping;
-        deckMap.repeat.set(14, 14);
-        textures.add(deckMap);
-        deck.map = deckMap;
-        box([40, 0.2, 40], [0, -2.15, 7], deck);
-        // Sparse rails, structural arches and floor inlays imply an observation lab.
-        for (const x of [-4.3, 4.3]) {
-            const curve = new T.CatmullRomCurve3([
-                new T.Vector3(x, -2, -3.2),
-                new T.Vector3(x, 1.5, -3.5),
-                new T.Vector3(x * 0.82, 4.8, -3.5),
-                new T.Vector3(x * 0.55, 6, -3.5),
-            ]);
-            mesh(
-                new T.TubeGeometry(curve, 64, 0.12, 16, false),
-                metal,
-                [0, 0, 0],
-            );
-            box([0.055, 0.5, 0.06], [x, 0.1, -3.05], amber);
-            line(
-                new T.Vector3(x, -2, -2.8),
-                new T.Vector3(x, -0.95, -2.8),
-                0.04,
-            );
-        }
-        for (const y of [-1.55, -0.95])
-            line(new T.Vector3(-5, y, -3), new T.Vector3(5, y, -3), 0.025);
-        for (const x of [-3.5, 3.5]) {
-            box([1.4, 0.8, 0.9], [x, -1.65, -2.3], ceramic);
-            box([1.45, 0.04, 0.95], [x, -1.23, -2.3]);
-            box([1.25, 0.56, 0.025], [x, -1.65, -1.84]);
-            box([0.48, 0.29, 0.027], [x - 0.29, -1.58, -1.82], cyan);
-            for (let i = 0; i < 9; i++)
-                box([0.34, 0.014, 0.025], [x + 0.35, -1.47 - i * 0.04, -1.82]);
-            for (const side of [-1, 1]) {
-                box(
-                    [0.06, 0.6, 0.065],
-                    [x + side * 0.64, -1.65, -1.82],
-                    ceramic,
-                );
-                box([0.12, 0.04, 0.04], [x + side * 0.4, -1.34, -1.8], amber);
-                const upright = new T.CylinderGeometry(0.05, 0.05, 1.2, 24);
-                mesh(upright, metal, [x + side * 0.7, -1.4, -2.7]);
-            }
-            for (let i = 0; i < 4; i++)
-                box(
-                    [0.12, 0.035, 0.02],
-                    [x - 0.4 + i * 0.25, -1.4, -1.83],
-                    i === 0 ? amber : cyan,
-                );
-        }
-        for (const x of [-2.8, 2.8])
-            box([0.018, 0.004, 7], [x, -2.042, -0.5], amber);
-        const haze = new T.ShaderMaterial({
-            transparent: true,
-            depthWrite: false,
-            uniforms: {},
-            vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-            fragmentShader: `varying vec2 vUv;void main(){float mist=(1.-smoothstep(.0,.85,vUv.y))*.72;gl_FragColor=vec4(.26,.15,.095,mist);}`,
-        });
-        mesh(new T.PlaneGeometry(120, 28), haze, [0, 6, -72]);
-        const noise = new ImprovedNoise();
-        const terrain = new T.PlaneGeometry(100, 80, 240, 180);
-        terrain.rotateX(-Math.PI / 2);
-        terrain.translate(0, -3.7, -36);
-        const pos = terrain.getAttribute("position");
-        const colors: number[] = [];
-        for (let i = 0; i < pos.count; i++) {
-            const x = pos.getX(i),
-                z = pos.getZ(i);
-            const horizon = T.MathUtils.smoothstep(-z, 7, 16);
-            let ridge = 0,
-                amplitude = 1,
-                frequency = 0.11;
-            for (let octave = 0; octave < 4; octave++) {
-                ridge +=
-                    (1 -
-                        Math.abs(
-                            noise.noise(x * frequency, z * frequency, 13),
-                        )) *
-                    amplitude;
-                amplitude *= 0.48;
-                frequency *= 2.05;
-            }
-            const y = (ridge - 1.05) * 5.5 * horizon;
-            pos.setY(i, -3.7 + y);
-            const c = new T.Color().setScalar(
-                0.7 + noise.noise(x * 0.4, z * 0.4, 7) * 0.15,
-            );
-            colors.push(c.r, c.g, c.b);
-        }
-        terrain.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
-        terrain.computeVertexNormals();
-        const dust = new T.MeshStandardMaterial({
-            color: 0xd2aa87,
-            roughness: 1,
-            bumpScale: 0.2,
-            envMapIntensity: 0.1,
-            vertexColors: true,
-        });
-        mesh(terrain, dust, [0, 0, 0]);
-        ready = Promise.all(
-            [
-                ["regolith-color-v1.webp", true],
-                ["regolith-height-v1.webp", false],
-            ].map(async ([file, color]) => {
-                try {
-                    const map = await new T.TextureLoader().loadAsync(
-                        `/images/scenes/${file}`,
-                    );
-                    if (disposed) {
-                        map.dispose();
-                        return;
-                    }
-                    if (color) map.colorSpace = T.SRGBColorSpace;
-                    map.wrapS = map.wrapT = T.RepeatWrapping;
-                    map.repeat.set(28, 22);
-                    map.anisotropy = 4;
-                    textures.add(map);
-                    if (color) dust.map = map;
-                    else dust.bumpMap = map;
-                    dust.needsUpdate = true;
-                } catch {
-                    // The terrain remains usable without either optional map.
-                }
-            }),
-        ).then(() => {});
     } else if (kind === "workshop") {
         for (const [x, y, z, scale] of [
             [-3.1, -1.2, 1.5, 0.44],
