@@ -1,6 +1,6 @@
 # Cloudflare security configuration
 
-Reviewed November 5, 2026 (America/Los_Angeles). Applies to `adithya-rajendran.com`, its `www` alias, and Worker `portfolio-v2` on branch `v2-rewrite`. The owner authorized domain-wide hardening, keeping the non-US challenge for Studio, retaining every existing country block, and subsequently allowing agents to read public content using free-tier settings. The zone remains on Free Website; no paid upgrade was added.
+Reviewed November 6, 2026 (America/Los_Angeles). Applies to `adithya-rajendran.com`, its `www` alias, and Worker `portfolio-v2` on branch `v2-rewrite`. The owner authorized domain-wide hardening, keeping the non-US challenge for Studio, retaining every existing country block, and subsequently allowing agents to read public content using free-tier settings. The zone remains on Free Website; no paid upgrade was added. See the [November 6 audit](security-audit-2026-11-06.md) for traffic evidence, follow-up changes and limitations.
 
 ## Edge protections
 
@@ -31,7 +31,7 @@ The five rules, in order:
 
 1. **Block OFAC and high-risk countries** (`0eb1cde72b5045c9b985c30e5112c420`). Blocks the geographic policy below.
 2. **Challenge non-US access to Sanity Studio** (`9ef2e81cf84242d5b19030d547590e6e`). Matches non-US sources on `/studio` and `/studio/*`. Replaces the old login/signup/admin-path expression without removing the rule.
-3. **Block private-file and unused CMS probes** (`01a41462a9a44609a5c222b5b013aef9`). Blocks requests for `.git`, `.env`, `.dev.vars`, dependency/config files and unused WordPress/phpMyAdmin endpoints. It does not block `.well-known`.
+3. **Block private-file and unused CMS probes** (`01a41462a9a44609a5c222b5b013aef9`). Blocks requests for `.git`, `.env`, `.dev.vars`, dependency/config files and unused WordPress/phpMyAdmin endpoints. The November 6 audit made path matching case-insensitive and added the observed `/credentials.json`, `/service-account.json`, `/wordpress` and `/wp` probes, plus unused WordPress content paths. These previously returned 404; blocking them at the edge avoids Worker execution. It does not block `.well-known`.
 4. **Allow only website methods and contact POST** (`0c6c4a8ee5b94017ba9cc8027fdfa3eb`). Allows GET, HEAD and OPTIONS, plus POST to `/api/contact` and `/api/contact/`. Cloudflare-owned `/cdn-cgi/` endpoints are excluded from this method restriction.
 5. **Reject cross-site or unsupported contact submissions** (`43e8b0da71f54d0f860a6c90713479a0`). Rejects POSTs to the contact endpoint without the canonical Origin or URL-encoded content type, before Worker execution. The application repeats these checks.
 
@@ -55,7 +55,7 @@ The additions are preventive policy choices. The initial attempt to read recent 
 
 ## Public reading and human-only contact
 
-With the owner's explicit approval, `fight_mode` and `enable_js` are now `false`, and `ai_bots_protection` and `crawler_protection` are `disabled`. AI search, user agents and the configured personal agents are allowed (`disabled` means their block is off). `ai_training` remains `disallow`, with managed robots.txt and Bot Preference Sync enabled. The legacy AI-block toggle also reset the training preference during the update; it was immediately restored and verified. Final readback differs from the saved baseline only in the four approved settings. The custom firewall, managed WAF and contact rate-limit rulesets match the baseline exactly.
+With the owner's explicit approval, `fight_mode` and `enable_js` are now `false`, and `ai_bots_protection` and `crawler_protection` are `disabled`. AI search, user agents and the configured personal agents are allowed (`disabled` means their block is off). `ai_training` remains `disallow`, with managed robots.txt and Bot Preference Sync enabled. The legacy AI-block toggle also reset the training preference during the update; it was immediately restored and verified. At the November 5 agent-reading change, final readback differed from the saved baseline only in the four approved settings; firewall and rate-limit rules were unchanged. The November 6 audit subsequently extended only the existing private-path rule.
 
 These controls are available on the [Cloudflare Free plan](https://developers.cloudflare.com/bots/plans/free/). Cloudflare's automatic [Markdown for Agents conversion](https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/#availability-and-pricing) requires an eligible paid zone plan or SSL for SaaS, so it was not enabled. The existing agent guide, HTML and RSS provide free reading paths. Country blocks and other security rules still apply to public traffic.
 
@@ -76,6 +76,8 @@ The existing Cloudflare managed security-header preset remains enabled. It suppl
 Redirects and explicit error responses receive the same security headers. Cloudflare's [Bot Fight Mode guidance](https://developers.cloudflare.com/bots/get-started/bot-fight-mode/#javascript-detections) confirms its injected scripts can inherit a nonce from the CSP response header.
 
 ## Verification and operations
+
+The following records the November 5 rollout. The [November 6 audit](security-audit-2026-11-06.md) contains the subsequent review and current verification results.
 
 - Production build, lint and type checking passed; existing Three.js deprecation hints remain.
 - 565 unit tests passed with coverage thresholds satisfied.

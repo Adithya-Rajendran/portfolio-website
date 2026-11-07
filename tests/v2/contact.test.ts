@@ -48,21 +48,30 @@ function request(
         locals: { cspNonce: "test-nonce" },
     } as Parameters<typeof POST>[0]);
 }
+const resendUrl = "https://api.resend.com/emails";
+const turnstileUrl =
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+function inputUrl(input: string | URL | Request): string {
+    return input instanceof Request ? input.url : String(input);
+}
 function provider(input: string | URL | Request) {
-    const url = String(input);
-    if (url.includes("siteverify"))
+    const url = inputUrl(input);
+    if (url === turnstileUrl)
         return Response.json({
             success: true,
             hostname: "example.com",
             action: "contact",
         });
-    if (url.includes("dns-query"))
+    const parsed = new URL(url);
+    if (
+        parsed.origin === "https://cloudflare-dns.com" &&
+        parsed.pathname === "/dns-query"
+    )
         return Response.json({
             Status: 0,
             Answer: [{ type: 15, data: "10 mail.example.com." }],
         });
-    if (url.includes("api.resend.com"))
-        return Response.json({ id: "message-123" });
+    if (url === resendUrl) return Response.json({ id: "message-123" });
     throw new Error(`Unexpected provider ${url}`);
 }
 beforeEach(() => {
@@ -164,8 +173,17 @@ describe("contact Worker", () => {
     it("sends a verified message through Resend", async () => {
         const response = await request();
         expect(response.status).toBe(200);
-        const call = fetchMock.mock.calls.find(([url]) =>
-            String(url).includes("api.resend.com"),
+        expect(
+            fetchMock.mock.calls.map(([url]) => inputUrl(url)).sort(),
+        ).toEqual(
+            [
+                turnstileUrl,
+                "https://cloudflare-dns.com/dns-query?name=example.com&type=MX",
+                resendUrl,
+            ].sort(),
+        );
+        const call = fetchMock.mock.calls.find(
+            ([url]) => inputUrl(url) === resendUrl,
         );
         expect(call).toBeDefined();
         expect(JSON.parse(call![1].body)).toMatchObject({
@@ -189,16 +207,16 @@ describe("contact Worker", () => {
     ])(
         "does not claim success when Resend refuses or does not confirm acceptance",
         async (resend) => {
-            fetchMock.mockImplementation((url: string) =>
-                url.includes("api.resend.com") ? resend : provider(url),
+            fetchMock.mockImplementation((url: string | URL | Request) =>
+                inputUrl(url) === resendUrl ? resend : provider(url),
             );
             expect((await request()).status).toBe(502);
         },
     );
     it("does not expose secrets or provider errors to visitors or logs", async () => {
         const log = vi.spyOn(console, "error").mockImplementation(() => {});
-        fetchMock.mockImplementation((url: string) =>
-            url.includes("api.resend.com")
+        fetchMock.mockImplementation((url: string | URL | Request) =>
+            inputUrl(url) === resendUrl
                 ? Promise.reject(new Error(`failed ${secrets.RESEND_API_KEY}`))
                 : provider(url),
         );
