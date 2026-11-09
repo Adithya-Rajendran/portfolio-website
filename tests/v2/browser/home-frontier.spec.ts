@@ -83,6 +83,22 @@ test("offscreen and hidden frontier pauses and preserves manual pause on return"
     page,
 }) => {
     test.setTimeout(300_000);
+    await page.addInitScript(() => {
+        let draws = 0;
+        const original = WebGL2RenderingContext.prototype.drawElements;
+        WebGL2RenderingContext.prototype.drawElements = function (
+            this: WebGL2RenderingContext,
+            ...args: Parameters<WebGL2RenderingContext["drawElements"]>
+        ) {
+            draws++;
+            return original.apply(this, args);
+        };
+        Object.defineProperty(window, "testGpuDraws", { get: () => draws });
+    });
+    const gpuDraws = () =>
+        page.evaluate(
+            () => (window as unknown as { testGpuDraws: number }).testGpuDraws,
+        );
     await page.setViewportSize({ width: 960, height: 720 });
     const stage = await openHome(page);
     await expect
@@ -97,8 +113,12 @@ test("offscreen and hidden frontier pauses and preserves manual pause on return"
         timeout: 30000,
     });
     const offscreen = await stage.getAttribute("data-scene-time");
+    const offscreenDraws = await gpuDraws();
+    // A layout change must not render the hidden landscape just to resize it.
+    await page.setViewportSize({ width: 961, height: 720 });
     await page.waitForTimeout(1000);
     expect(await stage.getAttribute("data-scene-time")).toBe(offscreen);
+    expect(await gpuDraws()).toBe(offscreenDraws);
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(stage).toHaveAttribute("data-state", "running", {
         timeout: 30000,
@@ -113,8 +133,11 @@ test("offscreen and hidden frontier pauses and preserves manual pause on return"
         document.dispatchEvent(new Event("visibilitychange"));
     });
     const hidden = await stage.getAttribute("data-scene-time");
+    const hiddenDraws = await gpuDraws();
+    await page.setViewportSize({ width: 960, height: 720 });
     await page.waitForTimeout(1000);
     expect(await stage.getAttribute("data-scene-time")).toBe(hidden);
+    expect(await gpuDraws()).toBe(hiddenDraws);
     await page.evaluate(() => {
         Object.defineProperty(document, "hidden", {
             configurable: true,
@@ -127,6 +150,44 @@ test("offscreen and hidden frontier pauses and preserves manual pause on return"
     );
     await expect(stage).toHaveAttribute("data-state", "paused");
     await expect(stage.locator("canvas")).toHaveCount(1);
+});
+
+test("contact shading is reused during ambient animation and refreshed for a new camera view", async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 960, height: 720 });
+    const stage = await openHome(page);
+    await expect
+        .poll(async () => Number(await stage.getAttribute("data-scene-time")), {
+            timeout: 30000,
+        })
+        .toBeGreaterThan(0);
+    const cached = Number(await stage.getAttribute("data-occlusion-updates"));
+    expect(cached).toBeGreaterThan(0);
+    const time = Number(await stage.getAttribute("data-scene-time"));
+    await expect
+        .poll(async () => Number(await stage.getAttribute("data-scene-time")), {
+            timeout: 30000,
+        })
+        .toBeGreaterThan(time + 0.1);
+    expect(Number(await stage.getAttribute("data-occlusion-updates"))).toBe(
+        cached,
+    );
+    await page.locator("[data-home-motion]").click();
+    await expect(stage).toHaveAttribute("data-state", "paused");
+    const pausedCache = Number(
+        await stage.getAttribute("data-occlusion-updates"),
+    );
+    await page.getByRole("button", { name: "Outpost", exact: true }).click();
+    await expect
+        .poll(
+            async () =>
+                Number(await stage.getAttribute("data-occlusion-updates")),
+            { timeout: 30000 },
+        )
+        .toBeGreaterThan(pausedCache);
+    await expect(stage).toHaveAttribute("data-state", "paused");
 });
 
 test("mobile frontier permits native touch scrolling", async ({ browser }) => {

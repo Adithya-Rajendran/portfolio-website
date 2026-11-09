@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 // Capture native Three.js output, not an illustration of the intended result.
 // Increment the version before replacing an already published poster.
-const version = "v2";
+const version = "v4";
 const url = process.env.ARTWORK_URL || "http://127.0.0.1:4321";
 const browser = await chromium.launch({
     headless: true,

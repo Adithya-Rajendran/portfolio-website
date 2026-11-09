@@ -206,7 +206,7 @@ export function makeObservationLab({
     });
     const sky = mesh(new T.SphereGeometry(600, 32, 16), skyMaterial, [0, 0, 0]);
     sky.castShadow = sky.receiveShadow = false;
-    sky.renderOrder = -1;
+    sky.renderOrder = 1000;
 
     const noise = new ImprovedNoise();
     // Spend vertices on the landscape seen through the window, not on a huge

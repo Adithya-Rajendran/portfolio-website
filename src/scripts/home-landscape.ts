@@ -1,12 +1,16 @@
 import * as T from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { ImprovedNoise } from "three/addons/math/ImprovedNoise.js";
-import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import {
+    mergeGeometries,
+    mergeVertices,
+} from "three/addons/utils/BufferGeometryUtils.js";
 import { homeCoverFrame, type HomeFraming } from "../lib/home-framing";
 import { makeHomeFrontier } from "./home-frontier";
 import { makeHomeRendering } from "./home-rendering";
+import { makeTerrainGrid, tileTerrain } from "./landscape-geometry";
+import { HOME_SUN_DIRECTION, makeHomeEnvironment } from "./home-lighting";
 
 // The composed view and freely explorable scene share the same real geometry.
 export function makeHomeLandscape(renderer: T.WebGLRenderer) {
@@ -40,19 +44,17 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             launchRidge,
         );
     };
-    scene.fog = new T.FogExp2(0x353d42, 0.003);
+    scene.fog = new T.FogExp2(0x293844, 0.0038);
 
-    const room = new RoomEnvironment();
-    const pmrem = new T.PMREMGenerator(renderer);
-    const environment = pmrem.fromScene(room, 0.05, 0.1, 100, { size: 128 });
+    const environment = makeHomeEnvironment(renderer);
     // Reflection lighting belongs to the rover's metal. The rough landscape
     // uses direct and sky light, avoiding expensive reflection samples per pixel.
-    room.dispose();
-    pmrem.dispose();
-    scene.add(new T.HemisphereLight(0xb9b1aa, 0x71482f, 1.15));
-    const sun = new T.DirectionalLight(0xffb977, 2.3);
-    sun.position.set(-16, 18, -100);
+    scene.add(new T.HemisphereLight(0xa7c4df, 0x635041, 1.35));
+    const sun = new T.DirectionalLight(0xffcda0, 2.1);
     sun.target.position.set(-4, 0, -15);
+    sun.position
+        .copy(sun.target.position)
+        .addScaledVector(HOME_SUN_DIRECTION, 130);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     Object.assign(sun.shadow.camera, {
@@ -61,69 +63,146 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
         top: 30,
         bottom: -30,
         near: 1,
-        far: 110,
+        far: 165,
     });
     sun.shadow.bias = -0.00008;
     sun.shadow.normalBias = 0.065;
+    sun.shadow.radius = 2.8;
     scene.add(sun, sun.target);
-    const fill = new T.DirectionalLight(0xd9b18a, 0.3);
+    const fill = new T.DirectionalLight(0xb0cee6, 0.95);
     fill.position.set(4, 6, 10);
     scene.add(fill);
 
     const groundMaterial = new T.MeshStandardMaterial({
-        color: 0xb08b6b,
+        color: 0xa9937c,
         roughness: 0.98,
         bumpScale: 0.14,
     });
-    const groundGeometry = new T.PlaneGeometry(180, 180, 220, 220);
-    groundGeometry.rotateX(-Math.PI / 2);
-    groundGeometry.translate(0, 0, -50);
-    const vertices = groundGeometry.attributes.position;
-    const colors = new Float32Array(vertices.count * 3);
-    const dust = new T.Color();
+    // Fixed world-space texture scales avoid swimming while exploring. Fine
+    // grain fades into broad mineral variation instead of a repeating horizon.
+    groundMaterial.onBeforeCompile = (shader) => {
+        shader.vertexShader = shader.vertexShader
+            .replace(
+                "#include <common>",
+                "#include <common>\nvarying float terrainDistance; varying vec2 terrainXZ;",
+            )
+            .replace(
+                "#include <worldpos_vertex>",
+                `#include <worldpos_vertex>
+                vec3 terrainWorld=(modelMatrix*vec4(transformed,1.)).xyz;
+                terrainDistance=length(cameraPosition-terrainWorld);
+                terrainXZ=terrainWorld.xz;`,
+            );
+        shader.fragmentShader = shader.fragmentShader
+            .replace(
+                "#include <common>",
+                "#include <common>\nvarying float terrainDistance; varying vec2 terrainXZ;",
+            )
+            .replace(
+                "#include <map_fragment>",
+                `
+                #ifdef USE_MAP
+                    float distant=smoothstep(28.,110.,terrainDistance);
+                    vec4 mineral;
+                    if(distant<1.) mineral=texture2D(map,vMapUv);
+                    if(distant>0.) {
+                        vec4 broad=texture2D(map,vMapUv*.08);
+                        mineral=distant<1.?mix(mineral,broad,distant):broad;
+                    }
+                    diffuseColor*=mineral;
+                #endif
+                float route=-terrainXZ.y;
+                float trailCenter=2.+.012*pow(max(0.,route-3.),2.);
+                float trackDistance=min(abs(terrainXZ.x-trailCenter-1.5),abs(terrainXZ.x-trailCenter+1.5));
+                float trail=(1.-smoothstep(.14,.25,trackDistance))*smoothstep(1.7,3.,route)*(1.-smoothstep(13.,19.,route));
+                float tread=smoothstep(.5,.95,abs(sin(route*13.+trackDistance*5.)));
+                diffuseColor.rgb*=1.-trail*(.06+.09*tread);`,
+            )
+            .replace(
+                "#include <normal_fragment_maps>",
+                `
+                float terrainDetail=1.-smoothstep(18.,100.,terrainDistance);
+                if(terrainDetail>0.) {
+                    vec3 terrainNormal=normal;
+                    #include <normal_fragment_maps>
+                    normal=normalize(mix(terrainNormal,normal,terrainDetail));
+                }`,
+            );
+    };
+    groundMaterial.customProgramCacheKey = () => "explorable-regolith-v1";
     const distantHeight = (x: number, z: number) =>
         -12 +
         T.MathUtils.smoothstep(Math.hypot(x, z + 30), 90, 190) *
             (6 + noise.noise(x * 0.018, z * 0.018, 17) * 8);
+    const terrainHeight = (x: number, z: number) => {
+        const edge = Math.min(90 - Math.abs(x), 90 - Math.abs(z + 50));
+        return T.MathUtils.lerp(
+            distantHeight(x, z),
+            heightAt(x, z),
+            T.MathUtils.smoothstep(edge, 0, 18),
+        );
+    };
+    const axis = (bands: number[][]) => {
+        const values = [bands[0][0]];
+        for (const [from, to, step] of bands) {
+            const count = Math.ceil((to - from) / step);
+            for (let i = 1; i <= count; i++)
+                values.push(T.MathUtils.lerp(from, to, i / count));
+        }
+        return values;
+    };
+    // Resolve the rover and settlement more finely than the old uniform grid,
+    // spending fewer vertices on distant terrain and outside the composed view.
+    const groundGeometry = makeTerrainGrid(
+        axis([
+            [-90, -50, 4],
+            [-50, -24, 2],
+            [-24, 24, 0.75],
+            [24, 50, 2],
+            [50, 90, 4],
+        ]),
+        axis([
+            [-140, -100, 4],
+            [-100, -60, 2],
+            [-60, -45, 1.5],
+            [-45, 15, 0.75],
+            [15, 40, 2],
+        ]),
+        terrainHeight,
+    );
+    const vertices = groundGeometry.attributes.position;
+    const colors = new Float32Array(vertices.count * 3);
+    const dust = new T.Color();
     for (let i = 0; i < vertices.count; i++) {
         const x = vertices.getX(i),
             z = vertices.getZ(i);
-        const edge = Math.min(90 - Math.abs(x), 90 - Math.abs(z + 50));
-        vertices.setY(
-            i,
-            T.MathUtils.lerp(
-                distantHeight(x, z),
-                heightAt(x, z),
-                T.MathUtils.smoothstep(edge, 0, 18),
-            ),
-        );
         dust.setScalar(0.72 + noise.noise(x * 0.14, z * 0.14, 6) * 0.22);
         dust.toArray(colors, i * 3);
     }
     groundGeometry.setAttribute("color", new T.BufferAttribute(colors, 3));
-    groundGeometry.computeVertexNormals();
     groundMaterial.vertexColors = true;
-    const ground = new T.Mesh(groundGeometry, groundMaterial);
-    ground.receiveShadow = true;
-    scene.add(ground);
+    scene.add(tileTerrain(groundGeometry, groundMaterial, 60, true));
 
     // Complete the terrain behind the authored view so a full orbit never
     // reveals the edge of the detailed foreground mesh.
-    const distantGeometry = new T.PlaneGeometry(1200, 1200, 140, 140);
-    distantGeometry.rotateX(-Math.PI / 2);
+    const distantAxis = axis([[-600, 600, 18.75]]);
+    const distantGeometry = makeTerrainGrid(
+        distantAxis,
+        distantAxis,
+        distantHeight,
+        // Only remove cells entirely underneath the detailed terrain.
+        (left, right, back, front) =>
+            left >= -80 && right <= 80 && back >= -130 && front <= 30,
+    );
     const distantPoints = distantGeometry.attributes.position;
     const distantUv = distantGeometry.attributes.uv;
     for (let i = 0; i < distantPoints.count; i++) {
-        const x = distantPoints.getX(i),
-            z = distantPoints.getZ(i);
-        distantPoints.setY(i, distantHeight(x, z));
         distantUv.setXY(
             i,
             (distantUv.getX(i) * 1200) / 180,
             (distantUv.getY(i) * 1200) / 180,
         );
     }
-    distantGeometry.computeVertexNormals();
     distantGeometry.setAttribute(
         "color",
         new T.BufferAttribute(
@@ -132,6 +211,7 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
         ),
     );
     const distantGround = new T.Mesh(distantGeometry, groundMaterial);
+    distantGround.matrixAutoUpdate = false;
     scene.add(distantGround);
 
     // Layered, continuous ridges fade into the haze. Smooth vertex normals avoid
@@ -158,8 +238,20 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
         return -8 + envelope * Math.max(0, ridge - 0.65) * (13 + layer * 3);
     };
     const ridgeMaterials: T.MeshStandardMaterial[] = [];
+    const ridgeGeometries: T.BufferGeometry[] = [];
+    const ridgeMaterial = new T.MeshStandardMaterial({
+        color: 0x725542,
+        roughness: 1,
+        bumpScale: 0.3,
+    });
+    ridgeMaterials.push(ridgeMaterial);
     for (let layer = 0; layer < 4; layer++) {
-        const geometry = new T.PlaneGeometry(680, 110, 240, 60);
+        const geometry = new T.PlaneGeometry(
+            680,
+            110,
+            [192, 144, 112, 80][layer],
+            [36, 28, 20, 16][layer],
+        );
         geometry.rotateX(-Math.PI / 2);
         geometry.translate(0, 0, -105 - layer * 65);
         const positions = geometry.attributes.position;
@@ -169,43 +261,49 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             positions.setY(i, ridgeHeight(x, z, layer));
         }
         geometry.computeVertexNormals();
-        const material = new T.MeshStandardMaterial({
-            color: 0x725542,
-            roughness: 1,
-            bumpScale: 0.3,
-        });
-        ridgeMaterials.push(material);
-        scene.add(new T.Mesh(geometry, material));
+        ridgeGeometries.push(geometry);
     }
+    scene.add(
+        tileTerrain(mergeGeometries(ridgeGeometries, false)!, ridgeMaterial, {
+            x: 170,
+            z: Infinity,
+        }),
+    );
+    ridgeGeometries.forEach((geometry) => geometry.dispose());
 
     const rockMaterial = new T.MeshStandardMaterial({
         color: 0x685345,
         roughness: 0.95,
     });
     for (let variant = 0; variant < 4; variant++) {
-        const source = new T.IcosahedronGeometry(1, 2);
-        source.deleteAttribute("normal");
-        const geometry = mergeVertices(source);
-        source.dispose();
-        const points = geometry.attributes.position;
-        for (let i = 0; i < points.count; i++) {
-            const x = points.getX(i),
-                y = points.getY(i),
-                z = points.getZ(i);
-            const distortion =
-                0.84 +
-                noise.noise(x * 2.5, y * 2.5, z * 2.5 + variant * 7) * 0.24;
-            points.setXYZ(
-                i,
-                x * distortion,
-                y * distortion * 0.55,
-                z * distortion,
-            );
-        }
-        geometry.computeVertexNormals();
-        const rocks = new T.InstancedMesh(geometry, rockMaterial, 110);
+        const rockGeometry = (detail: number) => {
+            const source = new T.IcosahedronGeometry(1, detail);
+            source.deleteAttribute("normal");
+            const geometry = mergeVertices(source);
+            source.dispose();
+            const points = geometry.attributes.position;
+            for (let i = 0; i < points.count; i++) {
+                const x = points.getX(i),
+                    y = points.getY(i),
+                    z = points.getZ(i);
+                const distortion =
+                    0.84 +
+                    noise.noise(x * 2.5, y * 2.5, z * 2.5 + variant * 7) * 0.24;
+                points.setXYZ(
+                    i,
+                    x * distortion,
+                    y * distortion * 0.55,
+                    z * distortion,
+                );
+            }
+            geometry.computeVertexNormals();
+            return geometry;
+        };
+        // Pebbles remain textured, but do not need the topology of boulders.
+        const pebbles = new T.InstancedMesh(rockGeometry(0), rockMaterial, 80);
+        const rocks = new T.InstancedMesh(rockGeometry(2), rockMaterial, 30);
         const pose = new T.Object3D();
-        for (let i = 0; i < rocks.count; i++) {
+        for (let i = 0; i < 110; i++) {
             let x = random() * 68 - 30,
                 z = random() * 60 - 44;
             if (Math.hypot(x - 2, z) < 3.6) {
@@ -222,11 +320,15 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
                 random() * 0.2,
             );
             pose.updateMatrix();
-            rocks.setMatrixAt(i, pose.matrix);
+            if (i < 80) pebbles.setMatrixAt(i, pose.matrix);
+            else rocks.setMatrixAt(i - 80, pose.matrix);
         }
-        rocks.castShadow = true;
-        rocks.receiveShadow = true;
-        scene.add(rocks);
+        for (const instances of [pebbles, rocks]) {
+            instances.castShadow = true;
+            instances.receiveShadow = true;
+            instances.userData.contactOcclusion = true;
+            scene.add(instances);
+        }
     }
 
     // An astronomical backdrop seen through a thin, dusty, amber horizon.
@@ -235,27 +337,31 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
         side: T.BackSide,
         depthWrite: false,
         fog: false,
-        uniforms: { galaxy: { value: null as T.Texture | null } },
+        uniforms: {
+            galaxy: { value: null as T.Texture | null },
+            sunDirection: { value: HOME_SUN_DIRECTION },
+        },
         vertexShader: `varying vec3 vDirection; void main() {vDirection=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-        fragmentShader: `uniform sampler2D galaxy; varying vec3 vDirection;
+        fragmentShader: `uniform sampler2D galaxy; uniform vec3 sunDirection; varying vec3 vDirection;
             void main(){
                 vec3 d=normalize(vDirection);
                 float h=max(0.,d.y);
-                vec3 sky=mix(vec3(.035,.033,.032),vec3(.005,.012,.021),smoothstep(0.,.19,h));
-                vec3 sunDir=normalize(vec3(-.15,.018,-1.));
-                float angle=max(0.,1.-dot(d,sunDir));
-                sky+=vec3(1.,.43,.13)*(.10*exp(-angle*14.)+.18*exp(-angle*340.));
-                sky+=vec3(1.,.78,.49)*2.2*exp(-angle*65000.);
+                vec3 sky=mix(vec3(.046,.052,.063),vec3(.003,.010,.022),smoothstep(0.,.42,h));
+                float angle=max(0.,1.-dot(d,sunDirection));
+                sky+=vec3(1.,.43,.16)*(.055*exp(-angle*12.)+.25*exp(-angle*180.));
+                sky+=vec3(1.,.80,.56)*2.5*exp(-angle*65000.);
                 vec2 uv=vec2(atan(d.z,d.x)/6.283185+.5,asin(d.y)/3.14159+.5);
                 vec3 stars=texture2D(galaxy,vec2(fract((uv.x-.08)*5.2),clamp(.45+(uv.y-.5)*5.6,0.,1.))).rgb;
-                sky+=stars*.28*smoothstep(.015,.16,h);
+                sky+=stars*.18*smoothstep(.025,.20,h)*(1.-.7*exp(-angle*8.));
                 gl_FragColor=vec4(sky,1.);
                 #include <tonemapping_fragment>
                 #include <colorspace_fragment>
             }`,
     });
     const sky = new T.Mesh(new T.SphereGeometry(550, 32, 24), skyMaterial);
-    sky.renderOrder = -1;
+    // Opaque terrain writes depth first, rejecting covered sky fragments before
+    // their galaxy texture and atmospheric shader need to run.
+    sky.renderOrder = 1000;
     scene.add(sky);
 
     const frontier = makeHomeFrontier(heightAt, environment.texture);
@@ -329,6 +435,7 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
                     if (obj instanceof T.Mesh) {
                         obj.castShadow = true;
                         obj.receiveShadow = true;
+                        obj.userData.contactOcclusion = true;
                         const finish = (original: T.MeshStandardMaterial) => {
                             let material = finishes.get(original);
                             if (!material) {
@@ -338,7 +445,7 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
                                     original,
                                 );
                                 material.envMap = environment.texture;
-                                material.envMapIntensity = 0.2;
+                                material.envMapIntensity = 0.55;
                                 if (original.name.includes("glass")) {
                                     material.color.setHex(0x23383d);
                                     material.metalness = 0.7;
@@ -390,6 +497,12 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
             map.repeat.set(46, 46);
             groundMaterial.bumpMap = map;
             groundMaterial.needsUpdate = true;
+            const rockBump = map.clone();
+            rockBump.repeat.set(1, 1);
+            textures.add(rockBump);
+            rockMaterial.bumpMap = rockBump;
+            rockMaterial.bumpScale = 0.055;
+            rockMaterial.needsUpdate = true;
             const ridgeBump = map.clone();
             ridgeBump.repeat.set(96, 16);
             textures.add(ridgeBump);
@@ -514,6 +627,9 @@ export function makeHomeLandscape(renderer: T.WebGLRenderer) {
         cameraFloor,
         target,
         update: frontier.update,
+        get occlusionUpdates() {
+            return rendering.occlusionUpdates;
+        },
         render: rendering.render,
         resize: rendering.resize,
         dispose() {
