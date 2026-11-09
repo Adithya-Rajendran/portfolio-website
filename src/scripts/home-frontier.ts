@@ -19,7 +19,7 @@ export function makeHomeFrontier(
             metalness,
             roughness,
             envMap: environment,
-            envMapIntensity: 0.25,
+            envMapIntensity: 0.45,
         });
     // Weathered panel seams, fasteners, service markings and vents are drawn
     // once into a real material map, so the structure holds up at closer views.
@@ -72,10 +72,10 @@ export function makeHomeFrontier(
     const panels = new T.CanvasTexture(panelCanvas);
     panels.colorSpace = T.SRGBColorSpace;
     panels.anisotropy = 4;
-    const ceramic = finish(0xd2cdbb, 0.28, 0.58);
+    const ceramic = finish(0xd2cdbb, 0.18, 0.46);
     ceramic.map = panels;
     ceramic.bumpMap = panels;
-    ceramic.bumpScale = 0.018;
+    ceramic.bumpScale = 0.009;
     const dark = finish(0x202d32, 0.65, 0.42);
     const alloy = finish(0x7d9194, 0.72, 0.34);
     const copper = finish(0xa56e45, 0.62, 0.48);
@@ -85,7 +85,7 @@ export function makeHomeFrontier(
     const window = new T.MeshStandardMaterial({
         color: 0xe0bc78,
         emissive: 0xd5994e,
-        emissiveIntensity: 3,
+        emissiveIntensity: 1.8,
         roughness: 0.26,
         metalness: 0.15,
     });
@@ -96,15 +96,17 @@ export function makeHomeFrontier(
         roughness: 0.3,
         metalness: 0.35,
     });
-    const glass = new T.MeshStandardMaterial({
-        color: 0x91a392,
-        metalness: 0,
-        roughness: 0.65,
+    const glass = new T.MeshPhysicalMaterial({
+        color: 0x739ba2,
+        metalness: 0.05,
+        roughness: 0.14,
+        clearcoat: 0.55,
+        clearcoatRoughness: 0.24,
         transparent: true,
-        opacity: 0.14,
+        opacity: 0.2,
         depthWrite: false,
         envMap: environment,
-        envMapIntensity: 0.02,
+        envMapIntensity: 0.22,
     });
 
     const mesh = (
@@ -118,6 +120,7 @@ export function makeHomeFrontier(
         const object = new T.Mesh(geometry, material);
         object.position.set(x, y, z);
         object.castShadow = parent === buildings;
+        object.userData.contactOcclusion = parent === buildings;
         object.receiveShadow = true;
         parent.add(object);
         return object;
@@ -198,7 +201,7 @@ export function makeHomeFrontier(
     };
     const batch = (group: T.Group) => {
         group.updateMatrixWorld(true);
-        const buckets = new Map<T.Material, T.BufferGeometry[]>();
+        const buckets = new Map<T.Material, Map<string, T.BufferGeometry[]>>();
         const originals = new Set<T.BufferGeometry>();
         group.traverse((child) => {
             if (!(child instanceof T.Mesh) || Array.isArray(child.material))
@@ -207,21 +210,32 @@ export function makeHomeFrontier(
                 ? child.geometry.toNonIndexed()
                 : child.geometry.clone();
             geometry.applyMatrix4(child.matrixWorld);
-            const parts = buckets.get(child.material) || [];
+            geometry.computeBoundingBox();
+            const center = geometry.boundingBox!.getCenter(new T.Vector3());
+            // Keep the settlement and distant launch site independently
+            // cullable without fragmenting each facade into many draw calls.
+            const key = `${Math.floor((center.x + 30) / 60)},${Math.floor((center.z + 40) / 60)}`;
+            const cells =
+                buckets.get(child.material) ??
+                new Map<string, T.BufferGeometry[]>();
+            const parts = cells.get(key) ?? [];
             parts.push(geometry);
-            buckets.set(child.material, parts);
+            cells.set(key, parts);
+            buckets.set(child.material, cells);
             originals.add(child.geometry);
         });
         group.clear();
-        for (const [material, parts] of buckets) {
-            const geometry = mergeGeometries(parts, false);
-            if (geometry) {
-                const result = mesh(group, geometry, material);
-                result.castShadow =
-                    group === buildings && !material.transparent;
+        for (const [material, cells] of buckets)
+            for (const parts of cells.values()) {
+                const geometry = mergeGeometries(parts, false);
+                if (geometry) {
+                    geometry.computeBoundingSphere();
+                    const result = mesh(group, geometry, material);
+                    result.castShadow =
+                        group === buildings && !material.transparent;
+                }
+                parts.forEach((part) => part.dispose());
             }
-            parts.forEach((part) => part.dispose());
-        }
         originals.forEach((geometry) => geometry.dispose());
     };
 
@@ -995,7 +1009,9 @@ export function makeHomeFrontier(
                 vec2 cell=abs(fract(vLocal*2.)-.5);
                 float grid=1.-smoothstep(.015,.05,min(cell.x,cell.y));
                 float fade=(1.-smoothstep(5.,7.,radius))*smoothstep(.6,1.4,radius);
-                gl_FragColor=vec4(vec3(.35,.73,.72),(band*.13+band*grid*.45)*fade);
+                float alpha=(band*.13+band*grid*.45)*fade;
+                if(alpha<.004) discard;
+                gl_FragColor=vec4(vec3(.35,.73,.72),alpha);
                 #include <tonemapping_fragment>
                 #include <colorspace_fragment>
             }`,

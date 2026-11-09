@@ -188,11 +188,13 @@ body > header {
 }
 .space-study__controls {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+    gap: 0.35rem;
     min-height: 44px;
     font:
-        0.67rem/1.7 DMMono,
+        0.72rem/1.7 DMMono,
         monospace;
     visibility: hidden;
 }
@@ -200,22 +202,30 @@ body > header {
     visibility: visible;
 }
 .space-study__controls button {
-    border: 0;
-    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
     color: var(--ink);
     font: inherit;
     padding: 0.5rem;
     min-height: 44px;
     min-width: 44px;
-    border-left: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
-    border-radius: 0;
+    border-radius: 999px;
+    transition: border-color 180ms ease;
 }
 .space-study__controls button:first-child {
-    border-left: 0;
     min-width: 8.5rem;
+}
+.space-study__controls button:hover:not(:disabled) {
+    color: var(--accent-text);
+    border-color: var(--accent-text);
 }
 .space-study__controls button:disabled {
     opacity: 0.65;
+}
+@media (prefers-reduced-motion: reduce) {
+    .space-study__controls button {
+        transition: none;
+    }
 }
 .space-study__hint {
     text-align: center;

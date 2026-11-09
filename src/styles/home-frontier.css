@@ -107,7 +107,11 @@
     gap: 0.35rem;
     padding: 0.25rem;
     border: 1px solid #a8b5ad44;
+    border-radius: 999px;
     background: #101719db;
+    box-shadow:
+        0 8px 24px #00000024,
+        inset 0 1px 0 #ffffff0a;
     backdrop-filter: blur(12px);
 }
 .home-camera-tools__actions {
@@ -118,13 +122,35 @@
     min-width: 44px;
     min-height: 44px;
     border: 0;
+    border-radius: 999px;
     background: transparent;
     color: #f1e5cf;
     padding: 0.4rem 0.7rem;
     font:
-        0.68rem DMMono,
+        0.72rem DMMono,
         monospace;
     cursor: pointer;
+    transition:
+        background 180ms ease,
+        color 180ms ease;
+}
+.home-camera-tools [data-home-explore] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    padding-inline: 1rem;
+}
+.home-camera-tools [data-home-explore]::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    background: radial-gradient(circle, currentColor 0 1px, transparent 2px);
+    box-shadow: inset 0 0 0 3px #101719;
+    opacity: 0.8;
 }
 .home-camera-tools button:hover {
     background: #dfa05d22;
@@ -146,9 +172,11 @@
     margin: 0;
     padding: 0.5rem 0.8rem;
     background: #101719cf;
+    border: 1px solid #a8b5ad22;
+    border-radius: 999px;
     color: #d6dbcf;
     font:
-        0.65rem/1.6 DMMono,
+        0.7rem/1.6 DMMono,
         monospace;
     text-align: center;
     pointer-events: none;
@@ -161,6 +189,12 @@
     ~ .home-camera-help
     .home-camera-help__keyboard {
     display: block;
+}
+.home-camera-surface:focus-visible ~ .home-camera-help .home-camera-help__mouse,
+.home-camera-surface:focus-visible
+    ~ .home-camera-help
+    .home-camera-help__touch {
+    display: none;
 }
 .home-camera-surface[hidden],
 .home-camera-tools[hidden],
@@ -178,6 +212,13 @@
 }
 .home-hero[data-exploring="true"] .home-hero__veil {
     opacity: 0.2;
+}
+@media (prefers-reduced-motion: reduce) {
+    .home-camera-tools button,
+    .home-hero__content,
+    .home-hero__veil {
+        transition: none;
+    }
 }
 @media (pointer: coarse) {
     .home-camera-help__mouse {
@@ -217,11 +258,12 @@
         padding-inline: 0.5rem;
     }
     .home-camera-help {
-        top: 256px;
+        top: 250px;
         bottom: auto;
         width: max-content;
         max-width: calc(100% - 2.5rem);
-        font-size: 0.53rem;
+        font-size: 0.62rem;
+        padding: 0.35rem 0.65rem;
     }
     .home-hero[data-exploring="true"] .home-hero__content {
         opacity: 1;
@@ -249,7 +291,7 @@
 }
 .frontier-console__eyebrow {
     font:
-        0.57rem DMMono,
+        0.63rem DMMono,
         monospace;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -324,8 +366,8 @@
 .home-page .home-hero__caption {
     z-index: 3;
     bottom: 1.15rem;
-    font-size: 0.53rem;
-    opacity: 0.75;
+    font-size: 0.6rem;
+    opacity: 0.82;
 }
 .home-page .home-section--work {
     position: relative;

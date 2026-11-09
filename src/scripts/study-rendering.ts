@@ -65,7 +65,27 @@ export function makeStudyRendering(
             // reuse them; camera-only movement also leaves world shadows intact.
             renderer.shadowMap.needsUpdate = updateShadows;
             renderer.render(scene, camera);
-            occlusion.render(renderer, color, color, 0, false);
+            // Glass, light halos and distant backdrops do not write scene
+            // depth. Treating them as solid in the normals pass produces dark
+            // silhouettes and spends a second draw on invisible surfaces.
+            const excluded: T.Object3D[] = [];
+            scene.traverse((object) => {
+                if (!(object instanceof T.Mesh) || !object.visible) return;
+                const materials = Array.isArray(object.material)
+                    ? object.material
+                    : [object.material];
+                if (materials.every((material) => !material.depthWrite)) {
+                    excluded.push(object);
+                    object.visible = false;
+                }
+            });
+            try {
+                occlusion.render(renderer, color, color, 0, false);
+            } finally {
+                excluded.forEach((object) => {
+                    object.visible = true;
+                });
+            }
             renderer.setRenderTarget(null);
             renderer.clear();
             quad.render(renderer);

@@ -101,6 +101,7 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
             let ticking = false;
             let reveal: Animation | undefined;
             let firstFrameFence: WebGLSync | null = null;
+            let renderFence: WebGLSync | null = null;
             const pointer = new T.Vector2(),
                 current = new T.Vector2();
             const reduced = matchMedia("(prefers-reduced-motion: reduce)");
@@ -131,6 +132,9 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
             const draw = () => {
                 render.info.reset();
                 landscape.render();
+                if (renderFence) gl.deleteSync(renderFence);
+                renderFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+                gl.flush();
                 // The moving dish and drone do not cast into this static map.
                 // Terrain, rover and buildings only need one shadow pass.
                 render.shadowMap.autoUpdate = false;
@@ -147,6 +151,10 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                     .join(",");
                 stage.dataset.sceneTime = elapsed.toFixed(3);
                 stage.dataset.drawCalls = String(render.info.render.calls);
+                stage.dataset.triangles = String(render.info.render.triangles);
+                stage.dataset.occlusionUpdates = String(
+                    landscape.occlusionUpdates,
+                );
                 stage.dataset.cameraDistance = landscape.camera.position
                     .distanceTo(target)
                     .toFixed(3);
@@ -188,15 +196,32 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                     lastTime = 0;
                     return;
                 }
+                // A slow device should finish the current frame before another
+                // is submitted, keeping camera input and page scrolling responsive.
+                if (renderFence) {
+                    if (
+                        gl.clientWaitSync(renderFence, 0, 0) ===
+                        gl.TIMEOUT_EXPIRED
+                    ) {
+                        wake();
+                        return;
+                    }
+                    gl.deleteSync(renderFence);
+                    renderFence = null;
+                }
                 const still = reduced.matches || paused;
                 ticking = true;
                 // Camera easing follows elapsed time even on a slow renderer;
                 // visibility changes reset the clock before it can jump.
-                const delta = Math.min((time - (lastTime || time)) / 1000, 0.1);
+                const cameraDelta = Math.max(
+                    0,
+                    (time - (lastTime || time)) / 1000,
+                );
+                const delta = Math.min(cameraDelta, 0.1);
                 lastTime = time;
                 stage.dataset.state = still ? "paused" : "running";
                 const manualMovement = navigation?.ownsCamera
-                    ? navigation.update(delta)
+                    ? navigation.update(cameraDelta)
                     : false;
                 const moving =
                     manualMovement ||
@@ -206,11 +231,11 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 if (!still) {
                     elapsed += delta;
                     if (!navigation?.ownsCamera) {
-                        current.lerp(pointer, 1 - Math.exp(-delta * 3.8));
+                        current.lerp(pointer, 1 - Math.exp(-cameraDelta * 3.8));
                         focus = T.MathUtils.lerp(
                             focus,
                             desiredFocus,
-                            1 - Math.exp(-delta * 2.1),
+                            1 - Math.exp(-cameraDelta * 2.1),
                         );
                         if (Math.abs(focus - desiredFocus) < 0.0001)
                             focus = desiredFocus;
@@ -283,6 +308,9 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                     landscape.cameraFloor,
                     () => {
                         dirty = true;
+                        stage.dataset.cameraMoving = String(
+                            Boolean(navigation?.transitioning),
+                        );
                         if (!ticking) wake();
                     },
                 );
@@ -357,8 +385,12 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 render.setSize(renderedWidth, renderedHeight, false);
                 landscape.resize(renderedWidth, renderedHeight);
                 syncExplorationUI();
-                pose();
-                draw();
+                dirty = true;
+                if (revealed) wake();
+                else {
+                    pose();
+                    draw();
+                }
             };
             const onPointer = (event: PointerEvent) => {
                 if (
@@ -462,6 +494,8 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 reveal?.cancel();
                 if (firstFrameFence) gl.deleteSync(firstFrameFence);
                 firstFrameFence = null;
+                if (renderFence) gl.deleteSync(renderFence);
+                renderFence = null;
                 clearInterval(preferenceTimer);
                 observer.disconnect();
                 sizes.disconnect();

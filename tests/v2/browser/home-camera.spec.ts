@@ -157,15 +157,38 @@ test("drag interrupts a guided destination flight and Done returns to compositio
     test.setTimeout(300_000);
     await page.setViewportSize({ width: 960, height: 720 });
     const { stage, surface } = await enter(page, false);
-    await page.getByRole("button", { name: "Signal", exact: true }).click();
-    await expect(stage).toHaveAttribute("data-camera-moving", "true", {
-        timeout: 30000,
-    });
     const box = await surface.boundingBox();
     expect(box).not.toBeNull();
     if (!box) throw new Error("Camera surface has no bounds");
     await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+    // Start the move immediately before the same trusted pointerdown reaches
+    // the orbit controls. Slow rendering cannot finish the flight between
+    // separate browser commands and hide whether the grab interrupted it.
+    await surface.evaluate((element) => {
+        const stage = document.querySelector<HTMLElement>("[data-home-stage]")!;
+        element.addEventListener(
+            "pointerdown",
+            () => {
+                document
+                    .querySelector<HTMLButtonElement>(
+                        '[data-home-destination="signal"]',
+                    )!
+                    .click();
+                element.dataset.flightBeforeGrab = stage.dataset.cameraMoving;
+            },
+            { capture: true, once: true },
+        );
+        element.addEventListener(
+            "pointerdown",
+            () => {
+                element.dataset.flightAfterGrab = stage.dataset.cameraMoving;
+            },
+            { once: true },
+        );
+    });
     await page.mouse.down();
+    await expect(surface).toHaveAttribute("data-flight-before-grab", "true");
+    await expect(surface).toHaveAttribute("data-flight-after-grab", "false");
     await page.mouse.move(box.x + box.width * 0.65, box.y + box.height * 0.45, {
         steps: 5,
     });
