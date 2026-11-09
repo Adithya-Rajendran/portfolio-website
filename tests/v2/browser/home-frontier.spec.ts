@@ -39,19 +39,23 @@ test("frontier destinations are keyboard operable and interrupt camera movement"
         .not.toBe(initialTarget);
     await page.keyboard.press("Tab");
     await expect(signal).toBeFocused();
+    const beforeSignal = await stage.getAttribute("data-target");
     await page.keyboard.press("Space");
     await expect(signal).toHaveAttribute("aria-pressed", "true");
     await expect(outpost).toHaveAttribute("aria-pressed", "false");
     await expect(stage).toHaveAttribute("data-home-focus", "signal");
-    const target = await stage.getAttribute("data-target");
     await expect
         .poll(() => stage.getAttribute("data-target"), { timeout: 30000 })
-        .not.toBe(target);
+        .not.toBe(beforeSignal);
+    const signalTarget = await stage.getAttribute("data-target");
     await rover.focus();
     await page.keyboard.press("Enter");
     await expect(rover).toHaveAttribute("aria-pressed", "true");
     await expect(signal).toHaveAttribute("aria-pressed", "false");
     await expect(stage).toHaveAttribute("data-home-focus", "rover");
+    await expect
+        .poll(() => stage.getAttribute("data-target"), { timeout: 30000 })
+        .not.toBe(signalTarget);
 });
 
 for (const reduced of [false, true]) {
