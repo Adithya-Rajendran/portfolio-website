@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 import HeroVisual from "../components/HeroVisual.astro";
+import SceneCameraTools from "../components/SceneCameraTools.astro";
 import { getProfile, getAllPosts, getAllProjects } from "../lib/sanity";
 import { availabilityLine } from "../../lib/profile-content";
 import { homeProjects } from "../../lib/home";
@@ -24,59 +25,14 @@ const availability = availabilityLine(profile?.availability);
         <div
             id="home-camera-surface"
             class="home-camera-surface"
-            data-home-camera-surface
+            data-scene-camera-surface
             role="group"
             aria-label="3D landscape camera"
-            aria-describedby="home-camera-help"
+            aria-describedby="home-camera-surface-help"
             tabindex="0"
             hidden
         ></div>
-        <div class="home-camera-tools" data-home-camera-tools hidden>
-            <div
-                class="home-camera-tools__actions"
-                data-home-camera-actions
-                hidden
-            >
-                <button type="button" data-home-zoom="in" aria-label="Zoom in">
-                    +
-                </button>
-                <button
-                    type="button"
-                    data-home-zoom="out"
-                    aria-label="Zoom out"
-                >
-                    −
-                </button>
-                <button type="button" data-home-camera-reset>
-                    Reset view
-                </button>
-            </div>
-            <button
-                type="button"
-                data-home-explore
-                aria-expanded="false"
-                aria-controls="home-camera-surface"
-            >
-                Explore scene
-            </button>
-        </div>
-        <p
-            id="home-camera-help"
-            class="home-camera-help"
-            data-home-camera-help
-            hidden
-        >
-            <span class="home-camera-help__mouse">
-                Drag to orbit · Right-drag to pan · Scroll to zoom
-            </span>
-            <span class="home-camera-help__touch">
-                Drag to orbit · Pinch to zoom · Two fingers to pan
-            </span>
-            <span class="home-camera-help__keyboard">
-                Arrow keys orbit · Shift + arrows pan · + / − zoom · Home resets
-                · Esc exits
-            </span>
-        </p>
+        <SceneCameraTools surfaceId="home-camera-surface" />
         <div class="home-hero__content">
             <p class="home-hero__kicker">
                 Robotics <span>·</span> Perception <span>·</span> Systems

@@ -3,6 +3,7 @@
     /* Past the content column's width the scene starts beside the words
        instead of beneath them, and the hero grows with a wide screen. */
     --scene-left: max(0px, calc((100% - 1576px) / 2));
+    --scene-camera-help-bottom: 8rem;
     min-height: clamp(680px, calc(90svh - 80px), max(860px, 34vw));
     align-items: flex-start;
 }
@@ -100,113 +101,8 @@
 .home-camera-surface:focus-visible {
     box-shadow: inset 0 0 0 2px #dfa05d77;
 }
-.home-camera-tools {
-    position: absolute;
-    top: 1.2rem;
-    right: 1.5rem;
-    z-index: 4;
-    display: flex;
-    gap: 0.35rem;
-    padding: 0.25rem;
-    border: 1px solid #a8b5ad44;
-    border-radius: 999px;
-    background: #101719db;
-    box-shadow:
-        0 8px 24px #00000024,
-        inset 0 1px 0 #ffffff0a;
-    backdrop-filter: blur(12px);
-}
-.home-camera-tools__actions {
-    display: flex;
-    gap: 0.2rem;
-}
-.home-camera-tools button {
-    min-width: 44px;
-    min-height: 44px;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: #f1e5cf;
-    padding: 0.4rem 0.7rem;
-    font:
-        0.72rem DMMono,
-        monospace;
-    cursor: pointer;
-    transition:
-        background 180ms ease,
-        color 180ms ease;
-}
-.home-camera-tools [data-home-explore] {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    padding-inline: 1rem;
-}
-.home-camera-tools [data-home-explore]::before {
-    content: "";
-    width: 14px;
-    height: 14px;
-    flex: 0 0 auto;
-    border: 1px solid currentColor;
-    border-radius: 50%;
-    background: radial-gradient(circle, currentColor 0 1px, transparent 2px);
-    box-shadow: inset 0 0 0 3px #101719;
-    opacity: 0.8;
-}
-.home-camera-tools button:hover {
-    background: #dfa05d22;
-}
-.home-camera-tools button:focus-visible {
-    outline: 2px solid #dfa05d;
-    outline-offset: -2px;
-}
-.home-camera-tools [aria-expanded="true"] {
-    color: #dfa05d;
-    border-left: 1px solid #a8b5ad44;
-}
-.home-camera-help {
-    position: absolute;
-    bottom: 8rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 3;
-    margin: 0;
-    padding: 0.5rem 0.8rem;
-    background: #101719cf;
-    border: 1px solid #a8b5ad22;
-    border-radius: 999px;
-    color: #d6dbcf;
-    font:
-        0.7rem/1.6 DMMono,
-        monospace;
-    text-align: center;
-    pointer-events: none;
-}
-.home-camera-help__touch,
-.home-camera-help__keyboard {
+.home-camera-surface[hidden] {
     display: none;
-}
-.home-camera-surface:focus-visible
-    ~ .home-camera-help
-    .home-camera-help__keyboard {
-    display: block;
-}
-.home-camera-surface:focus-visible ~ .home-camera-help .home-camera-help__mouse,
-.home-camera-surface:focus-visible
-    ~ .home-camera-help
-    .home-camera-help__touch {
-    display: none;
-}
-.home-camera-surface[hidden],
-.home-camera-tools[hidden],
-.home-camera-tools__actions[hidden],
-.home-camera-help[hidden] {
-    display: none;
-}
-.home-hero__content,
-.home-hero__veil {
-    transition: opacity 350ms ease;
 }
 .home-hero[data-exploring="true"] .home-hero__content {
     opacity: 0;
@@ -215,31 +111,14 @@
 .home-hero[data-exploring="true"] .home-hero__veil {
     opacity: 0.2;
 }
-@media (prefers-reduced-motion: reduce) {
-    .home-camera-tools button,
-    .home-hero__content,
-    .home-hero__veil {
-        transition: none;
-    }
-}
-@media (pointer: coarse) {
-    .home-camera-help__mouse {
-        display: none;
-    }
-    .home-camera-help__touch {
-        display: block;
-    }
-}
 @media (min-width: 651px) and (max-width: 1100px) and (max-aspect-ratio: 4/3) {
     .home-camera-surface {
         height: 460px;
         bottom: auto;
     }
-    .home-camera-help {
-        top: 370px;
-        bottom: auto;
-        width: max-content;
-        max-width: calc(100% - 3rem);
+    .home-hero {
+        --scene-camera-help-top: 370px;
+        --scene-camera-help-bottom: auto;
     }
     .home-hero[data-exploring="true"] .home-hero__content {
         opacity: 1;
@@ -251,21 +130,9 @@
         height: 340px;
         bottom: auto;
     }
-    .home-camera-tools {
-        top: 0.7rem;
-        right: 0.8rem;
-    }
-    .home-camera-tools button {
-        font-size: 0.6rem;
-        padding-inline: 0.5rem;
-    }
-    .home-camera-help {
-        top: 250px;
-        bottom: auto;
-        width: max-content;
-        max-width: calc(100% - 2.5rem);
-        font-size: 0.62rem;
-        padding: 0.35rem 0.65rem;
+    .home-hero {
+        --scene-camera-help-top: 250px;
+        --scene-camera-help-bottom: auto;
     }
     .home-hero[data-exploring="true"] .home-hero__content {
         opacity: 1;
@@ -687,8 +554,6 @@
     }
 }
 @media print {
-    .home-camera-tools,
-    .home-camera-help,
     .home-camera-surface {
         display: none;
     }
