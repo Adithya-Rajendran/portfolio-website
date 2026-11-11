@@ -27,3 +27,6 @@ next-env.d.ts
 
 # Vercel
 .vercel
+
+# Handed over by the settlement builds as they are
+assets/scenes/settlements/*/site.json

@@ -1,6 +1,9 @@
 /* Landing-page art direction; the other pages retain their own compositions. */
 .home-page .home-hero {
-    min-height: clamp(680px, calc(90svh - 80px), 860px);
+    /* Past the content column's width the scene starts beside the words
+       instead of beneath them, and the hero grows with a wide screen. */
+    --scene-left: max(0px, calc((100% - 1576px) / 2));
+    min-height: clamp(680px, calc(90svh - 80px), max(860px, 34vw));
     align-items: flex-start;
 }
 .home-page .home-hero__content {
@@ -30,16 +33,15 @@
     font-size: 0.94rem;
     color: #bcc7c6;
 }
+/* The scene dims itself toward the words; the veil only joins its edges
+   to the page. */
 .home-page .home-hero__veil {
     background:
         linear-gradient(180deg, #101719 0, #10171900 90px),
         linear-gradient(
             90deg,
-            #0b1215f5 0%,
-            #0b1215d9 24%,
-            #0b121580 39%,
-            #0b121508 62%,
-            transparent
+            #101719 var(--scene-left),
+            #10171900 calc(var(--scene-left) + (100% - var(--scene-left)) * 0.2)
         ),
         linear-gradient(0deg, #101719 0%, #101719c4 9%, transparent 28%);
 }

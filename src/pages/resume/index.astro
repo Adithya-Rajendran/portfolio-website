@@ -2,6 +2,7 @@
 import SafeLink from "../../components/SafeLink.astro";
 import Base from "../../layouts/Base.astro";
 import ExperienceVisual from "../../components/ExperienceVisual.astro";
+import SettlementPlaces from "../../components/SettlementPlaces.astro";
 import { cvAnchor } from "../../../lib/cv";
 import { formatTimelineDate } from "../../../lib/profile-content";
 import { getProfile } from "../../lib/sanity";
@@ -171,6 +172,7 @@ const timeline = p?.timeline || [];
                         </ul>
                     </section>
                 )}
+                <SettlementPlaces />
                 <section
                     class="trajectory-next"
                     data-journey-world={

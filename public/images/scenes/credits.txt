@@ -1,6 +1,10 @@
 EXPLORATORY LANDSCAPES & MECHANICAL STUDIES
 
-Homepage: an interactive illustrative Mars research landscape with original JavaScript-authored terrain, connected habitats, geodesic greenhouses and interiors, parabolic dish, distant launch structure, drone, terrain-following scan, lighting and camera motion, and a rover posed and prepared in Blender. It is not a mission photograph or hardware built by the portfolio owner.
+Homepage: an interactive illustrative Mars research landscape. The ground is Jezero crater, Mars, as the HiRISE camera measured it (USGS Astrogeology Science Center elevation and orthoimage mosaics, derived and resampled; see /terrain/jezero-v1/CREDITS.md). The ledges cut into the butte, the boot-scale floor detail and the rover ruts are interpretation, not survey. The outpost, greenhouses, solar field and masts, landers, survey drone with its scan, lighting and camera motion are original work made for this portfolio; the rover was posed and prepared in Blender. It is not a mission photograph or hardware built by the portfolio owner.
+
+Terrain: USGS Astrogeology Science Center, Mars 2020 TRN HiRISE DTM and orthoimage mosaics (Fergason et al., 2020); HiRISE image: NASA/JPL/University of Arizona.
+https://doi.org/10.5066/P9REJ9JN
+https://doi.org/10.5066/P9QJDP48
 
 Rover geometry: NASA/JPL-Caltech, Mars 2020 Perseverance Rover. Adapted pose and neutral arm graphics. No affiliation or endorsement is implied.
 https://science.nasa.gov/3d-resources/mars-2020-perseverance-rover/
@@ -12,7 +16,7 @@ https://polyhaven.com/license
 
 Terrain, composition, lighting, stereo camera and antenna studies: original Blender scenes created for this portfolio. The camera and antenna are illustrative design studies.
 
-The homepage uses real 3D geometry, subtle optical bloom and three smooth camera selections (Rover, Outpost and Signal), with gentle pointer-driven perspective movement. Version 4 desktop, tablet and mobile loading/fallback posters are captured from the same scene. The first rendered GPU frame is ready before a 900 ms fade over the poster; reduced motion skips the fade. Ambient motion renders at up to 30 frames per second while camera movement follows display cadence. The scene clock freezes offscreen, in hidden tabs, while paused and under reduced motion. Projects, Writing, About and Contact feature original Three.js mechanical studies; the experience page has separate interactive orbital scenes.
+The homepage uses real 3D geometry, subtle optical bloom and three smooth camera selections (Rover, Outpost and Signal), with gentle pointer-driven perspective movement. Version 5 desktop, tablet and mobile loading/fallback posters are captured from the same scene. The first rendered GPU frame is ready before a 900 ms fade over the poster; reduced motion skips the fade. Ambient motion renders at up to 30 frames per second while camera movement follows display cadence. The scene clock freezes offscreen, in hidden tabs, while paused and under reduced motion. Projects, Writing, About and Contact feature original Three.js mechanical studies; the Projects orbital dry dock and the Moon and Mars settlements on the experience page are original models made for this portfolio with the owner's procedural modelling toolkit (see /models/README.md).
 
 Milky Way photography: ESO/S. Brunier, CC BY 4.0. Adapted projection, color and brightness.
 https://www.eso.org/public/images/eso0932a/

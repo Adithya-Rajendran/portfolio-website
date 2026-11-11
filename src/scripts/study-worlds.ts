@@ -5,7 +5,7 @@
  * never reattach it to the camera to keep it in view.
  */
 export const studyWorlds = {
-    workshop: { position: [-300, -155, -1400], radius: 65 },
+    workshop: { position: [-275, -235, -1400], radius: 150 },
     observatory: { position: [-420, 245, -1600], radius: 45 },
     relay: { position: [-360, 320, -1500], radius: 75 },
 } satisfies Record<

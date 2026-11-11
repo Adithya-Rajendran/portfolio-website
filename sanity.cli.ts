@@ -13,6 +13,15 @@ export default defineCliConfig({
         // application whatever URL it was registered with.
         appId: "go7tr653762tnknqhjkhot5x",
     },
+    vite: (config) => ({
+        ...config,
+        // Vite copies `<root>/public` into the build output, and the Studio
+        // is built from the repository root into public/studio: without
+        // this the Studio would carry a second copy of every site asset
+        // (models, images, fonts, Draco, lighting, about 38 MB). The Studio
+        // has no public files of its own; its assets live in `static/`.
+        publicDir: false,
+    }),
     typegen: {
         enabled: true,
         path: "./{src,lib}/**/*.{ts,tsx}",

@@ -9,7 +9,7 @@ const { kind, compact = false } = Astro.props;
 const scenes = {
     workshop: {
         name: "The orbital workshop",
-        note: "An imagined research station above the Moon.",
+        note: "An imagined dry dock in orbit above the Moon, where robot arms and a small crew assemble a deep-space vehicle.",
         coordinate: "01 / Build",
     },
     observatory: {
@@ -29,6 +29,14 @@ const scenes = {
     },
 };
 const scene = scenes[kind];
+// A still's file name is its version: it changes whenever the picture does.
+// Keep these paired with scripts/artwork/capture-space-posters.mjs.
+const still = {
+    workshop: "v4",
+    observatory: "v3",
+    robotics: "v3",
+    relay: "v3",
+}[kind];
 ---
 
 <figure
@@ -44,10 +52,10 @@ const scene = scenes[kind];
         >
             <source
                 media="(max-width: 800px)"
-                srcset={`/images/scenes/${kind}-mobile-v3.webp`}
+                srcset={`/images/scenes/${kind}-mobile-${still}.webp`}
             />
             <img
-                src={`/images/scenes/${kind}-desktop-v3.webp`}
+                src={`/images/scenes/${kind}-desktop-${still}.webp`}
                 alt=""
                 width="1440"
                 height="1080"

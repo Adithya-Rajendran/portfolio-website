@@ -153,7 +153,11 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
             <a href="https://nss.org/l5-news-mass-driver-update/">
                 O’Neill’s mass-driver research
             </a>
-            . These are imagined future settlements.
+            . These are imagined future settlements.{" "}
+            <a href="#settlements">
+                What each structure is for, and what it is modelled on
+            </a>
+            , is listed after the record.
         </p>
         <p class="experience-visual__credit">
             Maps: <a href="https://visibleearth.nasa.gov/">NASA</a> and{" "}
@@ -384,6 +388,62 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     .experience-visual__details a {
         color: #d4b58c;
     }
+    /* Names hung over the structures of a settlement; made by the script. */
+    .observatory__viewport :global(.observatory__captions) {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+        pointer-events: none;
+    }
+    .observatory__viewport :global(.observatory__captions span) {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+    .observatory__viewport :global(.observatory__captions span[data-shown]) {
+        opacity: 1;
+    }
+    .observatory__viewport :global(.observatory__captions span::before) {
+        content: "";
+        position: absolute;
+        bottom: 3px;
+        left: -0.5px;
+        width: 1px;
+        height: 22px;
+        background: linear-gradient(to top, #f2e9d7e6, #f2e9d740);
+    }
+    .observatory__viewport :global(.observatory__captions span::after) {
+        content: "";
+        position: absolute;
+        top: -2.5px;
+        left: -2.5px;
+        box-sizing: border-box;
+        width: 5px;
+        height: 5px;
+        border: 1px solid #f2e9d7e6;
+        border-radius: 50%;
+        background: #0a0d0c99;
+    }
+    .observatory__viewport :global(.observatory__captions b) {
+        position: absolute;
+        bottom: 27px;
+        left: 0;
+        transform: translateX(-50%);
+        padding: 0.12rem 0.42rem;
+        border: 1px solid #f2e9d726;
+        border-radius: 2px;
+        background: #0a0d0c8c;
+        color: #f6eedd;
+        font:
+            500 0.66rem DMMono,
+            monospace;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
     @media (min-width: 801px) and (max-height: 850px) {
         .observatory__viewport {
             height: max(280px, calc(100svh - 290px));
@@ -457,7 +517,8 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         }
     }
     @media (prefers-reduced-motion: reduce) {
-        .observatory__viewport {
+        .observatory__viewport,
+        .observatory__viewport :global(.observatory__captions span) {
             transition: none;
         }
     }

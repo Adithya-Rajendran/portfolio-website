@@ -22,9 +22,9 @@ The v2 Earth uses Solar System Scope's 8K [day map](https://www.solarsystemscope
 - `earth-clouds-v2-{4k,2k}.webp`: separate cloud layer and surface shadows.
 - `earth-lights-v2-{4k,2k}.webp`: cities on the unlit hemisphere.
 - `earth-normal-v2-2k.webp`, `earth-water-v2-2k.webp`: relief and ocean reflectance.
-- `earth-poster-v2-{dawn,day,dusk,night}.webp`: original Blender/Cycles CUDA renders using those maps, for loading and graphics fallback.
+- The `earth-poster-v2-{dawn,day,dusk,night}.webp` Blender/Cycles renders (made with `scripts/artwork/render-earth-posters.py`) are no longer shipped; the live Earth is Three.js geometry. Regenerate them with `scripts/artwork/encode-earth-posters.mjs` if a fallback is needed again.
 
-`milky-way-v2-{4k,2k}.webp` uses **ESO/S. Brunier**, [The Milky Way panorama, eso0932a](https://www.eso.org/public/images/eso0932a/), [CC BY 4.0](https://www.eso.org/public/outreach/copyright/). Adaptations: JavaScript perspective projection of the celestial sphere, 32-degree camera roll, resizing, reduced saturation/brightness and WebP encoding. Its visible page credit preserves the source's full wording. No AI image editing was used.
+`milky-way-v2-{4k,2k,1k}.webp` uses **ESO/S. Brunier**, [The Milky Way panorama, eso0932a](https://www.eso.org/public/images/eso0932a/), [CC BY 4.0](https://www.eso.org/public/outreach/copyright/). Adaptations: JavaScript perspective projection of the celestial sphere, 32-degree camera roll, resizing, reduced saturation/brightness and WebP encoding. The 1k file (1024×640, WebP quality 80) is the 2k file resized for narrow screens. Its visible page credit preserves the source's full wording. No AI image editing was used.
 
 These assets are prepared with `scripts/artwork/prepare-orbit-assets.mjs`. Older maps below remain used by other planets or archived source components.
 
@@ -70,7 +70,7 @@ and Earth Observatory:
 
 The maps and sky are lossy WebP; the ring, Saturn strip and water mask are lossless. Actual transferred bytes depend on the selected world and device.
 
-The enlarged desktop Earth also uses `earth-cinematic-4k.webp` (4096×2048), resized and encoded at WebP quality 90 from Solar System Scope's [8K Earth day map](https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg). The same CC BY 4.0 attribution applies. The shader adjusts saturation, ocean reflectance and directional lighting; mobile retains the smaller map.
+`earth-cinematic-4k.webp` (4096×2048, from Solar System Scope's [8K Earth day map](https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg), same CC BY 4.0 attribution) is no longer shipped; `scripts/encode-trajectory-textures.mjs` still produces it on demand. Desktop Earth uses `earth-surface-v2-8k.webp`; mobile retains the smaller maps.
 
 `node scripts/encode-trajectory-textures.mjs` downloads the sources and writes
 these files with sharp. Files in `/public` are cached immutably, so rename a

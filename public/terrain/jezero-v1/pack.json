@@ -1,0 +1,136 @@
+{
+    "version": 1,
+    "generated": "2026-11-10",
+    "centre": {
+        "local_E_m": 2080.0,
+        "local_N_m": 1840.0,
+        "lon_deg": 77.487791,
+        "lat_deg": 18.475742,
+        "ground_height_m": -2571.0,
+        "ground_height_note": "sigma=2 m smoothed DTM at C"
+    },
+    "local_frame": {
+        "origin_lonlat_deg": [77.4508, 18.4447],
+        "definition": "E = (x - x0)*cos(18.4447 deg), N = y - y0 where x = R*lon_rad, y = R*lat_rad (equirectangular, R=3396190 m); the DTM has 1 m pixels in x/y, i.e. 0.9486 m ground E-W, corrected in every pack file",
+        "axes_in_pack": "x = east, y = up, z = south (image rows increase southward)"
+    },
+    "height": {
+        "h_min_m": -2660.8,
+        "h_max_m": -2271.9,
+        "quantisation_step_m": 0.00593423361562524,
+        "datum": "Heights are those of the DTM product named 'MOLAtopography_DeltaGeoid': relative to the Mars geoid (stated in the USGS MSR product README for the same processing; not stated on the 2020 Astropedia page itself)",
+        "decode": {
+            "encoding": "8-bit RGB PNG, no alpha. value16 = (R<<8)|G ; height_m = h_min + value16/65535*(h_max-h_min). B=255 real data, B=0 filled from nearest valid cell. Read with createImageBitmap(...,{colorSpaceConversion:'none',premultiplyAlpha:'none'})."
+        }
+    },
+    "files": {
+        "height-0.png": {
+            "file": "height-0.png",
+            "width": 512,
+            "height": 512,
+            "pixel_m": 2.0,
+            "half_extent_m": 512.0,
+            "extent_m": 1024.0,
+            "kind": "height",
+            "pixel_to_local": "E = 2080 + (col + 0.5 - width/2)*pixel_m ; N = 1840 - (row + 0.5 - height/2)*pixel_m  (north-up, +x east, +y image-down = south)",
+            "bytes": 260240,
+            "note": "Gaussian sigma 1 m, then sampled at cell centres"
+        },
+        "height-1.png": {
+            "file": "height-1.png",
+            "width": 512,
+            "height": 512,
+            "pixel_m": 16.0,
+            "half_extent_m": 4096.0,
+            "extent_m": 8192.0,
+            "kind": "height",
+            "pixel_to_local": "E = 2080 + (col + 0.5 - width/2)*pixel_m ; N = 1840 - (row + 0.5 - height/2)*pixel_m  (north-up, +x east, +y image-down = south)",
+            "bytes": 376811,
+            "note": "area-averaged"
+        },
+        "height-2.png": {
+            "file": "height-2.png",
+            "width": 256,
+            "height": 256,
+            "pixel_m": 64.0,
+            "half_extent_m": 8192.0,
+            "extent_m": 16384.0,
+            "kind": "height",
+            "pixel_to_local": "E = 2080 + (col + 0.5 - width/2)*pixel_m ; N = 1840 - (row + 0.5 - height/2)*pixel_m  (north-up, +x east, +y image-down = south)",
+            "bytes": 85036,
+            "note": "area-averaged over valid cells; cells with no data filled from nearest valid cell (B=0)"
+        },
+        "detail-0.webp": {
+            "file": "detail-0.webp",
+            "width": 1024,
+            "height": 1024,
+            "pixel_m": 1.0,
+            "half_extent_m": 512.0,
+            "extent_m": 1024.0,
+            "kind": "detail tone",
+            "pixel_to_local": "E = 2080 + (col + 0.5 - width/2)*pixel_m ; N = 1840 - (row + 0.5 - height/2)*pixel_m  (north-up, +x east, +y image-down = south)",
+            "bytes": 224920,
+            "decode": "ratio = 0.5 + value/255 (value 128 = 1.0); ortho / gaussian-blurred ortho (sigma 40 m); read the R channel (lossy WebP can differ by 1 between channels)"
+        },
+        "detail-1.webp": {
+            "file": "detail-1.webp",
+            "width": 512,
+            "height": 512,
+            "pixel_m": 16.0,
+            "half_extent_m": 4096.0,
+            "extent_m": 8192.0,
+            "kind": "detail tone",
+            "pixel_to_local": "E = 2080 + (col + 0.5 - width/2)*pixel_m ; N = 1840 - (row + 0.5 - height/2)*pixel_m  (north-up, +x east, +y image-down = south)",
+            "bytes": 98296,
+            "decode": "same, blur sigma 600 m; no data = 128"
+        },
+        "normal-0.webp": {
+            "file": "normal-0.webp",
+            "width": 1024,
+            "height": 1024,
+            "pixel_m": 1.0,
+            "half_extent_m": 512.0,
+            "extent_m": 1024.0,
+            "kind": "normal",
+            "pixel_to_local": "E = 2080 + (col + 0.5 - width/2)*pixel_m ; N = 1840 - (row + 0.5 - height/2)*pixel_m  (north-up, +x east, +y image-down = south)",
+            "bytes": 64752,
+            "decode": "n = rgb/255*2-1 (renormalise); x east, y up, z south; DTM smoothed sigma 0.7 m"
+        }
+    },
+    "landmarks": {
+        "butte_summit": {
+            "local_E_m": 2094.5,
+            "local_N_m": 2265.5,
+            "lon_deg": 77.488049,
+            "lat_deg": 18.48292,
+            "height_m": -2502.71,
+            "above_C_m": 68.29,
+            "offset_from_C_m": [14.5, 425.5],
+            "note": "chosen as 'Kodiak'; identification NOT verified against a published coordinate"
+        }
+    },
+    "sources": {
+        "dtm": {
+            "product": "Mars 2020 Terrain Relative Navigation HiRISE DTM Mosaic",
+            "file": "JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif",
+            "doi": "10.5066/P9REJ9JN",
+            "page": "https://astrogeology.usgs.gov/search/map/mars_2020_terrain_relative_navigation_hirise_dtm_mosaic",
+            "url": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif",
+            "gsd_m": 1.0
+        },
+        "ortho": {
+            "product": "Mars 2020 Terrain Relative Navigation HiRISE Orthorectified Image Mosaic",
+            "file": "JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first.tif",
+            "doi": "10.5066/P9QJDP48",
+            "page": "https://astrogeology.usgs.gov/search/map/mars_2020_terrain_relative_navigation_hirise_orthorectified_image_mosaic",
+            "url": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first.tif",
+            "gsd_m": 0.25
+        },
+        "date_fetched": "2026-11-10"
+    },
+    "usage_statements": {
+        "astropedia": "Access Constraints: None. Use Constraints: Please cite authors",
+        "hirise": "https://www.uahirise.org/media/usage.php: 'there is no copyright restriction'; images 'are within the public domain'; 'We do ask for a credit line where possible: Image: NASA/JPL/University of Arizona'"
+    },
+    "credit": "Terrain: Mars 2020 Terrain Relative Navigation HiRISE DTM Mosaic and Orthorectified Image Mosaic, USGS Astrogeology Science Center (Astropedia, 'Use Constraints: Please cite authors'). Fergason, R. L., Hare, T. M., Mayer, D. P., Galuszka, D. M., Redding, B. L., Smith, E. D., Shinaman, J. R., Cheng, Y., Otero, R. E., 2020, Mars 2020 Terrain Relative Navigation Flight Product Generation: Digital Terrain Model and Orthorectified Image Mosaics, 51st Lunar and Planetary Science Conference, https://www.hou.usra.edu/meetings/lpsc2020/pdf/2020.pdf. HiRISE imagery credit line requested by the HiRISE team: 'Image: NASA/JPL/University of Arizona'."
+}

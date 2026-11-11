@@ -3,6 +3,7 @@ import * as THREE from "three";
 import type { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import {
     arcPosition,
+    TERRAIN_RADIUS,
     createExperienceCamera,
 } from "../../src/scripts/experience-camera";
 
@@ -132,5 +133,54 @@ describe("experience camera", () => {
             controls.minDistance,
         );
         expect(controls.update).not.toHaveBeenCalled();
+    });
+
+    describe("over a settlement's drawn ground", () => {
+        const ground = {
+            globe: new THREE.Vector3(0, 0, 0),
+            at: new THREE.Vector3(0, 0, 1.0016),
+            reach: 0.26,
+            beyond: 0.338,
+            radius: 1.00355,
+        };
+        const ordinary = TERRAIN_RADIUS + 0.001;
+
+        function settle(position: THREE.Vector3, drawn = ground) {
+            const { camera, rig, globe } = setup();
+            rig.move(pose(position), 0.05, {
+                instant: true,
+                manual: false,
+                globes: [globe],
+                ground: drawn,
+            });
+            return camera.position.distanceTo(globe.position);
+        }
+
+        it("lets the camera sit under the ordinary minimum", () => {
+            const radius = settle(new THREE.Vector3(0, 0, 1.005));
+            expect(radius).toBeLessThan(ordinary);
+            expect(radius).toBeCloseTo(1.005, 9);
+        });
+
+        it("never lets it below the ground's own radius", () => {
+            expect(settle(new THREE.Vector3(0, 0, 1.0))).toBeCloseTo(
+                ground.radius,
+                9,
+            );
+        });
+
+        it("applies the ordinary minimum beyond the far distance", () => {
+            const far = new THREE.Vector3(1, 0, 0.05).setLength(1.005);
+            expect(far.distanceTo(ground.at)).toBeGreaterThan(ground.beyond);
+            expect(settle(far)).toBeCloseTo(ordinary, 9);
+        });
+
+        it("ignores ground that belongs to a different globe", () => {
+            const other = { ...ground, globe: new THREE.Vector3(9, 0, 0) };
+            expect(settle(new THREE.Vector3(0, 0, 1.005), other)).toBeCloseTo(
+                ordinary,
+                9,
+            );
+        });
     });
 });

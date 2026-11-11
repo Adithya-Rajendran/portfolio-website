@@ -3,6 +3,7 @@ import type { ScenePhase } from "../lib/scene-time";
 import { waitForSceneClock, refreshSceneClock } from "../lib/scene-clock";
 import { createJourneyPlayback } from "../lib/journey-playback";
 import { createScrollJourney } from "../lib/scroll-journey";
+import { isSoftwareRenderer, rendererName } from "../lib/renderer-kind";
 import { createExperienceNavigation } from "./experience-navigation";
 import {
     arcPosition,
@@ -12,11 +13,18 @@ import {
 } from "./experience-camera";
 import { addSatellites } from "./orbital-satellites";
 import { addLunarLaunch } from "./lunar-launch";
+import { addSettlementTraffic } from "./settlement-traffic";
+import { makeSettlementCaptions } from "./settlement-captions";
 import {
     loadOutpost,
     attachOutpost,
     disposeOutpost,
     outpostCamera,
+    outpostTextures,
+    settlementAirOf,
+    settlementMayShow,
+    settlementParts,
+    SETTLEMENT_FLOOR,
 } from "./planetary-outposts";
 import {
     makePlanet,
@@ -25,6 +33,9 @@ import {
     type World,
     type PlanetLighting,
 } from "./planet-materials";
+
+/** Radians a second: a ring habitat turns once in about eighteen seconds. */
+const SPIN_RATE = 0.35;
 
 const section = document.querySelector<HTMLElement>(".experience-visual");
 const stage = section?.querySelector<HTMLElement>("[data-experience-stage]");
@@ -83,6 +94,16 @@ if (
         stage.dataset.ready = "false";
         delete stage.dataset.firstFramePhase;
         try {
+            // The modules do not depend on the clock, so fetch them while it
+            // resolves instead of one after another.
+            const modules = Promise.all([
+                import("three"),
+                import("three/addons/controls/OrbitControls.js"),
+                import("three/addons/environments/RoomEnvironment.js"),
+            ]);
+            // A clock failure leaves this unawaited; any import failure is
+            // still thrown by the await below.
+            modules.catch(() => {});
             // The first page resolves the local timezone before any planet is
             // requested. Direct links/recovery share the same safe bootstrap.
             const initialClock = await waitForSceneClock();
@@ -90,18 +111,26 @@ if (
             section.dataset.phase = initialClock.phase;
             if (page) page.dataset.phase = initialClock.phase;
             if (ticket !== generation) return;
-            const T = await import("three");
-            const { OrbitControls } =
-                await import("three/addons/controls/OrbitControls.js");
+            const [T, { OrbitControls }, { RoomEnvironment }] = await modules;
             if (ticket !== generation) return;
+            // A renderer that draws on the processor (a test machine, a
+            // remote desktop) gets the lighter scene: every sample of every
+            // pixel is its own work there.
+            const probe = document.createElement("canvas").getContext("webgl2");
+            const software = probe
+                ? isSoftwareRenderer(rendererName(probe))
+                : false;
+            probe?.getExtension("WEBGL_lose_context")?.loseContext();
             const render = new T.WebGLRenderer({
-                antialias: true,
+                antialias: !software,
                 alpha: true,
                 powerPreference: "high-performance",
             });
             renderer = render;
             render.domElement.style.visibility = "hidden";
-            render.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+            render.setPixelRatio(
+                software ? 1 : Math.min(devicePixelRatio || 1, 2),
+            );
             render.outputColorSpace = T.SRGBColorSpace;
             render.toneMapping = T.ACESFilmicToneMapping;
             render.toneMappingExposure = 1.05;
@@ -109,12 +138,6 @@ if (
             render.shadowMap.enabled = true;
             render.shadowMap.type = T.PCFShadowMap;
             const scene = new T.Scene();
-            const { RoomEnvironment } =
-                await import("three/addons/environments/RoomEnvironment.js");
-            if (ticket !== generation) {
-                render.dispose();
-                return;
-            }
             const room = new RoomEnvironment();
             const generator = new T.PMREMGenerator(render);
             const reflection = generator.fromScene(room, 0.04);
@@ -214,10 +237,15 @@ if (
             // layered shaders share the visitor's local-time lighting above.
             sun.position.set(5, 2, 1.8).normalize().multiplyScalar(8);
             sun.castShadow = true;
-            sun.shadow.mapSize.set(
-                narrow.matches ? 1024 : 2048,
-                narrow.matches ? 1024 : 2048,
-            );
+            // A settlement's long shadows are read from one map over the
+            // whole town, so a desktop gets a finer one.
+            const shadowTexels =
+                software || narrow.matches
+                    ? 1024
+                    : render.capabilities.maxTextureSize >= 8192
+                      ? 4096
+                      : 2048;
+            sun.shadow.mapSize.set(shadowTexels, shadowTexels);
             Object.assign(sun.shadow.camera, {
                 left: -3,
                 right: 3,
@@ -230,9 +258,65 @@ if (
             scene.add(sun);
             const ambient = new T.AmbientLight(0x8cadd3, 0.055);
             scene.add(ambient);
+            const SURFACE_LIGHT = {
+                // With no air, nothing but the soil lights a lunar shadow:
+                // the sun is everything and shade is close to black.
+                1: {
+                    sun: new T.Color(0xfff6ea),
+                    strength: 3.7,
+                    fill: new T.Color(0xb9bdc6),
+                    ambient: 0.04,
+                },
+                // Mars's sun comes through dust, warm, and its sky fills
+                // the shade with what the dust did not keep.
+                2: {
+                    sun: new T.Color(1, 0.87, 0.72),
+                    strength: 3.6,
+                    fill: new T.Color(0xa3a8c0),
+                    ambient: 0.3,
+                },
+            };
             const loader = new T.TextureLoader(),
                 textures = new Map<string, Promise<Three.Texture>>(),
                 owned = new Set<Three.Texture>();
+            // Large maps decode off the main thread. The bitmap is flipped when
+            // created because three ignores texture.flipY for bitmaps, and
+            // colour-space conversion is off, so the pixels match the plain
+            // image path. Without createImageBitmap, TextureLoader runs.
+            const decode = async (name: string) => {
+                const url = `/images/trajectory/${name}.webp`;
+                if (
+                    typeof createImageBitmap !== "function" ||
+                    !/-(2k|4k|8k)$/.test(name)
+                )
+                    return loader.loadAsync(url);
+                // A failed request is reported as it is: asking again through
+                // the image path would only repeat it.
+                const response = await fetch(url);
+                if (!response.ok)
+                    throw new Error(`${url} answered ${response.status}`);
+                const blob = await response.blob();
+                let bitmap: ImageBitmap;
+                try {
+                    bitmap = await createImageBitmap(blob, {
+                        imageOrientation: "flipY",
+                        premultiplyAlpha: "none",
+                        colorSpaceConversion: "none",
+                    });
+                } catch {
+                    // Only a failed decode takes the plain image path, which
+                    // the browser answers from the response it just stored.
+                    return loader.loadAsync(url);
+                }
+                const t = new T.Texture(bitmap);
+                t.flipY = false;
+                t.needsUpdate = true;
+                // The GPU copy is all that is used afterwards, so free the
+                // decoded pixels once uploaded or disposed.
+                t.onUpdate = () => bitmap.close();
+                t.addEventListener("dispose", () => bitmap.close());
+                return t;
+            };
             const planets = new Map<number, Three.Group>(),
                 pending = new Map<number, Promise<Three.Group>>();
             let disposed = false;
@@ -241,14 +325,85 @@ if (
             const outpostFailures = new Set<number>();
             let lunarLaunch: ReturnType<typeof addLunarLaunch>;
             let lunarElapsed = 0;
+            const traffic = new Map<
+                number,
+                ReturnType<typeof addSettlementTraffic>
+            >();
+            // The names of what stands in a settlement, hung over the picture.
+            const captions = makeSettlementCaptions(
+                T,
+                stage.parentElement ?? stage,
+            );
+            const pictureSize = new T.Vector2();
+            // Home, standing over the horizon the lunar driver points at. It
+            // is drawn only from the Moon's surface, where the journey's own
+            // Earth is out of the picture, and larger than life.
+            let earthrise: Three.Group | undefined;
+            const EARTHRISE = {
+                toward: new T.Vector3(0.37, 0.156, -0.916).normalize(),
+                away: 60,
+                radius: 60 * Math.tan(T.MathUtils.degToRad(2.3)),
+            };
+            const earthriseToward = new T.Vector3(),
+                earthriseTurn = new T.Quaternion(),
+                sunToward = new T.Vector3();
             const playback = createJourneyPlayback();
+            // Link shaders ahead of the first draw. Late arrivals only start
+            // compiling; nothing waits for them.
+            const warm = (object: Three.Object3D) => {
+                if (!disposed)
+                    void render
+                        .compileAsync(object, camera, scene)
+                        .catch(() => {});
+            };
+            // The first globe is awaited, so the first visible frame does not
+            // stall on linking. The wait is bounded: a lost context never
+            // completes it, and a retry must not be left waiting.
+            const prepare = async (objects: Three.Object3D[]) => {
+                let timer = 0;
+                try {
+                    await Promise.race([
+                        Promise.all(
+                            objects.map((object) =>
+                                render.compileAsync(object, camera, scene),
+                            ),
+                        ),
+                        new Promise<void>((resolve) => {
+                            timer = window.setTimeout(resolve, 3000);
+                        }),
+                    ]);
+                } catch {
+                    // Programs are then linked by the first draw, as before.
+                } finally {
+                    clearTimeout(timer);
+                }
+            };
+            const small =
+                narrow.matches ||
+                render.capabilities.maxTextureSize < 8192 ||
+                (
+                    navigator as Navigator & {
+                        connection?: { saveData?: boolean };
+                    }
+                ).connection?.saveData ||
+                ((navigator as Navigator & { deviceMemory?: number })
+                    .deviceMemory || 8) <= 4;
             const ensureOutpost = (index: number) => {
                 if (index !== 1 && index !== 2) return Promise.resolve();
                 let request = outpostRequests.get(index);
                 if (!request) {
                     request = loadOutpost(
                         index === 1 ? "moon" : "mars",
-                        Math.min(8, render.capabilities.getMaxAnisotropy()),
+                        render,
+                        {
+                            anisotropy: software
+                                ? 1
+                                : Math.min(
+                                      8,
+                                      render.capabilities.getMaxAnisotropy(),
+                                  ),
+                            lite: small || software,
+                        },
                     )
                         .then((group) => {
                             if (disposed) {
@@ -263,9 +418,98 @@ if (
                                     globe,
                                     index === 1 ? "moon" : "mars",
                                 );
-                            if (index === 1)
+                            if (index === 1) {
                                 lunarLaunch = addLunarLaunch(T, group);
+                                Promise.all([
+                                    texture("earth-surface-v2-2k"),
+                                    texture("earth-clouds-v2-2k", false, true),
+                                ])
+                                    .then(([map, clouds]) => {
+                                        if (disposed || earthrise) return;
+                                        const shape = new T.SphereGeometry(
+                                            1,
+                                            48,
+                                            24,
+                                        );
+                                        const land = new T.MeshStandardMaterial(
+                                            {
+                                                map,
+                                                color: 0xb4bcc6,
+                                                roughness: 1,
+                                                metalness: 0,
+                                                envMapIntensity: 0,
+                                            },
+                                        );
+                                        // Weather over it: what makes it home
+                                        // and not a map of it.
+                                        land.onBeforeCompile = (shader) => {
+                                            shader.uniforms.homeClouds = {
+                                                value: clouds,
+                                            };
+                                            shader.fragmentShader =
+                                                shader.fragmentShader
+                                                    .replace(
+                                                        "#include <common>",
+                                                        `#include <common>
+                                                        uniform sampler2D homeClouds;`,
+                                                    )
+                                                    .replace(
+                                                        "#include <map_fragment>",
+                                                        `#include <map_fragment>
+                                                        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.86), smoothstep(.12, .7, texture2D(homeClouds, vMapUv).r) * .92);`,
+                                                    );
+                                        };
+                                        land.customProgramCacheKey = () =>
+                                            "earth-in-the-lunar-sky";
+                                        const globe = new T.Mesh(shape, land);
+                                        // Its air, as a thin blue rim.
+                                        const air = new T.Mesh(
+                                            shape,
+                                            new T.MeshBasicMaterial({
+                                                color: 0x4f8fe0,
+                                                transparent: true,
+                                                opacity: 0.2,
+                                                blending: T.AdditiveBlending,
+                                                side: T.BackSide,
+                                                depthWrite: false,
+                                                toneMapped: false,
+                                            }),
+                                        );
+                                        air.scale.setScalar(1.035);
+                                        globe.rotation.set(0.42, 2.3, 0.2);
+                                        earthrise = new T.Group();
+                                        earthrise.name =
+                                            "Earth in the lunar sky";
+                                        earthrise.add(globe, air);
+                                        earthrise.visible = false;
+                                        scene.add(earthrise);
+                                    })
+                                    .catch(() => {
+                                        // The sky is complete without it.
+                                    });
+                            }
+                            // A world with air has a sky of its own.
+                            const sky = settlementAirOf(group)?.sky;
+                            if (sky) scene.add(sky);
+                            traffic.set(
+                                index,
+                                addSettlementTraffic(
+                                    T,
+                                    group,
+                                    index === 1 ? "moon" : "mars",
+                                ),
+                            );
                             outposts.set(index, group);
+                            // Start linking its programs and uploading its maps
+                            // now, long before the descent can show it.
+                            warm(group);
+                            outpostTextures(group).forEach((t) => {
+                                try {
+                                    render.initTexture(t);
+                                } catch {
+                                    // Uploaded on first draw instead.
+                                }
+                            });
                             schedule();
                         })
                         .catch(() => {
@@ -277,19 +521,37 @@ if (
                 }
                 return request;
             };
-            const texture = async (name: string, color = true) => {
+            const texture = async (
+                name: string,
+                color = true,
+                single = false,
+            ) => {
                 let value = textures.get(name);
                 if (!value) {
-                    value = loader
-                        .loadAsync(`/images/trajectory/${name}.webp`)
+                    value = decode(name)
                         .then((t) => {
                             if (color) t.colorSpace = T.SRGBColorSpace;
+                            // Linear masks that the shader reads as .r only.
+                            if (single) t.format = T.RedFormat;
+                            // Sampler state is fixed at the first upload, so
+                            // it is set here, before initTexture below.
+                            if (name.startsWith("earth-clouds"))
+                                t.wrapS = T.RepeatWrapping;
                             t.anisotropy = Math.min(
                                 8,
                                 render.capabilities.getMaxAnisotropy(),
                             );
                             if (disposed) t.dispose();
-                            else owned.add(t);
+                            else {
+                                owned.add(t);
+                                // Upload now, not inside the first frame that
+                                // draws it. A failed upload retries on draw.
+                                try {
+                                    render.initTexture(t);
+                                } catch {
+                                    // Nothing to undo.
+                                }
+                            }
                             return t;
                         })
                         .catch((e) => {
@@ -300,16 +562,6 @@ if (
                 }
                 return value;
             };
-            const small =
-                narrow.matches ||
-                render.capabilities.maxTextureSize < 8192 ||
-                (
-                    navigator as Navigator & {
-                        connection?: { saveData?: boolean };
-                    }
-                ).connection?.saveData ||
-                ((navigator as Navigator & { deviceMemory?: number })
-                    .deviceMemory || 8) <= 4;
             const failed = new Set<number>();
             let satellites: ReturnType<typeof addSatellites> | undefined;
             const ensurePlanet = (index: number) => {
@@ -322,12 +574,30 @@ if (
                         texture,
                         lighting,
                     )
-                        .then((group) => {
+                        .then(async (group) => {
                             if (disposed) {
                                 disposePlanet(group);
                                 return group;
                             }
                             group.visible = false;
+                            if (index === 0) {
+                                satellites = addSatellites(T, group);
+                                stage.dataset.satellites = String(
+                                    satellites.count,
+                                );
+                            }
+                            // Link this globe's programs before it joins the
+                            // scene; the first one also covers the stars.
+                            await prepare(
+                                index === 0 ? [group, stars] : [group],
+                            );
+                            if (disposed) {
+                                disposePlanet(group);
+                                return group;
+                            }
+                            // Nothing awaits between here and planets.set, so a
+                            // settlement arriving meanwhile is attached by
+                            // exactly one of the two sides.
                             planets.set(index, group);
                             const outpost = outposts.get(index);
                             if (outpost)
@@ -337,12 +607,6 @@ if (
                                     group,
                                     index === 1 ? "moon" : "mars",
                                 );
-                            if (index === 0) {
-                                satellites = addSatellites(T, group);
-                                stage.dataset.satellites = String(
-                                    satellites.count,
-                                );
-                            }
                             scene.add(group);
                             schedule();
                             return group;
@@ -391,7 +655,10 @@ if (
                 opacity: 0.8,
                 depthWrite: false,
             });
-            scene.add(new T.Points(starsGeo, starsMat));
+            const stars = new T.Points(starsGeo, starsMat);
+            // Before a world's sky, which is drawn over them.
+            stars.renderOrder = -200;
+            scene.add(stars);
             let frame = 0,
                 visible = true,
                 paused = false,
@@ -406,6 +673,37 @@ if (
             let orbitalDistance = 3.45;
             const worldUp = new T.Vector3(0, 1, 0);
             const origin = new T.Vector3();
+            // Reused every frame instead of allocating.
+            const homeDirection = new T.Vector3(0, 0.18, 3.45).normalize();
+            const goal: CameraPose = {
+                position: new T.Vector3(),
+                target: new T.Vector3(),
+                up: new T.Vector3(),
+            };
+            const anchor = new T.Vector3(),
+                surfaceUp = new T.Vector3(),
+                worldQuaternion = new T.Quaternion(),
+                toCamera = new T.Vector3(),
+                settlementNormal = new T.Vector3(),
+                // The sun a settlement stands under is the one its globe
+                // is seen under from orbit, so nothing shifts on the way down.
+                sunOffset = new T.Vector3(5, 2, 1.8)
+                    .normalize()
+                    .multiplyScalar(1.4),
+                orbitSun = new T.Color(0xffedda),
+                orbitFill = new T.Color(0x8cadd3),
+                visibleGlobes: Three.Group[] = [];
+            let shadowFrame = "";
+            // Writing an unchanged value still queues DOM work.
+            const put = (element: HTMLElement, key: string, value: string) => {
+                if (element.dataset[key] !== value)
+                    element.dataset[key] = value;
+            };
+            const say = (element: HTMLElement, text: string) => {
+                if (element.textContent !== text) element.textContent = text;
+            };
+            const triple = (x: number, y: number, z: number, digits: number) =>
+                `${x.toFixed(digits)},${y.toFixed(digits)},${z.toFixed(digits)}`;
             const orbitDirection = camera.position.clone().normalize();
             const approachDirection = orbitDirection.clone();
             let departure: { pose: CameraPose; mix: number } | undefined;
@@ -513,7 +811,10 @@ if (
                     motionButton.textContent = label;
                 if (motionButton.disabled !== reduced)
                     motionButton.disabled = reduced;
-                motionButton.setAttribute("aria-pressed", String(paused));
+                if (
+                    motionButton.getAttribute("aria-pressed") !== String(paused)
+                )
+                    motionButton.setAttribute("aria-pressed", String(paused));
             };
             const baseDistance = (world: number) => {
                 const radius = world === 4 ? 2.25 : 1.08;
@@ -525,38 +826,35 @@ if (
                 );
             };
             const telemetry = () => {
-                stage.dataset.camera = [
-                    camera.position.x,
-                    camera.position.y,
-                    camera.position.z,
-                ]
-                    .map((n) => n.toFixed(4))
-                    .join(",");
-                stage.dataset.distance = camera.position
-                    .distanceTo(rig.target)
-                    .toFixed(4);
-                stage.dataset.cameraTarget = rig.target
-                    .toArray()
-                    .map((n) => n.toFixed(6))
-                    .join(",");
-                stage.dataset.cameraUp = camera.up
-                    .toArray()
-                    .map((n) => n.toFixed(6))
-                    .join(",");
-                stage.dataset.cameraQuaternion = camera.quaternion
-                    .toArray()
-                    .map((n) => n.toFixed(7))
-                    .join(",");
-                stage.dataset.cameraClearance = Math.min(
-                    ...[...planets.values()]
-                        .filter((g) => g.visible)
-                        .map((g) => camera.position.distanceTo(g.position) - 1),
-                ).toFixed(6);
-                stage.dataset.cameraOwner = freeLook
-                    ? "manual"
-                    : returnTime > 0
-                      ? "returning"
-                      : "guided";
+                const p = camera.position,
+                    t = rig.target,
+                    up = camera.up,
+                    q = camera.quaternion;
+                put(stage, "camera", triple(p.x, p.y, p.z, 4));
+                put(stage, "distance", p.distanceTo(t).toFixed(4));
+                put(stage, "cameraTarget", triple(t.x, t.y, t.z, 6));
+                put(stage, "cameraUp", triple(up.x, up.y, up.z, 6));
+                put(
+                    stage,
+                    "cameraQuaternion",
+                    `${q.x.toFixed(7)},${q.y.toFixed(7)},${q.z.toFixed(7)},${q.w.toFixed(7)}`,
+                );
+                let clearance = Infinity;
+                for (const g of visibleGlobes)
+                    clearance = Math.min(
+                        clearance,
+                        p.distanceTo(g.position) - 1,
+                    );
+                put(stage, "cameraClearance", clearance.toFixed(6));
+                put(
+                    stage,
+                    "cameraOwner",
+                    freeLook
+                        ? "manual"
+                        : returnTime > 0
+                          ? "returning"
+                          : "guided",
+                );
             };
             const setLabel = (index: number) => {
                 if (index === lastWorld) return;
@@ -696,19 +994,24 @@ if (
                         Math.sin(travel * Math.PI) * 3.8;
                     orbitalDistance = distance;
                     setLabel(travel > 0.5 ? to : from);
-                    status.textContent = "";
+                    say(status, "");
                 } else {
                     const retained = planets.get(lastWorld);
                     if (retained) {
                         retained.visible = true;
                         retained.position.set(0, 0, 0);
                     }
-                    if (!retained)
-                        status.textContent = "Loading the orbital view…";
+                    if (!retained) say(status, "Loading the orbital view…");
                     const unavailable = !first ? from : to;
                     if (failed.has(unavailable))
-                        status.textContent = `${worldNames[unavailable]} could not load. Select it below to retry.`;
+                        say(
+                            status,
+                            `${worldNames[unavailable]} could not load. Select it below to retry.`,
+                        );
                 }
+                visibleGlobes.length = 0;
+                for (const g of planets.values())
+                    if (g.visible) visibleGlobes.push(g);
                 // The base is a child of its planet. Only the camera moves:
                 // the globe and curved local ground remain opaque throughout.
                 const near = Math.round(progress);
@@ -752,11 +1055,11 @@ if (
                 playback.setReducedMotion(motion.matches);
                 playback.setManualOrbit(freeLook);
                 const play = playback.tick(time);
-                stage.dataset.journeyTime = play.elapsed.toFixed(3);
-                stage.dataset.guidedTime = play.guidedElapsed.toFixed(3);
-                stage.dataset.surfaceProgress = surfaceMix.toFixed(4);
-                stage.dataset.surface = String(surfaceMix > 0.02);
-                section.dataset.surface = stage.dataset.surface;
+                put(stage, "journeyTime", play.elapsed.toFixed(3));
+                put(stage, "guidedTime", play.guidedElapsed.toFixed(3));
+                put(stage, "surfaceProgress", surfaceMix.toFixed(4));
+                put(stage, "surface", String(surfaceMix > 0.02));
+                put(section, "surface", String(surfaceMix > 0.02));
                 const outpost = outposts.get(surfaceWorld);
                 let landmark = "";
                 if (!freeLook && surfaceMix === 0 && !still) {
@@ -766,7 +1069,7 @@ if (
                                 arcPosition(
                                     T,
                                     orbitDirection,
-                                    new T.Vector3(0, 0.18, 3.45).normalize(),
+                                    homeDirection,
                                     origin,
                                     1 - Math.exp(-dt * 1.5),
                                 ),
@@ -774,13 +1077,11 @@ if (
                             .normalize();
                     else orbitDirection.applyAxisAngle(worldUp, -dt * 0.0126);
                 }
-                const goal: CameraPose = {
-                    position: orbitDirection
-                        .clone()
-                        .multiplyScalar(orbitalDistance),
-                    target: origin.clone(),
-                    up: worldUp.clone(),
-                };
+                goal.position
+                    .copy(orbitDirection)
+                    .multiplyScalar(orbitalDistance);
+                goal.target.copy(origin);
+                goal.up.copy(worldUp);
                 if (outpost && surfaceMix > 0) {
                     const pose = outpostCamera(
                         T,
@@ -790,9 +1091,11 @@ if (
                         lunarLaunch?.positionAt,
                     );
                     landmark = pose.landmark;
-                    const surfaceUp = new T.Vector3(0, 1, 0).applyQuaternion(
-                        outpost.getWorldQuaternion(new T.Quaternion()),
-                    );
+                    surfaceUp
+                        .set(0, 1, 0)
+                        .applyQuaternion(
+                            outpost.getWorldQuaternion(worldQuaternion),
+                        );
                     const globe = planets.get(surfaceWorld)!;
                     if (
                         departure &&
@@ -840,27 +1143,33 @@ if (
                         );
                         goal.up.lerp(surfaceUp, surfaceMix).normalize();
                     }
-                    const anchor = outpost.getWorldPosition(new T.Vector3());
+                    outpost.getWorldPosition(anchor);
                     sun.target.position.copy(anchor);
-                    sun.position
-                        .copy(anchor)
-                        .add(new T.Vector3(0.7, 1.1, 0.65));
-                    const shadowSize = 0.22;
-                    Object.assign(sun.shadow.camera, {
-                        left: -shadowSize,
-                        right: shadowSize,
-                        top: shadowSize,
-                        bottom: -shadowSize,
-                        near: 0.05,
-                        far: 3,
-                    });
-                    sun.shadow.camera.updateProjectionMatrix();
-                    stage.dataset.surfaceAnchor = anchor
-                        .toArray()
-                        .map((n) => n.toFixed(5))
-                        .join(",");
-                    stage.dataset.settlementAttached = String(
-                        outpost.parent === planets.get(surfaceWorld),
+                    sun.position.copy(anchor).add(sunOffset);
+                    // The frustum only depends on the mode, so it is refitted
+                    // when the mode changes rather than every frame.
+                    if (shadowFrame !== "surface") {
+                        shadowFrame = "surface";
+                        const shadowSize = 0.22;
+                        Object.assign(sun.shadow.camera, {
+                            left: -shadowSize,
+                            right: shadowSize,
+                            top: shadowSize,
+                            bottom: -shadowSize,
+                            near: 0.05,
+                            far: 3,
+                        });
+                        sun.shadow.camera.updateProjectionMatrix();
+                    }
+                    put(
+                        stage,
+                        "surfaceAnchor",
+                        triple(anchor.x, anchor.y, anchor.z, 5),
+                    );
+                    put(
+                        stage,
+                        "settlementAttached",
+                        String(outpost.parent === planets.get(surfaceWorld)),
                     );
                 } else if (!freeLook) {
                     sun.target.position.set(0, 0, 0);
@@ -871,50 +1180,79 @@ if (
                             .set(5, 2, 1.8)
                             .normalize()
                             .multiplyScalar(8);
-                    Object.assign(sun.shadow.camera, {
-                        left: -3,
-                        right: 3,
-                        top: 3,
-                        bottom: -3,
-                        near: 0.5,
-                        far: 20,
-                    });
-                    sun.shadow.camera.updateProjectionMatrix();
+                    if (shadowFrame !== "orbit") {
+                        shadowFrame = "orbit";
+                        Object.assign(sun.shadow.camera, {
+                            left: -3,
+                            right: 3,
+                            top: 3,
+                            bottom: -3,
+                            near: 0.5,
+                            far: 20,
+                        });
+                        sun.shadow.camera.updateProjectionMatrix();
+                    }
                 }
                 if (lunarLaunch) {
                     const active = lastWorld === 1 && surfaceMix >= 0.98;
                     if (lastWorld === 1) lunarElapsed = play.elapsed;
                     const launch = lunarLaunch.update(lunarElapsed);
-                    stage.dataset.launchState = active
-                        ? still
-                            ? "paused"
-                            : "running"
-                        : "inactive";
-                    stage.dataset.launchPhase = launch.phase;
-                    stage.dataset.launchCycle = String(launch.cycle);
-                    stage.dataset.launchPosition = launch.position
-                        .toArray()
-                        .map((n) => n.toFixed(3))
-                        .join(",");
+                    put(
+                        stage,
+                        "launchState",
+                        active ? (still ? "paused" : "running") : "inactive",
+                    );
+                    put(stage, "launchPhase", launch.phase);
+                    put(stage, "launchCycle", String(launch.cycle));
+                    put(
+                        stage,
+                        "launchPosition",
+                        triple(
+                            launch.position.x,
+                            launch.position.y,
+                            launch.position.z,
+                            3,
+                        ),
+                    );
                 }
-                ambient.intensity = 0.055 + surfaceMix * 0.24;
-                sun.intensity = 2.6 - surfaceMix * 0.2;
-                stage.dataset.view = surfaceMix > 0.98 ? "surface" : "orbit";
-                section.dataset.view = stage.dataset.view;
-                stage.dataset.navigation = freeLook ? "manual" : "guided";
+                // On the ground the light is each world's own: hard and
+                // white on the Moon, warm through Mars's dust. What fills
+                // the shadows is the soil around them.
+                const local = SURFACE_LIGHT[surfaceWorld === 2 ? 2 : 1];
+                sun.color.copy(orbitSun).lerp(local.sun, surfaceMix);
+                sun.intensity = T.MathUtils.lerp(
+                    2.6,
+                    local.strength,
+                    surfaceMix,
+                );
+                ambient.color.copy(orbitFill).lerp(local.fill, surfaceMix);
+                ambient.intensity = T.MathUtils.lerp(
+                    0.055,
+                    local.ambient,
+                    surfaceMix,
+                );
+                const view = surfaceMix > 0.98 ? "surface" : "orbit";
+                put(stage, "view", view);
+                put(section, "view", view);
+                put(stage, "navigation", freeLook ? "manual" : "guided");
                 if (navigationLabel)
-                    navigationLabel.textContent = freeLook
-                        ? "Free exploration"
-                        : surfaceMix > 0.98
-                          ? "Guided exploration"
-                          : "Scroll to travel";
+                    say(
+                        navigationLabel,
+                        freeLook
+                            ? "Free exploration"
+                            : surfaceMix > 0.98
+                              ? "Guided exploration"
+                              : "Scroll to travel",
+                    );
                 if (destinationLabel)
-                    destinationLabel.textContent =
+                    say(
+                        destinationLabel,
                         surfaceMix > 0.98
                             ? landmark
                             : lastWorld === 0
                               ? "Earth · Our starting point"
-                              : `${worldNames[Math.max(0, lastWorld)]} · ${surfaceMix > 0.1 ? "Descending to the settlement" : "Orbital approach"}`;
+                              : `${worldNames[Math.max(0, lastWorld)]} · ${surfaceMix > 0.1 ? "Descending to the settlement" : "Orbital approach"}`,
+                    );
                 if (freeLook) {
                     orbit.enableDamping = !still;
                     orbit.dampingFactor =
@@ -929,7 +1267,16 @@ if (
                             surfaceMix > 0
                                 ? planets.get(surfaceWorld)?.position
                                 : undefined,
-                        globes: [...planets.values()].filter((g) => g.visible),
+                        globes: visibleGlobes,
+                        ground:
+                            surfaceMix > 0 && outpost
+                                ? {
+                                      globe: planets.get(surfaceWorld)!
+                                          .position,
+                                      at: outpost.getWorldPosition(anchor),
+                                      ...SETTLEMENT_FLOOR,
+                                  }
+                                : undefined,
                     });
                 returnTime = settle ? 0 : Math.max(0, returnTime - dt);
                 navigationDirty =
@@ -942,15 +1289,12 @@ if (
                 // plane makes Earth's closely spaced cloud/surface layers flicker.
                 // Close free exploration also needs to clear the ground, even
                 // when its orbit pivot is still deep inside the globe.
-                const groundClearance = Math.min(
-                    ...[...planets.values()]
-                        .filter((g) => g.visible)
-                        .map(
-                            (g) =>
-                                camera.position.distanceTo(g.position) -
-                                TERRAIN_RADIUS,
-                        ),
-                );
+                let groundClearance = Infinity;
+                for (const g of visibleGlobes)
+                    groundClearance = Math.min(
+                        groundClearance,
+                        camera.position.distanceTo(g.position) - TERRAIN_RADIUS,
+                    );
                 const nearPlane = T.MathUtils.clamp(
                     Math.min(
                         camera.position.distanceTo(rig.target) * 0.02,
@@ -963,8 +1307,85 @@ if (
                     camera.near = nearPlane;
                     camera.updateProjectionMatrix();
                 }
-                stage.dataset.nearPlane = camera.near.toFixed(6);
+                put(stage, "nearPlane", camera.near.toFixed(6));
                 telemetry();
+                if (earthrise) {
+                    const moon = outposts.get(1);
+                    earthrise.visible =
+                        Boolean(moon) &&
+                        surfaceWorld === 1 &&
+                        surfaceMix > 0.02;
+                    if (earthrise.visible) {
+                        // Far enough that walking the town does not move it
+                        // against the stars: it keeps its bearing, not its place.
+                        earthrise.position
+                            .copy(camera.position)
+                            .addScaledVector(
+                                earthriseToward
+                                    .copy(EARTHRISE.toward)
+                                    .applyQuaternion(
+                                        moon!.getWorldQuaternion(earthriseTurn),
+                                    ),
+                                EARTHRISE.away,
+                            );
+                        earthrise.scale.setScalar(
+                            EARTHRISE.radius *
+                                T.MathUtils.smoothstep(surfaceMix, 0.02, 0.6),
+                        );
+                    }
+                }
+                // A settlement entirely beyond the horizon is not drawn, and
+                // casts shadows only while the tight surface frustum is in use.
+                // Mesh flags change no shader program, so nothing recompiles.
+                for (const [index, group] of outposts) {
+                    const parts = settlementParts(group),
+                        globe = planets.get(index);
+                    if (
+                        !parts ||
+                        !globe?.visible ||
+                        !group.userData.planetAttached
+                    )
+                        continue;
+                    toCamera.copy(camera.position).sub(globe.position);
+                    const distance = toCamera.length();
+                    const shown = settlementMayShow(
+                        toCamera.dot(
+                            settlementNormal
+                                .copy(group.userData.surfaceNormal)
+                                .applyQuaternion(globe.quaternion),
+                        ) / distance,
+                        distance,
+                        parts.reach,
+                        parts.height,
+                    );
+                    const casting =
+                        shown && surfaceWorld === index && surfaceMix > 0;
+                    for (const mesh of parts.meshes) {
+                        mesh.visible = shown;
+                        mesh.castShadow = casting && mesh.userData.casts;
+                    }
+                    // Centrifuge rings turn with the journey's own clock,
+                    // so they stop when it does; so do landers and pods.
+                    for (const [order, spinner] of parts.spinners.entries())
+                        spinner.rotation.y =
+                            (order % 2 ? -1 : 1) * play.elapsed * SPIN_RATE;
+                    if (shown) traffic.get(index)?.update(play.elapsed);
+                    settlementAirOf(group)?.update(
+                        camera,
+                        globe,
+                        group,
+                        sunToward.copy(sun.position).sub(sun.target.position),
+                        surfaceWorld === index ? surfaceMix : 0,
+                    );
+                }
+                render.getSize(pictureSize);
+                captions.update(
+                    camera,
+                    surfaceMix > 0.98 ? outposts.get(surfaceWorld) : undefined,
+                    pictureSize.x,
+                    pictureSize.y,
+                    performance.now(),
+                );
                 render.render(scene, camera);
                 if (!firstFrameDrawn && ready) {
                     firstFrameDrawn = true;
@@ -972,18 +1393,25 @@ if (
                     stage.dataset.firstFramePhase = phase;
                     stage.dataset.ready = "true";
                 }
-                stage.dataset.progress = progress.toFixed(4);
-                stage.dataset.transition = travel.toFixed(4);
-                stage.dataset.state = still ? "paused" : "running";
+                put(stage, "progress", progress.toFixed(4));
+                put(stage, "transition", travel.toFixed(4));
+                put(stage, "state", still ? "paused" : "running");
                 if (!still) schedule();
             };
+            let sizedWidth = 0,
+                sizedHeight = 0;
             const resize = () => {
                 const w = stage.clientWidth,
                     h = stage.clientHeight;
                 if (!w || !h) return;
-                render.setSize(w, h, false);
-                camera.aspect = w / h;
-                camera.updateProjectionMatrix();
+                // Resizing clears the canvas, so skip it when nothing changed.
+                if (w !== sizedWidth || h !== sizedHeight) {
+                    sizedWidth = w;
+                    sizedHeight = h;
+                    render.setSize(w, h, false);
+                    camera.aspect = w / h;
+                    camera.updateProjectionMatrix();
+                }
                 measure();
                 alignSelection();
                 // A size/font/layout change must not move the selected world.
@@ -1208,11 +1636,19 @@ if (
                     button.removeEventListener("click", zoomHandlers[i]),
                 );
                 orbit.dispose();
+                captions.dispose();
                 outposts.forEach((group) => {
                     group.removeFromParent();
+                    settlementAirOf(group)?.sky?.removeFromParent();
                     disposeOutpost(group);
                 });
                 satellites?.dispose();
+                earthrise?.removeFromParent();
+                earthrise?.traverse((object) => {
+                    const mesh = object as Three.Mesh;
+                    mesh.geometry?.dispose();
+                    (mesh.material as Three.Material | undefined)?.dispose();
+                });
                 planets.forEach(disposePlanet);
                 owned.forEach((t) => t.dispose());
                 starsGeo.dispose();

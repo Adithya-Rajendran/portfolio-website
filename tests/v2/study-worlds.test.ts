@@ -110,12 +110,29 @@ describe("planet detail", () => {
                 ]).toEqual([64, 48]);
                 expect(distant.triangles).toBeLessThan(close.triangles * 0.2);
                 if (world === "earth") {
+                    // Clouds and water are linear masks read as .r, so they
+                    // ask for one-channel uploads; the night lights are sRGB
+                    // colour and the normal map is RGB, so they do not.
                     expect(close.load).toHaveBeenCalledWith(
                         "earth-clouds-v2-4k",
                         false,
+                        true,
                     );
                     expect(distant.load).toHaveBeenCalledWith(
                         "earth-clouds-v2-2k",
+                        false,
+                        true,
+                    );
+                    expect(close.load).toHaveBeenCalledWith(
+                        "earth-water-v2-2k",
+                        false,
+                        true,
+                    );
+                    expect(close.load).toHaveBeenCalledWith(
+                        "earth-lights-v2-4k",
+                    );
+                    expect(close.load).toHaveBeenCalledWith(
+                        "earth-normal-v2-2k",
                         false,
                     );
                 }
