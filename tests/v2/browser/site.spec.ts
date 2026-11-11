@@ -742,6 +742,7 @@ test("reduced motion renders a static visual while retaining the experience list
 test("orbital controls change and reset the camera, select worlds, and retain the record on context loss", async ({
     page,
 }) => {
+    test.setTimeout(120000);
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
@@ -773,7 +774,9 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     const initialDistance = Number(await stage.getAttribute("data-distance"));
     expect(initialCamera).toBeTruthy();
     expect(initialDistance).toBeGreaterThan(0);
-    await stage.focus();
+    const explore = page.getByRole("button", { name: "Explore scene" });
+    await explore.click();
+    await expect(stage).toBeFocused();
     await page.keyboard.press("ArrowLeft");
     await expect(stage).toHaveAttribute("data-navigation", "manual");
     await expect
@@ -783,6 +786,19 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     expect(box).not.toBeNull();
     const x = box!.x + box!.width / 2;
     const y = box!.y + box!.height / 2;
+    const beforePan = await stage.getAttribute("data-camera-target");
+    await page.keyboard.press("Shift+ArrowRight");
+    await expect
+        .poll(() => stage.getAttribute("data-camera-target"))
+        .not.toBe(beforePan);
+    const beforeRightDrag = await stage.getAttribute("data-camera-target");
+    await page.mouse.move(x, y);
+    await page.mouse.down({ button: "right" });
+    await page.mouse.move(x + 45, y + 10, { steps: 4 });
+    await page.mouse.up({ button: "right" });
+    await expect
+        .poll(() => stage.getAttribute("data-camera-target"))
+        .not.toBe(beforeRightDrag);
     const beforeDrag = await stage.getAttribute("data-camera");
     await page.mouse.move(x, y);
     await page.mouse.down();
@@ -800,6 +816,28 @@ test("orbital controls change and reset the camera, select worlds, and retain th
     await expect
         .poll(async () => Number(await stage.getAttribute("data-distance")))
         .toBeLessThan(initialDistance);
+    const beforeWheel = Number(await stage.getAttribute("data-distance"));
+    const beforeScroll = await page.evaluate(() => scrollY);
+    await page.mouse.move(x, y);
+    await page.mouse.wheel(0, 180);
+    await expect
+        .poll(async () => Number(await stage.getAttribute("data-distance")))
+        .toBeGreaterThan(beforeWheel);
+    expect(await page.evaluate(() => scrollY)).toBe(beforeScroll);
+    await page.getByRole("button", { name: "Reset view" }).click();
+    await expect(stage).toHaveAttribute(
+        "data-camera-target",
+        "0.000000,0.000000,0.000000",
+    );
+    await expect(stage).toHaveAttribute("data-navigation", "manual");
+    await expect(page.getByRole("button", { name: "Done" })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+    );
+    await page.keyboard.press("Escape");
+    await expect(explore).toBeFocused();
+    await expect(explore).toHaveAttribute("aria-expanded", "false");
+    await expect(stage).toHaveAttribute("data-navigation", "guided");
     await page.getByRole("button", { name: "Replay the guided tour" }).click();
     await expect(stage).toHaveAttribute("data-navigation", "guided");
     await expect
@@ -1192,15 +1230,23 @@ test("experience remains scrollable over the visual on a narrow screen", async (
         .toBeGreaterThan(before);
 });
 
-test("mobile experience compacts for reading, expands, and closes with Escape", async ({
-    page,
+test("mobile experience supports touch exploration and restores reading scroll on exit", async ({
+    browser,
 }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.emulateMedia({ reducedMotion: "reduce" });
+    test.setTimeout(120000);
+    const context = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: true,
+        reducedMotion: "reduce",
+    });
+    const page = await context.newPage();
     await page.goto("/resume");
     const visual = page.locator(".experience-visual");
     const viewport = visual.locator(".observatory__viewport");
-    const expand = page.locator("[data-experience-expand]");
+    const expand = page.locator("[data-scene-camera-toggle]");
+    const stage = page.locator("[data-experience-stage]");
+    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
     await expect(visual).toHaveAttribute("data-layout", "arrival");
     const initialHeight = (await viewport.boundingBox())!.height;
     await page.evaluate(() => {
@@ -1217,12 +1263,58 @@ test("mobile experience compacts for reading, expands, and closes with Escape", 
     await expand.click();
     await expect(visual).toHaveAttribute("data-layout", "expanded");
     await expect(expand).toHaveAttribute("aria-expanded", "true");
-    await expect(expand).toHaveText("Back to reading");
+    await expect(expand).toHaveText("Done");
     expect((await viewport.boundingBox())!.height).toBeGreaterThan(
         compactHeight,
     );
-    const stage = page.locator("[data-experience-stage]");
-    await expect(stage.locator("canvas")).toBeVisible({ timeout: 20000 });
+    const session = await context.newCDPSession(page);
+    const scene = (await stage.boundingBox())!;
+    const x = scene.x + scene.width / 2;
+    const y = scene.y + scene.height / 2;
+    const beforeOrbit = await stage.getAttribute("data-camera");
+    const beforeTouchScroll = await page.evaluate(() => scrollY);
+    await session.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [{ x, y }],
+    });
+    await session.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: x + 60, y: y + 12 }],
+    });
+    await session.send("Input.dispatchTouchEvent", {
+        type: "touchEnd",
+        touchPoints: [],
+    });
+    await expect
+        .poll(() => stage.getAttribute("data-camera"))
+        .not.toBe(beforeOrbit);
+    const beforePinch = Number(await stage.getAttribute("data-distance"));
+    const beforePan = await stage.getAttribute("data-camera-target");
+    await session.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [
+            { id: 0, x: x - 30, y },
+            { id: 1, x: x + 30, y },
+        ],
+    });
+    await session.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [
+            { id: 0, x: x - 40, y: y + 30 },
+            { id: 1, x: x + 50, y: y + 30 },
+        ],
+    });
+    await session.send("Input.dispatchTouchEvent", {
+        type: "touchEnd",
+        touchPoints: [],
+    });
+    await expect
+        .poll(async () => Number(await stage.getAttribute("data-distance")))
+        .toBeLessThan(beforePinch);
+    await expect
+        .poll(() => stage.getAttribute("data-camera-target"))
+        .not.toBe(beforePan);
+    expect(await page.evaluate(() => scrollY)).toBe(beforeTouchScroll);
     await page.getByRole("button", { name: "Moon", exact: true }).click();
     await expect(stage).toHaveAttribute("data-world", "moon", {
         timeout: 30000,
@@ -1247,17 +1339,29 @@ test("mobile experience compacts for reading, expands, and closes with Escape", 
     await page.keyboard.press("Escape");
     await expect(visual).toHaveAttribute("data-layout", "compact");
     await expect(expand).toHaveAttribute("aria-expanded", "false");
+    await expect(expand).toBeFocused();
     const bounds = await viewport.boundingBox();
     expect(bounds).not.toBeNull();
-    await page.mouse.move(
-        bounds!.x + bounds!.width / 2,
-        bounds!.y + bounds!.height / 2,
-    );
+    const touchX = bounds!.x + bounds!.width / 2;
+    const touchY = bounds!.y + bounds!.height * 0.8;
     const before = await page.evaluate(() => scrollY);
-    await page.mouse.wheel(0, 250);
+    await session.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [{ x: touchX, y: touchY }],
+    });
+    for (const offset of [20, 40, 60, 80])
+        await session.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ x: touchX, y: touchY - offset }],
+        });
+    await session.send("Input.dispatchTouchEvent", {
+        type: "touchEnd",
+        touchPoints: [],
+    });
     await expect
         .poll(() => page.evaluate(() => scrollY), { timeout: 20000 })
         .toBeGreaterThan(before);
+    await context.close();
 });
 
 test("mobile Moon selection reaches the surface through compact resizing", async ({

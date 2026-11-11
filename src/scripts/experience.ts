@@ -4,7 +4,15 @@ import { waitForSceneClock, refreshSceneClock } from "../lib/scene-clock";
 import { createJourneyPlayback } from "../lib/journey-playback";
 import { createScrollJourney } from "../lib/scroll-journey";
 import { isSoftwareRenderer, rendererName } from "../lib/renderer-kind";
+import { setupExperienceLayout } from "./experience-layout";
 import { createExperienceNavigation } from "./experience-navigation";
+import {
+    applySceneCameraKey,
+    bindCameraTools,
+    configureSceneOrbit,
+    isCameraShortcut,
+    zoomSceneCamera,
+} from "./scene-camera-controls";
 import {
     arcPosition,
     createExperienceCamera,
@@ -47,8 +55,8 @@ const panel = section?.querySelector<HTMLElement>("[data-experience-controls]");
 const motionButton = section?.querySelector<HTMLButtonElement>(
     "[data-experience-motion]",
 );
-const resetButton = section?.querySelector<HTMLButtonElement>(
-    "[data-experience-reset]",
+const replayButton = section?.querySelector<HTMLButtonElement>(
+    "[data-experience-replay]",
 );
 const current = section?.querySelector<HTMLElement>(
     "[data-experience-current]",
@@ -77,9 +85,10 @@ if (
     status &&
     panel &&
     motionButton &&
-    resetButton &&
+    replayButton &&
     current
 ) {
+    let layout = setupExperienceLayout(section);
     let cleanup: (() => void) | undefined;
     let generation = 0,
         loading = false,
@@ -90,6 +99,7 @@ if (
         loading = true;
         start.hidden = true;
         let renderer: Three.WebGLRenderer | undefined;
+        let disposeInput: (() => void) | undefined;
         let firstFrameDrawn = false;
         stage.dataset.ready = "false";
         delete stage.dataset.firstFramePhase;
@@ -127,6 +137,7 @@ if (
                 powerPreference: "high-performance",
             });
             renderer = render;
+            const gl = render.getContext() as WebGL2RenderingContext;
             render.domElement.style.visibility = "hidden";
             render.setPixelRatio(
                 software ? 1 : Math.min(devicePixelRatio || 1, 2),
@@ -147,26 +158,25 @@ if (
             generator.dispose();
             const camera = new T.PerspectiveCamera(36, 1, 0.05, 160);
             camera.position.set(0, 0.18, 3.45);
-            const inputCamera = camera.clone();
-            const orbit = new OrbitControls(inputCamera, render.domElement);
+            const orbit = new OrbitControls(camera.clone(), stage);
+            disposeInput = () => orbit.dispose();
             const rig = createExperienceCamera(T, camera, orbit);
+            configureSceneOrbit(orbit);
             orbit.enableDamping = true;
             orbit.dampingFactor = 0.075;
-            orbit.enablePan = false;
-            // The page wheel always controls the journey. Deliberate zoom uses +/-.
-            orbit.enableZoom = false;
-            orbit.rotateSpeed = 0.5;
-            orbit.minDistance = 2.2;
-            orbit.maxDistance = 14;
+            let exploring = false;
             const narrow = matchMedia("(max-width: 800px)");
-            const configureTouch = () => {
-                render.domElement.style.touchAction = "pan-y";
-                orbit.touches.ONE = narrow.matches
-                    ? (null as unknown as Three.TOUCH)
-                    : T.TOUCH.ROTATE;
-                orbit.touches.TWO = T.TOUCH.DOLLY_ROTATE;
+            const configureInput = () => {
+                orbit.enablePan = exploring;
+                orbit.enableZoom = exploring;
+                stage.style.touchAction = exploring ? "none" : "pan-y";
+                orbit.touches.ONE =
+                    exploring || !narrow.matches ? T.TOUCH.ROTATE : null;
+                orbit.touches.TWO = exploring
+                    ? T.TOUCH.DOLLY_PAN
+                    : T.TOUCH.DOLLY_ROTATE;
             };
-            configureTouch();
+            configureInput();
             const looks: Record<
                 ScenePhase,
                 {
@@ -670,6 +680,7 @@ if (
             let surfaceMix = 0,
                 surfaceWorld = -1,
                 freeLook = false;
+            let renderFence: WebGLSync | null = null;
             let orbitalDistance = 3.45;
             const worldUp = new T.Vector3(0, 1, 0);
             const origin = new T.Vector3();
@@ -743,9 +754,14 @@ if (
                 centeredWorld = undefined;
                 selectionScroll = undefined;
             };
-            const releaseOnKey = (event: KeyboardEvent) => {
+            const windowKey = (event: KeyboardEvent) => {
+                if (!isCameraShortcut(event)) return;
+                if (exploring && event.key === "Escape") {
+                    event.preventDefault();
+                    exitExploration();
+                    return;
+                }
                 if (
-                    !event.defaultPrevented &&
                     [
                         "ArrowDown",
                         "ArrowUp",
@@ -778,8 +794,7 @@ if (
                 schedule();
             };
             const readScroll = () => {
-                if (!knots.length || section.dataset.layout === "expanded")
-                    return;
+                if (!knots.length || exploring) return;
                 if (selectionScroll !== undefined) {
                     // The scroll event queued by a destination click must not
                     // overwrite that selection after the mobile layout resizes.
@@ -884,16 +899,95 @@ if (
                 if (!frame && !disposed && visible && !document.hidden)
                     frame = requestAnimationFrame(tick);
             }
+            let guidedElapsed = 0,
+                landmark = "";
+            const updateGuidedPose = (outpost?: Three.Group) => {
+                goal.position
+                    .copy(orbitDirection)
+                    .multiplyScalar(orbitalDistance);
+                goal.target.copy(origin);
+                goal.up.copy(worldUp);
+                if (!outpost || surfaceMix === 0) return;
+                const pose = outpostCamera(
+                    T,
+                    outpost,
+                    surfaceWorld === 1 ? "moon" : "mars",
+                    guidedElapsed,
+                    lunarLaunch?.positionAt,
+                );
+                landmark = pose.landmark;
+                surfaceUp
+                    .set(0, 1, 0)
+                    .applyQuaternion(
+                        outpost.getWorldQuaternion(worldQuaternion),
+                    );
+                const globe = planets.get(surfaceWorld)!;
+                if (
+                    departure &&
+                    target === surfaceWorld &&
+                    surfaceMix >= departure.mix
+                )
+                    departure = undefined;
+                if (departure) {
+                    const lift = T.MathUtils.smoothstep(
+                        1 - surfaceMix / departure.mix,
+                        0,
+                        1,
+                    );
+                    goal.position.copy(
+                        arcPosition(
+                            T,
+                            departure.pose.position,
+                            goal.position,
+                            globe.position,
+                            lift,
+                        ),
+                    );
+                    goal.target.copy(departure.pose.target).lerp(origin, lift);
+                    goal.up
+                        .copy(departure.pose.up)
+                        .lerp(worldUp, lift)
+                        .normalize();
+                } else {
+                    goal.position.copy(
+                        arcPosition(
+                            T,
+                            approachDirection
+                                .clone()
+                                .multiplyScalar(orbitalDistance),
+                            pose.position,
+                            globe.position,
+                            surfaceMix,
+                        ),
+                    );
+                    goal.target.lerp(
+                        pose.target,
+                        T.MathUtils.smoothstep(surfaceMix, 0, 0.7),
+                    );
+                    goal.up.lerp(surfaceUp, surfaceMix).normalize();
+                }
+            };
             const tick = (time: number) => {
                 frame = 0;
                 if (disposed || !visible || document.hidden) return;
+                // Keep only one rendered frame in flight, as on the homepage.
+                if (renderFence) {
+                    if (
+                        gl.clientWaitSync(renderFence, 0, 0) ===
+                        gl.TIMEOUT_EXPIRED
+                    ) {
+                        schedule();
+                        return;
+                    }
+                    gl.deleteSync(renderFence);
+                    renderFence = null;
+                }
                 const elapsedDelta = Math.min(
                     0.25,
                     (time - (lastTime || time)) / 1000,
                 );
                 const dt = Math.min(0.1, elapsedDelta);
                 lastTime = time;
-                updateControl();
                 const still = paused || motion.matches;
                 const settle = motion.matches || (paused && navigationDirty);
                 const look = looks[phase],
@@ -1061,7 +1155,7 @@ if (
                 put(stage, "surface", String(surfaceMix > 0.02));
                 put(section, "surface", String(surfaceMix > 0.02));
                 const outpost = outposts.get(surfaceWorld);
-                let landmark = "";
+                guidedElapsed = play.guidedElapsed;
                 if (!freeLook && surfaceMix === 0 && !still) {
                     if (Math.abs(target - progress) > 0.01)
                         orbitDirection
@@ -1077,72 +1171,8 @@ if (
                             .normalize();
                     else orbitDirection.applyAxisAngle(worldUp, -dt * 0.0126);
                 }
-                goal.position
-                    .copy(orbitDirection)
-                    .multiplyScalar(orbitalDistance);
-                goal.target.copy(origin);
-                goal.up.copy(worldUp);
+                if (!freeLook) updateGuidedPose(outpost);
                 if (outpost && surfaceMix > 0) {
-                    const pose = outpostCamera(
-                        T,
-                        outpost,
-                        surfaceWorld === 1 ? "moon" : "mars",
-                        play.guidedElapsed,
-                        lunarLaunch?.positionAt,
-                    );
-                    landmark = pose.landmark;
-                    surfaceUp
-                        .set(0, 1, 0)
-                        .applyQuaternion(
-                            outpost.getWorldQuaternion(worldQuaternion),
-                        );
-                    const globe = planets.get(surfaceWorld)!;
-                    if (
-                        departure &&
-                        target === surfaceWorld &&
-                        surfaceMix >= departure.mix
-                    )
-                        departure = undefined;
-                    if (departure) {
-                        const lift = T.MathUtils.smoothstep(
-                            1 - surfaceMix / departure.mix,
-                            0,
-                            1,
-                        );
-                        goal.position.copy(
-                            arcPosition(
-                                T,
-                                departure.pose.position,
-                                goal.position,
-                                globe.position,
-                                lift,
-                            ),
-                        );
-                        goal.target
-                            .copy(departure.pose.target)
-                            .lerp(origin, lift);
-                        goal.up
-                            .copy(departure.pose.up)
-                            .lerp(worldUp, lift)
-                            .normalize();
-                    } else {
-                        goal.position.copy(
-                            arcPosition(
-                                T,
-                                approachDirection
-                                    .clone()
-                                    .multiplyScalar(orbitalDistance),
-                                pose.position,
-                                globe.position,
-                                surfaceMix,
-                            ),
-                        );
-                        goal.target.lerp(
-                            pose.target,
-                            T.MathUtils.smoothstep(surfaceMix, 0, 0.7),
-                        );
-                        goal.up.lerp(surfaceUp, surfaceMix).normalize();
-                    }
                     outpost.getWorldPosition(anchor);
                     sun.target.position.copy(anchor);
                     sun.position.copy(anchor).add(sunOffset);
@@ -1238,7 +1268,7 @@ if (
                 if (navigationLabel)
                     say(
                         navigationLabel,
-                        freeLook
+                        exploring || freeLook
                             ? "Free exploration"
                             : surfaceMix > 0.98
                               ? "Guided exploration"
@@ -1273,7 +1303,7 @@ if (
                                 ? {
                                       globe: planets.get(surfaceWorld)!
                                           .position,
-                                      at: outpost.getWorldPosition(anchor),
+                                      at: anchor,
                                       ...SETTLEMENT_FLOOR,
                                   }
                                 : undefined,
@@ -1387,11 +1417,14 @@ if (
                     performance.now(),
                 );
                 render.render(scene, camera);
+                renderFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+                gl.flush();
                 if (!firstFrameDrawn && ready) {
                     firstFrameDrawn = true;
                     render.domElement.style.visibility = "visible";
                     stage.dataset.firstFramePhase = phase;
                     stage.dataset.ready = "true";
+                    cameraTools?.show();
                 }
                 put(stage, "progress", progress.toFixed(4));
                 put(stage, "transition", travel.toFixed(4));
@@ -1432,7 +1465,27 @@ if (
                 paused = !paused;
                 syncMotion();
             };
-            const reset = () => {
+            const setExploring = (active: boolean) => {
+                exploring = active;
+                pendingTravel = undefined;
+                releaseAlignment();
+                if (dragging) {
+                    dragging = false;
+                    orbit.disconnect();
+                    orbit.connect(stage);
+                }
+                configureInput();
+                section.dataset.exploring = String(active);
+                if (active)
+                    stage.setAttribute("aria-describedby", `${stage.id}-help`);
+                else stage.removeAttribute("aria-describedby");
+                cameraTools?.setActive(active);
+                layout?.update();
+                schedule();
+            };
+            const replay = () => {
+                if (exploring) setExploring(false);
+                pendingTravel = undefined;
                 playback.setManualOrbit(true);
                 playback.setManualOrbit(false);
                 resumeGuide();
@@ -1452,59 +1505,50 @@ if (
                 target = surfaceMix > 0 ? Math.round(progress) : progress;
                 pendingTravel = undefined;
             };
-            const key = (event: KeyboardEvent) => {
-                if (event.key === "Home") {
-                    event.preventDefault();
-                    reset();
-                    return;
+            const exitExploration = () => {
+                setExploring(false);
+                if (freeLook) {
+                    target = Math.max(0, lastWorld);
+                    navigationDirty = true;
+                    resumeGuide();
                 }
-                if (
-                    ![
-                        "ArrowLeft",
-                        "ArrowRight",
-                        "ArrowUp",
-                        "ArrowDown",
-                        "+",
-                        "=",
-                        "-",
-                    ].includes(event.key)
-                )
-                    return;
+                cameraTools?.focusToggle();
+            };
+            const resetView = () => {
                 beginManual();
-                const s = new T.Spherical().setFromVector3(
-                    inputCamera.position.clone().sub(orbit.target),
-                );
-                if (event.key === "ArrowLeft") s.theta -= 0.16;
-                else if (event.key === "ArrowRight") s.theta += 0.16;
-                else if (event.key === "ArrowUp")
-                    s.phi = Math.max(0.1, s.phi - 0.16);
-                else if (event.key === "ArrowDown")
-                    s.phi = Math.min(Math.PI - 0.1, s.phi + 0.16);
-                else if (event.key === "+" || event.key === "=") {
-                    s.radius = Math.max(orbit.minDistance, s.radius * 0.85);
-                } else if (event.key === "-") {
-                    s.radius = Math.min(14, s.radius / 0.85);
-                } else return;
-                event.preventDefault();
-                inputCamera.position.setFromSpherical(s).add(orbit.target);
-                orbit.update();
+                updateGuidedPose(outposts.get(surfaceWorld));
+                rig.setManualPose(goal, surfaceMix > 0.02);
                 schedule();
             };
-            const zoomButtons = [
-                ...section.querySelectorAll<HTMLButtonElement>(
-                    "[data-experience-zoom]",
-                ),
-            ];
-            const zoomHandlers = zoomButtons.map((button) => {
-                const handler = () =>
-                    key(
-                        new KeyboardEvent("keydown", {
-                            key: button.dataset.experienceZoom,
-                            cancelable: true,
-                        }),
-                    );
-                button.addEventListener("click", handler);
-                return handler;
+            const prepareInput = () => {
+                beginManual();
+                orbit.object.updateMatrix();
+                orbit.enableDamping = !paused && !motion.matches;
+            };
+            const key = (event: KeyboardEvent) => {
+                if (event.key === "Home" && isCameraShortcut(event)) {
+                    event.preventDefault();
+                    if (exploring) resetView();
+                    else replay();
+                } else if (applySceneCameraKey(event, orbit, prepareInput)) {
+                    schedule();
+                }
+            };
+            const cameraTools = bindCameraTools(section, {
+                toggle: () => {
+                    if (exploring) exitExploration();
+                    else {
+                        beginManual();
+                        setExploring(true);
+                        stage.focus({ preventScroll: true });
+                    }
+                },
+                reset: resetView,
+                zoom: (inward) => {
+                    prepareInput();
+                    zoomSceneCamera(orbit, inward);
+                    schedule();
+                },
             });
             const selections = buttons.map((button, i) => {
                 const select = () => {
@@ -1522,8 +1566,10 @@ if (
                 return select;
             });
             const beginDrag = () => {
-                beginManual();
+                prepareInput();
                 dragging = true;
+                stage.focus({ preventScroll: true });
+                schedule();
             };
             const endDrag = () => {
                 dragging = false;
@@ -1579,12 +1625,15 @@ if (
             }, 500);
             const lost = (event: Event) => {
                 event.preventDefault();
+                const moveFocus =
+                    exploring && section.contains(document.activeElement);
                 cleanup?.();
                 cleanup = undefined;
                 status.textContent =
                     "The visual is unavailable. Your experience record remains readable.";
                 start.textContent = "Try again";
                 start.hidden = false;
+                if (moveFocus) start.focus({ preventScroll: true });
             };
             window.addEventListener("scroll", readScroll, { passive: true });
             window.addEventListener("wheel", releaseAlignment, {
@@ -1596,20 +1645,21 @@ if (
             window.addEventListener("pointerdown", releaseAlignment, {
                 passive: true,
             });
-            window.addEventListener("keydown", releaseOnKey);
+            window.addEventListener("keydown", windowKey);
             window.addEventListener("resize", resize);
             window.visualViewport?.addEventListener("resize", resize);
             document.addEventListener("visibilitychange", visibility);
             motion.addEventListener("change", syncMotion);
-            narrow.addEventListener("change", configureTouch);
+            narrow.addEventListener("change", configureInput);
             motionButton.addEventListener("click", toggleMotion);
-            resetButton.addEventListener("click", reset);
+            replayButton.addEventListener("click", replay);
             stage.addEventListener("keydown", key);
             render.domElement.addEventListener("webglcontextlost", lost);
             let preloadTimer = 0;
             cleanup = () => {
                 disposed = true;
                 cancelAnimationFrame(frame);
+                if (renderFence) gl.deleteSync(renderFence);
                 clearInterval(preferenceTimer);
                 clearInterval(phaseTimer);
                 clearTimeout(preloadTimer);
@@ -1619,22 +1669,20 @@ if (
                 window.removeEventListener("wheel", releaseAlignment);
                 window.removeEventListener("touchstart", releaseAlignment);
                 window.removeEventListener("pointerdown", releaseAlignment);
-                window.removeEventListener("keydown", releaseOnKey);
+                window.removeEventListener("keydown", windowKey);
                 window.removeEventListener("resize", resize);
                 window.visualViewport?.removeEventListener("resize", resize);
                 document.removeEventListener("visibilitychange", visibility);
                 motion.removeEventListener("change", syncMotion);
-                narrow.removeEventListener("change", configureTouch);
+                narrow.removeEventListener("change", configureInput);
                 motionButton.removeEventListener("click", toggleMotion);
-                resetButton.removeEventListener("click", reset);
+                replayButton.removeEventListener("click", replay);
                 stage.removeEventListener("keydown", key);
                 render.domElement.removeEventListener("webglcontextlost", lost);
                 buttons.forEach((button, i) =>
                     button.removeEventListener("click", selections[i]),
                 );
-                zoomButtons.forEach((button, i) =>
-                    button.removeEventListener("click", zoomHandlers[i]),
-                );
+                cameraTools?.dispose();
                 orbit.dispose();
                 captions.dispose();
                 outposts.forEach((group) => {
@@ -1659,9 +1707,13 @@ if (
                 render.domElement.remove();
                 stage.hidden = true;
                 panel.hidden = true;
+                stage.removeAttribute("aria-describedby");
+                section.dataset.exploring = "false";
+                layout?.update();
             };
             stage.appendChild(render.domElement);
             stage.hidden = false;
+            updateControl();
             panel.hidden = false;
             resize();
             readScroll();
@@ -1678,9 +1730,12 @@ if (
                 })();
             }, 350);
         } catch {
-            cleanup?.();
+            if (cleanup) cleanup();
+            else {
+                disposeInput?.();
+                renderer?.dispose();
+            }
             cleanup = undefined;
-            renderer?.dispose();
             stage.hidden = true;
             panel.hidden = true;
             start.hidden = false;
@@ -1699,9 +1754,13 @@ if (
         generation++;
         cleanup?.();
         cleanup = undefined;
+        layout?.dispose();
     });
     window.addEventListener("pageshow", (event) => {
         pageActive = true;
-        if (event.persisted) void initialize();
+        if (event.persisted) {
+            layout = setupExperienceLayout(section);
+            void initialize();
+        }
     });
 }

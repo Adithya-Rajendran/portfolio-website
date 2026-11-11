@@ -1,0 +1,202 @@
+---
+interface Props {
+    surfaceId: string;
+}
+const { surfaceId } = Astro.props;
+---
+
+<div class="scene-camera-tools" data-scene-camera-tools hidden>
+    <div
+        id={`${surfaceId}-actions`}
+        class="scene-camera-tools__actions"
+        data-scene-camera-actions
+        role="group"
+        aria-label="Camera controls"
+        hidden
+    >
+        <button type="button" data-scene-camera-zoom="in" aria-label="Zoom in">
+            +
+        </button>
+        <button
+            type="button"
+            data-scene-camera-zoom="out"
+            aria-label="Zoom out"
+        >
+            −
+        </button>
+        <button type="button" data-scene-camera-reset>
+            Reset view
+        </button>
+    </div>
+    <button
+        type="button"
+        data-scene-camera-toggle
+        aria-expanded="false"
+        aria-controls={`${surfaceId}-actions`}
+    >
+        Explore scene
+    </button>
+</div>
+<p
+    id={`${surfaceId}-help`}
+    class="scene-camera-help"
+    data-scene-camera-help
+    hidden
+>
+    <span class="scene-camera-help__mouse">
+        Drag to orbit · Right-drag to pan · Scroll to zoom
+    </span>
+    <span class="scene-camera-help__touch">
+        Drag to orbit · Pinch to zoom · Two fingers to pan
+    </span>
+    <span class="scene-camera-help__keyboard">
+        Arrow keys orbit · Shift + arrows pan · + / − zoom · Home resets · Esc
+        exits
+    </span>
+</p>
+
+<style>
+    .scene-camera-tools {
+        position: absolute;
+        top: var(--scene-camera-tools-top, 1.2rem);
+        right: var(--scene-camera-tools-right, 1.5rem);
+        bottom: var(--scene-camera-tools-bottom, auto);
+        z-index: 4;
+        display: flex;
+        gap: 0.35rem;
+        padding: 0.25rem;
+        border: 1px solid #a8b5ad44;
+        border-radius: 999px;
+        background: #101719db;
+        box-shadow:
+            0 8px 24px #00000024,
+            inset 0 1px 0 #ffffff0a;
+        backdrop-filter: blur(12px);
+    }
+    .scene-camera-tools__actions {
+        display: flex;
+        gap: 0.2rem;
+    }
+    .scene-camera-tools button {
+        min-width: 44px;
+        min-height: 44px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #f1e5cf;
+        padding: 0.4rem 0.7rem;
+        font:
+            0.72rem DMMono,
+            monospace;
+        cursor: pointer;
+        transition:
+            background 180ms ease,
+            color 180ms ease;
+    }
+    .scene-camera-tools [data-scene-camera-toggle] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        padding-inline: 1rem;
+    }
+    [data-scene-camera-toggle]::before {
+        content: "";
+        width: 14px;
+        height: 14px;
+        flex: 0 0 auto;
+        border: 1px solid currentColor;
+        border-radius: 50%;
+        background: radial-gradient(
+            circle,
+            currentColor 0 1px,
+            transparent 2px
+        );
+        box-shadow: inset 0 0 0 3px #101719;
+        opacity: 0.8;
+    }
+    .scene-camera-tools button:hover {
+        background: #dfa05d22;
+    }
+    .scene-camera-tools button:focus-visible {
+        outline: 2px solid #dfa05d;
+        outline-offset: -2px;
+    }
+    .scene-camera-tools [aria-expanded="true"] {
+        color: #dfa05d;
+        border-left: 1px solid #a8b5ad44;
+    }
+    .scene-camera-help {
+        position: absolute;
+        top: var(--scene-camera-help-top, auto);
+        bottom: var(--scene-camera-help-bottom, 0.75rem);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        width: max-content;
+        max-width: calc(100% - 2rem);
+        margin: 0;
+        padding: 0.5rem 0.8rem;
+        background: #101719cf;
+        border: 1px solid #a8b5ad22;
+        border-radius: 999px;
+        color: #d6dbcf;
+        font:
+            0.7rem/1.6 DMMono,
+            monospace;
+        text-align: center;
+        pointer-events: none;
+    }
+    .scene-camera-help__touch,
+    .scene-camera-help__keyboard {
+        display: none;
+    }
+    :global([data-scene-camera-surface]:focus-visible)
+        ~ .scene-camera-help
+        .scene-camera-help__keyboard {
+        display: block;
+    }
+    :global([data-scene-camera-surface]:focus-visible)
+        ~ .scene-camera-help
+        :is(.scene-camera-help__mouse, .scene-camera-help__touch) {
+        display: none;
+    }
+    .scene-camera-tools[hidden],
+    .scene-camera-tools__actions[hidden],
+    .scene-camera-help[hidden] {
+        display: none;
+    }
+    @media (pointer: coarse) {
+        .scene-camera-help__mouse {
+            display: none;
+        }
+        .scene-camera-help__touch {
+            display: block;
+        }
+    }
+    @media (max-width: 650px) {
+        .scene-camera-tools {
+            top: 0.7rem;
+            right: 0.8rem;
+        }
+        .scene-camera-tools button {
+            font-size: 0.6rem;
+            padding-inline: 0.5rem;
+        }
+        .scene-camera-help {
+            font-size: 0.62rem;
+            padding: 0.35rem 0.65rem;
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .scene-camera-tools button {
+            transition: none;
+        }
+    }
+    @media print {
+        .scene-camera-tools,
+        .scene-camera-help {
+            display: none;
+        }
+    }
+</style>

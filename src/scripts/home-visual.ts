@@ -1,5 +1,6 @@
 import type * as Three from "three";
 import type { HomeFraming } from "../lib/home-framing";
+import { bindCameraTools, isCameraShortcut } from "./scene-camera-controls";
 
 const wrapper = document.querySelector<HTMLElement>("[data-home-visual]");
 const stage = wrapper?.querySelector<HTMLElement>("[data-home-stage]");
@@ -10,27 +11,9 @@ const motionButton =
 const hint = document.querySelector<HTMLElement>("[data-home-hint]");
 const controls = document.querySelector<HTMLElement>("[data-home-controls]");
 const note = document.querySelector<HTMLElement>("[data-home-note]");
-const cameraSurface = document.querySelector<HTMLElement>(
-    "[data-home-camera-surface]",
+const cameraSurface = hero?.querySelector<HTMLElement>(
+    "[data-scene-camera-surface]",
 );
-const cameraTools = document.querySelector<HTMLElement>(
-    "[data-home-camera-tools]",
-);
-const cameraActions = document.querySelector<HTMLElement>(
-    "[data-home-camera-actions]",
-);
-const cameraHelp = document.querySelector<HTMLElement>(
-    "[data-home-camera-help]",
-);
-const exploreButton = document.querySelector<HTMLButtonElement>(
-    "[data-home-explore]",
-);
-const resetButton = document.querySelector<HTMLButtonElement>(
-    "[data-home-camera-reset]",
-);
-const zoomButtons = [
-    ...document.querySelectorAll<HTMLButtonElement>("[data-home-zoom]"),
-];
 const heroContent = hero?.querySelector<HTMLElement>(".home-hero__content");
 const destinations = [
     ...document.querySelectorAll<HTMLButtonElement>("[data-home-destination]"),
@@ -42,7 +25,7 @@ const focusNotes = [
     "Stay curious. Stay connected.",
 ];
 
-if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
+if (wrapper && stage && poster && hero && cameraSurface) {
     let cleanup: (() => void) | undefined;
     let loading = false;
     let generation = 0;
@@ -122,7 +105,7 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
             const updateButton = () => {
                 if (!revealed) return;
                 if (controls) controls.hidden = false;
-                if (cameraTools) cameraTools.hidden = false;
+                cameraTools?.show();
                 if (motionButton) {
                     motionButton.hidden = false;
                     motionButton.disabled = reduced.matches;
@@ -290,10 +273,7 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 dirty = true;
                 stage.dataset.cameraMode = active ? "explore" : "composed";
                 cameraSurface.hidden = !active;
-                if (cameraActions) cameraActions.hidden = !active;
-                if (cameraHelp) cameraHelp.hidden = !active;
-                exploreButton.textContent = active ? "Done" : "Explore scene";
-                exploreButton.setAttribute("aria-expanded", String(active));
+                cameraTools?.setActive(active);
                 if (heroContent) {
                     const covered = active && framing() === "desktop";
                     heroContent.inert = covered;
@@ -310,7 +290,7 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 current.set(0, 0);
                 navigation.deactivate(landscape.homePose(framing(), focus));
                 syncExplorationUI();
-                exploreButton.focus({ preventScroll: true });
+                cameraTools?.focusToggle();
             };
             const explore = () => {
                 if (!revealed) return;
@@ -350,7 +330,7 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                     navigation.goTo(landscape.explorationPose(desiredFocus));
             };
             const cameraKey = (event: KeyboardEvent) => {
-                if (!navigation?.active) return;
+                if (!navigation?.active || !isCameraShortcut(event)) return;
                 if (event.key === "Escape") {
                     event.preventDefault();
                     exitExploration();
@@ -362,13 +342,12 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                     resetCamera();
                 }
             };
-            const zoomSelections = zoomButtons.map((button) => {
-                const zoom = () => {
-                    if (navigation?.active)
-                        navigation.zoom(button.dataset.homeZoom === "in");
-                };
-                button.addEventListener("click", zoom);
-                return zoom;
+            const cameraTools = bindCameraTools(hero, {
+                toggle: explore,
+                reset: resetCamera,
+                zoom: (inward) => {
+                    if (navigation?.active) navigation.zoom(inward);
+                },
             });
             const sync = () => {
                 cancelAnimationFrame(frame);
@@ -493,8 +472,6 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 }
             }, 500);
             motionButton?.addEventListener("click", toggle);
-            exploreButton.addEventListener("click", explore);
-            resetButton?.addEventListener("click", resetCamera);
             hero.addEventListener("keydown", cameraKey);
             hero.addEventListener("pointermove", onPointer, { passive: true });
             hero.addEventListener("pointerleave", leave);
@@ -505,6 +482,7 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
             teardown = () => {
                 if (disposed) return;
                 disposed = true;
+                revealed = false;
                 endLifetime();
                 cancelAnimationFrame(frame);
                 cancelAnimationFrame(revealFrame);
@@ -517,12 +495,8 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 observer.disconnect();
                 sizes.disconnect();
                 motionButton?.removeEventListener("click", toggle);
-                exploreButton.removeEventListener("click", explore);
-                resetButton?.removeEventListener("click", resetCamera);
                 hero.removeEventListener("keydown", cameraKey);
-                zoomButtons.forEach((button, i) =>
-                    button.removeEventListener("click", zoomSelections[i]),
-                );
+                cameraTools?.dispose();
                 const wasExploring = navigation?.active;
                 navigation?.dispose();
                 navigation = undefined;
@@ -551,7 +525,6 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 if (motionButton) motionButton.hidden = true;
                 if (hint) hint.hidden = true;
                 if (controls) controls.hidden = true;
-                if (cameraTools) cameraTools.hidden = true;
             };
             cleanup = teardown;
             await Promise.race([
@@ -649,7 +622,6 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
             if (motionButton) motionButton.hidden = true;
             if (hint) hint.hidden = true;
             if (controls) controls.hidden = true;
-            if (cameraTools) cameraTools.hidden = true;
         } finally {
             loading = false;
             if (ticket !== generation && pageActive) void initialize();

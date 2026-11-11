@@ -65,6 +65,11 @@ export function createExperienceCamera(
     const inverseFrame = new T.Quaternion();
     const look = new T.PerspectiveCamera();
     const yAxis = new T.Vector3(0, 1, 0);
+    const manual: CameraPose = {
+        position: new T.Vector3(),
+        target: new T.Vector3(),
+        up: new T.Vector3(),
+    };
     // Reused by move(), which runs every frame.
     const previousPosition = new T.Vector3();
     const offset = new T.Vector3();
@@ -73,42 +78,51 @@ export function createExperienceCamera(
     const minimumRadius = TERRAIN_RADIUS + 0.001;
     let initialized = false;
 
-    function beginManual(surface: boolean) {
+    function setManualPose(pose: CameraPose, surface: boolean) {
         // Flush residual damping before replacing the input pose, never after.
         orbit.enableDamping = false;
-        orbit.minDistance = 0.001;
-        orbit.maxPolarAngle = Math.PI;
         orbit.update(0);
-        // Preserve the view the visitor actually sees, including an interrupted
-        // turn whose orientation has not yet caught up with its guided focus.
-        const focusDistance = camera.position.distanceTo(target);
-        camera
-            .getWorldDirection(target)
-            .multiplyScalar(focusDistance)
-            .add(camera.position);
-        controlFrame.setFromUnitVectors(yAxis, camera.up);
+        const distance = pose.position.distanceTo(pose.target);
+        controlFrame.setFromUnitVectors(yAxis, pose.up);
         inverseFrame.copy(controlFrame).invert();
-        control.position.copy(camera.position).applyQuaternion(inverseFrame);
-        orbit.target.copy(target).applyQuaternion(inverseFrame);
-        orbit.minDistance = surface ? 0.0143 : Math.min(2.2, focusDistance);
-        // Keep the local horizon upright. Collision clearance is also enforced
-        // after interpolation, before calculating the rendered orientation.
-        orbit.minPolarAngle = 0.025;
-        const initialPolar = new T.Spherical().setFromVector3(
-            control.position.clone().sub(orbit.target),
-        ).phi;
-        orbit.maxPolarAngle = surface
-            ? Math.max(initialPolar, Math.PI / 2 - 0.035)
-            : Math.PI - 0.025;
+        control.position.copy(pose.position).applyQuaternion(inverseFrame);
+        orbit.target.copy(pose.target).applyQuaternion(inverseFrame);
+        orbit.cursor.copy(orbit.target);
+        orbit.maxTargetRadius = surface ? 0.2 : 3.5;
+        orbit.minDistance = Math.min(surface ? 0.0143 : 2.2, distance);
+        orbit.maxDistance = Math.max(14, distance);
+        // Keep the incoming elevation reachable and the local horizon upright.
+        const polar = offset
+            .copy(control.position)
+            .sub(orbit.target)
+            .angleTo(yAxis);
+        orbit.minPolarAngle = Math.min(polar, 0.025);
+        orbit.maxPolarAngle = Math.max(
+            polar,
+            surface ? Math.PI / 2 - 0.035 : Math.PI - 0.025,
+        );
         orbit.update(0);
     }
 
+    function beginManual(surface: boolean) {
+        // Preserve the view the visitor actually sees, including an interrupted
+        // turn whose orientation has not yet caught up with its guided focus.
+        const focusDistance = camera.position.distanceTo(target);
+        manual.position.copy(camera.position);
+        manual.up.copy(camera.up);
+        camera
+            .getWorldDirection(manual.target)
+            .multiplyScalar(focusDistance)
+            .add(camera.position);
+        target.copy(manual.target);
+        setManualPose(manual, surface);
+    }
+
     function manualPose(): CameraPose {
-        return {
-            position: control.position.clone().applyQuaternion(controlFrame),
-            target: orbit.target.clone().applyQuaternion(controlFrame),
-            up: yAxis.clone().applyQuaternion(controlFrame),
-        };
+        manual.position.copy(control.position).applyQuaternion(controlFrame);
+        manual.target.copy(orbit.target).applyQuaternion(controlFrame);
+        manual.up.copy(yAxis).applyQuaternion(controlFrame);
+        return manual;
     }
 
     function move(
@@ -196,5 +210,5 @@ export function createExperienceCamera(
         initialized = true;
     }
 
-    return { target, beginManual, manualPose, move };
+    return { target, beginManual, setManualPose, manualPose, move };
 }

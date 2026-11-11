@@ -14,6 +14,7 @@ function setup() {
     const controls = {
         object: input,
         target: new THREE.Vector3(),
+        cursor: new THREE.Vector3(),
         enableDamping: false,
         minDistance: 2.2,
         minPolarAngle: 0,
@@ -102,6 +103,26 @@ describe("experience camera", () => {
         });
         expect(camera.position.distanceTo(original)).toBeGreaterThan(0.9);
         expect(controls.update).toHaveBeenCalled();
+    });
+
+    it("starts manual exploration from the rendered sight line during a guided turn", () => {
+        const { camera, rig, globe } = setup();
+        const position = new THREE.Vector3(0, 0, 3);
+        const options = { instant: false, manual: false, globes: [globe] };
+        rig.move(pose(position), 0.05, options);
+        rig.move(pose(position, new THREE.Vector3(2, 0, 5)), 0.05, options);
+        const sightLine = camera.getWorldDirection(new THREE.Vector3());
+
+        rig.beginManual(false);
+        const manual = rig.manualPose();
+        expect(rig.target.distanceTo(manual.target)).toBeLessThan(1e-9);
+        expect(
+            manual.target
+                .clone()
+                .sub(manual.position)
+                .normalize()
+                .distanceTo(sightLine),
+        ).toBeLessThan(1e-9);
     });
 
     it("keeps a manual camera outside raised surface terrain", () => {

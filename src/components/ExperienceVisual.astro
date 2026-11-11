@@ -1,4 +1,5 @@
 ---
+import SceneCameraTools from "./SceneCameraTools.astro";
 const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
 ---
 
@@ -38,13 +39,16 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
                 <circle cx="786" cy="615" r="3" />
             </svg>
             <div
+                id="experience-camera-surface"
                 class="observatory__stage"
                 data-experience-stage
+                data-scene-camera-surface
                 role="region"
                 tabindex="0"
-                aria-label="Orbital journey. Scroll the page to travel between planets. Drag or use arrow keys to orbit; use plus and minus to zoom and Home to reset."
+                aria-label="Orbital journey camera"
                 hidden
             ></div>
+            <SceneCameraTools surfaceId="experience-camera-surface" />
             <div
                 class="observatory__label"
                 aria-live="polite"
@@ -73,39 +77,12 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
                 <button type="button" data-experience-motion>
                     Pause motion
                 </button>
-                <div
-                    class="observatory__camera-controls"
-                    role="group"
-                    aria-label="Adjust the view"
-                >
-                    <button
-                        type="button"
-                        data-experience-zoom="+"
-                        aria-label="Zoom in"
-                    >
-                        +
-                    </button>
-                    <button
-                        type="button"
-                        data-experience-zoom="-"
-                        aria-label="Zoom out"
-                    >
-                        −
-                    </button>
-                    <button
-                        type="button"
-                        data-experience-reset
-                        aria-label="Replay the guided tour"
-                    >
-                        ↺ <span>Replay</span>
-                    </button>
-                </div>
                 <button
                     type="button"
-                    data-experience-expand
-                    aria-expanded="false"
+                    data-experience-replay
+                    aria-label="Replay the guided tour"
                 >
-                    Explore <span aria-hidden="true">↗</span>
+                    ↺ Replay
                 </button>
             </div>
         </div>
@@ -133,11 +110,12 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     <details class="experience-visual__details">
         <summary>Controls &amp; credits</summary>
         <p>
-            Scroll through the record to move between worlds. Use arrow keys to
-            orbit, + / − to zoom, and Home to reset. On touch, drag with two
-            fingers. Dawn, day, dusk, and night follow your device's local
-            clock. Lighting is illustrative; it does not use your location or
-            live weather. Satellites are enlarged for visibility. Moon and Mars
+            Scroll through the record to move between worlds. Choose Explore
+            scene to orbit, pan and zoom. Use Reset view to restore the current
+            world's framing, and Done or Escape to return to the journey. Dawn,
+            day, dusk, and night follow your device's local clock. Lighting is
+            illustrative and uses your device's time without location or live
+            weather. Satellites are enlarged for visibility. Moon and Mars
             arrivals reveal original architectural concepts at an illustrated
             scale, attached to their planet’s curved surface. The lunar rail
             launches a satellite, unfolds its solar panels, and returns the
@@ -173,15 +151,6 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
 </section>
 <script>
     import "../scripts/experience";
-    import { setupExperienceLayout } from "../scripts/experience-layout";
-    const visual = document.querySelector<HTMLElement>(".experience-visual");
-    if (visual) {
-        let disposeLayout = setupExperienceLayout(visual);
-        window.addEventListener("pagehide", () => disposeLayout());
-        window.addEventListener("pageshow", (event) => {
-            if (event.persisted) disposeLayout = setupExperienceLayout(visual);
-        });
-    }
 </script>
 <style>
     .experience-visual {
@@ -234,9 +203,20 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
     .observatory__stage {
         position: absolute;
         inset: 0;
-    }
-    .observatory__stage {
         touch-action: pan-y;
+    }
+    [data-exploring="true"] .observatory__stage {
+        cursor: grab;
+    }
+    [data-exploring="true"] .observatory__stage:active {
+        cursor: grabbing;
+    }
+    .observatory__stage:focus-visible {
+        outline: none;
+    }
+    .observatory__viewport:has(.observatory__stage:focus-visible) {
+        outline: 2px solid #dfa05d;
+        outline-offset: -2px;
     }
     .observatory__stage :global(canvas) {
         display: block;
@@ -310,21 +290,9 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         gap: 0.6rem;
         padding-top: 0.2rem;
     }
-    .observatory__camera-controls {
-        display: flex;
-        align-items: center;
-    }
-    .observatory__camera-controls [data-experience-zoom] {
-        font-size: 1.15rem;
-        min-width: 44px;
-    }
     .observatory__actions [data-experience-motion] {
         color: #f2d1a7;
         font-family: inherit;
-    }
-    .observatory__actions [data-experience-expand] {
-        display: none;
-        color: #f2d1a7;
     }
     .observatory__status:empty {
         display: none;
@@ -444,6 +412,15 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         text-transform: uppercase;
         white-space: nowrap;
     }
+    @media (min-width: 801px) {
+        .observatory__viewport {
+            /* The orbital art reaches behind the intro and past the grid. */
+            --scene-camera-tools-top: auto;
+            --scene-camera-tools-right: 3.5rem;
+            --scene-camera-tools-bottom: 1rem;
+            --scene-camera-help-bottom: 4.8rem;
+        }
+    }
     @media (min-width: 801px) and (max-height: 850px) {
         .observatory__viewport {
             height: max(280px, calc(100svh - 290px));
@@ -475,16 +452,6 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
             font-size: 0.78rem;
             padding-inline: 0.4rem;
         }
-        .observatory__actions [data-experience-expand] {
-            display: block;
-        }
-        [data-experience-reset] span {
-            display: none;
-        }
-        .observatory__camera-controls [data-experience-reset] {
-            font-size: 1.1rem;
-            min-width: 44px;
-        }
         .experience-visual__caption {
             margin-top: 0.4rem;
         }
@@ -511,9 +478,6 @@ const worlds = ["Earth", "Moon", "Mars", "Jupiter", "Saturn"];
         }
         .experience-visual[data-layout="expanded"] .experience-visual__details {
             display: none;
-        }
-        .experience-visual[data-layout="expanded"] [data-experience-expand] {
-            font-size: 0.7rem;
         }
     }
     @media (prefers-reduced-motion: reduce) {

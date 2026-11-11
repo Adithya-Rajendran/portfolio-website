@@ -1,5 +1,10 @@
 import * as T from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import {
+    applySceneCameraKey,
+    configureSceneOrbit,
+    zoomSceneCamera,
+} from "./scene-camera-controls";
 
 export interface HomeCameraPose {
     eye: T.Vector3;
@@ -20,10 +25,7 @@ export function makeHomeCamera(
     orbit.enabled = false;
     orbit.enableDamping = true;
     orbit.dampingFactor = 0.12;
-    orbit.rotateSpeed = 0.65;
-    orbit.panSpeed = 0.7;
-    orbit.zoomSpeed = 0.7;
-    orbit.screenSpacePanning = false;
+    configureSceneOrbit(orbit);
     orbit.minDistance = 7;
     orbit.maxDistance = 65;
     orbit.minPolarAngle = 0.15;
@@ -93,29 +95,12 @@ export function makeHomeCamera(
     };
     const zoom = (inward: boolean) => {
         interrupt();
-        if (inward) orbit.dollyIn(1 / 1.16);
-        else orbit.dollyOut(1 / 1.16);
+        zoomSceneCamera(orbit, inward);
         constrain();
         changed();
     };
     const key = (event: KeyboardEvent) => {
-        if (!active || event.altKey || event.ctrlKey || event.metaKey) return;
-        if (["+", "=", "-", "_"].includes(event.key)) {
-            event.preventDefault();
-            zoom(event.key === "+" || event.key === "=");
-            return;
-        }
-        if (!event.key.startsWith("Arrow")) return;
-        event.preventDefault();
-        interrupt();
-        const horizontal =
-            event.key === "ArrowLeft" || event.key === "ArrowRight";
-        const sign =
-            event.key === "ArrowLeft" || event.key === "ArrowUp" ? 1 : -1;
-        if (event.shiftKey)
-            orbit.pan(horizontal ? sign * 32 : 0, horizontal ? 0 : sign * 32);
-        else if (horizontal) orbit.rotateLeft(sign * 0.12);
-        else orbit.rotateUp(sign * 0.09);
+        if (!active || !applySceneCameraKey(event, orbit, interrupt)) return;
         constrain();
         changed();
     };
