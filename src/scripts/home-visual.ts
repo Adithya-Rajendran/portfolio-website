@@ -56,15 +56,25 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
         let renderer: Three.WebGLRenderer | undefined;
         let teardown: (() => void) | undefined;
         try {
-            const [T, { makeHomeLandscape }, { makeHomeCamera }] =
+            // The ground is measured data and everything stands on it, so
+            // its heights are fetched alongside the code that uses them.
+            const [T, { makeHomeLandscape }, { makeHomeCamera }, terrain] =
                 await Promise.all([
                     import("three"),
                     import("./home-landscape"),
                     import("./home-camera"),
+                    import("./home-terrain").then((module) =>
+                        module.loadHomeTerrain(),
+                    ),
                 ]);
-            if (ticket !== generation || !pageActive) return;
+            if (ticket !== generation || !pageActive) {
+                terrain.dispose();
+                return;
+            }
+            // The scene is antialiased in its own HDR target; the canvas
+            // only ever receives the finished full-screen image.
             const render = new T.WebGLRenderer({
-                antialias: true,
+                antialias: false,
                 alpha: false,
                 powerPreference: "high-performance",
             });
@@ -73,12 +83,13 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
             const gl = render.getContext() as WebGL2RenderingContext;
             render.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
             render.outputColorSpace = T.SRGBColorSpace;
-            render.toneMapping = T.ACESFilmicToneMapping;
+            // Exposure and the film curve are applied once, in the final pass.
+            render.toneMapping = T.NoToneMapping;
             render.toneMappingExposure = 1;
             render.shadowMap.enabled = true;
             render.shadowMap.type = T.PCFShadowMap;
             render.info.autoReset = false;
-            const landscape = makeHomeLandscape(render);
+            const landscape = makeHomeLandscape(render, terrain);
             let navigation: ReturnType<typeof makeHomeCamera> | undefined;
             let endLifetime: () => void = () => {};
             const lifetime = new Promise<void>((resolve) => {
@@ -129,9 +140,9 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                         !finePointer.matches ||
                         Boolean(navigation?.active);
             };
-            const draw = () => {
+            const draw = (settling = false) => {
                 render.info.reset();
-                landscape.render();
+                landscape.render(settling);
                 if (renderFence) gl.deleteSync(renderFence);
                 renderFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
                 gl.flush();
@@ -244,13 +255,17 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
                 }
                 // Ambient detail runs at 30fps; pointer/camera movement follows
                 // the display cadence. No time is consumed outside the viewport.
+                // The margin keeps a 60 Hz display on every second frame
+                // instead of slipping to every third.
                 if (
                     dirty ||
                     moving ||
-                    (!still && time - lastDraw >= 1000 / 30)
+                    (!still && time - lastDraw >= 1000 / 30 - 4)
                 ) {
                     pose();
-                    draw();
+                    // Ambient frames keep coming, so a moving camera may
+                    // reuse contact shading for a few of them.
+                    draw(moving && !still);
                     dirty = false;
                     lastDraw = time;
                 }
@@ -271,6 +286,8 @@ if (wrapper && stage && poster && hero && cameraSurface && exploreButton) {
             const syncExplorationUI = () => {
                 const active = Boolean(navigation?.active);
                 hero.dataset.exploring = String(active);
+                landscape.reveal(active, reduced.matches || paused);
+                dirty = true;
                 stage.dataset.cameraMode = active ? "explore" : "composed";
                 cameraSurface.hidden = !active;
                 if (cameraActions) cameraActions.hidden = !active;

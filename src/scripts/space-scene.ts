@@ -48,7 +48,9 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             if (!active || ticket !== generation) return;
             renderer = new T.WebGLRenderer({
                 alpha: true,
-                antialias: true,
+                // Every frame is resolved from the multisampled colour target
+                // and copied by a full-screen quad, so the canvas needs none.
+                antialias: false,
                 powerPreference: "high-performance",
             });
             const render = renderer;
@@ -65,9 +67,20 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             if (kind === "robotics")
                 scene.fog = new T.FogExp2(0x45464d, 0.0065);
             const planetScene = new T.Scene();
-            const planetarySun = new T.DirectionalLight(0xffedd8, 1.8);
-            planetarySun.position.set(-6, 4, 0);
-            planetScene.add(planetarySun, new T.AmbientLight(0xabc6e5, 0.025));
+            // The Moon is as dark as asphalt: beside a sunlit station it needs
+            // the camera's exposure, and the station's own sun, to read at all.
+            const planetarySun = new T.DirectionalLight(
+                0xffedd8,
+                kind === "workshop" ? 15 : 1.8,
+            );
+            if (kind === "workshop") planetarySun.position.set(-5, 5, 1);
+            else planetarySun.position.set(-6, 4, 0);
+            // Earthshine: enough that the Moon's night side is not a hole in
+            // the page's own sky.
+            planetScene.add(
+                planetarySun,
+                new T.AmbientLight(0xabc6e5, kind === "workshop" ? 0.3 : 0.025),
+            );
             const camera = new T.PerspectiveCamera(36, 1, 0.1, 2400);
             const eyeHeight =
                 kind === "workshop" ? 3.7 : kind === "robotics" ? 1.1 : 0.3;
@@ -102,7 +115,11 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             rim.position.set(4, 2, -3);
             scene.add(rim);
             scene.add(new T.HemisphereLight(0xb1c7e0, 0x352318, 0.08));
-            const model = makeSpaceStudy(kind);
+            const model = makeSpaceStudy(kind, {
+                anisotropy: Math.min(4, render.capabilities.getMaxAnisotropy()),
+                // A phone gets the lighter build of a loaded model.
+                lite: matchMedia("(max-width: 800px)").matches,
+            });
             startupCleanup.push(() => model.dispose());
             const setting = makeStudySetting(kind);
             startupCleanup.push(() => setting.dispose());
@@ -138,6 +155,23 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             let renderFence: WebGLSync | null = null;
             let lastWidth = 0,
                 lastHeight = 0;
+            // Full rate while the visitor interacts or the view is settling;
+            // idle drift moves about a pixel a second and needs far fewer frames.
+            const activeInterval = 1000 / 30,
+                idleInterval = 1000 / 12 - 4,
+                hold = 1000;
+            let activeUntil = 0,
+                easing = false;
+            const boost = () => {
+                const now = performance.now();
+                // Draw at once when leaving the idle rate; later input only
+                // extends the window so the rate stays capped at 30 fps.
+                if (now >= activeUntil) lastDraw = 0;
+                activeUntil = now + hold;
+            };
+            let shownTime = "",
+                shownCalls = "",
+                shownTriangles = "";
             let endLifetime: () => void = () => {};
             const lifetime = new Promise<void>((resolve) => {
                 endLifetime = resolve;
@@ -158,15 +192,19 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 reflectedReduced = reduced.matches;
                 button.hidden = false;
                 button.disabled = reduced.matches;
-                button.textContent = reduced.matches
+                const label = reduced.matches
                     ? "Still scene"
                     : paused
                       ? "Resume motion"
                       : "Pause motion";
-                button.setAttribute("aria-pressed", String(paused));
+                if (button.textContent !== label) button.textContent = label;
+                const pressed = String(paused);
+                if (button.getAttribute("aria-pressed") !== pressed)
+                    button.setAttribute("aria-pressed", pressed);
                 hint.hidden = false;
-                figure.dataset.state =
-                    reduced.matches || paused ? "paused" : "running";
+                const state = reduced.matches || paused ? "paused" : "running";
+                if (figure.dataset.state !== state)
+                    figure.dataset.state = state;
             };
             const draw = (updateShadows = true) => {
                 render.info.reset();
@@ -176,9 +214,15 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 if (renderFence) gl.deleteSync(renderFence);
                 renderFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
                 gl.flush();
-                figure.dataset.sceneTime = elapsed.toFixed(3);
-                figure.dataset.drawCalls = String(render.info.render.calls);
-                figure.dataset.triangles = String(render.info.render.triangles);
+                const time = elapsed.toFixed(3),
+                    calls = String(render.info.render.calls),
+                    triangles = String(render.info.render.triangles);
+                if (time !== shownTime)
+                    figure.dataset.sceneTime = shownTime = time;
+                if (calls !== shownCalls)
+                    figure.dataset.drawCalls = shownCalls = calls;
+                if (triangles !== shownTriangles)
+                    figure.dataset.triangles = shownTriangles = triangles;
             };
             const tick = (time: number) => {
                 frame = 0;
@@ -199,13 +243,16 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                     renderFence = null;
                 }
                 const still = reduced.matches || paused;
-                if (time - lastDraw < 1000 / 30) {
+                const fast = time < activeUntil || easing;
+                if (time - lastDraw < (fast ? activeInterval : idleInterval)) {
                     frame = requestAnimationFrame(tick);
                     return;
                 }
                 lastDraw = time;
                 const cameraDelta = (time - (lastTime || time)) / 1000;
-                const dt = Math.min(cameraDelta, 0.05);
+                // The ambient step is capped for stalls only; the idle rate must
+                // not slow the drift, so its frames may span a longer step.
+                const dt = Math.min(cameraDelta, fast ? 0.05 : 0.25);
                 lastTime = time;
                 if (!still) {
                     elapsed += dt;
@@ -224,10 +271,13 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 // Input follows wall time even when a slow GPU skips frames;
                 // only ambient animation uses the capped simulation step.
                 const moving = orbit?.update(cameraDelta, reduced.matches);
+                easing = Boolean(moving);
                 draw(!still);
                 if (!still || moving) frame = requestAnimationFrame(tick);
             };
             const wake = () => {
+                // Orbit input, zoom, reset and keys all arrive through here.
+                boost();
                 if (
                     compiled &&
                     !frame &&
@@ -240,6 +290,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 }
             };
             const sync = () => {
+                boost();
                 cancelAnimationFrame(frame);
                 frame = 0;
                 lastTime = 0;
@@ -269,6 +320,7 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 camera.updateProjectionMatrix();
                 render.setSize(width, height, false);
                 rendering.resize(width, height);
+                boost();
                 if (compiled) wake();
             };
             const reset = () => orbit?.reset();
@@ -289,6 +341,21 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                     wake();
                 }
             };
+            // Interaction that wake() does not see: pointer drags and touches,
+            // wheel, keys and focus anywhere in the figure, plus a theme change.
+            const interact = () => boost();
+            const hover = (event: PointerEvent) => {
+                if (event.buttons || event.pointerType === "touch") boost();
+            };
+            const interactions = [
+                "pointerdown",
+                "keydown",
+                "focusin",
+                "wheel",
+                "touchstart",
+                "touchmove",
+            ] as const;
+            const theme = new MutationObserver(interact);
             const lost = (event: Event) => {
                 event.preventDefault();
                 cleanup?.();
@@ -321,6 +388,10 @@ for (const figure of document.querySelectorAll<HTMLElement>(
                 renderFence = null;
                 sizes.disconnect();
                 observer.disconnect();
+                theme.disconnect();
+                for (const name of interactions)
+                    figure.removeEventListener(name, interact);
+                figure.removeEventListener("pointermove", hover);
                 orbit?.dispose();
                 orbit = undefined;
                 resetButton.removeEventListener("click", reset);
@@ -502,6 +573,13 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             orbit.update(0, true);
             sizes.observe(stage);
             observer.observe(stage);
+            for (const name of interactions)
+                figure.addEventListener(name, interact, { passive: true });
+            figure.addEventListener("pointermove", hover, { passive: true });
+            theme.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-theme"],
+            });
             resetButton.addEventListener("click", reset);
             zoomIn.addEventListener("click", closer);
             zoomOut.addEventListener("click", further);
@@ -528,27 +606,65 @@ for (const figure of document.querySelectorAll<HTMLElement>(
             if (ticket !== generation && active) void initialize();
         }
     };
+    // Data saving: keep the poster and wait for the visitor to engage with
+    // the figure (its controls, focus or a tap) instead of downloading.
+    const saving =
+        Boolean(
+            (navigator as Navigator & { connection?: { saveData?: boolean } })
+                .connection?.saveData,
+        ) || matchMedia("(prefers-reduced-data: reduce)").matches;
+    let allowed = !saving;
+    let idleStart = 0,
+        idleTimer = 0;
+    const manualEvents = ["pointerdown", "keydown", "focusin"] as const;
+    const stopManual = () => {
+        for (const name of manualEvents)
+            figure.removeEventListener(name, manual);
+    };
+    function manual() {
+        stopManual();
+        allowed = true;
+        void initialize();
+    }
+    // Start after the page's own text, fonts and styles have loaded.
+    const afterLoad = () => {
+        const start = () => {
+            if (active) void initialize();
+        };
+        const schedule = () => {
+            if ("requestIdleCallback" in window)
+                idleStart = requestIdleCallback(start, { timeout: 2000 });
+            else idleTimer = setTimeout(start, 200) as unknown as number;
+        };
+        if (document.readyState === "complete") schedule();
+        else window.addEventListener("load", schedule, { once: true });
+    };
     const observer = new IntersectionObserver(
         ([entry]) => {
             if (entry.isIntersecting) {
                 observer.disconnect();
-                void initialize();
+                if (allowed) afterLoad();
             }
         },
         { rootMargin: "250px" },
     );
     observer.observe(figure);
+    if (saving)
+        for (const name of manualEvents)
+            figure.addEventListener(name, manual, { passive: true });
     window.addEventListener("pagehide", () => {
         active = false;
         generation++;
         observer.disconnect();
+        if (idleStart) cancelIdleCallback(idleStart);
+        clearTimeout(idleTimer);
         cleanup?.();
         cleanup = undefined;
     });
     window.addEventListener("pageshow", (event) => {
         if (event.persisted) {
             active = true;
-            void initialize();
+            if (allowed) void initialize();
         }
     });
 }

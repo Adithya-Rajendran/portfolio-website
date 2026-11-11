@@ -1,15 +1,21 @@
 import * as T from "three";
 import { finishSurface } from "./study-surfaces";
 import { makePerceptionArm } from "./study-robotics";
-import { makeOrbitalWorkshop, makeRelay } from "./study-orbital";
+import { makeRelay } from "./study-orbital";
 import { finishWebbSurfaces, makeFoilRelief } from "./study-webb";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 export type SpaceStudy = "workshop" | "observatory" | "robotics" | "relay";
 
+/** What the page can afford: texture filtering, and a lighter model. */
+export interface StudyDetail {
+    anisotropy?: number;
+    lite?: boolean;
+}
+
 /** Original instruments, built in metres with shared materials and reusable parts. */
-export function makeSpaceStudy(kind: SpaceStudy) {
+export function makeSpaceStudy(kind: SpaceStudy, detail: StudyDetail = {}) {
     const root = new T.Group();
     const ivory = new T.MeshStandardMaterial({
         color: 0xc9c9bd,
@@ -290,28 +296,7 @@ export function makeSpaceStudy(kind: SpaceStudy) {
     };
     let moving: T.Object3D | undefined;
     if (kind === "workshop") {
-        moving = makeOrbitalWorkshop({
-            root,
-            ivory,
-            metal,
-            gold,
-            dark,
-            amber,
-            light,
-            foil,
-            solar,
-            materials,
-            textures,
-            mesh,
-            box,
-            tube,
-            ring,
-            strut,
-            bolts,
-            wing,
-            dish,
-            truss,
-        });
+        // The dry dock is loaded before the first frame below.
     } else if (kind === "observatory") {
         // The detailed NASA telescope is loaded before the first frame below.
     } else if (kind === "robotics") {
@@ -421,103 +406,161 @@ export function makeSpaceStudy(kind: SpaceStudy) {
     };
     reclaimSources();
     let disposed = false;
+    let turning: ((time: number) => void) | undefined;
+    const dock = async () => {
+        const { loadOrbitalWorkshop } = await import("./study-workshop");
+        const made = await loadOrbitalWorkshop(
+            detail.anisotropy ?? 1,
+            detail.lite ?? false,
+        );
+        if (disposed) {
+            made.geometries.forEach((g) => g.dispose());
+            made.materials.forEach((m) => m.dispose());
+            made.textures.forEach((t) => t.dispose());
+            return;
+        }
+        made.geometries.forEach((g) => geometries.add(g));
+        materials.push(...made.materials);
+        textures.push(...made.textures);
+        root.add(made.asset);
+        // Seen from ahead and to starboard, a little above the keel. Beside
+        // the page's heading on a wide screen; on a narrow one it has the
+        // width to itself, and is set back until both arrays are inside it.
+        root.rotation.set(0.1, -0.5, 0.03);
+        const narrow = matchMedia("(max-width: 800px)");
+        let placed: boolean | undefined;
+        const place = () => {
+            if (placed === narrow.matches) return;
+            placed = narrow.matches;
+            root.position.set(placed ? 0 : 0.9, 0.15, 0);
+            root.scale.setScalar(placed ? 0.9 : 1);
+        };
+        turning = (time) => {
+            place();
+            made.update(time);
+        };
+        turning(0);
+    };
     const ready =
-        kind === "observatory"
-            ? (async () => {
-                  const [{ GLTFLoader }, { DRACOLoader }] = await Promise.all([
-                      import("three/addons/loaders/GLTFLoader.js"),
-                      import("three/addons/loaders/DRACOLoader.js"),
-                  ]);
-                  const decoder = new DRACOLoader();
-                  decoder.setDecoderPath("/draco/");
-                  decoder.setDecoderConfig({ type: "js" });
-                  const loader = new GLTFLoader().setDRACOLoader(decoder);
-                  try {
-                      const { scene: asset } = await loader.loadAsync(
-                          "/models/webb-observatory-v1.glb",
-                      );
-                      finishWebbSurfaces(asset);
-                      asset.traverse((object) => {
-                          if (!(object instanceof T.Mesh)) return;
-                          geometries.add(object.geometry);
-                          for (const material of Array.isArray(object.material)
-                              ? object.material
-                              : [object.material]) {
-                              if (material instanceof T.MeshStandardMaterial) {
-                                  const name = material.name.toLowerCase();
-                                  if (name.includes("mirror")) {
-                                      material.color.set(0xe2a947);
-                                      material.metalness = 0.98;
-                                      material.roughness = 0.26;
-                                      material.bumpMap = foilRelief;
-                                      material.bumpScale = 0;
-                                  } else if (/silv|smli/.test(name)) {
-                                      material.color.set(0x969da6);
-                                      material.metalness = 0.98;
-                                      material.roughness = 0.22;
-                                      material.bumpMap = foilRelief;
-                                      material.bumpScale = 0.004;
-                                  } else if (
-                                      /pink|pnkmli|pmli|gold/.test(name)
-                                  ) {
-                                      material.color.set(
-                                          /gold/.test(name)
-                                              ? 0xac8441
-                                              : 0x9b8d84,
-                                      );
-                                      material.metalness = 0.65;
-                                      material.roughness = 0.44;
-                                  } else if (
-                                      /black|blk|carbon|graphite/.test(name)
-                                  ) {
-                                      material.color.set(0x1a2429);
-                                      material.metalness = 0.35;
-                                      material.roughness = 0.5;
-                                  } else if (/alu|ssm/.test(name)) {
-                                      material.color.set(0x929da3);
-                                      material.metalness = 0.92;
-                                      material.roughness = 0.28;
-                                  } else if (/sacells/.test(name)) {
-                                      material.map = cells;
-                                      material.color.set(0x84a3c5);
-                                      material.metalness = 0.55;
-                                      material.roughness = 0.4;
-                                  }
-                                  material.side = T.DoubleSide;
-                                  materials.push(material);
-                              }
-                          }
-                      });
-                      if (disposed) {
-                          geometries.forEach((g) => g.dispose());
-                          materials.forEach((m) => m.dispose());
-                          return;
-                      }
-                      root.clear();
-                      asset.rotation.y = -Math.PI / 2;
-                      asset.updateMatrixWorld(true);
-                      const bounds = new T.Box3().setFromObject(asset);
-                      const size = bounds.getSize(new T.Vector3()),
-                          center = bounds.getCenter(new T.Vector3());
-                      const scale = 8.5 / Math.max(size.x, size.y, size.z);
-                      asset.scale.setScalar(scale);
-                      asset.position.copy(center).multiplyScalar(-scale);
-                      root.add(asset);
-                      root.rotation.set(0.08, -0.65, -0.05);
-                      root.position.x = 1.15;
-                      root.scale.setScalar(1.32);
-                      batch(root);
-                      reclaimSources();
-                  } finally {
-                      decoder.dispose();
-                  }
-              })()
-            : Promise.resolve();
+        kind === "workshop"
+            ? dock()
+            : kind === "observatory"
+              ? (async () => {
+                    const [{ GLTFLoader }, { DRACOLoader }] = await Promise.all(
+                        [
+                            import("three/addons/loaders/GLTFLoader.js"),
+                            import("three/addons/loaders/DRACOLoader.js"),
+                        ],
+                    );
+                    const decoder = new DRACOLoader();
+                    decoder.setDecoderPath("/draco/");
+                    decoder.setDecoderConfig({ type: "js" });
+                    const loader = new GLTFLoader().setDRACOLoader(decoder);
+                    try {
+                        const { scene: asset } = await loader.loadAsync(
+                            "/models/webb-observatory-v1.glb",
+                        );
+                        finishWebbSurfaces(asset);
+                        const detached = new Set<T.Texture>();
+                        asset.traverse((object) => {
+                            if (!(object instanceof T.Mesh)) return;
+                            geometries.add(object.geometry);
+                            for (const material of Array.isArray(
+                                object.material,
+                            )
+                                ? object.material
+                                : [object.material]) {
+                                if (
+                                    material instanceof T.MeshStandardMaterial
+                                ) {
+                                    const name = material.name.toLowerCase();
+                                    // The file bakes a self-lit emissive colour into most
+                                    // materials, which flattens the model. None of the
+                                    // overrides below is meant to glow.
+                                    if (material.emissiveMap)
+                                        detached.add(material.emissiveMap);
+                                    material.emissiveMap = null;
+                                    material.emissive.setRGB(0, 0, 0);
+                                    if (name.includes("mirror")) {
+                                        material.color.set(0xe2a947);
+                                        material.metalness = 0.98;
+                                        material.roughness = 0.26;
+                                        material.bumpMap = foilRelief;
+                                        material.bumpScale = 0;
+                                    } else if (/silv|smli/.test(name)) {
+                                        material.color.set(0x969da6);
+                                        material.metalness = 0.98;
+                                        material.roughness = 0.22;
+                                        material.bumpMap = foilRelief;
+                                        material.bumpScale = 0.004;
+                                    } else if (
+                                        /pink|pnkmli|pmli|gold/.test(name)
+                                    ) {
+                                        material.color.set(
+                                            /gold/.test(name)
+                                                ? 0xac8441
+                                                : 0x9b8d84,
+                                        );
+                                        material.metalness = 0.65;
+                                        material.roughness = 0.44;
+                                    } else if (
+                                        /black|blk|carbon|graphite/.test(name)
+                                    ) {
+                                        material.color.set(0x1a2429);
+                                        material.metalness = 0.35;
+                                        material.roughness = 0.5;
+                                    } else if (/alu|ssm/.test(name)) {
+                                        material.color.set(0x929da3);
+                                        material.metalness = 0.92;
+                                        material.roughness = 0.28;
+                                    } else if (/sacells/.test(name)) {
+                                        material.map = cells;
+                                        material.color.set(0x84a3c5);
+                                        material.metalness = 0.55;
+                                        material.roughness = 0.4;
+                                    }
+                                    material.side = T.DoubleSide;
+                                    materials.push(material);
+                                }
+                            }
+                        });
+                        // Free detached emissive maps unless another slot still uses them.
+                        for (const texture of detached) {
+                            const used = materials.some((material) =>
+                                Object.values(material).includes(texture),
+                            );
+                            if (!used) texture.dispose();
+                        }
+                        if (disposed) {
+                            geometries.forEach((g) => g.dispose());
+                            materials.forEach((m) => m.dispose());
+                            return;
+                        }
+                        root.clear();
+                        asset.rotation.y = -Math.PI / 2;
+                        asset.updateMatrixWorld(true);
+                        const bounds = new T.Box3().setFromObject(asset);
+                        const size = bounds.getSize(new T.Vector3()),
+                            center = bounds.getCenter(new T.Vector3());
+                        const scale = 8.5 / Math.max(size.x, size.y, size.z);
+                        asset.scale.setScalar(scale);
+                        asset.position.copy(center).multiplyScalar(-scale);
+                        root.add(asset);
+                        root.rotation.set(0.08, -0.65, -0.05);
+                        root.position.x = 1.15;
+                        root.scale.setScalar(1.32);
+                        batch(root);
+                        reclaimSources();
+                    } finally {
+                        decoder.dispose();
+                    }
+                })()
+              : Promise.resolve();
     return {
         root,
         ready,
         update(time: number) {
-            if (kind === "workshop" && moving) moving.rotation.z = time * 0.035;
+            if (kind === "workshop") turning?.(time);
             if (kind === "robotics" && moving)
                 moving.rotation.y = Math.sin(time * 0.16) * 0.14;
             if (kind === "relay" && moving)

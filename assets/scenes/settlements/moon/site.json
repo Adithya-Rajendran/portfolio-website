@@ -1,0 +1,499 @@
+{
+ "world": "moon",
+ "labels": [
+  "SEL OPS 01",
+  "HAB 01",
+  "HAB 02",
+  "HAB 03",
+  "HAB 04",
+  "HAB 05",
+  "VAULT ROW A",
+  "VAULT ROW B",
+  "MD LOAD 01",
+  "LAUNCH CTRL",
+  "FUSION 1",
+  "O2 WORKS",
+  "COMMONS",
+  "RING A",
+  "RING B",
+  "HIGH BAY"
+ ],
+ "pads": [
+  {
+   "name": "berth-1",
+   "x": -72.0,
+   "z": 100.0,
+   "radius": 13.0
+  },
+  {
+   "name": "berth-2",
+   "x": -106.0,
+   "z": 96.0,
+   "radius": 11.0
+  }
+ ],
+ "lanes": [
+  {
+   "name": "main-street",
+   "width": 7.0,
+   "points": [
+    [
+     1.0,
+     66.0
+    ],
+    [
+     1.0,
+     -142.0
+    ]
+   ]
+  },
+  {
+   "name": "line-road",
+   "width": 7.0,
+   "points": [
+    [
+     30.5,
+     66.0
+    ],
+    [
+     30.5,
+     -142.0
+    ]
+   ]
+  },
+  {
+   "name": "port-road",
+   "width": 7.0,
+   "points": [
+    [
+     -128.0,
+     66.0
+    ],
+    [
+     30.5,
+     66.0
+    ]
+   ]
+  },
+  {
+   "name": "north-street",
+   "width": 7.0,
+   "points": [
+    [
+     -95.0,
+     -142.0
+    ],
+    [
+     30.5,
+     -142.0
+    ]
+   ]
+  },
+  {
+   "name": "ring-road",
+   "width": 7.0,
+   "points": [
+    [
+     -95.0,
+     66.0
+    ],
+    [
+     -95.0,
+     -142.0
+    ]
+   ]
+  },
+  {
+   "name": "vault-row-a",
+   "width": 7.0,
+   "points": [
+    [
+     -95.0,
+     -18.2
+    ],
+    [
+     -47.0,
+     -18.2
+    ]
+   ]
+  },
+  {
+   "name": "vault-row-b",
+   "width": 7.0,
+   "points": [
+    [
+     -95.0,
+     -87.8
+    ],
+    [
+     -61.0,
+     -87.8
+    ]
+   ]
+  },
+  {
+   "name": "works-road",
+   "width": 7.0,
+   "points": [
+    [
+     18.0,
+     108.0
+    ],
+    [
+     150.0,
+     108.0
+    ]
+   ]
+  },
+  {
+   "name": "crawlerway",
+   "width": 9.0,
+   "points": [
+    [
+     18.0,
+     66.0
+    ],
+    [
+     18.0,
+     108.0
+    ]
+   ]
+  },
+  {
+   "name": "berth-1-spur",
+   "width": 7.0,
+   "points": [
+    [
+     -72.0,
+     66.0
+    ],
+    [
+     -72.0,
+     81.0
+    ]
+   ]
+  },
+  {
+   "name": "berth-2-spur",
+   "width": 7.0,
+   "points": [
+    [
+     -106.0,
+     66.0
+    ],
+    [
+     -106.0,
+     79.0
+    ]
+   ]
+  },
+  {
+   "name": "yard-lane-1",
+   "width": 7.0,
+   "points": [
+    [
+     1.0,
+     27.5
+    ],
+    [
+     30.5,
+     27.5
+    ]
+   ]
+  },
+  {
+   "name": "yard-lane-2",
+   "width": 7.0,
+   "points": [
+    [
+     1.0,
+     -9.5
+    ],
+    [
+     30.5,
+     -9.5
+    ]
+   ]
+  },
+  {
+   "name": "yard-lane-3",
+   "width": 7.0,
+   "points": [
+    [
+     1.0,
+     -64.5
+    ],
+    [
+     30.5,
+     -64.5
+    ]
+   ]
+  },
+  {
+   "name": "perimeter-track",
+   "width": 4.0,
+   "points": [
+    [
+     -178,
+     -68
+    ],
+    [
+     -68,
+     -178
+    ],
+    [
+     68,
+     -178
+    ],
+    [
+     178,
+     -68
+    ],
+    [
+     178,
+     68
+    ],
+    [
+     158,
+     104
+    ],
+    [
+     104,
+     154
+    ],
+    [
+     68,
+     178
+    ],
+    [
+     -68,
+     178
+    ],
+    [
+     -178,
+     68
+    ],
+    [
+     -178,
+     -68
+    ]
+   ]
+  }
+ ],
+ "blast": [
+  {
+   "x": -72.0,
+   "z": 100.0,
+   "radius": 26
+  },
+  {
+   "x": -106.0,
+   "z": 96.0,
+   "radius": 22
+  }
+ ],
+ "coil_uv": "coil band vertices carry UV.x = ring distance from launch_start / 208; sector 1: rings at s 6.0, 12.0, 18.0, 24.0, 30.0, 36.0; sector 2: rings at s 42.2, 47.1, 51.9, 56.8; sector 3: rings at s 61.2, 66.1, 70.9, 75.8; sector 4: rings at s 80.2, 85.1, 89.9, 94.8; sector 5: rings at s 99.2, 104.1, 108.9, 113.8; sector 6: rings at s 118.2, 123.1, 127.9, 132.8; sector 7: rings at s 137.2, 142.1, 146.9, 151.8; sector 8: rings at s 156.2, 161.1, 165.9, 170.8; sector 9: rings at s 175.2, 178.1, 181.0, 184.0, 186.9, 189.8; sector 10: rings at s 194.2, 197.2, 200.2, 203.2; terminal ring at 207.6",
+ "line": "launch_start (47, 3.65, 85) to launch_exit (47, 35.45, -120.70): the line now runs due north, parallel to Main Street",
+ "landmarks": [
+  {
+   "name": "mass-driver",
+   "x": 47.0,
+   "y": 40.4,
+   "z": -18.2
+  },
+  {
+   "name": "muzzle",
+   "x": 47.0,
+   "y": 42.9,
+   "z": -120.0
+  },
+  {
+   "name": "breech-hall",
+   "x": 46.5,
+   "y": 18.3,
+   "z": 85.0
+  },
+  {
+   "name": "pulse-yard",
+   "x": 15.1,
+   "y": 6.0,
+   "z": 7.8
+  },
+  {
+   "name": "launch-control",
+   "x": -14.7,
+   "y": 13.0,
+   "z": -52.0
+  },
+  {
+   "name": "oxygen-works",
+   "x": 102.5,
+   "y": 18.6,
+   "z": 95.5
+  },
+  {
+   "name": "stockyard",
+   "x": 98.5,
+   "y": 10.2,
+   "z": 130.0
+  },
+  {
+   "name": "regolith-field",
+   "x": 66.3,
+   "y": 4.8,
+   "z": 164.6
+  },
+  {
+   "name": "lox-farm",
+   "x": -38.0,
+   "y": 16.0,
+   "z": 92.0
+  },
+  {
+   "name": "berth-1",
+   "x": -72.0,
+   "y": 11.0,
+   "z": 100.3
+  },
+  {
+   "name": "berth-2",
+   "x": -106.0,
+   "y": 11.0,
+   "z": 96.3
+  },
+  {
+   "name": "high-bay",
+   "x": 57.0,
+   "y": 23.2,
+   "z": 131.0
+  },
+  {
+   "name": "old-town",
+   "x": -25.0,
+   "y": 10.7,
+   "z": -16.7
+  },
+  {
+   "name": "operations",
+   "x": -26.0,
+   "y": 19.8,
+   "z": -31.1
+  },
+  {
+   "name": "main-street",
+   "x": 1.0,
+   "y": 6.5,
+   "z": -45.0
+  },
+  {
+   "name": "south-gate",
+   "x": -12.6,
+   "y": 10.4,
+   "z": 49.4
+  },
+  {
+   "name": "commons",
+   "x": -43.9,
+   "y": 16.8,
+   "z": -87.8
+  },
+  {
+   "name": "vault-row-a",
+   "x": -65.6,
+   "y": 13.6,
+   "z": -16.5
+  },
+  {
+   "name": "vault-row-b",
+   "x": -67.5,
+   "y": 13.4,
+   "z": -87.5
+  },
+  {
+   "name": "ring-a",
+   "x": -120.0,
+   "y": 15.5,
+   "z": -19.7
+  },
+  {
+   "name": "ring-b",
+   "x": -120.0,
+   "y": 15.5,
+   "z": -94.4
+  },
+  {
+   "name": "farm",
+   "x": -59.5,
+   "y": 7.0,
+   "z": 33.1
+  },
+  {
+   "name": "reactor-hall",
+   "x": 110.5,
+   "y": 19.2,
+   "z": 22.0
+  },
+  {
+   "name": "sun-towers",
+   "x": 103.8,
+   "y": 37.8,
+   "z": -51.0
+  },
+  {
+   "name": "observatory",
+   "x": -30.6,
+   "y": 15.6,
+   "z": -119.6
+  },
+  {
+   "name": "earth-link",
+   "x": -52.8,
+   "y": 33.6,
+   "z": -161.2
+  },
+  {
+   "name": "transit-station",
+   "x": -83.3,
+   "y": 15.8,
+   "z": -52.0
+  },
+  {
+   "name": "cryoplant",
+   "x": 15.3,
+   "y": 10.9,
+   "z": -88.8
+  }
+ ],
+ "bounds": {
+  "radius": 191.6,
+  "height": 43.8
+ },
+ "nodes": {
+  "spin": [
+   "spin_ring_a",
+   "spin_ring_b"
+  ],
+  "rigid": [
+   "launch_sled",
+   "launch_payload",
+   "fly_lander"
+  ],
+  "empties": {
+   "launch_start": [
+    47.0,
+    3.65,
+    85.0
+   ],
+   "launch_exit": [
+    47.0,
+    35.45,
+    -120.704
+   ],
+   "fly_lander_engine": [
+    -106.0,
+    1.8,
+    96.0
+   ]
+  }
+ }
+}

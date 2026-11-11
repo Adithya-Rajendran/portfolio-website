@@ -2,16 +2,16 @@
     <picture class="hero-visual__poster" data-home-poster>
         <source
             media="(min-width: 651px) and (max-width: 1100px) and (max-aspect-ratio: 4/3)"
-            srcset="/images/scenes/horizon-3d-tablet-v4.webp"
+            srcset="/images/scenes/horizon-3d-tablet-v5.webp"
             data-home-framing="tablet"
         />
         <source
             media="(max-width: 650px)"
-            srcset="/images/scenes/horizon-3d-mobile-v4.webp"
+            srcset="/images/scenes/horizon-3d-mobile-v5.webp"
             data-home-framing="mobile"
         />
         <img
-            src="/images/scenes/horizon-3d-desktop-v4.webp"
+            src="/images/scenes/horizon-3d-desktop-v5.webp"
             width="2160"
             height="1095"
             alt=""
@@ -28,6 +28,7 @@
     .hero-visual {
         position: absolute;
         inset: 0;
+        left: var(--scene-left, 0px);
         z-index: -2;
         overflow: hidden;
         background: #101719;

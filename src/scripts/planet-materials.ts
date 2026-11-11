@@ -8,9 +8,15 @@ export const worldNames = [
     "Saturn",
 ] as const;
 export type World = Lowercase<(typeof worldNames)[number]>;
+/**
+ * `single` asks for a one-channel (red) upload. Only request it for linear
+ * maps whose shader reads `.r`; a loader that ignores it stays correct,
+ * because the same read works on an RGBA texture.
+ */
 export type TextureLoader = (
     name: string,
     color?: boolean,
+    single?: boolean,
 ) => Promise<Three.Texture>;
 
 export interface PlanetLighting {
@@ -55,22 +61,37 @@ export async function makePlanet(
     const heightSegments = distant ? 48 : 128;
     const suffix = smallMaps ? "1k" : "2k";
     try {
-        const map = await texture(
+        // Every map is requested at once, so the largest never delays the rest.
+        // One Promise.all also keeps a late failure from becoming unhandled.
+        const [map, earthMaps, ringMap] = await Promise.all([
+            texture(
+                world === "earth"
+                    ? `earth-surface-v2-${smallMaps ? "2k" : "8k"}`
+                    : world === "saturn"
+                      ? "saturn-strip-v1"
+                      : world === "moon" || world === "mars"
+                        ? `${world}-surface-v2-${smallMaps ? "2k" : "4k"}`
+                        : `${world}-${suffix}`,
+            ),
             world === "earth"
-                ? `earth-surface-v2-${smallMaps ? "2k" : "8k"}`
-                : world === "saturn"
-                  ? "saturn-strip-v1"
-                  : world === "moon" || world === "mars"
-                    ? `${world}-surface-v2-${smallMaps ? "2k" : "4k"}`
-                    : `${world}-${suffix}`,
-        );
-        if (world === "earth") {
-            const [clouds, night, water, normal] = await Promise.all([
-                texture(`earth-clouds-v2-${smallMaps ? "2k" : "4k"}`, false),
-                texture(`earth-lights-v2-${smallMaps ? "2k" : "4k"}`),
-                texture("earth-water-v2-2k", false),
-                texture("earth-normal-v2-2k", false),
-            ]);
+                ? Promise.all([
+                      // Clouds and water are linear masks read only as `.r`.
+                      // The night lights stay RGB: they are an sRGB colour map,
+                      // which a one-channel texture cannot decode.
+                      texture(
+                          `earth-clouds-v2-${smallMaps ? "2k" : "4k"}`,
+                          false,
+                          true,
+                      ),
+                      texture(`earth-lights-v2-${smallMaps ? "2k" : "4k"}`),
+                      texture("earth-water-v2-2k", false, true),
+                      texture("earth-normal-v2-2k", false),
+                  ])
+                : undefined,
+            world === "saturn" ? texture("saturn-ring-1k") : undefined,
+        ]);
+        if (world === "earth" && earthMaps) {
+            const [clouds, night, water, normal] = earthMaps;
             clouds.wrapS = T.RepeatWrapping;
             const surface = new T.ShaderMaterial({
                 uniforms: {
@@ -209,8 +230,7 @@ export async function makePlanet(
             surface.receiveShadow = world === "saturn";
             group.add(surface);
         }
-        if (world === "saturn") {
-            const ringMap = await texture("saturn-ring-1k");
+        if (world === "saturn" && ringMap) {
             const ringGeometry = new T.RingGeometry(
                 1.25,
                 2.15,

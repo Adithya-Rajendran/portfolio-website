@@ -1,0 +1,12 @@
+{
+    "metres": 8,
+    "size": 2048,
+    "steepest": 2.5,
+    "sun": [0.286, 0.2, -0.958],
+    "files": {
+        "colour": "colour.webp",
+        "slopeX": "slope-x.webp",
+        "slopeZ": "slope-z.webp",
+        "sun": "sun.webp"
+    }
+}

@@ -22,7 +22,8 @@ export function makeHomeOcclusion(
     const world = new T.Matrix4(),
         projection = new T.Matrix4();
     let dirty = true,
-        updates = 0;
+        updates = 0,
+        updated = -Infinity;
     const differs = (a: T.Matrix4, b: T.Matrix4) =>
         a.elements.some(
             (value, i) => Math.abs(value - b.elements[i]) > 0.00001,
@@ -39,7 +40,12 @@ export function makeHomeOcclusion(
             );
             dirty = true;
         },
-        update(buffer: T.WebGLRenderTarget) {
+        /**
+         * While the camera is easing and another frame is certain to follow,
+         * `settling` refreshes the soft, low-resolution shade about twelve
+         * times a second instead of on every display frame.
+         */
+        update(buffer: T.WebGLRenderTarget, settling = false) {
             camera.updateMatrixWorld();
             if (
                 !dirty &&
@@ -47,6 +53,9 @@ export function makeHomeOcclusion(
                 !differs(projection, camera.projectionMatrix)
             )
                 return;
+            const now = performance.now();
+            if (settling && !dirty && now - updated < 80) return;
+            updated = now;
             eye.copy(camera);
             eye.far = Math.min(camera.far, 90);
             eye.updateProjectionMatrix();

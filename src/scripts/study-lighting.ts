@@ -52,6 +52,8 @@ export function makeStudyEnvironment(
                 captured = generator.fromEquirectangular(hdr);
                 scene.environment = captured.texture;
                 scene.environmentRotation.set(0, 0.8, 0);
+                // The procedural stage is only the placeholder until this arrives.
+                map.dispose();
             } finally {
                 hdr.dispose();
             }

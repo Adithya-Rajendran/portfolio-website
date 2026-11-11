@@ -986,7 +986,9 @@ test("a missing later planet keeps the current view and can be retried", async (
 test("Moon and Mars arrive at their surface studies", async ({ page }) => {
     const outpostRequests: string[] = [];
     page.on("request", (request) => {
-        if (/\/models\/(moon|mars)-outpost-v2\.glb/.test(request.url()))
+        // The full model, or the lighter one a small or software-drawn
+        // display is given.
+        if (/\/models\/(moon|mars)-outpost(-lite)?-v3\.glb/.test(request.url()))
             outpostRequests.push(request.url());
     });
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -1018,7 +1020,9 @@ test("Moon and Mars arrive at their surface studies", async ({ page }) => {
         expect(coordinates.every(Number.isFinite)).toBe(true);
         expect(
             outpostRequests.some((url) =>
-                url.includes(`/models/${world}-outpost-v2.glb`),
+                new RegExp(`/models/${world}-outpost(-lite)?-v3\\.glb`).test(
+                    url,
+                ),
             ),
         ).toBe(true);
     }
@@ -1106,7 +1110,9 @@ test("the Moon globe remains usable when its optional surface model fails", asyn
     page,
 }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.route("**/models/moon-outpost-v2.glb", (route) => route.abort());
+    await page.route("**/models/moon-outpost*-v3.glb", (route) =>
+        route.abort(),
+    );
     await page.goto("/resume");
     const supported = await page.evaluate(() =>
         Boolean(document.createElement("canvas").getContext("webgl2")),
@@ -1352,10 +1358,16 @@ test("ordinary articles do not download the orbital renderer or maps", async ({
     const sceneRequests: string[] = [];
     page.on("request", (request) => {
         const url = request.url();
-        if (new URL(url).pathname === "/images/trajectory/milky-way-v2-2k.webp")
+        // The page-wide sky: the 2k file, or the 1k file up to 800 CSS px.
+        if (
+            [
+                "/images/trajectory/milky-way-v2-2k.webp",
+                "/images/trajectory/milky-way-v2-1k.webp",
+            ].includes(new URL(url).pathname)
+        )
             return;
         if (
-            /\/images\/trajectory\/|\/models\/nasa-perseverance\.glb|\/three\/draco\/|\/three\.module\.|\/GLTFLoader\.|\/DRACOLoader\.|\/OrbitControls\.|\/ExperienceVisual\.|\/HeroVisual\.|\/SpaceStudy\.|\/space-studies\./i.test(
+            /\/images\/trajectory\/|\/terrain\/|\/models\/nasa-perseverance\.glb|\/three\/draco\/|\/three\.module\.|\/GLTFLoader\.|\/DRACOLoader\.|\/OrbitControls\.|\/ExperienceVisual\.|\/HeroVisual\.|\/SpaceStudy\.|\/space-studies\./i.test(
                 url,
             )
         )

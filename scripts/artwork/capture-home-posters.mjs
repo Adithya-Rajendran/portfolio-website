@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 // Capture native Three.js output, not an illustration of the intended result.
 // Increment the version before replacing an already published poster.
-const version = "v4";
+const version = "v5";
 const url = process.env.ARTWORK_URL || "http://127.0.0.1:4321";
 const browser = await chromium.launch({
     headless: true,
@@ -30,7 +30,11 @@ try {
         // temporary loading image is hidden before capturing the native canvas.
         await page.route("**/images/scenes/horizon-3d-*.webp", (route) =>
             route.fulfill({
-                path: "public/images/scenes/horizon-v1.webp",
+                // A 1x1 stand-in; it is hidden before the canvas is captured.
+                body: Buffer.from(
+                    "UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==",
+                    "base64",
+                ),
                 contentType: "image/webp",
             }),
         );

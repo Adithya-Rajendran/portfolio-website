@@ -1,0 +1,112 @@
+---
+import { SETTLEMENTS } from "../scripts/settlement-places";
+
+const settlements = [
+    { world: "the Moon", ...SETTLEMENTS.moon },
+    { world: "Mars", ...SETTLEMENTS.mars },
+];
+// "The galley of…" reads on from "Modelled on" once its article is lowered.
+const led = (text: string) =>
+    text.replace(/^(The|An|A) /, (article) => article.toLowerCase());
+---
+
+<section
+    class="trajectory-extra settlement-places"
+    id="settlements"
+    aria-labelledby="settlements-title"
+>
+    <h2 id="settlements-title">In the orbital view</h2>
+    <p>
+        The settlements on the Moon and Mars are imagined, but nothing in them
+        is arbitrary. Each structure has a job, and a precedent: a real
+        engineering site or city it is modelled on, and often a piece of fiction
+        it echoes. On the surface, the view names them as it passes.
+    </p>
+    {settlements.map((settlement) => (
+        <details>
+            <summary>
+                {settlement.name}, on {settlement.world}
+                <span>{settlement.places.length} structures</span>
+            </summary>
+            <p>{settlement.plan}</p>
+            <dl>
+                {settlement.places.map((place) => (
+                    <div>
+                        <dt>{place.name}</dt>
+                        <dd>{place.job}</dd>
+                        {place.after && <dd>Modelled on {led(place.after)}</dd>}
+                    </div>
+                ))}
+            </dl>
+        </details>
+    ))}
+</section>
+<style>
+    .settlement-places {
+        scroll-margin-top: 6rem;
+    }
+    .settlement-places > p,
+    .settlement-places details > p {
+        color: #b6bfbd;
+        font-size: 0.94rem;
+        line-height: 1.8;
+    }
+    .settlement-places details {
+        border-top: 1px solid #58665b55;
+    }
+    .settlement-places details:last-of-type {
+        border-bottom: 1px solid #58665b55;
+    }
+    .settlement-places summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        min-height: 44px;
+        padding: 0.75rem 0;
+        color: #aac490;
+        font:
+            1rem DMMono,
+            monospace;
+        cursor: pointer;
+    }
+    .settlement-places summary span {
+        color: #9ba8a3;
+        font-size: 0.72rem;
+    }
+    .settlement-places summary:hover {
+        color: #ffcf95;
+    }
+    .settlement-places summary:focus-visible {
+        outline: 2px solid #dfa05d;
+        outline-offset: 2px;
+    }
+    .settlement-places dl {
+        display: grid;
+        gap: 0.9rem;
+        margin: 0.8rem 0 1.4rem;
+    }
+    .settlement-places dt {
+        color: #e3d2b4;
+        font:
+            0.74rem DMMono,
+            monospace;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+    .settlement-places dd {
+        margin: 0.15rem 0 0;
+        color: #b6bfbd;
+        font-size: 0.9rem;
+        line-height: 1.65;
+    }
+    .settlement-places dd + dd {
+        color: #9ba8a3;
+        font-size: 0.84rem;
+    }
+    @media print {
+        .settlement-places {
+            display: none;
+        }
+    }
+</style>

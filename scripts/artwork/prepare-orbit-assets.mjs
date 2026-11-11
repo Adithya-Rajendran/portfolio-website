@@ -115,3 +115,14 @@ for (const [name, width] of [
     const { size } = await stat(new URL(`${name}.webp`, output));
     console.log(`${name}: ${Math.round(size / 1024)} KB`);
 }
+// Small-screen backdrop: the 2k sky resized to 1024 px (WebP quality 80),
+// served to narrow viewports by src/styles/space.css.
+{
+    const name = "milky-way-v2-1k";
+    await sharp(new URL("milky-way-v2-2k.webp", output).pathname)
+        .resize({ width: 1024 })
+        .webp({ quality: 80, effort: 6, smartSubsample: true })
+        .toFile(new URL(`${name}.webp`, output).pathname);
+    const { size } = await stat(new URL(`${name}.webp`, output));
+    console.log(`${name}: ${Math.round(size / 1024)} KB`);
+}

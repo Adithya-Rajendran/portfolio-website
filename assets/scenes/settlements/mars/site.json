@@ -1,0 +1,553 @@
+{
+ "world": "mars",
+ "labels": [
+  "ARES HUB 01",
+  "RES RING A",
+  "RES RING B",
+  "LANDING 01",
+  "HAB 12",
+  "HAB 13",
+  "HAB 14",
+  "HAB 15",
+  "LANDING WAY",
+  "WATER 1",
+  "ARES BIO 1",
+  "NURSERY 2",
+  "GEO HALL",
+  "ISRU 02",
+  "HARBOUR 1",
+  "HARBOUR CTL"
+ ],
+ "pads": [
+  {
+   "name": "launch-mount",
+   "x": 125.0,
+   "z": -14.0,
+   "radius": 18.0
+  },
+  {
+   "name": "pad-b",
+   "x": 92.0,
+   "z": -108.0,
+   "radius": 15.0
+  },
+  {
+   "name": "pad-c",
+   "x": 158.0,
+   "z": 34.0,
+   "radius": 15.0
+  },
+  {
+   "name": "lander-berth",
+   "x": 95.0,
+   "z": 30.0,
+   "radius": 15.0
+  }
+ ],
+ "lanes": [
+  {
+   "name": "canal-street-west",
+   "width": 3.5,
+   "points": [
+    [
+     -4.0,
+     70.0
+    ],
+    [
+     -4.0,
+     19.0
+    ]
+   ]
+  },
+  {
+   "name": "canal-street-east",
+   "width": 3.5,
+   "points": [
+    [
+     2.0,
+     70.0
+    ],
+    [
+     2.0,
+     19.0
+    ]
+   ]
+  },
+  {
+   "name": "canal-street-north-w",
+   "width": 3.0,
+   "points": [
+    [
+     -4.2,
+     -32.0
+    ],
+    [
+     -4.2,
+     -65.0
+    ]
+   ]
+  },
+  {
+   "name": "canal-street-north-e",
+   "width": 3.0,
+   "points": [
+    [
+     2.2,
+     -32.0
+    ],
+    [
+     2.2,
+     -65.0
+    ]
+   ]
+  },
+  {
+   "name": "landing-way-north-track",
+   "width": 4.5,
+   "points": [
+    [
+     -117.0,
+     -18.75
+    ],
+    [
+     -26.0,
+     -18.75
+    ]
+   ]
+  },
+  {
+   "name": "landing-way-south-track",
+   "width": 4.5,
+   "points": [
+    [
+     -117.0,
+     -9.25
+    ],
+    [
+     -26.0,
+     -9.25
+    ]
+   ]
+  },
+  {
+   "name": "landing-way-east-north-track",
+   "width": 4.5,
+   "points": [
+    [
+     24.0,
+     -18.75
+    ],
+    [
+     69.0,
+     -18.75
+    ]
+   ]
+  },
+  {
+   "name": "landing-way-east-south-track",
+   "width": 4.5,
+   "points": [
+    [
+     24.0,
+     -9.25
+    ],
+    [
+     69.0,
+     -9.25
+    ]
+   ]
+  },
+  {
+   "name": "crawlerway-north-track",
+   "width": 4.5,
+   "points": [
+    [
+     69.0,
+     -18.75
+    ],
+    [
+     107.0,
+     -18.75
+    ]
+   ]
+  },
+  {
+   "name": "crawlerway-south-track",
+   "width": 4.5,
+   "points": [
+    [
+     69.0,
+     -9.25
+    ],
+    [
+     107.0,
+     -9.25
+    ]
+   ]
+  },
+  {
+   "name": "garden-way",
+   "width": 7,
+   "points": [
+    [
+     -99.0,
+     -80.0
+    ],
+    [
+     -16.0,
+     -80.0
+    ]
+   ]
+  },
+  {
+   "name": "south-road",
+   "width": 7,
+   "points": [
+    [
+     -95.0,
+     34.0
+    ],
+    [
+     60.0,
+     34.0
+    ]
+   ]
+  },
+  {
+   "name": "reactor-road",
+   "width": 6,
+   "points": [
+    [
+     60.0,
+     34.0
+    ],
+    [
+     108.0,
+     72.0
+    ]
+   ]
+  },
+  {
+   "name": "west-street",
+   "width": 6,
+   "points": [
+    [
+     -58.0,
+     -80.0
+    ],
+    [
+     -58.0,
+     34.0
+    ]
+   ]
+  },
+  {
+   "name": "ring-road",
+   "width": 7,
+   "points": [
+    [
+     -92.0,
+     -80.0
+    ],
+    [
+     -92.0,
+     34.0
+    ]
+   ]
+  },
+  {
+   "name": "works-road",
+   "width": 7,
+   "points": [
+    [
+     28.0,
+     -150.0
+    ],
+    [
+     28.0,
+     34.0
+    ]
+   ]
+  },
+  {
+   "name": "north-road",
+   "width": 5,
+   "points": [
+    [
+     28.0,
+     -150.5
+    ],
+    [
+     -12.0,
+     -150.5
+    ]
+   ]
+  },
+  {
+   "name": "pad-b-road",
+   "width": 6,
+   "points": [
+    [
+     31.5,
+     -150.0
+    ],
+    [
+     70.0,
+     -150.0
+    ],
+    [
+     86.0,
+     -126.0
+    ]
+   ]
+  },
+  {
+   "name": "pad-c-road",
+   "width": 6,
+   "points": [
+    [
+     107.0,
+     -6.0
+    ],
+    [
+     146.0,
+     22.0
+    ]
+   ]
+  },
+  {
+   "name": "mine-road",
+   "width": 7,
+   "points": [
+    [
+     -1.0,
+     70.0
+    ],
+    [
+     -1.0,
+     120.0
+    ]
+   ]
+  }
+ ],
+ "blast": [
+  {
+   "x": 125.0,
+   "z": -14.0,
+   "radius": 30.0
+  },
+  {
+   "x": 92.0,
+   "z": -108.0,
+   "radius": 28.0
+  },
+  {
+   "x": 158.0,
+   "z": 34.0,
+   "radius": 28.0
+  },
+  {
+   "x": 95.0,
+   "z": 30.0,
+   "radius": 30.0
+  }
+ ],
+ "landmarks": [
+  {
+   "name": "landing-square",
+   "x": -15.0,
+   "y": 14.2,
+   "z": -12.0
+  },
+  {
+   "name": "canal-street",
+   "x": -11.5,
+   "y": 4.5,
+   "z": -60.0
+  },
+  {
+   "name": "hub-station",
+   "x": -1.0,
+   "y": 15.6,
+   "z": 8.0
+  },
+  {
+   "name": "bio-station",
+   "x": -1.0,
+   "y": 15.6,
+   "z": -79.5
+  },
+  {
+   "name": "landing-way",
+   "x": -80.0,
+   "y": 0.5,
+   "z": -13.5
+  },
+  {
+   "name": "harbour-gate",
+   "x": 60.0,
+   "y": 19.0,
+   "z": -14.0
+  },
+  {
+   "name": "block-12",
+   "x": -75.0,
+   "y": 23.0,
+   "z": -39.0
+  },
+  {
+   "name": "block-13",
+   "x": -40.5,
+   "y": 29.0,
+   "z": -39.0
+  },
+  {
+   "name": "block-14",
+   "x": -75.0,
+   "y": 20.0,
+   "z": 11.5
+  },
+  {
+   "name": "block-15",
+   "x": -40.5,
+   "y": 27.0,
+   "z": 11.5
+  },
+  {
+   "name": "ring-a",
+   "x": -125.0,
+   "y": 20.6,
+   "z": -80.0
+  },
+  {
+   "name": "ring-b",
+   "x": -138.0,
+   "y": 20.6,
+   "z": -14.0
+  },
+  {
+   "name": "biosphere",
+   "x": -20.0,
+   "y": 24.6,
+   "z": -113.0
+  },
+  {
+   "name": "nursery",
+   "x": -62.0,
+   "y": 14.0,
+   "z": -102.0
+  },
+  {
+   "name": "farm-north",
+   "x": -32.5,
+   "y": 6.0,
+   "z": -158.0
+  },
+  {
+   "name": "farm-south",
+   "x": -37.0,
+   "y": 6.0,
+   "z": 56.0
+  },
+  {
+   "name": "solar-farm",
+   "x": -111.0,
+   "y": 2.6,
+   "z": 54.0
+  },
+  {
+   "name": "geo-hall",
+   "x": -33.0,
+   "y": 11.0,
+   "z": -67.0
+  },
+  {
+   "name": "water-works",
+   "x": 41.5,
+   "y": 9.0,
+   "z": -51.0
+  },
+  {
+   "name": "print-works",
+   "x": 41.5,
+   "y": 10.0,
+   "z": -87.0
+  },
+  {
+   "name": "depot",
+   "x": 24.0,
+   "y": 8.0,
+   "z": 50.0
+  },
+  {
+   "name": "rampart",
+   "x": 60.0,
+   "y": 6.5,
+   "z": -70.0
+  },
+  {
+   "name": "control-tower",
+   "x": 44.0,
+   "y": 33.0,
+   "z": 7.0
+  },
+  {
+   "name": "launch-mount",
+   "x": 125.0,
+   "y": 6.7,
+   "z": -14.0
+  },
+  {
+   "name": "ship-a",
+   "x": 125.0,
+   "y": 57.0,
+   "z": -14.0
+  },
+  {
+   "name": "ship-b",
+   "x": 92.0,
+   "y": 50.3,
+   "z": -108.0
+  },
+  {
+   "name": "ship-c",
+   "x": 158.0,
+   "y": 50.3,
+   "z": 34.0
+  },
+  {
+   "name": "tank-farm",
+   "x": 109.0,
+   "y": 17.0,
+   "z": -58.0
+  },
+  {
+   "name": "propellant-works",
+   "x": 77.0,
+   "y": 22.0,
+   "z": -35.0
+  },
+  {
+   "name": "lander-berth",
+   "x": 95.0,
+   "y": 12.0,
+   "z": 30.0
+  },
+  {
+   "name": "reactor-park",
+   "x": 118.0,
+   "y": 11.1,
+   "z": 82.0
+  },
+  {
+   "name": "earth-station",
+   "x": 41.5,
+   "y": 22.0,
+   "z": -126.0
+  }
+ ],
+ "bounds": {
+  "radius": 186.65,
+  "height": 56.7
+ }
+}

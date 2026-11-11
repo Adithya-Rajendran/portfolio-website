@@ -9,6 +9,20 @@ export interface CameraPose {
     up: Three.Vector3;
 }
 
+/**
+ * The ground a settlement draws for itself: level, with none of the globe's
+ * ridges, out to `reach` from `at`. Over it the camera may come down to
+ * `radius` from the centre of the globe at `globe`; the ridges' own
+ * clearance is back in force by `beyond`. All in the scene's units.
+ */
+export interface DrawnGround {
+    globe: Three.Vector3;
+    at: Three.Vector3;
+    reach: number;
+    beyond: number;
+    radius: number;
+}
+
 /** Spherical interpolation never cuts through a planet, even from its far side. */
 export function arcPosition(
     T: typeof Three,
@@ -51,6 +65,9 @@ export function createExperienceCamera(
     const inverseFrame = new T.Quaternion();
     const look = new T.PerspectiveCamera();
     const yAxis = new T.Vector3(0, 1, 0);
+    // Reused by move(), which runs every frame.
+    const previousPosition = new T.Vector3();
+    const offset = new T.Vector3();
     // Clear the authored terrain ridges as well as the mathematical globe.
     // Settlements use scale .00065 and a tangent-frame base radius of 1.0016.
     const minimumRadius = TERRAIN_RADIUS + 0.001;
@@ -102,6 +119,7 @@ export function createExperienceCamera(
             manual: boolean;
             center?: Three.Vector3;
             globes: Three.Group[];
+            ground?: DrawnGround;
         },
     ) {
         const instant = options.instant || !initialized;
@@ -109,7 +127,7 @@ export function createExperienceCamera(
         const blend = instant
             ? 1
             : 1 - Math.exp(-step * (options.manual ? 24 : 6));
-        const previousPosition = camera.position.clone();
+        previousPosition.copy(camera.position);
         if (options.center && !instant)
             camera.position.copy(
                 arcPosition(
@@ -131,13 +149,27 @@ export function createExperienceCamera(
                 (step * 7) / distance,
             );
 
+        const ground = options.ground;
         for (const globe of options.globes) {
-            const offset = camera.position.clone().sub(globe.position);
-            if (offset.length() < minimumRadius) {
+            offset.copy(camera.position).sub(globe.position);
+            // Street level in a settlement is far below the globe's ridges.
+            const floor =
+                ground && globe.position.distanceToSquared(ground.globe) < 1e-12
+                    ? T.MathUtils.lerp(
+                          ground.radius,
+                          minimumRadius,
+                          T.MathUtils.smoothstep(
+                              camera.position.distanceTo(ground.at),
+                              ground.reach,
+                              ground.beyond,
+                          ),
+                      )
+                    : minimumRadius;
+            if (offset.length() < floor) {
                 if (offset.lengthSq() < 1e-12) offset.copy(yAxis);
                 camera.position
                     .copy(globe.position)
-                    .add(offset.setLength(minimumRadius));
+                    .add(offset.setLength(floor));
             }
         }
         const targetDistance = target.distanceTo(pose.target);

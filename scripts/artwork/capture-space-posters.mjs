@@ -4,6 +4,12 @@ import { copyFile } from "node:fs/promises";
 
 // These are transparent captures of the production scene, not generated mockups.
 // Keep their framing and version paired with SpaceStudy and space-scene.
+const versions = {
+    workshop: "v4",
+    observatory: "v3",
+    robotics: "v3",
+    relay: "v3",
+};
 const base = process.env.ARTWORK_URL || "http://127.0.0.1:8804";
 const shots = [];
 const browser = await chromium.launch({
@@ -58,7 +64,12 @@ try {
                         route.request().url(),
                     )
                         ? route.fulfill({
-                              path: "public/images/scenes/horizon-v1.webp",
+                              // A 1x1 stand-in: the old horizon placeholder
+                              // file is no longer shipped.
+                              body: Buffer.from(
+                                  "UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==",
+                                  "base64",
+                              ),
                               contentType: "image/webp",
                           })
                         : route.continue(),
@@ -90,7 +101,7 @@ try {
                 const png = await figure
                     .locator("canvas")
                     .screenshot({ omitBackground: true });
-                const name = `${kind}${kind === "relay" ? `-${phase}` : ""}-${view}-v3.webp`;
+                const name = `${kind}${kind === "relay" ? `-${phase}` : ""}-${view}-${versions[kind]}.webp`;
                 shots.push({ name, png });
                 console.log(`Captured ${name}`);
                 await page.close();
@@ -106,9 +117,11 @@ for (const { name, png } of shots)
         .webp({ quality: 90, alphaQuality: 100, effort: 4 })
         .toFile(`public/images/scenes/${name}`);
 for (const view of ["desktop", "mobile"]) {
-    if (shots.some((s) => s.name === `relay-day-${view}-v3.webp`))
+    if (
+        shots.some((s) => s.name === `relay-day-${view}-${versions.relay}.webp`)
+    )
         await copyFile(
-            `public/images/scenes/relay-day-${view}-v3.webp`,
-            `public/images/scenes/relay-${view}-v3.webp`,
+            `public/images/scenes/relay-day-${view}-${versions.relay}.webp`,
+            `public/images/scenes/relay-${view}-${versions.relay}.webp`,
         );
 }

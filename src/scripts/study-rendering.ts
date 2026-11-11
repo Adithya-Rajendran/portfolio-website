@@ -43,6 +43,17 @@ export function makeStudyRendering(
         blending: T.NoBlending,
     });
     const quad = new FullScreenQuad(composite);
+    // Reused every frame; the scene graph is walked, not reallocated.
+    const excluded: T.Object3D[] = [];
+    const hideDepthless = (object: T.Object3D) => {
+        if (!(object instanceof T.Mesh) || !object.visible) return;
+        const material = object.material as T.Material | T.Material[];
+        if (Array.isArray(material)) {
+            for (const entry of material) if (entry.depthWrite) return;
+        } else if (material.depthWrite) return;
+        excluded.push(object);
+        object.visible = false;
+    };
     return {
         resize(width: number, height: number) {
             const ratio = renderer.getPixelRatio();
@@ -68,23 +79,12 @@ export function makeStudyRendering(
             // Glass, light halos and distant backdrops do not write scene
             // depth. Treating them as solid in the normals pass produces dark
             // silhouettes and spends a second draw on invisible surfaces.
-            const excluded: T.Object3D[] = [];
-            scene.traverse((object) => {
-                if (!(object instanceof T.Mesh) || !object.visible) return;
-                const materials = Array.isArray(object.material)
-                    ? object.material
-                    : [object.material];
-                if (materials.every((material) => !material.depthWrite)) {
-                    excluded.push(object);
-                    object.visible = false;
-                }
-            });
+            excluded.length = 0;
+            scene.traverse(hideDepthless);
             try {
                 occlusion.render(renderer, color, color, 0, false);
             } finally {
-                excluded.forEach((object) => {
-                    object.visible = true;
-                });
+                for (const object of excluded) object.visible = true;
             }
             renderer.setRenderTarget(null);
             renderer.clear();

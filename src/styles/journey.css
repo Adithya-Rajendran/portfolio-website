@@ -54,6 +54,13 @@ body > header #theme-switch {
     opacity: 0.7;
     transition: opacity 2s;
 }
+/* 4k only where it can show: a viewport up to 1920 CSS px at 1x, or up to
+   960 CSS px at 2x, cannot use more than the 2k file's 1920 px. */
+@media (max-width: 1920px) and (max-resolution: 1dppx), (max-width: 960px) {
+    .experience-page::before {
+        background-image: url("/images/trajectory/milky-way-v2-2k.webp");
+    }
+}
 .experience-page::after {
     content: "";
     position: fixed;
