@@ -24,7 +24,7 @@ button:hover, button.on { color: var(--cy); border-color: var(--cy); } button.on
 </style></head><body>
 <canvas id="c"></canvas><div id="labels"></div>
 <aside id="side">
-  <div class="k">ARCADIA STATION</div><h1>BLUEPRINT · DRAFT 3</h1>
+  <div class="k">ARCADIA STATION</div><h1>BLUEPRINT · DRAFT 4</h1>
   <p>This is a 3D model of the place the website happens in. <b>Drag to turn it, scroll to zoom.</b> The rooms are drawn from the real room models, as line drawings.</p>
   <div class="views"><button data-v="station">WHOLE STATION</button><button data-v="deck" class="on">THE DECK</button></div>
   <p id="blurb"></p>
@@ -33,10 +33,15 @@ button:hover, button.on { color: var(--cy); border-color: var(--cy); } button.on
   <h1 style="margin-top:22px;font-size:13px">WHY IT IS BUILT THIS WAY</h1>
   <p><b>Round hull.</b> Air pressure wants to make a sphere, so the ring is a circular tube. The ribs in the Atrium are its frames, 4 m apart.</p>
   <p><b>Rooms in a row.</b> A tube only has room for one line of compartments. Each is sealed by bulkheads, so a leak costs one room, and every room has two ways out along the Ring Line.</p>
-  <p><b>Dock at the hub.</b> A ship cannot hold on to a moving rim. It docks on the axis, where nothing moves, and people ride a spoke down. That is why the Atrium is at the spoke.</p>
-  <p><b>Workshop by the cargo lift.</b> Heavy things arrive weightless at the hub and come down the same spoke, straight into Fabrication.</p>
+  <p><b>Dock at the hub.</b> A ship cannot hold on to a moving rim. It docks on the axis, where nothing moves, and people ride a spoke down. That is why the Atrium is beside the spoke.</p>
+  <p><b>Freight under the floor.</b> Heavy things arrive weightless at the hub, come down the same spoke and travel the Ring Line to Fabrication's cargo lift.</p>
   <p><b>Water under the floor.</b> The rim is the outside of the station, so tanks there shield the rooms and balance the ring.</p>
-  <p><b>No rim windows.</b> The ring turns twice a minute; a window in it would show Earth tumbling. A telescope on the still hub looks at Earth and relays the image down the spoke to the Oculus.</p>
+  <p><b>No rim windows; a periscope.</b> The ring turns twice a minute, so a window in it would show Earth tumbling past. Light is brought in from the still hub instead, down the spoke, and two mirrors at its foot turn it into the rooms on either side. So the Atrium's Oculus and the Lounge's window are two eyepieces of one instrument, with the spoke between them.</p>
+  <h1 style="margin-top:22px;font-size:13px">BORROWED FROM</h1>
+  <p><b>Stanford torus</b> (NASA, 1975): no picture windows in the rim. A non-rotating mirror sends sunlight to mirrors at the hub, which turn it into the habitat tube.</p>
+  <p><b>O'Neill cylinders</b> (1976): sunlight by external mirrors through hull windows, and habitats in counter-rotating pairs so their spin cancels.</p>
+  <p><b>ISS Cupola</b>: direct windows work on a station that does not spin. Its largest pane is 80 cm across.</p>
+  <p><b>Telescopes</b>: a rotating field of view is steadied with a derotator, a prism or mirror set turning at half the rate.</p>
   <p><b>Paired rings.</b> Two pairs turn opposite ways so their spin cancels.</p>
 </aside>
 <div id="tog"><button id="roof">SHOW HULL + ROOFS</button></div>

@@ -23,21 +23,21 @@ function tag(html, pos, cls, mode) { const el = document.createElement('div'); e
 // The pressure hull is a circular tube; the main deck is a chord across it. Rooms are compartments between
 // bulkheads, in a row. HULL_R and HULL_Y are the Atrium's own hull (its ribs are these frames); below the deck there
 // is room for the Ring Line, tanks and shielding.
-const HULL_R = 10.5, HULL_Y = 2.3, X0 = -66, X1 = 90, LINE_Y = -4.5;
+const HULL_R = 10.5, HULL_Y = 2.3, X0 = -60, X1 = 96, LINE_Y = -4.5, CORE = [33, 45];     // CORE: the foot of the spoke, between the Atrium and the Lounge
 const ROOMS = [
-  { id: 'atrium', name: 'ATRIUM', page: 'HOME', href: 'index.html', glb: 'assets/lobby/room.glb', img: 'blueprint/lobby.png', at: 7, turn: -1, label: [16, 13, 0], view: [[16, 40, 46], [16, 2, 0]],
-    text: 'Compartment 4, at the foot of the spoke. You step out of the lift from the hub and face the Oculus. Its side walls are the hull, so the only ways on are in the far bulkhead: a door to the next compartment and a stair down to the Ring Line.' },
-  { id: 'fabrication', name: 'FABRICATION BAY 02', page: 'PROJECTS', href: 'index.html?room=projects', glb: 'assets/projects/room.glb', img: 'blueprint/projects.png', at: -35, turn: -1, label: [-26, 11, 0], view: [[-26, 34, 40], [-26, 2, 0]],
-    text: 'Compartment 3, on the other side of the spoke: its big door is the cargo lift, so parts come straight down from the hub dock.' },
-  { id: 'navigation', name: 'NAVIGATION', page: 'EXPERIENCE', href: 'index.html?room=experience', glb: 'assets/experience/room.glb', img: 'blueprint/experience.png', at: -53, turn: -1, label: [-53, 11, 0], view: [[-53, 30, 30], [-53, 2, 0]],
-    text: 'Compartment 2. A round chart room; its dome is a pressure dome under the hull.' },
-  { id: 'lounge', name: 'OBSERVATION LOUNGE', page: 'ABOUT', href: 'index.html?room=about', glb: 'assets/about/room.glb', img: 'blueprint/about.png', at: 48, turn: 1, label: [47, 9, 0], view: [[47, 26, 30], [47, 2, 0]],
-    text: 'Compartment 6. It faces the Atrium across the optics bay, so both rooms look into the same relayed view of Earth.' },
-  { id: 'library', name: 'LIBRARY', page: 'WRITING · PLANNED', box: [56, 72, 6], label: [64, 8, 0], view: [[64, 26, 30], [64, 2, 0]], text: 'Compartment 7. Not built yet.' },
-  { id: 'comms', name: 'COMMS', page: 'CONTACT · PLANNED', box: [74, 86, 6], label: [80, 8, 0], view: [[80, 26, 30], [80, 2, 0]], text: 'Compartment 8. Not built yet.' },
+  { id: 'atrium', name: 'ATRIUM', page: 'HOME', href: 'index.html', glb: 'assets/lobby/room.glb', img: 'blueprint/lobby.png', at: 7, turn: -1, label: [16, 14, 0], view: [[16, 40, 46], [16, 2, 0]],
+    text: 'Beside the foot of the spoke. You come down by lift, step through a door in the bulkhead and the hall opens in front of you. Its side walls are the hull, so the only ways on are in that same bulkhead: back into the spoke core for the Lounge beyond, or down the stair to the Ring Line. The big ring between the doors is the lower end of the periscope.' },
+  { id: 'fabrication', name: 'FABRICATION BAY 02', page: 'PROJECTS', href: 'index.html?room=projects', glb: 'assets/projects/room.glb', img: 'blueprint/projects.png', at: -28, turn: -1, label: [-19, 11, 0], view: [[-19, 34, 40], [-19, 2, 0]],
+    text: 'Behind the Atrium. Its big door is the cargo lift down to the Ring Line, whose freight track runs to the spoke and so up to the hub dock.' },
+  { id: 'navigation', name: 'NAVIGATION', page: 'EXPERIENCE', href: 'index.html?room=experience', glb: 'assets/experience/room.glb', img: 'blueprint/experience.png', at: -47, turn: -1, label: [-47, 11, 0], view: [[-47, 30, 30], [-47, 2, 0]],
+    text: 'The far end of the deck. A round chart room; its dome is a lining under the hull.' },
+  { id: 'lounge', name: 'OBSERVATION LOUNGE', page: 'ABOUT', href: 'index.html?room=about', glb: 'assets/about/room.glb', img: 'blueprint/about.png', at: 54, turn: 1, label: [53, 9, 0], view: [[53, 26, 30], [53, 2, 0]],
+    text: 'On the other side of the spoke core. Its window is the periscope\'s second eyepiece, which is why it shows the same Earth as the Oculus: the two rooms do not look at each other, they both look up the spoke.' },
+  { id: 'library', name: 'LIBRARY', page: 'WRITING · PLANNED', box: [62, 78, 6], label: [70, 8, 0], view: [[70, 26, 30], [70, 2, 0]], text: 'Not built yet.' },
+  { id: 'comms', name: 'COMMS', page: 'CONTACT · PLANNED', box: [80, 92, 6], label: [86, 8, 0], view: [[86, 26, 30], [86, 2, 0]], text: 'Not built yet.' },
 ];
-const BULKHEADS = [-64, -43, -10, 0, 33, 39, 55, 73, 87];
-const STOPS = [['NAVIGATION', -53], ['FABRICATION', -26], ['ATRIUM', 16], ['LOUNGE', 47], ['LIBRARY', 64], ['COMMS', 80]];
+const BULKHEADS = [-57, -36.5, -1.5, 33, 45, 61, 79, 93];
+const STOPS = [['NAVIGATION', -47], ['FABRICATION', -19], ['ATRIUM', 16], ['SPOKE', 39], ['LOUNGE', 53], ['LIBRARY', 70], ['COMMS', 86]];
 
 const deck = new THREE.Group(); scene.add(deck);
 const roofs = [], shell = []; let showRoof = false;
@@ -82,19 +82,25 @@ tag('WATER TANKS · RADIATION SHIELD + BALLAST', V(-58, -8.5, 8), 'far', 'deck')
 for (const [name, x] of STOPS) { const p = new THREE.Mesh(new THREE.BoxGeometry(5, 0.2, 2.6), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.5 })); p.position.set(x, LINE_Y, 3); deck.add(p);
   deck.add(poly([V(x, LINE_Y, 3), V(x, 0.1, 6.5)], dashed(AM, 0.9, 0.5))); }
 // the Atrium's two ways on, both in its spinward bulkhead: a door to the next compartment and a stair down to the Ring Line
-for (const [name, z] of [['LOUNGE →', 8.2], ['↓ RING LINE', -8.2]]) {
+for (const [name, z] of [['LIFTS · LOUNGE', 8.2], ['↓ RING LINE', -8.2]]) {
   const d = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3.2, 2.6), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.6 })); d.position.set(33, 2.0, z); deck.add(d);
   if (z < 0) deck.add(poly([V(33, 0.4, z), V(36, LINE_Y, -3)], dashed(AM, 0.9, 0.5)));
   tag(name, V(33, 5.0, z), 'door', 'deck'); }
-// the spoke: lift core between Fabrication and the Atrium, running up to the hub
-{ const m = line(AM, 0.8); for (const [x, z] of [[-10, -5], [0, -5], [0, 5], [-10, 5]]) deck.add(poly([V(x, 0, z), V(x, 60, z)], m));
-  for (let y = 0; y <= 60; y += 6) deck.add(poly([V(-10, y, -5), V(0, y, -5), V(0, y, 5), V(-10, y, 5)], line(AM, 0.35), true));
-  tag('SPOKE · LIFTS TO THE HUB<small><br>PASSENGERS ↔ ATRIUM · CARGO ↔ FABRICATION</small>', V(-5, 30, 0), 'door', 'deck'); }
-// the optics bay between the Atrium and the Lounge
-{ const m = line(AM, 0.9); deck.add(poly(circ(36, 4.6, 48).map((p) => p.setY(p.y - HULL_Y + 5.65)), m, true));
-  deck.add(poly([V(36, 5.65, 0), V(36, 16, 0), V(-5, 16, 0), V(-5, 60, 0)], dashed(AM, 0.9, 0.7)));
-  tag('OPTICS BAY · OCULUS RELAY<small><br>DE-SPUN IMAGE FROM THE HUB TELESCOPE</small>', V(36, 19, 0), 'door', 'deck'); }
-{ const you = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.8, 16), new THREE.MeshBasicMaterial({ color: AM })); you.position.set(2.8, 0.9, 0); deck.add(you); tag('YOU ARRIVE HERE', V(2.8, 3.2, 0), 'door', 'deck'); }
+// the spoke: its foot is a compartment of its own between the Atrium and the Lounge (lifts to the hub, the stair down)
+{ const m = line(AM, 0.8), [a, z] = [CORE[0] + 1, CORE[1] - 1];
+  for (const [x, w] of [[a, -5], [z, -5], [z, 5], [a, 5]]) deck.add(poly([V(x, 0, w), V(x, 60, w)], m));
+  for (let y = 0; y <= 60; y += 6) deck.add(poly([V(a, y, -5), V(z, y, -5), V(z, y, 5), V(a, y, 5)], line(AM, 0.35), true));
+  tag('SPOKE CORE<small><br>LIFTS TO THE HUB · STAIR TO THE RING LINE</small>', V(39, 34, 0), 'door', 'deck'); }
+// The periscope. Light from the hub telescope comes down the middle of the spoke; at the foot two mirrors, back to
+// back, turn it into the rooms on either side. The Atrium's Oculus and the Lounge's window are its two eyepieces.
+{ const m = line(AM, 0.95), mid = (CORE[0] + CORE[1]) / 2;
+  deck.add(poly(circ(CORE[0], 4.6, 48).map((p) => p.setY(p.y - HULL_Y + 5.65)), m, true));                                 // the Oculus, in the Atrium's bulkhead
+  deck.add(poly([V(CORE[1], 0.55, -6.2), V(CORE[1], 5.9, -6.2), V(CORE[1], 5.9, 6.2), V(CORE[1], 0.55, 6.2)], m, true));   // the Lounge's window
+  for (const w of [-3, 3]) deck.add(poly([V(mid - 2.6, 3.0, w), V(mid, 8.2, w), V(mid + 2.6, 3.0, w)], m));                // the two mirrors
+  deck.add(poly([V(mid - 2.6, 3.0, -3), V(mid - 2.6, 3.0, 3)], m), poly([V(mid, 8.2, -3), V(mid, 8.2, 3)], m), poly([V(mid + 2.6, 3.0, -3), V(mid + 2.6, 3.0, 3)], m));
+  deck.add(poly([V(mid, 60, 0), V(mid, 5.65, 0)], dashed(AM, 0.9, 0.7)), poly([V(CORE[0], 5.65, 0), V(mid, 5.65, 0), V(CORE[1], 4.0, 0)], dashed(AM, 0.9, 0.7)));
+  tag('PERISCOPE<small><br>ONE VIEW FROM THE HUB, TURNED INTO BOTH ROOMS</small>', V(mid, 11.5, 0), 'door', 'deck'); }
+{ const you = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.8, 16), new THREE.MeshBasicMaterial({ color: AM })); you.position.set(41.5, 0.9, 7.6); deck.add(you); tag('YOU ARRIVE HERE', V(41.5, 3.2, 7.6), 'door', 'deck'); }
 tag('← ANTISPINWARD', V(X0 - 6, 0, 0), 'far', 'deck'); tag('SPINWARD →', V(X1 + 6, 6, 0), 'far', 'deck');
 for (const r of ROOMS) tag(`<b>${r.name}</b><small>${r.page}</small>`, V(...r.label), '', 'deck');
 
@@ -108,7 +114,7 @@ function hoop(z, r, mat, n = 160) { const l = poly(ring(r, n), mat, true); l.pos
   for (const dz of [-HULL_R, HULL_R]) hoop(z + dz, R, m); hoop(z, R + HULL_R, m); hoop(z, R - HULL_R, m);
   for (let k = 0; k < 48; k++) { const a = k / 48 * 6.2832, c = Math.cos(a), s = Math.sin(a); const f = poly(ring(HULL_R, 20), line(here ? AM : CY, 0.22), true);
     f.position.set(c * R, R + s * R, z); f.rotation.set(0, 0, a); f.rotateY(Math.PI / 2); f.rotateX(Math.PI / 2); station.add(f); }
-  for (let k = 0; k < 4; k++) { const a = k / 4 * 6.2832 - 1.5708 - 0.022, c = Math.cos(a), s = Math.sin(a); for (const d of [-5, 5]) station.add(poly([V(c * 24, R + s * 24, z + d), V(c * (R - HULL_R), R + s * (R - HULL_R), z + d)], line(here && k === 0 ? AM : CY, 0.6))); }
+  for (let k = 0; k < 4; k++) { const a = k / 4 * 6.2832 - 1.5708 + 39 / R, c = Math.cos(a), s = Math.sin(a); for (const d of [-5, 5]) station.add(poly([V(c * 24, R + s * 24, z + d), V(c * (R - HULL_R), R + s * (R - HULL_R), z + d)], line(here && k === 0 ? AM : CY, 0.6))); }
   tag(`RING ${no}${here ? ' · THE DECK IS ITS LOWEST ARC' : ''}`, V(0, 2 * R + 30, z), here ? 'door' : 'far', 'station');
 });
 tag('RINGS 01 + 02 TURN ONE WAY, 03 + 04 THE OTHER:<br>THEIR SPIN CANCELS, SO THE STATION CAN BE STEERED', V(-R - 150, R + 140, 110), 'far', 'station');
@@ -120,9 +126,9 @@ tag('HUB · DOES NOT SPIN · ZERO-G', V(0, R + 46, 110), 'far', 'station');
   for (const z of [380, 470, 560]) for (const sx of [-1, 1]) station.add(poly([V(sx * 10, R, z - 30), V(sx * 300, R, z - 30), V(sx * 300, R, z + 30), V(sx * 10, R, z + 30)], line(CY, 0.55), true));
   for (const sy of [-1, 1]) station.add(poly([V(0, R + sy * 10, 600), V(0, R + sy * 220, 600), V(0, R + sy * 220, 640), V(0, R + sy * 10, 640)], line(AM, 0.6), true));
   tag('SOLAR ARRAYS', V(310, R + 30, 470), 'far', 'station'); tag('RADIATORS · EDGE-ON TO THE SUN', V(0, R + 250, 620), 'far', 'station'); }
-// Earth-pointing telescope on the hub: its image goes down the spoke to the Oculus
+// Earth-pointing telescope on the hub: the top of the periscope. Its image goes down the spoke to the deck.
 { const t = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(9, 9, 40, 12), 30), line(AM, 0.9)); t.position.set(0, R - 40, -40); station.add(t);
-  station.add(poly([V(0, R - 20, -40), V(0, R - 20, 0), V(0, 20, 0)], dashed(AM, 0.9, 6))); tag('OCULUS TELESCOPE', V(0, R - 70, -40), 'door', 'station'); }
+  station.add(poly([V(0, R - 20, -40), V(0, R - 20, 0), V(4, R - 24, 0), V(37, R - 212, 0)], dashed(AM, 0.9, 6))); tag('OCULUS TELESCOPE', V(0, R - 70, -40), 'door', 'station'); }
 // Ark Aurora, docked nose-on to the hub, on the spin axis (the only place a ship can meet a spinning station)
 { const ark = new THREE.Group(); ark.position.set(0, R, -70); station.add(ark); const m = line(CY, 0.7);
   ark.add(poly([V(0, 0, -40), V(0, 0, -1520)], m));
@@ -140,10 +146,10 @@ tag('HUB · DOES NOT SPIN · ZERO-G', V(0, R + 46, 110), 'far', 'station');
 // ------------------------------------------------------------------ side panel + camera moves
 const BLURB = {
   station: '<b>Arcadia Station</b>, 717 km up. Four habitat rings spin for gravity; the hub on the axis does not spin, so that is where ships dock, where the solar arrays and radiators sit, and where the telescope that feeds the Oculus points at Earth. <b>Ark Aurora</b> is docked nose-on to the hub. Everything on the website happens on the amber arc of Ring 04.',
-  deck: 'That arc, straightened out. The ring is a pressure tube with a flat deck across it. The rooms are <b>compartments in a row</b>, each sealed from the next by a bulkhead (amber rings). You come down the <b>spoke</b> by lift and step into the Atrium. Under the deck runs the <b>Ring Line</b>, a tram and walkway that reaches every room.',
+  deck: 'That arc, straightened out. The ring is a pressure tube with a flat deck across it. The rooms are <b>compartments in a row</b>, each sealed from the next by a bulkhead (amber rings). You come down the <b>spoke</b> by lift into its core and step through into the Atrium. Light from the hub comes down the same spoke: the <b>periscope</b>. Under the deck runs the <b>Ring Line</b>, a tram and walkway that reaches every room.',
 };
 let mode = 'deck', fly = null;
-const DECK_VIEW = [[-10, 120, 150], [12, -4, 0]], STATION_VIEW = [[1900, 1100, 900], [0, R, -480]];
+const DECK_VIEW = [[-4, 120, 150], [18, -4, 0]], STATION_VIEW = [[1900, 1100, 900], [0, R, -480]];
 function go(pos, tgt, m) { fly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: V(...pos), t1: V(...tgt), k: 0 }; if (m) setMode(m); }
 function setMode(m) { mode = m; document.querySelectorAll('.views button').forEach((b) => b.classList.toggle('on', b.dataset.v === m)); document.getElementById('blurb').innerHTML = BLURB[m];
   controls.maxDistance = m === 'station' ? 6000 : 330; deck.visible = true; }
