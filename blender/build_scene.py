@@ -18,9 +18,13 @@ pi = math.pi
 # ----------------------------------------------------------------- dimensions
 W = 10.0            # half width of hall
 Y0, Y1 = -7.0, 26.0  # hall extents (camera looks along +Y)
-H = 11.0            # ceiling height
-ZC = 7.5            # where wall turns into the 45 deg chamfer
-XC = 6.5            # half width of flat ceiling
+# The hall is one compartment of the ring: a stretch of pressure tube with the deck as a chord across it. Its roof is
+# the hull itself, so everything above the balcony follows a circle about the tube's axis, HC above the deck.
+HC = 2.3            # height of the tube axis above the deck
+RL = 10.05          # radius of the hull lining
+RIB_IN, RIB_OUT = 9.7, 10.4     # hull ring frames (the ribs), on the ring's 4 m pitch
+WALL_Z = 4.6        # up to the balcony floor, flat service walls stand in front of the hull
+H = HC + RL         # crown of the lining
 FX = 5.9            # half width of the central polished floor
 PLAT_Z = 0.45       # side platform height
 MEZ_Z = 4.2         # underside of mezzanine
@@ -370,7 +374,7 @@ def blob(name, c, r, m, grp, squash=(1, 1, 1)):
 
 # ---- pressure doors: every compartment is sealed from the next, so every way out of a room is one of these
 DOORS = []          # exported to scene.json: where each door is, which way it faces, where it leads
-def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5):
+def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5, stops=None):
     """Sliding two-leaf pressure door in a heavy frame. M: origin on the wall at floor level, +x into the room, +y along the wall."""
     def kb(n, size, loc, m=None, em=None, bevel=0.0):
         bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
@@ -385,11 +389,12 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5):
         for i in range(4): kb(f'chev{d}{i}', (0.012, 0.2, 0.09), (0.245, d * (w / 2 + 0.14), 0.25 + i * 0.22), 'brass' if i % 2 == 0 else 'dark')   # warning bands at the foot of the frame
     kb('lintel', (0.36, w + 0.56, 0.32), (0.06, 0, h + 0.16), 'rib', bevel=0.03)
     kb('sill', (0.55, w + 0.56, 0.05), (0.14, 0, 0.025), 'brass')
-    kb('status', (0.02, w * 0.72, 0.05), (0.245, 0, h + 0.07), em='gate' if to else 'amber')          # green: open for use, amber: sealed
+    kb('status', (0.02, w * 0.72, 0.05), (0.245, 0, h + 0.07), em='gate' if to or stops else 'amber')          # green: open for use, amber: sealed
     face = lambda z: M @ Matrix(((0, 0, 1, 0.25), (1, 0, 0, 0), (0, 1, 0, z), (0, 0, 0, 1)))
     text3d(name + '_t', title, 0.25, face(h + 0.56), spacing=1.3)
     if sub: text3d(name + '_s', sub, 0.11, face(h + 0.4), spacing=1.5)
-    DOORS.append(dict(c=list(M @ Vector((0.3, 0, h / 2))), n=list(M.to_3x3() @ Vector((1, 0, 0))), to=to, label=title))     # to: room id, '' = sealed
+    DOORS.append(dict(c=list(M @ Vector((0.3, 0, h / 2))), n=list(M.to_3x3() @ Vector((1, 0, 0))), to=to, label=title,       # to: room id, '' = sealed
+                      **({'stops': stops} if stops else {})))                                                             # stops: [[label, room id], ...]
 
 # ---- everything above this line is the shared kit: room_*.py scripts execute it and build their own room
 # ================================================================= ARCHITECTURE
@@ -400,12 +405,22 @@ quad('floor_near', [(-FX, Y0, 0), (FX, Y0, 0), (FX, FLOOR_SPLIT, 0), (-FX, FLOOR
 quad('floor_far', [(-FX, FLOOR_SPLIT, 0), (FX, FLOOR_SPLIT, 0), (FX, STAIR_Y, 0), (-FX, STAIR_Y, 0)], 'floor', 'floorF')
 
 # The two sides of the hall are deliberately not mirror images: each bay has its own job.
-PROGRAM = {1: ['alcove', 'screen', 'screen', 'garden', 'door', 'screen', 'door'],
-           -1: ['alcove', 'screen', 'garden', 'screen', 'door', 'screen', 'door']}
-UPPER = {1: ['panel', 'banner', 'window', 'panel', 'banner', 'window', 'panel'],
-         -1: ['panel', 'window', 'banner', 'window', 'panel', 'banner', 'window']}
-# stair doors down to the Ring Line, each signed for where its stair comes out
-STAIRS = {(-1, 4): ('FABRICATION', 'projects'), (-1, 6): ('NAVIGATION', 'experience'), (1, 6): ('LOUNGE', 'about'), (1, 4): ('LIBRARY', '')}
+PROGRAM = {1: ['alcove', 'screen', 'screen', 'garden', 'alcove', 'screen', 'alcove'],          # the last bay stays low: the bulkhead doors are beyond it
+           -1: ['alcove', 'screen', 'garden', 'screen', 'garden', 'screen', 'alcove']}
+UPPER = {1: ['panel', 'banner', 'hatch', 'panel', 'banner', 'hatch', 'panel'],
+         -1: ['panel', 'hatch', 'banner', 'hatch', 'panel', 'banner', 'hatch']}
+TW = math.degrees(math.acos((WALL_Z - HC) / RL))        # where the lining meets the top of the service walls
+
+def arc(s, r, t0, t1, n=None):
+    """Points (x, z) on the circle of radius r about the tube axis, on side s; t = degrees round from the crown."""
+    n = n or max(1, int(abs(t1 - t0) / 2.5))
+    return [(s * r * math.sin(math.radians(t0 + (t1 - t0) * i / n)), HC + r * math.cos(math.radians(t0 + (t1 - t0) * i / n))) for i in range(n + 1)]
+def shell(name, s, t0, t1, y0, y1, m=None, grp=None, depth=0.1, r=RL, **kw):
+    """A curved panel on the hull: from t0 to t1 round the tube, standing `depth` proud of radius r."""
+    return band(name, arc(s, r, t0, t1), arc(s, r - depth, t0, t1), y0, y1, m, grp, **kw)
+def on_hull(s, t, d=0.0):
+    """The point d inside the lining at angle t."""
+    return arc(s, RL - d, t, t, 1)[0]
 
 for s in (1, -1):
     g = side_grp(s)
@@ -421,8 +436,8 @@ for s in (1, -1):
     for i, (xx, zz) in enumerate(STEPS):
         box(f'stepled_{g}{i}', sx(xx - 0.032), sx(xx - 0.006), Y0, STAIR_Y if i == 0 else Y1, zz - 0.048, zz - 0.04, em='step')
     # wall base planes
-    quad(f'wall_{g}', [(sx(W), Y0, 0), (sx(W), Y1, 0), (sx(W), Y1, ZC), (sx(W), Y0, ZC)], 'wall', g)
-    quad(f'chamf_{g}', [(sx(W), Y0, ZC), (sx(W), Y1, ZC), (sx(XC), Y1, H), (sx(XC), Y0, H)], 'ceil', 'archC')
+    quad(f'wall_{g}', [(sx(W), Y0, 0), (sx(W), Y1, 0), (sx(W), Y1, WALL_Z + 0.3), (sx(W), Y0, WALL_Z + 0.3)], 'wall', g)
+    shell(f'hull_{g}', s, 0, TW + 3, Y0, Y1, 'ceil', 'archC', depth=-0.1)
 
     # ---- balcony: slab tapering to a slim nose with a brass inlay, wash light tucked under the taper,
     # frameless glass balustrade in a base shoe with slim stanchions and a round brass handrail
@@ -441,26 +456,21 @@ for s in (1, -1):
     quad(f'FX_glass_{g}', [(sx(6.96), Y0, TOP + 0.1), (sx(6.96), Y1, TOP + 0.1), (sx(6.96), Y1, 5.63), (sx(6.96), Y0, 5.63)],
          'chrome', fx='glass', uv=True)
 
-    # ribs (portal frames) -- half per side; each carries a bracket under the balcony
-    outer = [(sx(10.05), -0.02), (sx(10.05), ZC + 0.02), (sx(XC + 0.02), H + 0.05), (0, H + 0.05)]
-    inner = [(sx(9.35), -0.02), (sx(9.35), ZC - 0.27), (sx(XC - 0.27), H - 0.65), (0, H - 0.65)]
-    inner2 = [(sx(9.33), 0.46), (sx(9.33), ZC - 0.28), (sx(XC - 0.28), H - 0.67), (0, H - 0.67)]
-    inner1 = [(sx(9.36), 0.46)] + inner[1:]
+    # ribs: the hull's ring frames, true circles about the tube axis (half per side); each carries a bracket under the balcony
     for k, ry in enumerate(RIB_Y):
         gg = 'back' if ry < CAM_POS.y else g
-        band(f'rib_{g}{k}', outer, inner, ry - 0.3, ry + 0.3, 'rib', gg, bevel=0.03)
-        band(f'ribled_{g}{k}', inner1, inner2, ry - 0.04, ry + 0.04, em=em_ramp('ice', k, ry, 0.3, 2.3))
-        prism(f'bracket_{g}{k}', [(sx(9.36), MEZ_Z), (sx(7.75), MEZ_Z), (sx(7.75), MEZ_Z - 0.07), (sx(9.36), MEZ_Z - 0.8)], 'Y', ry - 0.09, ry + 0.09, 'rib', gg, bevel=0.015)
+        band(f'rib_{g}{k}', arc(s, RIB_OUT, 103.5, 0), arc(s, RIB_IN, 103.5, 0), ry - 0.3, ry + 0.3, 'rib', gg, bevel=0.03)
+        band(f'ribled_{g}{k}', arc(s, RIB_IN, 100.5, 0), arc(s, RIB_IN - 0.02, 100.5, 0), ry - 0.04, ry + 0.04, em=em_ramp('ice', k, ry, 0.3, 2.3))
+        prism(f'bracket_{g}{k}', [(sx(9.6), MEZ_Z), (sx(7.75), MEZ_Z), (sx(7.75), MEZ_Z - 0.07), (sx(9.6), MEZ_Z - 0.8)], 'Y', ry - 0.09, ry + 0.09, 'rib', gg, bevel=0.015)
 
-    # ---- service run along the roof on the left side only: a duct and two pipes on hangers
+    # ---- service run along the hull on the left side only: a duct and two pipes on hangers
     if s < 0:
-        def CHP(t, d): return (sx(W - t * 0.7071 - d * 0.7071), ZC + t * 0.7071 - d * 0.7071)
-        tube('duct', *CHP(1.05, 0.34), 0.2, Y0, Y1, 'wall2', 'archC', n=16)
-        tube('pipe_a', *CHP(1.55, 0.2), 0.07, Y0, Y1, 'brass', 'archC')
-        tube('pipe_b', *CHP(1.78, 0.17), 0.045, Y0, Y1, 'chrome', 'archC')
+        tube('duct', *on_hull(s, 53, 0.36), 0.2, Y0, Y1, 'wall2', 'archC', n=16)
+        tube('pipe_a', *on_hull(s, 48.6, 0.2), 0.07, Y0, Y1, 'brass', 'archC')
+        tube('pipe_b', *on_hull(s, 46.6, 0.17), 0.045, Y0, Y1, 'chrome', 'archC')
         for yc in BAYS:
             for yy in (yc - 0.9, yc + 0.9):
-                prism('hanger', [CHP(0.78, 0.0), CHP(1.95, 0.0), CHP(1.95, 0.1), CHP(1.3, 0.6), CHP(0.78, 0.6)], 'Y', yy - 0.02, yy + 0.02, 'dark', 'archC')
+                prism('hanger', [on_hull(s, 55, 0), on_hull(s, 45.5, 0), on_hull(s, 45.5, 0.1), on_hull(s, 51, 0.62), on_hull(s, 55, 0.62)], 'Y', yy - 0.02, yy + 0.02, 'dark', 'archC')
 
     # ---- bays
     for bi, yc in enumerate(BAYS):
@@ -506,13 +516,6 @@ for s in (1, -1):
                 box(f'sofa_arm_{g}{bi}', sx(8.2), sx(9.28), yy - 0.11, yy + 0.11, z0 + 0.2, z0 + 0.66, 'sofa', 'props', bevel=0.06, seg=3)
             lathe(f'table_{g}{bi}', [(0, 0.4), (0.42, 0.4), (0.45, 0.37), (0.3, 0.04), (0.3, 0.0), (0, 0)], 'white', 'props', segs=48,
                   M=T((sx(7.45), yc, z0)))
-        elif kind == 'door':
-            title, to = STAIRS[(s, bi)]
-            box(f'doorrecess_{g}{bi}', sx(9.82), sx(W), yc - 1.5, yc + 1.5, z0, 3.95, 'dark', gg, bevel=0.02)
-            pressure_door(f'door_{g}{bi}', T((sx(9.8), yc, z0), (0, 0, pi if s > 0 else 0)), gg, title, 'RING LINE  ·  STAIR' if to else 'RING LINE  ·  SEALED', to)
-            if title == 'FABRICATION':                                            # parts waiting to go down to the bay
-                for ci, (dx, dy, dz, sz, m) in enumerate(((8.95, 1.75, 0, 0.62, 'crate_w'), (8.93, 1.7, 0.62, 0.5, 'crate_o'), (8.3, 1.8, 0, 0.5, 'crate_o'))):
-                    box(f'crate_{g}{bi}{ci}', sx(dx - sz / 2), sx(dx + sz / 2), yc - dy - sz / 2, yc - dy + sz / 2, z0 + dz, z0 + dz + sz, m, 'props', bevel=0.025)
         elif kind == 'garden':
             # a grove in a round planter, lit from below, with a bench against the wall
             c = Vector((sx(8.25), yc, z0))
@@ -547,38 +550,36 @@ for s in (1, -1):
         for yy in (yc - 0.9, yc + 0.9):
             lathe(f'down_{g}{bi}', [(0, 0.0), (0.07, 0.0), (0.07, 0.012), (0, 0.012)], em='warm', segs=16, M=T((sx(8.3), yy, MEZ_Z - 0.012)))
 
-        # ---------- upper wall: banners, lit windows into the ring corridor, or plain panels - all under a cove wash
+        # ---------- the hull above the balcony: a dressed band (banners, fins, service hatches) under a cove wash
         up = UPPER[s][bi]
-        box(f'uppanel_{g}{bi}', sx(9.88), sx(W), yc - 1.55, yc + 1.55, 4.85, 7.3, 'wall2', gg, bevel=0.025)
-        box(f'covelip_{g}{bi}', sx(9.72), sx(9.78), yc - 1.55, yc + 1.55, 7.16, 7.32, 'wall2', gg)
-        box(f'cove_{g}{bi}', sx(9.8), sx(9.86), yc - 1.5, yc + 1.5, 7.27, 7.29, em='step')
-        if up == 'banner':
-            col = 'banner_o' if (bi + (s > 0)) % 2 else 'banner_n'
-            box(f'banner_{g}{bi}', sx(9.83), sx(9.845), yc - 0.85, yc + 0.85, 4.95, 7.1, col, gg)
-            tube(f'bannerrod_{g}{bi}', sx(9.82), 7.12, 0.025, yc - 0.95, yc + 0.95, 'brass', gg, n=8)
-            Mb = T((sx(9.825), yc, 6.25), (0, -s * pi / 2, 0))                                    # emblem: ring and star
+        shell(f'uppanel_{g}{bi}', s, 60.5, 75.5, yc - 1.55, yc + 1.55, 'wall2', gg)
+        shell(f'covelip_{g}{bi}', s, 58.9, 59.7, yc - 1.55, yc + 1.55, 'wall2', gg, depth=0.26)
+        shell(f'cove_{g}{bi}', s, 59.8, 60.1, yc - 1.5, yc + 1.5, em='step', depth=0.04, r=RL - 0.14)
+        if up == 'banner':                                                       # cloth hangs plumb, so it stands clear of the curving hull
+            col = 'banner_o' if (bi + (s > 0)) % 2 else 'banner_n'; bx = on_hull(1, 61)[0] - 0.14
+            box(f'banner_{g}{bi}', sx(bx - 0.015), sx(bx), yc - 0.85, yc + 0.85, 4.95, 7.05, col, gg)
+            tube(f'bannerrod_{g}{bi}', sx(bx - 0.008), 7.07, 0.025, yc - 0.95, yc + 0.95, 'brass', gg, n=8)
+            Mb = T((sx(bx - 0.02), yc, 6.2), (0, -s * pi / 2, 0))                                    # emblem: ring and star
             lathe(f'emblem_{g}{bi}', [(0.36, 0), (0.45, 0), (0.45, 0.006), (0.36, 0.006)], 'white', gg, segs=48, M=Mb)
             lathe(f'emblemdot_{g}{bi}', [(0, 0), (0.1, 0), (0.1, 0.006), (0, 0.006)], 'white', gg, segs=24, closed=False, M=Mb)
-            box(f'bannerbar_{g}{bi}', sx(9.822), sx(9.83), yc - 0.6, yc + 0.6, 5.3, 5.36, 'white', gg)
-        elif up == 'window':
-            box(f'winframe_{g}{bi}', sx(9.85), sx(9.88), yc - 1.32, yc + 1.32, 5.2, 6.9, 'dark', gg, bevel=0.01)
-            box(f'winglow_{g}{bi}', sx(9.842), sx(9.85), yc - 1.26, yc + 1.26, 5.26, 6.84, 'lum_warm', gg)
-            for yy in (yc - 0.63, yc, yc + 0.63):
-                box(f'mullion_{g}{bi}', sx(9.82), sx(9.85), yy - 0.02, yy + 0.02, 5.26, 6.84, 'dark', gg)
-            box(f'transom_{g}{bi}', sx(9.82), sx(9.85), yc - 1.26, yc + 1.26, 6.3, 6.34, 'dark', gg)
+            box(f'bannerbar_{g}{bi}', sx(bx - 0.023), sx(bx - 0.015), yc - 0.6, yc + 0.6, 5.25, 5.31, 'white', gg)
+        elif up == 'hatch':                                                      # service hatch into the space between lining and hull
+            shell(f'hatch_{g}{bi}', s, 63.5, 72.5, yc - 1.1, yc + 1.1, 'dark', gg, depth=0.14)
+            for yy in (yc - 0.55, yc + 0.55):
+                shell(f'hatchslit_{g}{bi}', s, 65.5, 67.0, yy - 0.3, yy + 0.3, 'lum_cool', gg, depth=0.15)
+            shell(f'hatchpull_{g}{bi}', s, 70.6, 71.0, yc - 0.35, yc + 0.35, 'brass', gg, depth=0.18)
         else:
             for yy in (yc - 0.8, yc + 0.8):
-                box(f'fin_{g}{bi}', sx(9.78), sx(9.88), yy - 0.05, yy + 0.05, 5.0, 7.1, 'rib', gg, bevel=0.012)
-        # ---------- chamfer panel + light line
-        def CH(t, d):   # point on chamfer: t along slope from wall, d offset into room
-            return (sx(W - t * 0.7071 - d * 0.7071), ZC + t * 0.7071 - d * 0.7071)
-        prism(f'chpanel_{g}{bi}', [CH(0.45, 0), CH(4.5, 0), CH(4.5, 0.09), CH(0.45, 0.09)], 'Y', yc - 1.55, yc + 1.55, 'wall', 'archC', bevel=0.02)
-        prism(f'chled_{g}{bi}', [CH(2.4, 0.085), CH(2.52, 0.085), CH(2.52, 0.1), CH(2.4, 0.1)], 'Y', yc - 1.4, yc + 1.4, em=em_ramp('white', bi, yc, 0.4, 2.8))
-        # ---------- flat ceiling: light lines + spots
-        box(f'ceilled_{g}{bi}', sx(1.55), sx(1.67), yc - 1.6, yc + 1.6, H - 0.03, H, em=em_ramp('white', bi, yc, 0.4, 2.8))
-        for xx in (3.3, 4.9):
+                shell(f'fin_{g}{bi}', s, 61.5, 74.5, yy - 0.05, yy + 0.05, 'rib', gg, depth=0.22)
+        # ---------- the crown: lining panels between the frames, light lines and spots set into them
+        lit = em_ramp('white', bi, yc, 0.4, 2.8)
+        shell(f'crown_{g}{bi}', s, 12.5, 52, yc - 1.55, yc + 1.55, 'wall', 'archC', depth=0.09)
+        shell(f'crownmid_{g}{bi}', s, 0, 8.3, yc - 1.55, yc + 1.55, 'wall', 'archC', depth=0.12)
+        shell(f'chled_{g}{bi}', s, 33.6, 34.3, yc - 1.4, yc + 1.4, em=lit, depth=0.015, r=RL - 0.085)
+        shell(f'ceilled_{g}{bi}', s, 8.9, 9.6, yc - 1.6, yc + 1.6, em=lit, depth=0.03)
+        for t in (19, 29):
             for yy in (yc - 0.85, yc + 0.85):
-                box(f'spot_{g}{bi}', sx(xx - 0.05), sx(xx + 0.05), yy - 0.05, yy + 0.05, H - 0.02, H, em='warm')
+                shell(f'spot_{g}{bi}', s, t - 0.29, t + 0.29, yy - 0.05, yy + 0.05, em='warm', depth=0.02)
 
     # ---- floor: a brass strip let into the stone, with small in-ground marker lights that brighten towards the portal
     box(f'floorinlay_{g}', sx(4.57), sx(4.63), Y0, STAIR_Y, 0.0, 0.003, 'brass', 'center')
@@ -588,14 +589,9 @@ for s in (1, -1):
         lathe(f'marker_{g}{i}', [(0, 0.004), (0.036, 0.004), (0.036, 0.0), (0, 0.0)], em=em_ramp('mark', i, y, 0.5, 5.5), segs=12, closed=False, M=T((sx(4.6), y, 0)))
         lathe(f'markerbezel_{g}{i}', [(0.036, 0.0045), (0.06, 0.0045), (0.06, 0.0), (0.036, 0.0)], 'dark', 'center', segs=16, closed=False, M=T((sx(4.6), y, 0)))
 
-# flat ceiling
-quad('ceiling', [(-XC, Y0, H), (XC, Y0, H), (XC, Y1, H), (-XC, Y1, H)], 'ceil', 'archC')
-for bi, yc in enumerate(BAYS):
-    box(f'ceilcoffer_{bi}', -1.45, 1.45, yc - 1.55, yc + 1.55, H - 0.12, H, 'wall', 'archC', bevel=0.03)
-
-# back wall (behind camera) with luminous door panels
+# antispinward bulkhead (behind the camera): the lift lobby you arrive through
 def profile_pts():
-    return [(-W, 0), (W, 0), (W, ZC), (XC, H), (-XC, H), (-W, ZC)]
+    return [(-W, 0), (W, 0), (W, WALL_Z)] + arc(1, RL, TW, 0) + arc(-1, RL, 0, TW)[1:] + [(-W, WALL_Z)]
 bm = bmesh.new(); bm.faces.new([bm.verts.new((x, Y0, z)) for x, z in profile_pts()])
 face_in(bm); finish('backwall', bm, 'wall', 'back', keep_normals=True)
 box('backdoor', -2.4, 2.4, Y0, Y0 + 0.12, 0, 4.2, 'wall2', 'back', bevel=0.03)
@@ -603,7 +599,7 @@ for xx in (-3.6, 3.6):
     box('backlum', xx - 0.5, xx + 0.5, Y0, Y0 + 0.05, 0.6, 6.5, 'lum_cool', 'back')
 box('backlum_t', -2.2, 2.2, Y0, Y0 + 0.05, 4.6, 5.2, 'lum_cool', 'back')
 
-# ---- end wall with circular portal (radial mesh)
+# ---- spinward bulkhead. In its middle, the Oculus: a ring-framed optic 9 m across (radial mesh around it)
 def ray_poly(c, a, poly):
     d = (math.cos(a), math.sin(a)); best = 1e9
     for i in range(len(poly)):
@@ -633,10 +629,13 @@ for yy, nm in ((Y1, 'endwall'), (Y1 + 1.2, 'endwall_out')):
 # mission lettering either side of the portal (kept as crisp emissive geometry)
 def text(name, body, size, x, z, em='sign', spacing=1.12):
     return text3d(name, body, size, T((x, Y1 - 0.03, z), (pi / 2, 0, 0)), em, spacing)
-text('sign_l1', 'AURORA', 0.62, -7.55, 6.72)
-text('sign_l2', 'ARK ONE', 0.3, -7.55, 6.24, spacing=1.5)
-text('sign_r1', 'AD ASTRA', 0.5, 7.55, 6.74)
-text('sign_r2', 'FOR ALL OF US', 0.27, 7.55, 6.26, spacing=1.25)
+text('sign_l1', 'AURORA', 0.58, -7.2, 6.72)
+text('sign_l2', 'ARK ONE', 0.3, -7.2, 6.26, spacing=1.5)
+text('sign_r1', 'AD ASTRA', 0.48, 7.2, 6.74)
+text('sign_r2', 'FOR ALL OF US', 0.26, 7.2, 6.28, spacing=1.25)
+# what the big ring is: not a window (this wall faces the next compartment, and the ring turns twice a minute)
+text('sign_l3', 'OCULUS  01', 0.2, -7.3, 5.8, spacing=1.6)
+text('sign_r3', 'RELAYED FROM THE HUB', 0.17, 7.3, 5.82, spacing=1.4)
 
 # portal ring frame (lathe about Y)
 MP = T(PORTAL_C, (pi / 2, 0, 0))   # local z -> world -y (towards the hall)
@@ -656,7 +655,18 @@ for i in range(12):
     bmesh.ops.transform(bm, matrix=T((R + 1.55, 0, 0.012)) @ Matrix.Diagonal((0.9, 0.035, 0.03, 1)), verts=bm.verts)
     finish(f'portal_tick{i}', bm, None, em='cyan', M=MP @ Matrix.Rotation(2 * pi * i / 12, 4, 'Z'))
 
-# ---- grand stair + viewing platform under the portal
+# behind the ring, the relay's barrel: matt black, stepped down by two baffles (local z < 0 is beyond the bulkhead)
+lathe('oculus_barrel', [(R, -1.25), (R, -3.4), (R + 0.05, -3.4), (R + 0.05, -1.25)], 'dark', 'center', segs=96, M=MP)
+for depth, lip in ((-2.2, 0.16), (-3.4, 0.34)):
+    lathe(f'oculus_baffle{-depth}', [(R - lip, depth), (R + 0.05, depth), (R + 0.05, depth - 0.04), (R - lip, depth - 0.04)], 'dark', 'center', segs=96, M=MP)
+# The only ways out of a compartment are through its bulkheads. Both doors here are in the spinward one, either side
+# of the stair: on to the next compartment, and down to the Ring Line that runs under every deck.
+for sx_, title, sub_, to, stops in ((1, 'LOUNGE', 'SPINWARD  ·  COMPARTMENT 6', 'about', None),
+                                    (-1, 'RING LINE', 'STAIR DOWN  ·  ALL COMPARTMENTS', '', [['NAVIGATION', 'experience'], ['FABRICATION', 'projects'], ['LOUNGE', 'about'], ['LIBRARY', ''], ['COMMS', '']])):
+    box(f'doorrecess{sx_}', sx_ * 8.2 - 1.5, sx_ * 8.2 + 1.5, Y1 - 0.2, Y1, PLAT_Z, 3.95, 'dark', 'center', bevel=0.02)
+    pressure_door(f'door{sx_}', T((sx_ * 8.2, Y1 - 0.22, PLAT_Z), (0, 0, -pi / 2)), 'center', title, sub_, to, stops=stops)
+
+# ---- grand stair + viewing platform under the Oculus
 pts = [(STAIR_Y, 0)]
 for i in range(5):
     y = STAIR_Y + 0.5 * i; z = 0.16 * (i + 1)
@@ -685,6 +695,8 @@ lathe('holo_floor_ring', [(1.15, 0.14), (1.19, 0.14), (1.19, 0.143), (1.15, 0.14
 # ---- orrery chandelier: three nested gimbal rings, each lit along part of its length.
 # Rings tagged A turn one way about the vertical axis, B the other (see bake.py: their light is baked per phase).
 CH_C = Vector((DAIS.x, DAIS.y, 8.15))
+lathe('chand_stem', [(0, 0), (0.045, 0), (0.045, H - CH_C.z - 0.6), (0.3, H - CH_C.z - 0.35), (0.3, H - CH_C.z - 0.3), (0, H - CH_C.z - 0.3)], 'chrome', 'archC', segs=24, closed=False, M=T(CH_C))
+lathe('chand_hub', [(0, 0.16), (0.16, 0.08), (0.2, 0), (0.16, -0.08), (0, -0.16)], 'brass', 'archC', segs=24, closed=False, M=T(CH_C))
 RINGS = ((3.3, 20, 22, 'A', 205), (2.6, 100, -34, 'B', 215), (1.9, 200, 48, 'A', 230))   # radius, tilt axis azimuth, tilt, group, lit arc (deg)
 for i, (rr, az, tilt, grp, arc) in enumerate(RINGS):
     axis = Vector((math.cos(math.radians(az)), math.sin(math.radians(az)), 0))

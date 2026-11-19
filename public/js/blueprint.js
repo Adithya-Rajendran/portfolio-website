@@ -21,12 +21,12 @@ function tag(html, pos, cls, mode) { const el = document.createElement('div'); e
 // ------------------------------------------------------------------ the habitat tube
 // World axes on the deck: x runs along the ring (spinward = +x), y is up (towards the hub), z is across the tube.
 // The pressure hull is a circular tube; the main deck is a chord across it. Rooms are compartments between
-// bulkheads, in a row. HULL_R and HULL_Y are chosen so the Atrium (20 m wide, 11 m high) fits with a services attic
-// above and the Ring Line, tanks and shielding below.
-const HULL_R = 12.6, HULL_Y = 3.2, X0 = -66, X1 = 90, LINE_Y = -4.5;
+// bulkheads, in a row. HULL_R and HULL_Y are the Atrium's own hull (its ribs are these frames); below the deck there
+// is room for the Ring Line, tanks and shielding.
+const HULL_R = 10.5, HULL_Y = 2.3, X0 = -66, X1 = 90, LINE_Y = -4.5;
 const ROOMS = [
   { id: 'atrium', name: 'ATRIUM', page: 'HOME', href: 'index.html', glb: 'assets/lobby/room.glb', img: 'blueprint/lobby.png', at: 7, turn: -1, label: [16, 13, 0], view: [[16, 40, 46], [16, 2, 0]],
-    text: 'Compartment 4, at the foot of the spoke. You step out of the lift from the hub and face the Oculus. Stair doors in the side bays go down to the Ring Line.' },
+    text: 'Compartment 4, at the foot of the spoke. You step out of the lift from the hub and face the Oculus. Its side walls are the hull, so the only ways on are in the far bulkhead: a door to the next compartment and a stair down to the Ring Line.' },
   { id: 'fabrication', name: 'FABRICATION BAY 02', page: 'PROJECTS', href: 'index.html?room=projects', glb: 'assets/projects/room.glb', img: 'blueprint/projects.png', at: -35, turn: -1, label: [-26, 11, 0], view: [[-26, 34, 40], [-26, 2, 0]],
     text: 'Compartment 3, on the other side of the spoke: its big door is the cargo lift, so parts come straight down from the hub dock.' },
   { id: 'navigation', name: 'NAVIGATION', page: 'EXPERIENCE', href: 'index.html?room=experience', glb: 'assets/experience/room.glb', img: 'blueprint/experience.png', at: -53, turn: -1, label: [-53, 11, 0], view: [[-53, 30, 30], [-53, 2, 0]],
@@ -77,14 +77,15 @@ for (const x of BULKHEADS) { deck.add(poly(circ(x, HULL_R, 64), line(AM, 0.75), 
 // below the deck: the Ring Line (tram + walkway through every compartment), water tanks that double as shielding
 deck.add(poly([V(X0, LINE_Y, -0.8), V(X1, LINE_Y, -0.8)], line(AM, 0.9)), poly([V(X0, LINE_Y, 0.8), V(X1, LINE_Y, 0.8)], line(AM, 0.9)));
 for (let x = X0; x <= X1; x += 2) deck.add(poly([V(x, LINE_Y, -0.8), V(x, LINE_Y, 0.8)], line(AM, 0.35)));
-for (const z of [-6.5, 6.5]) for (let x = X0 + 3; x < X1 - 8; x += 13) { const t = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(2.3, 2.3, 10, 12).rotateZ(Math.PI / 2), 30), line(CY, 0.3)); t.position.set(x + 5, -4.6, z); deck.add(t); }
-tag('WATER TANKS · RADIATION SHIELD + BALLAST', V(-58, -8.5, 9), 'far', 'deck'); tag('RING LINE · TRAM + WALKWAY', V(96, LINE_Y, 0), 'door', 'deck');
+for (const z of [-4.4, 4.4]) for (let x = X0 + 3; x < X1 - 8; x += 13) { const t = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(1.6, 1.6, 10, 12).rotateZ(Math.PI / 2), 30), line(CY, 0.3)); t.position.set(x + 5, -5.4, z); deck.add(t); }
+tag('WATER TANKS · RADIATION SHIELD + BALLAST', V(-58, -8.5, 8), 'far', 'deck'); tag('RING LINE · TRAM + WALKWAY', V(96, LINE_Y, 0), 'door', 'deck');
 for (const [name, x] of STOPS) { const p = new THREE.Mesh(new THREE.BoxGeometry(5, 0.2, 2.6), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.5 })); p.position.set(x, LINE_Y, 3); deck.add(p);
   deck.add(poly([V(x, LINE_Y, 3), V(x, 0.1, 6.5)], dashed(AM, 0.9, 0.5))); }
-// the Atrium's four stair doors down to the Ring Line (hall coordinates: across = z, along = x - 7)
-for (const [name, hx, hy] of [['↓ NAVIGATION', -10, 21], ['↓ FABRICATION', -10, 13], ['↓ LOUNGE', 10, 21], ['↓ LIBRARY · COMMS', 10, 13]]) {
-  const d = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.2, 0.8), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.6 })); d.position.set(hy + 7, 1.6, hx); deck.add(d);
-  deck.add(poly([V(hy + 7, 0, hx), V(hy + 7, LINE_Y, Math.sign(hx) * 3)], dashed(AM, 0.9, 0.5))); tag(name, V(hy + 7, 4.4, hx * 1.08), 'door', 'deck'); }
+// the Atrium's two ways on, both in its spinward bulkhead: a door to the next compartment and a stair down to the Ring Line
+for (const [name, z] of [['LOUNGE →', 8.2], ['↓ RING LINE', -8.2]]) {
+  const d = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3.2, 2.6), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.6 })); d.position.set(33, 2.0, z); deck.add(d);
+  if (z < 0) deck.add(poly([V(33, 0.4, z), V(36, LINE_Y, -3)], dashed(AM, 0.9, 0.5)));
+  tag(name, V(33, 5.0, z), 'door', 'deck'); }
 // the spoke: lift core between Fabrication and the Atrium, running up to the hub
 { const m = line(AM, 0.8); for (const [x, z] of [[-10, -5], [0, -5], [0, 5], [-10, 5]]) deck.add(poly([V(x, 0, z), V(x, 60, z)], m));
   for (let y = 0; y <= 60; y += 6) deck.add(poly([V(-10, y, -5), V(0, y, -5), V(0, y, 5), V(-10, y, 5)], line(AM, 0.35), true));

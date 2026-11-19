@@ -12,7 +12,7 @@
       "nav": "HOME",
       "title": "Ark Aurora — Embarkation Hall",
       "loading": "DOCKING",
-      "close": "WINDOW",
+      "close": "THE OCULUS",
       "credit": true,
       "kicker": "ARCADIA STATION · RING 04 · ATRIUM",
       "headline": ["We go", "for all of us."],
@@ -24,7 +24,7 @@
         "list": [
           {
             "layout": "board", "title": "ARK AURORA  ·  DEPARTURE", "tag": "FLIGHT 001",
-            "label": "T-MINUS", "clock": "{tminus}", "status": "NOW BOARDING  ·  GROUP C  ·  GATES 3 – 6",
+            "label": "T-MINUS", "clock": "{tminus}", "status": "NOW BOARDING  ·  GROUP C  ·  LIFTS 3 – 6",
             "rows": [["DESTINATION", "PROXIMA CENTAURI b"], ["DISTANCE", "4.24 LIGHT-YEARS"], ["CREW", "10,000 · 193 NATIONS"]]
           },
           {
@@ -57,8 +57,8 @@
             ]
           },
           {
-            "layout": "roster", "title": "BOARDING  ·  GROUP C", "tag": "GATE 04",
-            "head": ["NAME", "FROM", "ROLE", "STATUS"], "states": ["ABOARD", "AT GATE", "CHECK-IN"], "count": "{aboard} OF 10,000 ABOARD",
+            "layout": "roster", "title": "BOARDING  ·  GROUP C", "tag": "LIFT 04",
+            "head": ["NAME", "FROM", "ROLE", "STATUS"], "states": ["ABOARD", "AT LIFT", "CHECK-IN"], "count": "{aboard} OF 10,000 ABOARD",
             "people": [
               ["Amara Okafor", "LAGOS", "AGRONOMIST"],
               ["Kenji Watanabe", "OSAKA", "REACTOR ENG."],

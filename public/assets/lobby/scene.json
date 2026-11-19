@@ -76,27 +76,13 @@
  "doors": [
   {
    "c": [
-    9.5,
-    13.0,
+    8.199999809265137,
+    25.48000144958496,
     1.7000000476837158
    ],
    "n": [
+    -4.371138828673793e-08,
     -1.0,
-    -8.742277657347586e-08,
-    0.0
-   ],
-   "to": "",
-   "label": "LIBRARY"
-  },
-  {
-   "c": [
-    9.5,
-    21.0,
-    1.7000000476837158
-   ],
-   "n": [
-    -1.0,
-    -8.742277657347586e-08,
     0.0
    ],
    "to": "about",
@@ -104,32 +90,49 @@
   },
   {
    "c": [
-    -9.5,
-    13.0,
+    -8.199999809265137,
+    25.48000144958496,
     1.7000000476837158
    ],
    "n": [
-    1.0,
-    0.0,
+    -4.371138828673793e-08,
+    -1.0,
     0.0
    ],
-   "to": "projects",
-   "label": "FABRICATION"
-  },
-  {
-   "c": [
-    -9.5,
-    21.0,
-    1.7000000476837158
-   ],
-   "n": [
-    1.0,
-    0.0,
-    0.0
-   ],
-   "to": "experience",
-   "label": "NAVIGATION"
+   "to": "",
+   "label": "RING LINE",
+   "stops": [
+    [
+     "NAVIGATION",
+     "experience"
+    ],
+    [
+     "FABRICATION",
+     "projects"
+    ],
+    [
+     "LOUNGE",
+     "about"
+    ],
+    [
+     "LIBRARY",
+     ""
+    ],
+    [
+     "COMMS",
+     ""
+    ]
+   ]
   }
+ ],
+ "room": "lobby",
+ "screens": [
+  "FX_screen_archR1",
+  "FX_screen_archR2",
+  "FX_screen_archR5",
+  "FX_screen_archL1",
+  "FX_screen_archL3",
+  "FX_screen_archL5"
  ],
  "earth": {
   "c": [
@@ -479,14 +482,5 @@
   "props"
  ],
  "hdr_range": 8.0,
- "em_range": 8.0,
- "screens": [
-  "FX_screen_archR1",
-  "FX_screen_archR2",
-  "FX_screen_archR5",
-  "FX_screen_archL1",
-  "FX_screen_archL3",
-  "FX_screen_archL5"
- ],
- "room": "lobby"
+ "em_range": 8.0
 }

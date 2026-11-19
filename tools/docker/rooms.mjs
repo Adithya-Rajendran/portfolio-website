@@ -21,7 +21,7 @@ async function throughDoor(label, to) {
     await p.mouse.move(x, y); await p.waitForTimeout(1200);
   }
   await p.mouse.click(x, y); await p.waitForTimeout(1300);
-  console.log(`  at the ${label} door:`, await p.evaluate(() => document.getElementById('enter').textContent));
+  console.log(`  at the ${label} door:`, await p.evaluate(() => document.getElementById('ways').textContent));
   await arrive(to); console.log(`door ${label.padEnd(8)}`, JSON.stringify(await state()));
 }
 await p.evaluate(() => window.__lobby.enter('lobby')); await arrive('lobby');

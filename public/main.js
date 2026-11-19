@@ -136,8 +136,9 @@ function setFocus(pick = null) {
   if (!pick) return;
   navTouched = true; viewTarget = Math.round(view);                         // stop the opening move; it would fight the close-up
   $('#count').textContent = `${tourOrder().indexOf(pick) + 1} / ${room.picks.length}`;
-  const door = pick.door, go = $('#enter'); go.hidden = !door;
-  if (door) { go.textContent = door.to ? `ENTER ${door.label}  →` : `${door.label}  ·  NOT YET OPEN`; go.disabled = !door.to; }
+  // a door leads to one room, or (the stair down to the Ring Line) to a list of stops; '' marks one that is not built yet
+  const door = pick.door, ways = !door ? [] : door.stops ?? [[`ENTER ${door.label}`, door.to]];
+  $('#ways').innerHTML = ways.map(([label, to]) => `<button data-to="${to}"${to ? '' : ' disabled'}>${label}${to ? '  →' : '  ·  NOT YET OPEN'}</button>`).join('');
 }
 function step(d) { const t = tourOrder(), i = t.indexOf(focus.pick); setFocus(t[((i < 0 ? (d > 0 ? -1 : 0) : i) + d + t.length) % t.length]); }
 function travel(id, delay = 0) { if (id && !leaving) leaving = setTimeout(() => enter(id), delay); }
@@ -196,14 +197,17 @@ addEventListener('click', (e) => {
   if (!room || busy || e.target.closest('nav, #inspectbar, a, button')) return;
   if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;       // that was a drag
   const pick = pickAt(e); setFocus(pick);
-  if (pick?.door) travel(pick.door.to, 1500);                               // clicked a door: walk up to it, then through
+  if (pick?.door && !pick.door.stops) travel(pick.door.to, 1500);           // clicked a door: walk up to it, then through
 });
 addEventListener('keydown', (e) => {
   if (!room || busy) return;
   if (e.key === 'Escape') setFocus(null);
   else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); step(e.key === 'ArrowRight' ? 1 : -1); }
 });
-bar.addEventListener('click', (e) => ({ back: () => setFocus(null), prev: () => step(-1), next: () => step(1), enter: () => travel(focus.pick?.door?.to) })[e.target.id]?.());
+bar.addEventListener('click', (e) => {
+  if (e.target.dataset.to) travel(e.target.dataset.to);
+  else ({ back: () => setFocus(null), prev: () => step(-1), next: () => step(1) })[e.target.id]?.();
+});
 $('nav').addEventListener('click', (e) => {
   const a = e.target.closest('a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
   if (a.dataset.room) { e.preventDefault(); enter(a.dataset.room); }
