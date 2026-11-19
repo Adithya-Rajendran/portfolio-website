@@ -21,7 +21,9 @@ HAS_CHAND = 'chand' in s['lobby'].keys()
 RES = {'floorN': 2048, 'floorF': 2048, 'center': 4096, 'archL': 4096, 'archR': 4096, 'archC': 4096, 'props': 4096, 'people': 4096, 'back': 1024, 'chandA': 1024, 'chandB': 1024}
 LAYER_RES = 1024                      # the chandelier's light is low-frequency: small maps are enough
 PHASES = [0.0, 120.0, 240.0]          # rotation phases at which its light is baked (blended at runtime)
-PASSES = os.environ.get('LOBBY_PASSES', 'base,chand,layers').split(',')
+PASSES = os.environ.get('LOBBY_PASSES', 'base,chand,layers,sky,albedo').split(',')
+SPIN = s['lobby'].to_dict().get('spin')    # the room turns under the sky: see pass 'sky' below
+SKY_PHASES = 6; SKY_RES = 512; ALB_RES = 2048
 
 s = bpy.context.scene
 p = bpy.context.preferences.addons['cycles'].preferences
@@ -40,13 +42,13 @@ s.render.bake.margin = max(2, int(10 * SCALE)); s.render.bake.margin_type = 'EXT
 s.render.bake.use_clear = True
 
 HDR_RANGE = 8.0
-def save_encoded(img, path):
-    """Scene-linear radiance -> 8 bit: stored = sqrt(L / HDR_RANGE). Decoded in the three.js shaders, tone mapped there."""
-    w, h = img.size
-    px = np.empty(w * h * 4, dtype=np.float32); img.pixels.foreach_get(px)
-    px = np.nan_to_num(px.reshape(-1, 4), nan=0.0, posinf=HDR_RANGE)
+def pixels(img):
+    px = np.empty(img.size[0] * img.size[1] * 4, dtype=np.float32); img.pixels.foreach_get(px)
+    return np.nan_to_num(px.reshape(-1, 4), nan=0.0, posinf=HDR_RANGE)
+def save_encoded(px, w, h, path, rng=HDR_RANGE):
+    """Scene-linear radiance -> 8 bit: stored = sqrt(L / range). Decoded in the three.js shaders, tone mapped there."""
     buf = np.ones((w * h, 4), np.float32)
-    buf[:, :3] = np.sqrt(np.clip(px[:, :3], 0.0, HDR_RANGE) / HDR_RANGE)
+    buf[:, :3] = np.sqrt(np.clip(px[:, :3], 0.0, rng) / rng)
     out = bpy.data.images.new('enc', w, h, alpha=False, float_buffer=False)
     out.colorspace_settings.name = 'Non-Color'
     out.pixels.foreach_set(buf.ravel())
@@ -139,36 +141,48 @@ BG = [n for n in s.world.node_tree.nodes if n.type == 'BACKGROUND']
 BG0 = [n.inputs['Strength'].default_value for n in BG]
 def chand_light(on):
     for m in CH_MATS: emis(m).default_value = EM_ALL[m] if on else 0.0
-def other_light(on):
+def inside_light(on):
     for m, v in EM_ALL.items():
         if m not in CH_MATS: emis(m).default_value = v if on else 0.0
-    for l, e in LAMPS.items(): l.energy = e if on else 0.0
+    for l, e in LAMPS.items():
+        if l.type != 'SUN': l.energy = e if on else 0.0
+def sun_light(on):
+    for l, e in LAMPS.items():
+        if l.type == 'SUN': l.energy = e if on else 0.0
+def sky_light(on):                                  # Earth, Moon, stars
     for n, v in zip(BG, BG0): n.inputs['Strength'].default_value = v if on else 0.0
-    bpy.data.collections['Outside'].hide_render = not on
+    if 'Outside' in bpy.data.collections: bpy.data.collections['Outside'].hide_render = not on
+def other_light(on, outside=None):
+    outside = on if outside is None else outside
+    inside_light(on); sun_light(outside); sky_light(outside)
 
-def bake(key, ob, res, name, margin):
-    img = bpy.data.images.new('bake_' + name, res, res, float_buffer=True, alpha=False)
+def bake_px(key, ob, res, margin, kind='COMBINED', direct=True):
+    img = bpy.data.images.new('bake_tmp', res, res, float_buffer=True, alpha=False)
     for m in bpy.data.materials:
         if m.node_tree and 'BAKE' in m.node_tree.nodes: m.node_tree.nodes['BAKE'].image = img
     activate(ob)
-    t = time.time()
-    pf = {'DIRECT', 'INDIRECT', 'DIFFUSE', 'TRANSMISSION', 'EMIT'}
-    if not key.startswith('floor'): pf.add('GLOSSY')        # the floor's reflection is rendered live instead
+    if kind == 'DIFFUSE': pf = {'COLOR'}
+    else:
+        pf = {'INDIRECT', 'DIFFUSE', 'TRANSMISSION'} | ({'DIRECT', 'EMIT'} if direct else set())
+        if not key.startswith('floor'): pf.add('GLOSSY')        # the floor's reflection is rendered live instead
     s.render.bake.margin = margin
-    bpy.ops.object.bake(type='COMBINED', pass_filter=pf, margin=margin)
-    save_encoded(img, os.path.join(OUTD, 'tex', name + '.webp'))
+    bpy.ops.object.bake(type=kind, pass_filter=pf, margin=margin)
+    px = pixels(img); bpy.data.images.remove(img)
+    return px
+def bake(key, ob, res, name, margin):
+    t = time.time()
+    save_encoded(bake_px(key, ob, res, margin), res, res, os.path.join(OUTD, 'tex', name + '.webp'))
     print('BAKED %s %dpx in %.0fs' % (name, res, time.time() - t), flush=True)
-    bpy.data.images.remove(img)
 
 is_chand = lambda k: k.startswith('chand')
 static = [k for k in groups if not is_chand(k)]
 if 'base' in PASSES:
-    chand_light(False); other_light(True)
+    chand_light(False); other_light(True, outside=not SPIN)
     for key in static:
         if ONLY and key not in ONLY: continue
         bake(key, groups[key], int(RES[key] * SCALE), key, max(2, int(10 * SCALE)))
 if 'chand' in PASSES and HAS_CHAND:                                       # the rings themselves: lit by everything, in their rest pose
-    chand_light(True); other_light(True)
+    chand_light(True); other_light(True, outside=not SPIN)
     for key in groups:
         if is_chand(key): bake(key, groups[key], int(RES[key] * SCALE), key, 4)
 if 'layers' in PASSES and HAS_CHAND:
@@ -186,6 +200,35 @@ if 'layers' in PASSES and HAS_CHAND:
             bake(key, groups[key], max(128, int(min(RES[key], LAYER_RES) * SCALE)), '%s_c%d' % (key, i), 3)
     for o, rest, sg in movers: o.matrix_world = rest
     vl.update()
+# A spinning room. Seen from inside, the sky turns about the spin axis; for the bake it is simpler to turn the room
+# under a fixed sky. Light from outside is baked at SKY_PHASES angles and cross-faded at runtime:
+#   Earth, Moon and stars: direct + bounced.   Sun: bounced only; its direct light and shadows are drawn live.
+if 'sky' in PASSES and SPIN:
+    from mathutils import Matrix
+    chand_light(False); inside_light(False)
+    piv, ax = Vector(s['lobby']['portal']), Vector(SPIN['axis'])
+    out = set(bpy.data.collections['Outside'].all_objects) if 'Outside' in bpy.data.collections else set()
+    room = [(o, o.matrix_world.copy()) for o in s.objects if o not in out and o.parent is None and not (o.type == 'LIGHT' and o.data.type == 'SUN')]
+    for i in range(SKY_PHASES):
+        M = Matrix.Translation(piv) @ Matrix.Rotation(-2 * math.pi * i / SKY_PHASES, 4, ax) @ Matrix.Translation(-piv)
+        for o, rest in room: o.matrix_world = M @ rest
+        vl.update()
+        for key in static:
+            if ONLY and key not in ONLY: continue
+            t = time.time(); res = max(128, int(min(RES[key], SKY_RES) * SCALE))
+            sun_light(False); sky_light(True); px = bake_px(key, groups[key], res, 3)
+            sun_light(True); sky_light(False); px += bake_px(key, groups[key], res, 3, direct=False)
+            save_encoded(px, res, res, os.path.join(OUTD, 'tex', '%s_s%d.webp' % (key, i)))
+            print('BAKED %s_s%d %dpx in %.0fs' % (key, i, res, time.time() - t), flush=True)
+    for o, rest in room: o.matrix_world = rest
+    vl.update()
+# what the live sunlight needs: each surface's diffuse colour
+if 'albedo' in PASSES and SPIN:
+    for key in static:
+        if ONLY and key not in ONLY: continue
+        res = max(128, int(min(RES[key] // 2, ALB_RES) * SCALE))
+        save_encoded(bake_px(key, groups[key], res, max(2, int(6 * SCALE)), kind='DIFFUSE'), res, res, os.path.join(OUTD, 'tex', key + '_a.webp'), rng=1.0)
+        print('BAKED %s_a %dpx' % (key, res), flush=True)
 chand_light(True); other_light(True)
 
 # ---- 5. export geometry (no textures inside; three.js pairs meshes with atlases by name)
@@ -199,11 +242,12 @@ bpy.ops.object.select_all(action='DESELECT')
 for ob in list(groups.values()) + list(ems.values()) + [o for o in s.objects if 'fx' in o]:
     ob.hide_render = False; ob.select_set(True)
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUTD, 'room.glb'), export_format='GLB', use_selection=True, export_yup=True,
-                          export_normals=False, export_texcoords=True, export_materials='EXPORT', export_image_format='NONE',
+                          export_normals=bool(SPIN), export_texcoords=True, export_materials='EXPORT', export_image_format='NONE',
                           export_vertex_color='ACTIVE', export_all_vertex_colors=False, export_active_vertex_color_when_no_material=True,
                           export_extras=True, export_apply=False, export_animations=False, export_cameras=False, export_lights=False)
 info = s['lobby'].to_dict()
 info['room'] = ROOM; info['groups'] = list(groups.keys()); info['hdr_range'] = HDR_RANGE; info['em_range'] = EM_RANGE
+if SPIN: info['spin'] = dict(SPIN, phases=SKY_PHASES, layered=static)
 if HAS_CHAND: info['chand'] = dict(info.get('chand', {}), phases=PHASES, layered=static, spin=dict(chandA=1, chandB=-1))
 json.dump(info, open(os.path.join(OUTD, 'scene.json'), 'w'), indent=1)
 print('EXPORTED', os.path.getsize(os.path.join(OUTD, 'room.glb')) // 1024, 'KB')

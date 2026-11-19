@@ -1058,6 +1058,10 @@ scene['lobby'] = dict(cam=list(CAM_POS), tgt=list(CAM_TGT), fov=50.0, dais=list(
                       chand=dict(pivot=[DAIS.x, DAIS.y], center=list(CH_C)), doors=DOORS, room='lobby',
                       screens=[f'FX_screen_{side_grp(s)}{bi}' for s in (1, -1) for bi, k in enumerate(PROGRAM[s]) if k == 'screen'],   # in content.json order
                       earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),
+                      # The ring turns once in `period` seconds about `axis` (the hall's long axis), so everything outside
+                      # turns in the window. bake.py bakes the light from outside at several angles; the sun's direct
+                      # light is drawn live (sun_e: its irradiance, W/m2 per channel).
+                      spin=dict(axis=[0.0, 1.0, 0.0], period=120.0, sun_e=[sun.energy * c for c in sun.color]), backdrop_fov=100.0,
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})
 
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, 'lobby.blend'))

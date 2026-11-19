@@ -15,7 +15,8 @@ print('DEVICES', [(d.name, d.type) for d in p.devices if d.use], flush=True)
 s.cycles.device = 'GPU'; s.cycles.samples = 128; s.cycles.use_denoising = False
 cam = s.camera; cam.data.sensor_fit = 'VERTICAL'; cam.data.angle_y = math.radians(L.get('backdrop_fov', 80))   # keep in sync with main.js
 cam.location = L['cam']
-cam.rotation_euler = (Vector(L['portal']) - Vector(L['cam'])).to_track_quat('-Z', 'Y').to_euler()
+aim = Vector(L['spin']['axis']) if 'spin' in L else Vector(L['portal']) - Vector(L['cam'])     # a spinning room: centred on the spin axis
+cam.rotation_euler = aim.to_track_quat('-Z', 'Y').to_euler()
 s.render.resolution_x = s.render.resolution_y = size; s.render.resolution_percentage = 100
 s.render.image_settings.file_format = 'OPEN_EXR'; s.render.image_settings.color_depth = '32'
 import tempfile

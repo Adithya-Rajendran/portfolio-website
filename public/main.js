@@ -96,6 +96,7 @@ function renderMirror() {
 }
 function draw(t) {
   renderer.info.reset();
+  if (!SKIP.has('sunlight')) room.prepass?.(renderer);
   if (!SKIP.has('mirror')) renderMirror();
   renderer.setRenderTarget(post.scene); renderer.render(room.scene, camera);
   post.render(t, SKIP.has('bloom'));

@@ -147,6 +147,31 @@
    0.8976775407791138
   ]
  },
+ "spin": {
+  "axis": [
+   0.0,
+   1.0,
+   0.0
+  ],
+  "period": 120.0,
+  "sun_e": [
+   9.0,
+   6.929999828338623,
+   4.860000193119049
+  ],
+  "phases": 6,
+  "layered": [
+   "archC",
+   "archL",
+   "archR",
+   "back",
+   "center",
+   "floorF",
+   "floorN",
+   "props"
+  ]
+ },
+ "backdrop_fov": 100.0,
  "em": {
   "cyan": {
    "color": [

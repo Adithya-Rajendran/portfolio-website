@@ -148,3 +148,13 @@ Each phase ends with something to look at and a decision. Nothing later starts b
 Machine time on the 4070: about 50 min for each windowed room, 25 min for the others; roughly 2.5 h of baking in total, plus re-bakes.
 
 Fallback at any gate: `feat/arcadia-station-rooms` still holds the periscope version untouched.
+
+## 9. Status
+- **Phase 0 done.** Chosen period: **120 s** (0.5 rpm; a 3.6 km ring at 1 g).
+- **Atrium lighting done ahead of the geometry** (asked for at the phase 0 review). The room's spin axis is the hall's long axis (`spin` in `scene.json`):
+  - `base`: inside lights only.
+  - `<group>_s0..5`: light from outside at six angles, 512 px. Earth, Moon, stars direct and bounced; sun bounced only. The two nearest are cross-faded.
+  - Direct sun is live: `<group>_a` (diffuse colour) x irradiance x cosine, shadowed by a 2048 px depth map rendered from the sun through the Oculus each frame. The beam in the haze and the dust follow it.
+  - Bake: about 50 min on the 4070. Cost on the Intel test GPU: a few ms per frame.
+- Found while building it: the axis is level with the deck, but the hero camera looks up at the Oculus, so the sky turns about a point near the bottom of the window, not its centre. With the sun 12.5° off the axis the sunbeam mostly lands on the floor by the camera and the wall behind it; what is seen moving from the entrance is the Earth, the sun's glare and the pool on the platform under the Oculus. A sun further off-axis would put the pool mid-hall but take the sun and the horizon out of the Oculus. Left as is.
+- Not done: glossy highlights of the sun (diffuse only); Lounge still uses the phase 0 prototype (sky turns, light does not); phases 1 and 2 geometry (blueprint, hull wall, side doors).
