@@ -368,6 +368,29 @@ def blob(name, c, r, m, grp, squash=(1, 1, 1)):
     for f in bm.faces: f.smooth = True
     return finish(name, bm, m, grp)
 
+# ---- pressure doors: every compartment is sealed from the next, so every way out of a room is one of these
+DOORS = []          # exported to scene.json: where each door is, which way it faces, where it leads
+def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5):
+    """Sliding two-leaf pressure door in a heavy frame. M: origin on the wall at floor level, +x into the room, +y along the wall."""
+    def kb(n, size, loc, m=None, em=None, bevel=0.0):
+        bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
+        bmesh.ops.transform(bm, matrix=Matrix.Translation(loc) @ Matrix.Diagonal((*size, 1)), verts=bm.verts)
+        return finish(f'{name}_{n}', bm, m, None if em else grp, em=em, bevel=bevel, M=M)
+    for d in (-1, 1):
+        kb(f'jamb{d}', (0.36, 0.28, h + 0.3), (0.06, d * (w / 2 + 0.14), (h + 0.3) / 2), 'rib', bevel=0.03)
+        kb(f'leaf{d}', (0.08, w / 2 - 0.015, h), (-0.03, d * w / 4, h / 2), 'wall2', bevel=0.012)
+        for i in range(3): kb(f'bar{d}{i}', (0.05, w / 2 - 0.22, 0.09), (0.03, d * w / 4, 0.45 + i * 0.8), 'rib', bevel=0.01)
+        kb(f'slit{d}', (0.02, 0.14, 0.62), (0.015, d * 0.28, 1.72), 'lum_cool')
+        kb(f'grip{d}', (0.06, 0.035, 0.5), (0.045, d * 0.1, 1.1), 'brass')
+        for i in range(4): kb(f'chev{d}{i}', (0.012, 0.2, 0.09), (0.245, d * (w / 2 + 0.14), 0.25 + i * 0.22), 'brass' if i % 2 == 0 else 'dark')   # warning bands at the foot of the frame
+    kb('lintel', (0.36, w + 0.56, 0.32), (0.06, 0, h + 0.16), 'rib', bevel=0.03)
+    kb('sill', (0.55, w + 0.56, 0.05), (0.14, 0, 0.025), 'brass')
+    kb('status', (0.02, w * 0.72, 0.05), (0.245, 0, h + 0.07), em='gate' if to else 'amber')          # green: open for use, amber: sealed
+    face = lambda z: M @ Matrix(((0, 0, 1, 0.25), (1, 0, 0, 0), (0, 1, 0, z), (0, 0, 0, 1)))
+    text3d(name + '_t', title, 0.25, face(h + 0.56), spacing=1.3)
+    if sub: text3d(name + '_s', sub, 0.11, face(h + 0.4), spacing=1.5)
+    DOORS.append(dict(c=list(M @ Vector((0.3, 0, h / 2))), n=list(M.to_3x3() @ Vector((1, 0, 0))), to=to, label=title))
+
 # ---- everything above this line is the shared kit: room_*.py scripts execute it and build their own room
 # ================================================================= ARCHITECTURE
 def side_grp(s): return 'archR' if s > 0 else 'archL'
@@ -377,11 +400,12 @@ quad('floor_near', [(-FX, Y0, 0), (FX, Y0, 0), (FX, FLOOR_SPLIT, 0), (-FX, FLOOR
 quad('floor_far', [(-FX, FLOOR_SPLIT, 0), (FX, FLOOR_SPLIT, 0), (FX, STAIR_Y, 0), (-FX, STAIR_Y, 0)], 'floor', 'floorF')
 
 # The two sides of the hall are deliberately not mirror images: each bay has its own job.
-PROGRAM = {1: ['alcove', 'screen', 'garden', 'screen', 'gate', 'screen', 'alcove'],
-           -1: ['alcove', 'screen', 'gate', 'screen', 'garden', 'screen', 'gate']}
+PROGRAM = {1: ['alcove', 'screen', 'screen', 'garden', 'door', 'screen', 'door'],
+           -1: ['alcove', 'screen', 'garden', 'screen', 'door', 'screen', 'door']}
 UPPER = {1: ['panel', 'banner', 'window', 'panel', 'banner', 'window', 'panel'],
          -1: ['panel', 'window', 'banner', 'window', 'panel', 'banner', 'window']}
-GATES = {(1, 4): '04', (-1, 2): '03', (-1, 6): '05'}
+# stair doors down to the Ring Line, each signed for where its stair comes out
+STAIRS = {(-1, 4): ('FABRICATION', 'projects.html'), (-1, 6): ('NAVIGATION', 'experience.html'), (1, 6): ('LOUNGE', 'about.html'), (1, 4): ('LIBRARY', '')}
 
 for s in (1, -1):
     g = side_grp(s)
@@ -482,22 +506,13 @@ for s in (1, -1):
                 box(f'sofa_arm_{g}{bi}', sx(8.2), sx(9.28), yy - 0.11, yy + 0.11, z0 + 0.2, z0 + 0.66, 'sofa', 'props', bevel=0.06, seg=3)
             lathe(f'table_{g}{bi}', [(0, 0.4), (0.42, 0.4), (0.45, 0.37), (0.3, 0.04), (0.3, 0.0), (0, 0)], 'white', 'props', segs=48,
                   M=T((sx(7.45), yc, z0)))
-        elif kind == 'gate':
-            # boarding gate: recessed double door with sight slits, status light over the lintel, number on the wall
-            box(f'gateframe_{g}{bi}', sx(9.78), sx(W), yc - 1.4, yc + 1.4, z0, 3.5, 'dark', gg, bevel=0.03)
-            for d in (-1, 1):
-                box(f'gateleaf_{g}{bi}', sx(9.74), sx(9.78), yc + d * 0.02, yc + d * 1.22, z0 + 0.02, 3.28, 'wall2', gg, bevel=0.012)
-                box(f'gateslit_{g}{bi}', sx(9.732), sx(9.74), yc + d * 0.52, yc + d * 0.7, 1.7, 2.75, 'lum_cool', gg)
-                box(f'gatepull_{g}{bi}', sx(9.71), sx(9.74), yc + d * 0.14, yc + d * 0.18, 1.35, 1.95, 'brass', gg)
-            box(f'gatelight_{g}{bi}', sx(9.74), sx(9.78), yc - 1.22, yc + 1.22, 3.3, 3.35, em='gate')
-            text3d(f'gateno_{g}{bi}', 'GATE ' + GATES[(s, bi)], 0.3, wall_M(s, sx(9.985), yc, 3.72), spacing=1.3)
-            # freight waiting to be loaded, and a pair of queue posts
-            side = 1 if bi % 4 else -1
-            for ci, (dx, dy, dz, sz, m) in enumerate(((8.95, 1.6, 0, 0.62, 'crate_w'), (8.95, 0.92, 0, 0.62, 'crate_o'), (8.93, 1.3, 0.62, 0.56, 'crate_w'), (8.2, 1.62, 0, 0.5, 'crate_o'))):
-                box(f'crate_{g}{bi}{ci}', sx(dx - sz / 2), sx(dx + sz / 2), yc + side * dy - sz / 2, yc + side * dy + sz / 2, z0 + dz, z0 + dz + sz, m, 'props', bevel=0.025)
-                box(f'cratelid_{g}{bi}{ci}', sx(dx - sz / 2 - 0.012), sx(dx + sz / 2 + 0.012), yc + side * dy - sz / 2 - 0.012, yc + side * dy + sz / 2 + 0.012, z0 + dz + sz * 0.44, z0 + dz + sz * 0.5, 'dark', 'props')
-            for d in (-1, 1):
-                lathe(f'qpost_{g}{bi}', [(0, 0.95), (0.03, 0.95), (0.03, 0.03), (0.14, 0.02), (0.14, 0), (0, 0)], 'chrome', 'props', segs=20, M=T((sx(8.4), yc + d * 0.95, z0)))
+        elif kind == 'door':
+            title, to = STAIRS[(s, bi)]
+            box(f'doorrecess_{g}{bi}', sx(9.82), sx(W), yc - 1.5, yc + 1.5, z0, 3.95, 'dark', gg, bevel=0.02)
+            pressure_door(f'door_{g}{bi}', T((sx(9.8), yc, z0), (0, 0, pi if s > 0 else 0)), gg, title, 'RING LINE  ·  STAIR' if to else 'RING LINE  ·  SEALED', to)
+            if title == 'FABRICATION':                                            # parts waiting to go down to the bay
+                for ci, (dx, dy, dz, sz, m) in enumerate(((8.95, 1.75, 0, 0.62, 'crate_w'), (8.93, 1.7, 0.62, 0.5, 'crate_o'), (8.3, 1.8, 0, 0.5, 'crate_o'))):
+                    box(f'crate_{g}{bi}{ci}', sx(dx - sz / 2), sx(dx + sz / 2), yc - dy - sz / 2, yc - dy + sz / 2, z0 + dz, z0 + dz + sz, m, 'props', bevel=0.025)
         elif kind == 'garden':
             # a grove in a round planter, lit from below, with a bench against the wall
             c = Vector((sx(8.25), yc, z0))
@@ -1028,7 +1043,7 @@ scene.view_settings.look = 'AgX - Medium High Contrast'
 scene.view_settings.exposure = 0.0
 scene['lobby'] = dict(cam=list(CAM_POS), tgt=list(CAM_TGT), fov=50.0, dais=list(DAIS), portal=list(PORTAL_C), portal_r=PORTAL_R,
                       sun=list(SUN_DIR), floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=FX / 4.0, noise=0.55), holo=list(DAIS + Vector((0, 0, HOLO_Z))), floor_half=FX, y0=Y0, y1=Y1,
-                      chand=dict(pivot=[DAIS.x, DAIS.y], center=list(CH_C)),
+                      chand=dict(pivot=[DAIS.x, DAIS.y], center=list(CH_C)), doors=DOORS,
                       earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})
 

@@ -454,7 +454,8 @@ function addPoint(center, r, dir, parent = scene, local = null) {            // 
     const dist = r / Math.min(tanV(), tanV() * camera.aspect) * 1.25; return { pos: c.clone().addScaledVector(d, dist), tgt: c }; } });
 }
 scene.updateMatrixWorld(true);
-for (const o of screenMeshes) {                                              // a flat display: stand square in front of it, filling the view
+const HUB = ROOM === 'lobby';                                                // in the Atrium only the hologram and the doors are interactive
+for (const o of HUB ? [] : screenMeshes) {                                    // a flat display: stand square in front of it, filling the view
   const p = o.geometry.attributes.position, v = [0, 1, 2, 3].map((i) => new THREE.Vector3().fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld));
   const c = v.reduce((a, b) => a.add(b), new THREE.Vector3()).multiplyScalar(0.25);
   const ix = o.geometry.index, tri = [0, 1, 2].map((i) => v[ix ? ix.getX(i) : i]);
@@ -475,11 +476,21 @@ function addHolo(parent, local, r, dist, lift, target) {
 if (routeMap) for (const s of routeMap.stations) addHolo(s.grp, new THREE.Vector3(0, 0.42, 0), 0.48, 2.9, 0.3, s);
 if (hologram) addHolo(scene, hologram.root.position.clone(), 1.0, 5.6, 0.55, hologram);
 for (const f of info.focus || []) addPoint(B(f.c), f.r, B(f.dir));
+// Doors: walk up to it, then go through (to another room's page). A sealed door only shows its notice.
+for (const d of info.doors || []) {
+  const c = B(d.c), n = B(d.n).normalize(), m = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.4, 2.4), pickMat); m.position.copy(c); scene.add(m);
+  picks.push({ mesh: m, door: d, pose: () => ({ pos: c.clone().addScaledVector(n, 4.2 / Math.min(1, camera.aspect / 1.2)).setY(c.y + 0.5), tgt: c.clone().setY(c.y + 0.25) }) });
+}
 const focus = { to: null, f: 1, from: { pos: new THREE.Vector3(), tgt: new THREE.Vector3() }, cur: { pos: new THREE.Vector3(), tgt: new THREE.Vector3() }, dest: new THREE.Vector3() };
 const hudEl = document.getElementById('hud'), bar = document.createElement('div'); bar.id = 'inspectbar'; bar.hidden = true;
-bar.innerHTML = '<button id="back">←  BACK</button><button id="prev" aria-label="Previous">‹</button><span id="count"></span><button id="next" aria-label="Next">›</button>';
+bar.innerHTML = '<button id="back">←  BACK</button><button id="prev" aria-label="Previous">‹</button><span id="count"></span><button id="next" aria-label="Next">›</button><button id="enter" hidden></button>';
 document.body.appendChild(bar);
-const backBtn = bar.querySelector('#back'), countEl = bar.querySelector('#count');
+const backBtn = bar.querySelector('#back'), countEl = bar.querySelector('#count'), enterBtn = bar.querySelector('#enter');
+const fade = document.createElement('div'); fade.id = 'fade'; document.body.appendChild(fade);
+let leaving = null;
+function travel(href, delay = 0) { if (!href || leaving) return; leaving = setTimeout(() => { fade.classList.add('on'); setTimeout(() => (location.href = href), 550); }, delay); }
+enterBtn.addEventListener('click', () => travel(focus.pick?.door?.to));
+addEventListener('pageshow', () => { fade.classList.remove('on'); leaving = null; });
 // the tour order: a sweep across the room from left to right as seen from the room camera
 let tour = null;
 function tourOrder() {
@@ -496,6 +507,8 @@ function setFocus(pick) {
   if (pick) { navTouched = true; viewTarget = Math.round(view); }           // stop the opening move; it would fight the close-up
   hudEl.classList.toggle('inspecting', !!pick); bar.hidden = !pick;
   if (pick) countEl.textContent = `${tourOrder().indexOf(pick) + 1} / ${picks.length}`;
+  clearTimeout(leaving); leaving = null;
+  const d = pick?.door; enterBtn.hidden = !d; if (d) { enterBtn.textContent = d.to ? `ENTER ${d.label}  →` : `${d.label}  ·  NOT YET OPEN`; enterBtn.disabled = !d.to; }
 }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function pickAt(e) {
@@ -510,6 +523,7 @@ addEventListener('click', (e) => {
   if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
   const pk = pickAt(e); if (Q.has('debug')) console.log('pick', picks.indexOf(pk), e.clientX, e.clientY, focus.pick ? 1 : 0);
   setFocus(pk);
+  if (pk?.door?.to) travel(pk.door.to, 1500);                               // clicked a door: walk up to it, then through
 });
 backBtn.addEventListener('click', () => setFocus(null));
 bar.querySelector('#prev').addEventListener('click', () => step(-1)); bar.querySelector('#next').addEventListener('click', () => step(1));

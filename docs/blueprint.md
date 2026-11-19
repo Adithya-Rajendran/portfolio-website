@@ -29,6 +29,6 @@ Reasons: round hull for pressure; compartments limit a breach to one room and gi
 - Doors: four stair doors in the side bays down to the Ring Line, each signed for a destination.
 
 ## Consequences for the built rooms (not done)
-- Atrium: gates become four signed stair doors in the second and sixth bays; the back wall becomes the lift lobby. Re-bake.
+- Atrium: gates become four signed stair doors in the fifth and seventh bays (the ones visible from the arrival point); the back wall becomes the lift lobby. Re-bake.
 - Lounge window and Atrium portal are relay optics, not hull windows.
 - Fabrication's bay door is the cargo lift.

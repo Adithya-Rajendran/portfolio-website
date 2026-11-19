@@ -59,3 +59,8 @@ nav .sep { width: 1px; align-self: stretch; background: rgba(233,244,250,.25); }
 #inspectbar #prev, #inspectbar #next { font-size: 20px; letter-spacing: 0; padding: 6px 16px 9px; line-height: 1; }
 #inspectbar button:hover { color: var(--cy); border-color: var(--cy); }
 #count { font-size: 11px; letter-spacing: .3em; color: #a9c0cd; min-width: 64px; text-align: center; text-shadow: 0 1px 8px #000; }
+#fade { position: fixed; inset: 0; background: #04060a; opacity: 0; pointer-events: none; transition: opacity .5s ease; z-index: 6; }
+#fade.on { opacity: 1; }
+#inspectbar #enter { color: var(--am); border-color: var(--am); }
+#inspectbar #enter[hidden] { display: none; }
+#inspectbar #enter:disabled { opacity: .6; cursor: default; }

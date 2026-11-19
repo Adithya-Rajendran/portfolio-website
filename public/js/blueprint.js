@@ -82,7 +82,7 @@ tag('WATER TANKS · RADIATION SHIELD + BALLAST', V(-58, -8.5, 9), 'far', 'deck')
 for (const [name, x] of STOPS) { const p = new THREE.Mesh(new THREE.BoxGeometry(5, 0.2, 2.6), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.5 })); p.position.set(x, LINE_Y, 3); deck.add(p);
   deck.add(poly([V(x, LINE_Y, 3), V(x, 0.1, 6.5)], dashed(AM, 0.9, 0.5))); }
 // the Atrium's four stair doors down to the Ring Line (hall coordinates: across = z, along = x - 7)
-for (const [name, hx, hy] of [['↓ NAVIGATION', -10, 17], ['↓ FABRICATION', -10, 1], ['↓ LOUNGE', 10, 17], ['↓ LIBRARY · COMMS', 10, 1]]) {
+for (const [name, hx, hy] of [['↓ NAVIGATION', -10, 21], ['↓ FABRICATION', -10, 13], ['↓ LOUNGE', 10, 21], ['↓ LIBRARY · COMMS', 10, 13]]) {
   const d = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.2, 0.8), new THREE.MeshBasicMaterial({ color: AM, transparent: true, opacity: 0.6 })); d.position.set(hy + 7, 1.6, hx); deck.add(d);
   deck.add(poly([V(hy + 7, 0, hx), V(hy + 7, LINE_Y, Math.sign(hx) * 3)], dashed(AM, 0.9, 0.5))); tag(name, V(hy + 7, 4.4, hx * 1.08), 'door', 'deck'); }
 // the spoke: lift core between Fabrication and the Atrium, running up to the hub

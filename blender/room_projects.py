@@ -18,7 +18,7 @@ H = 8.6
 CAM_POS = Vector((0, -4.6, 1.7)); CAM_TGT = Vector((0, 12, 2.9))
 CLOSE_POS = Vector((2.3, 11.6, 1.75)); CLOSE_TGT = Vector((0, 19.0, 3.3))
 PAD = Vector((0, 19.0, 0))                      # assembly pad under the crane
-FRAMES = [-5.0, 0.0, 5.0, 10.0, 15.0, 20.0]     # steel portal frames
+FRAMES = [-5.0, -1.0, 3.0, 7.0, 11.0, 15.0, 19.0, 23.0]     # steel frames on the ring's 4 m hull-frame pitch
 FLOOR_ROUGH = (0.2, 0.24); FLOOR_IOR = 1.5      # sealed concrete: a soft, blurred mirror
 
 mat('steel', (0.15, 0.16, 0.18), 0.45, 0.6, var=0.12)
@@ -84,7 +84,7 @@ for s in (1, -1):
         for i in range(5):
             a, b = (sx(xs[i]), H - 1.5 if i % 2 else H - 0.4), (sx(xs[i + 1]), H - 0.4 if i % 2 else H - 1.5)
             beam(f'web_{g}{k}{i}', a, b, 0.1, fy - 0.06, fy + 0.06, 'steel', 'archC')
-        box(f'worklight_{g}{k}', sx(1.4), sx(4.6), fy - 0.07, fy + 0.07, H - 1.66, H - 1.62, em=em_ramp('work', k, fy, 5.0, 14.0, 1.3))
+        box(f'worklight_{g}{k}', sx(1.4), sx(4.6), fy - 0.07, fy + 0.07, H - 1.66, H - 1.62, em=em_ramp('work', k, fy, 4.0, 11.0, 1.3))
         box(f'worklightbody_{g}{k}', sx(1.3), sx(4.7), fy - 0.1, fy + 0.1, H - 1.62, H - 1.56, 'dark', 'archC')
     # crane rail on corbels
     box(f'rail_{g}', sx(6.3), sx(6.6), Y0, Y1, 6.0, 6.3, 'yellow', g, bevel=0.015)
@@ -118,7 +118,7 @@ for d in (-1, 1):
     box(f'doorwin{d}', d * 1.5, d * 3.7, Y1 - 0.31, Y1 - 0.3, 3.0, 3.7, 'lum_cool', 'center')
 box('doorseam', -0.035, 0.035, Y1 - 0.33, Y1 - 0.3, 0.02, DH, em='seam')      # light from the airlock beyond, through the gap
 text3d('baysign', 'BAY 02', 0.75, T((0, Y1 - 0.52, DH + 0.95), (pi / 2, 0, 0)), spacing=1.25)
-text3d('baysign2', 'FABRICATION  ·  ASSEMBLY  ·  TEST', 0.2, T((0, Y1 - 0.52, DH + 0.62), (pi / 2, 0, 0)), spacing=1.3)
+text3d('baysign2', 'CARGO LIFT  ·  SPOKE  ·  HUB DOCK', 0.2, T((0, Y1 - 0.52, DH + 0.62), (pi / 2, 0, 0)), spacing=1.3)
 for d in (-1, 1):                                                             # amber beacons either side of the door
     lathe(f'beacon{d}', [(0, 0.2), (0.07, 0.19), (0.09, 0.0), (0, 0.0)], em='beacon', segs=16, closed=False, M=T((d * (DW + 0.25), Y1 - 0.56, DH + 0.5)))
     lathe(f'beaconbase{d}', [(0, 0.0), (0.12, 0.0), (0.12, -0.06), (0, -0.06)], 'dark', 'center', segs=16, closed=False, M=T((d * (DW + 0.25), Y1 - 0.56, DH + 0.5)))
@@ -304,8 +304,9 @@ def bench(name, x0, x1, y):
     box(name + 'vise', x1 - 0.5, x1 - 0.25, y - 0.1, y + 0.1, 0.96, 1.12, 'steel', 'props', bevel=0.02)
     lathe(name + 'lamp', [(0, 0.6), (0.012, 0.6), (0.012, 0.02), (0.08, 0.01), (0.08, 0), (0, 0)], 'chrome', 'props', segs=12, closed=False, M=T(((x0 + x1) / 2, y + 0.3, 0.96)))
     lathe(name + 'shade', [(0, 0.1), (0.05, 0.1), (0.11, 0.0), (0.1, 0.0), (0.045, 0.085), (0, 0.085)], 'yellow', 'props', segs=16, closed=False, M=T(((x0 + x1) / 2, y + 0.18, 1.5), (0.5, 0, 0)))
-rack('rackL', 0, 6.5, -1); rack('rackR', 0, 6.5, 1); rack('rackL2', 0, 17.3, -1, 3)
-bench('benchL', -7.6, -5.6, -1.6); bench('benchR', 5.4, 7.5, 16.6)
+rack('rackL', 0, 5.0, -1); rack('rackR', 0, 5.0, 1); rack('rackL2', 0, 17.0, -1, 3)
+pressure_door('door', T((7.8, 9.0, 0), (0, 0, pi)), 'archR', 'ATRIUM', 'RING LINE  ·  STAIR', 'index.html', w=1.6, h=2.4)
+bench('benchL', -7.6, -5.6, -3.0); bench('benchR', 5.4, 7.5, 17.0)
 for ci, (x, y, z, sz, m) in enumerate(((6.9, -1.9, 0, 0.8, 'crate_w'), (6.95, -1.0, 0, 0.62, 'crate_o'), (6.9, -1.75, 0.8, 0.55, 'crate_o'), (-6.6, 20.6, 0, 0.9, 'crate_w'), (-6.75, 21.6, 0, 0.7, 'crate_w'),
                                        (-6.6, 20.7, 0.9, 0.6, 'crate_o'), (6.4, 21.4, 0, 0.85, 'crate_o'), (6.9, 20.4, 0, 0.6, 'crate_w'))):
     box(f'crate{ci}', x - sz / 2, x + sz / 2, y - sz / 2, y + sz / 2, z, z + sz, m, 'props', bevel=0.025)
@@ -321,7 +322,7 @@ co.location = CAM_POS; co.rotation_euler = (CAM_TGT - CAM_POS).to_track_quat('-Z
 w = bpy.data.worlds.new('Dark'); w.use_nodes = True; w.node_tree.nodes['Background'].inputs['Color'].default_value = (0, 0, 0, 1); scene.world = w
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
-scene['lobby'] = dict(room='projects', focus=[{'c': [-4.6, 2.5, 1.3], 'r': 1.5, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 2.5, 1.4], 'r': 1.6, 'dir': [-1, -0.9, 0.25]}, {'c': [-4.6, 12.5, 1.3], 'r': 1.3, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 12.5, 1.6], 'r': 1.3, 'dir': [-1, -0.9, 0.25]}, {'c': [0, 19, 3.1], 'r': 3.0, 'dir': [0.15, -1, -0.1]}], exposure=1.3, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
+scene['lobby'] = dict(room='projects', focus=[{'c': [-4.6, 2.5, 1.3], 'r': 1.5, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 2.5, 1.4], 'r': 1.6, 'dir': [-1, -0.9, 0.25]}, {'c': [-4.6, 12.5, 1.3], 'r': 1.3, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 12.5, 1.6], 'r': 1.3, 'dir': [-1, -0.9, 0.25]}, {'c': [0, 19, 3.1], 'r': 3.0, 'dir': [0.15, -1, -0.1]}], exposure=1.1, doors=DOORS, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
                       floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=2.0), y0=Y0, y1=Y1, dust=dict(x=14, y0=Y0, y1=Y1, h=8),
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, 'projects.blend'))
