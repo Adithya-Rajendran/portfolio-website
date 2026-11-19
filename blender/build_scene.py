@@ -389,7 +389,7 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5):
     face = lambda z: M @ Matrix(((0, 0, 1, 0.25), (1, 0, 0, 0), (0, 1, 0, z), (0, 0, 0, 1)))
     text3d(name + '_t', title, 0.25, face(h + 0.56), spacing=1.3)
     if sub: text3d(name + '_s', sub, 0.11, face(h + 0.4), spacing=1.5)
-    DOORS.append(dict(c=list(M @ Vector((0.3, 0, h / 2))), n=list(M.to_3x3() @ Vector((1, 0, 0))), to=to, label=title))
+    DOORS.append(dict(c=list(M @ Vector((0.3, 0, h / 2))), n=list(M.to_3x3() @ Vector((1, 0, 0))), to=to, label=title))     # to: room id, '' = sealed
 
 # ---- everything above this line is the shared kit: room_*.py scripts execute it and build their own room
 # ================================================================= ARCHITECTURE
@@ -405,7 +405,7 @@ PROGRAM = {1: ['alcove', 'screen', 'screen', 'garden', 'door', 'screen', 'door']
 UPPER = {1: ['panel', 'banner', 'window', 'panel', 'banner', 'window', 'panel'],
          -1: ['panel', 'window', 'banner', 'window', 'panel', 'banner', 'window']}
 # stair doors down to the Ring Line, each signed for where its stair comes out
-STAIRS = {(-1, 4): ('FABRICATION', 'projects.html'), (-1, 6): ('NAVIGATION', 'experience.html'), (1, 6): ('LOUNGE', 'about.html'), (1, 4): ('LIBRARY', '')}
+STAIRS = {(-1, 4): ('FABRICATION', 'projects'), (-1, 6): ('NAVIGATION', 'experience'), (1, 6): ('LOUNGE', 'about'), (1, 4): ('LIBRARY', '')}
 
 for s in (1, -1):
     g = side_grp(s)
@@ -1043,7 +1043,8 @@ scene.view_settings.look = 'AgX - Medium High Contrast'
 scene.view_settings.exposure = 0.0
 scene['lobby'] = dict(cam=list(CAM_POS), tgt=list(CAM_TGT), fov=50.0, dais=list(DAIS), portal=list(PORTAL_C), portal_r=PORTAL_R,
                       sun=list(SUN_DIR), floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=FX / 4.0, noise=0.55), holo=list(DAIS + Vector((0, 0, HOLO_Z))), floor_half=FX, y0=Y0, y1=Y1,
-                      chand=dict(pivot=[DAIS.x, DAIS.y], center=list(CH_C)), doors=DOORS,
+                      chand=dict(pivot=[DAIS.x, DAIS.y], center=list(CH_C)), doors=DOORS, room='lobby',
+                      screens=[f'FX_screen_{side_grp(s)}{bi}' for s in (1, -1) for bi, k in enumerate(PROGRAM[s]) if k == 'screen'],   # in content.json order
                       earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})
 

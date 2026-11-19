@@ -305,7 +305,7 @@ def bench(name, x0, x1, y):
     lathe(name + 'lamp', [(0, 0.6), (0.012, 0.6), (0.012, 0.02), (0.08, 0.01), (0.08, 0), (0, 0)], 'chrome', 'props', segs=12, closed=False, M=T(((x0 + x1) / 2, y + 0.3, 0.96)))
     lathe(name + 'shade', [(0, 0.1), (0.05, 0.1), (0.11, 0.0), (0.1, 0.0), (0.045, 0.085), (0, 0.085)], 'yellow', 'props', segs=16, closed=False, M=T(((x0 + x1) / 2, y + 0.18, 1.5), (0.5, 0, 0)))
 rack('rackL', 0, 5.0, -1); rack('rackR', 0, 5.0, 1); rack('rackL2', 0, 17.0, -1, 3)
-pressure_door('door', T((7.8, 9.0, 0), (0, 0, pi)), 'archR', 'ATRIUM', 'RING LINE  ·  STAIR', 'index.html', w=1.6, h=2.4)
+pressure_door('door', T((7.8, 9.0, 0), (0, 0, pi)), 'archR', 'ATRIUM', 'RING LINE  ·  STAIR', 'lobby', w=1.6, h=2.4)
 bench('benchL', -7.6, -5.6, -3.0); bench('benchR', 5.4, 7.5, 17.0)
 for ci, (x, y, z, sz, m) in enumerate(((6.9, -1.9, 0, 0.8, 'crate_w'), (6.95, -1.0, 0, 0.62, 'crate_o'), (6.9, -1.75, 0.8, 0.55, 'crate_o'), (-6.6, 20.6, 0, 0.9, 'crate_w'), (-6.75, 21.6, 0, 0.7, 'crate_w'),
                                        (-6.6, 20.7, 0.9, 0.6, 'crate_o'), (6.4, 21.4, 0, 0.85, 'crate_o'), (6.9, 20.4, 0, 0.6, 'crate_w'))):
@@ -322,7 +322,7 @@ co.location = CAM_POS; co.rotation_euler = (CAM_TGT - CAM_POS).to_track_quat('-Z
 w = bpy.data.worlds.new('Dark'); w.use_nodes = True; w.node_tree.nodes['Background'].inputs['Color'].default_value = (0, 0, 0, 1); scene.world = w
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
-scene['lobby'] = dict(room='projects', focus=[{'c': [-4.6, 2.5, 1.3], 'r': 1.5, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 2.5, 1.4], 'r': 1.6, 'dir': [-1, -0.9, 0.25]}, {'c': [-4.6, 12.5, 1.3], 'r': 1.3, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 12.5, 1.6], 'r': 1.3, 'dir': [-1, -0.9, 0.25]}, {'c': [0, 19, 3.1], 'r': 3.0, 'dir': [0.15, -1, -0.1]}], exposure=1.1, doors=DOORS, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
+scene['lobby'] = dict(room='projects', focus=[{'c': [-4.6, 2.5, 1.3], 'r': 1.5, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 2.5, 1.4], 'r': 1.6, 'dir': [-1, -0.9, 0.25]}, {'c': [-4.6, 12.5, 1.3], 'r': 1.3, 'dir': [1, -0.9, 0.25]}, {'c': [4.6, 12.5, 1.6], 'r': 1.3, 'dir': [-1, -0.9, 0.25]}, {'c': [0, 19, 3.1], 'r': 3.0, 'dir': [0.15, -1, -0.1]}], exposure=1.1, doors=DOORS, screens=[f'FX_screen{i}' for i in range(4)], cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
                       floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=2.0), y0=Y0, y1=Y1, dust=dict(x=14, y0=Y0, y1=Y1, h=8),
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, 'projects.blend'))

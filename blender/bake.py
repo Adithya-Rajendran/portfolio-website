@@ -3,7 +3,7 @@ Path-trace lighting (+ reflections as seen from the hero camera) into linear-HDR
 The floor is baked WITHOUT its glossy lobe: its reflection is rendered live in three.js (planar reflection).
   ./run.sh -b lobby.blend --python bake.py -- <scale> <spp> [group,group,...]
 scale: 1.0 = final (4k atlases), 0.25 = quick preview.
-Outputs ../public/assets/{lobby.glb, scene.json, tex/<group>.webp}
+Outputs ../public/assets/<room>/{room.glb, scene.json, tex/<group>.webp}
 """
 import bpy, bmesh, sys, os, math, json, time
 import numpy as np
@@ -15,8 +15,8 @@ SPP = int(a[1]) if len(a) > 1 else 32
 ONLY = a[2].split(',') if len(a) > 2 else None
 HERE = os.path.dirname(os.path.abspath(__file__))
 s = bpy.context.scene
-ROOM = s['lobby'].get('room', 'lobby')                 # each room bakes into its own asset folder (the lobby keeps the root)
-OUTD = os.path.join(HERE, '..', 'public', 'assets', *([] if ROOM == 'lobby' else [ROOM])); os.makedirs(os.path.join(OUTD, 'tex'), exist_ok=True)
+ROOM = s['lobby'].get('room', 'lobby')                 # each room bakes into its own asset folder
+OUTD = os.path.join(HERE, '..', 'public', 'assets', ROOM); os.makedirs(os.path.join(OUTD, 'tex'), exist_ok=True)
 HAS_CHAND = 'chand' in s['lobby'].keys()
 RES = {'floorN': 2048, 'floorF': 2048, 'center': 4096, 'archL': 4096, 'archR': 4096, 'archC': 4096, 'props': 4096, 'people': 4096, 'back': 1024, 'chandA': 1024, 'chandB': 1024}
 LAYER_RES = 1024                      # the chandelier's light is low-frequency: small maps are enough
@@ -198,12 +198,12 @@ for key, ob in ems.items():
 bpy.ops.object.select_all(action='DESELECT')
 for ob in list(groups.values()) + list(ems.values()) + [o for o in s.objects if 'fx' in o]:
     ob.hide_render = False; ob.select_set(True)
-bpy.ops.export_scene.gltf(filepath=os.path.join(OUTD, 'lobby.glb'), export_format='GLB', use_selection=True, export_yup=True,
+bpy.ops.export_scene.gltf(filepath=os.path.join(OUTD, 'room.glb'), export_format='GLB', use_selection=True, export_yup=True,
                           export_normals=False, export_texcoords=True, export_materials='EXPORT', export_image_format='NONE',
                           export_vertex_color='ACTIVE', export_all_vertex_colors=False, export_active_vertex_color_when_no_material=True,
                           export_extras=True, export_apply=False, export_animations=False, export_cameras=False, export_lights=False)
 info = s['lobby'].to_dict()
-info['groups'] = list(groups.keys()); info['hdr_range'] = HDR_RANGE; info['em_range'] = EM_RANGE
+info['room'] = ROOM; info['groups'] = list(groups.keys()); info['hdr_range'] = HDR_RANGE; info['em_range'] = EM_RANGE
 if HAS_CHAND: info['chand'] = dict(info.get('chand', {}), phases=PHASES, layered=static, spin=dict(chandA=1, chandB=-1))
 json.dump(info, open(os.path.join(OUTD, 'scene.json'), 'w'), indent=1)
-print('EXPORTED', os.path.getsize(os.path.join(OUTD, 'lobby.glb')) // 1024, 'KB')
+print('EXPORTED', os.path.getsize(os.path.join(OUTD, 'room.glb')) // 1024, 'KB')

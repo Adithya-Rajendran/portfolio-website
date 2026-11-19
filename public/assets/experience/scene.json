@@ -34,7 +34,7 @@
     -0.25881892442703247,
     0.0
    ],
-   "to": "index.html",
+   "to": "lobby",
    "label": "ATRIUM"
   }
  ],
@@ -203,5 +203,11 @@
   "props"
  ],
  "hdr_range": 8.0,
- "em_range": 8.0
+ "em_range": 8.0,
+ "screens": [
+  "FX_screen4",
+  "FX_screen3",
+  "FX_screen2",
+  "FX_screen1"
+ ]
 }

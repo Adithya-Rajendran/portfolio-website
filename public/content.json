@@ -1,0 +1,234 @@
+{
+  "brand": "ARK AURORA",
+  "hint": "MOVE TO LOOK AROUND  ·  CLICK TO INSPECT  ·  ← → TO TOUR",
+  "credit": "Earth imagery: NASA Blue Marble / Black Marble",
+  "depart": "03:47:12",
+  "live": {
+    "aboard": { "from": 6214, "per": 0.3333, "max": 10000 },
+    "received": { "from": 41207316, "per": 37 }
+  },
+  "rooms": {
+    "lobby": {
+      "nav": "HOME",
+      "title": "Ark Aurora — Embarkation Hall",
+      "loading": "DOCKING",
+      "close": "WINDOW",
+      "credit": true,
+      "kicker": "ARCADIA STATION · RING 04 · ATRIUM",
+      "headline": ["We go", "for all of us."],
+      "sub": ["Ten thousand volunteers. One ship. A second home for humankind,", "4.24 light-years away. Departure in {tminus}"],
+      "facts": [["DESTINATION", "PROXIMA CENTAURI b"], ["CREW", "10,000 · 193 NATIONS"], ["BELOW US", "EARTH · 717 KM"]],
+      "screens": {
+        "footer": "ARCADIA STATION  ·  EMBARKATION HALL  ·  RING 04",
+        "inspect": false,
+        "list": [
+          {
+            "layout": "board", "title": "ARK AURORA  ·  DEPARTURE", "tag": "FLIGHT 001",
+            "label": "T-MINUS", "clock": "{tminus}", "status": "NOW BOARDING  ·  GROUP C  ·  GATES 3 – 6",
+            "rows": [["DESTINATION", "PROXIMA CENTAURI b"], ["DISTANCE", "4.24 LIGHT-YEARS"], ["CREW", "10,000 · 193 NATIONS"]]
+          },
+          {
+            "layout": "messages", "title": "MESSAGES FROM HOME", "tag": "LIVE",
+            "label": "RECEIVED TODAY", "count": "{received}", "note": "8.2 BILLION PEOPLE  ·  ONE CREW",
+            "items": [
+              ["Come back with stories.", "LAGOS"],
+              ["Plant something green for us.", "KYOTO"],
+              ["Grandpa says: check the airlock twice.", "REYKJAVÍK"],
+              ["We will keep the lights on.", "SÃO PAULO"],
+              ["Name a mountain after her.", "KATHMANDU"],
+              ["You carry all of us. Travel well.", "NAIROBI"],
+              ["Class 4B is watching the launch!", "AUCKLAND"],
+              ["Find us a second home.", "MUMBAI"],
+              ["Proud of you. Always.", "MONTRÉAL"],
+              ["Send pictures of the new sky.", "CAIRO"],
+              ["Go gently. Come home if you can.", "WARSAW"],
+              ["Take the old songs with you.", "ULAANBAATAR"]
+            ]
+          },
+          {
+            "layout": "rows", "title": "WHAT WE CARRY", "tag": "MANIFEST",
+            "line": "So that there is always a tomorrow.",
+            "rows": [
+              ["SEED VAULT", "1,204,000 SPECIES"],
+              ["GENOME ARCHIVE", "8.9 MILLION"],
+              ["LIBRARY", "EVERY BOOK EVER SCANNED"],
+              ["LANGUAGES", "7,164 · ALL OF THEM"],
+              ["CREW", "10,000 VOLUNTEERS", "amber"]
+            ]
+          },
+          {
+            "layout": "roster", "title": "BOARDING  ·  GROUP C", "tag": "GATE 04",
+            "head": ["NAME", "FROM", "ROLE", "STATUS"], "states": ["ABOARD", "AT GATE", "CHECK-IN"], "count": "{aboard} OF 10,000 ABOARD",
+            "people": [
+              ["Amara Okafor", "LAGOS", "AGRONOMIST"],
+              ["Kenji Watanabe", "OSAKA", "REACTOR ENG."],
+              ["Sofía Ramírez", "BOGOTÁ", "PAEDIATRICIAN"],
+              ["Arjun Mehta", "PUNE", "TEACHER"],
+              ["Ingrid Solberg", "TROMSØ", "NAVIGATOR"],
+              ["Tāne Parata", "ROTORUA", "HYDROLOGIST"],
+              ["Leila Haddad", "BEIRUT", "ARCHIVIST"]
+            ]
+          },
+          {
+            "layout": "bars", "title": "ARK AURORA  ·  READINESS", "tag": "ALL SYSTEMS",
+            "figure": "ship", "captions": ["DRIVE", "HABITAT RINGS", "SHIELD", "1,480 m"],
+            "bars": [
+              ["FUSION DRIVE", 1, "READY"],
+              ["LIFE SUPPORT", 1, "NOMINAL"],
+              ["HYDROPONICS", 0.98, "98%"],
+              ["WATER  ·  94 YEARS", 1, "SEALED"],
+              ["CREW ABOARD", "aboard", "{aboard}"]
+            ]
+          },
+          {
+            "layout": "rows", "title": "THE CROSSING", "tag": "SOL  →  PROXIMA",
+            "figure": "crossing", "captions": ["SOL", "HOME", "PROXIMA CENTAURI b", "NEW HOME"],
+            "rows": [
+              ["DISTANCE", "4.24 LIGHT-YEARS  ·  40 TRILLION KM"],
+              ["CRUISE SPEED", "4.5% OF LIGHT"],
+              ["ARRIVAL", "IN 94 YEARS  ·  FOUR GENERATIONS", "amber"]
+            ]
+          }
+        ]
+      },
+      "hologram": {
+        "station": ["ARCADIA STATION", "ORBIT 717 KM  ·  YOU ARE HERE"],
+        "destination": ["PROXIMA CENTAURI b", "4.24 LIGHT-YEARS  ·  94 YEARS"],
+        "relay": ["RELAY CONSTELLATION", "24 SATELLITES  ·  LINK NOMINAL"],
+        "moon": ["LUNA", "384,400 KM  ·  WAYPOINT 01"],
+        "panel": {
+          "title": "MISSION OVERVIEW", "accent": 3,
+          "rows": [
+            ["VESSEL", "ARK AURORA"],
+            ["CREW", "10,000"],
+            ["ORIGIN", "EARTH  ·  SOL III"],
+            ["DESTINATION", "PROXIMA b"],
+            ["DISTANCE", "4.24 LY"],
+            ["CRUISE", "0.045 c"],
+            ["TRANSIT", "94 YEARS"]
+          ]
+        },
+        "cities": [
+          ["LAGOS", 6.5, 3.4], ["KYOTO", 35.0, 135.8], ["SÃO PAULO", -23.5, -46.6], ["NAIROBI", -1.3, 36.8],
+          ["MUMBAI", 19.1, 72.9], ["MONTRÉAL", 45.5, -73.6], ["CAIRO", 30.0, 31.2], ["REYKJAVÍK", 64.1, -21.9],
+          ["AUCKLAND", -36.8, 174.8], ["WARSAW", 52.2, 21.0], ["BOGOTÁ", 4.7, -74.1], ["ULAANBAATAR", 47.9, 106.9]
+        ]
+      }
+    },
+    "about": {
+      "nav": "ABOUT",
+      "title": "About — Observation Lounge",
+      "loading": "DIMMING LIGHTS",
+      "close": "THE WINDOW",
+      "credit": true,
+      "kicker": "RING 04 · COMPARTMENT 6 · OBSERVATION LOUNGE",
+      "headline": ["The view", "from here."],
+      "sub": ["A quiet room, a wall of books, and home in the window.", "The words on the wall are placeholders for now."],
+      "facts": [["ROOM", "ABOUT"], ["BELOW US", "EARTH · 717 KM"]],
+      "screens": {
+        "footer": "ARCADIA STATION  ·  OBSERVATION LOUNGE",
+        "tag": "LOUNGE",
+        "list": [
+          {
+            "layout": "placard", "title": "ABOUT", "name": "A short introduction", "meta": "NAME  ·  WHAT I DO  ·  WHERE",
+            "lines": ["Two or three sentences in your own voice.", "What you care about, and what you are looking for."]
+          },
+          {
+            "layout": "placard", "title": "CURRENTLY", "name": "What I am working on", "meta": "UPDATED  ·  DATE",
+            "lines": ["The thing on the desk right now.", "Reading  ·  building  ·  learning"]
+          }
+        ]
+      }
+    },
+    "projects": {
+      "nav": "PROJECTS",
+      "title": "Projects — Fabrication Bay 02",
+      "loading": "OPENING BAY",
+      "close": "THE CRANE",
+      "kicker": "RING 04 · COMPARTMENT 2 · FABRICATION BAY",
+      "headline": ["Things", "I've built."],
+      "sub": ["Four on the floor, one on the crane.", "Each exhibit stands in for a project; the placards are placeholders for now."],
+      "facts": [["ROOM", "PROJECTS"], ["EXHIBITS", "01 – 04"]],
+      "screens": {
+        "footer": "ARCADIA STATION  ·  FABRICATION BAY 02",
+        "tag": "BAY 02",
+        "list": [
+          {
+            "layout": "placard", "title": "PROJECT 01", "no": "01", "name": "PROJECT ONE", "meta": "ROLE  ·  YEAR", "cta": "SELECT TO OPEN  →",
+            "lines": ["One line on what it is and why it mattered.", "What I built  ·  what it took  ·  what came of it"]
+          },
+          {
+            "layout": "placard", "title": "PROJECT 02", "no": "02", "name": "PROJECT TWO", "meta": "ROLE  ·  YEAR", "cta": "SELECT TO OPEN  →",
+            "lines": ["One line on what it is and why it mattered.", "What I built  ·  what it took  ·  what came of it"]
+          },
+          {
+            "layout": "placard", "title": "PROJECT 03", "no": "03", "name": "PROJECT THREE", "meta": "ROLE  ·  YEAR", "cta": "SELECT TO OPEN  →",
+            "lines": ["One line on what it is and why it mattered.", "What I built  ·  what it took  ·  what came of it"]
+          },
+          {
+            "layout": "placard", "title": "PROJECT 04", "no": "04", "name": "PROJECT FOUR", "meta": "ROLE  ·  YEAR", "cta": "SELECT TO OPEN  →",
+            "lines": ["One line on what it is and why it mattered.", "What I built  ·  what it took  ·  what came of it"]
+          }
+        ]
+      }
+    },
+    "experience": {
+      "nav": "EXPERIENCE",
+      "title": "Experience — Navigation",
+      "loading": "PLOTTING ROUTE",
+      "close": "THE MAP",
+      "kicker": "RING 04 · COMPARTMENT 1 · NAVIGATION",
+      "headline": ["A trajectory", "of building."],
+      "sub": ["Every stop on the line so far, and the one being laid now.", "Station names are placeholders for now."],
+      "facts": [["ROOM", "EXPERIENCE"], ["STATIONS", "01 – NOW"]],
+      "screens": {
+        "footer": "ARCADIA STATION  ·  NAVIGATION",
+        "tag": "ROUTE LOG",
+        "list": [
+          {
+            "layout": "placard", "title": "STATION 01", "no": "01", "name": "ROLE  ·  ORGANISATION", "meta": "FROM  –  TO  ·  PLACE",
+            "lines": ["What you were responsible for.", "The outcome you would point to first."]
+          },
+          {
+            "layout": "placard", "title": "STATION 02", "no": "02", "name": "ROLE  ·  ORGANISATION", "meta": "FROM  –  TO  ·  PLACE",
+            "lines": ["What you were responsible for.", "The outcome you would point to first."]
+          },
+          {
+            "layout": "placard", "title": "STATION 03", "no": "03", "name": "ROLE  ·  ORGANISATION", "meta": "FROM  –  TO  ·  PLACE",
+            "lines": ["What you were responsible for.", "The outcome you would point to first."]
+          },
+          {
+            "layout": "placard", "title": "STATION 04", "no": "04", "name": "ROLE  ·  ORGANISATION", "meta": "FROM  –  TO  ·  PLACE",
+            "lines": ["What you were responsible for.", "The outcome you would point to first."]
+          }
+        ]
+      },
+      "stations": [
+        {
+          "title": "STATION 01", "sub": "SPACE ELEVATOR", "model": "elevator",
+          "specs": [["PROPOSED", "TSIOLKOVSKY  ·  1895"], ["TETHER", "~100,000 KM"], ["ANCHOR", "EQUATOR"], ["STATION AT", "GEO  ·  35,786 KM"], ["CLIMB", "ABOUT A WEEK"]]
+        },
+        {
+          "title": "STATION 02", "sub": "STANFORD TORUS", "model": "torus",
+          "specs": [["STUDY", "NASA / STANFORD  ·  1975"], ["DIAMETER", "1.8 KM"], ["SPIN", "1 RPM  ·  1 g AT RIM"], ["RESIDENTS", "10,000"], ["LIGHT", "OVERHEAD MIRROR"]]
+        },
+        {
+          "title": "STATION 03", "sub": "O'NEILL CYLINDERS", "model": "cylinders",
+          "specs": [["PROPOSED", "G. K. O'NEILL  ·  1976"], ["EACH", "8 KM x 32 KM"], ["LAYOUT", "COUNTER-ROTATING PAIR"], ["INTERIOR", "3 LAND  ·  3 WINDOW STRIPS"], ["RESIDENTS", "MILLIONS"]]
+        },
+        {
+          "title": "STATION 04", "sub": "BUSSARD RAMJET", "model": "ramjet",
+          "specs": [["PROPOSED", "R. W. BUSSARD  ·  1960"], ["FUEL", "INTERSTELLAR HYDROGEN"], ["COLLECTOR", "MAGNETIC SCOOP"], ["DRIVE", "FUSION"], ["CARRIES", "NO PROPELLANT"]]
+        },
+        {
+          "title": "STATION 05", "sub": "DYSON SWARM", "model": "dyson",
+          "specs": [["PROPOSED", "F. DYSON  ·  1960"], ["FORM", "SWARM OF COLLECTORS"], ["CAPTURES", "A STAR'S OUTPUT"], ["SOL", "3.8 x 10^26 W"], ["SIGNATURE", "INFRARED EXCESS"]]
+        },
+        {
+          "title": "NOW", "sub": "WARP-RING SHIP", "model": "warp",
+          "specs": [["METRIC", "M. ALCUBIERRE  ·  1994"], ["AHEAD", "SPACE CONTRACTS"], ["BEHIND", "SPACE EXPANDS"], ["SHIP", "AT REST IN ITS BUBBLE"], ["NEEDS", "NEGATIVE ENERGY"]]
+        }
+      ]
+    }
+  }
+}

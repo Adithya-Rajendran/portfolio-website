@@ -25,13 +25,13 @@ function tag(html, pos, cls, mode) { const el = document.createElement('div'); e
 // above and the Ring Line, tanks and shielding below.
 const HULL_R = 12.6, HULL_Y = 3.2, X0 = -66, X1 = 90, LINE_Y = -4.5;
 const ROOMS = [
-  { id: 'atrium', name: 'ATRIUM', page: 'HOME', href: 'index.html', glb: 'assets/lobby.glb', img: 'blueprint/lobby.png', at: 7, turn: -1, label: [16, 13, 0], view: [[16, 40, 46], [16, 2, 0]],
+  { id: 'atrium', name: 'ATRIUM', page: 'HOME', href: 'index.html', glb: 'assets/lobby/room.glb', img: 'blueprint/lobby.png', at: 7, turn: -1, label: [16, 13, 0], view: [[16, 40, 46], [16, 2, 0]],
     text: 'Compartment 4, at the foot of the spoke. You step out of the lift from the hub and face the Oculus. Stair doors in the side bays go down to the Ring Line.' },
-  { id: 'fabrication', name: 'FABRICATION BAY 02', page: 'PROJECTS', href: 'projects.html', glb: 'assets/projects/lobby.glb', img: 'blueprint/projects.png', at: -35, turn: -1, label: [-26, 11, 0], view: [[-26, 34, 40], [-26, 2, 0]],
+  { id: 'fabrication', name: 'FABRICATION BAY 02', page: 'PROJECTS', href: 'index.html?room=projects', glb: 'assets/projects/room.glb', img: 'blueprint/projects.png', at: -35, turn: -1, label: [-26, 11, 0], view: [[-26, 34, 40], [-26, 2, 0]],
     text: 'Compartment 3, on the other side of the spoke: its big door is the cargo lift, so parts come straight down from the hub dock.' },
-  { id: 'navigation', name: 'NAVIGATION', page: 'EXPERIENCE', href: 'experience.html', glb: 'assets/experience/lobby.glb', img: 'blueprint/experience.png', at: -53, turn: -1, label: [-53, 11, 0], view: [[-53, 30, 30], [-53, 2, 0]],
+  { id: 'navigation', name: 'NAVIGATION', page: 'EXPERIENCE', href: 'index.html?room=experience', glb: 'assets/experience/room.glb', img: 'blueprint/experience.png', at: -53, turn: -1, label: [-53, 11, 0], view: [[-53, 30, 30], [-53, 2, 0]],
     text: 'Compartment 2. A round chart room; its dome is a pressure dome under the hull.' },
-  { id: 'lounge', name: 'OBSERVATION LOUNGE', page: 'ABOUT', href: 'about.html', glb: 'assets/about/lobby.glb', img: 'blueprint/about.png', at: 48, turn: 1, label: [47, 9, 0], view: [[47, 26, 30], [47, 2, 0]],
+  { id: 'lounge', name: 'OBSERVATION LOUNGE', page: 'ABOUT', href: 'index.html?room=about', glb: 'assets/about/room.glb', img: 'blueprint/about.png', at: 48, turn: 1, label: [47, 9, 0], view: [[47, 26, 30], [47, 2, 0]],
     text: 'Compartment 6. It faces the Atrium across the optics bay, so both rooms look into the same relayed view of Earth.' },
   { id: 'library', name: 'LIBRARY', page: 'WRITING · PLANNED', box: [56, 72, 6], label: [64, 8, 0], view: [[64, 26, 30], [64, 2, 0]], text: 'Compartment 7. Not built yet.' },
   { id: 'comms', name: 'COMMS', page: 'CONTACT · PLANNED', box: [74, 86, 6], label: [80, 8, 0], view: [[80, 26, 30], [80, 2, 0]], text: 'Compartment 8. Not built yet.' },

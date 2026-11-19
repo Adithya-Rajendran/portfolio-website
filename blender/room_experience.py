@@ -76,7 +76,7 @@ for k in range(12):
     M = at(a, R - 0.06)
     if a == 15:                                                               # the stair door down to the Ring Line
         rbox(f'panel{k}', (0.08, 3.2, 3.2), M @ T((-0.01, 0, 1.7)), 'dark', 'archL', bevel=0.02)
-        pressure_door('door', at(a, R - 0.12, 0, 180), 'archL', 'ATRIUM', 'RING LINE  ·  STAIR', 'index.html', w=1.6, h=2.4)
+        pressure_door('door', at(a, R - 0.12, 0, 180), 'archL', 'ATRIUM', 'RING LINE  ·  STAIR', 'lobby', w=1.6, h=2.4)
         continue
     if a in SCREENS:
         rbox(f'bezel{k}', (0.1, 3.0, 2.0), M @ T((-0.02, 0, 2.3)), 'dark', 'archL', bevel=0.02)
@@ -139,7 +139,7 @@ w = bpy.data.worlds.new('Dark'); w.use_nodes = True; w.node_tree.nodes['Backgrou
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
 scene['lobby'] = dict(room='experience', exposure=1.5, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
-                      doors=DOORS, map=dict(c=[0.0, 0.0, TABLE_H], r=TABLE_R), floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=1.5), y0=Y0, y1=Y1,
+                      doors=DOORS, screens=[f'FX_screen{k}' for k in (4, 3, 2, 1)], map=dict(c=[0.0, 0.0, TABLE_H], r=TABLE_R), floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=1.5), y0=Y0, y1=Y1,
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, 'experience.blend'))
 print('OBJECTS', len(bpy.data.objects), 'TRIS', sum(len(o.data.polygons) for o in bpy.data.objects if o.type == 'MESH'))

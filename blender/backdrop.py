@@ -30,6 +30,6 @@ buf = np.ones((w * h, 4), np.float32); buf[:, :3] = np.sqrt(np.clip(px[:, :3], 0
 out = bpy.data.images.new('enc', w, h, alpha=False, float_buffer=False); out.colorspace_settings.name = 'Non-Color'
 out.pixels.foreach_set(buf.ravel())
 ROOM = L.get('room', 'lobby')
-OUTT = os.path.join(HERE, '..', 'public', 'assets', *([] if ROOM == 'lobby' else [ROOM]), 'tex'); os.makedirs(OUTT, exist_ok=True)
+OUTT = os.path.join(HERE, '..', 'public', 'assets', ROOM, 'tex'); os.makedirs(OUTT, exist_ok=True)
 out.filepath_raw = os.path.join(OUTT, 'backdrop.webp'); out.file_format = 'WEBP'; out.save(quality=94)
 print('BACKDROP saved')

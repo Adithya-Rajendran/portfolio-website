@@ -141,7 +141,7 @@ for i, yc in enumerate((1.1, 3.2)):
     box(f'bezel{i}', RX - 0.06, RX, yc - 0.92, yc + 0.92, 1.45, 2.75, 'frame', 'archR', bevel=0.01)
     quad(f'FX_screen{i}', [(RX - 0.065, yc + 0.85, 1.52), (RX - 0.065, yc - 0.85, 1.52), (RX - 0.065, yc - 0.85, 2.68), (RX - 0.065, yc + 0.85, 2.68)], 'lum_screen', fx='screen', uv=True)
 
-pressure_door('door', T((RX - 0.02, 6.0, 0), (0, 0, pi)), 'archR', 'ATRIUM', 'RING LINE  ·  STAIR', 'index.html', w=1.6, h=2.4)
+pressure_door('door', T((RX - 0.02, 6.0, 0), (0, 0, pi)), 'archR', 'ATRIUM', 'RING LINE  ·  STAIR', 'lobby', w=1.6, h=2.4)
 
 # ================================================================= THE MIDDLE: a rug, two sofas facing each other, armchairs turned to the view
 box('rug', -3.3, 3.3, -1.6, 4.6, 0.0, 0.018, 'rug', 'props')
@@ -224,7 +224,7 @@ co.location = CAM_POS; co.rotation_euler = (CAM_TGT - CAM_POS).to_track_quat('-Z
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
 scene['lobby'] = dict(room='about', exposure=1.4, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
-                      doors=DOORS, portal=list(PORTAL_C), sun=list(SUN_DIR), backdrop_fov=100, earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),
+                      doors=DOORS, screens=['FX_screen0', 'FX_screen1'], portal=list(PORTAL_C), sun=list(SUN_DIR), backdrop_fov=100, earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),
                       floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=1.2), y0=Y0, y1=Y1,
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, 'about.blend'))

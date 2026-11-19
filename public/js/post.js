@@ -104,6 +104,8 @@ export class Post {
     return rt;
   }
 
+  setExposure(v) { this.mFinal.uniforms.toneMappingExposure.value = v; }
+
   setMSAA(samples) {
     if (samples === this.msaa) return;
     const { width, height } = this.scene; this.scene.dispose(); this.msaa = samples; this.scene = this._makeScene(); this.scene.setSize(width, height);
@@ -153,8 +155,10 @@ export class Governor {
   constructor({ min = 0.5, max = 1, target = 60, pinned = null } = {}) {
     this.min = min; this.max = max; this.scale = pinned ?? max; this.pinned = pinned != null;
     this.slow = 1000 / (target * 0.86); this.fast = 1000 / (target * 0.95);
-    this.acc = 0; this.n = 0; this.cool = 2; this.backoff = 8; this.good = 0; this.warm = 4000;   // ms to ignore at start-up (shader compiles, uploads)
+    this.cool = 2; this.backoff = 8; this.good = 0; this.rest(4000);
   }
+  /** Ignore the next `ms` of frames: start-up and room changes stall on shader compiles and texture uploads. */
+  rest(ms) { this.warm = ms; this.acc = 0; this.n = 0; }
   /** @returns true when the scale changed */
   update(dtMs) {
     if (this.pinned || dtMs > 250) return false;                       // ignore tab switches / hitches

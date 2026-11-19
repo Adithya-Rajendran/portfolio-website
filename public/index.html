@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ark Aurora — Embarkation Hall</title>
+<title>Arcadia Station</title>
 <link rel="stylesheet" href="style.css">
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/jsm/" } }
@@ -12,28 +12,28 @@
 <body>
 <canvas id="scene"></canvas>
 
+<!-- Everything below is filled in from content.json by main.js: one page, and a room per entry in "rooms". -->
 <div id="loader">
   <div class="mark">◯</div>
   <div class="bar"><i id="progress"></i></div>
-  <div class="label">DOCKING <span id="pct">0</span>%</div>
+  <div class="label"><span id="what"></span> <span id="pct">0</span>%</div>
 </div>
 
 <div id="hud" class="hidden">
   <header>
-    <div class="brand"><span class="ring"></span>ARK&nbsp;AURORA</div>
-    <nav><a class="here" href="index.html">HOME</a><a href="about.html">ABOUT</a><a href="projects.html">PROJECTS</a><a href="experience.html">EXPERIENCE</a><span class="sep"></span><a data-view="0">WIDE</a><a data-view="1">WINDOW</a></nav>
+    <div class="brand"><span class="ring"></span><span id="brand"></span></div>
+    <nav></nav>
   </header>
   <section class="hero">
-    <p class="kicker">ARCADIA STATION · RING 04 · ATRIUM</p>
-    <h1>We go<br>for all of us.</h1>
-    <p class="sub">Ten thousand volunteers. One ship. A second home for humankind,<br>4.24 light-years away. Departure in <span id="clock">03:47:12</span></p>
+    <p class="kicker"></p>
+    <h1></h1>
+    <p class="sub"></p>
   </section>
-  <footer>
-    <div><b>DESTINATION</b> PROXIMA CENTAURI b</div>
-    <div><b>CREW</b> 10,000 · 193 NATIONS</div>
-    <div><b>BELOW US</b> EARTH · 717 KM</div>
-    <div class="hint">MOVE TO LOOK AROUND<br><small>Earth imagery: NASA Blue Marble / Black Marble</small></div>
-  </footer>
+  <footer></footer>
+</div>
+
+<div id="inspectbar" hidden>
+  <button id="back">←  BACK</button><button id="prev" aria-label="Previous">‹</button><span id="count"></span><button id="next" aria-label="Next">›</button><button id="enter" hidden></button>
 </div>
 <script type="module" src="main.js"></script>
 </body>

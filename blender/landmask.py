@@ -1,9 +1,9 @@
 """Small data textures for the holographic globe, derived from the NASA maps.   blender -b --python landmask.py
-   -> public/assets/tex/landmask.png   (512x256, land = white)
-   -> public/assets/tex/citylights.png (1024x512, brightness of night lights)"""
+   -> public/assets/lobby/tex/landmask.png   (512x256, land = white)
+   -> public/assets/lobby/tex/citylights.png (1024x512, brightness of night lights)"""
 import bpy, os, numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, '..', 'public', 'assets', 'tex')
+OUT = os.path.join(HERE, '..', 'public', 'assets', 'lobby', 'tex')
 
 def load(name):
     img = bpy.data.images.load(os.path.join(HERE, 'textures_dl', name)); w, h = img.size

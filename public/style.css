@@ -1,66 +1,56 @@
-:root { --cy: #7fe3ff; --am: #ff9a4a; --fg: #e9f4fa; }
+:root { --cy: #7fe3ff; --am: #ff9a4a; --fg: #e9f4fa; --soft: #a9c0cd; --edge: clamp(16px, 3vw, 40px); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--fg);
   font-family: "Eurostile", "Michroma", "Orbitron", "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
+/* cover shown while a room loads: comes down quickly, lifts slowly */
 #loader { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px;
-  background: #04060a; transition: opacity 1.2s ease; z-index: 5; }
-#loader.done { opacity: 0; pointer-events: none; }
+  background: #04060a; transition: opacity .45s ease; z-index: 5; }
+#loader.done { opacity: 0; pointer-events: none; transition-duration: 1.2s; }
 #loader .mark { font-size: 44px; color: var(--cy); animation: pulse 1.6s ease-in-out infinite; }
 #loader .bar { width: 220px; height: 2px; background: #16222c; }
 #loader .bar i { display: block; height: 100%; width: 0; background: var(--cy); box-shadow: 0 0 12px var(--cy); transition: width .2s; }
 #loader .label { font-size: 11px; letter-spacing: .45em; color: #7d94a3; }
 @keyframes pulse { 50% { opacity: .35; transform: scale(.92); } }
 
+/* text over the scene; only links and buttons take the pointer */
 #hud { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
-  padding: clamp(16px, 3vw, 40px); transition: opacity 1.6s ease .4s; z-index: 2;
+  padding: var(--edge); transition: opacity 1.6s ease .4s, background .6s; z-index: 2; text-shadow: 0 1px 14px rgba(0,0,0,.85);
   background: linear-gradient(90deg, rgba(2,5,9,.82) 0%, rgba(2,5,9,.5) 26%, rgba(2,5,9,0) 50%),
               linear-gradient(180deg, rgba(2,5,9,.7) 0%, rgba(2,5,9,0) 16%), linear-gradient(0deg, rgba(2,5,9,.75), rgba(2,5,9,0) 22%); }
 #hud.hidden { opacity: 0; }
-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; letter-spacing: .32em; }
-.brand { display: flex; align-items: center; gap: 12px; font-weight: 600; }
-.brand .ring { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--cy); box-shadow: 0 0 10px var(--cy), inset 0 0 6px var(--cy); }
-nav { display: flex; gap: clamp(12px, 2.4vw, 36px); }
-nav a { color: #e9f4fa; opacity: .95; text-shadow: 0 1px 12px #000, 0 0 2px #000; padding: 8px 0; border-bottom: 1px solid rgba(127,227,255,.5); pointer-events: auto; cursor: pointer; transition: color .2s, opacity .2s; }
-nav a:hover { color: var(--cy); opacity: 1; }
-.hero { max-width: 560px; }
-.kicker { font-size: 12px; letter-spacing: .5em; color: var(--am); margin-bottom: 18px; }
-h1 { font-size: clamp(40px, 6.2vw, 96px); line-height: .95; font-weight: 200; letter-spacing: -.02em;
-  text-shadow: 0 0 40px rgba(127,227,255,.35); }
-.sub { margin-top: 22px; font-size: 14px; letter-spacing: .08em; color: #a9c0cd; }
-.sub span, footer span { color: var(--cy); font-variant-numeric: tabular-nums; }
-footer { display: flex; gap: clamp(16px, 3vw, 48px); align-items: flex-end; font-size: 11px; letter-spacing: .22em; color: #a9c0cd; }
-footer b { display: block; font-weight: 400; color: #8aa3b1; font-size: 9px; letter-spacing: .4em; margin-bottom: 5px; }
-footer .hint { margin-left: auto; color: #8aa3b1; animation: pulse 3s ease-in-out infinite; }
-@media (max-width: 720px) { nav { display: none; } footer .hint { display: none; } }
-footer .hint { text-align: right; line-height: 1.7; }
-footer .hint small { font-size: 9px; letter-spacing: .12em; opacity: .7; animation: none; }
-.sub { line-height: 1.6; }
-header, .hero, footer { text-shadow: 0 1px 14px rgba(0,0,0,.85); }
-h1 { text-shadow: 0 2px 30px rgba(0,0,0,.6), 0 0 40px rgba(127,227,255,.25); }
-footer .hint, footer .hint small { color: #c5d8e2; }
-footer .hint { animation: none; }
-nav a { text-decoration: none; }
-nav a.here { color: var(--cy); border-bottom-color: var(--cy); }
-nav .sep { width: 1px; align-self: stretch; background: rgba(233,244,250,.25); }
-#back { position: fixed; left: clamp(16px, 3vw, 40px); bottom: clamp(16px, 3vw, 40px); z-index: 3; font: inherit; font-size: 12px; letter-spacing: .32em;
-  color: var(--fg); background: rgba(2,5,9,.6); border: 1px solid rgba(127,227,255,.55); padding: 12px 18px; cursor: pointer; backdrop-filter: blur(6px); }
-#back:hover { color: var(--cy); border-color: var(--cy); }
-#back[hidden] { display: none; }
-#hud { transition: opacity 1.6s ease .4s, background .6s; }
 #hud .hero, #hud footer { transition: opacity .5s; }
 #hud.inspecting { background: none; }
 #hud.inspecting .hero, #hud.inspecting footer { opacity: 0; }
-#inspectbar { position: fixed; left: clamp(16px, 3vw, 40px); bottom: clamp(16px, 3vw, 40px); z-index: 3; display: flex; align-items: center; gap: 8px; }
-#inspectbar[hidden] { display: none; }
-#inspectbar button { position: static; font: inherit; font-size: 12px; letter-spacing: .32em; color: var(--fg); background: rgba(2,5,9,.6);
+header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; letter-spacing: .32em; }
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 600; white-space: nowrap; }
+.brand .ring { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--cy); box-shadow: 0 0 10px var(--cy), inset 0 0 6px var(--cy); }
+nav { display: flex; gap: clamp(12px, 2.4vw, 36px); }
+nav a { color: var(--fg); opacity: .95; text-decoration: none; text-shadow: 0 1px 12px #000, 0 0 2px #000; padding: 8px 0;
+  border-bottom: 1px solid rgba(127,227,255,.5); pointer-events: auto; cursor: pointer; transition: color .2s, opacity .2s; }
+nav a:hover, nav a.here { color: var(--cy); opacity: 1; }
+nav a.here { border-bottom-color: var(--cy); }
+nav .sep { width: 1px; align-self: stretch; background: rgba(233,244,250,.25); }
+.hero { max-width: 560px; }
+.kicker { font-size: 12px; letter-spacing: .5em; color: var(--am); margin-bottom: 18px; }
+h1 { font-size: clamp(40px, 6.2vw, 96px); line-height: .95; font-weight: 200; letter-spacing: -.02em;
+  text-shadow: 0 2px 30px rgba(0,0,0,.6), 0 0 40px rgba(127,227,255,.25); }
+.sub { margin-top: 22px; font-size: 14px; line-height: 1.6; letter-spacing: .08em; color: var(--soft); }
+.sub span { color: var(--cy); font-variant-numeric: tabular-nums; }
+footer { display: flex; gap: clamp(16px, 3vw, 48px); align-items: flex-end; font-size: 11px; letter-spacing: .22em; color: var(--soft); }
+footer b { display: block; font-weight: 400; color: #8aa3b1; font-size: 9px; letter-spacing: .4em; margin-bottom: 5px; }
+footer .hint { margin-left: auto; text-align: right; line-height: 1.7; color: #c5d8e2; }
+footer .hint small { font-size: 9px; letter-spacing: .12em; opacity: .7; }
+@media (max-width: 720px) { nav { display: none; } footer .hint { display: none; } }
+
+/* controls shown while something is being inspected */
+#inspectbar { position: fixed; left: var(--edge); bottom: var(--edge); z-index: 3; display: flex; align-items: center; gap: 8px; }
+#inspectbar[hidden], #enter[hidden] { display: none; }
+#inspectbar button { font: inherit; font-size: 12px; letter-spacing: .32em; color: var(--fg); background: rgba(2,5,9,.6);
   border: 1px solid rgba(127,227,255,.55); padding: 12px 18px; cursor: pointer; backdrop-filter: blur(6px); }
-#inspectbar #prev, #inspectbar #next { font-size: 20px; letter-spacing: 0; padding: 6px 16px 9px; line-height: 1; }
 #inspectbar button:hover { color: var(--cy); border-color: var(--cy); }
-#count { font-size: 11px; letter-spacing: .3em; color: #a9c0cd; min-width: 64px; text-align: center; text-shadow: 0 1px 8px #000; }
-#fade { position: fixed; inset: 0; background: #04060a; opacity: 0; pointer-events: none; transition: opacity .5s ease; z-index: 6; }
-#fade.on { opacity: 1; }
+#inspectbar #prev, #inspectbar #next { font-size: 20px; letter-spacing: 0; padding: 6px 16px 9px; line-height: 1; }
 #inspectbar #enter { color: var(--am); border-color: var(--am); }
-#inspectbar #enter[hidden] { display: none; }
 #inspectbar #enter:disabled { opacity: .6; cursor: default; }
+#count { font-size: 11px; letter-spacing: .3em; color: var(--soft); min-width: 64px; text-align: center; text-shadow: 0 1px 8px #000; }
