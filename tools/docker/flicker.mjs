@@ -1,0 +1,14 @@
+import { webkit, chromium } from 'playwright';
+const [url, eng = 'webkit', q = '?debug'] = process.argv.slice(2);
+const b = await ({ webkit, chromium })[eng].launch(eng === 'chromium' ? { args: ['--enable-unsafe-swiftshader'] } : {});
+const p = await b.newPage({ viewport: { width: 640, height: 360 } });
+p.on('console', (m) => { if (m.type() !== 'log') console.log(`[${m.type()}]`, m.text().slice(0, 300)); });
+p.on('pageerror', (e) => console.log('[pageerror]', e.message));
+await p.goto(url + q);
+await p.waitForFunction(() => window.__lobby?.ready() >= 1, null, { timeout: 200000 });
+await p.waitForTimeout(15000);
+const r = await p.evaluate(() => ({ mode: window.__lobby.mode(), s: window.__lobby.series.slice(-120) }));
+const s = r.s, mean = s.reduce((a, c) => a + c, 0) / s.length;
+console.log(eng, q, JSON.stringify(r.mode), 'frames', s.length, 'mean', mean.toFixed(1), 'min', Math.min(...s), 'max', Math.max(...s));
+console.log(s.join(' '));
+await b.close();

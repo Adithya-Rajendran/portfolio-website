@@ -1,0 +1,6 @@
+node_modules/
+blender/out/
+*.blend
+*.blend1
+blender/textures_dl/night_full.jpg
+.DS_Store

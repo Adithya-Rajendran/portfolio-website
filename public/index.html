@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ark Aurora — Embarkation Hall</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<div id="loader">
+  <div class="mark">◯</div>
+  <div class="bar"><i id="progress"></i></div>
+  <div class="label">DOCKING <span id="pct">0</span>%</div>
+</div>
+
+<div id="hud" class="hidden">
+  <header>
+    <div class="brand"><span class="ring"></span>ARK&nbsp;AURORA</div>
+    <nav><a class="here" href="index.html">HOME</a><a href="about.html">ABOUT</a><a href="projects.html">PROJECTS</a><a href="experience.html">EXPERIENCE</a><span class="sep"></span><a data-view="0">WIDE</a><a data-view="1">WINDOW</a></nav>
+  </header>
+  <section class="hero">
+    <p class="kicker">ARCADIA STATION · EMBARKATION HALL</p>
+    <h1>We go<br>for all of us.</h1>
+    <p class="sub">Ten thousand volunteers. One ship. A second home for humankind,<br>4.24 light-years away. Departure in <span id="clock">03:47:12</span></p>
+  </section>
+  <footer>
+    <div><b>DESTINATION</b> PROXIMA CENTAURI b</div>
+    <div><b>CREW</b> 10,000 · 193 NATIONS</div>
+    <div><b>BELOW US</b> EARTH · 717 KM</div>
+    <div class="hint">MOVE TO LOOK AROUND<br><small>Earth imagery: NASA Blue Marble / Black Marble</small></div>
+  </footer>
+</div>
+<script type="module" src="main.js"></script>
+</body>
+</html>

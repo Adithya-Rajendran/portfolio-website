@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
+const p = await b.newPage({ viewport: { width: 960, height: 540 } }); let n = 0;
+p.on('console', (m) => { if ((m.type() === 'error' || m.type() === 'warning') && n++ < 6) console.log(`[${m.type()}]`, m.text().slice(0, 1500)); });
+p.on('pageerror', (e) => console.log('[pageerror]', e.message, (e.stack || '').split('\n').slice(0, 3).join(' | ')));
+p.on('requestfailed', (r) => console.log('[failed]', r.url()));
+p.on('response', (r) => { if (r.status() >= 400) console.log('[http]', r.status(), r.url()); });
+await p.goto(process.argv[2]); await p.waitForTimeout(9000);
+console.log('state', JSON.stringify(await p.evaluate(() => window.__lobby ? window.__lobby.mode() : document.querySelector('#loader .label').textContent)));
+await b.close();
