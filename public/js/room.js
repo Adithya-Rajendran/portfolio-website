@@ -10,6 +10,8 @@ import { createRouteMap } from './routemap.js';
 
 const pickMat = new THREE.MeshBasicMaterial({ visible: false });
 const CH_GAIN = num('chandgain', 0.5), CH_SPEED = (2 * Math.PI) / num('chandperiod', 48);
+// ?roll=<seconds per turn> spins the sky about the line of sight through the window (the station's spin axis); ?rollat=<degrees> holds it
+const ROLL = num('roll', 0), ROLL_AT = num('rollat', NaN), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math.PI / 180;      // ?chand=<degrees> stops the orrery there
 
 /**
@@ -149,15 +151,15 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
   }
 
   // ---- outside: Earth at sunrise (NASA Blue Marble + Black Marble imagery) rendered in Cycles; effectively at infinity
-  let backdrop, shaft;
+  let backdrop, shaft; const sky = new THREE.Group(), AXIS = PORTAL.clone().sub(CAM).normalize(), sunNow = SUN.clone(); scene.add(sky);       // everything at infinity; follows the camera, turns with the spin
   if (info.portal) {
     const D = 900, dir = PORTAL.clone().sub(CAM).normalize(), size = 2 * D * Math.tan(THREE.MathUtils.degToRad((info.backdrop_fov || 80) / 2));
     backdrop = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bakedMat(bakeTex('backdrop', 4, true), null, num('earth', 0.75)));
-    backdrop.position.copy(CAM).addScaledVector(dir, D); backdrop.lookAt(CAM); backdrop.frustumCulled = false; backdrop.userData.offset = dir.multiplyScalar(D);
+    backdrop.position.copy(dir).multiplyScalar(D); backdrop.lookAt(0, 0, 0); backdrop.frustumCulled = false;
     // The sun, just above Earth's horizon: the focal point of the whole composition. Drawn at infinity for whichever
     // camera is rendering, so it also appears, stretched into a glare path, in the floor.
     const sun = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-      ...GLOW, uniforms: { uDir: { value: SUN }, uSize: { value: 0.16 }, uGain: { value: num('sun', 1.0) }, uMirror },
+      ...GLOW, uniforms: { uDir: { value: sunNow }, uSize: { value: 0.16 }, uGain: { value: num('sun', 1.0) }, uMirror },
       vertexShader: `uniform vec3 uDir; uniform float uSize; varying vec2 vP;
         void main(){ vP = position.xy; vec3 c = mat3(viewMatrix)*uDir*860.0;       // just in front of the backdrop plane
           gl_Position = projectionMatrix*vec4(c + vec3(position.xy*uSize*860.0, 0.0), 1.0); }`,
@@ -171,7 +173,7 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
           vec3 col = vec3(1.0, 0.86, 0.68)*(disc + halo + spikes)*(1.0 - smoothstep(0.85, 1.0, r));
           gl_FragColor = vec4(col*uGain, 1.0); }`,
     }));
-    sun.frustumCulled = false; sun.renderOrder = 1; scene.add(backdrop, sun);
+    sun.frustumCulled = false; sun.renderOrder = 1; sky.add(backdrop); scene.add(sun);
   }
   // ---- thunderstorms flickering in the clouds on Earth's night side. Points on the globe (taken from the Cycles scene)
   // are projected to infinity, like the backdrop itself.
@@ -189,7 +191,7 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
       vertexShader: `attribute float seed; uniform float uTime, uPx; varying float vA;
         float h(float n){ return fract(sin(n*91.345)*47453.5); }
         void main(){
-          vec4 mv = viewMatrix*vec4(cameraPosition + position, 1.0); gl_Position = projectionMatrix*mv;
+          vec4 mv = viewMatrix*vec4(cameraPosition + mat3(modelMatrix)*position, 1.0); gl_Position = projectionMatrix*mv;
           float cellId = floor(seed), slot = floor(uTime*1.7 + h(cellId)*9.0);            // each storm cell fires in bursts
           float burst = step(0.72, h(slot*0.37 + cellId));
           float f = fract(uTime*1.7 + h(cellId)*9.0);
@@ -198,7 +200,7 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
           gl_PointSize = (0.012 + 0.02*h(seed*3.1))*uPx; }`,
       fragmentShader: `varying float vA; void main(){ float d = length(gl_PointCoord - 0.5); gl_FragColor = vec4(vec3(0.62, 0.72, 1.0)*vA*1.6*smoothstep(0.5, 0.0, d), 1.0); }`,
     }), { seed });
-    storms.renderOrder = 1; scene.add(storms);
+    storms.renderOrder = 1; sky.add(storms);
   }
   // ---- sunbeam: the hall's air is faintly hazy, so the light entering through the portal is visible. Single
   // scattering integrated analytically per pixel: (length of the view ray inside the beam) x (phase function).
@@ -300,7 +302,9 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
     exposure: num('exp', info.exposure || 0.85),
     /** Per frame, after the camera has been placed. */
     update(t) {
-      backdrop?.position.copy(camera.position).add(backdrop.userData.offset);          // Earth is at infinity: no parallax
+      sky.position.copy(camera.position);                                              // Earth is at infinity: no parallax
+      const roll = Number.isNaN(ROLL_AT) ? (ROLL && !still ? t * 2 * Math.PI / ROLL : 0) : ROLL_AT * Math.PI / 180;
+      sky.quaternion.setFromAxisAngle(AXIS, roll); sunNow.copy(SUN).applyQuaternion(sky.quaternion);
       // orrery: turn the rings and blend the three baked light phases for the current angle
       const phi = CH_FIXED ?? t * CH_SPEED;
       for (const turn in pivots) pivots[turn].rotation.y = phi * turn;
