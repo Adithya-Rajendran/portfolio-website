@@ -45,8 +45,8 @@ So the rule is:
 
 Consequences:
 1. **The Atrium turns 90°.** The hall runs across the tube, from the star-side hull to the Earth-side hull. The Oculus wall becomes real hull. The side walls become bulkheads, so **side doors are correct again** and the two doors beside the Oculus must go (they would open onto vacuum). This is largely the layout from before the tube rebuild; the mistake then was the hull, not the doors.
-2. **The tube must be about 40 m across** to hold a 33 m hall (today 21 m). With a 20 m tube radius and the deck 6 m below the tube's axis, the deck is 38 m wide and the hull is vertical at Oculus height (5.65 m). That leaves room for a deck above and the Ring Line below. Still a third of SP-413's tube.
-3. **The hull frames now run along the hall** instead of arching across it. In the hero view they become lines converging on the Oculus.
+2. **The tube must be about 44 m across** to hold a 33 m hall (today 21 m). With a 22 m tube radius and the deck 6 m below the tube's axis, the deck is 42 m wide and the hull is vertical at Oculus height (5.65 m). That leaves room for decks above and the Ring Line below. Still a third of SP-413's tube. Rooms share this tube; see section 7.
+3. **The Atrium's ceiling is no longer hull.** The tube's crown is 28 m above the deck, so there are decks over the hall. The existing ribbed vault can stay as what it would be in a building: the arch that carries the deck above across a 20 m span. Only the Oculus wall is hull.
 4. **Walking toward the Oculus is the one direction with no Coriolis force** (motion parallel to the axis). Hall's "minimize off-axis motion" for free: the main promenade is axial.
 5. **The Lounge works unchanged in principle**: its far-wall window is an axial hull window showing the same Earth at the same roll angle.
 6. Navigation and Fabrication have no windows and can sit anywhere in the row.
@@ -80,7 +80,7 @@ The engine already has what this needs: the orrery's light is baked at three ang
 | 1 | Backdrop re-rendered centred on the axis, square, horizon through the middle; shader rotation; stars, Moon, storms, city lights turn with it | Small | Storm points are already projected per frame |
 | 2 | Lighting: split the bake into static + direct sun + Earth-light at 3 angles | Medium | Roughly doubles bake time (est. 50 min per windowed room on the 4070). Small extra maps like the `_c0..2` set (tens of kB each) |
 | 3 | Sun: on-axis so it is static; or a live floor pool if we keep it off-axis | Small / medium | |
-| 4 | Atrium turned 90°: hull at the Oculus end, bulkhead sides with doors, longitudinal frames, paned Oculus | Large | Third pass on this room; most props survive |
+| 4 | Atrium: Oculus wall becomes hull (two doors and the barrel removed, paned Oculus), one side door each way at mid-hall, signs | Medium | The vault, dais, stairs and props stay |
 | 5 | Lounge to the same section | Medium | |
 | 6 | Navigation, Fabrication: bulkhead doors, new signs | Medium | Needed under any option |
 | 7 | Blueprint draft 5: R 894 m, 40 m tube, rooms across the tube, counter-rotating pairs, no telescope | Medium | |
@@ -92,8 +92,59 @@ Known risks:
 - Three angles reproduce a half-lit disc only to its first harmonic. Probably invisible in diffuse light; to be checked against a fourth bake.
 - The attitude and gravity-gradient figures are my own estimates, not from a source.
 
-## 6. Decisions needed before building
-1. Ring size: stay 224 m / 2 rpm (turn in 30 s) or go 894 m / 1 rpm (60 s)?
-2. Attitude: horizon-locked with the sun on the axis, as proposed?
-3. Paned Oculus instead of one sheet?
-4. Run step 0 first and decide on the evidence?
+## 6. Assumed until told otherwise
+1. Ring 894 m, 1 rpm (view turns once a minute). The prototype in phase 0 can still overrule this.
+2. Horizon-locked attitude, sunrise on the axis, rings in counter-rotating pairs.
+3. Paned Oculus.
+4. Prototype before any rebuild.
+
+## 7. Deck plan (draft 5 proposal): rooms share the tube
+Rooms no longer take a whole slice of the tube each. The deck is 42 m wide; a corridor along the ring, the **Midway**, splits it into a bow half (hull with windows, facing Earth's horizon) and a stern half (faces ring 03, no windows). Only the Atrium spans both.
+
+```
+                    BOW · hull · windows · toward Earth's horizon
+ ┌─────────────┬────────────────────┬─────────────┬────────────────┐
+ │  LIBRARY    │   ( Oculus )       │  LOUNGE     │  COMMS         │  19 m
+ │  window     │                    │  window     │  window        │
+ ├── MIDWAY ───┤      ATRIUM        ├── MIDWAY ───┴────────────────┤   4 m
+ │ NAVIGATION  │      · dais ·      │  FABRICATION BAY 02          │  19 m
+ │  (round)    │    lift lobby      │  cargo lift                  │
+ └─────────────┴──────[SPOKE]───────┴──────────────────────────────┘
+                    STERN · faces ring 03 · no windows
+  ← antispinward (cyan)                          spinward (amber) →
+      18 m             20 m               14 m          18 m
+```
+
+| Room | Half | Footprint as built | Fits? | Why here |
+|---|---|---|---|---|
+| Atrium | both | 20 × 33 m | yes, plus a 9 m lift lobby | The spoke lands at its stern end. You step out of the lift and the whole hall points at the Oculus. Restores the original arrival |
+| Lounge | bow | 14 × 15 m, window in far wall | yes | Its window is real hull. Same Earth, same roll angle as the Oculus |
+| Fabrication | stern | 16 × 32 m | yes, long side along the ring | No window needed. Next to the spoke, so the cargo lift is the spoke's |
+| Navigation | stern | 18 m round | yes (19 m available) | No window. Its dome stays a lining |
+| Library (planned) | bow | about 18 × 19 m | | A reading room earns a window |
+| Comms (planned) | bow | about 18 × 19 m | | Line of sight toward Earth |
+
+Circulation:
+- **Atrium:** two doors only, facing each other across the hall at mid-length, where the Midway crosses. Amber frame spinward (LOUNGE · FABRICATION · COMMS), cyan antispinward (NAVIGATION · LIBRARY). The existing multi-stop door UI handles this.
+- **Every other room:** one door onto the Midway, with the Atrium and its neighbours as stops.
+- **Ring Line:** stays under the deck for the rest of the ring. Reached from the lift lobby, so it no longer needs a door in the hall.
+- The compartment bulkheads now fall at the Atrium's two side walls, with the Midway doors as the pressure doors.
+
+Open point: the Midway itself is never seen. Travel between rooms stays a cut, as today.
+
+## 8. Project plan
+Each phase ends with something to look at and a decision. Nothing later starts before the gate before it passes.
+
+| Phase | Work | Output | Gate |
+|---|---|---|---|
+| 0. Prototype | `?roll=<seconds>` spins the current backdrop in the current Atrium. No Blender, no bake | Three links: 30, 60, 120 s | Go or no-go on rolling at all; pick the period |
+| 1. Blueprint draft 5 | Ring 894 m, 44 m tube, the deck plan above, counter-rotating pairs, bow ring, no telescope | `blueprint.html` | Layout agreed in 3D before any room is touched |
+| 2. Atrium | Hull wall with paned Oculus, side doors, signs. Backdrop centred on the axis. Bake split into static, sun, Earth-light × 3 angles. Shader blend + rotation | Rebaked Atrium, before/after shots, frame times | Lighting reads as turning; no ghosting on glossy walls; no slower than today |
+| 3. Lounge | Same window treatment and bake split; door onto the Midway | Rebaked Lounge | Earth matches the Atrium's angle when travelling between them |
+| 4. Fabrication, Navigation | Doors and signs to the new plan; Fabrication's cargo lift named for the spoke | Rebakes | Door travel works both ways from every room |
+| 5. Finish | Reduced-motion and pause, captions (`RING 04 · BOW ·…`), `content.json`, `docs/blueprint.md`, perf pass, real Safari check | Commit, merge decision | You choose: merge into the feature branch, or drop the branch and keep the periscope |
+| Later | Library, Comms | | |
+
+Machine time on the 4070: about 50 min for each windowed room, 25 min for the others; roughly 2.5 h of baking in total, plus re-bakes.
+
+Fallback at any gate: `feat/arcadia-station-rooms` still holds the periscope version untouched.
