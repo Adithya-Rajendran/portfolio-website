@@ -77,6 +77,25 @@ function resize() {
   if (focus.pick) focus.to = focus.pick.pose();
 }
 
+// A point of the floor is its own mirror image, so the floor only reads the mirror image where the floor itself is
+// on screen, widened by the reach of its blur taps (+-5 lobe widths, mip footprints up to 2^(lod+3) px; see room.js).
+// Returns that rectangle in mirror pixels (from projecting the floor's bounding box), or null when no floor is in view.
+const floorBox = new THREE.Box3(), _c = new THREE.Vector4(), _d = new THREE.Vector4(), _n = new THREE.Vector2(), _lo = new THREE.Vector2(), _hi = new THREE.Vector2();
+function floorRect() {
+  const corner = (i, v) => v.set(i & 1 ? floorBox.max.x : floorBox.min.x, i & 2 ? floorBox.max.y : floorBox.min.y, i & 4 ? floorBox.max.z : floorBox.min.z, 1).applyMatrix4(mirror.vp);
+  const add = (v) => { _n.set(v.x / v.w, v.y / v.w); _lo.min(_n); _hi.max(_n); }, W = 1e-3;
+  _lo.set(1, 1); _hi.set(-1, -1);
+  for (let i = 0; i < 8; i++) {
+    if (corner(i, _c).w > W) add(_c);
+    for (const b of [1, 2, 4]) if (!(i & b) && (corner(i, _c).w > W) !== (corner(i | b, _d).w > W)) add(_c.lerp(_d, (_c.w - W) / (_c.w - _d.w)));   // edge crosses the near side
+  }
+  _lo.clampScalar(-1, 1); _hi.clampScalar(-1, 1);
+  if (_lo.x >= _hi.x || _lo.y >= _hi.y) return null;
+  const a = ((room.info.floor.rough[0] + room.info.floor.rough[1]) / 2) ** 2, rv = 2 * a * mirror.pxPerRad.value;
+  const pad = 5 * rv + 2 * 2 ** (Math.max(Math.log2(Math.max(rv / 4, 1)), mirror.minLod.value) + 3) + 8, { x: w, y: h } = mirror.size;
+  const x0 = Math.max(0, Math.floor((_lo.x + 1) / 2 * w - pad)), y0 = Math.max(0, Math.floor((_lo.y + 1) / 2 * h - pad));
+  return [x0, y0, Math.min(w, Math.ceil((_hi.x + 1) / 2 * w + pad)) - x0, Math.min(h, Math.ceil((_hi.y + 1) / 2 * h + pad)) - y0];
+}
 // mirror the camera in the floor plane (y = 0) and render what the floor sees
 const _rot = new THREE.Matrix4(), _p = V(), _t = V();
 function renderMirror() {
@@ -90,6 +109,8 @@ function renderMirror() {
   c.fov = camera.fov; c.aspect = camera.aspect; c.near = camera.near; c.far = camera.far;
   c.updateProjectionMatrix(); c.updateMatrixWorld();
   mirror.vp.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);
+  const rect = floorRect(); if (!rect) return;
+  mirror.rt.scissor.set(...rect); mirror.rt.scissorTest = true;
   dim(room.floors, false); dim(room.hidden, false);
   uMirror.value = 1; renderer.setRenderTarget(mirror.rt); renderer.render(room.scene, c); uMirror.value = 0;
   dim(room.floors, true); dim(room.hidden, true);
@@ -176,6 +197,7 @@ async function enter(id, push = true) {
   if (room) { await new Promise((r) => setTimeout(r, 500)); room.dispose(); room = null; }      // let the cover fade in before the old room goes
   if (push) history.pushState(null, '', urlFor(id));
   room = await loadRoom(id, content.rooms[id], { camera, mirror, maxAniso, onProgress: progress });
+  floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);
   tour = null; view = viewTarget = Q.has('shot') ? SHOT : +!still; navTouched = PINNED; t0 = uTime.value;
   loader.classList.add('done'); hud.classList.remove('hidden'); busy = false;
