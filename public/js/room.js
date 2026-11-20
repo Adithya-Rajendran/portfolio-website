@@ -343,7 +343,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // Sky layers: only the two angles either side of the sky's are drawn, and the sky moves on by one every period/N
   // seconds, so each group keeps three (that pair, and the next one, fetched a whole step before it is needed).
   const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
-  const skyStep = (roll) => ((roll / (2 * Math.PI)) % 1 + 1) % 1 * NSKY; let skyAt = -1;
+  const skyStep = (roll) => ((roll / (2 * Math.PI)) % 1 + 1) % 1 * NSKY, inFlight = (t) => t && !t.image; let skyAt = -1;
   function setSky(i) {
     skyAt = i;
     for (const grp of LIT) {
@@ -375,8 +375,9 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       sky.quaternion.setFromAxisAngle(AXIS, roll); sunNow.copy(SUN).applyQuaternion(sky.quaternion);
       if (NSKY) {                                                                      // the two baked sky angles either side of this one
         const x = skyStep(roll), i = Math.floor(x) % NSKY;
-        uSkyMix.value = x - Math.floor(x);
-        if (i !== skyAt) setSky(i);
+        // move on once the new pair is in (its second layer was asked for a step ahead); meanwhile hold the last angle
+        if (i !== skyAt && !lit.some(([grp]) => inFlight(skyTex[grp][i]) || inFlight(skyTex[grp][(i + 1) % NSKY]))) setSky(i);
+        uSkyMix.value = i === skyAt ? x - Math.floor(x) : 1;
       }
       // orrery: turn the rings and blend the three baked light phases for the current angle
       const phi = CH_FIXED ?? t * CH_SPEED;
