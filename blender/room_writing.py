@@ -2,7 +2,9 @@
 Library (Writing). A two-storey reading room in the bow half of the ring tube: bookcases and a gallery down both
 sides, one long table, and at the far end the hull, with a tall paned window on the turning Earth. The writing is
 asked for at a terminal on the table; a drone fetches the volume from its shelf.
-  ./run.sh -b --python room_writing.py      -> writing.blend
+  ./run.sh -b --python room_writing.py                 -> writing.blend
+  ASSET=<name> ./run.sh -b --python room_writing.py    -> one asset alone in a studio: asset_<name>.png (see ASSETS)
+The room is assembled from the assets below; each is a function that builds itself at a placement M.
 """
 import os
 _here = os.path.dirname(os.path.abspath(__file__))
@@ -21,17 +23,20 @@ FLOOR_ROUGH = (0.12, 0.15); FLOOR_IOR = 1.55
 GAL_Z, GAL_X = 3.6, WD - 1.3                              # gallery floor; its inner edge
 BAYS = [(-4.0 + 3 * k, -1.0 + 3 * k) for k in range(5)]  # bookcase bays between the uprights, entrance -> window
 DOOR_BAY = 3                                              # on the left: the way to the Atrium instead of books
+TY0, TY1, TW, TZ = 0.6, 8.6, 0.62, 0.77                   # the reading table: its ends, half width, top
 
 mat('wood', (0.2, 0.1, 0.045), 0.42, 0.0, 1.5, 0.25, var=0.1, seams=(0.24, 0, 0))            # walnut
 mat('wood_l', (0.42, 0.26, 0.13), 0.5, var=0.1, seams=(0, 0.3, 0))
+mat('wood_d', (0.09, 0.045, 0.022), 0.38, 0.0, 1.5, 0.3, var=0.08)                           # the darkest mouldings
 mat('plaster', (0.3, 0.28, 0.26), 0.7, var=0.05)
-mat('runner', (0.045, 0.13, 0.085), 0.95)
-mat('runner2', (0.5, 0.4, 0.25), 0.95)
-mat('leather', (0.16, 0.07, 0.035), 0.42, var=0.08)
-mat('greenlamp', (0.02, 0.16, 0.08), 0.15, 0.0, 1.5, 0.6)
+mat('runner', (0.045, 0.13, 0.085), 0.95); mat('runner2', (0.5, 0.4, 0.25), 0.95); mat('runner3', (0.3, 0.07, 0.05), 0.95)
+mat('leather', (0.16, 0.07, 0.035), 0.42, var=0.08); mat('leather_g', (0.05, 0.12, 0.08), 0.45, var=0.06)
+mat('greenlamp', (0.02, 0.2, 0.09), 0.08, 0.0, 1.5, 1.0)
 mat('frame', (0.03, 0.03, 0.035), 0.35, 0.8)
 mat('paper', (0.75, 0.72, 0.66), 0.8)
 mat('navy', (0.03, 0.07, 0.16), 0.35)
+mat('marble', (0.78, 0.76, 0.72), 0.25, var=0.05)
+mat('gilt', (0.95, 0.7, 0.32), 0.25, 1.0)
 BOOKS = []
 for i, c in enumerate(((0.45, 0.07, 0.05), (0.06, 0.16, 0.3), (0.55, 0.42, 0.2), (0.1, 0.25, 0.14), (0.6, 0.58, 0.52), (0.08, 0.08, 0.09), (0.5, 0.22, 0.05), (0.25, 0.1, 0.2))):
     mat(f'book{i}', c, 0.6); BOOKS.append(f'book{i}')
@@ -39,6 +44,7 @@ EM.update({'lamp': ((1.0, 0.56, 0.24), 9.0), 'shelf': ((1.0, 0.68, 0.4), 2.2), '
 for k in ('lamp', 'shelf', 'cool', 'ring'):
     mat('EM_' + k, (0, 0, 0), 0.5, emis=EM[k][0], estr=EM[k][1])
 
+I4 = Matrix.Identity(4)
 def rbox(name, size, M, m, grp, bevel=0.0, **kw):
     bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
     bmesh.ops.transform(bm, matrix=Matrix.Diagonal((*size, 1)), verts=bm.verts)
@@ -46,10 +52,347 @@ def rbox(name, size, M, m, grp, bevel=0.0, **kw):
 def glow(name, loc, watts, color=(1.0, 0.58, 0.28), r=0.12):
     l = bpy.data.lights.new(name, 'POINT'); l.energy = watts; l.color = color; l.shadow_soft_size = r
     o = bpy.data.objects.new(name, l); COL.objects.link(o); o.location = loc; return o
-def torus(name, R, r, M, m=None, grp=None, **kw):
-    return lathe(name, [(R + r * math.cos(a * pi / 6), r * math.sin(a * pi / 6)) for a in range(12)], m, grp, segs=64, M=M, **kw)
+def torus(name, R, r, M, m=None, grp=None, segs=64, **kw):
+    return lathe(name, [(R + r * math.cos(a * pi / 4), r * math.sin(a * pi / 4)) for a in range(8)], m, grp, segs=segs, M=M, **kw)
+def rod(name, a, b, r, m, grp, M=I4, n=8, **kw):
+    """A round bar from a to b."""
+    a, b = Vector(a), Vector(b); L = (b - a).length
+    return lathe(name, [(0, 0), (r, 0), (r, L), (0, L)], m, grp, segs=n, closed=False, M=M @ Matrix.Translation(a) @ (b - a).to_track_quat('Z', 'Y').to_matrix().to_4x4(), **kw)
+def turned(name, h, r, m, grp, M=I4, segs=14):
+    """A turned leg or baluster of height h and greatest radius r: foot, vase, ring, neck."""
+    P = [(0, 0), (0.75, 0), (0.75, 0.04), (0.5, 0.07), (0.62, 0.1), (1.0, 0.2), (0.9, 0.32), (0.5, 0.52), (0.45, 0.7), (0.7, 0.74), (0.45, 0.78), (0.6, 0.9), (0.8, 0.93), (0.8, 1.0), (0, 1.0)]
+    return lathe(name, [(x * r, z * h) for x, z in P], m, grp, segs=segs, closed=False, M=M)
+def moulding(name, prof, y0, y1, m, grp, M=I4, **kw):
+    """A moulding running along Y: prof is its (x, z) outline."""
+    return prism(name, prof, 'Y', y0, y1, m, grp, M=M, **kw)
 
-# ================================================================= SHELL
+# ================================================================= ASSETS
+def a_table(M=I4, grp='props'):
+    """The reading table: 8 m of walnut on six turned legs, a leather writing surface, a drawer for every seat."""
+    L = TY1 - TY0
+    box('table_top', -TW, TW, 0, L, TZ - 0.045, TZ, 'wood_l', grp, bevel=0.014, seg=3, M=M)
+    box('table_under', -TW + 0.03, TW - 0.03, 0.03, L - 0.03, TZ - 0.06, TZ - 0.045, 'wood_d', grp, M=M)
+    box('table_inlay', -TW + 0.13, TW - 0.13, 0.13, L - 0.13, TZ, TZ + 0.002, 'leather_g', grp, M=M)
+    for d in (-1, 1):                                                                   # gilt line round the leather
+        box('table_gilt', d * (TW - 0.135), d * (TW - 0.128), 0.128, L - 0.128, TZ + 0.002, TZ + 0.0026, 'gilt', grp, M=M)
+        box('table_frieze', d * (TW - 0.07), d * (TW - 0.1), 0.08, L - 0.08, TZ - 0.19, TZ - 0.06, 'wood', grp, M=M)
+        for k in range(8):                                                              # drawer fronts and their pulls
+            y = 0.5 + k * (L - 1.0) / 7
+            box('table_drawer', d * (TW - 0.062), d * (TW - 0.07), y - 0.36, y + 0.36, TZ - 0.17, TZ - 0.08, 'wood_l', grp, bevel=0.004, M=M)
+            lathe('table_pull', [(0, 0.02), (0.012, 0.02), (0.016, 0.012), (0.006, 0.006), (0.006, 0), (0, 0)], 'brass', grp, segs=10, closed=False, M=M @ T((d * (TW - 0.062), y, TZ - 0.125), (0, d * pi / 2, 0)))
+    for yy in (0.128, L - 0.128): box('table_gilt', -TW + 0.128, TW - 0.128, yy - 0.0035, yy + 0.0035, TZ + 0.002, TZ + 0.0026, 'gilt', grp, M=M)
+    for yy in (0.08, L - 0.08): box('table_frieze', -TW + 0.07, TW - 0.07, yy - 0.015, yy + 0.015, TZ - 0.19, TZ - 0.06, 'wood', grp, M=M)
+    for y in (0.35, L / 2, L - 0.35):
+        for d in (-1, 1):
+            turned('table_leg', TZ - 0.19, 0.055, 'wood', grp, M=M @ T((d * (TW - 0.12), y, 0)))
+            box('table_block', d * (TW - 0.17), d * (TW - 0.07), y - 0.05, y + 0.05, TZ - 0.19, TZ - 0.06, 'wood', grp, M=M)
+        box('table_stretcher', -TW + 0.12, TW - 0.12, y - 0.02, y + 0.02, 0.12, 0.16, 'wood', grp, bevel=0.006, M=M)
+    box('table_rail', -0.025, 0.025, 0.35, L - 0.35, 0.115, 0.165, 'wood', grp, bevel=0.006, M=M)
+
+def a_chair(M=I4, grp='props'):
+    """A library chair, facing +x: leather seat with brass nails, a curved back on raked legs, turned front legs."""
+    rbox('chair_seat', (0.46, 0.46, 0.035), M @ T((0, 0, 0.44)), 'wood', grp, bevel=0.012)
+    rbox('chair_pad', (0.4, 0.4, 0.045), M @ T((0.01, 0, 0.475)), 'leather', grp, bevel=0.02, seg=3)
+    for d in (-1, 1):
+        turned('chair_leg_f', 0.43, 0.026, 'wood', grp, M=M @ T((0.19, d * 0.19, 0)), segs=10)
+        rod('chair_leg_b', (-0.2, d * 0.19, 0), (-0.3, d * 0.2, 0.95), 0.02, 'wood', grp, M=M)
+        rod('chair_side', (0.19, d * 0.19, 0.2), (-0.22, d * 0.19, 0.2), 0.011, 'wood', grp, M=M)
+    rod('chair_front', (0.19, -0.19, 0.2), (0.19, 0.19, 0.2), 0.011, 'wood', grp, M=M)
+    for k in range(8): blob('chair_nail', M @ Vector((0.232, -0.175 + k * 0.05, 0.445)), 0.006, 'brass', grp)
+    for z, w in ((0.93, 0.07), (0.62, 0.035)):                                           # top rail and lower rail, both bowed
+        pts = [(-0.3 - 0.03 * math.cos(a) + (0.95 - z) * 0.105, 0.21 * math.sin(a)) for a in [pi * (i / 10 - 0.5) for i in range(11)]]
+        finish('chair_rail', _strip([(x, y, z - w / 2) for x, y in pts], [(x, y, z + w / 2) for x, y in pts], 0.022), 'wood', grp, M=M)
+    rbox('chair_splat', (0.014, 0.13, 0.3), M @ T((-0.285, 0, 0.78), (0, -0.1, 0)), 'leather', grp, bevel=0.005)
+def _strip(lo, hi, th):
+    """A bent board: two polylines (bottom and top edge), given thickness along -x."""
+    bm = bmesh.new(); n = len(lo); V4 = [[bm.verts.new(p) for p in lo], [bm.verts.new(p) for p in hi], [bm.verts.new((p[0] - th, p[1], p[2])) for p in lo], [bm.verts.new((p[0] - th, p[1], p[2])) for p in hi]]
+    for i in range(n - 1):
+        for a, b in ((0, 1), (1, 3), (3, 2), (2, 0)): bm.faces.new((V4[a][i], V4[a][i + 1], V4[b][i + 1], V4[b][i]))
+    for i in (0, n - 1): bm.faces.new((V4[0][i], V4[1][i], V4[3][i], V4[2][i]))
+    return bm
+
+def a_lamp(M=I4, grp='props', key=0):
+    """A banker's lamp: stepped brass foot, a neck that curves over, a long green glass shade, a pull chain."""
+    lathe('lamp_foot', [(0, 0.045), (0.02, 0.045), (0.03, 0.03), (0.07, 0.024), (0.1, 0.012), (0.105, 0), (0, 0)], 'brass', grp, segs=28, closed=False, M=M)
+    rod('lamp_stem', (0, 0, 0.045), (0, 0, 0.3), 0.009, 'brass', grp, M=M, n=8); blob('lamp_knop', M @ Vector((0, 0, 0.17)), 0.018, 'brass', grp)
+    S = M @ T((0, 0, 0.3))
+    sh = [(0.075 * math.cos(a), 0.075 * math.sin(a)) for a in [pi * i / 12 for i in range(13)]]           # half-round shade along the table, open underneath
+    band('lamp_shade', [(x * 1.06, z * 1.06) for x, z in sh], sh, -0.21, 0.21, 'greenlamp', grp, M=S)
+    for d in (-1, 1): prism('lamp_cap', [(0, 0)] + [(x * 1.06, z * 1.06) for x, z in sh], 'Y', d * 0.21, d * 0.215, 'brass', grp, M=S)
+    box('lamp_saddle', -0.02, 0.02, -0.05, 0.05, -0.004, 0.012, 'brass', grp, M=S)
+    box('lamp_tube', -0.012, 0.012, -0.19, 0.19, 0.022, 0.034, em='lamp', M=S)
+    for k in range(6): blob('lamp_chain', M @ Vector((0.05, 0.15, 0.29 - k * 0.014)), 0.004, 'brass', grp)
+    glow(f'lamp_glow{key}', M @ Vector((0, 0, 0.24)), 22)
+
+def a_pendant(M=I4, grp='archC'):
+    """A ring light on three rods from a ceiling rose; M puts the ring's centre, the ceiling is at H."""
+    z = (M @ Vector((0, 0, 0))).z
+    torus('pendant', 1.05, 0.04, M, 'brass', grp); torus('pendant_light', 1.05, 0.022, M @ T((0, 0, -0.035)), em='ring')
+    torus('pendant_in', 0.99, 0.012, M @ T((0, 0, 0.02)), 'gilt', grp)
+    lathe('pendant_rose', [(0, 0), (0.16, 0), (0.14, -0.04), (0.06, -0.07), (0.03, -0.14), (0, -0.14)], 'brass', grp, segs=24, closed=False, M=M @ T((0, 0, H - z)))
+    for a in range(3):
+        ang = a * 2 * pi / 3 + 0.5; p = Vector((1.05 * math.cos(ang), 1.05 * math.sin(ang), 0))
+        rod('pendant_rod', p, Vector((0.03 * math.cos(ang), 0.03 * math.sin(ang), H - z - 0.12)), 0.007, 'brass', grp, M=M, n=6)
+        blob('pendant_knuckle', M @ p + Vector((0, 0, 0.045)), 0.022, 'brass', grp)
+
+def a_ladder(M=I4, grp='props', h=3.4):
+    """A rolling library ladder leaning in -x from its feet at the origin: two rails, round rungs, wheels, hooks at the top."""
+    lean = 0.2; top = Vector((-h * math.sin(lean), 0, h * math.cos(lean)))
+    for d in (-1, 1):
+        s = Vector((0, d * 0.22, 0)); rod('ladder_rail', s, top + s, 0.022, 'wood_l', grp, M=M)
+        lathe('ladder_wheel', [(0, -0.012), (0.045, -0.012), (0.045, 0.012), (0, 0.012)], 'brass', grp, segs=16, M=M @ T((0.02, d * 0.25, 0.045), (pi / 2, 0, 0)))
+        rod('ladder_hook', top + s, top + s + Vector((-0.14, 0, 0.06)), 0.01, 'brass', grp, M=M)
+        lathe('ladder_roller', [(0, -0.01), (0.03, -0.01), (0.03, 0.01), (0, 0.01)], 'brass', grp, segs=14, M=M @ Matrix.Translation(top + s + Vector((-0.15, 0, 0.03))) @ Matrix.Rotation(pi / 2, 4, 'X'))
+    n = int(h / 0.3)
+    for k in range(1, n):
+        p = top * (k / n); rod('ladder_rung', p + Vector((0, -0.22, 0)), p + Vector((0, 0.22, 0)), 0.014, 'wood_l', grp, M=M)
+
+def a_terminal(M=I4, grp='props'):
+    """The catalogue terminal: a brass-framed screen laid back on a hinged arm over a walnut base. Returns the screen's corners."""
+    LEAN = 0.95; c = Vector((0, 0, 0.19)); up = Vector((0, math.sin(LEAN), math.cos(LEAN))); n = Vector((0, -math.cos(LEAN), math.sin(LEAN)))
+    P = lambda a, b, d=0.0: tuple(M @ (c + Vector((-1, 0, 0)) * a + up * b + n * d))
+    F = M @ Matrix(((1, 0, 0, c.x), (0, up.y, n.y, c.y), (0, up.z, n.z, c.z), (0, 0, 0, 1)))
+    rbox('terminal_back', (0.56, 0.4, 0.03), F @ T((0, 0, -0.012)), 'frame', grp, bevel=0.012)
+    for sx in (-1, 1): rbox('terminal_side', (0.012, 0.4, 0.04), F @ T((sx * 0.28, 0, -0.008)), 'brass', grp, bevel=0.004)
+    for sy in (-1, 1): rbox('terminal_edge', (0.57, 0.012, 0.04), F @ T((0, sy * 0.2, -0.008)), 'brass', grp, bevel=0.004)
+    box('terminal_base', -0.24, 0.24, -0.02, 0.26, 0, 0.05, 'wood', grp, bevel=0.012, M=M)
+    box('terminal_plate', -0.2, 0.2, 0.0, 0.22, 0.05, 0.056, 'brass', grp, bevel=0.003, M=M)
+    for sx in (-1, 1):
+        rod('terminal_arm', (sx * 0.16, 0.16, 0.05), (sx * 0.16, 0.1, 0.21), 0.012, 'brass', grp, M=M)
+        lathe('terminal_knuckle', [(0, -0.02), (0.02, -0.02), (0.02, 0.02), (0, 0.02)], 'brass', grp, segs=14, M=M @ T((sx * 0.16, 0.16, 0.056), (0, pi / 2, 0)))
+    box('terminal_light', -0.2, 0.2, -0.024, -0.02, 0.006, 0.012, em='cool', M=M)
+    for k in range(3): blob('terminal_key', M @ Vector((-0.16 + k * 0.05, 0.03, 0.058)), 0.012, 'frame', grp, squash=(1, 1, 0.4))
+    return [P(0.25, -0.17, 0.006), P(-0.25, -0.17, 0.006), P(-0.25, 0.17, 0.006), P(0.25, 0.17, 0.006)]
+
+def a_cradle(M=I4, grp='props'):
+    """Where the drone rests: a brass ring on three curved legs over a charging pad."""
+    torus('cradle', 0.3, 0.012, M @ T((0, 0, 0.13)), 'brass', grp); torus('cradle_in', 0.26, 0.006, M @ T((0, 0, 0.12)), 'gilt', grp)
+    for a in range(3):
+        ang = a * 2 * pi / 3 + 0.3; c, s = math.cos(ang), math.sin(ang)
+        rod('cradle_leg', (0.3 * c, 0.3 * s, 0.13), (0.24 * c, 0.24 * s, 0.01), 0.008, 'brass', grp, M=M); blob('cradle_foot', M @ Vector((0.24 * c, 0.24 * s, 0.01)), 0.014, 'brass', grp)
+    lathe('cradle_pad', [(0, 0.014), (0.09, 0.014), (0.1, 0.006), (0.1, 0), (0, 0)], 'frame', grp, segs=24, closed=False, M=M)
+    torus('cradle_glow', 0.07, 0.003, M @ T((0, 0, 0.0145)), em='cool', segs=32)
+
+def a_catalogue(M=I4, grp='props'):
+    """A card catalogue: a walnut cabinet of small drawers, each with a brass label holder and pull, on a stand. Faces +x."""
+    box('cat_stand', -0.22, 0.22, -0.62, 0.62, 0.0, 0.5, 'wood', grp, bevel=0.01, M=M); box('cat_stand_gap', -0.2, 0.225, -0.56, 0.56, 0.08, 0.42, 'wood_d', grp, M=M)
+    box('cat_body', -0.24, 0.24, -0.66, 0.66, 0.5, 1.42, 'wood', grp, bevel=0.012, M=M); box('cat_top', -0.27, 0.27, -0.69, 0.69, 1.42, 1.46, 'wood_l', grp, bevel=0.012, M=M)
+    for r in range(6):
+        for c in range(6):
+            y, z = -0.55 + c * 0.22, 0.585 + r * 0.142
+            box('cat_drawer', 0.24, 0.252, y - 0.098, y + 0.098, z - 0.058, z + 0.058, 'wood_l', grp, bevel=0.004, M=M)
+            box('cat_label', 0.252, 0.256, y - 0.045, y + 0.045, z + 0.004, z + 0.04, 'brass', grp, M=M); box('cat_card', 0.2562, 0.257, y - 0.037, y + 0.037, z + 0.01, z + 0.034, 'paper', grp, M=M)
+            lathe('cat_pull', [(0, 0.016), (0.011, 0.016), (0.013, 0.01), (0.005, 0.005), (0.005, 0), (0, 0)], 'brass', grp, segs=8, closed=False, M=M @ T((0.252, y, z - 0.028), (0, pi / 2, 0)))
+
+def a_cart(M=I4, grp='props'):
+    """A book cart: two sloped shelves of returns between brass ends, on four castors."""
+    for d in (-1, 1):
+        for sy in (-1, 1): rod('cart_post', (d * 0.4, sy * 0.2, 0.12), (d * 0.4, sy * 0.2, 0.95), 0.012, 'brass', grp, M=M)
+        rod('cart_handle', (d * 0.4, -0.2, 0.95), (d * 0.4, 0.2, 0.95), 0.012, 'brass', grp, M=M)
+        for sy in (-1, 1):
+            lathe('cart_wheel', [(0, -0.012), (0.04, -0.012), (0.04, 0.012), (0, 0.012)], 'frame', grp, segs=14, M=M @ T((d * 0.4, sy * 0.2, 0.04), (pi / 2, 0, 0))); rod('cart_fork', (d * 0.4, sy * 0.2, 0.04), (d * 0.4, sy * 0.2, 0.12), 0.008, 'brass', grp, M=M)
+    for z in (0.22, 0.6):
+        box('cart_shelf', -0.4, 0.4, -0.21, 0.21, z, z + 0.02, 'wood', grp, bevel=0.005, M=M); box('cart_lip', -0.4, 0.4, -0.21, -0.2, z, z + 0.07, 'wood', grp, M=M)
+        x = -0.36
+        while x < 0.3:
+            t = random.uniform(0.03, 0.06); hh = random.uniform(0.2, 0.3)
+            box('cart_book', x, x + t, -0.17, 0.08, z + 0.02, z + 0.02 + hh, random.choice(BOOKS), grp, M=M); x += t + 0.004
+    for b in range(3): rbox('cart_flat', (0.2, 0.27, 0.04), M @ T((0.1, 0, 0.99 + b * 0.041), (0, 0, random.uniform(-0.3, 0.3))), random.choice(BOOKS), grp)
+    box('cart_top', -0.4, 0.4, -0.21, 0.21, 0.95, 0.97, 'wood', grp, bevel=0.005, M=M)
+
+def a_globe(M=I4, grp='props'):
+    """A floor globe in a walnut stand: horizon ring on four turned legs, a brass meridian, the sphere tilted on its axis."""
+    c = Vector((0, 0, 1.0)); blob('globe', M @ c, 0.5, 'navy', grp)
+    torus('globe_meridian', 0.53, 0.014, M @ Matrix.Translation(c) @ Matrix.Rotation(pi / 2, 4, 'X') @ Matrix.Rotation(0.41, 4, 'Y'), 'brass', grp)
+    for la in (-0.9, -0.45, 0, 0.45, 0.9):                                               # parallels, engraved in gilt
+        torus('globe_parallel', 0.502 * math.cos(la), 0.003, M @ Matrix.Translation(c) @ Matrix.Rotation(0.41, 4, 'X') @ T((0, 0, 0.502 * math.sin(la))), 'gilt', grp, segs=40)
+    torus('globe_horizon', 0.6, 0.03, M @ Matrix.Translation(c), 'wood_l', grp); torus('globe_horizon_in', 0.56, 0.008, M @ T((0, 0, 1.03)), 'brass', grp)
+    for a in range(4):
+        ang = a * pi / 2 + 0.4; p = (0.58 * math.cos(ang), 0.58 * math.sin(ang), 0)
+        turned('globe_leg', 0.97, 0.04, 'wood', grp, M=M @ T(p), segs=10); rod('globe_brace', (p[0], p[1], 0.3), (0, 0, 0.3), 0.012, 'wood', grp, M=M)
+    lathe('globe_hub', [(0, 0.36), (0.05, 0.36), (0.07, 0.3), (0.05, 0.24), (0, 0.24)], 'wood', grp, segs=14, closed=False, M=M)
+    for sgn in (-1, 1): blob('globe_pin', M @ (c + Vector((0, sgn * 0.53 * math.sin(0.41) * -1, sgn * 0.53 * math.cos(0.41)))), 0.022, 'brass', grp)
+
+def a_armchair(M=I4, grp='props'):
+    """A wing chair for the window corner, buttoned leather on turned feet, with a brass side table and a book left on it."""
+    rbox('arm_seat', (0.7, 0.66, 0.2), M @ T((0, 0.03, 0.4)), 'leather', grp, bevel=0.07, seg=3); rbox('arm_base', (0.76, 0.72, 0.12), M @ T((0, 0, 0.26)), 'leather', grp, bevel=0.03)
+    rbox('arm_back', (0.76, 0.16, 0.85), M @ T((0, -0.34, 0.83), (-0.2, 0, 0)), 'leather', grp, bevel=0.07, seg=3)
+    for d in (-1, 1):
+        rbox('arm_arm', (0.14, 0.7, 0.36), M @ T((d * 0.41, 0, 0.52)), 'leather', grp, bevel=0.06, seg=3); rbox('arm_wing', (0.1, 0.3, 0.55), M @ T((d * 0.4, -0.2, 0.98), (-0.2, 0, d * 0.25)), 'leather', grp, bevel=0.045, seg=3)
+        for sy in (-1, 1): turned('arm_foot', 0.2, 0.035, 'wood', grp, M=M @ T((d * 0.32, sy * 0.28, 0)), segs=10)
+    for r in range(3):
+        for c in range(4): blob('arm_button', M @ Vector((-0.24 + c * 0.16, -0.27 - (0.62 + r * 0.2 - 0.83) * 0.2, 0.62 + r * 0.2)), 0.012, 'brass', grp)
+    lathe('arm_table', [(0, 0.52), (0.22, 0.52), (0.22, 0.5), (0.03, 0.47), (0.025, 0.06), (0.15, 0.02), (0.15, 0), (0, 0)], 'brass', grp, segs=24, closed=False, M=M @ T((0.72, 0.15, 0)))
+    rbox('arm_book', (0.16, 0.22, 0.03), M @ T((0.72, 0.15, 0.535), (0, 0, 0.5)), BOOKS[0], grp)
+
+def a_floorlamp(M=I4, grp='props', key=0):
+    lathe('fl_base', [(0, 0.05), (0.03, 0.05), (0.17, 0.02), (0.18, 0), (0, 0)], 'brass', grp, segs=24, closed=False, M=M)
+    turned('fl_stem', 1.55, 0.022, 'brass', grp, M=M @ T((0, 0, 0.04)), segs=10)
+    lathe('fl_shade', [(0.08, 0.0), (0.22, -0.26), (0.215, -0.26), (0.075, 0.0)], em='lamp', segs=24, M=M @ T((0, 0, 1.86)))
+    glow(f'fl_glow{key}', M @ Vector((0, 0, 1.7)), 60)
+
+def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True):
+    """One bookcase bay, 3 m between upright centres, built against the plane x = 0 and reaching s * -x into the room.
+    Uprights with a fluted face and a capital, six shelves with brass label rails and hidden lights, books, a frieze and cornice."""
+    X = lambda a: -s * a; z0 = 0.14 if tier == 0 else 0.12; top = z0 + 3.3
+    def bx(n, a, b, y0, y1, zz0, zz1, m, **kw): box(n, X(a), X(b), y0, y1, zz0, zz1, m, grp, M=M, **kw)
+    if tier == 0: bx('bay_plinth', 0, 0.5, 0, 3, 0, 0.14, 'wood'); bx('bay_plinth_cap', 0, 0.53, 0, 3, 0.12, 0.15, 'wood_l', bevel=0.006)
+    if shelves:
+        bx('bay_back', 0, 0.04, 0.1, 2.9, z0, top, 'wood_d')
+        for k in range(6):
+            z = z0 + k * 0.62
+            bx('bay_shelf', 0, 0.42, 0.1, 2.9, z, z + 0.04, 'wood'); bx('bay_nosing', 0.42, 0.435, 0.1, 2.9, z + 0.004, z + 0.036, 'wood_l')
+            if k == 5: break
+            bx('bay_labelrail', 0.435, 0.439, 0.2, 2.8, z + 0.012, z + 0.03, 'brass')
+            for j in range(4): bx('bay_label', 0.439, 0.4395, 0.4 + j * 0.62, 0.56 + j * 0.62, z + 0.014, z + 0.028, 'paper')
+            if k in (1, 3): box('shelflight', X(0.36), X(0.4), 0.25, 2.75, z + 0.57, z + 0.58, em='shelf', M=M)
+            _books(M, grp, s, 0.13, 2.87, z + 0.04)
+    for y in (0, 3):                                                                    # half an upright at each end: neighbours complete it
+        y0, y1 = (y, y + 0.11) if y == 0 else (y - 0.11, y)
+        bx('bay_upright', 0, 0.5, y0, y1, z0, top, 'wood')
+        for f in range(2):
+            yy = y0 + 0.03 + f * 0.05 if y == 0 else y1 - 0.03 - f * 0.05
+            bx('bay_flute', 0.5, 0.506, yy - 0.012, yy + 0.012, z0 + 0.25, top - 0.3, 'wood_d')
+        bx('bay_capital', 0, 0.55, y0, y1, top - 0.2, top - 0.12, 'wood_l', bevel=0.008); bx('bay_base', 0, 0.54, y0, y1, z0, z0 + 0.16, 'wood_l', bevel=0.008)
+    bx('bay_frieze', 0, 0.46, 0, 3, top - 0.12, top + 0.06, 'wood'); bx('bay_plaque', 0.46, 0.466, 1.2, 1.8, top - 0.09, top + 0.02, 'brass', bevel=0.003)
+    moulding('bay_cornice', [(X(0), top + 0.06), (X(0.6), top + 0.06), (X(0.62), top + 0.1), (X(0.56), top + 0.13), (X(0.6), top + 0.17), (X(0), top + 0.17)], 0, 3, 'wood', grp, M=M)
+    for k in range(12): bx('bay_dentil', 0.46, 0.5, 0.06 + k * 0.25, 0.19 + k * 0.25, top + 0.0, top + 0.055, 'wood_l')
+def _books(M, grp, s, y0, y1, z, deep=0.3):
+    """Fill a shelf: runs of standing books (some with gilt bands), a few lying flat, bookends, the odd keepsake."""
+    X = lambda a: -s * a; y = y0 + 0.02
+    while y < y1 - 0.1:
+        r = random.random()
+        if r < 0.82:
+            n = random.randint(4, 12); set_ = random.random() < 0.25; c0 = random.choice(BOOKS); h0 = random.uniform(0.38, 0.48); t0 = random.uniform(0.035, 0.055)
+            for b in range(n):
+                t = t0 if set_ else random.uniform(0.026, 0.07); hh = h0 if set_ else random.uniform(0.32, 0.5); d = random.uniform(0.2, deep)
+                if y + t > y1 - 0.03: break
+                lean = 0.0
+                box('book', X(0.05), X(0.05 + d), y, y + t, z, z + hh, c0 if set_ else random.choice(BOOKS), grp, M=M)
+                if set_ or random.random() < 0.3:
+                    for zz in (0.07, hh - 0.09): box('book_band', X(0.05 + d), X(0.0515 + d), y + 0.003, y + t - 0.003, z + zz, z + zz + 0.012, 'gilt', grp, M=M)
+                y += t + 0.004
+            y += random.uniform(0.01, 0.12)
+        elif r < 0.93:
+            for b in range(random.randint(2, 4)):
+                box('bookflat', X(0.06), X(0.34), y, y + 0.42, z + b * 0.06, z + 0.055 + b * 0.06, random.choice(BOOKS), grp, M=M)
+            y += 0.5
+        else:
+            if random.random() < 0.5: box('bookend', X(0.08), X(0.26), y, y + 0.012, z, z + 0.2, 'brass', grp, M=M); box('bookend_f', X(0.08), X(0.26), y, y + 0.1, z, z + 0.008, 'brass', grp, M=M); y += 0.16
+            else: blob('keepsake', M @ Vector((X(0.22), y + 0.18, z + 0.16)), 0.15, random.choice(('brass', 'chrome', 'copper', 'white', 'marble')), grp); y += 0.42
+
+def a_gallery(M=I4, grp='props', s=1, L=3.0):
+    """A length of the gallery in front of the upper bookcases (wall at x = 0): boards on brackets, a moulded edge,
+    turned balusters under a brass handrail, a warm line of light under the edge."""
+    X = lambda a: -s * a
+    def bx(n, a, b, y0, y1, zz0, zz1, m, **kw): box(n, X(a), X(b), y0, y1, zz0, zz1, m, grp, M=M, **kw)
+    bx('gal_deck', 0, 1.3, 0, L, -0.12, 0, 'wood'); bx('gal_boards', 0.5, 1.28, 0, L, 0, 0.012, 'wood_l')
+    moulding('gal_edge', [(X(1.3), -0.3), (X(1.36), -0.26), (X(1.33), -0.2), (X(1.38), -0.14), (X(1.38), 0.04), (X(1.3), 0.04)], 0, L, 'wood', grp, M=M)
+    box('gal_light', X(1.2), X(1.26), 0.1, L - 0.1, -0.135, -0.12, em='shelf', M=M)
+    for y in (0.0, L):                                                                  # a bracket under each upright (half of one at each end)
+        y0, y1 = (y, y + 0.06) if y == 0 else (y - 0.06, y)
+        prism('gal_bracket', [(X(0.5), -0.12), (X(1.25), -0.12), (X(1.2), -0.2), (X(0.8), -0.34), (X(0.58), -0.62), (X(0.5), -0.66)], 'Y', y0, y1, 'wood', grp, M=M)
+    n = int(round(L / 0.25))
+    for k in range(n):
+        y = (k + 0.5) * L / n
+        turned('gal_baluster', 0.9, 0.028, 'wood_l' if k % 6 else 'wood', grp, M=M @ T((X(1.33), y, 0.04)), segs=8)
+    bx('gal_rail_base', 1.29, 1.37, 0, L, 0.03, 0.05, 'wood'); bx('gal_rail_cap', 1.285, 1.375, 0, L, 0.94, 0.985, 'wood', bevel=0.012)
+    tube('gal_handrail', (M @ Vector((X(1.33), 0, 0))).x, (M @ Vector((0, 0, 1.01))).z, 0.022, (M @ Vector((0, 0, 0))).y, (M @ Vector((0, L, 0))).y, 'brass', grp, n=10)
+
+def a_coffer(M=I4, grp='archC', w=4.4, d=3.0):
+    """One ceiling coffer (hanging from z = 0, centred): a stepped frame, a recessed panel, a gilt rosette in the middle."""
+    for k, (inset, z) in enumerate(((0.0, -0.1), (0.14, -0.05))):
+        x, y = w / 2 - inset, d / 2 - inset
+        for sx in (-1, 1): box('coffer_frame', sx * x, sx * (x - 0.12), -y, y, z, 0, 'wood', grp, M=M)
+        for sy in (-1, 1): box('coffer_frame', -x, x, sy * y, sy * (y - 0.12), z, 0, 'wood', grp, M=M)
+    box('coffer_panel', -w / 2 + 0.26, w / 2 - 0.26, -d / 2 + 0.26, d / 2 - 0.26, -0.012, 0, 'wood_l', grp, M=M)
+    lathe('coffer_rosette', [(0, -0.05), (0.03, -0.05), (0.06, -0.03), (0.12, -0.025), (0.16, -0.012), (0.16, 0), (0, 0)], 'gilt', grp, segs=20, closed=False, M=M)
+    for a in range(8): blob('coffer_petal', M @ Vector((0.1 * math.cos(a * pi / 4), 0.1 * math.sin(a * pi / 4), -0.03)), 0.03, 'gilt', grp, squash=(1, 1, 0.4))
+
+def a_window(M=I4, grp='center'):
+    """The hull window, built in the plane y = 0 looking back down the room (-y): end wall with a moulded timber arch,
+    a keystone, panelled jambs, a deep sill on brackets, glazing bars with a fan in the arch head."""
+    arch = [(WIN_W * math.cos(pi * i / 48), WIN_ZS + WIN_W * math.sin(pi * i / 48)) for i in range(49)]
+    sc = lambda k: [(x * k, WIN_ZS + (z - WIN_ZS) * k) for x, z in arch]
+    def bx(n, x0, x1, y0, y1, z0, z1, m, **kw): box(n, x0, x1, y0, y1, z0, z1, m, grp, M=M, **kw)
+    bx('end_l', -WD, -WIN_W, -0.5, 0, 0, H, 'plaster'); bx('end_r', WIN_W, WD, -0.5, 0, 0, H, 'plaster'); bx('end_b', -WIN_W, WIN_W, -0.5, 0, 0, WIN_Z0, 'plaster')
+    band('end_t', [(x, H) for x, _ in arch], arch, -0.5, 0, 'plaster', grp, M=M)
+    for k0, k1, y0, y1, m in ((1.0, 1.05, -0.5, -0.1, 'wood_d'), (1.05, 1.13, -0.6, -0.42, 'wood'), (1.13, 1.17, -0.56, -0.44, 'wood_l'), (1.17, 1.2, -0.53, -0.46, 'wood')):   # reveal, then three steps of architrave
+        band('win_arch', sc(k1), sc(k0), y0, y1, m, grp, M=M)
+        for d in (-1, 1): bx('win_jamb', d * WIN_W * k0, d * WIN_W * k1, y0, y1, WIN_Z0 - 0.12, WIN_ZS, m)
+    prism('win_key', [(-0.16, WIN_ZS + WIN_W * 0.99), (0.16, WIN_ZS + WIN_W * 0.99), (0.24, WIN_ZS + WIN_W * 1.26), (-0.24, WIN_ZS + WIN_W * 1.26)], 'Y', -0.66, -0.44, 'wood_l', grp, bevel=0.01, M=M)
+    for d in (-1, 1): bx('win_impost', d * WIN_W * 1.0, d * WIN_W * 1.22, -0.64, -0.42, WIN_ZS - 0.1, WIN_ZS + 0.08, 'wood_l', bevel=0.012)
+    bx('sill', -WIN_W * 1.2, WIN_W * 1.2, -0.95, -0.42, WIN_Z0 - 0.1, WIN_Z0, 'wood_l', bevel=0.02, seg=3); bx('sill_apron', -WIN_W * 1.13, WIN_W * 1.13, -0.6, -0.5, WIN_Z0 - 0.4, WIN_Z0 - 0.1, 'wood')
+    for x in (-2.4, -0.8, 0.8, 2.4): prism('sill_bracket', [(-0.95 + 0.06, WIN_Z0 - 0.1), (-0.5, WIN_Z0 - 0.1), (-0.5, WIN_Z0 - 0.5), (-0.62, WIN_Z0 - 0.42), (-0.72, WIN_Z0 - 0.2)], 'X', x - 0.05, x + 0.05, 'wood', grp, M=M)
+    # glazing bars: no pane wider than 1.3 m (cabin pressure on a single 5 m sheet would be about 200 tonnes)
+    for x in (-1.3, 0.0, 1.3): bx('mullion', x - 0.035, x + 0.035, -0.22, -0.1, WIN_Z0, WIN_ZS, 'frame')
+    for z in (3.15, WIN_ZS): bx('transom', -WIN_W, WIN_W, -0.22, -0.1, z - 0.035, z + 0.035, 'frame')
+    for a in (pi / 4, pi / 2, 3 * pi / 4): rod('fan_bar', (0, -0.16, WIN_ZS), (WIN_W * math.cos(a), -0.16, WIN_ZS + WIN_W * math.sin(a)), 0.03, 'frame', grp, M=M, n=6)
+    half = [(0.9 * math.cos(pi * i / 16), WIN_ZS + 0.9 * math.sin(pi * i / 16)) for i in range(17)]
+    band('fan_hub', [(x * 1.07, WIN_ZS + (z - WIN_ZS) * 1.07) for x, z in half], half, -0.2, -0.12, 'frame', grp, M=M)
+    for d in (-1, 1): lathe('win_latch', [(0, 0.05), (0.014, 0.05), (0.02, 0.03), (0.01, 0), (0, 0)], 'brass', grp, segs=10, closed=False, M=M @ T((d * 0.65, -0.24, 3.15), (pi / 2, 0, 0)))
+    box('win_cove', -WIN_W + 0.1, WIN_W - 0.1, -0.46, -0.43, WIN_Z0 - 0.16, WIN_Z0 - 0.145, em='cool', M=M)
+
+def a_endwall(M=I4, grp='center', d_=1):
+    """Beside the window (origin on the end wall at the floor, reaching x = 0 .. d_ * w): raised-and-fielded panelling, a framed chart, a sconce."""
+    w = GAL_X - (WIN_W * 1.2 + 0.2); X = lambda a: d_ * a
+    def bx(n, a, b, y0, y1, z0, z1, m, **kw): box(n, X(a), X(b), y0, y1, z0, z1, m, grp, M=M, **kw)
+    bx('end_panel', 0, w, -0.06, 0, 0.14, 3.44, 'wood'); bx('end_plinth', 0, w, -0.1, 0, 0, 0.16, 'wood_l', bevel=0.006)
+    bx('end_cornice', 0, w, -0.14, 0, 3.44, 3.58, 'wood', bevel=0.02)
+    bx('end_dado', 0, w, -0.09, 0, 1.05, 1.12, 'wood_l', bevel=0.008)
+    for k in range(3):
+        a, b = w * (k + 0.1) / 3, w * (k + 0.9) / 3
+        for z0, z1 in ((0.3, 0.95), (1.25, 3.25)):
+            bx('end_field', a, b, -0.075, -0.06, z0, z1, 'wood_d'); bx('end_raise', a + 0.07, b - 0.07, -0.09, -0.075, z0 + 0.07, z1 - 0.07, 'wood_l', bevel=0.012)
+    xs = w / 2
+    bx('chart_frame', xs - 0.75, xs + 0.75, -0.05, 0, 4.0, 5.0, 'gilt', bevel=0.012); bx('chart', xs - 0.69, xs + 0.69, -0.056, -0.05, 4.06, 4.94, 'navy')
+    for k in range(9): blob('chart_star', M @ Vector((X(xs - 0.55 + random.random() * 1.1), -0.058, 4.15 + random.random() * 0.7)), 0.012, 'gilt', grp, squash=(1, 0.3, 1))
+    bx('sconce_plate', xs - 0.05, xs + 0.05, -0.02, 0, 5.5, 5.75, 'brass', bevel=0.006)
+    rod('sconce_arm', (X(xs), 0, 5.62), (X(xs), -0.2, 5.7), 0.01, 'brass', grp, M=M)
+    lathe('sconce', [(0.05, 0.0), (0.13, 0.3), (0.125, 0.3), (0.045, 0.0)], em='lamp', segs=20, M=M @ T((X(xs), -0.22, 5.7)))
+    glow(f'sconce_glow{d_}', M @ Vector((X(xs), -0.3, 5.9)), 40)
+
+def a_stack(M=I4, grp='props', n=5):
+    """Books left on the table: a stack, slightly askew, and one lying open."""
+    z = 0
+    for b in range(n):
+        t = random.uniform(0.028, 0.05); w = random.uniform(0.17, 0.22); l = random.uniform(0.24, 0.3); R = T((random.uniform(-0.015, 0.015), random.uniform(-0.015, 0.015), z + t / 2), (0, 0, random.uniform(-0.3, 0.3)))
+        rbox('stack_cover', (w, l, t), M @ R, random.choice(BOOKS), grp, bevel=0.003); rbox('stack_pages', (w - 0.006, l - 0.01, t - 0.008), M @ R @ T((0.004, 0, 0)), 'paper', grp); z += t
+def a_openbook(M=I4, grp='props'):
+    for d in (-1, 1):
+        rbox('open_cover', (0.2, 0.28, 0.006), M @ T((d * 0.102, 0, 0.003)), random.choice(BOOKS), grp); rbox('open_pages', (0.19, 0.265, 0.02), M @ T((d * 0.098, 0, 0.016), (0, -d * 0.06, 0)), 'paper', grp, bevel=0.006)
+    rbox('open_ribbon', (0.012, 0.3, 0.002), M @ T((0.03, -0.03, 0.028)), 'runner3', grp)
+def a_blotter(M=I4, grp='props'):
+    """A place at the table: a leather blotter, paper on it, a pen in a brass tray."""
+    rbox('blot', (0.42, 0.3, 0.004), M @ T((0, 0, 0.002)), 'leather', grp); rbox('blot_paper', (0.21, 0.27, 0.002), M @ T((-0.05, 0, 0.005), (0, 0, 0.08)), 'paper', grp)
+    rbox('pen_tray', (0.05, 0.2, 0.012), M @ T((0.26, 0, 0.006)), 'brass', grp, bevel=0.004); rod('pen', (0.26, -0.07, 0.016), (0.26, 0.07, 0.016), 0.005, 'frame', grp, M=M, n=6)
+
+ASSETS = dict(table=a_table, chair=a_chair, lamp=a_lamp, pendant=a_pendant, ladder=a_ladder, terminal=a_terminal, cradle=a_cradle, catalogue=a_catalogue, cart=a_cart,
+              globe=a_globe, armchair=a_armchair, floorlamp=a_floorlamp, bay=a_bay, gallery=a_gallery, coffer=a_coffer, window=a_window, endwall=a_endwall,
+              stack=a_stack, openbook=a_openbook, blotter=a_blotter)
+
+# ================================================================= ASSET BENCH: one asset alone, in a studio
+if os.environ.get('ASSET'):
+    name = os.environ['ASSET']; ASSETS[name](T((0, 0, {'pendant': 6.3, 'coffer': 3.0}.get(name, 0))) if name not in ('gallery',) else T((0, 0, 1.0)))
+    pts = [o.matrix_world @ Vector(c) for o in bpy.data.objects if o.type == 'MESH' for c in o.bound_box]
+    lo = Vector([min(p[i] for p in pts) for i in range(3)]); hi = Vector([max(p[i] for p in pts) for i in range(3)]); c = (lo + hi) / 2; R = (hi - lo).length / 2
+    mat('studio', (0.32, 0.32, 0.33), 0.6)
+    box('studio_floor', c.x - 30, c.x + 30, c.y - 30, c.y + 30, lo.z - 0.02, lo.z, 'studio', 'props')
+    for i, (az, el, e, col) in enumerate(((0.9, 0.9, 700, (1, 0.93, 0.85)), (-1.8, 0.5, 260, (0.8, 0.9, 1.0)), (2.9, 0.3, 200, (1, 0.8, 0.6)))):
+        l = bpy.data.lights.new(f'key{i}', 'AREA'); l.energy = 0.35 * e * R * R; l.size = R * 1.5; l.color = col; o = bpy.data.objects.new(f'key{i}', l); COL.objects.link(o)
+        o.location = c + Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), math.sin(el))) * R * 3; o.rotation_euler = (c - o.location).to_track_quat('-Z', 'Y').to_euler()
+    cam = bpy.data.cameras.new('Bench'); cam.angle = math.radians(35); cam.clip_end = 500; co = bpy.data.objects.new('Bench', cam); scene.collection.objects.link(co); scene.camera = co
+    scene.render.engine = 'CYCLES'; scene.cycles.samples = int(os.environ.get('SPP', 96)); scene.cycles.use_denoising = True; scene.cycles.device = 'GPU'
+    prefs = bpy.context.preferences.addons['cycles'].preferences; DEV = os.environ.get('LOBBY_DEVICE', 'CUDA'); prefs.compute_device_type = DEV; prefs.get_devices()
+    for d in prefs.devices: d.use = (d.type == DEV)
+    scene.view_settings.view_transform = 'AgX'; scene.render.resolution_x, scene.render.resolution_y = 960, 720; scene.render.image_settings.file_format = 'PNG'
+    for i, (az, el) in enumerate(((-0.9, 0.35), (2.3, 0.2))):
+        co.location = c + Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), math.sin(el))) * R * 3.6; co.rotation_euler = (c - co.location).to_track_quat('-Z', 'Y').to_euler()
+        scene.render.filepath = os.path.join(_here, f'asset_{name}_{i}.png'); bpy.ops.render.render(write_still=True)
+    print('ASSET', name, 'TRIS', sum(len(o.data.polygons) for o in bpy.data.objects if o.type == 'MESH'))
+    raise SystemExit
+
+# ================================================================= THE ROOM
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 3, 0), (-WD, 3, 0)], 'floor', 'floorN')
 quad('floor_far', [(-WD, 3, 0), (WD, 3, 0), (WD, Y1, 0), (-WD, Y1, 0)], 'floor', 'floorF')
 quad('ceiling', [(-WD, Y0, H), (WD, Y0, H), (WD, Y1, H), (-WD, Y1, H)], 'plaster', 'archC')
@@ -57,172 +400,57 @@ quad('backwall', [(-WD, Y0, 0), (WD, Y0, 0), (WD, Y0, H), (-WD, Y0, H)], 'plaste
 for s in (1, -1):
     g = 'archR' if s > 0 else 'archL'
     quad(f'wall_{g}', [(s * WD, Y0, 0), (s * WD, Y1, 0), (s * WD, Y1, H), (s * WD, Y0, H)], 'plaster', g)
-# coffered timber ceiling: a beam over every upright (they case the hull frames), two running the length, light in the coffers
-for k, y in enumerate([b[0] for b in BAYS] + [BAYS[-1][1]]):
+# coffered timber ceiling: a beam over every upright (they case the hull frames), two running the length, a coffer in every field
+EDGES = [b[0] for b in BAYS] + [BAYS[-1][1]]
+for k, y in enumerate(EDGES):
     box(f'beam{k}', -WD, WD, y - 0.16, y + 0.16, H - 0.6, H, 'wood', 'archC', bevel=0.012)
     box(f'beamlight{k}', -GAL_X + 0.2, GAL_X - 0.2, y - 0.2, y - 0.17, H - 0.08, H - 0.06, em=em_ramp('step', k, y, 1.2, 0.5, 1.0))
 for x in (-2.2, 2.2):
     box('beam_long', x - 0.14, x + 0.14, Y0, Y1, H - 0.45, H, 'wood', 'archC', bevel=0.012)
+for y0, y1 in BAYS:
+    for x, w in ((0, 4.1), (-4.3, 3.9), (4.3, 3.9)): a_coffer(T((x, (y0 + y1) / 2, H)), 'archC', w=w, d=2.6)
+moulding('crown_l', [(-WD, H - 0.3), (-WD + 0.1, H - 0.3), (-WD + 0.16, H - 0.2), (-WD + 0.3, H - 0.06), (-WD + 0.3, H), (-WD, H)], Y0, Y1, 'wood', 'archL')
+moulding('crown_r', [(WD, H - 0.3), (WD - 0.1, H - 0.3), (WD - 0.16, H - 0.2), (WD - 0.3, H - 0.06), (WD - 0.3, H), (WD, H)], Y0, Y1, 'wood', 'archR')
 
-# ================================================================= THE WINDOW (the hull): a tall arch of panes
-arch = [(WIN_W * math.cos(pi * i / 48), WIN_ZS + WIN_W * math.sin(pi * i / 48)) for i in range(49)]
-def end_piece(name, x0, x1, z0, z1): box(name, x0, x1, Y1 - 0.5, Y1, z0, z1, 'plaster', 'center')
-end_piece('end_l', -WD, -WIN_W, 0, H); end_piece('end_r', WIN_W, WD, 0, H); end_piece('end_b', -WIN_W, WIN_W, 0, WIN_Z0)
-band('end_t', [(x, H) for x, _ in arch], arch, Y1 - 0.5, Y1, 'plaster', 'center')
-band('win_arch', [(x * 1.11, WIN_ZS + (z - WIN_ZS) * 1.11) for x, z in arch], arch, Y1 - 0.58, Y1 - 0.42, 'wood', 'center', bevel=0.012)      # timber architrave
-for d in (-1, 1):
-    box('win_jamb', d * WIN_W, d * WIN_W * 1.11, Y1 - 0.58, Y1 - 0.42, WIN_Z0 - 0.12, WIN_ZS, 'wood', 'center', bevel=0.012)
-box('sill', -WIN_W * 1.11, WIN_W * 1.11, Y1 - 0.85, Y1 - 0.42, WIN_Z0 - 0.12, WIN_Z0, 'wood_l', 'center', bevel=0.015)
-# glazing bars: no single pane is wider than 1.3 m (cabin pressure on one 5 m sheet would be about 200 tonnes)
-for x in (-1.3, 0.0, 1.3):
-    box('mullion', x - 0.03, x + 0.03, Y1 - 0.2, Y1 - 0.1, WIN_Z0, WIN_ZS + math.sqrt(WIN_W ** 2 - x * x), 'frame', 'center')
-for z in (3.15, WIN_ZS, 6.5):
-    hw = WIN_W if z <= WIN_ZS else math.sqrt(WIN_W ** 2 - (z - WIN_ZS) ** 2)
-    box('transom', -hw, hw, Y1 - 0.2, Y1 - 0.1, z - 0.03, z + 0.03, 'frame', 'center')
-# either side of the window: panelling to the height of the lower bookcases, a sconce above it
-for d_ in (-1, 1):
-    x0, x1 = d_ * (WIN_W * 1.11 + 0.25), d_ * GAL_X
-    box('end_panel', x0, x1, Y1 - 0.56, Y1 - 0.5, 0.14, 3.44, 'wood', 'center', bevel=0.01)
-    box('end_plinth', x0, x1, Y1 - 0.6, Y1 - 0.5, 0, 0.14, 'wood', 'center')
-    box('end_cornice', x0, x1, Y1 - 0.64, Y1 - 0.5, 3.44, 3.58, 'wood', 'center', bevel=0.015)
-    for k in range(3):
-        xa = x0 + (x1 - x0) * (k + 0.12) / 3; xb = x0 + (x1 - x0) * (k + 0.88) / 3
-        box('end_inset', xa, xb, Y1 - 0.585, Y1 - 0.56, 0.5, 3.1, 'wood_l', 'center', bevel=0.008)
-    xs = (x0 + x1) / 2
-    box('sconce_arm', xs - 0.03, xs + 0.03, Y1 - 0.72, Y1 - 0.5, 4.85, 4.9, 'brass', 'center')
-    lathe('sconce', [(0.05, 0.0), (0.13, 0.3), (0.125, 0.3), (0.045, 0.0)], em='lamp', segs=20, M=T((xs, Y1 - 0.74, 4.9)))
-    glow(f'sconce_glow{d_}', (xs, Y1 - 0.8, 5.1), 40)
-box('win_cove', -WIN_W + 0.1, WIN_W - 0.1, Y1 - 0.46, Y1 - 0.43, WIN_Z0 - 0.16, WIN_Z0 - 0.145, em='cool')
+a_window(T((0, Y1, 0)), 'center')
+for d_ in (-1, 1): a_endwall(T((d_ * (WIN_W * 1.2 + 0.2), Y1 - 0.5, 0)), 'center', d_)
 
-# ================================================================= BOOKCASES: two tiers each side, a gallery between
-def books(SX, s, y0, y1, z, grp, deep=0.3):
-    """Fill one shelf (books standing, a few lying, the odd keepsake). s: +1 right wall, -1 left; SX: the wall."""
-    f = lambda a, b: (SX - s * a, SX - s * b)                    # distances from the wall -> x range
-    y = y0 + 0.04
-    while y < y1 - 0.1:
-        r = random.random()
-        if r < 0.8:
-            for b in range(random.randint(4, 11)):
-                t = random.uniform(0.028, 0.07); hh = random.uniform(0.34, 0.5); d = random.uniform(0.2, deep)
-                if y + t > y1 - 0.04: break
-                box('book', *f(0.05, 0.05 + d), y, y + t, z, z + hh, random.choice(BOOKS), grp); y += t + 0.004
-            y += random.uniform(0.02, 0.12)
-        elif r < 0.93:
-            for b in range(random.randint(2, 4)):
-                box('bookflat', *f(0.06, 0.34), y, y + 0.42, z + b * 0.06, z + 0.055 + b * 0.06, random.choice(BOOKS), grp)
-            y += 0.5
-        else:
-            blob('keepsake', Vector((SX - s * 0.22, y + 0.18, z + 0.17)), 0.15, random.choice(('brass', 'chrome', 'copper', 'white')), grp); y += 0.42
+# bookcases: two tiers of bays each side, the gallery between them, a ladder on a rail
 for s in (1, -1):
-    g = 'archR' if s > 0 else 'archL'; SX = s * WD; X = lambda a: SX - s * a      # X(a): a metres in from this wall
-    for tier, z0 in enumerate((0.14, GAL_Z + 0.12)):
-        for bi, (y0, y1) in enumerate(BAYS):
-            if s < 0 and tier == 0 and bi == DOOR_BAY: continue
-            box(f'case_back{tier}{bi}', X(0), X(0.04), y0, y1, z0, z0 + 3.3, 'wood', g)
-            for k in range(6):
-                z = z0 + k * 0.62
-                box(f'shelf{tier}{bi}{k}', X(0), X(0.42), y0, y1, z, z + 0.04, 'wood', g)
-                if k == 5: break
-                if k in (1, 3): box('shelflight', X(0.36), X(0.4), y0 + 0.15, y1 - 0.15, z + 0.57, z + 0.58, em='shelf')
-                books(SX, s, y0 + 0.03, y1 - 0.03, z + 0.04, g)
-        for y in [b[0] for b in BAYS] + [BAYS[-1][1]]:                              # uprights, as pilasters
-            box(f'upright{tier}', X(0), X(0.5), y - 0.11, y + 0.11, z0 - (0.14 if tier == 0 else 0), z0 + 3.42, 'wood', g, bevel=0.012)
-        box(f'cornice{tier}', X(0), X(0.56), BAYS[0][0] - 0.11, BAYS[-1][1] + 0.11, z0 + 3.3, z0 + 3.44, 'wood', g, bevel=0.015)
-    box('plinth', X(0), X(0.46), BAYS[0][0], BAYS[-1][1], 0, 0.14, 'wood', g)
-    # the gallery: a walkway in front of the upper tier, brass rail, a warm line under its edge
-    box('gallery', X(0), X(1.3), Y0, Y1 - 0.5, GAL_Z - 0.16, GAL_Z, 'wood', g, bevel=0.01)
-    box('gallery_edge', X(1.3), X(1.36), Y0, Y1 - 0.5, GAL_Z - 0.3, GAL_Z + 0.04, 'wood_l', g, bevel=0.01)
-    box('gallery_light', X(1.2), X(1.26), BAYS[0][0], BAYS[-1][1], GAL_Z - 0.175, GAL_Z - 0.16, em='shelf')
-    for k in range(int((Y1 - 0.5 - Y0) / 1.5) + 1):
-        y = Y0 + 0.1 + k * 1.5
-        rbox('rail_post', (0.03, 0.03, 1.0), T((X(1.33), y, GAL_Z + 0.5)), 'brass', g)
-    for z in (GAL_Z + 0.55, GAL_Z + 1.02):
-        tube('rail', X(1.33), z, 0.018 if z < GAL_Z + 1 else 0.026, Y0, Y1 - 0.5, 'brass', g, n=8)
-    # a ladder on a brass rail along the lower tier
-    ly = 0.3 if s > 0 else -2.2
-    tube('ladder_rail', X(0.62), 3.3, 0.02, BAYS[0][0], BAYS[-1][1], 'brass', g, n=8)
-    for dy in (-0.22, 0.22):
-        rbox('ladder_side', (0.04, 0.05, 3.4), T((X(1.0), ly + dy, 1.65), (0, s * 0.2, 0)), 'wood_l', 'props')
-    for k in range(7):
-        zz = 0.4 + k * 0.42
-        rbox('ladder_rung', (0.05, 0.44, 0.03), T((X(1.34 - zz * 0.2), ly, zz)), 'wood_l', 'props')
+    g = 'archR' if s > 0 else 'archL'; SX = s * WD
+    for bi, (y0, y1) in enumerate(BAYS):
+        a_bay(T((SX, y0, 0)), g, s, 0, shelves=not (s < 0 and bi == DOOR_BAY)); a_bay(T((SX, y0, GAL_Z)), g, s, 1)
+        a_gallery(T((SX, y0, GAL_Z)), g, s)
+    for y0, y1 in ((Y0, BAYS[0][0]), (BAYS[-1][1], Y1 - 0.5)): a_gallery(T((SX, y0, GAL_Z)), g, s, L=y1 - y0)
+    tube('ladder_rail', SX - s * 0.62, 3.3, 0.02, BAYS[0][0], BAYS[-1][1], 'brass', g, n=8)
+    a_ladder(T((SX - s * 1.3, 0.3 if s > 0 else -2.2, 0)) @ Matrix.Rotation(0 if s > 0 else pi, 4, 'Z') @ Matrix.Rotation(pi, 4, 'Z'), 'props')
 pressure_door('door', T((-WD + 0.02, sum(BAYS[DOOR_BAY]) / 2, 0)), 'archL', 'ATRIUM', 'SPINWARD  ·  MIDWAY', 'lobby', w=1.6, h=2.4)
 
-# ================================================================= THE NAVE: a runner, one long table, lamps, chairs
+# the nave: a runner with a border, the table, its lamps and chairs, what readers left behind
 box('runner', -1.9, 1.9, -3.4, 11.6, 0.0, 0.016, 'runner', 'props')
-box('runner_border', -1.7, 1.7, -3.2, 11.4, 0.016, 0.019, 'runner2', 'props')
-box('runner_field', -1.55, 1.55, -3.05, 11.25, 0.019, 0.022, 'runner', 'props')
-TY0, TY1, TW = 0.6, 8.6, 0.62
-box('table_top', -TW, TW, TY0, TY1, 0.72, 0.77, 'wood_l', 'props', bevel=0.012)
-box('table_inlay', -TW + 0.12, TW - 0.12, TY0 + 0.12, TY1 - 0.12, 0.77, 0.773, 'leather', 'props')
-box('table_apron', -TW + 0.08, TW - 0.08, TY0 + 0.08, TY1 - 0.08, 0.6, 0.72, 'wood', 'props')
-for y in (TY0 + 0.5, (TY0 + TY1) / 2, TY1 - 0.5):
-    box('table_trestle', -TW + 0.1, TW - 0.1, y - 0.05, y + 0.05, 0.06, 0.6, 'wood', 'props', bevel=0.01)
-    box('table_foot', -TW - 0.05, TW + 0.05, y - 0.08, y + 0.08, 0.0, 0.06, 'wood', 'props', bevel=0.01)
-for k, y in enumerate((1.6, 3.6, 5.6, 7.6)):                                         # reading lamps: brass, green glass
-    lathe('lamp_base', [(0, 0.03), (0.09, 0.03), (0.09, 0), (0, 0)], 'brass', 'props', segs=20, closed=False, M=T((0, y, 0.773)))
-    rbox('lamp_stem', (0.018, 0.018, 0.34), T((0, y, 0.95)), 'brass', 'props')
-    rbox('lamp_shade', (0.5, 0.16, 0.07), T((0, y, 1.15)), 'greenlamp', 'props', bevel=0.03, seg=3)
-    box('lamp_light', -0.22, 0.22, y - 0.05, y + 0.05, 1.108, 1.113, em='lamp')
-    glow(f'lamp_glow{k}', (0, y, 1.06), 22)
-    for b in range(random.randint(1, 3)):                                            # reading left on the table
-        bx = random.choice((-1, 1)) * random.uniform(0.2, 0.36); by = y + random.uniform(0.45, 1.3)
-        rbox('tablebook', (0.2, 0.28, 0.035), T((bx, by, 0.791 + b * 0.036), (0, 0, random.uniform(-0.5, 0.5))), random.choice(BOOKS), 'props')
-def chair(name, x, y, face):
-    M = Matrix.Translation((x, y, 0)) @ Matrix.Rotation(0 if face > 0 else pi, 4, 'Z')    # the sitter looks along +x (face = 1) or -x
-    rbox(name + 'seat', (0.44, 0.46, 0.06), M @ T((0, 0, 0.45)), 'leather', 'props', bevel=0.02)
-    rbox(name + 'back', (0.05, 0.44, 0.5), M @ T((-0.22, 0, 0.78), (0, -0.12, 0)), 'wood', 'props', bevel=0.015)
-    for dx, dy in ((-0.19, -0.2), (0.19, -0.2), (-0.19, 0.2), (0.19, 0.2)):
-        rbox(name + 'leg', (0.035, 0.035, 0.42), M @ T((dx, dy, 0.21)), 'wood', 'props')
-for y in (1.6, 3.6, 5.6, 7.6):
+for a, b, m in ((1.78, 1.7, 'runner2'), (1.62, 1.5, 'runner3'), (1.44, 1.4, 'runner2')):
+    for d in (-1, 1): box('runner_line', d * a, d * b, -3.4 + (1.9 - a), 11.6 - (1.9 - a), 0.016, 0.019, m, 'props')
+    for y in (-3.4 + (1.9 - a), 11.6 - (1.9 - a)): box('runner_line', -a, a, y - (a - b) / 2, y + (a - b) / 2, 0.016, 0.019, m, 'props')
+a_table(T((0, TY0, 0)))
+for k, y in enumerate((1.6, 3.6, 5.6, 7.6)):
+    a_lamp(T((0, y, TZ + 0.002)), key=k)
     for d in (-1, 1):
-        chair('chair', d * (TW + 0.42 + random.uniform(0, 0.12)), y + random.uniform(-0.1, 0.1), -d)
-# three ring lights hung over the table, high enough to leave the window clear
-for k, y in enumerate((1.6, 5.1, 8.6)):
-    torus(f'pendant{k}', 1.05, 0.035, T((0, y, 6.3)), 'brass', 'archC')
-    torus(f'pendant_light{k}', 1.05, 0.02, T((0, y, 6.26)), em='ring')
-    for a in range(3):
-        ang = a * 2 * pi / 3 + 0.5; rbox('pendant_rod', (0.012, 0.012, H - 6.3), T((1.05 * math.cos(ang), y + 1.05 * math.sin(ang), (H + 6.3) / 2)), 'brass', 'archC')
-
-# ================================================================= THE WRITING: a catalogue terminal on the table; a drone fetches the volume
-# The terminal: a low console at the near end of the table, its screen laid back towards whoever stands there.
-TC = Vector((0, 1.0, 0.93)); LEAN = 0.95; f_, up_, n_ = Vector((0, -1, 0)), Vector((0, math.sin(LEAN), math.cos(LEAN))), Vector((0, -math.cos(LEAN), math.sin(LEAN)))
-TP = lambda a, b, dd=0.0: tuple(TC + Vector((-1, 0, 0)) * a + up_ * b + n_ * dd)         # a: to the reader's left, b: up the screen
+        a_chair(T((d * (TW + 0.36 + random.uniform(0, 0.14)), y + random.uniform(-0.12, 0.12), 0)) @ Matrix.Rotation(pi if d > 0 else 0, 4, 'Z') @ Matrix.Rotation(random.uniform(-0.12, 0.12), 4, 'Z'))
+for x, y, r in ((0.36, 4.5, 0.2), (-0.3, 6.4, -0.3), (0.3, 8.1, 0.1)): a_stack(T((x, y, TZ + 0.002), (0, 0, r)), n=random.randint(3, 6))
+a_openbook(T((-0.3, 3.0, TZ + 0.002), (0, 0, 1.4))); a_openbook(T((0.32, 6.9, TZ + 0.002), (0, 0, -1.7)))
+for x, y in ((-0.33, 4.6), (0.33, 5.6), (-0.33, 7.5)): a_blotter(T((x, y, TZ + 0.002), (0, 0, pi / 2 if x > 0 else -pi / 2)))
+for k, y in enumerate((1.6, 5.1, 8.6)): a_pendant(T((0, y, 6.3)), 'archC')
 SCREENS = ['FX_screen0']
-quad('FX_screen0', [TP(0.24, -0.16, 0.012), TP(-0.24, -0.16, 0.012), TP(-0.24, 0.16, 0.012), TP(0.24, 0.16, 0.012)], 'lum_screen', fx='screen', uv=True)
-TM = Matrix(((1, 0, 0, TC.x), (0, up_.y, n_.y, TC.y), (0, up_.z, n_.z, TC.z), (0, 0, 0, 1)))
-rbox('terminal_board', (0.54, 0.38, 0.035), TM @ T((0, 0, -0.012)), 'frame', 'props', bevel=0.01)
-rbox('terminal_lip', (0.54, 0.025, 0.04), TM @ T((0, -0.2, 0.012)), 'brass', 'props')
-box('terminal_base', -0.2, 0.2, 0.98, 1.2, 0.773, 0.86, 'wood', 'props', bevel=0.012)
-box('terminal_light', -0.2, 0.2, 0.86, 0.865, 0.778, 0.782, em='cool')
-# The drone's cradle: a brass ring on three legs further up the table. The drone itself is drawn live (js/drone.js).
-CR = Vector((0, 2.6, 0.773))
-torus('cradle', 0.17, 0.012, T(CR + Vector((0, 0, 0.12))), 'brass', 'props')
-for a in range(3):
-    ang = a * 2 * pi / 3 + 0.3; rbox('cradle_leg', (0.012, 0.012, 0.12), T((CR.x + 0.17 * math.cos(ang), CR.y + 0.17 * math.sin(ang), CR.z + 0.06)), 'brass', 'props')
-lathe('cradle_pad', [(0, 0.012), (0.07, 0.012), (0.07, 0), (0, 0)], 'dark', 'props', segs=20, closed=False, M=T(CR))
-box('cradle_light', -0.03, 0.03, CR.y - 0.03, CR.y + 0.03, CR.z + 0.012, CR.z + 0.014, em='cool')
+quad('FX_screen0', a_terminal(T((0, 0.86, TZ + 0.002))), 'lum_screen', fx='screen', uv=True)
+CR = Vector((0, 2.6, TZ + 0.002)); a_cradle(T(CR))
+# around the room: the card catalogue and a cart of returns by the entrance, a bust, the globe and a wing chair by the window
+a_catalogue(T((4.3, 3.3, 0)) @ Matrix.Rotation(pi, 4, 'Z')); a_cart(T((-3.6, 1.6, 0), (0, 0, 1.2)))
+a_globe(T((3.6, 12.0, 0))); a_floorlamp(T((4.75, 11.7, 0)), key=1)
+a_armchair(T((-3.9, 12.0, 0)) @ Matrix.Rotation(math.radians(-25), 4, 'Z')); a_floorlamp(T((-4.8, 11.5, 0)))
 # where each volume lives: a slot on a shelf (wall side, bay, tier, shelf); the drone hovers in front of it
 def slot(s, bay, tier, shelf):
     y0, y1 = BAYS[bay]; return [s * (WD - 0.3), (y0 + y1) / 2 + random.uniform(-0.8, 0.8), (0.14 if tier == 0 else GAL_Z + 0.12) + shelf * 0.62 + 0.3]
 SLOTS = [slot(1, 1, 1, 2), slot(-1, 2, 1, 3), slot(1, 2, 0, 3), slot(-1, 4, 0, 2), slot(1, 4, 1, 1)]
-
-# ================================================================= BY THE WINDOW: a globe, a chair to read in
-GC = Vector((4.1, 12.2, 1.05))
-blob('globe', GC, 0.52, 'navy', 'props')
-torus('globe_meridian', 0.56, 0.015, Matrix.Translation(GC) @ Matrix.Rotation(pi / 2, 4, 'X') @ Matrix.Rotation(0.41, 4, 'Y'), 'brass', 'props')
-torus('globe_horizon', 0.62, 0.02, T(GC), 'wood_l', 'props')
-for a in range(4):
-    ang = a * pi / 2 + 0.4; rbox('globe_leg', (0.04, 0.04, 1.05), T((GC.x + 0.6 * math.cos(ang), GC.y + 0.6 * math.sin(ang), 0.52)), 'wood', 'props')
-AC = Matrix.Translation((-4.0, 12.0, 0)) @ Matrix.Rotation(math.radians(-25), 4, 'Z')
-rbox('arm_seat', (0.74, 0.7, 0.2), AC @ T((0, 0, 0.38)), 'leather', 'props', bevel=0.06, seg=3)
-rbox('arm_back', (0.74, 0.16, 0.75), AC @ T((0, -0.33, 0.74), (-0.22, 0, 0)), 'leather', 'props', bevel=0.06, seg=3)
-for d in (-1, 1):
-    rbox('arm_arm', (0.12, 0.66, 0.34), AC @ T((d * 0.39, 0, 0.5)), 'leather', 'props', bevel=0.05, seg=3)
-lathe('fl_base', [(0, 0.04), (0.18, 0.04), (0.18, 0), (0, 0)], 'dark', 'props', segs=24, closed=False, M=T((-4.9, 11.6, 0)))
-rbox('fl_stem', (0.025, 0.025, 1.6), T((-4.9, 11.6, 0.82)), 'brass', 'props')
-lathe('fl_shade', [(0.07, 0.0), (0.2, -0.24), (0.195, -0.24), (0.065, 0.0)], em='lamp', segs=24, M=T((-4.9, 11.6, 1.84)))
-glow('fl_glow', (-4.9, 11.6, 1.68), 60)
 
 # ================================================================= OUTSIDE: the same Earth as the Atrium and the Lounge
 SUN_EL, SUN_AZ = math.radians(12.5), math.radians(1.5)
@@ -240,9 +468,9 @@ scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
 scene['lobby'] = dict(room='writing', exposure=1.3, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
                       doors=DOORS, screens=SCREENS,
-                      # the terminal: where to stand; the drone: its cradle, where it hands a volume over, the shelf slots
-                      terminal=dict(screen='FX_screen0', pos=[0.0, -0.75, 1.5], tgt=[0.0, 1.5, 1.12]),
-                      drone=dict(dock=list(CR + Vector((0, 0, 0.257))), deliver=[0.0, 0.5, 1.6], slots=SLOTS),
+                      # the terminal: where to stand; the drone: its cradle, where it presents a volume, the shelf slots
+                      terminal=dict(screen='FX_screen0', pos=[0.0, -1.05, 1.55], tgt=[0.0, 1.5, 1.3]),
+                      drone=dict(dock=list(CR + Vector((0, 0, 0.27))), deliver=[0.0, 0.5, 1.6], slots=SLOTS),
                       portal=list(PORTAL_C), sun=list(SUN_DIR), backdrop_fov=100,
                       # the ring's spin, as in the Atrium (see build_scene.py); half: half-size of the window the sun shines through
                       spin=dict(axis=[0.0, 1.0, 0.0], period=120.0, sun_e=[sun.energy * c for c in sun.color], half=4.8), earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),
