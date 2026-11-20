@@ -126,6 +126,7 @@
       "sub": ["A quiet room, a wall of books, and home in the window.", "The words on the wall are placeholders for now."],
       "facts": [["ROOM", "ABOUT"], ["BELOW US", "EARTH · 717 KM"]],
       "screens": {
+        "inspect": false,
         "footer": "ARCADIA STATION  ·  OBSERVATION LOUNGE",
         "tag": "LOUNGE",
         "list": [

@@ -1,7 +1,7 @@
-// The route map above the navigation table: a rail line climbing from station to station, one station per stop.
-// Inspired by star-rail style navigation charts, drawn in this site's own language: gold track, cyan instruments,
-// everything additive HDR light. One ribbon mesh carries rails, sleepers and the moving pulse of the train in its
-// shader; each station carries a moving wire model, a name tag and a data sheet that unfolds when it is opened.
+// The route map above the navigation table: one strand of DNA climbing from stop to stop, a station at each.
+// Drawn in this site's own language: gold backbone, cyan and gold base pairs, everything additive HDR light. One
+// mesh carries the whole helix and, in its shader, the pulse that reads along it; each station carries a moving wire
+// model, a name tag and a data sheet that unfolds when it is opened.
 // The stops themselves (names, which model, the data sheet) come from content.json ("stations").
 import * as THREE from 'three';
 import { GLOW, VERT_XZ, CY, GOLD, V, uTime, uPx, lineMat, glow, glsl, cloud, label, sheet, spring } from './kit.js';
@@ -125,28 +125,53 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
   const curve = new THREE.CatmullRomCurve3([P[0].clone().add(V(-0.9, -0.5, 0.9)), ...P, P[N - 1].clone().add(V(0.5, 0.9, 0.6))], false, 'centripetal');
   const T0 = 1 / (N + 1), T1 = N / (N + 1);                                          // curve parameter of the first / last station
 
-  // ---- the track: a flat ribbon that banks with the curve
-  const SEG = 480, W = 0.2, pos = [], uv = [], idx = [], side = V(), p = V(), tan = V();
-  for (let i = 0; i <= SEG; i++) {
-    const t = i / SEG; curve.getPoint(t, p); curve.getTangent(t, tan); side.crossVectors(tan, V(0, 1, 0)).setLength(W / 2);
-    pos.push(p.x - side.x, p.y - side.y, p.z - side.z, p.x + side.x, p.y + side.y, p.z + side.z); uv.push(0, t, 1, t);
-    if (i < SEG) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
+  // ---- the track: a double helix wound round the route. Two backbone strands and the base pairs between them, as
+  // one mesh of thin tubes; each vertex knows how far along the route it is (aT) and what it belongs to (aK:
+  // 0, 1 = the strands, 2, 3 = the two halves of a base pair).
+  const R = 0.11, PITCH = 0.62, PER_TURN = 10, GROOVE = 0.78 * Math.PI, SEG = 520, SIDES = 5;
+  const LEN = curve.getLength(), TURNS = LEN / PITCH, pos = [], nor = [], aT = [], aK = [], idx = [], p = V(), tan = V(), n = V(), b = V();
+  const on = (t, phase) => {                                                         // a point on a strand
+    curve.getPoint(t, p); curve.getTangent(t, tan); n.crossVectors(tan, V(0, 1, 0)).normalize(); b.crossVectors(n, tan);
+    const a = t * TURNS * TAU + phase; return p.clone().addScaledVector(n, Math.cos(a) * R).addScaledVector(b, Math.sin(a) * R);
+  };
+  function tube(pts, ts, r, kind) {
+    const base = pos.length / 3, u = V(), v = V(), dir = V();
+    pts.forEach((q, i) => {
+      dir.subVectors(pts[Math.min(i + 1, pts.length - 1)], pts[Math.max(i - 1, 0)]).normalize();
+      u.crossVectors(dir, Math.abs(dir.y) > 0.9 ? V(1, 0, 0) : V(0, 1, 0)).normalize(); v.crossVectors(dir, u);
+      for (let s = 0; s < SIDES; s++) {
+        const a = s / SIDES * TAU, x = Math.cos(a), y = Math.sin(a), nx = u.x * x + v.x * y, ny = u.y * x + v.y * y, nz = u.z * x + v.z * y;
+        pos.push(q.x + nx * r, q.y + ny * r, q.z + nz * r); nor.push(nx, ny, nz); aT.push(ts[i]); aK.push(kind);
+        if (i) { const c = base + i * SIDES + s, d = base + i * SIDES + (s + 1) % SIDES; idx.push(c - SIDES, d - SIDES, c, d - SIDES, d, c); }
+      }
+    });
   }
-  const ribbon = new THREE.BufferGeometry(); ribbon.setIndex(idx);
-  ribbon.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); ribbon.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  const track = new THREE.Mesh(ribbon, glsl(`uniform float uTime, uGain, uTrain, uLen; uniform vec2 uEnds; varying vec2 vUv;
+  const ts = Array.from({ length: SEG + 1 }, (_, i) => i / SEG);
+  for (const k of [0, 1]) tube(ts.map((t) => on(t, k * GROOVE)), ts, 0.013, k);
+  for (let i = 1, count = Math.floor(TURNS * PER_TURN); i < count; i++) {
+    const t = i / count, a = on(t, 0), c = on(t, GROOVE), mid = a.clone().lerp(c, 0.5), flip = i % 2;       // which base sits on which strand alternates
+    tube([a, mid], [t, t], 0.007, 2 + flip); tube([mid, c], [t, t], 0.007, 3 - flip);
+  }
+  const helix = new THREE.BufferGeometry(); helix.setIndex(idx);
+  for (const [name, arr, size] of [['position', pos, 3], ['normal', nor, 3], ['aT', aT, 1], ['aK', aK, 1]]) helix.setAttribute(name, new THREE.Float32BufferAttribute(arr, size));
+  const track = new THREE.Mesh(helix, glsl(`uniform float uTime, uGain, uTrain, uLen; uniform vec2 uEnds; varying float vT, vK, vFace;
     void main(){
-      float x = abs(vUv.x - 0.5)*2.0, s = vUv.y*uLen;
-      float rails = smoothstep(0.1, 0.0, abs(x - 0.82));                                // two rails
-      float ties = step(x, 0.95)*step(fract(s*9.0), 0.22)*0.32;                         // sleepers
-      float built = smoothstep(uEnds.x - 0.02, uEnds.x + 0.01, vUv.y)*(1.0 - smoothstep(uEnds.y, uEnds.y + 0.05, vUv.y));
-      float ahead = smoothstep(uEnds.y, uEnds.y + 0.03, vUv.y)*step(0.5, fract(s*5.0));    // the line beyond "now": still dashed
-      float d = uTrain - vUv.y;                                                         // > 0 behind the train
-      float wake = d > 0.0 ? exp(-d*26.0) : 0.0, head = exp(-abs(d)*900.0);
-      vec3 col = ${GOLD}*(rails*0.9 + ties)*(0.35 + 0.65*built)*(1.0 + 3.0*wake) + ${GOLD}*rails*ahead*0.5 + vec3(1.0, 0.92, 0.75)*head*3.0*step(x, 0.95);
-      col *= smoothstep(0.0, 0.03, vUv.y)*smoothstep(1.0, 0.985, vUv.y);
+      float s = vT*uLen, strand = step(vK, 1.5);
+      float built = smoothstep(uEnds.x - 0.02, uEnds.x + 0.01, vT)*(1.0 - smoothstep(uEnds.y, uEnds.y + 0.05, vT));
+      float ahead = smoothstep(uEnds.y, uEnds.y + 0.03, vT);                            // beyond "now": not yet written
+      float d = uTrain - vT;                                                            // > 0 behind the reader
+      float wake = d > 0.0 ? exp(-d*26.0) : 0.0, head = exp(-abs(d)*700.0);
+      vec3 base = vK < 2.5 ? ${CY} : ${GOLD};                                           // the two bases of a pair
+      vec3 col = strand > 0.5
+        ? ${GOLD}*(0.3 + 0.7*built)*(1.0 + 3.0*wake)*mix(1.0, 0.5*step(0.5, fract(s*5.0)), ahead)
+        : base*(0.12 + 0.5*built)*(1.0 + 5.0*wake)*(1.0 - 0.8*ahead);
+      col += vec3(1.0, 0.92, 0.75)*head*3.0;
+      col *= (0.35 + 0.65*vFace)*smoothstep(0.0, 0.03, vT)*smoothstep(1.0, 0.985, vT);  // tubes: brightest face-on
       gl_FragColor = vec4(col*uGain, 1.0);
-    }`, { ...U, uLen: { value: curve.getLength() }, uEnds: { value: new THREE.Vector2(T0, T1) } }, { side: THREE.DoubleSide }));
+    }`, { ...U, uLen: { value: LEN }, uEnds: { value: new THREE.Vector2(T0, T1) } }, {
+    vertexShader: `attribute float aT, aK; varying float vT, vK, vFace;
+      void main(){ vT = aT; vK = aK; vec4 w = modelMatrix*vec4(position, 1.0);
+        vFace = abs(dot(normalize(mat3(modelMatrix)*normal), normalize(cameraPosition - w.xyz))); gl_Position = projectionMatrix*viewMatrix*w; }` }));
   track.frustumCulled = false;
 
   // ---- stations
@@ -156,7 +181,7 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
     const drop = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, -0.1, 0), V(0, floor, 0)]), new THREE.LineDashedMaterial({ color: pale, dashSize: 0.05, gapSize: 0.05, opacity: 0.4, ...GLOW }));
     drop.computeLineDistances(); tag.position.set(0.27, 0.1, 0); page.position.set(-0.75, 0.75, 0); page.visible = false;
     holder.add(model); holder.position.y = 0.5; grp.position.copy(P[i]); root.add(grp);
-    // the stop itself: a platform halo round the track, a stem up to the model, a signal lamp; a drop line to its footprint on the table
+    // the stop itself: a halo round the helix, a stem up to the model, a signal lamp; a drop line to its footprint on the table
     grp.add(holder, tag, page, drop, path(circle(0.17, 48), col, 0.9), path(circle(0.21, 48), DIM, 0.5), path([V(0, 0.02, 0), V(0, 0.36, 0)], col, 0.6),
       solid(new THREE.SphereGeometry(0.03, 10, 8), col), at(solid(new THREE.RingGeometry(0.16, 0.18, 48).rotateX(-Math.PI / 2), pale), (f) => { f.position.y = floor; }));
     const open = spring(0.08);
@@ -186,7 +211,7 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
   root.add(track, dial, stars, cone, train);
 
   function update(t) {
-    // the train runs the built line from the first station to "now", pauses, and starts again
+    // the reader runs the written strand from the first station to "now", pauses, and starts again
     const u = Math.min((t * 0.06) % 1.25, 1), where = T0 + (T1 - T0) * u * u * (3 - 2 * u), anyOpen = stations.some((s) => s.open.to);
     U.uTrain.value = where; curve.getPoint(where, train.position);
     for (const s of stations) {
