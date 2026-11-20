@@ -196,7 +196,7 @@ async function enter(id, push = true) {
   $('#what').textContent = content.rooms[id].loading; progress(0); loader.classList.remove('done'); hud.classList.add('hidden');
   if (room) { await new Promise((r) => setTimeout(r, 500)); room.dispose(); room = null; }      // let the cover fade in before the old room goes
   if (push) history.pushState(null, '', urlFor(id));
-  room = await loadRoom(id, content.rooms[id], { camera, mirror, maxAniso, onProgress: progress });
+  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress });
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);
   tour = null; view = viewTarget = Q.has('shot') ? SHOT : +!still; navTouched = PINNED; t0 = uTime.value;

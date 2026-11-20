@@ -16,7 +16,7 @@ for (const job of jobs) {
   await p.screenshot({ path: `/out/${prefix}_${name}.png` });
   if (name.endsWith('hero')) {
     const shots = await p.evaluate(() => { const out = []; window.__lobby.scene.traverse((o) => { const t = o.userData?.fx === 'screen' && o.material?.uniforms?.map?.value;
-      if (t) out.push([o.userData.name || o.name, t.image.toDataURL('image/png')]); }); return out; });
+      if (t) out.push([o.userData.name || o.name, (t.userData.canvas ?? t.image).toDataURL('image/png')]); }); return out; });
     for (const [n, d] of shots) fs.writeFileSync(`/out/${prefix}_${name}_${n}.png`, Buffer.from(d.split(',')[1], 'base64'));
     console.log(name, 'screens:', shots.map((s) => s[0]).join(' '));
   }

@@ -120,11 +120,25 @@ const LAYOUTS = {
 };
 const EVERY = { board: 1, roster: 3, bars: 2 };                // seconds between redraws; anything else is drawn once
 
+// Uploading a canvas into an sRGB texture takes Chrome/ANGLE ~20 ms per screen (Intel HD 630): a visible hitch
+// whenever several screens redraw together. A plain RGBA8 upload is fast, so the canvas goes into one shared staging
+// texture and a full-screen draw decodes it into the screen's sRGB texture (the hardware re-encodes it: bit-exact).
+const stage = new THREE.CanvasTexture(); stage.flipY = false; stage.generateMipmaps = false; stage.minFilter = stage.magFilter = THREE.NearestFilter;
+const decode = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+  uniforms: { t: { value: stage } }, depthTest: false, depthWrite: false,
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+  fragmentShader: `uniform sampler2D t; varying vec2 vUv;
+    void main(){ vec3 c = texture2D(t, vUv).rgb; gl_FragColor = vec4(mix(c/12.92, pow((c + 0.055)/1.055, vec3(2.4)), step(0.04045, c)), 1.0); }`,
+}));
+decode.frustumCulled = false;
+const decodeCam = new THREE.Camera();
+
 /** @param cfg a room's "screens" entry from content.json. Returns one material per screen, in list order. */
-export function createScreens({ footer, tag = '', list }, anisotropy, gain = 0.9) {
+export function createScreens({ footer, tag = '', list }, renderer, anisotropy, gain = 0.9) {
   const items = list.map((s) => {
     const cv = Object.assign(document.createElement('canvas'), { width: W, height: H }), ctx = cv.getContext('2d');
-    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.flipY = false; tex.anisotropy = anisotropy;
+    const rt = new THREE.WebGLRenderTarget(W, H, { colorSpace: THREE.SRGBColorSpace, anisotropy, depthBuffer: false, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+    const tex = rt.texture; tex.userData.canvas = cv;
     ctx.textBaseline = 'middle';
     const material = new THREE.ShaderMaterial({
       uniforms: { map: { value: tex }, uMirror, uGain: { value: gain } }, vertexShader: VERT,
@@ -136,7 +150,7 @@ export function createScreens({ footer, tag = '', list }, anisotropy, gain = 0.9
           gl_FragColor = vec4(c*uGain, 1.0); ${DIST}
         }`,
     });
-    return { s, ctx, tex, material, last: null };
+    return { s, ctx, rt, material, last: null };
   });
   function update() {
     const t = performance.now() / 1000, v = live(t), fading = Math.min(t % CYCLE, CYCLE - (t % CYCLE)) < FADE;
@@ -144,9 +158,10 @@ export function createScreens({ footer, tag = '', list }, anisotropy, gain = 0.9
       const { s } = it, every = s.layout === 'messages' ? (fading ? 0.1 : 1) : s.figure === 'crossing' ? 1 : EVERY[s.layout];
       const key = every ? Math.floor(t / every) : 0;
       if (key === it.last) continue;
-      it.last = key; frame(it.ctx, s.title, s.tag ?? tag, footer); LAYOUTS[s.layout](it.ctx, s, (str) => fill(str, v), t, v); it.tex.needsUpdate = true;
+      it.last = key; frame(it.ctx, s.title, s.tag ?? tag, footer); LAYOUTS[s.layout](it.ctx, s, (str) => fill(str, v), t, v);
+      stage.image = it.ctx.canvas; stage.needsUpdate = true; renderer.setRenderTarget(it.rt); renderer.render(decode, decodeCam);
     }
   }
   update();
-  return { materials: items.map((it) => it.material), update };
+  return { materials: items.map((it) => it.material), update, dispose: () => items.forEach((it) => it.rt.dispose()) };
 }

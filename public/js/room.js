@@ -17,9 +17,9 @@ const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math
 
 /**
  * @param text  this room's entry in content.json
- * @param env   { camera, mirror, maxAniso, onProgress }: the shared camera, the floor-mirror target and its uniforms
+ * @param env   { renderer, camera, mirror, maxAniso, onProgress }: the shared renderer and camera, the floor-mirror target and its uniforms
  */
-export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress }) {
+export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress }) {
   // ---------------------------------------------------------------- loading
   const base = `assets/${id}`, manager = new THREE.LoadingManager(); let info;
   manager.onProgress = (_url, n, total) => onProgress(n / total);
@@ -160,7 +160,7 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
   });
 
   // ---------------------------------------------------------------- scene graph
-  const screens = createScreens(text.screens, Math.min(8, maxAniso), num('screens', 0.9));
+  const screens = createScreens(text.screens, renderer, Math.min(8, maxAniso), num('screens', 0.9));
   const screenMeshes = [], movers = [], pivots = {}, SPIN = info.chand?.spin || {};
   scene.add(gltf.scene);
   gltf.scene.traverse((o) => {
@@ -357,6 +357,6 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
       if (PHASES.length === 3) uChand.value.set(...PHASES.map((p) => (1 + 2 * Math.cos(phi - p)) / 3));
       hologram?.update(t); routeMap?.update(t); screens.update();
     },
-    dispose: () => { dispose(scene); shadow?.rt.dispose(); shadow?.mat.dispose(); for (const l of Object.values(skyTex)) for (const t of l) { t.dispose(); t.image?.close?.(); } },
+    dispose: () => { dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); for (const l of Object.values(skyTex)) for (const t of l) { t.dispose(); t.image?.close?.(); } },
   };
 }
