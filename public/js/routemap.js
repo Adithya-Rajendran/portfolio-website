@@ -129,7 +129,7 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
   // pairs between them, as one mesh of thin tubes; each vertex knows how far along the route it is (aT), what it
   // belongs to (aK: 0, 1 = the strands, 2, 3 = the two halves of a base pair) and the point and direction of the route
   // it turns about (aC, aAx).
-  const FAINT = '0.4', SPIN = '0.16';                                                // brightness of the helix; radians per second
+  const FAINT = '0.13', SPIN = '0.16';                                                // brightness of the helix; radians per second
   const R = 0.085, PITCH = 0.62, PER_TURN = 10, GROOVE = 0.78 * Math.PI, SEG = 520, SIDES = 5;
   const LEN = curve.getLength(), TURNS = LEN / PITCH, pos = [], nor = [], aT = [], aK = [], aC = [], aAx = [], idx = [], p = V(), tan = V(), n = V(), b = V();
   const on = (t, phase) => {                                                         // a point on a strand
@@ -166,9 +166,9 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
       float wake = d > 0.0 ? exp(-d*26.0) : 0.0, head = exp(-abs(d)*700.0);
       vec3 base = vK < 2.5 ? ${CY} : ${GOLD};                                           // the two bases of a pair
       vec3 col = strand > 0.5
-        ? ${GOLD}*(0.3 + 0.7*built)*(1.0 + 2.0*wake)*mix(1.0, 0.5*step(0.5, fract(s*5.0)), ahead)
-        : base*(0.1 + 0.35*built)*(1.0 + 4.0*wake)*(1.0 - 0.8*ahead);
-      col = col*${FAINT} + vec3(1.0, 0.92, 0.75)*head*1.2;                          // a suggestion of a helix, not a neon sign
+        ? ${GOLD}*(0.3 + 0.7*built)*(1.0 + 1.5*wake)*mix(1.0, 0.5*step(0.5, fract(s*5.0)), ahead)
+        : base*(0.08 + 0.3*built)*(1.0 + 2.5*wake)*(1.0 - 0.8*ahead);
+      col = col*${FAINT} + vec3(1.0, 0.92, 0.75)*head*0.35;                          // a suggestion of a helix, not a neon sign
       col *= (0.35 + 0.65*vFace)*smoothstep(0.0, 0.03, vT)*smoothstep(1.0, 0.985, vT);  // tubes: brightest face-on
       gl_FragColor = vec4(col*uGain, 1.0);
     }`, { ...U, uLen: { value: LEN }, uEnds: { value: new THREE.Vector2(T0, T1) } }, {
