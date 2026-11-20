@@ -69,7 +69,9 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   //   prepass() renders from the sun through the window every frame.
   const SPUN = info.spin, LIT = new Set(SPUN?.layered || []), NSKY = SPUN?.phases || 0, SH = num('shadow', 2048);
   const skyTex = {}, lit = [];                                     // grp -> its N layers; every material that uses them
-  const shadow = SPUN && { rt: new THREE.WebGLRenderTarget(SH, SH, { depthTexture: new THREE.DepthTexture(SH, SH), generateMipmaps: false }),
+  // Only its depth is used: the colour attachment three insists on is one byte and never written or cleared; 16-bit
+  // depth steps are 2 mm over the 139 m range, far below the 17 cm comparison bias.
+  const shadow = SPUN && { rt: new THREE.WebGLRenderTarget(SH, SH, { format: THREE.RedFormat, depthTexture: new THREE.DepthTexture(SH, SH), generateMipmaps: false }),
     cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 140), mat: new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }) };
   const uSunVP = { value: new THREE.Matrix4() }, uSunDir = { value: sunNow }, uSkyMix = { value: 0 },
     uSunE = { value: V(...(SPUN?.sun_e || [0, 0, 0])).multiplyScalar(num('sunlight', 1) / Math.PI) };
@@ -347,7 +349,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       c.position.copy(PORTAL).addScaledVector(sunNow, 60); c.up.set(1, 0, 0); c.lookAt(PORTAL); c.updateMatrixWorld();
       uSunVP.value.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);
       c.layers.set(1); scene.overrideMaterial = shadow.mat;
-      renderer.setRenderTarget(shadow.rt); renderer.clear(); renderer.render(scene, c);
+      renderer.autoClearColor = false; renderer.setRenderTarget(shadow.rt); renderer.render(scene, c); renderer.autoClearColor = true;
       scene.overrideMaterial = null;
     }),
     /** Per frame, after the camera has been placed. */
