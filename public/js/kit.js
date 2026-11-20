@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 
 export const Q = new URLSearchParams(location.search);
-export const SKIP = new Set((Q.get('skip') || '').split(','));    // profiling switches: mirror, bloom, holo, dust, shaft, storms
+export const SKIP = new Set((Q.get('skip') || '').split(','));    // profiling switches: sunlight, mirror, bloom, holo, dust, shaft, storms, zpre
 export const num = (k, d) => (Q.has(k) && !Number.isNaN(parseFloat(Q.get(k))) ? parseFloat(Q.get(k)) : d);
 export const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 export const B = (v) => V(v[0], v[2], -v[1]);                     // Blender (x, y, z) -> three (x, z, -y)

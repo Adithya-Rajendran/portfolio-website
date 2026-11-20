@@ -179,6 +179,15 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     if (u.grp) o.layers.enable(1);                      // layer 1: what casts a shadow in the sunlight
     if (SPIN[u.grp] ?? SPIN[u.em]) movers.push(o);
   });
+  // Depth pre-pass: the baked surfaces overlap about twice per pixel and theirs is the expensive shader, so each is
+  // first drawn depth-only (same vertex code, so the same depths; renderOrder -1 puts these first) and its real material
+  // then shades only what is seen. Children of the meshes, so they follow the orrery and hide with the floor; drawn in
+  // the same render() as everything else, since a separate pass would cost another MSAA resolve.
+  if (!SKIP.has('zpre')) {
+    const zMat = [THREE.FrontSide, THREE.DoubleSide].map((side) => new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: 'void main(){}', colorWrite: false, side }));
+    const baked = []; gltf.scene.traverse((o) => { if (o.isMesh && o.userData.grp) baked.push(o); });
+    for (const o of baked) { const z = new THREE.Mesh(o.geometry, zMat[+(o.material.side === THREE.DoubleSide)]); z.renderOrder = -1; z.frustumCulled = false; o.add(z); }
+  }
   // the orrery: rings tagged +1 and -1 turn in opposite directions about the vertical axis through the dais
   for (const o of movers) {
     const turn = SPIN[o.userData.grp] ?? SPIN[o.userData.em];
