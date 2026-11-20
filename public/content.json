@@ -253,11 +253,11 @@
         ]
       },
       "volumes": [
-        { "no": "01", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] },
-        { "no": "02", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] },
-        { "no": "03", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] },
-        { "no": "04", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] },
-        { "no": "05", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] }
+        { "no": "01", "title": "Title of the piece", "lines": ["One sentence on what it argues.", "Why you wrote it."], "rows": [["DATE", "Month, year"], ["LENGTH", "Minutes to read"], ["SUBJECT", "What it is about"]] },
+        { "no": "02", "title": "Title of the piece", "lines": ["One sentence on what it argues.", "Why you wrote it."], "rows": [["DATE", "Month, year"], ["LENGTH", "Minutes to read"], ["SUBJECT", "What it is about"]] },
+        { "no": "03", "title": "Title of the piece", "lines": ["One sentence on what it argues.", "Why you wrote it."], "rows": [["DATE", "Month, year"], ["LENGTH", "Minutes to read"], ["SUBJECT", "What it is about"]] },
+        { "no": "04", "title": "Title of the piece", "lines": ["One sentence on what it argues.", "Why you wrote it."], "rows": [["DATE", "Month, year"], ["LENGTH", "Minutes to read"], ["SUBJECT", "What it is about"]] },
+        { "no": "05", "title": "Title of the piece", "lines": ["One sentence on what it argues.", "Why you wrote it."], "rows": [["DATE", "Month, year"], ["LENGTH", "Minutes to read"], ["SUBJECT", "What it is about"]] }
       ]
     }
   }

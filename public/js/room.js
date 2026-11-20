@@ -339,6 +339,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     picks.push({ mesh, door, pose: () => ({ pos: c.clone().addScaledVector(n, 4.2 / Math.min(1, camera.aspect / 1.2)).setY(c.y + 0.5), tgt: c.clone().setY(c.y + 0.25) }) });
   }
 
+  let frames = 0;
   const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
   await Promise.all(pending);                                      // the cover lifts on a complete room
   return {
@@ -366,7 +367,14 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       for (const turn in pivots) pivots[turn].rotation.y = phi * turn;
       if (PHASES.length === 3) uChand.value.set(...PHASES.map((p) => (1 + 2 * Math.cos(phi - p)) / 3));
       hologram?.update(t); routeMap?.update(t); drone?.update(t); screens.update();
+      // The drone is lit by the room: once everything is on screen, the room is photographed from where it works into
+      // a cube map, and that becomes the environment of its materials.
+      if (drone && !drone.lit && ++frames > 3) {
+        const cube = new THREE.WebGLCubeRenderTarget(128, { type: THREE.HalfFloatType }), eye = new THREE.CubeCamera(0.05, 100, cube), pmrem = new THREE.PMREMGenerator(renderer);
+        eye.position.copy(B(info.drone.deliver)); drone.root.visible = false; eye.update(renderer, scene); drone.root.visible = true;
+        drone.setEnv((drone.lit = pmrem.fromCubemap(cube.texture)).texture); cube.dispose(); pmrem.dispose();
+      }
     },
-    dispose: () => { dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
+    dispose: () => { drone?.lit?.dispose?.(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
 }

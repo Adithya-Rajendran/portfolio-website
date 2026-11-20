@@ -242,7 +242,7 @@ scene['lobby'] = dict(room='writing', exposure=1.3, cam=list(CAM_POS), tgt=list(
                       doors=DOORS, screens=SCREENS,
                       # the terminal: where to stand; the drone: its cradle, where it hands a volume over, the shelf slots
                       terminal=dict(screen='FX_screen0', pos=[0.0, -0.75, 1.5], tgt=[0.0, 1.5, 1.12]),
-                      drone=dict(dock=list(CR + Vector((0, 0, 0.2))), deliver=[0.16, 0.7, 1.45], slots=SLOTS),
+                      drone=dict(dock=list(CR + Vector((0, 0, 0.257))), deliver=[0.0, 0.5, 1.6], slots=SLOTS),
                       portal=list(PORTAL_C), sun=list(SUN_DIR), backdrop_fov=100,
                       # the ring's spin, as in the Atrium (see build_scene.py); half: half-size of the window the sun shines through
                       spin=dict(axis=[0.0, 1.0, 0.0], period=120.0, sun_e=[sun.energy * c for c in sun.color], half=4.8), earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),
