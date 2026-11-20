@@ -125,11 +125,13 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
   const curve = new THREE.CatmullRomCurve3([P[0].clone().add(V(-0.9, -0.5, 0.9)), ...P, P[N - 1].clone().add(V(0.5, 0.9, 0.6))], false, 'centripetal');
   const T0 = 1 / (N + 1), T1 = N / (N + 1);                                          // curve parameter of the first / last station
 
-  // ---- the track: a double helix wound round the route. Two backbone strands and the base pairs between them, as
-  // one mesh of thin tubes; each vertex knows how far along the route it is (aT) and what it belongs to (aK:
-  // 0, 1 = the strands, 2, 3 = the two halves of a base pair).
-  const R = 0.11, PITCH = 0.62, PER_TURN = 10, GROOVE = 0.78 * Math.PI, SEG = 520, SIDES = 5;
-  const LEN = curve.getLength(), TURNS = LEN / PITCH, pos = [], nor = [], aT = [], aK = [], idx = [], p = V(), tan = V(), n = V(), b = V();
+  // ---- the track: a faint double helix wound round the route, turning slowly. Two backbone strands and the base
+  // pairs between them, as one mesh of thin tubes; each vertex knows how far along the route it is (aT), what it
+  // belongs to (aK: 0, 1 = the strands, 2, 3 = the two halves of a base pair) and the point and direction of the route
+  // it turns about (aC, aAx).
+  const FAINT = '0.4', SPIN = '0.16';                                                // brightness of the helix; radians per second
+  const R = 0.085, PITCH = 0.62, PER_TURN = 10, GROOVE = 0.78 * Math.PI, SEG = 520, SIDES = 5;
+  const LEN = curve.getLength(), TURNS = LEN / PITCH, pos = [], nor = [], aT = [], aK = [], aC = [], aAx = [], idx = [], p = V(), tan = V(), n = V(), b = V();
   const on = (t, phase) => {                                                         // a point on a strand
     curve.getPoint(t, p); curve.getTangent(t, tan); n.crossVectors(tan, V(0, 1, 0)).normalize(); b.crossVectors(n, tan);
     const a = t * TURNS * TAU + phase; return p.clone().addScaledVector(n, Math.cos(a) * R).addScaledVector(b, Math.sin(a) * R);
@@ -142,18 +144,19 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
       for (let s = 0; s < SIDES; s++) {
         const a = s / SIDES * TAU, x = Math.cos(a), y = Math.sin(a), nx = u.x * x + v.x * y, ny = u.y * x + v.y * y, nz = u.z * x + v.z * y;
         pos.push(q.x + nx * r, q.y + ny * r, q.z + nz * r); nor.push(nx, ny, nz); aT.push(ts[i]); aK.push(kind);
+        curve.getPoint(ts[i], p); curve.getTangent(ts[i], tan); aC.push(p.x, p.y, p.z); aAx.push(tan.x, tan.y, tan.z);
         if (i) { const c = base + i * SIDES + s, d = base + i * SIDES + (s + 1) % SIDES; idx.push(c - SIDES, d - SIDES, c, d - SIDES, d, c); }
       }
     });
   }
   const ts = Array.from({ length: SEG + 1 }, (_, i) => i / SEG);
-  for (const k of [0, 1]) tube(ts.map((t) => on(t, k * GROOVE)), ts, 0.013, k);
+  for (const k of [0, 1]) tube(ts.map((t) => on(t, k * GROOVE)), ts, 0.007, k);
   for (let i = 1, count = Math.floor(TURNS * PER_TURN); i < count; i++) {
     const t = i / count, a = on(t, 0), c = on(t, GROOVE), mid = a.clone().lerp(c, 0.5), flip = i % 2;       // which base sits on which strand alternates
-    tube([a, mid], [t, t], 0.007, 2 + flip); tube([mid, c], [t, t], 0.007, 3 - flip);
+    tube([a, mid], [t, t], 0.004, 2 + flip); tube([mid, c], [t, t], 0.004, 3 - flip);
   }
   const helix = new THREE.BufferGeometry(); helix.setIndex(idx);
-  for (const [name, arr, size] of [['position', pos, 3], ['normal', nor, 3], ['aT', aT, 1], ['aK', aK, 1]]) helix.setAttribute(name, new THREE.Float32BufferAttribute(arr, size));
+  for (const [name, arr, size] of [['position', pos, 3], ['normal', nor, 3], ['aT', aT, 1], ['aK', aK, 1], ['aC', aC, 3], ['aAx', aAx, 3]]) helix.setAttribute(name, new THREE.Float32BufferAttribute(arr, size));
   const track = new THREE.Mesh(helix, glsl(`uniform float uTime, uGain, uTrain, uLen; uniform vec2 uEnds; varying float vT, vK, vFace;
     void main(){
       float s = vT*uLen, strand = step(vK, 1.5);
@@ -163,15 +166,18 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
       float wake = d > 0.0 ? exp(-d*26.0) : 0.0, head = exp(-abs(d)*700.0);
       vec3 base = vK < 2.5 ? ${CY} : ${GOLD};                                           // the two bases of a pair
       vec3 col = strand > 0.5
-        ? ${GOLD}*(0.3 + 0.7*built)*(1.0 + 3.0*wake)*mix(1.0, 0.5*step(0.5, fract(s*5.0)), ahead)
-        : base*(0.12 + 0.5*built)*(1.0 + 5.0*wake)*(1.0 - 0.8*ahead);
-      col += vec3(1.0, 0.92, 0.75)*head*3.0;
+        ? ${GOLD}*(0.3 + 0.7*built)*(1.0 + 2.0*wake)*mix(1.0, 0.5*step(0.5, fract(s*5.0)), ahead)
+        : base*(0.1 + 0.35*built)*(1.0 + 4.0*wake)*(1.0 - 0.8*ahead);
+      col = col*${FAINT} + vec3(1.0, 0.92, 0.75)*head*1.2;                          // a suggestion of a helix, not a neon sign
       col *= (0.35 + 0.65*vFace)*smoothstep(0.0, 0.03, vT)*smoothstep(1.0, 0.985, vT);  // tubes: brightest face-on
       gl_FragColor = vec4(col*uGain, 1.0);
     }`, { ...U, uLen: { value: LEN }, uEnds: { value: new THREE.Vector2(T0, T1) } }, {
     vertexShader: `attribute float aT, aK; varying float vT, vK, vFace;
-      void main(){ vT = aT; vK = aK; vec4 w = modelMatrix*vec4(position, 1.0);
-        vFace = abs(dot(normalize(mat3(modelMatrix)*normal), normalize(cameraPosition - w.xyz))); gl_Position = projectionMatrix*viewMatrix*w; }` }));
+      attribute vec3 aC, aAx; uniform float uTime;
+      vec3 turn(vec3 v, vec3 k, float a){ return v*cos(a) + cross(k, v)*sin(a) + k*dot(k, v)*(1.0 - cos(a)); }    // about the route's own direction
+      void main(){ vT = aT; vK = aK; float a = uTime*${SPIN};
+        vec4 w = modelMatrix*vec4(aC + turn(position - aC, aAx, a), 1.0);
+        vFace = abs(dot(normalize(mat3(modelMatrix)*turn(normal, aAx, a)), normalize(cameraPosition - w.xyz))); gl_Position = projectionMatrix*viewMatrix*w; }` }));
   track.frustumCulled = false;
 
   // ---- stations
