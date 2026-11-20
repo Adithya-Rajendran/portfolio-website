@@ -1,0 +1,8 @@
+// Cloudflare Workers, static assets only: `npx wrangler deploy` uploads public/ as it is (no build step, no Worker code).
+// Cloudflare compresses text (HTML, JS, JSON, WASM) on the way out; the big files are already compressed inside
+// (KTX2 + Zstandard textures, meshopt geometry). Cache rules: public/_headers.
+{
+  "name": "arcadia-station",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./public" }
+}

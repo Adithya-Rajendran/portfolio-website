@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -42,15 +43,16 @@ const STOPS = [['NAVIGATION', -47], ['FABRICATION', -19], ['ATRIUM', 16], ['SPOK
 const deck = new THREE.Group(); scene.add(deck);
 const roofs = [], shell = []; let showRoof = false;
 const STYLE = { arch: [CY, 0.55], center: [CY, 0.85], props: [0x9fe6ff, 0.28], floor: [CY, 0.5], roof: [CY, 0.16], chand: [AM, 0.7] };
-const loader = new GLTFLoader(), picks = [];
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder), picks = [];
 function plateFor(r, box) { const s = box.getSize(V(0, 0, 0)), c = box.getCenter(V(0, 0, 0));
   const plate = new THREE.Mesh(r.id === 'navigation' ? new THREE.CircleGeometry(9, 64).rotateX(-Math.PI / 2) : new THREE.PlaneGeometry(s.x, s.z).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x0b2a3b, transparent: true, opacity: r.box ? 0.4 : 0.85 }));
   plate.position.set(c.x, -0.05, c.z); deck.add(plate); plate.userData.room = r; picks.push(plate); }
 async function addRoom(r) {
   const g = new THREE.Group(); g.position.set(r.at, 0, 0); g.rotation.y = r.turn * Math.PI / 2; deck.add(g); g.updateMatrixWorld(true);
-  const gltf = await loader.loadAsync(r.glb); gltf.scene.updateMatrixWorld(true); const box = new THREE.Box3();
+  const { v } = await (await fetch(r.glb.replace('room.glb', 'scene.json'), { cache: 'no-cache' })).json();      // the bake's version: see _headers
+  const gltf = await loader.loadAsync(`${r.glb}?v=${v}`); gltf.scene.updateMatrixWorld(true); const box = new THREE.Box3();
   gltf.scene.traverse((o) => {
-    if (!o.isMesh) return; const u = o.userData, grp = u.grp || '';
+    if (!o.isMesh) return; const u = o.userData = { ...o.parent.userData, ...o.userData }, grp = u.grp || '';
     if (u.em || u.fx === 'glass') return;
     const key = u.fx === 'screen' ? 'screen' : grp.startsWith('chand') ? 'chand' : grp === 'archC' ? 'roof' : grp.startsWith('arch') || grp === 'back' ? 'arch' : grp.startsWith('floor') ? 'floor' : grp;
     const [color, opacity] = key === 'screen' ? [AM, 0.9] : STYLE[key] || [CY, 0.5];

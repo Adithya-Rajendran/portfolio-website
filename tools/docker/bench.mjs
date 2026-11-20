@@ -7,13 +7,17 @@ const HOOK = () => {
   const bytes = new Map(); let total = 0, peak = 0;
   const set = (k, b) => { total += b - (bytes.get(k) || 0); bytes.set(k, b); peak = Math.max(peak, total); };
   const P = WebGL2RenderingContext.prototype, bound = new WeakMap();
-  const BPP = { 0x8058: 4, 0x8051: 3, 0x881A: 8, 0x8C3A: 4, 0x81A6: 4, 0x81A5: 2, 0x88F0: 4, 0x8CAC: 4, 0x8CAD: 8, 0x8D48: 1, 0x822F: 4, 0x8229: 1, 0x822B: 2, 0x8814: 16, 0x8C43: 4, 0x8F97: 4 };
+  const BPP = { 0x8058: 4, 0x8051: 3, 0x881A: 8, 0x8C3A: 4, 0x81A6: 4, 0x81A5: 2, 0x88F0: 4, 0x8CAC: 4, 0x8CAD: 8, 0x8D48: 1, 0x822F: 4, 0x8229: 1, 0x822B: 2, 0x8814: 16, 0x8C43: 4, 0x8F97: 4,
+    0x8E8C: 1, 0x8E8D: 1, 0x8E8E: 1, 0x8E8F: 1, 0x93B0: 1, 0x93D0: 1, 0x83F3: 1, 0x9278: 1, 0x83F0: 0.5, 0x83F1: 0.5, 0x9274: 0.5 };   // block-compressed: BC7, BC6H, ASTC 4x4, DXT5, ETC2 RGBA; DXT1, ETC2 RGB
   const fmtBytes = (f) => BPP[f] ?? 4;
   const oBind = P.bindTexture; P.bindTexture = function (t, tex) { bound.set(this, Object.assign(bound.get(this) || {}, { [t]: tex })); return oBind.call(this, t, tex); };
   const oRB = P.bindRenderbuffer; P.bindRenderbuffer = function (t, rb) { bound.set(this, Object.assign(bound.get(this) || {}, { rb })); return oRB.call(this, t, rb); };
   const oS = P.texStorage2D; P.texStorage2D = function (t, levels, fmt, w, h) {
     let b = 0, x = w, y = h; for (let i = 0; i < levels; i++) { b += x * y * fmtBytes(fmt); x = Math.max(1, x >> 1); y = Math.max(1, y >> 1); }
-    set(bound.get(this)[t], b * (t === 0x8513 ? 6 : 1)); return oS.apply(this, arguments); };
+    (window.__fmts ??= new Set()).add(fmt); set(bound.get(this)[t], b * (t === 0x8513 ? 6 : 1)); return oS.apply(this, arguments); };
+  const oS3 = P.texStorage3D; P.texStorage3D = function (t, levels, fmt, w, h, depth) {
+    let b = 0, x = w, y = h; for (let i = 0; i < levels; i++) { b += x * y * depth * fmtBytes(fmt); x = Math.max(1, x >> 1); y = Math.max(1, y >> 1); }
+    (window.__fmts ??= new Set()).add(fmt); set(bound.get(this)[t], b); return oS3.apply(this, arguments); };
   const oI = P.texImage2D; P.texImage2D = function (t, level, fmt) {
     const r = oI.apply(this, arguments); const tex = bound.get(this)?.[t];
     if (tex && level === 0) { const a = arguments; let ww = a[3], hh = a[4]; if (typeof ww !== 'number') { ww = a[5]?.width; hh = a[5]?.height; } if (typeof ww === 'number') set(tex, ww * hh * fmtBytes(fmt) * 4 / 3); }
@@ -26,7 +30,7 @@ const HOOK = () => {
   const gc = HTMLCanvasElement.prototype.getContext, raf = window.requestAnimationFrame.bind(window), px = new Uint8Array(4); let ctx2 = null;
   HTMLCanvasElement.prototype.getContext = function (t, o) { const c = gc.call(this, t, o); if (t === 'webgl2' && this.id === 'scene') ctx2 = c; return c; };
   window.requestAnimationFrame = (cb) => raf((t) => { cb(t); if (!window.__measuring) ctx2?.readPixels(0, 0, 1, 1, ctx2.RGBA, ctx2.UNSIGNED_BYTE, px); });
-  window.__gpumem = () => ({ mb: +(total / 2 ** 20).toFixed(1), peak_mb: +(peak / 2 ** 20).toFixed(1), objects: [...bytes.values()].filter(Boolean).length });
+  window.__gpumem = () => ({ mb: +(total / 2 ** 20).toFixed(1), peak_mb: +(peak / 2 ** 20).toFixed(1), objects: [...bytes.values()].filter(Boolean).length, formats: [...(window.__fmts || [])].map((f) => '0x' + f.toString(16)).join(' ') });
 };
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit'] });
 for (let run = 0; run < +runs; run++) {

@@ -3,7 +3,7 @@ Path-trace lighting (+ reflections as seen from the hero camera) into linear-HDR
 The floor is baked WITHOUT its glossy lobe: its reflection is rendered live in three.js (planar reflection).
   ./run.sh -b lobby.blend --python bake.py -- <scale> <spp> [group,group,...]
 scale: 1.0 = final (4k atlases), 0.25 = quick preview.
-Outputs ../public/assets/<room>/{room.glb, scene.json, tex/<group>.webp}
+Outputs ../assets-src/<room>/{room.glb, scene.json, tex/<group>.webp}; tools/pack.py turns that into what the site serves.
 """
 import bpy, bmesh, sys, os, math, json, time
 import numpy as np
@@ -16,7 +16,7 @@ ONLY = a[2].split(',') if len(a) > 2 else None
 HERE = os.path.dirname(os.path.abspath(__file__))
 s = bpy.context.scene
 ROOM = s['lobby'].get('room', 'lobby')                 # each room bakes into its own asset folder
-OUTD = os.path.join(HERE, '..', 'public', 'assets', ROOM); os.makedirs(os.path.join(OUTD, 'tex'), exist_ok=True)
+OUTD = os.path.join(HERE, '..', 'assets-src', ROOM); os.makedirs(os.path.join(OUTD, 'tex'), exist_ok=True)
 HAS_CHAND = 'chand' in s['lobby'].keys()
 RES = {'floorN': 2048, 'floorF': 2048, 'center': 4096, 'archL': 4096, 'archR': 4096, 'archC': 4096, 'props': 4096, 'people': 4096, 'back': 1024, 'chandA': 1024, 'chandB': 1024}
 LAYER_RES = 1024                      # the chandelier's light is low-frequency: small maps are enough

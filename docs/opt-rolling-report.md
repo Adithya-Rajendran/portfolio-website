@@ -173,3 +173,35 @@ tools/dbench.sh "?room=lobby&shot=hero&scale=1&tier=1" 5          # frame / GPU 
 ORIGIN=http://<host>:<port> tools/detsnap.sh base                  # 24 deterministic states of some other checkout
 tools/detsnap.sh final && tools/pdiff.sh base final                # max / mean pixel difference per state
 ```
+
+## Follow-up: compressed textures, packed layers, compressed geometry (items 1, 3, 4 above)
+
+Done after the pass above, by `tools/pack.py` (bakes now land in `assets-src/<room>/`; the script writes `public/assets/<room>/`,
+which is generated and not in git; `tools/get-pack-tools.sh` fetches the three tools it needs).
+
+- **Textures are KTX2** (UASTC + Zstandard; the surface-colour atlases BasisLZ), transcoded in workers to ASTC/BC7 and
+  left compressed on the GPU, with mipmaps from the file. BasisLZ was tried for everything: a fifth of the download, but
+  it showed as coloured blocks in dark, smooth light.
+- **Layers are array textures:** one file per group for the three orrery phases and one for the six sky angles
+  (replaces the on-demand loading of item 8).
+- **Geometry is meshopt-compressed** (16-bit positions, float lightmap UVs).
+- **Hosting:** `wrangler.jsonc` and `public/_headers` for Cloudflare Workers static assets. Everything under `/assets/`
+  is requested with the bake's version and cached as immutable.
+
+Same benchmark, same machine, 3 runs each (tier 0, pinned), before -> after:
+
+| room | GPU memory (WebGL) | frame ms | GPU ms | requests | download |
+|---|---|---|---|---|---|
+| lobby | 1024 -> 391 MB | 40.4 -> 39.6 | 32.0 -> 31.0 | 85 -> 61 | 9.5 -> 25.0 MB |
+| about | 870 -> 341 MB | 24.5 -> 24.0 | 18.7 -> 18.1 | 57 -> 49 | 5.4 -> 15.8 MB |
+| projects | 631 -> 275 MB | 25.8 -> 25.3 | 20.4 -> 19.3 | 24 -> 32 | 4.1 -> 15.3 MB |
+| experience | 606 -> 270 MB | 27.8 -> 25.1 | 19.2 -> 18.1 | 22 -> 30 | 2.5 -> 7.3 MB |
+
+`room.glb`: lobby 4.8 -> 0.95 MB, about 1.6 -> 0.37, projects 1.6 -> 0.39, experience 0.79 -> 0.20.
+
+The picture is no longer bit-identical: over the 24 states the mean difference is about 1/255 (0.1-1.2), with 2-14 % of
+pixels off by more than 2 and about 1 % by more than 8, concentrated on edges. Side by side it is not visible.
+
+Costs: the download is 2.7-3.7x larger, and load time over a real network was not measured. The memory counter in
+`tools/docker/bench.mjs` did not know compressed formats or array textures; it does now. Not done: smaller smooth
+layers (item 2), which would take about 4 MB off the lobby's download.

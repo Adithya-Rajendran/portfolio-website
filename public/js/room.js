@@ -3,12 +3,15 @@
 // loadRoom() builds the scene from them and returns what main.js needs to show it, walk around it and throw it away.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { Q, SKIP, num, B, V, VERT, DIST, DSCALE, ADD, GLOW, uTime, uPx, uMirror, cloud, dispose } from './kit.js';
 import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';
 import { createRouteMap } from './routemap.js';
 
 const pickMat = new THREE.MeshBasicMaterial({ visible: false });
+let ktx2;                                                           // one transcoder (and its workers) for every room
 const CH_GAIN = num('chandgain', 0.5), CH_SPEED = (2 * Math.PI) / num('chandperiod', 48);
 // The station spins, so the sky turns in the windows. ?roll=<seconds per turn> overrides the room's own period (0 stops it);
 // ?rollat=<degrees> holds one angle.
@@ -21,29 +24,21 @@ const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math
  */
 export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress }) {
   // ---------------------------------------------------------------- loading
-  const base = `assets/${id}`, manager = new THREE.LoadingManager(); let info;
-  manager.onProgress = (_url, n, total) => onProgress(n / total);
-  const images = new THREE.TextureLoader(manager), bitmaps = typeof createImageBitmap === 'function' && [false, true].map((flip) =>
-    new THREE.ImageBitmapLoader(manager).setOptions({ imageOrientation: flip ? 'flipY' : 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' }));
-  // HDR-encoded bakes (decoded in the shaders). Images are decoded off the main thread into ImageBitmaps where the
-  // browser can, so a texture is never uploaded half-decoded and loading does not stall the page. Once on the GPU, the
-  // decoded copy is let go: a 4096 px atlas holds 64 MB of RAM, which an integrated GPU shares.
-  let pending = [];                                                // every texture the first frame needs
-  function bakeTex(name, aniso = 4, flip = false) {
-    const url = `${base}/tex/${name}.webp?v=${info.v || 0}`;
-    let t;
-    const loaded = new Promise((done) => {
-      if (bitmaps) { t = new THREE.Texture(); t.flipY = false; bitmaps[+flip].load(url, (bmp) => { t.image = bmp; t.needsUpdate = true; done(); }, undefined, done); }
-      else { t = images.load(url, done, undefined, done); t.flipY = flip; }
-    });
-    pending?.push(loaded);
-    t.colorSpace = THREE.NoColorSpace; t.anisotropy = Math.min(aniso, maxAniso); t.onUpdate = () => t.image.close?.();
-    return t;
+  const base = `assets/${id}`; let info, arrived = 0;
+  // The bakes are KTX2 files (tools/pack.py): they stay block-compressed on the GPU and bring their own mipmaps. The
+  // pixels are HDR-encoded and decoded in the shaders. Returns the uniform now; the texture drops into it when it arrives,
+  // and once it is on the GPU the copy in RAM is let go.
+  ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').detectSupport(renderer);
+  const pending = [];
+  function bakeTex(name, aniso = 4) {
+    const u = { value: null }, got = () => onProgress(++arrived / pending.length);
+    pending.push(new Promise((done) => ktx2.load(`${base}/tex/${name}.ktx2?v=${info.v || 0}`, (t) => { t.anisotropy = Math.min(aniso, maxAniso); t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; }; u.value = t; done(); }, undefined, done)).then(got));
+    return u;
   }
   // scene.json is always re-checked with the server; it names the bake (info.v), and every other file is asked for by
   // that name, so a browser can never mix an old texture into a new bake.
   info = await fetch(`${base}/scene.json`, { cache: 'no-cache' }).then((r) => r.json());
-  const gltf = await new GLTFLoader(manager).loadAsync(`${base}/room.glb?v=${info.v || 0}`);
+  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(`${base}/room.glb?v=${info.v || 0}`);
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x010204);
   const CAM = B(info.cam), TGT = B(info.tgt), SUN = B(info.sun || [0, 1, 0.2]).normalize(), sunNow = SUN.clone(), PORTAL = B(info.portal || [0, 1e4, 0]);
   const floors = [], hidden = [];                                  // not drawn into the mirror image: the floor itself; glass and dust
@@ -65,27 +60,26 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // first harmonic of the rotation, and it reproduces each baked phase exactly).
   const uChand = { value: V(1 / 3, 1 / 3, 1 / 3) }, PHASES = (info.chand?.phases || []).map((d) => d * Math.PI / 180);
   const LAYERED = new Set(PHASES.length === 3 ? info.chand.layered : []);
-  const layerUniforms = (grp) => (LAYERED.has(grp) ? Object.fromEntries(PHASES.map((_, i) => [`l${i}`, { value: bakeTex(`${grp}_c${i}`, 1) }])) : {});
+  const layerUniforms = (grp) => (LAYERED.has(grp) ? { lc: bakeTex(`${grp}_c`, 1) } : {});       // one array texture, a layer per phase
   const layerGLSL = (grp, into) => (LAYERED.has(grp)
-    ? `${into} += max(dec(texture2D(l0, vUv))*uChand.x + dec(texture2D(l1, vUv))*uChand.y + dec(texture2D(l2, vUv))*uChand.z, 0.0)*${CH_GAIN.toFixed(3)};` : '');
+    ? `${into} += max(dec(texture(lc, vec3(vUv, 0.0)))*uChand.x + dec(texture(lc, vec3(vUv, 1.0)))*uChand.y + dec(texture(lc, vec3(vUv, 2.0)))*uChand.z, 0.0)*${CH_GAIN.toFixed(3)};` : '');
   // ---- a spinning room (info.spin). The light from outside turns with the sky:
   //   sky layers: Earth-light and bounced sunlight, baked at N angles; the two nearest are cross-faded
   //   direct sun: drawn live. Diffuse only: (baked surface colour) x (irradiance) x cos, shadowed by a depth map that
   //   prepass() renders from the sun through the window every frame.
   const SPUN = info.spin, LIT = new Set(SPUN?.layered || []), NSKY = SPUN?.phases || 0, SH = num('shadow', 2048);
-  const skyTex = {}, lit = [];                                     // grp -> its N layers (those loaded); every material that uses them
   // Only its depth is used: the colour attachment three insists on is one byte and never written or cleared; 16-bit
   // depth steps are 2 mm over the 139 m range, far below the 17 cm comparison bias.
   const shadow = SPUN && { rt: new THREE.WebGLRenderTarget(SH, SH, { format: THREE.RedFormat, depthTexture: new THREE.DepthTexture(SH, SH), generateMipmaps: false }),
     cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 140), mat: new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }) };
-  const uSunVP = { value: new THREE.Matrix4() }, uSunDir = { value: sunNow }, uSkyMix = { value: 0 },
+  const uSunVP = { value: new THREE.Matrix4() }, uSunDir = { value: sunNow }, uSky = { value: V(0, 1, 0) },       // uSky: the two baked angles either side of the sky's, and the mix
     uSunE = { value: V(...(SPUN?.sun_e || [0, 0, 0])).multiplyScalar(num('sunlight', 1) / Math.PI) };
   const litUniforms = (grp) => {
     if (!LIT.has(grp)) return {};
-    return { tAlb: { value: bakeTex(`${grp}_a`, 4) }, sA: { value: null }, sB: { value: null }, tShadow: { value: shadow.rt.depthTexture }, uSunVP, uSunDir, uSunE, uSkyMix };
+    return { tAlb: bakeTex(`${grp}_a`, 4), sk: bakeTex(`${grp}_s`, 1), tShadow: { value: shadow.rt.depthTexture }, uSunVP, uSunDir, uSunE, uSky };
   };
   const litGLSL = (grp, into) => (LIT.has(grp) ? `
-      ${into} += mix(dec(texture2D(sA, vUv)), dec(texture2D(sB, vUv)), uSkyMix)*${num('sky', 1).toFixed(3)};
+      ${into} += mix(dec(texture(sk, vec3(vUv, uSky.x))), dec(texture(sk, vec3(vUv, uSky.y))), uSky.z)*${num('sky', 1).toFixed(3)};
       { vec3 n = normalize(vN); if (dot(n, cameraPosition - vW) < 0.0) n = -n;
         float ndl = dot(n, uSunDir);
         vec4 sc = uSunVP*vec4(vW + n*0.04, 1.0); vec3 sp = sc.xyz*0.5 + 0.5;
@@ -98,18 +92,18 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         } }` : '');
   const VERT_N = `varying vec2 vUv; varying vec3 vW, vN;
     void main(){ vUv = uv; vN = mat3(modelMatrix)*normal; vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`;
-  const vert = (grp) => (LIT.has(grp) ? VERT_N : VERT), keep = (grp, m) => { if (LIT.has(grp)) lit.push([grp, m]); return m; };
-  const PARS = `uniform sampler2D map, l0, l1, l2, sA, sB, tAlb, tShadow; uniform vec3 uChand, uSunDir, uSunE; uniform mat4 uSunVP; uniform float uMirror, uSkyMix;
+  const vert = (grp) => (LIT.has(grp) ? VERT_N : VERT);
+  const PARS = `uniform sampler2D map, tAlb, tShadow; uniform highp sampler2DArray lc, sk; uniform vec3 uChand, uSunDir, uSunE, uSky; uniform mat4 uSunVP; uniform float uMirror;
     varying vec2 vUv; varying vec3 vW, vN; ${DEC}`;
-  const bakedMat = (map, grp, gain = 1) => keep(grp, new THREE.ShaderMaterial({
-    uniforms: { map: { value: map }, uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp) }, side: THREE.DoubleSide, vertexShader: vert(grp),
+  const bakedMat = (map, grp, gain = 1) => new THREE.ShaderMaterial({
+    uniforms: { map, uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp) }, side: THREE.DoubleSide, vertexShader: vert(grp),
     fragmentShader: `${PARS} uniform float uGain;
       void main(){ vec3 c = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'c')} ${litGLSL(grp, 'c')} gl_FragColor = vec4(c*uGain, 1.0); ${DIST} }`,
-  }));
+  });
   // ---- polished floor: baked diffuse light + the live planar reflection that main.js renders into mirror.rt
   const F0 = ((info.floor.ior - 1) / (info.floor.ior + 1)) ** 2, ROUGH = (info.floor.rough[0] + info.floor.rough[1]) / 2;
-  const floorMat = (map, grp) => keep(grp, new THREE.ShaderMaterial({
-    uniforms: { map: { value: map }, tRefl: { value: mirror.rt.texture }, uMirrorVP: { value: mirror.vp }, uSize: { value: mirror.size }, uPxR: mirror.pxPerRad,
+  const floorMat = (map, grp) => new THREE.ShaderMaterial({
+    uniforms: { map, tRefl: { value: mirror.rt.texture }, uMirrorVP: { value: mirror.vp }, uSize: { value: mirror.size }, uPxR: mirror.pxPerRad,
       uMinLod: mirror.minLod, uAlpha: { value: ROUGH * ROUGH }, uTile: { value: info.floor.tile }, uF0: { value: F0 }, uMirror, uChand, ...layerUniforms(grp), ...litUniforms(grp) },
     vertexShader: vert(grp),
     fragmentShader: `${PARS}
@@ -147,7 +141,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         float F = uF0 + (1.0 - uF0)*pow(1.0 - cosT, 5.0);
         gl_FragColor = vec4(diffuse*(1.0 - F)*(1.0 - 0.5*joint) + R*F*(1.0 - 0.9*joint), 1.0);
       }`,
-  }));
+  });
   // Frameless glass balustrade. Additive: what glass adds to the view is reflection, strongest at grazing angles,
   // plus the green-white glint of its polished edges (top edge and the joints between 2 m panels).
   const glassMat = new THREE.ShaderMaterial({
@@ -171,7 +165,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   scene.add(gltf.scene);
   gltf.scene.traverse((o) => {
     if (!o.isMesh) return;
-    const u = o.userData;
+    const u = o.userData = { ...o.parent.userData, ...o.userData }          // tools/pack.py leaves each mesh in a child of its named node;
     if (u.grp?.startsWith('floor')) { o.material = floorMat(bakeTex(u.grp, 2), u.grp); floors.push(o); }
     else if (u.grp) o.material = bakedMat(bakeTex(u.grp, 4), u.grp);
     else if (u.em === 'static') o.material = stripMat;
@@ -205,7 +199,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   let backdrop, shaft; const sky = new THREE.Group(), AXIS = SPUN ? B(SPUN.axis).normalize() : PORTAL.clone().sub(CAM).normalize(); scene.add(sky);       // everything at infinity; follows the camera, turns with the spin
   if (info.portal) {
     const D = 900, dir = AXIS.clone(), size = 2 * D * Math.tan(THREE.MathUtils.degToRad((info.backdrop_fov || 80) / 2));
-    backdrop = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bakedMat(bakeTex('backdrop', 4, true), null, num('earth', 0.75)));
+    backdrop = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bakedMat(bakeTex('backdrop', 4), null, num('earth', 0.75)));
     backdrop.position.copy(dir).multiplyScalar(D); backdrop.lookAt(0, 0, 0); backdrop.frustumCulled = false;
     // The sun, just above Earth's horizon: the focal point of the whole composition. Drawn at infinity for whichever
     // camera is rendering, so it also appears, stretched into a glare path, in the floor.
@@ -299,7 +293,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     scene.add(dust); hidden.push(dust);
   }
   const hologram = info.holo && !SKIP.has('holo')
-    ? await createHologram({ scene, position: B(info.holo).add(V(0, 0.1, 0)), sunDir: SUN, text: text.hologram, base, radius: 0.74, gain: num('holo', 2.0) }) : null;
+    ? await createHologram({ scene, position: B(info.holo).add(V(0, 0.1, 0)), sunDir: SUN, text: text.hologram, base, ver: `?v=${info.v || 0}`, radius: 0.74, gain: num('holo', 2.0) }) : null;
   const routeMap = info.map ? createRouteMap({ scene, center: B(info.map.c), stops: text.stations, radius: info.map.r, gain: num('map', 1.6) }) : null;
 
   // ---------------------------------------------------------------- interactables
@@ -340,20 +334,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     picks.push({ mesh, door, pose: () => ({ pos: c.clone().addScaledVector(n, 4.2 / Math.min(1, camera.aspect / 1.2)).setY(c.y + 0.5), tgt: c.clone().setY(c.y + 0.25) }) });
   }
 
-  // Sky layers: only the two angles either side of the sky's are drawn, and the sky moves on by one every period/N
-  // seconds, so each group keeps three (that pair, and the next one, fetched a whole step before it is needed).
   const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
-  const skyStep = (roll) => ((roll / (2 * Math.PI)) % 1 + 1) % 1 * NSKY, inFlight = (t) => t && !t.image; let skyAt = -1;
-  function setSky(i) {
-    skyAt = i;
-    for (const grp of LIT) {
-      const l = (skyTex[grp] ??= []);
-      for (let k = 0; k < NSKY; k++) if ((k - i + NSKY) % NSKY < 3) l[k] ??= bakeTex(`${grp}_s${k}`, 1); else if (l[k]) { l[k].dispose(); l[k] = null; }
-    }
-    for (const [grp, m] of lit) { m.uniforms.sA.value = skyTex[grp][i]; m.uniforms.sB.value = skyTex[grp][(i + 1) % NSKY]; }
-  }
-  if (NSKY) setSky(Math.floor(skyStep(rollAt(uTime.value))) % NSKY);
-  await Promise.all(pending); pending = null;                      // textures queued above
+  await Promise.all(pending);                                      // the cover lifts on a complete room
   return {
     id, info, scene, picks, floors, hidden, CAM, TGT,
     CLOSE: B(info.close || [0, 17.2, 2.15]), CLOSE_TGT: B(info.close_tgt || [0, 26, 2.6]), arc: info.holo ? 0.9 : 0.25,     // arc: how high the pull-back lifts over the middle
@@ -373,18 +355,13 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       sky.position.copy(camera.position);                                              // Earth is at infinity: no parallax
       const roll = rollAt(t);
       sky.quaternion.setFromAxisAngle(AXIS, roll); sunNow.copy(SUN).applyQuaternion(sky.quaternion);
-      if (NSKY) {                                                                      // the two baked sky angles either side of this one
-        const x = skyStep(roll), i = Math.floor(x) % NSKY;
-        // move on once the new pair is in (its second layer was asked for a step ahead); meanwhile hold the last angle
-        if (i !== skyAt && !lit.some(([grp]) => inFlight(skyTex[grp][i]) || inFlight(skyTex[grp][(i + 1) % NSKY]))) setSky(i);
-        uSkyMix.value = i === skyAt ? x - Math.floor(x) : 1;
-      }
+      if (NSKY) { const x = ((roll / (2 * Math.PI)) % 1 + 1) % 1 * NSKY, i = Math.floor(x) % NSKY; uSky.value.set(i, (i + 1) % NSKY, x - Math.floor(x)); }
       // orrery: turn the rings and blend the three baked light phases for the current angle
       const phi = CH_FIXED ?? t * CH_SPEED;
       for (const turn in pivots) pivots[turn].rotation.y = phi * turn;
       if (PHASES.length === 3) uChand.value.set(...PHASES.map((p) => (1 + 2 * Math.cos(phi - p)) / 3));
       hologram?.update(t); routeMap?.update(t); screens.update();
     },
-    dispose: () => { dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); for (const l of Object.values(skyTex)) for (const t of l) { t?.dispose(); t?.image?.close?.(); } },
+    dispose: () => { dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
 }

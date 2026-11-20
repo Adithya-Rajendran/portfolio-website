@@ -19,7 +19,7 @@ const pixels = (src) => (maps[src] ??= (async () => {
 })());
 const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
 
-export async function createHologram({ scene, position, sunDir, text, base, lensY = 0.52, gain = 1.5, radius = 0.62 }) {
+export async function createHologram({ scene, position, sunDir, text, base, ver = '', lensY = 0.52, gain = 1.5, radius = 0.62 }) {
   const R = radius, K = R / 0.62, DEG = Math.PI / 180;         // K scales the things laid out around the globe
   const root = new THREE.Group(); root.position.copy(position); scene.add(root);
   const U = { uTime, uPx, uSun: { value: sunDir }, uScan: { value: 0 }, uGain: { value: 1 } };
@@ -29,7 +29,7 @@ export async function createHologram({ scene, position, sunDir, text, base, lens
   const tilt = new THREE.Group(); tilt.rotation.z = 0.41; root.add(tilt);            // 23.4 degree axial tilt
   const spin = new THREE.Group(); tilt.add(spin);
   {
-    const [land, city] = await Promise.all([pixels(`${base}/tex/landmask.png`), pixels(`${base}/tex/citylights.png`)]);
+    const [land, city] = await Promise.all([pixels(`${base}/tex/landmask.png${ver}`), pixels(`${base}/tex/citylights.png${ver}`)]);
     const P = [], kind = [], seed = [];
     const isLand = (x, y) => land.d[(Math.min(land.h - 1, Math.max(0, y)) * land.w + ((x + land.w) % land.w)) * 4] > 127;
     const add = (v, k, i) => { P.push(v.x, v.y, v.z); kind.push(k); seed.push(i); };
