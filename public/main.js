@@ -43,7 +43,7 @@ const camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.3, 3000), maxAniso = re
 // the floor's mirror image: rendered here every frame, read by the floor material of whichever room is open
 const mirror = { cam: new THREE.PerspectiveCamera(), vp: new THREE.Matrix4(), size: new THREE.Vector2(4, 4), pxPerRad: { value: 500 }, minLod: { value: 0 },
   rt: new THREE.WebGLRenderTarget(4, 4, { type: HDR_OK ? THREE.HalfFloatType : THREE.UnsignedByteType, generateMipmaps: true,
-    minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, samples: 4 }) };     // MSAA: thin light strips must not alias in it
+    minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, samples: 4, resolveDepthBuffer: false }) };     // MSAA: thin light strips must not alias in it
 const post = new Post(renderer, { hdr: HDR_OK, packed: FLOAT, msaa: 4, look: { contrast: num('contrast', 1.3), saturation: num('sat', 1.08),
   bloom: num('bloom', 0.05), vignette: num('vig', 0.45), grain: num('grain', 0.045) } });
 const gov = new Governor({ min: 0.5, max: 1, pinned: Q.has('scale') ? num('scale', 1) : null });

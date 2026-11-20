@@ -99,7 +99,8 @@ export class Post {
   }
 
   _makeScene() {
-    const rt = new THREE.WebGLRenderTarget(4, 4, { ...this.fmt, samples: this.msaa, depthBuffer: true, stencilBuffer: false });
+    // resolveDepthBuffer: only the colour is read after the pass; three would otherwise copy the depth out too
+    const rt = new THREE.WebGLRenderTarget(4, 4, { ...this.fmt, samples: this.msaa, depthBuffer: true, stencilBuffer: false, resolveDepthBuffer: false });
     rt.texture.generateMipmaps = false;
     return rt;
   }
