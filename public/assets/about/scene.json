@@ -38,6 +38,10 @@
    "label": "ATRIUM"
   }
  ],
+ "screens": [
+  "FX_screen0",
+  "FX_screen1"
+ ],
  "portal": [
   0.0,
   9.0,
@@ -49,6 +53,31 @@
   0.2164396196603775
  ],
  "backdrop_fov": 100,
+ "spin": {
+  "axis": [
+   0.0,
+   1.0,
+   0.0
+  ],
+  "period": 120.0,
+  "sun_e": [
+   9.0,
+   6.929999828338623,
+   4.860000193119049
+  ],
+  "half": 7.7,
+  "phases": 6,
+  "layered": [
+   "archC",
+   "archL",
+   "archR",
+   "back",
+   "center",
+   "floorF",
+   "floorN",
+   "props"
+  ]
+ },
  "earth": {
   "c": [
    -184.58717346191406,
@@ -238,8 +267,5 @@
  ],
  "hdr_range": 8.0,
  "em_range": 8.0,
- "screens": [
-  "FX_screen0",
-  "FX_screen1"
- ]
+ "v": 1795162050
 }

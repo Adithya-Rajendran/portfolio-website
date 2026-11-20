@@ -21,21 +21,24 @@ const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math
  */
 export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress }) {
   // ---------------------------------------------------------------- loading
-  const base = `assets/${id}`, manager = new THREE.LoadingManager();
+  const base = `assets/${id}`, manager = new THREE.LoadingManager(); let info;
   manager.onProgress = (_url, n, total) => onProgress(n / total);
   const images = new THREE.TextureLoader(manager), bitmaps = typeof createImageBitmap === 'function' && [false, true].map((flip) =>
     new THREE.ImageBitmapLoader(manager).setOptions({ imageOrientation: flip ? 'flipY' : 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' }));
   // HDR-encoded bakes (decoded in the shaders). Images are decoded off the main thread into ImageBitmaps where the
   // browser can, so a texture is never uploaded half-decoded and loading does not stall the page.
   function bakeTex(name, aniso = 4, flip = false) {
-    const url = `${base}/tex/${name}.webp`;
+    const url = `${base}/tex/${name}.webp?v=${info.v || 0}`;
     let t;
     if (bitmaps) { t = new THREE.Texture(); t.flipY = false; bitmaps[+flip].load(url, (bmp) => { t.image = bmp; t.needsUpdate = true; }); }
     else { t = images.load(url); t.flipY = flip; }
     t.colorSpace = THREE.NoColorSpace; t.anisotropy = Math.min(aniso, maxAniso);
     return t;
   }
-  const [info, gltf] = await Promise.all([fetch(`${base}/scene.json`).then((r) => r.json()), new GLTFLoader(manager).loadAsync(`${base}/room.glb`)]);
+  // scene.json is always re-checked with the server; it names the bake (info.v), and every other file is asked for by
+  // that name, so a browser can never mix an old texture into a new bake.
+  info = await fetch(`${base}/scene.json`, { cache: 'no-cache' }).then((r) => r.json());
+  const gltf = await new GLTFLoader(manager).loadAsync(`${base}/room.glb?v=${info.v || 0}`);
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x010204);
   const CAM = B(info.cam), TGT = B(info.tgt), SUN = B(info.sun || [0, 1, 0.2]).normalize(), sunNow = SUN.clone(), PORTAL = B(info.portal || [0, 1e4, 0]);
   const floors = [], hidden = [];                                  // not drawn into the mirror image: the floor itself; glass and dust
@@ -76,7 +79,7 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
     return { tAlb: { value: bakeTex(`${grp}_a`, 4) }, sA: { value: skyTex[grp][0] }, sB: { value: skyTex[grp][1 % NSKY] }, tShadow: { value: shadow.rt.depthTexture }, uSunVP, uSunDir, uSunE, uSkyMix };
   };
   const litGLSL = (grp, into) => (LIT.has(grp) ? `
-      ${into} += mix(dec(texture2D(sA, vUv)), dec(texture2D(sB, vUv)), uSkyMix);
+      ${into} += mix(dec(texture2D(sA, vUv)), dec(texture2D(sB, vUv)), uSkyMix)*${num('sky', 1).toFixed(3)};
       { vec3 n = normalize(vN); if (dot(n, cameraPosition - vW) < 0.0) n = -n;
         float ndl = dot(n, uSunDir);
         vec4 sc = uSunVP*vec4(vW + n*0.04, 1.0); vec3 sp = sc.xyz*0.5 + 0.5;
@@ -330,7 +333,7 @@ export async function loadRoom(id, text, { camera, mirror, maxAniso, onProgress 
     exposure: num('exp', info.exposure || 0.85),
     /** Per frame, before anything else is drawn: the sun's shadow map, looking in through the window. */
     prepass: shadow && ((renderer) => {
-      const c = shadow.cam, h = (info.portal_r || 5) + 1.2;
+      const c = shadow.cam, h = SPUN.half || (info.portal_r || 5) + 1.2;
       c.left = c.bottom = -h; c.right = c.top = h; c.updateProjectionMatrix();
       c.position.copy(PORTAL).addScaledVector(sunNow, 60); c.up.set(1, 0, 0); c.lookAt(PORTAL); c.updateMatrixWorld();
       uSunVP.value.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);

@@ -246,7 +246,7 @@ bpy.ops.export_scene.gltf(filepath=os.path.join(OUTD, 'room.glb'), export_format
                           export_vertex_color='ACTIVE', export_all_vertex_colors=False, export_active_vertex_color_when_no_material=True,
                           export_extras=True, export_apply=False, export_animations=False, export_cameras=False, export_lights=False)
 info = s['lobby'].to_dict()
-info['room'] = ROOM; info['groups'] = list(groups.keys()); info['hdr_range'] = HDR_RANGE; info['em_range'] = EM_RANGE
+info['room'] = ROOM; info['v'] = int(time.time()); info['groups'] = list(groups.keys()); info['hdr_range'] = HDR_RANGE; info['em_range'] = EM_RANGE
 if SPIN: info['spin'] = dict(SPIN, phases=SKY_PHASES, layered=static)
 if HAS_CHAND: info['chand'] = dict(info.get('chand', {}), phases=PHASES, layered=static, spin=dict(chandA=1, chandB=-1))
 json.dump(info, open(os.path.join(OUTD, 'scene.json'), 'w'), indent=1)
