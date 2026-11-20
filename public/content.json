@@ -230,6 +230,43 @@
           "specs": [["METRIC", "M. ALCUBIERRE  ·  1994"], ["AHEAD", "SPACE CONTRACTS"], ["BEHIND", "SPACE EXPANDS"], ["SHIP", "AT REST IN ITS BUBBLE"], ["NEEDS", "NEGATIVE ENERGY"]]
         }
       ]
+    },
+    "writing": {
+      "nav": "WRITING",
+      "title": "Writing — Library",
+      "loading": "LIGHTING THE LAMPS",
+      "close": "THE WINDOW",
+      "credit": true,
+      "kicker": "RING 04 · BOW · LIBRARY",
+      "headline": ["Things", "I've written."],
+      "sub": ["A reading room at the hull, with the Earth turning in its window.", "Each lectern holds one piece. The titles are placeholders for now."],
+      "facts": [["ROOM", "WRITING"], ["ON THE LECTERNS", "5 PIECES"]],
+      "screens": {
+        "footer": "ARCADIA STATION  ·  LIBRARY",
+        "tag": "READING ROOM",
+        "list": [
+          {
+            "layout": "placard", "title": "PIECE 01", "no": "01", "name": "Title of the piece", "meta": "DATE  ·  MINUTES TO READ",
+            "lines": ["One sentence on what it argues.", "Why you wrote it."], "cta": "READ  →"
+          },
+          {
+            "layout": "placard", "title": "PIECE 02", "no": "02", "name": "Title of the piece", "meta": "DATE  ·  MINUTES TO READ",
+            "lines": ["One sentence on what it argues.", "Why you wrote it."], "cta": "READ  →"
+          },
+          {
+            "layout": "placard", "title": "PIECE 03", "no": "03", "name": "Title of the piece", "meta": "DATE  ·  MINUTES TO READ",
+            "lines": ["One sentence on what it argues.", "Why you wrote it."], "cta": "READ  →"
+          },
+          {
+            "layout": "placard", "title": "PIECE 04", "no": "04", "name": "Title of the piece", "meta": "DATE  ·  MINUTES TO READ",
+            "lines": ["One sentence on what it argues.", "Why you wrote it."], "cta": "READ  →"
+          },
+          {
+            "layout": "placard", "title": "FEATURED", "name": "The piece to read first", "meta": "DATE  ·  MINUTES TO READ",
+            "lines": ["Two lines that make someone want to read it.", "This lectern stands in front of the window."], "cta": "READ  →"
+          }
+        ]
+      }
     }
   }
 }
