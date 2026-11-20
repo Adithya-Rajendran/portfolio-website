@@ -27,11 +27,14 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     new THREE.ImageBitmapLoader(manager).setOptions({ imageOrientation: flip ? 'flipY' : 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' }));
   // HDR-encoded bakes (decoded in the shaders). Images are decoded off the main thread into ImageBitmaps where the
   // browser can, so a texture is never uploaded half-decoded and loading does not stall the page.
+  const pending = [];                                              // every texture the first frame needs
   function bakeTex(name, aniso = 4, flip = false) {
     const url = `${base}/tex/${name}.webp?v=${info.v || 0}`;
     let t;
-    if (bitmaps) { t = new THREE.Texture(); t.flipY = false; bitmaps[+flip].load(url, (bmp) => { t.image = bmp; t.needsUpdate = true; }); }
-    else { t = images.load(url); t.flipY = flip; }
+    pending.push(new Promise((done) => {
+      if (bitmaps) { t = new THREE.Texture(); t.flipY = false; bitmaps[+flip].load(url, (bmp) => { t.image = bmp; t.needsUpdate = true; done(); }, undefined, done); }
+      else { t = images.load(url, done, undefined, done); t.flipY = flip; }
+    }));
     t.colorSpace = THREE.NoColorSpace; t.anisotropy = Math.min(aniso, maxAniso);
     return t;
   }
@@ -336,7 +339,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     picks.push({ mesh, door, pose: () => ({ pos: c.clone().addScaledVector(n, 4.2 / Math.min(1, camera.aspect / 1.2)).setY(c.y + 0.5), tgt: c.clone().setY(c.y + 0.25) }) });
   }
 
-  await new Promise((done) => (manager.itemsLoaded === manager.itemsTotal ? done() : (manager.onLoad = done)));   // textures queued above
+  await Promise.all(pending);                                      // textures queued above
   const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0); let skyAt = 0;
   return {
     id, info, scene, picks, floors, hidden, CAM, TGT,
