@@ -26,7 +26,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const images = new THREE.TextureLoader(manager), bitmaps = typeof createImageBitmap === 'function' && [false, true].map((flip) =>
     new THREE.ImageBitmapLoader(manager).setOptions({ imageOrientation: flip ? 'flipY' : 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' }));
   // HDR-encoded bakes (decoded in the shaders). Images are decoded off the main thread into ImageBitmaps where the
-  // browser can, so a texture is never uploaded half-decoded and loading does not stall the page.
+  // browser can, so a texture is never uploaded half-decoded and loading does not stall the page. Once on the GPU, the
+  // decoded copy is let go: a 4096 px atlas holds 64 MB of RAM, which an integrated GPU shares.
   const pending = [];                                              // every texture the first frame needs
   function bakeTex(name, aniso = 4, flip = false) {
     const url = `${base}/tex/${name}.webp?v=${info.v || 0}`;
@@ -35,7 +36,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       if (bitmaps) { t = new THREE.Texture(); t.flipY = false; bitmaps[+flip].load(url, (bmp) => { t.image = bmp; t.needsUpdate = true; done(); }, undefined, done); }
       else { t = images.load(url, done, undefined, done); t.flipY = flip; }
     }));
-    t.colorSpace = THREE.NoColorSpace; t.anisotropy = Math.min(aniso, maxAniso);
+    t.colorSpace = THREE.NoColorSpace; t.anisotropy = Math.min(aniso, maxAniso); t.onUpdate = () => t.image.close?.();
     return t;
   }
   // scene.json is always re-checked with the server; it names the bake (info.v), and every other file is asked for by
