@@ -239,34 +239,26 @@
       "credit": true,
       "kicker": "RING 04 · BOW · LIBRARY",
       "headline": ["Things", "I've written."],
-      "sub": ["A reading room at the hull, with the Earth turning in its window.", "Each lectern holds one piece. The titles are placeholders for now."],
-      "facts": [["ROOM", "WRITING"], ["ON THE LECTERNS", "5 PIECES"]],
+      "sub": ["A reading room at the hull, with the Earth turning in its window.", "Ask at the terminal and the drone fetches the volume. Titles are placeholders for now."],
+      "facts": [["ROOM", "WRITING"], ["IN THE CATALOGUE", "5 VOLUMES"]],
       "screens": {
         "footer": "ARCADIA STATION  ·  LIBRARY",
-        "tag": "READING ROOM",
+        "tag": "CATALOGUE",
         "list": [
           {
-            "layout": "placard", "title": "PIECE 01", "no": "01", "name": "Title of the piece", "meta": "DATE  ·  MINUTES TO READ",
-            "lines": ["One sentence on what it argues.", "Why you wrote it."], "cta": "READ  →"
-          },
-          {
-            "layout": "placard", "title": "PIECE 02", "no": "02", "name": "Title of the piece", "meta": "DATE  ·  MINUTES TO READ",
-            "lines": ["One sentence on what it argues.", "Why you wrote it."], "cta": "READ  →"
-          },
-          {
-            "layout": "placard", "title": "PIECE 03", "no": "03", "name": "Title of the piece", "meta": "DATE  ·  MINUTES TO READ",
-            "lines": ["One sentence on what it argues.", "Why you wrote it."], "cta": "READ  →"
-          },
-          {
-            "layout": "placard", "title": "PIECE 04", "no": "04", "name": "Title of the piece", "meta": "DATE  ·  MINUTES TO READ",
-            "lines": ["One sentence on what it argues.", "Why you wrote it."], "cta": "READ  →"
-          },
-          {
-            "layout": "placard", "title": "FEATURED", "name": "The piece to read first", "meta": "DATE  ·  MINUTES TO READ",
-            "lines": ["Two lines that make someone want to read it.", "This lectern stands in front of the window."], "cta": "READ  →"
+            "layout": "rows", "title": "CHOOSE A VOLUME",
+            "rows": [["01", "Title of the piece"], ["02", "Title of the piece"], ["03", "Title of the piece"], ["04", "Title of the piece"], ["05", "Title of the piece"]],
+            "line": "The drone will bring it."
           }
         ]
-      }
+      },
+      "volumes": [
+        { "no": "01", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] },
+        { "no": "02", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] },
+        { "no": "03", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] },
+        { "no": "04", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] },
+        { "no": "05", "title": "Title of the piece", "rows": [["DATE", "MONTH YEAR"], ["LENGTH", "MINUTES TO READ"], ["ABOUT", "WHAT IT ARGUES"]] }
+      ]
     }
   }
 }

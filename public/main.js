@@ -160,7 +160,8 @@ function setFocus(pick = null) {
   $('#count').textContent = `${tourOrder().indexOf(pick) + 1} / ${room.picks.length}`;
   // a door leads to one room, or (the stair down to the Ring Line) to a list of stops; '' marks one that is not built yet
   const door = pick.door, ways = !door ? [] : door.stops ?? [[`ENTER ${door.label}`, door.to]];
-  $('#ways').innerHTML = ways.map(([label, to]) => `<button data-to="${to}"${to ? '' : ' disabled'}>${label}${to ? '  →' : '  ·  NOT YET OPEN'}</button>`).join('');
+  $('#ways').innerHTML = ways.map(([label, to]) => `<button data-to="${to}"${to ? '' : ' disabled'}>${label}${to ? '  →' : '  ·  NOT YET OPEN'}</button>`).join('')
+    + (pick.options || []).map(([label], i) => `<button data-option="${i}">${label}</button>`).join('');      // or it offers choices of its own
 }
 function step(d) { const t = tourOrder(), i = t.indexOf(focus.pick); setFocus(t[((i < 0 ? (d > 0 ? -1 : 0) : i) + d + t.length) % t.length]); }
 function travel(id, delay = 0) { if (id && !leaving) leaving = setTimeout(() => enter(id), delay); }
@@ -229,6 +230,7 @@ addEventListener('keydown', (e) => {
 });
 bar.addEventListener('click', (e) => {
   if (e.target.dataset.to) travel(e.target.dataset.to);
+  if (e.target.dataset.option) focus.pick?.options[e.target.dataset.option][1]();
   else ({ back: () => setFocus(null), prev: () => step(-1), next: () => step(1) })[e.target.id]?.();
 });
 $('nav').addEventListener('click', (e) => {

@@ -1,7 +1,7 @@
 """
 Library (Writing). A two-storey reading room in the bow half of the ring tube: bookcases and a gallery down both
-sides, one long table, and at the far end the hull, with a tall paned window on the turning Earth. Each piece of
-writing is a lit page on a lectern; the featured one stands on the axis in front of the window.
+sides, one long table, and at the far end the hull, with a tall paned window on the turning Earth. The writing is
+asked for at a terminal on the table; a drone fetches the volume from its shelf.
   ./run.sh -b --python room_writing.py      -> writing.blend
 """
 import os
@@ -184,28 +184,28 @@ for k, y in enumerate((1.6, 5.1, 8.6)):
     for a in range(3):
         ang = a * 2 * pi / 3 + 0.5; rbox('pendant_rod', (0.012, 0.012, H - 6.3), T((1.05 * math.cos(ang), y + 1.05 * math.sin(ang), (H + 6.3) / 2)), 'brass', 'archC')
 
-# ================================================================= THE WRITING: lit pages on lecterns
-SCREENS = []
-def lectern(c, face, w, h, lean=0.62, post=True):
-    """A page on a stand. c: centre of the page; face: the horizontal direction it looks; lean: radians back from vertical."""
-    f = Vector((face[0], face[1], 0)).normalized(); left = Vector((f.y, -f.x, 0))        # the reader's left
-    up = Vector((0, 0, math.cos(lean))) - f * math.sin(lean); n = f * math.cos(lean) + Vector((0, 0, math.sin(lean))); c = Vector(c)
-    P = lambda a, b, d=0.0: tuple(c + left * a + up * b + n * d)
-    i = len(SCREENS); name = f'FX_screen{i}'; SCREENS.append(name)
-    quad(name, [P(w / 2, -h / 2, 0.012), P(-w / 2, -h / 2, 0.012), P(-w / 2, h / 2, 0.012), P(w / 2, h / 2, 0.012)], 'lum_screen', fx='screen', uv=True)
-    M = Matrix((( -left.x, up.x, n.x, c.x), (-left.y, up.y, n.y, c.y), (-left.z, up.z, n.z, c.z), (0, 0, 0, 1)))
-    rbox(f'lectern_board{i}', (w + 0.08, h + 0.08, 0.03), M @ T((0, 0, -0.012)), 'wood', 'props', bevel=0.008)
-    rbox(f'lectern_lip{i}', (w + 0.08, 0.03, 0.05), M @ T((0, -h / 2 - 0.04, 0.02)), 'brass', 'props')
-    if post:
-        foot = c - n * 0.06; foot.z = 0
-        lathe(f'lectern_post{i}', [(0, c.z - 0.05), (0.03, c.z - 0.05), (0.03, 0.05), (0.2, 0.02), (0.2, 0), (0, 0)], 'brass', 'props', segs=24, closed=False, M=T(foot - f * 0.05))
-for y in (2.2, 6.6):                                                                 # four along the nave, turned a little towards whoever walks in
-    for d in (-1, 1):
-        lectern((d * 2.75, y, 1.28), (-d * 0.85, -0.5), 0.62, 0.44)
-# the featured piece: a larger page on a dais in front of the window
-lathe('dais', [(0, 0.3), (1.35, 0.3), (1.35, 0.15), (1.7, 0.15), (1.7, 0), (0, 0)], 'wood', 'center', segs=64, closed=False, M=T((0, 11.4, 0)))
-lectern((0, 11.3, 1.72), (0, -1), 1.0, 0.7, lean=0.5, post=False)
-lathe('feature_post', [(0, 1.42), (0.05, 1.42), (0.05, 0.1), (0.3, 0.04), (0.3, 0), (0, 0)], 'brass', 'center', segs=32, closed=False, M=T((0, 11.55, 0.3)))
+# ================================================================= THE WRITING: a catalogue terminal on the table; a drone fetches the volume
+# The terminal: a low console at the near end of the table, its screen laid back towards whoever stands there.
+TC = Vector((0, 1.0, 0.93)); LEAN = 0.95; f_, up_, n_ = Vector((0, -1, 0)), Vector((0, math.sin(LEAN), math.cos(LEAN))), Vector((0, -math.cos(LEAN), math.sin(LEAN)))
+TP = lambda a, b, dd=0.0: tuple(TC + Vector((-1, 0, 0)) * a + up_ * b + n_ * dd)         # a: to the reader's left, b: up the screen
+SCREENS = ['FX_screen0']
+quad('FX_screen0', [TP(0.24, -0.16, 0.012), TP(-0.24, -0.16, 0.012), TP(-0.24, 0.16, 0.012), TP(0.24, 0.16, 0.012)], 'lum_screen', fx='screen', uv=True)
+TM = Matrix(((1, 0, 0, TC.x), (0, up_.y, n_.y, TC.y), (0, up_.z, n_.z, TC.z), (0, 0, 0, 1)))
+rbox('terminal_board', (0.54, 0.38, 0.035), TM @ T((0, 0, -0.012)), 'frame', 'props', bevel=0.01)
+rbox('terminal_lip', (0.54, 0.025, 0.04), TM @ T((0, -0.2, 0.012)), 'brass', 'props')
+box('terminal_base', -0.2, 0.2, 0.98, 1.2, 0.773, 0.86, 'wood', 'props', bevel=0.012)
+box('terminal_light', -0.2, 0.2, 0.86, 0.865, 0.778, 0.782, em='cool')
+# The drone's cradle: a brass ring on three legs further up the table. The drone itself is drawn live (js/drone.js).
+CR = Vector((0, 2.6, 0.773))
+torus('cradle', 0.17, 0.012, T(CR + Vector((0, 0, 0.12))), 'brass', 'props')
+for a in range(3):
+    ang = a * 2 * pi / 3 + 0.3; rbox('cradle_leg', (0.012, 0.012, 0.12), T((CR.x + 0.17 * math.cos(ang), CR.y + 0.17 * math.sin(ang), CR.z + 0.06)), 'brass', 'props')
+lathe('cradle_pad', [(0, 0.012), (0.07, 0.012), (0.07, 0), (0, 0)], 'dark', 'props', segs=20, closed=False, M=T(CR))
+box('cradle_light', -0.03, 0.03, CR.y - 0.03, CR.y + 0.03, CR.z + 0.012, CR.z + 0.014, em='cool')
+# where each volume lives: a slot on a shelf (wall side, bay, tier, shelf); the drone hovers in front of it
+def slot(s, bay, tier, shelf):
+    y0, y1 = BAYS[bay]; return [s * (WD - 0.3), (y0 + y1) / 2 + random.uniform(-0.8, 0.8), (0.14 if tier == 0 else GAL_Z + 0.12) + shelf * 0.62 + 0.3]
+SLOTS = [slot(1, 1, 1, 2), slot(-1, 2, 1, 3), slot(1, 2, 0, 3), slot(-1, 4, 0, 2), slot(1, 4, 1, 1)]
 
 # ================================================================= BY THE WINDOW: a globe, a chair to read in
 GC = Vector((4.1, 12.2, 1.05))
@@ -239,7 +239,11 @@ co.location = CAM_POS; co.rotation_euler = (CAM_TGT - CAM_POS).to_track_quat('-Z
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
 scene['lobby'] = dict(room='writing', exposure=1.3, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
-                      doors=DOORS, screens=SCREENS, portal=list(PORTAL_C), sun=list(SUN_DIR), backdrop_fov=100,
+                      doors=DOORS, screens=SCREENS,
+                      # the terminal: where to stand; the drone: its cradle, where it hands a volume over, the shelf slots
+                      terminal=dict(screen='FX_screen0', pos=[0.0, -0.75, 1.5], tgt=[0.0, 1.5, 1.12]),
+                      drone=dict(dock=list(CR + Vector((0, 0, 0.2))), deliver=[0.16, 0.7, 1.45], slots=SLOTS),
+                      portal=list(PORTAL_C), sun=list(SUN_DIR), backdrop_fov=100,
                       # the ring's spin, as in the Atrium (see build_scene.py); half: half-size of the window the sun shines through
                       spin=dict(axis=[0.0, 1.0, 0.0], period=120.0, sun_e=[sun.energy * c for c in sun.color], half=4.8), earth=dict(c=list(EARTH_C), r=EARTH_R, u=list(EARTH_U)),
                       floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=1.2), y0=Y0, y1=Y1,

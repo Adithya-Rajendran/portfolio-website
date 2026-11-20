@@ -141,7 +141,7 @@ export function createScreens({ footer, tag = '', list }, renderer, anisotropy, 
     const tex = rt.texture; tex.userData.canvas = cv;
     ctx.textBaseline = 'middle';
     const material = new THREE.ShaderMaterial({
-      uniforms: { map: { value: tex }, uMirror, uGain: { value: gain } }, vertexShader: VERT,
+      uniforms: { map: { value: tex }, uMirror, uGain: { value: gain } }, vertexShader: VERT, side: THREE.DoubleSide,     // a screen laid back on a desk may be wound either way
       fragmentShader: `uniform sampler2D map; uniform float uMirror, uGain; varying vec2 vUv; varying vec3 vW;
         void main(){
           vec3 c = texture2D(map, vUv).rgb;

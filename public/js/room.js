@@ -9,6 +9,7 @@ import { Q, SKIP, num, B, V, VERT, DIST, DSCALE, ADD, GLOW, uTime, uPx, uMirror,
 import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';
 import { createRouteMap } from './routemap.js';
+import { createDrone } from './drone.js';
 
 const pickMat = new THREE.MeshBasicMaterial({ visible: false });
 let ktx2;                                                           // one transcoder (and its workers) for every room
@@ -294,6 +295,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   }
   const hologram = info.holo && !SKIP.has('holo')
     ? await createHologram({ scene, position: B(info.holo).add(V(0, 0.1, 0)), sunDir: SUN, text: text.hologram, base, ver: `?v=${info.v || 0}`, radius: 0.74, gain: num('holo', 2.0) }) : null;
+  const drone = info.drone ? createDrone({ scene, dock: B(info.drone.dock), deliver: B(info.drone.deliver), slots: info.drone.slots.map(B), volumes: text.volumes }) : null;
   const routeMap = info.map ? createRouteMap({ scene, center: B(info.map.c), stops: text.stations, radius: info.map.r, gain: num('map', 1.6) }) : null;
 
   // ---------------------------------------------------------------- interactables
@@ -309,7 +311,10 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     if (n.dot(middle.clone().sub(c).setY(0)) < 0) n.negate();                // the side that faces into the room
     const along = V().crossVectors(V(0, 1, 0), n).normalize(), span = (f) => Math.max(...v.map(f)) - Math.min(...v.map(f));
     const w = span((q) => q.dot(along)), h = span((q) => q.y);
-    picks.push({ mesh: o, pose: () => ({ pos: c.clone().addScaledVector(n, Math.max(h / 2 / tanV(), w / 2 / (tanV() * camera.aspect)) * 1.12), tgt: c }) });
+    // the catalogue terminal: stand back far enough to watch the drone; each volume is a choice (main.js lists them)
+    if (drone && o.userData.name === info.terminal.screen) picks.push({ mesh: o, pose: () => ({ pos: B(info.terminal.pos), tgt: B(info.terminal.tgt) }),
+      options: text.volumes.map((v, i) => [v.no, () => drone.fetch(i)]), onFocus: (on) => on || drone.fetch(null) });
+    else picks.push({ mesh: o, pose: () => ({ pos: c.clone().addScaledVector(n, Math.max(h / 2 / tanV(), w / 2 / (tanV() * camera.aspect)) * 1.12), tgt: c }) });
   }
   // Holograms open up instead: the camera only comes closer, along its own line of sight, while the display grows
   // and unfolds its detail layer.
@@ -360,7 +365,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       const phi = CH_FIXED ?? t * CH_SPEED;
       for (const turn in pivots) pivots[turn].rotation.y = phi * turn;
       if (PHASES.length === 3) uChand.value.set(...PHASES.map((p) => (1 + 2 * Math.cos(phi - p)) / 3));
-      hologram?.update(t); routeMap?.update(t); screens.update();
+      hologram?.update(t); routeMap?.update(t); drone?.update(t); screens.update();
     },
     dispose: () => { dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
