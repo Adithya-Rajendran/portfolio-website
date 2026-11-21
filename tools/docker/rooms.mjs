@@ -1,5 +1,6 @@
 // Room switching without a page load: nav link, Back button, a door, and a leak check over repeated visits.
 import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
 const base = process.argv[2] || 'http://10.0.0.117:8080/';
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
 const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
@@ -8,8 +9,9 @@ p.on('pageerror',e=>fail('[pageerror]',e.message));p.on('requestfailed',r=>fail(
 p.on('console',m=>{if(m.type()==='error')fail('[error]',m.text());});
 const state = () => p.evaluate(() => { globalThis.gc?.(); const L = window.__lobby; return { room: L.mode().room, url: location.search, same: window.__marker === 1,
   geo: L.renderer.info.memory.geometries, tex: L.renderer.info.memory.textures, programs: L.renderer.info.programs.length, heapMB: Math.round(performance.memory.usedJSHeapSize / 1e6), title: document.title, h1: document.querySelector('h1').textContent }; });
-const arrive = async (id) => { await p.waitForFunction((r) => window.__lobby?.mode().room === r && window.__lobby.ready() >= 1, id, { timeout: 120000 }); await p.waitForTimeout(1500); };
-await p.goto(base + '?shot=hero&scale=1'); await arrive('lobby'); await p.evaluate(() => { window.__marker = 1; });
+let marked=false;
+const arrive = async (id) => { await p.waitForFunction((r) => window.__lobby?.mode().room === r && window.__lobby.ready() >= 1, id, { timeout: 120000 }); await p.waitForTimeout(1500); if(marked) assert(await p.evaluate(()=>window.__marker===1),'A room change reloaded the page'); };
+await p.goto(base + '?shot=hero&scale=1'); await arrive('lobby'); await p.evaluate(() => { window.__marker = 1; }); marked=true;
 console.log('start        ', JSON.stringify(await state()));
 await p.click('nav a[data-room="projects"]'); await arrive('projects'); console.log('nav link     ', JSON.stringify(await state()));
 await p.goBack(); await arrive('lobby'); console.log('back button  ', JSON.stringify(await state()));

@@ -4,13 +4,25 @@ import * as THREE from 'three';
 import { uMirror, DSCALE } from './kit.js';
 
 export const windowShadow = (unit,size) => `float windowVisibility(vec3 W,vec3 N,float nl){
-  if(nl<=0.) return 0.;
-  const float unit=${unit.toFixed(8)};
-  vec3 sp=(uSunVP*vec4(W+N*unit*(1.-clamp(nl,0.,1.)),1.)).xyz*.5+.5;
+  const float unit=${unit.toFixed(8)}, halfWidth=${(unit*size*.5).toFixed(6)};
+  const int resolution=${Math.max(1,Math.floor(size))};
+  // Use the actual triangle plane (not a bevel's smoothed shading normal). Each PCF tap
+  // looks along a DIFFERENT sun ray: at low sun its depth on a tabletop can differ by
+  // centimetres. A single centre depth for all taps stripes even an unobstructed surface.
+  vec3 face=cross(dFdx(W),dFdy(W)); float len2=dot(face,face);
+  face=len2>1.e-18?face*inversesqrt(len2):N; if(dot(face,N)<0.)face=-face;
+  float incidence=dot(face,uSunDir); if(nl<=0. || incidence<=.0001) return 0.;
+  vec3 sp=(uSunVP*vec4(W+face*min(.001,unit*.15),1.)).xyz*.5+.5;
   if(any(lessThanEqual(sp,vec3(0.))) || any(greaterThanEqual(sp,vec3(1.)))) return 0.;
-  float open=0.; float z=sp.z-(.0025+unit*(1.25-nl))/70.;
-  for(int i=-1;i<=1;i++) for(int j=-1;j<=1;j++)
-    open+=step(z,texture2D(tShadow,sp.xy+vec2(float(i),float(j))*${(1.3/size).toFixed(8)}).r);
+  vec3 right=vec3(uSunVP[0][0],uSunVP[1][0],uSunVP[2][0])*halfWidth;
+  vec3 up=vec3(uSunVP[0][1],uSunVP[1][1],uSunVP[2][1])*halfWidth;
+  vec2 dz=vec2(dot(face,right),dot(face,up))*(unit/(70.*incidence));
+  vec2 tc=sp.xy*float(resolution); float open=0.,z=sp.z-(.0015+unit*.12)/70.;
+  for(int i=-1;i<=1;i++) for(int j=-1;j<=1;j++){
+    ivec2 ij=clamp(ivec2(floor(tc+vec2(float(i),float(j))*1.3)),ivec2(0),ivec2(resolution-1));
+    float receiver=z+dot(dz,vec2(ij)+.5-tc);  // actual sampled texel centre, not the nominal tap
+    open+=step(receiver,texelFetch(tShadow,ij,0).r);
+  }
   return open/9.;
 }`;
 

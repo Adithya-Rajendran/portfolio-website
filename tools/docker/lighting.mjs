@@ -68,19 +68,29 @@ try {
       const T=await import('three'),{windowShadow}=await import('./js/sunlight.js'),l=window.__lobby,R=l.renderer,S=448,cam=new T.Camera(),sc=new T.Scene();let u;
       l.scene.traverse(o=>{if(o.userData.grp?.startsWith('floor')&&o.material?.uniforms?.tShadow)u=o.material.uniforms;});if(!u)throw new Error('No live sun on the floor');
       const rt=new T.WebGLRenderTarget(S,S,{depthBuffer:false}),mode={value:0};
-      const m=new T.ShaderMaterial({depthTest:false,depthWrite:false,uniforms:{tShadow:u.tShadow,uSunVP:u.uSunVP,dir:u.uSunDir,mode},vertexShader:'varying vec2 st; void main(){st=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:`uniform sampler2D tShadow;uniform mat4 uSunVP;uniform vec3 dir;uniform float mode;varying vec2 st;
+      const m=new T.ShaderMaterial({depthTest:false,depthWrite:false,uniforms:{tShadow:u.tShadow,uSunVP:u.uSunVP,uSunDir:u.uSunDir,mode},vertexShader:'varying vec2 st; void main(){st=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:`uniform sampler2D tShadow;uniform mat4 uSunVP;uniform vec3 uSunDir;uniform float mode;varying vec2 st;
         ${windowShadow(2*7.7/2048,2048)} void main(){
         if(mode<.5){float z=texture2D(tShadow,st).r;float q=floor(z*65535.+.5);gl_FragColor=vec4(floor(q/256.)/255.,mod(q,256.)/255.,0.,1.);}
-        else{vec3 w=vec3(mix(-6.8,6.8,st.x),.026,mix(-8.7,5.7,st.y));float open=windowVisibility(w,vec3(0.,1.,0.),dir.y);gl_FragColor=vec4(vec3(open),1.);}}`});
+        else{vec3 w=vec3(mix(-6.8,6.8,st.x),.026,mix(-8.7,5.7,st.y));if(mode>1.5)w=vec3(mix(-.8,.8,st.x),.85,mix(-2.8,-1.2,st.y));float open=windowVisibility(w,vec3(0.,1.,0.),uSunDir.y);gl_FragColor=vec4(vec3(open),1.);}}`});
       const plane=new T.Mesh(new T.PlaneGeometry(2,2),m);plane.frustumCulled=false;sc.add(plane);
       const read=k=>{mode.value=k;R.setRenderTarget(rt);R.render(sc,cam);const a=new Uint8Array(S*S*4);R.readRenderTargetPixels(rt,0,0,S,S,a);R.setRenderTarget(null);return a;};
       const images={},snap=(eye,at,t,name)=>{l.lightFrame(eye,at,t);if(wantImages)images[name]=R.domElement.toDataURL();return {map:read(0),floor:read(1),vp:u.uSunVP.value.toArray()};};
       const a=snap([0,1.55,3.9],[0,1.05,-3],0,'sun-rest'),v=snap([-1.6,1.85,2.8],[0,.8,-2.5],0,'sun-other-eye'),z=snap([0,1.55,3.9],[0,1.05,-3],18,'sun-rotated');
       const delta=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(a[i]!==b[i]||a[i+1]!==b[i+1])n++;return n;};
+      // Separate a true contact shadow from self-shadowing stripes at grazing incidence.
+      // Only this known flat coupon casts into the real window map; no geometry can shadow it.
+      const saved=[];l.scene.traverse(o=>{if(o.isMesh&&(o.layers.mask&2)){saved.push(o);o.layers.disable(1);}});
+      const cardMat=new T.MeshBasicMaterial(),coupon=new T.Mesh(new T.PlaneGeometry(4,4).rotateX(-Math.PI/2),cardMat),block=new T.Mesh(new T.BoxGeometry(.24,.25,.24),cardMat);
+      coupon.position.set(0,.85,-2);block.position.set(0,.975,-2);coupon.layers.set(1);block.layers.set(1);l.scene.add(coupon);
+      const couponFrame=()=>l.lightFrame([0,1.55,3.9],[0,.8,-2],0);couponFrame();const bare=read(2);l.scene.add(block);couponFrame();const blocked=read(2);
+      let selfShadow=0,contact=0,lit=0,nc=0,nl=0;for(let y=0;y<S;y++)for(let x=0;x<S;x++){
+        const i=(y*S+x)*4,wx=-.8+1.6*(x+.5)/S,wz=-2.8+1.6*(y+.5)/S;if(bare[i]<254)selfShadow++;
+        if(Math.abs(wx)<.055){if(wz> -1.87&&wz< -1.845){contact+=blocked[i]/255;nc++;}if(wz> -2.45&&wz< -2.32){lit+=blocked[i]/255;nl++;}}}
+      for(const o of saved)o.layers.enable(1);l.scene.remove(coupon,block);coupon.geometry.dispose();block.geometry.dispose();cardMat.dispose();
       rt.dispose();m.dispose();plane.geometry.dispose();
-      return {room:'about',samples:S*S,shadowMapCamera:delta(a.map,v.map),floorMaskCamera:delta(a.floor,v.floor),lightMatrixCamera:Math.max(...a.vp.map((n,i)=>Math.abs(n-v.vp[i]))),shadowMapRoll:delta(a.map,z.map),floorMaskRoll:delta(a.floor,z.floor),images};
+      return {room:'about',samples:S*S,selfShadowSamples:selfShadow,contactVisibility:+(contact/nc).toFixed(4),upLightVisibility:+(lit/nl).toFixed(4),shadowMapCamera:delta(a.map,v.map),floorMaskCamera:delta(a.floor,v.floor),lightMatrixCamera:Math.max(...a.vp.map((n,i)=>Math.abs(n-v.vp[i]))),shadowMapRoll:delta(a.map,z.map),floorMaskRoll:delta(a.floor,z.floor),images};
     },!!out);
-    await save(result);assert.equal(result.lightMatrixCamera,0);assert.equal(result.shadowMapCamera,0);assert.equal(result.floorMaskCamera,0);assert(result.shadowMapRoll>100&&result.floorMaskRoll>100);
+    await save(result);assert.equal(result.lightMatrixCamera,0);assert.equal(result.shadowMapCamera,0);assert.equal(result.floorMaskCamera,0);assert(result.shadowMapRoll>100&&result.floorMaskRoll>100);assert.equal(result.selfShadowSamples,0,'An unobstructed flat surface shadowed itself');assert(result.contactVisibility<.02&&result.upLightVisibility>.98,'Detached or missing contact shadow');
   }
   if(which==='all'||which==='caster'){
     await load('writing',{rollat:0});
