@@ -1,4 +1,8 @@
-"""Foreground Fabrication exhibits. Coordinates in metres; Z=0 is the plinth top."""
+"""Fabrication exhibit assets, using the shared kit and the room's material palette.
+
+Coordinates are in metres. M places the plinth at floor level and the other assets
+at plinth-top level. Indexed builders take i as the suffix for their part names.
+"""
 
 def a_rover(M=I4):
     g = 'props'
@@ -74,3 +78,46 @@ def a_manipulator(M=I4):
         rbox('ar_finger',(.076,.033,.122),M @ T((x,sign*.088,z-.20)),'t_light',g,bevel=.006)
         rbox('ar_pad',(.075,.019,.055),M @ T((x,sign*.067,z-.232)),'rubber',g)
     lathe('ar_sample', [(0,.17),(.095,.17),(.12,.13),(.12,.028),(.097,0),(0,0)],'copper',g,segs=24,M=M @ T((1.15,0,0)))
+
+
+def a_plinth(M=I4, i=0):
+    """Build the lit plinth and return its top centre in world coordinates."""
+    lathe(f'plinth{i}', [(0, 0.42), (1.35, 0.42), (1.35, 0.34), (1.22, 0.34), (1.22, 0)], 'white', 'props', segs=64, closed=False, M=M)
+    lathe(f'plinth_led{i}', [(1.24, 0.32), (1.33, 0.32), (1.33, 0.33), (1.24, 0.33)], em='step', segs=64, M=M)
+    lathe(f'plinth_top{i}', [(0, 0.42), (1.2, 0.42), (1.2, 0.425), (0, 0.425)], 'dark', 'props', segs=48, closed=False, M=M)
+    return M @ Vector((0, 0, 0.425))
+
+
+def a_engine(M=I4, i=0):
+    lathe(f'en_bell{i}', [(0.2, 1.05), (0.26, 0.9), (0.42, 0.6), (0.6, 0.3), (0.68, 0.12), (0.66, 0.12), (0.58, 0.3), (0.4, 0.6), (0.24, 0.9), (0.18, 1.05)], 'copper', 'props', segs=64, M=M)
+    lathe(f'en_chamber{i}', [(0, 1.5), (0.2, 1.5), (0.28, 1.4), (0.28, 1.15), (0.2, 1.04), (0, 1.04)], 'chrome', 'props', segs=32, closed=False, M=M)
+    for k in range(10):                                                       # stiffening hoops on the bell
+        z = 0.2 + k * 0.08; r = 0.67 - (z - 0.12) * 0.52
+        lathe(f'en_hoop{i}{k}', [(r, z), (r + 0.018, z), (r + 0.018, z + 0.02), (r, z + 0.02)], 'steel', 'props', segs=48, M=M)
+    for a in (0.6, 2.7, 4.4):
+        lathe(f'en_pump{i}', [(0, 0.34), (0.11, 0.34), (0.13, 0.3), (0.13, 0.04), (0.11, 0), (0, 0)], 'wall2', 'props', segs=20, closed=False, M=M @ T((0.36 * math.cos(a), 0.36 * math.sin(a), 1.22)))
+        rbox(f'en_line{i}', (0.035, 0.035, 0.62), M @ T((0.5 * math.cos(a), 0.5 * math.sin(a), 0.95), (0.42 * math.sin(a), -0.42 * math.cos(a), 0)), 'brass', 'props')
+    for a in range(3):                                                        # test stand
+        ang = a * 2 * pi / 3 + 0.5
+        rbox(f'en_leg{i}', (0.06, 0.06, 1.25), M @ T((0.78 * math.cos(ang), 0.78 * math.sin(ang), 0.6), (0.2 * math.sin(ang), -0.2 * math.cos(ang), 0)), 'yellow', 'props')
+    lathe(f'en_ring{i}', [(0.64, 1.16), (0.72, 1.16), (0.72, 1.22), (0.64, 1.22)], 'yellow', 'props', segs=48, M=M)
+    for a in range(3):
+        ang = a * 2 * pi / 3 + 0.5
+        rbox(f'en_arm{i}', (0.42, 0.05, 0.05), M @ Matrix.Rotation(ang, 4, 'Z') @ T((0.46, 0, 1.19)), 'yellow', 'props')
+
+
+def a_lattice(M=I4, i=0):
+    C = M @ T((0, 0, 1.25))
+    bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=2, radius=0.85)
+    ob = finish(f'lt_shell{i}', bm, 'chrome', 'props', M=C @ Matrix.Rotation(0.4, 4, 'X'))
+    w = ob.modifiers.new('wire', 'WIREFRAME'); w.thickness = 0.035; w.use_replace = True
+    bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=1, radius=0.42)
+    ob = finish(f'lt_inner{i}', bm, 'brass', 'props', M=C @ Matrix.Rotation(0.9, 4, 'Y'))
+    w = ob.modifiers.new('wire', 'WIREFRAME'); w.thickness = 0.03; w.use_replace = True
+    bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=2, radius=0.13)
+    finish(f'lt_core{i}', bm, None, em='core', M=C)
+    lathe(f'lt_post{i}', [(0, 0.4), (0.03, 0.4), (0.05, 0.02), (0.22, 0.01), (0.22, 0), (0, 0)], 'steel', 'props', segs=20, closed=False, M=M)
+    glow(f'lt_glow{i}', C.translation, 60, color=(0.1, 0.8, 1.0), r=0.13)
+
+
+EXHIBIT_ASSETS = dict(rover=a_rover, arm=a_manipulator, engine=a_engine, lattice=a_lattice, plinth=a_plinth)

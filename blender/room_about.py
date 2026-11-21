@@ -39,9 +39,8 @@ for k in ('lamp', 'shelf', 'cool'):
 mat('wood_d', (0.09, 0.045, 0.022), 0.38, 0.0, 1.5, 0.3, var=0.08); mat('leather_g', (0.05, 0.12, 0.08), 0.45, var=0.06); mat('greenlamp', (0.02, 0.2, 0.09), 0.08, 0.0, 1.5, 1.0)
 mat('gilt', (0.95, 0.7, 0.32), 0.25, 1.0); mat('marble', (0.78, 0.76, 0.72), 0.25, var=0.05); mat('runner3', (0.3, 0.07, 0.05), 0.95); mat('navy', (0.03, 0.07, 0.16), 0.35)
 mat('drape', (0.1, 0.035, 0.03), 0.9); mat('glassware', (0.16, 0.19, 0.22), 0.03, 0.0, 1.5, 1.0); mat('whisky', (0.55, 0.25, 0.05), 0.1, 0.0, 1.4, 1.0)
-# the Lounge is furnished from the Library's assets (bookcase bays, ladder, wing chair, stacks ...) plus a few of its own below
-_lib = open(os.path.join(_here, 'room_writing.py')).read()
-exec(_lib.split('# ================================================================= ASSETS')[1].split('bench(ASSETS,')[0], globals())
+# Shared reading furniture (bookcase bays, ladder, wing chair, stacks ...).
+exec(open(os.path.join(_here, 'assets_reading.py')).read(), globals())
 
 def rbox(name, size, M, m, grp, bevel=0.0, **kw):
     bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
@@ -89,8 +88,11 @@ def a_frame(M=I4, grp='props', w=0.7, h=0.9):
     box('pic_gilt', -0.05, 0, -w / 2 - 0.05, w / 2 + 0.05, -h / 2 - 0.05, h / 2 + 0.05, 'gilt', grp, bevel=0.012, M=M); box('pic_inner', -0.058, -0.05, -w / 2, w / 2, -h / 2, h / 2, 'frame', grp, M=M)
     box('pic_mount', -0.062, -0.058, -w / 2 + 0.03, w / 2 - 0.03, -h / 2 + 0.03, h / 2 - 0.03, 'paper', grp, M=M); box('pic_art', -0.065, -0.062, -w / 4, w / 4, -h / 4, h / 4, random.choice(BOOKS), grp, M=M)
     rod('pic_light', (-0.16, -w * 0.3, h / 2 + 0.14), (-0.16, w * 0.3, h / 2 + 0.14), 0.014, 'brass', grp, M=M); rod('pic_arm', (0, 0, h / 2 + 0.1), (-0.16, 0, h / 2 + 0.14), 0.006, 'brass', grp, M=M)
-ASSETS.update(wainscot=a_wainscot, drape=a_drape, sofa_trim=a_sofa_trim, drinks=a_drinks, frame=a_frame)
-bench(ASSETS, {'pendant': T((0, 0, 6.3)), 'coffer': T((0, 0, 3.0)), 'gallery': T((0, 0, 1.0))})
+exec(open(os.path.join(_here, 'assets_lounge.py')).read(), globals())
+ASSETS = READING_ASSETS.copy()
+ASSETS.update(wainscot=a_wainscot, drape=a_drape, sofa_trim=a_sofa_trim, drinks=a_drinks, frame=a_frame,
+              coffee_table=a_coffee_table, telescope=a_telescope)
+bench(ASSETS)
 
 # ================================================================= SHELL
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 2, 0), (-WD, 2, 0)], 'floor', 'floorN')
@@ -190,13 +192,8 @@ sofa('sofaL', -2.2, 0.2, 3.0, 1); sofa('sofaR', 2.2, 0.2, 3.0, -1)
 a_sofa_trim(T((-2.2, 1.6, 0))); a_sofa_trim(T((2.2, 1.6, 0)) @ Matrix.Rotation(pi, 4, 'Z'))
 for a, b in ((3.12, 3.06), (2.94, 2.9)):
     for dd in (-1, 1): box('rug_line', dd * a, dd * b, -1.5, 4.5, 0.021, 0.0245, 'rug2', 'props')
-box('table_top', -0.75, 0.75, 0.75, 2.45, 0.34, 0.38, 'wood_l', 'props', bevel=0.012)
-# Mortised aprons meet the four turned legs instead of a solid box underneath.
-for x in (-.68, .68): box('table_apron', x-.016,x+.016,.82,2.38,.261,.34,'wood','props',bevel=.004)
-for y in (.82,2.38): box('table_endrail',-.68,.68,y-.016,y+.016,.261,.34,'wood','props',bevel=.004)
+a_coffee_table(T((0, 1.6, 0)))
 a_stack(T((-0.31, 1.33, 0.38), (0, 0, 0.15)), n=4); a_openbook(T((0.05, 1.95, 0.38), (0, 0, 0.4))); a_drinks(T((0.38, 1.25, 0.38)))
-for x in (-0.68, 0.68):
-    for y in (0.82, 2.38): turned('table_leg', 0.34, 0.035, 'wood', 'props', M=T((x, y, 0)), segs=10)
 def armchair(name, c, yaw):
     M = Matrix.Translation(c) @ Matrix.Rotation(math.radians(yaw), 4, 'Z')
     rbox(name + 'seat', (0.74, 0.7, 0.2), M @ T((0, 0, 0.38)), 'leather', 'props', bevel=0.06, seg=3)
@@ -213,20 +210,8 @@ rbox('fl_arm', (0.025, 0.025, 1.0), T((-3.2, 0.25, 2.05), (0.0, 1.05, 0.55)), 'b
 lathe('fl_shade', [(0.06, 0.0), (0.2, -0.22), (0.195, -0.22), (0.055, 0.0)], em='lamp', segs=24, M=T((-2.8, 0.5, 2.3)))
 glow('fl_glow', (-2.8, 0.5, 2.12), 90)
 # telescope by the window: brass tube on a timber tripod, pointed at the Moon
-TP = Vector((3.6, 6.9, 0)); head = TP + Vector((0, 0, 1.45))
-for a in range(3):
-    ang = a * 2 * pi / 3 + 0.3; foot = TP + Vector((0.55 * math.cos(ang), 0.55 * math.sin(ang), 0)); q = (head - foot).to_track_quat('Z', 'Y')
-    rbox('scope_leg', (0.04, 0.04, (head - foot).length), Matrix.Translation((head + foot) / 2) @ q.to_matrix().to_4x4(), 'wood_l', 'props')
-aim = (Vector((-2.0, Y1 + 6, 4.6)) - head).normalized(); Mq = Matrix.Translation(head + Vector((0, 0, 0.1))) @ aim.to_track_quat('Z', 'Y').to_matrix().to_4x4()
-lathe('scope_tube', [(0, -0.55), (0.055, -0.55), (0.055, 0.5), (0.075, 0.5), (0.075, 0.62), (0.065, 0.62), (0.065, 0.52), (0, 0.52)], 'brass', 'props', segs=24, closed=False, M=Mq)
-lathe('scope_eye', [(0, -0.72), (0.028, -0.72), (0.028, -0.55), (0, -0.55)], 'dark', 'props', segs=16, closed=False, M=Mq)
-lathe('scope_mount', [(0, 0.1), (0.06, 0.1), (0.06, 0), (0, 0)], 'dark', 'props', segs=16, closed=False, M=T(head))
-for z in (-.25, .22):
-    torus('scope_saddle_band', .057,.009,Mq @ T((0,0,z)), 'dark','props',segs=32)
-rod('scope_saddle', (0,-.064,-.27),(0,-.064,.24),.017,'dark','props',M=Mq)
-rod('scope_focuser',(-.085,0,-.54),(.085,0,-.54),.009,'brass','props',M=Mq)
-for d in (-1,1):
-    lathe('scope_focus_wheel',[(0,-.008),(.033,-.008),(.033,.008),(0,.008)],'dark','props',segs=20,M=Mq @ T((d*.08,0,-.54),(0,pi/2,0)))
+scope_M = T((3.6, 6.9, 0))
+a_telescope(scope_M, target=scope_M.inverted() @ Vector((-2.0, Y1 + 6, 4.6)))
 # planters either side of the window
 for d in (-1, 1):
     c = Vector((d * 5.6, 7.7, 0))

@@ -462,7 +462,9 @@ def bench(ASSETS, place={}):
     name = os.environ.get('ASSET')
     if not name: return
     ASSETS[name](place.get(name, I4))
-    pts = [o.matrix_world @ Vector(c) for o in bpy.data.objects if o.type == 'MESH' for c in o.bound_box]
+    graph = bpy.context.evaluated_depsgraph_get()
+    parts = [obj.evaluated_get(graph) for obj in scene.objects if obj.type == 'MESH']
+    pts = [o.matrix_world @ Vector(corner) for o in parts for corner in o.bound_box]
     lo = Vector([min(p[i] for p in pts) for i in range(3)]); hi = Vector([max(p[i] for p in pts) for i in range(3)]); c = (lo + hi) / 2; R = (hi - lo).length / 2
     mat('studio', (0.32, 0.32, 0.33), 0.6)
     box('studio_floor', c.x - 30, c.x + 30, c.y - 30, c.y + 30, lo.z - 0.02, lo.z, 'studio', 'props')
@@ -474,13 +476,27 @@ def bench(ASSETS, place={}):
     prefs = bpy.context.preferences.addons['cycles'].preferences; DEV = os.environ.get('LOBBY_DEVICE', 'CUDA'); prefs.compute_device_type = DEV; prefs.get_devices()
     for d in prefs.devices: d.use = (d.type == DEV)
     scene.view_settings.view_transform = 'AgX'; scene.render.resolution_x, scene.render.resolution_y = 960, 720; scene.render.image_settings.file_format = 'PNG'
+    # Keep the established distance unless a projected corner would clip (tall tripods in particular).
+    frame = cam.view_frame(scene=scene)
+    tx, ty = (max(abs(p[axis] / p.z) for p in frame) * .94 for axis in (0, 1))
     for i, (az, el) in enumerate(((-0.9, 0.35), (2.3, 0.2))):
-        co.location = c + Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), math.sin(el))) * R * 3.6; co.rotation_euler = (c - co.location).to_track_quat('-Z', 'Y').to_euler()
-        scene.render.filepath = os.path.join(HERE, f'asset_{name}_{i}.png'); bpy.ops.render.render(write_still=True)
-    print('ASSET', name, 'TRIS', sum(len(o.data.polygons) for o in bpy.data.objects if o.type == 'MESH'))
+        outward = Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), math.sin(el)))
+        rot = (-outward).to_track_quat('-Z', 'Y'); inv = rot.inverted()
+        dist = max(R * 3.6, max(p.z + max(abs(p.x) / tx, abs(p.y) / ty) for p in (inv @ (v - c) for v in pts)))
+        co.location = c + outward * dist; co.rotation_euler = rot.to_euler()
+        scene.render.filepath = os.path.join(os.environ.get('ASSET_OUT', HERE), f'asset_{name}_{i}.png'); bpy.ops.render.render(write_still=True)
+    print('ASSET', name, 'MESHES', len(parts))
     raise SystemExit
 
 # ---- everything above this line is the shared kit: room_*.py scripts execute it and build their own room
+exec(open(os.path.join(HERE, 'assets_projection.py')).read(), globals())
+if os.environ.get('ASSET'):
+    # Load bench hardware here without changing the normal scene's material setup order.
+    exec(open(os.path.join(HERE, 'assets_tech.py')).read(), globals())
+    # A representative door for inspecting the existing five-room builder in isolation.
+    bench({**TECH, **ATRIUM_PROJECTION, 'pressure_door': lambda M: pressure_door(
+        'door', M, 'center', 'ATRIUM', 'RING LINE  ·  STAIR', 'lobby', w=1.6, h=2.4)})
+
 # ================================================================= ARCHITECTURE
 def side_grp(s): return 'archR' if s > 0 else 'archL'
 
@@ -767,18 +783,9 @@ MD = T(DAIS)
 lathe('dais', [(0, 0.14), (3.6, 0.14), (3.6, 0.09), (3.48, 0.09), (3.48, 0)], 'plat', 'center', segs=160, closed=False, M=MD)
 lathe('dais_led', [(3.5, 0.075), (3.58, 0.075), (3.58, 0.085), (3.5, 0.085)], em='stair', segs=160, M=MD)
 lathe('floor_ring', [(4.3, 0.0), (4.38, 0.0), (4.38, 0.003), (4.3, 0.003)], 'brass', 'center', segs=160, M=MD)
-for di, (A0, A1) in enumerate(((math.radians(-56), math.radians(56)), (math.radians(124), math.radians(236)))):
-    lathe(f'desk{di}', [(2.3, 0.14), (2.78, 1.02), (2.78, 1.12), (1.98, 1.12), (1.98, 1.0), (2.06, 0.14)], 'white', 'center', segs=64, a0=A0, a1=A1, M=MD)
-    lathe(f'desk_top{di}', [(1.94, 1.12), (2.82, 1.12), (2.82, 1.16), (1.94, 1.16)], 'glasstop', 'center', segs=64, a0=A0 - 0.012, a1=A1 + 0.012, M=MD)
-    lathe(f'desk_led{di}', [(2.7, 0.94), (2.745, 1.01), (2.76, 1.01), (2.715, 0.94)], em='cyan', segs=64, a0=A0 + 0.02, a1=A1 - 0.02, M=MD)
-lathe('holo_base', [(0, 0.5), (0.5, 0.5), (0.62, 0.4), (0.7, 0.14), (0, 0.14)], 'dark', 'center', segs=64, closed=False, M=MD)
-lathe('holo_ring', [(0.5, 0.5), (0.6, 0.5), (0.6, 0.54), (0.5, 0.54)], 'chrome', 'center', segs=64, M=MD)
-# Segmented keeper ring: the emitter cartridge can be lifted out from above.
-for i in range(12):
-    B = MD @ Matrix.Rotation(i*pi/6, 4, 'Z') @ T((.466,0,.515))
-    rbox('lens_keeper', (.062,.082,.018), B, 'dark', 'center', bevel=.005)
-    lathe('keeper_bolt', [(0,.009),(.011,.009),(.011,.016),(0,.016)], 'chrome','center',segs=6,M=B)
-lathe('holo_lens', [(0, 0.505), (0.44, 0.505), (0.44, 0.515), (0, 0.515)], em='cyan', segs=64, closed=False, M=MD)
+for di, (a0, a1) in enumerate(((-56, 56), (124, 236))):
+    a_reception_desk(MD, a0=math.radians(a0), a1=math.radians(a1), index=di)
+a_projector(MD)
 lathe('holo_floor_ring', [(1.15, 0.14), (1.19, 0.14), (1.19, 0.143), (1.15, 0.143)], 'brass', 'center', segs=96, M=MD)
 
 # ---- orrery chandelier: three nested gimbal rings, each lit along part of its length.
@@ -796,7 +803,7 @@ for i, (rr, az, tilt, grp, arc) in enumerate(RINGS):
     lathe(f'chandled_b{i}', [(rr - 0.03, -0.098), (rr + 0.03, -0.098), (rr + 0.03, -0.09), (rr - 0.03, -0.09)], em='chand' + grp, segs=128, a0=a0, a1=a1, M=Mr)
 
 # ================================================================= CONCOURSE DETAIL (assets_tech.py): what a working terminal accumulates
-exec(open(os.path.join(HERE, 'assets_tech.py')).read(), globals()); bench(TECH)
+exec(open(os.path.join(HERE, 'assets_tech.py')).read(), globals())
 a_kiosk(T((7.0, 3.0, PLAT_Z)) @ Matrix.Rotation(pi, 4, 'Z')); a_kiosk(T((-7.0, 15.0, PLAT_Z)))
 a_bench_hall(T((7.1, 9.8, PLAT_Z)) @ Matrix.Rotation(pi, 4, 'Z') @ T((0, -2.4, 0))); a_bench_hall(T((-7.1, -2.2, PLAT_Z)))
 a_luggage(T((-7.3, 7.2, PLAT_Z), (0, 0, 0.5))); a_luggage(T((7.4, 18.7, PLAT_Z), (0, 0, 2.4)))

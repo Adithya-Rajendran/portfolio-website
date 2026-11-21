@@ -53,10 +53,10 @@ def spot(name, loc, target, watts, size=42, color=(1.0, 0.86, 0.7), blend=0.35, 
     lathe(name + '_lens', [(0, 0.03), (0.125, 0.03), (0.125, 0.04), (0, 0.04)], em='work', segs=16, closed=False, M=Mc)
     return o
 
-# station hardware shared with the Atrium and Navigation; ASSET=<name> shows one of them alone
+# Station hardware and Fabrication exhibits; ASSET=<name> shows one asset alone.
 exec(open(os.path.join(_here, 'assets_tech.py')).read(), globals())
 exec(open(os.path.join(_here, 'assets_exhibits.py')).read(), globals())
-bench({**TECH, 'rover': a_rover, 'arm': a_manipulator})
+bench({**TECH, **EXHIBIT_ASSETS})
 
 # ================================================================= SHELL
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 9, 0), (-WD, 9, 0)], 'floor', 'floorN')
@@ -215,56 +215,17 @@ for d in (-1, 1):                                                             # 
     spot(f'door_wash{d}', (d * 3.2, Y1 - 3.2, 7.0), (d * 2.8, Y1 - 0.3, 2.6), 3500, 60, color=(0.75, 0.88, 1.0))
 
 # ================================================================= EXHIBITS (one per project) + placard screens
-def plinth(i, c):
-    M = T(c)
-    lathe(f'plinth{i}', [(0, 0.42), (1.35, 0.42), (1.35, 0.34), (1.22, 0.34), (1.22, 0)], 'white', 'props', segs=64, closed=False, M=M)
-    lathe(f'plinth_led{i}', [(1.24, 0.32), (1.33, 0.32), (1.33, 0.33), (1.24, 0.33)], em='step', segs=64, M=M)
-    lathe(f'plinth_top{i}', [(0, 0.42), (1.2, 0.42), (1.2, 0.425), (0, 0.425)], 'dark', 'props', segs=48, closed=False, M=M)
-    return c + Vector((0, 0, 0.425))
+def place_rover(M, _i):
+    a_rover(M @ Matrix.Rotation(math.radians(-28 if M.translation.x < 0 else 28), 4, 'Z'))
 
-def rover(i, p):
-    M = Matrix.Translation(p) @ Matrix.Rotation(math.radians(-28 if p.x < 0 else 28), 4, 'Z')
-    a_rover(M)
+def place_arm(M, _i):
+    a_manipulator(M @ Matrix.Rotation(math.radians(150), 4, 'Z'))
 
-def engine(i, p):
-    M = Matrix.Translation(p)
-    lathe(f'en_bell{i}', [(0.2, 1.05), (0.26, 0.9), (0.42, 0.6), (0.6, 0.3), (0.68, 0.12), (0.66, 0.12), (0.58, 0.3), (0.4, 0.6), (0.24, 0.9), (0.18, 1.05)], 'copper', 'props', segs=64, M=M)
-    lathe(f'en_chamber{i}', [(0, 1.5), (0.2, 1.5), (0.28, 1.4), (0.28, 1.15), (0.2, 1.04), (0, 1.04)], 'chrome', 'props', segs=32, closed=False, M=M)
-    for k in range(10):                                                       # stiffening hoops on the bell
-        z = 0.2 + k * 0.08; r = 0.67 - (z - 0.12) * 0.52
-        lathe(f'en_hoop{i}{k}', [(r, z), (r + 0.018, z), (r + 0.018, z + 0.02), (r, z + 0.02)], 'steel', 'props', segs=48, M=M)
-    for a in (0.6, 2.7, 4.4):
-        lathe(f'en_pump{i}', [(0, 0.34), (0.11, 0.34), (0.13, 0.3), (0.13, 0.04), (0.11, 0), (0, 0)], 'wall2', 'props', segs=20, closed=False, M=M @ T((0.36 * math.cos(a), 0.36 * math.sin(a), 1.22)))
-        rbox(f'en_line{i}', (0.035, 0.035, 0.62), M @ T((0.5 * math.cos(a), 0.5 * math.sin(a), 0.95), (0.42 * math.sin(a), -0.42 * math.cos(a), 0)), 'brass', 'props')
-    for a in range(3):                                                        # test stand
-        ang = a * 2 * pi / 3 + 0.5
-        rbox(f'en_leg{i}', (0.06, 0.06, 1.25), M @ T((0.78 * math.cos(ang), 0.78 * math.sin(ang), 0.6), (0.2 * math.sin(ang), -0.2 * math.cos(ang), 0)), 'yellow', 'props')
-    lathe(f'en_ring{i}', [(0.64, 1.16), (0.72, 1.16), (0.72, 1.22), (0.64, 1.22)], 'yellow', 'props', segs=48, M=M)
-    for a in range(3):
-        ang = a * 2 * pi / 3 + 0.5
-        rbox(f'en_arm{i}', (0.42, 0.05, 0.05), M @ Matrix.Rotation(ang, 4, 'Z') @ T((0.46, 0, 1.19)), 'yellow', 'props')
-
-def arm(i, p):
-    M = Matrix.Translation(p) @ Matrix.Rotation(math.radians(150), 4, 'Z')
-    a_manipulator(M)
-
-def lattice(i, p):
-    c = p + Vector((0, 0, 1.25))
-    bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=2, radius=0.85)
-    ob = finish(f'lt_shell{i}', bm, 'chrome', 'props', M=Matrix.Translation(c) @ Matrix.Rotation(0.4, 4, 'X'))
-    w = ob.modifiers.new('wire', 'WIREFRAME'); w.thickness = 0.035; w.use_replace = True
-    bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=1, radius=0.42)
-    ob = finish(f'lt_inner{i}', bm, 'brass', 'props', M=Matrix.Translation(c) @ Matrix.Rotation(0.9, 4, 'Y'))
-    w = ob.modifiers.new('wire', 'WIREFRAME'); w.thickness = 0.03; w.use_replace = True
-    bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=2, radius=0.13)
-    finish(f'lt_core{i}', bm, None, em='core', M=Matrix.Translation(c))
-    lathe(f'lt_post{i}', [(0, 0.4), (0.03, 0.4), (0.05, 0.02), (0.22, 0.01), (0.22, 0), (0, 0)], 'steel', 'props', segs=20, closed=False, M=T(p))
-    cl = bpy.data.lights.new(f'lt_glow{i}', 'POINT'); cl.energy = 60; cl.color = (0.1, 0.8, 1.0); cl.shadow_soft_size = 0.13
-    co = bpy.data.objects.new(f'lt_glow{i}', cl); COL.objects.link(co); co.location = c
-
-EXHIBITS = [(Vector((-4.6, 2.5, 0)), rover), (Vector((4.6, 2.5, 0)), arm), (Vector((-4.6, 12.5, 0)), engine), (Vector((4.6, 12.5, 0)), lattice)]
+EXHIBITS = [(Vector((-4.6, 2.5, 0)), place_rover), (Vector((4.6, 2.5, 0)), place_arm),
+            (Vector((-4.6, 12.5, 0)), a_engine), (Vector((4.6, 12.5, 0)), a_lattice)]
 for i, (c, build) in enumerate(EXHIBITS):
-    top = plinth(i, c); build(i, top)
+    top = a_plinth(T(c), i)
+    build(Matrix.Translation(top), i)
     s = 1 if c.x > 0 else -1; g = 'archR' if s > 0 else 'archL'
     spot(f'key{i}', (c.x - s * 1.6, c.y - 1.8, 6.9), top + Vector((0, 0, 0.9)), 4200, 40)
     spot(f'rim{i}', (c.x + s * 1.2, c.y + 2.2, 6.9), top + Vector((0, 0, 0.9)), 1800, 46, color=(0.62, 0.84, 1.0))
