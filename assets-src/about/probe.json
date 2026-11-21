@@ -1,0 +1,33 @@
+{
+  "origin": [
+    0.0,
+    1.6,
+    1.15
+  ],
+  "bounds": {
+    "min": [
+      -7.0,
+      -6.0,
+      0.0
+    ],
+    "max": [
+      7.0,
+      9.0,
+      6.6
+    ]
+  },
+  "coordinates": "blender",
+  "projection": "equirectangular",
+  "texture": "tex/probe_c.ktx2",
+  "width": 512,
+  "height": 256,
+  "roughness": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "range": 16.0,
+  "encoding": "sqrt"
+}
