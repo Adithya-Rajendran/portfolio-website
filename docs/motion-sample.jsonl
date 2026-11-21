@@ -1,6 +1,6 @@
-{"room":"lobby","phase":"idle","frames":30,"elapsedMs":512,"nodesSeen":126,"localTransforms":14,"morphing":0}
-{"room":"about","phase":"idle","frames":30,"elapsedMs":491,"nodesSeen":45,"localTransforms":1,"morphing":0}
-{"room":"projects","phase":"idle","frames":30,"elapsedMs":501,"nodesSeen":65,"localTransforms":0,"morphing":0}
-{"room":"experience","phase":"idle","frames":30,"elapsedMs":492,"nodesSeen":202,"localTransforms":14,"morphing":0}
-{"room":"writing","phase":"idle","frames":30,"elapsedMs":491,"nodesSeen":173,"localTransforms":2,"morphing":0}
-{"room":"writing","phase":"request to page opening","frames":419,"elapsedMs":7389,"nodesSeen":190,"localTransforms":13,"morphing":2}
+{"room":"lobby","phase":"idle","frames":30,"elapsedMs":484,"nodesSeen":129,"localTransforms":14,"morphing":0}
+{"room":"about","phase":"idle","frames":30,"elapsedMs":498,"nodesSeen":51,"localTransforms":1,"morphing":0}
+{"room":"projects","phase":"idle","frames":30,"elapsedMs":486,"nodesSeen":68,"localTransforms":0,"morphing":0}
+{"room":"experience","phase":"idle","frames":30,"elapsedMs":501,"nodesSeen":205,"localTransforms":14,"morphing":0}
+{"room":"writing","phase":"idle","frames":30,"elapsedMs":513,"nodesSeen":179,"localTransforms":2,"morphing":0}
+{"room":"writing","phase":"request to page opening","frames":416,"elapsedMs":7731,"nodesSeen":196,"localTransforms":13,"morphing":2}

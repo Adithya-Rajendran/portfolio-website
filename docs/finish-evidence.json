@@ -1,0 +1,635 @@
+{
+  "baseline": "383154b",
+  "runtimeRevision": "fc4d4dc",
+  "metrics": "Warm Chromium 1280x720; DPR1, tier1 FXAA, scale1, fixed roll/orrery; before / after / after / before. Each visit: 90 warmup frames, 150 timed with gl.readPixels. Render stats span drawing passes, not unique assets. Times in ms. Not a time-to-first-frame or Safari test.",
+  "gpu": "ANGLE (Intel, Mesa Intel(R) HD Graphics 630 (KBL GT2), OpenGL ES 3.2)",
+  "packedRoomBytes": {
+    "lobby": {
+      "before": 25020661,
+      "after": 25248062
+    },
+    "about": {
+      "before": 17967753,
+      "after": 19982174
+    },
+    "projects": {
+      "before": 15794575,
+      "after": 17275419
+    },
+    "experience": {
+      "before": 6941310,
+      "after": 8671799
+    },
+    "writing": {
+      "before": 25210922,
+      "after": 26652874
+    }
+  },
+  "lighting": [
+    {
+      "room": "experience",
+      "polished": {
+        "worldPoints": 247,
+        "meanContributionA": 54.42,
+        "meanContributionB": 32,
+        "meanViewChange": 43.61
+      },
+      "planar": {
+        "worldPoints": 247,
+        "meanContributionA": 23.65,
+        "meanContributionB": 25.49,
+        "meanViewChange": 25.83
+      },
+      "chartLandmark": [
+        {
+          "signal": 70349,
+          "errorPx": 0.84
+        },
+        {
+          "signal": 74551,
+          "errorPx": 0.17
+        }
+      ],
+      "floorLandmark": [
+        {
+          "signal": 70210,
+          "errorPx": 0.79
+        },
+        {
+          "signal": 91056,
+          "errorPx": 0.71
+        }
+      ]
+    },
+    {
+      "room": "about",
+      "samples": 200704,
+      "selfShadowSamples": 0,
+      "contactVisibility": 0,
+      "upLightVisibility": 1,
+      "shadowMapCamera": 0,
+      "floorMaskCamera": 0,
+      "lightMatrixCamera": 0,
+      "shadowMapRoll": 120041,
+      "floorMaskRoll": 81771
+    },
+    {
+      "room": "writing",
+      "fixedRollDeg": 0,
+      "depthSamples": 589824,
+      "droneOccludedSamplesAtDock": 1049,
+      "droneOccludedSamplesInFlight": 1072,
+      "casterMaskChanged": 2121,
+      "litDronePixelsAtDock": 3016,
+      "litDronePixelsInFlight": 3073,
+      "opaqueDistanceHits": 23,
+      "maxDistanceErrorM": 0.001
+    }
+  ],
+  "reducedMotionAndOpaqueBake": [
+    {
+      "engine": "chromium",
+      "width": 960,
+      "height": 540,
+      "room": "lobby",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.697,
+      "meanBakeSignal": 19.89,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "chromium",
+      "width": 960,
+      "height": 540,
+      "room": "about",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.4993,
+      "meanBakeSignal": 25.3,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "chromium",
+      "width": 960,
+      "height": 540,
+      "room": "projects",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": null,
+      "bakeVisibleFraction": 0.7303,
+      "meanBakeSignal": 35.57,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "chromium",
+      "width": 960,
+      "height": 540,
+      "room": "experience",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": null,
+      "bakeVisibleFraction": 0.7602,
+      "meanBakeSignal": 38.93,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "chromium",
+      "width": 960,
+      "height": 540,
+      "room": "writing",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.5973,
+      "meanBakeSignal": 23.39,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 960,
+      "height": 540,
+      "room": "lobby",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.6923,
+      "meanBakeSignal": 19.58,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 960,
+      "height": 540,
+      "room": "about",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.4934,
+      "meanBakeSignal": 25.07,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 960,
+      "height": 540,
+      "room": "projects",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": null,
+      "bakeVisibleFraction": 0.7283,
+      "meanBakeSignal": 35.41,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 960,
+      "height": 540,
+      "room": "experience",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": null,
+      "bakeVisibleFraction": 0.7574,
+      "meanBakeSignal": 38.72,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 960,
+      "height": 540,
+      "room": "writing",
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.5922,
+      "meanBakeSignal": 23.09,
+      "glError": 0,
+      "lost": false
+    }
+  ],
+  "threeRounds": {
+    "fields": [
+      "geometries",
+      "textures",
+      "programs"
+    ],
+    "stableCounts": {
+      "lobby": [
+        91,
+        60,
+        36
+      ],
+      "about": [
+        29,
+        46,
+        17
+      ],
+      "projects": [
+        51,
+        24,
+        13
+      ],
+      "experience": [
+        156,
+        29,
+        22
+      ],
+      "writing": [
+        132,
+        46,
+        21
+      ]
+    }
+  },
+  "cleanCheckoutIdenticalPackedFiles": 134,
+  "warmTimings": [
+    {
+      "state": "lobby",
+      "version": "before",
+      "medianMs": 24.5,
+      "p95Ms": 32,
+      "calls": 204,
+      "drawnTriangles": 547267,
+      "textureCount": 55
+    },
+    {
+      "state": "lobby",
+      "version": "after",
+      "medianMs": 23.7,
+      "p95Ms": 29.4,
+      "calls": 209,
+      "drawnTriangles": 613931,
+      "textureCount": 60
+    },
+    {
+      "state": "lobby",
+      "version": "after",
+      "medianMs": 25.7,
+      "p95Ms": 33.3,
+      "calls": 209,
+      "drawnTriangles": 613931,
+      "textureCount": 60
+    },
+    {
+      "state": "lobby",
+      "version": "before",
+      "medianMs": 24.3,
+      "p95Ms": 30.7,
+      "calls": 204,
+      "drawnTriangles": 547267,
+      "textureCount": 55
+    },
+    {
+      "state": "about",
+      "version": "before",
+      "medianMs": 14.4,
+      "p95Ms": 20.7,
+      "calls": 77,
+      "drawnTriangles": 370614,
+      "textureCount": 39
+    },
+    {
+      "state": "about",
+      "version": "after",
+      "medianMs": 15.2,
+      "p95Ms": 21.1,
+      "calls": 87,
+      "drawnTriangles": 514684,
+      "textureCount": 46
+    },
+    {
+      "state": "about",
+      "version": "after",
+      "medianMs": 15.2,
+      "p95Ms": 19.7,
+      "calls": 87,
+      "drawnTriangles": 514684,
+      "textureCount": 46
+    },
+    {
+      "state": "about",
+      "version": "before",
+      "medianMs": 14.3,
+      "p95Ms": 21.3,
+      "calls": 77,
+      "drawnTriangles": 370614,
+      "textureCount": 39
+    },
+    {
+      "state": "projects",
+      "version": "before",
+      "medianMs": 16.3,
+      "p95Ms": 22.7,
+      "calls": 107,
+      "drawnTriangles": 412784,
+      "textureCount": 22
+    },
+    {
+      "state": "projects",
+      "version": "after",
+      "medianMs": 14.7,
+      "p95Ms": 21,
+      "calls": 111,
+      "drawnTriangles": 502344,
+      "textureCount": 24
+    },
+    {
+      "state": "projects",
+      "version": "after",
+      "medianMs": 13,
+      "p95Ms": 22.8,
+      "calls": 111,
+      "drawnTriangles": 502344,
+      "textureCount": 24
+    },
+    {
+      "state": "projects",
+      "version": "before",
+      "medianMs": 15.4,
+      "p95Ms": 20.7,
+      "calls": 107,
+      "drawnTriangles": 412784,
+      "textureCount": 22
+    },
+    {
+      "state": "experience",
+      "version": "before",
+      "medianMs": 21,
+      "p95Ms": 23.8,
+      "calls": 210,
+      "drawnTriangles": 316708,
+      "textureCount": 26
+    },
+    {
+      "state": "experience",
+      "version": "after",
+      "medianMs": 22,
+      "p95Ms": 24.6,
+      "calls": 240,
+      "drawnTriangles": 392236,
+      "textureCount": 29
+    },
+    {
+      "state": "experience",
+      "version": "after",
+      "medianMs": 22.3,
+      "p95Ms": 26,
+      "calls": 240,
+      "drawnTriangles": 392236,
+      "textureCount": 29
+    },
+    {
+      "state": "experience",
+      "version": "before",
+      "medianMs": 20.5,
+      "p95Ms": 22.9,
+      "calls": 210,
+      "drawnTriangles": 316708,
+      "textureCount": 26
+    },
+    {
+      "state": "writing",
+      "version": "before",
+      "medianMs": 23.5,
+      "p95Ms": 29.5,
+      "calls": 263,
+      "drawnTriangles": 1233086,
+      "textureCount": 39
+    },
+    {
+      "state": "writing",
+      "version": "after",
+      "medianMs": 22.9,
+      "p95Ms": 29.9,
+      "calls": 273,
+      "drawnTriangles": 1381546,
+      "textureCount": 46
+    },
+    {
+      "state": "writing",
+      "version": "after",
+      "medianMs": 23.2,
+      "p95Ms": 28,
+      "calls": 273,
+      "drawnTriangles": 1381546,
+      "textureCount": 46
+    },
+    {
+      "state": "writing",
+      "version": "before",
+      "medianMs": 16.6,
+      "p95Ms": 26.7,
+      "calls": 263,
+      "drawnTriangles": 1233086,
+      "textureCount": 39
+    },
+    {
+      "state": "open-book",
+      "version": "before",
+      "medianMs": 22.2,
+      "p95Ms": 29.1,
+      "calls": 291,
+      "drawnTriangles": 1233546,
+      "textureCount": 45
+    },
+    {
+      "state": "open-book",
+      "version": "after",
+      "medianMs": 22.3,
+      "p95Ms": 30.1,
+      "calls": 301,
+      "drawnTriangles": 1382006,
+      "textureCount": 52
+    },
+    {
+      "state": "open-book",
+      "version": "after",
+      "medianMs": 22.4,
+      "p95Ms": 31.1,
+      "calls": 301,
+      "drawnTriangles": 1382006,
+      "textureCount": 52
+    },
+    {
+      "state": "open-book",
+      "version": "before",
+      "medianMs": 19.7,
+      "p95Ms": 31.9,
+      "calls": 291,
+      "drawnTriangles": 1233546,
+      "textureCount": 45
+    }
+  ],
+  "allRoomFloorAndWindowCheck": [
+    {
+      "room": "lobby",
+      "landmarks": [
+        {
+          "signal": 79236,
+          "errorPx": 0.37
+        },
+        {
+          "signal": 66512,
+          "errorPx": 0.78
+        }
+      ],
+      "sun": {
+        "samples": 65536,
+        "eyeChanges": 0,
+        "rollChanges": 65510
+      }
+    },
+    {
+      "room": "about",
+      "landmarks": [
+        {
+          "signal": 93479,
+          "errorPx": 0.14
+        },
+        {
+          "signal": 85619,
+          "errorPx": 0.22
+        }
+      ],
+      "sun": {
+        "samples": 65536,
+        "eyeChanges": 0,
+        "rollChanges": 39263
+      }
+    },
+    {
+      "room": "projects",
+      "landmarks": [
+        {
+          "signal": 111761,
+          "errorPx": 2.1
+        },
+        {
+          "signal": 153419,
+          "errorPx": 0.96
+        }
+      ],
+      "sun": null
+    },
+    {
+      "room": "experience",
+      "landmarks": [
+        {
+          "signal": 93097,
+          "errorPx": 1.64
+        },
+        {
+          "signal": 107761,
+          "errorPx": 0.71
+        }
+      ],
+      "sun": null
+    },
+    {
+      "room": "writing",
+      "landmarks": [
+        {
+          "signal": 117474,
+          "errorPx": 0.22
+        },
+        {
+          "signal": 111634,
+          "errorPx": 0.96
+        }
+      ],
+      "sun": {
+        "samples": 65536,
+        "eyeChanges": 0,
+        "rollChanges": 59363
+      }
+    }
+  ],
+  "adaptiveHeadlessWebKit": [
+    {
+      "engine": "webkit",
+      "width": 1280,
+      "height": 720,
+      "room": "lobby",
+      "tier": 0,
+      "scale": 1,
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.6877,
+      "meanBakeSignal": 19.64,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 1280,
+      "height": 720,
+      "room": "about",
+      "tier": 0,
+      "scale": 1,
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.4888,
+      "meanBakeSignal": 24.87,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 1280,
+      "height": 720,
+      "room": "projects",
+      "tier": 0,
+      "scale": 1,
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": null,
+      "bakeVisibleFraction": 0.7208,
+      "meanBakeSignal": 34.51,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 1280,
+      "height": 720,
+      "room": "experience",
+      "tier": 0,
+      "scale": 1,
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": null,
+      "bakeVisibleFraction": 0.7565,
+      "meanBakeSignal": 39.07,
+      "glError": 0,
+      "lost": false
+    },
+    {
+      "engine": "webkit",
+      "width": 1280,
+      "height": 720,
+      "room": "writing",
+      "tier": 0,
+      "scale": 1,
+      "heroZError": 0,
+      "intro": 1,
+      "rollChange": 0,
+      "bakeVisibleFraction": 0.5956,
+      "meanBakeSignal": 22.95,
+      "glError": 0,
+      "lost": false
+    }
+  ]
+}

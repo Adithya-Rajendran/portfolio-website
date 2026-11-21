@@ -14,6 +14,7 @@ Path-traced sci-fi rooms designed in Blender and shown in the browser with three
   `.blend` files are generated and not committed. `remote/` holds the PowerShell runners used on the bake machine.
 - `tools/` — Playwright helpers run in Docker: screenshots (`dshot.sh`), frame times (`dperf.sh`), before/after snapshots
   (`dsnap.sh`) and the room-switching test (`docker/rooms.mjs`).
+- [`/lighting-review/`](public/lighting-review/index.html) — matched browser views of all five rooms, actual book/satellite inspection poses and two short films. [Lighting method and measured checks](docs/finish-lighting.md).
 - `docs/blueprint.md` — the station design.
 - [`docs/scene-assets.md`](docs/scene-assets.md) — measured room inventory, overlap and extraction tests. Open `/asset-catalogue/parts.html` for the full parts breakdown and what moves in the browser. `/asset-catalogue/` shows the smaller set of reusable models; `python3 tools/review-models.py --list` lists their Blender studios.
 
