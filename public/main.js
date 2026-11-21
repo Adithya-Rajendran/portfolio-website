@@ -17,7 +17,9 @@ import { initLive, live, fill } from './js/screens.js';
 const $ = (sel) => document.querySelector(sel);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
 function fail(msg) {
-  loader.classList.remove('done'); $('#loader .label').textContent = msg;
+  if (loader.dataset.failed) return; // Preserve the first cause while outstanding requests settle.
+  loader.dataset.failed = 'true'; loader.classList.remove('done'); $('#what').textContent = msg;
+  $('#loader .percentage').hidden = true;
   $('#loader .bar').style.display = 'none'; $('#loader .mark').style.animation = 'none';
 }
 addEventListener('error', (e) => fail('ERROR: ' + (e.message || 'failed to start')));
