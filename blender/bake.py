@@ -119,7 +119,9 @@ for key, ob in groups.items():
     else:
         activate(ob)
         bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=11.0 / res, area_weight=0.0, correct_aspect=True, scale_to_bounds=False)
+        # every island gets this margin, so a group made of thousands of small things (a wall of books) must keep it small
+        # or the atlas is mostly gaps
+        bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=(11.0 if len(me.polygons) < 6000 else 2.5) / res, area_weight=0.0, correct_aspect=True, scale_to_bounds=False)
         bpy.ops.object.mode_set(mode='OBJECT')
 
 # ---- 4. bake
