@@ -44,8 +44,10 @@ bench({**TECH, **NAVIGATION_PROJECTION})
 # ================================================================= SHELL: drum wall, dome, oculus
 quad('floor', [(-R - 0.5, -R - 0.5, 0), (R + 0.5, -R - 0.5, 0), (R + 0.5, R + 0.5, 0), (-R - 0.5, R + 0.5, 0)], 'floor', 'floorN')
 DOME = [(OCULUS + (R - OCULUS) * math.cos(t * pi / 2 / 24), WALL_H + (APEX - WALL_H) * math.sin(t * pi / 2 / 24)) for t in range(25)]
-lathe('drum', [(R, 0), (R, WALL_H)], 'wall', 'archL', segs=96, closed=False)
-lathe('dome', DOME, 'navy', 'archC', segs=96, closed=False)
+# These two sheets are the room's lining. A camera render can shade the back of a
+# polygon; a lightmap bakes only its selected side. Face the inhabitants, not space.
+lathe('drum', [(R, WALL_H), (R, 0)], 'wall', 'archL', segs=96, closed=False, keep_normals=True)
+lathe('dome', DOME[::-1], 'navy', 'archC', segs=96, closed=False, keep_normals=True)
 lathe('base', [(R, 0.0), (R - 0.14, 0.0), (R - 0.14, 0.45), (R, 0.5)], 'plat', 'archL', segs=96, closed=False)
 # ---- Cornice and cove lighting at the foot of the dome
 lathe('cornice', [(R, WALL_H - 0.25), (R - 0.5, WALL_H - 0.12), (R - 0.5, WALL_H + 0.1), (R - 0.42, WALL_H + 0.1), (R - 0.42, WALL_H - 0.04), (R, WALL_H + 0.02)], 'rib', 'archR', segs=96)
