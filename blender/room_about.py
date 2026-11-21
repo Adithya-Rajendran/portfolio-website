@@ -91,7 +91,7 @@ def a_frame(M=I4, grp='props', w=0.7, h=0.9):
 exec(open(os.path.join(_here, 'assets_lounge.py')).read(), globals())
 ASSETS = READING_ASSETS.copy()
 ASSETS.update(wainscot=a_wainscot, drape=a_drape, sofa_trim=a_sofa_trim, drinks=a_drinks, frame=a_frame,
-              coffee_table=a_coffee_table, telescope=a_telescope)
+              coffee_table=a_coffee_table, telescope=a_telescope, sideboard=a_sideboard, sofa_body=a_sofa_body)
 bench(ASSETS)
 
 # ================================================================= SHELL
@@ -103,7 +103,7 @@ for s in (1, -1):
     g = 'archR' if s > 0 else 'archL'
     quad(f'wall_{g}', [(s * WD, Y0, 0), (s * WD, Y1, 0), (s * WD, Y1, H), (s * WD, Y0, H)], 'plaster', g)
     box(f'skirt_{g}', s * (WD - 0.03), s * WD, Y0, Y1, 0, 0.14, 'wood', g)
-# timber ceiling: deep beams across the room, slats between them, warm light in the gaps
+# ---- Timber ceiling: beams, slats and concealed lighting
 for k, y in enumerate((-4.0, 0.0, 4.0, 8.0)):          # the timber beams case the hull frames, which are 4 m apart everywhere on the ring
     box(f'beam{k}', -WD, WD, y - 0.14, y + 0.14, H - 0.55, H, 'wood', 'archC', bevel=0.012)
     box(f'beamlight{k}', -WD + 0.4, WD - 0.4, y - 0.18, y - 0.15, H - 0.08, H - 0.06, em=em_ramp('step', k, y, 1.4, 0.5, 1.0))
@@ -133,10 +133,7 @@ a_ladder(T((SX + 1.6, 2.6, 0)), 'props', h=4.85)
 
 # ================================================================= RIGHT WALL: pictures, a sideboard, two placard screens
 RX = WD
-box('sideboard', RX - 0.6, RX - 0.02, -3.2, 1.2, 0.12, 0.85, 'wood', 'props', bevel=0.012)
-box('sideboard_top', RX - 0.63, RX - 0.02, -3.25, 1.25, 0.85, 0.89, 'wood_l', 'props', bevel=0.008)
-for k in range(4):
-    box('sideboard_door', RX - 0.615, RX - 0.6, -3.15 + k * 1.09, -2.13 + k * 1.09, 0.17, 0.8, 'wood_l', 'props', bevel=0.006)
+a_sideboard(T((RX, -1.0, 0)))
 lathe('sb_lamp_base', [(0, 0.34), (0.03, 0.34), (0.05, 0.2), (0.1, 0.03), (0.1, 0), (0, 0)], 'brass', 'props', segs=20, closed=False, M=T((RX - 0.32, -2.6, 0.89)))
 lathe('sb_lamp_shade', [(0.1, 0.0), (0.17, -0.24), (0.165, -0.24), (0.095, 0.0)], em='lamp', segs=24, M=T((RX - 0.32, -2.6, 1.5)))
 glow('sb_lamp_glow', (RX - 0.32, -2.6, 1.36), 55)
@@ -151,15 +148,11 @@ for li in range(22):
         if prev: bm.faces.new((prev[0], prev[1], cur[1], cur[0]))
         prev = cur
 finish('sb_plant', bm, 'leaf', 'props')
-# a salon hang of framed pictures (plain mounts for now) and the two screens
+# ---- Framed pictures, wall panelling and two placards
 for y, z, w, h in ((-3.0, 2.45, 0.7, 0.9), (-2.05, 2.75, 0.5, 0.5), (-2.1, 1.95, 0.55, 0.6), (-1.2, 2.4, 0.8, 1.1)):
     a_frame(T((RX, y, z)), 'archR', w, h)
 a_wainscot(T((RX, 5.0, 0)) @ Matrix.Rotation(pi, 4, 'Z'), 'archR', L=11.0); a_wainscot(T((RX, Y1 - 0.55, 0)) @ Matrix.Rotation(pi, 4, 'Z'), 'archR', L=1.45)
 a_wainscot(T((WD, Y0, 0)) @ Matrix.Rotation(pi / 2, 4, 'Z'), 'back', L=2 * WD)
-for k in range(4):
-    lathe('sb_knob', [(0, 0.03), (0.014, 0.03), (0.018, 0.02), (0.007, 0.01), (0.007, 0), (0, 0)], 'brass', 'props', segs=10, closed=False, M=T((RX - 0.615, -2.64 + k * 1.09 + (0.42 if k % 2 == 0 else -0.42), 0.5), (0, -pi / 2, 0)))
-for y in (-3.1, -1.0, 1.1):
-    for x in (RX - 0.52, RX - 0.1): turned('sb_foot', 0.12, 0.03, 'wood', 'props', M=T((x, y, 0)), segs=10)
 a_drinks(T((RX - 0.32, -1.0, 0.89))); a_stack(T((RX - 0.3, -0.2, 0.89), (0, 0, 0.3)), n=3)
 for i, yc in enumerate((1.1, 3.2)):
     box(f'bezel{i}', RX - 0.06, RX, yc - 0.92, yc + 0.92, 1.45, 2.75, 'frame', 'archR', bevel=0.01)
@@ -171,24 +164,8 @@ pressure_door('door', T((RX - 0.02, 6.0, 0), (0, 0, pi)), 'archR', 'ATRIUM', 'RI
 box('rug', -3.3, 3.3, -1.6, 4.6, 0.0, 0.018, 'rug', 'props')
 box('rug_border', -3.0, 3.0, -1.3, 4.3, 0.018, 0.021, 'rug2', 'props')
 box('rug_field', -2.8, 2.8, -1.1, 4.1, 0.021, 0.024, 'rug', 'props')
-def sofa(name, x, y0, y1, face):
-    """Low sofa along Y at x, facing +x (face = 1) or -x."""
-    b = x - face * 0.5
-    box(name + 'base', x - 0.5, x + 0.5, y0, y1, 0.08, 0.22, 'wood', 'props')
-    span = (y1 - y0 - 0.16) / 3
-    for k in range(3):
-        yy = y0 + 0.08 + span * k
-        boxed_cushion(name+'seat', T((x,yy+span/2,.325)), .94,span-.01,.21,'linen','props')
-    for dx in (-0.38, 0.38):
-        for yy in (y0 + .14, y1 - .14):
-            turned('sofa_foot', .08, .04, 'wood', 'props', M=T((x+dx, yy, 0)))
-    box(name + 'back', min(b, b + face * 0.2), max(b, b + face * 0.2), y0, y1, 0.22, 0.86, 'linen', 'props', bevel=0.07, seg=3)
-    for yy in (y0, y1):
-        box(name + 'arm', x - 0.5, x + 0.5, yy - 0.09, yy + 0.09, 0.22, 0.62, 'linen', 'props', bevel=0.06, seg=3)
-    for k in range(3):
-        yy = y0 + (k + 0.5) * (y1 - y0) / 3
-        rbox(name + 'cushion', (0.14, 0.5, 0.46), T((b + face * 0.3, yy, 0.62), (0, -face * 0.25, 0)), random.choice(('rug', 'linen', 'rug2')), 'props', bevel=0.05, seg=3)
-sofa('sofaL', -2.2, 0.2, 3.0, 1); sofa('sofaR', 2.2, 0.2, 3.0, -1)
+a_sofa_body(T((-2.2, 1.6, 0)), name='sofaL')
+a_sofa_body(T((2.2, 1.6, 0)), name='sofaR', face=-1)
 a_sofa_trim(T((-2.2, 1.6, 0))); a_sofa_trim(T((2.2, 1.6, 0)) @ Matrix.Rotation(pi, 4, 'Z'))
 for a, b in ((3.12, 3.06), (2.94, 2.9)):
     for dd in (-1, 1): box('rug_line', dd * a, dd * b, -1.5, 4.5, 0.021, 0.0245, 'rug2', 'props')
@@ -203,16 +180,16 @@ def armchair(name, c, yaw):
     for dx, dy in ((-0.3, -0.26), (0.3, -0.26), (-0.3, 0.26), (0.3, 0.26)):
         rbox(name + 'leg', (0.04, 0.04, 0.28), M @ T((dx, dy, 0.14)), 'wood', 'props')
 a_armchair(T((-1.9, 5.7, 0)) @ Matrix.Rotation(math.radians(-14), 4, 'Z')); a_armchair(T((1.3, 6.0, 0)) @ Matrix.Rotation(math.radians(12), 4, 'Z'))
-# floor lamp arching over the left sofa
+# ---- Arched floor lamp over the left sofa
 lathe('fl_base', [(0, 0.04), (0.2, 0.04), (0.2, 0), (0, 0)], 'dark', 'props', segs=24, closed=False, M=T((-3.6, 0.0, 0)))
 rbox('fl_stem', (0.025, 0.025, 1.9), T((-3.6, 0.0, 0.97)), 'brass', 'props')
 rbox('fl_arm', (0.025, 0.025, 1.0), T((-3.2, 0.25, 2.05), (0.0, 1.05, 0.55)), 'brass', 'props')
 lathe('fl_shade', [(0.06, 0.0), (0.2, -0.22), (0.195, -0.22), (0.055, 0.0)], em='lamp', segs=24, M=T((-2.8, 0.5, 2.3)))
 glow('fl_glow', (-2.8, 0.5, 2.12), 90)
-# telescope by the window: brass tube on a timber tripod, pointed at the Moon
+# ---- Brass telescope and tripod by the window
 scope_M = T((3.6, 6.9, 0))
 a_telescope(scope_M, target=scope_M.inverted() @ Vector((-2.0, Y1 + 6, 4.6)))
-# planters either side of the window
+# ---- Window planters
 for d in (-1, 1):
     c = Vector((d * 5.6, 7.7, 0))
     lathe(f'pot{d}', [(0, 0.6), (0.42, 0.6), (0.46, 0.54), (0.36, 0.0), (0, 0)], 'white', 'props', segs=32, closed=False, M=T(c))

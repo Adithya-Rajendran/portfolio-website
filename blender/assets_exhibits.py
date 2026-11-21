@@ -1,7 +1,8 @@
 """Fabrication exhibit assets, using the shared kit and the room's material palette.
 
-Coordinates are in metres. M places the plinth at floor level and the other assets
-at plinth-top level. Indexed builders take i as the suffix for their part names.
+Coordinates are in metres. M places the plinth at floor level and the plinth
+exhibits at plinth-top level. The bay assemblies document their own datums.
+Indexed builders take i as the suffix for their part names.
 """
 
 def a_rover(M=I4):
@@ -120,4 +121,106 @@ def a_lattice(M=I4, i=0):
     glow(f'lt_glow{i}', C.translation, 60, color=(0.1, 0.8, 1.0), r=0.13)
 
 
-EXHIBIT_ASSETS = dict(rover=a_rover, arm=a_manipulator, engine=a_engine, lattice=a_lattice, plinth=a_plinth)
+def a_cargo_bulkhead(M=I4):
+    """Static closed cargo bulkhead and two leaves; M is at floor level on the rear wall."""
+    DW, DH = 5.2, 5.2
+    box('doorframe_l', -DW - 0.5, -DW, -0.5, 0, 0, DH + 0.5, 'steel', 'center', bevel=0.03, M=M)
+    box('doorframe_r', DW, DW + 0.5, -0.5, 0, 0, DH + 0.5, 'steel', 'center', bevel=0.03, M=M)
+    box('doorframe_t', -DW - 0.5, DW + 0.5, -0.5, 0, DH, DH + 0.5, 'steel', 'center', bevel=0.03, M=M)
+    for d in (-1, 1):
+        box(f'door{d}', d * 0.06, d * DW, -0.3, -0.12, 0.02, DH, 'wall2', 'center', bevel=0.02, M=M)
+        for i in range(4):
+            z = 0.9 + i * 1.3
+            box(f'doorrib{d}{i}', d * 0.2, d * (DW - 0.15), -0.36, -0.3, z, z + 0.14, 'steel', 'center', bevel=0.01, M=M)
+        for i in range(13):
+            x0 = 0.1 + i * 0.4
+            prism(f'chev{d}{i}', [(d * x0, 0.04), (d * (x0 + 0.2), 0.04), (d * (x0 + 0.5), 0.62), (d * (x0 + 0.3), 0.62)], 'Y', -0.31, -0.3, 'hazard_y' if i % 2 == 0 else 'hazard_k', 'center', M=M)
+        box(f'doorwin{d}', d * 1.5, d * 3.7, -0.31, -0.3, 3.0, 3.7, 'lum_cool', 'center', M=M)
+    box('doorseam', -0.035, 0.035, -0.33, -0.3, 0.02, DH, em='seam', M=M)
+    text3d('baysign', 'BAY 02', 0.75, M @ T((0, -0.52, DH + 0.95), (pi / 2, 0, 0)), spacing=1.25)
+    text3d('baysign2', 'CARGO LIFT  ·  SPOKE  ·  HUB DOCK', 0.2, M @ T((0, -0.52, DH + 0.62), (pi / 2, 0, 0)), spacing=1.3)
+    for d in (-1, 1):
+        B = M @ T((d * (DW + 0.25), -0.56, DH + 0.5))
+        lathe(f'beacon{d}', [(0, 0.2), (0.07, 0.19), (0.09, 0.0), (0, 0.0)], em='beacon', segs=16, closed=False, M=B)
+        lathe(f'beaconbase{d}', [(0, 0.0), (0.12, 0.0), (0.12, -0.06), (0, -0.06)], 'dark', 'center', segs=16, closed=False, M=B)
+
+
+def a_gantry(M=I4):
+    """Static bridge, trolley and hoist; M is below the hook at floor level. Return the world sling anchor."""
+    box('bridge', -6.6, 6.6, -0.3, 0.3, 6.36, 6.95, 'yellow', 'center', bevel=0.03, M=M)
+    box('bridgeweb', -6.5, 6.5, -0.36, 0.36, 6.6, 6.68, 'steel', 'center', M=M)
+    for d in (-1, 1):
+        box(f'endtruck{d}', d * 6.2, d * 6.75, -0.9, 0.9, 6.36, 6.7, 'steel', 'center', bevel=0.03, M=M)
+    box('trolley', -0.7, 0.7, -0.55, 0.55, 6.1, 6.4, 'steel', 'center', bevel=0.03, M=M)
+    box('hoist', -0.35, 0.35, -0.3, 0.3, 5.7, 6.1, 'yellow', 'center', bevel=0.04, M=M)
+    for dx in (-0.12, 0.12):
+        box('cable', dx - 0.012, dx + 0.012, -0.012, 0.012, 4.75, 5.7, 'chrome', 'center', M=M)
+    hook = M @ T((0, 0, 4.45))
+    lathe('hookblock', [(0, 0.3), (0.2, 0.3), (0.24, 0.1), (0.14, 0.0), (0, 0.0)], 'yellow', 'center', segs=20, closed=False, M=hook)
+    return hook.translation
+
+
+def a_solar_wing(M=I4, *, d=1):
+    """One deployed wing with static drive and hinges; M is the bus frame, d selects the ±X side."""
+    rbox(f'sat_yoke{d}', (0.5, 0.06, 0.06), M @ T((d * 0.98, 0, 0)), 'chrome', 'center')
+    # Keep the frame and pins on +Y on both wings, rather than reflecting the mesh.
+    W = M @ T((d*.91,0,0),(0,d*pi/2,0))
+    lathe('array_drive',[(0,0),(.15,0),(.15,.13),(.115,.15),(.115,.21),(0,.21)],'steel','center',segs=24,M=W)
+    for joint in range(2):
+        seam=d*(2.26+joint*1.08)
+        for z in (-.55,.55):
+            rbox('array_hinge_leaf',(.16,.042,.13),M @ T((seam,.029,z)),'steel','center',bevel=.007)
+            rod('array_hinge_pin',(seam,.058,z-.086),(seam,.058,z+.086),.019,'chrome','center',M=M)
+    for i in range(3):
+        cx = d * (1.2 + 0.52 + i * 1.08)
+        rbox(f'sat_wing{d}{i}', (1.0, 0.03, 1.5), M @ T((cx, 0, 0), (0.0, 0, 0)), 'solar', 'center')
+        rbox(f'sat_wingf{d}{i}', (1.04, 0.02, 1.54), M @ T((cx, 0.012, 0)), 'chrome', 'center')
+        for j in range(1, 6):
+            rbox(f'sat_cell{d}{i}{j}', (1.0, 0.032, 0.008), M @ T((cx, 0, -0.75 + j * 0.25)), 'chrome', 'center')
+        for j in range(1, 4):
+            rbox(f'sat_cellv{d}{i}{j}', (0.008, 0.032, 1.5), M @ T((cx - 0.5 + j * 0.25, 0, 0)), 'chrome', 'center')
+
+
+def a_satellite(M=I4):
+    """Static payload with both deployed wings; M is at the bus centre, without rigging."""
+    def ngon(name, n, r, h, M, m, grp):
+        bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=True, segments=n, radius1=r, radius2=r, depth=h)
+        return finish(name, bm, m, grp, M=M @ Matrix.Rotation(pi / n, 4, 'Z'))
+
+    ngon('sat_bus', 8, 0.8, 1.7, M, 'foil', 'center')
+    for z in (0.89, -0.89):
+        ngon('sat_deck', 8, 0.84, 0.08, M @ T((0, 0, z)), 'dark', 'center')
+    lathe('sat_adapter', [(0.45, 0.93), (0.52, 0.93), (0.52, 1.05), (0.45, 1.05)], 'chrome', 'center', segs=32, M=M)
+    FR = 0.8 * math.cos(pi / 8)  # distance from the axis to a face
+    for a, kind in ((90, 'box'), (270, 'radiator'), (45, 'horn'), (135, 'box2'), (225, 'tracker'), (315, 'box')):
+        Mf = M @ Matrix.Rotation(math.radians(a), 4, 'Z')
+        if kind == 'box': rbox('sat_eq', (0.1, 0.42, 0.6), Mf @ T((FR + 0.05, 0, 0.1)), 'white', 'center', bevel=0.015)
+        elif kind == 'box2':
+            rbox('sat_eq', (0.14, 0.36, 0.36), Mf @ T((FR + 0.07, 0, 0.4)), 'dark', 'center', bevel=0.015)
+            rbox('sat_eq', (0.08, 0.3, 0.5), Mf @ T((FR + 0.04, 0, -0.3)), 'white', 'center', bevel=0.01)
+        elif kind == 'radiator':
+            rbox('sat_rad', (0.03, 0.56, 1.3), Mf @ T((FR + 0.02, 0, 0)), 'white', 'center')
+            for j in range(6): rbox('sat_radfin', (0.05, 0.5, 0.02), Mf @ T((FR + 0.045, 0, -0.5 + j * 0.2)), 'chrome', 'center')
+        elif kind == 'horn': lathe('sat_horn', [(0, 0), (0.05, 0), (0.16, 0.3), (0.15, 0.3), (0.04, 0.02), (0, 0.02)], 'chrome', 'center', segs=20, closed=False, M=Mf @ T((FR, 0, 0.3), (0, pi / 2, 0)))
+        else:
+            for dz in (-0.2, 0.25): lathe('sat_tracker', [(0, 0), (0.07, 0), (0.1, 0.22), (0.09, 0.22), (0.06, 0.02), (0, 0.02)], 'dark', 'center', segs=16, closed=False, M=Mf @ T((FR, 0, dz), (0, pi / 2 - 0.5, 0)))
+    for a in (45, 135, 225, 315):  # thruster quads on the lower deck
+        Mq = M @ Matrix.Rotation(math.radians(a), 4, 'Z') @ T((0.86, 0, -0.8))
+        rbox('sat_quad', (0.12, 0.12, 0.12), Mq, 'dark', 'center', bevel=0.01)
+        for rx, ry in ((pi / 2, 0), (-pi / 2, 0), (0, pi / 2)):
+            lathe('sat_thr', [(0, 0), (0.02, 0), (0.045, 0.1), (0.04, 0.1), (0.015, 0.01), (0, 0.01)], 'chrome', 'center', segs=10, closed=False, M=Mq @ T((0, 0, 0), (rx, ry, 0)) @ T((0, 0, 0.06)))
+    rbox('sat_mast', (0.03, 0.03, 0.9), M @ T((0.3, 0.3, 1.4)), 'chrome', 'center')
+    lathe('sat_omni', [(0, 0), (0.06, 0.02), (0.06, 0.1), (0, 0.14)], 'white', 'center', segs=12, closed=False, M=M @ T((0.3, 0.3, 1.85)))
+    lathe('sat_dish', [(0, 0.0), (0.25, 0.03), (0.5, 0.12), (0.72, 0.28), (0.74, 0.28), (0.5, 0.1), (0.25, 0.01), (0, -0.02)], 'white', 'center', segs=48, closed=False, M=M @ T((0, 0, -1.28), (pi, 0, 0)))
+    # Rear dish is carried on a trussed spacer between the bus and reflector.
+    for leg in range(3):
+        a = leg*2*pi/3
+        rod('dish_stay',(.36*math.cos(a),.36*math.sin(a),-.925),(.15*math.cos(a),.15*math.sin(a),-1.29),.018,'steel','center',M=M)
+    lathe('sat_feed', [(0, 0.0), (0.03, 0.0), (0.03, 0.5), (0.07, 0.56), (0, 0.6)], 'chrome', 'center', segs=12, closed=False, M=M @ T((0, 0, -1.3), (pi, 0, 0)))
+    lathe('sat_nozzle', [(0, 0.0), (0.1, 0.0), (0.2, 0.3), (0.19, 0.3), (0.09, 0.02), (0, 0.02)], 'chrome', 'center', segs=24, closed=False, M=M @ T((0, 0, 0.9)))
+    for d in (-1, 1):
+        a_solar_wing(M, d=d)
+
+
+EXHIBIT_ASSETS = dict(rover=a_rover, arm=a_manipulator, engine=a_engine, lattice=a_lattice, plinth=a_plinth,
+                      gantry=a_gantry, satellite=a_satellite, solar_wing=a_solar_wing, cargo_bulkhead=a_cargo_bulkhead)

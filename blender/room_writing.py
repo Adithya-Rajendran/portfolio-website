@@ -272,7 +272,7 @@ ASSETS.update(table=a_table, chair=a_chair, lamp=a_lamp, pendant=a_pendant, term
 # ================================================================= ASSET BENCH: one asset alone, in a studio
 bench(ASSETS, {'pendant': T((0, 0, 6.3)), 'coffer': T((0, 0, 3.0)), 'gallery': T((0, 0, 1.0))})
 
-# ================================================================= THE ROOM
+# ================================================================= Floor, ceiling and plaster shell
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 3, 0), (-WD, 3, 0)], 'floor', 'floorN')
 quad('floor_far', [(-WD, 3, 0), (WD, 3, 0), (WD, Y1, 0), (-WD, Y1, 0)], 'floor', 'floorF')
 quad('ceiling', [(-WD, Y0, H), (WD, Y0, H), (WD, Y1, H), (-WD, Y1, H)], 'plaster', 'archC')
@@ -280,7 +280,7 @@ quad('backwall', [(-WD, Y0, 0), (WD, Y0, 0), (WD, Y0, H), (-WD, Y0, H)], 'plaste
 for s in (1, -1):
     g = 'archR' if s > 0 else 'archL'
     quad(f'wall_{g}', [(s * WD, Y0, 0), (s * WD, Y1, 0), (s * WD, Y1, H), (s * WD, Y0, H)], 'plaster', g)
-# coffered timber ceiling: a beam over every upright (they case the hull frames), two running the length, a coffer in every field
+# ---- Timber ceiling: hull-frame casings, coffers, crown moulding and lights
 EDGES = [b[0] for b in BAYS] + [BAYS[-1][1]]
 for k, y in enumerate(EDGES):
     box(f'beam{k}', -WD, WD, y - 0.16, y + 0.16, H - 0.6, H, 'wood', 'archC', bevel=0.012)
@@ -292,10 +292,11 @@ for y0, y1 in BAYS:
 moulding('crown_l', [(-WD, H - 0.3), (-WD + 0.1, H - 0.3), (-WD + 0.16, H - 0.2), (-WD + 0.3, H - 0.06), (-WD + 0.3, H), (-WD, H)], Y0, Y1, 'wood', 'archL')
 moulding('crown_r', [(WD, H - 0.3), (WD - 0.1, H - 0.3), (WD - 0.16, H - 0.2), (WD - 0.3, H - 0.06), (WD - 0.3, H), (WD, H)], Y0, Y1, 'wood', 'archR')
 
+# ---- Arched bow window and end wall
 a_window(T((0, Y1, 0)), 'center')
 for d_ in (-1, 1): a_endwall(T((d_ * (WIN_W * 1.2 + 0.2), Y1 - 0.5, 0)), 'center', d_)
 
-# bookcases: two tiers of bays each side, the gallery between them, a ladder on a rail
+# ---- Bookcase walls, galleries and ladder rails
 for s in (1, -1):
     g = 'archR' if s > 0 else 'archL'; SX = s * WD
     for bi, (y0, y1) in enumerate(BAYS):
@@ -306,7 +307,7 @@ for s in (1, -1):
     a_ladder(T((SX - s * 1.3, 0.3 if s > 0 else -2.2, 0)) @ Matrix.Rotation(0 if s > 0 else pi, 4, 'Z') @ Matrix.Rotation(pi, 4, 'Z'), 'props')
 pressure_door('door', T((-WD + 0.02, sum(BAYS[DOOR_BAY]) / 2, 0)), 'archL', 'ATRIUM', 'SPINWARD  ·  MIDWAY', 'lobby', w=1.6, h=2.4)
 
-# the nave: a runner with a border, the table, its lamps and chairs, what readers left behind
+# ---- Reading table, lamps, chairs and the bordered runner
 box('runner', -1.9, 1.9, -3.4, 11.6, 0.0, 0.016, 'runner', 'props')
 for a, b, m in ((1.78, 1.7, 'runner2'), (1.62, 1.5, 'runner3'), (1.44, 1.4, 'runner2')):
     for d in (-1, 1): box('runner_line', d * a, d * b, -3.4 + (1.9 - a), 11.6 - (1.9 - a), 0.016, 0.019, m, 'props')
@@ -321,10 +322,11 @@ for x, y, r in ((0.36, 4.5, 0.2), (-0.3, 6.4, -0.3), (0.3, 8.1, 0.1)): a_stack(T
 a_openbook(T((-0.3, 3.0, TZ + 0.002), (0, 0, 1.4))); a_openbook(T((0.32, 6.9, TZ + 0.002), (0, 0, -1.7)))
 for x, y in ((-0.33, 4.6), (0.33, 5.6), (-0.33, 7.5)): a_blotter(T((x, y, TZ + 0.002), (0, 0, pi / 2 if x > 0 else -pi / 2)))
 for k, y in enumerate((1.6, 5.1, 8.6)): a_pendant(T((0, y, 6.3)), 'archC')
+# ---- Live catalogue screen, terminal and drone cradle
 SCREENS = ['FX_screen0']
 quad('FX_screen0', a_terminal(T((0, 0.86, TZ + 0.002))), 'lum_screen', fx='screen', uv=True)
 CR = Vector((0, 2.6, TZ + 0.002)); a_cradle(T(CR))
-# around the room: the card catalogue and a cart of returns by the entrance, a bust, the globe and a wing chair by the window
+# ---- Card catalogue, returns cart and window-side furnishings
 a_catalogue(T((4.3, 3.3, 0)) @ Matrix.Rotation(pi, 4, 'Z')); a_cart(T((-3.6, 1.6, 0), (0, 0, 1.2)))
 a_globe(T((3.6, 12.0, 0))); a_floorlamp(T((4.75, 11.7, 0)), key=1)
 a_armchair(T((-3.9, 12.0, 0)) @ Matrix.Rotation(math.radians(-25), 4, 'Z')); a_floorlamp(T((-4.8, 11.5, 0)))

@@ -15,7 +15,7 @@ Path-traced sci-fi rooms designed in Blender and shown in the browser with three
 - `tools/` — Playwright helpers run in Docker: screenshots (`dshot.sh`), frame times (`dperf.sh`), before/after snapshots
   (`dsnap.sh`) and the room-switching test (`docker/rooms.mjs`).
 - `docs/blueprint.md` — the station design.
-- [`docs/scene-assets.md`](docs/scene-assets.md) — measured room inventory, overlap and extraction tests. Open `/asset-catalogue/` on the preview server for the visual catalogue; run `python3 tools/review-models.py --list` for the Blender studios.
+- [`docs/scene-assets.md`](docs/scene-assets.md) — measured room inventory, overlap and extraction tests. Open `/asset-catalogue/parts.html` for the full parts breakdown and what moves in the browser. `/asset-catalogue/` shows the smaller set of reusable models; `python3 tools/review-models.py --list` lists their Blender studios.
 
 Rebuild a room: `blender -b --python blender/room_about.py`, then `blender -b blender/about.blend --python blender/bake.py -- 1.0 192`.
 

@@ -1,6 +1,7 @@
-"""Static projection furniture, executed after the shared mesh/material kit.
+"""Atrium and Navigation assets, executed after the shared mesh/material kit.
 
-Navigation supplies EM_core for the map table's lens before building or benching it.
+Navigation supplies leather, EM_core and EM_riblight before building or benching
+its assets. The orrery uses the shared chandelier palette; its motion is external.
 """
 
 
@@ -25,6 +26,57 @@ def a_projector(M=I4, grp='center'):
         rbox('lens_keeper', (.062, .082, .018), B, 'dark', grp, bevel=.005)
         lathe('keeper_bolt', [(0, .009), (.011, .009), (.011, .016), (0, .016)], 'chrome', grp, segs=6, M=B)
     lathe('holo_lens', [(0, 0.505), (0.44, 0.505), (0.44, 0.515), (0, 0.515)], em='cyan', segs=64, closed=False, M=M)
+
+
+def a_gimbal_ring(M=I4, grp='chandA', *, radius=3.3, index=0, a0=0.0, lit_arc=math.radians(205)):
+    """One gimbal in its local XY plane, with an inner and underside light arc (radians)."""
+    rr = radius; a1 = a0 + lit_arc
+    lathe(f'chand{index}', [(rr - 0.045, -0.09), (rr + 0.045, -0.09), (rr + 0.045, 0.09), (rr - 0.045, 0.09)],
+          'chrome', grp, segs=192, M=M)
+    lathe(f'chandled{index}', [(rr - 0.053, -0.06), (rr - 0.045, -0.06), (rr - 0.045, 0.06), (rr - 0.053, 0.06)],
+          em=grp, segs=128, a0=a0, a1=a1, M=M)
+    lathe(f'chandled_b{index}', [(rr - 0.03, -0.098), (rr + 0.03, -0.098), (rr + 0.03, -0.09), (rr - 0.03, -0.09)],
+          em=grp, segs=128, a0=a0, a1=a1, M=M)
+
+
+def a_orrery(M=I4, grp='archC', *, stem_rise=4.2):
+    """The Atrium chandelier, with M at the hub and stem_rise measured to the ceiling."""
+    lathe('chand_stem', [(0, 0), (0.045, 0), (0.045, stem_rise - 0.6), (0.3, stem_rise - 0.35),
+                        (0.3, stem_rise - 0.3), (0, stem_rise - 0.3)], 'chrome', grp, segs=24, closed=False, M=M)
+    lathe('chand_hub', [(0, 0.16), (0.16, 0.08), (0.2, 0), (0.16, -0.08), (0, -0.16)],
+          'brass', grp, segs=24, closed=False, M=M)
+    # Radius, tilt axis azimuth, tilt, spin tag, lit arc (angles in degrees).
+    rings = ((3.3, 20, 22, 'chandA', 205), (2.6, 100, -34, 'chandB', 215), (1.9, 200, 48, 'chandA', 230))
+    for i, (rr, az, tilt, tag, arc) in enumerate(rings):
+        axis = Vector((math.cos(math.radians(az)), math.sin(math.radians(az)), 0))
+        Mr = M @ Matrix.Rotation(math.radians(tilt), 4, axis)
+        a_gimbal_ring(Mr, tag, radius=rr, index=i, a0=math.radians(70 * i), lit_arc=math.radians(arc))
+
+
+def a_wall_seat(M=I4, grp='props', *, index=0):
+    """Navigation's built-in seat and base; M is the bay frame with +X toward the wall."""
+    rbox(f'seat{index}', (0.55, 2.6, 0.1), M @ T((-0.34, 0, 0.5)), 'leather', grp, bevel=0.03, seg=3)
+    rbox(f'seatbase{index}', (0.5, 2.5, 0.42), M @ T((-0.32, 0, 0.24)), 'wall2', grp)
+
+
+def a_dome_rib(M=I4, grp='archR', *, azimuth=0.0, radius=9.0, wall_h=3.6, apex=8.4, oculus=1.7, index=0):
+    """Navigation's floor-to-oculus rib and light strip, about the drum axis at azimuth (radians)."""
+    def rib_path(off):
+        pts = [(radius - off, 0.0), (radius - off, wall_h)]
+        for t in range(1, 25):
+            a = t * pi / 2 / 24
+            r0 = oculus + (radius - oculus) * math.cos(a); z0 = wall_h + (apex - wall_h) * math.sin(a)
+            nx, nz = math.cos(a) * (apex - wall_h), math.sin(a) * (radius - oculus)
+            n = math.hypot(nx, nz)  # ellipse normal
+            pts.append((r0 - off * nx / n, z0 - off * nz / n))
+        return pts
+
+    # Keep azimuth in the lathe angles, not a post-rotation, to reproduce the original vertex coordinates and order.
+    M = None if M is I4 else M
+    lathe(f'rib{index}', rib_path(-0.02) + list(reversed(rib_path(0.32))), 'rib', grp,
+          segs=2, a0=azimuth - 0.03, a1=azimuth + 0.03, M=M)
+    lathe(f'ribled{index}', rib_path(0.322) + list(reversed(rib_path(0.332))), em='riblight',
+          segs=1, a0=azimuth - 0.0035, a1=azimuth + 0.0035, M=M)
 
 
 def a_map_table(M=I4, grp='center', *, radius=3.1, height=0.62):
@@ -59,7 +111,11 @@ def a_map_table(M=I4, grp='center', *, radius=3.1, height=0.62):
 ATRIUM_PROJECTION = {
     'reception_desk': a_reception_desk,
     'projector': a_projector,
+    'orrery': a_orrery,
+    'gimbal_ring': a_gimbal_ring,
 }
 NAVIGATION_PROJECTION = {
     'map_table': a_map_table,
+    'wall_seat': a_wall_seat,
+    'dome_rib': a_dome_rib,
 }

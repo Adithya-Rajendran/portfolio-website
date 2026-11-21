@@ -36,7 +36,7 @@ def spot(name, loc, target, watts, size=45, color=(1.0, 0.86, 0.7)):
     o = bpy.data.objects.new(name, l); COL.objects.link(o); o.location = loc
     o.rotation_euler = (Vector(target) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler(); return o
 
-# ASSET=<name> benches shared station hardware or Navigation's projection table.
+# ASSET=<name> benches shared station hardware or a Navigation asset with its room palette.
 exec(open(os.path.join(_here, 'assets_tech.py')).read(), globals())
 exec(open(os.path.join(_here, 'assets_projection.py')).read(), globals())
 bench({**TECH, **NAVIGATION_PROJECTION})
@@ -47,26 +47,17 @@ DOME = [(OCULUS + (R - OCULUS) * math.cos(t * pi / 2 / 24), WALL_H + (APEX - WAL
 lathe('drum', [(R, 0), (R, WALL_H)], 'wall', 'archL', segs=96, closed=False)
 lathe('dome', DOME, 'navy', 'archC', segs=96, closed=False)
 lathe('base', [(R, 0.0), (R - 0.14, 0.0), (R - 0.14, 0.45), (R, 0.5)], 'plat', 'archL', segs=96, closed=False)
-# cornice at the springing of the dome, hiding a ring of light that washes up into it
+# ---- Cornice and cove lighting at the foot of the dome
 lathe('cornice', [(R, WALL_H - 0.25), (R - 0.5, WALL_H - 0.12), (R - 0.5, WALL_H + 0.1), (R - 0.42, WALL_H + 0.1), (R - 0.42, WALL_H - 0.04), (R, WALL_H + 0.02)], 'rib', 'archR', segs=96)
 lathe('cove', [(R - 0.36, WALL_H + 0.0), (R - 0.12, WALL_H + 0.02), (R - 0.12, WALL_H + 0.035), (R - 0.36, WALL_H + 0.015)], em='cool', segs=96)
 lathe('cornice_inlay', [(R - 0.505, WALL_H - 0.06), (R - 0.5, WALL_H - 0.06), (R - 0.5, WALL_H + 0.04), (R - 0.505, WALL_H + 0.04)], 'brass', 'archR', segs=96)
-# oculus: a brass ring and a disc of deep sky
+# ---- Oculus ring and sky disc
 lathe('oculus_ring', [(OCULUS, APEX - 0.05), (OCULUS + 0.3, APEX - 0.22), (OCULUS + 0.3, APEX + 0.05), (OCULUS, APEX + 0.05)], 'brass', 'archR', segs=64)
 lathe('oculus_sky', [(0, APEX + 0.04), (OCULUS, APEX + 0.04)], em='sky', segs=48, closed=False)
-# twelve ribs running from the floor up the dome to the oculus, each with a hairline of light
-def rib_path(off):
-    pts = [(R - off, 0.0), (R - off, WALL_H)]
-    for t in range(1, 25):
-        a = t * pi / 2 / 24; r0 = OCULUS + (R - OCULUS) * math.cos(a); z0 = WALL_H + (APEX - WALL_H) * math.sin(a)
-        nx, nz = math.cos(a) * (APEX - WALL_H), math.sin(a) * (R - OCULUS); n = math.hypot(nx, nz)        # ellipse normal
-        pts.append((r0 - off * nx / n, z0 - off * nz / n))
-    return pts
+# ---- Twelve dome ribs with light strips
 for k in range(12):
-    a = math.radians(k * 30)
-    lathe(f'rib{k}', rib_path(-0.02) + list(reversed(rib_path(0.32))), 'rib', 'archR', segs=2, a0=a - 0.03, a1=a + 0.03)
-    lathe(f'ribled{k}', rib_path(0.322) + list(reversed(rib_path(0.332))), em='riblight', segs=1, a0=a - 0.0035, a1=a + 0.0035)
-# constellation studs in the dome: small brass-set lights, denser towards the top
+    a_dome_rib(I4, azimuth=math.radians(k * 30), radius=R, wall_h=WALL_H, apex=APEX, oculus=OCULUS, index=k)
+# ---- Constellation studs in the dome
 for i in range(110):
     t = random.uniform(0.12, 0.95) * pi / 2; a = random.uniform(0, 2 * pi)
     r0 = OCULUS + (R - OCULUS) * math.cos(t) - 0.02; z0 = WALL_H + (APEX - WALL_H) * math.sin(t) - 0.02
@@ -96,9 +87,8 @@ for k in range(12):
         a_grille(at(a, R - 0.11, 2.45, 180), 'archL', w=1.6, h=0.5)
         if k % 3 == 0: a_extinguisher(at(a, R - 0.11, 0.75, 180) @ T((0, 1.1, 0)), 'props')
     # bench seat built into each bay
-    rbox(f'seat{k}', (0.55, 2.6, 0.1), M @ T((-0.34, 0, 0.5)), 'leather', 'props', bevel=0.03, seg=3)
-    rbox(f'seatbase{k}', (0.5, 2.5, 0.42), M @ T((-0.32, 0, 0.24)), 'wall2', 'props')
-# entrance: a tall doorway with a lit reveal
+    a_wall_seat(M, index=k)
+# ---- Rear entry surround, leaf and light
 Me = at(270, R - 0.1)
 rbox('door_frame', (0.5, 3.4, 3.3), Me @ T((-0.05, 0, 1.65)), 'rib', 'archL', bevel=0.03)
 rbox('door_leaf', (0.1, 2.6, 2.9), Me @ T((-0.28, 0, 1.47)), 'wall2', 'archL', bevel=0.02)

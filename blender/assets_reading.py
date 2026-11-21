@@ -41,6 +41,24 @@ def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6):
     moulding('bay_cornice', [(X(0), top + 0.06), (X(0.6), top + 0.06), (X(0.62), top + 0.1), (X(0.56), top + 0.13), (X(0.6), top + 0.17), (X(0), top + 0.17)], 0, L, 'wood', grp, M=M)
     for k in range(int(L / 0.25)): bx('bay_dentil', 0.46, 0.5, 0.06 + k * 0.25, 0.19 + k * 0.25, top + 0.0, top + 0.055, 'wood_l')
 
+
+def a_shelf_volume(M=I4, grp='props', *, s=1, depth=0.27, thickness=0.05, height=0.45,
+                   material='book0', bands=True):
+    """An upright volume from its lower back corner, with the spine facing -s * x."""
+    spine = -s * depth
+    box('book', 0, spine, 0, thickness, 0, height, material, grp, M=M)
+    if bands:
+        for z in (0.07, height - 0.09):
+            box('book_band', spine, -s * (depth + 0.0015), 0.003, thickness - 0.003, z, z + 0.012,
+                'gilt', grp, M=M)
+
+
+def a_bookend(M=I4, grp='props', *, s=1):
+    """Brass bookend from its lower back corner: a vertical side and a foot extending in +y."""
+    box('bookend', 0, -s * 0.18, 0, 0.012, 0, 0.2, 'brass', grp, M=M)
+    box('bookend_f', 0, -s * 0.18, 0, 0.1, 0, 0.008, 'brass', grp, M=M)
+
+
 def _books(M, grp, s, y0, y1, z, deep=0.3):
     """Fill a shelf: runs of standing books (some with gilt bands), a few lying flat, bookends, the odd keepsake."""
     X = lambda a: -s * a; y = y0 + 0.02
@@ -51,10 +69,11 @@ def _books(M, grp, s, y0, y1, z, deep=0.3):
             for b in range(n):
                 t = t0 if set_ else random.uniform(0.026, 0.07); hh = h0 if set_ else random.uniform(0.32, 0.5); d = random.uniform(0.2, deep)
                 if y + t > y1 - 0.03: break
-                lean = 0.0
-                box('book', X(0.05), X(0.05 + d), y, y + t, z, z + hh, c0 if set_ else random.choice(BOOKS), grp, M=M)
-                if set_ or random.random() < 0.3:
-                    for zz in (0.07, hh - 0.09): box('book_band', X(0.05 + d), X(0.0515 + d), y + 0.003, y + t - 0.003, z + zz, z + zz + 0.012, 'gilt', grp, M=M)
+                # Keep the fit check and the short-circuited draws in the shelf layout.
+                material = c0 if set_ else random.choice(BOOKS)
+                bands = set_ or random.random() < 0.3
+                a_shelf_volume(M @ T((X(0.05), y, z)), grp, s=s, depth=d, thickness=t, height=hh,
+                               material=material, bands=bands)
                 y += t + 0.004
             y += random.uniform(0.01, 0.12)
         elif r < 0.93:
@@ -62,7 +81,9 @@ def _books(M, grp, s, y0, y1, z, deep=0.3):
                 box('bookflat', X(0.06), X(0.34), y, y + 0.42, z + b * 0.06, z + 0.055 + b * 0.06, random.choice(BOOKS), grp, M=M)
             y += 0.5
         else:
-            if random.random() < 0.5: box('bookend', X(0.08), X(0.26), y, y + 0.012, z, z + 0.2, 'brass', grp, M=M); box('bookend_f', X(0.08), X(0.26), y, y + 0.1, z, z + 0.008, 'brass', grp, M=M); y += 0.16
+            if random.random() < 0.5:
+                a_bookend(M @ T((X(0.08), y, z)), grp, s=s)
+                y += 0.16
             else: blob('keepsake', M @ Vector((X(0.22), y + 0.18, z + 0.16)), 0.15, random.choice(('brass', 'chrome', 'copper', 'white', 'marble')), grp); y += 0.42
 
 
@@ -106,5 +127,13 @@ def a_openbook(M=I4, grp='props'):
     rbox('open_ribbon', (0.012, 0.3, 0.002), M @ T((0.03, -0.03, 0.028)), 'runner3', grp)
 
 
-READING_ASSETS = dict(ladder=a_ladder, bay=a_bay, armchair=a_armchair, stack=a_stack, openbook=a_openbook,
-                      closed_book=a_closed_book)
+READING_ASSETS = {
+    'ladder': a_ladder,
+    'bay': a_bay,
+    'armchair': a_armchair,
+    'stack': a_stack,
+    'openbook': a_openbook,
+    'closed_book': a_closed_book,
+    'shelf_volume': a_shelf_volume,
+    'bookend': a_bookend,
+}

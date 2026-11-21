@@ -3,7 +3,9 @@ armchair	blender/assets_reading.py:a_armchair	0	2	0	0	1	-
 bay	blender/assets_reading.py:a_bay	0	4	0	0	20	-
 bench_hall	blender/assets_tech.py:a_bench_hall	2	0	0	0	0	-
 blotter	blender/room_writing.py:a_blotter	0	0	0	0	3	-
+bookend	blender/assets_reading.py:a_bookend	0	8	0	0	19	about/a_bay:8, writing/a_bay:19
 cabinet	blender/assets_tech.py:a_cabinet	0	0	4	0	0	-
+cargo_bulkhead	blender/assets_exhibits.py:a_cargo_bulkhead	0	0	1	0	0	-
 cart	blender/room_writing.py:a_cart	0	0	0	0	1	-
 catalogue	blender/room_writing.py:a_catalogue	0	0	0	0	1	-
 chair	blender/room_writing.py:a_chair	0	0	0	0	8	-
@@ -12,6 +14,7 @@ coffee_table	blender/assets_lounge.py:a_coffee_table	0	1	0	0	0	-
 coffer	blender/room_writing.py:a_coffer	0	0	0	0	15	-
 console	blender/assets_tech.py:a_console	0	0	0	5	0	-
 cradle	blender/room_writing.py:a_cradle	0	0	0	0	1	-
+dome_rib	blender/assets_projection.py:a_dome_rib	0	0	0	12	0	-
 drape	blender/room_about.py:a_drape	0	2	0	0	0	-
 drinks	blender/room_about.py:a_drinks	0	2	0	0	0	-
 drum	blender/assets_tech.py:a_drum	0	0	5	0	0	projects/a_pallet:2
@@ -23,6 +26,8 @@ floorhatch	blender/assets_tech.py:a_floorhatch	2	0	2	0	0	-
 floorlamp	blender/room_writing.py:a_floorlamp	0	0	0	0	2	-
 frame	blender/room_about.py:a_frame	0	4	0	0	0	-
 gallery	blender/room_writing.py:a_gallery	0	0	0	0	14	-
+gantry	blender/assets_exhibits.py:a_gantry	0	0	1	0	0	-
+gimbal_ring	blender/assets_projection.py:a_gimbal_ring	3	0	0	0	0	lobby/a_orrery:3
 globe	blender/room_writing.py:a_globe	0	0	0	0	1	-
 grille	blender/assets_tech.py:a_grille	0	0	16	5	0	-
 kiosk	blender/assets_tech.py:a_kiosk	2	0	0	2	0	-
@@ -34,6 +39,7 @@ arm	blender/assets_exhibits.py:a_manipulator	0	0	1	0	0	-
 map_table	blender/assets_projection.py:a_map_table	0	0	0	1	0	-
 opchair	blender/assets_tech.py:a_opchair	0	0	0	5	0	-
 openbook	blender/assets_reading.py:a_openbook	0	1	0	0	2	-
+orrery	blender/assets_projection.py:a_orrery	1	0	0	0	0	-
 pallet	blender/assets_tech.py:a_pallet	0	0	2	0	0	-
 pegboard	blender/assets_tech.py:a_pegboard	0	0	1	0	0	-
 pendant	blender/room_writing.py:a_pendant	0	0	0	0	3	-
@@ -41,7 +47,12 @@ plinth	blender/assets_exhibits.py:a_plinth	0	0	4	0	0	-
 projector	blender/assets_projection.py:a_projector	1	0	0	0	0	-
 reception_desk	blender/assets_projection.py:a_reception_desk	2	0	0	0	0	-
 rover	blender/assets_exhibits.py:a_rover	0	0	1	0	0	-
+satellite	blender/assets_exhibits.py:a_satellite	0	0	1	0	0	-
+shelf_volume	blender/assets_reading.py:a_shelf_volume	0	973	0	0	3765	about/a_bay:973, writing/a_bay:3765
+sideboard	blender/assets_lounge.py:a_sideboard	0	1	0	0	0	-
+sofa_body	blender/assets_lounge.py:a_sofa_body	0	2	0	0	0	-
 sofa_trim	blender/room_about.py:a_sofa_trim	0	2	0	0	0	-
+solar_wing	blender/assets_exhibits.py:a_solar_wing	0	0	2	0	0	projects/a_satellite:2
 stack	blender/assets_reading.py:a_stack	0	2	0	0	3	-
 stanchion	blender/assets_tech.py:a_stanchion	2	0	12	0	0	-
 stepladder	blender/assets_tech.py:a_stepladder	0	0	1	0	0	-
@@ -50,5 +61,6 @@ telescope	blender/assets_lounge.py:a_telescope	0	1	0	0	0	-
 terminal	blender/room_writing.py:a_terminal	0	0	0	0	1	-
 toolchest	blender/assets_tech.py:a_toolchest	0	0	2	0	0	-
 wainscot	blender/room_about.py:a_wainscot	0	3	0	0	0	-
+wall_seat	blender/assets_projection.py:a_wall_seat	0	0	0	9	0	-
 window	blender/room_writing.py:a_window	0	0	0	0	1	-
 pressure_door	blender/build_scene.py:pressure_door	2	1	1	1	1	-

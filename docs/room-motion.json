@@ -1,0 +1,192 @@
+{
+  "lobby": [
+    {
+      "system": "Orrery chandelier",
+      "mode": "rigged",
+      "parts": "At idle, three modelled rings and their luminous strips turn on two counter-rotating group pivots. The chandelier support, hub and dais stay fixed.",
+      "evidence": "assets-src/lobby/scene.json: chand.spin, chand.pivot; public/js/room.js: SPIN, pivots, update"
+    },
+    {
+      "system": "Orrery light on the hall",
+      "mode": "shading",
+      "parts": "At idle, the ring angle blends three baked light phases on the hall surfaces and floor. The changing light is separate from the moving rings.",
+      "evidence": "assets-src/lobby/scene.json: chand.phases, chand.layered; public/js/room.js: layerGLSL, uChand, update"
+    },
+    {
+      "system": "Mission hologram",
+      "mode": "projection",
+      "parts": "At idle, the projected Earth spins and a scan sweeps it; station and Moon markers orbit, the Ark marker runs along its departure path, and dial rings turn. Trails, city twinkle and rising projector motes are draw effects. Selection lifts and enlarges the projection and reveals city labels, a rotating relay layer, the Moon label and a mission panel; the pedestal stays put.",
+      "evidence": "assets-src/lobby/scene.json: holo; public/js/hologram.js: createHologram, trailMat, motes, update, setExpanded; public/js/room.js: addHolo"
+    },
+    {
+      "system": "Oculus sky and sunlight",
+      "mode": "shading",
+      "parts": "At idle, the Earth backdrop and sun roll together. Live diffuse sun and shadow mapping sweep the hall while adjacent baked phases crossfade Earth's light and bounced sunlight. Earth lightning flickers and the haze shaft follows the sun. Reduced motion stops the default roll, not the lightning.",
+      "evidence": "assets-src/lobby/scene.json: portal, portal_r, earth, spin; public/js/room.js: rollAt, sky, storms, shaft, prepass, litGLSL, uSky; public/main.js: draw"
+    },
+    {
+      "system": "Dust, floor reflections and post effects",
+      "mode": "shading",
+      "parts": "At idle, shader motes drift and catch the beam. The fixed floor reflects the current view and scene motion, including sun glare. Bloom and changing grain and dither are image effects, not moving hardware.",
+      "evidence": "public/js/room.js: dust, floorMat; public/main.js: renderMirror, draw; public/js/post.js: Post.render, mFinal"
+    },
+    {
+      "system": "Departure boards and HUD",
+      "mode": "display",
+      "parts": "At idle, fixed panels redraw the countdown and blinking status, fade through messages, advance the roster highlight, update the boarding bar and nudge the crossing marker. The manifest is fixed; the HUD countdown also updates. The panels are not selectable.",
+      "evidence": "public/content.json: rooms.lobby.screens, rooms.lobby.sub; public/js/screens.js: LAYOUTS, FIGURES.crossing, createScreens.update; public/js/room.js: screen picks; public/main.js: tick"
+    },
+    {
+      "system": "Lounge door and Ring Line access",
+      "mode": "static",
+      "parts": "Door geometry does not animate. Clicking the Lounge door glides the camera toward it before a covered room change; selecting Ring Line offers destinations instead.",
+      "evidence": "assets-src/lobby/scene.json: doors; public/js/room.js: door picks; public/main.js: setFocus, travel, enter, frame"
+    }
+  ],
+  "about": [
+    {
+      "system": "Lounge window and sunlight",
+      "mode": "shading",
+      "parts": "At idle, the Earth backdrop and sun roll past the fixed window; lightning flickers on Earth's night side. Direct diffuse sun and live shadows shift as adjacent bakes of Earth's light and bounced sunlight crossfade. Reduced motion holds the default roll angle, not the lightning.",
+      "evidence": "assets-src/about/scene.json: portal, earth, spin; public/js/room.js: rollAt, sky, storms, prepass, litGLSL, uSky; public/main.js: draw"
+    },
+    {
+      "system": "Dust, floor reflections and post effects",
+      "mode": "shading",
+      "parts": "Dust drifts in the shader at idle; the fixed floor reflects the changing view and scene. Bloom, changing grain and dither affect the image only.",
+      "evidence": "public/js/room.js: dust, floorMat; public/main.js: renderMirror, draw; public/js/post.js: Post.render, mFinal"
+    },
+    {
+      "system": "Wall placards",
+      "mode": "display",
+      "parts": "The About and Currently cards are drawn on room load, then stay unchanged at idle. They are not selectable.",
+      "evidence": "public/content.json: rooms.about.screens; public/js/screens.js: LAYOUTS.placard, createScreens.update; public/js/room.js: screen picks"
+    },
+    {
+      "system": "Reading props and telescope",
+      "mode": "static",
+      "parts": "Selecting the coffee-table book display reframes the camera; books do not open or turn pages. The telescope, shelf ladder and tied-back drapes stay fixed.",
+      "evidence": "blender/room_about.py: a_stack, a_openbook, a_telescope, a_ladder, a_drape placements; assets-src/about/scene.json: focus; public/js/room.js: focus picks, SPIN; public/main.js: setFocus, frame"
+    },
+    {
+      "system": "Atrium door",
+      "mode": "static",
+      "parts": "Clicking the door moves the camera, then changes rooms under the cover. No door leaf moves.",
+      "evidence": "assets-src/about/scene.json: doors; public/js/room.js: door picks; public/main.js: setFocus, travel, enter, frame"
+    }
+  ],
+  "projects": [
+    {
+      "system": "Gantry hoist and satellite",
+      "mode": "static",
+      "parts": "The bridge and trolley do not travel, the hoist does not reel its cables, and the satellite neither swings nor folds its solar wings. Selecting the exhibit moves only the camera.",
+      "evidence": "blender/assets_exhibits.py: a_gantry, a_satellite, a_solar_wing; blender/room_projects.py: slings; assets-src/projects/scene.json: focus, no chand.spin; public/js/room.js: SPIN, focus picks; public/main.js: frame"
+    },
+    {
+      "system": "Plinth exhibits",
+      "mode": "static",
+      "parts": "Rover wheels and suspension, robot arm joints and gripper, engine and lattice are posed exhibits. None runs at idle or articulates when selected; inspection is a camera move.",
+      "evidence": "blender/assets_exhibits.py: a_rover, a_manipulator, a_engine, a_lattice; assets-src/projects/scene.json: focus; public/js/room.js: focus picks, update; public/main.js: frame"
+    },
+    {
+      "system": "Project placards",
+      "mode": "display",
+      "parts": "Title cards are drawn on room load and do not cycle. Selecting a card glides the camera to it; the card does not open or animate.",
+      "evidence": "public/content.json: rooms.projects.screens; public/js/screens.js: LAYOUTS.placard, createScreens.update; public/js/room.js: screen picks; public/main.js: frame"
+    },
+    {
+      "system": "Bay lighting and image effects",
+      "mode": "shading",
+      "parts": "Work lights and beacons are steady; there is no rolling window or live solar pass. Shader dust drifts at idle, the fixed floor reflects the changing view, and bloom, grain and dither are post effects.",
+      "evidence": "assets-src/projects/scene.json: em, floor, no portal or spin; public/js/room.js: stripMat, dust, floorMat, prepass; public/main.js: renderMirror, draw; public/js/post.js: Post.render, mFinal"
+    },
+    {
+      "system": "Cargo bay and Atrium doors",
+      "mode": "static",
+      "parts": "The cargo bay door is fixed scenery. Clicking the separate Atrium door glides the camera toward it and changes rooms; neither door opens.",
+      "evidence": "blender/assets_exhibits.py: a_cargo_bulkhead; blender/room_projects.py: pressure_door placement; assets-src/projects/scene.json: doors; public/js/room.js: door picks; public/main.js: setFocus, travel, enter, frame"
+    }
+  ],
+  "experience": [
+    {
+      "system": "Route helix and reader",
+      "mode": "projection",
+      "parts": "At idle, the projected helix twists in the vertex shader. A bright reader marker travels along it, trailing a shader wake, then pauses and loops. Stars drift and twinkle and a sweep crosses the chart dial; the table and projector cone stay fixed.",
+      "evidence": "assets-src/experience/scene.json: map; public/js/routemap.js: createRouteMap.track, train, dial, stars, cone, update"
+    },
+    {
+      "system": "Six projected station models",
+      "mode": "projection",
+      "parts": "At idle: Space Elevator spins its planet and repeats a climber run along the fixed tether; Stanford Torus spins its wheel under a fixed mirror; O'Neill Cylinders counter-rotate with their attached mirrors; Bussard Ramjet rolls its habitat ring and streams intake and exhaust dots; Dyson Swarm turns its collector rings and hexagons around a fixed star; Warp-Ring Ship spins and pulses its rings while the ship and grid stay fixed within the model.",
+      "evidence": "public/content.json: rooms.experience.stations; public/js/routemap.js: MODELS.elevator, torus, cylinders, ramjet, dyson, warp; createRouteMap.update"
+    },
+    {
+      "system": "Station inspection",
+      "mode": "projection",
+      "parts": "At idle, each model swells as the reader passes. Selection raises and enlarges the chosen model, unfolds its data sheet and hides other name tags; deselection reverses the expansion. The camera glides to the station, not the table.",
+      "evidence": "public/js/routemap.js: stations, setExpanded, update; public/js/room.js: addHolo; public/main.js: setFocus, frame"
+    },
+    {
+      "system": "Wall placards",
+      "mode": "display",
+      "parts": "Fixed title cards are drawn on room load. Selecting one changes the camera framing, not the card content; these are separate from the route's unfolding data sheets.",
+      "evidence": "public/content.json: rooms.experience.screens; public/js/screens.js: LAYOUTS.placard, createScreens.update; public/js/room.js: screen picks; public/main.js: frame"
+    },
+    {
+      "system": "Dust, floor reflections and post effects",
+      "mode": "shading",
+      "parts": "Shader dust drifts at idle; the fixed floor reflects the changing projection and view. Bloom, grain and dither affect only the image. No rolling window or live sunlight pass runs here.",
+      "evidence": "assets-src/experience/scene.json: floor, no portal or spin; public/js/room.js: dust, floorMat, prepass; public/main.js: renderMirror, draw; public/js/post.js: Post.render, mFinal"
+    },
+    {
+      "system": "Atrium door",
+      "mode": "static",
+      "parts": "Clicking the door glides the camera toward it and starts a covered room change; the door does not open.",
+      "evidence": "assets-src/experience/scene.json: doors; public/js/room.js: door picks; public/main.js: setFocus, travel, enter, frame"
+    }
+  ],
+  "writing": [
+    {
+      "system": "Retrieval drone flight",
+      "mode": "rigged",
+      "parts": "At idle the drone sits on the dock with stopped rotors, a sweeping camera gimbal and pulsing status lights. Choosing a volume sends it to the shelf slot and then to the reader: it yaws, leans, bobs, and spins its rotors with a blur-disc effect. Leaving terminal focus sends it to return the held volume and redock.",
+      "evidence": "assets-src/writing/scene.json: drone.dock, drone.slots, drone.deliver, terminal; public/js/room.js: terminal pick; public/js/drone.js: createDrone, fetch, update"
+    },
+    {
+      "system": "Delivery tray and live book",
+      "mode": "rigged",
+      "parts": "At pickup, the chosen live book appears on the tray; no baked shelf book moves. At delivery, support rods extend as the tray drops and tilts; the cover half and spine hinge open and the pages bend to reveal a fixed title and index spread. The book closes as the tray stows for return or exchange.",
+      "evidence": "public/js/drone.js: take, put, fetch, update, makeBook, book.userData.open; public/content.json: rooms.writing.volumes"
+    },
+    {
+      "system": "Dock and Library fittings",
+      "mode": "static",
+      "parts": "The cradle and charging contacts stay put during docking. Shelf and table books, ladder, cart wheels, floor globe, lamp chains, drawers and hinged terminal mount stay posed at idle and during retrieval.",
+      "evidence": "blender/room_writing.py: a_cradle, a_cart, a_globe, a_lamp, a_table, a_catalogue, a_terminal, a_ladder and book placements; public/js/room.js: SPIN, update; public/js/drone.js: createDrone"
+    },
+    {
+      "system": "Catalogue screen and choices",
+      "mode": "display",
+      "parts": "The catalogue screen is drawn on room load and does not page or cycle. Selecting it moves the camera to the reading pose and shows volume buttons in the overlay; choosing a button calls the drone.",
+      "evidence": "assets-src/writing/scene.json: terminal; public/content.json: rooms.writing.screens; public/js/screens.js: LAYOUTS.rows, createScreens.update; public/js/room.js: terminal pick; public/main.js: setFocus, inspect-bar click"
+    },
+    {
+      "system": "Library window and sunlight",
+      "mode": "shading",
+      "parts": "At idle, Earth and the sun roll past the fixed window and night-side lightning flickers. Live diffuse sunlight and shadows shift while adjacent baked phases of Earth's light and bounced sunlight crossfade. Reduced motion holds the default roll angle, not the lightning.",
+      "evidence": "assets-src/writing/scene.json: portal, earth, spin; public/js/room.js: rollAt, sky, storms, prepass, litGLSL, uSky; public/main.js: draw"
+    },
+    {
+      "system": "Dust, floor reflections and post effects",
+      "mode": "shading",
+      "parts": "Shader dust drifts at idle; the fixed floor reflects the changing view, sky and drone. Bloom, changing grain and dither affect the rendered image, not the room geometry.",
+      "evidence": "public/js/room.js: dust, floorMat; public/main.js: renderMirror, draw; public/js/post.js: Post.render, mFinal"
+    },
+    {
+      "system": "Atrium door",
+      "mode": "static",
+      "parts": "Clicking the door glides the camera toward it and starts a covered room change. The door leaf remains fixed.",
+      "evidence": "assets-src/writing/scene.json: doors; public/js/room.js: door picks; public/main.js: setFocus, travel, enter, frame"
+    }
+  ]
+}

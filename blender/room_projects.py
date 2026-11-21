@@ -67,7 +67,7 @@ box('backlum', -3.0, 3.0, Y0, Y0 + 0.05, 5.6, 6.2, 'lum_cool', 'back')
 for s in (1, -1):
     g = 'archR' if s > 0 else 'archL'; sx = lambda x: s * x
     quad(f'wall_{g}', [(sx(WD), Y0, 0), (sx(WD), Y1, 0), (sx(WD), Y1, H), (sx(WD), Y0, H)], 'panel', g)
-    # concrete plinth course and a dado rail, then a cable tray and two pipe runs high on the wall
+    # ---- Wall plinth courses, cable trays and pipes
     box(f'base_{g}', sx(7.82), sx(WD), Y0, Y1, 0, 0.5, 'concrete', g, bevel=0.02)
     box(f'dado_{g}', sx(7.9), sx(WD), Y0, Y1, 1.05, 1.13, 'steel', g)
     box(f'tray_{g}', sx(7.45), sx(7.95), Y0, Y1, 5.15, 5.2, 'steel', g)
@@ -76,7 +76,7 @@ for s in (1, -1):
         tube(f'cable_{g}{i}', sx(dx), 5.2 + r, r, Y0, Y1, m, g, n=8)
     tube(f'pipe_{g}', sx(7.75), 6.1, 0.09, Y0, Y1, 'wall2', g)
     box(f'wash_{g}', sx(7.8), sx(7.86), Y0, Y1, 0.5, 0.52, em='cool')                    # low wall wash above the plinth course
-    # steel portal frames: column, haunch, roof truss (half per side)
+    # ---- Steel portal frames, roof trusses and work lights
     for k, fy in enumerate(FRAMES):
         gg = 'back' if fy < CAM_POS.y else g
         box(f'col_{g}{k}', sx(7.35), sx(7.75), fy - 0.16, fy + 0.16, 0, H - 0.25, 'steel', gg, bevel=0.012)
@@ -91,113 +91,38 @@ for s in (1, -1):
             beam(f'web_{g}{k}{i}', a, b, 0.1, fy - 0.06, fy + 0.06, 'steel', 'archC')
         box(f'worklight_{g}{k}', sx(1.4), sx(4.6), fy - 0.07, fy + 0.07, H - 1.66, H - 1.62, em=em_ramp('work', k, fy, 4.0, 11.0, 1.3))
         box(f'worklightbody_{g}{k}', sx(1.3), sx(4.7), fy - 0.1, fy + 0.1, H - 1.62, H - 1.56, 'dark', 'archC')
-    # crane rail on corbels
+    # ---- Crane rails on corbels
     box(f'rail_{g}', sx(6.3), sx(6.6), Y0, Y1, 6.0, 6.3, 'yellow', g, bevel=0.015)
     box(f'railcap_{g}', sx(6.38), sx(6.52), Y0, Y1, 6.3, 6.36, 'steel', g)
     for k, fy in enumerate(FRAMES):
         prism(f'corbel_{g}{k}', [(sx(7.35), 6.0), (sx(6.3), 6.0), (sx(6.3), 5.86), (sx(7.35), 5.3)], 'Y', fy - 0.12, fy + 0.12, 'steel', 'back' if fy < CAM_POS.y else g)
-    # painted aisle line + marker lights leading to the pad
+    # ---- Aisle stripes and marker lights
     box(f'aisle_{g}', sx(2.36), sx(2.48), Y0, 14.2, 0.0, 0.003, 'hazard_y', 'center')
     for i in range(10):
         y = -6.0 + 2.2 * i
         lathe(f'marker_{g}{i}', [(0, 0.004), (0.04, 0.004), (0.04, 0.0), (0, 0.0)], em=em_ramp('mark', i, y, 0.5, 5.0), segs=12, closed=False, M=T((sx(2.42), y, 0)))
 
-# roof purlins and skylight slots (dark sky, a hint of stars is not visible: they read as deep recesses with a cool edge)
+# ---- Roof purlins
 for x in (-6.0, -3.0, 0.0, 3.0, 6.0):
     box('purlin', x - 0.07, x + 0.07, Y0, Y1, H - 0.24, H - 0.02, 'steel', 'archC')
 
 # ================================================================= BAY DOOR (end wall)
 quad('endwall', [(-WD, Y1, 0), (WD, Y1, 0), (WD, Y1, H), (-WD, Y1, H)], 'panel', 'archC')
-DW, DH = 5.2, 5.2
-box('doorframe_l', -DW - 0.5, -DW, Y1 - 0.5, Y1, 0, DH + 0.5, 'steel', 'center', bevel=0.03)
-box('doorframe_r', DW, DW + 0.5, Y1 - 0.5, Y1, 0, DH + 0.5, 'steel', 'center', bevel=0.03)
-box('doorframe_t', -DW - 0.5, DW + 0.5, Y1 - 0.5, Y1, DH, DH + 0.5, 'steel', 'center', bevel=0.03)
-for d in (-1, 1):
-    box(f'door{d}', d * 0.06, d * DW, Y1 - 0.3, Y1 - 0.12, 0.02, DH, 'wall2', 'center', bevel=0.02)
-    for i in range(4):                                                        # horizontal stiffeners
-        z = 0.9 + i * 1.3
-        box(f'doorrib{d}{i}', d * 0.2, d * (DW - 0.15), Y1 - 0.36, Y1 - 0.3, z, z + 0.14, 'steel', 'center', bevel=0.01)
-    for i in range(13):                                                       # hazard chevrons along the foot of each leaf
-        x0 = 0.1 + i * 0.4
-        prism(f'chev{d}{i}', [(d * x0, 0.04), (d * (x0 + 0.2), 0.04), (d * (x0 + 0.5), 0.62), (d * (x0 + 0.3), 0.62)], 'Y', Y1 - 0.31, Y1 - 0.3, 'hazard_y' if i % 2 == 0 else 'hazard_k', 'center')
-    box(f'doorwin{d}', d * 1.5, d * 3.7, Y1 - 0.31, Y1 - 0.3, 3.0, 3.7, 'lum_cool', 'center')
-box('doorseam', -0.035, 0.035, Y1 - 0.33, Y1 - 0.3, 0.02, DH, em='seam')      # light from the airlock beyond, through the gap
-text3d('baysign', 'BAY 02', 0.75, T((0, Y1 - 0.52, DH + 0.95), (pi / 2, 0, 0)), spacing=1.25)
-text3d('baysign2', 'CARGO LIFT  ·  SPOKE  ·  HUB DOCK', 0.2, T((0, Y1 - 0.52, DH + 0.62), (pi / 2, 0, 0)), spacing=1.3)
-for d in (-1, 1):                                                             # amber beacons either side of the door
-    lathe(f'beacon{d}', [(0, 0.2), (0.07, 0.19), (0.09, 0.0), (0, 0.0)], em='beacon', segs=16, closed=False, M=T((d * (DW + 0.25), Y1 - 0.56, DH + 0.5)))
-    lathe(f'beaconbase{d}', [(0, 0.0), (0.12, 0.0), (0.12, -0.06), (0, -0.06)], 'dark', 'center', segs=16, closed=False, M=T((d * (DW + 0.25), Y1 - 0.56, DH + 0.5)))
+a_cargo_bulkhead(T((0, Y1, 0)))
 
 # ================================================================= GANTRY CRANE + the satellite it carries
 BY = PAD.y
-box('bridge', -6.6, 6.6, BY - 0.3, BY + 0.3, 6.36, 6.95, 'yellow', 'center', bevel=0.03)
-box('bridgeweb', -6.5, 6.5, BY - 0.36, BY + 0.36, 6.6, 6.68, 'steel', 'center')
-for d in (-1, 1):
-    box(f'endtruck{d}', d * 6.2, d * 6.75, BY - 0.9, BY + 0.9, 6.36, 6.7, 'steel', 'center', bevel=0.03)
-box('trolley', -0.7, 0.7, BY - 0.55, BY + 0.55, 6.1, 6.4, 'steel', 'center', bevel=0.03)
-box('hoist', -0.35, 0.35, BY - 0.3, BY + 0.3, 5.7, 6.1, 'yellow', 'center', bevel=0.04)
-for dx, dy in ((-0.12, 0), (0.12, 0)):
-    box('cable', dx - 0.012, dx + 0.012, BY + dy - 0.012, BY + dy + 0.012, 4.75, 5.7, 'chrome', 'center')
-lathe('hookblock', [(0, 0.3), (0.2, 0.3), (0.24, 0.1), (0.14, 0.0), (0, 0.0)], 'yellow', 'center', segs=20, closed=False, M=T((0, BY, 4.45)))
+hook_anchor = a_gantry(T(PAD))
 SAT = Vector((0, BY, 3.1))
-for a in range(4):                                                            # sling from the hook to the lifting points
-    ang = pi / 4 + a * pi / 2; top = Vector((0, BY, 4.45)); bot = SAT + Vector((0.55 * math.cos(ang), 0.55 * math.sin(ang), 0.92))
-    q = (bot - top).to_track_quat('Z', 'Y')
-    rbox(f'sling{a}', (0.018, 0.018, (bot - top).length), Matrix.Translation((top + bot) / 2) @ q.to_matrix().to_4x4(), 'rubber', 'center')
-MS = Matrix.Translation(SAT) @ Matrix.Rotation(math.radians(24), 4, 'Z')
-def ngon(name, n, r, h, M, m, grp):
-    bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=True, segments=n, radius1=r, radius2=r, depth=h)
-    return finish(name, bm, m, grp, M=M @ Matrix.Rotation(pi / n, 4, 'Z'))
-ngon('sat_bus', 8, 0.8, 1.7, MS, 'foil', 'center')                                  # octagonal bus wrapped in gold foil
-for z in (0.89, -0.89):
-    ngon('sat_deck', 8, 0.84, 0.08, MS @ T((0, 0, z)), 'dark', 'center')
-lathe('sat_adapter', [(0.45, 0.93), (0.52, 0.93), (0.52, 1.05), (0.45, 1.05)], 'chrome', 'center', segs=32, M=MS)
-FR = 0.8 * math.cos(pi / 8)                                                         # distance from the axis to a face
-for a, kind in ((90, 'box'), (270, 'radiator'), (45, 'horn'), (135, 'box2'), (225, 'tracker'), (315, 'box')):
-    Mf = MS @ Matrix.Rotation(math.radians(a), 4, 'Z')
-    if kind == 'box': rbox('sat_eq', (0.1, 0.42, 0.6), Mf @ T((FR + 0.05, 0, 0.1)), 'white', 'center', bevel=0.015)
-    elif kind == 'box2':
-        rbox('sat_eq', (0.14, 0.36, 0.36), Mf @ T((FR + 0.07, 0, 0.4)), 'dark', 'center', bevel=0.015)
-        rbox('sat_eq', (0.08, 0.3, 0.5), Mf @ T((FR + 0.04, 0, -0.3)), 'white', 'center', bevel=0.01)
-    elif kind == 'radiator':
-        rbox('sat_rad', (0.03, 0.56, 1.3), Mf @ T((FR + 0.02, 0, 0)), 'white', 'center')
-        for j in range(6): rbox('sat_radfin', (0.05, 0.5, 0.02), Mf @ T((FR + 0.045, 0, -0.5 + j * 0.2)), 'chrome', 'center')
-    elif kind == 'horn': lathe('sat_horn', [(0, 0), (0.05, 0), (0.16, 0.3), (0.15, 0.3), (0.04, 0.02), (0, 0.02)], 'chrome', 'center', segs=20, closed=False, M=Mf @ T((FR, 0, 0.3), (0, pi / 2, 0)))
-    else:
-        for dz in (-0.2, 0.25): lathe('sat_tracker', [(0, 0), (0.07, 0), (0.1, 0.22), (0.09, 0.22), (0.06, 0.02), (0, 0.02)], 'dark', 'center', segs=16, closed=False, M=Mf @ T((FR, 0, dz), (0, pi / 2 - 0.5, 0)))
-for a in (45, 135, 225, 315):                                                       # thruster quads on the lower deck
-    Mq = MS @ Matrix.Rotation(math.radians(a), 4, 'Z') @ T((0.86, 0, -0.8))
-    rbox('sat_quad', (0.12, 0.12, 0.12), Mq, 'dark', 'center', bevel=0.01)
-    for rx, ry in ((pi / 2, 0), (-pi / 2, 0), (0, pi / 2)):
-        lathe('sat_thr', [(0, 0), (0.02, 0), (0.045, 0.1), (0.04, 0.1), (0.015, 0.01), (0, 0.01)], 'chrome', 'center', segs=10, closed=False, M=Mq @ T((0, 0, 0), (rx, ry, 0)) @ T((0, 0, 0.06)))
-rbox('sat_mast', (0.03, 0.03, 0.9), MS @ T((0.3, 0.3, 1.4)), 'chrome', 'center')
-lathe('sat_omni', [(0, 0), (0.06, 0.02), (0.06, 0.1), (0, 0.14)], 'white', 'center', segs=12, closed=False, M=MS @ T((0.3, 0.3, 1.85)))
-lathe('sat_dish', [(0, 0.0), (0.25, 0.03), (0.5, 0.12), (0.72, 0.28), (0.74, 0.28), (0.5, 0.1), (0.25, 0.01), (0, -0.02)], 'white', 'center', segs=48, closed=False, M=MS @ T((0, 0, -1.28), (pi, 0, 0)))
-# Rear dish is carried on a trussed spacer between the bus and reflector, not suspended in space.
-for leg in range(3):
-    a = leg*2*pi/3
-    rod('dish_stay',(.36*math.cos(a),.36*math.sin(a),-.925),(.15*math.cos(a),.15*math.sin(a),-1.29),.018,'steel','center',M=MS)
-lathe('sat_feed', [(0, 0.0), (0.03, 0.0), (0.03, 0.5), (0.07, 0.56), (0, 0.6)], 'chrome', 'center', segs=12, closed=False, M=MS @ T((0, 0, -1.3), (pi, 0, 0)))
-lathe('sat_nozzle', [(0, 0.0), (0.1, 0.0), (0.2, 0.3), (0.19, 0.3), (0.09, 0.02), (0, 0.02)], 'chrome', 'center', segs=24, closed=False, M=MS @ T((0, 0, 0.9)))
-for d in (-1, 1):
-    rbox(f'sat_yoke{d}', (0.5, 0.06, 0.06), MS @ T((d * 0.98, 0, 0)), 'chrome', 'center')
-    # Root rotary drive, then a pair of folding hinges bridging each panel gap.
-    W = MS @ T((d*.91,0,0),(0,d*pi/2,0))
-    lathe('array_drive',[(0,0),(.15,0),(.15,.13),(.115,.15),(.115,.21),(0,.21)],'steel','center',segs=24,M=W)
-    for joint in range(2):
-        seam=d*(2.26+joint*1.08)
-        for z in (-.55,.55):
-            rbox('array_hinge_leaf',(.16,.042,.13),MS @ T((seam,.029,z)),'steel','center',bevel=.007)
-            rod('array_hinge_pin',(seam,.058,z-.086),(seam,.058,z+.086),.019,'chrome','center',M=MS)
-    for i in range(3):                                                        # three-section solar wing with gaps and frames
-        cx = d * (1.2 + 0.52 + i * 1.08)
-        rbox(f'sat_wing{d}{i}', (1.0, 0.03, 1.5), MS @ T((cx, 0, 0), (0.0, 0, 0)), 'solar', 'center')
-        rbox(f'sat_wingf{d}{i}', (1.04, 0.02, 1.54), MS @ T((cx, 0.012, 0)), 'chrome', 'center')
-        for j in range(1, 6):
-            rbox(f'sat_cell{d}{i}{j}', (1.0, 0.032, 0.008), MS @ T((cx, 0, -0.75 + j * 0.25)), 'chrome', 'center')
-        for j in range(1, 4):
-            rbox(f'sat_cellv{d}{i}{j}', (0.008, 0.032, 1.5), MS @ T((cx - 0.5 + j * 0.25, 0, 0)), 'chrome', 'center')
-# assembly pad: a floating disc with hazard ring, lit from the shadow gap
+# The sling lifting points keep their bay-aligned offsets, independent of the bus heading.
+for a in range(4):
+    ang = pi / 4 + a * pi / 2
+    bot = SAT + Vector((0.55 * math.cos(ang), 0.55 * math.sin(ang), 0.92))
+    axis = bot - hook_anchor
+    q = axis.to_track_quat('Z', 'Y')
+    rbox(f'sling{a}', (0.018, 0.018, axis.length), Matrix.Translation((hook_anchor + bot) / 2) @ q.to_matrix().to_4x4(), 'rubber', 'center')
+a_satellite(Matrix.Translation(SAT) @ Matrix.Rotation(math.radians(24), 4, 'Z'))
+# ---- Assembly pad and work stands
 MPD = T(PAD)
 lathe('pad', [(0, 0.16), (3.0, 0.16), (3.0, 0.1), (2.86, 0.1), (2.86, 0)], 'plat', 'center', segs=128, closed=False, M=MPD)
 lathe('pad_led', [(2.88, 0.085), (2.97, 0.085), (2.97, 0.095), (2.88, 0.095)], em='stair', segs=128, M=MPD)
@@ -261,9 +186,12 @@ def bench(name, x0, x1, y):
     box(name + 'vise', x1 - 0.5, x1 - 0.25, y - 0.1, y + 0.1, 0.96, 1.12, 'steel', 'props', bevel=0.02)
     lathe(name + 'lamp', [(0, 0.6), (0.012, 0.6), (0.012, 0.02), (0.08, 0.01), (0.08, 0), (0, 0)], 'chrome', 'props', segs=12, closed=False, M=T(((x0 + x1) / 2, y + 0.3, 0.96)))
     lathe(name + 'shade', [(0, 0.1), (0.05, 0.1), (0.11, 0.0), (0.1, 0.0), (0.045, 0.085), (0, 0.085)], 'yellow', 'props', segs=16, closed=False, M=T(((x0 + x1) / 2, y + 0.18, 1.5), (0.5, 0, 0)))
+# ---- Storage racks and bins
 rack('rackL', 0, 5.0, -1); rack('rackR', 0, 5.0, 1); rack('rackL2', 0, 17.0, -1, 3)
 pressure_door('door', T((7.8, 9.0, 0), (0, 0, pi)), 'archR', 'ATRIUM', 'RING LINE  ·  STAIR', 'lobby', w=1.6, h=2.4)
+# ---- Workbenches, vices and bench lamps
 bench('benchL', -7.6, -5.6, -3.0); bench('benchR', 5.4, 7.5, 17.0)
+# ---- Cargo crates and bottle storage
 for ci, (x, y, z, sz, m) in enumerate(((6.9, -1.9, 0, 0.8, 'crate_w'), (6.95, -1.0, 0, 0.62, 'crate_o'), (6.9, -1.75, 0.8, 0.55, 'crate_o'), (-6.6, 20.6, 0, 0.9, 'crate_w'), (-6.75, 21.6, 0, 0.7, 'crate_w'),
                                        (-6.6, 20.7, 0.9, 0.6, 'crate_o'), (6.4, 21.4, 0, 0.85, 'crate_o'), (6.9, 20.4, 0, 0.6, 'crate_w'))):
     box(f'crate{ci}', x - sz / 2, x + sz / 2, y - sz / 2, y + sz / 2, z, z + sz, m, 'props', bevel=0.025)
