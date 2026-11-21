@@ -54,7 +54,9 @@ def spot(name, loc, target, watts, size=42, color=(1.0, 0.86, 0.7), blend=0.35, 
     return o
 
 # station hardware shared with the Atrium and Navigation; ASSET=<name> shows one of them alone
-exec(open(os.path.join(_here, 'assets_tech.py')).read(), globals()); bench(TECH)
+exec(open(os.path.join(_here, 'assets_tech.py')).read(), globals())
+exec(open(os.path.join(_here, 'assets_exhibits.py')).read(), globals())
+bench({**TECH, 'rover': a_rover, 'arm': a_manipulator})
 
 # ================================================================= SHELL
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 9, 0), (-WD, 9, 0)], 'floor', 'floorN')
@@ -210,18 +212,7 @@ def plinth(i, c):
 
 def rover(i, p):
     M = Matrix.Translation(p) @ Matrix.Rotation(math.radians(-28 if p.x < 0 else 28), 4, 'Z')
-    rbox(f'rv_chassis{i}', (1.5, 0.85, 0.24), M @ T((0, 0, 0.62)), 'white', 'props', bevel=0.04)
-    rbox(f'rv_deck{i}', (1.3, 0.75, 0.03), M @ T((0, 0, 0.76)), 'solar', 'props')
-    for dx in (-0.6, 0.0, 0.6):
-        for dy in (-0.58, 0.58):
-            lathe(f'rv_wheel{i}', [(0, 0.11), (0.2, 0.11), (0.27, 0.08), (0.27, -0.08), (0.2, -0.11), (0, -0.11)], 'rubber', 'props', segs=24, closed=False, M=M @ T((dx, dy, 0.27), (pi / 2, 0, 0)))
-            lathe(f'rv_hub{i}', [(0, 0.125), (0.12, 0.125), (0.12, -0.125), (0, -0.125)], 'chrome', 'props', segs=12, closed=False, M=M @ T((dx, dy, 0.27), (pi / 2, 0, 0)))
-            rbox(f'rv_leg{i}', (0.05, 0.05, 0.4), M @ T((dx, dy * 0.82, 0.45), (0.5 * (1 if dy > 0 else -1), 0, 0)), 'chrome', 'props')
-    rbox(f'rv_mast{i}', (0.05, 0.05, 0.8), M @ T((0.5, 0, 1.15)), 'chrome', 'props')
-    rbox(f'rv_head{i}', (0.16, 0.34, 0.14), M @ T((0.52, 0, 1.6)), 'white', 'props', bevel=0.02)
-    for dy in (-0.09, 0.09):
-        lathe(f'rv_eye{i}', [(0, 0), (0.035, 0), (0.035, 0.01), (0, 0.01)], em='core', segs=12, closed=False, M=M @ T((0.605, dy, 1.6), (0, pi / 2, 0)))
-    lathe(f'rv_dish{i}', [(0, 0), (0.16, 0.03), (0.26, 0.1), (0.27, 0.1), (0.16, 0.02), (0, -0.01)], 'white', 'props', segs=24, closed=False, M=M @ T((-0.45, 0.15, 0.95), (0.3, -0.4, 0)))
+    a_rover(M)
 
 def engine(i, p):
     M = Matrix.Translation(p)
@@ -243,17 +234,7 @@ def engine(i, p):
 
 def arm(i, p):
     M = Matrix.Translation(p) @ Matrix.Rotation(math.radians(150), 4, 'Z')
-    lathe(f'ar_base{i}', [(0, 0.28), (0.26, 0.28), (0.34, 0.06), (0.34, 0), (0, 0)], 'steel', 'props', segs=32, closed=False, M=M)
-    lathe(f'ar_turret{i}', [(0, 0.5), (0.2, 0.5), (0.22, 0.28), (0, 0.28)], 'yellow', 'props', segs=32, closed=False, M=M)
-    J = [Vector((0, 0, 0.55)), Vector((0.35, 0, 1.4)), Vector((1.15, 0, 1.75)), Vector((1.55, 0, 1.35))]
-    for k in range(3):
-        a, b = J[k], J[k + 1]; q = (b - a).to_track_quat('Z', 'Y')
-        rbox(f'ar_seg{i}{k}', ((0.2, 0.17, 0.13)[k], (0.2, 0.17, 0.13)[k], (b - a).length), M @ Matrix.Translation((a + b) / 2) @ q.to_matrix().to_4x4(), 'yellow', 'props', bevel=0.03)
-    for k, r in enumerate((0.17, 0.15, 0.12, 0.09)):
-        lathe(f'ar_joint{i}{k}', [(0, 0.13), (r, 0.13), (r, -0.13), (0, -0.13)], 'steel', 'props', segs=24, closed=False, M=M @ T(J[k], (pi / 2, 0, 0)))
-    for d in (-1, 1):
-        rbox(f'ar_grip{i}', (0.04, 0.03, 0.22), M @ T(J[3] + Vector((0.03, d * 0.07, -0.16)), (0, 0.25, 0)), 'chrome', 'props')
-    lathe(f'ar_part{i}', [(0, 0.2), (0.1, 0.2), (0.14, 0.16), (0.14, 0.04), (0.1, 0), (0, 0)], 'copper', 'props', segs=24, closed=False, M=M @ T((1.6, 0, 0.0)))
+    a_manipulator(M)
 
 def lattice(i, p):
     c = p + Vector((0, 0, 1.25))
