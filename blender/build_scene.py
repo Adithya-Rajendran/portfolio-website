@@ -396,6 +396,61 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5, stops=None):
     DOORS.append(dict(c=list(M @ Vector((0.3, 0, h / 2))), n=list(M.to_3x3() @ Vector((1, 0, 0))), to=to, label=title,       # to: room id, '' = sealed
                       **({'stops': stops} if stops else {})))                                                             # stops: [[label, room id], ...]
 
+# ---- small builders every room's assets use, and the bench that shows one asset on its own
+I4 = Matrix.Identity(4)
+def rbox(name, size, M, m, grp, bevel=0.0, **kw):
+    bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
+    bmesh.ops.transform(bm, matrix=Matrix.Diagonal((*size, 1)), verts=bm.verts)
+    return finish(name, bm, m, grp, bevel=bevel, M=M, **kw)
+def glow(name, loc, watts, color=(1.0, 0.58, 0.28), r=0.12):
+    l = bpy.data.lights.new(name, 'POINT'); l.energy = watts; l.color = color; l.shadow_soft_size = r
+    o = bpy.data.objects.new(name, l); COL.objects.link(o); o.location = loc; return o
+def torus(name, R, r, M, m=None, grp=None, segs=64, **kw):
+    return lathe(name, [(R + r * math.cos(a * pi / 4), r * math.sin(a * pi / 4)) for a in range(8)], m, grp, segs=segs, M=M, **kw)
+def rod(name, a, b, r, m, grp, M=I4, n=8, **kw):
+    """A round bar from a to b."""
+    a, b = Vector(a), Vector(b); L = (b - a).length
+    return lathe(name, [(0, 0), (r, 0), (r, L), (0, L)], m, grp, segs=n, closed=False, M=M @ Matrix.Translation(a) @ (b - a).to_track_quat('Z', 'Y').to_matrix().to_4x4(), **kw)
+def turned(name, h, r, m, grp, M=I4, segs=14):
+    """A turned leg or baluster of height h and greatest radius r: foot, vase, ring, neck."""
+    P = [(0, 0), (0.75, 0), (0.75, 0.04), (0.5, 0.07), (0.62, 0.1), (1.0, 0.2), (0.9, 0.32), (0.5, 0.52), (0.45, 0.7), (0.7, 0.74), (0.45, 0.78), (0.6, 0.9), (0.8, 0.93), (0.8, 1.0), (0, 1.0)]
+    return lathe(name, [(x * r, z * h) for x, z in P], m, grp, segs=segs, closed=False, M=M)
+def moulding(name, prof, y0, y1, m, grp, M=I4, **kw):
+    """A moulding running along Y: prof is its (x, z) outline."""
+    return prism(name, prof, 'Y', y0, y1, m, grp, M=M, **kw)
+
+def _strip(lo, hi, th):
+    """A bent board: two polylines (bottom and top edge), given thickness along -x."""
+    bm = bmesh.new(); n = len(lo); V4 = [[bm.verts.new(p) for p in lo], [bm.verts.new(p) for p in hi], [bm.verts.new((p[0] - th, p[1], p[2])) for p in lo], [bm.verts.new((p[0] - th, p[1], p[2])) for p in hi]]
+    for i in range(n - 1):
+        for a, b in ((0, 1), (1, 3), (3, 2), (2, 0)): bm.faces.new((V4[a][i], V4[a][i + 1], V4[b][i + 1], V4[b][i]))
+    for i in (0, n - 1): bm.faces.new((V4[0][i], V4[1][i], V4[3][i], V4[2][i]))
+    return bm
+
+
+def bench(ASSETS, place={}):
+    """ASSET=<name> in the environment: build that one asset alone in a studio, render two views (asset_<name>_0/1.png) and stop."""
+    name = os.environ.get('ASSET')
+    if not name: return
+    ASSETS[name](place.get(name, I4))
+    pts = [o.matrix_world @ Vector(c) for o in bpy.data.objects if o.type == 'MESH' for c in o.bound_box]
+    lo = Vector([min(p[i] for p in pts) for i in range(3)]); hi = Vector([max(p[i] for p in pts) for i in range(3)]); c = (lo + hi) / 2; R = (hi - lo).length / 2
+    mat('studio', (0.32, 0.32, 0.33), 0.6)
+    box('studio_floor', c.x - 30, c.x + 30, c.y - 30, c.y + 30, lo.z - 0.02, lo.z, 'studio', 'props')
+    for i, (az, el, e, col) in enumerate(((0.9, 0.9, 700, (1, 0.93, 0.85)), (-1.8, 0.5, 260, (0.8, 0.9, 1.0)), (2.9, 0.3, 200, (1, 0.8, 0.6)))):
+        l = bpy.data.lights.new(f'key{i}', 'AREA'); l.energy = 0.35 * e * R * R; l.size = R * 1.5; l.color = col; o = bpy.data.objects.new(f'key{i}', l); COL.objects.link(o)
+        o.location = c + Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), math.sin(el))) * R * 3; o.rotation_euler = (c - o.location).to_track_quat('-Z', 'Y').to_euler()
+    cam = bpy.data.cameras.new('Bench'); cam.angle = math.radians(35); cam.clip_end = 500; co = bpy.data.objects.new('Bench', cam); scene.collection.objects.link(co); scene.camera = co
+    scene.render.engine = 'CYCLES'; scene.cycles.samples = int(os.environ.get('SPP', 96)); scene.cycles.use_denoising = True; scene.cycles.device = 'GPU'
+    prefs = bpy.context.preferences.addons['cycles'].preferences; DEV = os.environ.get('LOBBY_DEVICE', 'CUDA'); prefs.compute_device_type = DEV; prefs.get_devices()
+    for d in prefs.devices: d.use = (d.type == DEV)
+    scene.view_settings.view_transform = 'AgX'; scene.render.resolution_x, scene.render.resolution_y = 960, 720; scene.render.image_settings.file_format = 'PNG'
+    for i, (az, el) in enumerate(((-0.9, 0.35), (2.3, 0.2))):
+        co.location = c + Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), math.sin(el))) * R * 3.6; co.rotation_euler = (c - co.location).to_track_quat('-Z', 'Y').to_euler()
+        scene.render.filepath = os.path.join(HERE, f'asset_{name}_{i}.png'); bpy.ops.render.render(write_still=True)
+    print('ASSET', name, 'TRIS', sum(len(o.data.polygons) for o in bpy.data.objects if o.type == 'MESH'))
+    raise SystemExit
+
 # ---- everything above this line is the shared kit: room_*.py scripts execute it and build their own room
 # ================================================================= ARCHITECTURE
 def side_grp(s): return 'archR' if s > 0 else 'archL'
@@ -705,6 +760,14 @@ for i, (rr, az, tilt, grp, arc) in enumerate(RINGS):
     a0 = math.radians(70 * i); a1 = a0 + math.radians(arc)
     lathe(f'chandled{i}', [(rr - 0.053, -0.06), (rr - 0.045, -0.06), (rr - 0.045, 0.06), (rr - 0.053, 0.06)], em='chand' + grp, segs=128, a0=a0, a1=a1, M=Mr)
     lathe(f'chandled_b{i}', [(rr - 0.03, -0.098), (rr + 0.03, -0.098), (rr + 0.03, -0.09), (rr - 0.03, -0.09)], em='chand' + grp, segs=128, a0=a0, a1=a1, M=Mr)
+
+# ================================================================= CONCOURSE DETAIL (assets_tech.py): what a working terminal accumulates
+exec(open(os.path.join(HERE, 'assets_tech.py')).read(), globals()); bench(TECH)
+a_kiosk(T((7.0, 3.0, PLAT_Z)) @ Matrix.Rotation(pi, 4, 'Z')); a_kiosk(T((-7.0, 15.0, PLAT_Z)))
+a_bench_hall(T((7.1, 9.8, PLAT_Z)) @ Matrix.Rotation(pi, 4, 'Z') @ T((0, -2.4, 0))); a_bench_hall(T((-7.1, -2.2, PLAT_Z)))
+a_luggage(T((-7.3, 7.2, PLAT_Z), (0, 0, 0.5))); a_luggage(T((7.4, 18.7, PLAT_Z), (0, 0, 2.4)))
+a_floorhatch(T((-7.2, 11.0, PLAT_Z)), 'props'); a_floorhatch(T((7.2, -1.0, PLAT_Z)), 'props')
+for y in (6.2, 8.2): a_stanchion(T((6.3, y, PLAT_Z)), 'props', L=2.0)
 
 # ================================================================= PEOPLE
 # Crew and families gathered at the window for a last look at Earth. They are seen from behind, backlit by the

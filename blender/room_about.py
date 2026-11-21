@@ -36,6 +36,13 @@ EM.update({'lamp': ((1.0, 0.56, 0.24), 9.0), 'shelf': ((1.0, 0.68, 0.4), 2.2), '
 for k in ('lamp', 'shelf', 'cool'):
     mat('EM_' + k, (0, 0, 0), 0.5, emis=EM[k][0], estr=EM[k][1])
 
+mat('wood_d', (0.09, 0.045, 0.022), 0.38, 0.0, 1.5, 0.3, var=0.08); mat('leather_g', (0.05, 0.12, 0.08), 0.45, var=0.06); mat('greenlamp', (0.02, 0.2, 0.09), 0.08, 0.0, 1.5, 1.0)
+mat('gilt', (0.95, 0.7, 0.32), 0.25, 1.0); mat('marble', (0.78, 0.76, 0.72), 0.25, var=0.05); mat('runner3', (0.3, 0.07, 0.05), 0.95); mat('navy', (0.03, 0.07, 0.16), 0.35)
+mat('drape', (0.1, 0.035, 0.03), 0.9); mat('glassware', (0.16, 0.19, 0.22), 0.03, 0.0, 1.5, 1.0); mat('whisky', (0.55, 0.25, 0.05), 0.1, 0.0, 1.4, 1.0)
+# the Lounge is furnished from the Library's assets (bookcase bays, ladder, wing chair, stacks ...) plus a few of its own below
+_lib = open(os.path.join(_here, 'room_writing.py')).read()
+exec(_lib.split('# ================================================================= ASSETS')[1].split('bench(ASSETS,')[0], globals())
+
 def rbox(name, size, M, m, grp, bevel=0.0, **kw):
     bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
     bmesh.ops.transform(bm, matrix=Matrix.Diagonal((*size, 1)), verts=bm.verts)
@@ -43,6 +50,47 @@ def rbox(name, size, M, m, grp, bevel=0.0, **kw):
 def glow(name, loc, watts, color=(1.0, 0.58, 0.28), r=0.12):
     l = bpy.data.lights.new(name, 'POINT'); l.energy = watts; l.color = color; l.shadow_soft_size = r
     o = bpy.data.objects.new(name, l); COL.objects.link(o); o.location = loc; return o
+
+# ================================================================= ASSETS of the Lounge
+def a_wainscot(M=I4, grp='props', L=4.0, hgt=1.25):
+    """Panelling along a wall: built on the plane x = 0 reaching +x into the room, running 0..L in y."""
+    box('wains', 0, 0.03, 0, L, 0, hgt, 'wood', grp, M=M); box('wains_skirt', 0, 0.06, 0, L, 0, 0.16, 'wood_l', grp, bevel=0.006, M=M)
+    moulding('wains_rail', [(0, hgt), (0.07, hgt), (0.09, hgt + 0.03), (0.06, hgt + 0.07), (0, hgt + 0.07)], 0, L, 'wood_l', grp, M=M)
+    n = max(1, int(round(L / 0.95)))
+    for k in range(n):
+        a, b = L * (k + 0.1) / n, L * (k + 0.9) / n
+        box('wains_field', 0.03, 0.04, a, b, 0.3, hgt - 0.14, 'wood_d', grp, M=M); box('wains_raise', 0.04, 0.052, a + 0.07, b - 0.07, 0.37, hgt - 0.21, 'wood_l', grp, bevel=0.01, M=M)
+def a_drape(M=I4, grp='props', w=0.9, h=5.6):
+    """A heavy curtain gathered to one side: folds running top to bottom, a brass pole ring row, a tie-back."""
+    bm = bmesh.new(); n = 28; rows = []
+    for zi in range(9):
+        z = h * zi / 8; pinch = 1 - 0.45 * math.exp(-((z - h * 0.42) / 0.5) ** 2)
+        rows.append([bm.verts.new(((i / n - 0.5) * w * pinch, 0.07 * math.sin(i * 1.9) * (0.6 + 0.4 * pinch), z)) for i in range(n + 1)])
+    for a, b in zip(rows, rows[1:]):
+        for i in range(n): bm.faces.new((a[i], a[i + 1], b[i + 1], b[i]))
+    for f in bm.faces: f.smooth = True
+    finish('drape', bm, 'drape', grp, M=M)
+    torus('drape_tie', w * 0.3, 0.015, M @ T((0, 0, h * 0.42)), 'gilt', grp, segs=24)
+def a_sofa_trim(M=I4, grp='props', L=2.8):
+    """What the sofas were missing (origin at the middle of the seat front, sofa along y): turned feet, a welt along the seat, a throw over one arm."""
+    for y in (-L / 2 + 0.12, 0, L / 2 - 0.12):
+        for x in (-0.42, 0.42): turned('sofa_foot', 0.1, 0.03, 'wood', grp, M=M @ T((x, y, 0)), segs=10)
+    rod('sofa_welt', (0.5, -L / 2, 0.43), (0.5, L / 2, 0.43), 0.008, 'rug2', grp, M=M)
+    rbox('sofa_throw', (0.95, 0.5, 0.02), M @ T((0, L / 2, 0.64)), 'rug', grp, bevel=0.008); rbox('sofa_throw_h', (0.02, 0.5, 0.3), M @ T((0.48, L / 2, 0.5)), 'rug', grp, bevel=0.008)
+def a_drinks(M=I4, grp='props'):
+    """A brass tray with a decanter and two glasses."""
+    lathe('tray', [(0, 0.012), (0.2, 0.012), (0.215, 0.03), (0.22, 0.03), (0.2, 0), (0, 0)], 'brass', grp, segs=32, closed=False, M=M)
+    lathe('decanter', [(0, 0.012), (0.055, 0.012), (0.065, 0.03), (0.06, 0.13), (0.02, 0.17), (0.018, 0.22), (0.028, 0.23), (0.0, 0.23)], 'glassware', grp, segs=20, closed=False, M=M @ T((-0.05, 0.03, 0)))
+    lathe('decanter_w', [(0, 0.02), (0.05, 0.02), (0.057, 0.035), (0.054, 0.1), (0, 0.1)], 'whisky', grp, segs=20, closed=False, M=M @ T((-0.05, 0.03, 0)))
+    blob('stopper', M @ Vector((-0.05, 0.03, 0.255)), 0.025, 'glassware', grp)
+    for x, y in ((0.09, -0.06), (0.1, 0.07)): lathe('glass', [(0, 0.014), (0.032, 0.014), (0.036, 0.09), (0.033, 0.09), (0.03, 0.02), (0, 0.02)], 'glassware', grp, segs=16, closed=False, M=M @ T((x, y, 0)))
+def a_frame(M=I4, grp='props', w=0.7, h=0.9):
+    """A picture in a gilt frame under a brass picture light (hung on the plane x = 0, facing -x)."""
+    box('pic_gilt', -0.05, 0, -w / 2 - 0.05, w / 2 + 0.05, -h / 2 - 0.05, h / 2 + 0.05, 'gilt', grp, bevel=0.012, M=M); box('pic_inner', -0.058, -0.05, -w / 2, w / 2, -h / 2, h / 2, 'frame', grp, M=M)
+    box('pic_mount', -0.062, -0.058, -w / 2 + 0.03, w / 2 - 0.03, -h / 2 + 0.03, h / 2 - 0.03, 'paper', grp, M=M); box('pic_art', -0.065, -0.062, -w / 4, w / 4, -h / 4, h / 4, random.choice(BOOKS), grp, M=M)
+    rod('pic_light', (-0.16, -w * 0.3, h / 2 + 0.14), (-0.16, w * 0.3, h / 2 + 0.14), 0.014, 'brass', grp, M=M); rod('pic_arm', (0, 0, h / 2 + 0.1), (-0.16, 0, h / 2 + 0.14), 0.006, 'brass', grp, M=M)
+ASSETS.update(wainscot=a_wainscot, drape=a_drape, sofa_trim=a_sofa_trim, drinks=a_drinks, frame=a_frame)
+bench(ASSETS, {'pendant': T((0, 0, 6.3)), 'coffer': T((0, 0, 3.0)), 'gallery': T((0, 0, 1.0))})
 
 # ================================================================= SHELL
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 2, 0), (-WD, 2, 0)], 'floor', 'floorN')
@@ -71,46 +119,15 @@ box('sill', -WIN_W, WIN_W, Y1 - 0.85, Y1 - 0.5, WIN_Z0 - 0.06, WIN_Z0, 'wood_l',
 for x in (-3.1, 0.0, 3.1):
     box('mullion', x - 0.035, x + 0.035, Y1 - 0.2, Y1 - 0.08, WIN_Z0, WIN_Z1, 'frame', 'center')
 box('transom', -WIN_W, WIN_W, Y1 - 0.2, Y1 - 0.08, 5.05, 5.11, 'frame', 'center')
+for dd in (-1, 1): a_drape(T((dd * (WIN_W + 0.35), Y1 - 0.7, 0.3)), 'center', w=1.0, h=H - 0.9)
+rod('drape_pole', (-WD + 0.2, Y1 - 0.7, H - 0.55), (WD - 0.2, Y1 - 0.7, H - 0.55), 0.025, 'brass', 'center')
 box('win_cove', -WIN_W + 0.1, WIN_W - 0.1, Y1 - 0.5, Y1 - 0.46, WIN_Z0 - 0.1, WIN_Z0 - 0.085, em='cool')      # faint cool line under the sill
 
-# ================================================================= LEFT WALL: the library of a life (books, objects, a ladder)
+# ================================================================= LEFT WALL: the library of a life (four bookcase bays, a ladder)
 SX = -WD
-box('case_back', SX, SX + 0.04, -4.6, 6.4, 0.14, 5.2, 'wood', 'archL')
-for k in range(8):
-    z = 0.14 + k * 0.66
-    box(f'shelf{k}', SX, SX + 0.42, -4.6, 6.4, z, z + 0.04, 'wood', 'archL')
-    if k == 7: break
-    if k % 2 == 0: box(f'shelflight{k}', SX + 0.36, SX + 0.4, -4.4, 6.2, z + 0.61, z + 0.62, em='shelf')
-    y = -4.5
-    while y < 6.25:
-        r = random.random()
-        if r < 0.72:                                                             # a run of books
-            n = random.randint(3, 9)
-            for b in range(n):
-                t = random.uniform(0.028, 0.07); hh = random.uniform(0.36, 0.56); d = random.uniform(0.2, 0.3)
-                if y + t > 6.3: break
-                box('book', SX + 0.05, SX + 0.05 + d, y, y + t, z + 0.04, z + 0.04 + hh, random.choice(BOOKS), 'props')
-                y += t + 0.004
-            y += random.uniform(0.02, 0.1)
-        elif r < 0.86:                                                           # a stack lying flat
-            for b in range(random.randint(2, 4)):
-                box('bookflat', SX + 0.06, SX + 0.34, y, y + 0.42, z + 0.04 + b * 0.06, z + 0.095 + b * 0.06, random.choice(BOOKS), 'props')
-            y += 0.5
-        else:                                                                    # an object: a globe, a model, a pot
-            kind = random.choice(('sphere', 'vase', 'box'))
-            if kind == 'sphere': blob('keepsake', Vector((SX + 0.22, y + 0.18, z + 0.22)), 0.16, random.choice(('brass', 'chrome', 'copper')), 'props')
-            elif kind == 'vase': lathe('keepsake', [(0, 0.34), (0.05, 0.34), (0.04, 0.26), (0.11, 0.12), (0.07, 0), (0, 0)], random.choice(('white', 'copper', 'dark')), 'props', segs=20, closed=False, M=T((SX + 0.22, y + 0.16, z + 0.04)))
-            else: box('keepsake', SX + 0.1, SX + 0.34, y + 0.03, y + 0.33, z + 0.04, z + 0.2, random.choice(('crate_o', 'white', 'brass')), 'props', bevel=0.015)
-            y += 0.42
-for y in (-4.6, -1.85, 0.9, 3.65, 6.4):
-    box('case_upright', SX, SX + 0.43, y - 0.025, y + 0.025, 0.14, 5.2, 'wood', 'archL')
-# library ladder on a brass rail
-tube('ladder_rail', SX + 0.55, 4.9, 0.02, -4.6, 6.4, 'brass', 'archL', n=8)
-for dy in (-0.22, 0.22):
-    rbox('ladder_side', (0.04, 0.05, 5.0), T((SX + 1.0, 2.6 + dy, 2.45), (0, -0.185, 0)), 'wood_l', 'props')
-for k in range(11):
-    zz = 0.4 + k * 0.42
-    rbox('ladder_rung', (0.05, 0.44, 0.03), T((SX + 1.46 - zz * 0.187, 2.6, zz)), 'wood_l', 'props')
+for k in range(4): a_bay(T((SX, -4.6 + k * 2.75, 0)), 'archL', -1, 0, L=2.75, rows=8)
+tube('ladder_rail', SX + 0.62, 4.75, 0.02, -4.6, 6.4, 'brass', 'archL', n=8)
+a_ladder(T((SX + 1.6, 2.6, 0)), 'props', h=4.85)
 
 # ================================================================= RIGHT WALL: pictures, a sideboard, two placard screens
 RX = WD
@@ -133,10 +150,15 @@ for li in range(22):
         prev = cur
 finish('sb_plant', bm, 'leaf', 'props')
 # a salon hang of framed pictures (plain mounts for now) and the two screens
-for i, (y, z, w, h) in enumerate(((-3.0, 2.3, 0.7, 0.9), (-2.1, 2.55, 0.5, 0.5), (-2.15, 1.85, 0.55, 0.6), (-1.3, 2.25, 0.8, 1.1)  )):
-    box(f'pic_frame{i}', RX - 0.045, RX, y - w / 2, y + w / 2, z - h / 2, z + h / 2, 'frame', 'archR', bevel=0.006)
-    box(f'pic_mount{i}', RX - 0.05, RX - 0.045, y - w / 2 + 0.06, y + w / 2 - 0.06, z - h / 2 + 0.06, z + h / 2 - 0.06, 'paper', 'archR')
-    box(f'pic_art{i}', RX - 0.053, RX - 0.05, y - w / 4, y + w / 4, z - h / 4, z + h / 4, random.choice(BOOKS), 'archR')
+for y, z, w, h in ((-3.0, 2.45, 0.7, 0.9), (-2.05, 2.75, 0.5, 0.5), (-2.1, 1.95, 0.55, 0.6), (-1.2, 2.4, 0.8, 1.1)):
+    a_frame(T((RX, y, z)), 'archR', w, h)
+a_wainscot(T((RX, 5.0, 0)) @ Matrix.Rotation(pi, 4, 'Z'), 'archR', L=11.0); a_wainscot(T((RX, Y1 - 0.55, 0)) @ Matrix.Rotation(pi, 4, 'Z'), 'archR', L=1.45)
+a_wainscot(T((WD, Y0, 0)) @ Matrix.Rotation(pi / 2, 4, 'Z'), 'back', L=2 * WD)
+for k in range(4):
+    lathe('sb_knob', [(0, 0.03), (0.014, 0.03), (0.018, 0.02), (0.007, 0.01), (0.007, 0), (0, 0)], 'brass', 'props', segs=10, closed=False, M=T((RX - 0.615, -2.64 + k * 1.09 + (0.42 if k % 2 == 0 else -0.42), 0.5), (0, -pi / 2, 0)))
+for y in (-3.1, -1.0, 1.1):
+    for x in (RX - 0.52, RX - 0.1): turned('sb_foot', 0.12, 0.03, 'wood', 'props', M=T((x, y, 0)), segs=10)
+a_drinks(T((RX - 0.32, -1.0, 0.89))); a_stack(T((RX - 0.3, -0.2, 0.89), (0, 0, 0.3)), n=3)
 for i, yc in enumerate((1.1, 3.2)):
     box(f'bezel{i}', RX - 0.06, RX, yc - 0.92, yc + 0.92, 1.45, 2.75, 'frame', 'archR', bevel=0.01)
     quad(f'FX_screen{i}', [(RX - 0.065, yc + 0.85, 1.52), (RX - 0.065, yc - 0.85, 1.52), (RX - 0.065, yc - 0.85, 2.68), (RX - 0.065, yc + 0.85, 2.68)], 'lum_screen', fx='screen', uv=True)
@@ -159,12 +181,14 @@ def sofa(name, x, y0, y1, face):
         yy = y0 + (k + 0.5) * (y1 - y0) / 3
         rbox(name + 'cushion', (0.14, 0.5, 0.46), T((b + face * 0.3, yy, 0.62), (0, -face * 0.25, 0)), random.choice(('rug', 'linen', 'rug2')), 'props', bevel=0.05, seg=3)
 sofa('sofaL', -2.2, 0.2, 3.0, 1); sofa('sofaR', 2.2, 0.2, 3.0, -1)
+a_sofa_trim(T((-2.2, 1.6, 0))); a_sofa_trim(T((2.2, 1.6, 0)) @ Matrix.Rotation(pi, 4, 'Z'))
+for a, b in ((3.12, 3.06), (2.94, 2.9)):
+    for dd in (-1, 1): box('rug_line', dd * a, dd * b, -1.5, 4.5, 0.021, 0.0245, 'rug2', 'props')
 box('table_top', -0.75, 0.75, 0.75, 2.45, 0.34, 0.38, 'wood_l', 'props', bevel=0.012)
 box('table_slab', -0.6, 0.6, 0.9, 2.3, 0.1, 0.34, 'dark', 'props')
-for i in range(3):
-    box('tablebook', -0.5, -0.12, 1.05, 1.6, 0.38 + i * 0.045, 0.42 + i * 0.045, random.choice(BOOKS), 'props')
-lathe('cup', [(0, 0.09), (0.045, 0.09), (0.04, 0.0), (0, 0.0)], 'white', 'props', segs=16, closed=False, M=T((0.3, 1.2, 0.38)))
-lathe('bowl', [(0, 0.02), (0.1, 0.02), (0.18, 0.1), (0.17, 0.1), (0.1, 0.035), (0, 0.035)], 'brass', 'props', segs=24, closed=False, M=T((0.25, 1.95, 0.38)))
+a_stack(T((-0.31, 1.33, 0.38), (0, 0, 0.15)), n=4); a_openbook(T((0.05, 1.95, 0.38), (0, 0, 0.4))); a_drinks(T((0.38, 1.25, 0.38)))
+for x in (-0.68, 0.68):
+    for y in (0.82, 2.38): turned('table_leg', 0.34, 0.035, 'wood', 'props', M=T((x, y, 0)), segs=10)
 def armchair(name, c, yaw):
     M = Matrix.Translation(c) @ Matrix.Rotation(math.radians(yaw), 4, 'Z')
     rbox(name + 'seat', (0.74, 0.7, 0.2), M @ T((0, 0, 0.38)), 'leather', 'props', bevel=0.06, seg=3)
@@ -173,9 +197,7 @@ def armchair(name, c, yaw):
         rbox(name + 'arm', (0.12, 0.66, 0.34), M @ T((d * 0.39, 0, 0.5)), 'leather', 'props', bevel=0.05, seg=3)
     for dx, dy in ((-0.3, -0.26), (0.3, -0.26), (-0.3, 0.26), (0.3, 0.26)):
         rbox(name + 'leg', (0.04, 0.04, 0.28), M @ T((dx, dy, 0.14)), 'wood', 'props')
-armchair('chairA', Vector((-1.5, 5.6, 0)), -14); armchair('chairB', Vector((1.3, 5.9, 0)), 12)
-lathe('sidetable', [(0, 0.5), (0.24, 0.5), (0.24, 0.47), (0.03, 0.45), (0.03, 0.03), (0.16, 0.0), (0, 0)], 'brass', 'props', segs=24, closed=False, M=T((-0.15, 6.0, 0)))
-lathe('sidecup', [(0, 0.09), (0.04, 0.09), (0.035, 0.0), (0, 0.0)], 'white', 'props', segs=16, closed=False, M=T((-0.12, 6.02, 0.5)))
+a_armchair(T((-1.9, 5.7, 0)) @ Matrix.Rotation(math.radians(-14), 4, 'Z')); a_armchair(T((1.3, 6.0, 0)) @ Matrix.Rotation(math.radians(12), 4, 'Z'))
 # floor lamp arching over the left sofa
 lathe('fl_base', [(0, 0.04), (0.2, 0.04), (0.2, 0), (0, 0)], 'dark', 'props', segs=24, closed=False, M=T((-3.6, 0.0, 0)))
 rbox('fl_stem', (0.025, 0.025, 1.9), T((-3.6, 0.0, 0.97)), 'brass', 'props')

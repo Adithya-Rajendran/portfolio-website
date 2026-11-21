@@ -44,28 +44,6 @@ EM.update({'lamp': ((1.0, 0.56, 0.24), 9.0), 'shelf': ((1.0, 0.68, 0.4), 2.2), '
 for k in ('lamp', 'shelf', 'cool', 'ring'):
     mat('EM_' + k, (0, 0, 0), 0.5, emis=EM[k][0], estr=EM[k][1])
 
-I4 = Matrix.Identity(4)
-def rbox(name, size, M, m, grp, bevel=0.0, **kw):
-    bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
-    bmesh.ops.transform(bm, matrix=Matrix.Diagonal((*size, 1)), verts=bm.verts)
-    return finish(name, bm, m, grp, bevel=bevel, M=M, **kw)
-def glow(name, loc, watts, color=(1.0, 0.58, 0.28), r=0.12):
-    l = bpy.data.lights.new(name, 'POINT'); l.energy = watts; l.color = color; l.shadow_soft_size = r
-    o = bpy.data.objects.new(name, l); COL.objects.link(o); o.location = loc; return o
-def torus(name, R, r, M, m=None, grp=None, segs=64, **kw):
-    return lathe(name, [(R + r * math.cos(a * pi / 4), r * math.sin(a * pi / 4)) for a in range(8)], m, grp, segs=segs, M=M, **kw)
-def rod(name, a, b, r, m, grp, M=I4, n=8, **kw):
-    """A round bar from a to b."""
-    a, b = Vector(a), Vector(b); L = (b - a).length
-    return lathe(name, [(0, 0), (r, 0), (r, L), (0, L)], m, grp, segs=n, closed=False, M=M @ Matrix.Translation(a) @ (b - a).to_track_quat('Z', 'Y').to_matrix().to_4x4(), **kw)
-def turned(name, h, r, m, grp, M=I4, segs=14):
-    """A turned leg or baluster of height h and greatest radius r: foot, vase, ring, neck."""
-    P = [(0, 0), (0.75, 0), (0.75, 0.04), (0.5, 0.07), (0.62, 0.1), (1.0, 0.2), (0.9, 0.32), (0.5, 0.52), (0.45, 0.7), (0.7, 0.74), (0.45, 0.78), (0.6, 0.9), (0.8, 0.93), (0.8, 1.0), (0, 1.0)]
-    return lathe(name, [(x * r, z * h) for x, z in P], m, grp, segs=segs, closed=False, M=M)
-def moulding(name, prof, y0, y1, m, grp, M=I4, **kw):
-    """A moulding running along Y: prof is its (x, z) outline."""
-    return prism(name, prof, 'Y', y0, y1, m, grp, M=M, **kw)
-
 # ================================================================= ASSETS
 def a_table(M=I4, grp='props'):
     """The reading table: 8 m of walnut on six turned legs, a leather writing surface, a drawer for every seat."""
@@ -103,14 +81,6 @@ def a_chair(M=I4, grp='props'):
         pts = [(-0.3 - 0.03 * math.cos(a) + (0.95 - z) * 0.105, 0.21 * math.sin(a)) for a in [pi * (i / 10 - 0.5) for i in range(11)]]
         finish('chair_rail', _strip([(x, y, z - w / 2) for x, y in pts], [(x, y, z + w / 2) for x, y in pts], 0.022), 'wood', grp, M=M)
     rbox('chair_splat', (0.014, 0.13, 0.3), M @ T((-0.285, 0, 0.78), (0, -0.1, 0)), 'leather', grp, bevel=0.005)
-def _strip(lo, hi, th):
-    """A bent board: two polylines (bottom and top edge), given thickness along -x."""
-    bm = bmesh.new(); n = len(lo); V4 = [[bm.verts.new(p) for p in lo], [bm.verts.new(p) for p in hi], [bm.verts.new((p[0] - th, p[1], p[2])) for p in lo], [bm.verts.new((p[0] - th, p[1], p[2])) for p in hi]]
-    for i in range(n - 1):
-        for a, b in ((0, 1), (1, 3), (3, 2), (2, 0)): bm.faces.new((V4[a][i], V4[a][i + 1], V4[b][i + 1], V4[b][i]))
-    for i in (0, n - 1): bm.faces.new((V4[0][i], V4[1][i], V4[3][i], V4[2][i]))
-    return bm
-
 def a_lamp(M=I4, grp='props', key=0):
     """A banker's lamp: stepped brass foot, a neck that curves over, a long green glass shade, a pull chain."""
     lathe('lamp_foot', [(0, 0.045), (0.02, 0.045), (0.03, 0.03), (0.07, 0.024), (0.1, 0.012), (0.105, 0), (0, 0)], 'brass', grp, segs=28, closed=False, M=M)
@@ -231,32 +201,32 @@ def a_floorlamp(M=I4, grp='props', key=0):
     lathe('fl_shade', [(0.08, 0.0), (0.22, -0.26), (0.215, -0.26), (0.075, 0.0)], em='lamp', segs=24, M=M @ T((0, 0, 1.86)))
     glow(f'fl_glow{key}', M @ Vector((0, 0, 1.7)), 60)
 
-def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True):
-    """One bookcase bay, 3 m between upright centres, built against the plane x = 0 and reaching s * -x into the room.
+def a_bay(M=I4, grp='props', s=1, tier=0, shelves=True, L=3.0, rows=6):
+    """One bookcase bay, L between upright centres with `rows` shelves, built against the plane x = 0 and reaching s * -x into the room.
     Uprights with a fluted face and a capital, six shelves with brass label rails and hidden lights, books, a frieze and cornice."""
-    X = lambda a: -s * a; z0 = 0.14 if tier == 0 else 0.12; top = z0 + 3.3
+    X = lambda a: -s * a; z0 = 0.14 if tier == 0 else 0.12; top = z0 + (rows - 1) * 0.62 + 0.2
     def bx(n, a, b, y0, y1, zz0, zz1, m, **kw): box(n, X(a), X(b), y0, y1, zz0, zz1, m, grp, M=M, **kw)
-    if tier == 0: bx('bay_plinth', 0, 0.5, 0, 3, 0, 0.14, 'wood'); bx('bay_plinth_cap', 0, 0.53, 0, 3, 0.12, 0.15, 'wood_l', bevel=0.006)
+    if tier == 0: bx('bay_plinth', 0, 0.5, 0, L, 0, 0.14, 'wood'); bx('bay_plinth_cap', 0, 0.53, 0, L, 0.12, 0.15, 'wood_l', bevel=0.006)
     if shelves:
-        bx('bay_back', 0, 0.04, 0.1, 2.9, z0, top, 'wood_d')
-        for k in range(6):
+        bx('bay_back', 0, 0.04, 0.1, L - 0.1, z0, top, 'wood_d')
+        for k in range(rows):
             z = z0 + k * 0.62
-            bx('bay_shelf', 0, 0.42, 0.1, 2.9, z, z + 0.04, 'wood'); bx('bay_nosing', 0.42, 0.435, 0.1, 2.9, z + 0.004, z + 0.036, 'wood_l')
-            if k == 5: break
-            bx('bay_labelrail', 0.435, 0.439, 0.2, 2.8, z + 0.012, z + 0.03, 'brass')
-            for j in range(4): bx('bay_label', 0.439, 0.4395, 0.4 + j * 0.62, 0.56 + j * 0.62, z + 0.014, z + 0.028, 'paper')
-            if k in (1, 3): box('shelflight', X(0.36), X(0.4), 0.25, 2.75, z + 0.57, z + 0.58, em='shelf', M=M)
-            _books(M, grp, s, 0.13, 2.87, z + 0.04)
-    for y in (0, 3):                                                                    # half an upright at each end: neighbours complete it
+            bx('bay_shelf', 0, 0.42, 0.1, L - 0.1, z, z + 0.04, 'wood'); bx('bay_nosing', 0.42, 0.435, 0.1, L - 0.1, z + 0.004, z + 0.036, 'wood_l')
+            if k == rows - 1: break
+            bx('bay_labelrail', 0.435, 0.439, 0.2, L - 0.2, z + 0.012, z + 0.03, 'brass')
+            for j in range(int(L / 0.7)): bx('bay_label', 0.439, 0.4395, 0.4 + j * 0.62, 0.56 + j * 0.62, z + 0.014, z + 0.028, 'paper')
+            if k % 2: box('shelflight', X(0.36), X(0.4), 0.25, L - 0.25, z + 0.57, z + 0.58, em='shelf', M=M)
+            _books(M, grp, s, 0.13, L - 0.13, z + 0.04)
+    for y in (0, L):                                                                    # half an upright at each end: neighbours complete it
         y0, y1 = (y, y + 0.11) if y == 0 else (y - 0.11, y)
         bx('bay_upright', 0, 0.5, y0, y1, z0, top, 'wood')
         for f in range(2):
             yy = y0 + 0.03 + f * 0.05 if y == 0 else y1 - 0.03 - f * 0.05
             bx('bay_flute', 0.5, 0.506, yy - 0.012, yy + 0.012, z0 + 0.25, top - 0.3, 'wood_d')
         bx('bay_capital', 0, 0.55, y0, y1, top - 0.2, top - 0.12, 'wood_l', bevel=0.008); bx('bay_base', 0, 0.54, y0, y1, z0, z0 + 0.16, 'wood_l', bevel=0.008)
-    bx('bay_frieze', 0, 0.46, 0, 3, top - 0.12, top + 0.06, 'wood'); bx('bay_plaque', 0.46, 0.466, 1.2, 1.8, top - 0.09, top + 0.02, 'brass', bevel=0.003)
-    moulding('bay_cornice', [(X(0), top + 0.06), (X(0.6), top + 0.06), (X(0.62), top + 0.1), (X(0.56), top + 0.13), (X(0.6), top + 0.17), (X(0), top + 0.17)], 0, 3, 'wood', grp, M=M)
-    for k in range(12): bx('bay_dentil', 0.46, 0.5, 0.06 + k * 0.25, 0.19 + k * 0.25, top + 0.0, top + 0.055, 'wood_l')
+    bx('bay_frieze', 0, 0.46, 0, L, top - 0.12, top + 0.06, 'wood'); bx('bay_plaque', 0.46, 0.466, L / 2 - 0.3, L / 2 + 0.3, top - 0.09, top + 0.02, 'brass', bevel=0.003)
+    moulding('bay_cornice', [(X(0), top + 0.06), (X(0.6), top + 0.06), (X(0.62), top + 0.1), (X(0.56), top + 0.13), (X(0.6), top + 0.17), (X(0), top + 0.17)], 0, L, 'wood', grp, M=M)
+    for k in range(int(L / 0.25)): bx('bay_dentil', 0.46, 0.5, 0.06 + k * 0.25, 0.19 + k * 0.25, top + 0.0, top + 0.055, 'wood_l')
 def _books(M, grp, s, y0, y1, z, deep=0.3):
     """Fill a shelf: runs of standing books (some with gilt bands), a few lying flat, bookends, the odd keepsake."""
     X = lambda a: -s * a; y = y0 + 0.02
@@ -372,25 +342,7 @@ ASSETS = dict(table=a_table, chair=a_chair, lamp=a_lamp, pendant=a_pendant, ladd
               stack=a_stack, openbook=a_openbook, blotter=a_blotter)
 
 # ================================================================= ASSET BENCH: one asset alone, in a studio
-if os.environ.get('ASSET'):
-    name = os.environ['ASSET']; ASSETS[name](T((0, 0, {'pendant': 6.3, 'coffer': 3.0}.get(name, 0))) if name not in ('gallery',) else T((0, 0, 1.0)))
-    pts = [o.matrix_world @ Vector(c) for o in bpy.data.objects if o.type == 'MESH' for c in o.bound_box]
-    lo = Vector([min(p[i] for p in pts) for i in range(3)]); hi = Vector([max(p[i] for p in pts) for i in range(3)]); c = (lo + hi) / 2; R = (hi - lo).length / 2
-    mat('studio', (0.32, 0.32, 0.33), 0.6)
-    box('studio_floor', c.x - 30, c.x + 30, c.y - 30, c.y + 30, lo.z - 0.02, lo.z, 'studio', 'props')
-    for i, (az, el, e, col) in enumerate(((0.9, 0.9, 700, (1, 0.93, 0.85)), (-1.8, 0.5, 260, (0.8, 0.9, 1.0)), (2.9, 0.3, 200, (1, 0.8, 0.6)))):
-        l = bpy.data.lights.new(f'key{i}', 'AREA'); l.energy = 0.35 * e * R * R; l.size = R * 1.5; l.color = col; o = bpy.data.objects.new(f'key{i}', l); COL.objects.link(o)
-        o.location = c + Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), math.sin(el))) * R * 3; o.rotation_euler = (c - o.location).to_track_quat('-Z', 'Y').to_euler()
-    cam = bpy.data.cameras.new('Bench'); cam.angle = math.radians(35); cam.clip_end = 500; co = bpy.data.objects.new('Bench', cam); scene.collection.objects.link(co); scene.camera = co
-    scene.render.engine = 'CYCLES'; scene.cycles.samples = int(os.environ.get('SPP', 96)); scene.cycles.use_denoising = True; scene.cycles.device = 'GPU'
-    prefs = bpy.context.preferences.addons['cycles'].preferences; DEV = os.environ.get('LOBBY_DEVICE', 'CUDA'); prefs.compute_device_type = DEV; prefs.get_devices()
-    for d in prefs.devices: d.use = (d.type == DEV)
-    scene.view_settings.view_transform = 'AgX'; scene.render.resolution_x, scene.render.resolution_y = 960, 720; scene.render.image_settings.file_format = 'PNG'
-    for i, (az, el) in enumerate(((-0.9, 0.35), (2.3, 0.2))):
-        co.location = c + Vector((math.cos(az) * math.cos(el), math.sin(az) * math.cos(el), math.sin(el))) * R * 3.6; co.rotation_euler = (c - co.location).to_track_quat('-Z', 'Y').to_euler()
-        scene.render.filepath = os.path.join(_here, f'asset_{name}_{i}.png'); bpy.ops.render.render(write_still=True)
-    print('ASSET', name, 'TRIS', sum(len(o.data.polygons) for o in bpy.data.objects if o.type == 'MESH'))
-    raise SystemExit
+bench(ASSETS, {'pendant': T((0, 0, 6.3)), 'coffer': T((0, 0, 3.0)), 'gallery': T((0, 0, 1.0))})
 
 # ================================================================= THE ROOM
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 3, 0), (-WD, 3, 0)], 'floor', 'floorN')

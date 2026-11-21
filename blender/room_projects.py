@@ -53,6 +53,9 @@ def spot(name, loc, target, watts, size=42, color=(1.0, 0.86, 0.7), blend=0.35, 
     lathe(name + '_lens', [(0, 0.03), (0.125, 0.03), (0.125, 0.04), (0, 0.04)], em='work', segs=16, closed=False, M=Mc)
     return o
 
+# station hardware shared with the Atrium and Navigation; ASSET=<name> shows one of them alone
+exec(open(os.path.join(_here, 'assets_tech.py')).read(), globals()); bench(TECH)
+
 # ================================================================= SHELL
 quad('floor_near', [(-WD, Y0, 0), (WD, Y0, 0), (WD, 9, 0), (-WD, 9, 0)], 'floor', 'floorN')
 quad('floor_far', [(-WD, 9, 0), (WD, 9, 0), (WD, Y1, 0), (-WD, Y1, 0)], 'floor', 'floorF')
@@ -314,6 +317,22 @@ for ci, (x, y, z, sz, m) in enumerate(((6.9, -1.9, 0, 0.8, 'crate_w'), (6.95, -1
 for d in (-1, 1):                                                             # gas bottles chained by the door
     for k in range(3):
         lathe(f'bottle{d}{k}', [(0, 1.5), (0.03, 1.5), (0.04, 1.42), (0.11, 1.3), (0.115, 0.02), (0.1, 0), (0, 0)], ('wall2', 'crate_o', 'white')[k], 'props', segs=20, closed=False, M=T((d * (6.3 + k * 0.27), 24.2, 0)))
+
+# ================================================================= WORKING DETAIL (assets_tech.py)
+a_toolchest(T((-6.95, 6.7, 0))); a_toolchest(T((7.0, 6.9, 0)) @ Matrix.Rotation(pi, 4, 'Z'))
+a_cabinet(T((-7.82, 13.5, 0)), rise=3.15); a_cabinet(T((-7.82, 9.6, 0)), rise=3.15); a_cabinet(T((7.82, 13.5, 0)) @ Matrix.Rotation(pi, 4, 'Z'), rise=3.15); a_cabinet(T((7.82, 14.4, 0)) @ Matrix.Rotation(pi, 4, 'Z'), h=1.6, rise=3.55)
+for k, fy in enumerate(FRAMES):
+    if k % 2: a_extinguisher(T((-7.82, fy + 0.6, 0.5))); a_extinguisher(T((7.82, fy - 0.6, 0.5)) @ Matrix.Rotation(pi, 4, 'Z'))
+    for s_ in (-1, 1): a_grille(T((s_ * 7.98, fy + 2.0, 3.4)) @ Matrix.Rotation(0 if s_ < 0 else pi, 4, 'Z'), 'archL' if s_ < 0 else 'archR')
+a_pallet(T((-6.7, 8.4, 0), (0, 0, 0.3))); a_pallet(T((6.9, 10.9, 0), (0, 0, -1.4)))
+for x, y, m_ in ((-6.9, -0.6, 't_paint'), (-6.35, -0.25, 't_orange'), (-7.0, 0.1, 't_paint')): a_drum(T((x, y, 0)), 'props', m_)
+a_stepladder(T((-6.9, 15.7, 0), (0, 0, 0.4))); a_pegboard(T((7.98, 17.0, 1.25)) @ Matrix.Rotation(pi, 4, 'Z'))
+a_floorhatch(T((-3.4, 7.5, 0))); a_floorhatch(T((3.4, 7.5, 0)))
+for c, _ in EXHIBITS:                                                          # each exhibit roped off on three sides, open to the aisle
+    out = 1 if c.x > 0 else -1
+    a_stanchion(T((c.x + out * 1.95, c.y - 1.95, 0)), 'props', L=3.9)
+    for yy in (c.y - 1.95, c.y + 1.95): a_stanchion(T((c.x - 1.95, yy, 0)) @ Matrix.Rotation(-pi / 2, 4, 'Z'), 'props', L=3.9)
+for s_ in (-1, 1): a_duct(T((s_ * 6.95, Y0 + 1.0, 5.0)), 'archL' if s_ < 0 else 'archR', L=Y1 - Y0 - 2.0)
 
 # ================================================================= CAMERA / RENDER
 cam = bpy.data.cameras.new('Hero'); cam.sensor_fit = 'VERTICAL'; cam.angle_y = math.radians(50); cam.clip_start = 0.1; cam.clip_end = 5000

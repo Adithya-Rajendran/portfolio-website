@@ -36,6 +36,9 @@ def spot(name, loc, target, watts, size=45, color=(1.0, 0.86, 0.7)):
     o = bpy.data.objects.new(name, l); COL.objects.link(o); o.location = loc
     o.rotation_euler = (Vector(target) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler(); return o
 
+# station hardware shared with the Atrium and Fabrication; ASSET=<name> shows one of them alone
+exec(open(os.path.join(_here, 'assets_tech.py')).read(), globals()); bench(TECH)
+
 # ================================================================= SHELL: drum wall, dome, oculus
 quad('floor', [(-R - 0.5, -R - 0.5, 0), (R + 0.5, -R - 0.5, 0), (R + 0.5, R + 0.5, 0), (-R - 0.5, R + 0.5, 0)], 'floor', 'floorN')
 DOME = [(OCULUS + (R - OCULUS) * math.cos(t * pi / 2 / 24), WALL_H + (APEX - WALL_H) * math.sin(t * pi / 2 / 24)) for t in range(25)]
@@ -88,6 +91,8 @@ for k in range(12):
         for d in (-1, 1):
             rbox(f'panelled{k}', (0.03, 0.03, 2.3), M @ T((-0.06, d * 1.45, 2.0)), None, None, em='gold')
         rbox(f'panelbrass{k}', (0.02, 2.6, 0.03), M @ T((-0.06, 0, 3.0)), 'brass', 'archL')
+        a_grille(at(a, R - 0.11, 2.45, 180), 'archL', w=1.6, h=0.5)
+        if k % 3 == 0: a_extinguisher(at(a, R - 0.11, 0.75, 180) @ T((0, 1.1, 0)), 'props')
     # bench seat built into each bay
     rbox(f'seat{k}', (0.55, 2.6, 0.1), M @ T((-0.34, 0, 0.5)), 'leather', 'props', bevel=0.03, seg=3)
     rbox(f'seatbase{k}', (0.5, 2.5, 0.42), M @ T((-0.32, 0, 0.24)), 'wall2', 'props')
@@ -119,15 +124,12 @@ for k in range(12):
     rbox(f'ray{k}', (2.44, 0.03, 0.003), at(a, 5.45, 0.0015), 'brass', 'center')
     lathe(f'marker{k}', [(0, 0.004), (0.04, 0.004), (0.04, 0.0), (0, 0.0)], em='mark', segs=12, closed=False, M=T(polar(a + 15, 6.73, 0)))
 
+for a_ in (0, 180): a_kiosk(at(a_, 7.7, 0, 180), 'props')
 # ================================================================= CONSOLES: five lecterns round the table (none in the approach)
 for i, a in enumerate((200, 150, 90, 30, 340)):
     M = at(a, 4.75)
-    rbox(f'con_body{i}', (0.5, 1.5, 0.95), M @ T((0.05, 0, 0.475)), 'wall2', 'center', bevel=0.03)
-    rbox(f'con_top{i}', (0.7, 1.6, 0.06), M @ T((-0.02, 0, 1.0), (0, -0.38, 0)), 'dark', 'center', bevel=0.015)
-    rbox(f'con_glow{i}', (0.5, 1.3, 0.005), M @ T((-0.035, 0, 1.035), (0, -0.38, 0)), 'lum_screen', 'center')
-    rbox(f'con_trim{i}', (0.02, 1.6, 0.03), M @ T((-0.35, 0, 0.9)), 'brass', 'center')
+    a_console(M, 'center', w=1.6); a_opchair(at(a, 5.75, 0, 180) @ Matrix.Rotation(random.uniform(-0.5, 0.5), 4, 'Z'))
     rbox(f'con_led{i}', (0.02, 1.4, 0.02), M @ T((0.3, 0, 0.06)), None, None, em='gold')
-    lathe(f'stool{i}', [(0, 0.62), (0.2, 0.62), (0.22, 0.56), (0.05, 0.52), (0.05, 0.04), (0.2, 0.02), (0.2, 0), (0, 0)], 'leather', 'props', segs=24, closed=False, M=T(polar(a, 5.6, 0)))
     spot(f'con_spot{i}', polar(a, 5.2, 5.6), polar(a, 4.9, 0.9), 320, 40)
 for a in (60, 120, 0, 180):                                                    # soft pools on the outer floor
     spot(f'pool{a}', polar(a, 7.2, 5.0), polar(a, 7.4, 0), 380, 55, color=(0.7, 0.85, 1.0))
