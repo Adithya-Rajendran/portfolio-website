@@ -1,5 +1,8 @@
 // The fixed architecture and live PBR objects must agree on the window, caster and receiver.
 // All arguments are room/world-space. The bias is in metres, scaled to the orthographic depth range.
+import * as THREE from 'three';
+import { uMirror, DSCALE } from './kit.js';
+
 export const windowShadow = (unit,size) => `float windowVisibility(vec3 W,vec3 N,float nl){
   if(nl<=0.) return 0.;
   const float unit=${unit.toFixed(8)};
@@ -17,10 +20,14 @@ export const windowShadow = (unit,size) => `float windowVisibility(vec3 W,vec3 N
 export function receiveWindowSun(root, uniforms, visibility) {
   const materials=new Set(); root.traverse(o=>{if(o.material?.isMeshStandardMaterial) materials.add(o.material);});
   for(const m of materials){
+    // The floor uses mirror alpha as distance. Transparent rotor blades blend light but
+    // must not replace that distance with their opacity; opaque fittings write metres.
+    if(m.transparent){ m.blending=THREE.CustomBlending; m.blendSrc=THREE.SrcAlphaFactor; m.blendDst=THREE.OneMinusSrcAlphaFactor;
+      m.blendSrcAlpha=THREE.ZeroFactor; m.blendDstAlpha=THREE.OneFactor; }
     m.onBeforeCompile=shader=>{
-      Object.assign(shader.uniforms,uniforms);
+      Object.assign(shader.uniforms,uniforms,{uMirror});
       shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
-        uniform mat4 uSunVP; uniform sampler2D tShadow; uniform vec3 uSunDir,uSunE;
+        uniform mat4 uSunVP; uniform sampler2D tShadow; uniform vec3 uSunDir,uSunE; uniform float uMirror;
         ${visibility}`)
         .replace('#include <lights_fragment_begin>',`#include <lights_fragment_begin>
           vec3 W=cameraPosition+(vec4(geometryPosition,0.)*viewMatrix).xyz;
@@ -31,7 +38,9 @@ export function receiveWindowSun(root, uniforms, visibility) {
             directLight.color=uSunE*(PI*open); directLight.visible=true;
             RE_Direct(directLight,geometryPosition,geometryNormal,geometryViewDir,geometryClearcoatNormal,material,reflectedLight);
           }`);
+      if(!m.transparent) shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',
+        `#include <opaque_fragment>\nif(uMirror>.5) gl_FragColor.a=length(geometryPosition)*${DSCALE.toFixed(3)};`);
     };
-    m.customProgramCacheKey=()=>`window-sun:${visibility}`; m.needsUpdate=true;
+    m.customProgramCacheKey=()=>`window-sun:${m.transparent}:${DSCALE}:${visibility}`; m.needsUpdate=true;
   }
 }

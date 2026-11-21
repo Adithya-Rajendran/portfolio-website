@@ -85,7 +85,7 @@ try {
   if(which==='all'||which==='caster'){
     await load('writing',{rollat:0});
     const result=await p.evaluate(async()=>{
-      const T=await import('three'),l=window.__lobby,R=l.renderer,root=l.scene.getObjectByName('Catalogue drone'),S=768;
+      const T=await import('three'),{uMirror,DSCALE}=await import('./js/kit.js'),l=window.__lobby,R=l.renderer,root=l.scene.getObjectByName('Catalogue drone'),S=768;
       if(!root)throw new Error('Missing live catalogue drone');const pick=l.picks.find(p=>p.options?.length);if(!pick)throw new Error('Missing catalogue');
       let u;l.scene.traverse(o=>{if(o.userData.grp?.startsWith('floor')&&o.material?.uniforms?.tShadow)u=o.material.uniforms;});
       const sc=new T.Scene(),cam=new T.Camera(),rt=new T.WebGLRenderTarget(S,S,{depthBuffer:false});
@@ -96,17 +96,26 @@ try {
       function caster(t){root.visible=true;frame(t);const a=depths();root.visible=false;frame(t);const b=depths();root.visible=true;
         const mask=new Uint8Array(S*S);for(let i=0;i<mask.length;i++)mask[i]=+(a[i*4]*256+a[i*4+1]<b[i*4]*256+b[i*4+1]);return mask;}
       // A/B only the directional term on the actual PBR meshes, with the SAME depth map and PMREM.
-      root.traverse(o=>{if(o.material?.isMeshStandardMaterial)o.layers.enable(3);});
+      root.traverse(o=>{if(o.material?.isMeshStandardMaterial){o.layers.enable(3);if(!o.material.transparent)o.layers.enable(4);}});
       const received=t=>{const trg=root.position.clone(),eye=trg.clone().add(new T.Vector3(.55,.6,-1.15));l.lightFrame(eye.toArray(),trg.toArray(),t);
         const rt2=new T.WebGLRenderTarget(256,256),E=u.uSunE.value.clone(),bg=l.scene.background;l.camera.layers.set(3);l.scene.background=new T.Color(0);
         const read=()=>{const a=new Uint8Array(256*256*4);R.setRenderTarget(rt2);R.render(l.scene,l.camera);R.readRenderTargetPixels(rt2,0,0,256,256,a);return a;};const a=read();u.uSunE.value.setScalar(0);const b=read();u.uSunE.value.copy(E);R.setRenderTarget(null);rt2.dispose();l.scene.background=bg;l.camera.layers.set(0);
         let n=0;for(let i=0;i<a.length;i+=4)if(a[i]-b[i]>2||a[i+1]-b[i+1]>2||a[i+2]-b[i+2]>2)n++;return n;};
-      const a=caster(0),atRest=received(0);pick.options[0][1](); for(let i=1;i<=15;i++)frame(i*.05);
+      const a=caster(0),atRest=received(0);
+      // The planar floor reads distance from reflection alpha to blur a distant object
+      // more than a contact. Check the actual opaque PBR material against ray/mesh hits.
+      const probeRT=new T.WebGLRenderTarget(192,192,{type:T.HalfFloatType}),rc=new T.Raycaster(),distErrors=[];
+      const oldBg=l.scene.background;l.scene.background=new T.Color(0);l.camera.layers.set(4);rc.layers.set(4);uMirror.value=1;R.setRenderTarget(probeRT);R.render(l.scene,l.camera);
+      for(const x of [85,91,96,101,107])for(const y of [85,91,96,101,107]){
+        rc.setFromCamera(new T.Vector2(2*(x+.5)/192-1,2*(y+.5)/192-1),l.camera);const hit=rc.intersectObject(root,true).find(h=>{for(let o=h.object;o;o=o.parent)if(!o.visible)return false;return true;});if(!hit)continue;
+        const px=new Uint16Array(4);R.readRenderTargetPixels(probeRT,x,y,1,1,px);distErrors.push(Math.abs(T.DataUtils.fromHalfFloat(px[3])/DSCALE-hit.distance));}
+      uMirror.value=0;l.camera.layers.set(0);l.scene.background=oldBg;R.setRenderTarget(null);probeRT.dispose();
+      pick.options[0][1](); for(let i=1;i<=15;i++)frame(i*.05);
       const b=caster(.75),inFlight=received(.75);let moved=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])moved++;
       rt.dispose();mat.dispose();plane.geometry.dispose();const count=x=>x.reduce((a,b)=>a+b,0);
-      return {room:'writing',fixedRollDeg:0,depthSamples:S*S,droneOccludedSamplesAtDock:count(a),droneOccludedSamplesInFlight:count(b),casterMaskChanged:moved,litDronePixelsAtDock:atRest,litDronePixelsInFlight:inFlight};
+      return {room:'writing',fixedRollDeg:0,depthSamples:S*S,droneOccludedSamplesAtDock:count(a),droneOccludedSamplesInFlight:count(b),casterMaskChanged:moved,litDronePixelsAtDock:atRest,litDronePixelsInFlight:inFlight,opaqueDistanceHits:distErrors.length,maxDistanceErrorM:+Math.max(...distErrors).toFixed(4)};
     });
-    await save(result);assert(result.droneOccludedSamplesAtDock>20&&result.casterMaskChanged>20,'Drone did not cast a moving sun shadow');assert(Math.max(result.litDronePixelsAtDock,result.litDronePixelsInFlight)>30,'The drone did not receive window sun');
+    await save(result);assert(result.droneOccludedSamplesAtDock>20&&result.casterMaskChanged>20,'Drone did not cast a moving sun shadow');assert(Math.max(result.litDronePixelsAtDock,result.litDronePixelsInFlight)>30,'The drone did not receive window sun');assert(result.opaqueDistanceHits>=5&&result.maxDistanceErrorM<.008,'Incorrect distance in the floor reflection of the drone');
   }
   assert.deepEqual(errors,[]);
 } finally {await b.close();}
