@@ -84,6 +84,12 @@
    "label": "ATRIUM"
   }
  ],
+ "screens": [
+  "FX_screen0",
+  "FX_screen1",
+  "FX_screen2",
+  "FX_screen3"
+ ],
  "cam": [
   0.0,
   -4.599999904632568,
@@ -258,6 +264,38 @@
    ],
    "strength": 6.0
   },
+  "t_ok": {
+   "color": [
+    0.3,
+    1.0,
+    0.5
+   ],
+   "strength": 3.0
+  },
+  "t_warn": {
+   "color": [
+    1.0,
+    0.5,
+    0.1
+   ],
+   "strength": 3.0
+  },
+  "t_cy": {
+   "color": [
+    0.25,
+    0.8,
+    1.0
+   ],
+   "strength": 2.4
+  },
+  "t_work": {
+   "color": [
+    1.0,
+    0.85,
+    0.7
+   ],
+   "strength": 6.0
+  },
   "work0": {
    "color": [
     1.0,
@@ -403,6 +441,7 @@
    "strength": 2.758779743650847
   }
  },
+ "v": 1795227633,
  "groups": [
   "archC",
   "archL",
@@ -414,12 +453,5 @@
   "props"
  ],
  "hdr_range": 8.0,
- "em_range": 8.0,
- "screens": [
-  "FX_screen0",
-  "FX_screen1",
-  "FX_screen2",
-  "FX_screen3"
- ],
- "v": 1795160219
+ "em_range": 8.0
 }
