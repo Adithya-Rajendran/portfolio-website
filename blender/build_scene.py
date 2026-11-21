@@ -55,6 +55,7 @@ FXC = bpy.data.collections.new('FX'); scene.collection.children.link(FXC)
 
 # ----------------------------------------------------------------- materials
 MAT = {}
+exec(open(os.path.join(HERE, 'surface_finishes.py')).read(), globals())
 
 class NT:
     """Small helper to wire shader nodes: values may be sockets or constants."""
@@ -139,6 +140,8 @@ def mat(name, base=(0.8, 0.8, 0.8), rough=0.5, metal=0.0, ior=1.5, coat=0.0, emi
         if seam is not None: height = g.math('SUBTRACT', height, seam)
         bump = g.node('ShaderNodeBump'); bump.inputs['Strength'].default_value = 0.55; bump.inputs['Distance'].default_value = 0.004
         nt.links.new(height, bump.inputs['Height']); nt.links.new(bump.outputs['Normal'], b.inputs['Normal'])
+    if name in SURFACE_FAMILIES:
+        apply_finish(NT(m.node_tree), b, SURFACE_FAMILIES[name], base, rough)
     MAT[name] = m
     return m
 
@@ -413,6 +416,21 @@ def rbox(name, size, M, m, grp, bevel=0.0, **kw):
     bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
     bmesh.ops.transform(bm, matrix=Matrix.Diagonal((*size, 1)), verts=bm.verts)
     return finish(name, bm, m, grp, bevel=bevel, M=M, **kw)
+def boxed_cushion(name, M, w, depth, height, material, grp):
+    """Boxed upholstery with a crowned panel, side boxing and a raised sewn welt, not a bevelled solid."""
+    bm = bmesh.new(); rings = []; n = 48
+    for radius, lift in ((.04,-.48),(.91,-.48),(.99,-.37),(1,-.24),(1,.21),(1.009,.26),(1.009,.29),(.998,.32),(.97,.38),(.8,.46),(.53,.50),(.24,.51),(.04,.51)):
+        row=[]
+        for k in range(n):
+            a = k*2*pi/n; co, si = math.cos(a), math.sin(a)
+            x = math.copysign(abs(co)**.31,co)*w*.5*radius; y = math.copysign(abs(si)**.31,si)*depth*.5*radius
+            row.append(bm.verts.new((x,y,height*lift)))
+        if rings:
+            prev=rings[-1]
+            for j in range(n): bm.faces.new((prev[j-1], prev[j], row[j], row[j-1])).smooth=True
+        rings.append(row)
+    bm.faces.new(list(reversed(rings[0]))); bm.faces.new(rings[-1]); return finish(name,bm,material,grp,M=M)
+
 def glow(name, loc, watts, color=(1.0, 0.58, 0.28), r=0.12):
     l = bpy.data.lights.new(name, 'POINT'); l.energy = watts; l.color = color; l.shadow_soft_size = r
     o = bpy.data.objects.new(name, l); COL.objects.link(o); o.location = loc; return o

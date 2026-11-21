@@ -176,7 +176,7 @@ def sofa(name, x, y0, y1, face):
     span = (y1 - y0 - 0.16) / 3
     for k in range(3):
         yy = y0 + 0.08 + span * k
-        box(name + 'seat', x - 0.47, x + 0.47, yy + 0.005, yy + span - 0.005, 0.22, 0.43, 'linen', 'props', bevel=0.045, seg=4)
+        boxed_cushion(name+'seat', T((x,yy+span/2,.325)), .94,span-.01,.21,'linen','props')
     for dx in (-0.38, 0.38):
         for yy in (y0 + .14, y1 - .14):
             turned('sofa_foot', .08, .04, 'wood', 'props', M=T((x+dx, yy, 0)))

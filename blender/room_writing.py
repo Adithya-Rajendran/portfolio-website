@@ -191,13 +191,15 @@ def a_globe(M=I4, grp='props'):
 
 def a_armchair(M=I4, grp='props'):
     """A wing chair for the window corner, buttoned leather on turned feet, with a brass side table and a book left on it."""
-    rbox('arm_seat', (0.7, 0.66, 0.2), M @ T((0, 0.03, 0.4)), 'leather', grp, bevel=0.07, seg=3); rbox('arm_base', (0.76, 0.72, 0.12), M @ T((0, 0, 0.26)), 'leather', grp, bevel=0.03)
-    rbox('arm_back', (0.76, 0.16, 0.85), M @ T((0, -0.34, 0.83), (-0.2, 0, 0)), 'leather', grp, bevel=0.07, seg=3)
+    boxed_cushion('arm_seat', M @ T((0, 0.03, 0.4)), .70,.66,.20,'leather',grp)
+    rbox('arm_base', (0.76, 0.72, 0.12), M @ T((0, 0, 0.26)), 'leather', grp, bevel=0.03)
+    back = M @ T((0,-.34,.83),(-pi/2+.2,0,0))
+    boxed_cushion('arm_back', back, .76,.85,.16,'leather',grp)
     for d in (-1, 1):
         rbox('arm_arm', (0.14, 0.7, 0.36), M @ T((d * 0.41, 0, 0.52)), 'leather', grp, bevel=0.06, seg=3); rbox('arm_wing', (0.1, 0.3, 0.55), M @ T((d * 0.4, -0.2, 0.98), (-0.2, 0, d * 0.25)), 'leather', grp, bevel=0.045, seg=3)
         for sy in (-1, 1): turned('arm_foot', 0.2, 0.035, 'wood', grp, M=M @ T((d * 0.32, sy * 0.28, 0)), segs=10)
     for r in range(3):
-        for c in range(4): blob('arm_button', M @ Vector((-0.24 + c * 0.16, -0.27 - (0.62 + r * 0.2 - 0.83) * 0.2, 0.62 + r * 0.2)), 0.012, 'brass', grp)
+        for c in range(4): blob('arm_button', back @ Vector((-.24+c*.16,(r-1)*.20,.073)), .011,'brass',grp)
     lathe('arm_table', [(0, 0.52), (0.22, 0.52), (0.22, 0.5), (0.03, 0.47), (0.025, 0.06), (0.15, 0.02), (0.15, 0), (0, 0)], 'brass', grp, segs=24, closed=False, M=M @ T((0.72, 0.15, 0)))
     rbox('arm_book', (0.16, 0.22, 0.03), M @ T((0.72, 0.15, 0.535), (0, 0, 0.5)), BOOKS[0], grp)
 
