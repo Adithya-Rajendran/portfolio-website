@@ -75,7 +75,40 @@ def a_sofa_trim(M=I4, grp='props', L=2.8):
     for y in (-L / 2 + 0.12, 0, L / 2 - 0.12):
         for x in (-0.42, 0.42): turned('sofa_foot', 0.1, 0.03, 'wood', grp, M=M @ T((x, y, 0)), segs=10)
     rod('sofa_welt', (0.5, -L / 2, 0.43), (0.5, L / 2, 0.43), 0.008, 'rug2', grp, M=M)
-    rbox('sofa_throw', (0.95, 0.5, 0.02), M @ T((0, L / 2, 0.64)), 'rug', grp, bevel=0.008); rbox('sofa_throw_h', (0.02, 0.5, 0.3), M @ T((0.48, L / 2, 0.5)), 'rug', grp, bevel=0.008)
+    # A single woven panel lies over the end arm, sags at its free sides, and rolls over the nose.
+    path = ((-.285, .638, 1), (-.22, .636, 1), (-.12, .636, 1), (.035, .634, 1),
+            (.18, .633, 1), (.31, .636, 1), (.411, .637, 1), (.455, .632, .99),
+            (.483, .615, .92), (.504, .588, .76), (.516, .552, .55), (.516, .502, .32),
+            (.514, .451, .16), (.512, .398, .07), (.511, .352, 0))
+    widths = (-1, -.95, -.90, -.82, -.775, -.66, -.50, -.29, -.12, .06,
+              .23, .39, .54, .70, .78, .825, .91, .96, 1)
+    face, lining = [], []
+    for i, (x, z, support) in enumerate(path):
+        xa, za, _ = path[max(0, i - 1)]
+        xb, zb, _ = path[min(len(path) - 1, i + 1)]
+        n = Vector((za - zb, 0, xb - xa)).normalized()
+        s = i / (len(path) - 1)
+        row, inner = [], []
+        for v in widths:
+            free = max(0, (abs(v) - .26) / .74)
+            sag = .119 * support * free**1.55
+            folds = (math.sin(9.0 * v + .95 * s) + .38 * math.sin(17 * v - 1.6 * s))
+            lift = folds * (.0025 + .010 * free + .002 * (1 - support))
+            hem = (1 - support)**2 * (.011 * v + .008 * math.sin(9 * v + s))
+            p = Vector((x + .014 * v * v * max(0, 1 - 5*s), L / 2 + (.219 + .016*s) * v + .006*s,
+                        z - sag + hem)) + n * lift
+            row.append(p)
+            inner.append(p - n * (.0045 if abs(v) >= .95 or i in (0, len(path) - 1) else .0028))
+        face.append(row)
+        lining.append(inner)
+    bm = bmesh.new()
+    _reading_patch(bm, face, accent_cols=(3, 14))
+    _reading_patch(bm, lining, accent_cols=(3, 14))
+    for i in (0, -1):
+        _reading_patch(bm, [face[i], lining[i]], smooth=False)
+        _reading_patch(bm, [[a[i], b[i]] for a, b in zip(face, lining)], smooth=False)
+    throw = finish('sofa_throw', bm, 'rug', grp, M=M)
+    throw.data.materials.append(MAT['rug2'])
 def a_drinks(M=I4, grp='props'):
     """A brass tray with a decanter and two glasses."""
     lathe('tray', [(0, 0.012), (0.2, 0.012), (0.215, 0.03), (0.22, 0.03), (0.2, 0), (0, 0)], 'brass', grp, segs=32, closed=False, M=M)

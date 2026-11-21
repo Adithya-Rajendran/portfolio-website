@@ -1,6 +1,7 @@
 """
-Path-trace lighting (+ reflections as seen from the hero camera) into linear-HDR texture atlases, then export for three.js.
-The floor is baked WITHOUT its glossy lobe: its reflection is rendered live in three.js (planar reflection).
+Path-trace room light into linear-HDR atlases. Run reflection_probe.py on the same .blend first.
+The floor and polished fittings exclude their first-hit glossy lobe: the viewer supplies it (planar / local IBL).
+Rough architecture retains its Cycles finish, including broad sheen and indirect glossy bounces.
   ./run.sh -b lobby.blend --python bake.py -- <scale> <spp> [group,group,...]
 scale: 1.0 = final (4k atlases), 0.25 = quick preview.
 Outputs ../assets-src/<room>/{room.glb, scene.json, tex/<group>.webp}; tools/pack.py turns that into what the site serves.
@@ -17,8 +18,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 s = bpy.context.scene
 ROOM = s['lobby'].get('room', 'lobby')                 # each room bakes into its own asset folder
 OUTD = os.path.join(HERE, '..', 'assets-src', ROOM); os.makedirs(os.path.join(OUTD, 'tex'), exist_ok=True)
+PROBE_FILE = os.path.join(OUTD, 'probe.json')
+if not os.path.isfile(PROBE_FILE): raise RuntimeError('Render reflection_probe.py on this room before baking')
+with open(PROBE_FILE) as f: PROBE = json.load(f)
+if not all(os.path.isfile(os.path.join(OUTD, 'tex', f'probe_c{i}.webp')) for i in range(5)):
+    raise RuntimeError('Missing prefiltered Cycles reflection layers')
 HAS_CHAND = 'chand' in s['lobby'].keys()
 RES = {'floorN': 2048, 'floorF': 2048, 'center': 4096, 'archL': 4096, 'archR': 4096, 'archC': 4096, 'props': 4096, 'people': 4096, 'back': 1024, 'chandA': 1024, 'chandB': 1024}
+RES['folio'] = 2048               # dedicated UV area for the curved printed book faces at inspection distance
+RES['polish'] = 2048              # diffuse paint/ground below the live specular layer; sharp reflections need no atlas area
 LAYER_RES = 1024                      # the chandelier's light is low-frequency: small maps are enough
 PHASES = [0.0, 120.0, 240.0]          # rotation phases at which its light is baked (blended at runtime)
 PASSES = os.environ.get('LOBBY_PASSES', 'base,chand,layers,sky,albedo').split(',')
@@ -87,9 +95,31 @@ def display_radiance(key):
     if re.match(r'(ice|white)\d', key): k *= 0.6      # roof strips sit behind diffusers, so the ceiling stays quiet
     if key in ('step', 'stair'): k *= 0.5             # hidden wash lights: only ever seen in the floor's reflection
     return [c[0] * k, c[1] * k, c[2] * k]
+# Split genuinely reflective finishes from the mostly matte shells, rather than adding a second
+# glossy reflection on top of Cycles'. Preserve the moving chandelier groups. These are all
+# single-finish kit pieces. COLOR_0 carries linear normal-incidence reflectance and perceptual
+# roughness, not a visible tint; the exporter keeps it even when the temporary material is removed.
+polished = {'chrome', 't_chrome', 'brass', 'gilt', 'copper', 'foil', 'solar', 't_glass',
+            'glasstop', 'greenlamp', 'glassware', 'whisky', 'projection_optic'}
+reflective_groups = set()
 byg, bye = {}, {}
 for o in meshes:
-    if 'grp' in o: byg.setdefault(o['grp'], []).append(o)
+    if 'grp' in o:
+        group = o['grp']; m = o.data.materials[0] if len(o.data.materials) == 1 else None
+        if m and (m.name.rsplit('.', 1)[0] in polished or group.startswith('chand')):
+            group = group if group.startswith('chand') else 'polish'; o['grp'] = group; reflective_groups.add(group)
+            bs = m.node_tree.nodes['Principled BSDF'].inputs
+            ior, metal = bs['IOR'].default_value, bs['Metallic'].default_value
+            f0 = ((ior - 1) / (ior + 1)) ** 2
+            coat = bs['Coat Weight'].default_value
+            # Schlick at normal incidence for the clear top coat over a dielectric substrate.
+            f0 += (1 - f0) * .04 * coat
+            rgb = [(1-metal)*f0 + metal*x for x in bs['Base Color'].default_value[:3]]
+            rough = max(.045, min(1., bs['Roughness'].default_value))
+            ca = o.data.color_attributes.new('Specular', 'FLOAT_COLOR', 'CORNER')
+            ca.data.foreach_set('color', np.tile(np.array([*rgb,rough], np.float32), len(o.data.loops)))
+            o.data.color_attributes.active_color = ca; o.data.color_attributes.render_color_index = 0
+        byg.setdefault(group, []).append(o)
     else:
         key = o['em']; moving = key.startswith('chand')
         if not moving:
@@ -166,7 +196,7 @@ def bake_px(key, ob, res, margin, kind='COMBINED', direct=True):
     if kind == 'DIFFUSE': pf = {'COLOR'}
     else:
         pf = {'INDIRECT', 'DIFFUSE', 'TRANSMISSION'} | ({'DIRECT', 'EMIT'} if direct else set())
-        if not key.startswith('floor'): pf.add('GLOSSY')        # the floor's reflection is rendered live instead
+        if not key.startswith('floor') and key not in reflective_groups: pf.add('GLOSSY')
     s.render.bake.margin = margin
     bpy.ops.object.bake(type=kind, pass_filter=pf, margin=margin)
     px = pixels(img); bpy.data.images.remove(img)
@@ -244,11 +274,12 @@ bpy.ops.object.select_all(action='DESELECT')
 for ob in list(groups.values()) + list(ems.values()) + [o for o in s.objects if 'fx' in o]:
     ob.hide_render = False; ob.select_set(True)
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUTD, 'room.glb'), export_format='GLB', use_selection=True, export_yup=True,
-                          export_normals=bool(SPIN), export_texcoords=True, export_materials='EXPORT', export_image_format='NONE',
+                          export_normals=True, export_texcoords=True, export_materials='EXPORT', export_image_format='NONE',
                           export_vertex_color='ACTIVE', export_all_vertex_colors=False, export_active_vertex_color_when_no_material=True,
                           export_extras=True, export_apply=False, export_animations=False, export_cameras=False, export_lights=False)
 info = s['lobby'].to_dict()
 info['room'] = ROOM; info['v'] = int(time.time()); info['groups'] = list(groups.keys()); info['hdr_range'] = HDR_RANGE; info['em_range'] = EM_RANGE
+info['probe'] = dict(PROBE, groups=sorted(reflective_groups))
 if SPIN: info['spin'] = dict(SPIN, phases=SKY_PHASES, layered=static)
 if HAS_CHAND: info['chand'] = dict(info.get('chand', {}), phases=PHASES, layered=static, spin=dict(chandA=1, chandB=-1))
 json.dump(info, open(os.path.join(OUTD, 'scene.json'), 'w'), indent=1)

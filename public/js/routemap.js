@@ -196,11 +196,15 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
 
   // ---- the table surface (chart rings and bearings), stars drifting in the volume, the projector's light, the train
   const dial = new THREE.Mesh(new THREE.RingGeometry(0.66, radius - 0.08, 160, 1).rotateX(-Math.PI / 2), glsl(`uniform float uTime, uGain, uR; varying vec2 vP;
+    // Etched, backlit chart traces over the real specular dial. Light only the rule,
+    // not the interval between rules. Average subpixel strokes instead of blinking.
+    float rule(float t,float w){float d=abs(fract(t+.5)-.5), aa=clamp(fwidth(t),.0001,.30);
+      return (1.-smoothstep(max(0.,w-aa*.5),w+aa*.5,d))*min(1.,2.*w/aa);}
     void main(){ float r = length(vP)/uR, a = atan(vP.y, vP.x)/6.2832 + 0.5;
-      float rings = smoothstep(0.012, 0.0, abs(fract(r*6.0) - 0.5) - 0.47)*0.5;
-      float ticks = step(0.9, r)*step(fract(a*120.0), 0.12)*0.8 + step(0.86, r)*step(fract(a*24.0), 0.03);
-      float spokes = step(fract(a*12.0), 0.004)*0.6*step(r, 0.86);
-      float sweep = pow(max(0.0, 1.0 - fract(a - uTime*0.03)*5.0), 2.0)*0.35*step(r, 0.86);
+      float rings = rule(r*6.,.009)*.42;
+      float ticks = step(.86,r)*(1.-step(.904,r))*rule(a*24.,.021)*.72;
+      float spokes = rule(a*12.,.004)*.41*step(r,.86);
+      float sweep = pow(max(0.,1.-fract(a-uTime*.03)*11.),2.)*.075*step(r,.86);
       gl_FragColor = vec4(${CY}*(rings + ticks + spokes + sweep)*0.35*uGain, 1.0); }`, { ...U, uR: { value: radius } }, { vertexShader: VERT_XZ, side: THREE.DoubleSide }));
   dial.position.y = 0.03;
   const stars = cloud(Array.from({ length: 1260 }, Math.random), new THREE.ShaderMaterial({ ...GLOW, uniforms: { ...U, uR: { value: radius } },

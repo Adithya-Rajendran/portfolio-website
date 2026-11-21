@@ -4,7 +4,7 @@
 Textures -> KTX2: block-compressed on the GPU (a quarter to an eighth of the memory of RGBA8), mipmaps included, and
 the layers of one group (orrery phases _c0.., sky angles _s0..) packed into a single array texture.
 Geometry -> meshopt-compressed GLB.   Needs ktx (KTX-Software), dwebp (libwebp) and gltfpack under ~/.local/opt."""
-import os, re, shutil, subprocess, sys, tempfile
+import json, os, re, shutil, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
@@ -29,8 +29,32 @@ def pack(room):
         for name in ('landmask.png', 'citylights.png'):
             if not os.path.isfile(f'{src}/tex/{name}'):
                 sys.exit(f'Missing Atrium hologram input: {src}/tex/{name}. Include the tracked PNGs before packing.')
-    shutil.rmtree(dst, ignore_errors=True); os.makedirs(f'{dst}/tex')
-    tmp = tempfile.mkdtemp()
+    with open(f'{src}/scene.json') as f: info = json.load(f)
+    if info.get('room') != room or not os.path.isfile(f'{src}/room.glb'): sys.exit(f'Incomplete {room} geometry or manifest')
+    needed = set(info['groups'])
+    if info.get('portal'): needed.add('backdrop')
+    for group in info.get('chand',{}).get('layered',[]):
+        needed.update(f'{group}_c{i}' for i in range(len(info['chand']['phases'])))
+    for group in info.get('spin',{}).get('layered',[]):
+        needed.add(group+'_a'); needed.update(f'{group}_s{i}' for i in range(info['spin']['phases']))
+    if 'probe' in info:
+        if not set(info['probe']['groups']) <= needed: sys.exit(f'{room}: unrecognised polished group')
+        needed.update(f'probe_c{i}' for i in range(len(info['probe']['roughness'])))
+    for n in sorted(needed):
+        if not os.path.isfile(f'{src}/tex/{n}.webp'): sys.exit(f'Missing {room} bake input: {n}.webp')
+    # Do not take a working room offline while the encoders run (or if one fails).
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f'.pack-{room}-', dir=os.path.dirname(dst)) as stage:
+        new = f'{stage}/new'; os.makedirs(f'{new}/tex')
+        with tempfile.TemporaryDirectory() as tmp: encode(room, src, new, tmp)
+        old = f'{stage}/old'
+        if os.path.isdir(dst): os.rename(dst,old)
+        try: os.rename(new,dst)
+        except BaseException:
+            if os.path.isdir(old): os.rename(old,dst)
+            raise
+
+def encode(room, src, dst, tmp):
     jobs = {}                                                        # output name -> (kind, [source images, in layer order])
     for f in sorted(os.listdir(f'{src}/tex')):
         name, ext = os.path.splitext(f)
@@ -49,7 +73,7 @@ def pack(room):
     with ThreadPoolExecutor(3) as ex: list(ex.map(one, jobs.items()))
     # geometry: keep node names, extras and unused attributes (lightmap UVs, vertex colours); lightmap UVs stay floats (quantized ones need a texture transform that our materials do not have)
     run(GLTFPACK, '-i', f'{src}/room.glb', '-o', f'{dst}/room.glb', '-cc', '-kn', '-ke', '-km', '-kv', '-vp', '16', '-vtf', '-vn', '10', '-vc', '12')
-    shutil.copy(f'{src}/scene.json', f'{dst}/scene.json'); shutil.rmtree(tmp)
+    shutil.copy(f'{src}/scene.json', f'{dst}/scene.json')
     size = lambda d: sum(os.path.getsize(os.path.join(p, f)) for p, _, fs in os.walk(d) for f in fs) / 1e6
     print('%-11s %5.1f MB -> %5.1f MB   (%d files -> %d)' % (room, size(src), size(dst), sum(len(f) for *_, f in os.walk(src)), sum(len(f) for *_, f in os.walk(dst))), flush=True)
 

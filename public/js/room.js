@@ -10,6 +10,7 @@ import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';
 import { createRouteMap } from './routemap.js';
 import { createDrone } from './drone.js';
+import { probePars } from './reflections.js';
 
 const pickMat = new THREE.MeshBasicMaterial({ visible: false });
 let ktx2;                                                           // one transcoder (and its workers) for every room
@@ -30,10 +31,10 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // pixels are HDR-encoded and decoded in the shaders. Returns the uniform now; the texture drops into it when it arrives,
   // and once it is on the GPU the copy in RAM is let go.
   ktx2 ??= new KTX2Loader().setTranscoderPath('vendor/jsm/libs/basis/').detectSupport(renderer);
-  const pending = [];
-  function bakeTex(name, aniso = 4) {
+  const pending = []; let textureError;
+  function bakeTex(name, aniso = 4, panorama = false) {
     const u = { value: null }, got = () => onProgress(++arrived / pending.length);
-    pending.push(new Promise((done) => ktx2.load(`${base}/tex/${name}.ktx2?v=${info.v || 0}`, (t) => { t.anisotropy = Math.min(aniso, maxAniso); t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; }; u.value = t; done(); }, undefined, done)).then(got));
+    pending.push(new Promise((done) => ktx2.load(`${base}/tex/${name}.ktx2?v=${info.v || 0}`, (t) => { if (panorama) t.wrapS = THREE.RepeatWrapping; t.anisotropy = Math.min(aniso, maxAniso); t.onUpdate = () => { for (const m of t.mipmaps) m.data = null; }; u.value = t; done(); }, undefined, (e) => { textureError ??= new Error(`Cannot load ${id}/${name}.ktx2`, {cause:e}); done(); })).then(got));
     return u;
   }
   // scene.json is always re-checked with the server; it names the bake (info.v), and every other file is asked for by
@@ -69,46 +70,57 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   //   direct sun: drawn live. Diffuse only: (baked surface colour) x (irradiance) x cos, shadowed by a depth map that
   //   prepass() renders from the sun through the window every frame.
   const SPUN = info.spin, LIT = new Set(SPUN?.layered || []), NSKY = SPUN?.phases || 0, SH = num('shadow', 2048);
-  // Only its depth is used: the colour attachment three insists on is one byte and never written or cleared; 16-bit
-  // depth steps are 2 mm over the 139 m range, far below the 17 cm comparison bias.
+  // Sun-space, not screen-space. Keep about 20 m outside the window and 50 m into the
+  // compartment. Bias follows a shadow texel in metres, not a fixed 17 cm gap at every contact.
+  const shadowHalf = SPUN?.half || (info.portal_r || 5) + 1.2, shadowTexel = 2*shadowHalf/Math.max(1,SH);
   const shadow = SPUN && { rt: new THREE.WebGLRenderTarget(SH, SH, { format: THREE.RedFormat, depthTexture: new THREE.DepthTexture(SH, SH), generateMipmaps: false }),
-    cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 140), mat: new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }) };
+    cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 40, 110), mat: new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }) };
   const uSunVP = { value: new THREE.Matrix4() }, uSunDir = { value: sunNow }, uSky = { value: V(0, 1, 0) },       // uSky: the two baked angles either side of the sky's, and the mix
     uSunE = { value: V(...(SPUN?.sun_e || [0, 0, 0])).multiplyScalar(num('sunlight', 1) / Math.PI) };
   const litUniforms = (grp) => {
     if (!LIT.has(grp)) return {};
     return { tAlb: bakeTex(`${grp}_a`, 4), sk: bakeTex(`${grp}_s`, 1), tShadow: { value: shadow.rt.depthTexture }, uSunVP, uSunDir, uSunE, uSky };
   };
+  const probe = info.probe, polished = new Set(probe?.groups || []);
+  let probeU;
+  if (probe) {
+    const a = B(probe.bounds.min), b = B(probe.bounds.max);
+    probeU = {tRoomSpec:bakeTex('probe_c',1,true), uProbePos:{value:B(probe.origin)},
+      uBoxLo:{value:a.clone().min(b)}, uBoxHi:{value:a.clone().max(b)}, uProbeRange:{value:probe.range}, uSpecGain:{value:num('spec',1)}};
+  }
   const litGLSL = (grp, into) => (LIT.has(grp) ? `
       ${into} += mix(dec(texture(sk, vec3(vUv, uSky.x))), dec(texture(sk, vec3(vUv, uSky.y))), uSky.z)*${num('sky', 1).toFixed(3)};
-      { vec3 n = normalize(vN); if (dot(n, cameraPosition - vW) < 0.0) n = -n;
-        float ndl = dot(n, uSunDir);
-        vec4 sc = uSunVP*vec4(vW + n*0.04, 1.0); vec3 sp = sc.xyz*0.5 + 0.5;
-        if (ndl > 0.0 && sp.x > 0.0 && sp.x < 1.0 && sp.y > 0.0 && sp.y < 1.0) {
+      { vec3 n = normalize(vN); float ndl = dot(n, uSunDir);
+        float unit = ${shadowTexel.toFixed(7)};
+        vec4 sc = uSunVP*vec4(vW + n*unit*(1.0-clamp(ndl,0.,1.)), 1.0); vec3 sp = sc.xyz*0.5 + 0.5;
+        if (ndl > 0.0 && all(greaterThan(sp,vec3(0.))) && all(lessThan(sp,vec3(1.)))) {
           float open = 0.0;
           for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++)
-            open += step(sp.z - 0.0012, texture2D(tShadow, sp.xy + vec2(float(i), float(j))*${(1.3 / SH).toFixed(6)}).r);
+            open += step(sp.z - (0.0025 + unit*(1.25 - ndl))/70., texture2D(tShadow, sp.xy + vec2(float(i), float(j))*${(1.3 / SH).toFixed(6)}).r);
           vec4 a = texture2D(tAlb, vUv);
-          ${into} += a.rgb*a.rgb*uSunE*(ndl*open/9.0);
+          ${into} += (a.rgb*a.rgb${polished.has(grp) ? ' + sunSpec(n,normalize(cameraPosition-vW),uSunDir)' : ''})*uSunE*(ndl*open/9.0);
         } }` : '');
-  const VERT_N = `varying vec2 vUv; varying vec3 vW, vN;
-    void main(){ vUv = uv; vN = mat3(modelMatrix)*normal; vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`;
-  const vert = (grp) => (LIT.has(grp) ? VERT_N : VERT);
+  const vert = (grp) => (LIT.has(grp) || polished.has(grp) ? `varying vec2 vUv; varying vec3 vW,vN; ${polished.has(grp) ? 'varying vec4 vFinish;' : ''}
+    void main(){ vUv = uv; vN = (vec4(normalMatrix*normal,0.)*viewMatrix).xyz;
+      ${polished.has(grp) ? 'vFinish = color;' : ''} vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }` : VERT);
   const PARS = `uniform sampler2D map, tAlb, tShadow; uniform highp sampler2DArray lc, sk; uniform vec3 uChand, uSunDir, uSunE, uSky; uniform mat4 uSunVP; uniform float uMirror;
     varying vec2 vUv; varying vec3 vW, vN; ${DEC}`;
   const bakedMat = (map, grp, gain = 1) => new THREE.ShaderMaterial({
-    uniforms: { map, uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp) }, side: THREE.DoubleSide, vertexShader: vert(grp),
-    fragmentShader: `${PARS} uniform float uGain;
-      void main(){ vec3 c = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'c')} ${litGLSL(grp, 'c')} gl_FragColor = vec4(c*uGain, 1.0); ${DIST} }`,
+    uniforms: { map, uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp), ...(polished.has(grp) ? probeU : {}) },
+    side: THREE.DoubleSide, vertexColors: polished.has(grp), vertexShader: vert(grp),
+    fragmentShader: `${PARS} uniform float uGain; ${polished.has(grp) ? probePars : ''}
+      void main(){ vec3 c = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'c')} ${litGLSL(grp, 'c')}
+        ${polished.has(grp) ? 'vec3 N = normalize(vN), V = normalize(cameraPosition-vW); c += roomSpec(vW,dot(N,V) < 0. ? -N : N,V);' : ''}
+        gl_FragColor = vec4(c*uGain, 1.0); ${DIST} }`,
   });
   // ---- polished floor: baked diffuse light + the live planar reflection that main.js renders into mirror.rt
   const F0 = ((info.floor.ior - 1) / (info.floor.ior + 1)) ** 2, ROUGH = (info.floor.rough[0] + info.floor.rough[1]) / 2;
   const floorMat = (map, grp) => new THREE.ShaderMaterial({
     uniforms: { map, tRefl: { value: mirror.rt.texture }, uMirrorVP: { value: mirror.vp }, uSize: { value: mirror.size }, uPxR: mirror.pxPerRad,
-      uMinLod: mirror.minLod, uAlpha: { value: ROUGH * ROUGH }, uTile: { value: info.floor.tile }, uF0: { value: F0 }, uMirror, uChand, ...layerUniforms(grp), ...litUniforms(grp) },
+      uMinLod: mirror.minLod, uAlpha: { value: ROUGH * ROUGH }, uTile: { value: info.floor.tile }, uF0: { value: F0 }, uFloorRefl: {value:num('floorrefl',1)}, uMirror, uChand, ...layerUniforms(grp), ...litUniforms(grp) },
     vertexShader: vert(grp),
     fragmentShader: `${PARS}
-      uniform sampler2D tRefl; uniform mat4 uMirrorVP; uniform vec2 uSize; uniform float uPxR, uAlpha, uTile, uF0, uMinLod;
+      uniform sampler2D tRefl; uniform mat4 uMirrorVP; uniform vec2 uSize; uniform float uPxR, uAlpha, uTile, uF0, uMinLod, uFloorRefl;
       void main(){
         vec3 diffuse = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'diffuse')} ${litGLSL(grp, 'diffuse')}
         vec3 V = normalize(cameraPosition - vW);
@@ -140,14 +152,15 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
              + (textureLod(tRefl, uv + o2, lod + 3.0).rgb + textureLod(tRefl, uv - o2, lod + 3.0).rgb)*0.013;
         }
         float F = uF0 + (1.0 - uF0)*pow(1.0 - cosT, 5.0);
-        gl_FragColor = vec4(diffuse*(1.0 - F)*(1.0 - 0.5*joint) + R*F*(1.0 - 0.9*joint), 1.0);
+        gl_FragColor = vec4(diffuse*(1.0 - F)*(1.0 - 0.5*joint) + R*F*uFloorRefl*(1.0 - 0.9*joint), 1.0);
       }`,
   });
   // Frameless glass balustrade. Additive: what glass adds to the view is reflection, strongest at grazing angles,
   // plus the green-white glint of its polished edges (top edge and the joints between 2 m panels).
   const glassMat = new THREE.ShaderMaterial({
-    ...GLOW, side: THREE.DoubleSide, vertexShader: VERT,
+    ...GLOW, uniforms:probeU || {}, side: THREE.DoubleSide, vertexShader: VERT,
     fragmentShader: `varying vec3 vW; varying vec2 vUv;
+      ${probe ? probePars.replace('varying vec4 vFinish;', 'const vec4 vFinish=vec4(.041,.044,.043,.065);') : ''}
       void main(){
         vec3 v = normalize(cameraPosition - vW);
         float F = 0.04 + 0.96*pow(1.0 - abs(v.x), 5.0);                             // Fresnel; the panes face +-X
@@ -156,7 +169,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         float j = abs(fract(vW.z/2.0 + 0.5) - 0.5)*2.0, fw = fwidth(vW.z/2.0)*2.0;  // panel joints every 2 m
         float joint = 1.0 - smoothstep(0.004, 0.004 + fw, j);
         float top = smoothstep(0.975, 0.99, vUv.y);
-        gl_FragColor = vec4(refl*F + vec3(0.55, 0.9, 0.8)*(joint*0.10 + top*0.22), 1.0);
+        gl_FragColor = vec4(${probe ? 'roomSpec(vW,vec3(v.x<0.?-1.:1.,0.,0.),v)' : 'refl*F'} + vec3(0.55, 0.9, 0.8)*(joint*0.10 + top*0.22), 1.0);
       }`,
   });
 
@@ -167,6 +180,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   gltf.scene.traverse((o) => {
     if (!o.isMesh) return;
     const u = o.userData = { ...o.parent.userData, ...o.userData }          // tools/pack.py leaves each mesh in a child of its named node;
+    if (polished.has(u.grp) && o.geometry.getAttribute('color')?.itemSize !== 4) throw new Error(`${id}/${u.grp}: missing packed specular colour/roughness`);
     if (u.grp?.startsWith('floor')) { o.material = floorMat(bakeTex(u.grp, 2), u.grp); floors.push(o); }
     else if (u.grp) o.material = bakedMat(bakeTex(u.grp, 4), u.grp);
     else if (u.em === 'static') o.material = stripMat;
@@ -197,10 +211,15 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   }
 
   // ---- outside: Earth at sunrise (NASA Blue Marble + Black Marble imagery) rendered in Cycles; effectively at infinity
-  let backdrop, shaft; const sky = new THREE.Group(), AXIS = SPUN ? B(SPUN.axis).normalize() : PORTAL.clone().sub(CAM).normalize(); scene.add(sky);       // everything at infinity; follows the camera, turns with the spin
+  let backdrop, shaft; const sky = new THREE.Group(), AXIS = SPUN ? B(SPUN.axis).normalize() : PORTAL.clone().sub(CAM).normalize(); scene.add(sky);       // orientation only; infinity is evaluated separately for each rendering camera
   if (info.portal) {
     const D = 900, dir = AXIS.clone(), size = 2 * D * Math.tan(THREE.MathUtils.degToRad((info.backdrop_fov || 80) / 2));
     backdrop = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bakedMat(bakeTex('backdrop', 4), null, num('earth', 0.75)));
+    // The main camera, mirror and drone cubemap have different origins. Centre infinity
+    // on the active eye in the shader, like the sun and storm sprites; never leak parallax.
+    backdrop.material.vertexShader = `varying vec2 vUv; varying vec3 vW; void main(){ vUv=uv;
+      vec3 ray=(modelMatrix*vec4(position,1.)).xyz; vW=cameraPosition+ray;
+      gl_Position=projectionMatrix*vec4(mat3(viewMatrix)*ray,1.); }`;
     backdrop.position.copy(dir).multiplyScalar(D); backdrop.lookAt(0, 0, 0); backdrop.frustumCulled = false;
     // The sun, just above Earth's horizon: the focal point of the whole composition. Drawn at infinity for whichever
     // camera is rendering, so it also appears, stretched into a glare path, in the floor.
@@ -341,14 +360,15 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
 
   let frames = 0;
   const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
-  await Promise.all(pending);                                      // the cover lifts on a complete room
+  await Promise.all(pending);
+  if (textureError) throw textureError;                             // do not lift the cover on a partial bake
   return {
     id, info, scene, picks, floors, hidden, CAM, TGT,
     CLOSE: B(info.close || [0, 17.2, 2.15]), CLOSE_TGT: B(info.close_tgt || [0, 26, 2.6]), arc: info.holo ? 0.9 : 0.25,     // arc: how high the pull-back lifts over the middle
     exposure: num('exp', info.exposure || 0.85),
     /** Per frame, before anything else is drawn: the sun's shadow map, looking in through the window. */
     prepass: shadow && ((renderer) => {
-      const c = shadow.cam, h = SPUN.half || (info.portal_r || 5) + 1.2;
+      const c = shadow.cam, h = shadowHalf;
       c.left = c.bottom = -h; c.right = c.top = h; c.updateProjectionMatrix();
       c.position.copy(PORTAL).addScaledVector(sunNow, 60); c.up.set(1, 0, 0); c.lookAt(PORTAL); c.updateMatrixWorld();
       uSunVP.value.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);
@@ -358,7 +378,6 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     }),
     /** Per frame, after the camera has been placed. */
     update(t) {
-      sky.position.copy(camera.position);                                              // Earth is at infinity: no parallax
       const roll = rollAt(t);
       sky.quaternion.setFromAxisAngle(AXIS, roll); sunNow.copy(SUN).applyQuaternion(sky.quaternion);
       if (NSKY) { const x = ((roll / (2 * Math.PI)) % 1 + 1) % 1 * NSKY, i = Math.floor(x) % NSKY; uSky.value.set(i, (i + 1) % NSKY, x - Math.floor(x)); }

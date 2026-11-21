@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1024" width="1536" height="1024">
+<title>Arcadia field atlas · engraved reference spread for the reading rooms</title>
+<defs>
+ <pattern id="etch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(28)"><path d="M0 0V7" stroke="#625849" stroke-width="2"/></pattern>
+ <pattern id="dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.2" fill="#846c50"/></pattern>
+ <g id="star" fill="#45483d"><path d="M0 -7L1.7 -1.7L7 0L1.7 1.7L0 7L-1.7 1.7L-7 0L-1.7 -1.7Z"/></g>
+ <g id="div"><path d="M0 -154V-166" stroke="#5a5947" stroke-width="2.4"/></g>
+ <g id="divisions"><use href="#div"/><use href="#div" transform="rotate(15)"/><use href="#div" transform="rotate(30)"/><use href="#div" transform="rotate(45)"/><use href="#div" transform="rotate(60)"/><use href="#div" transform="rotate(75)"/></g>
+ <g id="rule" stroke="#9b8159" fill="none"><path d="M0 0h568M0 5h568"/></g>
+ <style>.body{font-family:'Liberation Serif',serif;fill:#2e302a}.caps{font-family:'Liberation Sans',sans-serif;letter-spacing:4px;fill:#75523e}.note{font-family:'Liberation Serif',serif;font-style:italic;fill:#62533f}</style>
+</defs>
+<rect width="1536" height="1024" fill="#e9dfc6"/>
+<g transform="translate(90 0)">
+ <text class="caps" x="0" y="96" font-size="17">ARCADIA  /  FIELD ATLAS</text><text class="body" x="568" y="96" text-anchor="end" font-size="20">IV</text><use href="#rule" y="110"/>
+ <text class="body" x="284" y="211" text-anchor="middle" font-size="61">Circles of the sky</text><text class="note" x="284" y="252" text-anchor="middle" font-size="24">A reference plate for the observer</text>
+ <g transform="translate(284 505)" stroke="#45483d" fill="none">
+ <circle r="172" stroke-width="2"/><circle r="151" fill="url(#dots)" stroke-width="2"/>
+ <use href="#divisions"/><use href="#divisions" transform="rotate(90)"/><use href="#divisions" transform="rotate(180)"/><use href="#divisions" transform="rotate(270)"/>
+ <g transform="rotate(20)" stroke-width="1.5"><ellipse ry="151" rx="55"/><ellipse ry="151" rx="111"/><ellipse rx="151" ry="39" stroke-width="3"/><path d="M0 -190V190" stroke-dasharray="10 5"/></g>
+ <g transform="rotate(-16)"><ellipse rx="166" ry="41" stroke="#904c38" stroke-width="5"/><path d="M-195 0H194" stroke="#904c38" stroke-dasharray="5 5"/></g>
+ <g stroke="none"><use href="#star" x="-79" y="-88"/><use href="#star" x="83" y="-53"/><use href="#star" x="-39" y="70"/><use href="#star" x="20" y="-110"/><use href="#star" x="91" y="69"/></g>
+ </g>
+ <text class="note" x="284" y="731" text-anchor="middle" font-size="23">Fig. 1.  The celestial sphere and its great circles.</text>
+ <text class="body" x="24" y="815" font-size="25">The equator divides the sky into two hemispheres.</text>
+ <text class="body" x="24" y="853" font-size="25">The inclined circle marks the ecliptic, the apparent</text>
+ <text class="body" x="24" y="891" font-size="25">yearly path of the Sun against the stars.</text>
+ <use href="#rule" y="930"/><text class="body" x="284" y="970" text-anchor="middle" font-size="20">18</text>
+</g>
+<g transform="translate(873 0)">
+ <text class="caps" x="0" y="96" font-size="17">NOTES  /  OBSERVATION</text><text class="body" x="568" y="96" text-anchor="end" font-size="20">IV</text><use href="#rule" y="110"/>
+ <text class="body" x="0" y="209" font-size="55">The lunar cycle</text><text class="note" x="0" y="249" font-size="24">Four aspects of one sunlit sphere</text>
+ <g transform="translate(0 362)" stroke="#4f4b3e" stroke-width="2"><circle cx="63" r="47" fill="url(#etch)"/><circle cx="208" r="47" fill="url(#etch)"/><path d="M208 -47a47 47 0 0 1 0 94Z" fill="#f5ebd2"/><circle cx="353" r="47" fill="#f5ebd2"/><circle cx="498" r="47" fill="url(#etch)"/><path d="M498 -47a47 47 0 0 0 0 94Z" fill="#f5ebd2"/></g>
+ <g class="body" font-size="23" text-anchor="middle"><text x="63" y="452">New</text><text x="208" y="452">First quarter</text><text x="353" y="452">Full</text><text x="498" y="452">Last quarter</text></g>
+ <text class="body" x="0" y="553" font-size="32">Notes on the plate</text><path d="M0 570h568" stroke="#96734f"/>
+ <g class="body" font-size="25"><text x="0" y="619">I.</text><text x="48" y="619">Half the Moon faces the Sun. Its phase records</text><text x="48" y="654">how much of that half is visible from Earth.</text>
+ <text x="0" y="721">II.</text><text x="48" y="721">At quarter phase, the illuminated and dark</text><text x="48" y="756">parts divide the apparent disc in half.</text></g>
+ <path d="M0 830h568M0 890h568" stroke="#96734f"/><text class="caps" x="0" y="867" font-size="17">MEAN LUNATION</text><text class="note" x="562" y="867" text-anchor="end" font-size="26">29.53 days</text>
+ <use href="#rule" y="930"/><text class="body" x="284" y="970" text-anchor="middle" font-size="20">19</text>
+</g></svg>

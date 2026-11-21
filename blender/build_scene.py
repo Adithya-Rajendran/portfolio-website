@@ -387,7 +387,29 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5, stops=None):
         kb(f'jamb{d}', (0.36, 0.28, h + 0.3), (0.06, d * (w / 2 + 0.14), (h + 0.3) / 2), 'rib', bevel=0.03)
         kb(f'leaf{d}', (0.08, w / 2 - 0.015, h), (-0.03, d * w / 4, h / 2), 'wall2', bevel=0.012)
         for i in range(3): kb(f'bar{d}{i}', (0.05, w / 2 - 0.22, 0.09), (0.03, d * w / 4, 0.45 + i * 0.8), 'rib', bevel=0.01)
-        kb(f'slit{d}', (0.02, 0.14, 0.62), (0.015, d * 0.28, 1.72), 'lum_cool')
+        # A recessed borrowed-light cassette, not a luminous rectangle pasted on the leaf.
+        # Revolve a stadium-shaped section in the YZ face. The lip actually returns to the glass.
+        cy, cz = d * .32, 1.72
+        def capsule(n, section, material):
+            bm = bmesh.new(); rings = []
+            for x, radius in section:
+                ring = []
+                for end in (0, 1):
+                    for j in range(9):
+                        a = pi * (end + j/8)
+                        ring.append(bm.verts.new((x, cy + radius*math.cos(a), cz + (.196 if end == 0 else -.196) + radius*math.sin(a))))
+                rings.append(ring)
+            for i, row in enumerate(rings):
+                other = rings[(i+1) % len(rings)]
+                for j in range(len(row)):
+                    k = (j+1) % len(row); bm.faces.new((row[j],row[k],other[k],other[j]))
+            finish(name + n, bm, material, grp, M=M)
+        capsule('_cassette_seal', [(.011,.095),(.025,.095),(.025,.077),(.011,.077)], 'dark')
+        capsule('_cassette_bezel', [(.023,.087),(.041,.084),(.046,.072),(.030,.064),(.023,.064)], 'rib')
+        # The backing sits behind the lip. A stack of actual louvres gives it depth without
+        # pretending there is a modelled corridor visible through a solid bulkhead.
+        kb(f'slit{d}', (.012, .129, .489), (.021, cy, cz), 'lum_cool', bevel=.006)
+        for j in range(6): kb('cassette_louvre', (.008,.127,.009), (.031,cy,cz+(j-2.5)*.070), 'dark')
         # A rebated gasket at the meeting stile and a pull with knuckle clearance.
         kb(f'gasket{d}', (0.023, 0.016, h - 0.06), (0.012, d * 0.012, h / 2), 'dark')
         for z in (0.91, 1.29):
@@ -402,9 +424,16 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5, stops=None):
                     lathe('jamb_fastener', [(0,0),(.012,0),(.012,.008),(0,.008)], 'chrome', grp, segs=6, M=M @ T((.255,d*(w/2+.14)+sy,z+sz),(0,pi/2,0)))
         for i in range(4): kb(f'chev{d}{i}', (0.012, 0.2, 0.09), (0.245, d * (w / 2 + 0.14), 0.25 + i * 0.22), 'brass' if i % 2 == 0 else 'dark')   # warning bands at the foot of the frame
     kb('lintel', (0.36, w + 0.56, 0.32), (0.06, 0, h + 0.16), 'rib', bevel=0.03)
-    kb('sill', (0.55, w + 0.56, 0.05), (0.14, 0, 0.025), 'brass')
+    # Flush trolley threshold with sloping noses, parallel leaf guides and a bolt-on sign tray.
+    prism(name+'_threshold', [(-.15,0),(.42,0),(.36,.026),(-.10,.026)], 'Y', -w/2-.26, w/2+.26, 'wall2', grp, M=M)
+    for x in (.015,.055): kb('sill_guide', (.012,w+.08,.004), (x,0,.028), 'brass')
+    kb('sign_carrier', (.095,w+.47,.415), (.14,0,h+.513), 'wall2', bevel=.018)
+    kb('enamel_sign', (.025,w+.42,.378), (.208,0,h+.514), 'dark', bevel=.011)
+    for y in (-w/2-.15,w/2+.15):
+        for z in (h+.36,h+.66):
+            lathe('sign_stud', [(0,0),(.013,0),(.014,.008),(.009,.012),(0,.012)], 'chrome', grp, segs=10, M=M@T((.220,y,z),(0,pi/2,0)))
     kb('status', (0.02, w * 0.72, 0.05), (0.245, 0, h + 0.07), em='gate' if to or stops else 'amber')          # green: open for use, amber: sealed
-    face = lambda z: M @ Matrix(((0, 0, 1, 0.25), (1, 0, 0, 0), (0, 1, 0, z), (0, 0, 0, 1)))
+    face = lambda z: M @ Matrix(((0, 0, 1, 0.223), (1, 0, 0, 0), (0, 1, 0, z), (0, 0, 0, 1)))
     text3d(name + '_t', title, 0.25, face(h + 0.56), spacing=1.3)
     if sub: text3d(name + '_s', sub, 0.11, face(h + 0.4), spacing=1.5)
     DOORS.append(dict(c=list(M @ Vector((0.3, 0, h / 2))), n=list(M.to_3x3() @ Vector((1, 0, 0))), to=to, label=title,       # to: room id, '' = sealed

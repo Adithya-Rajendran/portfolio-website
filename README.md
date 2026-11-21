@@ -10,13 +10,23 @@ Path-traced sci-fi rooms designed in Blender and shown in the browser with three
     and `js/routemap.js` are the things in it, `js/post.js` is the image pipeline, `js/kit.js` holds what they share.
   - `assets/<room>/` — `scene.json`, `room.glb` and `tex/` for each room, packed by `tools/pack.py` from the tracked `assets-src/<room>/` bake masters.
   - `blueprint.html` — the 3D station blueprint. `vendor/` — three.js 0.181.
-- `blender/` — scene scripts (`build_scene.py` for the Atrium and shared kit, `room_*.py` per room), `bake.py`, `backdrop.py`.
+- `blender/` — scene scripts (`build_scene.py` for the Atrium and shared kit, `room_*.py` per room), `bake.py`, `reflection_probe.py`, `backdrop.py`.
   `.blend` files are generated and not committed. `remote/` holds the PowerShell runners used on the bake machine.
 - `tools/` — Playwright helpers run in Docker: screenshots (`dshot.sh`), frame times (`dperf.sh`), before/after snapshots
   (`dsnap.sh`) and the room-switching test (`docker/rooms.mjs`).
 - `docs/blueprint.md` — the station design.
 - [`docs/scene-assets.md`](docs/scene-assets.md) — measured room inventory, overlap and extraction tests. Open `/asset-catalogue/parts.html` for the full parts breakdown and what moves in the browser. `/asset-catalogue/` shows the smaller set of reusable models; `python3 tools/review-models.py --list` lists their Blender studios.
 
-Rebuild a room: `blender -b --python blender/room_about.py`, then `blender -b blender/about.blend --python blender/bake.py -- 1.0 192`.
+Rebuild the Lounge (Blender 5.0.1, `LOBBY_DEVICE=CUDA` or `OPTIX`):
+
+```sh
+blender/run.sh -b --python-exit-code 2 -P blender/room_about.py
+blender/run.sh -b blender/about.blend --python-exit-code 2 -P blender/reflection_probe.py
+blender/run.sh -b blender/about.blend --python-exit-code 2 -P blender/backdrop.py -- 4096  # window rooms only
+blender/run.sh -b blender/about.blend --python-exit-code 2 -P blender/bake.py -- 1.0 192
+python3 tools/pack.py about
+```
+
+The printed field atlas is an original reference illustration (`blender/textures_dl/field-folio.svg` and its tracked PNG). It is lit paper in the room, not an HTML overlay. Preserve the Atrium’s two tracked hologram PNGs when copying bakes from another machine. `tools/docker/lighting.mjs` checks the packed floor mirror, polished glass and sunlight from controlled camera poses.
 
 Earth imagery: NASA Blue Marble and Black Marble (public domain), see `blender/textures_dl/README.txt`.

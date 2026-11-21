@@ -2,8 +2,8 @@
 // Rooms are built by js/room.js from assets/<id>/; everything the site says is in content.json.
 //
 // How a frame is made (kept deliberately cheap, so moving characters can be added later):
-//   1. Lighting is path-traced into linear-HDR atlases (blender/bake.py) and drawn unlit: no realtime lights.
-//      The orrery chandelier turns, so its light is baked separately at three rotation phases and blended live.
+//   1. Cycles bakes the room's fixed light and indirect daylight. Direct window sun uses a live light-space
+//      shadow map. The orrery's baked light phases follow its rings; polished fittings read a local specular probe.
 //   2. The polished floor gets a live planar reflection: the scene is rendered once more from the mirrored camera
 //      at reduced size. Anything that moves reflects automatically.
 //   3. One HDR scene pass, a small bloom chain and a single full-screen grading/tone-mapping pass (js/post.js).
@@ -287,4 +287,10 @@ if (Q.has('focus')) setTimeout(() => setFocus(room.picks[num('focus', 0)]), 300)
 frame();
 window.__lobby = { renderer, camera, post, gov, series, setFocus, step, enter, ready: () => intro,
   get scene() { return room?.scene; }, get picks() { return room?.picks ?? []; },
+  // Opt-in deterministic QA: use the actual room.update, sun prepass, mirror and post,
+  // changing only eye/target/time. Normal visitors retain the usual camera and clock.
+  ...(Q.has('lightcheck') && { lightFrame(eye, at, t) {
+    camera.position.fromArray(eye); camera.lookAt(...at); camera.updateMatrixWorld(true);
+    uTime.value = t; room.update(t); draw(t);
+  }}),
   mode: () => ({ room: room?.id, hdr: HDR_OK, tier, msaa: post.msaa, scale: +gov.scale.toFixed(2), size: `${post.scene.width}x${post.scene.height}`, mirror: `${mirror.size.x}x${mirror.size.y}` }) };
