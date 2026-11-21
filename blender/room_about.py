@@ -68,8 +68,16 @@ def a_drape(M=I4, grp='props', w=0.9, h=5.6):
     for a, b in zip(rows, rows[1:]):
         for i in range(n): bm.faces.new((a[i], a[i + 1], b[i + 1], b[i]))
     for f in bm.faces: f.smooth = True
-    finish('drape', bm, 'drape', grp, M=M)
-    torus('drape_tie', w * 0.3, 0.015, M @ T((0, 0, h * 0.42)), 'gilt', grp, segs=24)
+    # A lightmap has one value per face. Give the window and room sides their own
+    # surfaces, including a small closing hem, instead of baking the back of a sheet.
+    cloth = finish('drape', bm, 'drape', grp, M=M)
+    lining = cloth.modifiers.new('Lined velvet', 'SOLIDIFY'); lining.thickness = .004; lining.offset = 0
+    torus('drape_tie', w * .302, .012, M @ T((0, 0, h * .42)) @ Matrix.Diagonal((1., .35, 1., 1.)), 'gilt', grp, segs=32)
+    # The room's pole runs along X, 50 mm above the gathered header.
+    for i in (2, 8, 14, 20, 26):
+        x = (i/n-.5)*w; y = .07*math.sin(i*1.9)
+        torus('curtain_runner', .038, .0055, M @ T((x, 0, h+.05), (0, pi/2, 0)), 'brass', grp, segs=16)
+        rod('curtain_hook', (x, 0, h+.014), (x, y, h-.016), .005, 'brass', grp, M=M, n=6)
 def a_sofa_trim(M=I4, grp='props', L=2.8):
     """What the sofas were missing (origin at the middle of the seat front, sofa along y): turned feet, a welt along the seat, a throw over one arm."""
     for y in (-L / 2 + 0.12, 0, L / 2 - 0.12):

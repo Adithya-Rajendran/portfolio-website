@@ -1,6 +1,6 @@
 # Arcadia Station: scene asset catalogue
 
-Start with the [as-built parts and motion inspector](../public/asset-catalogue/parts.html) (`/asset-catalogue/parts.html`). It accounts for **all 16,877 Blender scene objects** before baking: **16,831 meshes, 40 lights, five cameras and one empty**. Of the meshes, 15,453 are inside named builders; **1,378 are not**. Expand any assembly or inline room section to see its constituent mesh names and counts. Each room also has a downloadable exact object list, including FX placeholders and exterior geometry. See [room totals](scene-parts.tsv).
+Start with the [as-built parts and motion inspector](../public/asset-catalogue/parts.html) (`/asset-catalogue/parts.html`). It accounts for **all 16,897 Blender scene objects** before baking: **16,851 meshes, 40 lights, five cameras and one empty**. Of the meshes, 15,473 are inside named builders; **1,378 are not**. Expand any assembly or inline room section to see its constituent mesh names and counts. Each room also has a downloadable exact object list, including FX placeholders and exterior geometry. See [room totals](scene-parts.tsv).
 
 The [studio gallery](../public/asset-catalogue/index.html) and [builder matrix](asset-placements.tsv) answer a different question: which reusable builders exist and where are they used? Neither a named builder nor a mesh is necessarily a mechanism. Shader effects and three.js-only assemblies (e.g. the drone) have a separate [source-based motion inventory](room-motion.json).
 
@@ -34,7 +34,7 @@ We traced `a_*` builder calls and `pressure_door` during five **normal Blender b
 
 **65 named families; 14 shared** (11 of 60 if considering direct room calls only). The previous reported 53 were studio families, not a count of everything modelled. The actual room builds now make 238 top-level and 4,800 nested builder calls. A `shelf_volume` call makes one upright book plus zero or two gilt bands; it does not make a new book design. A shell can be a single mesh; a single console can contain dozens. The parts inspector keeps the levels separate.
 
-- Lounge / Library: eight reading-kit families plus the pressure door. The shelf bays contain **973 / 3,765 upright books** respectively; there are also flat books and bookends. The simpler closed table/cart book is called **9 / 19** times. The five live volume choices still use three.js and do not remove any mesh from the shelf.
+- Lounge / Library: eight reading-kit families plus the pressure door. The shelf bays contain **973 / 3,765 upright books** respectively; there are also flat books and bookends. The closer, case-bound table/cart book is called **9 / 19** times. The five live volume choices still use three.js and do not remove any mesh from the shelf.
 - Atrium / Fabrication: door, deck hatch and stanchion. A stanchion call builds **a belt span with two posts**, not one post. Atrium / Navigation: door and kiosk. Fabrication / Navigation: door, grille and extinguisher. All other off-diagonal ones are the door alone; it has six total placements across five rooms.
 
 ## Objects promoted to studio assets
@@ -48,7 +48,7 @@ The preceding extraction (`dfb8e62`):
 | `blender/assets_projection.py` | One reception desk arc (placed twice), static Atrium projector pedestal, Navigation map table with dial and clamps | Dais and floor inlay, hologram, chart animation, map lights and pick metadata |
 | `blender/assets_lounge.py` | Coffee table including rails/legs, tripod telescope with a target in local coordinates | Tray and books on the table, book focus sphere, window sightline |
 | `blender/assets_exhibits.py` | Display plinth (placed four times), engine display and wire lattice (with modifiers and its own point light) | Numbered placards, screen UVs, spotlights, room focus spheres |
-| `blender/assets_reading.py` | Closed book with original simple and page-block variants | Bulk distant shelf fill and animated drone book. The former single-box dressing stays a single box in the migrated instances; this isn't a visual redesign. |
+| `blender/assets_reading.py` | Closed book with original simple and page-block variants | Bulk distant shelf fill and animated drone book. That extraction preserved the old shapes. The later realism pass replaced them with bindings, boards and paper edges. |
 
 Each extracted builder takes a Blender placement matrix `M` first. The room supplies its existing `MAT`/`EM` palette before loading the module: e.g. the reading kit uses `BOOKS`, timber, paper and shelf-light keys; `map_table` needs Navigation's `EM_core`. Pass local dimensions/aim where they vary, and keep room anchors, wall-mounted labels and interaction metadata in the generator. The canonical studio is the supported material environment—not a claim that every builder can run in any unprepared room.
 
