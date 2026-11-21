@@ -21,7 +21,7 @@
     {
       "system": "Oculus sky and sunlight",
       "mode": "shading",
-      "parts": "At idle, the Earth backdrop and sun roll together. Live diffuse sun and shadow mapping sweep the hall while adjacent baked phases crossfade Earth's light and bounced sunlight. Earth lightning flickers and the haze shaft follows the sun. Reduced motion stops the default roll, not the lightning.",
+      "parts": "At idle, the Earth backdrop and sun roll together. The window sun, its specular highlights and its light-space shadows sweep the hall while adjacent baked phases crossfade Earth's light and bounced sunlight. Earth lightning flickers and the haze shaft follows the sun. Reduced motion stops the default roll, not the lightning.",
       "evidence": "assets-src/lobby/scene.json: portal, portal_r, earth, spin; public/js/room.js: rollAt, sky, storms, shaft, prepass, litGLSL, uSky; public/main.js: draw"
     },
     {
@@ -47,7 +47,7 @@
     {
       "system": "Lounge window and sunlight",
       "mode": "shading",
-      "parts": "At idle, the Earth backdrop and sun roll past the fixed window; lightning flickers on Earth's night side. Direct diffuse sun and live shadows shift as adjacent bakes of Earth's light and bounced sunlight crossfade. Reduced motion holds the default roll angle, not the lightning.",
+      "parts": "At idle, the Earth backdrop and sun roll past the fixed window; lightning flickers on Earth's night side. Direct diffuse light, highlights on polished fittings and live shadows shift as adjacent bakes of Earth's light and bounced sunlight crossfade. Reduced motion holds the default roll angle, not the lightning.",
       "evidence": "assets-src/about/scene.json: portal, earth, spin; public/js/room.js: rollAt, sky, storms, prepass, litGLSL, uSky; public/main.js: draw"
     },
     {
@@ -97,7 +97,7 @@
     {
       "system": "Bay lighting and image effects",
       "mode": "shading",
-      "parts": "Work lights and beacons are steady; there is no rolling window or live solar pass. Shader dust drifts at idle, the fixed floor reflects the changing view, and bloom, grain and dither are post effects.",
+      "parts": "Work lights and beacons are steady; there is no rolling window or live solar pass. Shader dust drifts at idle, the floor has a planar mirror and polished hardware reflects a local Cycles probe from the current eye. Bloom, grain and dither are post effects.",
       "evidence": "assets-src/projects/scene.json: em, floor, no portal or spin; public/js/room.js: stripMat, dust, floorMat, prepass; public/main.js: renderMirror, draw; public/js/post.js: Post.render, mFinal"
     },
     {
@@ -135,8 +135,8 @@
     {
       "system": "Dust, floor reflections and post effects",
       "mode": "shading",
-      "parts": "Shader dust drifts at idle; the fixed floor reflects the changing projection and view. Bloom, grain and dither affect only the image. No rolling window or live sunlight pass runs here.",
-      "evidence": "assets-src/experience/scene.json: floor, no portal or spin; public/js/room.js: dust, floorMat, prepass; public/main.js: renderMirror, draw; public/js/post.js: Post.render, mFinal"
+      "parts": "Shader dust drifts at idle; the floor mirrors the room, and the smoked chart glass reflects the live station models and reader over its room-local probe. Bloom, grain and dither affect only the image. No rolling window or live sunlight pass runs here.",
+      "evidence": "assets-src/experience/scene.json: floor, probe, no portal or spin; public/js/room.js: dust, floorMat; public/js/reflections.js: chartReflection; public/main.js: renderMirror, draw"
     },
     {
       "system": "Atrium door",
@@ -173,8 +173,8 @@
     {
       "system": "Library window and sunlight",
       "mode": "shading",
-      "parts": "At idle, Earth and the sun roll past the fixed window and night-side lightning flickers. Live diffuse sunlight and shadows shift while adjacent baked phases of Earth's light and bounced sunlight crossfade. Reduced motion holds the default roll angle, not the lightning.",
-      "evidence": "assets-src/writing/scene.json: portal, earth, spin; public/js/room.js: rollAt, sky, storms, prepass, litGLSL, uSky; public/main.js: draw"
+      "parts": "At idle, Earth and the sun roll past the fixed window and night-side lightning flickers. Live sunlight and shadows shift while adjacent baked phases of Earth's light and bounced sunlight crossfade. The PBR drone and book cast and receive the same shadowed sun; their indoor lighting comes from the Cycles probe. Reduced motion holds the default roll angle, not the lightning.",
+      "evidence": "assets-src/writing/scene.json: portal, earth, spin, probe; public/js/room.js: prepass, litGLSL, uSky; public/js/sunlight.js: receiveWindowSun; public/js/reflections.js: probeEnvironment"
     },
     {
       "system": "Dust, floor reflections and post effects",

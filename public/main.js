@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { Post, Governor } from './js/post.js';
 import { Q, SKIP, V, num, uTime, uPx, uMirror, setDistanceScale } from './js/kit.js';
 import { loadRoom } from './js/room.js';
+import { reflectEye } from './js/reflections.js';
 import { initLive, live, fill } from './js/screens.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -99,27 +100,21 @@ function floorRect() {
   return [x0, y0, Math.min(w, Math.ceil((_hi.x + 1) / 2 * w + pad)) - x0, Math.min(h, Math.ceil((_hi.y + 1) / 2 * h + pad)) - y0];
 }
 // mirror the camera in the floor plane (y = 0) and render what the floor sees
-const _rot = new THREE.Matrix4(), _p = V(), _t = V();
+const _p = V();
 function renderMirror() {
   const c = mirror.cam, dim = (list, on) => { for (const o of list) o.visible = on; };
-  camera.updateMatrixWorld();
-  _rot.extractRotation(camera.matrixWorld); _p.setFromMatrixPosition(camera.matrixWorld);
-  _t.set(0, 0, -1).applyMatrix4(_rot).add(_p);
-  c.position.set(_p.x, -_p.y, _p.z);
-  c.up.set(0, 1, 0).applyMatrix4(_rot); c.up.y *= -1;
-  c.lookAt(_t.x, -_t.y, _t.z);
-  c.fov = camera.fov; c.aspect = camera.aspect; c.near = camera.near; c.far = camera.far;
-  c.updateProjectionMatrix(); c.updateMatrixWorld();
-  mirror.vp.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);
+  reflectEye(camera,c,0,mirror.vp);
   const rect = floorRect(); if (!rect) return;
   mirror.rt.scissor.set(...rect); mirror.rt.scissorTest = true;
   dim(room.floors, false); dim(room.hidden, false);
-  uMirror.value = 1; renderer.setRenderTarget(mirror.rt); renderer.render(room.scene, c); uMirror.value = 0;
+  const px = uPx.value; uPx.value = mirror.pxPerRad.value; uMirror.value = 1;
+  renderer.setRenderTarget(mirror.rt); renderer.render(room.scene, c); uMirror.value = 0; uPx.value = px;
   dim(room.floors, true); dim(room.hidden, true);
 }
 function draw(t) {
   renderer.info.reset();
   if (!SKIP.has('sunlight')) room.prepass?.(renderer);
+  room.chart?.draw(renderer,room.scene,camera);
   if (!SKIP.has('mirror')) renderMirror();
   renderer.setRenderTarget(post.scene); renderer.render(room.scene, camera);
   post.render(t, SKIP.has('bloom'));

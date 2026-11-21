@@ -219,6 +219,9 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
   cone.position.y = 2.2;
   const train = solid(new THREE.SphereGeometry(0.05, 12, 8), new THREE.Color(3.0, 2.4, 1.6));
   root.add(track, dial, stars, cone, train);
+  // Layer 2: emitted models, light stems and reader reflected in the chart glass.
+  // The etched dial lies on the glass; tag sprites/cards annotate the view rather than the room.
+  root.traverse(o => { if(o!==dial && !o.isSprite && (o.isMesh || o.isLine || o.isPoints)) o.layers.enable(2); });
 
   function update(t) {
     // the reader runs the written strand from the first station to "now", pauses, and starts again

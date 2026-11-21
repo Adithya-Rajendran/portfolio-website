@@ -37,16 +37,19 @@ def pack(room):
         needed.update(f'{group}_c{i}' for i in range(len(info['chand']['phases'])))
     for group in info.get('spin',{}).get('layered',[]):
         needed.add(group+'_a'); needed.update(f'{group}_s{i}' for i in range(info['spin']['phases']))
+    if 'polish' in needed and 'probe' not in info: sys.exit(f'{room}: polished fittings have no reflection probe')
     if 'probe' in info:
-        if not set(info['probe']['groups']) <= needed: sys.exit(f'{room}: unrecognised polished group')
-        needed.update(f'probe_c{i}' for i in range(len(info['probe']['roughness'])))
+        p = info['probe']
+        if not set(p['groups']) <= set(info['groups']): sys.exit(f'{room}: unrecognised polished group')
+        if p['roughness'] != [0,.25,.5,.75,1] or p['encoding'] != 'sqrt': sys.exit(f'{room}: unsupported probe encoding or roughness levels')
+        needed.update(f'probe_c{i}' for i in range(len(p['roughness'])))
     for n in sorted(needed):
         if not os.path.isfile(f'{src}/tex/{n}.webp'): sys.exit(f'Missing {room} bake input: {n}.webp')
     # Do not take a working room offline while the encoders run (or if one fails).
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=f'.pack-{room}-', dir=os.path.dirname(dst)) as stage:
         new = f'{stage}/new'; os.makedirs(f'{new}/tex')
-        with tempfile.TemporaryDirectory() as tmp: encode(room, src, new, tmp)
+        with tempfile.TemporaryDirectory() as tmp: encode(room, src, new, tmp, needed)
         old = f'{stage}/old'
         if os.path.isdir(dst): os.rename(dst,old)
         try: os.rename(new,dst)
@@ -54,11 +57,13 @@ def pack(room):
             if os.path.isdir(old): os.rename(old,dst)
             raise
 
-def encode(room, src, dst, tmp):
+def encode(room, src, dst, tmp, needed):
     jobs = {}                                                        # output name -> (kind, [source images, in layer order])
     for f in sorted(os.listdir(f'{src}/tex')):
         name, ext = os.path.splitext(f)
-        if ext == '.png': shutil.copy(f'{src}/tex/{f}', f'{dst}/tex/{f}'); continue
+        if room == 'lobby' and f in {'landmask.png', 'citylights.png'}:
+            shutil.copy(f'{src}/tex/{f}', f'{dst}/tex/{f}'); continue
+        if ext != '.webp' or name not in needed: continue  # stale layers are not part of this room version
         m = re.fullmatch(r'(.+)_([cs])(\d)', name)
         if m: jobs.setdefault(f'{m[1]}_{m[2]}', ('layers', []))[1].append(name)
         else: jobs[name] = ('albedo' if name.endswith('_a') else 'backdrop' if name == 'backdrop' else 'base', [name])

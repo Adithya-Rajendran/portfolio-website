@@ -2,7 +2,7 @@
 // off, flies to that volume's place on the shelves, takes the book onto the tray under its belly and brings it to the
 // reader; there the tray lowers and tilts like a lectern and the book opens at its index page.
 // Drone and book are the only things in the room drawn live rather than baked. They are ordinary PBR materials lit by
-// an environment map that room.js renders from the baked room itself, so they sit in the room's own light.
+// the room’s Cycles environment. They also cast and receive the same live window sun as the table.
 // The volumes (number, title, two lines, the rows of the index) come from content.json ("volumes").
 import * as THREE from 'three';
 import { GLOW, V, glow, spring } from './kit.js';
@@ -137,7 +137,7 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   const books = volumes.map((v, i) => { const b = makeBook(v, i, M); b.rotation.y = PI; b.position.set(0, 0.004, -TD / 2); b.visible = false; tray.add(b); return b; });
   for (const b of books) b.traverse((o) => { if (o.isMesh) casters.push(o); });
   for (const m of casters) m.layers.enable(1);                    // they cast shadows in the sunlight (see room.js)
-  body.scale.setScalar(1.15); root.add(body); root.position.copy(dock); scene.add(root);
+  body.scale.setScalar(1.15); root.name='Catalogue drone'; root.add(body); root.position.copy(dock); scene.add(root);
 
   // ---- flight: a queue of legs, each "go to p, then do this". Flying = any leg left, or away from the cradle.
   const legs = [], present = spring(0.07), opened = spring(0.06); let leg = null, held = -1, shown = -1, last = 0, lift = 0, yaw = 0, spin = 0; const hover = V().copy(dock), vel = V();

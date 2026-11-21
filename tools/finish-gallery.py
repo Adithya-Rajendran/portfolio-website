@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+"""Assemble /lighting-review/ from real, pinned browser captures. See docs/finish-lighting.md.
+No capture => fail, rather than publishing old room art as this release's evidence.
+"""
+from pathlib import Path
+import argparse, html, shutil, subprocess
+p=argparse.ArgumentParser();p.add_argument('shots',type=Path);a=p.parse_args();src=a.shots
+out=Path(__file__).resolve().parents[1]/'public'/'lighting-review';out.mkdir(parents=True,exist_ok=True)
+webp=Path.home()/'.local/opt/webp/bin/cwebp'
+rooms={'lobby':('Atrium','The reception desk and projector now have distinct castings, seams, baffles and fasteners. The orrery’s rings still turn independently of the fixed support.'),
+       'about':('Observation Lounge','The window lights tailored cushions, shaped chair wings and bound books. Select the books on the coffee table to inspect the printed spread.'),
+       'projects':('Fabrication Bay 02','Bridge trucks carry the hoist; harnesses, fittings and cell strings articulate the construction of the suspended satellite. These are static exhibits.'),
+       'experience':('Navigation','Smoked chart glass carries narrow illuminated bearings. The projected stations and passing reader reflect in the glass; the brass scale and table stay put.'),
+       'writing':('Library','Wing chairs, shelf bindings and table atlases share the reading-room kit. Request a volume at the desk to see the live book, lit by the room and its window.')}
+for r in rooms:
+    for k,folder in [('before','matched-before'),('after','after')]:
+        subprocess.run([webp,'-quiet','-resize','1120','0','-q','83',src/folder/(r+'.png'),'-o',out/f'{r}-{k}.webp'],check=True)
+for n in ['about-inspect','about-detail','projects-inspect','writing-inspect']:
+    subprocess.run([webp,'-quiet','-resize','1120','0','-q','86',src/'inspect'/(n+'.png'),'-o',out/(n+'.webp')],check=True)
+for name in ['moving-eye','moving-sun']:
+    for ext in ['jpg','webm']:shutil.copyfile(src/'clips'/f'{name}.{ext}',out/f'{name}.{ext}')
+esc=html.escape
+body='''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101619"><title>Materials and light · Arcadia Station</title>
+<style>*{box-sizing:border-box}html{color-scheme:dark}body{margin:0;background:#101619;color:#eeeae1;font:1rem/1.55 system-ui,sans-serif}main{max-width:76rem;margin:auto;padding:clamp(1rem,4vw,3rem)}header{max-width:50rem}h1,h2{font:normal clamp(2rem,5.6vw,4.8rem)/1.03 Georgia,serif;letter-spacing:-.035em;margin:.6em 0 .28em}h2{font-size:clamp(1.75rem,3vw,2.8rem);margin-top:1.4em}h3{font:normal 1.55rem/1.15 Georgia,serif;margin:.75rem 0 .4rem}p{margin:.4rem 0 1rem}a{color:#a8e7df;text-underline-offset:.22em}small,.eyebrow{font:600 .74rem/1.4 system-ui;letter-spacing:.15em;text-transform:uppercase;color:#e9bd81}.eyebrow{margin-top:2.25rem}nav,.grid{display:grid;gap:1.2rem}.grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,23rem),1fr))}nav{display:flex;flex-wrap:wrap;gap:.65rem 1.15rem}article,figure{margin:0;padding:0 0 .75rem}img,video{display:block;width:100%;height:auto;border-radius:3px;background:#070b0d}figure img{aspect-ratio:8/5}video{aspect-ratio:16/9}figcaption,details{margin:.55rem 0;color:#cbd5d1}summary{cursor:pointer;color:#e9bd81}details img{margin:.4rem 0}section{padding-top:.6rem;border-top:1px solid #3a464a;margin:2rem 0}:focus-visible{outline:2px solid #d4ad78;outline-offset:4px}</style>
+<main><a href="../">← Enter Arcadia Station</a><header><p class="eyebrow">Arcadia Station / material and lighting study</p><h1>Inside the ring</h1><p>Five rooms on the station before boarding Ark Aurora. These views and clips come from the packed website, not from Blender studio renders. Enter any room to move the camera yourself.</p></header>
+<section><h2>Light in motion</h2><div class="grid"><article><video controls playsinline muted preload="none" poster="moving-eye.jpg" aria-label="Camera moves above the navigation chart while the station models hold still"><source src="moving-eye.webm" type="video/webm"></video><h3>Moving eye, fixed light</h3><p>Watch the dome lights and projected stations slide across the glass. The models and light are held still for this camera move.</p><a href="../?room=experience&amp;shot=close">Enter Navigation →</a></article><article><video controls playsinline muted preload="none" poster="moving-sun.jpg" aria-label="Sunlight and shadows travel across the lounge as its window rolls"><source src="moving-sun.webm" type="video/webm"></video><h3>Fixed eye, moving sunlight</h3><p>The camera stays put. This four-second clip shows 18 seconds of station rotation; the interactive room takes two minutes per turn.</p><a href="../?room=about">Enter the Lounge →</a></article></div></section>
+<section><h2>At inspection distance</h2><div class="grid">'''
+for fname,alt,caption in [('about-inspect','Coffee table with bound books and an illustrated atlas','Lounge · actual book inspection pose'),('about-detail','Curved atlas leaves, printed diagrams and bound edges','Lounge · closer detail camera on the same physical paper'),('projects-inspect','Satellite with hoist, bridle and two working faces of the solar array','Fabrication · satellite inspection pose'),('writing-inspect','Library catalogue drone presenting the open physical index','Library · requested volume at the reading desk')]:
+    body+=f'<figure><a href="{fname}.webp"><img loading="lazy" width="1120" height="700" src="{fname}.webp" alt="{esc(alt)}"></a><figcaption>{esc(caption)}</figcaption></figure>'
+body+='</div></section><section><h2>Five rooms, matched views</h2><p>New bake first. Expand a previous view to compare the same camera, window angle and chandelier phase.</p><div class="grid">'
+for i,(r,(name,desc)) in enumerate(rooms.items(),1):
+    body+=f'<article><img loading="lazy" width="1120" height="630" src="{r}-after.webp" alt="{esc(name)} in the updated browser"><h3><small>0{i} / </small>{esc(name)}</h3><p>{esc(desc)}</p><a href="../?room={r}">Enter {esc(name)} →</a><details><summary>Previous packed bake</summary><img loading="lazy" width="1120" height="630" src="{r}-before.webp" alt="Previous version of {esc(name)}, matching camera"></details></article>'
+(out/'index.html').write_text(body+'</div></section><nav><a href="../">Enter the station</a><a href="../asset-catalogue/">Blender studio catalogue</a><a href="../asset-catalogue/parts.html">All parts and motion</a></nav></main></html>\n')
+print(out)

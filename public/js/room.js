@@ -10,7 +10,8 @@ import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';
 import { createRouteMap } from './routemap.js';
 import { createDrone } from './drone.js';
-import { probePars } from './reflections.js';
+import { probePars, chartPars, chartReflection, probeEnvironment } from './reflections.js';
+import { windowShadow, receiveWindowSun } from './sunlight.js';
 
 const pickMat = new THREE.MeshBasicMaterial({ visible: false });
 let ktx2;                                                           // one transcoder (and its workers) for every room
@@ -67,7 +68,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     ? `${into} += max(dec(texture(lc, vec3(vUv, 0.0)))*uChand.x + dec(texture(lc, vec3(vUv, 1.0)))*uChand.y + dec(texture(lc, vec3(vUv, 2.0)))*uChand.z, 0.0)*${CH_GAIN.toFixed(3)};` : '');
   // ---- a spinning room (info.spin). The light from outside turns with the sky:
   //   sky layers: Earth-light and bounced sunlight, baked at N angles; the two nearest are cross-faded
-  //   direct sun: drawn live. Diffuse only: (baked surface colour) x (irradiance) x cos, shadowed by a depth map that
+  //   direct sun: shadowed diffuse, plus the polished material's directional GGX lobe. A depth map that
   //   prepass() renders from the sun through the window every frame.
   const SPUN = info.spin, LIT = new Set(SPUN?.layered || []), NSKY = SPUN?.phases || 0, SH = num('shadow', 2048);
   // Sun-space, not screen-space. Keep about 20 m outside the window and 50 m into the
@@ -82,35 +83,34 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     return { tAlb: bakeTex(`${grp}_a`, 4), sk: bakeTex(`${grp}_s`, 1), tShadow: { value: shadow.rt.depthTexture }, uSunVP, uSunDir, uSunE, uSky };
   };
   const probe = info.probe, polished = new Set(probe?.groups || []);
+  const chart = probe && info.map && !SKIP.has('chartreflection') ? chartReflection(B(info.map.c),info.map.r,mirror) : null;
   let probeU;
   if (probe) {
     const a = B(probe.bounds.min), b = B(probe.bounds.max);
     probeU = {tRoomSpec:bakeTex('probe_c',1,true), uProbePos:{value:B(probe.origin)},
       uBoxLo:{value:a.clone().min(b)}, uBoxHi:{value:a.clone().max(b)}, uProbeRange:{value:probe.range}, uSpecGain:{value:num('spec',1)}};
   }
+  const visibility = windowShadow(shadowTexel,SH);
   const litGLSL = (grp, into) => (LIT.has(grp) ? `
       ${into} += mix(dec(texture(sk, vec3(vUv, uSky.x))), dec(texture(sk, vec3(vUv, uSky.y))), uSky.z)*${num('sky', 1).toFixed(3)};
       { vec3 n = normalize(vN); float ndl = dot(n, uSunDir);
-        float unit = ${shadowTexel.toFixed(7)};
-        vec4 sc = uSunVP*vec4(vW + n*unit*(1.0-clamp(ndl,0.,1.)), 1.0); vec3 sp = sc.xyz*0.5 + 0.5;
-        if (ndl > 0.0 && all(greaterThan(sp,vec3(0.))) && all(lessThan(sp,vec3(1.)))) {
-          float open = 0.0;
-          for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++)
-            open += step(sp.z - (0.0025 + unit*(1.25 - ndl))/70., texture2D(tShadow, sp.xy + vec2(float(i), float(j))*${(1.3 / SH).toFixed(6)}).r);
+        float open=windowVisibility(vW,n,ndl);
+        if (open > 0.) {
           vec4 a = texture2D(tAlb, vUv);
-          ${into} += (a.rgb*a.rgb${polished.has(grp) ? ' + sunSpec(n,normalize(cameraPosition-vW),uSunDir)' : ''})*uSunE*(ndl*open/9.0);
+          ${into} += (a.rgb*a.rgb${polished.has(grp) ? ' + sunSpec(n,normalize(cameraPosition-vW),uSunDir)' : ''})*uSunE*(ndl*open);
         } }` : '');
   const vert = (grp) => (LIT.has(grp) || polished.has(grp) ? `varying vec2 vUv; varying vec3 vW,vN; ${polished.has(grp) ? 'varying vec4 vFinish;' : ''}
     void main(){ vUv = uv; vN = (vec4(normalMatrix*normal,0.)*viewMatrix).xyz;
       ${polished.has(grp) ? 'vFinish = color;' : ''} vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }` : VERT);
   const PARS = `uniform sampler2D map, tAlb, tShadow; uniform highp sampler2DArray lc, sk; uniform vec3 uChand, uSunDir, uSunE, uSky; uniform mat4 uSunVP; uniform float uMirror;
-    varying vec2 vUv; varying vec3 vW, vN; ${DEC}`;
+    varying vec2 vUv; varying vec3 vW, vN; ${DEC} ${visibility}`;
   const bakedMat = (map, grp, gain = 1) => new THREE.ShaderMaterial({
-    uniforms: { map, uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp), ...(polished.has(grp) ? probeU : {}) },
+    uniforms: { map, uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp), ...(polished.has(grp) ? {...probeU,...chart?.uniforms} : {}) },
     side: THREE.DoubleSide, vertexColors: polished.has(grp), vertexShader: vert(grp),
-    fragmentShader: `${PARS} uniform float uGain; ${polished.has(grp) ? probePars : ''}
+    fragmentShader: `${PARS} uniform float uGain; ${polished.has(grp) ? probePars + (chart ? chartPars : '') : ''}
       void main(){ vec3 c = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'c')} ${litGLSL(grp, 'c')}
         ${polished.has(grp) ? 'vec3 N = normalize(vN), V = normalize(cameraPosition-vW); c += roomSpec(vW,dot(N,V) < 0. ? -N : N,V);' : ''}
+        ${polished.has(grp) && chart ? 'c += chartLight(vW,N,V);' : ''}
         gl_FragColor = vec4(c*uGain, 1.0); ${DIST} }`,
   });
   // ---- polished floor: baked diffuse light + the live planar reflection that main.js renders into mirror.rt
@@ -315,6 +315,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const hologram = info.holo && !SKIP.has('holo')
     ? await createHologram({ scene, position: B(info.holo).add(V(0, 0.1, 0)), sunDir: SUN, text: text.hologram, base, ver: `?v=${info.v || 0}`, radius: 0.74, gain: num('holo', 2.0) }) : null;
   const drone = info.drone ? createDrone({ scene, dock: B(info.drone.dock), deliver: B(info.drone.deliver), slots: info.drone.slots.map(B), volumes: text.volumes }) : null;
+  if (drone && probe && shadow && !SKIP.has('sunlight')) receiveWindowSun(drone.root,{uSunVP,uSunDir,uSunE,tShadow:{value:shadow.rt.depthTexture}},visibility);
   const routeMap = info.map ? createRouteMap({ scene, center: B(info.map.c), stops: text.stations, radius: info.map.r, gain: num('map', 1.6) }) : null;
 
   // ---------------------------------------------------------------- interactables
@@ -362,8 +363,9 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const PERIOD = Q.has('roll') ? ROLL : (SPUN?.period || 0), rollAt = (t) => (Number.isNaN(ROLL_AT) ? (PERIOD && !still ? t * 2 * Math.PI / PERIOD : 0) : ROLL_AT * Math.PI / 180);
   await Promise.all(pending);
   if (textureError) throw textureError;                             // do not lift the cover on a partial bake
+  if (drone && probe) drone.setEnv((drone.lit=probeEnvironment(renderer,probeU,probe)).texture);
   return {
-    id, info, scene, picks, floors, hidden, CAM, TGT,
+    id, info, scene, picks, floors, hidden, CAM, TGT, chart,
     CLOSE: B(info.close || [0, 17.2, 2.15]), CLOSE_TGT: B(info.close_tgt || [0, 26, 2.6]), arc: info.holo ? 0.9 : 0.25,     // arc: how high the pull-back lifts over the middle
     exposure: num('exp', info.exposure || 0.85),
     /** Per frame, before anything else is drawn: the sun's shadow map, looking in through the window. */
@@ -386,14 +388,13 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       for (const turn in pivots) pivots[turn].rotation.y = phi * turn;
       if (PHASES.length === 3) uChand.value.set(...PHASES.map((p) => (1 + 2 * Math.cos(phi - p)) / 3));
       hologram?.update(t); routeMap?.update(t); drone?.update(t); screens.update();
-      // The drone is lit by the room: once everything is on screen, the room is photographed from where it works into
-      // a cube map, and that becomes the environment of its materials.
+      // Backward compatibility for bake masters that predate the sun-free room probe.
       if (drone && !drone.lit && ++frames > 3) {
         const cube = new THREE.WebGLCubeRenderTarget(128, { type: THREE.HalfFloatType }), eye = new THREE.CubeCamera(0.05, 100, cube), pmrem = new THREE.PMREMGenerator(renderer);
         eye.position.copy(B(info.drone.deliver)); drone.root.visible = false; eye.update(renderer, scene); drone.root.visible = true;
         drone.setEnv((drone.lit = pmrem.fromCubemap(cube.texture)).texture); cube.dispose(); pmrem.dispose();
       }
     },
-    dispose: () => { drone?.lit?.dispose?.(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
+    dispose: () => { drone?.lit?.dispose?.(); chart?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
 }
