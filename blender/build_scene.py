@@ -385,7 +385,18 @@ def pressure_door(name, M, grp, title, sub='', to='', w=1.8, h=2.5, stops=None):
         kb(f'leaf{d}', (0.08, w / 2 - 0.015, h), (-0.03, d * w / 4, h / 2), 'wall2', bevel=0.012)
         for i in range(3): kb(f'bar{d}{i}', (0.05, w / 2 - 0.22, 0.09), (0.03, d * w / 4, 0.45 + i * 0.8), 'rib', bevel=0.01)
         kb(f'slit{d}', (0.02, 0.14, 0.62), (0.015, d * 0.28, 1.72), 'lum_cool')
-        kb(f'grip{d}', (0.06, 0.035, 0.5), (0.045, d * 0.1, 1.1), 'brass')
+        # A rebated gasket at the meeting stile and a pull with knuckle clearance.
+        kb(f'gasket{d}', (0.023, 0.016, h - 0.06), (0.012, d * 0.012, h / 2), 'dark')
+        for z in (0.91, 1.29):
+            kb('pull_boss', (0.038, 0.08, 0.07), (0.037, d * 0.1, z), 'rib', bevel=0.008)
+            kb('pull_return', (0.09, 0.031, 0.031), (0.089, d * 0.1, z), 'brass', bevel=0.007)
+        kb(f'grip{d}', (0.032, 0.032, 0.41), (0.127, d * 0.1, 1.1), 'brass', bevel=0.009)
+        for z in (0.2, h - 0.22):
+            # Removable jamb covers; captive hex heads are proud of the face.
+            kb('inspection_plate', (0.014, 0.22, 0.29), (0.248, d*(w/2+0.14), z), 'wall2', bevel=0.008)
+            for sy in (-0.08, 0.08):
+                for sz in (-0.11, 0.11):
+                    lathe('jamb_fastener', [(0,0),(.012,0),(.012,.008),(0,.008)], 'chrome', grp, segs=6, M=M @ T((.255,d*(w/2+.14)+sy,z+sz),(0,pi/2,0)))
         for i in range(4): kb(f'chev{d}{i}', (0.012, 0.2, 0.09), (0.245, d * (w / 2 + 0.14), 0.25 + i * 0.22), 'brass' if i % 2 == 0 else 'dark')   # warning bands at the foot of the frame
     kb('lintel', (0.36, w + 0.56, 0.32), (0.06, 0, h + 0.16), 'rib', bevel=0.03)
     kb('sill', (0.55, w + 0.56, 0.05), (0.14, 0, 0.025), 'brass')
@@ -744,6 +755,11 @@ for di, (A0, A1) in enumerate(((math.radians(-56), math.radians(56)), (math.radi
     lathe(f'desk_led{di}', [(2.7, 0.94), (2.745, 1.01), (2.76, 1.01), (2.715, 0.94)], em='cyan', segs=64, a0=A0 + 0.02, a1=A1 - 0.02, M=MD)
 lathe('holo_base', [(0, 0.5), (0.5, 0.5), (0.62, 0.4), (0.7, 0.14), (0, 0.14)], 'dark', 'center', segs=64, closed=False, M=MD)
 lathe('holo_ring', [(0.5, 0.5), (0.6, 0.5), (0.6, 0.54), (0.5, 0.54)], 'chrome', 'center', segs=64, M=MD)
+# Segmented keeper ring: the emitter cartridge can be lifted out from above.
+for i in range(12):
+    B = MD @ Matrix.Rotation(i*pi/6, 4, 'Z') @ T((.466,0,.515))
+    rbox('lens_keeper', (.062,.082,.018), B, 'dark', 'center', bevel=.005)
+    lathe('keeper_bolt', [(0,.009),(.011,.009),(.011,.016),(0,.016)], 'chrome','center',segs=6,M=B)
 lathe('holo_lens', [(0, 0.505), (0.44, 0.505), (0.44, 0.515), (0, 0.515)], em='cyan', segs=64, closed=False, M=MD)
 lathe('holo_floor_ring', [(1.15, 0.14), (1.19, 0.14), (1.19, 0.143), (1.15, 0.143)], 'brass', 'center', segs=96, M=MD)
 

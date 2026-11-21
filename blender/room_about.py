@@ -173,7 +173,13 @@ def sofa(name, x, y0, y1, face):
     """Low sofa along Y at x, facing +x (face = 1) or -x."""
     b = x - face * 0.5
     box(name + 'base', x - 0.5, x + 0.5, y0, y1, 0.08, 0.22, 'wood', 'props')
-    box(name + 'seat', x - 0.47, x + 0.5, y0 + 0.02, y1 - 0.02, 0.22, 0.43, 'linen', 'props', bevel=0.06, seg=3)
+    span = (y1 - y0 - 0.16) / 3
+    for k in range(3):
+        yy = y0 + 0.08 + span * k
+        box(name + 'seat', x - 0.47, x + 0.47, yy + 0.005, yy + span - 0.005, 0.22, 0.43, 'linen', 'props', bevel=0.045, seg=4)
+    for dx in (-0.38, 0.38):
+        for yy in (y0 + .14, y1 - .14):
+            turned('sofa_foot', .08, .04, 'wood', 'props', M=T((x+dx, yy, 0)))
     box(name + 'back', min(b, b + face * 0.2), max(b, b + face * 0.2), y0, y1, 0.22, 0.86, 'linen', 'props', bevel=0.07, seg=3)
     for yy in (y0, y1):
         box(name + 'arm', x - 0.5, x + 0.5, yy - 0.09, yy + 0.09, 0.22, 0.62, 'linen', 'props', bevel=0.06, seg=3)
@@ -185,7 +191,9 @@ a_sofa_trim(T((-2.2, 1.6, 0))); a_sofa_trim(T((2.2, 1.6, 0)) @ Matrix.Rotation(p
 for a, b in ((3.12, 3.06), (2.94, 2.9)):
     for dd in (-1, 1): box('rug_line', dd * a, dd * b, -1.5, 4.5, 0.021, 0.0245, 'rug2', 'props')
 box('table_top', -0.75, 0.75, 0.75, 2.45, 0.34, 0.38, 'wood_l', 'props', bevel=0.012)
-box('table_slab', -0.6, 0.6, 0.9, 2.3, 0.1, 0.34, 'dark', 'props')
+# Mortised aprons meet the four turned legs instead of a solid box underneath.
+for x in (-.68, .68): box('table_apron', x-.016,x+.016,.82,2.38,.261,.34,'wood','props',bevel=.004)
+for y in (.82,2.38): box('table_endrail',-.68,.68,y-.016,y+.016,.261,.34,'wood','props',bevel=.004)
 a_stack(T((-0.31, 1.33, 0.38), (0, 0, 0.15)), n=4); a_openbook(T((0.05, 1.95, 0.38), (0, 0, 0.4))); a_drinks(T((0.38, 1.25, 0.38)))
 for x in (-0.68, 0.68):
     for y in (0.82, 2.38): turned('table_leg', 0.34, 0.035, 'wood', 'props', M=T((x, y, 0)), segs=10)
@@ -213,6 +221,12 @@ aim = (Vector((-2.0, Y1 + 6, 4.6)) - head).normalized(); Mq = Matrix.Translation
 lathe('scope_tube', [(0, -0.55), (0.055, -0.55), (0.055, 0.5), (0.075, 0.5), (0.075, 0.62), (0.065, 0.62), (0.065, 0.52), (0, 0.52)], 'brass', 'props', segs=24, closed=False, M=Mq)
 lathe('scope_eye', [(0, -0.72), (0.028, -0.72), (0.028, -0.55), (0, -0.55)], 'dark', 'props', segs=16, closed=False, M=Mq)
 lathe('scope_mount', [(0, 0.1), (0.06, 0.1), (0.06, 0), (0, 0)], 'dark', 'props', segs=16, closed=False, M=T(head))
+for z in (-.25, .22):
+    torus('scope_saddle_band', .057,.009,Mq @ T((0,0,z)), 'dark','props',segs=32)
+rod('scope_saddle', (0,-.064,-.27),(0,-.064,.24),.017,'dark','props',M=Mq)
+rod('scope_focuser',(-.085,0,-.54),(.085,0,-.54),.009,'brass','props',M=Mq)
+for d in (-1,1):
+    lathe('scope_focus_wheel',[(0,-.008),(.033,-.008),(.033,.008),(0,.008)],'dark','props',segs=20,M=Mq @ T((d*.08,0,-.54),(0,pi/2,0)))
 # planters either side of the window
 for d in (-1, 1):
     c = Vector((d * 5.6, 7.7, 0))

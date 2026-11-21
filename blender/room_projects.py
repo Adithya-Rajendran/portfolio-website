@@ -173,10 +173,22 @@ for a in (45, 135, 225, 315):                                                   
 rbox('sat_mast', (0.03, 0.03, 0.9), MS @ T((0.3, 0.3, 1.4)), 'chrome', 'center')
 lathe('sat_omni', [(0, 0), (0.06, 0.02), (0.06, 0.1), (0, 0.14)], 'white', 'center', segs=12, closed=False, M=MS @ T((0.3, 0.3, 1.85)))
 lathe('sat_dish', [(0, 0.0), (0.25, 0.03), (0.5, 0.12), (0.72, 0.28), (0.74, 0.28), (0.5, 0.1), (0.25, 0.01), (0, -0.02)], 'white', 'center', segs=48, closed=False, M=MS @ T((0, 0, -1.28), (pi, 0, 0)))
+# Rear dish is carried on a trussed spacer between the bus and reflector, not suspended in space.
+for leg in range(3):
+    a = leg*2*pi/3
+    rod('dish_stay',(.36*math.cos(a),.36*math.sin(a),-.925),(.15*math.cos(a),.15*math.sin(a),-1.29),.018,'steel','center',M=MS)
 lathe('sat_feed', [(0, 0.0), (0.03, 0.0), (0.03, 0.5), (0.07, 0.56), (0, 0.6)], 'chrome', 'center', segs=12, closed=False, M=MS @ T((0, 0, -1.3), (pi, 0, 0)))
 lathe('sat_nozzle', [(0, 0.0), (0.1, 0.0), (0.2, 0.3), (0.19, 0.3), (0.09, 0.02), (0, 0.02)], 'chrome', 'center', segs=24, closed=False, M=MS @ T((0, 0, 0.9)))
 for d in (-1, 1):
     rbox(f'sat_yoke{d}', (0.5, 0.06, 0.06), MS @ T((d * 0.98, 0, 0)), 'chrome', 'center')
+    # Root rotary drive, then a pair of folding hinges bridging each panel gap.
+    W = MS @ T((d*.91,0,0),(0,d*pi/2,0))
+    lathe('array_drive',[(0,0),(.15,0),(.15,.13),(.115,.15),(.115,.21),(0,.21)],'steel','center',segs=24,M=W)
+    for joint in range(2):
+        seam=d*(2.26+joint*1.08)
+        for z in (-.55,.55):
+            rbox('array_hinge_leaf',(.16,.042,.13),MS @ T((seam,.029,z)),'steel','center',bevel=.007)
+            rod('array_hinge_pin',(seam,.058,z-.086),(seam,.058,z+.086),.019,'chrome','center',M=MS)
     for i in range(3):                                                        # three-section solar wing with gaps and frames
         cx = d * (1.2 + 0.52 + i * 1.08)
         rbox(f'sat_wing{d}{i}', (1.0, 0.03, 1.5), MS @ T((cx, 0, 0), (0.0, 0, 0)), 'solar', 'center')

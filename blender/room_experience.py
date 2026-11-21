@@ -111,6 +111,15 @@ for r in (0.9, 1.7, 2.5):
     lathe(f'table_ring{r}', [(r, TABLE_H + 0.006), (r + 0.02, TABLE_H + 0.006)], 'brass', 'center', segs=96, closed=False)
 lathe('lens', [(0, TABLE_H + 0.008), (0.5, TABLE_H + 0.008)], em='core', segs=48, closed=False)
 lathe('lens_ring', [(0.5, TABLE_H), (0.62, TABLE_H), (0.62, TABLE_H + 0.05), (0.5, TABLE_H + 0.05)], 'chrome', 'center', segs=48)
+# Engraved azimuth scale on an annular brass dial. Long divisions can be read from the aisle.
+lathe('azimuth_dial', [(TABLE_R-.166,TABLE_H+.012),(TABLE_R-.037,TABLE_H+.012)], 'brass','center',segs=128,closed=False)
+for degree in range(0,360,3):
+    length = .095 if degree % 30 == 0 else (.057 if degree % 15 == 0 else .028)
+    rbox('azimuth_division', (length,.009,.002), at(degree,TABLE_R-.045-length/2,TABLE_H+.014),'dark','center')
+for quadrant in range(4):
+    B = at(quadrant*90,.57,TABLE_H+.051)
+    rbox('optical_clamp',(.085,.125,.016), B,'dark','center',bevel=.005)
+    for dy in (-.043,.043): lathe('clamp_screw',[(0,.008),(.012,.008),(.012,.014),(0,.014)],'chrome','center',segs=6,M=B @ T((0,dy,0)))
 # the light the map itself throws on the room (the map is drawn in three.js)
 for z, wts, col in ((2.4, 420, (1.0, 0.68, 0.3)), (3.6, 260, (0.3, 0.75, 1.0))):
     l = bpy.data.lights.new('mapglow', 'POINT'); l.energy = wts; l.color = col; l.shadow_soft_size = 1.2

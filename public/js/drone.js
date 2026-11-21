@@ -33,7 +33,7 @@ const leftPage = (v) => canvasTex(768, 1064, (c, w, h) => {
 const rightPage = (v) => canvasTex(768, 1064, (c, w, h) => {
   paper(c, w, h, -1); c.fillStyle = RULE; c.font = `600 34px ${SANS}`; if ('letterSpacing' in c) c.letterSpacing = '8px'; c.fillText('INDEX', 96, 160); if ('letterSpacing' in c) c.letterSpacing = '0px';
   v.rows.forEach(([k, val], i) => {
-    const y = 290 + i * 190; c.fillStyle = RULE; c.font = `600 28px ${SANS}`; c.fillText(k, 96, y); c.fillStyle = INK; c.font = `400 58px ${SERIF}`; c.fillText(val, 96, y + 74);
+    const y = 290 + i * 190; c.fillStyle = RULE; c.font = `600 36px ${SANS}`; c.fillText(k, 96, y); c.fillStyle = INK; c.font = `400 64px ${SERIF}`; c.fillText(val, 96, y + 78, w - 192);
     c.fillStyle = 'rgba(138,90,34,0.5)'; c.fillRect(96, y + 110, w - 192, 2);
   });
   c.fillStyle = RULE; c.font = `600 20px ${SANS}`; c.textAlign = 'right'; c.fillText(v.no, w - 96, h - 96);
@@ -50,22 +50,33 @@ const BW = 0.25, BH = 0.35, BT = 0.046;
 function makeBook(v, i, mats) {
   const book = new THREE.Group(), left = new THREE.Group(), spine = new THREE.Group(), half = BT / 2, board = 0.004, [r, g, b] = LEATHER[i % LEATHER.length];
   const leather = std(new THREE.Color(r, g, b), 0, 0.55), pagesMat = std(0xffffff, 0, 0.9, { map: edges }), brass = mats.brass;
-  const page = (tex) => new THREE.Mesh(new THREE.PlaneGeometry(BW - 0.014, BH - 0.018).rotateX(-PI / 2), std(0xffffff, 0, 0.85, { map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.22 }));
+  // Leaves rise slightly beside the sewn gutter when open, then settle toward the fore edge.
+  // Morph from flat so the two printed faces still meet when the boards are closed.
+  const page = (tex, gutter) => {
+    const geom = new THREE.PlaneGeometry(BW - 0.014, BH - 0.018, 24, 1).rotateX(-PI / 2);
+    const flat = geom.attributes.position, bent = flat.clone();
+    for (let j = 0; j < flat.count; j++) {
+      const u = geom.attributes.uv.getX(j), t = gutter === 'left' ? u : 1 - u;
+      bent.setY(j, .014 * Math.sin(Math.PI * t) * Math.exp(-5 * t));
+    }
+    geom.morphAttributes.position = [bent];
+    return new THREE.Mesh(geom, std(0xffffff, 0, 0.85, { map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.22 }));
+  };
   const box = (parent, w, h, d, x, y, z, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); parent.add(o); return o; };
   // right half: the back board, half the leaves, the page that shows when it is open
   box(book, BW + 0.004, board, BH, BW / 2 + 0.002, board / 2, 0, leather); box(book, BW - 0.008, half - board, BH - 0.012, BW / 2 - 0.004, (half + board) / 2, 0, pagesMat);
-  const pr = page(rightPage(v)); pr.position.set(BW / 2 - 0.004, half + 0.0006, 0); book.add(pr);
+  const pr = page(rightPage(v), 'left'); pr.position.set(BW / 2 - 0.004, half + 0.0006, 0); book.add(pr);
   // left half: turns about the spine. Built in its closed pose (lying on top of the right half).
   left.position.set(0, half, 0); book.add(left);
   box(left, BW - 0.008, half - board, BH - 0.012, BW / 2 - 0.004, (half - board) / 2, 0, pagesMat); box(left, BW + 0.004, board, BH, BW / 2 + 0.002, half - board / 2, 0, leather);
-  const pl = page(leftPage(v)); pl.geometry.rotateZ(PI); pl.position.set(BW / 2 - 0.004, -0.0006, 0); left.add(pl);
+  const pl = page(leftPage(v), 'right'); pl.rotation.z = PI; pl.position.set(BW / 2 - 0.004, -0.0006, 0); left.add(pl);
   const tool = new THREE.Mesh(new THREE.PlaneGeometry(BW - 0.02, BH - 0.02).rotateX(-PI / 2), std(0xffffff, 1, 0.3, { map: gilt(v.no), transparent: true, alphaTest: 0.3 })); tool.position.set(BW / 2, half + 0.0006, 0); left.add(tool);
   // the spine turns half as far, so it ends up flat under the gutter; raised bands and a gilt label on it
   book.add(spine); box(spine, 0.006, BT, BH, -0.003, half, 0, leather);
   for (const z of [-0.12, -0.06, 0.06, 0.12]) box(spine, 0.009, BT + 0.002, 0.007, -0.0035, half, z, leather);
   box(spine, 0.0065, BT * 0.7, 0.04, -0.0034, half, -0.005, brass);
   box(book, 0.012, 0.0008, 0.07, BW * 0.55, half + 0.001, BH / 2 + 0.02, std(0x7a1410, 0, 0.7));       // a ribbon marker
-  book.userData.open = (k) => { left.rotation.z = k * PI; spine.rotation.z = k * PI / 2; };
+  book.userData.open = (k) => { left.rotation.z = k * PI; spine.rotation.z = k * PI / 2; pl.morphTargetInfluences[0] = pr.morphTargetInfluences[0] = k; };
   return book;
 }
 

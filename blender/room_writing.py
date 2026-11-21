@@ -141,6 +141,12 @@ def a_cradle(M=I4, grp='props'):
         ang = a * 2 * pi / 3 + 0.3; c, s = math.cos(ang), math.sin(ang)
         rod('cradle_leg', (0.3 * c, 0.3 * s, 0.13), (0.24 * c, 0.24 * s, 0.01), 0.008, 'brass', grp, M=M); blob('cradle_foot', M @ Vector((0.24 * c, 0.24 * s, 0.01)), 0.014, 'brass', grp)
     lathe('cradle_pad', [(0, 0.014), (0.09, 0.014), (0.1, 0.006), (0.1, 0), (0, 0)], 'frame', grp, segs=24, closed=False, M=M)
+    # Replaceable landing shoes and sprung brass contacts, insulated from the metal rail.
+    for angle in (0, 2*pi/3, 4*pi/3):
+        B = M @ Matrix.Rotation(angle+.3,4,'Z') @ T((.292,0,.133))
+        rbox('landing_shoe',(.06,.095,.024),B,'frame',grp,bevel=.008)
+        for dy in (-.025,.025):
+            lathe('charge_pin',[(0,.012),(.009,.012),(.009,.022),(.006,.025),(0,.025)],'gilt',grp,segs=12,M=B @ T((0,dy,0)))
     torus('cradle_glow', 0.07, 0.003, M @ T((0, 0, 0.0145)), em='cool', segs=32)
 
 def a_catalogue(M=I4, grp='props'):
@@ -385,7 +391,8 @@ for a, b, m in ((1.78, 1.7, 'runner2'), (1.62, 1.5, 'runner3'), (1.44, 1.4, 'run
     for y in (-3.4 + (1.9 - a), 11.6 - (1.9 - a)): box('runner_line', -a, a, y - (a - b) / 2, y + (a - b) / 2, 0.016, 0.019, m, 'props')
 a_table(T((0, TY0, 0)))
 for k, y in enumerate((1.6, 3.6, 5.6, 7.6)):
-    a_lamp(T((0, y, TZ + 0.002)), key=k)
+    # Leave the catalogue-to-cradle sightline clear at the near end.
+    a_lamp(T((-.43 if k == 0 else 0, y, TZ + 0.002)), key=k)
     for d in (-1, 1):
         a_chair(T((d * (TW + 0.36 + random.uniform(0, 0.14)), y + random.uniform(-0.12, 0.12), 0)) @ Matrix.Rotation(pi if d > 0 else 0, 4, 'Z') @ Matrix.Rotation(random.uniform(-0.12, 0.12), 4, 'Z'))
 for x, y, r in ((0.36, 4.5, 0.2), (-0.3, 6.4, -0.3), (0.3, 8.1, 0.1)): a_stack(T((x, y, TZ + 0.002), (0, 0, r)), n=random.randint(3, 6))
