@@ -66,12 +66,9 @@ export function liveSpecPars({ probes, sky, live, lights }) {
   // Lagarde & de Rousiers: how much of a lobe of this roughness escapes a surface with this ambient occlusion.
   float specOcc(float ao, float nv, float r) { return clamp(pow(nv + ao, exp2(-16.*r - 1.)) - 1. + ao, 0., 1.); }
   vec2 panoUV(vec3 d) { return vec2(fract(.5 + atan(d.x, -d.z)*0.15915494309), acos(clamp(d.y,-1.,1.))*0.31830988618); }
-  vec4 probeLayer(int i, vec3 hit, float level) {
-    vec2 uv = panoUV(normalize(hit - uProbePos[i]));
-    float j = floor(level), base = float(i*5);
-    vec4 a = textureLod(tRoomSpec, vec3(uv, base + j), 0.), b = textureLod(tRoomSpec, vec3(uv, base + min(j + 1., 4.)), 0.);
-    a.rgb *= a.rgb; b.rgb *= b.rgb;
-    return mix(a, b, level - j);
+  // One array layer per probe, its mip chain holding the roughness levels (tools/pack.py): one trilinear fetch.
+  vec4 probeAt(int i, vec3 hit, float level) {
+    vec4 a = textureLod(tRoomSpec, vec3(panoUV(normalize(hit - uProbePos[i])), float(i)), level); a.rgb *= a.rgb; return a;
   }
   ${sky ? `vec3 skyAlong(vec3 R, float rough) {        // the backdrop plane, turned with the station's roll
     vec3 d = uSkyM*R; if (d.z <= .02) return vec3(0.);
@@ -79,28 +76,42 @@ export function liveSpecPars({ probes, sky, live, lights }) {
     if (any(lessThan(uv, vec2(0.))) || any(greaterThan(uv, vec2(1.)))) return vec3(0.);
     vec3 t = textureLod(tSky, uv, uSkyLod + log2(max(rough*rough*2048., 1.))).rgb; return t*t*${(8).toFixed(1)}*uSkyGain; }` : ''}
   ${live ? `vec4 liveAlong(vec3 W, vec3 R, float rough) {   // premultiplied: what moves, in front of the room
+    // The cube is seen from below the orrery, as nearly every reflector sees it. A surface above its centre would see
+    // the unlit tops of the rings instead, so it gets no overlay (the probe omits the orrery: nothing is frozen).
+    float below = smoothstep(uLiveC.y + .5, uLiveC.y - 1.5, W.y); if (below <= 0.) return vec4(0.);
     vec3 oc = W - uLiveC; float b = dot(oc, R), h = b*b - dot(oc, oc) + uLiveR*uLiveR;
     if (h <= 0.) return vec4(0.);
     h = sqrt(h); float t0 = -b - h, t1 = -b + h; if (t1 <= 0.) return vec4(0.);
     float lod = uLiveLod + rough*5.;
     vec4 far = textureLod(tLive, W + R*t1 - uLiveEye, lod);
-    if (t0 <= 0.) return far;
+    if (t0 <= 0.) return far*below;
     vec4 near = textureLod(tLive, W + R*t0 - uLiveEye, lod);
-    return near + far*(1. - near.a); }` : ''}
-  // Radiance arriving along R at W, for a lobe of this roughness.
-  vec3 envAlong(vec3 W, vec3 R, float rough) {
-    vec3 at = clamp(W, uBoxLo + .002, uBoxHi - .002);
+    return (near + far*(1. - near.a))*below; }` : ''}
+  // Where the reflected ray meets the room shell, and the two probes nearest the surface (shared by both lobes).
+  // Weights fall off with distance; at the swap of the 2nd and 3rd nearest both are equal, so nothing jumps.
+  struct Env { vec3 hit; int i0, i1; float w1; };
+  Env envSetup(vec3 W, vec3 R) {
+    Env e; vec3 at = clamp(W, uBoxLo + .002, uBoxHi - .002);
     vec3 reach = mix(at - uBoxLo, uBoxHi - at, step(vec3(0.), R))/max(abs(R), vec3(1e-5));
-    vec3 hit = at + R*min(reach.x, min(reach.y, reach.z));
-    float level = clamp(rough, 0., 1.)*4., sum = 0.; float w[PROBES];
-    for (int i = 0; i < PROBES; i++) { vec3 d = W - uProbePos[i]; float k = 1. + dot(d, d); w[i] = 1./(k*k); sum += w[i]; }
-    vec4 env = vec4(0.); float used = 0.;
-    for (int i = 0; i < PROBES; i++) { float k = w[i]/sum; if (k > .04) { env += probeLayer(i, hit, level)*k; used += k; } }
-    env /= used; vec3 c = env.rgb*uProbeRange;
+    e.hit = at + R*min(reach.x, min(reach.y, reach.z));
+    float d0 = 1e9, d1 = 1e9; e.i0 = 0; e.i1 = 0;
+    for (int i = 0; i < PROBES; i++) { vec3 d = W - uProbePos[i]; float q = dot(d, d);
+      if (q < d0) { d1 = d0; e.i1 = e.i0; d0 = q; e.i0 = i; } else if (q < d1) { d1 = q; e.i1 = i; } }
+    float a = 1./((1. + d0)*(1. + d0)), b = PROBES > 1 ? 1./((1. + d1)*(1. + d1)) : 0.;
+    e.w1 = uMirror > .5 ? 0. : b/(a + b);              // the mirror image is small and blurred: the nearest probe
+    return e;
+  }
+  // Radiance arriving along R at W, for a lobe of this roughness.
+  vec3 envLobe(Env e, vec3 W, vec3 R, float rough) {
+    float level = clamp(rough, 0., 1.)*4.;
+    vec4 env = probeAt(e.i0, e.hit, level);
+    if (e.w1 > .002) env = mix(env, probeAt(e.i1, e.hit, level), e.w1);
+    vec3 c = env.rgb*uProbeRange;
     ${sky ? 'c += (1. - env.a)*skyAlong(R, rough);' : ''}
     ${live ? 'vec4 m = liveAlong(W, R, rough); c = c*(1. - m.a) + m.rgb;' : ''}
     return c;
   }
+  vec3 envAlong(vec3 W, vec3 R, float rough) { return envLobe(envSetup(W, R), W, R, rough); }
   // GGX for one light direction: D*Vis*F*NoL. 'a' is alpha (roughness squared), possibly widened for an area.
   vec3 ggx(vec3 N, vec3 V, vec3 L, vec3 F0, float a) {
     float nl = max(dot(N, L), 0.), nv = max(dot(N, V), 1e-3); vec3 H = normalize(L + V); float nh = max(dot(N, H), 0.);

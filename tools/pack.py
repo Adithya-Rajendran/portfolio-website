@@ -47,7 +47,7 @@ def pack(room):
         missing = set(info['groups']) - set(info['finish']['groups']) - {g for g in info['groups'] if g.startswith('floor')}
         if missing: sys.exit(f'{room}: no finish atlas for {sorted(missing)}')
         needed.update(f'{g}_f' for g in info['finish']['groups']); rgba.update(f'{g}_f' for g in info['finish']['groups'])
-        info['probe'] = dict(probe, groups=sorted(info['groups'])); rgba.add('probe_c')
+        info['probe'] = dict(probe, groups=sorted(g for g in info['groups'] if not g.startswith('floor')), layout='mips'); rgba.add('probe_c')
     elif 'polish' in needed and 'probe' not in info: sys.exit(f'{room}: polished fittings have no reflection probe')
     if 'probe' in info:
         p = info['probe']
@@ -69,6 +69,7 @@ def pack(room):
             raise
 
 def encode(room, src, dst, tmp, needed, rgba, info):
+    src_dir = f'{src}/tex'
     jobs = {}                                                        # output name -> (kind, [source images, in layer order])
     for f in sorted(os.listdir(f'{src}/tex')):
         name, ext = os.path.splitext(f)
@@ -84,6 +85,17 @@ def encode(room, src, dst, tmp, needed, rgba, info):
     def one(item):
         out, (kind, names) = item
         pngs = []
+        if out == 'probe_c' and info.get('probe', {}).get('layout') == 'mips':
+            # One array layer per probe; mip k holds roughness k/4 at half the size of k-1, so a shader gets any
+            # roughness in ONE trilinear fetch. Below the roughest level the chain repeats it, shrinking to 1 px.
+            p = info['probe']; w, h = p['width'], p['height']; n = len(p['probes']); per = len(p['roughness'])
+            levels = max(w, h).bit_length()
+            for lv in range(levels):
+                for k in range(n):
+                    layer = names[k * per + min(lv, per - 1)]; png = f'{tmp}/{layer}-{lv}.png'; pngs.append(png)
+                    run(DWEBP, '-quiet', '-scale', str(max(1, w >> lv)), str(max(1, h >> lv)), f'{src_dir}/{layer}.webp', '-o', png)
+            run(KTX, 'create', '--format', 'R8G8B8A8_UNORM', '--assign-tf', 'linear', '--layers', str(n), '--levels', str(levels), *UASTC, *pngs, f'{dst}/tex/{out}.ktx2')
+            return
         for n in names:
             pngs.append(f'{tmp}/{n}.png')                            # the backdrop is the only image stored top row first
             run(DWEBP, '-quiet', *(['-flip'] if kind == 'backdrop' else []), f'{src}/tex/{n}.webp', '-o', pngs[-1])

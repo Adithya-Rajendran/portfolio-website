@@ -13,7 +13,9 @@ try {
   p.on('pageerror', (e) => errors.push(e.message)); p.on('requestfailed', (r) => errors.push(r.url()));
   p.on('console', (m) => { if (m.type() === 'error' || /shader|program/i.test(m.text())) errors.push(m.text()); });
   p.on('response', (r) => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
-  const u = new URL(base); u.search = `room=${room}&lightcheck=1&shot=hero&tier=0&scale=1&rollat=0&chand=0&grain=0&${extra}`;
+  const u = new URL(base), q = new URLSearchParams(`room=${room}&lightcheck=1&shot=hero&tier=0&scale=1&rollat=0&chand=0&grain=0`);
+  for (const [k, v] of new URLSearchParams(extra)) q.set(k, v);                // extras override the defaults
+  u.search = `${q}`;
   await p.goto(u.href); await p.waitForFunction((r) => window.__lobby?.mode().room === r && document.querySelector('#loader.done'), room, { timeout: 180000 });
   for (const spec of specs) {
     const [name, eye, tgt, t = '0'] = spec.split(':');

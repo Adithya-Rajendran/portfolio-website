@@ -158,14 +158,15 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         c *= keep;
         vec3 R = reflect(-V, N);
         const float ENV = ${num('env', 1).toFixed(3)};    // QA: ?env=0 drops the room/sky/live environment
-        vec3 spec = envAlong(vW, R, rough)*E*specOcc(fin.g, nv, rough)*ENV;
+        Env env = envSetup(vW, R);
+        vec3 spec = envLobe(env, vW, R, rough)*E*specOcc(fin.g, nv, rough)*ENV;
         ${LAMPS.length ? 'spec += lampLobe(vW, N, V, F0, rough)*fin.b;' : ''}
         ${chart ? 'spec += chartLive(vW, N, V, E, rough);' : ''}
         ${LIT.has(grp) ? `float ndl = dot(N, uSunDir), open = windowVisibility(vW, N, ndl);
         if (open > 0.) { vec4 a = texture2D(tAlb, vUv); c += a.rgb*a.rgb*keep*uSunE*(ndl*open);
           spec += ggx(N, V, uSunDir, F0, max(rough*rough, .002))*uSunE*(3.14159265*open); }` : 'float open = 0.;'}
         if (coatW > .005) {                                 // a clear coat: a sharp second lobe over all of that
-          spec = spec*(1. - Ec) + envAlong(vW, R, coatR)*Ec*specOcc(fin.g, nv, coatR)*ENV;
+          spec = spec*(1. - Ec) + envLobe(env, vW, R, coatR)*Ec*specOcc(fin.g, nv, coatR)*ENV;
           ${LAMPS.length ? 'spec += lampLobe(vW, N, V, vec3(.04), coatR)*(coatW*fin.b);' : ''}
           ${LIT.has(grp) ? 'if (open > 0.) spec += ggx(N, V, uSunDir, vec3(.04), max(coatR*coatR, .002))*uSunE*(3.14159265*open*coatW);' : ''}
         }
@@ -228,8 +229,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // Frameless glass balustrade. Additive: what glass adds to the view is reflection, strongest at grazing angles,
   // plus the green-white glint of its polished edges (top edge and the joints between 2 m panels).
   const glassMat = LIVE ? new THREE.ShaderMaterial({
-    ...GLOW, uniforms: { ...probeU, ...skyU, ...liveU, ...lampU }, side: THREE.DoubleSide, vertexShader: VERT,
-    fragmentShader: `varying vec3 vW; varying vec2 vUv; ${livePars}
+    ...GLOW, uniforms: { ...probeU, ...skyU, ...liveU, ...lampU, uMirror }, side: THREE.DoubleSide, vertexShader: VERT,
+    fragmentShader: `varying vec3 vW; varying vec2 vUv; uniform float uMirror; ${livePars}
       void main(){
         vec3 v = normalize(cameraPosition - vW), n = vec3(v.x < 0. ? -1. : 1., 0., 0.);   // the panes face +-X
         vec2 ab = envAB(.065, clamp(abs(v.x), 1e-3, 1.));
