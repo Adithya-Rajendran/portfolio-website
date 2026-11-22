@@ -159,6 +159,7 @@ for y in (-2.0, 2.0, 6.0):
         l = bpy.data.lights.new('downlight', 'SPOT'); l.energy = 200; l.color = (1.0, 0.82, 0.64); l.spot_size = math.radians(100)
         l.spot_blend = 0.5; l.shadow_soft_size = 0.06
         o = bpy.data.objects.new('downlight', l); COL.objects.link(o); o.location = (x, y, H - 0.2)          # spots aim down -Z
+        o.visible_glossy = False      # in a reflection one sees the glowing lens (in the probes), not the lamp: no per-pixel highlight
 
 # ================================================================= THE WINDOW
 # end wall = a deep timber-lined frame around one sheet of space; slim mullions, a low sill to lean on
