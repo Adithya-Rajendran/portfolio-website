@@ -40,6 +40,92 @@ export const probePars = `
     return f*(a2*vis/max(1.e-9,d*d))*uSpecGain;  // multiplied by shadowed NoL * irradiance / pi by the caller
   }`;
 
+// ---------------------------------------------------------------- live reflections on every baked surface
+// The bake holds only the light leaving each surface diffusely (blender/bake.py). Everything that depends on the
+// eye is evaluated here, per pixel, for the camera that is drawing (the mirror cameras included):
+//   room   the Cycles probes nearest the pixel, the reflected ray box-projected onto the room shell, by roughness
+//   sky    where a probe saw out of the room, the rolling sky along the reflected ray (it is at infinity)
+//   live   things that move (the orrery): a small cube rendered each frame, met on a sphere around them
+//   lamps  analytic GGX highlights of each point/spot lamp (sphere lights), times the baked lamp visibility
+//   sun    shadowed GGX highlight of the window sun (room.js)
+// A clear coat is a second, sharper lobe on top. Specular occlusion comes from the baked ambient occlusion.
+export function liveSpecPars({ probes, sky, live, lights }) {
+  const P = Math.max(1, probes), NL = lights;
+  return `
+  #define PROBES ${P}
+  uniform highp sampler2DArray tRoomSpec; uniform vec3 uProbePos[PROBES], uBoxLo, uBoxHi; uniform float uProbeRange, uSpecGain;
+  ${sky ? 'uniform sampler2D tSky; uniform mat3 uSkyM; uniform float uSkyHalf, uSkyGain, uSkyLod;' : ''}
+  ${live ? 'uniform samplerCube tLive; uniform vec3 uLiveEye, uLiveC; uniform float uLiveR, uLiveLod;' : ''}
+  ${NL ? `uniform vec3 uLP[${NL}], uLI[${NL}], uLD[${NL}], uLS[${NL}];` : ''}
+  // Split-sum GGX environment BRDF (Karis' fit of the DFG integral): reflectance = F0*x + y.
+  vec2 envAB(float r, float nv) {
+    vec4 p = r*vec4(-1.,-.0275,-.572,.022) + vec4(1.,.0425,1.04,-.04);
+    float a004 = min(p.x*p.x, exp2(-9.28*nv))*p.x + p.y;
+    return vec2(-1.04,1.04)*a004 + p.zw;
+  }
+  // Lagarde & de Rousiers: how much of a lobe of this roughness escapes a surface with this ambient occlusion.
+  float specOcc(float ao, float nv, float r) { return clamp(pow(nv + ao, exp2(-16.*r - 1.)) - 1. + ao, 0., 1.); }
+  vec2 panoUV(vec3 d) { return vec2(fract(.5 + atan(d.x, -d.z)*0.15915494309), acos(clamp(d.y,-1.,1.))*0.31830988618); }
+  vec4 probeLayer(int i, vec3 hit, float level) {
+    vec2 uv = panoUV(normalize(hit - uProbePos[i]));
+    float j = floor(level), base = float(i*5);
+    vec4 a = textureLod(tRoomSpec, vec3(uv, base + j), 0.), b = textureLod(tRoomSpec, vec3(uv, base + min(j + 1., 4.)), 0.);
+    a.rgb *= a.rgb; b.rgb *= b.rgb;
+    return mix(a, b, level - j);
+  }
+  ${sky ? `vec3 skyAlong(vec3 R, float rough) {        // the backdrop plane, turned with the station's roll
+    vec3 d = uSkyM*R; if (d.z <= .02) return vec3(0.);
+    vec2 uv = d.xy/(d.z*uSkyHalf)*.5 + .5;
+    if (any(lessThan(uv, vec2(0.))) || any(greaterThan(uv, vec2(1.)))) return vec3(0.);
+    vec3 t = textureLod(tSky, uv, uSkyLod + log2(max(rough*rough*2048., 1.))).rgb; return t*t*${(8).toFixed(1)}*uSkyGain; }` : ''}
+  ${live ? `vec4 liveAlong(vec3 W, vec3 R, float rough) {   // premultiplied: what moves, in front of the room
+    vec3 oc = W - uLiveC; float b = dot(oc, R), h = b*b - dot(oc, oc) + uLiveR*uLiveR;
+    if (h <= 0.) return vec4(0.);
+    h = sqrt(h); float t0 = -b - h, t1 = -b + h; if (t1 <= 0.) return vec4(0.);
+    float lod = uLiveLod + rough*5.;
+    vec4 far = textureLod(tLive, W + R*t1 - uLiveEye, lod);
+    if (t0 <= 0.) return far;
+    vec4 near = textureLod(tLive, W + R*t0 - uLiveEye, lod);
+    return near + far*(1. - near.a); }` : ''}
+  // Radiance arriving along R at W, for a lobe of this roughness.
+  vec3 envAlong(vec3 W, vec3 R, float rough) {
+    vec3 at = clamp(W, uBoxLo + .002, uBoxHi - .002);
+    vec3 reach = mix(at - uBoxLo, uBoxHi - at, step(vec3(0.), R))/max(abs(R), vec3(1e-5));
+    vec3 hit = at + R*min(reach.x, min(reach.y, reach.z));
+    float level = clamp(rough, 0., 1.)*4., sum = 0.; float w[PROBES];
+    for (int i = 0; i < PROBES; i++) { vec3 d = W - uProbePos[i]; float k = 1. + dot(d, d); w[i] = 1./(k*k); sum += w[i]; }
+    vec4 env = vec4(0.); float used = 0.;
+    for (int i = 0; i < PROBES; i++) { float k = w[i]/sum; if (k > .04) { env += probeLayer(i, hit, level)*k; used += k; } }
+    env /= used; vec3 c = env.rgb*uProbeRange;
+    ${sky ? 'c += (1. - env.a)*skyAlong(R, rough);' : ''}
+    ${live ? 'vec4 m = liveAlong(W, R, rough); c = c*(1. - m.a) + m.rgb;' : ''}
+    return c;
+  }
+  // GGX for one light direction: D*Vis*F*NoL. 'a' is alpha (roughness squared), possibly widened for an area.
+  vec3 ggx(vec3 N, vec3 V, vec3 L, vec3 F0, float a) {
+    float nl = max(dot(N, L), 0.), nv = max(dot(N, V), 1e-3); vec3 H = normalize(L + V); float nh = max(dot(N, H), 0.);
+    float a2 = a*a, d = nh*nh*(a2 - 1.) + 1.;
+    float vis = .5/max(1e-4, nl*sqrt(nv*nv*(1. - a2) + a2) + nv*sqrt(nl*nl*(1. - a2) + a2));
+    vec3 F = F0 + (1. - F0)*pow(1. - clamp(dot(V, H), 0., 1.), 5.);
+    return F*(a2*vis/max(1e-9, 3.14159265*d*d))*nl;
+  }
+  ${NL ? `// Each lamp is a sphere of uLS.x metres (Karis' representative point and normalisation); uLS.y/z: spot cone
+  // cosine and its soft edge (y < -1.5: a point lamp). Intensity in W/sr, as Cycles uses it.
+  vec3 lampLobe(vec3 W, vec3 N, vec3 V, vec3 F0, float rough) {
+    vec3 sum = vec3(0.), R = reflect(-V, N); float a = max(rough*rough, .002);
+    for (int i = 0; i < ${NL}; i++) {
+      vec3 Lv = uLP[i] - W; float d2 = dot(Lv, Lv), d = sqrt(d2); vec3 L0 = Lv/d;
+      float cone = 1.;
+      if (uLS[i].y > -1.5) { float c = dot(-L0, uLD[i]) - uLS[i].y; cone = c <= 0. ? 0. : uLS[i].z > 0. ? smoothstep(0., uLS[i].z, c) : 1.; }
+      if (cone <= 0. || dot(N, L0) <= 0.) continue;
+      vec3 toRay = dot(Lv, R)*R - Lv; vec3 L = normalize(Lv + toRay*clamp(uLS[i].x/max(length(toRay), 1e-4), 0., 1.));
+      float aw = clamp(a + uLS[i].x/(2.*d), 0., 1.);
+      sum += ggx(N, V, L, F0, aw)*(a*a/(aw*aw))*uLI[i]*(cone/d2);
+    }
+    return sum; }` : ''}
+`;
+}
+
 // Feed the sun-free Cycles radiance to Three's standard PBR materials (the Library drone
 // and its book). A single decode and PMREM while the room is covered, not six room draws
 // using a floor reflection captured from the wrong eye. Three measures longitude from +X.
@@ -78,6 +164,13 @@ export const chartPars = `uniform sampler2D tChart; uniform mat4 uChartVP; unifo
     vec4 q=uChartVP*vec4(W,1.); vec2 uv=q.xy/q.w*.5+.5;
     float r=vFinish.a, lod=log2(1.+r*r*float(textureSize(tChart,0).y)*.18);
     return textureLod(tChart,uv,lod).rgb*envWeight(r,clamp(dot(N,V),0.,1.));
+  }`;
+// The same for a LIVE room: weighted by this lobe's split-sum reflectance E.
+export const chartParsLive = `uniform sampler2D tChart; uniform mat4 uChartVP; uniform vec4 uChart;
+  vec3 chartLive(vec3 W,vec3 N,vec3 V,vec3 E,float r){
+    if(uMirror>.5 || N.y<.97 || V.y<=0. || abs(W.y-uChart.y)>.004 || distance(W.xz,uChart.xz)>uChart.w) return vec3(0.);
+    vec4 q=uChartVP*vec4(W,1.); vec2 uv=q.xy/q.w*.5+.5;
+    return textureLod(tChart,uv,log2(1.+r*r*float(textureSize(tChart,0).y)*.18)).rgb*E;
   }`;
 export function chartReflection(center, radius, mirror) {
   const rt = new THREE.WebGLRenderTarget(4,4,{type:mirror.rt.texture.type,depthBuffer:false,

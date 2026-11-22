@@ -10,10 +10,11 @@ import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';
 import { createRouteMap } from './routemap.js';
 import { createDrone } from './drone.js';
-import { probePars, chartPars, chartReflection, probeEnvironment } from './reflections.js';
+import { probePars, chartPars, chartParsLive, chartReflection, probeEnvironment, liveSpecPars } from './reflections.js';
 import { windowShadow, receiveWindowSun } from './sunlight.js';
 
 const pickMat = new THREE.MeshBasicMaterial({ visible: false });
+const _m3 = new THREE.Matrix3(), _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion();
 let ktx2;                                                           // one transcoder (and its workers) for every room
 const CH_GAIN = num('chandgain', 0.5), CH_SPEED = (2 * Math.PI) / num('chandperiod', 48);
 // The station spins, so the sky turns in the windows. ?roll=<seconds per turn> overrides the room's own period (0 stops it);
@@ -82,14 +83,30 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     if (!LIT.has(grp)) return {};
     return { tAlb: bakeTex(`${grp}_a`, 4), sk: bakeTex(`${grp}_s`, 1), tShadow: { value: shadow.rt.depthTexture }, uSunVP, uSunDir, uSunE, uSky };
   };
-  const probe = info.probe, polished = new Set(probe?.groups || []);
+  // LIVE: a bake with nothing view-dependent in it (blender/bake.py 'finish'); every reflection is drawn here.
+  const LIVE = !!info.finish && !SKIP.has('live');
+  const probe = info.probe, polished = new Set(LIVE ? [] : probe?.groups || []), finished = new Set(LIVE ? info.finish.groups : []);
   const chart = probe && info.map && !SKIP.has('chartreflection') ? chartReflection(B(info.map.c),info.map.r,mirror) : null;
   let probeU;
   if (probe) {
     const a = B(probe.bounds.min), b = B(probe.bounds.max);
-    probeU = {tRoomSpec:bakeTex('probe_c',1,true), uProbePos:{value:B(probe.origin)},
+    probeU = {tRoomSpec:bakeTex('probe_c',1,true), uProbePos:{value:probe.probes ? probe.probes.map((p) => B(p.origin)) : B(probe.origin)},
       uBoxLo:{value:a.clone().min(b)}, uBoxHi:{value:a.clone().max(b)}, uProbeRange:{value:probe.range}, uSpecGain:{value:num('spec',1)}};
   }
+  // The window's sky, for reflected rays leaving the room: the same backdrop texture as the window, turned with it.
+  const skyTex = info.portal ? bakeTex('backdrop', 4) : null;
+  const skyU = LIVE && skyTex && !SKIP.has('skyrefl') ? { tSky: skyTex, uSkyM: { value: new THREE.Matrix3() }, uSkyHalf: { value: Math.tan(THREE.MathUtils.degToRad((info.backdrop_fov || 80) / 2)) },
+    uSkyGain: { value: num('earth', 0.75) }, uSkyLod: { value: 0 } } : null;
+  // Things that turn (the orrery): rendered into a small cube each frame, seen in reflections on a sphere around them.
+  const LIVE_LAYER = 6, liveRT = LIVE && info.chand?.center && !SKIP.has('liverefl') ? new THREE.WebGLCubeRenderTarget(num('livecube', 128), { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter }) : null;
+  const liveBlank = liveRT && new THREE.WebGLCubeRenderTarget(1);
+  const liveU = liveRT && { tLive: { value: liveRT.texture }, uLiveEye: { value: B([info.chand.center[0], info.chand.center[1], 2.4]) }, uLiveC: { value: B(info.chand.center) },
+    uLiveR: { value: num('liver', 2.6) }, uLiveLod: { value: 0 } };
+  // The lamps' own highlights (their light is in the bake; a lamp itself is invisible to the probes).
+  const LAMPS = LIVE && !SKIP.has('lamps') ? (info.lights || []).slice(0, 16) : [];
+  const lampU = LAMPS.length ? { uLP: { value: LAMPS.map((l) => B(l.pos)) }, uLI: { value: LAMPS.map((l) => V(...l.intensity)) },
+    uLD: { value: LAMPS.map((l) => (l.dir ? B(l.dir) : V())) }, uLS: { value: LAMPS.map((l) => V(l.radius, l.dir ? l.cos : -2, l.dir ? l.smooth : 0)) } } : {};
+  const livePars = LIVE && probe ? liveSpecPars({ probes: probe.probes?.length || 1, sky: !!skyU, live: !!liveU, lights: LAMPS.length }) : '';
   const visibility = windowShadow(shadowTexel,SH);
   const litGLSL = (grp, into) => (LIT.has(grp) ? `
       ${into} += mix(dec(texture(sk, vec3(vUv, uSky.x))), dec(texture(sk, vec3(vUv, uSky.y))), uSky.z)*${num('sky', 1).toFixed(3)};
@@ -104,7 +121,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       ${polished.has(grp) ? 'vFinish = color;' : ''} vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }` : VERT);
   const PARS = `uniform sampler2D map, tAlb, tShadow; uniform highp sampler2DArray lc, sk; uniform vec3 uChand, uSunDir, uSunE, uSky; uniform mat4 uSunVP; uniform float uMirror;
     varying vec2 vUv; varying vec3 vW, vN; ${DEC} ${visibility}`;
-  const bakedMat = (map, grp, gain = 1) => new THREE.ShaderMaterial({
+  const bakedMat = (map, grp, gain = 1) => (finished.has(grp) ? liveMat(map, grp, gain) : new THREE.ShaderMaterial({
     uniforms: { map, uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp), ...(polished.has(grp) ? {...probeU,...chart?.uniforms} : {}) },
     side: THREE.DoubleSide, vertexColors: polished.has(grp), vertexShader: vert(grp),
     fragmentShader: `${PARS} uniform float uGain; ${polished.has(grp) ? probePars + (chart ? chartPars : '') : ''}
@@ -112,15 +129,59 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         ${polished.has(grp) ? 'vec3 N = normalize(vN), V = normalize(cameraPosition-vW); c += roomSpec(vW,dot(N,V) < 0. ? -N : N,V);' : ''}
         ${polished.has(grp) && chart ? 'c += chartLight(vW,N,V);' : ''}
         gl_FragColor = vec4(c*uGain, 1.0); ${DIST} }`,
+  }));
+  // Every baked surface of a LIVE room. The atlas is what leaves it diffusely, evaluated looking straight down onto
+  // it; at this pixel's angle the specular layers (base and coat) take more of the light, so the diffuse is reduced
+  // by the ratio of their reflectances, before their reflections are added for this eye.
+  const LUM = 'vec3(.2126,.7152,.0722)';
+  const FINISH_VIEW = num('finishview', 0);         // QA: 1 roughness, 2 occlusion, 3 lamp visibility, 4 reflectance scale, 5 coat, 6 diffuse kept, 7 window sun, 8 normal
+  const liveMat = (map, grp, gain) => new THREE.ShaderMaterial({
+    uniforms: { map, tFin: bakeTex(`${grp}_f`, 2), uMirror, uGain: { value: gain }, uChand, ...layerUniforms(grp), ...litUniforms(grp), ...probeU, ...skyU, ...liveU, ...lampU, ...chart?.uniforms },
+    side: THREE.DoubleSide, vertexColors: true,
+    vertexShader: `attribute vec2 uv1; varying vec2 vUv, vCoat; varying vec3 vW, vN; varying vec4 vSpec;
+      void main(){ vUv = uv; vCoat = uv1; vSpec = color; vN = (vec4(normalMatrix*normal,0.)*viewMatrix).xyz;
+        vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
+    fragmentShader: `${PARS} uniform float uGain; uniform sampler2D tFin; varying vec2 vCoat; varying vec4 vSpec;
+      ${livePars} ${chart ? chartParsLive : ''}
+      void main(){
+        vec3 c = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'c')}
+        ${LIT.has(grp) ? `c += mix(dec(texture(sk, vec3(vUv, uSky.x))), dec(texture(sk, vec3(vUv, uSky.y))), uSky.z)*${num('sky', 1).toFixed(3)};` : ''}
+        c *= ${num('baked', 1).toFixed(3)};                  // QA: ?baked=0 leaves only the live terms
+        vec3 N = normalize(vN), V = normalize(cameraPosition - vW); if (dot(N, V) < 0.) N = -N;
+        float nv = clamp(dot(N, V), 1e-3, 1.);
+        vec4 fin = texture2D(tFin, vUv);                    // roughness, occlusion, lamp visibility, reflectance/2
+        float rough = clamp(fin.r, .045, 1.), coatW = vSpec.a, coatR = clamp(vCoat.x, .045, 1.);
+        vec3 F0 = vSpec.rgb*(2.*fin.a);
+        vec2 ab = envAB(rough, nv), ab1 = envAB(rough, 1.), cb = envAB(coatR, nv), cb1 = envAB(coatR, 1.);
+        vec3 E = F0*ab.x + ab.y; float Ec = coatW*(.04*cb.x + cb.y);
+        float keep = (1. - dot(E, ${LUM}))/max(.05, 1. - dot(F0*ab1.x + ab1.y, ${LUM}))*(1. - Ec)/max(.05, 1. - coatW*(.04*cb1.x + cb1.y));
+        c *= keep;
+        vec3 R = reflect(-V, N);
+        const float ENV = ${num('env', 1).toFixed(3)};    // QA: ?env=0 drops the room/sky/live environment
+        vec3 spec = envAlong(vW, R, rough)*E*specOcc(fin.g, nv, rough)*ENV;
+        ${LAMPS.length ? 'spec += lampLobe(vW, N, V, F0, rough)*fin.b;' : ''}
+        ${chart ? 'spec += chartLive(vW, N, V, E, rough);' : ''}
+        ${LIT.has(grp) ? `float ndl = dot(N, uSunDir), open = windowVisibility(vW, N, ndl);
+        if (open > 0.) { vec4 a = texture2D(tAlb, vUv); c += a.rgb*a.rgb*keep*uSunE*(ndl*open);
+          spec += ggx(N, V, uSunDir, F0, max(rough*rough, .002))*uSunE*(3.14159265*open); }` : 'float open = 0.;'}
+        if (coatW > .005) {                                 // a clear coat: a sharp second lobe over all of that
+          spec = spec*(1. - Ec) + envAlong(vW, R, coatR)*Ec*specOcc(fin.g, nv, coatR)*ENV;
+          ${LAMPS.length ? 'spec += lampLobe(vW, N, V, vec3(.04), coatR)*(coatW*fin.b);' : ''}
+          ${LIT.has(grp) ? 'if (open > 0.) spec += ggx(N, V, uSunDir, vec3(.04), max(coatR*coatR, .002))*uSunE*(3.14159265*open*coatW);' : ''}
+        }
+        gl_FragColor = vec4((c + spec*uSpecGain)*uGain, 1.0);
+        ${FINISH_VIEW === 8 ? 'gl_FragColor = vec4(N*.5 + .5, 1.);' : FINISH_VIEW ? `gl_FragColor = vec4(vec3(${['fin.r', 'fin.g', 'fin.b', 'fin.a*2.', 'vSpec.a', 'keep', 'open'][FINISH_VIEW - 1]}), 1.);` : ''} ${DIST} }`,
   });
   // ---- polished floor: baked diffuse light + the live planar reflection that main.js renders into mirror.rt
   const F0 = ((info.floor.ior - 1) / (info.floor.ior + 1)) ** 2, ROUGH = (info.floor.rough[0] + info.floor.rough[1]) / 2;
   const floorMat = (map, grp) => new THREE.ShaderMaterial({
     uniforms: { map, tRefl: { value: mirror.rt.texture }, uMirrorVP: { value: mirror.vp }, uSize: { value: mirror.size }, uPxR: mirror.pxPerRad,
-      uMinLod: mirror.minLod, uAlpha: { value: ROUGH * ROUGH }, uTile: { value: info.floor.tile }, uF0: { value: F0 }, uFloorRefl: {value:num('floorrefl',1)}, uMirror, uChand, ...layerUniforms(grp), ...litUniforms(grp) },
+      uMinLod: mirror.minLod, uAlpha: { value: ROUGH * ROUGH }, uTile: { value: info.floor.tile }, uF0: { value: F0 }, uFloorRefl: {value:num('floorrefl',1)}, uMirror, uChand, ...layerUniforms(grp), ...litUniforms(grp),
+      ...(LIVE ? { ...probeU, ...skyU, ...liveU, ...lampU } : {}) },
     vertexShader: vert(grp),
     fragmentShader: `${PARS}
       uniform sampler2D tRefl; uniform mat4 uMirrorVP; uniform vec2 uSize; uniform float uPxR, uAlpha, uTile, uF0, uMinLod, uFloorRefl;
+      ${LIVE ? livePars : ''}
       void main(){
         vec3 diffuse = dec(texture2D(map, vUv)); ${layerGLSL(grp, 'diffuse')} ${litGLSL(grp, 'diffuse')}
         vec3 V = normalize(cameraPosition - vW);
@@ -153,11 +214,30 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         }
         float F = uF0 + (1.0 - uF0)*pow(1.0 - cosT, 5.0);
         gl_FragColor = vec4(diffuse*(1.0 - F)*(1.0 - 0.5*joint) + R*F*uFloorRefl*(1.0 - 0.9*joint), 1.0);
+        ${LIVE && LIT.has(grp) ? `{   // the sun's glare: GGX for this eye, widened for the 0.9 degree disc (Karis), shadowed like the sunlight
+          float ndl = uSunDir.y, open = windowVisibility(vW, vec3(0., 1., 0.), ndl);
+          if (open > 0.) {
+            float a = uAlpha, aw = a + .0039, a2 = aw*aw, nv = max(V.y, 1e-3); vec3 H = normalize(uSunDir + V);
+            float d = H.y*H.y*(a2 - 1.) + 1., vis = .5/max(1e-4, ndl*sqrt(nv*nv*(1. - a2) + a2) + nv*sqrt(ndl*ndl*(1. - a2) + a2));
+            float Fs = uF0 + (1. - uF0)*pow(1. - clamp(dot(V, H), 0., 1.), 5.);
+            gl_FragColor.rgb += uSunE*(Fs*a2*vis/(d*d)*ndl*(a*a/(aw*aw))*open*uFloorRefl*(1. - 0.9*joint));
+          } }` : ''}
+        ${LIVE && LAMPS.length ? 'gl_FragColor.rgb += lampLobe(vW, vec3(0., 1., 0.), V, vec3(uF0), sqrt(uAlpha))*uFloorRefl*(1. - 0.9*joint);   // lamps have no geometry to mirror' : ''}
       }`,
   });
   // Frameless glass balustrade. Additive: what glass adds to the view is reflection, strongest at grazing angles,
   // plus the green-white glint of its polished edges (top edge and the joints between 2 m panels).
-  const glassMat = new THREE.ShaderMaterial({
+  const glassMat = LIVE ? new THREE.ShaderMaterial({
+    ...GLOW, uniforms: { ...probeU, ...skyU, ...liveU, ...lampU }, side: THREE.DoubleSide, vertexShader: VERT,
+    fragmentShader: `varying vec3 vW; varying vec2 vUv; ${livePars}
+      void main(){
+        vec3 v = normalize(cameraPosition - vW), n = vec3(v.x < 0. ? -1. : 1., 0., 0.);   // the panes face +-X
+        vec2 ab = envAB(.065, clamp(abs(v.x), 1e-3, 1.));
+        float j = abs(fract(vW.z/2.0 + 0.5) - 0.5)*2.0, fw = fwidth(vW.z/2.0)*2.0, joint = 1.0 - smoothstep(0.004, 0.004 + fw, j);
+        float top = smoothstep(0.975, 0.99, vUv.y);
+        gl_FragColor = vec4(envAlong(vW, reflect(-v, n), .065)*(vec3(.041,.044,.043)*ab.x + ab.y)*uSpecGain + vec3(0.55, 0.9, 0.8)*(joint*0.10 + top*0.22), 1.0);
+      }`,
+  }) : new THREE.ShaderMaterial({
     ...GLOW, uniforms:probeU || {}, side: THREE.DoubleSide, vertexShader: VERT,
     fragmentShader: `varying vec3 vW; varying vec2 vUv;
       ${probe ? probePars.replace('varying vec4 vFinish;', 'const vec4 vFinish=vec4(.041,.044,.043,.065);') : ''}
@@ -209,12 +289,19 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     if (!pivots[turn]) { pivots[turn] = new THREE.Group(); pivots[turn].position.set(info.chand.pivot[0], 0, -info.chand.pivot[1]); scene.add(pivots[turn]); pivots[turn].updateMatrixWorld(); }
     pivots[turn].attach(o); o.updateMatrix();
   }
+  let liveCam = null;
+  if (liveRT) {                                         // from below the orrery, where nearly every reflector sees it from
+    liveCam = new THREE.CubeCamera(0.05, 80, liveRT); liveCam.position.copy(liveU.uLiveEye.value);
+    for (const c of liveCam.children) c.layers.set(LIVE_LAYER);
+    for (const o of movers) o.layers.enable(LIVE_LAYER);
+    scene.add(liveCam);
+  }
 
   // ---- outside: Earth at sunrise (NASA Blue Marble + Black Marble imagery) rendered in Cycles; effectively at infinity
   let backdrop, shaft; const sky = new THREE.Group(), AXIS = SPUN ? B(SPUN.axis).normalize() : PORTAL.clone().sub(CAM).normalize(); scene.add(sky);       // orientation only; infinity is evaluated separately for each rendering camera
   if (info.portal) {
     const D = 900, dir = AXIS.clone(), size = 2 * D * Math.tan(THREE.MathUtils.degToRad((info.backdrop_fov || 80) / 2));
-    backdrop = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bakedMat(bakeTex('backdrop', 4), null, num('earth', 0.75)));
+    backdrop = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bakedMat(skyTex, null, num('earth', 0.75)));
     // The main camera, mirror and drone cubemap have different origins. Centre infinity
     // on the active eye in the shader, like the sun and storm sprites; never leak parallax.
     backdrop.material.vertexShader = `varying vec2 vUv; varying vec3 vW; void main(){ vUv=uv;
@@ -229,7 +316,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         void main(){ vP = position.xy; vec3 c = mat3(viewMatrix)*uDir*860.0;       // just in front of the backdrop plane
           gl_Position = projectionMatrix*vec4(c + vec3(position.xy*uSize*860.0, 0.0), 1.0); }`,
       fragmentShader: `uniform float uGain, uMirror; varying vec2 vP;
-        void main(){ float r = length(vP), a = atan(vP.y, vP.x);
+        void main(){ ${LIVE ? 'if (uMirror > 0.5) discard;   // the floor draws its own glare of the sun (room.js floorMat)' : ''}
+          float r = length(vP), a = atan(vP.y, vP.x);
           // the photosphere is thousands of times brighter than anything indoors. Seen directly that only needs to be
           // "far above white"; seen in the floor its true strength is what survives the Fresnel loss and the blur.
           float disc = smoothstep(0.034, 0.024, r)*mix(70.0, 2600.0, uMirror);
@@ -239,6 +327,11 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
           gl_FragColor = vec4(col*uGain, 1.0); }`,
     }));
     sun.frustumCulled = false; sun.renderOrder = 1; sky.add(backdrop); scene.add(sun);
+    backdrop.updateMatrix();
+    if (skyU) {                                         // rows: the plane's right, up and the direction it lies in
+      const e = backdrop.matrix.elements, ax = (i) => V(e[i], e[i + 1], e[i + 2]).normalize(), along = backdrop.position.clone().normalize();
+      skyU.frame = new THREE.Matrix3().set(...ax(0).toArray(), ...ax(4).toArray(), ...along.toArray());
+    }
   }
   // ---- thunderstorms flickering in the clouds on Earth's night side. Points on the globe (taken from the Cycles scene)
   // are projected to infinity, like the backdrop itself.
@@ -382,6 +475,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     update(t) {
       const roll = rollAt(t);
       sky.quaternion.setFromAxisAngle(AXIS, roll); sunNow.copy(SUN).applyQuaternion(sky.quaternion);
+      if (skyU?.frame) skyU.uSkyM.value.copy(skyU.frame).multiply(_m3.setFromMatrix4(_m4.makeRotationFromQuaternion(_q.copy(sky.quaternion).invert())));
       if (NSKY) { const x = ((roll / (2 * Math.PI)) % 1 + 1) % 1 * NSKY, i = Math.floor(x) % NSKY; uSky.value.set(i, (i + 1) % NSKY, x - Math.floor(x)); }
       // orrery: turn the rings and blend the three baked light phases for the current angle
       const phi = CH_FIXED ?? t * CH_SPEED;
@@ -395,6 +489,13 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
         drone.setEnv((drone.lit = pmrem.fromCubemap(cube.texture)).texture); cube.dispose(); pmrem.dispose();
       }
     },
-    dispose: () => { drone?.lit?.dispose?.(); chart?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
+    /** Per frame, before the mirror and the view: what turns, as the reflections will see it. */
+    capture: liveRT && ((renderer) => {
+      const bg = scene.background, clear = renderer.getClearAlpha(), u = liveU.tLive;
+      scene.background = null; renderer.setClearAlpha(0); u.value = liveBlank.texture;      // no sampling of the target being drawn
+      liveCam.update(renderer, scene);
+      scene.background = bg; renderer.setClearAlpha(clear); u.value = liveRT.texture;
+    }),
+    dispose: () => { drone?.lit?.dispose?.(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
 }

@@ -114,6 +114,7 @@ function renderMirror() {
 function draw(t) {
   renderer.info.reset();
   if (!SKIP.has('sunlight')) room.prepass?.(renderer);
+  room.capture?.(renderer);
   room.chart?.draw(renderer,room.scene,camera);
   if (!SKIP.has('mirror')) renderMirror();
   renderer.setRenderTarget(post.scene); renderer.render(room.scene, camera);

@@ -37,19 +37,30 @@ def pack(room):
         needed.update(f'{group}_c{i}' for i in range(len(info['chand']['phases'])))
     for group in info.get('spin',{}).get('layered',[]):
         needed.add(group+'_a'); needed.update(f'{group}_s{i}' for i in range(info['spin']['phases']))
-    if 'polish' in needed and 'probe' not in info: sys.exit(f'{room}: polished fittings have no reflection probe')
+    rgba = set()                                                      # outputs that keep a fourth channel
+    if 'finish' in info:
+        # Live reflections: every surface needs its finish atlas and the room its probes. Bakes made
+        # before this were evaluated from the hero camera; never mix the two kinds of master.
+        if not os.path.isfile(f'{src}/probe.json'): sys.exit(f'{room}: render blender/reflection_probe.py for this bake')
+        with open(f'{src}/probe.json') as f: probe = json.load(f)
+        if probe.get('alpha') != 'interior' or not probe.get('probes'): sys.exit(f'{room}: probe.json predates the live-reflection format')
+        missing = set(info['groups']) - set(info['finish']['groups']) - {g for g in info['groups'] if g.startswith('floor')}
+        if missing: sys.exit(f'{room}: no finish atlas for {sorted(missing)}')
+        needed.update(f'{g}_f' for g in info['finish']['groups']); rgba.update(f'{g}_f' for g in info['finish']['groups'])
+        info['probe'] = dict(probe, groups=sorted(info['groups'])); rgba.add('probe_c')
+    elif 'polish' in needed and 'probe' not in info: sys.exit(f'{room}: polished fittings have no reflection probe')
     if 'probe' in info:
         p = info['probe']
         if not set(p['groups']) <= set(info['groups']): sys.exit(f'{room}: unrecognised polished group')
         if p['roughness'] != [0,.25,.5,.75,1] or p['encoding'] != 'sqrt': sys.exit(f'{room}: unsupported probe encoding or roughness levels')
-        needed.update(f'probe_c{i}' for i in range(len(p['roughness'])))
+        needed.update(f'probe_c{i}' for i in range(len(p['roughness']) * len(p.get('probes', [0]))))
     for n in sorted(needed):
         if not os.path.isfile(f'{src}/tex/{n}.webp'): sys.exit(f'Missing {room} bake input: {n}.webp')
     # Do not take a working room offline while the encoders run (or if one fails).
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=f'.pack-{room}-', dir=os.path.dirname(dst)) as stage:
         new = f'{stage}/new'; os.makedirs(f'{new}/tex')
-        with tempfile.TemporaryDirectory() as tmp: encode(room, src, new, tmp, needed)
+        with tempfile.TemporaryDirectory() as tmp: encode(room, src, new, tmp, needed, rgba, info)
         old = f'{stage}/old'
         if os.path.isdir(dst): os.rename(dst,old)
         try: os.rename(new,dst)
@@ -57,28 +68,31 @@ def pack(room):
             if os.path.isdir(old): os.rename(old,dst)
             raise
 
-def encode(room, src, dst, tmp, needed):
+def encode(room, src, dst, tmp, needed, rgba, info):
     jobs = {}                                                        # output name -> (kind, [source images, in layer order])
     for f in sorted(os.listdir(f'{src}/tex')):
         name, ext = os.path.splitext(f)
         if room == 'lobby' and f in {'landmask.png', 'citylights.png'}:
             shutil.copy(f'{src}/tex/{f}', f'{dst}/tex/{f}'); continue
         if ext != '.webp' or name not in needed: continue  # stale layers are not part of this room version
-        m = re.fullmatch(r'(.+)_([cs])(\d)', name)
+        m = re.fullmatch(r'(.+)_([cs])(\d+)', name)
         if m: jobs.setdefault(f'{m[1]}_{m[2]}', ('layers', []))[1].append(name)
-        else: jobs[name] = ('albedo' if name.endswith('_a') else 'backdrop' if name == 'backdrop' else 'base', [name])
+        else: jobs[name] = ('albedo' if name.endswith('_a') or name.endswith('_f') else 'backdrop' if name == 'backdrop' else 'base', [name])   # _f: smooth shader data, ETC1S
+    for kind, names in jobs.values():                                # layer k is image k: 'probe_c10' sorts before 'probe_c2'
+        names.sort(key=lambda n: int(re.search(r'(\d+)$', n)[1]) if kind == 'layers' else 0)
+        if kind == 'layers' and [int(re.search(r'(\d+)$', n)[1]) for n in names] != list(range(len(names))): sys.exit(f'{room}: layers {names} are not 0..n-1')
     def one(item):
         out, (kind, names) = item
         pngs = []
         for n in names:
             pngs.append(f'{tmp}/{n}.png')                            # the backdrop is the only image stored top row first
             run(DWEBP, '-quiet', *(['-flip'] if kind == 'backdrop' else []), f'{src}/tex/{n}.webp', '-o', pngs[-1])
-        run(KTX, 'create', '--format', 'R8G8B8_UNORM', '--assign-tf', 'linear', '--generate-mipmap',
+        run(KTX, 'create', '--format', 'R8G8B8A8_UNORM' if out in rgba else 'R8G8B8_UNORM', '--assign-tf', 'linear', '--generate-mipmap',
             *(['--layers', str(len(pngs))] if kind == 'layers' else []), *(ETC1S if kind == 'albedo' else UASTC), *pngs, f'{dst}/tex/{out}.ktx2')
     with ThreadPoolExecutor(3) as ex: list(ex.map(one, jobs.items()))
     # geometry: keep node names, extras and unused attributes (lightmap UVs, vertex colours); lightmap UVs stay floats (quantized ones need a texture transform that our materials do not have)
+    with open(f'{dst}/scene.json', 'w') as f: json.dump(info, f, indent=1)   # including the current probe.json
     run(GLTFPACK, '-i', f'{src}/room.glb', '-o', f'{dst}/room.glb', '-cc', '-kn', '-ke', '-km', '-kv', '-vp', '16', '-vtf', '-vn', '10', '-vc', '12')
-    shutil.copy(f'{src}/scene.json', f'{dst}/scene.json')
     size = lambda d: sum(os.path.getsize(os.path.join(p, f)) for p, _, fs in os.walk(d) for f in fs) / 1e6
     print('%-11s %5.1f MB -> %5.1f MB   (%d files -> %d)' % (room, size(src), size(dst), sum(len(f) for *_, f in os.walk(src)), sum(len(f) for *_, f in os.walk(dst))), flush=True)
 

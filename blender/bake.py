@@ -1,7 +1,12 @@
 """
-Path-trace room light into linear-HDR atlases. Run reflection_probe.py on the same .blend first.
-The floor and polished fittings exclude their first-hit glossy lobe: the viewer supplies it (planar / local IBL).
-Rough architecture retains its Cycles finish, including broad sheen and indirect glossy bounces.
+Path-trace room light into linear-HDR atlases. Run reflection_probe.py on the same .blend as well (either order).
+Nothing baked here depends on where anyone stands. Every atlas is the light leaving each surface diffusely,
+evaluated looking straight down onto the surface ('above surface', not from the hero camera), without its
+first-hit glossy or refraction. The viewer adds those for the current eye: planar mirrors, local Cycles reflection
+probes, the live sky, live sun and the room's lamps. Light that reached a surface via other surfaces' glossy
+bounces is diffuse at that surface and stays in the bake.
+Per surface the viewer gets its reflectance at normal incidence, clear coat and sheen (vertex attributes), and a
+small 'finish' atlas: roughness, local occlusion, visibility of the lamps and the texel-to-texel reflectance scale.
   ./run.sh -b lobby.blend --python bake.py -- <scale> <spp> [group,group,...]
 scale: 1.0 = final (4k atlases), 0.25 = quick preview.
 Outputs ../assets-src/<room>/{room.glb, scene.json, tex/<group>.webp}; tools/pack.py turns that into what the site serves.
@@ -18,18 +23,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 s = bpy.context.scene
 ROOM = s['lobby'].get('room', 'lobby')                 # each room bakes into its own asset folder
 OUTD = os.path.join(HERE, '..', 'assets-src', ROOM); os.makedirs(os.path.join(OUTD, 'tex'), exist_ok=True)
-PROBE_FILE = os.path.join(OUTD, 'probe.json')
-if not os.path.isfile(PROBE_FILE): raise RuntimeError('Render reflection_probe.py on this room before baking')
-with open(PROBE_FILE) as f: PROBE = json.load(f)
-if not all(os.path.isfile(os.path.join(OUTD, 'tex', f'probe_c{i}.webp')) for i in range(5)):
-    raise RuntimeError('Missing prefiltered Cycles reflection layers')
 HAS_CHAND = 'chand' in s['lobby'].keys()
 RES = {'floorN': 2048, 'floorF': 2048, 'center': 4096, 'archL': 4096, 'archR': 4096, 'archC': 4096, 'props': 4096, 'people': 4096, 'back': 1024, 'chandA': 1024, 'chandB': 1024}
 RES['folio'] = 2048               # dedicated UV area for the curved printed book faces at inspection distance
 RES['polish'] = 2048              # diffuse paint/ground below the live specular layer; sharp reflections need no atlas area
 LAYER_RES = 1024                      # the chandelier's light is low-frequency: small maps are enough
+# Roughness, occlusion and reflectance vary over centimetres to metres, not over a lightmap texel.
+FINISH_RES = lambda key: max(256, min(1024, RES[key] // 4))
+AO_DISTANCE = 1.0                     # metres: what can hide a reflection is local; the probe sees the rest
 PHASES = [0.0, 120.0, 240.0]          # rotation phases at which its light is baked (blended at runtime)
-PASSES = os.environ.get('LOBBY_PASSES', 'base,chand,layers,sky,albedo').split(',')
+PASSES = os.environ.get('LOBBY_PASSES', 'base,chand,layers,sky,albedo,finish').split(',')
 SPIN = s['lobby'].to_dict().get('spin')    # the room turns under the sky: see pass 'sky' below
 SKY_PHASES = 6; SKY_RES = 512; ALB_RES = 2048
 
@@ -45,7 +48,7 @@ s.cycles.use_adaptive_sampling = True; s.cycles.adaptive_threshold = 0.015
 s.cycles.use_denoising = True; s.cycles.denoiser = 'OPENIMAGEDENOISE'
 s.cycles.sample_clamp_indirect = 12
 s.cycles.max_bounces = 8
-s.render.bake.view_from = 'ACTIVE_CAMERA'     # reflections are traced as seen from the hero camera
+s.render.bake.view_from = 'ABOVE_SURFACE'     # never from a camera: the viewer owns everything that depends on the eye
 s.render.bake.margin = max(2, int(10 * SCALE)); s.render.bake.margin_type = 'EXTEND'
 s.render.bake.use_clear = True
 
@@ -62,12 +65,20 @@ def save_encoded(px, w, h, path, rng=HDR_RANGE):
     out.pixels.foreach_set(buf.ravel())
     out.filepath_raw = path; out.file_format = 'WEBP'; out.save(quality=94)
     bpy.data.images.remove(out)
+def save_data(rgba, w, h, path):
+    """Four linear 0..1 channels, losslessly: data for shaders, not light."""
+    out = bpy.data.images.new('data', w, h, alpha=True, float_buffer=False)
+    out.colorspace_settings.name = 'Non-Color'; out.alpha_mode = 'CHANNEL_PACKED'
+    out.pixels.foreach_set(np.clip(rgba, 0.0, 1.0).astype(np.float32).ravel())
+    out.filepath_raw = path; out.file_format = 'WEBP'; out.save(quality=100)
+    bpy.data.images.remove(out)
 
 vl = bpy.context.view_layer
 def activate(ob):
     bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); vl.objects.active = ob
 
-# ---- 1. apply modifiers, smooth shading with sharp edges
+# ---- 1. apply modifiers; creases on smooth surfaces. Faces keep the shading they were authored with: a flat box face
+# stays flat (forcing it smooth bent its normals ~15 degrees into its bevels, a pillow in every reflection).
 dg = bpy.context.evaluated_depsgraph_get()
 meshes = [o for o in s.objects if o.type == 'MESH' and ('grp' in o or 'em' in o)]
 for o in meshes:
@@ -75,7 +86,6 @@ for o in meshes:
         me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
         o.modifiers.clear(); o.data = me
     if 'grp' in o:
-        for pl in o.data.polygons: pl.use_smooth = True
         o.data.set_sharp_from_angle(angle=math.radians(38))
 
 # ---- 2. join per bake group / per emissive colour
@@ -95,30 +105,16 @@ def display_radiance(key):
     if re.match(r'(ice|white)\d', key): k *= 0.6      # roof strips sit behind diffusers, so the ceiling stays quiet
     if key in ('step', 'stair'): k *= 0.5             # hidden wash lights: only ever seen in the floor's reflection
     return [c[0] * k, c[1] * k, c[2] * k]
-# Split genuinely reflective finishes from the mostly matte shells, rather than adding a second
-# glossy reflection on top of Cycles'. Preserve the moving chandelier groups. These are all
-# single-finish kit pieces. COLOR_0 carries linear normal-incidence reflectance and perceptual
-# roughness, not a visible tint; the exporter keeps it even when the temporary material is removed.
+# Metal and glass fittings share a smaller atlas: very little of their light is diffuse. Every group's
+# reflection is drawn live; this split is only about atlas area.
 polished = {'chrome', 't_chrome', 'brass', 'gilt', 'copper', 'foil', 'solar', 't_glass',
             'glasstop', 'greenlamp', 'glassware', 'whisky', 'projection_optic'}
-reflective_groups = set()
 byg, bye = {}, {}
 for o in meshes:
     if 'grp' in o:
         group = o['grp']; m = o.data.materials[0] if len(o.data.materials) == 1 else None
-        if m and (m.name.rsplit('.', 1)[0] in polished or group.startswith('chand')):
-            group = group if group.startswith('chand') else 'polish'; o['grp'] = group; reflective_groups.add(group)
-            bs = m.node_tree.nodes['Principled BSDF'].inputs
-            ior, metal = bs['IOR'].default_value, bs['Metallic'].default_value
-            f0 = ((ior - 1) / (ior + 1)) ** 2
-            coat = bs['Coat Weight'].default_value
-            # Schlick at normal incidence for the clear top coat over a dielectric substrate.
-            f0 += (1 - f0) * .04 * coat
-            rgb = [(1-metal)*f0 + metal*x for x in bs['Base Color'].default_value[:3]]
-            rough = max(.045, min(1., bs['Roughness'].default_value))
-            ca = o.data.color_attributes.new('Specular', 'FLOAT_COLOR', 'CORNER')
-            ca.data.foreach_set('color', np.tile(np.array([*rgb,rough], np.float32), len(o.data.loops)))
-            o.data.color_attributes.active_color = ca; o.data.color_attributes.render_color_index = 0
+        if m and m.name.rsplit('.', 1)[0] in polished and not group.startswith('chand'):
+            group = 'polish'; o['grp'] = group
         byg.setdefault(group, []).append(o)
     else:
         key = o['em']; moving = key.startswith('chand')
@@ -153,6 +149,36 @@ for key, ob in groups.items():
         # or the atlas is mostly gaps
         bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=(11.0 if len(me.polygons) < 6000 else 2.5) / res, area_weight=0.0, correct_aspect=True, scale_to_bounds=False)
         bpy.ops.object.mode_set(mode='OBJECT')
+
+# ---- 3b. what each surface reflects with, read from its own material sliders, per face (groups mix materials):
+#   COLOR_0    = linear reflectance at normal incidence (dielectric IOR x level x tint, or the metal's colour), coat weight
+#   TEXCOORD_1 = coat roughness, sheen weight          (the lightmap keeps TEXCOORD_0)
+def principled(m):
+    if m and m.node_tree:
+        for n in m.node_tree.nodes:
+            if n.type == 'BSDF_PRINCIPLED': return n
+def reflectance(m):
+    b = principled(m)
+    if b is None: return (0.04, 0.04, 0.04, 0.0), (0.05, 0.0)
+    I = b.inputs; ior = I['IOR'].default_value; metal = I['Metallic'].default_value
+    f0d = min(1.0, ((ior - 1) / (ior + 1)) ** 2 * 2 * I['Specular IOR Level'].default_value)
+    f0 = [(1 - metal) * f0d * t + metal * c for t, c in zip(I['Specular Tint'].default_value[:3], I['Base Color'].default_value[:3])]
+    return (*f0, I['Coat Weight'].default_value), (I['Coat Roughness'].default_value, I['Sheen Weight'].default_value)
+def paint_finish(ob):
+    me = ob.data; n = len(me.loops)
+    mi = np.zeros(len(me.polygons), np.int32); me.polygons.foreach_get('material_index', mi)
+    lt = np.zeros(len(me.polygons), np.int32); me.polygons.foreach_get('loop_total', lt)
+    ls = np.zeros(len(me.polygons), np.int32); me.polygons.foreach_get('loop_start', ls)
+    if len(ls) and not np.array_equal(ls, np.concatenate(([0], np.cumsum(lt)[:-1]))): raise RuntimeError(f'{ob.name}: loops not in face order')
+    per_loop = np.repeat(mi, lt); spec = np.zeros((n, 4), np.float32); coat = np.zeros((n, 2), np.float32)
+    for k, slot in enumerate(me.materials):
+        a, c = reflectance(slot); sel = per_loop == k; spec[sel] = a; coat[sel] = c
+    for a in [a for a in me.color_attributes]: me.color_attributes.remove(a)
+    ca = me.color_attributes.new('Specular', 'FLOAT_COLOR', 'CORNER'); ca.data.foreach_set('color', spec.ravel())
+    me.color_attributes.active_color = ca; me.color_attributes.render_color_index = 0
+    uv = me.uv_layers.new(name='Coat'); uv.data.foreach_set('uv', coat.ravel())
+    me.uv_layers.active = me.uv_layers['UVMap']; me.uv_layers['UVMap'].active_render = True
+for ob in groups.values(): paint_finish(ob)
 
 # ---- 4. bake
 # Light is additive, so the turning chandelier is handled by splitting the lighting:
@@ -193,12 +219,12 @@ def bake_px(key, ob, res, margin, kind='COMBINED', direct=True):
     for m in bpy.data.materials:
         if m.node_tree and 'BAKE' in m.node_tree.nodes: m.node_tree.nodes['BAKE'].image = img
     activate(ob)
-    if kind == 'DIFFUSE': pf = {'COLOR'}
-    else:
-        pf = {'INDIRECT', 'DIFFUSE', 'TRANSMISSION'} | ({'DIRECT', 'EMIT'} if direct else set())
-        if not key.startswith('floor') and key not in reflective_groups: pf.add('GLOSSY')
     s.render.bake.margin = margin
-    bpy.ops.object.bake(type=kind, pass_filter=pf, margin=margin)
+    if kind in ('DIFFUSE', 'COMBINED'):
+        # Never GLOSSY or TRANSMISSION at the baked surface itself: both depend on the eye.
+        pf = {'COLOR'} if kind == 'DIFFUSE' else {'INDIRECT', 'DIFFUSE'} | ({'DIRECT', 'EMIT'} if direct else set())
+        bpy.ops.object.bake(type=kind, pass_filter=pf, margin=margin)
+    else: bpy.ops.object.bake(type=kind, margin=margin)
     px = pixels(img); bpy.data.images.remove(img)
     return px
 def bake(key, ob, res, name, margin):
@@ -261,7 +287,65 @@ if 'albedo' in PASSES and SPIN:
         res = max(128, int(min(RES[key] // 2, ALB_RES) * SCALE))
         save_encoded(bake_px(key, groups[key], res, max(2, int(6 * SCALE)), kind='DIFFUSE'), res, res, os.path.join(OUTD, 'tex', key + '_a.webp'), rng=1.0)
         print('BAKED %s_a %dpx' % (key, res), flush=True)
+
+# What the live reflections need from each texel (not from the hero view): R roughness as the shader computes it
+# (smudges, grime), G ambient occlusion within AO_DISTANCE, B how much of the lamps' light reaches it (their
+# highlights are drawn live), A reflectance relative to the vertex value / 2 (dirt and tint on metal).
+def reflectance_emission(on, saved=[]):
+    if not on:
+        for m, nodes, colour, strength, links in saved:
+            for n in nodes: m.node_tree.nodes.remove(n)
+            b = principled(m); b.inputs['Emission Color'].default_value = colour; b.inputs['Emission Strength'].default_value = strength
+            for socket, src in links: m.node_tree.links.new(src, b.inputs[socket])
+        saved.clear(); return
+    for m in bpy.data.materials:
+        b = principled(m)
+        if b is None: continue
+        I, nt = b.inputs, m.node_tree
+        links = [(k, l.from_socket) for k in ('Emission Color', 'Emission Strength') for l in I[k].links]
+        saved.append((m, [], tuple(I['Emission Color'].default_value), I['Emission Strength'].default_value, links))
+        for k in ('Emission Color', 'Emission Strength'):
+            for l in list(I[k].links): nt.links.remove(l)
+        I['Emission Strength'].default_value = 1.0; I['Emission Color'].default_value = (1, 1, 1, 1)
+        metal = I['Metallic'].default_value; f0 = reflectance(m)[0][:3]
+        if metal > 0 and I['Base Color'].is_linked:
+            lum = max(1e-4, 0.2126 * f0[0] + 0.7152 * f0[1] + 0.0722 * f0[2])
+            f0d = min(1.0, ((I['IOR'].default_value - 1) / (I['IOR'].default_value + 1)) ** 2 * 2 * I['Specular IOR Level'].default_value)
+            mix = nt.nodes.new('ShaderNodeMix'); mix.data_type = 'RGBA'; mix.inputs[0].default_value = metal
+            mix.inputs[6].default_value = (f0d, f0d, f0d, 1); nt.links.new(I['Base Color'].links[0].from_socket, mix.inputs[7])
+            sc = nt.nodes.new('ShaderNodeVectorMath'); sc.operation = 'SCALE'; sc.inputs['Scale'].default_value = 1.0 / lum
+            nt.links.new(mix.outputs[2], sc.inputs[0]); nt.links.new(sc.outputs['Vector'], I['Emission Color']); saved[-1][1].extend((mix, sc))
+FINISHED = []
+if 'finish' in PASSES:
+    s.world.light_settings.distance = AO_DISTANCE
+    for key in groups:
+        if key.startswith('floor') or (ONLY and key not in ONLY): continue
+        ob, res = groups[key], max(64, int(FINISH_RES(key) * SCALE)); t = time.time(); m = max(2, int(4 * SCALE))
+        rough = bake_px(key, ob, res, m, kind='ROUGHNESS')[:, 0]
+        ao = bake_px(key, ob, res, m, kind='AO')[:, 0]
+        chand_light(False); sky_light(False); sun_light(False)
+        for mat_ in EM_ALL: emis(mat_).default_value = 0.0
+        for l, e in LAMPS.items(): l.energy = e if l.type != 'SUN' else 0.0
+        lamps = bake_px(key, ob, res, m, kind='SHADOW')[:, 0] if any(l.type != 'SUN' and e > 0 for l, e in LAMPS.items()) else np.ones(res * res, np.float32)
+        reflectance_emission(True); rgb = bake_px(key, ob, res, m, kind='EMIT'); reflectance_emission(False)
+        scale = (0.2126 * rgb[:, 0] + 0.7152 * rgb[:, 1] + 0.0722 * rgb[:, 2]) / 2
+        chand_light(True); other_light(True)
+        save_data(np.stack([rough, ao, lamps, scale], 1), res, res, os.path.join(OUTD, 'tex', key + '_f.webp')); FINISHED.append(key)
+        print('BAKED %s_f %dpx in %.0fs (roughness %.2f..%.2f, occlusion %.2f, lamps %.2f, reflectance %.2f..%.2f)' % (
+            key, res, time.time() - t, rough.min(), rough.max(), ao.mean(), lamps.mean(), 2 * scale.min(), 2 * scale.max()), flush=True)
 chand_light(True); other_light(True)
+# The lamps (not the sun, not glowing surfaces) as the viewer draws their highlights, in Cycles' units:
+# radiant intensity I = P / 4 pi in W/sr; a spot keeps it inside a cone that softens over 'smooth' of its cosine.
+LIGHTS = []
+for o in s.objects:
+    if o.type != 'LIGHT' or o.data.type == 'SUN' or o.hide_render or not o.visible_glossy: continue
+    l = o.data
+    if l.type not in ('POINT', 'SPOT'): print('WARNING: no live highlight for', l.type, o.name); continue
+    item = {'name': o.name, 'pos': list(o.matrix_world.translation), 'radius': l.shadow_soft_size, 'intensity': [l.energy * c / (4 * math.pi) for c in l.color]}
+    if l.type == 'SPOT':
+        d = (o.matrix_world.to_3x3() @ Vector((0, 0, -1))).normalized(); ca = math.cos(l.spot_size / 2)
+        item.update(dir=list(d), cos=ca, smooth=(1 - ca) * l.spot_blend)
+    LIGHTS.append(item)
 
 # ---- 5. export geometry (no textures inside; three.js pairs meshes with atlases by name)
 ph = {}
@@ -279,7 +363,9 @@ bpy.ops.export_scene.gltf(filepath=os.path.join(OUTD, 'room.glb'), export_format
                           export_extras=True, export_apply=False, export_animations=False, export_cameras=False, export_lights=False)
 info = s['lobby'].to_dict()
 info['room'] = ROOM; info['v'] = int(time.time()); info['groups'] = list(groups.keys()); info['hdr_range'] = HDR_RANGE; info['em_range'] = EM_RANGE
-info['probe'] = dict(PROBE, groups=sorted(reflective_groups))
+info.pop('probe', None)                          # tools/pack.py adds the current probe.json
+info['finish'] = {'groups': FINISHED, 'view': 'above surface', 'glossy': 'live', 'ao_distance': AO_DISTANCE}
+info['lights'] = LIGHTS
 if SPIN: info['spin'] = dict(SPIN, phases=SKY_PHASES, layered=static)
 if HAS_CHAND: info['chand'] = dict(info.get('chand', {}), phases=PHASES, layered=static, spin=dict(chandA=1, chandB=-1))
 json.dump(info, open(os.path.join(OUTD, 'scene.json'), 'w'), indent=1)

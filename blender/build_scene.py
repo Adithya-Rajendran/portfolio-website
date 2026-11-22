@@ -263,6 +263,10 @@ def finish(name, bm, m, grp=None, em=None, fx=None, bevel=0.0, seg=2, col=None, 
         md = ob.modifiers.new('bev', 'BEVEL')
         md.width = bevel; md.segments = seg; md.limit_method = 'ANGLE'
         md.angle_limit = math.radians(35)
+    if m == 'leaf' and grp:
+        # A blade is a single sheet. A lightmap stores one side of a face, so give each blade a front and a back
+        # 1.5 mm apart: each side then bakes its own light (Cycles renders the same geometry).
+        md = ob.modifiers.new('two-sided', 'SOLIDIFY'); md.thickness = 0.0015; md.offset = 0.0; md.use_even_offset = True
     return ob
 
 def box(name, x0, x1, y0, y1, z0, z1, m=None, grp=None, **kw):
