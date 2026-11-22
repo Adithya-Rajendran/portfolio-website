@@ -127,6 +127,7 @@ co.location = CAM_POS; co.rotation_euler = (CAM_TGT - CAM_POS).to_track_quat('-Z
 w = bpy.data.worlds.new('Dark'); w.use_nodes = True; w.node_tree.nodes['Background'].inputs['Color'].default_value = (0, 0, 0, 1); scene.world = w
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
+light_level(2)                      # brighter fittings throughout: the chart room keeps its dark dome
 scene['lobby'] = dict(room='experience', exposure=1.5, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
                       doors=DOORS, screens=[f'FX_screen{k}' for k in (4, 3, 2, 1)], map=dict(c=[0.0, 0.0, TABLE_H], r=TABLE_R), floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=1.5), y0=Y0, y1=Y1,
                       em={k: dict(color=list(c), strength=s) for k, (c, s) in EM.items()})

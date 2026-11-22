@@ -349,6 +349,7 @@ co = bpy.data.objects.new('Hero', cam); scene.collection.objects.link(co)
 co.location = CAM_POS; co.rotation_euler = (CAM_TGT - CAM_POS).to_track_quat('-Z', 'Y').to_euler(); scene.camera = co
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
+light_level(3)                      # brighter fittings throughout: reading light
 scene['lobby'] = dict(room='writing', exposure=1.3, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
                       doors=DOORS, screens=SCREENS,
                       # the terminal: where to stand; the drone: its cradle, where it presents a volume, the shelf slots

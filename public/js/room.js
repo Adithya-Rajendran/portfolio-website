@@ -16,7 +16,7 @@ import { windowShadow, receiveWindowSun } from './sunlight.js';
 const pickMat = new THREE.MeshBasicMaterial({ visible: false });
 const _m3 = new THREE.Matrix3(), _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion();
 let ktx2;                                                           // one transcoder (and its workers) for every room
-const CH_GAIN = num('chandgain', 0.5), CH_SPEED = (2 * Math.PI) / num('chandperiod', 48);
+const CH_GAIN = num('chandgain', 1), EARTH = num('earth', 1), CH_SPEED = (2 * Math.PI) / num('chandperiod', 48);
 // The station spins, so the sky turns in the windows. ?roll=<seconds per turn> overrides the room's own period (0 stops it);
 // ?rollat=<degrees> holds one angle.
 const ROLL = num('roll', 0), ROLL_AT = num('rollat', NaN), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -96,7 +96,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   // The window's sky, for reflected rays leaving the room: the same backdrop texture as the window, turned with it.
   const skyTex = info.portal ? bakeTex('backdrop', 4) : null;
   const skyU = LIVE && skyTex && !SKIP.has('skyrefl') ? { tSky: skyTex, uSkyM: { value: new THREE.Matrix3() }, uSkyHalf: { value: Math.tan(THREE.MathUtils.degToRad((info.backdrop_fov || 80) / 2)) },
-    uSkyGain: { value: num('earth', 0.75) }, uSkyLod: { value: 0 } } : null;
+    uSkyGain: { value: EARTH }, uSkyLod: { value: 0 } } : null;
   // Things that turn (the orrery): rendered into a small cube each frame, seen in reflections on a sphere around them.
   const LIVE_LAYER = 6, liveRT = LIVE && info.chand?.center && !SKIP.has('liverefl') ? new THREE.WebGLCubeRenderTarget(num('livecube', 128), { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter }) : null;
   const liveBlank = liveRT && new THREE.WebGLCubeRenderTarget(1);
@@ -265,8 +265,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     if (u.grp?.startsWith('floor')) { o.material = floorMat(bakeTex(u.grp, 2), u.grp); floors.push(o); }
     else if (u.grp) o.material = bakedMat(bakeTex(u.grp, 4), u.grp);
     else if (u.em === 'static') o.material = stripMat;
-    else if (u.em) {                                    // the orrery's lamps (baked far brighter than they are shown)
-      const { color: c, strength } = info.em[u.em], k = Math.min(strength, 7);
+    else if (u.em) {                                    // the orrery's lamps, as bright as the strips may be (bake.py EM_RANGE)
+      const { color: c, strength } = info.em[u.em], k = Math.min(strength, info.em_range || 8);
       o.material = flatMat(new THREE.Color(c[0] * k, c[1] * k, c[2] * k));
     } else if (u.fx === 'screen') {                     // scene.json lists the screens in the order content.json describes them
       o.material = screens.materials[Math.max(0, (info.screens || []).indexOf(u.name)) % screens.materials.length]; screenMeshes.push(o);
@@ -302,7 +302,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   let backdrop, shaft; const sky = new THREE.Group(), AXIS = SPUN ? B(SPUN.axis).normalize() : PORTAL.clone().sub(CAM).normalize(); scene.add(sky);       // orientation only; infinity is evaluated separately for each rendering camera
   if (info.portal) {
     const D = 900, dir = AXIS.clone(), size = 2 * D * Math.tan(THREE.MathUtils.degToRad((info.backdrop_fov || 80) / 2));
-    backdrop = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bakedMat(skyTex, null, num('earth', 0.75)));
+    backdrop = new THREE.Mesh(new THREE.PlaneGeometry(size, size), bakedMat(skyTex, null, EARTH));
     // The main camera, mirror and drone cubemap have different origins. Centre infinity
     // on the active eye in the shader, like the sun and storm sprites; never leak parallax.
     backdrop.material.vertexShader = `varying vec2 vUv; varying vec3 vW; void main(){ vUv=uv;

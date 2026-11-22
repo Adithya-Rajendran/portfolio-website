@@ -521,6 +521,17 @@ def bench(ASSETS, place={}):
     print('ASSET', name, 'MESHES', len(parts))
     raise SystemExit
 
+def light_level(k):
+    """Refit a room with k times the light: every lamp and glowing fitting (EM, the luminous panels), never the sun,
+    the Earth or the display screens. Call once, after the room's lights exist and before scene['lobby'] is written
+    (it exports EM, which the viewer draws the strips from)."""
+    for key, (c, st) in list(EM.items()): EM[key] = (c, st * k)
+    for m in bpy.data.materials:
+        if m.name.startswith('EM_') or m.name in ('lum_warm', 'lum_cool'):
+            b = m.node_tree.nodes['Principled BSDF']; b.inputs['Emission Strength'].default_value *= k
+    for l in bpy.data.lights:
+        if l.type != 'SUN': l.energy *= k
+
 # ---- everything above this line is the shared kit: room_*.py scripts execute it and build their own room
 exec(open(os.path.join(HERE, 'assets_projection.py')).read(), globals())
 if os.environ.get('ASSET'):
@@ -1183,6 +1194,7 @@ scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'
 scene.view_settings.look = 'AgX - Medium High Contrast'
 scene.view_settings.exposure = 0.0
+light_level(2)                      # brighter fittings throughout: the Atrium
 scene['lobby'] = dict(cam=list(CAM_POS), tgt=list(CAM_TGT), fov=50.0, dais=list(DAIS), portal=list(PORTAL_C), portal_r=PORTAL_R,
                       sun=list(SUN_DIR), floor=dict(ior=FLOOR_IOR, rough=list(FLOOR_ROUGH), tile=FX / 4.0, noise=0.55), holo=list(DAIS + Vector((0, 0, HOLO_Z))), floor_half=FX, y0=Y0, y1=Y1,
                       chand=dict(pivot=[DAIS.x, DAIS.y], center=list(CH_C)), doors=DOORS, room='lobby',

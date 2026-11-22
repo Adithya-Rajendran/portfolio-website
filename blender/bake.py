@@ -27,6 +27,8 @@ HAS_CHAND = 'chand' in s['lobby'].keys()
 RES = {'floorN': 2048, 'floorF': 2048, 'center': 4096, 'archL': 4096, 'archR': 4096, 'archC': 4096, 'props': 4096, 'people': 4096, 'back': 1024, 'chandA': 1024, 'chandB': 1024}
 RES['folio'] = 2048               # dedicated UV area for the curved printed book faces at inspection distance
 RES['polish'] = 2048              # diffuse paint/ground below the live specular layer; sharp reflections need no atlas area
+# Blades are a few cm wide: in a big group's quarter-size light layers they fell below a texel and lost their light
+RES['foliage'] = 2048
 LAYER_RES = 1024                      # the chandelier's light is low-frequency: small maps are enough
 # Roughness, occlusion and reflectance vary over centimetres to metres, not over a lightmap texel.
 FINISH_RES = lambda key: max(256, min(1024, RES[key] // 4))
@@ -97,13 +99,10 @@ def join(objs, name):
     return ob
 # Light strips: everything that does not move becomes ONE mesh, with the radiance to display stored per vertex
 # (one draw call instead of one per colour). The chandelier's lamps stay separate because they turn.
-EM_RANGE = 8.0
-import re
+EM_RANGE = 32.0                       # strips are stored as a fraction of this (12-bit vertex colours once packed)
 def display_radiance(key):
-    c, k = s['lobby']['em'][key]['color'], s['lobby']['em'][key]['strength']
-    k = min(k, 7.0)                                   # shown value; some lamps are baked far brighter than display white
-    if re.match(r'(ice|white)\d', key): k *= 0.6      # roof strips sit behind diffusers, so the ceiling stays quiet
-    if key in ('step', 'stair'): k *= 0.5             # hidden wash lights: only ever seen in the floor's reflection
+    """What a strip shows: the radiance Cycles lights the room with, so it and its reflections match the bake."""
+    c, k = s['lobby']['em'][key]['color'], min(s['lobby']['em'][key]['strength'], EM_RANGE)
     return [c[0] * k, c[1] * k, c[2] * k]
 # Metal and glass fittings share a smaller atlas: very little of their light is diffuse. Every group's
 # reflection is drawn live; this split is only about atlas area.
@@ -115,6 +114,8 @@ for o in meshes:
         group = o['grp']; m = o.data.materials[0] if len(o.data.materials) == 1 else None
         if m and m.name.rsplit('.', 1)[0] in polished and not group.startswith('chand'):
             group = 'polish'; o['grp'] = group
+        elif m and m.name.rsplit('.', 1)[0] == 'leaf':
+            group = 'foliage'; o['grp'] = group
         byg.setdefault(group, []).append(o)
     else:
         key = o['em']; moving = key.startswith('chand')

@@ -151,6 +151,14 @@ for k, y in enumerate((-4.0, 0.0, 4.0, 8.0)):          # the timber beams case t
 x = -WD + 0.3
 while x < WD - 0.2:
     box('slat', x, x + 0.09, Y0, Y1, H - 0.16, H - 0.04, 'wood_l', 'archC'); x += 0.3
+# Recessed downlights under the slats, three rows between the beams: 210 m2 is far more than two lamps can light.
+EM['down'] = ((1.0, 0.8, 0.6), 8.0); mat('EM_down', (0, 0, 0), 0.5, emis=EM['down'][0], estr=EM['down'][1])
+for y in (-2.0, 2.0, 6.0):
+    for x in (-4.5, -1.5, 1.5, 4.5):
+        lathe('downlight', [(0, 0.0), (0.09, 0.0), (0.09, 0.012), (0, 0.012)], em='down', segs=20, M=T((x, y, H - 0.18)))
+        l = bpy.data.lights.new('downlight', 'SPOT'); l.energy = 200; l.color = (1.0, 0.82, 0.64); l.spot_size = math.radians(100)
+        l.spot_blend = 0.5; l.shadow_soft_size = 0.06
+        o = bpy.data.objects.new('downlight', l); COL.objects.link(o); o.location = (x, y, H - 0.2)          # spots aim down -Z
 
 # ================================================================= THE WINDOW
 # end wall = a deep timber-lined frame around one sheet of space; slim mullions, a low sill to lean on
@@ -262,6 +270,7 @@ co = bpy.data.objects.new('Hero', cam); scene.collection.objects.link(co)
 co.location = CAM_POS; co.rotation_euler = (CAM_TGT - CAM_POS).to_track_quat('-Z', 'Y').to_euler(); scene.camera = co
 scene.render.engine = 'CYCLES'
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
+light_level(2)                      # brighter fittings throughout: the Lounge, with its new downlights
 scene['lobby'] = dict(room='about', exposure=1.4, cam=list(CAM_POS), tgt=list(CAM_TGT), close=list(CLOSE_POS), close_tgt=list(CLOSE_TGT), fov=50.0,
                       doors=DOORS, screens=['FX_screen0', 'FX_screen1'],
                       focus=[dict(c=[-0.31, 1.33, 0.5], r=0.95, dir=[0.15, -0.8, 0.58])],      # the books on the table: the room's one exhibit
