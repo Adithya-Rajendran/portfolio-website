@@ -27,11 +27,14 @@ HAS_CHAND = 'chand' in s['lobby'].keys()
 RES = {'floorN': 2048, 'floorF': 2048, 'center': 4096, 'archL': 4096, 'archR': 4096, 'archC': 4096, 'props': 4096, 'people': 4096, 'back': 1024, 'chandA': 1024, 'chandB': 1024}
 RES['folio'] = 2048               # dedicated UV area for the curved printed book faces at inspection distance
 RES['polish'] = 2048              # diffuse paint/ground below the live specular layer; sharp reflections need no atlas area
-# Blades are a few cm wide: in a big group's quarter-size light layers they fell below a texel and lost their light
+# Blades are a few cm wide. In a big group's quarter-size light layers they fell below a texel and lost their light (the
+# orrery's at half size still came out 3x too dark), so leaves get their own atlas and every layer at its full size.
 RES['foliage'] = 2048
+FULL = {'foliage'}
+layer_res = lambda key, cap: RES[key] if key in FULL else min(RES[key], cap)
 LAYER_RES = 1024                      # the chandelier's light is low-frequency: small maps are enough
 # Roughness, occlusion and reflectance vary over centimetres to metres, not over a lightmap texel.
-FINISH_RES = lambda key: max(256, min(1024, RES[key] // 4))
+FINISH_RES = lambda key: RES[key] if key in FULL else max(256, min(1024, RES[key] // 4))
 AO_DISTANCE = 1.0                     # metres: what can hide a reflection is local; the probe sees the rest
 PHASES = [0.0, 120.0, 240.0]          # rotation phases at which its light is baked (blended at runtime)
 PASSES = os.environ.get('LOBBY_PASSES', 'base,chand,layers,sky,albedo,finish').split(',')
@@ -256,7 +259,7 @@ if 'layers' in PASSES and HAS_CHAND:
         vl.update()
         for key in static:
             if ONLY and key not in ONLY: continue
-            bake(key, groups[key], max(128, int(min(RES[key], LAYER_RES) * SCALE)), '%s_c%d' % (key, i), 3)
+            bake(key, groups[key], max(128, int(layer_res(key, LAYER_RES) * SCALE)), '%s_c%d' % (key, i), 3)
     for o, rest, sg in movers: o.matrix_world = rest
     vl.update()
 # A spinning room. Seen from inside, the sky turns about the spin axis; for the bake it is simpler to turn the room
@@ -274,7 +277,7 @@ if 'sky' in PASSES and SPIN:
         vl.update()
         for key in static:
             if ONLY and key not in ONLY: continue
-            t = time.time(); res = max(128, int(min(RES[key], SKY_RES) * SCALE))
+            t = time.time(); res = max(128, int(layer_res(key, SKY_RES) * SCALE))
             sun_light(False); sky_light(True); px = bake_px(key, groups[key], res, 3)
             sun_light(True); sky_light(False); px += bake_px(key, groups[key], res, 3, direct=False)
             save_encoded(px, res, res, os.path.join(OUTD, 'tex', '%s_s%d.webp' % (key, i)))
