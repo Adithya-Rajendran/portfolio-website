@@ -1,8 +1,26 @@
 {
-  "origin": [
-    0.0,
-    4.55,
-    1.45
+  "probes": [
+    {
+      "origin": [
+        0.0,
+        -1.6,
+        1.5
+      ]
+    },
+    {
+      "origin": [
+        0.0,
+        4.55,
+        1.45
+      ]
+    },
+    {
+      "origin": [
+        0.0,
+        10.5,
+        1.45
+      ]
+    }
   ],
   "bounds": {
     "min": [
@@ -29,5 +47,12 @@
     1.0
   ],
   "range": 16.0,
-  "encoding": "sqrt"
+  "encoding": "sqrt",
+  "alpha": "interior",
+  "hidden": [
+    "exterior",
+    "sun",
+    "lamps",
+    "moving"
+  ]
 }
