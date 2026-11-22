@@ -272,7 +272,7 @@
    "strength": 0.5599999999999999
   }
  },
- "v": 1795301923,
+ "v": 1795335959,
  "groups": [
   "archC",
   "archL",
@@ -287,40 +287,49 @@
  ],
  "hdr_range": 8.0,
  "em_range": 8.0,
- "probe": {
-  "origin": [
-   0.0,
-   1.6,
-   1.15
+ "finish": {
+  "groups": [
+   "archC",
+   "archL",
+   "archR",
+   "back",
+   "center",
+   "folio",
+   "polish",
+   "props"
   ],
-  "bounds": {
-   "min": [
-    -7.0,
-    -6.0,
-    0.0
+  "view": "above surface",
+  "glossy": "live",
+  "ao_distance": 1.0
+ },
+ "lights": [
+  {
+   "name": "sb_lamp_glow",
+   "pos": [
+    6.679999828338623,
+    -2.5999999046325684,
+    1.3600000143051147
    ],
-   "max": [
-    7.0,
-    9.0,
-    6.6
+   "radius": 0.11999999731779099,
+   "intensity": [
+    4.3767609350271215,
+    2.5385212692706522,
+    1.2254930670250999
    ]
   },
-  "coordinates": "blender",
-  "projection": "equirectangular",
-  "texture": "tex/probe_c.ktx2",
-  "width": 512,
-  "height": 256,
-  "roughness": [
-   0.0,
-   0.25,
-   0.5,
-   0.75,
-   1.0
-  ],
-  "range": 16.0,
-  "encoding": "sqrt",
-  "groups": [
-   "polish"
-  ]
- }
+  {
+   "name": "fl_glow",
+   "pos": [
+    -2.799999952316284,
+    0.5,
+    2.119999885559082
+   ],
+   "radius": 0.11999999731779099,
+   "intensity": [
+    7.16197243913529,
+    4.153943895170158,
+    2.0053522914956177
+   ]
+  }
+ ]
 }
