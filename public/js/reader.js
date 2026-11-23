@@ -22,14 +22,24 @@ const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // the scan, in seconds from the request: the fan sweeps the pages, the frame unfolds upward, the words follow it down
 const SWEEP = [0.25, 1.35], UNFOLD = [1.15, 1.95], REVEAL = [1.75, 2.65], FOLD = 0.45;
 const ramp = (t, [a, b]) => { const x = clamp((t - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
+// a uniform eased toward where it should be, and then there: a change on the display ends (reduced motion: a cut)
+const ease = (u, to, k) => { u.value = still || Math.abs(to - u.value) < 1e-3 ? to : u.value + (to - u.value) * k; return u.value; };
+// what the display adds over the room, and how much of what is behind it goes out; the alpha channel (the floor's mirror
+// pass reads distance there) is left as it was
+const VEIL = { transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor };
 
-function glyphTex(word) {                                       // READ, in the manner of the page's own display: brackets and spaced capitals
+// READ, in the manner of the page's own display: corners and spaced capitals, one part to a channel so the shader can light
+// each its own way (r: the word, g: the corners, b: the rule inside them). On black, not on a clear canvas: a clear canvas
+// uploads the soft edges of its strokes at full strength, and small capitals come out ragged.
+function glyphTex(word) {
   const cv = Object.assign(document.createElement('canvas'), { width: 768, height: 256 }), c = cv.getContext('2d');
-  c.strokeStyle = c.fillStyle = '#fff'; c.lineWidth = 5; c.lineCap = 'square';
+  c.fillStyle = '#000'; c.fillRect(0, 0, 768, 256); c.lineCap = 'square';
+  c.strokeStyle = '#0f0'; c.lineWidth = 7;
   for (const [x, sx] of [[40, 1], [728, -1]]) for (const [y, sy] of [[40, 1], [216, -1]]) { c.beginPath(); c.moveTo(x + sx * 46, y); c.lineTo(x, y); c.lineTo(x, y + sy * 46); c.stroke(); }
-  c.globalAlpha = 0.45; c.lineWidth = 2; c.strokeRect(64, 64, 640, 128); c.globalAlpha = 1;
-  c.font = `500 84px ${SANS}`; c.textAlign = 'center'; c.textBaseline = 'middle'; if ('letterSpacing' in c) c.letterSpacing = word.length > 5 ? '18px' : '44px';
-  c.fillText(word, 384 + (word.length > 5 ? 9 : 22), 132);
+  c.strokeStyle = '#00f'; c.lineWidth = 3; c.strokeRect(64, 64, 640, 128);
+  const gap = word.length > 5 ? 0.21 : 0.52, fit = (px) => { c.font = `600 ${px}px ${SANS}`; if ('letterSpacing' in c) c.letterSpacing = `${Math.round(px * gap)}px`; return c.measureText(word).width; };
+  let px = 100; const wide = fit(px); if (wide > 590) fit(px = Math.floor(px * 590 / wide));          // a longer word in a room's own language still fits inside the rule
+  c.fillStyle = '#f00'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(word, 384 + Math.round(px * gap) / 2, 133);
   const t = new THREE.CanvasTexture(cv); t.anisotropy = 8; return t;
 }
 const light = (fragmentShader, uniforms, extra = {}) => new THREE.ShaderMaterial({ ...GLOW, side: THREE.DoubleSide, uniforms,
@@ -47,45 +57,65 @@ const pathOf = (url) => url.split('#')[0];
 export function createReader({ scene, camera, text, onLink, onShown, clearance }) {
   const root = new THREE.Group(); root.name = 'Reader'; scene.add(root);
 
-  // ---- READ: a glyph under the thing, always facing the visitor and drawn over everything, like the rest of their display
-  const uShow = { value: 0 }, uWord = { value: 0 }, words = new Map(), word = (w) => words.get(w) ?? words.set(w, glyphTex(w)).get(w), tA = { value: word(text.read) };
-  const glyph = new THREE.Mesh(new THREE.PlaneGeometry(3, 1), light(`uniform sampler2D tA, tB; uniform float uShow, uWord, uTime; varying vec2 vUv;
+  // ---- READ: a glyph under the thing, always facing the visitor and drawn over everything, like the rest of their display.
+  // It has no clock: it opens, changes its word, brightens under the pointer and shows how far the scan has got, and is
+  // otherwise still. A dark plate behind the word lets it read over a white page as well as over a dark room.
+  const uShow = { value: 0 }, uWord = { value: 0 }, uHover = { value: 0 }, uProgress = { value: 0 }, words = new Map(), word = (w) => words.get(w) ?? words.set(w, glyphTex(w)).get(w), tA = { value: word(text.read) };
+  const glyph = new THREE.Mesh(new THREE.PlaneGeometry(3, 1), light(`uniform sampler2D tA, tB; uniform float uShow, uWord, uHover, uProgress; varying vec2 vUv;
     void main(){
       float open = smoothstep(0.0, 1.0, uShow), w = abs(vUv.x - 0.5)*2.0;
       if (w > open) discard;                                   // pops open from its middle
-      float ink = mix(texture2D(tA, vUv).r, texture2D(tB, vUv).r, uWord);
-      float sweep = exp(-pow((vUv.x - fract(uTime*0.45)*1.6 + 0.3)*7.0, 2.0));
+      vec3 ink = mix(texture2D(tA, vUv, -0.6).rgb, texture2D(tB, vUv, -0.6).rgb, smoothstep(0.3, 0.7, uWord));     // a sharper level of the drawing: it is shown small
+      vec2 p = vUv*vec2(768.0, 256.0), q = min(p - 40.0, vec2(728.0, 216.0) - p);      // texels of the drawing; q: in from the plate's edges
+      float fw = max(fwidth(p.x), 1.0), plate = smoothstep(-fw, fw, min(q.x, q.y));      // fw: texels to a pixel on screen
+      float to = mix(64.0, 704.0, uProgress), bar = (1.0 - smoothstep(3.0, 3.0 + fw, abs(p.y - 64.0)))*smoothstep(64.0 - fw, 64.0, p.x)*(1.0 - smoothstep(to - fw, to, p.x))*uWord;
       float lead = exp(-pow((open - w)*30.0, 2.0))*(1.0 - open);
-      vec3 c = ${CY}*(ink*(0.75 + 0.2*sin(uTime*2.6)) + 0.012) + vec3(0.7, 0.95, 1.0)*(ink*sweep*0.9 + lead*1.5);
-      gl_FragColor = vec4(c*2.4, 1.0);
-    }`, { tA, tB: { value: word(text.scanning) }, uShow, uWord, uTime }, { depthTest: false }));
-  glyph.renderOrder = 20; glyph.frustumCulled = false; root.add(glyph);
+      vec3 c = vec3(0.62, 0.93, 1.0)*(ink.r*(1.15 + 0.45*uHover) + bar*1.7 + lead*1.5)
+             + ${CY}*(ink.g*(1.05 + 1.2*uHover) + ink.b*(0.24 + 0.56*uHover)*(1.0 - bar));
+      gl_FragColor = vec4(vec3(0.0022, 0.006, 0.0095)*plate + c, plate*0.88*open);     // the room behind the plate all but goes out
+    }`, { tA, tB: { value: word(text.scanning) }, uShow, uWord, uHover, uProgress }, { ...VEIL, depthTest: false }));
+  glyph.name = 'ReadGlyph'; glyph.renderOrder = 20; glyph.frustumCulled = false; root.add(glyph);
   const hit = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.3), new THREE.MeshBasicMaterial({ visible: false })); glyph.add(hit);
+  // the pointer over it (a mouse or a pen: a finger does not hover). Where it is is kept; whether that is on the glyph is
+  // asked a few times a second while the glyph shows, so a glyph that comes to rest under a still pointer lights too
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let pointer = null, asked = -1, over = false;
+  const onPointer = (e) => { pointer = e.pointerType === 'touch' || !(e.target instanceof HTMLCanvasElement) ? null : [e.clientX, e.clientY]; };
+  const onOut = (e) => { if (!e.relatedTarget) pointer = null; };
+  addEventListener('pointermove', onPointer, { passive: true }); document.addEventListener('pointerout', onOut);
 
-  // ---- the scan: a line of light crossing what is read, and the fan from the visitor that draws it
-  const uScan = { value: 0 }, uScanK = { value: 0 };
-  const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), light(`uniform float uScan, uK, uTime; varying vec2 vUv;
+  // ---- the scan: a line of light crossing what is read, and the fan from the visitor that draws it. Only when READ is
+  // asked: corners snap onto what is read, so it is plain what the display is looking at, and hold while the line crosses.
+  // The sheet's plane reaches a little beyond the surface (lay() sizes it) to have room for the corners; in its own
+  // frame the surface is still the unit square, so the fan and the beam find its edges at +-0.5.
+  const uScan = { value: 0 }, uScanK = { value: 0 }, uSnap = { value: 0 }, uPage = { value: new THREE.Vector2(1, 1) };
+  const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), light(`uniform float uScan, uK, uSnap; uniform vec2 uPage; varying vec2 vUv, vM;
     void main(){
-      float v = 1.0 - vUv.y, d = uScan - v;                    // v: from the top down
-      float line = exp(-pow(d*90.0, 2.0)), read = step(0.0, d)*exp(-d*5.0);
+      vec2 h = uPage*0.5, a = abs(vM), s = vec2(min(uPage.x, uPage.y));                 // vM: metres from the middle of the surface
+      float px = max(length(fwidth(vM)), 1e-5), on = step(a.x, h.x)*step(a.y, h.y);       // px: metres to a pixel on screen
+      vec2 d = a - h - s*mix(0.2, 0.03, uSnap);                // from each corner mark's corner: they close in from outside, and hold just off the edges
+      float arm = s.x*0.17, w = px*1.1;
+      float mark = max((1.0 - smoothstep(w, w + px, abs(d.y)))*smoothstep(-arm - px, -arm, d.x)*(1.0 - smoothstep(w, w + px, d.x)),
+                       (1.0 - smoothstep(w, w + px, abs(d.x)))*smoothstep(-arm - px, -arm, d.y)*(1.0 - smoothstep(w, w + px, d.y)));
+      float v = 1.0 - vUv.y, e = uScan - v;                    // v: from the top down
+      float line = exp(-pow(e*90.0, 2.0)), read = step(0.0, e)*exp(-e*5.0);
       float grid = step(0.86, fract(vUv.x*24.0)) + step(0.8, fract(v*34.0));
-      gl_FragColor = vec4(${CY}*(line*3.2 + read*(0.10 + 0.22*grid))*uK, 1.0);
-    }`, { uScan, uK: uScanK, uTime }));
-  sheet.renderOrder = 9; sheet.visible = false;
+      gl_FragColor = vec4(${CY}*((line*3.2 + read*(0.10 + 0.22*grid))*on*uK + mark*(1.5 + 2.0*(1.0 - uSnap))*min(uK*4.0, 1.0)), 1.0);      // the corners at full strength at once
+    }`, { uScan, uK: uScanK, uSnap, uPage }, { vertexShader: 'uniform vec2 uPage; varying vec2 vUv, vM; void main(){ vUv = position.xy + 0.5; vM = position.xy*uPage; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }' }));
+  sheet.name = 'ScanSheet'; sheet.renderOrder = 7; sheet.visible = false;
   const fanGeo = new THREE.BufferGeometry(); fanGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9), 3));
   fanGeo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0.5, 0, 0, 1, 1, 1]), 2));
-  const fan = new THREE.Mesh(fanGeo, light(`uniform float uK, uTime; varying vec2 vUv;
-    void main(){ float x = (vUv.x - 0.5)/max(vUv.y, 0.02) + 0.5, ray = 0.6 + 0.4*sin(x*90.0 + uTime*3.0);
-      gl_FragColor = vec4(${CY}*pow(vUv.y, 1.6)*ray*0.42*uK, 1.0); }`, { uK: uScanK, uTime }, { depthTest: false }));
-  fan.frustumCulled = false; fan.renderOrder = 19; root.add(fan);
+  const fan = new THREE.Mesh(fanGeo, light(`uniform float uK; varying vec2 vUv;
+    void main(){ float x = (vUv.x - 0.5)/max(vUv.y, 0.02) + 0.5, ray = 0.6 + 0.4*sin(x*90.0);       // its rays are still: what moves is the fan, with the line
+      gl_FragColor = vec4(${CY}*pow(vUv.y, 1.6)*ray*0.42*uK, 1.0); }`, { uK: uScanK }, { depthTest: false }));
+  fan.name = 'ScanFan'; fan.frustumCulled = false; fan.renderOrder = 19; fan.visible = false; root.add(fan);
 
   // ---- the hologram: a frame with a dark veil behind the words, and a curtain of light rising to it from the book
   const uOpen = { value: 0 }, uReveal = { value: 0 }, uSize = { value: new THREE.Vector2(800, 500) };
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide,     // over whatever stands in its rectangle (the Library's drone reaches in front of it)
-    blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
-    uniforms: { uOpen, uReveal, uSize, uTime },
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ ...VEIL, depthTest: false, side: THREE.DoubleSide,     // over whatever stands in its rectangle (the Library's drone reaches in front of it)
+    uniforms: { uOpen, uReveal, uSize },
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }',
-    fragmentShader: `uniform float uOpen, uReveal, uTime; uniform vec2 uSize; varying vec2 vUv;
+    fragmentShader: `uniform float uOpen, uReveal; uniform vec2 uSize; varying vec2 vUv;
       void main(){
         if (vUv.y > uOpen) discard;                            // unfolds upward from the edge over the book
         vec2 p = vUv*uSize, q = min(p, uSize - p);             // CSS pixels from the nearest edges
@@ -97,15 +127,15 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
         vec3 c = ${CY}*(edge*0.30 + tick*1.1 + lead*2.2 + line*1.6 + 0.004*rows + 0.01*(1.0 - smoothstep(0.0, 90.0, q.y)));
         gl_FragColor = vec4(vec3(0.0022, 0.006, 0.0095) + c, 0.998);      // what is behind all but goes out: the words must be easy to read
       }` }));
-  panel.renderOrder = 8; panel.visible = false; root.add(panel);
+  panel.name = 'ReadFrame'; panel.renderOrder = 8; panel.visible = false; root.add(panel);
   const beamGeo = new THREE.BufferGeometry(); beamGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3));
   beamGeo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), 2)); beamGeo.setIndex([0, 1, 2, 2, 1, 3]);
-  const uBeam = { value: 0 };
-  const beam = new THREE.Mesh(beamGeo, light(`uniform float uK, uTime; varying vec2 vUv;
-    void main(){ float s = 0.55 + 0.45*sin(vUv.x*70.0 + sin(vUv.x*13.0)*4.0), rise = 0.7 + 0.3*sin(vUv.y*26.0 - uTime*mix(0.5, 5.0, smoothstep(0.35, 0.9, uK)) + vUv.x*9.0);    // lively while it unfolds, then nearly still
+  const uBeam = { value: 0 }, uFlow = { value: 0 };             // uFlow: how far its light has risen; it rises while the frame unfolds and stops when the words are there
+  const beam = new THREE.Mesh(beamGeo, light(`uniform float uK, uFlow; varying vec2 vUv;
+    void main(){ float s = 0.55 + 0.45*sin(vUv.x*70.0 + sin(vUv.x*13.0)*4.0), rise = 0.7 + 0.3*sin(vUv.y*26.0 - uFlow + vUv.x*9.0);
       float side = smoothstep(0.0, 0.08, vUv.x)*smoothstep(1.0, 0.92, vUv.x);
-      gl_FragColor = vec4(${CY}*s*rise*side*pow(1.0 - vUv.y, 1.3)*0.5*uK, 1.0); }`, { uK: uBeam, uTime }));
-  beam.frustumCulled = false; beam.renderOrder = 7; root.add(beam);
+      gl_FragColor = vec4(${CY}*s*rise*side*pow(1.0 - vUv.y, 1.3)*0.5*uK, 1.0); }`, { uK: uBeam, uFlow }));
+  beam.name = 'ReadBeam'; beam.frustumCulled = false; beam.renderOrder = 7; root.add(beam);
 
   // ---- the words: one element over the canvas, holding the article
   const host = Object.assign(document.createElement('div'), { id: 'reader', hidden: true });
@@ -162,6 +192,8 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
   function lay(s) {                                              // put the scan's sheet on a source (it also says where the glyph goes)
     if (s === laid) return; laid = s; sheet.removeFromParent(); if (!s) return;
     (s.sheet.parent ?? root).add(sheet); sheet.position.copy(s.sheet.position); sheet.quaternion.copy(s.sheet.quaternion); sheet.scale.set(...s.sheet.size, 1); sheet.updateMatrixWorld(true);
+    const [w, h] = s.sheet.size, m = 0.26 * Math.min(w, h);    // room around the surface for the corners as they close in
+    uPage.value.set(w, h); sheet.geometry.dispose(); sheet.geometry = new THREE.PlaneGeometry(1 + 2 * m / w, 1 + 2 * m / h);
     tA.value = word(s.word ?? text.read);
   }
   function layout() {
@@ -208,11 +240,15 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
   const onResize = () => { if (state !== 'closed') layout(); };
   addEventListener('resize', onResize);
 
+  let last = 0;
   function update(t) {
-    const T = t - t0, on = state !== 'closed', s = current(), can = !!s; lay(s);
-    // READ: there while something can be read and nothing is; sized on screen, not in the room, so it can be tapped on a phone
-    uShow.value += ((can && (!on || T < SWEEP[0] + 0.5) ? 1 : 0) - uShow.value) * 0.14; uWord.value += ((on ? 1 : 0) - uWord.value) * 0.25;
+    const T = t - t0, on = state !== 'closed', s = current(), can = !!s, dt = clamp(t - last, 0, 0.1); last = t; lay(s);
+    // READ: there while something can be read and nothing is, and while the scan crosses it (it says SCANNING and how far
+    // the scan has got); sized on screen, not in the room, so it can be tapped on a phone
+    ease(uShow, can && (!on || T < SWEEP[1]) ? 1 : 0, 0.14);
     glyph.visible = uShow.value > 0.01 && !!laid;
+    if (glyph.visible) { ease(uWord, on ? 1 : 0, 0.25); uProgress.value = on ? ramp(T, SWEEP) : uWord.value > 0 ? uProgress.value : 0; }
+    else { uWord.value = on ? 1 : 0; uProgress.value = 0; }      // shut: it opens again saying what it will say
     if (glyph.visible) {                                       // its top edge a few pixels under the thing, never off the bottom of the view
       const tan = Math.tan(rad(camera.fov / 2)), fwd = camera.getWorldDirection(_b), up = _a.copy(UP).applyQuaternion(camera.quaternion);
       sheet.localToWorld(_v.set(0, -0.5, 0)); _c.copy(_v).sub(camera.position);
@@ -222,8 +258,17 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
       const low = _c.dot(up) - 14 * m - h / 2, floor = -depth * tan + (taken ? taken + 34 : 10) * m + h / 2;
       glyph.position.copy(_v).addScaledVector(up, Math.max(low, floor) - _c.dot(up)); glyph.quaternion.copy(camera.quaternion); glyph.scale.setScalar(w / 3);
     }
+    // brighter while the pointer is on it and it can be pressed: a short ease, to an end. The pointer is tested against the
+    // glyph's own tap area a few times a second, not on every move
+    if (!(glyph.visible && pointer && state === 'closed')) over = false;
+    else if (t - asked > 0.08 || t < asked) {
+      asked = t; ndc.set(pointer[0] / innerWidth * 2 - 1, -pointer[1] / innerHeight * 2 + 1); ray.setFromCamera(ndc, camera); glyph.updateMatrixWorld(true);
+      over = ray.intersectObject(hit, false).length > 0;
+    }
+    uHover.value = still ? +over : clamp(uHover.value + (over ? dt : -dt) / 0.18, 0, 1);
     // the scan
-    const sweep = on ? ramp(T, SWEEP) : 0; uScan.value = sweep * 1.04; uScanK.value += ((on && T < SWEEP[1] + 0.25 ? 1 : 0) - uScanK.value) * 0.2;
+    const sweep = on ? ramp(T, SWEEP) : 0; uScan.value = sweep * 1.04; ease(uScanK, on && T < SWEEP[1] + 0.25 ? 1 : 0, 0.2);
+    uSnap.value = on ? 1 - (1 - clamp(T / 0.2, 0, 1)) ** 3 : 0;    // the corners close in fast and stop: on before the line starts
     sheet.visible = fan.visible = uScanK.value > 0.01 && !!laid;
     if (fan.visible) {                                          // from just under the visitor's eye to the line on what is read
       const p = fanGeo.attributes.position, y = 0.5 - uScan.value;
@@ -233,7 +278,10 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
     // the hologram
     const open = on ? ramp(T, UNFOLD) : Math.max(0, uOpen.value - (still ? 1 : (t - folding) > 0 ? 0.09 : 0));
     uOpen.value = open; uReveal.value = on ? ramp(T, REVEAL) : 0; panel.visible = open > 0.002;
-    uBeam.value += ((on && T > UNFOLD[0] ? (T < REVEAL[1] ? 1 : 0.32) : 0) - uBeam.value) * 0.12; beam.visible = uBeam.value > 0.01 && !!laid;
+    // the curtain of light: up with the frame, lively while it unfolds, then dimmer and still before the reader is settled()
+    if (on) { uBeam.value = ramp(T, [UNFOLD[0], UNFOLD[0] + 0.4]) * (1 - 0.68 * ramp(T, [REVEAL[1], REVEAL[1] + 0.6])); uFlow.value += dt * 5 * (1 - ramp(T, [REVEAL[0], REVEAL[1] + 0.6])); }
+    else ease(uBeam, 0, 0.12);
+    beam.visible = uBeam.value > 0.01 && !!laid;
     if (beam.visible) {                                         // from the edge of what is read that is nearest the frame: its top if it lies under it (sheet.top), else its foot
       const p = beamGeo.attributes.position, y = laid.sheet.top ? 0.5 : -0.5;
       const reach = Math.min(1, 0.75 * sheet.scale.x / panel.scale.x);
@@ -266,6 +314,6 @@ export function createReader({ scene, camera, text, onLink, onShown, clearance }
     jump(id) { const h = id && scroll.querySelector(`#${CSS.escape(id)}`); if (h) h.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' }); else scroll.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' }); },
     /** Open the next article at this heading (by id): where the reader had got to on the plain page. */
     scrollTo(id) { goTo = id; },
-    dispose() { removeEventListener('resize', onResize); host.remove(); for (const w of words.values()) w.dispose(); sheet.removeFromParent(); },
+    dispose() { removeEventListener('resize', onResize); removeEventListener('pointermove', onPointer); document.removeEventListener('pointerout', onOut); host.remove(); for (const w of words.values()) w.dispose(); sheet.removeFromParent(); sheet.geometry.dispose(); },
   };
 }
