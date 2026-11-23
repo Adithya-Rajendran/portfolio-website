@@ -1,0 +1,48 @@
+{
+ "name": "Ada \"Ace\" O'Brien <&> </script>",
+ "headline": "A headline <with> & \"quotes\"",
+ "introduction": "An introduction with < > & \" ' and </script><!-- in it.",
+ "work_summary": "A work summary & more <things>.",
+ "seo_description": "An SEO description that closes a script: </script><script>alert(1)</script> & \"quotes\".",
+ "writing_description": "Notes <on> things & \"stuff\".",
+ "projects_intro": "Projects <intro> & \"more\".",
+ "contact_intro": "Write <to> me & \"say\" hello.",
+ "contact_invitation": "An invitation </script> & 'more'.",
+ "tagline": "A tagline.",
+ "bio": "One paragraph.",
+ "location": "Nowhere",
+ "availability": {
+  "status": "closed",
+  "cta": "Say hello"
+ },
+ "contact_routes": {
+  "hello": {
+   "title": "Hello",
+   "prompt": "Anything."
+  }
+ },
+ "skill_groups": [
+  {
+   "title": "Tools",
+   "skills": [
+    "Python"
+   ]
+  }
+ ],
+ "social_links": [
+  {
+   "label": "GitHub",
+   "url": "https://github.com/example"
+  }
+ ],
+ "timeline": [
+  {
+   "id": "only-2020",
+   "kind": "education",
+   "organization": "School",
+   "org_short": "School",
+   "title": "A degree",
+   "start_date": "2020-09-01"
+  }
+ ]
+}

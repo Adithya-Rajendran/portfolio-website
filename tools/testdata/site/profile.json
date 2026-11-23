@@ -1,0 +1,192 @@
+{
+ "name": "Ada \"Ace\" O'Brien <&> </script>",
+ "headline": "A headline <with> & \"quotes\"",
+ "tagline": "A very long tagline that goes on: word0 word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12 word13 word14 word15 word16 word17 word18 word19 word20 word21 word22 word23 word24 word25 word26 word27 word28 word29 word30 word31 word32 word33 word34 word35 word36 word37 word38 word39 word40 word41 word42 word43 word44 word45 word46 word47 word48 word49 word50 word51 word52 word53 word54 word55 word56 word57 word58 word59 word60 word61 word62 word63 word64 word65 word66 word67 word68 word69 word70 word71 word72 word73 word74 word75 word76 word77 word78 word79 word80 word81 word82 word83 word84 word85 word86 word87 word88 word89 word90 word91 word92 word93 word94 word95 word96 word97 word98 word99 word100 word101 word102 word103 word104 word105 word106 word107 word108 word109 word110 word111 word112 word113 word114 word115 word116 word117 word118 word119 word120 word121 word122 word123 word124 word125 word126 word127 word128 word129 word130 word131 word132 word133 word134 word135 word136 word137 word138 word139 word140 word141 word142 word143 word144 word145 word146 word147 word148 word149 word150 word151 word152 word153 word154 word155 word156 word157 word158 word159 word160 word161 word162 word163 word164 word165 word166 word167 word168 word169 word170 word171 word172 word173 word174 word175 word176 word177 word178 word179 word180 word181 word182 word183 word184 word185 word186 word187 word188 word189 word190 word191 word192 word193 word194 word195 word196 word197 word198 word199 word200 word201 word202 word203 word204 word205 word206 word207 word208 word209 word210 word211 word212 word213 word214 word215 word216 word217 word218 word219 word220 word221 word222 word223 word224 word225 word226 word227 word228 word229 word230 word231 word232 word233 word234 word235 word236 word237 word238 word239 word240 word241 word242 word243 word244 word245 word246 word247 word248 word249 word250 word251 word252 word253 word254 word255 word256 word257 word258 word259 word260 word261 word262 word263 word264 word265 word266 word267 word268 word269 word270 word271 word272 word273 word274 word275 word276 word277 word278 word279 word280 word281 word282 word283 word284 word285 word286 word287 word288 word289 word290 word291 word292 word293 word294 word295 word296 word297 word298 word299 word300 word301 word302 word303 word304 word305 word306 word307 word308 word309 word310 word311 word312 word313 word314 word315 word316 word317 word318 word319 word320 word321 word322 word323 word324 word325 word326 word327 word328 word329 word330 word331 word332 word333 word334 word335 word336 word337 word338 word339 word340 word341 word342 word343 word344 word345 word346 word347 word348 word349 word350 word351 word352 word353 word354 word355 word356 word357 word358 word359 word360 word361 word362 word363 word364 word365 word366 word367 word368 word369 word370 word371 word372 word373 word374 word375 word376 word377 word378 word379 word380 word381 word382 word383 word384 word385 word386 word387 word388 word389 word390 word391 word392 word393 word394 word395 word396 word397 word398 word399. The end.",
+ "introduction": "An introduction with < > & \" ' and </script><!-- in it.",
+ "bio": "The first paragraph, <b>not bold</b> & 'quoted'.\nA second line of the same paragraph.\n\nThe second paragraph: *stars* and _underscores_ as typed.\n\nThe third paragraph.",
+ "work_summary": "A work summary & more <things>.",
+ "location": "Santa Cruz, California, USA",
+ "seo_description": "An SEO description that closes a script: </script><script>alert(1)</script> & \"quotes\".",
+ "writing_description": "Notes <on> things & \"stuff\".",
+ "projects_intro": "Projects <intro> & \"more\".",
+ "contact_intro": "Write <to> me & \"say\" hello.",
+ "contact_invitation": "An invitation </script> & 'more'.",
+ "focus_areas": [
+  "<b>Bold</b> & \"quoted\"",
+  "Spatial memory"
+ ],
+ "featured_post": "my-homelab",
+ "resume": "e70b01e95fdcf9f4e5d8ad06a0e32b28f62060c2.pdf",
+ "availability": {
+  "status": "selective",
+  "cta": "Write <now> & \"soon\"",
+  "seeking": [
+   "Internships <2027>",
+   "Research & \"more\""
+  ],
+  "updated_at": "2026-09-29"
+ },
+ "contact_routes": {
+  "hiring": {
+   "title": "Roles <& internships>",
+   "prompt": "The role, the \"team\" & the dates."
+  },
+  "availability": {
+   "title": "A route whose id is a section's",
+   "prompt": "Its id is kept; the section's heading takes another."
+  },
+  "hello": {
+   "title": "Hello",
+   "prompt": "Anything </script> else."
+  }
+ },
+ "credentials": [
+  {
+   "title": "Cert <one> & \"full\"",
+   "issuer": "Issuer & Co",
+   "issued_on": "2023-09-01",
+   "expires_on": "2026-09-01",
+   "lifetime": false,
+   "verification_url": "https://example.org/verify?id=1&x=\"y\"",
+   "badge": "ceb88ce338a7bfc4ab9d0c9562fbc2a34c2cc6ae-340x340.png",
+   "badge_alt": "A badge <alt> & \"text\""
+  },
+  {
+   "title": "Lifetime cert",
+   "issuer": "Lifelong",
+   "issued_on": "2018-05-01",
+   "lifetime": true,
+   "badge": "27bdcd5732178c9ee24330686cff57fa9d1cff5f-340x340.png"
+  },
+  {
+   "title": "AWS Certified Minimal",
+   "issuer": "AWS",
+   "issued_on": "2020-01-01"
+  }
+ ],
+ "skill_groups": [
+  {
+   "title": "Programming <languages>",
+   "skills": [
+    "Python",
+    "C & C++",
+    "<HTML>",
+    "\"Quoted\""
+   ]
+  },
+  {
+   "title": "Skills",
+   "skills": [
+    "A group named like a section"
+   ]
+  }
+ ],
+ "social_links": [
+  {
+   "label": "Profile <one> & \"more\"",
+   "url": "https://example.org/profile?a=1&b=2"
+  },
+  {
+   "label": "GitHub",
+   "url": "https://github.com/example"
+  }
+ ],
+ "current_curiosities": [
+  {
+   "title": "A question <with> & \"quotes\"?",
+   "note": "A note & more.",
+   "project": "homelab"
+  },
+  {
+   "title": "A title alone?"
+  },
+  {
+   "title": "Not a question",
+   "note": "So its kind is null."
+  }
+ ],
+ "curiosities_updated_at": "2026-10-26",
+ "talks_and_papers": [
+  {
+   "title": "A paper <title> & \"more\"",
+   "kind": "report",
+   "date": "2026-10-23",
+   "authors": "Ada & Bob",
+   "venue": "A venue <somewhere>",
+   "abstract": "An abstract </script> & more.",
+   "project": "homelab",
+   "links": [
+    {
+     "label": "Read <it> (PDF)",
+     "kind": "paper",
+     "file": "fc41d42d9b66390887e20ff239a1361e55975238.pdf"
+    },
+    {
+     "label": "Source",
+     "kind": "repo",
+     "url": "https://example.org/source"
+    },
+    {
+     "label": "The post",
+     "kind": "article",
+     "post": "my-homelab"
+    },
+    {
+     "label": "The project",
+     "kind": "other",
+     "project": "robot-scene-memory"
+    }
+   ]
+  },
+  {
+   "title": "A talk with only what is required",
+   "kind": "talk",
+   "date": "2024-03-15"
+  }
+ ],
+ "timeline": [
+  {
+   "id": "skills",
+   "kind": "work",
+   "organization": "Org <&> \"Co\"",
+   "org_short": "Org",
+   "title": "Engineer <lead> (promoted & more)",
+   "employment": "full-time",
+   "location": "Remote & <home>",
+   "summary": "A summary </script>.",
+   "start_date": "2026-08-01",
+   "start_precision": "month",
+   "expected_end_year": 2028,
+   "is_current": true,
+   "highlights": [
+    "Did <this> & \"that\".",
+    "Then the other."
+   ],
+   "logo": "a005c7a111c8b681ac58093d9102134ac731fcc3-512x512.webp",
+   "logo_alt": "A logo <alt>"
+  },
+  {
+   "id": "acme-2024",
+   "kind": "work",
+   "organization": "Acme",
+   "org_short": "Acme",
+   "title": "Security Intern",
+   "employment": "internship",
+   "start_date": "2024-05-01",
+   "end_date": "2025-07-01",
+   "is_current": false,
+   "logo": "96d13f0f07ebb4d8a1e215b6b079cf06171af1e9-512x512.webp"
+  },
+  {
+   "id": "uni-2019",
+   "kind": "education",
+   "organization": "A University",
+   "org_short": "Uni",
+   "title": "B.S. Something",
+   "start_date": "2019-01-01",
+   "start_precision": "year",
+   "end_date": "2023-06-01",
+   "end_precision": "year"
+  }
+ ]
+}
