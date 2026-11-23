@@ -42,9 +42,11 @@
   </section>
   <footer></footer>
 </div>
+<!-- what the display has noticed under the pointer (js/hud.js): marks around it, what it is, what a click does -->
+<div id="lock" aria-hidden="true" hidden><div class="lock-box"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i></div><div class="lock-tag"><span class="lock-name"></span><span class="lock-verb"></span></div></div>
 
 <div id="inspectbar" hidden>
-  <button id="back">←  BACK</button><button id="prev" aria-label="Previous">‹</button><span id="count"></span><button id="next" aria-label="Next">›</button><span id="ways"></span>
+  <span id="named" aria-live="polite"></span><button id="back">←  BACK</button><button id="prev" aria-label="Previous">‹</button><span id="count"></span><button id="next" aria-label="Next">›</button><span id="ways"></span>
 </div>
 <script type="module" src="main.js"></script>
 </body>

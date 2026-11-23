@@ -26,9 +26,10 @@ const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math
 
 /**
  * @param text  this room's entry in content.json
- * @param env   { renderer, camera, mirror, maxAniso, onProgress }: the shared renderer and camera, the floor-mirror target and its uniforms
+ * @param env   { renderer, camera, mirror, maxAniso, onProgress }: the shared renderer and camera, the floor-mirror target and its uniforms;
+ *              display: content.json "display", the words the visitor's display uses to say what a pick is and what a click on it does
  */
-export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink, onShown, clearance, want, words }) {
+export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink, onShown, clearance, want, words, display: D }) {
   // ---------------------------------------------------------------- loading
   const base = `assets/${id}`; let info, arrived = 0;
   // The bakes are KTX2 files (tools/pack.py): they stay block-compressed on the GPU and bring their own mipmaps. The
@@ -458,6 +459,17 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   let terminal = null, reading = null, waiting = null;
   const picks = [], tanV = () => Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), middle = CAM.clone().lerp(TGT, 0.5);
   const pickMesh = (geometry, parent, position) => { const m = new THREE.Mesh(geometry, pickMat); m.position.copy(position); parent.add(m); return m; };
+  // What the visitor's display calls each pick (js/hud.js shows it when the pointer rests on one, and in the bar while it is in focus),
+  // and what a click on it does. Something that can be read is READ; anything else is looked at.
+  const named = (pick, name, verb) => Object.assign(pick, { name: String(name || '').toUpperCase(), verb });
+  const looks = (src) => (src ? D.read : D.inspect);
+  // a round thing's outline for the display: a square about its sphere, square to the view; or, for what lies flat (a table
+  // and what is on it: content.json "flat"), the circle it lies in, with a hand's breadth above it
+  const _x = V(), _y = V(), RING = Array.from({ length: 12 }, (_, i) => V(Math.cos(i * Math.PI / 6), 0, Math.sin(i * Math.PI / 6)));
+  const ball = (mesh, r, flat) => () => { const c = mesh.getWorldPosition(V());
+    if (flat) return [...RING.map((u) => c.clone().addScaledVector(u, r)), c.clone().setY(c.y + 0.25 * r)];
+    _x.setFromMatrixColumn(camera.matrixWorld, 0).multiplyScalar(r); _y.setFromMatrixColumn(camera.matrixWorld, 1).multiplyScalar(r);
+    return [c.clone().add(_x).add(_y), c.clone().add(_x).sub(_y), c.clone().sub(_x).add(_y), c.clone().sub(_x).sub(_y)]; };
   scene.updateMatrixWorld(true);
   // a flat display: stand square in front of it, filling the view
   for (const o of text.screens.inspect === false ? [] : screenMeshes) {
@@ -468,7 +480,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const along = V().crossVectors(V(0, 1, 0), n).normalize(), span = (f) => Math.max(...v.map(f)) - Math.min(...v.map(f));
     const w = span((q) => q.dot(along)), h = span((q) => q.y);
     // the catalogue terminal: stand back far enough to watch the drone; each volume is a choice (main.js lists them)
-    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = offers({ mesh: o, list: true, pose: () => {
+    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = offers({ mesh: o, list: true, name: D.catalogue, verb: D.choose, pose: () => {
         // on an upright screen the view is wide and the book small: stand nearer to where the drone presents it
         const at = B(info.drone.deliver), k = THREE.MathUtils.clamp(camera.aspect / 1.1, 0.5, 1);
         return { pos: at.clone().lerp(B(info.terminal.pos), k), tgt: B(info.terminal.tgt).lerp(at.clone().setY(at.y - 0.3), 1 - k) };
@@ -480,15 +492,16 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       const entry = text.screens.list[o.userData.screen], nh = n.clone().setY(0).normalize();
       const src = entry?.url && { url: entry.url, foot: () => c.clone().addScaledVector(nh, 0.3).setY(c.y - h / 2), facing: nh, span: 0.6, sheet: { parent: null, position: c.clone().addScaledVector(n, 0.012), quaternion: upright(n), size: [w, h] } };
       const pick = { mesh: o, pose: () => ({ pos: c.clone().addScaledVector(n, Math.max(h / 2 / tanV(), w / 2 / (tanV() * camera.aspect)) * 1.12), tgt: c }) };
+      named(pick, entry?.name || entry?.title, looks(src));
       picks.push(src ? offers(pick, () => src) : pick);
     }
   }
   // Holograms open up instead: the camera only comes closer, along its own line of sight, while the display grows
   // and unfolds its detail layer.
-  function addHolo(parent, local, r, dist, lift, target, url) {
+  function addHolo(parent, local, r, dist, lift, target, url, name) {
     const mesh = pickMesh(new THREE.SphereGeometry(r, 12, 8), parent, local), at = mesh.getWorldPosition(V()), f = toCam(at);
     const src = url && { url, foot: () => at.clone().addScaledVector(f, 0.6).setY(at.y - 0.25), facing: f, span: 0.6, sheet: { parent: null, position: at.clone().addScaledVector(f, 0.2), quaternion: upright(f), size: [1.2, 1.0] } };
-    const pick = { mesh, onFocus: target.setExpanded, pose: () => {
+    const pick = { mesh, onFocus: target.setExpanded, name, verb: url ? D.read : D.open, bounds: ball(mesh, r), pose: () => {
       const c = mesh.getWorldPosition(V()); c.y += lift;
       const d = CAM.clone().sub(c); d.y *= 0.35;
       const far = CAM.distanceTo(c) * 0.95;                // on an upright screen it stands further back, but never behind the room's own camera (that is outside the wall)
@@ -496,31 +509,34 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     } };
     picks.push(src ? offers(pick, () => src) : pick);
   }
-  (routeMap?.stations || []).forEach((s, i) => addHolo(s.grp, V(0, 0.42, 0), 0.48, 2.9, 0.3, s, text.stations[i]?.url));        // a stop on the line: what was done there
-  if (hologram) addHolo(scene, hologram.root.position, 1.0, 5.6, 0.55, hologram);
+  (routeMap?.stations || []).forEach((s, i) => { const st = text.stations[i]; addHolo(s.grp, V(0, 0.42, 0), 0.48, 2.9, 0.3, s, st?.url, [st?.title, st?.sub].filter(Boolean).join(' · ').toUpperCase()); });        // a stop on the line: what was done there
+  if (hologram) addHolo(scene, hologram.root.position, 1.0, 5.6, 0.55, hologram, null, text.hologram.panel.title.toUpperCase());
   // exhibits and other round-ish things: frame a sphere of radius r from the direction scene.json gives
   (info.focus || []).forEach((f, i) => {
     const mesh = pickMesh(new THREE.SphereGeometry(f.r * 0.8, 12, 8), scene, B(f.c)), d = B(f.dir).normalize(), dh = d.clone().setY(0).normalize(), c = mesh.position;
     const what = text.exhibits?.[i], lift = THREE.MathUtils.clamp(c.y - f.r * 0.45, 0.75, 1.25);                  // content.json "exhibits": what each stands for
     const src = what?.url && { url: what.url, foot: () => c.clone().addScaledVector(dh, f.r * 0.75).setY(lift), facing: dh, span: 0.6,
       sheet: { parent: null, position: c.clone().addScaledVector(dh, f.r * 0.5), quaternion: upright(dh), size: [f.r * 1.3, f.r * 1.3] } };
-    const pick = { mesh, cta: !!what?.cta, pose: () => ({ pos: c.clone().addScaledVector(d, f.r / Math.min(tanV(), tanV() * camera.aspect) * 1.25), tgt: c }) };
+    const pick = { mesh, cta: !!what?.cta, bounds: ball(mesh, f.r * 0.8, what?.flat), pose: () => ({ pos: c.clone().addScaledVector(d, f.r / Math.min(tanV(), tanV() * camera.aspect) * 1.25), tgt: c }) };
+    named(pick, what?.name || D.exhibit, looks(src));                                                     // its name: the project's (js/site.js), or content.json's
     picks.push(src ? offers(pick, () => src) : pick);
   });
   // the comms field: stand square in front of it; once open, clicks and the pointer go to the field itself (main.js)
-  if (comms) picks.push({ cta: true, mesh: comms.hit, onFocus: comms.setExpanded, click: comms.click, cursor: comms.cursor, typing: comms.typing, pose: () => {
+  if (comms) picks.push({ cta: true, mesh: comms.hit, name: text.comms.title.toUpperCase(), verb: D.write, onFocus: comms.setExpanded, click: comms.click, cursor: comms.cursor, typing: comms.typing, pose: () => {
     const c = comms.hit.getWorldPosition(V()), n = V(0, 0, 1).transformDirection(comms.hit.matrixWorld), { size: [w, h], beside } = comms.frame();
     const d = Math.max(h / 2 / tanV(), (w / 2 + (beside ? 0.35 : 0)) / (tanV() * camera.aspect)) * (beside ? 1.32 : 1.06);   // landscape: field and drone; upright: the field fills the width
     return { pos: c.clone().addScaledVector(n, d), tgt: beside ? c.clone().add(V(0.12, -0.04, 0)) : c };
   } });
   // reading: its pick is the READ glyph, there only while something is offered. Aside from the tour; BACK leads to what offered it.
-  if (reader) picks.push(reading = { mesh: reader.hit, reads: true, aside: true, steady: true, live: reader.available, pose: reader.pose, typing: () => reader.state() !== 'closed', calm: reader.settled,
+  if (reader) picks.push(reading = { mesh: reader.hit, reads: true, aside: true, name: '', verb: '', steady: true, live: reader.available, pose: reader.pose, typing: () => reader.state() !== 'closed', calm: reader.settled,
     back: reader.offeredBy, get backLabel() { return reader.offeredBy()?.returnLabel; }, url: reader.url, title: reader.title,
     onFocus: (on, next) => { if (on) return reader.read(); const by = reader.offeredBy(); reader.close(); if (next !== by) { reader.offer(null); by?.left?.(); } } });
   // doors: walk up to it; main.js then goes through to door.to (another room's id; '' = sealed)
   for (const door of info.doors || []) {
     const c = B(door.c), n = B(door.n).normalize(), mesh = pickMesh(new THREE.BoxGeometry(2.4, 3.4, 2.4), scene, c);
-    picks.push({ mesh, door, pose: () => ({ pos: c.clone().addScaledVector(n, 4.2 / Math.min(1, camera.aspect / 1.2)).setY(c.y + 0.5), tgt: c.clone().setY(c.y + 0.25) }) });
+    const along = V(-n.z, 0, n.x).normalize().multiplyScalar(1.2), top = c.clone().setY(c.y + 1.7), foot = c.clone().setY(Math.max(0, c.y - 1.7));     // for the display: the doorway in its wall, from the floor up
+    const verb = door.stops ? D.stops.replace('{n}', door.stops.length) : door.to ? D.enter : D.sealed;
+    picks.push({ mesh, door, name: door.label.toUpperCase(), verb, bounds: () => [top.clone().add(along), top.clone().sub(along), foot.clone().add(along), foot.clone().sub(along)], pose: () => ({ pos: c.clone().addScaledVector(n, 4.2 / Math.min(1, camera.aspect / 1.2)).setY(c.y + 0.5), tgt: c.clone().setY(c.y + 0.25) }) });
   }
 
   let frames = 0;

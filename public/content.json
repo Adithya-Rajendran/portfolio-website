@@ -1,7 +1,11 @@
 {
   "brand": "ARK AURORA",
   "reader": { "read": "READ", "scanning": "SCANNING", "label": "What is being read", "back": "CLOSE", "backToCatalogue": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED", "copyCode": "Copy this code", "failed": "This could not be opened.", "readThis": "Read what this shows", "ready": "{place} IS READY", "offer": "THIS CAN BE READ IN {place}", "enter": "READ IT THERE  →" },
-  "hint": "MOVE TO LOOK AROUND  ·  CLICK TO INSPECT  ·  ← → TO TOUR",
+  "display": {
+    "read": "READ", "inspect": "INSPECT", "open": "OPEN", "write": "WRITE", "enter": "ENTER", "stops": "{n} STOPS", "sealed": "SEALED",
+    "catalogue": "CATALOGUE", "choose": "CHOOSE A VOLUME", "exhibit": "EXHIBIT",
+    "hint": { "pointer": "MOVE TO LOOK AROUND  ·  CLICK TO INSPECT  ·  ← → TO TOUR", "touch": "TAP TO INSPECT" }
+  },
   "credit": "Earth imagery: NASA Blue Marble / Black Marble",
   "depart": "03:47:12",
   "live": {
@@ -128,7 +132,7 @@
       "headline": ["The view", "from here."],
       "sub": ["A quiet room, a wall of books, and home in the window.", "{headline}  ·  {location}"],
       "cta": "ABOUT ME  →", "ctaReads": "/about/",
-      "exhibits": [{ "url": "/about/" }],
+      "exhibits": [{ "url": "/about/", "name": "THE BOOK ON THE TABLE", "flat": true }],
       "facts": [["ROOM", "ABOUT"], ["BELOW US", "EARTH · 717 KM"]],
       "screens": {
         "inspect": false,

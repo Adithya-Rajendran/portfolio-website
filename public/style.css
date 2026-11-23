@@ -21,6 +21,7 @@ html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--f
               linear-gradient(180deg, rgba(2,5,9,.7) 0%, rgba(2,5,9,0) 16%), linear-gradient(0deg, rgba(2,5,9,.75), rgba(2,5,9,0) 22%); }
 #hud.hidden { opacity: 0; }
 #hud .hero, #hud > footer { transition: opacity .5s; }
+#hud .hero.yield, #hud > footer.yield { opacity: .16; transition-duration: .2s; }      /* the lock lies over these words (js/hud.js): they step back for it */
 #hud.inspecting { background: none; }
 #hud.inspecting .hero, #hud.inspecting > footer { opacity: 0; }
 #hud > header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; letter-spacing: .32em; }
@@ -46,8 +47,14 @@ html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--f
 #hud > footer { display: flex; gap: clamp(16px, 3vw, 48px); align-items: flex-end; font-size: 11px; letter-spacing: .22em; color: var(--soft); }
 #hud > footer b { display: block; font-weight: 400; color: #8aa3b1; font-size: 9px; letter-spacing: .4em; margin-bottom: 5px; }
 #hud > footer .hint { margin-left: auto; text-align: right; line-height: 1.7; color: #c5d8e2; }
+#hud > footer .hint .how, #hud > footer .hint small { display: block; }
 #hud > footer .hint small { font-size: 9px; letter-spacing: .12em; opacity: .7; }
-@media (max-width: 720px) { #hud nav { display: none; } #hud > footer .hint { display: none; } }
+@media (max-width: 720px) {                          /* the hint on a line of its own over the facts; the credit is left to the wider screens */
+  #hud nav { display: none; }
+  #hud > footer { position: relative; }
+  #hud > footer .hint { position: absolute; left: 0; right: 0; bottom: calc(100% + 16px); margin: 0; text-align: left; }
+  #hud > footer .hint small, #hud > footer .hint.gone { display: none; }
+}
 
 /* controls shown while something is being inspected */
 #inspectbar { position: fixed; left: var(--edge); bottom: var(--edge); z-index: 3; display: flex; align-items: center; gap: 8px; }
@@ -68,8 +75,40 @@ html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--f
 #ways.list button small { display: block; margin-top: 5px; font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--soft); pointer-events: none; }
 #ways.list button:hover { color: var(--cy); border-color: var(--cy); }
 #ways.list button[aria-current] { color: #ffd2a8; border-color: var(--am); box-shadow: inset 3px 0 0 var(--am); }
+@media (max-width: 720px) {                          /* a door's ways on rows of their own over the controls: BACK ‹ › stay where they are */
+  #inspectbar { flex-wrap: wrap; max-width: calc(100vw - 2 * var(--edge)); }
+  #ways:not(.list) button[data-to] { order: -1; flex: 1 0 100%; }
+}
 @media (max-width: 720px) {                          /* no room beside the book: once one is chosen, only it stays, and opens the list again */
   #ways.list.chosen button:not([aria-current]):not(#enter) { display: none; }
   #ways.list.chosen button[aria-current]::after { content: "▾"; float: right; margin-top: -22px; color: var(--am); }
 }
+/* the bar's caption: what is in focus, standing over BACK (and under a list, if there is one) */
+#named { position: absolute; left: 0; bottom: calc(100% + 12px); max-width: calc(100vw - 2 * var(--edge)); font-size: 11px; letter-spacing: .3em; line-height: 1.4;
+  color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 8px #000, 0 0 2px #000; border-left: 1px solid var(--cy); padding-left: 10px; }
+#named:empty { display: none; }
+#inspectbar:has(#named:not(:empty)) #ways.list { bottom: calc(100% + 40px); }
+
+/* the lock: corner marks around what the pointer rests on, and a tag under it. It settles once as it appears (the marks
+   close in, the tag comes up) and goes quickly; it never moves by itself. Reduced motion: it is simply there. */
+#lock, #lock * { pointer-events: none; }
+#lock { position: fixed; inset: 0; z-index: 2; }
+#lock[hidden] { display: none; }
+#lock .lock-box, #lock .lock-tag { position: absolute; left: 0; top: 0; }
+#lock .c { position: absolute; width: min(14px, 34%); height: min(14px, 34%); border: 0 solid var(--cy); opacity: 0; transition: opacity .12s, transform .12s;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.9)) drop-shadow(0 0 4px rgba(127,227,255,.45)); }
+#lock .tl { left: 0; top: 0; border-width: 1px 0 0 1px; transform: translate(-6px, -6px); }
+#lock .tr { right: 0; top: 0; border-width: 1px 1px 0 0; transform: translate(6px, -6px); }
+#lock .bl { left: 0; bottom: 0; border-width: 0 0 1px 1px; transform: translate(-6px, 6px); }
+#lock .br { right: 0; bottom: 0; border-width: 0 1px 1px 0; transform: translate(6px, 6px); }
+#lock.on .c { opacity: 1; transform: none; transition: opacity .1s, transform .18s cubic-bezier(.2, .8, .3, 1); }
+#lock .lock-tag { display: flex; gap: 12px; max-width: calc(100vw - 16px); font-size: 11px; letter-spacing: .3em; line-height: 1.4; white-space: nowrap;
+  padding: 6px 7px 6px 10px; background: rgba(2,5,9,.62); border-left: 1px solid var(--cy); backdrop-filter: blur(6px);
+  opacity: 0; transition: opacity .12s; text-shadow: 0 1px 8px #000, 0 0 2px #000; }
+#lock.on .lock-tag { opacity: 1; transition: opacity .18s; }
+#lock .lock-name { color: var(--fg); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#lock .lock-verb { color: var(--am); flex: none; padding-left: 12px; border-left: 1px solid rgba(233,244,250,.25); }
+#lock.cut, #lock.cut * { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #lock, #lock * { transition: none !important; } }
+
 #count { font-size: 11px; letter-spacing: .3em; color: var(--soft); min-width: 64px; text-align: center; text-shadow: 0 1px 8px #000; }

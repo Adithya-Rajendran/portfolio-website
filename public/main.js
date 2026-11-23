@@ -15,6 +15,7 @@ import { loadRoom } from './js/room.js';
 import { reflectEye } from './js/reflections.js';
 import { initLive, live, fill } from './js/screens.js';
 import { loadSite, furnish } from './js/site.js';
+import { createDisplay } from './js/hud.js';
 
 const $ = (sel) => document.querySelector(sel), esc = (str) => String(str).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
@@ -147,6 +148,9 @@ let view = 1, viewTarget = 1, navTouched = false, intro = 0, t0 = 0;   // view: 
 // room's own camera. Doors are picks too: walking up to one leads through it into the next room.
 const focus = { pick: null, to: null, f: 1, from: { pos: V(), tgt: V() }, cur: { pos: V(), tgt: V() }, dest: V() };
 let tour = null, leaving = null;
+// The visitor's display (js/hud.js): the lock on what the pointer rests on, the bar's caption, the hint.
+const display = createDisplay({ camera, words: content.display, gliding: () => focus.f < 1 });
+let pointer = null, over = null, aim = false, aimed = 0;     // where the mouse or pen is over the room (null: touch, gone, pressed, or over the display's own controls); the pick under it
 function tourOrder() {                                 // a sweep across the room from left to right as seen from the room camera
   const box = new THREE.Box3(), c = V(), azimuth = (p) => { box.setFromObject(p.mesh).getCenter(c); return Math.atan2(c.x - room.CAM.x, room.CAM.z - c.z); };
   return (tour ??= room.picks.filter((p) => !p.aside).map((p) => [azimuth(p), p]).sort((a, b) => a[0] - b[0]).map((a) => a[1]));     // aside: reached from another pick, not on the tour
@@ -155,6 +159,7 @@ function setFocus(pick = null) {
   if (pick === focus.pick) return;
   focus.pick?.onFocus?.(false, pick); pick?.onFocus?.(true);        // the one being left is told where the visitor is going
   focus.pick = pick; focus.to = pick?.pose() ?? null; focus.f = still ? 1 : 0;      // reduced motion: a cut, not a glide
+  pointer = null; display.focused(pick);                                    // the lock goes until the pointer moves again; the bar says what is in focus
   focus.from.pos.copy(focus.cur.pos); focus.from.tgt.copy(focus.cur.tgt);
   clearTimeout(leaving); leaving = null;
   hud.classList.toggle('inspecting', !!pick); bar.hidden = !pick; bar.classList.toggle('aside', !!pick?.aside);
@@ -198,8 +203,8 @@ function fillHud(id) {
     + `<span class="sep"></span><a data-view="0">WIDE</a><a data-view="1">${r.close}</a>`;
   const shelved = room?.volumes?.length ?? 0, facts = r.facts.map(([k, v]) => [k, v.replace('{count} VOLUMES', `${shelved} VOLUME${shelved === 1 ? '' : 'S'}`)]);
   $('#hud > footer').innerHTML = facts.map(([k, v]) => `<div><b>${esc(k)}</b> ${esc(v)}</div>`).join('')
-    + `<div class="hint">${content.hint}${r.credit ? `<br><small>${content.credit}</small>` : ''}</div>`;
-  tick();
+    + `<div class="hint"><span class="how"></span>${r.credit ? `<small>${content.credit}</small>` : ''}</div>`;
+  display.paintHint(); tick();
 }
 const isRoom = (id) => typeof id === 'string' && Object.hasOwn(content.rooms, id);       // not 'constructor' and the like
 // Where a URL leads. Every room has a path (content.json "path": / the Atrium, /blog/ the Library ...); anything deeper,
@@ -245,11 +250,11 @@ function onLink(href) {
   } else if (to.id === room?.id) back();                                                    // the room itself: close what is read
   else { if (to.read) history.pushState(null, '', to.read.split('#')[0] + query() + u.hash); enter(to.id, !to.read); }     // another room, and what is read there
 }
-/** How far up from the bottom of the window the bar's controls reach between x0 and x1 (0: none there). The READ glyph stays above them. */
+/** How far up from the bottom of the window the bar's controls (and its caption) reach between x0 and x1 (0: none there). The READ glyph stays above them. */
 function clearance(x0, x1) {
   if (bar.hidden) return 0;
   let top = innerHeight;
-  for (const el of bar.querySelectorAll('button')) { const r = el.getBoundingClientRect(); if (r.width && r.right > x0 && r.left < x1) top = Math.min(top, r.top); }
+  for (const el of bar.querySelectorAll('button, #named')) { const r = el.getBoundingClientRect(); if (r.width && r.right > x0 && r.left < x1) top = Math.min(top, r.top); }      // and the caption over them
   return innerHeight - top;
 }
 function back() {
@@ -264,7 +269,7 @@ async function enter(id, push = true) {
   $('#what').textContent = content.rooms[id].loading; progress(0); loader.classList.remove('done'); hud.classList.add('hidden');
   if (room) { await new Promise((r) => setTimeout(r, 500)); room.dispose(); room = null; }      // let the cover fade in before the old room goes
   if (push && location.pathname + location.search !== urlFor(id)) history.pushState(null, '', urlFor(id));
-  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, clearance, words: content.reader,
+  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, clearance, words: content.reader, display: content.display,
     onShown: () => { if (room && !busy) syncUrl(); }, want: route().read?.split('/')[2] });
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);
@@ -286,9 +291,12 @@ addEventListener('popstate', () => {
   }
   else if (focus.pick?.reads) back();
 });
-addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
+addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; pointer = null; display.pointing(e.pointerType); });     // a press: the lock goes
+addEventListener('pointerout', (e) => { if (!e.relatedTarget) pointer = null; });       // out of the window
+addEventListener('blur', () => { pointer = null; });
 addEventListener('pointermove', (e) => {
   mouse.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1);
+  display.pointing(e.pointerType); pointer = e.pointerType !== 'touch' && e.target === canvas ? { clientX: e.clientX, clientY: e.clientY } : null; aim = true;
   if (room && !plain() && e.timeStamp - hovered > 60) {
     hovered = e.timeStamp; const ph = pickHit(e);
     canvas.style.cursor = !ph ? '' : ph.pick === focus.pick && ph.pick.cursor ? ph.pick.cursor(ph.hit.uv) : 'pointer';
@@ -340,7 +348,7 @@ const clock = new THREE.Clock(), CALM = num('calm', 0.15); let drawn = 0, wasCal
 function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 0.05), t = (uTime.value += dt), since = t - t0;
-  if (!room || plain()) return;                         // nothing is drawn behind an article read as a page
+  if (!room || plain()) return display.frame(null);     // nothing is drawn behind an article read as a page
   // While an article is read the room is a still backdrop, nearly dark behind the hologram's veil. It is redrawn only a
   // few times a second: the GPU is then free for the page, and the text scrolls smoothly even on a slow one.
   const calm = focus.f >= 1 && !!focus.pick?.calm?.();
@@ -374,6 +382,9 @@ function frame() {
   camera.lookAt(_look);
 
   room.update(t); draw(t);
+  // the lock: on the pick the pointer rests on, looked for again as the view moves under a still pointer
+  if (!pointer) over = null; else if (aim || t - aimed > 0.15) { over = pickHit(pointer)?.pick ?? null; aim = false; aimed = t; }
+  display.frame(over && !busy && over !== focus.pick && !over.reads && !focus.pick?.reads && over.name ? over : null);
   if (Q.has('debug')) { series.push(Math.round(brightness(7))); if (series.length > 400) series.shift(); }
 }
 
@@ -407,7 +418,7 @@ camera.position.copy(room.CAM); camera.lookAt(room.TGT); room.update(0); draw(0)
 if (tier === 0 && brightness(8) < 2) { setTier(1); applyScale(); }
 if (Q.has('focus')) setTimeout(() => setFocus(room.picks[num('focus', 0)]), 300);
 frame();
-window.__lobby = { renderer, camera, post, gov, series, setFocus, step, enter, ready: () => intro,
+window.__lobby = { renderer, camera, post, gov, series, setFocus, step, enter, ready: () => intro, display: { state: display.state },
   get scene() { return room?.scene; }, get picks() { return room?.picks ?? []; },
   // Opt-in deterministic QA: use the actual room.update, sun prepass, mirror and post,
   // changing only eye/target/time. Normal visitors retain the usual camera and clock.

@@ -23,7 +23,7 @@ export function furnish(content, { posts, projects, profile }) {
     const named = P.exhibits.map((slug) => by.get(slug) ?? null), rest = ranked.filter((p) => !named.includes(p)), shown = named.map((p) => p ?? rest.shift() ?? null);
     P.screens.list = P.screens.list.map((card, i) => (shown[i] ? { ...card, layout: 'card', title: up(shown[i].types.join(' · ')), tag: up(shown[i].status_label), name: shown[i].name,
       meta: up(join(shown[i].period, shown[i].role && cut(shown[i].role, 44))), text: shown[i].summary, url: shown[i].url } : card));
-    P.exhibits = shown.map((p) => (p ? { url: p.url } : null));
+    P.exhibits = shown.map((p) => (p ? { url: p.url, name: p.name } : null));        // the visitor's display names each exhibit for its project
     for (const k of ['sub', 'facts', 'cta']) P[k] = fill(P[k], { count: projects.length, shown: shown.filter(Boolean).length });
     if (!projects.length) { delete P.cta; delete P.ctaReads; P.screens.list = P.screens.list.map((card) => ({ ...card, cta: '' })); }      // nothing to read yet
   }
