@@ -176,8 +176,9 @@ function travel(id, delay = 0) { if (id && !leaving) leaving = setTimeout(() => 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function pickHit(e) {                                // the pick under the pointer, and where on it (a terminal reads the uv)
   ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
-  const hit = ray.intersectObjects(room.picks.filter((p) => !p.live || p.live()).map((p) => p.mesh), false)[0];      // live: some are only there at times
-  return hit ? { pick: room.picks.find((p) => p.mesh === hit.object), hit } : null;
+  const live = room.picks.filter((p) => !p.live || p.live()), of = (h) => live.find((p) => p.mesh === h.object);      // live: some are only there at times
+  const hits = ray.intersectObjects(live.map((p) => p.mesh), false), hit = hits.find((h) => of(h).reads) ?? hits[0];  // READ is drawn over everything, so it is also in front of everything
+  return hit ? { pick: of(hit), hit } : null;
 }
 const pickAt = (e) => pickHit(e)?.pick ?? null;
 
