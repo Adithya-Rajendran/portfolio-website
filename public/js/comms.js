@@ -2,14 +2,14 @@
 // above the plinth when you come up to it, with a small drone in attendance whose aura shows its mood. You write on
 // the field; the station's Mind sends it. Socials are glyphs on the same field.
 // What it says and where a message goes come from content.json ("comms"). Without a send endpoint the message is
-// handed to the visitor's own mail program (mailto), which the Mind says so.
+// handed to the visitor's own mail program (mailto); with no address either, it is copied for them to carry. The Mind says which.
 import * as THREE from 'three';
 import { GLOW, V, uTime, spring } from './kit.js';
 
 const SANS = '"Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif', SERIF = 'Georgia, "Times New Roman", serif';
 const INK = { fg: '#eef8ff', soft: 'rgba(214,236,255,0.62)', dim: 'rgba(190,220,245,0.34)', line: 'rgba(170,220,255,0.22)', warm: '#ffe2b8' };
 // the drone's aura, by mood (Culture drones wear their mood in colour; this palette is the station's own)
-const MOOD = { idle: '#8fd6ff', composing: '#ffd59a', sending: '#ffffff', sent: '#a6ffcf', handed: '#a6ffcf', empty: '#ffb4a0', failed: '#ff9c9c' };
+const MOOD = { idle: '#8fd6ff', composing: '#ffd59a', sending: '#ffffff', sent: '#a6ffcf', handed: '#a6ffcf', copied: '#a6ffcf', empty: '#ffb4a0', failed: '#ff9c9c' };
 // Two layouts of the field: landscape, and portrait for phones held upright. Canvas pixels; size in metres;
 // regions [x0, y0, x1, y1]; lift raises a tall field clear of the plinth; drone: where it hovers beside (or above) it.
 // standby: the y of the three lines of the invitation shown while nobody is at the field (inside the half-open band).
@@ -177,7 +177,10 @@ export function createComms({ scene, center, facing, text, window: win, out }) {
     state = 'sending'; setMood('sending'); redraw();
     const body = { message: msg.value.trim(), reply: sig.value.trim(), from: location.href, at: new Date().toISOString() };
     const flight = new Promise((done) => { sending = { t0: uTime.value, path: curve(), done }; });
-    let result = 'handed';
+    // Where it goes: to the station's endpoint if it has one, else into the visitor's own mail, else (no address is published)
+    // onto their clipboard, to be pasted wherever they reach the owner.
+    let result = text.address ? 'handed' : 'copied';
+    if (result === 'copied' && !text.endpoint) { try { await navigator.clipboard.writeText(body.message + (body.reply ? `\n\n— ${body.reply}` : '')); } catch { result = 'failed'; } }      // now, while the click still counts as the visitor's
     if (text.endpoint) {
       try { result = (await fetch(text.endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).ok ? 'sent' : 'failed'; }
       catch { result = 'failed'; }

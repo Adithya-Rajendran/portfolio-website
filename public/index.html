@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="post.css">
 <!-- before anything is painted: an article's own URL starts as a readable page ("reading"), everything else as the station (post.css) -->
-<script>document.documentElement.className = /^\/blog\/[^/]+\/?$/.test(location.pathname) ? 'reading' : 'station';</script>
+<script>document.documentElement.className = /^\/(blog|portfolio)\/[^/]+\/?$/.test(location.pathname) ? 'reading' : 'station';</script>
 <!-- three.js r181 as published, minified (1.3 MB less to load); three.module.js next to it is the same code, readable -->
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/jsm/" } }
@@ -20,7 +20,7 @@
 <canvas id="scene"></canvas>
 <noscript><p style="position:fixed;left:0;right:0;bottom:0;padding:18px 22px;font:14px/1.6 sans-serif;color:#a9c0cd;background:#04060a">Arcadia Station is drawn in 3D and needs JavaScript. The writing can be read without it: <a href="/blog/" style="color:#7fe3ff">/blog/</a></p></noscript>
 <!-- the way around for a page read as a page (post.css); the station has its own display -->
-<nav id="pagenav" aria-label="Site"><a href="/">ARK AURORA</a><a href="/blog/">LIBRARY</a></nav>
+<nav id="pagenav" aria-label="Site"><a href="/">ARK AURORA</a><a href="/about/">ABOUT</a><a href="/portfolio/">PROJECTS</a><a href="/experience/">EXPERIENCE</a><a href="/blog/">WRITING</a><a href="/contact/">CONTACT</a></nav>
 <!--site:page-->
 
 <!-- Everything below is filled in from content.json by main.js: one page, and a room per entry in "rooms". -->

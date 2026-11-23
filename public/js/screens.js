@@ -121,6 +121,18 @@ const LAYOUTS = {
     });
     if (!s.volumes.length) put(c, s.empty, 48, 300, '300 40 dim');
   },
+  card(c, s) {                                               // a title card that fits what it is given: a figure (a year), a name, a line of facts, a few lines of text
+    const wrap = (str, font, width = 928) => { c.font = font; if ('letterSpacing' in c) c.letterSpacing = '0px'; const out = []; let line = '';
+      for (const w of str.split(' ')) { if (c.measureText(line + w).width > width && line) { out.push(line.trim()); line = ''; } line += w + ' '; } out.push(line.trim()); return out; };
+    const most = s.figure ? 2 : 3; let y = 168, size = 70, name;
+    if (s.figure) { put(c, s.figure, 42, 196, '200 124 amber'); y = 312; }
+    do { size -= 6; name = wrap(s.name, `300 ${size}px ${SANS}`); } while (name.length > most && size > 34);        // the largest size at which the name fits
+    for (const l of name.slice(0, most)) { put(c, l, 48, y, `300 ${size} fg`); y += size * 1.14; }
+    y += 6; put(c, wrap(s.meta, `500 20px ${SANS}`, 760)[0], 48, y, '500 20 dim s3'); rule(c, y + 34, 0.3); y += 76;
+    const text = wrap(s.text ?? '', `300 28px ${SANS}`), room = Math.max(1, Math.floor(((s.cta ? 578 : 628) - y) / 40) + 1);
+    text.slice(0, room).forEach((l, i) => put(c, i === room - 1 && text.length > room ? l.replace(/.{0,3}$/, '…') : l, 48, y + i * 40, `300 28 ${i ? 'dim' : 'fg'}`));
+    if (s.cta) put(c, s.cta, 48, 612, '600 22 cy s4');
+  },
   placard(c, s) {                                            // a numbered (or plain) title card
     const y = s.no ? 340 : 200;
     if (s.no) put(c, s.no, 44, 210, '200 150 amber');

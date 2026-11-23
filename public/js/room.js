@@ -28,7 +28,7 @@ const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math
  * @param text  this room's entry in content.json
  * @param env   { renderer, camera, mirror, maxAniso, onProgress }: the shared renderer and camera, the floor-mirror target and its uniforms
  */
-export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink, want }) {
+export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink, onShown, want, words }) {
   // ---------------------------------------------------------------- loading
   const base = `assets/${id}`; let info, arrived = 0;
   // The bakes are KTX2 files (tools/pack.py): they stay block-compressed on the GPU and bring their own mipmaps. The
@@ -278,7 +278,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       const { color: c, strength } = info.em[u.em], k = Math.min(strength, info.em_range || 8);
       o.material = flatMat(new THREE.Color(c[0] * k, c[1] * k, c[2] * k));
     } else if (u.fx === 'screen') {                     // scene.json lists the screens in the order content.json describes them
-      o.material = screens.materials[Math.max(0, (info.screens || []).indexOf(u.name)) % screens.materials.length]; screenMeshes.push(o);
+      o.userData.screen = Math.max(0, (info.screens || []).indexOf(u.name)) % screens.materials.length;        // which entry of the room's screens it shows
+      o.material = screens.materials[o.userData.screen]; screenMeshes.push(o);
     } else if (u.fx === 'glass') { o.material = glassMat; o.renderOrder = 5; hidden.push(o); }
     o.frustumCulled = false; o.matrixAutoUpdate = false; o.updateMatrix();
     if (u.grp) o.layers.enable(1);                      // layer 1: what casts a shadow in the sunlight
@@ -432,10 +433,28 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     if (shelf) { shelf.selected = i ?? -1; shelf.rev++; }
     if (still && i != null) drone.bring(i); else drone.fetch(i);                 // reduced motion: no flight across the room
   };
-  // ... and a volume lying open can be read: scanned, it stands over the book as a hologram (js/reader.js)
-  const reader = drone && volumes.length ? createReader({ scene, camera, drone, volumes, text: text.reader, onLink,
-    facing: B(info.terminal.pos).sub(B(info.drone.deliver)).setY(0).normalize() }) : null;
+  // Things that can be read (js/reader.js): a volume lying open, a placard, an exhibit, a stop on the route map. The pick
+  // that shows one offers it while it has the visitor's attention; READ then scans it and stands its article over it.
+  const reader = words ? createReader({ scene, camera, text: words, onLink, onShown }) : null;
   if (reader) hidden.push(reader.root);                              // light addressed to the visitor: not in the floor's mirror image
+  const upright = (n) => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(n, V(), V(0, 1, 0)));     // a plane's turn so that it faces along n
+  const toCam = (p) => CAM.clone().sub(p).setY(0).normalize();
+  /** Make a pick offer a source (a function, asked every frame: the source or null). */
+  function offers(pick, source, backLabel) {
+    if (!reader) return pick;
+    const own = pick.onFocus;
+    return Object.assign(pick, { source, backLabel, enter: () => (reader.available() ? reading : null), enterLabel: words.read,
+      onFocus: (on, next) => { own?.(on, next); if (on) reader.offer(source, pick); else if (!next?.reads) reader.offer(null); } });
+  }
+  /** Something read with nothing of its own in the room: a frame in the air a few steps in front of the room's camera. */
+  function afloat(url) {
+    const f = CAM.clone().sub(TGT).setY(0).normalize(), foot = CAM.clone().addScaledVector(f, -2.4).setY(1.0);
+    return { url, foot: () => foot, facing: f, span: 0.5, sheet: { parent: null, position: foot.clone().setY(1.2), quaternion: upright(f), size: [0.5, 0.32] } };
+  }
+  const bookSources = [];                                            // the Library: the volume lying open
+  const bookSource = () => { const i = drone.open(); if (i < 0) return null;
+    return (bookSources[i] ??= { url: volumes[i].url, foot: () => drone.book().getWorldPosition(V()), facing: B(info.terminal.pos).sub(B(info.drone.deliver)).setY(0).normalize(), span: drone.size[0],
+      sheet: { parent: drone.book(), position: V(0, 0.046, 0), quaternion: new THREE.Quaternion().setFromAxisAngle(V(1, 0, 0), -Math.PI / 2), size: drone.size, top: true } }); };
   let terminal = null, reading = null, waiting = null;
   const picks = [], tanV = () => Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), middle = CAM.clone().lerp(TGT, 0.5);
   const pickMesh = (geometry, parent, position) => { const m = new THREE.Mesh(geometry, pickMat); m.position.copy(position); parent.add(m); return m; };
@@ -449,42 +468,54 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const along = V().crossVectors(V(0, 1, 0), n).normalize(), span = (f) => Math.max(...v.map(f)) - Math.min(...v.map(f));
     const w = span((q) => q.dot(along)), h = span((q) => q.y);
     // the catalogue terminal: stand back far enough to watch the drone; each volume is a choice (main.js lists them)
-    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = { mesh: o, list: true, pose: () => {
+    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = offers({ mesh: o, list: true, pose: () => {
         // on an upright screen the view is wide and the book small: stand nearer to where the drone presents it
         const at = B(info.drone.deliver), k = THREE.MathUtils.clamp(camera.aspect / 1.1, 0.5, 1);
         return { pos: at.clone().lerp(B(info.terminal.pos), k), tgt: B(info.terminal.tgt).lerp(at.clone().setY(at.y - 0.3), 1 - k) };
       },
       options: volumes.map((v, i) => [v.title, () => call(i), `${v.date}  ·  ${v.minutes} min`]), current: () => shelf?.selected ?? -1,
-      enter: () => (reader?.available() ? reading : null), enterLabel: text.reader?.read, onFocus: (on, next) => on || next?.reads || call(null) });
-    else picks.push({ mesh: o, pose: () => ({ pos: c.clone().addScaledVector(n, Math.max(h / 2 / tanV(), w / 2 / (tanV() * camera.aspect)) * 1.12), tgt: c }) });
+      left: () => call(null), onFocus: (on, next) => on || next?.reads || call(null) }, bookSource, words?.backToCatalogue));
+    else {
+      // a placard: what it names can be read, standing at its foot
+      const entry = text.screens.list[o.userData.screen], nh = n.clone().setY(0).normalize();
+      const src = entry?.url && { url: entry.url, foot: () => c.clone().addScaledVector(nh, 0.3).setY(c.y - h / 2), facing: nh, span: 0.6, sheet: { parent: null, position: c.clone().addScaledVector(n, 0.012), quaternion: upright(n), size: [w, h] } };
+      const pick = { mesh: o, pose: () => ({ pos: c.clone().addScaledVector(n, Math.max(h / 2 / tanV(), w / 2 / (tanV() * camera.aspect)) * 1.12), tgt: c }) };
+      picks.push(src ? offers(pick, () => src) : pick);
+    }
   }
   // Holograms open up instead: the camera only comes closer, along its own line of sight, while the display grows
   // and unfolds its detail layer.
-  function addHolo(parent, local, r, dist, lift, target) {
-    const mesh = pickMesh(new THREE.SphereGeometry(r, 12, 8), parent, local);
-    picks.push({ mesh, onFocus: target.setExpanded, pose: () => {
+  function addHolo(parent, local, r, dist, lift, target, url) {
+    const mesh = pickMesh(new THREE.SphereGeometry(r, 12, 8), parent, local), at = mesh.getWorldPosition(V()), f = toCam(at);
+    const src = url && { url, foot: () => at.clone().addScaledVector(f, 0.6).setY(at.y - 0.25), facing: f, span: 0.6, sheet: { parent: null, position: at.clone().addScaledVector(f, 0.2), quaternion: upright(f), size: [1.2, 1.0] } };
+    const pick = { mesh, onFocus: target.setExpanded, pose: () => {
       const c = mesh.getWorldPosition(V()); c.y += lift;
       const d = CAM.clone().sub(c); d.y *= 0.35;
       return { pos: c.clone().addScaledVector(d.normalize(), dist / Math.min(1, camera.aspect / 1.5)), tgt: c };
-    } });
+    } };
+    picks.push(src ? offers(pick, () => src) : pick);
   }
-  for (const s of routeMap?.stations || []) addHolo(s.grp, V(0, 0.42, 0), 0.48, 2.9, 0.3, s);
+  (routeMap?.stations || []).forEach((s, i) => addHolo(s.grp, V(0, 0.42, 0), 0.48, 2.9, 0.3, s, text.stations[i]?.url));        // a stop on the line: what was done there
   if (hologram) addHolo(scene, hologram.root.position, 1.0, 5.6, 0.55, hologram);
   // exhibits and other round-ish things: frame a sphere of radius r from the direction scene.json gives
-  for (const f of info.focus || []) {
-    const mesh = pickMesh(new THREE.SphereGeometry(f.r * 0.8, 12, 8), scene, B(f.c)), d = B(f.dir).normalize();
-    picks.push({ mesh, pose: () => ({ pos: mesh.position.clone().addScaledVector(d, f.r / Math.min(tanV(), tanV() * camera.aspect) * 1.25), tgt: mesh.position }) });
-  }
+  (info.focus || []).forEach((f, i) => {
+    const mesh = pickMesh(new THREE.SphereGeometry(f.r * 0.8, 12, 8), scene, B(f.c)), d = B(f.dir).normalize(), dh = d.clone().setY(0).normalize(), c = mesh.position;
+    const what = text.exhibits?.[i], lift = THREE.MathUtils.clamp(c.y - f.r * 0.45, 0.75, 1.25);                  // content.json "exhibits": what each stands for
+    const src = what?.url && { url: what.url, foot: () => c.clone().addScaledVector(dh, f.r * 0.75).setY(lift), facing: dh, span: 0.6,
+      sheet: { parent: null, position: c.clone().addScaledVector(dh, f.r * 0.5), quaternion: upright(dh), size: [f.r * 1.3, f.r * 1.3] } };
+    const pick = { mesh, cta: !!what?.cta, pose: () => ({ pos: c.clone().addScaledVector(d, f.r / Math.min(tanV(), tanV() * camera.aspect) * 1.25), tgt: c }) };
+    picks.push(src ? offers(pick, () => src) : pick);
+  });
   // the comms field: stand square in front of it; once open, clicks and the pointer go to the field itself (main.js)
   if (comms) picks.push({ cta: true, mesh: comms.hit, onFocus: comms.setExpanded, click: comms.click, cursor: comms.cursor, typing: comms.typing, pose: () => {
     const c = comms.hit.getWorldPosition(V()), n = V(0, 0, 1).transformDirection(comms.hit.matrixWorld), { size: [w, h], beside } = comms.frame();
     const d = Math.max(h / 2 / tanV(), (w / 2 + (beside ? 0.35 : 0)) / (tanV() * camera.aspect)) * (beside ? 1.32 : 1.06);   // landscape: field and drone; upright: the field fills the width
     return { pos: c.clone().addScaledVector(n, d), tgt: beside ? c.clone().add(V(0.12, -0.04, 0)) : c };
   } });
-  // reading: its pick is the READ glyph, there only while a book lies open. Aside from the tour; BACK leads to the terminal.
+  // reading: its pick is the READ glyph, there only while something is offered. Aside from the tour; BACK leads to what offered it.
   if (reader) picks.push(reading = { mesh: reader.hit, reads: true, aside: true, steady: true, live: reader.available, pose: reader.pose, typing: () => reader.state() !== 'closed', calm: reader.settled,
-    back: () => terminal, backLabel: text.reader.backTo, slug: reader.slug,
-    onFocus: (on, next) => { if (on) reader.read(); else { reader.close(); if (next !== terminal) call(null); } } });
+    back: reader.offeredBy, get backLabel() { return reader.offeredBy()?.backLabel; }, url: reader.url, title: reader.title,
+    onFocus: (on, next) => { if (on) return reader.read(); const by = reader.offeredBy(); reader.close(); if (next !== by) { reader.offer(null); by?.left?.(); } } });
   // doors: walk up to it; main.js then goes through to door.to (another room's id; '' = sealed)
   for (const door of info.doors || []) {
     const c = B(door.c), n = B(door.n).normalize(), mesh = pickMesh(new THREE.BoxGeometry(2.4, 3.4, 2.4), scene, c);
@@ -500,14 +531,23 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   let last = 0;
   return {
     id, info, scene, picks, floors, hidden, CAM, TGT, chart, reader, terminal, volumes,
+    /** Can the article at this URL be read here? (In the Library only a volume on the shelves.) */
+    reads: (url) => !!reader && !!url && (!drone || volumes.some((v) => v.url === url.split('#')[0])),
     heldVolume: () => drone?.open() ?? -1,
-    /** Have a volume opened for reading: resolves with the pick to focus once the book lies open (null: not on the shelves).
-     *  fly: the drone fetches it from its shelf; otherwise it is simply there (a page that opens on an article). */
-    read(slug, fly) {
-      const i = volumes.findIndex((v) => v.slug === slug); if (i < 0 || !reader) return Promise.resolve(null);
-      waiting?.done(null); waiting = null;
-      if (drone.open() !== i) { if (fly) call(i); else { if (shelf) { shelf.selected = i; shelf.rev++; } drone.bring(i); } }
-      return new Promise((done) => { waiting = { i, done }; });
+    /** Have the article at a URL opened for reading: resolves with the pick to focus when it can be read (null: it cannot be, here).
+     *  In the Library the volume must first lie open: the drone fetches it (fly), or it is simply there (a page that opens on an article). */
+    read(url, fly) {
+      if (!reader) return Promise.resolve(null);
+      const path = url.split('#')[0];
+      if (drone) {
+        const i = volumes.findIndex((v) => v.url === path); if (i < 0) return Promise.resolve(null);
+        waiting?.done(null); waiting = null; reader.offer(bookSource, terminal);
+        if (drone.open() !== i) { if (fly) call(i); else { if (shelf) { shelf.selected = i; shelf.rev++; } drone.bring(i); } }
+        return new Promise((done) => { waiting = { i, done }; });
+      }
+      const by = picks.find((p) => p.source?.()?.url.split('#')[0] === path && (p.source().url === url || !url.includes('#'))) ?? picks.find((p) => p.source?.()?.url.split('#')[0] === path) ?? null;
+      const src = by && by.source().url === url ? by.source() : { ...(by?.source() ?? afloat(url)), url };
+      reader.offer(() => src, by); return Promise.resolve(reading);
     },
     CLOSE: B(info.close || [0, 17.2, 2.15]), CLOSE_TGT: B(info.close_tgt || [0, 26, 2.6]), arc: info.holo ? 0.9 : 0.25,     // arc: how high the pull-back lifts over the middle
     exposure: num('exp', info.exposure || 0.85),

@@ -1,5 +1,6 @@
 {
   "brand": "ARK AURORA",
+  "reader": { "read": "READ", "scanning": "SCANNING", "mark": "LIBRARY", "label": "The volume being read", "back": "CLOSE", "backToCatalogue": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED", "copyCode": "Copy this code", "failed": "This volume could not be opened.", "ready": "THE LIBRARY IS READY", "offer": "THIS IS A VOLUME IN THE LIBRARY", "enter": "READ IT THERE  →" },
   "hint": "MOVE TO LOOK AROUND  ·  CLICK TO INSPECT  ·  ← → TO TOUR",
   "credit": "Earth imagery: NASA Blue Marble / Black Marble",
   "depart": "03:47:12",
@@ -9,6 +10,7 @@
   },
   "rooms": {
     "lobby": {
+      "path": "/",
       "nav": "HOME",
       "title": "Ark Aurora — Embarkation Hall",
       "loading": "DOCKING",
@@ -116,6 +118,7 @@
       }
     },
     "about": {
+      "path": "/about/",
       "nav": "ABOUT",
       "title": "About — Observation Lounge",
       "loading": "DIMMING LIGHTS",
@@ -123,115 +126,68 @@
       "credit": true,
       "kicker": "RING 04 · COMPARTMENT 6 · OBSERVATION LOUNGE",
       "headline": ["The view", "from here."],
-      "sub": ["A quiet room, a wall of books, and home in the window.", "The words on the wall are placeholders for now."],
+      "sub": ["A quiet room, a wall of books, and home in the window.", "{headline}  ·  {location}"],
+      "cta": "ABOUT ME  →", "ctaReads": "/about/",
+      "exhibits": [{ "url": "/about/" }],
       "facts": [["ROOM", "ABOUT"], ["BELOW US", "EARTH · 717 KM"]],
       "screens": {
         "inspect": false,
         "footer": "ARCADIA STATION  ·  OBSERVATION LOUNGE",
         "tag": "LOUNGE",
         "list": [
-          {
-            "layout": "placard", "title": "ABOUT", "name": "A short introduction", "meta": "NAME  ·  WHAT I DO  ·  WHERE",
-            "lines": ["Two or three sentences in your own voice.", "What you care about, and what you are looking for."]
-          },
-          {
-            "layout": "placard", "title": "CURRENTLY", "name": "What I am working on", "meta": "UPDATED  ·  DATE",
-            "lines": ["The thing on the desk right now.", "Reading  ·  building  ·  learning"]
-          }
+          { "layout": "placard", "title": "ABOUT", "name": "", "meta": "", "lines": ["", ""] },
+          { "layout": "placard", "title": "CURRENTLY ASKING", "name": "", "meta": "", "lines": ["", ""] }
         ]
       }
     },
     "projects": {
+      "path": "/portfolio/",
       "nav": "PROJECTS",
       "title": "Projects — Fabrication Bay 02",
       "loading": "OPENING BAY",
       "close": "THE CRANE",
       "kicker": "RING 04 · COMPARTMENT 2 · FABRICATION BAY",
       "headline": ["Things", "I've built."],
-      "sub": ["Four on the floor, one on the crane.", "Each exhibit stands in for a project; the placards are placeholders for now."],
-      "facts": [["ROOM", "PROJECTS"], ["EXHIBITS", "01 – 04"]],
+      "sub": ["Four on the floor, one on the crane: {shown} of {count} projects.", "Each exhibit stands for one. Walk up to its placard and READ for the whole account."],
+      "cta": "ALL {count} PROJECTS  →", "ctaReads": "/portfolio/",
+      "exhibits": ["driving-detection-evaluation", "robot-scene-memory", "gb10-memory-guard", "homelab", "local-coding-agent-benchmarks"],
+      "facts": [["ROOM", "PROJECTS"], ["IN THE BAY", "{shown} OF {count}"]],
       "screens": {
         "footer": "ARCADIA STATION  ·  FABRICATION BAY 02",
         "tag": "BAY 02",
         "list": [
-          {
-            "layout": "placard", "title": "PROJECT 01", "no": "01", "name": "PROJECT ONE", "meta": "ROLE  ·  YEAR", "cta": "SELECT TO OPEN  →",
-            "lines": ["One line on what it is and why it mattered.", "What I built  ·  what it took  ·  what came of it"]
-          },
-          {
-            "layout": "placard", "title": "PROJECT 02", "no": "02", "name": "PROJECT TWO", "meta": "ROLE  ·  YEAR", "cta": "SELECT TO OPEN  →",
-            "lines": ["One line on what it is and why it mattered.", "What I built  ·  what it took  ·  what came of it"]
-          },
-          {
-            "layout": "placard", "title": "PROJECT 03", "no": "03", "name": "PROJECT THREE", "meta": "ROLE  ·  YEAR", "cta": "SELECT TO OPEN  →",
-            "lines": ["One line on what it is and why it mattered.", "What I built  ·  what it took  ·  what came of it"]
-          },
-          {
-            "layout": "placard", "title": "PROJECT 04", "no": "04", "name": "PROJECT FOUR", "meta": "ROLE  ·  YEAR", "cta": "SELECT TO OPEN  →",
-            "lines": ["One line on what it is and why it mattered.", "What I built  ·  what it took  ·  what came of it"]
-          }
+          { "layout": "placard", "title": "PROJECT", "name": "", "meta": "", "lines": ["", ""], "cta": "READ FOR THE WHOLE ACCOUNT  →" },
+          { "layout": "placard", "title": "PROJECT", "name": "", "meta": "", "lines": ["", ""], "cta": "READ FOR THE WHOLE ACCOUNT  →" },
+          { "layout": "placard", "title": "PROJECT", "name": "", "meta": "", "lines": ["", ""], "cta": "READ FOR THE WHOLE ACCOUNT  →" },
+          { "layout": "placard", "title": "PROJECT", "name": "", "meta": "", "lines": ["", ""], "cta": "READ FOR THE WHOLE ACCOUNT  →" }
         ]
       }
     },
     "experience": {
+      "path": "/experience/",
       "nav": "EXPERIENCE",
       "title": "Experience — Navigation",
       "loading": "PLOTTING ROUTE",
       "close": "THE MAP",
       "kicker": "RING 04 · COMPARTMENT 1 · NAVIGATION",
       "headline": ["A trajectory", "of building."],
-      "sub": ["Every stop on the line so far, and the one being laid now.", "Station names are placeholders for now."],
-      "facts": [["ROOM", "EXPERIENCE"], ["STATIONS", "01 – NOW"]],
+      "sub": ["Every stop on the line so far, and the one being laid now.", "{count} stations since {since}. Open one and READ what was done there."],
+      "now": "NOW", "models": ["elevator", "torus", "cylinders", "ramjet", "dyson", "warp"],
+      "facts": [["ROOM", "EXPERIENCE"], ["STATIONS", "{since} – NOW"]],
       "screens": {
         "footer": "ARCADIA STATION  ·  NAVIGATION",
         "tag": "ROUTE LOG",
         "list": [
-          {
-            "layout": "placard", "title": "STATION 01", "no": "01", "name": "ROLE  ·  ORGANISATION", "meta": "FROM  –  TO  ·  PLACE",
-            "lines": ["What you were responsible for.", "The outcome you would point to first."]
-          },
-          {
-            "layout": "placard", "title": "STATION 02", "no": "02", "name": "ROLE  ·  ORGANISATION", "meta": "FROM  –  TO  ·  PLACE",
-            "lines": ["What you were responsible for.", "The outcome you would point to first."]
-          },
-          {
-            "layout": "placard", "title": "STATION 03", "no": "03", "name": "ROLE  ·  ORGANISATION", "meta": "FROM  –  TO  ·  PLACE",
-            "lines": ["What you were responsible for.", "The outcome you would point to first."]
-          },
-          {
-            "layout": "placard", "title": "STATION 04", "no": "04", "name": "ROLE  ·  ORGANISATION", "meta": "FROM  –  TO  ·  PLACE",
-            "lines": ["What you were responsible for.", "The outcome you would point to first."]
-          }
+          { "layout": "placard", "title": "STATION", "name": "", "meta": "", "lines": ["", ""], "cta": "READ WHAT WAS DONE THERE  →" },
+          { "layout": "placard", "title": "STATION", "name": "", "meta": "", "lines": ["", ""], "cta": "READ WHAT WAS DONE THERE  →" },
+          { "layout": "placard", "title": "STATION", "name": "", "meta": "", "lines": ["", ""], "cta": "READ WHAT WAS DONE THERE  →" },
+          { "layout": "placard", "title": "STATION", "name": "", "meta": "", "lines": ["", ""], "cta": "READ WHAT WAS DONE THERE  →" }
         ]
       },
-      "stations": [
-        {
-          "title": "STATION 01", "sub": "SPACE ELEVATOR", "model": "elevator",
-          "specs": [["PROPOSED", "TSIOLKOVSKY  ·  1895"], ["TETHER", "~100,000 KM"], ["ANCHOR", "EQUATOR"], ["STATION AT", "GEO  ·  35,786 KM"], ["CLIMB", "ABOUT A WEEK"]]
-        },
-        {
-          "title": "STATION 02", "sub": "STANFORD TORUS", "model": "torus",
-          "specs": [["STUDY", "NASA / STANFORD  ·  1975"], ["DIAMETER", "1.8 KM"], ["SPIN", "1 RPM  ·  1 g AT RIM"], ["RESIDENTS", "10,000"], ["LIGHT", "OVERHEAD MIRROR"]]
-        },
-        {
-          "title": "STATION 03", "sub": "O'NEILL CYLINDERS", "model": "cylinders",
-          "specs": [["PROPOSED", "G. K. O'NEILL  ·  1976"], ["EACH", "8 KM x 32 KM"], ["LAYOUT", "COUNTER-ROTATING PAIR"], ["INTERIOR", "3 LAND  ·  3 WINDOW STRIPS"], ["RESIDENTS", "MILLIONS"]]
-        },
-        {
-          "title": "STATION 04", "sub": "BUSSARD RAMJET", "model": "ramjet",
-          "specs": [["PROPOSED", "R. W. BUSSARD  ·  1960"], ["FUEL", "INTERSTELLAR HYDROGEN"], ["COLLECTOR", "MAGNETIC SCOOP"], ["DRIVE", "FUSION"], ["CARRIES", "NO PROPELLANT"]]
-        },
-        {
-          "title": "STATION 05", "sub": "DYSON SWARM", "model": "dyson",
-          "specs": [["PROPOSED", "F. DYSON  ·  1960"], ["FORM", "SWARM OF COLLECTORS"], ["CAPTURES", "A STAR'S OUTPUT"], ["SOL", "3.8 x 10^26 W"], ["SIGNATURE", "INFRARED EXCESS"]]
-        },
-        {
-          "title": "NOW", "sub": "WARP-RING SHIP", "model": "warp",
-          "specs": [["METRIC", "M. ALCUBIERRE  ·  1994"], ["AHEAD", "SPACE CONTRACTS"], ["BEHIND", "SPACE EXPANDS"], ["SHIP", "AT REST IN ITS BUBBLE"], ["NEEDS", "NEGATIVE ENERGY"]]
-        }
-      ]
+      "stations": []
     },
     "writing": {
+      "path": "/blog/",
       "nav": "WRITING",
       "title": "Writing — Library",
       "loading": "LIGHTING THE LAMPS",
@@ -241,8 +197,6 @@
       "headline": ["Things", "I've written."],
       "sub": ["A reading room at the hull, with the Earth turning in its window.", "Ask at the terminal and the drone brings the volume; READ, and it is scanned into the air in front of you."],
       "facts": [["ROOM", "WRITING"], ["IN THE CATALOGUE", "{count} VOLUMES"]],
-      "reader": { "read": "READ", "scanning": "SCANNING", "mark": "LIBRARY", "label": "The volume being read", "back": "CLOSE", "backTo": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED", "copyCode": "Copy this code",
-                  "failed": "This volume could not be opened.", "ready": "THE LIBRARY IS READY", "offer": "THIS IS A VOLUME IN THE LIBRARY", "enter": "READ IT THERE  →" },
       "screens": {
         "footer": "ARCADIA STATION  ·  LIBRARY",
         "tag": "CATALOGUE",
@@ -252,6 +206,7 @@
       }
     },
     "comms": {
+      "path": "/contact/",
       "nav": "CONTACT",
       "title": "Contact — Comms",
       "loading": "OPENING A CHANNEL",
@@ -259,7 +214,7 @@
       "credit": true,
       "kicker": "RING 04 · BOW · COMMS",
       "headline": ["Send", "word."],
-      "sub": ["The station's signal room. The field by the window is open: write on it,", "and the Mind will see your words across. The addresses are placeholders for now."],
+      "sub": ["The station's signal room. The field by the window is open: write on it,", "and the Mind will see your words across."],
       "cta": "WRITE A MESSAGE  →",
       "facts": [["ROOM", "CONTACT"], ["LIGHT-TIME TO EARTH", "2.4 MS"]],
       "screens": {
@@ -272,17 +227,18 @@
         ]
       },
       "comms": {
-        "title": "COMMS  ·  OUTBOUND SIGNAL", "toLabel": "TO", "to": "YOUR NAME",
+        "title": "COMMS  ·  OUTBOUND SIGNAL", "toLabel": "TO", "to": "",
         "write": "Say something. It will arrive.", "replyLabel": "REPLY TO", "reply": "your address, if you would like an answer",
         "send": "SEND", "standby": { "kicker": "OUTBOUND CHANNEL  ·  OPEN", "invite": "Write to me.", "click": "CLICK THE FIELD TO WRITE", "tap": "TAP THE FIELD TO WRITE" }, "max": 2000,
-        "address": "you@example.com", "subject": "A signal from Arcadia Station", "endpoint": "",
-        "socials": [["GITHUB", "https://github.com/your-handle"], ["LINKEDIN", "https://www.linkedin.com/in/your-handle"], ["EMAIL", "mailto:you@example.com"]],
+        "address": "", "resume": "RÉSUMÉ", "subject": "A signal from Arcadia Station", "endpoint": "",
+        "socials": [],
         "mind": {
           "idle": "The field is open. Take your time; I have rather a lot of it.",
           "composing": "I am not reading over your shoulder. Much.",
           "sending": "Folding it into a signal…",
           "sent": "Sent. It is already there; light is quick at this distance.",
           "handed": "Handed to your own mail for the last leg. Ours is a small station.",
+          "copied": "Copied for you to carry. Paste it wherever you reach me: the glyphs below lead there.",
           "empty": "An admirably concise message. Perhaps a word or two more?",
           "failed": "The relay coughed. Nothing was lost; try once more?"
         }

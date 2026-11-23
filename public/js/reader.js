@@ -1,10 +1,19 @@
-// The Library's reader. A volume lies open on the drone's tray, and a READ glyph from the visitor's own display floats
-// under it. Asked to read, a fan of light from the visitor sweeps the pages, and the article stands up over the book
-// as a hologram.
-// The article is not a texture. It is the post's own <article> (the HTML of its page, written by tools/site.py), laid
-// over the canvas and moved with the camera so that it sits in the hologram's frame. Once the camera has come to rest
-// it is an ordinary upright element at its natural size: sharp, selectable, searchable, read by screen readers, and
-// its links work. Everything that is light (the frame and its veil, the beam, the scan) is drawn in the scene.
+// The reader. Some things in the rooms can be read: a volume lying open on the Library drone's tray, a project's placard
+// in the Fabrication bay, a stop on the route map. A READ glyph from the visitor's own display floats under such a
+// thing. Asked to read, a fan of light from the visitor sweeps it, and its article stands up over it as a hologram.
+// The article is not a texture. It is the <article> of that thing's own page (written by tools/site.py), laid over the
+// canvas and moved with the camera so that it sits in the hologram's frame. Once the camera has come to rest it is an
+// ordinary upright element at its natural size: sharp, selectable, searchable, read by screen readers, and its links
+// work. Everything that is light (the frame and its veil, the beam, the scan) is drawn in the scene.
+//
+// A source is what a room offers to be read:
+//   url      the page whose article it is ('/blog/<slug>/', '/portfolio/<slug>/', '/experience/#<id>'); a #fragment opens it at that id
+//   foot()   world point the hologram stands over (the middle of the book, the foot of a placard)
+//   facing   horizontal unit vector from there toward where the reader stands
+//   sheet    the surface the scan crosses: { parent (an Object3D; null: the room), position, quaternion, size: [w, h] }, in the parent's
+//            frame; a unit plane is laid there with its +y toward the top of what is read; top: the frame stands beyond its top edge (a book lying open)
+//   span     how many metres of the room fill the strip left under the frame (default: the sheet's width, at most 0.6)
+//   word     what the glyph says (default: the room's "read")
 import * as THREE from 'three';
 import { GLOW, CY, V, uTime } from './kit.js';
 
@@ -26,17 +35,19 @@ function glyphTex(word) {                                       // READ, in the 
 const light = (fragmentShader, uniforms, extra = {}) => new THREE.ShaderMaterial({ ...GLOW, side: THREE.DoubleSide, uniforms,
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }', fragmentShader, ...extra });
 
-/**
- * @param drone    the catalogue drone (js/drone.js): open() names the volume lying open, book() is that book
- * @param facing   horizontal unit vector from the book toward where the reader stands
- * @param text     the room's "reader" words (content.json);  onLink(href): a link in the article that leads elsewhere on the site
- */
-export function createReader({ scene, camera, drone, volumes, facing, text, onLink }) {
-  const root = new THREE.Group(); root.name = 'Reader'; scene.add(root);
-  const [BOOK_W, BOOK_H] = drone.size;
+const articles = new Map(), HERE = location.pathname;          // path -> its <article>, kept once fetched; HERE: the page this session opened on
+const pathOf = (url) => url.split('#')[0];
 
-  // ---- READ: a glyph under the book, always facing the visitor and drawn over everything, like the rest of their display
-  const uShow = { value: 0 }, uWord = { value: 0 }, words = [glyphTex(text.read), glyphTex(text.scanning)];
+/**
+ * @param text     the room's "reader" words (content.json)
+ * @param onLink   (href) a link in the article that leads elsewhere on the site (null: the reader's own close button)
+ * @param onShown  () the article has arrived: its title is known
+ */
+export function createReader({ scene, camera, text, onLink, onShown }) {
+  const root = new THREE.Group(); root.name = 'Reader'; scene.add(root);
+
+  // ---- READ: a glyph under the thing, always facing the visitor and drawn over everything, like the rest of their display
+  const uShow = { value: 0 }, uWord = { value: 0 }, words = new Map(), word = (w) => words.get(w) ?? words.set(w, glyphTex(w)).get(w), tA = { value: word(text.read) };
   const glyph = new THREE.Mesh(new THREE.PlaneGeometry(3, 1), light(`uniform sampler2D tA, tB; uniform float uShow, uWord, uTime; varying vec2 vUv;
     void main(){
       float open = smoothstep(0.0, 1.0, uShow), w = abs(vUv.x - 0.5)*2.0;
@@ -46,20 +57,20 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
       float lead = exp(-pow((open - w)*30.0, 2.0))*(1.0 - open);
       vec3 c = ${CY}*(ink*(0.75 + 0.2*sin(uTime*2.6)) + 0.012) + vec3(0.7, 0.95, 1.0)*(ink*sweep*0.9 + lead*1.5);
       gl_FragColor = vec4(c*2.4, 1.0);
-    }`, { tA: { value: words[0] }, tB: { value: words[1] }, uShow, uWord, uTime }, { depthTest: false }));
+    }`, { tA, tB: { value: word(text.scanning) }, uShow, uWord, uTime }, { depthTest: false }));
   glyph.renderOrder = 20; glyph.frustumCulled = false; root.add(glyph);
   const hit = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.3), new THREE.MeshBasicMaterial({ visible: false })); glyph.add(hit);
 
-  // ---- the scan: a line of light crossing the pages, and the fan from the visitor that draws it
+  // ---- the scan: a line of light crossing what is read, and the fan from the visitor that draws it
   const uScan = { value: 0 }, uScanK = { value: 0 };
-  const sheet = new THREE.Mesh(new THREE.PlaneGeometry(BOOK_W, BOOK_H).rotateX(-Math.PI / 2), light(`uniform float uScan, uK, uTime; varying vec2 vUv;
+  const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), light(`uniform float uScan, uK, uTime; varying vec2 vUv;
     void main(){
-      float v = 1.0 - vUv.y, d = uScan - v;                    // v: from the top of the page down
+      float v = 1.0 - vUv.y, d = uScan - v;                    // v: from the top down
       float line = exp(-pow(d*90.0, 2.0)), read = step(0.0, d)*exp(-d*5.0);
       float grid = step(0.86, fract(vUv.x*24.0)) + step(0.8, fract(v*34.0));
       gl_FragColor = vec4(${CY}*(line*3.2 + read*(0.10 + 0.22*grid))*uK, 1.0);
     }`, { uScan, uK: uScanK, uTime }));
-  sheet.position.y = 0.046; sheet.renderOrder = 9;
+  sheet.renderOrder = 9; sheet.visible = false;
   const fanGeo = new THREE.BufferGeometry(); fanGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9), 3));
   fanGeo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0.5, 0, 0, 1, 1, 1]), 2));
   const fan = new THREE.Mesh(fanGeo, light(`uniform float uK, uTime; varying vec2 vUv;
@@ -69,7 +80,7 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
 
   // ---- the hologram: a frame with a dark veil behind the words, and a curtain of light rising to it from the book
   const uOpen = { value: 0 }, uReveal = { value: 0 }, uSize = { value: new THREE.Vector2(800, 500) };
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide,     // over whatever stands in its rectangle: the drone reaches in front of it
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide,     // over whatever stands in its rectangle (the Library's drone reaches in front of it)
     blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
     uniforms: { uOpen, uReveal, uSize, uTime },
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }',
@@ -103,29 +114,28 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
     <div class="reader-scroll" tabindex="0"></div><div class="reader-progress"><i></i></div>`;
   document.body.append(host);
   const scroll = host.querySelector('.reader-scroll'), rail = host.querySelector('.reader-rail ol'), bar = host.querySelector('.reader-progress i');
-  const articles = new Map();                                   // slug -> its <article>, kept once fetched
-  async function article(slug) {
-    if (articles.has(slug)) return articles.get(slug);
-    let el = document.querySelector(`#page article.post[data-slug="${CSS.escape(slug)}"]`);           // this page's own article
+  async function article(path) {
+    if (articles.has(path)) return articles.get(path);
+    let el = path === HERE ? document.querySelector('#page article.post, #page section.post-list') : null;           // the page's own article
     if (!el) {
-      const r = await fetch(`blog/${slug}/`); if (!r.ok) throw new Error(`blog/${slug}/: ${r.status}`);
-      el = new DOMParser().parseFromString(await r.text(), 'text/html').querySelector('article.post');
-      if (!el) throw new Error(`blog/${slug}/ has no article`);
+      const r = await fetch(path.slice(1)); if (!r.ok) throw new Error(`${path}: ${r.status}`);
+      el = new DOMParser().parseFromString(await r.text(), 'text/html').querySelector('article.post, section.post-list');
+      if (!el) throw new Error(`${path} has no article`);
       el = document.adoptNode(el);
     }
     for (const pre of el.querySelectorAll('pre')) {              // code can be copied
       const b = Object.assign(document.createElement('button'), { className: 'copy', type: 'button', textContent: text.copy }); b.setAttribute('aria-label', text.copyCode); b.setAttribute('aria-live', 'polite'); pre.before(b);
       b.addEventListener('click', async () => { try { await navigator.clipboard.writeText(pre.textContent); b.textContent = text.copied; setTimeout(() => { b.textContent = text.copy; }, 1600); } catch { /* no clipboard: select it by hand */ } });
     }
-    articles.set(slug, el); return el;
+    articles.set(path, el); return el;
   }
   let heads = [], goTo = null;
   function show(el) {
     scroll.replaceChildren(el);
     host.querySelector('.reader-title').textContent = el.querySelector('h1')?.textContent ?? '';
-    heads = [...el.querySelectorAll('.post-body h2[id]')];
+    heads = [...el.querySelectorAll('.post-body h2[id], section.entry[id] > h2')].map((h) => (h.id ? h : Object.assign(h, { id: `${h.parentNode.id}-title` })));
     rail.replaceChildren(...heads.map((h) => { const li = document.createElement('li'), a = Object.assign(document.createElement('a'), { href: `#${h.id}`, textContent: h.textContent }); li.append(a); return li; }));
-    progress();
+    progress(); onShown?.();
   }
   function progress() {
     const max = scroll.scrollHeight - scroll.clientHeight; bar.style.transform = `scaleX(${max > 0 ? scroll.scrollTop / max : 1})`;
@@ -136,20 +146,27 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
   host.addEventListener('click', (e) => {
     const a = e.target.closest('a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || a.target === '_blank') return;
     const href = a.getAttribute('href') || '';
-    if (href.startsWith('/blog/files/')) { a.target = '_blank'; a.rel = 'noopener'; return; }      // a file: beside the station, not instead of it
+    if (/^\/(blog\/files|resume)\//.test(href)) { a.target = '_blank'; a.rel = 'noopener'; return; }      // a file: beside the station, not instead of it
     if (href.startsWith('#')) { e.preventDefault(); scroll.querySelector(`#${CSS.escape(href.slice(1))}`)?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' }); }
     else if (href.startsWith('/') && onLink(href) !== false) e.preventDefault();       // a post or a room: the station goes there itself
   });
 
   // ---- where things stand. The hologram's size is chosen in CSS pixels first, then placed in the room at the scale
   // that makes one of its pixels one pixel on screen from the reading pose; so at rest the words need no transform.
-  const px = { w: 800, h: 500, top: 76 }, pose = { pos: V(), tgt: V() }, bookAt = V(), _m = new THREE.Matrix4(), _n = new THREE.Matrix4(), _v = V(), _a = V(), _b = V();
+  const px = { w: 800, h: 500, top: 76 }, pose = { pos: V(), tgt: V() }, _m = new THREE.Matrix4(), _n = new THREE.Matrix4(), _v = V(), _a = V(), _b = V(), _c = V(), UP = V(0, 1, 0);
+  let offer = null, offeredBy = null, src = null, laid = null;   // offer(): the source that can be read now; src: the one being read; laid: the one the sheet lies on
+  const current = () => src ?? offer?.() ?? null;
+  function lay(s) {                                              // put the scan's sheet on a source (it also says where the glyph goes)
+    if (s === laid) return; laid = s; sheet.removeFromParent(); if (!s) return;
+    (s.sheet.parent ?? root).add(sheet); sheet.position.copy(s.sheet.position); sheet.quaternion.copy(s.sheet.quaternion); sheet.scale.set(...s.sheet.size, 1); sheet.updateMatrixWorld(true);
+    tA.value = word(s.word ?? text.read);
+  }
   function layout() {
-    const W = innerWidth, H = innerHeight, phone = W < 720, tan = Math.tan(rad(camera.fov / 2)), bottom = phone ? 132 : 130;
+    const s = current(); if (!s) return pose;
+    const W = innerWidth, H = innerHeight, phone = W < 720, tan = Math.tan(rad(camera.fov / 2)), bottom = phone ? 132 : 130, facing = s.facing;
     px.top = phone ? 58 : 76; px.w = Math.round(Math.min(1040, W - (phone ? 12 : 80))); px.h = Math.round(H - px.top - bottom);
-    const k = BOOK_W / Math.min(clamp(H * 0.4, 220, 480), W * 0.6), d = k * H / (2 * tan);      // k: metres per pixel at the hologram; d: how far back that puts the eye
-    (drone.book() ?? drone.root).getWorldPosition(bookAt);
-    const at = bookAt.clone().addScaledVector(facing, 0.22), eyeY = bookAt.y + (H / 2 - bottom * 0.45) * k;        // the book shows in the strip left under the frame
+    const span = s.span ?? Math.min(0.6, s.sheet.size[0]), k = span / Math.min(clamp(H * 0.4, 220, 480), W * 0.6), d = k * H / (2 * tan);      // k: metres per pixel at the hologram; d: how far back that puts the eye
+    const foot = s.foot(), at = foot.clone().addScaledVector(facing, 0.22), eyeY = foot.y + (H / 2 - bottom * 0.45) * k;        // what is read shows in the strip left under the frame
     pose.tgt.set(at.x, eyeY, at.z); pose.pos.copy(pose.tgt).addScaledVector(facing, d);
     panel.position.set(at.x, eyeY + (H / 2 - (px.top + px.h / 2)) * k, at.z); panel.scale.set(px.w * k, px.h * k, 1); panel.lookAt(_v.copy(panel.position).add(facing)); panel.updateMatrixWorld();
     uSize.value.set(px.w, px.h); host.style.width = `${px.w}px`; host.style.height = `${px.h}px`; host.classList.toggle('phone', phone);
@@ -166,23 +183,22 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
   }
 
   // ---- state: closed -> scanning -> open, and back
-  let state = 'closed', slug = null, t0 = 0, folding = 0, ready = false, attached = null;
-  const book = () => drone.book(), openVolume = () => drone.open();
+  let state = 'closed', t0 = 0, folding = 0, ready = false;
   function read() {
-    const i = openVolume(); if (i < 0 || state !== 'closed') return false;
-    slug = volumes[i].slug; state = 'scanning'; t0 = uTime.value - (still ? 9 : 0); ready = false; folding = 0;
-    const want = slug, mine = () => state !== 'closed' && slug === want;      // an answer that arrives after the reader has moved on is dropped
-    article(want).then((el) => { if (mine()) show(el); }, (err) => {
+    const s = offer?.(); if (!s || state !== 'closed') return false;
+    src = s; state = 'scanning'; t0 = uTime.value - (still ? 9 : 0); ready = false; folding = 0; lay(s);
+    const [path, id] = s.url.split('#'), mine = () => state !== 'closed' && src === s;      // an answer that arrives after the reader has moved on is dropped
+    if (id) goTo = id;
+    article(path).then((el) => { if (mine()) show(el); }, (err) => {
       console.error(err); if (!mine()) return;
       heads = []; rail.replaceChildren(); host.querySelector('.reader-title').textContent = '';
       scroll.replaceChildren(Object.assign(document.createElement('p'), { className: 'reader-error', textContent: text.failed }));
     }).finally(() => { if (mine()) ready = true; });
-    const b = book(); if (attached !== b) { attached?.remove(sheet); b.add(sheet); attached = b; }
     return true;
   }
   function close() {
     if (state === 'closed') return;
-    state = 'closed'; slug = null; folding = uTime.value; host.hidden = true; host.classList.remove('open');
+    state = 'closed'; src = null; folding = uTime.value; host.hidden = true; host.classList.remove('open');
     if (host.contains(document.activeElement)) document.activeElement.blur();
   }
   host.querySelector('.reader-close').addEventListener('click', () => onLink(null));
@@ -190,33 +206,34 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
   addEventListener('resize', onResize);
 
   function update(t) {
-    const can = openVolume() >= 0, T = t - t0, on = state !== 'closed';
-    // READ: there while a book lies open and nothing is being read; sized on screen, not in the room, so it can be tapped on a phone
+    const T = t - t0, on = state !== 'closed', s = current(), can = !!s; lay(s);
+    // READ: there while something can be read and nothing is; sized on screen, not in the room, so it can be tapped on a phone
     uShow.value += ((can && (!on || T < SWEEP[0] + 0.5) ? 1 : 0) - uShow.value) * 0.14; uWord.value += ((on ? 1 : 0) - uWord.value) * 0.25;
-    glyph.visible = uShow.value > 0.01;
-    if (glyph.visible && book()) {                            // its top edge a few pixels under the book, never off the bottom of the view
-      const tan = Math.tan(rad(camera.fov / 2)), fwd = camera.getWorldDirection(_b), up = _a.set(0, 1, 0).applyQuaternion(camera.quaternion);
-      book().localToWorld(_v.set(0, 0, BOOK_H / 2 + 0.03));
-      const depth = _v.clone().sub(camera.position).dot(fwd), m = 2 * depth * tan / innerHeight, w = clamp(innerWidth * 0.2, 104, 168) * m, h = w / 3;       // m: metres per pixel there
-      const low = _v.clone().sub(camera.position).dot(up) - 8 * m - h / 2, floor = -depth * tan + (innerWidth < 720 ? 150 : 10) * m + h / 2;      // a phone has the catalogue's bar along the bottom
-      glyph.position.copy(_v).addScaledVector(up, Math.max(low, floor) - _v.clone().sub(camera.position).dot(up)); glyph.quaternion.copy(camera.quaternion); glyph.scale.setScalar(w / 3);
+    glyph.visible = uShow.value > 0.01 && !!laid;
+    if (glyph.visible) {                                       // its top edge a few pixels under the thing, never off the bottom of the view
+      const tan = Math.tan(rad(camera.fov / 2)), fwd = camera.getWorldDirection(_b), up = _a.copy(UP).applyQuaternion(camera.quaternion);
+      sheet.localToWorld(_v.set(0, -0.5, 0)); _c.copy(_v).sub(camera.position);
+      const depth = Math.max(0.3, _c.dot(fwd)), m = 2 * depth * tan / innerHeight, w = clamp(innerWidth * 0.2, 104, 168) * m, h = w / 3;       // m: metres per pixel there
+      const low = _c.dot(up) - 14 * m - h / 2, floor = -depth * tan + (innerWidth < 720 ? 150 : 10) * m + h / 2;      // a phone has a bar along the bottom
+      glyph.position.copy(_v).addScaledVector(up, Math.max(low, floor) - _c.dot(up)); glyph.quaternion.copy(camera.quaternion); glyph.scale.setScalar(w / 3);
     }
     // the scan
     const sweep = on ? ramp(T, SWEEP) : 0; uScan.value = sweep * 1.04; uScanK.value += ((on && T < SWEEP[1] + 0.25 ? 1 : 0) - uScanK.value) * 0.2;
-    sheet.visible = fan.visible = uScanK.value > 0.01 && !!attached;
-    if (fan.visible) {                                          // from just under the visitor's eye to the line on the page
-      const p = fanGeo.attributes.position, z = (uScan.value - 0.5) * BOOK_H;
-      p.setXYZ(0, ..._v.copy(camera.position).addScaledVector(camera.getWorldDirection(_b), 0.5).addScaledVector(_a.set(0, 1, 0).applyQuaternion(camera.quaternion), -0.56 * Math.tan(rad(camera.fov / 2))).toArray());   // just under the bottom edge of the view
-      p.setXYZ(1, ...attached.localToWorld(_v.set(-BOOK_W / 2, 0.046, z)).toArray()); p.setXYZ(2, ...attached.localToWorld(_v.set(BOOK_W / 2, 0.046, z)).toArray()); p.needsUpdate = true;
+    sheet.visible = fan.visible = uScanK.value > 0.01 && !!laid;
+    if (fan.visible) {                                          // from just under the visitor's eye to the line on what is read
+      const p = fanGeo.attributes.position, y = 0.5 - uScan.value;
+      p.setXYZ(0, ..._v.copy(camera.position).addScaledVector(camera.getWorldDirection(_b), 0.5).addScaledVector(_a.copy(UP).applyQuaternion(camera.quaternion), -0.56 * Math.tan(rad(camera.fov / 2))).toArray());   // just under the bottom edge of the view
+      p.setXYZ(1, ...sheet.localToWorld(_v.set(-0.5, y, 0)).toArray()); p.setXYZ(2, ...sheet.localToWorld(_v.set(0.5, y, 0)).toArray()); p.needsUpdate = true;
     }
     // the hologram
     const open = on ? ramp(T, UNFOLD) : Math.max(0, uOpen.value - (still ? 1 : (t - folding) > 0 ? 0.09 : 0));
     uOpen.value = open; uReveal.value = on ? ramp(T, REVEAL) : 0; panel.visible = open > 0.002;
-    uBeam.value += ((on && T > UNFOLD[0] ? (T < REVEAL[1] ? 1 : 0.32) : 0) - uBeam.value) * 0.12; beam.visible = uBeam.value > 0.01 && !!attached;
-    if (beam.visible) {
-      const p = beamGeo.attributes.position, half = Math.min(BOOK_W, panel.scale.x) / 2 / panel.scale.x;
-      p.setXYZ(0, ...attached.localToWorld(_v.set(-BOOK_W / 2, 0.04, -BOOK_H / 2)).toArray()); p.setXYZ(1, ...attached.localToWorld(_v.set(BOOK_W / 2, 0.04, -BOOK_H / 2)).toArray());
-      p.setXYZ(2, ...panel.localToWorld(_v.set(-half * 1.5, -0.5, 0)).toArray()); p.setXYZ(3, ...panel.localToWorld(_v.set(half * 1.5, -0.5, 0)).toArray()); p.needsUpdate = true;
+    uBeam.value += ((on && T > UNFOLD[0] ? (T < REVEAL[1] ? 1 : 0.32) : 0) - uBeam.value) * 0.12; beam.visible = uBeam.value > 0.01 && !!laid;
+    if (beam.visible) {                                         // from the edge of what is read that is nearest the frame: its top if it lies under it (sheet.top), else its foot
+      const p = beamGeo.attributes.position, y = laid.sheet.top ? 0.5 : -0.5;
+      const reach = Math.min(1, 0.75 * sheet.scale.x / panel.scale.x);
+      p.setXYZ(0, ...sheet.localToWorld(_v.set(-0.5, y, 0)).toArray()); p.setXYZ(1, ...sheet.localToWorld(_v.set(0.5, y, 0)).toArray());
+      p.setXYZ(2, ...panel.localToWorld(_v.set(-reach / 2, -0.5, 0)).toArray()); p.setXYZ(3, ...panel.localToWorld(_v.set(reach / 2, -0.5, 0)).toArray()); p.needsUpdate = true;
     }
     // the words follow the reveal line down the frame, then are simply there
     if (on && T >= REVEAL[0] && ready) {
@@ -230,15 +247,20 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
   }
   return {
     root, hit, update, read, close, pose: layout,
-    /** A book lies open and can be read. */
-    available: () => openVolume() >= 0 && state === 'closed',
-    state: () => state, slug: () => slug,
+    /** What can be read now: a function returning a source or null (asked every frame), and the pick that offers it. */
+    offer(fn, by = null) { offer = fn; offeredBy = by; },
+    offeredBy: () => offeredBy,
+    /** Something is offered and nothing is being read. */
+    available: () => state === 'closed' && !!offer?.(),
+    state: () => state,
+    /** The address of what is being read (null: nothing), and its title once it has arrived. */
+    url: () => src?.url ?? null, title: () => (src && articles.get(pathOf(src.url))?.querySelector('h1')?.textContent) || null,
     /** Open and at rest: nothing in the frame is changing any more (main.js then draws the room behind it less often). */
     settled: () => state === 'open' && uTime.value - t0 > REVEAL[1] + 0.8,
     /** Go to a heading of the article that is open (by id; none: its top). */
     jump(id) { const h = id && scroll.querySelector(`#${CSS.escape(id)}`); if (h) h.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' }); else scroll.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' }); },
     /** Open the next article at this heading (by id): where the reader had got to on the plain page. */
     scrollTo(id) { goTo = id; },
-    dispose() { removeEventListener('resize', onResize); host.remove(); for (const w of words) w.dispose(); attached?.remove(sheet); },
+    dispose() { removeEventListener('resize', onResize); host.remove(); for (const w of words.values()) w.dispose(); sheet.removeFromParent(); },
   };
 }

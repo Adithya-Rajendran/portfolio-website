@@ -14,7 +14,7 @@ import { Q, SKIP, V, num, uTime, uPx, uMirror, setDistanceScale } from './js/kit
 import { loadRoom } from './js/room.js';
 import { reflectEye } from './js/reflections.js';
 import { initLive, live, fill } from './js/screens.js';
-import { loadCatalogue } from './js/catalogue.js';
+import { loadSite, furnish } from './js/site.js';
 
 const $ = (sel) => document.querySelector(sel), esc = (str) => str.replace(/[&<>"]/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
@@ -28,10 +28,9 @@ function fail(msg) {
 }
 addEventListener('error', (e) => fail('ERROR: ' + (e.message || 'failed to start')));
 addEventListener('unhandledrejection', (e) => fail('ERROR: ' + (e.reason?.message || e.reason || 'failed to load')));
-const [content, posts] = await Promise.all([fetch('content.json').then((r) => r.json()), loadCatalogue()]);
-{ // the Library's volumes are the posts
-  const lib = content.rooms.writing; lib.volumes = posts;
-}
+const [content, site] = await Promise.all([fetch('content.json').then((r) => r.json()), loadSite()]);
+furnish(content, site);                                 // the posts, the projects and the profile take their places in the rooms
+const titles = new Map([...site.posts, ...site.projects].map((p) => [p.url, p.title]));
 
 // ---------------------------------------------------------------- renderer
 // The canvas itself needs no depth buffer or MSAA (the scene is drawn into our own HDR target) - except in WebKit,
@@ -201,41 +200,47 @@ function fillHud(id) {
   tick();
 }
 const isRoom = (id) => typeof id === 'string' && Object.hasOwn(content.rooms, id);       // not 'constructor' and the like
-// Where a URL leads: / is the Atrium, /?room=<id> another room, /blog/ the Library and /blog/<slug>/ the Library with that post read.
-function route() {
-  const blog = location.pathname.match(/^\/blog(?:\/([^/]+))?\/?$/), id = blog ? 'writing' : new URLSearchParams(location.search).get('room');
-  return { id: isRoom(id) ? id : 'lobby', slug: blog?.[1] ?? null };
+// Where a URL leads. Every room has a path (content.json "path": / the Atrium, /blog/ the Library ...); anything deeper,
+// or a #fragment on a room's path, is something read in that room (/blog/<slug>/, /experience/#<id>). ?room=<id> is the
+// older way to name a room and still works.
+const ROOMS = Object.entries(content.rooms).map(([id, r]) => [r.path, id]);
+const roomAt = (pathname) => { const first = `/${pathname.split('/')[1]}/`.replace('//', '/'); return [first === '/' ? null : ROOMS.find(([p]) => p === first)?.[1] ?? null, first]; };
+function route(u = location) {
+  const path = u.pathname.replace(/\/?$/, '/'), [at, base] = roomAt(path), q = new URLSearchParams(u.search).get('room');
+  return { id: at ?? (isRoom(q) ? q : 'lobby'), read: at && (path !== base || u.hash.length > 1) ? path + u.hash : null };
 }
 const roomInUrl = () => route().id;
-function urlFor(id, slug) {                            // other switches in the query (?tier=, ?shot= ...) are kept
-  const p = new URLSearchParams(location.search); p.delete('room'); if (id !== 'lobby' && id !== 'writing') p.set('room', id);
-  return (id === 'writing' ? `/blog/${slug ? `${slug}/` : ''}` : '/') + (`${p}` ? `?${p}` : '');
-}
-/** The address and the tab's title follow what is open: a room, or the post being read in it. */
+const query = () => { const p = new URLSearchParams(location.search); p.delete('room'); return `${p}` ? `?${p}` : ''; };       // other switches (?tier=, ?shot= ...) are kept
+const urlFor = (id) => content.rooms[id].path + query();
+/** The address and the tab's title follow what is open: a room, or what is being read in it. */
 let silent = 0;                                         // > 0: a step on the way somewhere, not to be recorded
 function syncUrl() {
   if (silent) return;
-  const slug = focus.pick?.slug?.() ?? null, url = urlFor(room.id, slug);
-  if (location.pathname + location.search !== url) history.pushState(null, '', url);
-  document.title = posts.find((p) => p.slug === slug)?.title ?? content.rooms[room.id].title;
+  const read = focus.pick?.url?.() ?? null, [path, id] = (read ?? '').split('#'), url = read ? path + query() + (id ? `#${id}` : '') : urlFor(room.id);
+  if (location.pathname + location.search + location.hash !== url) history.pushState(null, '', url);
+  document.title = (read && (focus.pick.title?.() ?? titles.get(path))) || content.rooms[room.id].title;
 }
-/** Have a post read in the Library: the drone fetches it (fly), or it is simply there when the page opened on it. */
-async function readPost(slug, fly) {
+/** Have the article at a URL read in the room that is open. In the Library the drone fetches the volume (fly), or it is simply there
+ *  when the page opened on it. False: it cannot be read here. */
+async function readPost(url, fly) {
   if (!room?.read) return false;
-  if (fly || focus.pick?.reads) { silent++; setFocus(room.terminal); silent--; }     // the terminal (the volume being read is closed), to watch the drone go; the address waits for the article
-  const here = room, pick = await room.read(slug, fly);
+  if ((fly && room.terminal) || focus.pick?.reads) { silent++; setFocus(room.terminal ?? null); silent--; }     // what is being read is closed; in the Library, to the terminal to watch the drone go. The address waits for the article
+  const here = room, pick = await room.read(url, fly);
   if (pick && room === here) setFocus(pick);
   return !!pick;
 }
 /** A link inside an article that leads elsewhere on the site (null: the reader's own close button). False: let the browser follow it. */
 function onLink(href) {
   if (href === null) return back();
-  const u = new URL(href, location.origin), blog = u.pathname.match(/^\/blog(?:\/([^/]+))?\/?$/), id = u.searchParams.get('room');
-  if (blog?.[1] && blog[1] === focus.pick?.slug?.()) room.reader.jump(u.hash.slice(1));     // the post being read: only a place in it
-  else if (blog?.[1] && room?.volumes?.some((v) => v.slug === blog[1])) readPost(blog[1], true);
-  else if (blog && !blog[1]) back();                                                        // the Library itself: close the volume
-  else if (u.pathname === '/' && (isRoom(id) || !id)) enter(id || 'lobby');
-  else return false;                                    // anything else, a post that is not on the shelves included: the browser goes there
+  const u = new URL(href, location.origin), [at] = roomAt(u.pathname.replace(/\/?$/, '/')), to = route(u);
+  if (u.origin !== location.origin || (!at && u.pathname !== '/')) return false;            // not a room's address: the browser goes there
+  if (to.read && to.id === room?.id) {
+    const now = focus.pick?.url?.()?.split('#')[0];
+    if (now === to.read.split('#')[0]) room.reader.jump(u.hash.slice(1));                   // what is being read: only a place in it
+    else if (room.reads(to.read)) readPost(to.read, true);
+    else return false;                                                                      // e.g. a post that is not on the shelves
+  } else if (to.id === room?.id) back();                                                    // the room itself: close what is read
+  else { if (to.read) history.pushState(null, '', to.read.split('#')[0] + query() + u.hash); enter(to.id, !to.read); }     // another room, and what is read there
 }
 function back() {
   const was = focus.pick; setFocus(was?.back?.() ?? null);
@@ -249,13 +254,14 @@ async function enter(id, push = true) {
   $('#what').textContent = content.rooms[id].loading; progress(0); loader.classList.remove('done'); hud.classList.add('hidden');
   if (room) { await new Promise((r) => setTimeout(r, 500)); room.dispose(); room = null; }      // let the cover fade in before the old room goes
   if (push && location.pathname + location.search !== urlFor(id)) history.pushState(null, '', urlFor(id));
-  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, want: route().slug });
+  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, words: content.reader,
+    onShown: () => { if (room && !busy) syncUrl(); }, want: route().read?.split('/')[2] });
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);
   tour = null; view = viewTarget = Q.has('shot') ? SHOT : +!still; navTouched = PINNED; t0 = uTime.value;
   loader.classList.add('done'); hud.classList.remove('hidden'); busy = false;
   if (roomInUrl() !== id) enter(roomInUrl(), false);                         // Back / Forward was pressed while this was loading
-  else if (route().slug && !plain()) readPost(route().slug, false);         // came back to a post's address: it is open again
+  else if (route().read && !plain()) readPost(route().read, false);         // an address that names something read here: it is open
 }
 
 // ---------------------------------------------------------------- input
@@ -264,8 +270,8 @@ addEventListener('resize', resize);
 addEventListener('popstate', () => {
   const r = route();
   if (r.id !== room?.id) enter(r.id, false);
-  else if (r.slug) { if (focus.pick?.slug?.() !== r.slug) readPost(r.slug, false); }      // Back / Forward: at once, without the flight
-  else if (focus.pick?.slug?.()) back();
+  else if (r.read) { if (focus.pick?.url?.() !== r.read) readPost(r.read, false); }       // Back / Forward: at once, without the flight
+  else if (focus.pick?.reads) back();
 });
 addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
 addEventListener('pointermove', (e) => {
@@ -306,7 +312,10 @@ bar.addEventListener('click', (e) => {
   }
   else ({ back, prev: () => step(-1), next: () => step(1) })[e.target.id]?.();
 });
-$('.hero').addEventListener('click', (e) => { if (e.target.closest('.cta') && room) setFocus(room.picks.find((p) => p.cta)); });
+$('.hero').addEventListener('click', (e) => {            // a room's call to action: something to read ("ctaReads"), or its 'cta' pick
+  if (!e.target.closest('.cta') || !room) return;
+  const reads = content.rooms[room.id].ctaReads; if (reads) readPost(reads, false); else setFocus(room.picks.find((p) => p.cta));
+});
 $('#hud nav').addEventListener('click', (e) => {
   const a = e.target.closest('a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
   if (a.dataset.room) { e.preventDefault(); enter(a.dataset.room); }
@@ -362,14 +371,14 @@ initLive(content); $('#brand').textContent = content.brand; setInterval(tick, 50
 // is only offered it, as is one who asked to save data (for them the room is not even fetched until asked for).
 let touched = false;
 const offer = () => new Promise((yes) => {
-  const words = content.rooms.writing.reader, b = Object.assign(document.createElement('button'), { id: 'stepin', type: 'button' });
+  const words = content.reader, b = Object.assign(document.createElement('button'), { id: 'stepin', type: 'button' });
   b.innerHTML = `<small>${esc(room ? words.ready : words.offer)}</small>${esc(words.enter)}`; b.addEventListener('click', () => { b.remove(); yes(); }); document.body.append(b);
 });
 async function stepIn() {
-  const slug = route().slug, at = [...document.querySelectorAll('#page .post-body h2[id]')].filter((h) => h.getBoundingClientRect().top < innerHeight * 0.4).pop()?.id;
+  const read = route().read, at = [...document.querySelectorAll('#page .post-body h2[id]')].filter((h) => h.getBoundingClientRect().top < innerHeight * 0.4).pop()?.id;
   html.className = 'station'; scrollTo(0, 0); resize(); navTouched = true; viewTarget = view = 0; t0 = uTime.value;
   if (at) room.reader?.scrollTo(at);                     // where they had got to
-  await readPost(slug, false);
+  await readPost(read, false);
 }
 if (plain()) {
   for (const type of ['scroll', 'keydown', 'pointerdown', 'wheel']) addEventListener(type, () => { touched = true; }, { once: true, passive: true });
@@ -377,7 +386,7 @@ if (plain()) {
 }
 await enter(roomInUrl(), false);
 if (plain()) {
-  if (!room.volumes?.some((v) => v.slug === route().slug)) html.className = '';              // not on the shelves: it stays a page
+  if (!room.reads?.(route().read)) html.className = '';                      // cannot be read in the room (a post not on the shelves): it stays a page
   else if (!touched && scrollY < 80) stepIn(); else offer().then(stepIn);
 }
 // Safety net: if nothing reached the canvas (seen with multisampled float targets on some drivers), drop MSAA.
@@ -393,6 +402,7 @@ window.__lobby = { renderer, camera, post, gov, series, setFocus, step, enter, r
     camera.position.fromArray(eye); camera.lookAt(...at); camera.updateMatrixWorld(true);
     uTime.value = t; room.update(t); draw(t);
   }}),
-  reader: { state: () => room?.reader?.state() ?? 'closed', slug: () => room?.reader?.slug() ?? null, read: (slug) => readPost(slug, true), close: () => { if (focus.pick?.reads) back(); } },
+  reader: { state: () => room?.reader?.state() ?? 'closed', url: () => room?.reader?.url() ?? null, slug: () => room?.reader?.url()?.split('#')[0].split('/').filter(Boolean).pop() ?? null,
+    read: (what) => readPost(what.startsWith('/') ? what : `/blog/${what}/`, true), close: () => { if (focus.pick?.reads) back(); } },
   volumes: () => (room?.volumes ?? []).map(({ slug, title }) => ({ slug, title })), held: () => room?.volumes?.[room.heldVolume()]?.slug ?? null,
   mode: () => ({ room: room?.id, hdr: HDR_OK, tier, msaa: post.msaa, scale: +gov.scale.toFixed(2), size: `${post.scene.width}x${post.scene.height}`, mirror: `${mirror.size.x}x${mirror.size.y}` }) };

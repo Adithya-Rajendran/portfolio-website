@@ -167,3 +167,55 @@ Test hooks on `window.__lobby` (in addition to `ready`, `picks`, `setFocus`, `ca
 ## 5. Tests
 
 `tools/dtest.sh <script.mjs> [args]` runs a Playwright script from `tools/docker/` against the checkout it is in, serving `public/` inside the container at `http://127.0.0.1:8080` (env `ORIGIN`); nothing listens on the host. Screenshots go to `/out` (host `$OUT`, default `/tmp/dtest`).
+
+## 8. Projects and the profile: what `tools/site.py` writes (phase 5)
+
+Every room has a path, and the page at that path holds the room's text, so it reads without JavaScript or WebGL as the posts do.
+
+| URL | Room | The page's `<main>` |
+|---|---|---|
+| `/about/` | Lounge | `article.post.page[data-slug="about"]`: who, what, where |
+| `/portfolio/` | Fabrication | `section.post-list`: every project |
+| `/portfolio/<slug>/` | Fabrication, that project read | `article.post.project[data-slug]` |
+| `/experience/` | Navigation | `article.post.page[data-slug="experience"]`: the timeline, skills, credentials, talks, the résumé |
+| `/contact/` | Comms | `article.post.page[data-slug="contact"]`: the invitation, what to write about, the links |
+
+- `/?room=<id>` still works. `/about`, `/contact` and `/portfolio/*` are pages now, so they leave `_redirects`.
+- An article page (`/blog/<slug>/`, `/portfolio/<slug>/`) starts as a readable page (`html.reading`); a room's page starts as the station.
+- All of these are generated and git-ignored, with the same rules as §3: the shell with three changes, every text escaped, the same link policy, deterministic, nothing written outside `--out`.
+
+### Markup
+
+The pages use the article markup of §3 (`header` with `.post-meta`, `h1`, `.post-lede`, `.post-tags`; `div.post-body`; `footer`) so that one stylesheet serves all. Additions:
+
+- In `/experience/`, each timeline entry is `<section class="entry" id="<its id>">` with an `h2` (the title), a `p.post-meta` (organization · period · place) and its text. The reader opens the page at `/experience/#<id>`.
+- A list of label/value pairs (a project's parameters and results) is a `<dl class="post-facts">`.
+- A group of links (a project's links, the social links) is a `<ul class="post-links">`.
+- A project page ends with `p.post-next` to the next project in order, as a post does.
+- Sections of a page that are not prose from a body get an `h2` with an `id`, like body headings.
+
+### `public/portfolio/index.json`
+
+```json
+{ "v": "<8 hex>",
+  "projects": [ { "slug": "homelab", "url": "/portfolio/homelab/", "name": "Homelab", "title": "Rebuildable OpenStack homelab",
+                  "summary": "…", "status": "active", "status_label": "Active", "period": "2022 – now", "year": "2022",
+                  "types": ["infrastructure"], "role": "…", "technologies": ["MAAS", "Juju"], "featured": null, "quiet": false } ] }
+```
+
+In the projects' own order. `period` is how the dates read (`"Dec 2022 – Oct 2026"`, `"2026"`, `"2022 – now"`; `null` with no dates); `year` the year it began. `role`, `featured` (a rank, 1 first) and `period` may be `null`.
+
+### `public/profile.json`
+
+```json
+{ "v": "<8 hex>", "name": "…", "headline": "…", "tagline": "…", "location": "…", "introduction": "…", "focus": ["…"],
+  "availability": { "status": "open", "label": "Write about a role", "seeking": ["Summer 2027 internships"] },
+  "curiosities": [ { "kind": "question", "title": "…", "note": "…", "url": null } ],
+  "timeline": [ { "id": "canonical-2024", "url": "/experience/#canonical-2024", "kind": "work", "title": "…", "organization": "…", "org_short": "Canonical",
+                  "period": "May 2024 – Jul 2026", "year": "2024", "current": false, "location": "Remote", "employment": "full-time", "summary": "…" } ],
+  "links": [ { "label": "LinkedIn", "url": "https://…" } ],
+  "contact": { "intro": "…", "invitation": "…", "email": null, "routes": [ { "id": "hello", "title": "Hello", "prompt": "…" } ] },
+  "resume": "/resume/<file>.pdf" }
+```
+
+What the rooms show of the profile, as plain text (no markup). `timeline` is newest first. `availability`, `resume`, `contact.email` and the optional fields of a record may be `null`. `url` values are site paths or `http(s)` URLs.
