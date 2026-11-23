@@ -6,7 +6,7 @@ gets posts through load_posts(), so the files' format is defined in one place: d
 
 A post is data/posts/<slug>.md: a header between two '---' lines, then the article in Markdown.
 """
-import json, math, os, re, sys
+import datetime, json, math, os, re, sys
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 DATA = os.path.join(ROOT, 'data')
@@ -20,6 +20,14 @@ SLUG = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*$')
 
 class ContentError(ValueError):
     pass
+
+
+def _is_date(s):
+    """2026-03-30 and a real day: the pattern alone lets 2026-13-45 through, which the page generator cannot print."""
+    try:
+        return bool(DATE.match(s)) and bool(datetime.date.fromisoformat(s))
+    except (TypeError, ValueError):
+        return False
 
 
 def _scalar(v, where):
@@ -125,10 +133,11 @@ def load_post(path):
         if not isinstance(head[k], list):
             raise ContentError(f'{name}: `{k}` must be a list')
     for k in ('published', 'revised'):
-        if head.get(k) and not DATE.match(head[k]):
+        if head.get(k) and not _is_date(head[k]):
             raise ContentError(f'{name}: `{k}` must be a date like 2026-03-30')
     for c in head['changelog']:
-        if not isinstance(c, dict) or not DATE.match(c.get('date', '')) or c.get('kind') not in ('update', 'correction') or not c.get('note'):
+        if not isinstance(c, dict) or set(c) - {'date', 'kind', 'note'} or not _is_date(c.get('date', '')) \
+                or c.get('kind') not in ('update', 'correction') or not c.get('note'):
             raise ContentError(f'{name}: a changelog entry needs date, kind (update or correction) and note')
     if head.get('image') and not os.path.exists(os.path.join(DATA, 'assets', 'images', head['image'])):
         raise ContentError(f'{name}: image {head["image"]} is not in data/assets/images/')
