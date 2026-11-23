@@ -16,6 +16,7 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from content import ContentError, DATA, ROOT, SITE, load_posts, load_profile
+import site_extras                                         # feed, sitemap, llms.txt, résumé, _redirects
 
 SHELL = os.path.join(ROOT, 'public', 'index.html')
 WEBP = os.path.expanduser('~/.local/opt/webp/bin')
@@ -732,11 +733,13 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         outputs, posts, profile, warnings = build(a.posts, a.out)
+        extras = site_extras.build(posts, profile)         # before anything is written, like the pages
     except ContentError as e:
         sys.exit(f'site.py: {e}\nnothing was written')
     for w in warnings:
         print('warning:', w, file=sys.stderr)
     write_outputs(a.out, outputs)
+    site_extras.write(a.out, extras)
 
 
 if __name__ == '__main__':
