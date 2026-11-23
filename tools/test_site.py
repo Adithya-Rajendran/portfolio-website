@@ -360,6 +360,26 @@ class Site(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(out, 'blog', 'other')))
         self.assertEqual(set(snapshot(out)), set(snapshot(self.out)))
 
+    def test_writes_only_inside_out(self):
+        """A name from the data cannot put a file outside --out: content.py refuses it, and out_path would too."""
+        base = tempfile.mkdtemp(dir=self.tmp)
+        out = os.path.join(base, 'x', 'out')
+        bad = ('---\ntitle: "Bad"\ndescription: "Escapes."\npublished: 2026-03-01\n'
+               'image: ../../../public/exhibit-review.png\n---\n\nText.\n')
+        with self.assertRaises(SystemExit) as e:
+            generate(self.posts_dir(bad=bad), out)
+        self.assertIn('nothing was written', str(e.exception.code))
+        self.assertEqual([d for d, _, files in os.walk(base) if files], [])
+        os.makedirs(out)
+        os.symlink(base, os.path.join(out, 'up'))
+        for rel in ('../x.txt', 'blog/../../x.txt', 'blog/media/../../../x.txt', '/tmp/x.txt', 'up/x.txt', '.', ''):
+            with self.assertRaises(s.ContentError, msg=rel):
+                s.out_path(out, rel)
+        self.assertEqual(s.out_path(out, 'blog/media/a.png'), os.path.join(os.path.realpath(out), 'blog', 'media', 'a.png'))
+        with self.assertRaises(s.ContentError):
+            s.write_outputs(out, {'blog/index.json': b'{}', 'blog/../../escaped': b'x'})
+        self.assertEqual(os.listdir(out), ['up'])               # checked before the first write
+
     def test_bad_post_writes_nothing(self):
         bad = '---\ntitle: "Bad"\ndescription: "Broken."\npublished: 2026-03-01\n---\n\nFine.\n\n#### Too deep\n'
         posts = self.posts_dir(bad=bad)

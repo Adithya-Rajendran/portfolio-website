@@ -6,10 +6,11 @@ gets posts through load_posts(), so the files' format is defined in one place: d
 
 A post is data/posts/<slug>.md: a header between two '---' lines, then the article in Markdown.
 """
-import datetime, json, math, os, re, sys
+import datetime, json, math, os, re, stat, sys
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 DATA = os.path.join(ROOT, 'data')
+IMAGES = os.path.join(DATA, 'assets', 'images')
 SITE = 'https://adithya-rajendran.com'                     # canonical origin: links in the feed, the sitemap, og:url
 REQUIRED = ('title', 'description', 'published')
 LISTS = ('tags', 'takeaways', 'changelog', 'projects')
@@ -107,6 +108,18 @@ def split(text, name='post'):
     return parse_header(lines[1:end], name), '\n'.join(lines[end + 1:]).strip('\n') + '\n'
 
 
+def image_file(name):
+    """data/assets/images/<name>, or None unless name is a bare file name (no folder, so nothing outside can be
+    reached) of a regular file there (not a symbolic link, which could point anywhere)."""
+    if not isinstance(name, str) or not name or '/' in name or '\\' in name or name in ('.', '..'):
+        return None
+    path = os.path.join(IMAGES, name)
+    try:
+        return path if stat.S_ISREG(os.lstat(path).st_mode) else None
+    except (OSError, ValueError):                         # ValueError: a NUL in the name
+        return None
+
+
 def prose_words(body):
     """Words a reader reads: the body without fenced code, image lines and Markdown punctuation."""
     text = re.sub(r'^```.*?^```[ \t]*$', ' ', body, flags=re.S | re.M)
@@ -139,8 +152,8 @@ def load_post(path):
         if not isinstance(c, dict) or set(c) - {'date', 'kind', 'note'} or not _is_date(c.get('date', '')) \
                 or c.get('kind') not in ('update', 'correction') or not c.get('note'):
             raise ContentError(f'{name}: a changelog entry needs date, kind (update or correction) and note')
-    if head.get('image') and not os.path.exists(os.path.join(DATA, 'assets', 'images', head['image'])):
-        raise ContentError(f'{name}: image {head["image"]} is not in data/assets/images/')
+    if head.get('image') and not image_file(head['image']):
+        raise ContentError(f'{name}: `image` must be the name of a file in data/assets/images/, with no folder: {head["image"]}')
     words = prose_words(body)
     return dict({k: head.get(k) for k in KNOWN}, slug=slug, body=body, words=words, minutes=max(1, math.ceil(words / 200)))
 

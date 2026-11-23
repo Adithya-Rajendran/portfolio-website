@@ -15,7 +15,7 @@ import argparse, bisect, hashlib, html, json, os, re, shutil, subprocess, sys, t
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from content import ContentError, DATA, ROOT, SITE, load_posts, load_profile
+from content import ContentError, DATA, ROOT, SITE, image_file, load_posts, load_profile
 import site_extras                                         # feed, sitemap, llms.txt, résumé, _redirects
 
 SHELL = os.path.join(ROOT, 'public', 'index.html')
@@ -193,8 +193,8 @@ class Doc:
 
     def image(self, file, line):
         """A body image -> (URL, width, height) of its WebP in /blog/media/."""
-        src = os.path.join(DATA, 'assets', 'images', file)
-        if '/' in file or not os.path.isfile(src):
+        src = image_file(file)
+        if not src:
             self.error(line, f'image {file} is not in data/assets/images/')
         size = display_size(src)[1]
         name = media_name(src)
@@ -704,7 +704,7 @@ def post_page(shell, post, doc, body, profile, posts_by_slug):
     first, last = post['published'], post['revised'] or post['published']
     card = None
     if post['image']:
-        w, h, _ = image_info(os.path.join(DATA, 'assets', 'images', post['image']))
+        w, h, _ = image_info(image_file(post['image']))
         card = f'{SITE}/blog/media/{quote(post["image"])}', w, h
     head = [meta('description', post['description'], 'name'), f'<link rel="canonical" href="{escape(url)}">',
             meta('og:type', 'article'), meta('og:site_name', name), meta('og:title', post['title']),
@@ -799,7 +799,7 @@ def build(posts_dir, out):
         body, doc = render_markdown(p['body'], doc=doc)
         outputs[f'blog/{p["slug"]}/index.html'] = post_page(shell, p, doc, body, profile, by_slug).encode()
         if p['image']:
-            src = os.path.join(DATA, 'assets', 'images', p['image'])
+            src = image_file(p['image'])
             if image_info(src)[0:2] != (1200, 630) or not p['image'].endswith(('.png', '.jpg')):
                 warnings.append(f'{doc.name}: the social card {p["image"]} should be a 1200x630 PNG')
             with open(src, 'rb') as f:
@@ -829,11 +829,23 @@ def build(posts_dir, out):
     return outputs, posts, profile, warnings
 
 
+def out_path(out, rel):
+    """out/rel with links and '..' resolved, or ContentError when that is not inside out. Every file this tool
+    writes, copies or removes goes through here: a name taken from the data can never put a file elsewhere."""
+    root = os.path.realpath(out)
+    path = os.path.realpath(os.path.join(root, rel))
+    if path == root or os.path.commonpath([root, path]) != root:
+        raise ContentError(f'{rel}: refused, it is not inside {out}')
+    return path
+
+
 def write_outputs(out, outputs, prune=('blog',)):
-    """Write what changed; leave identical files alone; under each `prune` folder, remove what this run did not make."""
+    """Write what changed; leave identical files alone; under each `prune` folder, remove what this run did not make.
+    Every path is checked before the first file is written."""
     written = unchanged = removed = 0
+    paths = {rel: out_path(out, rel) for rel in outputs}
     for rel, data in sorted(outputs.items()):
-        path = os.path.join(out, rel)
+        path = paths[rel]
         if data is KEEP:
             unchanged += 1; continue
         try:
@@ -852,9 +864,9 @@ def write_outputs(out, outputs, prune=('blog',)):
             for f in sorted(files):
                 rel = os.path.relpath(os.path.join(folder, f), out).replace(os.sep, '/')
                 if rel not in outputs:
-                    os.remove(os.path.join(folder, f)); print('removed', rel); removed += 1
+                    os.remove(os.path.join(out_path(out, os.path.dirname(rel)), f)); print('removed', rel); removed += 1
             if not os.listdir(folder) and folder != os.path.join(out, top):
-                os.rmdir(folder)
+                os.rmdir(out_path(out, os.path.relpath(folder, out)))
     print(f'{written} written, {unchanged} unchanged, {removed} removed')
 
 
@@ -866,6 +878,10 @@ def main(argv=None):
     try:
         outputs, posts, profile, warnings = build(a.posts, a.out)
         extras = site_extras.build(posts, profile)         # before anything is written, like the pages
+        for rel in extras:                                 # site_extras.write writes them: checked here, before anything
+            out_path(a.out, rel)
+        for rel in outputs:
+            out_path(a.out, rel)
     except ContentError as e:
         sys.exit(f'site.py: {e}\nnothing was written')
     for w in warnings:
