@@ -6,7 +6,8 @@ The posts move from Sanity into `data/`, and each becomes a real page at `/blog/
 
 | URL | What it is |
 |---|---|
-| `/` | Atrium. Other rooms: `/?room=about`, `projects`, `experience`, `comms` (unchanged in V1) |
+| `/` | Atrium |
+| `/about/`, `/portfolio/`, `/portfolio/<slug>/`, `/experience/`, `/contact/` | The other rooms and what is read in them (§8) |
 | `/blog/` | The Library, with the list of posts in the page |
 | `/blog/<slug>/` | The Library with that post read; the article is in the page's HTML |
 | `/blog/media/<name>`, `/blog/files/<name>` | Images (re-encoded) and files used by posts |
@@ -14,8 +15,8 @@ The posts move from Sanity into `data/`, and each becomes a real page at `/blog/
 | `/resume/<file>.pdf` | The résumé the profile points to |
 
 - Canonical URLs end in `/`. Canonical origin: `content.SITE` (`https://adithya-rajendran.com`).
-- Old URLs redirect (`public/_redirects`, written by `tools/site_extras.py` because the résumé's file name comes from the data): `/blog/tags/*` → `/blog/`; `/portfolio`, `/portfolio/*` → `/?room=projects`; `/about` → `/?room=about`; `/contact` → `/?room=comms`; `/resume`, `/resume/view`, `/resume/download` → the PDF. `/studio`, `/api/contact`, `/openapi.json` and `/.well-known/api-catalog` are gone.
-- `?room=writing` keeps working and means `/blog/`.
+- Old URLs redirect (`public/_redirects`, written by `tools/site_extras.py` because the résumé's file name comes from the data): `/blog/tags/*` → `/blog/`; `/resume`, `/resume/view`, `/resume/download` → the PDF. `/about/`, `/portfolio/` and `/contact/` are pages (§8). `/studio`, `/api/contact`, `/openapi.json` and `/.well-known/api-catalog` are gone.
+- `?room=<id>` keeps working (`?room=writing` means `/blog/`).
 
 ## 2. A post: `data/posts/<slug>.md`
 
@@ -122,7 +123,7 @@ A post's `<main>`:
 - Optional parts (`post-revised`, `post-tags`, `post-takeaways`, `figcaption`, `post-changelog`, `post-next`) are left out when empty.
 - Heading ids: the heading's text, lower-cased, anything but `a-z0-9`, space and `-` removed, spaces to `-`; a repeat gets `-2`, `-3`.
 - Dates print as `30 March 2026`.
-- Links: only `http:`, `https:`, `mailto:` and paths starting with `/` are allowed; anything else renders as its text with no link. External links get `target="_blank" rel="noopener"`. `/portfolio/<slug>/` is written as `/?room=projects&project=<slug>`.
+- Links: only `http:`, `https:`, `mailto:` and paths starting with `/` are allowed; anything else renders as its text with no link. External links get `target="_blank" rel="noopener"`. A link to a project is its page, `/portfolio/<slug>/`.
 - Images: longest side at most 1600 px, WebP, metadata stripped, turned upright if the camera stored them sideways (`~/.local/opt/webp/bin/cwebp`); `width`/`height` are the written file's. A re-encoded image is named `<source name>.<8 hex of source and encoding>.webp`, so its URL can be cached for good; the social card is copied unchanged for `og:image`. Files: copied to `/blog/files/` under their original name (`data/assets/files.json`).
 - Every piece of text from the data is HTML-escaped. The generator writes no inline `<script>` other than the JSON-LD, in which every `<` is written as `\u003c`.
 
@@ -321,7 +322,7 @@ Every room has a path, and the page at that path holds the room's text, so it re
 - `/?room=<id>` still works. `/about`, `/contact` and `/portfolio/*` are pages now, so they leave `_redirects` (Cloudflare adds the trailing slash to `/about` and `/portfolio/<slug>` itself).
 - An article page (`/blog/<slug>/`, `/portfolio/<slug>/`) starts as a readable page (`html.reading`); a room's page starts as the station.
 - All of these are generated and git-ignored, with the same rules as §3: the shell with three changes, every text escaped, the same link policy, deterministic, nothing written outside `--out`, and a mistake anywhere writes nothing at all.
-- On these pages a link to a project is its page, `/portfolio/<slug>/` (a §6 link's `project`, a curiosity's or a paper's `project`, and `/portfolio/<slug>/` in a project's body or inline lists). A post's links keep §3's `/?room=projects&project=<slug>`.
+- On these pages a link to a project is its page, `/portfolio/<slug>/` (a §6 link's `project`, a curiosity's or a paper's `project`, and `/portfolio/<slug>/` in a project's body or inline lists). A post's links to a project are the same.
 - Every heading id on a page is unique and none is an id of the shell or of `RUNTIME_IDS` (§3's rule). Ids the data fixes (a timeline entry's `id`, a contact route's id) are used as they are and are reserved first, so a section heading of the same words takes `-2`; one that is an id of the shell is an error.
 
 ### Markup

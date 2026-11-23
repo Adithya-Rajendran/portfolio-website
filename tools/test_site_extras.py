@@ -134,7 +134,7 @@ class Extras(unittest.TestCase):
         fixture = self.feed(self.two).findall('item')[1].findtext('content:encoded', namespaces=NS)
         urls = Links(fixture).urls
         self.assertIn(f'{SITE}/blog/every-construct/', urls)                                 # a link to a post
-        self.assertIn(f'{SITE}/?room=projects&project=homelab', urls)                        # a link to a project
+        self.assertIn(f'{SITE}/portfolio/homelab/', urls)                        # a link to a project
         self.assertIn('https://example.org/path?x=1&y=2#frag', urls)                         # an external link is untouched
         self.assertIn(f'{SITE}/blog/files/gui-lxd-profile.yaml', urls)
         self.assertTrue(any(u.startswith(f'{SITE}/blog/media/') and u.endswith('.webp') for u in urls))

@@ -180,11 +180,11 @@ class Doc:
     """What rendering one page collects: ids in use, sections (h2, h3), the images and files it needs, warnings.
     `taken` are ids already in the page around the article (the shell's), which headings must not repeat. `slugs` and
     `projects` are the posts and projects that exist (None: not checked, or data/projects/ for projects).
-    A post's images go to /blog/media/ and its links to a project to the room (§3); the pages of §8 (projects and the
-    profile) set media='/media' and project_pages, and link a project's own page."""
-    def __init__(self, name='post', first_line=1, taken=(), slugs=None, media='/blog/media', projects=None, project_pages=False):
+    A post's images go to /blog/media/; the pages of §8 (projects and the profile) set media='/media'. A link to a
+    project is that project's page everywhere."""
+    def __init__(self, name='post', first_line=1, taken=(), slugs=None, media='/blog/media', projects=None):
         self.name, self.first_line, self.ids, self.slugs = name, first_line, set(taken), slugs
-        self.media_url, self.projects, self.project_pages = media, projects, project_pages
+        self.media_url, self.projects = media, projects
         self.sections, self.media, self.files, self.warnings = [], {}, {}, []
         self._files = None
 
@@ -236,9 +236,7 @@ class Doc:
                 if m[1] and not (m[1] in self.projects if self.projects is not None
                                  else os.path.isfile(os.path.join(DATA, 'projects', f'{m[1]}.md'))):
                     warn(f'{self.where(line)}: no project {m[1]} in data/projects/')
-                if self.project_pages:
-                    return (f'/portfolio/{m[1]}/' if m[1] else '/portfolio/'), False
-                return ('/?room=projects&project=' + m[1] if m[1] else '/?room=projects'), False
+                return (f'/portfolio/{m[1]}/' if m[1] else '/portfolio/'), False
             m = re.match(r'^/blog/([a-z0-9-]+)/', url)
             if m and self.slugs is not None and m[1] not in self.slugs and m[1] not in ('media', 'files'):
                 warn(f'{self.where(line)}: no post {m[1]} for the link {url}')
@@ -854,7 +852,7 @@ def listing(projects):
 
 def page_doc(name, site):
     """A Doc for one of the §8 pages: images to /media/, a project linked as its page."""
-    return Doc(name, None, site['taken'], set(site['posts']), media='/media', projects=set(site['projects']), project_pages=True)
+    return Doc(name, None, site['taken'], set(site['posts']), media='/media', projects=set(site['projects']))
 
 
 def reserve(doc, ids, what):

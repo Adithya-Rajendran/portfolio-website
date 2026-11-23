@@ -20,6 +20,8 @@ public/about/
 public/experience/
 public/contact/
 public/profile.json
+public/media/
+public/.generated-files
 public/resume/
 public/feed.xml
 public/sitemap.xml

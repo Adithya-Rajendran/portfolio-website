@@ -509,13 +509,13 @@ class Pages(unittest.TestCase):
                             self.assertIn(frag, pages[target], (rel, u))
 
     def test_link_policy_on_these_pages(self):
-        d = s.Doc('t', 1, project_pages=True, projects={'homelab'}, media='/media')
+        d = s.Doc('t', 1, projects={'homelab'}, media='/media')
         self.assertEqual(s.render_inline('[x](/portfolio/homelab/) [y](/portfolio/) [z](/portfolio/nope/)', d),
                          '<a href="/portfolio/homelab/">x</a> <a href="/portfolio/">y</a> <a href="/portfolio/nope/">z</a>')
         self.assertEqual(len(d.warnings), 1)
         self.assertIn('no project nope', d.warnings[0])
-        post = s.Doc('t', 1)                               # a post's links to a project are still the room's (§3)
-        self.assertEqual(s.render_inline('[x](/portfolio/homelab/)', post), '<a href="/?room=projects&amp;project=homelab">x</a>')
+        post = s.Doc('t', 1)                               # and in a post
+        self.assertEqual(s.render_inline('[x](/portfolio/homelab/)', post), '<a href="/portfolio/homelab/">x</a>')
 
     # ------------------------------------------------------------ the JSON
 

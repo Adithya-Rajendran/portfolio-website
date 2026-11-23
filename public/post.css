@@ -58,9 +58,39 @@
 .post .post-links { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; list-style: none; }
 .post .post-links a { display: block; padding: 10px 16px 9px; border: 1px solid rgba(127,227,255,.5); text-decoration: none; font-size: 14px; letter-spacing: .06em; }
 .post .post-links a:hover, .post .post-links a:focus-visible { border-color: #fff; background: rgba(127,227,255,.08); }
+.post-links li[data-kind="repo"] a::before { content: "‹›  "; color: var(--soft); }
+.post-links li[data-kind="paper"] a::before, .post-links li[data-kind="article"] a::before { content: "¶  "; color: var(--soft); }
+.post-meta .post-status { color: #fff; }
+.post-role, .post-status-note { font-size: 15px; color: #b9d2df; }
+.post-role b, .post-availability b { margin-right: 10px; font-size: 10px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: var(--cy); }
+.post-status-note { padding-left: 16px; border-left: 2px solid var(--am); }
+.post .post-cover { margin: 0 0 34px; }
 .post .entry { margin: 0 0 8px; }
+.post .entry::after { content: ""; display: block; clear: both; }
 .post .entry > .post-meta { margin: -6px 0 16px; }
 .post .entry:target > h2, .post h2:target { color: var(--am); }
+.post .entry-logo { float: right; width: 44px; height: 44px; margin: 22px 0 8px 16px; object-fit: contain; border-radius: 4px; background: #fff; padding: 3px; }
+.post .entry[data-kind="education"] > h2::after { content: "  ·  education"; font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--soft); }
+.post h3 + .post-tags { margin: 0 0 22px; }
+.post .post-credentials, .post .post-talks, .post .post-curiosities { padding: 0; list-style: none; }
+.post-credentials li { display: grid; grid-template-columns: 52px 1fr; column-gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.post-credentials .post-badge { grid-row: span 2; width: 52px; height: 52px; object-fit: contain; }
+.post-credentials .post-meta, .post-talks .post-meta, .post-curiosities .post-meta { color: var(--soft); letter-spacing: .18em; }
+.post-credentials li > :not(.post-badge) { grid-column: 2; }
+.post-talks li, .post-curiosities li { padding: 16px 0; border-bottom: 1px solid var(--rule); }
+.post-talks li > strong, .post-curiosities li > strong { display: block; font-size: 18px; font-weight: 400; line-height: 1.35; color: #fff; }
+.post-talks p, .post-curiosities p { margin: 8px 0 0; }
+.post-talks .post-links { margin: 12px 0 0; }
+.post-availability[data-status="open"] b { color: #9cf5c0; }
+.post-availability time { color: var(--soft); font-size: 13px; }
+.post-cta a, .post-featured a { display: inline-block; padding: 12px 18px; border: 1px solid var(--am); color: #ffd2a8; text-decoration: none; }
+.post-cta a:hover, .post-cta a:focus-visible, .post-featured a:hover, .post-featured a:focus-visible { background: rgba(255,154,74,.1); color: #fff; }
+.post .route { padding: 14px 0; border-top: 1px solid var(--rule); }
+.post .route h3 { margin: 0 0 6px; }
+.post .route p { margin: 0; color: #b9d2df; }
+.post-list h2 { margin: 44px 0 0; font-size: 11px; font-weight: 500; letter-spacing: .34em; text-transform: uppercase; color: var(--cy); }
+.post-list h2 + ol { margin-top: 12px; }
+.post-list li.quiet > a { font-size: 19px; color: #cfe2ec; }
 
 /* ---------------------------------------------------------------- as a hologram: one element over the canvas */
 #reader { position: fixed; left: 0; top: 0; z-index: 4; transform-origin: 0 0; display: grid; grid-template: "head head" auto "rail text" minmax(0, 1fr) "bar bar" 2px / 232px minmax(0, 1fr);
@@ -109,11 +139,12 @@ html:not(.station) #scene, html:not(.station) #hud, html:not(.station) #inspectb
 html:not(.station):not(.reading) #loader { display: none; }
 body:has(> #page) > noscript { display: none; }      /* the notice that the station needs JavaScript: not where the page is the text itself */
 #pagenav { display: none; }
-html:not(.station) #pagenav { display: flex; gap: 26px; position: absolute; left: 0; right: 0; top: 0; max-width: 760px; margin: 0 auto; padding: 26px 22px 0;
+html:not(.station) #pagenav { display: flex; flex-wrap: wrap; gap: 12px 26px; position: absolute; left: 0; right: 0; top: 0; max-width: 760px; margin: 0 auto; padding: 26px 22px 0;
   font: 600 12px "Eurostile", "Michroma", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: .32em; }
 #pagenav a { color: var(--fg); text-decoration: none; padding-bottom: 7px; border-bottom: 1px solid rgba(127,227,255,.5); }
 #pagenav a:hover, #pagenav a:focus-visible { color: var(--cy); border-bottom-color: var(--cy); }
 #pagenav a + a { color: var(--soft); }
+@media (max-width: 720px) { html:not(.station) #pagenav { gap: 10px 18px; font-size: 11px; letter-spacing: .24em; } html:not(.station) #page { padding-top: 112px; } }
 .post-list h1 { font-size: clamp(40px, 7vw, 72px); font-weight: 200; letter-spacing: -.02em; line-height: 1; margin-bottom: 18px; }
 .post-list ol { list-style: none; margin-top: 44px; }
 .post-list li { padding: 26px 0; border-top: 1px solid var(--rule); font: 16px/1.6 var(--text); color: #b9d2df; }

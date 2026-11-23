@@ -297,8 +297,8 @@ class Site(unittest.TestCase):
         self.assertEqual(r('[x](http://e.org/)'), '<a href="http://e.org/" target="_blank" rel="noopener">x</a>')
         self.assertEqual(r('[x](mailto:a@b.c)'), '<a href="mailto:a@b.c">x</a>')
         self.assertEqual(r('[x](/blog/every-construct/)'), '<a href="/blog/every-construct/">x</a>')
-        self.assertEqual(r('[x](/portfolio/homelab/)'), '<a href="/?room=projects&amp;project=homelab">x</a>')
-        self.assertEqual(r('[x](/portfolio/)'), '<a href="/?room=projects">x</a>')
+        self.assertEqual(r('[x](/portfolio/homelab/)'), '<a href="/portfolio/homelab/">x</a>')
+        self.assertEqual(r('[x](/portfolio/)'), '<a href="/portfolio/">x</a>')
         self.assertEqual(r('[x](../assets/files/8b46b93f83223a11d762796f2775bb697b0a94ce.yaml)'),
                          '<a href="/blog/files/gui-lxd-profile.yaml">x</a>')
         self.assertIn('<a href="/blog/files/gui-lxd-profile.yaml">file link</a>', self.html)
@@ -596,7 +596,7 @@ that is wrapped over two lines in the source and is still one paragraph.</p>
 <h2 id="lists">Lists</h2>
 <ul>
 <li>A bullet.</li>
-<li>A bullet with <code>code</code> and a <a href="/?room=projects&amp;project=homelab">link</a>.<ul>
+<li>A bullet with <code>code</code> and a <a href="/portfolio/homelab/">link</a>.<ul>
 <li>A nested bullet.</li>
 <li>Another nested bullet.</li>
 </ul></li>
