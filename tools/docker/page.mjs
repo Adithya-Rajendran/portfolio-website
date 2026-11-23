@@ -1,9 +1,14 @@
-// A generated page read the way a crawler or a reader without JavaScript sees it:  tools/dtest.sh page.mjs /blog/<slug>/
-// Generate the pages first (python3 tools/site.py). Checks the DOM, not the looks: the article has no stylesheet yet and
-// the loader overlay covers it when no script runs. Saves /out/page.png (the viewport, as served) and
-// /out/page-article.png (the article with #loader and the canvas hidden, after every check has run).
+// A generated page read the way a crawler or a reader without JavaScript sees it:  tools/dtest.sh page.mjs <path>
+// <path>: a post (/blog/<slug>/), a list (/blog/, /portfolio/), a project (/portfolio/<slug>/) or a room's page (/about/,
+// /experience/, /contact/): docs/v1-contracts.md §3 and §8. Generate the pages first (python3 tools/site.py). Checks the
+// DOM, not the looks: the loader overlay covers the page when no script runs. Every image in it must load at the size
+// its attributes say, and every link it makes to the site must answer 200. Saves /out/page.png (the viewport, as served)
+// and /out/page-article.png (the page's content with #loader and the canvas hidden, after every check has run).
 import { chromium } from 'playwright';
 const path = process.argv[2] || '/blog/every-construct/';
+const kind = /^\/(blog|portfolio)\/$/.test(path) ? 'list' : /^\/blog\/[^/]+\/$/.test(path) ? 'post' : /^\/portfolio\/[^/]+\/$/.test(path) ? 'project'
+  : { '/about/': 'about', '/experience/': 'experience', '/contact/': 'contact' }[path];
+if (!kind) { console.log('FAIL not a generated page:', path); process.exit(1); }
 const b = await chromium.launch();
 let failed = 0;
 const fail = (...m) => { failed++; console.log('FAIL', ...m); };
@@ -17,24 +22,50 @@ try {
   const res = await p.goto(process.env.ORIGIN + path, { waitUntil: 'load' });
   if (res.status() !== 200) fail('page status', res.status());
   if (requests.some(u => u.endsWith('/main.js'))) fail('main.js was requested with JavaScript disabled');
+  console.log('kind:', kind);
 
-  const article = p.locator('article.post');
-  if (await article.count() !== 1) fail('article.post count', await article.count());
-  const h1 = (await p.locator('article.post header h1').textContent())?.trim();
-  if (!h1) fail('no h1 in the article header'); else console.log('h1:', h1);
-  if (await p.locator('main#page > article.post').count() !== 1) fail('article.post is not in main#page');
-  for (const part of ['header .post-meta time', 'header .post-lede', 'div.post-body', 'div.post-body h2[id]', 'div.post-body p']) {
-    const n = await p.locator(`article.post ${part}`).count();
+  // What the page must hold (required) and what it may (counted), as §3 and §8 write it.
+  const root = kind === 'list' ? 'main#page > section.post-list' : kind === 'post' ? 'main#page > article.post'
+    : kind === 'project' ? 'main#page > article.post.project[data-slug]' : `main#page > article.post.page[data-slug="${kind}"]`;
+  const content = p.locator(root);
+  if (await content.count() !== 1) fail(root, 'count', await content.count());
+  if (await p.locator('main#page > *').count() !== 1) fail('main#page holds more than its article');
+  const h1 = (await p.locator(`${root} h1`).first().textContent())?.trim();
+  if (!h1 || await p.locator('main#page h1').count() !== 1) fail('not exactly one h1'); else console.log('h1:', h1);
+  const required = {
+    list: ['.post-lede', 'ol > li > a', 'ol > li > p.post-meta'],
+    post: ['header .post-meta time', 'header .post-lede', 'div.post-body', 'div.post-body h2[id]', 'div.post-body p'],
+    project: ['header .post-meta .post-status', 'header .post-lede'],
+    about: ['header .post-meta', 'header .post-lede', 'div.post-body h2[id]', 'div.post-body p', 'ul.post-links a'],
+    experience: ['header .post-lede', 'section.entry[id] > h2', 'section.entry[id] > p.post-meta', 'div.post-body h2[id]', 'ul.post-tags li'],
+    contact: ['header .post-lede', 'section.route[id] > h3', 'section.route[id] > p', 'ul.post-links a', 'div.post-body h2[id]'],
+  }[kind];
+  const optional = {
+    list: ['h2[id]', 'li.quiet'],
+    post: ['div.post-body pre[data-lang] > code', 'div.post-body figure > img', 'ul.post-tags', 'section.post-takeaways', 'footer .post-changelog', 'footer .post-next'],
+    project: ['header .post-role', 'header .post-status-note', 'ul.post-tags', 'figure.post-cover > img', 'div.post-body', 'div.post-body h2[id]',
+      'dl.post-facts', 'ul.post-links', 'footer .post-next'],
+    about: ['ul.post-curiosities > li', 'p.post-availability', 'p.post-cta a', 'p.post-featured a'],
+    experience: ['section.entry img.entry-logo', 'ul.post-credentials > li', 'ul.post-credentials img.post-badge', 'ul.post-talks > li'],
+    contact: ['p.post-availability'],
+  }[kind];
+  for (const part of required) {
+    const n = await p.locator(`${root} ${part}`).count();
     if (!n) fail('missing', part); else console.log(`${part}: ${n}`);
   }
-  for (const part of ['div.post-body pre[data-lang] > code', 'div.post-body figure > img', 'ul.post-tags', 'section.post-takeaways', 'footer .post-changelog', 'footer .post-next'])   // not in every post
-    console.log(`${part}: ${await p.locator(`article.post ${part}`).count()}`);
+  for (const part of optional) console.log(`${part}: ${await p.locator(`${root} ${part}`).count()}`);
   if (await p.locator('script[type="application/ld+json"]').count() !== 1) fail('JSON-LD script count');
-  if (!await p.locator('link[rel="canonical"]').getAttribute('href')) fail('no canonical link');
+  const ld = JSON.parse(await p.locator('script[type="application/ld+json"]').textContent());
+  console.log('JSON-LD:', ld['@type']);
+  const canonical = await p.locator('link[rel="canonical"]').getAttribute('href');
+  if (!canonical?.endsWith(path)) fail('canonical link', canonical);
+  const ids = await p.evaluate(() => [...document.querySelectorAll('[id]')].map(e => e.id));
+  if (new Set(ids).size !== ids.length) fail('an id is used twice', ids.filter((x, i) => ids.indexOf(x) !== i));
+  if (await p.locator(`${root} form, ${root} input, ${root} script`).count()) fail('a form, an input or a script in the content');
 
-  // Every image in the article has loaded (scroll to each: with scripting off Chromium loads lazy images anyway, but
-  // the check should not depend on that).
-  const imgs = p.locator('article.post img');
+  // Every image in it has loaded (scroll to each: with scripting off Chromium loads lazy images anyway, but the check
+  // should not depend on that).
+  const imgs = p.locator(`${root} img`);
   for (let i = 0; i < await imgs.count(); i++) {
     const img = imgs.nth(i);
     await img.scrollIntoViewIfNeeded();
@@ -44,12 +75,32 @@ try {
     else if (`${nw}x${nh}` !== `${await img.getAttribute('width')}x${await img.getAttribute('height')}`) fail('width/height attributes differ from the file', src, nw, nh);
     else console.log('image', src, `${nw}x${nh}`);
   }
+  // Every link to the site answers 200, and a #fragment names an element of the page it leads to. External links open
+  // apart (target, rel); nothing else is a link.
+  const hrefs = await p.locator(`${root} a[href]`).evaluateAll(as => as.map(a => [a.getAttribute('href'), a.getAttribute('target'), a.getAttribute('rel')]));
+  const site = new Set();
+  for (const [h, target, rel] of hrefs) {
+    if (/^https?:\/\//.test(h)) { if (target !== '_blank' || rel !== 'noopener') fail('external link without target/rel', h); }
+    else if (h.startsWith('/') && !h.startsWith('//')) site.add(h);
+    else fail('link not allowed', h);
+  }
+  const pages = new Map();
+  for (const h of site) {
+    const [where, frag] = h.split('#');
+    if (!pages.has(where)) {
+      const r = await ctx.request.get(process.env.ORIGIN + where, { maxRedirects: 0 });
+      pages.set(where, r.status() === 200 && where.endsWith('/') ? await r.text() : '');
+      if (r.status() !== 200) fail('link', h, r.status());
+    }
+    if (frag && !pages.get(where).includes(` id="${frag}"`)) fail('link to a missing id', h);
+  }
+  console.log(`${hrefs.length} links, ${site.size} on the site, all answered`);
   await p.evaluate(() => { document.documentElement.scrollTop = document.body.scrollTop = 0; });   // body is the scroller
   await p.screenshot({ path: '/out/page.png' });
   for (const over of ['#loader', '#scene']) await p.locator(over).evaluate(el => { el.style.display = 'none'; });
-  const box = await article.boundingBox();                // the shell's style.css does not scroll the page: grow the window
+  const box = await content.boundingBox();               // the shell's style.css does not scroll the page: grow the window
   await p.setViewportSize({ width: 1000, height: Math.ceil(Math.min(box.y + box.height, 16000)) });
-  await article.screenshot({ path: '/out/page-article.png' });
+  await content.screenshot({ path: '/out/page-article.png' });
   console.log(failed ? `${failed} failed` : 'page ok', path);
 } finally { await b.close(); }
 process.exitCode = failed ? 1 : 0;
