@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- this file is also the shell of every generated page (tools/site.py), which live in folders: all paths are from the root -->
+<base href="/">
 <title>Arcadia Station</title>
+<!--site:head-->
 <link rel="stylesheet" href="style.css">
 <!-- three.js r181 as published, minified (1.3 MB less to load); three.module.js next to it is the same code, readable -->
 <script type="importmap">
@@ -12,6 +15,7 @@
 </head>
 <body>
 <canvas id="scene"></canvas>
+<!--site:page-->
 
 <!-- Everything below is filled in from content.json by main.js: one page, and a room per entry in "rooms". -->
 <div id="loader">
