@@ -14,7 +14,7 @@ The posts move from Sanity into `data/`, and each becomes a real page at `/blog/
 | `/resume/<file>.pdf` | The résumé the profile points to |
 
 - Canonical URLs end in `/`. Canonical origin: `content.SITE` (`https://adithya-rajendran.com`).
-- Old URLs redirect (`public/_redirects`): `/blog/tags/*` → `/blog/`; `/portfolio`, `/portfolio/*` → `/?room=projects`; `/about` → `/?room=about`; `/contact` → `/?room=comms`; `/resume`, `/resume/view`, `/resume/download` → the PDF. `/studio`, `/api/contact`, `/openapi.json` and `/.well-known/api-catalog` are gone.
+- Old URLs redirect (`public/_redirects`, written by `tools/site_extras.py` because the résumé's file name comes from the data): `/blog/tags/*` → `/blog/`; `/portfolio`, `/portfolio/*` → `/?room=projects`; `/about` → `/?room=about`; `/contact` → `/?room=comms`; `/resume`, `/resume/view`, `/resume/download` → the PDF. `/studio`, `/api/contact`, `/openapi.json` and `/.well-known/api-catalog` are gone.
 - `?room=writing` keeps working and means `/blog/`.
 
 ## 2. A post: `data/posts/<slug>.md`
@@ -121,7 +121,7 @@ A post's `<main>`:
 - Heading ids: the heading's text, lower-cased, anything but `a-z0-9`, space and `-` removed, spaces to `-`; a repeat gets `-2`, `-3`.
 - Dates print as `30 March 2026`.
 - Links: only `http:`, `https:`, `mailto:` and paths starting with `/` are allowed; anything else renders as its text with no link. External links get `target="_blank" rel="noopener"`. `/portfolio/<slug>/` is written as `/?room=projects&project=<slug>`.
-- Images: longest side at most 1600 px, WebP, metadata stripped (`~/.local/opt/webp/bin/cwebp`); `width`/`height` are the written file's. Files: copied to `/blog/files/` under their original name (`data/assets/files.json`).
+- Images: longest side at most 1600 px, WebP, metadata stripped, turned upright if the camera stored them sideways (`~/.local/opt/webp/bin/cwebp`); `width`/`height` are the written file's. A re-encoded image is named `<source name>.<8 hex of source and encoding>.webp`, so its URL can be cached for good; the social card is copied unchanged for `og:image`. Files: copied to `/blog/files/` under their original name (`data/assets/files.json`).
 - Every piece of text from the data is HTML-escaped. The generator writes no inline `<script>` other than the JSON-LD, in which every `<` is written as `\u003c`.
 
 The list page's `<main>`:
@@ -141,8 +141,15 @@ The list page's `<main>`:
 
 ## 4. The page in the browser
 
-- With no JavaScript or no WebGL, `#page` is the page: an ordinary scrolling document (`public/page.css`).
-- When the station starts, it takes `article.post` out of `#page` and shows that same element inside the hologram. Going to another post in the room fetches `/blog/<slug>/index.html` and takes its `article.post`.
+The class on `<html>` says which of three things the page is (`public/post.css`; set by a one-line script in the shell's head):
+
+| Class | When | What shows |
+|---|---|---|
+| none | no JavaScript, or WebGL failed | `#page`, an ordinary scrolling document, and `#pagenav` |
+| `reading` | an article's own URL, from the first paint | the same, with the Library loading behind it; then it steps in by itself, or offers to (`#stepin`) if the reader has scrolled or asked to save data |
+| `station` | everywhere else, and after stepping in | the 3D site; `#page` is put away |
+
+- In the station, reading a post takes `article.post` out of `#page` (or fetches `/blog/<slug>/` and takes its `article.post`) and shows that element inside the hologram, `#reader`.
 - `public/js`, `public/main.js`, `public/index.html` and the stylesheets are not written by the generator.
 
 Test hooks on `window.__lobby` (in addition to `ready`, `picks`, `setFocus`, `camera`, `mode`):
