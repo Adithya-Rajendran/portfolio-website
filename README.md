@@ -1,6 +1,7 @@
 # Arcadia Station — 3D portfolio rooms
 
-Path-traced sci-fi rooms designed in Blender and shown in the browser with three.js. Plain HTML, CSS and ES modules; no JS build step. On a fresh checkout install the packing tools (`tools/get-pack-tools.sh`) and run `python3 tools/pack.py` before serving the rooms.
+Path-traced sci-fi rooms designed in Blender and shown in the browser with three.js. Plain HTML, CSS and ES modules; no JS build step. On a fresh checkout install the packing tools (`tools/get-pack-tools.sh`) and run `python3 tools/pack.py` (the rooms) and `python3 tools/site.py` (the blog pages) before serving.
+Deploy: `python3 tools/pack.py && python3 tools/site.py && npx wrangler deploy`.
 
 - `public/` — the site. Serve it with any static file server, e.g. `python3 -m http.server -d public`.
   - `index.html` — the portfolio. Rooms are `?room=about`, `?room=projects`, `?room=experience`, `?room=writing` (no parameter: the Atrium);
@@ -13,8 +14,11 @@ Path-traced sci-fi rooms designed in Blender and shown in the browser with three
 - `blender/` — scene scripts (`build_scene.py` for the Atrium and shared kit, `room_*.py` per room), `bake.py`, `reflection_probe.py`, `backdrop.py`.
   `.blend` files are generated and not committed. `remote/` holds the PowerShell runners used on the bake machine; `remote/arm64/` builds Blender for an ARM64 GPU machine (NVIDIA GB10) and runs the same phases there in Docker.
 - `data/` — the portfolio content (profile, posts, projects, images, PDFs) exported from Sanity by `tools/sanity-export.py`; see [`data/README.md`](data/README.md).
-- `tools/` — Playwright helpers run in Docker: screenshots (`dshot.sh`), frame times (`dperf.sh`), before/after snapshots
-  (`dsnap.sh`) and the room-switching test (`docker/rooms.mjs`).
+- `tools/` — `site.py` writes `public/blog/` (the post pages, `index.json`, their images and files; generated, not committed) from
+  `data/posts/*.md`, read by `content.py` (format: [`docs/v1-contracts.md`](docs/v1-contracts.md)); test it with
+  `python3 -m unittest tools/test_site.py`. Playwright helpers run in Docker: screenshots (`dshot.sh`), frame times (`dperf.sh`),
+  before/after snapshots (`dsnap.sh`), the room-switching test (`docker/rooms.mjs`), and `dtest.sh page.mjs /blog/<slug>/`,
+  a generated page read with JavaScript off.
 - [`/lighting-review/`](public/lighting-review/index.html) — matched browser views of all five rooms, actual book/satellite inspection poses and two short films. [Lighting method and measured checks](docs/finish-lighting.md).
 - `docs/blueprint.md` — the station design.
 - [`docs/scene-assets.md`](docs/scene-assets.md) — measured room inventory, overlap and extraction tests. Open `/asset-catalogue/parts.html` for the full parts breakdown and what moves in the browser. `/asset-catalogue/` shows the smaller set of reusable models; `python3 tools/review-models.py --list` lists their Blender studios.
