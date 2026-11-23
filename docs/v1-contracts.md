@@ -19,7 +19,7 @@ The posts move from Sanity into `data/`, and each becomes a real page at `/blog/
 
 ## 2. A post: `data/posts/<slug>.md`
 
-Read only through `tools/content.py` (`load_posts()`, `load_profile()`, `SITE`, `DATA`). The slug is the file name.
+Read only through `tools/content.py` (`load_posts()`, `load_projects()`, `load_profile()`, `SITE`, `DATA`). The slug is the file name.
 
 Header, between two `---` lines (a strict subset of YAML, so GitHub shows it as a table):
 
@@ -46,7 +46,7 @@ projects: [homelab]                  # optional: slugs in data/projects/
 
 - String values are written as JSON strings (`"…"`) unless they are a date or a single slug-like word.
 - Unknown fields are an error.
-- Every field's type is checked, and: `revised` is not before `published`; the changelog is newest first and no entry predates `published`; each `projects` slug has a `data/projects/<slug>.json`.
+- Every field's type is checked, and: `revised` is not before `published`; the changelog is newest first and no entry predates `published`; each `projects` slug has a `data/projects/<slug>.md` (§6).
 - `image` is copied to the public site unchanged, so it must be a PNG or JPEG of exactly 1200×630 with no EXIF data, named without a folder.
 
 Body: this Markdown and nothing else (it is all valid CommonMark, so it previews on GitHub). `tools/testdata/posts/every-construct.md` uses every construct and is the renderer's fixture.
@@ -167,6 +167,144 @@ Test hooks on `window.__lobby` (in addition to `ready`, `picks`, `setFocus`, `ca
 ## 5. Tests
 
 `tools/dtest.sh <script.mjs> [args]` runs a Playwright script from `tools/docker/` against the checkout it is in, serving `public/` inside the container at `http://127.0.0.1:8080` (env `ORIGIN`); nothing listens on the host. Screenshots go to `/out` (host `$OUT`, default `/tmp/dtest`).
+
+## 6. A project: `data/projects/<slug>.md`
+
+Read only through `content.load_projects()`. The slug is the file name (lower-case words joined by hyphens). Same file shape as a post: a header between two `---` lines in the same strict subset of YAML (§2), then a body.
+
+```
+---
+title: "Evaluating detectors on driving scenes"
+name: "Driving detection study"
+summary: "One or two sentences."
+order: 5
+status: completed
+types: [research, software]
+started: 2026-01-01
+ended: 2026-02-01
+date_precision: year
+cover: 24224f39…-2160x1440.png
+cover_alt: "…"
+problem: "…"
+approach: "…"
+highlights:
+  - "…"
+parameters:
+  - label: "KITTI validation frames"
+    value: "3,769"
+links:
+  - label: "Read report (PDF)"
+    kind: paper
+    file: "fc41d42d….pdf"
+---
+## What I changed
+…
+```
+
+### The header
+
+Written as in §2: strings as JSON strings (`"…"`, unless a single slug-like word), lists as `[a, b]` or `["a b", "c"]` or as `key:` followed by `  - ` lines, a record as `  - key: value` followed by `    key: value` lines. Numbers, `true` and `false` are written bare. Unknown fields are an error. Every field's type is checked; every string is one line, not empty, and without a space at either end. Absent fields come back from `load_projects()` as `None` (a list as `[]`).
+
+| Field | Type | | Meaning |
+|---|---|---|---|
+| `title` | string | required | The long title: what the page's `h1` says |
+| `name` | string | required | The short name, for lists and labels |
+| `summary` | string | required | One or two sentences |
+| `order` | whole number ≥ 1 | required | Position in lists, ascending. Unique among projects. Only an ordering: never shown or used as an identifier |
+| `status` | `active` or `completed` | required | |
+| `status_note` | string | optional | What state the work is in, for a reader |
+| `types` | list of `software`, `infrastructure`, `research`, `hardware` | required, not empty | |
+| `technologies` | list of strings | optional | |
+| `role` | string | optional | My part in it |
+| `started` | date `2026-01-01` | optional | A real date |
+| `ended` | date | optional | Needs `started`, is not before it, and is absent when `status` is `active` |
+| `date_precision` | `year` or `month` | with `started`: required; without: not allowed | How much of `started` and `ended` to show (a project begun in 2022 is stored as `2022-01-01`, precision `year`) |
+| `dates_approximate` | `true` or `false` | optional, needs `started` | The dates are estimates |
+| `featured` | whole number ≥ 1 | optional | Present for the featured projects: 1 is shown first. Unique among projects |
+| `quiet` | `true` or `false` | optional | A minor project, shown with less weight. `None` and `false` are the same |
+| `cover` | file name | optional | An image in `data/assets/images/` (a bare file name that exists; any format) |
+| `cover_alt` | string | optional, needs `cover` | Alt text. Without it the image is decorative (`alt=""`) |
+| `cover_caption` | string | optional, needs `cover` | |
+| `problem`, `approach`, `outcome` | string | optional | The brief. `problem` and `approach` come together; `outcome` needs them and is often absent |
+| `highlights`, `lessons`, `next_steps` | lists of strings | optional | Sentences. Items may use inline Markdown (as a post's `takeaways` do: `` `code` ``, `**strong**`, `*emphasis*`, `[text](url)`, `\` escapes). |
+| `parameters` | list of records `label`, `value` (strings, both required) | optional | Facts for a table, in order |
+| `results` | list of records `metric`, `value` (required), `note` (optional) | optional | Measured outcomes. `note` comes back as `None` when absent |
+| `links` | list of records, see below | optional | |
+
+Every string that is not in the three lists of sentences is plain text: shown as written, `*` and `_` included.
+
+**Nesting.** The Sanity `brief` object became three flat fields (`problem`, `approach`, `outcome`), since it is three strings; the `cover` object became three flat fields (`cover`, `cover_alt`, `cover_caption`); the three lists of records (`parameters`, `results`, `links`) are block lists of flat records.
+
+**A link** has `label` and `kind` (`article`, `repo`, `paper`, `dataset` or `other`), both required, and exactly one place it goes:
+
+| Field | Value | Checked |
+|---|---|---|
+| `url` | An `http:` or `https:` address (nothing else: no `mailto:`, no `javascript:`, no path) | scheme and host |
+| `post` | A post's slug | `data/posts/<slug>.md` exists |
+| `project` | A project's slug | that project's file exists |
+| `file` | A file name | the file exists in `data/assets/files/` (bare name, not a link) |
+
+`load_projects()` returns each link as a dict with the six keys `label`, `kind`, `url`, `post`, `project`, `file`, the three unused ones `None`. A page makes `post` the address `/blog/<slug>/`, `project` the address `/?room=projects&project=<slug>` (§3), and `file` a file it copies. (A link to the site's own pages is a `post` or `project` rather than an address, so it cannot go stale.)
+
+### Checks beyond the types
+
+`ended` not before `started`; `status: active` has no `ended`; `order` and `featured` unique; every `cover`, `file`, `post` and `project` exists; and in the body, every `/blog/<slug>/` names a post, every `/portfolio/<slug>/` a project, every `../assets/files/<file>` and `../assets/images/<file>` an existing file (code fences are not looked at). Any mistake is a `ContentError` naming the file and the field, as `` data/projects/homelab.md: `links[1].post`: there is no data/posts/x.md ``.
+
+### The body
+
+Exactly the Markdown of §2 (headings `##` and `###`, paragraphs, lists, quotations, code, images, links), the page's text under its `h1`. It may be empty.
+
+### What `load_projects()` returns
+
+A list ordered by `order`. Each project is a dict of every header field above (typed: `order` and `featured` int, `quiet` and `dates_approximate` bool, dates as `YYYY-MM-DD` strings, lists as lists, records as dicts with all their keys), plus `slug`, `body` (the Markdown) and `words` (prose words of the body, counted as for a post).
+
+## 7. The profile: `data/profile.json`
+
+One JSON file (it is nested lists of records, which the header format cannot hold). Read only through `content.load_profile()`, which returns it as a dict: every field below, absent optional ones `None` (a list `[]`). It is plain JSON: names are `snake_case`; dates are `YYYY-MM-DD` strings; whole numbers and booleans are JSON numbers and booleans; no Sanity bookkeeping (`_key`, `_type`, …); no duplicate keys; no `NaN`.
+
+All text is plain text, shown as written (no Markdown). Strings are not empty and have no space at either end; they are one line, except `bio`, which is paragraphs separated by one blank line (`"\n\n"` in JSON). A file name is a bare name (no folder) of an existing file: `image` names are in `data/assets/images/`, `file` names in `data/assets/files/`. A `post` or `project` is a slug of an existing `data/posts/<slug>.md` or `data/projects/<slug>.md`. Every URL is `http` or `https`. A malformed file is a `ContentError` naming the field (`` data/profile.json: `timeline[1].end_date`: must be a date like 2026-03-30 ``).
+
+| Field | Type | |
+|---|---|---|
+| `name`, `headline`, `tagline`, `introduction`, `work_summary`, `location`, `seo_description`, `writing_description`, `projects_intro`, `contact_intro`, `contact_invitation` | string | required. `writing_description` is the list page's lede (§3) |
+| `bio` | string, paragraphs | required |
+| `focus_areas` | list of strings | optional |
+| `featured_post` | post slug | optional |
+| `resume` | file name (a PDF) | optional. `/resume/<file>.pdf` is written from it (§1) |
+| `availability` | record, below | required |
+| `contact_routes` | record: route id → `{title, prompt}` (both required strings) | required, not empty. The ids (`hello`, `hiring`, …) are valid HTML ids and keep their order |
+| `credentials` | list of records, below | optional |
+| `skill_groups` | list of `{title, skills}`; `skills` a list of strings | required, neither list empty |
+| `social_links` | list of `{label, url}` | required, not empty |
+| `current_curiosities` | list of records: `title` (required string), `note` (string), `project` (a project slug) | optional |
+| `curiosities_updated_at` | date | optional |
+| `talks_and_papers` | list of records, below | optional |
+| `timeline` | list of records, below | required, not empty |
+
+`availability`: `status` (a lower-case word, e.g. `open`) and `cta` (string), both required; `seeking` (list of strings) and `updated_at` (date), optional.
+
+`credentials` entries: `title`, `issuer` (strings) and `issued_on` (date), required; `expires_on` (date, not before `issued_on`), `lifetime` (boolean; `true` means no `expires_on`), `verification_url` (URL), `badge` (image file name) and `badge_alt`, optional (`badge_alt` needs `badge`).
+
+`talks_and_papers` entries: `title`, `kind` (free word, e.g. `report`) and `date`, required; `authors`, `venue`, `abstract` (strings), `project` (a project slug) and `links`, optional. A link is `{label, kind, url | post | project | file}` exactly as in §6 (`kind` one of `article`, `repo`, `paper`, `dataset`, `other`; exactly one of the four places).
+
+`timeline` entries, newest first by `start_date`:
+
+| Field | Type | |
+|---|---|---|
+| `id` | HTML id: lower-case letters, digits, hyphens, starting with a letter | required, unique, **stable**: the address of the entry for links (`#sjsu-2026`). Made from the organization's short name and the start year; it does not change when the entry is edited |
+| `kind` | `work` or `education` | required |
+| `organization`, `org_short`, `title` | string | required |
+| `employment` | string (`full-time`, `internship`) | optional |
+| `location`, `summary` | string | optional |
+| `start_date` | date | required |
+| `end_date` | date, not before `start_date` | optional; absent when `is_current` is `true` |
+| `start_precision`, `end_precision` | `year` or `month` | optional; each needs its date. How much of the date to show |
+| `expected_end_year` | whole number (year) | optional; not before the year of `start_date` |
+| `is_current` | boolean | optional |
+| `highlights` | list of strings | optional |
+| `logo`, `logo_alt` | image file name, alt text | optional (`logo_alt` needs `logo`; without it the logo is decorative) |
+
+Other checks: no two timeline ids are equal; the timeline is newest first.
 
 ## 8. Projects and the profile: what `tools/site.py` writes (phase 5)
 
