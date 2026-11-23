@@ -761,7 +761,7 @@ def post_page(shell, post, doc, body, profile, posts_by_slug):
 
 
 def list_page(shell, entries, profile):
-    name, url, about = profile['name'], f'{SITE}/blog/', profile.get('writingDescription', '')
+    name, url, about = profile['name'], f'{SITE}/blog/', profile.get('writing_description', '')
     title = f'Writing — {name}'
     ld = {'@context': 'https://schema.org', '@type': 'Blog', 'name': title, 'description': about, 'url': url,
           'author': {'@type': 'Person', 'name': name, 'url': f'{SITE}/'},

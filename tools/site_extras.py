@@ -80,15 +80,13 @@ def post_url(post):
 
 
 def resume(profile):
-    """The profile's résumé -> (original file name, bytes), or None when the profile has none. The reference is
-    `file-<sha1>-<ext>` (data/README.md, Following references); the name comes from data/assets/files.json."""
-    ref = ((profile.get('resume') or {}).get('asset') or {}).get('_ref')
-    if not ref:
+    """The profile's résumé -> (original file name, bytes), or None when the profile has none. `resume` is a file name
+    `<sha1>.<ext>` in data/assets/files/ (docs/v1-contracts.md §7); the original name comes from data/assets/files.json."""
+    key = profile.get('resume')
+    if not key:
         return None
-    m = re.fullmatch(r'file-([0-9a-f]{40})-([a-z0-9]+)', ref)
-    if not m:
-        raise ContentError(f'profile.json: resume reference {ref!r} is not file-<sha1>-<ext>')
-    key = f'{m[1]}.{m[2]}'
+    if not re.fullmatch(r'[0-9a-f]{40}\.[a-z0-9]+', key):
+        raise ContentError(f'profile.json: resume {key!r} is not <sha1>.<ext>')
     name = sitegen().file_names().get(key)
     path = os.path.join(DATA, 'assets', 'files', key)
     if not name or not os.path.isfile(path):
@@ -120,7 +118,7 @@ def feed_xml(posts, profile):
     title = f'{name} — Writing'                            # as the pages' <link rel="alternate"> names it
     stamp = newest(posts)
     channel = [f'<title>{esc(title)}</title>', f'<link>{SITE}/blog/</link>',
-               f'<description>{esc(profile.get("writingDescription") or title)}</description>', '<language>en-us</language>']
+               f'<description>{esc(profile.get("writing_description") or title)}</description>', '<language>en-us</language>']
     if stamp:                                              # the newest change, not the time of the run: same bytes every time
         channel.append(f'<lastBuildDate>{rfc822(stamp)}</lastBuildDate>')
     channel.append(f'<atom:link href="{SITE}/feed.xml" rel="self" type="application/rss+xml"/>')
@@ -158,15 +156,15 @@ def llms_txt(posts, profile, resume_name):
     a few lines of detail, then sections of `- [title](url): notes`."""
     name, one_line = profile['name'], lambda s: ' '.join(str(s).split())
     lines = [f'# {one_line(name)}', '']
-    if profile.get('workSummary') or profile.get('headline'):
-        lines += [f'> {one_line(profile.get("workSummary") or profile["headline"])}', '']
+    if profile.get('work_summary') or profile.get('headline'):
+        lines += [f'> {one_line(profile.get("work_summary") or profile["headline"])}', '']
     lines += [f'This is the personal site of {one_line(name)}'
               + (f' ({one_line(profile["headline"])}, {one_line(profile["location"])}).' if profile.get('headline') and profile.get('location') else '.'),
               'The home page is an interactive 3D scene (it needs JavaScript and WebGL) whose rooms hold the about, projects, '
               'experience and contact pages. The writing and the résumé are plain pages that need neither. Follow the rules in robots.txt.',
               '', '## Writing']
-    if profile.get('writingDescription'):
-        lines += [one_line(profile['writingDescription']), '']
+    if profile.get('writing_description'):
+        lines += [one_line(profile['writing_description']), '']
     lines += [f'- [{md_link_text(p["title"])}]({post_url(p)}): {one_line(p["description"])}' for p in posts]
     lines += ['', '## Site', f'- [Home]({SITE}/): the 3D atrium', f'- [Writing]({SITE}/blog/): the list of posts']
     if resume_name:

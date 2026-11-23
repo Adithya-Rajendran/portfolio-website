@@ -98,7 +98,7 @@ class Extras(unittest.TestCase):
     def test_feed_channel_and_item_fields(self):
         ch = self.feed(self.two)
         self.assertEqual(ch.findtext('title'), 'Adithya Rajendran — Writing')
-        self.assertEqual(ch.findtext('description'), self.profile['writingDescription'])
+        self.assertEqual(ch.findtext('description'), self.profile['writing_description'])
         self.assertEqual(ch.findtext('link'), f'{SITE}/blog/')
         me = ch.find('atom:link', NS)
         self.assertEqual((me.get('rel'), me.get('href'), me.get('type')), ('self', f'{SITE}/feed.xml', 'application/rss+xml'))
@@ -181,7 +181,7 @@ class Extras(unittest.TestCase):
         text = read(self.two, 'llms.txt')
         lines = text.split('\n')
         self.assertEqual(lines[0], '# Adithya Rajendran')
-        self.assertEqual(lines[2], '> ' + self.profile['workSummary'])
+        self.assertEqual(lines[2], '> ' + self.profile['work_summary'])
         self.assertIn('## Writing', lines)
         links = [l for l in lines if l.startswith('- [') and '/blog/' in l and l != f'- [Writing]({SITE}/blog/): the list of posts']
         self.assertEqual(links, [
@@ -202,7 +202,7 @@ class Extras(unittest.TestCase):
     # ------------------------------------------------------------ the résumé
 
     def test_resume_is_the_file_the_profile_points_to(self):
-        m = re.fullmatch(r'file-([0-9a-f]{40})-pdf', self.profile['resume']['asset']['_ref'])
+        m = re.fullmatch(r'([0-9a-f]{40})\.pdf', self.profile['resume'])
         name = s.file_names()[f'{m[1]}.pdf']
         self.assertEqual(os.listdir(os.path.join(self.one, 'resume')), [name])
         self.assertEqual(read(self.one, f'resume/{name}', 'rb'), read(os.path.join(s.DATA, 'assets', 'files'), f'{m[1]}.pdf', 'rb'))
@@ -339,7 +339,7 @@ class Extras(unittest.TestCase):
 
     def test_bad_data_writes_nothing(self):
         out = tempfile.mkdtemp(dir=self.tmp)
-        profile = dict(self.profile, resume={'_type': 'file', 'asset': {'_ref': 'file-' + '0' * 40 + '-pdf'}})
+        profile = dict(self.profile, resume='0' * 40 + '.pdf')
         with self.assertRaises(x.ContentError):
             x.build(s.load_posts(FIXTURE), profile)
         self.assertEqual(os.listdir(out), [])

@@ -1,0 +1,258 @@
+{
+  "name": "Adithya Rajendran",
+  "headline": "M.S. Engineering student at SJSU",
+  "tagline": "I study detection errors and how another camera view can help verify a remembered object.",
+  "introduction": "I’m an M.S. Engineering student at SJSU working on visual perception. My current projects examine how evaluation settings change detector comparisons and how to tell an occluded object from one that has been removed. Before SJSU, I deployed and troubleshot private clouds at Canonical.",
+  "bio": "I’m studying for an M.S. Engineering at San José State University. My current work includes a driving-detection evaluation and a scene-memory pilot: if an object is no longer detected, how can another view help distinguish removal from occlusion?\n\nAt Canonical, I deployed OpenStack, Kubernetes, and Ceph private clouds and diagnosed failures across Linux and networking. Working with customers also meant explaining why a system failed and deciding what to test next.\n\nI started in security at UC Santa Cruz through the Slug Security Club, then worked on cloud compliance, threat modeling, and automation. I still use my homelab to rebuild systems and reproduce problems.\n\nMy longer-term interests include robots that keep useful memories of shared spaces, and autonomous systems for space exploration.",
+  "work_summary": "M.S. Engineering student at SJSU working on perception experiments and object-memory verification. Previously a Canonical field engineer deploying private clouds and troubleshooting Linux, networking, and distributed systems.",
+  "location": "San José, California",
+  "seo_description": "Adithya Rajendran: M.S. Engineering student at SJSU working on visual perception and object-memory verification; previously a field engineer at Canonical.",
+  "writing_description": "Engineering notes on GPU memory, Linux containers, and infrastructure, with configurations, observed failures, and the limits of each result.",
+  "projects_intro": "Detection experiments, a scene-memory pilot, and the systems I use to run local AI workloads.",
+  "contact_intro": "An idea, a question, or an opportunity. I’d like to hear from you.",
+  "contact_invitation": "Working on robotic perception, object memory, or reliable ML systems? I’d welcome a conversation about research, collaboration, or an opportunity to contribute.",
+  "focus_areas": [
+    "Robotic perception",
+    "Spatial memory",
+    "Reliable ML systems"
+  ],
+  "featured_post": "my-homelab",
+  "resume": "e70b01e95fdcf9f4e5d8ad06a0e32b28f62060c2.pdf",
+  "availability": {
+    "status": "open",
+    "cta": "Write about a role",
+    "seeking": [
+      "Summer 2027 internships",
+      "Full-time opportunities in 2028"
+    ],
+    "updated_at": "2026-09-29"
+  },
+  "contact_routes": {
+    "consulting": {
+      "title": "Consulting",
+      "prompt": "What needs to be designed, built or reviewed, and by when."
+    },
+    "hello": {
+      "title": "Hello",
+      "prompt": "A question, feedback on an entry, or anything else."
+    },
+    "hiring": {
+      "title": "Internships & roles",
+      "prompt": "The role and the team, where it is based, the dates, and a link to the posting."
+    },
+    "research": {
+      "title": "Research & collaboration",
+      "prompt": "The problem, what has been tried so far, and where you think I could help."
+    }
+  },
+  "credentials": [
+    {
+      "title": "AWS Certified Solutions Architect – Associate",
+      "issuer": "AWS",
+      "issued_on": "2023-09-01",
+      "expires_on": "2026-09-01",
+      "lifetime": false,
+      "verification_url": "https://www.credly.com/badges/80207866-2bf2-41a0-8c92-991295e79063/",
+      "badge": "ceb88ce338a7bfc4ab9d0c9562fbc2a34c2cc6ae-340x340.png",
+      "badge_alt": "AWS Certified Solutions Architect – Associate Badge"
+    },
+    {
+      "title": "CompTIA Security+",
+      "issuer": "CompTIA",
+      "issued_on": "2022-08-01",
+      "expires_on": "2025-08-01",
+      "lifetime": false,
+      "verification_url": "https://www.credly.com/badges/78c2780d-63dc-4c2b-a6df-72138c469271",
+      "badge": "27bdcd5732178c9ee24330686cff57fa9d1cff5f-340x340.png",
+      "badge_alt": "CompTIA Security+ ce Certification Badge"
+    },
+    {
+      "title": "MTA: Security Fundamentals",
+      "issuer": "Microsoft",
+      "issued_on": "2018-05-01",
+      "lifetime": true,
+      "verification_url": "https://www.credly.com/badges/b0889cff-2fbc-46c0-b16e-f631fefb024b",
+      "badge": "a87503a344b9f29d5f43ecfb3d2250d3802be215-352x352.png",
+      "badge_alt": "MTA: Security Fundamentals - Certified Badge"
+    }
+  ],
+  "skill_groups": [
+    {
+      "title": "Programming",
+      "skills": [
+        "Python",
+        "Bash",
+        "TypeScript",
+        "SQL",
+        "Git"
+      ]
+    },
+    {
+      "title": "ML and evaluation",
+      "skills": [
+        "PyTorch",
+        "scikit-learn",
+        "NumPy",
+        "pandas",
+        "OpenCV",
+        "TensorRT"
+      ]
+    },
+    {
+      "title": "Infrastructure",
+      "skills": [
+        "Linux",
+        "Docker",
+        "Kubernetes",
+        "OpenStack",
+        "Ceph",
+        "LXD",
+        "MAAS",
+        "Terraform"
+      ]
+    },
+    {
+      "title": "Networking and security",
+      "skills": [
+        "VLANs",
+        "PXE",
+        "OIDC",
+        "Auth0",
+        "MITRE ATT&CK",
+        "CIS / DISA STIG tailoring"
+      ]
+    }
+  ],
+  "social_links": [
+    {
+      "label": "LinkedIn",
+      "url": "https://www.linkedin.com/in/adithya-rajendran"
+    },
+    {
+      "label": "GitHub",
+      "url": "https://github.com/Adithya-Rajendran"
+    },
+    {
+      "label": "Credly",
+      "url": "https://www.credly.com/users/adithya-rajendran"
+    }
+  ],
+  "current_curiosities": [
+    {
+      "title": "When should a robot stop trusting where it last saw an object?",
+      "note": "Building an occlusion-aware scene-memory pilot: distinguish a missing object from a missed detection, and decide when another view is worth taking.",
+      "project": "robot-scene-memory"
+    },
+    {
+      "title": "How should robots track objects that people move, borrow, and return?",
+      "note": "I’m interested in visual memory for shared spaces, where a tool can be visible, in use, or somewhere a robot has not checked."
+    },
+    {
+      "title": "When should a robot ask a person instead of continuing to search?",
+      "note": "Exploring the tradeoff between taking another look, searching elsewhere, waiting, and interrupting someone for help."
+    }
+  ],
+  "curiosities_updated_at": "2026-10-26",
+  "talks_and_papers": [
+    {
+      "title": "One Flag and Two Gaps: What Zero-Shot COCO-to-Driving Detection Results Hide",
+      "kind": "report",
+      "date": "2026-10-23",
+      "authors": "Adithya Rajendran",
+      "venue": "San José State University · CMPE 249 course report",
+      "abstract": "CMPE 249 course study of evaluation settings, transfer across driving datasets, and inference latency. Includes paired comparisons, failure cases, and the limits of the fine-tuning experiments.",
+      "project": "driving-detection-evaluation",
+      "links": [
+        {
+          "label": "Read report (PDF)",
+          "kind": "paper",
+          "file": "fc41d42d9b66390887e20ff239a1361e55975238.pdf"
+        },
+        {
+          "label": "Report source and figures",
+          "kind": "paper",
+          "url": "https://github.com/Adithya-Rajendran/HW1-2D-Detection/tree/6e6a020c8556d4ca0e3de06a1d6f5de9f1ed46d6/paper"
+        },
+        {
+          "label": "Evaluation repository",
+          "kind": "repo",
+          "url": "https://github.com/Adithya-Rajendran/HW1-2D-Detection"
+        }
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "id": "sjsu-2026",
+      "kind": "education",
+      "organization": "San José State University",
+      "org_short": "SJSU",
+      "title": "M.S. Engineering (Interdisciplinary)",
+      "summary": "Studying the intersection of robotics and AI.",
+      "start_date": "2026-08-01",
+      "expected_end_year": 2028,
+      "is_current": true
+    },
+    {
+      "id": "canonical-2024",
+      "kind": "work",
+      "organization": "Canonical Ltd. (Ubuntu)",
+      "org_short": "Canonical",
+      "title": "Field Software Engineer I (promoted from Associate Field Engineer after the first year)",
+      "employment": "full-time",
+      "location": "Remote",
+      "summary": "Systems engineering, customer problem-solving, and technical communication across private-cloud deployments.",
+      "start_date": "2024-05-01",
+      "end_date": "2026-07-01",
+      "is_current": false,
+      "highlights": [
+        "Led customer engagements from discovery and architecture through multi-rack OpenStack, Kubernetes, and Ceph private-cloud deployments, including erasure-coded Ceph.",
+        "Led a multi-site MAAS bare-metal rollout, advancing sites in parallel around blockers and teaching the process through a customer working session.",
+        "Diagnosed failures across Linux kernels, networking, switch configuration, and applications; provided bug fixes and documented root causes.",
+        "Automated deployments and operations with Python, Terraform, and Bash; created CIS and DISA STIG tailoring files and mapped controls to fleet-management tools.",
+        "Led technical presales and tailored OpenStack and MicroCloud demonstrations; drafted statements of work and mentored new field engineers.",
+        "Presented product demos to Forrester and Gartner analysts; co-presented SQL Server on Ubuntu with Microsoft at PASS Data Community Summit 2024."
+      ],
+      "logo": "a005c7a111c8b681ac58093d9102134ac731fcc3-512x512.webp",
+      "logo_alt": "Canonical Ltd.’s Logo"
+    },
+    {
+      "id": "tcr-2023",
+      "kind": "work",
+      "organization": "Technical Consulting & Research, Inc. (TCR)",
+      "org_short": "TCR",
+      "title": "Cybersecurity Analyst Intern",
+      "employment": "internship",
+      "location": "Fremont, CA",
+      "start_date": "2023-12-01",
+      "end_date": "2024-05-01",
+      "highlights": [
+        "Identified gaps between cloud-provider configurations and compliance requirements through fit-gap analysis.",
+        "Used MITRE ATT&CK to structure threat modeling and prioritize remediation.",
+        "Built Python automation and JavaScript demonstrations to reduce repetitive work and explain compliance requirements.",
+        "Implemented authentication and authorization with Auth0; applied least-privilege access and network segmentation.",
+        "Presented “Navigating AI Risks for Small Businesses” at IGNITE and Bucknell University conferences; explained security findings through reports and visualizations."
+      ],
+      "logo": "96d13f0f07ebb4d8a1e215b6b079cf06171af1e9-512x512.webp",
+      "logo_alt": "Checkered Shield"
+    },
+    {
+      "id": "ucsc-2019",
+      "kind": "education",
+      "organization": "University of California, Santa Cruz",
+      "org_short": "UCSC",
+      "title": "B.S. Computer Science",
+      "location": "Santa Cruz, CA",
+      "start_date": "2019-01-01",
+      "start_precision": "year",
+      "end_date": "2023-06-01",
+      "end_precision": "year",
+      "highlights": [
+        "Explored network security and ethical hacking through the Slug Security Club’s workshops and competitions.",
+        "Relevant coursework: Computer Systems and C, Cryptography, Advanced Computer Networking, Principles of System Design, Artificial Intelligence, and Natural Language Processing."
+      ],
+      "logo": "e605c26acb5f3e4542e669e7f1e9f6a2729dab80-512x512.webp",
+      "logo_alt": "Graduation Cap"
+    }
+  ]
+}
