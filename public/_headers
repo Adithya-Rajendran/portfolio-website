@@ -7,3 +7,30 @@
   Cache-Control: no-cache
 /vendor/*
   Cache-Control: public, max-age=2592000
+
+# Written by tools/site.py and tools/site_extras.py. Cloudflare joins the values of every rule that matches a path, so
+# these rules are disjoint from each other and from the ones above (:slug is one path segment, * the rest).
+# Pages and the index of posts are always revalidated (no-cache: ask, and a 304 when unchanged), so a new post or a
+# correction shows at once.
+/blog/
+  Cache-Control: no-cache
+/blog/:slug/
+  Cache-Control: no-cache
+/blog/index.json
+  Cache-Control: no-cache
+# Images the generator re-encoded are named <source>.<8 hex of source+encoding>.webp, so a name never changes meaning.
+# A social card keeps its original name and a file its upload's name: those are left to Cloudflare's default (revalidate).
+/blog/media/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+# Feeds and the crawlers' files: short, so a new post reaches readers within the hour.
+/feed.xml
+  Cache-Control: public, max-age=3600
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+/llms.txt
+  Cache-Control: public, max-age=3600
+/robots.txt
+  Cache-Control: public, max-age=3600
+# The résumé keeps its name when the file is replaced.
+/resume/*
+  Cache-Control: no-cache

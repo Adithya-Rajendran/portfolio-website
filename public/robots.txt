@@ -1,0 +1,5 @@
+# Everything may be read. A guide for language models is at https://adithya-rajendran.com/llms.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://adithya-rajendran.com/sitemap.xml
