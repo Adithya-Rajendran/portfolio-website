@@ -3,7 +3,7 @@
 // reader; there the tray lowers and tilts like a lectern and the book opens at its index page.
 // Drone and book are the only things in the room drawn live rather than baked. They are ordinary PBR materials lit by
 // the room’s Cycles environment. They also cast and receive the same live window sun as the table.
-// The volumes (number, title, two lines, the rows of the index) come from content.json ("volumes").
+// The volumes are the posts (js/catalogue.js): a book's boards and its two open pages are drawn from the post it holds.
 import * as THREE from 'three';
 import { GLOW, V, glow, spring } from './kit.js';
 
@@ -23,26 +23,39 @@ function paper(c, w, h, gutter) {                                  // gutter: -1
   c.fillStyle = g; c.fillRect(0, 0, w, h); c.strokeStyle = RULE; c.lineWidth = 2; c.strokeRect(54, 54, w - 108, h - 108); c.textBaseline = 'alphabetic';
 }
 function wrap(c, text, x, y, width, lead) { let line = ''; for (const word of text.split(' ')) { if (c.measureText(line + word).width > width && line) { c.fillText(line.trim(), x, y); y += lead; line = ''; } line += word + ' '; } c.fillText(line.trim(), x, y); return y + lead; }
+const spaced = (c, px) => { if ('letterSpacing' in c) c.letterSpacing = `${px}px`; };
+function fit(c, text, width) { if (c.measureText(text).width <= width) return text; while (text.length > 1 && c.measureText(text + '…').width > width) text = text.slice(0, -1); return text.trimEnd() + '…'; }
+function lines(c, text, width, max) {                              // word-wrapped, at most `max` lines; the last one is cut with an ellipsis
+  const out = []; let line = '';
+  for (const word of text.split(' ')) { if (c.measureText(line + word).width > width && line) { out.push(line.trim()); line = ''; } line += word + ' '; }
+  out.push(line.trim()); return out.length > max ? [...out.slice(0, max - 1), fit(c, out.slice(max - 1).join(' '), width)] : out;
+}
+// the left page: when it was written, its title (set as large as four lines allow) and what it is about
 const leftPage = (v) => canvasTex(768, 1064, (c, w, h) => {
-  paper(c, w, h, 1); c.fillStyle = RULE; c.font = `600 34px ${SANS}`; if ('letterSpacing' in c) c.letterSpacing = '8px'; c.fillText(`VOLUME ${v.no}`, 96, 160);
-  if ('letterSpacing' in c) c.letterSpacing = '0px'; c.fillStyle = INK; c.font = `400 96px ${SERIF}`; let y = wrap(c, v.title, 96, 300, w - 190, 108);
-  c.fillStyle = RULE; c.fillRect(96, y - 30, 120, 3); c.fillStyle = INK; c.font = `italic 400 44px ${SERIF}`; y += 50;
-  for (const l of v.lines || []) y = wrap(c, l, 96, y, w - 190, 60) + 18;
-  c.font = `400 30px ${SERIF}`; c.textAlign = 'center'; c.fillStyle = RULE; c.fillText('❦', w / 2, h - 120);
+  paper(c, w, h, 1); c.fillStyle = RULE; c.font = `600 28px ${SANS}`; spaced(c, 6); c.fillText(`${v.date}  ·  ${v.minutes} min`.toUpperCase(), 96, 160); spaced(c, 0);
+  let size = 96, t; do { c.font = `400 ${size}px ${SERIF}`; t = lines(c, v.title, w - 190, 9); } while (t.length > 4 && (size -= 10) >= 56);
+  c.fillStyle = INK; let y = 190 + size; for (const l of t.slice(0, 5)) { c.fillText(l, 96, y); y += size * 1.12; }
+  c.fillStyle = RULE; c.fillRect(96, y - size * 0.55, 120, 3); c.fillStyle = INK; c.font = `italic 400 38px ${SERIF}`; y += 34;
+  for (const l of lines(c, v.description, w - 190, Math.max(2, Math.floor((h - 190 - y) / 52)))) { c.fillText(l, 96, y); y += 52; }
+  c.font = `400 30px ${SERIF}`; c.textAlign = 'center'; c.fillStyle = RULE; c.fillText('❦', w / 2, h - 110);
 });
+// the right page, its index: the article's sections, then what it is filed under
 const rightPage = (v) => canvasTex(768, 1064, (c, w, h) => {
-  paper(c, w, h, -1); c.fillStyle = RULE; c.font = `600 34px ${SANS}`; if ('letterSpacing' in c) c.letterSpacing = '8px'; c.fillText('INDEX', 96, 160); if ('letterSpacing' in c) c.letterSpacing = '0px';
-  v.rows.forEach(([k, val], i) => {
-    const y = 290 + i * 190; c.fillStyle = RULE; c.font = `600 36px ${SANS}`; c.fillText(k, 96, y); c.fillStyle = INK; c.font = `400 64px ${SERIF}`; c.fillText(val, 96, y + 78, w - 192);
-    c.fillStyle = 'rgba(138,90,34,0.5)'; c.fillRect(96, y + 110, w - 192, 2);
+  paper(c, w, h, -1); c.fillStyle = RULE; c.font = `600 34px ${SANS}`; spaced(c, 8); c.fillText('INDEX', 96, 160); spaced(c, 0);
+  const parts = v.sections.filter((x) => x.level === 2), n = Math.min(parts.length, 9), step = Math.min(92, 700 / Math.max(n, 1));
+  parts.slice(0, n).forEach((x, i) => {
+    const y = 250 + i * step; c.fillStyle = INK; c.font = `400 ${step > 80 ? 40 : 36}px ${SERIF}`; c.fillText(fit(c, i === n - 1 && parts.length > n ? 'and more' : x.title, w - 192), 96, y);
+    c.fillStyle = 'rgba(138,90,34,0.5)'; c.fillRect(96, y + 22, w - 192, 2);
   });
-  c.fillStyle = RULE; c.font = `600 20px ${SANS}`; c.textAlign = 'right'; c.fillText(v.no, w - 96, h - 96);
+  c.fillStyle = RULE; c.font = `600 22px ${SANS}`; spaced(c, 4); c.fillText(fit(c, v.tags.join('  ·  ').toUpperCase(), w - 192), 96, h - 104); spaced(c, 0);
 });
 const edges = canvasTex(64, 256, (c, w, h) => { c.fillStyle = '#d9cfb6'; c.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 3) { c.fillStyle = `rgba(90,70,40,${0.12 + 0.25 * Math.random()})`; c.fillRect(0, y, w, 1); } });
-const gilt = (no) => canvasTex(512, 720, (c, w, h) => {            // tooling on the front board: a double frame, the number, a small device
+const gilt = (v) => canvasTex(512, 720, (c, w, h) => {             // tooling on the front board: a double frame, the title, a small device
   c.strokeStyle = c.fillStyle = '#e2b866'; c.lineWidth = 5; c.strokeRect(34, 34, w - 68, h - 68); c.lineWidth = 2; c.strokeRect(50, 50, w - 100, h - 100);
-  c.textAlign = 'center'; c.font = `400 120px ${SERIF}`; c.fillText(no, w / 2, 300); c.fillRect(w / 2 - 60, 340, 120, 3); c.font = `600 24px ${SANS}`; if ('letterSpacing' in c) c.letterSpacing = '10px'; c.fillText('ARCADIA', w / 2 + 5, 400);
-  c.beginPath(); c.arc(w / 2, 540, 34, 0, TAU); c.stroke(); c.beginPath(); c.ellipse(w / 2, 540, 54, 16, -0.4, 0, TAU); c.stroke();
+  c.textAlign = 'center'; c.font = `400 44px ${SERIF}`; const t = lines(c, v.title, w - 150, 5); let y = 300 - t.length * 27;
+  for (const l of t) { c.fillText(l, w / 2, y); y += 54; }
+  c.fillRect(w / 2 - 60, y - 16, 120, 3); c.font = `600 22px ${SANS}`; spaced(c, 10); c.fillText('ARCADIA', w / 2 + 5, y + 36); spaced(c, 0);
+  c.beginPath(); c.arc(w / 2, 580, 30, 0, TAU); c.stroke(); c.beginPath(); c.ellipse(w / 2, 580, 48, 14, -0.4, 0, TAU); c.stroke();
 });
 
 // ---- the book: two halves on a spine, so it opens in the middle and lies flat. x: across the pages, -z: top of the page.
@@ -70,7 +83,7 @@ function makeBook(v, i, mats) {
   left.position.set(0, half, 0); book.add(left);
   box(left, BW - 0.008, half - board, BH - 0.012, BW / 2 - 0.004, (half - board) / 2, 0, pagesMat); box(left, BW + 0.004, board, BH, BW / 2 + 0.002, half - board / 2, 0, leather);
   const pl = page(leftPage(v), 'right'); pl.rotation.z = PI; pl.position.set(BW / 2 - 0.004, -0.0006, 0); left.add(pl);
-  const tool = new THREE.Mesh(new THREE.PlaneGeometry(BW - 0.02, BH - 0.02).rotateX(-PI / 2), std(0xffffff, 1, 0.3, { map: gilt(v.no), transparent: true, alphaTest: 0.3 })); tool.position.set(BW / 2, half + 0.0006, 0); left.add(tool);
+  const tool = new THREE.Mesh(new THREE.PlaneGeometry(BW - 0.02, BH - 0.02).rotateX(-PI / 2), std(0xffffff, 1, 0.3, { map: gilt(v), transparent: true, alphaTest: 0.3 })); tool.position.set(BW / 2, half + 0.0006, 0); left.add(tool);
   // the spine turns half as far, so it ends up flat under the gutter; raised bands and a gilt label on it
   book.add(spine); box(spine, 0.006, BT, BH, -0.003, half, 0, leather);
   for (const z of [-0.12, -0.06, 0.06, 0.12]) box(spine, 0.009, BT + 0.002, 0.007, -0.0035, half, z, leather);
@@ -181,5 +194,9 @@ export function createDrone({ scene, dock, deliver, slots, volumes }) {
   }
   /** Everything PBR here is lit by this environment map (room.js renders it from the room). */
   function setEnv(tex) { root.traverse((o) => { if (o.material?.isMeshStandardMaterial) { o.material.envMap = tex; o.material.needsUpdate = true; } }); }
-  return { root, update, fetch, setEnv, debug: (i, on) => { take(i)(); shown = on ? i : -1; hover.copy(deliver); yaw = PI; } };
+  /** Have volume i in hand at the reader already (a page that opens on an article does not wait for the flight). */
+  function bring(i, on = true) { legs.length = 0; leg = null; take(i)(); shown = on ? i : -1; hover.copy(deliver); yaw = PI; }
+  return { root, update, fetch, bring, setEnv, debug: bring,
+    /** The volume lying open in front of the reader (-1: none, or not open yet), and that book. */
+    open: () => (shown >= 0 && opened.x > 0.97 ? shown : -1), held: () => held, book: () => books[held] ?? null, size: [2 * BW, BH] };
 }

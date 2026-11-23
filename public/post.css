@@ -1,0 +1,107 @@
+/* An article, in its two settings: standing in the Library as a hologram (#reader, js/reader.js), and as the plain
+   page under it (#page), which is what a reader gets with no JavaScript or no WebGL, and while the Library loads.
+   The markup is tools/site.py's (docs/v1-contracts.md §3). */
+:root { --ink: #dcecf5; --rule: rgba(127,227,255,.22); --text: "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; }
+
+/* ---------------------------------------------------------------- the article itself */
+.post { font-family: var(--text); font-size: 17px; line-height: 1.7; color: var(--ink); letter-spacing: .005em; overflow-wrap: break-word; }
+.post > header { margin-bottom: 34px; }
+.post-meta { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--am); }
+.post-meta .post-revised { color: var(--soft); }
+.post h1 { margin: 16px 0 18px; font-size: clamp(30px, 4.6vw, 46px); line-height: 1.08; font-weight: 200; letter-spacing: -.015em; color: #fff;
+  text-shadow: 0 0 34px rgba(127,227,255,.3); }
+.post-lede { font-size: 19px; line-height: 1.55; color: #b9d2df; }
+.post .post-tags { display: flex; padding: 0; flex-wrap: wrap; gap: 8px; margin-top: 20px; list-style: none; }
+.post-tags li { font-size: 10px; letter-spacing: .26em; text-transform: uppercase; color: var(--cy); border: 1px solid var(--rule); padding: 5px 10px 4px; }
+.post-takeaways { margin: 0 0 38px; padding: 18px 22px 20px; border: 1px solid var(--rule); border-left: 2px solid var(--cy); background: rgba(127,227,255,.035); }
+.post .post-takeaways h2, .post .post-changelog h2 { margin: 0 0 10px; padding: 0; border: 0; font-size: 11px; font-weight: 500; letter-spacing: .34em; text-transform: uppercase; color: var(--cy); }
+.post .post-takeaways ul { margin: 0; }
+.post h2 { margin: 54px 0 16px; padding-top: 22px; border-top: 1px solid var(--rule); font-size: 25px; line-height: 1.25; font-weight: 300; color: #fff; scroll-margin-top: 18px; }
+.post h3 { margin: 36px 0 12px; font-size: 13px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--cy); scroll-margin-top: 18px; }
+.post p, .post ul, .post ol, .post blockquote, .post figure, .post pre { margin: 0 0 20px; }
+.post ul, .post ol { padding-left: 1.4em; }
+.post li { margin: 6px 0; }
+.post li > ul, .post li > ol { margin: 6px 0 0; }
+.post li::marker { color: var(--cy); }
+.post a { color: var(--cy); text-decoration: underline; text-decoration-color: rgba(127,227,255,.45); text-underline-offset: 3px; }
+.post a:hover, .post a:focus-visible { color: #fff; text-decoration-color: #fff; }
+.post strong { font-weight: 600; color: #fff; }
+.post blockquote { padding: 2px 0 2px 20px; border-left: 2px solid var(--am); color: #c9dbe6; font-style: italic; }
+.post blockquote p:last-child { margin-bottom: 0; }
+.post code { font-family: var(--mono); font-size: .86em; background: rgba(127,227,255,.1); padding: .12em .38em; border-radius: 2px; color: #eaf8ff; }
+.post pre { position: relative; overflow-x: auto; padding: 16px 18px; background: rgba(1,6,11,.72); border: 1px solid var(--rule); border-left: 2px solid var(--cy);
+  line-height: 1.55; tab-size: 4; scrollbar-width: thin; scrollbar-color: rgba(127,227,255,.4) transparent; }
+.post pre code { display: block; padding: 0; background: none; font-size: 13.5px; white-space: pre; color: #d5ebf7; }
+.post pre[data-lang]::before { content: attr(data-lang); position: sticky; left: 0; display: block; margin-bottom: 8px; font: 500 10px var(--text); letter-spacing: .3em; text-transform: uppercase; color: #5f8ba0; }
+.post pre[data-lang="text"]::before { content: "output"; }
+.post .copy { float: right; position: relative; z-index: 1; margin: 9px 10px 0 0; font: 500 10px var(--text); letter-spacing: .28em; color: var(--soft); background: rgba(2,5,9,.7);
+  border: 1px solid var(--rule); padding: 6px 9px 5px; cursor: pointer; }
+.post .copy:hover, .post .copy:focus-visible { color: var(--cy); border-color: var(--cy); outline: none; }
+.post figure img { display: block; max-width: 100%; height: auto; max-height: 78vh; width: auto; margin: 0 auto; border: 1px solid var(--rule); }
+.post figcaption { margin-top: 10px; font-size: 13.5px; line-height: 1.5; color: var(--soft); text-align: center; }
+.post > footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--rule); font-size: 15px; color: #b9d2df; }
+.post .post-changelog ul { list-style: none; padding: 0; }
+.post-changelog time { color: var(--soft); font-variant-numeric: tabular-nums; }
+.post-changelog b { font-size: 10px; letter-spacing: .26em; text-transform: uppercase; color: var(--am); font-weight: 500; margin: 0 6px; }
+.post-next { margin: 26px 0 0; }
+.post-next a { display: block; margin-bottom: 8px; padding: 16px 20px; border: 1px solid var(--am); color: #ffd2a8; text-decoration: none; font-size: 18px; }
+.post-next a span { display: block; margin-bottom: 4px; font-size: 10px; letter-spacing: .34em; text-transform: uppercase; color: var(--am); }
+.post-next a:hover, .post-next a:focus-visible { background: rgba(255,154,74,.1); color: #fff; }
+
+/* ---------------------------------------------------------------- as a hologram: one element over the canvas */
+#reader { position: fixed; left: 0; top: 0; z-index: 4; transform-origin: 0 0; display: grid; grid-template: "head head" auto "rail text" 1fr "bar bar" 2px / 232px 1fr;
+  will-change: transform; text-shadow: 0 0 12px rgba(127,227,255,.16); }
+#reader[hidden] { display: none; }
+.reader-head { grid-area: head; display: flex; align-items: center; gap: 16px; padding: 12px 18px 11px 22px; border-bottom: 1px solid var(--rule); font-size: 11px; letter-spacing: .32em; }
+.reader-mark { color: var(--am); white-space: nowrap; }
+.reader-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--soft); letter-spacing: .14em; text-transform: uppercase; }
+.reader-close { font: inherit; letter-spacing: .28em; color: var(--fg); background: rgba(2,5,9,.5); border: 1px solid rgba(127,227,255,.5); padding: 8px 12px 7px; cursor: pointer; white-space: nowrap; }
+.reader-close:hover, .reader-close:focus-visible { color: var(--cy); border-color: var(--cy); outline: none; }
+.reader-rail { grid-area: rail; overflow-y: auto; padding: 30px 14px 24px 22px; border-right: 1px solid var(--rule); scrollbar-width: none; }
+.reader-rail p { margin-bottom: 14px; font-size: 10px; letter-spacing: .36em; color: var(--cy); }
+.reader-rail ol { list-style: none; }
+.reader-rail a { display: block; padding: 7px 0 7px 12px; border-left: 1px solid var(--rule); font: 13px/1.35 var(--text); color: #8fb0c0; text-decoration: none; }
+.reader-rail a:hover, .reader-rail a:focus-visible { color: #fff; outline: none; }
+.reader-rail li[aria-current] a { color: #fff; border-left: 2px solid var(--am); padding-left: 11px; }
+.reader-scroll { grid-area: text; overflow-y: auto; overscroll-behavior: contain; padding: 34px clamp(20px, 5%, 56px) 80px; scrollbar-width: thin; scrollbar-color: rgba(127,227,255,.45) transparent; outline: none; }
+.reader-scroll .post { max-width: 700px; margin: 0 auto; }
+.reader-progress { grid-area: bar; background: rgba(127,227,255,.12); }
+.reader-progress i { display: block; height: 100%; background: var(--cy); box-shadow: 0 0 10px var(--cy); transform-origin: 0 50%; transform: scaleX(0); }
+.reader-error { margin-top: 20vh; text-align: center; color: var(--soft); letter-spacing: .1em; }
+#reader.phone { grid-template: "head" auto "text" 1fr "bar" 2px / 1fr; }
+#reader.phone .reader-rail, #reader.phone .reader-mark { display: none; }
+#reader.phone .reader-head { padding: 9px 10px 8px 14px; }
+#reader.phone .reader-scroll { padding: 22px 16px 60px; }
+#reader.phone .post { font-size: 16px; }
+@media (max-width: 1000px) { #reader:not(.phone) { grid-template-columns: 0 1fr; } #reader:not(.phone) .reader-rail { display: none; } }
+/* while something is read, the bar keeps only its way back; the frame has the rest */
+#inspectbar.aside #prev, #inspectbar.aside #next, #inspectbar.aside #count { display: none; }
+
+/* ---------------------------------------------------------------- as a plain page
+   html.station: the station is running and shows the article itself, so the page copy is put away.
+   html.reading: an article's own URL; it can be read at once while the Library loads behind it.
+   neither: no JavaScript. */
+#page { display: none; }
+html:not(.station) { height: auto; overflow: auto; background: #04060a; }
+html:not(.station) body { height: auto; overflow: visible; background: radial-gradient(1200px 700px at 50% -200px, rgba(40,110,150,.22), rgba(4,6,10,0) 70%) no-repeat #04060a; }
+html:not(.station) #page { display: block; max-width: 760px; margin: 0 auto; padding: clamp(84px, 12vh, 130px) 22px 120px; }
+html:not(.station) #scene, html:not(.station) #hud, html:not(.station) #inspectbar { visibility: hidden; pointer-events: none; }
+html:not(.station):not(.reading) #loader { display: none; }
+#page::before { content: "ARK AURORA  ·  LIBRARY"; position: absolute; left: 0; right: 0; top: 0; padding: 26px 22px 0; max-width: 760px; margin: 0 auto;
+  font: 600 12px "Eurostile", "Michroma", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: .32em; color: var(--fg); }
+.post-list h1 { font-size: clamp(40px, 7vw, 72px); font-weight: 200; letter-spacing: -.02em; line-height: 1; margin-bottom: 18px; }
+.post-list ol { list-style: none; margin-top: 44px; }
+.post-list li { padding: 26px 0; border-top: 1px solid var(--rule); font: 16px/1.6 var(--text); color: #b9d2df; }
+.post-list li > a { display: block; margin-bottom: 8px; font-size: 24px; line-height: 1.25; font-weight: 300; color: #fff; text-decoration: none; }
+.post-list li > a:hover, .post-list li > a:focus-visible { color: var(--cy); }
+.post-list .post-meta { margin-top: 10px; }
+/* the Library's progress while an article is being read as a page: a line in the corner, then an invitation */
+html.reading #loader { inset: auto 18px 18px auto; display: flex; gap: 12px; align-items: center; padding: 11px 14px; background: rgba(4,8,13,.86); border: 1px solid var(--rule); z-index: 6; }
+html.reading #loader .mark, html.reading #loader .bar { display: none; }
+html.reading #loader.done { opacity: 0; }
+#stepin { position: fixed; right: 18px; bottom: 18px; z-index: 6; font: 500 12px "Eurostile", "Michroma", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: .3em; color: var(--am);
+  background: rgba(4,8,13,.9); border: 1px solid var(--am); padding: 14px 18px; cursor: pointer; box-shadow: 0 0 26px rgba(255,154,74,.22); }
+#stepin small { display: block; margin-bottom: 6px; font-size: 9px; letter-spacing: .36em; color: var(--soft); }
+#stepin:hover, #stepin:focus-visible { color: #ffd2a8; outline: none; box-shadow: 0 0 34px rgba(255,154,74,.4); }
+html.station #stepin { display: none; }

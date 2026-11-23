@@ -10,6 +10,7 @@ import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';
 import { createRouteMap } from './routemap.js';
 import { createDrone } from './drone.js';
+import { createReader } from './reader.js';
 import { createComms } from './comms.js';
 import { probePars, chartPars, chartParsLive, chartReflection, probeEnvironment, liveSpecPars } from './reflections.js';
 import { windowShadow, receiveWindowSun } from './sunlight.js';
@@ -27,7 +28,7 @@ const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math
  * @param text  this room's entry in content.json
  * @param env   { renderer, camera, mirror, maxAniso, onProgress }: the shared renderer and camera, the floor-mirror target and its uniforms
  */
-export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress }) {
+export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink }) {
   // ---------------------------------------------------------------- loading
   const base = `assets/${id}`; let info, arrived = 0;
   // The bakes are KTX2 files (tools/pack.py): they stay block-compressed on the GPU and bring their own mipmaps. The
@@ -256,6 +257,9 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   });
 
   // ---------------------------------------------------------------- scene graph
+  // the Library's volumes are the posts; its shelves hold as many as the room has places, and the terminal lists them
+  const volumes = info.drone ? (text.volumes || []).slice(0, info.drone.slots.length) : [];
+  const shelf = text.screens.list.find((x) => x.layout === 'catalogue'); if (shelf) Object.assign(shelf, { volumes, selected: -1, rev: 0 });
   const screens = createScreens(text.screens, renderer, Math.min(8, maxAniso), num('screens', 0.9));
   const screenMeshes = [], movers = [], pivots = {}, SPIN = info.chand?.spin || {};
   scene.add(gltf.scene);
@@ -409,7 +413,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   }
   const hologram = info.holo && !SKIP.has('holo')
     ? await createHologram({ scene, position: B(info.holo).add(V(0, 0.1, 0)), sunDir: SUN, text: text.hologram, base, ver: `?v=${info.v || 0}`, radius: 0.74, gain: num('holo', 2.0) }) : null;
-  const drone = info.drone ? createDrone({ scene, dock: B(info.drone.dock), deliver: B(info.drone.deliver), slots: info.drone.slots.map(B), volumes: text.volumes }) : null;
+  const drone = info.drone ? createDrone({ scene, dock: B(info.drone.dock), deliver: B(info.drone.deliver), slots: info.drone.slots.map(B), volumes }) : null;
   if (drone && probe && shadow && !SKIP.has('sunlight')) receiveWindowSun(drone.root,{uSunVP,uSunDir,uSunE,tShadow:{value:shadow.rt.depthTexture}},visibility);
   const routeMap = info.map ? createRouteMap({ scene, center: B(info.map.c), stops: text.stations, radius: info.map.r, gain: num('map', 1.6) }) : null;
   // the signal room's terminal: a field over the plinth, and its drone (lit by the room and the window sun like the Library's)
@@ -418,6 +422,13 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
 
   // ---------------------------------------------------------------- interactables
   // Each has a pick mesh and a pose (where the camera stands, what it looks at); main.js glides the camera there.
+  // the Library: asking for a volume marks it on the terminal's screen and sends the drone
+  const call = (i) => { if (shelf) { shelf.selected = i ?? -1; shelf.rev++; } drone.fetch(i); };
+  // ... and a volume lying open can be read: scanned, it stands over the book as a hologram (js/reader.js)
+  const reader = drone && volumes.length ? createReader({ scene, camera, drone, volumes, text: text.reader, onLink,
+    facing: B(info.terminal.pos).sub(B(info.drone.deliver)).setY(0).normalize() }) : null;
+  if (reader) hidden.push(reader.root);                              // light addressed to the visitor: not in the floor's mirror image
+  let terminal = null, reading = null, waiting = null;
   const picks = [], tanV = () => Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), middle = CAM.clone().lerp(TGT, 0.5);
   const pickMesh = (geometry, parent, position) => { const m = new THREE.Mesh(geometry, pickMat); m.position.copy(position); parent.add(m); return m; };
   scene.updateMatrixWorld(true);
@@ -430,8 +441,9 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const along = V().crossVectors(V(0, 1, 0), n).normalize(), span = (f) => Math.max(...v.map(f)) - Math.min(...v.map(f));
     const w = span((q) => q.dot(along)), h = span((q) => q.y);
     // the catalogue terminal: stand back far enough to watch the drone; each volume is a choice (main.js lists them)
-    if (drone && o.userData.name === info.terminal.screen) picks.push({ mesh: o, pose: () => ({ pos: B(info.terminal.pos), tgt: B(info.terminal.tgt) }),
-      options: text.volumes.map((v, i) => [v.no, () => drone.fetch(i)]), onFocus: (on) => on || drone.fetch(null) });
+    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = { mesh: o, list: true, pose: () => ({ pos: B(info.terminal.pos), tgt: B(info.terminal.tgt) }),
+      options: volumes.map((v, i) => [v.title, () => call(i), `${v.date}  ·  ${v.minutes} min`]), current: () => shelf?.selected ?? -1,
+      enter: () => (reader?.available() ? reading : null), onFocus: (on, next) => on || next?.reads || call(null) });
     else picks.push({ mesh: o, pose: () => ({ pos: c.clone().addScaledVector(n, Math.max(h / 2 / tanV(), w / 2 / (tanV() * camera.aspect)) * 1.12), tgt: c }) });
   }
   // Holograms open up instead: the camera only comes closer, along its own line of sight, while the display grows
@@ -457,6 +469,10 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const d = Math.max(h / 2 / tanV(), (w / 2 + (beside ? 0.35 : 0)) / (tanV() * camera.aspect)) * (beside ? 1.32 : 1.06);   // landscape: field and drone; upright: the field fills the width
     return { pos: c.clone().addScaledVector(n, d), tgt: beside ? c.clone().add(V(0.12, -0.04, 0)) : c };
   } });
+  // reading: its pick is the READ glyph, there only while a book lies open. Aside from the tour; BACK leads to the terminal.
+  if (reader) picks.push(reading = { mesh: reader.hit, reads: true, aside: true, steady: true, live: reader.available, pose: reader.pose, typing: () => reader.state() !== 'closed',
+    back: () => terminal, backLabel: text.reader.backTo, slug: reader.slug,
+    onFocus: (on, next) => { if (on) reader.read(); else { reader.close(); if (next !== terminal) call(null); } } });
   // doors: walk up to it; main.js then goes through to door.to (another room's id; '' = sealed)
   for (const door of info.doors || []) {
     const c = B(door.c), n = B(door.n).normalize(), mesh = pickMesh(new THREE.BoxGeometry(2.4, 3.4, 2.4), scene, c);
@@ -471,7 +487,16 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const commsLit = comms && probe ? probeEnvironment(renderer, probeU, probe) : null; if (commsLit) comms.setEnv(commsLit.texture);
   let last = 0;
   return {
-    id, info, scene, picks, floors, hidden, CAM, TGT, chart,
+    id, info, scene, picks, floors, hidden, CAM, TGT, chart, reader, terminal, volumes,
+    heldVolume: () => drone?.open() ?? -1,
+    /** Have a volume opened for reading: resolves with the pick to focus once the book lies open (null: not on the shelves).
+     *  fly: the drone fetches it from its shelf; otherwise it is simply there (a page that opens on an article). */
+    read(slug, fly) {
+      const i = volumes.findIndex((v) => v.slug === slug); if (i < 0 || !reader) return Promise.resolve(null);
+      waiting?.done(null);
+      if (drone.open() !== i) { if (fly) call(i); else { if (shelf) { shelf.selected = i; shelf.rev++; } drone.bring(i); } }
+      return new Promise((done) => { waiting = { i, done }; });
+    },
     CLOSE: B(info.close || [0, 17.2, 2.15]), CLOSE_TGT: B(info.close_tgt || [0, 26, 2.6]), arc: info.holo ? 0.9 : 0.25,     // arc: how high the pull-back lifts over the middle
     exposure: num('exp', info.exposure || 0.85),
     /** Per frame, before anything else is drawn: the sun's shadow map, looking in through the window. */
@@ -494,7 +519,9 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       const phi = CH_FIXED ?? t * CH_SPEED;
       for (const turn in pivots) pivots[turn].rotation.y = phi * turn;
       if (PHASES.length === 3) uChand.value.set(...PHASES.map((p) => (1 + 2 * Math.cos(phi - p)) / 3));
-      hologram?.update(t); routeMap?.update(t); drone?.update(t); comms?.update(t, Math.min(0.1, t - last)); last = t; screens.update();
+      hologram?.update(t); routeMap?.update(t); drone?.update(t); reader?.update(t);
+      if (waiting && drone.open() === waiting.i && reader.available()) { waiting.done(reading); waiting = null; }
+      comms?.update(t, Math.min(0.1, t - last)); last = t; screens.update();
       // Backward compatibility for bake masters that predate the sun-free room probe.
       if (drone && !drone.lit && ++frames > 3) {
         const cube = new THREE.WebGLCubeRenderTarget(128, { type: THREE.HalfFloatType }), eye = new THREE.CubeCamera(0.05, 100, cube), pmrem = new THREE.PMREMGenerator(renderer);
@@ -509,6 +536,6 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       liveCam.update(renderer, scene);
       scene.background = bg; renderer.setClearAlpha(clear); u.value = liveRT.texture;
     }),
-    dispose: () => { drone?.lit?.dispose?.(); commsLit?.dispose(); comms?.dispose(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
+    dispose: () => { reader?.dispose(); waiting?.done(null); drone?.lit?.dispose?.(); commsLit?.dispose(); comms?.dispose(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
 }

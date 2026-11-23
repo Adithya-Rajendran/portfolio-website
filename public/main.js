@@ -14,18 +14,25 @@ import { Q, SKIP, V, num, uTime, uPx, uMirror, setDistanceScale } from './js/kit
 import { loadRoom } from './js/room.js';
 import { reflectEye } from './js/reflections.js';
 import { initLive, live, fill } from './js/screens.js';
+import { loadCatalogue } from './js/catalogue.js';
 
-const $ = (sel) => document.querySelector(sel);
+const $ = (sel) => document.querySelector(sel), esc = (str) => str.replace(/[&<>"]/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
+const html = document.documentElement, plain = () => html.classList.contains('reading');     // reading: an article shown as a page (post.css)
 function fail(msg) {
   if (loader.dataset.failed) return; // Preserve the first cause while outstanding requests settle.
+  if ($('#page')) { loader.dataset.failed = 'true'; html.className = ''; console.error(msg); return; }      // the page has its text in it: leave that to be read
   loader.dataset.failed = 'true'; loader.classList.remove('done'); $('#what').textContent = msg;
   $('#loader .percentage').hidden = true;
   $('#loader .bar').style.display = 'none'; $('#loader .mark').style.animation = 'none';
 }
 addEventListener('error', (e) => fail('ERROR: ' + (e.message || 'failed to start')));
 addEventListener('unhandledrejection', (e) => fail('ERROR: ' + (e.reason?.message || e.reason || 'failed to load')));
-const content = await (await fetch('content.json')).json();
+const [content, posts] = await Promise.all([fetch('content.json').then((r) => r.json()), loadCatalogue()]);
+{ // the Library's volumes are the posts
+  const lib = content.rooms.writing; lib.volumes = posts;
+  lib.facts = lib.facts.map(([k, v]) => [k, v.replace('{count} VOLUMES', `${posts.length} VOLUME${posts.length === 1 ? '' : 'S'}`)]);
+}
 
 // ---------------------------------------------------------------- renderer
 // The canvas itself needs no depth buffer or MSAA (the scene is drawn into our own HDR target) - except in WebKit,
@@ -144,29 +151,32 @@ const focus = { pick: null, to: null, f: 1, from: { pos: V(), tgt: V() }, cur: {
 let tour = null, leaving = null;
 function tourOrder() {                                 // a sweep across the room from left to right as seen from the room camera
   const box = new THREE.Box3(), c = V(), azimuth = (p) => { box.setFromObject(p.mesh).getCenter(c); return Math.atan2(c.x - room.CAM.x, room.CAM.z - c.z); };
-  return (tour ??= room.picks.map((p) => [azimuth(p), p]).sort((a, b) => a[0] - b[0]).map((a) => a[1]));
+  return (tour ??= room.picks.filter((p) => !p.aside).map((p) => [azimuth(p), p]).sort((a, b) => a[0] - b[0]).map((a) => a[1]));     // aside: reached from another pick, not on the tour
 }
 function setFocus(pick = null) {
   if (pick === focus.pick) return;
-  focus.pick?.onFocus?.(false); pick?.onFocus?.(true);
+  focus.pick?.onFocus?.(false, pick); pick?.onFocus?.(true);        // the one being left is told where the visitor is going
   focus.pick = pick; focus.to = pick?.pose() ?? null; focus.f = 0;
   focus.from.pos.copy(focus.cur.pos); focus.from.tgt.copy(focus.cur.tgt);
   clearTimeout(leaving); leaving = null;
-  hud.classList.toggle('inspecting', !!pick); bar.hidden = !pick;
+  hud.classList.toggle('inspecting', !!pick); bar.hidden = !pick; bar.classList.toggle('aside', !!pick?.aside);
+  if (room && !busy) syncUrl();
   if (!pick) return;
+  $('#back').textContent = pick.backLabel ?? '←  BACK';
   navTouched = true; viewTarget = Math.round(view);                         // stop the opening move; it would fight the close-up
-  $('#count').textContent = `${tourOrder().indexOf(pick) + 1} / ${room.picks.length}`;
+  $('#count').textContent = `${tourOrder().indexOf(pick) + 1} / ${tourOrder().length}`;
   // a door leads to one room, or (the stair down to the Ring Line) to a list of stops; '' marks one that is not built yet
   const door = pick.door, ways = !door ? [] : door.stops ?? [[`ENTER ${door.label}`, door.to]];
   $('#ways').innerHTML = ways.map(([label, to]) => `<button data-to="${to}"${to ? '' : ' disabled'}>${label}${to ? '  →' : '  ·  NOT YET OPEN'}</button>`).join('')
-    + (pick.options || []).map(([label], i) => `<button data-option="${i}">${label}</button>`).join('');      // or it offers choices of its own
+    + (pick.options || []).map(([label, , sub], i) => `<button data-option="${i}"${pick.current?.() === i ? ' aria-current' : ''}>${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</button>`).join('');      // or it offers choices of its own
+  $('#ways').classList.toggle('list', !!pick.list);                         // a list: titles one under another, above the bar
 }
 function step(d) { const t = tourOrder(), i = t.indexOf(focus.pick); setFocus(t[((i < 0 ? (d > 0 ? -1 : 0) : i) + d + t.length) % t.length]); }
 function travel(id, delay = 0) { if (id && !leaving) leaving = setTimeout(() => enter(id), delay); }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 function pickHit(e) {                                // the pick under the pointer, and where on it (a terminal reads the uv)
   ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
-  const hit = ray.intersectObjects(room.picks.map((p) => p.mesh), false)[0];
+  const hit = ray.intersectObjects(room.picks.filter((p) => !p.live || p.live()).map((p) => p.mesh), false)[0];      // live: some are only there at times
   return hit ? { pick: room.picks.find((p) => p.mesh === hit.object), hit } : null;
 }
 const pickAt = (e) => pickHit(e)?.pick ?? null;
@@ -175,21 +185,51 @@ const pickAt = (e) => pickHit(e)?.pick ?? null;
 const tick = () => { const v = live(); for (const el of document.querySelectorAll('[data-live]')) el.textContent = fill(`{${el.dataset.live}}`, v); };
 function fillHud(id) {
   const r = content.rooms[id];
-  document.title = r.title; $('.kicker').textContent = r.kicker; $('h1').innerHTML = r.headline.join('<br>');
+  document.title = r.title; $('.kicker').textContent = r.kicker; $('.headline').innerHTML = r.headline.join('<br>');
+  if (!$('#page h1')) { $('.headline').setAttribute('role', 'heading'); $('.headline').setAttribute('aria-level', '1'); }      // the page's heading, unless an article brings its own h1
   $('.sub').innerHTML = r.sub.join('<br>').replace(/\{(\w+)\}/g, '<span data-live="$1"></span>');
   $('.hero .cta')?.remove();
   if (r.cta) $('.hero').insertAdjacentHTML('beforeend', `<button class="cta">${r.cta}</button>`);   // the room's call to action: its 'cta' pick
-  $('nav').innerHTML = Object.entries(content.rooms).map(([k, v]) => `<a href="${urlFor(k)}" data-room="${k}"${k === id ? ' class="here"' : ''}>${v.nav}</a>`).join('')
+  $('#hud nav').innerHTML = Object.entries(content.rooms).map(([k, v]) => `<a href="${urlFor(k)}" data-room="${k}"${k === id ? ' class="here"' : ''}>${v.nav}</a>`).join('')
     + `<span class="sep"></span><a data-view="0">WIDE</a><a data-view="1">${r.close}</a>`;
-  $('footer').innerHTML = r.facts.map(([k, v]) => `<div><b>${k}</b> ${v}</div>`).join('')
+  $('#hud > footer').innerHTML = r.facts.map(([k, v]) => `<div><b>${k}</b> ${v}</div>`).join('')
     + `<div class="hint">${content.hint}${r.credit ? `<br><small>${content.credit}</small>` : ''}</div>`;
   tick();
 }
-const roomInUrl = () => { const id = new URLSearchParams(location.search).get('room'); return content.rooms[id] ? id : 'lobby'; };
-function urlFor(id) {
-  const p = new URLSearchParams(location.search); if (id === 'lobby') p.delete('room'); else p.set('room', id);
-  return `${p}` ? `?${p}` : location.pathname;
+// Where a URL leads: / is the Atrium, /?room=<id> another room, /blog/ the Library and /blog/<slug>/ the Library with that post read.
+function route() {
+  const blog = location.pathname.match(/^\/blog(?:\/([^/]+))?\/?$/), id = blog ? 'writing' : new URLSearchParams(location.search).get('room');
+  return { id: content.rooms[id] ? id : 'lobby', slug: blog?.[1] ?? null };
 }
+const roomInUrl = () => route().id;
+function urlFor(id, slug) {                            // other switches in the query (?tier=, ?shot= ...) are kept
+  const p = new URLSearchParams(location.search); p.delete('room'); if (id !== 'lobby' && id !== 'writing') p.set('room', id);
+  return (id === 'writing' ? `/blog/${slug ? `${slug}/` : ''}` : '/') + (`${p}` ? `?${p}` : '');
+}
+/** The address and the tab's title follow what is open: a room, or the post being read in it. */
+function syncUrl() {
+  const slug = focus.pick?.slug?.() ?? null, url = urlFor(room.id, slug);
+  if (location.pathname + location.search !== url) history.pushState(null, '', url);
+  document.title = posts.find((p) => p.slug === slug)?.title ?? content.rooms[room.id].title;
+}
+/** Have a post read in the Library: the drone fetches it (fly), or it is simply there when the page opened on it. */
+async function readPost(slug, fly) {
+  if (!room?.read) return false;
+  if (fly) setFocus(room.terminal);
+  const here = room, pick = await room.read(slug, fly);
+  if (pick && room === here) setFocus(pick);
+  return !!pick;
+}
+/** A link inside an article that leads elsewhere on the site (null: the reader's own close button). False: let the browser follow it. */
+function onLink(href) {
+  if (href === null) return back();
+  const u = new URL(href, location.origin), blog = u.pathname.match(/^\/blog(?:\/([^/]+))?\/?$/), id = u.searchParams.get('room');
+  if (blog?.[1] && posts.some((p) => p.slug === blog[1])) readPost(blog[1], true);
+  else if (blog) back();
+  else if (u.pathname === '/' && (content.rooms[id] || !id)) enter(id || 'lobby');
+  else return false;
+}
+const back = () => setFocus(focus.pick?.back?.() ?? null);
 const progress = (f) => { $('#progress').style.width = `${f * 100}%`; $('#pct').textContent = Math.round(f * 100); };
 /** Leave the open room (if any) and open another: cover the view, free the old room, load the new one, start its opening shot. */
 async function enter(id, push = true) {
@@ -197,8 +237,8 @@ async function enter(id, push = true) {
   busy = true; setFocus(null); intro = 0;
   $('#what').textContent = content.rooms[id].loading; progress(0); loader.classList.remove('done'); hud.classList.add('hidden');
   if (room) { await new Promise((r) => setTimeout(r, 500)); room.dispose(); room = null; }      // let the cover fade in before the old room goes
-  if (push) history.pushState(null, '', urlFor(id));
-  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress });
+  if (push && location.pathname + location.search !== urlFor(id)) history.pushState(null, '', urlFor(id));
+  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink });
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);
   tour = null; view = viewTarget = Q.has('shot') ? SHOT : +!still; navTouched = PINNED; t0 = uTime.value;
@@ -209,7 +249,12 @@ async function enter(id, push = true) {
 // ---------------------------------------------------------------- input
 let downAt = null, hovered = 0;
 addEventListener('resize', resize);
-addEventListener('popstate', () => enter(roomInUrl(), false));
+addEventListener('popstate', () => {
+  const r = route();
+  if (r.id !== room?.id) enter(r.id, false);
+  else if (r.slug) { if (focus.pick?.slug?.() !== r.slug) readPost(r.slug, true); }
+  else if (focus.pick?.slug?.()) back();
+});
 addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
 addEventListener('pointermove', (e) => {
   mouse.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1);
@@ -222,26 +267,29 @@ addEventListener('deviceorientation', (e) => {
   if (e.gamma != null) mouse.set(THREE.MathUtils.clamp(e.gamma / 30, -1, 1), THREE.MathUtils.clamp((e.beta - 45) / 30, -1, 1));
 });
 addEventListener('click', (e) => {
-  if (!room || busy || e.target.closest('nav, #inspectbar, a, button')) return;
+  if (!room || busy || e.target.closest('#hud nav, #inspectbar, #reader, a, button')) return;
   if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;       // that was a drag
   const ph = pickHit(e), pick = ph?.pick ?? null;
   if (pick && pick === focus.pick && pick.click) return pick.click(ph.hit.uv);     // an open terminal takes its own clicks
+  if (!pick && focus.pick?.steady) return;                                  // reading: a stray click beside the text does not close the book
   setFocus(pick);
   if (pick?.door && !pick.door.stops) travel(pick.door.to, 1500);           // clicked a door: walk up to it, then through
 });
 addEventListener('keydown', (e) => {
   if (!room || busy) return;
   if (focus.pick?.typing?.() && e.key !== 'Escape') return;                // writing at a terminal: the keys are the writer's
-  if (e.key === 'Escape') setFocus(null);
+  if (e.key === 'Escape') back();
+  else if (e.key === 'Enter' && focus.pick?.enter?.()) setFocus(focus.pick.enter());     // at the terminal with a book open: read it
   else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); step(e.key === 'ArrowRight' ? 1 : -1); }
 });
 bar.addEventListener('click', (e) => {
   if (e.target.dataset.to) travel(e.target.dataset.to);
-  if (e.target.dataset.option) focus.pick?.options[e.target.dataset.option][1]();
-  else ({ back: () => setFocus(null), prev: () => step(-1), next: () => step(1) })[e.target.id]?.();
+  const option = e.target.closest('[data-option]');
+  if (option) { for (const b of bar.querySelectorAll('[data-option]')) b.toggleAttribute('aria-current', b === option); focus.pick?.options[option.dataset.option][1](); }
+  else ({ back, prev: () => step(-1), next: () => step(1) })[e.target.id]?.();
 });
 $('.hero').addEventListener('click', (e) => { if (e.target.closest('.cta') && room) setFocus(room.picks.find((p) => p.cta)); });
-$('nav').addEventListener('click', (e) => {
+$('#hud nav').addEventListener('click', (e) => {
   const a = e.target.closest('a'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
   if (a.dataset.room) { e.preventDefault(); enter(a.dataset.room); }
   else { navTouched = true; viewTarget = +a.dataset.view; }
@@ -252,7 +300,7 @@ const clock = new THREE.Clock();
 function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 0.05), t = (uTime.value += dt), since = t - t0;
-  if (!room) return;
+  if (!room || plain()) return;                         // nothing is drawn behind an article read as a page
   if (gov.update(dt * 1000)) {
     if (tier === 0 && !TIER_PINNED && gov.scale < 0.72) { setTier(1); gov.scale = 1; gov.cool = 6; }     // cheaper AA before lower resolution
     applyScale();
@@ -273,7 +321,7 @@ function frame() {
   focus.f = Math.min(1, focus.f + dt / 1.4);
   const glide = focus.f * focus.f * (3 - 2 * focus.f);
   if (focus.to) {
-    focus.dest.copy(focus.to.pos); focus.dest.x += smooth.x * 0.1; focus.dest.y -= smooth.y * 0.06;
+    focus.dest.copy(focus.to.pos); if (!focus.pick.steady) { focus.dest.x += smooth.x * 0.1; focus.dest.y -= smooth.y * 0.06; }      // steady: text is being read, the view holds still
     camera.position.lerpVectors(focus.from.pos, focus.dest, glide); _look.lerpVectors(focus.from.tgt, focus.to.tgt, glide);
   } else if (focus.f < 1) { camera.position.lerpVectors(focus.from.pos, camera.position, glide); _look.lerpVectors(focus.from.tgt, _look, glide); }
   focus.cur.pos.copy(camera.position); focus.cur.tgt.copy(_look);
@@ -285,7 +333,29 @@ function frame() {
 
 // ---------------------------------------------------------------- start
 initLive(content); $('#brand').textContent = content.brand; setInterval(tick, 500);
+// An article's own URL is readable as a page from the first moment (html.reading). When the Library has loaded it takes
+// over: the book is there, it is scanned, and the same article stands in the room. A reader already well into the text
+// is only offered it, as is one who asked to save data (for them the room is not even fetched until asked for).
+let touched = false;
+const offer = () => new Promise((yes) => {
+  const words = content.rooms.writing.reader, b = Object.assign(document.createElement('button'), { id: 'stepin', type: 'button' });
+  b.innerHTML = `<small>${esc(room ? words.ready : words.offer)}</small>${esc(words.enter)}`; b.addEventListener('click', () => { b.remove(); yes(); }); document.body.append(b);
+});
+async function stepIn() {
+  const slug = route().slug, at = [...document.querySelectorAll('#page .post-body h2[id]')].filter((h) => h.getBoundingClientRect().top < innerHeight * 0.4).pop()?.id;
+  html.className = 'station'; scrollTo(0, 0); resize(); navTouched = true; viewTarget = view = 0; t0 = uTime.value;
+  if (at) room.reader?.scrollTo(at);                     // where they had got to
+  await readPost(slug, false);
+}
+if (plain()) {
+  for (const type of ['scroll', 'keydown', 'pointerdown', 'wheel']) addEventListener(type, () => { touched = true; }, { once: true, passive: true });
+  if (navigator.connection?.saveData) await offer();
+}
 await enter(roomInUrl(), false);
+if (plain()) {
+  if (!room.volumes?.some((v) => v.slug === route().slug)) html.className = '';              // not on the shelves: it stays a page
+  else if (!touched && scrollY < 80) stepIn(); else offer().then(stepIn);
+}
 // Safety net: if nothing reached the canvas (seen with multisampled float targets on some drivers), drop MSAA.
 camera.position.copy(room.CAM); camera.lookAt(room.TGT); room.update(0); draw(0);
 if (tier === 0 && brightness(8) < 2) { setTier(1); applyScale(); }
@@ -299,4 +369,6 @@ window.__lobby = { renderer, camera, post, gov, series, setFocus, step, enter, r
     camera.position.fromArray(eye); camera.lookAt(...at); camera.updateMatrixWorld(true);
     uTime.value = t; room.update(t); draw(t);
   }}),
+  reader: { state: () => room?.reader?.state() ?? 'closed', slug: () => room?.reader?.slug() ?? null, read: (slug) => readPost(slug, true), close: () => { if (focus.pick?.reads) back(); } },
+  volumes: () => (room?.volumes ?? []).map(({ slug, title }) => ({ slug, title })), held: () => room?.volumes?.[room.heldVolume()]?.slug ?? null,
   mode: () => ({ room: room?.id, hdr: HDR_OK, tier, msaa: post.msaa, scale: +gov.scale.toFixed(2), size: `${post.scene.width}x${post.scene.height}`, mirror: `${mirror.size.x}x${mirror.size.y}` }) };

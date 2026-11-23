@@ -23,12 +23,11 @@ try {
   const h1 = (await p.locator('article.post header h1').textContent())?.trim();
   if (!h1) fail('no h1 in the article header'); else console.log('h1:', h1);
   if (await p.locator('main#page > article.post').count() !== 1) fail('article.post is not in main#page');
-  for (const part of ['header .post-meta time', 'header .post-lede', 'div.post-body', 'div.post-body h2[id]', 'div.post-body p',
-                      'div.post-body pre[data-lang] > code', 'div.post-body figure > img']) {
+  for (const part of ['header .post-meta time', 'header .post-lede', 'div.post-body', 'div.post-body h2[id]', 'div.post-body p']) {
     const n = await p.locator(`article.post ${part}`).count();
     if (!n) fail('missing', part); else console.log(`${part}: ${n}`);
   }
-  for (const part of ['ul.post-tags', 'section.post-takeaways', 'footer .post-changelog', 'footer .post-next'])   // optional parts
+  for (const part of ['div.post-body pre[data-lang] > code', 'div.post-body figure > img', 'ul.post-tags', 'section.post-takeaways', 'footer .post-changelog', 'footer .post-next'])   // not in every post
     console.log(`${part}: ${await p.locator(`article.post ${part}`).count()}`);
   if (await p.locator('script[type="application/ld+json"]').count() !== 1) fail('JSON-LD script count');
   if (!await p.locator('link[rel="canonical"]').getAttribute('href')) fail('no canonical link');

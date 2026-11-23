@@ -110,6 +110,17 @@ const LAYOUTS = {
       c.fillStyle = INK[x < 1 ? 'amber' : 'cy']; c.fillRect(360, y - 7, 440 * x, 14); put(c, T(text), 976, y, '500 24 fg right');
     });
   },
+  catalogue(c, s) {                                          // the Library's shelf list: a title over its date; the one called for is marked
+    const step = Math.min(104, 520 / Math.max(1, s.volumes.length)); put(c, '', 0, 0, '400 34 fg');
+    const clip = (str, width) => { if (c.measureText(str).width <= width) return str; while (str.length > 1 && c.measureText(str + '…').width > width) str = str.slice(0, -1); return str.trimEnd() + '…'; };
+    s.volumes.forEach((v, i) => {
+      const y = 158 + i * step, on = i === s.selected;
+      if (on) { c.fillStyle = 'rgba(255,176,87,0.13)'; c.fillRect(36, y - 34, 952, step - 10); c.fillStyle = INK.amber; c.fillRect(36, y - 34, 5, step - 10); }
+      c.font = `400 34px ${SANS}`; put(c, clip(v.title, on ? 700 : 910), 60, y, `400 34 ${on ? 'white' : 'fg'}`);
+      put(c, `${v.date}  ·  ${v.minutes} MIN`.toUpperCase(), 60, y + 38, '500 18 dim s4'); if (on) put(c, s.called, 970, y, '600 20 amber right s4');
+    });
+    if (!s.volumes.length) put(c, s.empty, 48, 300, '300 40 dim');
+  },
   placard(c, s) {                                            // a numbered (or plain) title card
     const y = s.no ? 340 : 200;
     if (s.no) put(c, s.no, 44, 210, '200 150 amber');
@@ -156,7 +167,7 @@ export function createScreens({ footer, tag = '', list }, renderer, anisotropy, 
     const t = performance.now() / 1000, v = live(t), fading = Math.min(t % CYCLE, CYCLE - (t % CYCLE)) < FADE;
     for (const it of items) {
       const { s } = it, every = s.layout === 'messages' ? (fading ? 0.1 : 1) : s.figure === 'crossing' ? 1 : EVERY[s.layout];
-      const key = every ? Math.floor(t / every) : 0;
+      const key = `${every ? Math.floor(t / every) : 0}/${s.rev ?? 0}`;                // s.rev: bumped by whoever changes the content
       if (key === it.last) continue;
       it.last = key; frame(it.ctx, s.title, s.tag ?? tag, footer); LAYOUTS[s.layout](it.ctx, s, (str) => fill(str, v), t, v);
       stage.image = it.ctx.canvas; stage.needsUpdate = true; renderer.setRenderTarget(it.rt); renderer.render(decode, decodeCam);

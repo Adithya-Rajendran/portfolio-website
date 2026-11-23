@@ -169,8 +169,8 @@ class Site(unittest.TestCase):
                         t = Tree(fh.read())
                     self.assertEqual(t.errors, [], f)
                     self.assertEqual(len(t.ids), len(set(t.ids)), f)
-                    scripts = [n.attrs.get('type') for n in t.root.all('script')]   # the shell's two, and JSON-LD
-                    self.assertEqual(sorted(scripts), ['application/ld+json', 'importmap', 'module'], f)
+                    scripts = [n.attrs.get('type') or '' for n in t.root.all('script')]   # the shell's three (one is its untyped mode switch), and JSON-LD
+                    self.assertEqual(sorted(scripts), ['', 'application/ld+json', 'importmap', 'module'], f)
 
     def test_heading_ids(self):
         body = self.tree.one('div', 'post-body')
@@ -285,7 +285,7 @@ class Site(unittest.TestCase):
         with open(os.path.join(s.DATA, 'assets', 'files', '8b46b93f83223a11d762796f2775bb697b0a94ce.yaml'), 'rb') as a, \
              open(os.path.join(self.out, 'blog', 'files', 'gui-lxd-profile.yaml'), 'rb') as b:
             self.assertEqual(a.read(), b.read())
-        self.assertNotIn('javascript', self.html.lower())
+        self.assertNotIn('javascript:', self.html.lower())           # the scheme, anywhere (the shell's own text may say the word)
 
     def test_errors_name_post_and_line(self):
         for md, line, words in [('para\n\n# One', 3, 'only h1'), ('#### Four', 1, '## and ###'), ('```js\nx\n```', 1, 'unknown code language'),
