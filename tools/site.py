@@ -27,6 +27,10 @@ LANGS = ('bash', 'yaml', 'python', 'text')
 MONTHS = ('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
           'November', 'December')
 ESCAPABLE = '*_\\`[]'
+# Ids the page's scripts give elements they add at run time, so a heading must not take them either (the shell's own
+# ids are read from public/index.html): the hologram's article host in public/js/reader.js, the offer to step into
+# the Library in public/main.js.
+RUNTIME_IDS = ('reader', 'stepin')
 KEEP = object()                                            # an output whose file on disk is already current
 
 
@@ -789,7 +793,7 @@ def build(posts_dir, out):
     Raises ContentError (or exits) before anything is written."""
     with open(SHELL, encoding='utf-8') as f:
         shell = f.read()
-    taken = set(re.findall(r'\bid="([^"]+)"', shell)) | {'page'}
+    taken = set(re.findall(r'\bid="([^"]+)"', shell)) | {'page', *RUNTIME_IDS}
     posts, profile = load_posts(posts_dir), load_profile()
     by_slug = {p['slug']: p for p in posts}
     outputs, entries, media, warnings = {}, [], {}, []

@@ -181,6 +181,26 @@ class Site(unittest.TestCase):
         self.assertEqual([x['id'] for x in doc.sections], ['next-2', 'lists-2', 'lists', 'lists-3', 'lists-2-2', 'its-a-b-c'])
         self.assertEqual(doc.sections[-1], {'id': 'its-a-b-c', 'title': "It's a B: C!", 'level': 2})
 
+    def test_heading_ids_avoid_the_pages_ids(self):
+        """Not the shell's ids, the article's (page), nor those the scripts add at run time (RUNTIME_IDS)."""
+        post = ('---\ntitle: "Ids"\ndescription: "Headings named like parts of the page."\npublished: 2026-03-01\n---\n\n'
+                '## Reader\n\n## Step in\n\n## Stepin\n\n## Page\n\n## Reader\n')
+        out = self.fresh_out()
+        generate(self.posts_dir(ids=post), out)
+        with open(os.path.join(out, 'blog', 'index.json'), encoding='utf-8') as f:
+            sections = next(p['sections'] for p in json.load(f)['posts'] if p['slug'] == 'ids')
+        self.assertEqual([x['id'] for x in sections], ['reader-2', 'step-in', 'stepin-2', 'page-2', 'reader-3'])
+        with open(os.path.join(out, 'blog', 'ids', 'index.html'), encoding='utf-8') as f:
+            t = Tree(f.read())
+        self.assertEqual(len(t.ids), len(set(t.ids)))
+        self.assertFalse(set(t.ids) & set(s.RUNTIME_IDS))
+        made = set()                                       # the ids the scripts give the elements they create
+        for js in [os.path.join(s.ROOT, 'public', 'main.js')] + [os.path.join(d, f) for d, _, fs in os.walk(os.path.join(s.ROOT, 'public', 'js'))
+                                                                for f in fs if f.endswith('.js') and 'vendor' not in d]:
+            with open(js, encoding='utf-8') as f:
+                made |= set(re.findall(r"createElement\([^)]*\), \{ id: '([^']+)'", f.read()))
+        self.assertEqual(made, set(s.RUNTIME_IDS))
+
     def test_nested_lists(self):
         body = self.tree.one('div', 'post-body')
         ul, ol = body.kids('ul')[0], body.kids('ol')[0]
