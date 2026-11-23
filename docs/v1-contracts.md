@@ -318,9 +318,11 @@ Every room has a path, and the page at that path holds the room's text, so it re
 | `/experience/` | Navigation | `article.post.page[data-slug="experience"]`: the timeline, skills, credentials, talks, the résumé |
 | `/contact/` | Comms | `article.post.page[data-slug="contact"]`: the invitation, what to write about, the links |
 
-- `/?room=<id>` still works. `/about`, `/contact` and `/portfolio/*` are pages now, so they leave `_redirects`.
+- `/?room=<id>` still works. `/about`, `/contact` and `/portfolio/*` are pages now, so they leave `_redirects` (Cloudflare adds the trailing slash to `/about` and `/portfolio/<slug>` itself).
 - An article page (`/blog/<slug>/`, `/portfolio/<slug>/`) starts as a readable page (`html.reading`); a room's page starts as the station.
-- All of these are generated and git-ignored, with the same rules as §3: the shell with three changes, every text escaped, the same link policy, deterministic, nothing written outside `--out`.
+- All of these are generated and git-ignored, with the same rules as §3: the shell with three changes, every text escaped, the same link policy, deterministic, nothing written outside `--out`, and a mistake anywhere writes nothing at all.
+- On these pages a link to a project is its page, `/portfolio/<slug>/` (a §6 link's `project`, a curiosity's or a paper's `project`, and `/portfolio/<slug>/` in a project's body or inline lists). A post's links keep §3's `/?room=projects&project=<slug>`.
+- Every heading id on a page is unique and none is an id of the shell or of `RUNTIME_IDS` (§3's rule). Ids the data fixes (a timeline entry's `id`, a contact route's id) are used as they are and are reserved first, so a section heading of the same words takes `-2`; one that is an id of the shell is an error.
 
 ### Markup
 
@@ -332,6 +334,86 @@ The pages use the article markup of §3 (`header` with `.post-meta`, `h1`, `.pos
 - A project page ends with `p.post-next` to the next project in order, as a post does.
 - Sections of a page that are not prose from a body get an `h2` with an `id`, like body headings.
 
+Exactly, page by page (an optional part is left out when its field is absent or empty; `·` is ` · `):
+
+**`/portfolio/<slug>/`**
+
+```html
+<article class="post project" data-slug="homelab">
+  <header>
+    <p class="post-meta"><span class="post-status">Active</span> · 2022 – now · Infrastructure, Software</p>
+    <h1>title</h1>
+    <p class="post-lede">summary</p>
+    <p class="post-role"><b>Role</b> role</p>                       <!-- optional -->
+    <p class="post-status-note">status_note</p>                    <!-- optional -->
+    <ul class="post-tags"><li>technology</li>…</ul>                 <!-- optional -->
+  </header>
+  <figure class="post-cover"><img class="post-cover-image" src="/media/<name>.webp" width="…" height="…" alt="cover_alt" decoding="async"><figcaption>cover_caption</figcaption></figure>
+  <div class="post-body">
+    <h2 id="problem">Problem</h2> <p>…</p>   <h2 id="approach">Approach</h2> <p>…</p>   <h2 id="outcome">Outcome</h2> <p>…</p>
+    … the body, as a post's (§2, §3) …
+    <h2 id="highlights">Highlights</h2> <ul><li>inline Markdown</li></ul>
+    <h2 id="results">Results</h2> <dl class="post-facts"><dt>metric</dt><dd>value</dd><dd class="post-note">note</dd>…</dl>
+    <h2 id="parameters">Parameters</h2> <dl class="post-facts"><dt>label</dt><dd>value</dd>…</dl>
+    <h2 id="lessons">Lessons</h2> <ul>…</ul>   <h2 id="next-steps">Next steps</h2> <ul>…</ul>
+    <h2 id="links">Links</h2> <ul class="post-links"><li data-kind="repo"><a href="…">label</a></li>…</ul>
+    <h2 id="related-writing">Related writing</h2> <ul class="post-links"><li><a href="/blog/<slug>/">post title</a></li></ul>
+  </div>
+  <footer><p class="post-next"><a href="/portfolio/<slug>/"><span>Next</span> title of the next project</a></p></footer>
+</article>
+```
+
+- Meta: the status label (`active` → `Active`, `completed` → `Complete`), the period when there are dates, the types (`Research`, `Software`, `Infrastructure`, `Hardware`) joined by `, `.
+- The cover, without `cover_alt`, has `alt=""`; `figcaption` only with `cover_caption`; the image is not lazy (it is at the top). The whole `div.post-body` is left out when the project has none of its parts.
+- The fixed section ids are taken before the body's headings: a body `## Links` becomes `links-2`. Related writing: the posts whose `projects:` names this one, newest first.
+- `p.post-next`: the next project in `/portfolio/`'s order (below), the last leading to the first; none when there is only one project. A link record becomes: `url` as it is (external), `post` → `/blog/<slug>/`, `project` → `/portfolio/<slug>/`, `file` → `/blog/files/<original name>` (copied as for a post); `data-kind` is the record's `kind`.
+
+**`/portfolio/`**: §3's list, `section.post-list` with `h1` `Projects` and `p.post-lede` the profile's `projects_intro`, then up to two groups, each an `h2` and an `ol`: `<h2 id="selected">Selected projects</h2>` and `<h2 id="more">Experiments &amp; systems</h2>`. Each item is `<li><a href="/portfolio/<slug>/">title</a> <p>summary</p> <p class="post-meta">…the project page's meta…</p></li>`; a quiet project's `li` has `class="quiet"`. The order (the previous site's): the featured projects by rank, then the rest by `order`. Selected: the project with `featured: 1` (else the first) and the next two that are not quiet; a quiet project is never selected unless all are. The rest keep the order.
+
+**`/about/`**: `header`: `p.post-meta` (headline · location), `h1` (name), `p.post-lede` (tagline). `div.post-body`: `<p>` introduction; `h2#story` `The story so far` and a `<p>` per paragraph of `bio`; `h2#focus` `Current focus` and a `<ul>` of focus areas; `h2#curiosities` `Curiosities`, `<p class="post-meta">Updated <time>…</time></p>` (with `curiosities_updated_at`) and `<ul class="post-curiosities"><li><strong>title</strong> <p>note</p> <p class="post-meta">Project: <a href="/portfolio/<slug>/">project name</a></p></li></ul>`; the availability (below); `h2#featured-writing` `Featured writing` and `<p class="post-featured"><a href="/blog/<slug>/">title</a> description</p>`; `h2#elsewhere` `Elsewhere` and `ul.post-links` of the social links, then `Résumé (PDF)` → `/resume/<file>.pdf`.
+
+The availability (on `/about/` and `/contact/`): `h2#availability` `Availability`; `<p class="post-availability" data-status="open"><b>Open</b> · updated <time datetime="2026-09-29">29 September 2026</time></p>`; a `<ul>` of `seeking`; `<p class="post-cta"><a href="/contact/#hiring">cta</a></p>` (`/contact/` when there is no `hiring` route).
+
+**`/experience/`**: `header`: `h1` `Experience`, `p.post-lede` the `work_summary`. `div.post-body`: a `<section class="entry" id="<id>" data-kind="work|education">` per timeline entry, newest first, holding `<img class="entry-logo">` (with `logo`), `<h2>title</h2>`, `<p class="post-meta">organization · period · location · employment</p>`, `<p>summary</p>`, `<ul>` of highlights. The period is the timeline period (below), with ` (expected 2028)` when there is an `expected_end_year` and no end; employment is `Full-time`, `Internship`, …, left out when the title says it (`Internship` beside `… Intern`). The entry's `h2` has no id: the section has it. Then `h2#skills` `Skills`, and per group `<h3 id="…">title</h3><ul class="post-tags"><li>skill</li></ul>`; `h2#credentials` `Credentials` and `<ul class="post-credentials"><li><img class="post-badge"> <a href="verification_url">title</a> <span class="post-meta">issuer · Sep 2023 – Sep 2026</span></li></ul>` (the issuer is left out when the title names it; a lifetime credential or one without an expiry shows its issue month alone; no link without `verification_url`); `h2#talks-and-papers` `Talks and papers` and `<ul class="post-talks"><li><strong>title</strong> <p class="post-meta">Kind · <time datetime="2026-10-23">Oct 2026</time> · venue · authors</p> <p>abstract</p> <ul class="post-links">links, then <a href="/portfolio/<slug>/">Project: name</a></ul></li></ul>`; `h2#resume` `Résumé` and `ul.post-links` with the PDF.
+
+**`/contact/`**: `header`: `h1` `Contact`, `p.post-lede` the `contact_intro`. `div.post-body`: `<p>` the `contact_invitation`; `h2#what-to-write-about` `What to write about` and a `<section class="route" id="<route id>"><h3>title</h3> <p>prompt</p></section>` per route, in the profile's order; `h2#elsewhere` and the links as on `/about/`; the availability. No form, and no address (§7 has none).
+
+Every `img` on these pages has `width`, `height` (the written file's), `alt` (`""` when the data has none: decorative), `loading="lazy"` (except the cover) and `decoding="async"`.
+
+### Dates and labels
+
+- A month and year is `Dec 2022` (three-letter month); with precision `year`, the year alone.
+- A project's period: `start – end`; the same text once when both read the same (`2026`); `start – now` for an `active` project without `ended`; `start` alone for a completed one without `ended`; `c. ` before it when `dates_approximate`; `null` without `started`. Precision: `date_precision` for both ends.
+- A timeline period: the same, with `start_precision` and `end_precision` (absent: month), `– now` when `is_current`.
+- Dates in full (an update, a revision) are §3's `29 September 2026`.
+
+### Images and files
+
+The cover, a body image of a project, a credential's badge and an organization's logo are written to `/media/<source name>.<8 hex>.webp` under §3's rules for `/blog/media/` (longest side at most 1600 px, WebP, metadata stripped, upright; the 8 hex cover the source and the encoding), so `/media/*.webp` is cached for good. A project's cover is also its `og:image` (that WebP). Files a project or the profile links are copied to `/blog/files/<original name>`, as a post's are; the résumé is §1's `/resume/<file>.pdf`.
+
+### What is removed
+
+`public/` also holds files nobody generates, so `tools/site.py` removes only what it wrote: it keeps `public/.generated-files`, the list of every file of its last run, and a later run removes the files on that list it no longer makes (only under `blog/`, `portfolio/`, `about/`, `experience/`, `contact/`, `media/` and `profile.json`, whatever the list says). `blog/` is wholly the generator's, and anything else in it is removed too (§3).
+
+### Head
+
+As a post's (§3): description, canonical link, `og:type`, `og:site_name`, `og:title`, `og:description`, `og:url`, `og:image` (+ width, height, alt) when there is an image, `twitter:card` (`summary_large_image` with an image, else `summary`), the RSS link, one JSON-LD block whose `url` is the canonical URL. Titles: `<what> — <name>`.
+
+| Page | `<title>` (`og:title`) | description | `og:type` | JSON-LD |
+|---|---|---|---|---|
+| `/about/` | `About — <name>` | `seo_description` | `profile` | `ProfilePage`, `mainEntity` the `Person` (`@id` `<SITE>/#person`): description, place, current work, `alumniOf`/`affiliation` (education ended / current), `knowsAbout` (skills), `hasCredential`, `sameAs` (social links) |
+| `/portfolio/` | `Projects — <name>` | `projects_intro` | `website` | `CollectionPage` (`@id` `<SITE>/portfolio/`), `mainEntity` an `ItemList` of `ListItem` (`position`, `url`, `name`) in the page's order |
+| `/portfolio/<slug>/` | `<title> — <name>` (`<title>`) | `summary` | `website` | `CreativeWork`: `name`, `alternateName` (name), `description`, `genre` (types), `keywords` (technologies), `creator`, `isPartOf` the collection, `image` (cover), `sameAs` (its `url` links) |
+| `/experience/` | `Experience — <name>` | `work_summary` | `website` | `WebPage` `about` the `Person` |
+| `/contact/` | `Contact — <name>` | `contact_invitation` | `website` | `ContactPage` `about` the `Person` with `sameAs`; no email, telephone or contactPoint |
+
+### The other files
+
+- `sitemap.xml` lists, after the home page, `/blog/` and the posts: `/about/`, `/portfolio/`, every project (in `/portfolio/`'s order), `/experience/`, `/contact/`, without `<lastmod>` (projects and the profile record no date of change).
+- `llms.txt` gains `## Projects` (the `projects_intro`, then `- [title](<SITE>/portfolio/<slug>/): summary` in `/portfolio/`'s order) and the five pages under `## Site`.
+- `_redirects` keeps `/blog/tags/*` and the résumé's rules only.
+- `_headers`: `/portfolio/`, `/portfolio/:slug/`, `/portfolio/index.json`, `/about/`, `/experience/`, `/contact/` and `/profile.json` are `no-cache`; `/media/*.webp` is `public, max-age=31536000, immutable`.
+
 ### `public/portfolio/index.json`
 
 ```json
@@ -342,6 +424,8 @@ The pages use the article markup of §3 (`header` with `.post-meta`, `h1`, `.pos
 ```
 
 In the projects' own order. `period` is how the dates read (`"Dec 2022 – Oct 2026"`, `"2026"`, `"2022 – now"`; `null` with no dates); `year` the year it began. `role`, `featured` (a rank, 1 first) and `period` may be `null`.
+
+Exactly: the keys in this order; `v` is the first 8 hex of the SHA-256 of the `projects` list as JSON with sorted keys (it changes when anything in the file does); the list is in `order` (§6), not in `/portfolio/`'s order; `status` and `types` are §6's values and `status_label` its label (`Active`, `Complete`); `period` as under *Dates*; `year` is `null` without `started`; `technologies` is `[]` without; `quiet` is `false` without.
 
 ### `public/profile.json`
 
@@ -357,3 +441,5 @@ In the projects' own order. `period` is how the dates read (`"Dec 2022 – Oct 2
 ```
 
 What the rooms show of the profile, as plain text (no markup). `timeline` is newest first. `availability`, `resume`, `contact.email` and the optional fields of a record may be `null`. `url` values are site paths or `http(s)` URLs.
+
+Exactly: the keys in this order. `v` is the first 8 hex of the SHA-256 of the rest of the object as JSON with sorted keys. `focus` is `focus_areas` (`[]` without); `availability.label` is `cta` and `seeking` `[]` without; a curiosity's `kind` is `"question"` when its title ends with `?`, else `null` (§7 has no field for it), `note` may be `null`, `url` is `/portfolio/<slug>/` of its project or `null`; a timeline entry's `period` is the timeline period (above), `year` the year of `start_date`, `current` is `is_current` (`false` without), `location`, `employment` (§7's value, `full-time`) and `summary` may be `null`; `links` are the social links; `contact.routes` are `contact_routes` in the profile's order; `contact.email` is `null` (§7 has no address); `resume` is `/resume/<original name, percent-encoded>` or `null`. `availability` is never `null` today (§7 requires it).
