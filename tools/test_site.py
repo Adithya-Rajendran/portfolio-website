@@ -1,6 +1,7 @@
-"""Tests for tools/site.py, on the fixture tools/testdata/posts/every-construct.md, written into temporary folders.
+"""Tests for tools/site.py's posts, on the fixture tools/testdata/posts/every-construct.md, written into temporary
+folders beside the pages of the real projects and profile (tools/test_site_pages.py tests those, on their fixtures).
     python3 -m unittest tools/test_site.py          (from the repository root; -v lists each test)
-Needs cwebp under ~/.local/opt/webp like site.py itself; the image is encoded once and copied between runs."""
+Needs cwebp under ~/.local/opt/webp like site.py itself; the images are encoded once and copied between runs."""
 import contextlib, importlib.util, io, json, os, random, re, shutil, tempfile, time, unittest
 from html.parser import HTMLParser
 
@@ -345,25 +346,27 @@ class Site(unittest.TestCase):
 
     def test_no_posts(self):
         empty, out = tempfile.mkdtemp(dir=self.tmp), tempfile.mkdtemp(dir=self.tmp)
-        generate(empty, out)
-        self.assertEqual(sorted(os.listdir(os.path.join(out, 'blog'))), ['index.html', 'index.json'])
+        generate(empty, out)                               # blog/files/ holds what the projects link (§8)
+        self.assertEqual(sorted(set(os.listdir(os.path.join(out, 'blog'))) - {'files'}), ['index.html', 'index.json'])
         with open(os.path.join(out, 'blog', 'index.json'), encoding='utf-8') as f:
             self.assertEqual(json.load(f)['posts'], [])
 
     # ------------------------------------------------------------ writing
 
     def test_second_run_writes_nothing(self):
-        self.assertIn('7 written, 0 unchanged, 0 removed', self.log)
+        n = len(re.findall(r'^wrote (?!feed|sitemap|llms|_redirects|resume/)', self.log, re.M))   # site.py's, not site_extras'
+        self.assertIn(f'{n} written, 0 unchanged, 0 removed', self.log)
+        self.assertGreater(n, 7)                           # the post's 7, the record, and the projects' and profile's
         out = self.fresh_out()
         before = snapshot(out)
         log = generate(FIXTURE, out)
-        self.assertEqual(log.strip().splitlines(), ['0 written, 7 unchanged, 0 removed'])
+        self.assertEqual(log.strip().splitlines(), [f'0 written, {n} unchanged, 0 removed'])
         self.assertEqual(snapshot(out), before)
 
     def test_removed_post_is_removed(self):
-        other = ('---\ntitle: "Other"\ndescription: "Another post."\npublished: 2026-02-10\n---\n'
-                 '![A photo.](../assets/images/12840419b409b9b20e54683e668a4d2a76e26f67-1536x864.jpg)\n\n'
-                 'A [report](../assets/files/fc41d42d9b66390887e20ff239a1361e55975238.pdf).\n')
+        other = ('---\ntitle: "Other"\ndescription: "Another post."\npublished: 2026-02-10\n---\n'   # an image and a file no project uses
+                 '![A photo.](../assets/images/b70060c0abca9a0239f186395795e2e8fb2538cb-3000x4000.jpg)\n\n'
+                 'A [CV](../assets/files/e70b01e95fdcf9f4e5d8ad06a0e32b28f62060c2.pdf).\n')
         posts, out = self.posts_dir(other=other), self.fresh_out()
         generate(posts, out)
         made = snapshot(out)

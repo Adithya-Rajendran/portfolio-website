@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """The site's static endpoints, written by tools/site.py's main() beside the pages (docs/v1-contracts.md §1):
-feed.xml (RSS 2.0, full articles), sitemap.xml, llms.txt, resume/<file>.pdf and _redirects. robots.txt and _headers
-are plain committed files. There is no server, so each is written once from the posts and the profile, and nothing in
-them depends on the time of the run: a second run writes nothing.
+feed.xml (RSS 2.0, full articles), sitemap.xml and llms.txt (with the pages of §8 and the projects), resume/<file>.pdf
+and _redirects. robots.txt and _headers are plain committed files. There is no server, so each is written once from
+the posts, the projects and the profile, and nothing in them depends on the time of the run: a second run writes nothing.
 
-    build(posts, profile) -> {path under public: bytes}       (raises ContentError; writes nothing)
+    build(posts, profile, projects) -> {path under public: bytes}       (raises ContentError; writes nothing)
     write(out, files)                                          (changed files only; prunes out/resume/)
 
 Every URL written here is absolute on content.SITE, except in _redirects, where Cloudflare wants paths."""
@@ -19,11 +19,9 @@ from content import ContentError, DATA, SITE
 # `*` takes the rest of the path. 'RESUME' is the PDF's path, which comes from the data. The versions with a trailing
 # slash are there because Cloudflare matches the path as written. /studio, /api/contact, /openapi.json and
 # /.well-known/api-catalog are gone, and the _redirects syntax has no way to say 410: they are simply 404.
+# /about, /contact, /portfolio and /portfolio/<slug> are pages again (§8): Cloudflare adds their trailing slash itself.
 REDIRECTS = [
     ('/blog/tags/*', '/blog/'),
-    ('/portfolio', '/?room=projects'), ('/portfolio/', '/?room=projects'), ('/portfolio/*', '/?room=projects'),
-    ('/about', '/?room=about'), ('/about/', '/?room=about'),
-    ('/contact', '/?room=comms'), ('/contact/', '/?room=comms'),
     ('/resume', 'RESUME'), ('/resume/', 'RESUME'),
     ('/resume/view', 'RESUME'), ('/resume/view/', 'RESUME'),
     ('/resume/download', 'RESUME'), ('/resume/download/', 'RESUME'),
@@ -77,6 +75,15 @@ def absolute(html):
 
 def post_url(post):
     return f'{SITE}/blog/{post["slug"]}/'
+
+
+def project_url(project):
+    return f'{SITE}/portfolio/{project["slug"]}/'
+
+
+def ordered(projects):
+    """The projects in the order /portfolio/ lists them (site.py's listing())."""
+    return sum(sitegen().listing(list(projects)), []) if projects else []
 
 
 def resume(profile):
@@ -137,11 +144,14 @@ def feed_xml(posts, profile):
             f'{body}\n  </channel>\n</rss>\n')
 
 
-def sitemap_xml(posts):
-    """The home page, the list and every post. A post is dated by its last revision (else its publication), the list
-    and the home page by the newest of those. The rooms (/?room=...) are not pages of their own, so they are left out."""
+def sitemap_xml(posts, projects=()):
+    """The home page, the list and every post; then the pages of the rooms (§8) and every project, in /portfolio/'s
+    order. A post is dated by its last revision (else its publication), the list and the home page by the newest of
+    those. Projects and the profile record no date of change, so their pages have no <lastmod>."""
     stamp = newest(posts)
     pages = [(f'{SITE}/', stamp), (f'{SITE}/blog/', stamp)] + [(post_url(p), modified(p)) for p in posts]
+    pages += [(f'{SITE}/about/', None), (f'{SITE}/portfolio/', None)] + [(project_url(p), None) for p in ordered(projects)]
+    pages += [(f'{SITE}/experience/', None), (f'{SITE}/contact/', None)]
     urls = ''.join(f'  <url>\n    <loc>{esc(u)}</loc>\n' + (f'    <lastmod>{d}</lastmod>\n' if d else '') + '  </url>\n' for u, d in pages)
     return f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}</urlset>\n'
 
@@ -151,7 +161,7 @@ def md_link_text(s):
     return re.sub(r'([\\\[\]])', r'\\\1', ' '.join(str(s).split()))
 
 
-def llms_txt(posts, profile, resume_name):
+def llms_txt(posts, profile, resume_name, projects=()):
     """The llms.txt convention (llmstxt.org), as the previous site wrote it: a title, a one-line summary in a quote,
     a few lines of detail, then sections of `- [title](url): notes`."""
     name, one_line = profile['name'], lambda s: ' '.join(str(s).split())
@@ -160,13 +170,20 @@ def llms_txt(posts, profile, resume_name):
         lines += [f'> {one_line(profile.get("work_summary") or profile["headline"])}', '']
     lines += [f'This is the personal site of {one_line(name)}'
               + (f' ({one_line(profile["headline"])}, {one_line(profile["location"])}).' if profile.get('headline') and profile.get('location') else '.'),
-              'The home page is an interactive 3D scene (it needs JavaScript and WebGL) whose rooms hold the about, projects, '
-              'experience and contact pages. The writing and the résumé are plain pages that need neither. Follow the rules in robots.txt.',
+              'The home page is an interactive 3D scene (it needs JavaScript and WebGL). Each of its rooms is also a plain page '
+              'that needs neither: about, projects, experience, writing and contact. Follow the rules in robots.txt.',
               '', '## Writing']
     if profile.get('writing_description'):
         lines += [one_line(profile['writing_description']), '']
     lines += [f'- [{md_link_text(p["title"])}]({post_url(p)}): {one_line(p["description"])}' for p in posts]
-    lines += ['', '## Site', f'- [Home]({SITE}/): the 3D atrium', f'- [Writing]({SITE}/blog/): the list of posts']
+    lines += ['', '## Projects']
+    if profile.get('projects_intro'):
+        lines += [one_line(profile['projects_intro']), '']
+    lines += [f'- [{md_link_text(p["title"])}]({project_url(p)}): {one_line(p["summary"])}' for p in ordered(projects)]
+    lines += ['', '## Site', f'- [Home]({SITE}/): the 3D atrium', f'- [About]({SITE}/about/): who I am, what I work on, and where',
+              f'- [Projects]({SITE}/portfolio/): the list of projects',
+              f'- [Experience]({SITE}/experience/): the timeline, skills, credentials, talks and papers',
+              f'- [Writing]({SITE}/blog/): the list of posts', f'- [Contact]({SITE}/contact/): what to write about, and where']
     if resume_name:
         lines.append(f'- [Résumé (PDF)]({SITE}/resume/{quote(resume_name)})')
     lines += [f'- [RSS feed]({SITE}/feed.xml): every post in full', f'- [Sitemap]({SITE}/sitemap.xml)', f'- [robots.txt]({SITE}/robots.txt)', '']
@@ -181,11 +198,11 @@ def redirects_txt(resume_name):
            ''.join(f'{s} {t} 301\n' for s, t in rules)
 
 
-def build(posts, profile):
+def build(posts, profile, projects=()):
     """Everything this module writes, in memory: {path under public: bytes}."""
-    files = {'feed.xml': feed_xml(posts, profile), 'sitemap.xml': sitemap_xml(posts)}
+    files = {'feed.xml': feed_xml(posts, profile), 'sitemap.xml': sitemap_xml(posts, projects)}
     cv = resume(profile)
-    files['llms.txt'] = llms_txt(posts, profile, cv and cv[0])
+    files['llms.txt'] = llms_txt(posts, profile, cv and cv[0], projects)
     files['_redirects'] = redirects_txt(cv and cv[0])
     files = {k: v.encode('utf-8') for k, v in files.items()}
     if cv:

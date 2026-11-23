@@ -17,8 +17,10 @@ PUBLIC = os.path.join(s.ROOT, 'public')
 SITE = s.SITE
 NS = {'atom': 'http://www.w3.org/2005/Atom', 'content': 'http://purl.org/rss/1.0/modules/content/',
       'dc': 'http://purl.org/dc/elements/1.1/', 'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-# The old URLs of docs/v1-contracts.md §1. Each must be redirected, and nothing else (a trailing slash aside).
-OLD = {'/blog/tags/*', '/portfolio', '/portfolio/*', '/about', '/contact', '/resume', '/resume/view', '/resume/download'}
+# The old URLs of docs/v1-contracts.md §1 that are not pages again (§8: /about, /contact and /portfolio* are). Each must
+# be redirected, and nothing else (a trailing slash aside).
+OLD = {'/blog/tags/*', '/resume', '/resume/view', '/resume/download'}
+PAGES = {'/about', '/about/', '/contact', '/contact/', '/portfolio', '/portfolio/', '/portfolio/*'}
 # A second post that is newer than the fixture, with every character an XML or Markdown writer must get right.
 NASTY_TITLE = 'Tom & Jerry: <b>"bold"</b> [brackets] \\ and \'quotes\''
 OTHER = ('---\ntitle: %s\ndescription: %s\npublished: 2026-03-01\ntags: ["a-tag", "b & c"]\n---\n'
@@ -73,6 +75,7 @@ class Extras(unittest.TestCase):
         shutil.copytree(cls.one, cls.two)                  # the encoded image comes along
         generate(cls.posts2, cls.two)
         cls.profile = s.load_profile()
+        cls.projects = s.load_projects()
         cls.all_posts = {p['slug']: p for p in s.load_posts(cls.posts2)}
 
     @classmethod
@@ -160,9 +163,13 @@ class Extras(unittest.TestCase):
                 for u in ET.fromstring(read(out, 'sitemap.xml', 'rb')).findall('sm:url', NS)]
 
     def test_sitemap_pages_and_dates_in_order(self):
+        listed = [p['slug'] for p in sum(s.listing(self.projects), [])]
+        self.assertEqual(sorted(listed), sorted(p['slug'] for p in self.projects))
         self.assertEqual(self.sitemap(self.two), [
             (f'{SITE}/', '2026-03-01'), (f'{SITE}/blog/', '2026-03-01'),
-            (f'{SITE}/blog/other/', '2026-03-01'), (f'{SITE}/blog/every-construct/', '2026-02-01')])   # revised, else published
+            (f'{SITE}/blog/other/', '2026-03-01'), (f'{SITE}/blog/every-construct/', '2026-02-01'),   # revised, else published
+            (f'{SITE}/about/', None), (f'{SITE}/portfolio/', None)] + [(f'{SITE}/portfolio/{p}/', None) for p in listed]
+            + [(f'{SITE}/experience/', None), (f'{SITE}/contact/', None)])                         # no date of change
 
     def test_sitemap_lists_exactly_the_pages_that_exist(self):
         for out in (self.one, self.two):
@@ -189,6 +196,12 @@ class Extras(unittest.TestCase):
             f'- [{self.all_posts["every-construct"]["title"]}]({SITE}/blog/every-construct/): {self.all_posts["every-construct"]["description"]}'])
         cv = [n for n in os.listdir(os.path.join(self.two, 'resume'))]
         self.assertIn(f'- [Résumé (PDF)]({SITE}/resume/{cv[0]})', lines)
+        a, b = lines.index('## Projects'), lines.index('## Site')
+        self.assertEqual(lines[a + 1:a + 3], [self.profile['projects_intro'], ''])
+        self.assertEqual(lines[a + 3:b - 1], [f'- [{p["title"]}]({SITE}/portfolio/{p["slug"]}/): {p["summary"]}'
+                                              for p in sum(s.listing(self.projects), [])])
+        for page in ('about/', 'portfolio/', 'experience/', 'blog/', 'contact/'):
+            self.assertEqual(sum(l.startswith('- [') and l.split('](')[1].startswith(f'{SITE}/{page})') for l in lines[b:]), 1, page)
         self.assertIn(f'- [RSS feed]({SITE}/feed.xml): every post in full', lines)
         self.assertEqual(text.count('\n\n\n'), 0)
         self.assertTrue(text.endswith('\n') and not text.endswith('\n\n'))
@@ -243,6 +256,7 @@ class Extras(unittest.TestCase):
             self.assertTrue(r[0].startswith('/') and r[1].startswith('/'), r)
             self.assertIn(self.old(r[0]), OLD, r)           # a trailing slash is the only addition
         self.assertEqual({self.old(r[0]) for r in rules}, OLD)   # and every old URL has a rule
+        self.assertFalse({r[0] for r in rules} & PAGES)          # and a page has none
         contract = read(s.ROOT, 'docs/v1-contracts.md')
         for old in OLD:
             self.assertIn(f'`{old}`', contract)
@@ -300,8 +314,15 @@ class Extras(unittest.TestCase):
             want = ['public, max-age=31536000, immutable'] if m.endswith('.webp') else []
             self.assertEqual(self.cache('/blog/media/' + m), want, m)
         self.assertEqual(self.cache('/blog/files/gui-lxd-profile.yaml'), [])                  # original name: Cloudflare's default
-        for page in ('/blog/', '/blog/every-construct/', '/blog/index.json'):
+        for page in ('/blog/', '/blog/every-construct/', '/blog/index.json', '/portfolio/', '/portfolio/homelab/',
+                     '/portfolio/index.json', '/about/', '/experience/', '/contact/', '/profile.json'):
             self.assertEqual(self.cache(page), ['no-cache'], page)
+        self.assertTrue(os.listdir(os.path.join(self.one, 'media')))
+        for m in os.listdir(os.path.join(self.one, 'media')):   # every image of a project or the profile is re-encoded
+            self.assertRegex(m, r'^.+\.[0-9a-f]{8}\.webp$')
+            self.assertEqual(self.cache('/media/' + m), ['public, max-age=31536000, immutable'], m)
+        for path in ('/about', '/portfolio', '/portfolio/homelab', '/media/', '/media/x.png', '/profile.json.bak'):
+            self.assertEqual(self.cache(path), [], path)
         for path in ('/feed.xml', '/sitemap.xml', '/llms.txt', '/robots.txt'):
             self.assertEqual(self.cache(path), ['public, max-age=3600'], path)
         self.assertEqual(self.cache('/resume/Adithya-Rajendran-Research-CV.pdf'), ['no-cache'])
@@ -321,7 +342,7 @@ class Extras(unittest.TestCase):
 
     def test_the_same_bytes_wherever_and_whenever(self):
         posts = s.load_posts(FIXTURE)
-        a, b = x.build(posts, self.profile), x.build(posts, self.profile)
+        a, b = x.build(posts, self.profile, self.projects), x.build(posts, self.profile, self.projects)
         self.assertEqual(a, b)
         for name in ('feed.xml', 'sitemap.xml', 'llms.txt', '_redirects'):
             self.assertEqual(a[name], read(self.one, name, 'rb'))
@@ -334,7 +355,7 @@ class Extras(unittest.TestCase):
         files = x.build([], self.profile)
         ch = ET.fromstring(files['feed.xml']).find('channel')
         self.assertEqual((ch.findall('item'), ch.find('lastBuildDate')), ([], None))
-        self.assertEqual([u.findtext('sm:lastmod', namespaces=NS) for u in ET.fromstring(files['sitemap.xml']).findall('sm:url', NS)], [None, None])
+        self.assertEqual([u.findtext('sm:lastmod', namespaces=NS) for u in ET.fromstring(files['sitemap.xml']).findall('sm:url', NS)], [None] * 6)
         self.assertIn(b'## Writing', files['llms.txt'])
 
     def test_bad_data_writes_nothing(self):

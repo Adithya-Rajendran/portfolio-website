@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-"""Turn the posts (data/posts/*.md, read by tools/content.py) into pages, as docs/v1-contracts.md §3 specifies:
-    python3 tools/site.py [--posts data/posts] [--out public]
-writes blog/index.json, blog/index.html, blog/<slug>/index.html, blog/media/* and blog/files/* under --out. Every page
-is public/index.html (the shell) with its <title>, <!--site:head--> and <!--site:page--> replaced. Everything is
-rendered (and every image encoded) before a single file is written, so a bad post leaves the output as it was; files
-whose content is unchanged are not touched, and anything under blog/ that this run did not produce is removed.
+"""Turn the content in data/ (read by tools/content.py) into pages, as docs/v1-contracts.md §3 and §8 specify:
+    python3 tools/site.py [--posts data/posts] [--projects data/projects] [--profile data/profile.json] [--out public]
+writes, under --out: blog/index.json, blog/index.html, blog/<slug>/index.html, blog/media/* and blog/files/* from the
+posts; portfolio/index.json, portfolio/index.html, portfolio/<slug>/index.html, about/, experience/ and contact/
+index.html, profile.json and media/* from the projects and the profile; and, through tools/site_extras.py, the feed,
+the sitemap, llms.txt, the résumé and _redirects. Every page is public/index.html (the shell) with its <title>,
+<!--site:head--> and <!--site:page--> replaced. Everything is rendered (and every image encoded) before a single file
+is written, so a mistake anywhere leaves the output as it was; files whose content is unchanged are not touched; what
+an earlier run wrote and this one does not make is removed (RECORD lists it), and so is anything else under blog/.
 Images need cwebp and dwebp (libwebp) under ~/.local/opt/webp (tools/get-pack-tools.sh).
+--posts, --projects and --profile exist for the tests, which read fixtures (tools/testdata/).
 
 The functions are meant to be imported (render_markdown, render_inline, escape, human_date, page): the feed, the sitemap
 and llms.txt are built from the same pieces. `import site` gives Python's own startup module, so load this file by path:
     spec = importlib.util.spec_from_file_location('sitegen', 'tools/site.py')
     sitegen = importlib.util.module_from_spec(spec); spec.loader.exec_module(sitegen)"""
-import argparse, bisect, hashlib, html, json, os, re, shutil, subprocess, sys, tempfile
+import argparse, bisect, copy, hashlib, html, json, os, re, shutil, subprocess, sys, tempfile
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from content import ContentError, DATA, ROOT, SITE, image_file, load_posts, load_profile
+from content import ContentError, DATA, ROOT, SITE, image_file, load_posts, load_profile, load_projects
 import site_extras                                         # feed, sitemap, llms.txt, résumé, _redirects
 
 SHELL = os.path.join(ROOT, 'public', 'index.html')
@@ -173,12 +177,23 @@ def file_names():
 # ---------------------------------------------------------------- Markdown
 
 class Doc:
-    """What rendering one post collects: ids in use, sections (h2, h3), the images and files it needs, warnings.
-    `taken` are ids already in the page around the article (the shell's), which headings must not repeat."""
-    def __init__(self, name='post', first_line=1, taken=(), slugs=None):
+    """What rendering one page collects: ids in use, sections (h2, h3), the images and files it needs, warnings.
+    `taken` are ids already in the page around the article (the shell's), which headings must not repeat. `slugs` and
+    `projects` are the posts and projects that exist (None: not checked, or data/projects/ for projects).
+    A post's images go to /blog/media/ and its links to a project to the room (§3); the pages of §8 (projects and the
+    profile) set media='/media' and project_pages, and link a project's own page."""
+    def __init__(self, name='post', first_line=1, taken=(), slugs=None, media='/blog/media', projects=None, project_pages=False):
         self.name, self.first_line, self.ids, self.slugs = name, first_line, set(taken), slugs
+        self.media_url, self.projects, self.project_pages = media, projects, project_pages
         self.sections, self.media, self.files, self.warnings = [], {}, {}, []
         self._files = None
+
+    def part(self, what):
+        """The same page, for one field of its header: messages name the field; ids, images, files and warnings are
+        the page's own (shared, not copied)."""
+        d = copy.copy(self)
+        d.name, d.first_line = f'{self.name}, {what}', None
+        return d
 
     def where(self, line):
         return f'{self.name}, line {line}' if line else self.name
@@ -196,14 +211,14 @@ class Doc:
         return new
 
     def image(self, file, line):
-        """A body image -> (URL, width, height) of its WebP in /blog/media/."""
+        """An image -> (URL, (width, height)) of its WebP in the page's media folder (/blog/media/ or /media/)."""
         src = image_file(file)
         if not src:
             self.error(line, f'image {file} is not in data/assets/images/')
         size = display_size(src)[1]
-        name = media_name(src)
-        self.media[name] = (src, size)
-        return f'/blog/media/{name}', size
+        url = f'{self.media_url}/{media_name(src)}'
+        self.media[url[1:]] = (src, size)                 # keyed by the path it is written to under --out
+        return url, size
 
     def link(self, url, line, check_only=False):
         """The link policy: (href, external), or None when the link is refused and only its text is written.
@@ -218,8 +233,11 @@ class Doc:
         if url.startswith('/') and not url.startswith('//') and '\\' not in url:   # '/\host' is '//host' to a browser
             m = re.match(r'^/portfolio(?:/([a-z0-9-]+))?/?$', url)
             if m:
-                if m[1] and not os.path.isfile(os.path.join(DATA, 'projects', f'{m[1]}.json')):
+                if m[1] and not (m[1] in self.projects if self.projects is not None
+                                 else os.path.isfile(os.path.join(DATA, 'projects', f'{m[1]}.md'))):
                     warn(f'{self.where(line)}: no project {m[1]} in data/projects/')
+                if self.project_pages:
+                    return (f'/portfolio/{m[1]}/' if m[1] else '/portfolio/'), False
                 return ('/?room=projects&project=' + m[1] if m[1] else '/?room=projects'), False
             m = re.match(r'^/blog/([a-z0-9-]+)/', url)
             if m and self.slugs is not None and m[1] not in self.slugs and m[1] not in ('media', 'files'):
@@ -788,29 +806,460 @@ def body_start(path):
     return k + 1
 
 
-def build(posts_dir, out):
+# ---------------------------------------------------------------- projects and the profile (docs/v1-contracts.md §8)
+# Labels and date wording as the previous site printed them (lib/project-content.ts, lib/cv.ts, lib/dates.ts), except
+# that an open-ended period reads "– now" (the contract's word) where it read "– present".
+
+SHORT_MONTHS = tuple(m[:3] for m in MONTHS)
+STATUS = {'active': 'Active', 'completed': 'Complete'}
+TYPES = {'software': 'Software', 'infrastructure': 'Infrastructure', 'research': 'Research', 'hardware': 'Hardware'}
+SELECTED = 3                                               # the flagship and the next two: the previous site's tiers
+PERSON_ID = f'{SITE}/#person'                              # one Person node, named by every page's JSON-LD
+
+
+def month_year(iso, precision):
+    """2024-05-01 -> 'May 2024'; with precision 'year' only the year, so a month is never invented."""
+    return iso[:4] if precision == 'year' else f'{SHORT_MONTHS[int(iso[5:7]) - 1]} {iso[:4]}'
+
+
+def period(start, end, start_precision, end_precision, now=False, approximate=False):
+    """How a span of dates reads: 'Dec 2022 – Oct 2026', '2026' (both ends the same), '2022 – now', 'c. 2024 – 2025';
+    None without a start."""
+    if not start:
+        return None
+    a, b = month_year(start, start_precision), end and month_year(end, end_precision)
+    text = f'{a} – now' if now else a if not b or a == b else f'{a} – {b}'
+    return f'c. {text}' if approximate else text
+
+
+def project_period(p):
+    return period(p['started'], p['ended'], p['date_precision'], p['date_precision'], p['status'] == 'active' and not p['ended'],
+                  p['dates_approximate'])
+
+
+def entry_period(e):
+    return period(e['start_date'], e['end_date'], e['start_precision'], e['end_precision'], bool(e['is_current']) and not e['end_date'])
+
+
+def listing(projects):
+    """The projects as /portfolio/ lists them -> (selected, more), as the previous site did (lib/missions.ts): the
+    featured first by rank, then the rest by `order`; the flagship (featured 1, else the first) and the next two that are
+    not quiet are the selected ones, and the rest keep that order. A quiet project is never selected, unless all are."""
+    ranked = sorted(projects, key=lambda p: (p['featured'] or float('inf'), p['order']))
+    loud = [p for p in ranked if not p['quiet']] or ranked
+    first = next((p for p in loud if p['featured'] == 1), loud[0]) if loud else None
+    selected = ([first] if first else []) + [p for p in loud if p is not first][:SELECTED - 1]
+    return selected, [p for p in ranked if p not in selected]
+
+
+def page_doc(name, site):
+    """A Doc for one of the §8 pages: images to /media/, a project linked as its page."""
+    return Doc(name, None, site['taken'], set(site['posts']), media='/media', projects=set(site['projects']), project_pages=True)
+
+
+def reserve(doc, ids, what):
+    """Ids the data fixes (a timeline entry's, a contact route's): they are the addresses of those parts, so they are
+    used as they are, and nothing else on the page may take them."""
+    for i in ids:
+        if i in doc.ids:
+            raise ContentError(f'{doc.name}: {what} id {i} is already an id of the page (the shell\'s, or another {what})')
+        doc.ids.add(i)
+
+
+def person(profile, **more):
+    return {'@type': 'Person', '@id': PERSON_ID, 'name': profile['name'], 'url': f'{SITE}/', **more}
+
+
+def page_head(profile, title, description, path, ld, og_type='website', og_title=None, image=None):
+    """The head tags of a §8 page, in the order a post's are written. image: (absolute URL, width, height, alt)."""
+    url = SITE + path
+    head = [meta('description', description, 'name'), f'<link rel="canonical" href="{escape(url)}">', meta('og:type', og_type),
+            meta('og:site_name', profile['name']), meta('og:title', og_title or title), meta('og:description', description),
+            meta('og:url', url)]
+    if image:
+        head += [meta('og:image', image[0]), meta('og:image:width', image[1]), meta('og:image:height', image[2]),
+                 meta('og:image:alt', image[3])]
+    head += [meta('twitter:card', 'summary_large_image' if image else 'summary', 'name'), rss_link(profile),
+             json_ld({'@context': 'https://schema.org', **ld, 'url': url})]
+    return '\n'.join(head)
+
+
+def anchor(doc, address, text_html):
+    """A link through the link policy (§3): its text alone when the address is refused."""
+    to = doc.link(address, None)
+    if to is None:
+        return text_html
+    return f'<a href="{escape(to[0])}"' + (' target="_blank" rel="noopener"' if to[1] else '') + f'>{text_html}</a>'
+
+
+def link_address(link):
+    """A link record (§6) -> the address the link policy is asked about: a file is copied to /blog/files/."""
+    return (link['url'] or (link['post'] and f'/blog/{link["post"]}/') or (link['project'] and f'/portfolio/{link["project"]}/')
+            or f'../assets/files/{link["file"]}')
+
+
+def links_list(doc, items, indent='    '):
+    """ul.post-links from (address, label, kind or None)."""
+    lis = ''.join(f'<li{f" data-kind=\"{escape(k)}\"" if k else ""}>{anchor(doc, a, escape(t))}</li>' for a, t, k in items)
+    return f'{indent}<ul class="post-links">{lis}</ul>'
+
+
+def h2(doc, title, base):
+    return f'    <h2 id="{doc.unique_id(base)}">{escape(title)}</h2>'
+
+
+def img(src, size, alt, cls, lazy=True):
+    return (f'<img class="{cls}" src="{escape(src)}" width="{size[0]}" height="{size[1]}" alt="{escape(alt or "")}"'
+            + (' loading="lazy"' if lazy else '') + ' decoding="async">')
+
+
+def project_meta(p):
+    """'<span class="post-status">Active</span> · 2022 – now · Infrastructure': status, period, types."""
+    per = project_period(p)
+    return ' · '.join([f'<span class="post-status">{STATUS[p["status"]]}</span>'] + ([escape(per)] if per else [])
+                      + [escape(', '.join(TYPES[t] for t in p['types']))])
+
+
+def project_page(shell, p, doc, profile, site, next_project):
+    """/portfolio/<slug>/: article.post.project. The header, the cover, then the file's parts in div.post-body, each
+    under an h2: the brief, the body, highlights, results, parameters, lessons, next steps, links, related writing."""
+    related = [q for q in site['posts'].values() if p['slug'] in q['projects']]
+    fixed = [(k, t) for k, t, have in (
+        ('problem', 'Problem', p['problem']), ('approach', 'Approach', p['approach']), ('outcome', 'Outcome', p['outcome']),
+        ('highlights', 'Highlights', p['highlights']), ('results', 'Results', p['results']),
+        ('parameters', 'Parameters', p['parameters']), ('lessons', 'Lessons', p['lessons']),
+        ('next-steps', 'Next steps', p['next_steps']), ('links', 'Links', p['links']),
+        ('related-writing', 'Related writing', related)) if have]
+    ids = {k: doc.unique_id(k) for k, _ in fixed}         # first, so a body heading with the same words gets the -2
+    body, doc = render_markdown(p['body'], doc=doc)
+    sec = lambda k, html: f'    <h2 id="{ids[k]}">{escape(dict(fixed)[k])}</h2>\n    {html}'
+    inline = lambda k: '<ul>' + ''.join(f'<li>{render_inline(t, doc.part(f"`{k}[{i}]`"))}</li>' for i, t in enumerate(p[k])) + '</ul>'
+    parts = []
+    for k in ('problem', 'approach', 'outcome'):
+        if p[k]:
+            parts.append(sec(k, f'<p>{escape(p[k])}</p>'))
+    if body:
+        parts.append(body)
+    if p['highlights']:
+        parts.append(sec('highlights', inline('highlights')))
+    if p['results']:
+        parts.append(sec('results', '<dl class="post-facts">' + ''.join(
+            f'<dt>{escape(r["metric"])}</dt><dd>{escape(r["value"])}</dd>' + (f'<dd class="post-note">{escape(r["note"])}</dd>' if r['note'] else '')
+            for r in p['results']) + '</dl>'))
+    if p['parameters']:
+        parts.append(sec('parameters', '<dl class="post-facts">' + ''.join(
+            f'<dt>{escape(r["label"])}</dt><dd>{escape(r["value"])}</dd>' for r in p['parameters']) + '</dl>'))
+    for k in ('lessons', 'next_steps'):
+        if p[k]:
+            parts.append(sec(k.replace('_', '-'), inline(k)))
+    if p['links']:
+        parts.append(sec('links', links_list(doc.part('`links`'), [(link_address(l), l['label'], l['kind']) for l in p['links']], '').strip()))
+    if related:
+        parts.append(sec('related-writing', links_list(doc, [(f'/blog/{q["slug"]}/', q['title'], None) for q in related], '').strip()))
+
+    path, cover, card = f'/portfolio/{p["slug"]}/', '', None
+    if p['cover']:
+        src, size = doc.image(p['cover'], None)
+        cap = f'<figcaption>{escape(p["cover_caption"])}</figcaption>' if p['cover_caption'] else ''
+        cover = f'  <figure class="post-cover">{img(src, size, p["cover_alt"], "post-cover-image", lazy=False)}{cap}</figure>'
+        card = (SITE + src, size[0], size[1], p['cover_alt'] or p['title'])
+    head = ['  <header>', f'    <p class="post-meta">{project_meta(p)}</p>', f'    <h1>{escape(p["title"])}</h1>',
+            f'    <p class="post-lede">{escape(p["summary"])}</p>']
+    if p['role']:
+        head.append(f'    <p class="post-role"><b>Role</b> {escape(p["role"])}</p>')
+    if p['status_note']:
+        head.append(f'    <p class="post-status-note">{escape(p["status_note"])}</p>')
+    if p['technologies']:
+        head.append('    <ul class="post-tags">' + ''.join(f'<li>{escape(t)}</li>' for t in p['technologies']) + '</ul>')
+    head.append('  </header>')
+    main = ['<main id="page">', f'<article class="post project" data-slug="{escape(p["slug"])}">', *head]
+    if cover:
+        main.append(cover)
+    if parts:
+        main += ['  <div class="post-body">', *parts, '  </div>']
+    if next_project:
+        main += ['  <footer>', f'    <p class="post-next"><a href="/portfolio/{escape(next_project["slug"])}/"><span>Next</span> '
+                 f'{escape(next_project["title"])}</a></p>', '  </footer>']
+    main += ['</article>', '</main>']
+
+    ld = {'@type': 'CreativeWork', 'name': p['title'], 'alternateName': p['name'], 'description': p['summary'],
+          'genre': ', '.join(TYPES[t] for t in p['types']), 'creator': person(profile),
+          'isPartOf': {'@type': 'CollectionPage', '@id': f'{SITE}/portfolio/'}}
+    if p['technologies']:
+        ld['keywords'] = ', '.join(p['technologies'])
+    if card:
+        ld['image'] = card[0]
+    same = [l['url'] for l in p['links'] if l['url']]
+    if same:
+        ld['sameAs'] = same
+    title = f'{p["title"]} — {profile["name"]}'
+    return page(shell, title, page_head(profile, title, p['summary'], path, ld, og_title=p['title'], image=card), '\n'.join(main)), doc
+
+
+def portfolio_page(shell, profile, site):
+    """/portfolio/: section.post-list, the projects in the previous site's two groups."""
+    doc = page_doc('/portfolio/', site)
+    selected, more = listing(site['projects'].values())
+    title = f'Projects — {profile["name"]}'
+    item = lambda p: (f'    <li{" class=\"quiet\"" if p["quiet"] else ""}><a href="/portfolio/{escape(p["slug"])}/">{escape(p["title"])}</a> '
+                      f'<p>{escape(p["summary"])}</p>\n        <p class="post-meta">{project_meta(p)}</p></li>')
+    main = ['<main id="page">', '<section class="post-list">', '  <h1>Projects</h1>', f'  <p class="post-lede">{escape(profile["projects_intro"])}</p>']
+    for group, name, base in ((selected, 'Selected projects', 'selected'), (more, 'Experiments & systems', 'more')):
+        if group:
+            main += [h2(doc, name, base)[2:], '  <ol>', *map(item, group), '  </ol>']
+    main += ['</section>', '</main>']
+    ld = {'@type': 'CollectionPage', '@id': f'{SITE}/portfolio/', 'name': title, 'description': profile['projects_intro'],
+          'author': person(profile),
+          'mainEntity': {'@type': 'ItemList', 'itemListElement': [
+              {'@type': 'ListItem', 'position': i, 'url': f'{SITE}/portfolio/{p["slug"]}/', 'name': p['title']}
+              for i, p in enumerate(selected + more, 1)]}}
+    return page(shell, title, page_head(profile, title, profile['projects_intro'], '/portfolio/', ld), '\n'.join(main)), doc
+
+
+def availability(doc, profile, routes):
+    """The availability: its status, what is sought, and the call to action, which leads to the contact page (at the
+    hiring route when there is one)."""
+    a = profile['availability']
+    when = f' · updated <time datetime="{a["updated_at"]}">{human_date(a["updated_at"])}</time>' if a['updated_at'] else ''
+    out = [h2(doc, 'Availability', 'availability'),
+           f'    <p class="post-availability" data-status="{escape(a["status"])}"><b>{escape(a["status"].capitalize())}</b>{when}</p>']
+    if a['seeking']:
+        out.append('    <ul>' + ''.join(f'<li>{escape(s)}</li>' for s in a['seeking']) + '</ul>')
+    out.append(f'    <p class="post-cta"><a href="/contact/{"#hiring" if "hiring" in routes else ""}">{escape(a["cta"])}</a></p>')
+    return out
+
+
+def elsewhere(doc, profile, site):
+    """The social links and the résumé."""
+    items = [(l['url'], l['label'], None) for l in profile['social_links']]
+    if site['resume']:
+        items.append((site['resume'], 'Résumé (PDF)', None))
+    return [h2(doc, 'Elsewhere', 'elsewhere'), links_list(doc.part('`social_links`'), items)]
+
+
+def article_page(shell, slug, title, header, body, head):
+    main = ['<main id="page">', f'<article class="post page" data-slug="{slug}">', '  <header>', *header, '  </header>',
+            '  <div class="post-body">', *body, '  </div>', '</article>', '</main>']
+    return page(shell, title, head, '\n'.join(main))
+
+
+def about_page(shell, profile, site):
+    """/about/: who (name, tagline, headline, place), the introduction and the story, focus, curiosities, availability,
+    the featured post, the links and the résumé."""
+    doc, name = page_doc('data/profile.json', site), profile['name']
+    header = [f'    <p class="post-meta">{escape(profile["headline"])} · {escape(profile["location"])}</p>',
+              f'    <h1>{escape(name)}</h1>', f'    <p class="post-lede">{escape(profile["tagline"])}</p>']
+    body = [f'    <p>{escape(profile["introduction"])}</p>', h2(doc, 'The story so far', 'story'),
+            *(f'    <p>{escape(para)}</p>' for para in profile['bio'].split('\n\n'))]
+    if profile['focus_areas']:
+        body += [h2(doc, 'Current focus', 'focus'), '    <ul>' + ''.join(f'<li>{escape(f)}</li>' for f in profile['focus_areas']) + '</ul>']
+    if profile['current_curiosities']:
+        body.append(h2(doc, 'Curiosities', 'curiosities'))
+        if profile['curiosities_updated_at']:
+            d = profile['curiosities_updated_at']
+            body.append(f'    <p class="post-meta">Updated <time datetime="{d}">{human_date(d)}</time></p>')
+        lis = []
+        for i, c in enumerate(profile['current_curiosities']):
+            li = f'<li><strong>{escape(c["title"])}</strong>' + (f' <p>{escape(c["note"])}</p>' if c['note'] else '')
+            if c['project']:
+                pr = site['projects'].get(c['project'])
+                li += (' <p class="post-meta">Project: ' + anchor(doc.part(f'`current_curiosities[{i}].project`'), f'/portfolio/{c["project"]}/',
+                                                                  escape(pr['name'] if pr else c['project'])) + '</p>')
+            lis.append(li + '</li>')
+        body.append('    <ul class="post-curiosities">' + ''.join(lis) + '</ul>')
+    body += availability(doc, profile, profile['contact_routes'])
+    if profile['featured_post']:
+        post = site['posts'].get(profile['featured_post'])
+        if post:
+            body += [h2(doc, 'Featured writing', 'featured-writing'),
+                     f'    <p class="post-featured"><a href="/blog/{escape(post["slug"])}/">{escape(post["title"])}</a> {escape(post["description"])}</p>']
+        else:
+            doc.warnings.append(f'{doc.name}: `featured_post` {profile["featured_post"]} is not among the posts; /about/ leaves it out')
+    body += elsewhere(doc, profile, site)
+
+    title = f'About — {name}'
+    work = next((e for e in profile['timeline'] if e['kind'] == 'work' and e['is_current']), None)
+    studies = lambda now: [{'@type': 'CollegeOrUniversity', 'name': n} for n in dict.fromkeys(
+        e['organization'] for e in profile['timeline'] if e['kind'] == 'education' and bool(e['is_current']) == now)]
+    place = dict(zip(('addressLocality', 'addressRegion'), (s.strip() for s in profile['location'].split(',')[:2])))
+    who = person(profile, description=profile['seo_description'])
+    if work:
+        who.update(jobTitle=work['title'], worksFor={'@type': 'Organization', 'name': work['organization']})
+    who['homeLocation'] = {'@type': 'Place', 'address': {'@type': 'PostalAddress', **place}}
+    for k, v in (('alumniOf', studies(False)), ('affiliation', studies(True)),
+                 ('knowsAbout', list(dict.fromkeys(s for g in profile['skill_groups'] for s in g['skills']))),
+                 ('hasCredential', [credential_ld(c) for c in profile['credentials']])):
+        if v:
+            who[k] = v
+    who['sameAs'] = [l['url'] for l in profile['social_links']]
+    ld = {'@type': 'ProfilePage', 'name': title, 'description': profile['seo_description'], 'mainEntity': who}
+    return article_page(shell, 'about', title, header, body,
+                        page_head(profile, title, profile['seo_description'], '/about/', ld, og_type='profile')), doc
+
+
+def credential_ld(c):
+    ld = {'@type': 'EducationalOccupationalCredential', 'name': c['title'], 'credentialCategory': 'certification',
+          'recognizedBy': {'@type': 'Organization', 'name': c['issuer']}, 'validFrom': c['issued_on']}
+    if c['expires_on'] and not c['lifetime']:
+        ld['validUntil'] = c['expires_on']
+    if c['verification_url']:
+        ld['url'] = c['verification_url']
+    return ld
+
+
+def employment(e):
+    """'Full-time', 'Internship'; None when there is none or the title says it already ('Internship' beside '… Intern')."""
+    if not e['employment']:
+        return None
+    label = e['employment'][:1].upper() + e['employment'][1:]
+    return None if re.search(r'\b' + re.escape(re.sub(r'ship$', '', label, flags=re.I)) + r'\b', e['title'], re.I) else label
+
+
+def experience_page(shell, profile, site):
+    """/experience/: the work summary, the timeline newest first (a section.entry per stop, its id the data's), skills,
+    credentials, talks and papers, the résumé."""
+    doc = page_doc('data/profile.json', site)
+    reserve(doc, [e['id'] for e in profile['timeline']], 'timeline')
+    body = []
+    for i, e in enumerate(profile['timeline']):
+        when = entry_period(e) + (f' (expected {e["expected_end_year"]})' if e['expected_end_year'] and not e['end_date'] else '')
+        meta_ = ' · '.join(escape(x) for x in (e['organization'], when, e['location'], employment(e)) if x)
+        sec = [f'    <section class="entry" id="{e["id"]}" data-kind="{e["kind"]}">']
+        if e['logo']:
+            src, size = doc.image(e['logo'], None)
+            sec.append('      ' + img(src, size, e['logo_alt'], 'entry-logo'))
+        sec += [f'      <h2>{escape(e["title"])}</h2>', f'      <p class="post-meta">{meta_}</p>']
+        if e['summary']:
+            sec.append(f'      <p>{escape(e["summary"])}</p>')
+        if e['highlights']:
+            sec.append('      <ul>' + ''.join(f'<li>{escape(h)}</li>' for h in e['highlights']) + '</ul>')
+        body += sec + ['    </section>']
+    body.append(h2(doc, 'Skills', 'skills'))
+    for g in profile['skill_groups']:
+        body += [f'    <h3 id="{doc.unique_id(re.sub(r"[^a-z0-9 -]", "", g["title"].lower()).replace(" ", "-") or "skills")}">{escape(g["title"])}</h3>',
+                 '    <ul class="post-tags">' + ''.join(f'<li>{escape(s)}</li>' for s in g['skills']) + '</ul>']
+    if profile['credentials']:
+        lis = []
+        for i, c in enumerate(profile['credentials']):
+            badge = ''
+            if c['badge']:
+                src, size = doc.image(c['badge'], None)
+                badge = img(src, size, c['badge_alt'], 'post-badge') + ' '
+            name = (anchor(doc.part(f'`credentials[{i}].verification_url`'), c['verification_url'], escape(c['title']))
+                    if c['verification_url'] else escape(c['title']))
+            issued = month_year(c['issued_on'], 'month')
+            dates = f'{issued} – {month_year(c["expires_on"], "month")}' if c['expires_on'] and not c['lifetime'] else issued
+            said = c['issuer'].lower() in c['title'].lower()      # 'AWS Certified …' from AWS: the issuer once
+            lis.append(f'<li>{badge}{name} <span class="post-meta">' + ' · '.join(([] if said else [escape(c['issuer'])]) + [dates]) + '</span></li>')
+        body += [h2(doc, 'Credentials', 'credentials'), '    <ul class="post-credentials">' + ''.join(lis) + '</ul>']
+    if profile['talks_and_papers']:
+        lis = []
+        for i, t in enumerate(profile['talks_and_papers']):
+            facts = [t['kind'][:1].upper() + t['kind'][1:], f'<time datetime="{t["date"]}">{month_year(t["date"], "month")}</time>']
+            li = (f'<li><strong>{escape(t["title"])}</strong> <p class="post-meta">' + ' · '.join(
+                [escape(facts[0]), facts[1]] + [escape(x) for x in (t['venue'], t['authors']) if x]) + '</p>')
+            if t['abstract']:
+                li += f' <p>{escape(t["abstract"])}</p>'
+            items = [(link_address(l), l['label'], l['kind']) for l in t['links']]
+            if t['project']:
+                pr = site['projects'].get(t['project'])
+                items.append((f'/portfolio/{t["project"]}/', 'Project: ' + (pr['name'] if pr else t['project']), None))
+            if items:
+                li += ' ' + links_list(doc.part(f'`talks_and_papers[{i}]`'), items, '')
+            lis.append(li + '</li>')
+        body += [h2(doc, 'Talks and papers', 'talks-and-papers'), '    <ul class="post-talks">' + ''.join(lis) + '</ul>']
+    if site['resume']:
+        body += [h2(doc, 'Résumé', 'resume'), links_list(doc, [(site['resume'], 'Résumé (PDF)', None)])]
+
+    title = f'Experience — {profile["name"]}'
+    ld = {'@type': 'WebPage', 'name': title, 'description': profile['work_summary'], 'about': person(profile)}
+    header = ['    <h1>Experience</h1>', f'    <p class="post-lede">{escape(profile["work_summary"])}</p>']
+    return article_page(shell, 'experience', title, header, body,
+                        page_head(profile, title, profile['work_summary'], '/experience/', ld)), doc
+
+
+def contact_page(shell, profile, site):
+    """/contact/: the invitation, what to write about (a section per route, its id the route's), the links, the
+    availability. There is no form, and no address: the profile has none (§7)."""
+    doc = page_doc('data/profile.json', site)
+    routes = profile['contact_routes']
+    reserve(doc, list(routes), 'contact route')
+    header = ['    <h1>Contact</h1>', f'    <p class="post-lede">{escape(profile["contact_intro"])}</p>']
+    body = [f'    <p>{escape(profile["contact_invitation"])}</p>', h2(doc, 'What to write about', 'what-to-write-about')]
+    body += [f'    <section class="route" id="{rid}"><h3>{escape(r["title"])}</h3> <p>{escape(r["prompt"])}</p></section>'
+             for rid, r in routes.items()]
+    body += elsewhere(doc, profile, site) + availability(doc, profile, routes)
+    title = f'Contact — {profile["name"]}'
+    ld = {'@type': 'ContactPage', 'name': title, 'description': profile['contact_invitation'],
+          'about': person(profile, sameAs=[l['url'] for l in profile['social_links']])}
+    return article_page(shell, 'contact', title, header, body,
+                        page_head(profile, title, profile['contact_invitation'], '/contact/', ld)), doc
+
+
+def portfolio_json(projects):
+    """public/portfolio/index.json (§8), in the projects' own order."""
+    return [{'slug': p['slug'], 'url': f'/portfolio/{p["slug"]}/', 'name': p['name'], 'title': p['title'], 'summary': p['summary'],
+             'status': p['status'], 'status_label': STATUS[p['status']], 'period': project_period(p),
+             'year': p['started'] and p['started'][:4], 'types': p['types'], 'role': p['role'], 'technologies': p['technologies'],
+             'featured': p['featured'], 'quiet': bool(p['quiet'])} for p in projects]
+
+
+def profile_json(profile, resume_url):
+    """public/profile.json (§8): what the rooms show, as plain text. A curiosity's kind is 'question' when its title
+    asks one; the profile has no field for it (§7)."""
+    a = profile['availability']
+    return {
+        'name': profile['name'], 'headline': profile['headline'], 'tagline': profile['tagline'], 'location': profile['location'],
+        'introduction': profile['introduction'], 'focus': profile['focus_areas'],
+        'availability': {'status': a['status'], 'label': a['cta'], 'seeking': a['seeking']},
+        'curiosities': [{'kind': 'question' if c['title'].endswith('?') else None, 'title': c['title'], 'note': c['note'],
+                         'url': c['project'] and f'/portfolio/{c["project"]}/'} for c in profile['current_curiosities']],
+        'timeline': [{'id': e['id'], 'url': f'/experience/#{e["id"]}', 'kind': e['kind'], 'title': e['title'],
+                      'organization': e['organization'], 'org_short': e['org_short'], 'period': entry_period(e),
+                      'year': e['start_date'][:4], 'current': bool(e['is_current']), 'location': e['location'],
+                      'employment': e['employment'], 'summary': e['summary']} for e in profile['timeline']],
+        'links': [{'label': l['label'], 'url': l['url']} for l in profile['social_links']],
+        'contact': {'intro': profile['contact_intro'], 'invitation': profile['contact_invitation'], 'email': None,
+                    'routes': [{'id': k, 'title': r['title'], 'prompt': r['prompt']} for k, r in profile['contact_routes'].items()]},
+        'resume': resume_url}
+
+
+def versioned(key, value):
+    """{'v': 8 hex of the content, key: value} as written, for a JSON file the rooms fetch."""
+    v = hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:8]
+    body = {'v': v, key: value} if key else {'v': v, **value}
+    return (json.dumps(body, ensure_ascii=False, indent=1) + '\n').encode()
+
+
+def add_files(outputs, doc):
+    """The files a page links (data/assets/files/), copied to /blog/files/ under their original names (§3)."""
+    for name, src in doc.files.items():
+        with open(src, 'rb') as f:
+            data = f.read()
+        if outputs.get(f'blog/files/{name}', data) != data:
+            raise ContentError(f'{doc.name}: two different files are both called {name}')
+        outputs[f'blog/files/{name}'] = data
+
+
+def build(posts_dir, out, projects_dir=None, profile_path=None):
     """Render everything into memory: {path under out: bytes, or KEEP when the file there is already right}.
     Raises ContentError (or exits) before anything is written."""
     with open(SHELL, encoding='utf-8') as f:
         shell = f.read()
     taken = set(re.findall(r'\bid="([^"]+)"', shell)) | {'page', *RUNTIME_IDS}
-    posts, profile = load_posts(posts_dir), load_profile()
-    by_slug = {p['slug']: p for p in posts}
+    projects_dir = projects_dir or os.path.join(DATA, 'projects')
+    posts, projects, profile = load_posts(posts_dir), load_projects(projects_dir), load_profile(profile_path)
+    by_slug, by_project = {p['slug']: p for p in posts}, {p['slug']: p for p in projects}
     outputs, entries, media, warnings = {}, [], {}, []
     for p in posts:
         path = os.path.join(posts_dir, p['slug'] + '.md')
-        doc = Doc(os.path.relpath(path), body_start(path), taken, set(by_slug))
+        doc = Doc(os.path.relpath(path), body_start(path), taken, set(by_slug), projects=set(by_project))
         body, doc = render_markdown(p['body'], doc=doc)
         outputs[f'blog/{p["slug"]}/index.html'] = post_page(shell, p, doc, body, profile, by_slug).encode()
         if p['image']:
             with open(image_file(p['image']), 'rb') as f:  # content.py has checked it: 1200x630, PNG or JPEG, no EXIF
                 outputs[f'blog/media/{p["image"]}'] = f.read()
-        for name, src in doc.files.items():
-            with open(src, 'rb') as f:
-                data = f.read()
-            if outputs.get(f'blog/files/{name}', data) != data:
-                raise ContentError(f'{doc.name}: two different files are both called {name}')
-            outputs[f'blog/files/{name}'] = data
+        add_files(outputs, doc)
         media.update(doc.media)
         warnings += doc.warnings
         entries.append({'slug': p['slug'], 'url': f'/blog/{p["slug"]}/', 'title': p['title'], 'description': p['description'],
@@ -819,15 +1268,38 @@ def build(posts_dir, out):
     v = hashlib.sha256(json.dumps(entries, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:8]
     outputs['blog/index.json'] = (json.dumps({'v': v, 'posts': entries}, ensure_ascii=False, indent=1) + '\n').encode()
     outputs['blog/index.html'] = list_page(shell, entries, profile).encode()
+
+    # §8: the projects and the profile. A project's "next" is the one after it on /portfolio/, the last leading to the first.
+    cv = site_extras.resume(profile)
+    site = {'taken': taken, 'posts': by_slug, 'projects': by_project, 'resume': cv and f'/resume/{quote(cv[0])}'}
+    order = sum(listing(projects), [])
+    pages = []
+    for i, p in enumerate(order):
+        path = os.path.join(projects_dir, p['slug'] + '.md')
+        doc = page_doc(os.path.relpath(path), site)
+        doc.first_line = body_start(path)
+        nxt = order[(i + 1) % len(order)] if len(order) > 1 else None
+        pages.append((f'portfolio/{p["slug"]}/index.html', *project_page(shell, p, doc, profile, site, nxt)))
+    for rel, make in (('portfolio/index.html', portfolio_page), ('about/index.html', about_page),
+                      ('experience/index.html', experience_page), ('contact/index.html', contact_page)):
+        pages.append((rel, *make(shell, profile, site)))
+    for rel, html_, doc in pages:
+        outputs[rel] = html_.encode()
+        add_files(outputs, doc)
+        media.update(doc.media)
+        warnings += doc.warnings
+    outputs['portfolio/index.json'] = versioned('projects', portfolio_json(projects))
+    outputs['profile.json'] = versioned(None, profile_json(profile, site['resume']))
+
     with tempfile.TemporaryDirectory(prefix='site-') as tmp:  # images last: they are slow, and named by content
-        for name, (src, size) in sorted(media.items()):
-            have = os.path.join(out, 'blog', 'media', name)
+        for rel, (src, size) in sorted(media.items()):     # rel: blog/media/<name> (a post's) or media/<name>
+            have = os.path.join(out, rel)
             if os.path.isfile(have) and image_info(have)[:2] == size:
-                outputs[f'blog/media/{name}'] = KEEP
+                outputs[rel] = KEEP
             else:
                 print(f'encoding {os.path.relpath(src, ROOT)} at {size[0]}x{size[1]}', flush=True)
-                outputs[f'blog/media/{name}'] = encode(src, size, tmp)
-    return outputs, posts, profile, warnings
+                outputs[rel] = encode(src, size, tmp)
+    return outputs, posts, projects, profile, warnings
 
 
 def out_path(out, rel):
@@ -840,11 +1312,34 @@ def out_path(out, rel):
     return path
 
 
+# What the last run wrote, one path a line, so that the next run removes what it no longer makes. public/ also holds
+# files nobody generates (the shell, the scripts, the stylesheets), so nothing is removed for not being made: only what
+# this record lists, and only under the paths this tool writes (OWNED), whatever the record says.
+RECORD = '.generated-files'
+OWNED = ('blog/', 'portfolio/', 'about/', 'experience/', 'contact/', 'media/', 'profile.json')
+
+
 def write_outputs(out, outputs, prune=('blog',)):
-    """Write what changed; leave identical files alone; under each `prune` folder, remove what this run did not make.
-    Every path is checked before the first file is written."""
+    """Write what changed; leave identical files alone; remove what the previous run's RECORD lists and this run did not
+    make; under each `prune` folder (wholly this tool's), remove anything this run did not make. Every path is checked
+    before the first file is written."""
     written = unchanged = removed = 0
+    outputs = dict(outputs)
+    outputs[RECORD] = ('# Written by tools/site.py: the files of its last run, which the next removes if it no longer makes them.\n'
+                       + ''.join(f'{rel}\n' for rel in sorted(outputs))).encode()
     paths = {rel: out_path(out, rel) for rel in outputs}
+    stale = []
+    try:
+        with open(os.path.join(out, RECORD), encoding='utf-8') as f:
+            earlier = [l.strip() for l in f if l.strip() and not l.startswith('#')]
+    except FileNotFoundError:
+        earlier = []
+    for rel in sorted(set(earlier) - set(outputs)):
+        if rel.startswith(OWNED) and '\\' not in rel:
+            try:
+                stale.append((rel, out_path(out, rel)))
+            except ContentError:                          # a record edited by hand to point elsewhere: ignored
+                pass
     for rel, data in sorted(outputs.items()):
         path = paths[rel]
         if data is KEEP:
@@ -860,6 +1355,14 @@ def write_outputs(out, outputs, prune=('blog',)):
             f.write(data)
         os.replace(path + '.tmp', path)
         print('wrote', rel); written += 1
+    root = os.path.realpath(out)
+    for rel, path in stale:
+        if os.path.isfile(path) and not os.path.islink(path):
+            os.remove(path); print('removed', rel); removed += 1
+            folder = os.path.dirname(path)
+            while folder != root and os.path.isdir(folder) and not os.listdir(folder):
+                os.rmdir(folder)
+                folder = os.path.dirname(folder)
     for top in prune:
         for folder, dirs, files in os.walk(os.path.join(out, top), topdown=False):
             for f in sorted(files):
@@ -872,13 +1375,15 @@ def write_outputs(out, outputs, prune=('blog',)):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description='Write public/blog/ from the posts in data/posts/.')
+    ap = argparse.ArgumentParser(description='Write the pages of public/ from data/: the posts, the projects and the profile.')
     ap.add_argument('--posts', default=os.path.join(DATA, 'posts'), help='folder of <slug>.md posts (default data/posts)')
+    ap.add_argument('--projects', default=os.path.join(DATA, 'projects'), help='folder of <slug>.md projects (default data/projects)')
+    ap.add_argument('--profile', default=os.path.join(DATA, 'profile.json'), help='the profile (default data/profile.json)')
     ap.add_argument('--out', default=os.path.join(ROOT, 'public'), help='site folder to write into (default public)')
     a = ap.parse_args(argv)
     try:
-        outputs, posts, profile, warnings = build(a.posts, a.out)
-        extras = site_extras.build(posts, profile)         # before anything is written, like the pages
+        outputs, posts, projects, profile, warnings = build(a.posts, a.out, a.projects, a.profile)
+        extras = site_extras.build(posts, profile, projects)   # before anything is written, like the pages
         for rel in extras:                                 # site_extras.write writes them: checked here, before anything
             out_path(a.out, rel)
         for rel in outputs:
