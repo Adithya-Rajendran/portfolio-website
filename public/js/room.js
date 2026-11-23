@@ -10,6 +10,7 @@ import { createScreens } from './screens.js';
 import { createHologram } from './hologram.js';
 import { createRouteMap } from './routemap.js';
 import { createDrone } from './drone.js';
+import { createComms } from './comms.js';
 import { probePars, chartPars, chartParsLive, chartReflection, probeEnvironment, liveSpecPars } from './reflections.js';
 import { windowShadow, receiveWindowSun } from './sunlight.js';
 
@@ -411,6 +412,9 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const drone = info.drone ? createDrone({ scene, dock: B(info.drone.dock), deliver: B(info.drone.deliver), slots: info.drone.slots.map(B), volumes: text.volumes }) : null;
   if (drone && probe && shadow && !SKIP.has('sunlight')) receiveWindowSun(drone.root,{uSunVP,uSunDir,uSunE,tShadow:{value:shadow.rt.depthTexture}},visibility);
   const routeMap = info.map ? createRouteMap({ scene, center: B(info.map.c), stops: text.stations, radius: info.map.r, gain: num('map', 1.6) }) : null;
+  // the signal room's terminal: a field over the plinth, and its drone (lit by the room and the window sun like the Library's)
+  const comms = info.comms ? createComms({ scene, center: B(info.comms.c), facing: B(info.comms.facing).setY(0).normalize(), text: text.comms, window: PORTAL, out: AXIS }) : null;
+  if (comms && probe && shadow && !SKIP.has('sunlight')) receiveWindowSun(comms.drone,{uSunVP,uSunDir,uSunE,tShadow:{value:shadow.rt.depthTexture}},visibility);
 
   // ---------------------------------------------------------------- interactables
   // Each has a pick mesh and a pose (where the camera stands, what it looks at); main.js glides the camera there.
@@ -447,6 +451,12 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const mesh = pickMesh(new THREE.SphereGeometry(f.r * 0.8, 12, 8), scene, B(f.c)), d = B(f.dir).normalize();
     picks.push({ mesh, pose: () => ({ pos: mesh.position.clone().addScaledVector(d, f.r / Math.min(tanV(), tanV() * camera.aspect) * 1.25), tgt: mesh.position }) });
   }
+  // the comms field: stand square in front of it; once open, clicks and the pointer go to the field itself (main.js)
+  if (comms) picks.push({ mesh: comms.hit, onFocus: comms.setExpanded, click: comms.click, cursor: comms.cursor, typing: comms.typing, pose: () => {
+    const c = comms.hit.getWorldPosition(V()), n = V(0, 0, 1).transformDirection(comms.hit.matrixWorld), { size: [w, h], beside } = comms.frame();
+    const d = Math.max(h / 2 / tanV(), (w / 2 + (beside ? 0.35 : 0)) / (tanV() * camera.aspect)) * (beside ? 1.32 : 1.06);   // landscape: field and drone; upright: the field fills the width
+    return { pos: c.clone().addScaledVector(n, d), tgt: beside ? c.clone().add(V(0.12, -0.04, 0)) : c };
+  } });
   // doors: walk up to it; main.js then goes through to door.to (another room's id; '' = sealed)
   for (const door of info.doors || []) {
     const c = B(door.c), n = B(door.n).normalize(), mesh = pickMesh(new THREE.BoxGeometry(2.4, 3.4, 2.4), scene, c);
@@ -458,6 +468,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   await Promise.all(pending);
   if (textureError) throw textureError;                             // do not lift the cover on a partial bake
   if (drone && probe) drone.setEnv((drone.lit=probeEnvironment(renderer,probeU,probe)).texture);
+  const commsLit = comms && probe ? probeEnvironment(renderer, probeU, probe) : null; if (commsLit) comms.setEnv(commsLit.texture);
+  let last = 0;
   return {
     id, info, scene, picks, floors, hidden, CAM, TGT, chart,
     CLOSE: B(info.close || [0, 17.2, 2.15]), CLOSE_TGT: B(info.close_tgt || [0, 26, 2.6]), arc: info.holo ? 0.9 : 0.25,     // arc: how high the pull-back lifts over the middle
@@ -482,7 +494,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       const phi = CH_FIXED ?? t * CH_SPEED;
       for (const turn in pivots) pivots[turn].rotation.y = phi * turn;
       if (PHASES.length === 3) uChand.value.set(...PHASES.map((p) => (1 + 2 * Math.cos(phi - p)) / 3));
-      hologram?.update(t); routeMap?.update(t); drone?.update(t); screens.update();
+      hologram?.update(t); routeMap?.update(t); drone?.update(t); comms?.update(t, Math.min(0.1, t - last)); last = t; screens.update();
       // Backward compatibility for bake masters that predate the sun-free room probe.
       if (drone && !drone.lit && ++frames > 3) {
         const cube = new THREE.WebGLCubeRenderTarget(128, { type: THREE.HalfFloatType }), eye = new THREE.CubeCamera(0.05, 100, cube), pmrem = new THREE.PMREMGenerator(renderer);
@@ -497,6 +509,6 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       liveCam.update(renderer, scene);
       scene.background = bg; renderer.setClearAlpha(clear); u.value = liveRT.texture;
     }),
-    dispose: () => { drone?.lit?.dispose?.(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
+    dispose: () => { drone?.lit?.dispose?.(); commsLit?.dispose(); comms?.dispose(); chart?.dispose(); liveRT?.dispose(); liveBlank?.dispose(); dispose(scene); screens.dispose(); shadow?.rt.dispose(); shadow?.mat.dispose(); },
   };
 }

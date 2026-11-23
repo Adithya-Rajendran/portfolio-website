@@ -1,0 +1,58 @@
+{
+  "probes": [
+    {
+      "origin": [
+        0.0,
+        -2.5,
+        1.6
+      ]
+    },
+    {
+      "origin": [
+        0.0,
+        3.5,
+        1.6
+      ]
+    },
+    {
+      "origin": [
+        0.0,
+        9.6,
+        1.6
+      ]
+    }
+  ],
+  "bounds": {
+    "min": [
+      -8.0,
+      -6.0,
+      0.0
+    ],
+    "max": [
+      8.0,
+      12.0,
+      7.2
+    ]
+  },
+  "coordinates": "blender",
+  "projection": "equirectangular",
+  "texture": "tex/probe_c.ktx2",
+  "width": 512,
+  "height": 256,
+  "roughness": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "range": 16.0,
+  "encoding": "sqrt",
+  "alpha": "interior",
+  "hidden": [
+    "exterior",
+    "sun",
+    "lamps",
+    "moving"
+  ]
+}

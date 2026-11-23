@@ -164,11 +164,12 @@ function setFocus(pick = null) {
 function step(d) { const t = tourOrder(), i = t.indexOf(focus.pick); setFocus(t[((i < 0 ? (d > 0 ? -1 : 0) : i) + d + t.length) % t.length]); }
 function travel(id, delay = 0) { if (id && !leaving) leaving = setTimeout(() => enter(id), delay); }
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-function pickAt(e) {
+function pickHit(e) {                                // the pick under the pointer, and where on it (a terminal reads the uv)
   ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
   const hit = ray.intersectObjects(room.picks.map((p) => p.mesh), false)[0];
-  return hit ? room.picks.find((p) => p.mesh === hit.object) : null;
+  return hit ? { pick: room.picks.find((p) => p.mesh === hit.object), hit } : null;
 }
+const pickAt = (e) => pickHit(e)?.pick ?? null;
 
 // ---------------------------------------------------------------- page text and room changes
 const tick = () => { const v = live(); for (const el of document.querySelectorAll('[data-live]')) el.textContent = fill(`{${el.dataset.live}}`, v); };
@@ -210,7 +211,10 @@ addEventListener('popstate', () => enter(roomInUrl(), false));
 addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
 addEventListener('pointermove', (e) => {
   mouse.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1);
-  if (room && e.timeStamp - hovered > 60) { hovered = e.timeStamp; canvas.style.cursor = pickAt(e) ? 'pointer' : ''; }
+  if (room && e.timeStamp - hovered > 60) {
+    hovered = e.timeStamp; const ph = pickHit(e);
+    canvas.style.cursor = !ph ? '' : ph.pick === focus.pick && ph.pick.cursor ? ph.pick.cursor(ph.hit.uv) : 'pointer';
+  }
 });
 addEventListener('deviceorientation', (e) => {
   if (e.gamma != null) mouse.set(THREE.MathUtils.clamp(e.gamma / 30, -1, 1), THREE.MathUtils.clamp((e.beta - 45) / 30, -1, 1));
@@ -218,11 +222,14 @@ addEventListener('deviceorientation', (e) => {
 addEventListener('click', (e) => {
   if (!room || busy || e.target.closest('nav, #inspectbar, a, button')) return;
   if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;       // that was a drag
-  const pick = pickAt(e); setFocus(pick);
+  const ph = pickHit(e), pick = ph?.pick ?? null;
+  if (pick && pick === focus.pick && pick.click) return pick.click(ph.hit.uv);     // an open terminal takes its own clicks
+  setFocus(pick);
   if (pick?.door && !pick.door.stops) travel(pick.door.to, 1500);           // clicked a door: walk up to it, then through
 });
 addEventListener('keydown', (e) => {
   if (!room || busy) return;
+  if (focus.pick?.typing?.() && e.key !== 'Escape') return;                // writing at a terminal: the keys are the writer's
   if (e.key === 'Escape') setFocus(null);
   else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); step(e.key === 'ArrowRight' ? 1 : -1); }
 });

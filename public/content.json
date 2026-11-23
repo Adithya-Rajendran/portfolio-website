@@ -259,6 +259,42 @@
         { "no": "04", "title": "Title of the piece", "lines": ["One sentence on what it argues.", "Why you wrote it."], "rows": [["DATE", "Month, year"], ["LENGTH", "Minutes to read"], ["SUBJECT", "What it is about"]] },
         { "no": "05", "title": "Title of the piece", "lines": ["One sentence on what it argues.", "Why you wrote it."], "rows": [["DATE", "Month, year"], ["LENGTH", "Minutes to read"], ["SUBJECT", "What it is about"]] }
       ]
+    },
+    "comms": {
+      "nav": "CONTACT",
+      "title": "Contact — Comms",
+      "loading": "OPENING A CHANNEL",
+      "close": "THE WINDOW",
+      "credit": true,
+      "kicker": "RING 04 · BOW · COMMS",
+      "headline": ["Send", "word."],
+      "sub": ["The station's signal room. Walk up to the field over the plinth and write;", "the Mind will see it across. The addresses are placeholders for now."],
+      "facts": [["ROOM", "CONTACT"], ["LIGHT-TIME TO EARTH", "2.4 MS"]],
+      "screens": {
+        "footer": "ARCADIA STATION  ·  COMMS",
+        "tag": "SIGNAL",
+        "inspect": false,
+        "list": [
+          { "layout": "rows", "title": "SIGNAL LOG", "rows": [["LINK", "HUB RELAY · OPEN"], ["LIGHT-TIME TO EARTH", "2.4 MS"], ["QUEUE", "CLEAR", "cy"]], "line": "Every message is read. Eventually, by a person." },
+          { "layout": "placard", "title": "ELSEWHERE", "name": "Where else to find me", "meta": "THE GLYPHS ON THE FIELD", "lines": ["Each one opens in a new tab.", "Or write: replies come from a person, not a Mind."] }
+        ]
+      },
+      "comms": {
+        "title": "COMMS  ·  OUTBOUND SIGNAL", "toLabel": "TO", "to": "YOUR NAME",
+        "write": "Say something. It will arrive.", "replyLabel": "REPLY TO", "reply": "your address, if you would like an answer",
+        "send": "SEND", "max": 2000,
+        "address": "you@example.com", "subject": "A signal from Arcadia Station", "endpoint": "",
+        "socials": [["GITHUB", "https://github.com/your-handle"], ["LINKEDIN", "https://www.linkedin.com/in/your-handle"], ["EMAIL", "mailto:you@example.com"]],
+        "mind": {
+          "idle": "The field is open. Take your time; I have rather a lot of it.",
+          "composing": "I am not reading over your shoulder. Much.",
+          "sending": "Folding it into a signal…",
+          "sent": "Sent. It is already there; light is quick at this distance.",
+          "handed": "Handed to your own mail for the last leg. Ours is a small station.",
+          "empty": "An admirably concise message. Perhaps a word or two more?",
+          "failed": "The relay coughed. Nothing was lost; try once more?"
+        }
+      }
     }
   }
 }

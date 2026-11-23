@@ -57,6 +57,8 @@ ROOMS = {
     'experience': ([(0.75, -0.55, 1.5), (0.0, -5.6, 1.7)], (-9.0, -9.0, 0.0), (9.0, 9.0, 8.4)),
     # Library: at the catalogue terminal, above the reading table between lamps, beyond its far end.
     'writing': ([(0.0, -1.6, 1.5), (0.0, 4.55, 1.45), (0.0, 10.5, 1.45)], (-6.5, -5.0, 0.0), (6.5, 14.0, 8.6)),
+    # Comms: from the door's end, mid-room, between the crescent and the window (clear of the plinth and the floating lamps).
+    'comms': ([(0.0, -2.5, 1.6), (0.0, 3.5, 1.6), (0.0, 9.6, 1.6)], (-8.0, -6.0, 0.0), (8.0, 12.0, 7.2)),
 }
 
 
