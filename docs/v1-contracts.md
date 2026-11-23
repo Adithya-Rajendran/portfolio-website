@@ -164,10 +164,15 @@ Test hooks on `window.__lobby` (in addition to `ready`, `picks`, `setFocus`, `ca
 | `reader.read(slug or path)`, `reader.close()` | what the READ button and BACK do |
 | `volumes()` | the catalogue: `[{ slug, title }]` in shelf order |
 | `held()` | slug of the book the drone presents, or `null` |
+| `display.state()` | `{ lock, named, hint, gliding }`: `lock` is `null` or `{ name, verb, rect: [left, top, width, height] }` (CSS px, of the corner marks around the pick under the pointer); `named` the text of `#named` in the bar (the pick in focus; `''` for READ); `hint` the hint's words, `''` once it has gone; `gliding` true while the camera is on its way to or from a pick |
+| `picks[i].name`, `.verb` | what the display calls the pick (upper case) and what a click on it does; both `''` on the reading pick (`reads`), which is never locked. Optional `picks[i].bounds()`: the pick's outline as world points |
+| `scene.getObjectByName(...)` | the reader's meshes: `ReadGlyph` (the READ glyph; the reading pick's `mesh.parent`; uniforms `uShow`, `uWord`, `uHover`, `uProgress`, no `uTime`), `ScanFan`, `ScanSheet` (uniform `uSnap`), `ReadFrame`, `ReadBeam` (uniforms `uK`, `uFlow`) |
+
+Nothing on the visitor's display (`#hud`, `#inspectbar`, `#lock`, the READ glyph and the scan) moves by itself: a part may move once when it appears, changes or is asked for, and then it is still. The one scan, the fan of light and the line across the page, happens only when the visitor asks to READ something readable: `ScanFan` and `ScanSheet` are not visible at any other time, and once the article is open the beam's `uK` and `uFlow` stay constant. With `prefers-reduced-motion: reduce` these are cuts. `tools/docker/hud.mjs` checks this.
 
 ## 5. Tests
 
-`tools/dtest.sh <script.mjs> [args]` runs a Playwright script from `tools/docker/` against the checkout it is in, serving `public/` inside the container at `http://127.0.0.1:8080` (env `ORIGIN`); nothing listens on the host. Screenshots go to `/out` (host `$OUT`, default `/tmp/dtest`).
+`tools/dtest.sh <script.mjs> [args]` runs a Playwright script from `tools/docker/` against the checkout it is in, serving `public/` inside the container at `http://127.0.0.1:8080` (env `ORIGIN`); nothing listens on the host. Screenshots go to `/out` (host `$OUT`, default `/tmp/dtest`). `hud.mjs [desktop|phone|reduced|all]` tests the visitor's display (§4): the lock, the names, the bar's caption, the hint, and that the READ glyph and the scan are still unless READ is asked.
 
 ## 6. A project: `data/projects/<slug>.md`
 

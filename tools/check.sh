@@ -30,6 +30,7 @@ else
   step "rooms.others.mjs (Navigation, the Lounge, Comms)" dt rooms.others.mjs
   step "rooms.cross.mjs (links from one room's reading into another)" dt rooms.cross.mjs
   step "rooms.deeplink.mjs (a project's and a timeline entry's own address)" dt rooms.deeplink.mjs
+  step "hud.mjs (the visitor's display: the lock, names, caption, hint; still unless READ is asked)" dt hud.mjs all
   step "hostile.mjs (the rooms against hostile and thin data)" dt hostile.mjs
   step "endpoints.mjs" dt endpoints.mjs
   for u in "/" "/?room=about" "/?room=projects" "/?room=experience" "/?room=comms" "/blog/"; do step "errs.mjs $u" dt errs.mjs "http://127.0.0.1:8080$u"; done

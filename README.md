@@ -13,7 +13,7 @@ Deploy: `python3 tools/pack.py && python3 tools/site.py && npx wrangler deploy`.
     Library's shelves); `js/reader.js` scans whatever a room offers and shows that page's own `<article>` as a hologram.
     To write a post or a project, add `data/posts/<slug>.md` or `data/projects/<slug>.md`; the profile is `data/profile.json`.
   - `main.js` — the shell: renderer, camera, controls, room changes. `js/room.js` builds a room, `js/screens.js`, `js/hologram.js`
-    and `js/routemap.js` are the things in it, `js/post.js` is the image pipeline, `js/kit.js` holds what they share.
+    and `js/routemap.js` are the things in it, `js/post.js` is the image pipeline, `js/hud.js` is the visitor's own display (the lock on what the pointer rests on, the bar's caption, the hint), `js/kit.js` holds what they share.
   - `assets/<room>/` — `scene.json`, `room.glb` and `tex/` for each room, packed by `tools/pack.py` from the tracked `assets-src/<room>/` bake masters.
   - `blueprint.html` — the 3D station blueprint. `vendor/` — three.js 0.181.
 - `blender/` — scene scripts (`build_scene.py` for the Atrium and shared kit, `room_*.py` per room), `bake.py`, `reflection_probe.py`, `backdrop.py`.
@@ -22,7 +22,7 @@ Deploy: `python3 tools/pack.py && python3 tools/site.py && npx wrangler deploy`.
 - `tools/` — `site.py` writes `public/blog/` (the post pages, `index.json`, their images and files; generated, not committed) from
   `data/posts/*.md`, read by `content.py` (format: [`docs/v1-contracts.md`](docs/v1-contracts.md)); test it with
   `python3 -m unittest tools/test_site.py`. Playwright helpers run in Docker: screenshots (`dshot.sh`), frame times (`dperf.sh`),
-  before/after snapshots (`dsnap.sh`), the room-switching test (`docker/rooms.mjs`), and `dtest.sh page.mjs /blog/<slug>/`,
+  before/after snapshots (`dsnap.sh`), the room-switching test (`docker/rooms.mjs`), the visitor's display (`docker/hud.mjs`), and `dtest.sh page.mjs /blog/<slug>/`,
   a generated page read with JavaScript off.
 - [`/lighting-review/`](public/lighting-review/index.html) — matched browser views of all five rooms, actual book/satellite inspection poses and two short films. [Lighting method and measured checks](docs/finish-lighting.md).
 - `docs/blueprint.md` — the station design.
