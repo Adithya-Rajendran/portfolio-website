@@ -132,7 +132,8 @@ export function createReader({ scene, camera, text, onLink, onShown }) {
   let heads = [], goTo = null;
   function show(el) {
     scroll.replaceChildren(el);
-    host.querySelector('.reader-title').textContent = el.querySelector('h1')?.textContent ?? '';
+    const title = el.querySelector('h1')?.textContent ?? '';
+    host.querySelector('.reader-title').textContent = title.toUpperCase() === text.mark?.toUpperCase() ? '' : title;      // not the room's name twice
     heads = [...el.querySelectorAll('.post-body h2[id], section.entry[id] > h2')].map((h) => (h.id ? h : Object.assign(h, { id: `${h.parentNode.id}-title` })));
     rail.replaceChildren(...heads.map((h) => { const li = document.createElement('li'), a = Object.assign(document.createElement('a'), { href: `#${h.id}`, textContent: h.textContent }); li.append(a); return li; }));
     host.classList.toggle('plain', !heads.length);              // nothing to list: the text has the whole frame
