@@ -90,6 +90,7 @@ html:not(.station) body { height: auto; overflow: visible; background: radial-gr
 html:not(.station) #page { display: block; max-width: 760px; margin: 0 auto; padding: clamp(84px, 12vh, 130px) 22px 120px; }
 html:not(.station) #scene, html:not(.station) #hud, html:not(.station) #inspectbar { visibility: hidden; pointer-events: none; }
 html:not(.station):not(.reading) #loader { display: none; }
+body:has(> #page) > noscript { display: none; }      /* the notice that the station needs JavaScript: not where the page is the text itself */
 #pagenav { display: none; }
 html:not(.station) #pagenav { display: flex; gap: 26px; position: absolute; left: 0; right: 0; top: 0; max-width: 760px; margin: 0 auto; padding: 26px 22px 0;
   font: 600 12px "Eurostile", "Michroma", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: .32em; }

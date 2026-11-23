@@ -44,7 +44,7 @@ const until = (p, fn, arg, timeout = 90000) => p.waitForFunction(fn, arg, { time
 const snap = (p) => p.evaluate(() => { const l = window.__lobby, r = document.querySelector('#reader'), w = document.querySelector('#ways'), vis = (e) => !!e && !e.hidden && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
   return { state: l.reader.state(), slug: l.reader.slug(), path: location.pathname, search: location.search, title: document.title, held: l.held(), mode: document.documentElement.className,
     readerShown: vis(r), shownSlug: r.querySelector('article.post')?.dataset.slug ?? null, h1: r.querySelector('article.post h1')?.textContent.trim() ?? null,
-    listShown: vis(w) && w.classList.contains('list') && w.querySelectorAll('button').length, current: [...w.querySelectorAll('[data-option]')].findIndex((x) => x.hasAttribute('aria-current')),
+    listShown: vis(w) && w.classList.contains('list') && w.querySelectorAll('[data-option]').length, current: [...w.querySelectorAll('[data-option]')].findIndex((x) => x.hasAttribute('aria-current')),
     barShown: vis(document.querySelector('#inspectbar'))  }; });
 
 async function run(name) {
@@ -66,6 +66,10 @@ async function run(name) {
       onTop: top ? `${top.tagName.toLowerCase()}${top.id ? '#' + top.id : ''}${top.className && typeof top.className === 'string' ? '.' + top.className.split(' ')[0] : ''}` : null };
   });
   const pickVolume = async (p, i) => {                            // choose volume i from the terminal's list, as a visitor does
+    // on a narrow screen the list folds down to the volume already chosen: touching that one opens it again
+    if (await p.evaluate((i) => { const b = document.querySelector(`#ways [data-option="${i}"]`); return !!b && b.getClientRects().length === 0; }, i)) {
+      const again = await poke(p, '#ways [data-option][aria-current]'); if (again !== true) return again;
+    }
     const ok = await poke(p, `#ways [data-option="${i}"]`); if (ok !== true) return ok;
     return (await until(p, (s) => window.__lobby.held() === s, posts[i].slug, 120000)) ? true : `held() is ${await p.evaluate(() => window.__lobby.held())}, not ${posts[i].slug}`;
   };

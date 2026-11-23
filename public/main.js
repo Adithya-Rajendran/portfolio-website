@@ -222,7 +222,7 @@ function syncUrl() {
 /** Have a post read in the Library: the drone fetches it (fly), or it is simply there when the page opened on it. */
 async function readPost(slug, fly) {
   if (!room?.read) return false;
-  if (fly) { silent++; setFocus(room.terminal); silent--; }     // the terminal, to watch the drone go; the address waits for the article
+  if (fly || focus.pick?.reads) { silent++; setFocus(room.terminal); silent--; }     // the terminal (the volume being read is closed), to watch the drone go; the address waits for the article
   const here = room, pick = await room.read(slug, fly);
   if (pick && room === here) setFocus(pick);
   return !!pick;
@@ -264,7 +264,7 @@ addEventListener('resize', resize);
 addEventListener('popstate', () => {
   const r = route();
   if (r.id !== room?.id) enter(r.id, false);
-  else if (r.slug) { if (focus.pick?.slug?.() !== r.slug) readPost(r.slug, true); }
+  else if (r.slug) { if (focus.pick?.slug?.() !== r.slug) readPost(r.slug, false); }      // Back / Forward: at once, without the flight
   else if (focus.pick?.slug?.()) back();
 });
 addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });

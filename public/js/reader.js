@@ -121,7 +121,7 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
   }
   let heads = [], goTo = null;
   function show(el) {
-    scroll.replaceChildren(el); scroll.scrollTop = 0;
+    scroll.replaceChildren(el);
     host.querySelector('.reader-title').textContent = el.querySelector('h1')?.textContent ?? '';
     heads = [...el.querySelectorAll('.post-body h2[id]')];
     rail.replaceChildren(...heads.map((h) => { const li = document.createElement('li'), a = Object.assign(document.createElement('a'), { href: `#${h.id}`, textContent: h.textContent }); li.append(a); return li; }));
@@ -220,7 +220,8 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
     }
     // the words follow the reveal line down the frame, then are simply there
     if (on && T >= REVEAL[0] && ready) {
-      if (host.hidden) { host.hidden = false; if (goTo) { scroll.querySelector(`#${CSS.escape(goTo)}`)?.scrollIntoView({ block: 'start' }); goTo = null; } progress(); }
+      // (a hidden element cannot be scrolled, so the top is set now, when it shows, and not when the article was put in)
+      if (host.hidden) { host.hidden = false; scroll.scrollTop = 0; if (goTo) { scroll.querySelector(`#${CSS.escape(goTo)}`)?.scrollIntoView({ block: 'start' }); goTo = null; } progress(); }
       const r = Math.max(uReveal.value, still ? 1 : 0);
       if (r < 1) host.style.clipPath = `inset(0 0 ${((1 - r) * 100).toFixed(2)}% 0)`;
       else if (state === 'scanning') { state = 'open'; host.style.clipPath = ''; host.classList.add('open'); scroll.focus({ preventScroll: true }); }

@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-const url = new URL(process.argv[2]), room = url.searchParams.get('room') || 'lobby';
+const url = new URL(process.argv[2]), room = url.pathname.startsWith('/blog') ? 'writing' : url.searchParams.get('room') || 'lobby';
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 try {
   const p = await b.newPage({ viewport: { width: 960, height: 540 } });

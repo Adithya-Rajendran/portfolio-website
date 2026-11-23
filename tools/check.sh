@@ -22,8 +22,9 @@ else
   step "deeplink.mjs $FIRST (desktop)" dt deeplink.mjs "$FIRST"
   step "deeplink.mjs $FIRST (phone)" dt deeplink.mjs "$FIRST" 390 844
   step "writing-alias.mjs" dt writing-alias.mjs
-  # errs.mjs takes the room from ?room= only, so the Library is asked for by its old name, which main.js treats as /blog/
-  for u in "/" "/?room=about" "/?room=projects" "/?room=experience" "/?room=comms" "/blog/?room=writing"; do step "errs.mjs $u" dt errs.mjs "http://127.0.0.1:8080$u"; done
+  step "history.mjs (the address, Back and the reader)" dt history.mjs
+  step "endpoints.mjs" dt endpoints.mjs
+  for u in "/" "/?room=about" "/?room=projects" "/?room=experience" "/?room=comms" "/blog/"; do step "errs.mjs $u" dt errs.mjs "http://127.0.0.1:8080$u"; done
 fi
 
 echo; echo "=== summary"

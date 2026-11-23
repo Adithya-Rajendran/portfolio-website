@@ -46,6 +46,8 @@ projects: [homelab]                  # optional: slugs in data/projects/
 
 - String values are written as JSON strings (`"…"`) unless they are a date or a single slug-like word.
 - Unknown fields are an error.
+- Every field's type is checked, and: `revised` is not before `published`; the changelog is newest first and no entry predates `published`; each `projects` slug has a `data/projects/<slug>.json`.
+- `image` is copied to the public site unchanged, so it must be a PNG or JPEG of exactly 1200×630 with no EXIF data, named without a folder.
 
 Body: this Markdown and nothing else (it is all valid CommonMark, so it previews on GitHub). `tools/testdata/posts/every-construct.md` uses every construct and is the renderer's fixture.
 
