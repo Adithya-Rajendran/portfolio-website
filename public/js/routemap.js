@@ -121,7 +121,7 @@ export function createRouteMap({ scene, center, stops, radius = 3.1, gain = 1.6 
   const root = new THREE.Group(); root.position.copy(center); scene.add(root);
   const U = { uTime, uPx, uGain: { value: gain }, uTrain: { value: 0 } }, N = stops.length;
   // stations on a rising spiral, the newest highest and nearest the viewer's right
-  const P = stops.map((_, i) => { const t = i / (N - 1), a = -2.5 + t * 5.4, r = radius * (0.78 - 0.3 * t); return V(Math.cos(a) * r, 0.75 + t * 3.0 + 0.25 * Math.sin(t * 9.0), -Math.sin(a) * r); });
+  const P = stops.map((_, i) => { const t = N > 1 ? i / (N - 1) : 1, a = -2.5 + t * 5.4, r = radius * (0.78 - 0.3 * t); return V(Math.cos(a) * r, 0.75 + t * 3.0 + 0.25 * Math.sin(t * 9.0), -Math.sin(a) * r); });
   const curve = new THREE.CatmullRomCurve3([P[0].clone().add(V(-0.9, -0.5, 0.9)), ...P, P[N - 1].clone().add(V(0.5, 0.9, 0.6))], false, 'centripetal');
   const T0 = 1 / (N + 1), T1 = N / (N + 1);                                          // curve parameter of the first / last station
 

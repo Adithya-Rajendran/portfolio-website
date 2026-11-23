@@ -1,6 +1,6 @@
 {
   "brand": "ARK AURORA",
-  "reader": { "read": "READ", "scanning": "SCANNING", "label": "What is being read", "back": "CLOSE", "backToCatalogue": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED", "copyCode": "Copy this code", "failed": "This could not be opened.", "ready": "THE LIBRARY IS READY", "offer": "THIS IS A VOLUME IN THE LIBRARY", "enter": "READ IT THERE  →" },
+  "reader": { "read": "READ", "scanning": "SCANNING", "label": "What is being read", "back": "CLOSE", "backToCatalogue": "←  THE CATALOGUE", "contents": "CONTENTS", "copy": "COPY", "copied": "COPIED", "copyCode": "Copy this code", "failed": "This could not be opened.", "readThis": "Read what this shows", "ready": "{place} IS READY", "offer": "THIS CAN BE READ IN {place}", "enter": "READ IT THERE  →" },
   "hint": "MOVE TO LOOK AROUND  ·  CLICK TO INSPECT  ·  ← → TO TOUR",
   "credit": "Earth imagery: NASA Blue Marble / Black Marble",
   "depart": "03:47:12",
@@ -141,7 +141,7 @@
       }
     },
     "projects": {
-      "path": "/portfolio/",
+      "path": "/portfolio/", "place": "THE FABRICATION BAY",
       "nav": "PROJECTS",
       "title": "Projects — Fabrication Bay 02",
       "loading": "OPENING BAY",
@@ -171,7 +171,7 @@
       "close": "THE MAP",
       "kicker": "RING 04 · COMPARTMENT 1 · NAVIGATION",
       "headline": ["A trajectory", "of building."],
-      "sub": ["Every stop on the line so far, and the one being laid now.", "{count} stations since {since}. Open one and READ what was done there."],
+      "sub": ["Every stop on the line so far, and the one being laid now.", "{stations} since {since}. Open one and READ what was done there."],
       "now": "NOW", "models": ["elevator", "torus", "cylinders", "ramjet", "dyson", "warp"],
       "facts": [["ROOM", "EXPERIENCE"], ["STATIONS", "{since} – NOW"]],
       "screens": {
@@ -187,7 +187,7 @@
       "stations": []
     },
     "writing": {
-      "path": "/blog/",
+      "path": "/blog/", "place": "THE LIBRARY",
       "nav": "WRITING",
       "title": "Writing — Library",
       "loading": "LIGHTING THE LAMPS",

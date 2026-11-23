@@ -199,7 +199,8 @@ class Site(unittest.TestCase):
         for js in [os.path.join(s.ROOT, 'public', 'main.js')] + [os.path.join(d, f) for d, _, fs in os.walk(os.path.join(s.ROOT, 'public', 'js'))
                                                                 for f in fs if f.endswith('.js') and 'vendor' not in d]:
             with open(js, encoding='utf-8') as f:
-                made |= set(re.findall(r"createElement\([^)]*\), \{ id: '([^']+)'", f.read()))
+                js_text = f.read()
+                made |= set(re.findall(r"createElement\([^)]*\), \{ id: '([^']+)'", js_text)) | set(re.findall(r'`<\w+ id="([a-z-]+)"', js_text))   # ... or write as markup
         self.assertEqual(made, set(s.RUNTIME_IDS))
 
     def test_nested_lists(self):

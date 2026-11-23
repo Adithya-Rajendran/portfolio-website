@@ -245,7 +245,7 @@ Every string that is not in the three lists of sentences is plain text: shown as
 | `project` | A project's slug | that project's file exists |
 | `file` | A file name | the file exists in `data/assets/files/` (bare name, not a link) |
 
-`load_projects()` returns each link as a dict with the six keys `label`, `kind`, `url`, `post`, `project`, `file`, the three unused ones `None`. A page makes `post` the address `/blog/<slug>/`, `project` the address `/?room=projects&project=<slug>` (§3), and `file` a file it copies. (A link to the site's own pages is a `post` or `project` rather than an address, so it cannot go stale.)
+`load_projects()` returns each link as a dict with the six keys `label`, `kind`, `url`, `post`, `project`, `file`, the three unused ones `None`. A page makes `post` the address `/blog/<slug>/`, `project` the address `/portfolio/<slug>/`, and `file` a file it copies. (A link to the site's own pages is a `post` or `project` rather than an address, so it cannot go stale.)
 
 ### Checks beyond the types
 

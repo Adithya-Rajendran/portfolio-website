@@ -47,4 +47,15 @@ const room = (p, id) => p.waitForFunction((id) => window.__lobby?.mode().room ==
 { // 5. a room that is not a room
   const p = await page(); await p.goto(`${ORIGIN}/?room=constructor&shot=hero`); await room(p, 'lobby'); ok('5 ?room=constructor is the Atrium'); await p.close();
 }
+{ // 6. an address with a #fragment opens the post at that place, and Back still leaves (it re-opened the post for ever)
+  const p = await page(), sec = A.sections.filter((x) => x.level === 2).at(-1).id;
+  await p.goto(`${ORIGIN}/about/${Q}`); await room(p, 'about');
+  await p.goto(`${ORIGIN}/blog/${A.slug}/${Q}#${sec}`);          // the page shows that section, so the Library only offers itself
+  await p.waitForSelector('#stepin', { timeout: 120000 }); await p.click('#stepin'); await open(p, A.slug); await p.waitForTimeout(500);
+  const at = await p.evaluate((id) => { const h = document.querySelector(`#reader #${CSS.escape(id)}`), s = document.querySelector('.reader-scroll'); return h ? Math.round(h.getBoundingClientRect().top - s.getBoundingClientRect().top) : null; }, sec);
+  if (at === null || at < -5 || at > 160) fail('6 the post did not open at the section:', at); else ok('6 a #fragment opens the post at that section');
+  await p.goBack(); await room(p, 'about'); const s = await state(p);
+  if (s.path !== '/about/' || s.state !== 'closed') fail('6 Back from a #fragment address:', JSON.stringify(s)); else ok('6 Back leaves the post');
+  await p.close();
+}
 console.log(process.exitCode ? 'history FAILED' : 'history ok'); await b.close();

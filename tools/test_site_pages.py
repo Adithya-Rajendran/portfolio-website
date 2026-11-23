@@ -420,6 +420,8 @@ class Pages(unittest.TestCase):
         self.assertEqual([h.attrs['id'] for h in body.all('h2')], ['story', 'availability', 'elsewhere'])
         self.assertEqual(body.one('p', 'post-availability').text(), 'Closed')   # no date, nothing sought
         self.assertEqual(body.one('p', 'post-cta').one('a').attrs['href'], '/contact/')   # no hiring route
+        contact = self.main('contact/index.html', self.minimal)
+        self.assertEqual(list(contact.all('p', 'post-cta')), [])                 # on the contact page that link would lead to itself
         self.assertEqual([a.attrs['href'] for a in body.one('ul', 'post-links').all('a')], ['https://github.com/example'])   # no résumé
         self.assertFalse(os.path.exists(os.path.join(self.minimal, 'resume')))
 
@@ -699,7 +701,8 @@ class Pages(unittest.TestCase):
             with open(os.path.join(out, rel), 'w') as f:
                 f.write('kept')
         with open(os.path.join(out, s.RECORD), 'a') as f:  # a record edited to name things that are not the generator's
-            f.write('index.html\njs/hand-written.js\n../outside.txt\n/etc/passwd\n')
+            f.write('index.html\njs/hand-written.js\n../outside.txt\n/etc/passwd\n'
+                    'blog/../index.html\nmedia/../js/hand-written.js\nportfolio/../index.html\nprofile.jsonx\nabout/./../index.html\n')   # ... or that climb out of its folders
         log = generate(out, projects=projects)
         self.assertEqual(sorted(l for l in log.splitlines() if l.startswith('removed')),
                          ['removed media/' + cover[0], 'removed portfolio/quiet-featured/index.html'])

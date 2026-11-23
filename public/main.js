@@ -16,7 +16,7 @@ import { reflectEye } from './js/reflections.js';
 import { initLive, live, fill } from './js/screens.js';
 import { loadSite, furnish } from './js/site.js';
 
-const $ = (sel) => document.querySelector(sel), esc = (str) => str.replace(/[&<>"]/g, (ch) => `&#${ch.charCodeAt(0)};`);
+const $ = (sel) => document.querySelector(sel), esc = (str) => String(str).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
 const canvas = $('#scene'), loader = $('#loader'), hud = $('#hud'), bar = $('#inspectbar');
 const html = document.documentElement, plain = () => !html.classList.contains('station');    // an article shown as a page: the room, if loaded, is hidden behind it (post.css)
 function fail(msg) {
@@ -168,7 +168,7 @@ function setFocus(pick = null) {
   $('#ways').innerHTML = ways.map(([label, to]) => `<button data-to="${to}"${to ? '' : ' disabled'}>${label}${to ? '  →' : '  ·  NOT YET OPEN'}</button>`).join('')
     + (pick.options || []).map(([label, , sub], i) => `<button data-option="${i}"${pick.current?.() === i ? ' aria-current="true"' : ''}>${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</button>`).join('');      // or it offers choices of its own
   $('#ways').classList.toggle('list', !!pick.list); $('#ways').classList.toggle('chosen', pick.current?.() >= 0);
-  if (pick.enter) $('#ways').insertAdjacentHTML('beforeend', `<button id="enter" hidden>${esc(pick.enterLabel)}</button>`);      // what Enter does here, as a button (shown by tick)
+  if (pick.enter) $('#ways').insertAdjacentHTML('beforeend', `<button id="enter" hidden aria-label="${esc(content.reader.readThis)}">${esc(pick.enterLabel)}</button>`);      // what Enter does here, as a button (shown by tick)
   tick();                         // a list: titles one under another, above the bar
 }
 function step(d) { const t = tourOrder(), i = t.indexOf(focus.pick); setFocus(t[((i < 0 ? (d > 0 ? -1 : 0) : i) + d + t.length) % t.length]); }
@@ -189,13 +189,14 @@ const tick = () => {
 function fillHud(id) {
   const r = content.rooms[id];
   document.title = r.title; $('.kicker').textContent = r.kicker; $('.headline').innerHTML = r.headline.join('<br>');
-  $('.sub').innerHTML = r.sub.join('<br>').replace(/\{(\w+)\}/g, '<span data-live="$1"></span>');
+  // Words from content.json and, through js/site.js, from the profile: all of it is text. Only the places for live values become elements.
+  $('.sub').innerHTML = r.sub.map(esc).join('<br>').replace(/\{(\w+)\}/g, '<span data-live="$1"></span>');
   $('.hero .cta')?.remove();
-  if (r.cta) $('.hero').insertAdjacentHTML('beforeend', `<button class="cta">${r.cta}</button>`);   // the room's call to action: its 'cta' pick
+  if (r.cta) $('.hero').insertAdjacentHTML('beforeend', `<button class="cta">${esc(r.cta)}</button>`);   // the room's call to action: its 'cta' pick
   $('#hud nav').innerHTML = Object.entries(content.rooms).map(([k, v]) => `<a href="${urlFor(k)}" data-room="${k}"${k === id ? ' class="here"' : ''}>${v.nav}</a>`).join('')
     + `<span class="sep"></span><a data-view="0">WIDE</a><a data-view="1">${r.close}</a>`;
   const shelved = room?.volumes?.length ?? 0, facts = r.facts.map(([k, v]) => [k, v.replace('{count} VOLUMES', `${shelved} VOLUME${shelved === 1 ? '' : 'S'}`)]);
-  $('#hud > footer').innerHTML = facts.map(([k, v]) => `<div><b>${k}</b> ${v}</div>`).join('')
+  $('#hud > footer').innerHTML = facts.map(([k, v]) => `<div><b>${esc(k)}</b> ${esc(v)}</div>`).join('')
     + `<div class="hint">${content.hint}${r.credit ? `<br><small>${content.credit}</small>` : ''}</div>`;
   tick();
 }
@@ -217,7 +218,8 @@ let silent = 0;                                         // > 0: a step on the wa
 function syncUrl() {
   if (silent) return;
   const read = focus.pick?.url?.() ?? null, [path, id] = (read ?? '').split('#'), url = read ? path + query() + (id ? `#${id}` : '') : urlFor(room.id);
-  if (location.pathname + location.search + location.hash !== url) history.pushState(null, '', url);
+  if (location.pathname + location.search === url.split('#')[0]) { if (location.hash !== (id ? `#${id}` : '')) history.replaceState(null, '', url); }      // the same page, another place in it: not a new entry
+  else history.pushState(null, '', url);
   document.title = (read && (focus.pick.title?.() ?? titles.get(path))) || content.rooms[room.id].title;
 }
 /** Have the article at a URL read in the room that is open. In the Library the drone fetches the volume (fly), or it is simply there
@@ -244,7 +246,7 @@ function onLink(href) {
 }
 function back() {
   const was = focus.pick; setFocus(was?.back?.() ?? null);
-  if (was?.reads) bar.querySelector('[aria-current], [data-option]')?.focus({ preventScroll: true });       // the keyboard returns to the list it came from
+  if (was?.reads) (bar.querySelector('[aria-current], #enter:not([hidden]), [data-option]') ?? $('.hero .cta') ?? $('#back'))?.focus({ preventScroll: true });     // the keyboard returns to what it came from: the list, READ, or the room's button
 }
 const progress = (f) => { $('#progress').style.width = `${f * 100}%`; $('#pct').textContent = Math.round(f * 100); };
 /** Leave the open room (if any) and open another: cover the view, free the old room, load the new one, start its opening shot. */
@@ -270,7 +272,10 @@ addEventListener('resize', resize);
 addEventListener('popstate', () => {
   const r = route();
   if (r.id !== room?.id) enter(r.id, false);
-  else if (r.read) { if (focus.pick?.url?.() !== r.read) readPost(r.read, false); }       // Back / Forward: at once, without the flight
+  else if (r.read) {                                    // Back / Forward: at once, without the flight
+    const now = focus.pick?.url?.();
+    if (now?.split('#')[0] === r.read.split('#')[0]) room.reader.jump(location.hash.slice(1)); else readPost(r.read, false);
+  }
   else if (focus.pick?.reads) back();
 });
 addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
@@ -371,7 +376,7 @@ initLive(content); $('#brand').textContent = content.brand; setInterval(tick, 50
 // is only offered it, as is one who asked to save data (for them the room is not even fetched until asked for).
 let touched = false;
 const offer = () => new Promise((yes) => {
-  const words = content.reader, b = Object.assign(document.createElement('button'), { id: 'stepin', type: 'button' });
+  const words = Object.fromEntries(Object.entries(content.reader).map(([k, v]) => [k, v.replace('{place}', content.rooms[route().id].place ?? '')])), b = Object.assign(document.createElement('button'), { id: 'stepin', type: 'button' });
   b.innerHTML = `<small>${esc(room ? words.ready : words.offer)}</small>${esc(words.enter)}`; b.addEventListener('click', () => { b.remove(); yes(); }); document.body.append(b);
 });
 async function stepIn() {

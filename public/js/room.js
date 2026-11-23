@@ -420,7 +420,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     ? await createHologram({ scene, position: B(info.holo).add(V(0, 0.1, 0)), sunDir: SUN, text: text.hologram, base, ver: `?v=${info.v || 0}`, radius: 0.74, gain: num('holo', 2.0) }) : null;
   const drone = info.drone ? createDrone({ scene, dock: B(info.drone.dock), deliver: B(info.drone.deliver), slots: info.drone.slots.map(B), volumes }) : null;
   if (drone && probe && shadow && !SKIP.has('sunlight')) receiveWindowSun(drone.root,{uSunVP,uSunDir,uSunE,tShadow:{value:shadow.rt.depthTexture}},visibility);
-  const routeMap = info.map ? createRouteMap({ scene, center: B(info.map.c), stops: text.stations, radius: info.map.r, gain: num('map', 1.6) }) : null;
+  const routeMap = info.map && text.stations.length ? createRouteMap({ scene, center: B(info.map.c), stops: text.stations, radius: info.map.r, gain: num('map', 1.6) }) : null;
   // the signal room's terminal: a field over the plinth, and its drone (lit by the room and the window sun like the Library's)
   const comms = info.comms ? createComms({ scene, center: B(info.comms.c), facing: B(info.comms.facing).setY(0).normalize(), text: text.comms, window: PORTAL, out: AXIS }) : null;
   if (comms && probe && shadow && !SKIP.has('sunlight')) receiveWindowSun(comms.drone,{uSunVP,uSunDir,uSunE,tShadow:{value:shadow.rt.depthTexture}},visibility);
@@ -542,6 +542,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
       if (drone) {
         const i = volumes.findIndex((v) => v.url === path); if (i < 0) return Promise.resolve(null);
         waiting?.done(null); waiting = null; reader.offer(bookSource, terminal);
+        if (url.includes('#')) reader.scrollTo(url.split('#')[1]);      // an address that names a place in the volume: it opens there
         if (drone.open() !== i) { if (fly) call(i); else { if (shelf) { shelf.selected = i; shelf.rev++; } drone.bring(i); } }
         return new Promise((done) => { waiting = { i, done }; });
       }

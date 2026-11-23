@@ -34,7 +34,7 @@ ESCAPABLE = '*_\\`[]'
 # Ids the page's scripts give elements they add at run time, so a heading must not take them either (the shell's own
 # ids are read from public/index.html): the hologram's article host in public/js/reader.js, the offer to step into
 # the Library in public/main.js.
-RUNTIME_IDS = ('reader', 'stepin')
+RUNTIME_IDS = ('reader', 'stepin', 'enter')
 KEEP = object()                                            # an output whose file on disk is already current
 
 
@@ -1014,7 +1014,7 @@ def portfolio_page(shell, profile, site):
     return page(shell, title, page_head(profile, title, profile['projects_intro'], '/portfolio/', ld), '\n'.join(main)), doc
 
 
-def availability(doc, profile, routes):
+def availability(doc, profile, routes, here=False):
     """The availability: its status, what is sought, and the call to action, which leads to the contact page (at the
     hiring route when there is one)."""
     a = profile['availability']
@@ -1023,7 +1023,8 @@ def availability(doc, profile, routes):
            f'    <p class="post-availability" data-status="{escape(a["status"])}"><b>{escape(a["status"].capitalize())}</b>{when}</p>']
     if a['seeking']:
         out.append('    <ul>' + ''.join(f'<li>{escape(s)}</li>' for s in a['seeking']) + '</ul>')
-    out.append(f'    <p class="post-cta"><a href="/contact/{"#hiring" if "hiring" in routes else ""}">{escape(a["cta"])}</a></p>')
+    if not here:                                          # on the contact page itself the call to action would lead to where the reader is
+        out.append(f'    <p class="post-cta"><a href="/contact/{"#hiring" if "hiring" in routes else ""}">{escape(a["cta"])}</a></p>')
     return out
 
 
@@ -1186,7 +1187,7 @@ def contact_page(shell, profile, site):
     body = [f'    <p>{escape(profile["contact_invitation"])}</p>', h2(doc, 'What to write about', 'what-to-write-about')]
     body += [f'    <section class="route" id="{rid}"><h3>{escape(r["title"])}</h3> <p>{escape(r["prompt"])}</p></section>'
              for rid, r in routes.items()]
-    body += elsewhere(doc, profile, site) + availability(doc, profile, routes)
+    body += elsewhere(doc, profile, site) + availability(doc, profile, routes, here=True)
     title = f'Contact — {profile["name"]}'
     ld = {'@type': 'ContactPage', 'name': title, 'description': profile['contact_invitation'],
           'about': person(profile, sameAs=[l['url'] for l in profile['social_links']])}
@@ -1332,12 +1333,19 @@ def write_outputs(out, outputs, prune=('blog',)):
             earlier = [l.strip() for l in f if l.strip() and not l.startswith('#')]
     except FileNotFoundError:
         earlier = []
+    root = os.path.realpath(out)
     for rel in sorted(set(earlier) - set(outputs)):
-        if rel.startswith(OWNED) and '\\' not in rel:
-            try:
-                stale.append((rel, out_path(out, rel)))
-            except ContentError:                          # a record edited by hand to point elsewhere: ignored
-                pass
+        # The record is a file anyone can edit: a line is honoured only if, once resolved, it still names a file under
+        # a path this tool owns ('blog/../index.html' resolves to the shell, which it does not).
+        if '\\' in rel or '..' in rel.split('/') or rel.startswith('/'):
+            continue
+        try:
+            path = out_path(out, rel)
+        except ContentError:
+            continue
+        real = os.path.relpath(os.path.realpath(path), root).replace(os.sep, '/')
+        if real == rel and rel.startswith(OWNED):
+            stale.append((rel, path))
     for rel, data in sorted(outputs.items()):
         path = paths[rel]
         if data is KEEP:
