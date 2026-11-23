@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# live.ps1 for an ARM64 Linux GPU machine: blender/remote/arm64/live.sh build|probe|bake|draft <room>, run from blender/.
+# live.ps1 for an ARM64 Linux GPU machine: blender/remote/arm64/live.sh build|backdrop|probe|bake|draft <room>, run from blender/.
 # The GPU kernels Cycles and the driver compile on first use (minutes) are kept in ~/.cache/blender-arm between runs.
 set -euo pipefail
 phase=$1; room=$2; mkdir -p ~/.cache/blender-arm
 case $phase in
   build) args="--python-exit-code 2 -P $([[ $room == lobby ]] && echo build_scene.py || echo room_$room.py)";;
+  backdrop) args="$room.blend --python-exit-code 2 -P backdrop.py -- 4096";;                # window rooms: what the window shows
   probe) args="$room.blend --python-exit-code 2 -P reflection_probe.py";;
   draft) args="$room.blend --python-exit-code 2 -P bake.py -- 0.25 24";;
   bake)  args="$room.blend --python-exit-code 2 -P bake.py -- 1.0 192";;
