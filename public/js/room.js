@@ -441,7 +441,11 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const along = V().crossVectors(V(0, 1, 0), n).normalize(), span = (f) => Math.max(...v.map(f)) - Math.min(...v.map(f));
     const w = span((q) => q.dot(along)), h = span((q) => q.y);
     // the catalogue terminal: stand back far enough to watch the drone; each volume is a choice (main.js lists them)
-    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = { mesh: o, list: true, pose: () => ({ pos: B(info.terminal.pos), tgt: B(info.terminal.tgt) }),
+    if (drone && o.userData.name === info.terminal.screen) picks.push(terminal = { mesh: o, list: true, pose: () => {
+        // on an upright screen the view is wide and the book small: stand nearer to where the drone presents it
+        const at = B(info.drone.deliver), k = THREE.MathUtils.clamp(camera.aspect / 1.1, 0.5, 1);
+        return { pos: at.clone().lerp(B(info.terminal.pos), k), tgt: B(info.terminal.tgt).lerp(at.clone().setY(at.y - 0.3), 1 - k) };
+      },
       options: volumes.map((v, i) => [v.title, () => call(i), `${v.date}  ·  ${v.minutes} min`]), current: () => shelf?.selected ?? -1,
       enter: () => (reader?.available() ? reading : null), onFocus: (on, next) => on || next?.reads || call(null) });
     else picks.push({ mesh: o, pose: () => ({ pos: c.clone().addScaledVector(n, Math.max(h / 2 / tanV(), w / 2 / (tanV() * camera.aspect)) * 1.12), tgt: c }) });
@@ -470,7 +474,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     return { pos: c.clone().addScaledVector(n, d), tgt: beside ? c.clone().add(V(0.12, -0.04, 0)) : c };
   } });
   // reading: its pick is the READ glyph, there only while a book lies open. Aside from the tour; BACK leads to the terminal.
-  if (reader) picks.push(reading = { mesh: reader.hit, reads: true, aside: true, steady: true, live: reader.available, pose: reader.pose, typing: () => reader.state() !== 'closed',
+  if (reader) picks.push(reading = { mesh: reader.hit, reads: true, aside: true, steady: true, live: reader.available, pose: reader.pose, typing: () => reader.state() !== 'closed', calm: reader.settled,
     back: () => terminal, backLabel: text.reader.backTo, slug: reader.slug,
     onFocus: (on, next) => { if (on) reader.read(); else { reader.close(); if (next !== terminal) call(null); } } });
   // doors: walk up to it; main.js then goes through to door.to (another room's id; '' = sealed)

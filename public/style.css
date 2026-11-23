@@ -66,4 +66,8 @@ html, body { height: 100%; background: #04060a; overflow: hidden; color: var(--f
 #ways.list button small { display: block; margin-top: 5px; font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--soft); pointer-events: none; }
 #ways.list button:hover { color: var(--cy); border-color: var(--cy); }
 #ways.list button[aria-current] { color: #ffd2a8; border-color: var(--am); box-shadow: inset 3px 0 0 var(--am); }
+@media (max-width: 720px) {                          /* no room beside the book: once one is chosen, only it stays, and opens the list again */
+  #ways.list.chosen button:not([aria-current]) { display: none; }
+  #ways.list.chosen button[aria-current]::after { content: "▾"; float: right; margin-top: -22px; color: var(--am); }
+}
 #count { font-size: 11px; letter-spacing: .3em; color: var(--soft); min-width: 64px; text-align: center; text-shadow: 0 1px 8px #000; }

@@ -169,7 +169,7 @@ function setFocus(pick = null) {
   const door = pick.door, ways = !door ? [] : door.stops ?? [[`ENTER ${door.label}`, door.to]];
   $('#ways').innerHTML = ways.map(([label, to]) => `<button data-to="${to}"${to ? '' : ' disabled'}>${label}${to ? '  →' : '  ·  NOT YET OPEN'}</button>`).join('')
     + (pick.options || []).map(([label, , sub], i) => `<button data-option="${i}"${pick.current?.() === i ? ' aria-current' : ''}>${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</button>`).join('');      // or it offers choices of its own
-  $('#ways').classList.toggle('list', !!pick.list);                         // a list: titles one under another, above the bar
+  $('#ways').classList.toggle('list', !!pick.list); $('#ways').classList.toggle('chosen', pick.current?.() >= 0);                         // a list: titles one under another, above the bar
 }
 function step(d) { const t = tourOrder(), i = t.indexOf(focus.pick); setFocus(t[((i < 0 ? (d > 0 ? -1 : 0) : i) + d + t.length) % t.length]); }
 function travel(id, delay = 0) { if (id && !leaving) leaving = setTimeout(() => enter(id), delay); }
@@ -285,7 +285,11 @@ addEventListener('keydown', (e) => {
 bar.addEventListener('click', (e) => {
   if (e.target.dataset.to) travel(e.target.dataset.to);
   const option = e.target.closest('[data-option]');
-  if (option) { for (const b of bar.querySelectorAll('[data-option]')) b.toggleAttribute('aria-current', b === option); focus.pick?.options[option.dataset.option][1](); }
+  if (option) {                                                             // on a narrow screen a list folds down to what was chosen; touching that opens it again
+    const ways = $('#ways'), again = ways.classList.contains('chosen') && option.hasAttribute('aria-current') && matchMedia('(max-width: 720px)').matches;
+    ways.classList.toggle('chosen', !again); if (again) return;
+    for (const b of bar.querySelectorAll('[data-option]')) b.toggleAttribute('aria-current', b === option); focus.pick?.options[option.dataset.option][1]();
+  }
   else ({ back, prev: () => step(-1), next: () => step(1) })[e.target.id]?.();
 });
 $('.hero').addEventListener('click', (e) => { if (e.target.closest('.cta') && room) setFocus(room.picks.find((p) => p.cta)); });
@@ -296,12 +300,18 @@ $('#hud nav').addEventListener('click', (e) => {
 });
 
 // ---------------------------------------------------------------- frame
-const clock = new THREE.Clock();
+const clock = new THREE.Clock(), CALM = num('calm', 0.15); let drawn = 0, wasCalm = false;
 function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 0.05), t = (uTime.value += dt), since = t - t0;
   if (!room || plain()) return;                         // nothing is drawn behind an article read as a page
-  if (gov.update(dt * 1000)) {
+  // While an article is read the room is a still backdrop, nearly dark behind the hologram's veil. It is redrawn only a
+  // few times a second: the GPU is then free for the page, and the text scrolls smoothly even on a slow one.
+  const calm = focus.f >= 1 && !!focus.pick?.calm?.();
+  if (calm && t - drawn < CALM) return;
+  if (calm !== wasCalm) { wasCalm = calm; gov.rest(1500); }
+  drawn = t;
+  if (!calm && gov.update(dt * 1000)) {
     if (tier === 0 && !TIER_PINNED && gov.scale < 0.72) { setTier(1); gov.scale = 1; gov.cool = 6; }     // cheaper AA before lower resolution
     applyScale();
   }

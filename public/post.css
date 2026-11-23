@@ -50,10 +50,10 @@
 .post-next a:hover, .post-next a:focus-visible { background: rgba(255,154,74,.1); color: #fff; }
 
 /* ---------------------------------------------------------------- as a hologram: one element over the canvas */
-#reader { position: fixed; left: 0; top: 0; z-index: 4; transform-origin: 0 0; display: grid; grid-template: "head head" auto "rail text" 1fr "bar bar" 2px / 232px 1fr;
+#reader { position: fixed; left: 0; top: 0; z-index: 4; transform-origin: 0 0; display: grid; grid-template: "head head" auto "rail text" minmax(0, 1fr) "bar bar" 2px / 232px minmax(0, 1fr);
   will-change: transform; text-shadow: 0 0 12px rgba(127,227,255,.16); }
 #reader[hidden] { display: none; }
-.reader-head { grid-area: head; display: flex; align-items: center; gap: 16px; padding: 12px 18px 11px 22px; border-bottom: 1px solid var(--rule); font-size: 11px; letter-spacing: .32em; }
+.reader-head { grid-area: head; min-width: 0; display: flex; align-items: center; gap: 16px; padding: 12px 18px 11px 22px; border-bottom: 1px solid var(--rule); font-size: 11px; letter-spacing: .32em; }
 .reader-mark { color: var(--am); white-space: nowrap; }
 .reader-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--soft); letter-spacing: .14em; text-transform: uppercase; }
 .reader-close { font: inherit; letter-spacing: .28em; color: var(--fg); background: rgba(2,5,9,.5); border: 1px solid rgba(127,227,255,.5); padding: 8px 12px 7px; cursor: pointer; white-space: nowrap; }
@@ -69,12 +69,12 @@
 .reader-progress { grid-area: bar; background: rgba(127,227,255,.12); }
 .reader-progress i { display: block; height: 100%; background: var(--cy); box-shadow: 0 0 10px var(--cy); transform-origin: 0 50%; transform: scaleX(0); }
 .reader-error { margin-top: 20vh; text-align: center; color: var(--soft); letter-spacing: .1em; }
-#reader.phone { grid-template: "head" auto "text" 1fr "bar" 2px / 1fr; }
+#reader.phone { grid-template: "head" auto "text" minmax(0, 1fr) "bar" 2px / minmax(0, 1fr); }
 #reader.phone .reader-rail, #reader.phone .reader-mark { display: none; }
 #reader.phone .reader-head { padding: 9px 10px 8px 14px; }
 #reader.phone .reader-scroll { padding: 22px 16px 60px; }
 #reader.phone .post { font-size: 16px; }
-@media (max-width: 1000px) { #reader:not(.phone) { grid-template-columns: 0 1fr; } #reader:not(.phone) .reader-rail { display: none; } }
+@media (max-width: 1000px) { #reader:not(.phone) { grid-template-columns: 0 minmax(0, 1fr); } #reader:not(.phone) .reader-rail { display: none; } }
 /* while something is read, the bar keeps only its way back; the frame has the rest */
 #inspectbar.aside #prev, #inspectbar.aside #next, #inspectbar.aside #count { display: none; }
 
@@ -88,8 +88,12 @@ html:not(.station) body { height: auto; overflow: visible; background: radial-gr
 html:not(.station) #page { display: block; max-width: 760px; margin: 0 auto; padding: clamp(84px, 12vh, 130px) 22px 120px; }
 html:not(.station) #scene, html:not(.station) #hud, html:not(.station) #inspectbar { visibility: hidden; pointer-events: none; }
 html:not(.station):not(.reading) #loader { display: none; }
-#page::before { content: "ARK AURORA  ·  LIBRARY"; position: absolute; left: 0; right: 0; top: 0; padding: 26px 22px 0; max-width: 760px; margin: 0 auto;
-  font: 600 12px "Eurostile", "Michroma", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: .32em; color: var(--fg); }
+#pagenav { display: none; }
+html:not(.station) #pagenav { display: flex; gap: 26px; position: absolute; left: 0; right: 0; top: 0; max-width: 760px; margin: 0 auto; padding: 26px 22px 0;
+  font: 600 12px "Eurostile", "Michroma", "Segoe UI", "Helvetica Neue", Arial, sans-serif; letter-spacing: .32em; }
+#pagenav a { color: var(--fg); text-decoration: none; padding-bottom: 7px; border-bottom: 1px solid rgba(127,227,255,.5); }
+#pagenav a:hover, #pagenav a:focus-visible { color: var(--cy); border-bottom-color: var(--cy); }
+#pagenav a + a { color: var(--soft); }
 .post-list h1 { font-size: clamp(40px, 7vw, 72px); font-weight: 200; letter-spacing: -.02em; line-height: 1; margin-bottom: 18px; }
 .post-list ol { list-style: none; margin-top: 44px; }
 .post-list li { padding: 26px 0; border-top: 1px solid var(--rule); font: 16px/1.6 var(--text); color: #b9d2df; }

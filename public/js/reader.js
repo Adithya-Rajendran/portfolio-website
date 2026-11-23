@@ -83,14 +83,14 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
         float v = 1.0 - vUv.y, line = exp(-pow((uReveal - v)*uSize.y/2.5, 2.0))*step(0.001, uReveal)*(1.0 - step(0.999, uReveal));
         float rows = 0.5 + 0.5*sin(p.y*1.5708);
         vec3 c = ${CY}*(edge*0.30 + tick*1.1 + lead*2.2 + line*1.6 + 0.004*rows + 0.01*(1.0 - smoothstep(0.0, 90.0, q.y)));
-        gl_FragColor = vec4(vec3(0.0022, 0.006, 0.0095) + c, 0.994);      // what is behind all but goes out: the words must be easy to read
+        gl_FragColor = vec4(vec3(0.0022, 0.006, 0.0095) + c, 0.998);      // what is behind all but goes out: the words must be easy to read
       }` }));
   panel.renderOrder = 8; panel.visible = false; root.add(panel);
   const beamGeo = new THREE.BufferGeometry(); beamGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3));
   beamGeo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), 2)); beamGeo.setIndex([0, 1, 2, 2, 1, 3]);
   const uBeam = { value: 0 };
   const beam = new THREE.Mesh(beamGeo, light(`uniform float uK, uTime; varying vec2 vUv;
-    void main(){ float s = 0.55 + 0.45*sin(vUv.x*70.0 + sin(vUv.x*13.0)*4.0), rise = 0.7 + 0.3*sin(vUv.y*26.0 - uTime*5.0 + vUv.x*9.0);
+    void main(){ float s = 0.55 + 0.45*sin(vUv.x*70.0 + sin(vUv.x*13.0)*4.0), rise = 0.7 + 0.3*sin(vUv.y*26.0 - uTime*mix(0.5, 5.0, smoothstep(0.35, 0.9, uK)) + vUv.x*9.0);    // lively while it unfolds, then nearly still
       float side = smoothstep(0.0, 0.08, vUv.x)*smoothstep(1.0, 0.92, vUv.x);
       gl_FragColor = vec4(${CY}*s*rise*side*pow(1.0 - vUv.y, 1.3)*0.5*uK, 1.0); }`, { uK: uBeam, uTime }));
   beam.frustumCulled = false; beam.renderOrder = 7; root.add(beam);
@@ -192,7 +192,7 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
       const tan = Math.tan(rad(camera.fov / 2)), fwd = camera.getWorldDirection(_b), up = _a.set(0, 1, 0).applyQuaternion(camera.quaternion);
       book().localToWorld(_v.set(0, 0, BOOK_H / 2 + 0.03));
       const depth = _v.clone().sub(camera.position).dot(fwd), m = 2 * depth * tan / innerHeight, w = clamp(innerWidth * 0.2, 104, 168) * m, h = w / 3;       // m: metres per pixel there
-      const low = _v.clone().sub(camera.position).dot(up) - 8 * m - h / 2, floor = -depth * tan + 10 * m + h / 2;
+      const low = _v.clone().sub(camera.position).dot(up) - 8 * m - h / 2, floor = -depth * tan + (innerWidth < 720 ? 150 : 10) * m + h / 2;      // a phone has the catalogue's bar along the bottom
       glyph.position.copy(_v).addScaledVector(up, Math.max(low, floor) - _v.clone().sub(camera.position).dot(up)); glyph.quaternion.copy(camera.quaternion); glyph.scale.setScalar(w / 3);
     }
     // the scan
@@ -226,6 +226,8 @@ export function createReader({ scene, camera, drone, volumes, facing, text, onLi
     /** A book lies open and can be read. */
     available: () => openVolume() >= 0 && state === 'closed',
     state: () => state, slug: () => slug,
+    /** Open and at rest: nothing in the frame is changing any more (main.js then draws the room behind it less often). */
+    settled: () => state === 'open' && uTime.value - t0 > REVEAL[1] + 0.8,
     /** Open the next article at this heading (by id): where the reader had got to on the plain page. */
     scrollTo(id) { goTo = id; },
     dispose() { host.remove(); for (const w of words) w.dispose(); attached?.remove(sheet); },

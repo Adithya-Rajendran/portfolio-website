@@ -1,4 +1,5 @@
 // Frame-time benchmark on the real GPU.  node perf.mjs <url> [w] [h] [seconds] [dpr]
+// env UNTIL: a JavaScript condition to wait for before measuring, e.g. "__lobby.reader.state() === 'open'"
 import { chromium } from 'playwright';
 const [url, w = 1920, h = 1080, secs = 8, dpr = 1] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=gl-egl', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit'] });
@@ -7,6 +8,7 @@ p.on('pageerror', (e) => console.log('[pageerror]', e.message));
 p.on('console', (m) => { if (m.type() === 'error') console.log('[error]', m.text().slice(0, 300)); });
 await p.goto(url);
 await p.waitForFunction(() => window.__lobby?.ready() >= 1, null, { timeout: 300000 });
+if (process.env.UNTIL) await p.waitForFunction(process.env.UNTIL, null, { timeout: 120000 });
 await p.waitForTimeout(1500);
 const r = await p.evaluate((secs) => new Promise((res) => {
   const L = window.__lobby, gl = L.renderer.getContext(), dt = []; let last = performance.now(), t0 = last;
