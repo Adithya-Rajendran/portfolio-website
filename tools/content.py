@@ -15,6 +15,8 @@ SITE = 'https://adithya-rajendran.com'                     # canonical origin: l
 REQUIRED = ('title', 'description', 'published')
 LISTS = ('tags', 'takeaways', 'changelog', 'projects')
 KNOWN = REQUIRED + LISTS + ('revised', 'image', 'image_alt', 'next', 'next_reason')
+STRING_LISTS = ('tags', 'takeaways', 'projects')            # the other list, changelog, holds mappings
+CARD = (1200, 630)                                         # the social card's size, in pixels
 DATE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 SLUG = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*$')
 
@@ -70,16 +72,19 @@ def parse_header(lines, name):
         if not line.strip():
             continue
         if line.startswith('  - '):
-            if key is None or not isinstance(out[key], list):
+            if key is None:
                 raise ContentError(f'{where}: a list item without a `key:` line above it')
+            where += f', `{key}`'                           # errors in a value name its field
+            if not isinstance(out[key], list):
+                raise ContentError(f'{where}: a list item under a field that has a value')
             item = line[4:]
             m = pair.match(item)
             if m and not item.startswith('"'):              # a mapping: this pair, then indented pairs
                 entry = {m.group(1): _scalar(m.group(2) or '', where)}
                 while i < len(lines) and lines[i].startswith('    ') and not lines[i].startswith('    - '):
                     m2 = pair.match(lines[i][4:])
-                    if not m2:
-                        raise ContentError(f'{name}, header line {i + 2}: expected `key: value`')
+                    if not m2 or m2.group(1) in entry:
+                        raise ContentError(f'{name}, header line {i + 2}, `{key}`: expected a `key: value` not used above')
                     entry[m2.group(1)] = _scalar(m2.group(2) or '', where)
                     i += 1
                 out[key].append(entry)
@@ -92,7 +97,7 @@ def parse_header(lines, name):
         key = m.group(1)
         if key in out:
             raise ContentError(f'{where}: `{key}` appears twice')
-        out[key] = [] if m.group(2) is None else _value(m.group(2), where)
+        out[key] = [] if m.group(2) is None else _value(m.group(2), f'{where}, `{key}`')
     return out
 
 
@@ -128,32 +133,101 @@ def prose_words(body):
     return len(re.findall(r"[A-Za-z0-9][A-Za-z0-9'’./:_-]*", text))
 
 
+def check_header(head, name):
+    """Every field's type, then the values that must agree: a malformed header is a ContentError naming the file and
+    the field, never a traceback further on. Absent lists become []."""
+    for k in head:
+        if k not in KNOWN:
+            raise ContentError(f'{name}: unknown header field `{k}`')
+    for k in REQUIRED:
+        if k not in head:
+            raise ContentError(f'{name}: `{k}` is required')
+    for k in (k for k in KNOWN if k not in LISTS):
+        if k in head and not (isinstance(head[k], str) and head[k].strip()):
+            raise ContentError(f'{name}: `{k}` must be a string, and not empty')
+    for k in LISTS:
+        head.setdefault(k, [])
+        if not isinstance(head[k], list):
+            raise ContentError(f'{name}: `{k}` must be a list')
+    for k in STRING_LISTS:
+        if not all(isinstance(x, str) and x.strip() for x in head[k]):
+            raise ContentError(f'{name}: `{k}` must be a list of strings, none empty')
+    for k in ('published', 'revised'):
+        if k in head and not _is_date(head[k]):
+            raise ContentError(f'{name}: `{k}` must be a date like 2026-03-30')
+    if head.get('revised', head['published']) < head['published']:
+        raise ContentError(f'{name}: `revised` ({head["revised"]}) is earlier than `published` ({head["published"]})')
+    for c in head['changelog']:
+        if not isinstance(c, dict) or set(c) != {'date', 'kind', 'note'} or not _is_date(c['date']) \
+                or c['kind'] not in ('update', 'correction') or not (isinstance(c['note'], str) and c['note'].strip()):
+            raise ContentError(f'{name}: `changelog`: each entry is date, kind (update or correction) and note, and nothing else')
+    dates = [c['date'] for c in head['changelog']]
+    if dates != sorted(dates, reverse=True):
+        raise ContentError(f'{name}: `changelog` must be newest first')
+    if dates and dates[-1] < head['published']:
+        raise ContentError(f'{name}: `changelog` has an entry ({dates[-1]}) from before `published` ({head["published"]})')
+    for p in head['projects']:
+        if not SLUG.match(p) or not os.path.isfile(os.path.join(DATA, 'projects', f'{p}.json')):
+            raise ContentError(f'{name}: `projects`: there is no data/projects/{p}.json')
+    if 'image' in head:
+        path = image_file(head['image'])
+        if not path:
+            raise ContentError(f'{name}: `image` must be the name of a file in data/assets/images/, with no folder: {head["image"]}')
+        problem = card_problem(path)
+        if problem:
+            raise ContentError(f'{name}: `image` {head["image"]}: {problem}')
+
+
+def card_problem(path):
+    """What makes this file unfit to be the social card, or None. It is copied unchanged to the public site for
+    og:image, so it must be a PNG or JPEG of exactly CARD pixels (as its own header says, whatever its name says),
+    named for what it is, and carry no EXIF (camera, place, time)."""
+    with open(path, 'rb') as f:
+        d = f.read()
+    ext = os.path.splitext(path)[1].lower()
+    if d[:8] == b'\x89PNG\r\n\x1a\n' and d[12:16] == b'IHDR':
+        kind, exts, size = 'PNG', ('.png',), (int.from_bytes(d[16:20], 'big'), int.from_bytes(d[20:24], 'big'))
+        i, exif = 8, False
+        while i + 8 <= len(d) and not exif:                # chunks: length, type, data, CRC
+            exif = d[i + 4:i + 8] == b'eXIf'
+            i += 12 + int.from_bytes(d[i:i + 4], 'big')
+    elif d[:3] == b'\xff\xd8\xff':
+        kind, exts, size, i = 'JPEG', ('.jpg', '.jpeg'), None, 2
+        while size is None and i + 9 <= len(d) and d[i] == 0xff:   # segments up to the frame header, which has the size
+            marker = d[i + 1]
+            if marker == 0xff:                             # a fill byte
+                i += 1
+                continue
+            if 0xc0 <= marker <= 0xcf and marker not in (0xc4, 0xc8, 0xcc):
+                size = int.from_bytes(d[i + 7:i + 9], 'big'), int.from_bytes(d[i + 5:i + 7], 'big')
+            i += 2 + int.from_bytes(d[i + 2:i + 4], 'big')
+        if size is None:
+            return 'a JPEG whose size cannot be read from its header'
+        # An APP1 segment that starts with Exif. Inside compressed data 0xff is always followed by 0 or a restart
+        # marker, so these bytes can only be the segment itself, wherever it is.
+        exif = re.search(rb'\xff\xe1..Exif\0\0', d, re.S) is not None
+    else:
+        return 'not a PNG or JPEG; the social card must be one of them'
+    if size != CARD:
+        return f'the social card must be {CARD[0]}x{CARD[1]} pixels; this {kind} is {size[0]}x{size[1]}'
+    if ext not in exts:
+        return f'this file is a {kind}, so its name must end in {" or ".join(exts)}'
+    if exif:
+        return f'this {kind} carries EXIF metadata, which would be published with it; it must be stripped first'
+    return None
+
+
 def load_post(path):
     slug = os.path.basename(path)[:-3]
     name = f'data/posts/{slug}.md'
     if not SLUG.match(slug):
         raise ContentError(f'{name}: the file name must be lower-case words joined by hyphens')
-    with open(path, encoding='utf-8') as f:
-        head, body = split(f.read(), name)
-    for k in head:
-        if k not in KNOWN:
-            raise ContentError(f'{name}: unknown header field `{k}`')
-    for k in REQUIRED:
-        if not head.get(k) or not isinstance(head[k], str):
-            raise ContentError(f'{name}: `{k}` is required')
-    for k in LISTS:
-        head.setdefault(k, [])
-        if not isinstance(head[k], list):
-            raise ContentError(f'{name}: `{k}` must be a list')
-    for k in ('published', 'revised'):
-        if head.get(k) and not _is_date(head[k]):
-            raise ContentError(f'{name}: `{k}` must be a date like 2026-03-30')
-    for c in head['changelog']:
-        if not isinstance(c, dict) or set(c) - {'date', 'kind', 'note'} or not _is_date(c.get('date', '')) \
-                or c.get('kind') not in ('update', 'correction') or not c.get('note'):
-            raise ContentError(f'{name}: a changelog entry needs date, kind (update or correction) and note')
-    if head.get('image') and not image_file(head['image']):
-        raise ContentError(f'{name}: `image` must be the name of a file in data/assets/images/, with no folder: {head["image"]}')
+    try:
+        with open(path, encoding='utf-8') as f:
+            head, body = split(f.read(), name)
+    except UnicodeDecodeError as e:
+        raise ContentError(f'{name}: not UTF-8 text ({e.reason} at byte {e.start})')
+    check_header(head, name)
     words = prose_words(body)
     return dict({k: head.get(k) for k in KNOWN}, slug=slug, body=body, words=words, minutes=max(1, math.ceil(words / 200)))
 

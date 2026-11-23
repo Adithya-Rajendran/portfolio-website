@@ -803,10 +803,7 @@ def build(posts_dir, out):
         body, doc = render_markdown(p['body'], doc=doc)
         outputs[f'blog/{p["slug"]}/index.html'] = post_page(shell, p, doc, body, profile, by_slug).encode()
         if p['image']:
-            src = image_file(p['image'])
-            if image_info(src)[0:2] != (1200, 630) or not p['image'].endswith(('.png', '.jpg')):
-                warnings.append(f'{doc.name}: the social card {p["image"]} should be a 1200x630 PNG')
-            with open(src, 'rb') as f:
+            with open(image_file(p['image']), 'rb') as f:  # content.py has checked it: 1200x630, PNG or JPEG, no EXIF
                 outputs[f'blog/media/{p["image"]}'] = f.read()
         for name, src in doc.files.items():
             with open(src, 'rb') as f:
