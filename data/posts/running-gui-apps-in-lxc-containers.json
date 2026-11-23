@@ -1,0 +1,1646 @@
+{
+  "_createdAt": "2026-04-07T00:27:18Z",
+  "_id": "0f92e055-22a1-419f-933b-161badbdb243",
+  "_rev": "pJuzvlAAkes31pzNsp7lKu",
+  "_system": {
+    "base": {
+      "id": "0f92e055-22a1-419f-933b-161badbdb243",
+      "rev": "kMmNf3snj7GoQAhiUlidg0"
+    }
+  },
+  "_type": "post",
+  "_updatedAt": "2026-11-05T19:42:26Z",
+  "body": [
+    {
+      "_key": "90be57bc4db4",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "90be57bc40",
+          "_type": "span",
+          "marks": [],
+          "text": "I wanted to keep GUI applications and their dependencies in a container while using them from my normal Linux desktop. This LXD profile connects the container to the host’s display sockets and GPU, so application windows appear alongside my other desktop apps."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "6a46ace0c6b5",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "6a46ace0c0",
+          "_type": "span",
+          "marks": [],
+          "text": "This post walks through the LXD profile I use for that setup. It runs applications such as Antigravity in an isolated container while their windows render natively on my desktop."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "1a54771be78c",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "b3989d664a93",
+          "_type": "span",
+          "marks": [],
+          "text": "The Core Problem: Display Sockets Don’t Cross Container Boundaries"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "603c79bc9443",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "603c79bc90",
+          "_type": "span",
+          "marks": [],
+          "text": "On a modern Linux desktop, graphical applications connect through Unix-domain sockets. Wayland commonly uses "
+        },
+        {
+          "_key": "603c79bc91",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "$XDG_RUNTIME_DIR/wayland-0"
+        },
+        {
+          "_key": "603c79bc92",
+          "_type": "span",
+          "marks": [],
+          "text": ", while X11 or Xwayland uses a socket under "
+        },
+        {
+          "_key": "603c79bc93",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/tmp/.X11-unix/"
+        },
+        {
+          "_key": "603c79bc94",
+          "_type": "span",
+          "marks": [],
+          "text": ". Those sockets live in host-managed runtime directories, which a container cannot access by default."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "7f6d7d4e4c30",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e08ab50b7326",
+          "_type": "span",
+          "marks": [],
+          "text": "There are a few common workarounds:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "88b143c82e53",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "88b143c820",
+          "_type": "span",
+          "marks": [],
+          "text": "Bind-mounting the socket directory works, but it exposes the host’s runtime directory directly to the container and broadens the access surface."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "44a17572cc0f",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "44a17572c0",
+          "_type": "span",
+          "marks": [],
+          "text": "SSH X forwarding supports X11, but it adds latency and does not provide a native Wayland path."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "734e2e378e79",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "734e2e3780",
+          "_type": "span",
+          "marks": [],
+          "text": "Running VNC or RDP inside the container adds a second desktop session and more moving parts."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "98e79c2ae022",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "98e79c2ae0",
+          "_type": "span",
+          "marks": [],
+          "text": "I prefer LXD’s "
+        },
+        {
+          "_key": "98e79c2ae1",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "proxy"
+        },
+        {
+          "_key": "98e79c2ae2",
+          "_type": "span",
+          "marks": [],
+          "text": " device. It relays connections between a socket path on the host and a separate endpoint inside the container. The container does not receive a direct bind mount of the host socket, although it still gains access to the host display service."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "5cafb654d73d",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "2270ebb594d6",
+          "_type": "span",
+          "marks": [],
+          "text": "The Profile"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "download-gui-profile",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "gui-source-label",
+          "_type": "span",
+          "marks": [
+            "gui-download"
+          ],
+          "text": "Download the profile as gui-lxd-profile.yaml"
+        },
+        {
+          "_key": "gui-source-note",
+          "_type": "span",
+          "marks": [],
+          "text": ". This file matches the listing below; check the environment and permission assumptions before applying it."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "gui-download",
+          "_type": "contentLink",
+          "href": "https://cdn.sanity.io/files/ppk2h9tb/production/8b46b93f83223a11d762796f2775bb697b0a94ce.yaml"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "v3lxcprereq",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "v3lxcprer0",
+          "_type": "span",
+          "marks": [],
+          "text": "This example assumes a desktop user with UID/GID 1000, a Wayland socket at "
+        },
+        {
+          "_key": "v3lxcprer1",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/run/user/1000/wayland-0"
+        },
+        {
+          "_key": "v3lxcprer2",
+          "_type": "span",
+          "marks": [],
+          "text": ", Xwayland on display "
+        },
+        {
+          "_key": "v3lxcprer3",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": ":1"
+        },
+        {
+          "_key": "v3lxcprer4",
+          "_type": "span",
+          "marks": [],
+          "text": ", and a GPU-access group with GID 44 inside the container. Check the desktop IDs and display sockets on the host, and the GPU group ID in the container image."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "5ebbef4f0fd5",
+      "_type": "code",
+      "code": "config:\n  security.nesting: \"true\"\n  cloud-init.user-data: |\n    #cloud-config\n    package_update: true\n    packages:\n      # Desktop integration and session management\n      - dbus-user-session\n      - xdg-utils\n      - x11-utils\n      # Core graphics and hardware acceleration drivers\n      - libgl1\n      - libgl1-mesa-dri\n      - libegl1\n      - mesa-vulkan-drivers\n      # Wayland rendering base\n      - libwayland-egl1\n      # Base typography (prevents invisible text in headless containers)\n      - fontconfig\n      - fonts-liberation\n      - fonts-ubuntu\n    write_files:\n      - path: /usr/local/bin/setup-gui-sockets.sh\n        permissions: \"0755\"\n        content: |\n          #!/bin/bash\n          uid=1000\n          gid=\"$(getent passwd ${uid} | cut -d: -f4)\"\n          run_dir=\"/run/user/${uid}\"\n          tmp_dir=\"/tmp/.X11-unix\"\n          mkdir -p \"${run_dir}\" && chmod 700 \"${run_dir}\" && chown ${uid}:${gid} \"${run_dir}\"\n          mkdir -p \"${tmp_dir}\" && chmod 1777 \"${tmp_dir}\"\n          if [ -S /mnt/wayland-0 ] && [ ! -e \"${run_dir}/wayland-0\" ]; then\n            ln -s /mnt/wayland-0 \"${run_dir}/wayland-0\"\n          fi\n          if [ -S /mnt/X1 ] && [ ! -e \"${tmp_dir}/X1\" ]; then\n            ln -s /mnt/X1 \"${tmp_dir}/X1\"\n          fi\n      - path: /etc/systemd/system/setup-gui-sockets.service\n        content: |\n          [Unit]\n          Description=Link GUI sockets from /mnt to runtime dirs\n          After=local-fs.target\n          [Service]\n          Type=oneshot\n          ExecStart=/usr/local/bin/setup-gui-sockets.sh\n          [Install]\n          WantedBy=multi-user.target\n      - path: /home/ubuntu/.profile\n        append: true\n        owner: \"ubuntu:ubuntu\"\n        defer: true\n        content: |\n          export WAYLAND_DISPLAY=wayland-0\n          export XDG_SESSION_TYPE=wayland\n          export QT_QPA_PLATFORM=wayland\n          export DISPLAY=:1\n          export XDG_RUNTIME_DIR=/run/user/1000\n    runcmd:\n      - systemctl daemon-reload\n      - systemctl enable --now setup-gui-sockets.service\n      - usermod -a -G video,render ubuntu\ndescription: GUI applications with host display integration\ndevices:\n  gpu:\n    type: gpu\n    gid: 44\n  wayland_socket:\n    type: proxy\n    bind: container\n    connect: unix:/run/user/1000/wayland-0\n    listen: unix:/mnt/wayland-0\n    security.uid: \"1000\"\n    security.gid: \"1000\"\n    mode: \"0777\"\n  xwayland_socket:\n    type: proxy\n    bind: container\n    connect: unix:/tmp/.X11-unix/X1\n    listen: unix:/mnt/X1\n    security.uid: \"1000\"\n    security.gid: \"1000\"\n    mode: \"0777\"",
+      "language": "yaml"
+    },
+    {
+      "_key": "edit20261025-81",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-82",
+          "_type": "span",
+          "marks": [],
+          "text": "Environment assumptions"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "edit20261025-83",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-84",
+          "_type": "span",
+          "marks": [],
+          "text": "The launch command uses an Ubuntu 24.04 container image. The original notes do not record the host OS, LXD release, compositor, or GPU-driver versions, so this is a configuration example rather than a verified compatibility matrix. Record those versions when reproducing it, and check the UID/GID and socket assumptions above."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-85",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-86",
+          "_type": "span",
+          "marks": [],
+          "text": "The socket endpoints use "
+        },
+        {
+          "_key": "edit20261025-87",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "mode: \"0777\""
+        },
+        {
+          "_key": "edit20261025-88",
+          "_type": "span",
+          "marks": [],
+          "text": ". That makes them accessible to other container users who can reach "
+        },
+        {
+          "_key": "edit20261025-89",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/mnt"
+        },
+        {
+          "_key": "edit20261025-90",
+          "_type": "span",
+          "marks": [],
+          "text": ", even though the normal Wayland runtime directory is private. This profile assumes a trusted, single-user container. Restrict socket ownership and permissions for a multi-user setup, then test both display paths. LXD documents "
+        },
+        {
+          "_key": "edit20261025-91",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "mode"
+        },
+        {
+          "_key": "edit20261025-92",
+          "_type": "span",
+          "marks": [],
+          "text": ", "
+        },
+        {
+          "_key": "edit20261025-93",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "uid"
+        },
+        {
+          "_key": "edit20261025-94",
+          "_type": "span",
+          "marks": [],
+          "text": ", and "
+        },
+        {
+          "_key": "edit20261025-95",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "gid"
+        },
+        {
+          "_key": "edit20261025-96",
+          "_type": "span",
+          "marks": [],
+          "text": " separately from the proxy process’s "
+        },
+        {
+          "_key": "edit20261025-97",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "security.uid"
+        },
+        {
+          "_key": "edit20261025-98",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "edit20261025-99",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "security.gid"
+        },
+        {
+          "_key": "edit20261025-100",
+          "_type": "span",
+          "marks": [],
+          "text": " in its "
+        },
+        {
+          "_key": "edit20261025-102",
+          "_type": "span",
+          "marks": [
+            "edit20261025-101"
+          ],
+          "text": "proxy-device reference"
+        },
+        {
+          "_key": "edit20261025-103",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "edit20261025-101",
+          "_type": "contentLink",
+          "href": "https://canonical.com/lxd/docs/latest/reference/devices_proxy/"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "11bb181420e9",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e74a88d0fe3f",
+          "_type": "span",
+          "marks": [],
+          "text": "How It Works"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "9243c680be8a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "892626c36a62",
+          "_type": "span",
+          "marks": [],
+          "text": "Devices: Proxy Sockets and GPU Passthrough"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "e3532d6d22be",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "219254366e29",
+          "_type": "span",
+          "marks": [],
+          "text": "The "
+        },
+        {
+          "_key": "24ec55aae688",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "devices"
+        },
+        {
+          "_key": "9720eefe1897",
+          "_type": "span",
+          "marks": [],
+          "text": " section is where the real work happens."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "e4f7d3dccc5a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e4f7d3dcc0",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "wayland_socket"
+        },
+        {
+          "_key": "e4f7d3dcc1",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "e4f7d3dcc2",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "xwayland_socket"
+        },
+        {
+          "_key": "e4f7d3dcc3",
+          "_type": "span",
+          "marks": [],
+          "text": " are both "
+        },
+        {
+          "_key": "e4f7d3dcc4",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "proxy"
+        },
+        {
+          "_key": "e4f7d3dcc5",
+          "_type": "span",
+          "marks": [],
+          "text": " devices. For each one, LXD accepts connections at "
+        },
+        {
+          "_key": "e4f7d3dcc6",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "listen"
+        },
+        {
+          "_key": "e4f7d3dcc7",
+          "_type": "span",
+          "marks": [],
+          "text": " inside the container ("
+        },
+        {
+          "_key": "e4f7d3dcc8",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/mnt/wayland-0"
+        },
+        {
+          "_key": "e4f7d3dcc9",
+          "_type": "span",
+          "marks": [],
+          "text": " or "
+        },
+        {
+          "_key": "e4f7d3dcca",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/mnt/X1"
+        },
+        {
+          "_key": "e4f7d3dccb",
+          "_type": "span",
+          "marks": [],
+          "text": ") and relays them to "
+        },
+        {
+          "_key": "e4f7d3dccc",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "connect"
+        },
+        {
+          "_key": "e4f7d3dccd",
+          "_type": "span",
+          "marks": [],
+          "text": " on the host. With the container-side bind setting, LXD creates the listening endpoint inside the container rather than on the host."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "99637c0e0bf9",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "99637c0e00",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "security.uid"
+        },
+        {
+          "_key": "99637c0e01",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "99637c0e02",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "security.gid"
+        },
+        {
+          "_key": "99637c0e03",
+          "_type": "span",
+          "marks": [],
+          "text": " make the proxy process drop privileges to UID/GID 1000. That matches the host desktop user in this example; it is not a portable constant. Verify the host user’s IDs before applying the profile, or the proxy may fail with "
+        },
+        {
+          "_key": "99637c0e04",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "EACCES"
+        },
+        {
+          "_key": "99637c0e05",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "630c5d871251",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "fbb2dd2e60d6",
+          "_type": "span",
+          "marks": [
+            "strong"
+          ],
+          "text": "Why both Wayland and X11?"
+        },
+        {
+          "_key": "c52a1cc87561",
+          "_type": "span",
+          "marks": [],
+          "text": " Some apps (especially Electron-based tools like Antigravity) may fall back to X11 via Xwayland even on a Wayland session. Providing both sockets means you don’t have to fight with environment variables to coerce an app into the right protocol."
+        }
+      ],
+      "markDefs": [],
+      "style": "blockquote"
+    },
+    {
+      "_key": "6fc5a6b6928b",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "6fc5a6b690",
+          "_type": "span",
+          "marks": [],
+          "text": "The "
+        },
+        {
+          "_key": "6fc5a6b691",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "gpu"
+        },
+        {
+          "_key": "6fc5a6b692",
+          "_type": "span",
+          "marks": [],
+          "text": " device exposes the host GPU to the container. Its "
+        },
+        {
+          "_key": "6fc5a6b693",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "gid"
+        },
+        {
+          "_key": "6fc5a6b694",
+          "_type": "span",
+          "marks": [],
+          "text": " option sets the group owner of the device inside the container, so "
+        },
+        {
+          "_key": "6fc5a6b695",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "44"
+        },
+        {
+          "_key": "6fc5a6b696",
+          "_type": "span",
+          "marks": [],
+          "text": " is only correct when that is the intended GPU-access group in the image. Verify the "
+        },
+        {
+          "_key": "6fc5a6b697",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "video"
+        },
+        {
+          "_key": "6fc5a6b698",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "6fc5a6b699",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "render"
+        },
+        {
+          "_key": "6fc5a6b69a",
+          "_type": "span",
+          "marks": [],
+          "text": " group IDs rather than assuming a universal value. Hardware acceleration is noticeably smoother than software rendering for GPU-composited interfaces."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "b42680825d32",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "b426808250",
+          "_type": "span",
+          "marks": [],
+          "text": "cloud-init Package Installation"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "063ee79b134e",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "2b1b11c796bd",
+          "_type": "span",
+          "marks": [],
+          "text": "The packages install three things:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "8bd0d1aed446",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "8bd0d1aed0",
+          "_type": "span",
+          "marks": [],
+          "text": "Graphics stack: "
+        },
+        {
+          "_key": "8bd0d1aed1",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "libgl1"
+        },
+        {
+          "_key": "8bd0d1aed2",
+          "_type": "span",
+          "marks": [],
+          "text": ", "
+        },
+        {
+          "_key": "8bd0d1aed3",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "libgl1-mesa-dri"
+        },
+        {
+          "_key": "8bd0d1aed4",
+          "_type": "span",
+          "marks": [],
+          "text": ", "
+        },
+        {
+          "_key": "8bd0d1aed5",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "libegl1"
+        },
+        {
+          "_key": "8bd0d1aed6",
+          "_type": "span",
+          "marks": [],
+          "text": ", "
+        },
+        {
+          "_key": "8bd0d1aed7",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "mesa-vulkan-drivers"
+        },
+        {
+          "_key": "8bd0d1aed8",
+          "_type": "span",
+          "marks": [],
+          "text": ", and "
+        },
+        {
+          "_key": "8bd0d1aed9",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "libwayland-egl1"
+        },
+        {
+          "_key": "8bd0d1aeda",
+          "_type": "span",
+          "marks": [],
+          "text": " provide Mesa’s OpenGL, EGL, Vulkan, and Wayland support. Without the required libraries, applications may fail to start or fall back to CPU rendering."
+        }
+      ],
+      "level": 1,
+      "listItem": "number",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "78619f135611",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "78619f1350",
+          "_type": "span",
+          "marks": [],
+          "text": "NVIDIA note: Follow LXD’s NVIDIA passthrough path rather than installing a second kernel driver inside the container. Depending on the LXD version and setup, use an NVIDIA CDI device or "
+        },
+        {
+          "_key": "78619f1351",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "nvidia.runtime"
+        },
+        {
+          "_key": "78619f1352",
+          "_type": "span",
+          "marks": [],
+          "text": " to pass the host runtime libraries into the container."
+        }
+      ],
+      "level": 2,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "a39536165d2f",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "a395361650",
+          "_type": "span",
+          "marks": [],
+          "text": "Desktop plumbing: "
+        },
+        {
+          "_key": "a395361651",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "dbus-user-session"
+        },
+        {
+          "_key": "a395361652",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "a395361653",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "xdg-utils"
+        },
+        {
+          "_key": "a395361654",
+          "_type": "span",
+          "marks": [],
+          "text": " support interprocess messaging and MIME/URL handling. Many desktop applications expect a D-Bus user session; without one, some integrations fail silently."
+        }
+      ],
+      "level": 1,
+      "listItem": "number",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "9404673809a6",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "9404673800",
+          "_type": "span",
+          "marks": [],
+          "text": "Fonts: Fonts are easy to overlook. Without them, applications may show missing glyphs or placeholder text. "
+        },
+        {
+          "_key": "9404673801",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "fonts-liberation"
+        },
+        {
+          "_key": "9404673802",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "9404673803",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "fonts-ubuntu"
+        },
+        {
+          "_key": "9404673804",
+          "_type": "span",
+          "marks": [],
+          "text": " cover several common families."
+        }
+      ],
+      "level": 1,
+      "listItem": "number",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "bd47f792d288",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "f52f6db890da",
+          "_type": "span",
+          "marks": [],
+          "text": "The Socket Setup Script"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "554f333f5f7d",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "554f333f50",
+          "_type": "span",
+          "marks": [],
+          "text": "The proxy devices create sockets at "
+        },
+        {
+          "_key": "554f333f51",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/mnt/wayland-0"
+        },
+        {
+          "_key": "554f333f52",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "554f333f53",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/mnt/X1"
+        },
+        {
+          "_key": "554f333f54",
+          "_type": "span",
+          "marks": [],
+          "text": " inside the container. Applications expect them at "
+        },
+        {
+          "_key": "554f333f55",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "$XDG_RUNTIME_DIR/wayland-0"
+        },
+        {
+          "_key": "554f333f56",
+          "_type": "span",
+          "marks": [],
+          "text": " and the X11 socket path under "
+        },
+        {
+          "_key": "554f333f57",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/tmp/.X11-unix/"
+        },
+        {
+          "_key": "554f333f58",
+          "_type": "span",
+          "marks": [],
+          "text": ", so the profile links the proxy endpoints into those locations."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "e8a18939c863",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "daf1c36ddeb8",
+          "_type": "span",
+          "marks": [],
+          "text": "The "
+        },
+        {
+          "_key": "aee437a8ef31",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "setup-gui-sockets.sh"
+        },
+        {
+          "_key": "a650a451bf40",
+          "_type": "span",
+          "marks": [],
+          "text": " script bridges this gap by symlinking the "
+        },
+        {
+          "_key": "e09b64e13b2c",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/mnt"
+        },
+        {
+          "_key": "378b52f4b694",
+          "_type": "span",
+          "marks": [],
+          "text": " sockets into the expected locations:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "c6cb521018dc",
+      "_type": "code",
+      "code": "if [ -S /mnt/wayland-0 ] && [ ! -e \"${run_dir}/wayland-0\" ]; then\n  ln -s /mnt/wayland-0 \"${run_dir}/wayland-0\"\nfi\nif [ -S /mnt/X1 ] && [ ! -e \"${tmp_dir}/X1\" ]; then\n  ln -s /mnt/X1 \"${tmp_dir}/X1\"\nfi",
+      "language": "bash"
+    },
+    {
+      "_key": "71b621062194",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "71b6210620",
+          "_type": "span",
+          "marks": [],
+          "text": "The script also creates "
+        },
+        {
+          "_key": "71b6210621",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/run/user/1000"
+        },
+        {
+          "_key": "71b6210622",
+          "_type": "span",
+          "marks": [],
+          "text": " with mode "
+        },
+        {
+          "_key": "71b6210623",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "0700"
+        },
+        {
+          "_key": "71b6210624",
+          "_type": "span",
+          "marks": [],
+          "text": " and ownership assigned to the "
+        },
+        {
+          "_key": "71b6210625",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "ubuntu"
+        },
+        {
+          "_key": "71b6210626",
+          "_type": "span",
+          "marks": [],
+          "text": " user. Many Wayland-aware applications check this runtime directory at launch and exit if it is missing or has the wrong ownership."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "9ee8355d616c",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "9ee8355d60",
+          "_type": "span",
+          "marks": [],
+          "text": "The script runs as a oneshot systemd service enabled for "
+        },
+        {
+          "_key": "9ee8355d61",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "multi-user.target"
+        },
+        {
+          "_key": "9ee8355d62",
+          "_type": "span",
+          "marks": [],
+          "text": " and ordered after "
+        },
+        {
+          "_key": "9ee8355d63",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "local-fs.target"
+        },
+        {
+          "_key": "9ee8355d64",
+          "_type": "span",
+          "marks": [],
+          "text": ", so it runs during boot before a typical interactive user session."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "07792ddf5336",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "a4bd0334292d",
+          "_type": "span",
+          "marks": [],
+          "text": "Environment Variables"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "d90293c3a3be",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "20cf440bfa4f",
+          "_type": "span",
+          "marks": [],
+          "text": "The "
+        },
+        {
+          "_key": "c871f83cc007",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": ".profile"
+        },
+        {
+          "_key": "4eaf1c748167",
+          "_type": "span",
+          "marks": [],
+          "text": " additions wire up the session for both Wayland and X11:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "a3de434b8948",
+      "_type": "code",
+      "code": "export WAYLAND_DISPLAY=wayland-0       # Wayland socket name (relative to XDG_RUNTIME_DIR)\nexport XDG_SESSION_TYPE=wayland        # Tells toolkits this is a Wayland session\nexport QT_QPA_PLATFORM=wayland         # Forces Qt apps to use the Wayland backend\nexport DISPLAY=:1                      # X display number (matches XWayland socket X1)\nexport XDG_RUNTIME_DIR=/run/user/1000  # Runtime dir for the ubuntu user",
+      "language": "bash"
+    },
+    {
+      "_key": "b576793be1bd",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "b576793be0",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "DISPLAY=:1"
+        },
+        {
+          "_key": "b576793be1",
+          "_type": "span",
+          "marks": [],
+          "text": " matches the "
+        },
+        {
+          "_key": "b576793be2",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "X1"
+        },
+        {
+          "_key": "b576793be3",
+          "_type": "span",
+          "marks": [],
+          "text": " socket used by this profile. Do not assume every host uses display "
+        },
+        {
+          "_key": "b576793be4",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": ":1"
+        },
+        {
+          "_key": "b576793be5",
+          "_type": "span",
+          "marks": [],
+          "text": "; confirm the active X11 or Xwayland display and socket before applying the profile."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "07b6a54e523a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "19b8682846ed",
+          "_type": "span",
+          "marks": [],
+          "text": "Using the Profile"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "a37feb14d6a5",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "a37feb14d0",
+          "_type": "span",
+          "marks": [],
+          "text": "Save the profile as "
+        },
+        {
+          "_key": "a37feb14d1",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "gui.yaml"
+        },
+        {
+          "_key": "a37feb14d2",
+          "_type": "span",
+          "marks": [],
+          "text": ", then create it:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "9807897b3dd4",
+      "_type": "code",
+      "code": "lxc profile create gui < gui.yaml",
+      "language": "bash"
+    },
+    {
+      "_key": "5a6b7a077406",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "9c8908d8abb2",
+          "_type": "span",
+          "marks": [],
+          "text": "Launch a container with it:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "d9f03dfeac60",
+      "_type": "code",
+      "code": "lxc launch ubuntu:24.04 ai-dev --profile default --profile gui",
+      "language": "bash"
+    },
+    {
+      "_key": "34514d645277",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "34514d6450",
+          "_type": "span",
+          "marks": [],
+          "text": "Wait for cloud-init to finish using "
+        },
+        {
+          "_key": "34514d6451",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "lxc exec ai-dev -- cloud-init status --wait"
+        },
+        {
+          "_key": "34514d6452",
+          "_type": "span",
+          "marks": [],
+          "text": ". Then open a login shell as the container’s ubuntu user. This loads the desktop settings from .profile. Install your application, then launch it as ubuntu:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "703243a6027c",
+      "_type": "code",
+      "code": "lxc exec ai-dev -- su --login ubuntu\n# Install your application, then launch it as ubuntu.",
+      "language": "bash"
+    },
+    {
+      "_key": "d26c5ce8c00d",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "bebc15f00b41",
+          "_type": "span",
+          "marks": [],
+          "text": "Caveats"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "f1c2cbb4de5a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "f1c2cbb4d0",
+          "_type": "span",
+          "marks": [],
+          "text": "Audio: This profile does not configure audio. Supporting it usually requires exposing the appropriate PipeWire socket and matching its permissions and session environment."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "f92cdf2067da",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "f92cdf2060",
+          "_type": "span",
+          "marks": [],
+          "text": "Clipboard: Clipboard behavior depends on the compositor and protocol in use. Test it on your host before adding a "
+        },
+        {
+          "_key": "f92cdf2061",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "wl-copy"
+        },
+        {
+          "_key": "f92cdf2062",
+          "_type": "span",
+          "marks": [],
+          "text": "/"
+        },
+        {
+          "_key": "f92cdf2063",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "wl-paste"
+        },
+        {
+          "_key": "f92cdf2064",
+          "_type": "span",
+          "marks": [],
+          "text": " bridge or another compositor-specific workaround."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "bdce389a798f",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "bdce389a70",
+          "_type": "span",
+          "marks": [],
+          "text": "X11 clipboard sharing usually works, but X11 provides a weaker isolation boundary: a client may be able to observe or interact with other X11 clients on the host."
+        }
+      ],
+      "level": 2,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "154cd4def560",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "154cd4def0",
+          "_type": "span",
+          "marks": [],
+          "text": "NVIDIA GPUs: Device paths, runtime libraries, and group IDs may differ from Mesa-based setups. Use LXD’s documented NVIDIA passthrough configuration rather than assuming this generic profile is sufficient."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "023f9f717ed3",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "023f9f7170",
+          "_type": "span",
+          "marks": [],
+          "text": "User IDs: This profile assumes the "
+        },
+        {
+          "_key": "023f9f7171",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "ubuntu"
+        },
+        {
+          "_key": "023f9f7172",
+          "_type": "span",
+          "marks": [],
+          "text": " user has UID 1000 inside the container and the desktop user has UID/GID 1000 on the host. If either differs, update that side’s paths and IDs. The proxy’s "
+        },
+        {
+          "_key": "023f9f7173",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "security.uid"
+        },
+        {
+          "_key": "023f9f7174",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "023f9f7175",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "security.gid"
+        },
+        {
+          "_key": "023f9f7176",
+          "_type": "span",
+          "marks": [],
+          "text": " select its host-side credentials; the runtime directory and GPU-access group must match the container user."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "v3lxcclosing",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "v3lxcclos0",
+          "_type": "span",
+          "marks": [],
+          "text": "This setup is useful for isolating application files and dependencies, but display and GPU access deliberately cross the container boundary. Treat it as operational isolation for trusted tools, not as a VM-strength sandbox for hostile code."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "changelog": [
+    {
+      "_key": "edit20261025-104",
+      "_type": "postChange",
+      "date": "2026-10-25",
+      "kind": "correction",
+      "note": "Added a downloadable profile, documented the missing host-version record, and explained container-side 0777 socket permissions. The profile is unchanged; no new compatibility test is claimed."
+    }
+  ],
+  "description": "The LXD profile I use to run GUI tools on my Linux desktop, with shared display sockets, GPU access, and the limits of that isolation.",
+  "nextPost": {
+    "_ref": "d25c7eae-cbdf-4fd0-8736-8f87f09b32af",
+    "_type": "reference",
+    "_weak": true
+  },
+  "nextReadReason": "See how I organize the rest of the lab around explicit dependencies, from the Raspberry Pi bootstrap tier to the OpenStack machines.",
+  "projects": [
+    {
+      "_key": "edit20261025-105",
+      "_ref": "project-homelab",
+      "_type": "reference",
+      "_weak": true
+    }
+  ],
+  "publishedAt": "2026-03-26",
+  "revisedAt": "2026-10-25",
+  "slug": {
+    "_type": "slug",
+    "current": "running-gui-apps-in-lxc-containers"
+  },
+  "socialImage": {
+    "_type": "image",
+    "alt": "Running GUI apps in LXD containers. An engineering note by Adithya Rajendran.",
+    "asset": {
+      "_ref": "image-2f1a10bc0ed068b1f4ff1c502fd59e6bb98738b2-1200x630-png",
+      "_type": "reference"
+    }
+  },
+  "tags": [
+    "homelab",
+    "containers",
+    "linux"
+  ],
+  "takeaways": [
+    "An LXD proxy relays the host's display sockets into the container, while a GPU device gives applications access to rendering hardware.",
+    "Adapt the UID, GID, socket paths, and display assumptions to your desktop. The original notes do not establish a host-version compatibility matrix.",
+    "This profile assumes a trusted, single-user container. Sharing display services is not a security boundary for hostile applications."
+  ],
+  "title": "Running GUI apps in LXD containers"
+}

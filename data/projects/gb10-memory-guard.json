@@ -1,0 +1,155 @@
+{
+  "_createdAt": "2026-10-26T01:49:56Z",
+  "_id": "9d57a2fe-5952-4472-befb-ce6be095b70b",
+  "_rev": "Dhq0bRMSnQwR0o7XACadmr",
+  "_system": {
+    "base": {
+      "id": "9d57a2fe-5952-4472-befb-ce6be095b70b",
+      "rev": "Dhq0bRMSnQwR0o7XACD86t"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-10-26T03:22:00Z",
+  "body": [
+    {
+      "_key": "research-edit-19",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-19-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The intervention"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-20",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-20-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The guard reads Linux memory counters and pressure signals, tracks rapid allocation ramps, and stops selected cgroup v2 workloads. I added host-service protections and telemetry to help diagnose the failure and recovery sequence."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-21",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-21-text",
+          "_type": "span",
+          "marks": [],
+          "text": "What remains untested"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-22",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-22-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The documented stress observations used a 4 GiB hard floor and 1 GiB kernel reserve. Current defaults use 3 GiB and 256 MiB; the same stress sequence has not been repeated with them, and raw traces are not public."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-23",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-23-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The scan covers selected Docker workloads. Native processes, rootless Docker, and MicroK8s/containerd pods are outside its scope. The headroom calculation is a heuristic, and startup cache dropping also occurs in dry-run mode."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "brief": null,
+  "datePrecision": "year",
+  "datesApproximate": false,
+  "designation": 8,
+  "highlights": [
+    "Reads Linux memory counters and pressure signals to detect low headroom and fast allocation ramps.",
+    "Stops selected Docker cgroups through cgroup v2 and records actions and memory telemetry.",
+    "Documents protected host services, recovery settings, cache cleanup, and the guard’s coverage limits."
+  ],
+  "lessons": [],
+  "links": [
+    {
+      "_key": "edit20261025-255",
+      "_type": "externalLink",
+      "kind": "repo",
+      "label": "Guard implementation",
+      "url": "https://github.com/Adithya-Rajendran/gb10-hardening"
+    },
+    {
+      "_key": "edit20261025-256",
+      "_type": "externalLink",
+      "kind": "article",
+      "label": "Memory-pressure investigation",
+      "url": "https://adithya-rajendran.com/blog/dgx-spark-unified-memory-oom-hardening"
+    }
+  ],
+  "myRole": "Failure analysis, guard implementation, and documentation",
+  "name": "GB10 memory guard",
+  "next": [],
+  "parameters": [
+    {
+      "_key": "edit20261025-252",
+      "_type": "parameter",
+      "label": "Current soft threshold",
+      "value": "8 GiB"
+    },
+    {
+      "_key": "edit20261025-253",
+      "_type": "parameter",
+      "label": "Current hard threshold",
+      "value": "3 GiB"
+    },
+    {
+      "_key": "edit20261025-254",
+      "_type": "parameter",
+      "label": "Covered runtime",
+      "value": "Docker scopes"
+    }
+  ],
+  "slug": {
+    "_type": "slug",
+    "current": "gb10-memory-guard"
+  },
+  "startDate": "2026-01-01",
+  "status": "active",
+  "statusNote": "Implemented for Docker workloads. Current thresholds still need the earlier stress-test sequence.",
+  "summary": "A Linux guard built after large model loads left my GX10 unresponsive. It estimates memory headroom and stops selected Docker workloads when pressure or allocation rate crosses configured limits.",
+  "technologies": [
+    "Python",
+    "Linux",
+    "systemd",
+    "cgroup v2",
+    "Docker",
+    "NVIDIA GB10"
+  ],
+  "title": "A memory-pressure guard for GB10 Docker workloads",
+  "types": [
+    "infrastructure",
+    "software"
+  ]
+}

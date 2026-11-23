@@ -1,0 +1,221 @@
+{
+  "_createdAt": "2026-10-26T01:49:56Z",
+  "_id": "81274536-c947-4658-bca7-10fb38bedfd2",
+  "_rev": "Dhq0bRMSnQwR0o7XACadmr",
+  "_system": {
+    "base": {
+      "id": "81274536-c947-4658-bca7-10fb38bedfd2",
+      "rev": "0bY4OVpO5CKUGdHMlCBsqg"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-10-26T03:22:00Z",
+  "body": [
+    {
+      "_key": "research-edit-24",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-24-text",
+          "_type": "span",
+          "marks": [],
+          "text": "Why the checks are in the server"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-25",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-25-text",
+          "_type": "span",
+          "marks": [],
+          "text": "In the May 2026 trials, models sometimes retried a dry-run operation as a live call or tried to assemble a forbidden action from allowed tools. Those observations motivated explicit checks in the operations server rather than relying on tool descriptions."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-26",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-26-text",
+          "_type": "span",
+          "marks": [],
+          "text": "I implemented the servers and a TLS controller fixture for tests. The current operations server uses python-libjuju."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-27",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-27-text",
+          "_type": "span",
+          "marks": [],
+          "text": "Evaluation limits"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-28",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-28-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The May trials mixed fixture and live-cluster runs, used one attempt per prompt, and predate the current backend. They explain the design but do not validate this implementation. A final model response was not a correctness score."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-29",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-29-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The policy permits some bounded scaling actions. HTTP transport needs authentication before use beyond localhost. Tests check enforcement behavior; operational decisions still need review."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-source-heading",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-source-label",
+          "_type": "span",
+          "marks": [],
+          "text": "Evidence sources"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "evidence-link-0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-0-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-0-mark"
+          ],
+          "text": "Evaluation findings"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-0-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/juju-agent-mcps/tree/7923390de074af49f5276f10f70fb3e4e72a5ac3/eval/FINDINGS.md"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-link-1",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-1-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-1-mark"
+          ],
+          "text": "Mutation policy implementation"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-1-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/juju-agent-mcps/tree/7923390de074af49f5276f10f70fb3e4e72a5ac3/juju_ops/tools/mutate.py"
+        }
+      ],
+      "style": "normal"
+    }
+  ],
+  "brief": null,
+  "datePrecision": "year",
+  "datesApproximate": false,
+  "designation": 9,
+  "endDate": "2026-01-01",
+  "highlights": [
+    "Implemented separate operations, documentation, and metrics servers, with mutation decisions enforced in server code.",
+    "Added configuration allowlists, declared-app restrictions, unit-count bounds, forced dry-runs, and audit logging.",
+    "Built an in-process TLS Juju controller fixture for tests and documented failures from small live and fixture-based model runs."
+  ],
+  "lessons": [],
+  "links": [
+    {
+      "_key": "edit20261025-278",
+      "_type": "externalLink",
+      "kind": "repo",
+      "label": "Project repository",
+      "url": "https://github.com/Adithya-Rajendran/juju-agent-mcps"
+    }
+  ],
+  "myRole": "Server implementation, policy design, and evaluation",
+  "name": "Juju agent MCP servers",
+  "next": [],
+  "parameters": [
+    {
+      "_key": "edit20261025-275",
+      "_type": "parameter",
+      "label": "MCP servers",
+      "value": "3"
+    },
+    {
+      "_key": "edit20261025-276",
+      "_type": "parameter",
+      "label": "Controller interface",
+      "value": "python-libjuju"
+    },
+    {
+      "_key": "edit20261025-277",
+      "_type": "parameter",
+      "label": "Test fixture",
+      "value": "In-process TLS server"
+    }
+  ],
+  "slug": {
+    "_type": "slug",
+    "current": "juju-agent-mcps"
+  },
+  "startDate": "2026-01-01",
+  "status": "completed",
+  "statusNote": "Implementation and fixture tests are public; earlier model runs used a previous backend.",
+  "summary": "MCP servers for Juju operations, documentation, and metrics. The operations server checks allowed targets, configuration keys, scaling limits, and dry-run policy before acting.",
+  "technologies": [
+    "Python",
+    "MCP",
+    "python-libjuju",
+    "Juju",
+    "Prometheus",
+    "pytest"
+  ],
+  "title": "Juju tools with server-enforced limits",
+  "types": [
+    "software",
+    "infrastructure"
+  ]
+}

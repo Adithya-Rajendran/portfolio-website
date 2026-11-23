@@ -1,0 +1,1677 @@
+[
+  {
+    "_createdAt": "2026-04-10T05:33:51Z",
+    "_id": "image-05754647a9226f0938def18645edaef5169c8aec-3000x4000-jpg",
+    "_rev": "1R3NlbMiNmvZZPLvJ7zPlL",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-04-10T05:33:51Z",
+    "assetId": "05754647a9226f0938def18645edaef5169c8aec",
+    "extension": "jpg",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "VAA,d-~q-m4.jW?9$|s,oNt7E0RjtRxu%2N2WGoej;W9",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 0.75,
+        "height": 4000,
+        "width": 3000
+      },
+      "hasAlpha": false,
+      "isOpaque": true,
+      "lqip": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAPABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABgAE/8QAIxAAAgEEAQMFAAAAAAAAAAAAAQIDAAQFEQYiMUElQlGBkf/EABYBAQEBAAAAAAAAAAAAAAAAAAIEBf/EABsRAAIDAAMAAAAAAAAAAAAAAAABAgMREiEx/9oADAMBAAIRAxEAPwAilvaXsXKbySMOVn6Cw8UHzdnZPdengCARqW2Pd51SCHLw46LNWkxYmVww0KI5DKLITosB8a70VUor0fLR1wcKcEutACRgB+VVm4K0r4IMgGjI3f6qrNsp2b6KYtYj/9k=",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#4a4028",
+          "foreground": "#fff",
+          "population": 1.69,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#4c1407",
+          "foreground": "#fff",
+          "population": 0.03,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#cbc2ad",
+          "foreground": "#000",
+          "population": 12.44,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#cbc2ad",
+          "foreground": "#000",
+          "population": 12.44,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#e2b797",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#a98a61",
+          "foreground": "#fff",
+          "population": 3.39,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c67537",
+          "foreground": "#fff",
+          "population": 1.11,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "EAgGFYCvgdWJeIh0mXmIZNSvSM9q"
+    },
+    "mimeType": "image/jpeg",
+    "originalFilename": "20260409_222546.jpg",
+    "path": "images/ppk2h9tb/production/05754647a9226f0938def18645edaef5169c8aec-3000x4000.jpg",
+    "sha1hash": "05754647a9226f0938def18645edaef5169c8aec",
+    "size": 4362376,
+    "uploadId": "LL8HNbiL8YOkriu8xykw0iywhvGnGGOW",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/05754647a9226f0938def18645edaef5169c8aec-3000x4000.jpg"
+  },
+  {
+    "_createdAt": "2026-10-26T01:41:26Z",
+    "_id": "image-098eccdc6efeb653e079afec9c050554ce6eb959-1036x650-png",
+    "_rev": "jWvNKVkbAUo18la76a4tUJ",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-10-26T01:41:26Z",
+    "assetId": "098eccdc6efeb653e079afec9c050554ce6eb959",
+    "creditLine": "Adithya Rajendran",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "V3SigPxu-;?bIV_3IAM{%Mt7MxM{xu-;-p~q9GRj-;-;",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.593846153846154,
+        "height": 650,
+        "width": 1036
+      },
+      "hasAlpha": true,
+      "isOpaque": true,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAANCAYAAACpUE5eAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABh0lEQVQ4jYWT226DMBBE+f+PbCBvDRjfr1SaapYYSBqpDxaw2MPM2WVorUKpBeM4YppGjOMNt9sX7vcJ032S67oq1Frw87P9u4ZSMpyzckjrVcQfj2/M8wPzPEOtCiEG1FbRWgMNcG1b+7iGEDxiDKAwN+acYK0RcWMtQkwotaKUIvcxBNkjwlsT5zzLK2uD1goU7V/toilF5JxRShV3KWdYa2G0lv2VH6kV3nsYY+C9E+GBEfnAL3Tb10iMSWHr3O7aaEnEPRQMMYooa9Q4BF9FXgV9iFjUikUtwvuI3NqT7cl1WJb5xWF7E6y1CTvydN4hp/QnTbvsF8ErQ+GVEmKMEkNYFrIsEp21Xu+NbFdBjksX3HkVOOehjRZm1tm9i60ihCgMuRidovXiVgQZly/6GBB0ki4niUdePERBOt3r8ai3d4d9js6x6aBPRiL4PHy9/8hQ2v8czLMROy86j9HDeytYyC54J03scbuhQ/A6Jv1/5DMP848hLw5/Z0euXH0yusN+9hcb5/EC7vwQMgAAAABJRU5ErkJggg==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#445484",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#244c74",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#697686",
+          "foreground": "#fff",
+          "population": 0.15,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#bcbcb4",
+          "foreground": "#000",
+          "population": 0.07,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#cbe5f9",
+          "foreground": "#000",
+          "population": 0.04,
+          "title": "#000"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#697686",
+          "foreground": "#fff",
+          "population": 0.15,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#7196bc",
+          "foreground": "#fff",
+          "population": 0.01,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "PfgBBIDgVSUhxYlD6gX3hYtfyQ=="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "benchmark-02_quality_vs_time.png",
+    "path": "images/ppk2h9tb/production/098eccdc6efeb653e079afec9c050554ce6eb959-1036x650.png",
+    "sha1hash": "098eccdc6efeb653e079afec9c050554ce6eb959",
+    "size": 57057,
+    "source": {
+      "id": "dgx-spark-benchmarks/f69a046e4b43c5f477f42e59debdbe3aca20edd7/report/figures/02_quality_vs_time.png",
+      "name": "GitHub",
+      "url": "https://github.com/Adithya-Rajendran/dgx-spark-benchmarks/blob/f69a046e4b43c5f477f42e59debdbe3aca20edd7/report/figures/02_quality_vs_time.png"
+    },
+    "title": "Local coding agents: quality and task time",
+    "uploadId": "ef7dd357e49a51bce604efb9ed7ed72f16d4e568",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/098eccdc6efeb653e079afec9c050554ce6eb959-1036x650.png"
+  },
+  {
+    "_createdAt": "2026-11-05T18:55:09Z",
+    "_id": "image-0f0e342e068902b2b48d53bc69ae5e04b3bc7579-1200x630-png",
+    "_rev": "UwMs5vWJgtDHpzn4Ej6jmA",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-11-05T18:55:09Z",
+    "assetId": "0f0e342e068902b2b48d53bc69ae5e04b3bc7579",
+    "description": "Article sharing card. Designed from the article title; not a photograph or experiment result.",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "M57UM0?bIUofIU~UofM{ofay00D*xuay%L",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.9047619047619047,
+        "height": 630,
+        "width": 1200
+      },
+      "hasAlpha": true,
+      "isOpaque": true,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAALCAYAAAB/Ca1DAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABrklEQVQokZWS627aQBCF/QYNScvF910b6gtWpaakBVNspw3EYJe0IUBwb+//EqeasQiI9E9+fJqd3dU5szOrBIGLmi6CsFvHE/wTDnvuM5SWaUEVApqUUGUdDwg+a5k26F7TMJkWYR5hHFAudAvWWw9uP4IT9uGGEWTQh+X5jBtFcPoRbC/gXHgBbM+H5nRxrpl41daYs47OKG3bwSCOMSsWyL+VmC9LXic3XxFnGaZFjvldiet8hmw25Tu35QKfJhMIP8Qb08a5ZhwJCgejLMXDboPqz0/sfleo/v7CerfFrCxQfF/ifvuA5eoH8mWB+82Kz0h4mCQILy+hSheNU8HV4xqb6hGr3QbrassCwzTh6kdpilGa4P1wiME4RnydcYWD8Rjvrq6guz00VOMg+GEc42Yx56dOizm+5Lf4OPnM/WrbEtQWomkJNE3xlHeEA1U4eG1YLEgoF4YFs+dBBiEPgwZDAyBXGhi51o2nuF/X+VlHQ0PVmacekio5k1tHumhakoX2ji+BBWn01FT6CrYfQO/22ID2967/47iqY7hCGj1VSP1s2eLZV3gJ/wAHKUD+W47IAQAAAABJRU5ErkJggg==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#3c4340",
+          "foreground": "#fff",
+          "population": 1.55,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#392e17",
+          "foreground": "#fff",
+          "population": 1.46,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#3c4340",
+          "foreground": "#fff",
+          "population": 1.55,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#b6bcac",
+          "foreground": "#000",
+          "population": 0.03,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#d6c4a3",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8c8480",
+          "foreground": "#fff",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c8b184",
+          "foreground": "#000",
+          "population": 0.81,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "yvcFBIBcV2WMhnhQiXNqj5n2mA=="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "dgx-spark-unified-memory-oom-hardening.png",
+    "path": "images/ppk2h9tb/production/0f0e342e068902b2b48d53bc69ae5e04b3bc7579-1200x630.png",
+    "sha1hash": "0f0e342e068902b2b48d53bc69ae5e04b3bc7579",
+    "size": 62134,
+    "title": "Keeping a DGX Spark reachable under memory pressure",
+    "uploadId": "af5f19fd5a75cab873fd799e61b346b7eb6ffba3",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/0f0e342e068902b2b48d53bc69ae5e04b3bc7579-1200x630.png"
+  },
+  {
+    "_createdAt": "2026-10-26T01:41:24Z",
+    "_id": "image-12840419b409b9b20e54683e668a4d2a76e26f67-1536x864-jpg",
+    "_rev": "5bOXXYoEaE7sroPIZySuB0",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-10-26T01:41:24Z",
+    "assetId": "12840419b409b9b20e54683e668a4d2a76e26f67",
+    "creditLine": "Adithya Rajendran",
+    "extension": "jpg",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "M0D0#_00IV4d00O[%dWB8{ZgH[nOWVNGf#",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.7777777777777777,
+        "height": 864,
+        "width": 1536
+      },
+      "hasAlpha": false,
+      "isOpaque": true,
+      "lqip": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMEAgX/xAAgEAEAAQQCAgMAAAAAAAAAAAABAgADBSEEERIiFDFB/8QAFgEBAQEAAAAAAAAAAAAAAAAAAQID/8QAFxEBAAMAAAAAAAAAAAAAAAAAAAERMf/aAAwDAQACEQMRAD8A5GGjO3hIR+FGQaPUpmHt3JZDm+HBPFBRiaqbESk4c9nVxDf5VGKvXDMcuJOQNsXdSwrT7axEljVe/siUVqF2cRCT120UGH//2Q==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#2c5451",
+          "foreground": "#fff",
+          "population": 1.72,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#043874",
+          "foreground": "#fff",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#738c7e",
+          "foreground": "#fff",
+          "population": 3.24,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#a3c5b9",
+          "foreground": "#000",
+          "population": 0.13,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#da9fa1",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#738c7e",
+          "foreground": "#fff",
+          "population": 3.24,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#722c2e",
+          "foreground": "#fff",
+          "population": 0.22,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "G+gFBIB0BYaFd3d3d4djoPc1xg=="
+    },
+    "mimeType": "image/jpeg",
+    "originalFilename": "memory-pilot1_examples.jpg",
+    "path": "images/ppk2h9tb/production/12840419b409b9b20e54683e668a4d2a76e26f67-1536x864.jpg",
+    "sha1hash": "12840419b409b9b20e54683e668a4d2a76e26f67",
+    "size": 172508,
+    "source": {
+      "id": "cmpe249-active-verification/ab4d7131d334b0675a5443256af75a14feae5a4f/notes/figures/2026-10-17-pilot/pilot1_examples.jpg",
+      "name": "GitHub",
+      "url": "https://github.com/Adithya-Rajendran/cmpe249-active-verification/blob/ab4d7131d334b0675a5443256af75a14feae5a4f/notes/figures/2026-10-17-pilot/pilot1_examples.jpg"
+    },
+    "title": "Scene-memory development pilot examples",
+    "uploadId": "436fa7b68e8acdd18c44d76df4d83ca6467e31b2",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/12840419b409b9b20e54683e668a4d2a76e26f67-1536x864.jpg"
+  },
+  {
+    "_createdAt": "2026-10-26T03:20:41Z",
+    "_id": "image-24224f397bb32cf609f4c2a7b4520d12ec46eb3c-2160x1440-png",
+    "_rev": "0bY4OVpO5CKUGdHMlCWrMt",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-10-26T03:20:41Z",
+    "assetId": "24224f397bb32cf609f4c2a7b4520d12ec46eb3c",
+    "creditLine": "Adithya Rajendran; figure from committed paired-comparison results",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "V4R:7+t8?b~pxt?bRjs:oKt79aM{-:kCRj?aaetRkWe.",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.5,
+        "height": 1440,
+        "width": 2160
+      },
+      "hasAlpha": true,
+      "isOpaque": true,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAANCAYAAACpUE5eAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABkUlEQVQ4jX1T2XLDIAzs/39gknYSDD7AXAZfz9uRwKnT62EHj4xWq5V42xeLJRlY06BVH5DiBimuUA2dN6jmneOt/EBT/w39HTkOoNz9G94KocY4CE4Wjwse9wuf4n5BI66Qlbx5XKHkDUYL5Okfwm0ekWKP4Dp428JbBe8UgmufoFj0LXLsWQDl/Em4V9I1E0zBbEqs4ovA/Uq0f1c4TxqT7xgp9KyYv+PAhbbZYifibLCRQgIVTpoVk4gXQjI5ug6RSENBPBHyvayxhhaLl1i84u/kyRLF+VS0ElpWSEbPB5JmHJUZZEMasMYO69Rjm3q+S3m0Kb8obAt8V06rkEP3bI9afmIp55oNk/1omSpN5F3F5BSiEUijwOIkq9rmk9qTEG9p+gO2M2GpUqeaTWkldMi0Kk5hDh2WRK1pLDSYOv0cBx4e2fOikC+mIp9+0jCobdo/ZyT8KNl8ivGgaOL0KOqa8Ra8etizd+dltkZi1A2/olELuFGyGl7so+0/X0roOOHA8TpIHaPGaBv+W+xPCWDP1nTO3L4AAAAASUVORK5CYII=",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#373939",
+          "foreground": "#fff",
+          "population": 0.11,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#883c28",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#f3b79d",
+          "foreground": "#000",
+          "population": 0.19,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#dfcabf",
+          "foreground": "#000",
+          "population": 0.14,
+          "title": "#000"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#f3b79d",
+          "foreground": "#000",
+          "population": 0.19,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#ac886c",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#d09464",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "eggCBYDznJlkiZlSjEaXdZNlQFYG"
+    },
+    "mimeType": "image/png",
+    "originalFilename": "detection-result.png",
+    "path": "images/ppk2h9tb/production/24224f397bb32cf609f4c2a7b4520d12ec46eb3c-2160x1440.png",
+    "sha1hash": "24224f397bb32cf609f4c2a7b4520d12ec46eb3c",
+    "size": 111764,
+    "title": "Paired AP differences for YOLO26m on KITTI",
+    "uploadId": "da9693674f99e2cff65507c94228dfd9b32b38e2",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/24224f397bb32cf609f4c2a7b4520d12ec46eb3c-2160x1440.png"
+  },
+  {
+    "_createdAt": "2026-03-04T16:48:20Z",
+    "_id": "image-27bdcd5732178c9ee24330686cff57fa9d1cff5f-340x340-png",
+    "_rev": "nhvuNXiiqCDqr6j3KJTzLF",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-03-04T16:48:20Z",
+    "assetId": "27bdcd5732178c9ee24330686cff57fa9d1cff5f",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "eIMP?^t700o100Q-jZS~ayoz00ayK%R*?^s:jttRfkRP00WB_NkC,@",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1,
+        "height": 340,
+        "width": 340
+      },
+      "hasAlpha": true,
+      "isOpaque": false,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAAsTAAALEwEAmpwYAAAFOElEQVR4nIWUe0xTZxjGj4hTpALzMnTiDQsODBTFwYxBmE63ZQsuJCY6mXHbHzOyOZdp0GXabckWQ3RZtiyyBW9bdIgTRURRwFJaeqcF2tILp1d67zk9vZ62tOe8y+kSk0W3fcmT/HLO+zzfJd/3IsjTYw4X4WYpkOp5EoSdx1+4esVowfI1jBhmvimqq+cBws0CBJmD/NdgCjRI+XP8hS+tEC8qqR0r3LJvfO224+qyhm8YMSwr3LRPnldSI11YvpyphX8LZX7wkHKWNJ9TNbF6a4u6tvG6semwfKbl9LTnVJvNc7LNxrCh6bBcXdN4TVm09YikYCOH8TwVmlnZsnLWxNLNddqy3efNe1uUnrZ2guh7nCZVWippMFNJHUrF5JNU4O5g2nO2nWBqtGW7zikKNtcx3iehDIiKinLGF1fW6ire+Mn+QSuKX76ZiI2pqYTDTc/6A3QKJ+hZL0bHrQ6aNJjoqFhF4Zf/TNg/PIlOVbz+o2oxp4a3Zs0C5vwRHoJki/LWszXshjP2Qyd0xPW7yZBIQYelKjokUkBIKIfQiBSCw2II8sQQHJYAMThKh/hSmujqS9oOHddNFtefVuSx1wOCzEWESzYsUr3AeWd693uD2MUuMj5tYVYBEfkEhAQyCPKlQAwKMwrLxiEypoGwUAExjQHiqJXGOm7Epnc1D4wt2dTIbB2RLVi/arJ0+xnn0a/NEdkERQZDNBkgIIEFIOnFMkq4vUA6PRDz+SGOE5DEAjAbDEM6RtJR+STl/OQrk7qk/kv+8y+uQsYKSiu1tXuu+H+4FAgazRSKmmid3gBmixVmZpzgdLrB6XSBxWIFnU4PRiMK9hkHuFxuwDEcYiY77fu+I6Dd0nhZnLuuEpGyKrZP7Xi3D//9dtyHWmj+iBC6bt2GWz290D/wGAaGhuH+wwHo638EPb19cKe3L8PDAiFM6fQQsjlo/Go3qX11X6+EVVaHyPIrXtPtPjiAd/bOBh1uemJCDYNDPBgcGgaBUATMBEOPh0E4KgKRSJLh/oeDoBhTgcvlAtKH0YHO3oR+V3O/NL9iJ6JgldVpd+y/h/3WHU/6cDoSDgPm8YHPYgefHgW3Rg8ujT7Dfj0KjskpsGr1QPgxmE0mIeUP0PjVW6S+YX+PirVxGyLOLa3U1uy5xJxDyuGhgKLoVDgKpN4MYYkKggLZ31dnVJHh4KgCojoUUqEwQDpNp+wuyneuA596ubFDlFtcgUhy2EXqku1fOD7mojGFOk0lZ+lUOAIxvSkTyASFxMonHBYrIW40QzoSBSqRpGOyibSj5cy0ht3QKsopWonwlpWzVEs5bxl3HujHfu2MppxeKkWSVNDhBp/RBBhqAcxkAT9qBr/RDNi0GSIeH6TjCYrZEdb+R9S4s/m+cmnVm+OFlblIF4LMlcwvXacpbmi1Hzoujz4SeEkfRnpcbspkstBWm4222uy02WyhTWYLbbFYacznpxJ+nIw+4HttB0/I1MX1J8T5G9YyWZn3bGSz56vyOVXaLY2futsuXAiptIKg3enFPb5ZgiAoIhSmcCJI4XiACnj9ydCM0xtRaUac3/3crq1++6iyoIrDZPyj44iQohxR0SsrDR+1cjw3eppDEuUvcdQ2mvTihiQetGbkwQxx1DIaESvbPdfuHDC8/xmH8TDeZ7XEOUzngfr6bA33/GLvxU4O1v2giegXHAuOSLiMsH7+Maz7XlPgys1KpoZXX5+d8fxf5+ZyuVk8Ljdbs/cIy3Tq20Ln2V9WM2LY3fx5LnC52cDlZj3L/Bdi1r3xmPUIXwAAAABJRU5ErkJggg==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#393b44",
+          "foreground": "#fff",
+          "population": 0.04,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#b10714",
+          "foreground": "#fff",
+          "population": 0.02,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#d50b30",
+          "foreground": "#fff",
+          "population": 2,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c0848d",
+          "foreground": "#000",
+          "population": 0.2,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#fc96c4",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8c8c74",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#d50b30",
+          "foreground": "#fff",
+          "population": 2,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "cViGDQY5B0hzeoV7aPd7fL/HGFiHd3CHSA=="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "sec+.png",
+    "path": "images/ppk2h9tb/production/27bdcd5732178c9ee24330686cff57fa9d1cff5f-340x340.png",
+    "sha1hash": "27bdcd5732178c9ee24330686cff57fa9d1cff5f",
+    "size": 40277,
+    "uploadId": "0ucKlrjBXcJ6PJ71iCjGYMzCvxCtuvMf",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/27bdcd5732178c9ee24330686cff57fa9d1cff5f-340x340.png"
+  },
+  {
+    "_createdAt": "2026-11-05T18:55:38Z",
+    "_id": "image-2f1a10bc0ed068b1f4ff1c502fd59e6bb98738b2-1200x630-png",
+    "_rev": "eUACHwsPOMMeHD35RrXmor",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-11-05T18:55:38Z",
+    "assetId": "2f1a10bc0ed068b1f4ff1c502fd59e6bb98738b2",
+    "description": "Article sharing card. Designed from the article title; not a photograph or experiment result.",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "M69H2?t7D%t7D*~Vj[WBj[WB00a{-:Rk%M",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.9047619047619047,
+        "height": 630,
+        "width": 1200
+      },
+      "hasAlpha": true,
+      "isOpaque": true,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAALCAYAAAB/Ca1DAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAB8ElEQVQokX2S53LaUBCF9QYxjGmqVw2QBDaTMjEkQ7MMKkYUUSzALZO8/yOczF4RMsk4+fHp3N2Vds/ekeC6FnJsuJ4Nz8vV9eontc91x7XOnGve73coL1RUDSLTIRo6RJ2doLOOGtNQVlWUFRVlVcuVo3BKsoLyL0414VLRYLXaaHY60JsO1EYTzHGhOy5Y04Fk1aHYDVitK9Tb1zC8Fo8pL/NaHbJZR1kzcFFTIEiGjdF0gsVmhel9jHEw5Rok94jmM/hRgMGdj2iRYLlJESUzfB2PcRsGiBcJ4mWCuzhE++MnkDlBMm30fR+r3QbL7Rrz9QrZ0wHHlyMOz0dkj3skqwXm6xTbwwNW2zXCZIbdMcO3H694+f6KNNvifbeLS4VBEA0bveGQOxoHEwSzGNnTHvvnA5J0iXm65IPI3Trb8abpw4YPoqHZ455v0rjuoCipECrMQOfzDbqDAT70eugNB/CjELfhFDf9Ph9G6/lEFPLVp7M4v5ZZjEkU4stoxO+9ICoQiqKCKjNBqxN04ard5EruKafW85jQGg6PCTqzRl4rqQwXNRkCPUoKQ5UZqOkmyqrOrVOeUyWV8K4q/wHl8vpJTwj0sWhaYI7Dbcs2/QJ/NX2Dgiij8EZeoL3JLrmr6iYqTOdxUVL+2/Bf/AQDrU++9BSlGgAAAABJRU5ErkJggg==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#4c442c",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#041416",
+          "foreground": "#fff",
+          "population": 0.35,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c4c5bb",
+          "foreground": "#000",
+          "population": 0.86,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c4c5bb",
+          "foreground": "#000",
+          "population": 0.86,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#d8c5a1",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8c8c74",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#ccb484",
+          "foreground": "#000",
+          "population": 0.76,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "y/cJBIBoaGh6d4eAeXVoj3b2eA=="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "running-gui-apps-in-lxc-containers.png",
+    "path": "images/ppk2h9tb/production/2f1a10bc0ed068b1f4ff1c502fd59e6bb98738b2-1200x630.png",
+    "sha1hash": "2f1a10bc0ed068b1f4ff1c502fd59e6bb98738b2",
+    "size": 61358,
+    "title": "Running GUI apps in LXD containers",
+    "uploadId": "9cf2284425e0cee5ff32c12153f94ab161ed8753",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/2f1a10bc0ed068b1f4ff1c502fd59e6bb98738b2-1200x630.png"
+  },
+  {
+    "_createdAt": "2026-11-05T18:55:32Z",
+    "_id": "image-5eeba53d61f7407b70834e8c7526f2a7d8b960a1-1200x630-png",
+    "_rev": "eUACHwsPOMMeHD35RrXmjr",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-11-05T18:55:32Z",
+    "assetId": "5eeba53d61f7407b70834e8c7526f2a7d8b960a1",
+    "description": "Article sharing card. Designed from the article title; not a photograph or experiment result.",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "M59tJq-:01t7D%~VRjWBayRj00IU_2WB%L",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.9047619047619047,
+        "height": 630,
+        "width": 1200
+      },
+      "hasAlpha": true,
+      "isOpaque": true,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAALCAYAAAB/Ca1DAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAB80lEQVQokX2S6W7aUBCF/QiBhM34ejcGmz0pi0iqEkoSICzG7Gswou//Bqe6A5VAavvj03jmnnvuaMaC45g4Y8FxLYque4Zyqpk3ZP7or+9e6kJMVpBQVSR1DaLG0S9RQ1xREJUYIldEGUdGjMmISvJtzmQIIZGBpWwY2RwMN4tUvkBRsTOQUzYkMwVmpSnnMMuG7riw8wWoVEvDcLJI6hbuEhKEiKyi8vyMdq+DVucdA98jOoNPdIZ99IYDfHpDeDMfo6lPuo9+D/PNAn1viJ43oPpTo4F7SYEQV3U0Xpt0+We3g9lqjl2ww3y9wGq3RvArwO64R3A6YH/cYzgZYzjxsD3sSDua+ej7I5TrdTwwBUJCM9BoNvH22cWPtzYWmyUOpwP64xFGkzGC09lw87UlA16fLGfw51NUv7/AyuWgZhyIugk+PiGuGnhptUj4+vGO6WpOJjxv97qYr5fYH7+wC/ZYbld0ziMfQ7pQxH2S4S6RpPmR4YOkwHRzyD4+0ULc8iNKtRqcUhlmNodMqYxStYZSvY5itYZCtYL8twrsQhGiYZFhSJTIkJbCXaOKRi0ndBMxRafhhpMyvchFYZFdchnhJP9mCJHRLWTIhdxITWcIybTogWvDv3LV1TXUIf91+HLimoGYqiGiqNTFP83+w2+Y51L1iniPggAAAABJRU5ErkJggg==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#4c4434",
+          "foreground": "#fff",
+          "population": 0.02,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#041416",
+          "foreground": "#fff",
+          "population": 0.53,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#ccb484",
+          "foreground": "#000",
+          "population": 0.76,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c0bca4",
+          "foreground": "#000",
+          "population": 0.02,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#d8c5a1",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#948c74",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#ccb484",
+          "foreground": "#000",
+          "population": 0.76,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "zPcJBIBZaGd6d4dweoZZf4b1dw=="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "my-homelab.png",
+    "path": "images/ppk2h9tb/production/5eeba53d61f7407b70834e8c7526f2a7d8b960a1-1200x630.png",
+    "sha1hash": "5eeba53d61f7407b70834e8c7526f2a7d8b960a1",
+    "size": 59279,
+    "title": "A Homelab Built to Be Rebuilt",
+    "uploadId": "d060ed4d8f09c6cb10e82be61428875b8b03b6ed",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/5eeba53d61f7407b70834e8c7526f2a7d8b960a1-1200x630.png"
+  },
+  {
+    "_createdAt": "2026-09-30T22:53:47Z",
+    "_id": "image-6fe542e74604f9d619cf2856d74d17a377efd37b-1536x1024-webp",
+    "_rev": "t5PPWL4EO8iwkl2rCF58Nj",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-09-30T22:53:47Z",
+    "assetId": "6fe542e74604f9d619cf2856d74d17a377efd37b",
+    "creditLine": "Illustration",
+    "extension": "webp",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "V25}Ef0f4o}@BUWVs:RjWCt70f}sx]9][:xaNaWBofWq",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.5,
+        "height": 1024,
+        "width": 1536
+      },
+      "hasAlpha": false,
+      "isOpaque": true,
+      "lqip": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAANABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAQDBQYI/8QAHxAAAgIBBQEBAAAAAAAAAAAAAQIAAxEEBRIhMRVR/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAL/xAAZEQEBAAMBAAAAAAAAAAAAAAABAAIhQRH/2gAMAwEAAhEDEQA/AOZKrOdqA+ZmjG3i51QIoBHR6EphQiEEexz6NqsSVUnGPyTkPKsUHcnuFAo1LV8RlfYSDX3G/Ul8ceh17CAexT3V/9k=",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#592a28",
+          "foreground": "#fff",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#611408",
+          "foreground": "#fff",
+          "population": 0.06,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#df5d1b",
+          "foreground": "#fff",
+          "population": 1.09,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c4b8aa",
+          "foreground": "#000",
+          "population": 0.12,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#f47c32",
+          "foreground": "#000",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8c8474",
+          "foreground": "#fff",
+          "population": 0.05,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#df5d1b",
+          "foreground": "#fff",
+          "population": 1.09,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "BggGDYIAfDyGd3nDaoh3hmCHAXcY"
+    },
+    "mimeType": "image/webp",
+    "originalFilename": "gmail-spam-filter-illustration.webp",
+    "path": "images/ppk2h9tb/production/6fe542e74604f9d619cf2856d74d17a377efd37b-1536x1024.webp",
+    "sha1hash": "6fe542e74604f9d619cf2856d74d17a377efd37b",
+    "size": 75868,
+    "title": "Gmail filter, illustration",
+    "uploadId": "b2d4610f13d405d3e1da79eb73c38f5cab37c90e",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/6fe542e74604f9d619cf2856d74d17a377efd37b-1536x1024.webp"
+  },
+  {
+    "_createdAt": "2026-03-05T01:25:49Z",
+    "_id": "image-96d13f0f07ebb4d8a1e215b6b079cf06171af1e9-512x512-webp",
+    "_rev": "2B2USEIIBli9llw6m96UJV",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-03-05T01:25:49Z",
+    "assetId": "96d13f0f07ebb4d8a1e215b6b079cf06171af1e9",
+    "extension": "webp",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "eB97-zj]4To#DgxxRNfP%QRh8^ado$ay%jj[x{W9DgazDgoh%PRht8",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1,
+        "height": 512,
+        "width": 512
+      },
+      "hasAlpha": true,
+      "isOpaque": false,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAC+UlEQVR4nGNgoBNg1NIKZYuKqhDML9+uUNl1Vq+y65JeTvVGxdDQeiGQHEgNXhPS0may5lUuEy9rOqld233TvKrlgntR/cGE8ubDNTUd56fVdl+dX9F2pr2o/mBKWeMpz6qOaxaVree0MorXioH0YhiYUbxILLdyS1hZ84meqvZLs6o7rsyt7b4xt6bz4rSarotLmiY8uN486cmTpkmPrzZPenasacKjbdXtl6Zml2wIjI1tE8YwsLB+h0pJw97GoobDq/Nr9rTnlO1ILWg85lvbdsG8qfduTOu0l2fap7/9D8Jt017/a5v68mdtz+0b6SVbqv3De2QxDKxs3a9RWLe7Nat0S39i5kJ754BsYXv7eA4GBgamjinvbNqmvzkMMxCG63rvPU4r3NriHt6ugNXA/OodTWn5a5ri0+ZrIMsNYwOL6/a159cemF3ZcSUKZAgMt099HdM2/e1ikKEw3Drl5dnK9qunkvLW1eM0sLrz7MSGvnuXWqe8OIusGWQYyFBkS6o7r0Rnlm6fHJk0pxSrgRX1u9VqOs9PbJn05CW610CGggxBVl9Qc1g7u3RTXVTa7Dyf0Ho5DAMzi5bLljUdrW2a+PgBIQPt7etZqjvO2FS2nuxOL1yT7BFaKYphYHR0PV9B5d6whv77R1unvvqFy0CQYen5yxVKW45nVXddmFBQsdPNwiKUE8PA0NBQ5qLKHRq1XVfbmic9vtk29TXcUHAkTHxmX1g4W6i0/qBRefPxzMr2c5MrWo7n5RRvVMRZUBQWruKsaDxkXttztaN50sNTrVNevG2b9vpP27TXZxsn3MkobzoSU9Vxth2Uv6s7zhYV1uzQz82dyM6AD6SlbeIqrt+jVdF2PLGx7+a85kmPzjdPeniprufaysr289PLWk40F9UdCM2r2aVaXz8flDUJA3t7e5bs7IXCIO9Vth5Pre251FfRdrI1v3p/ZHb5Vt34+H4BhtBQZqIMQzW4niW7YqFwRdshtcL6/SpRUdMEyTKIEgAAAUAWECTjtXIAAAAASUVORK5CYII=",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#262c57",
+          "foreground": "#fff",
+          "population": 0.23,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#080f47",
+          "foreground": "#fff",
+          "population": 0.03,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8895fc",
+          "foreground": "#000",
+          "population": 0.78,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8d95bf",
+          "foreground": "#000",
+          "population": 0.4,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8895fc",
+          "foreground": "#000",
+          "population": 0.78,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#636c9a",
+          "foreground": "#fff",
+          "population": 0.22,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#7c90e8",
+          "foreground": "#fff",
+          "population": 0.12,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "K+WBBQAkCOplt2m7W/m5a4j5B0hpqHJ5Sg=="
+    },
+    "mimeType": "image/webp",
+    "originalFilename": "3668850-insurance-protection-safety-shield_108037.webp",
+    "path": "images/ppk2h9tb/production/96d13f0f07ebb4d8a1e215b6b079cf06171af1e9-512x512.webp",
+    "sha1hash": "96d13f0f07ebb4d8a1e215b6b079cf06171af1e9",
+    "size": 5266,
+    "uploadId": "y6XAkfg5xscoydz3z2koZ2iut7vkAteH",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/96d13f0f07ebb4d8a1e215b6b079cf06171af1e9-512x512.webp"
+  },
+  {
+    "_createdAt": "2026-11-05T18:55:44Z",
+    "_id": "image-9a726554281280ac5ab6fdb781266a32c9554d9a-1200x630-png",
+    "_rev": "UwMs5vWJgtDHpzn4Ej7TYs",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-11-05T18:55:44Z",
+    "assetId": "9a726554281280ac5ab6fdb781266a32c9554d9a",
+    "description": "Article sharing card. Designed from the article title; not a photograph or experiment result.",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "M67^}R%LD*xaM{~Vj[RjofWB00M{%MRjt7",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.9047619047619047,
+        "height": 630,
+        "width": 1200
+      },
+      "hasAlpha": true,
+      "isOpaque": true,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAALCAYAAAB/Ca1DAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABxUlEQVQokY2S627aQBCF/QjFtDj4svaubcBrk0i9Cqk0CiZgIIBxcGiaEBL1/Z/hVLM2Faqqpj8+zWVnx2fGq0kZgIhkCBmfIE+IQ8R1LlL1lVV3JPnHOIBmMBcm57B8AVNwWELAUpbXcZUzPQ6qbTEGw2EwGEOL7B9oTZvB60XonF/AjxOFiBN4kYSQMfykDy6lyoX9c4WQibpDNoj7EFEM2+9Atxi0M09gcPkNyyLHbLXEeJ4p0lmGUTbB5GaOq+kE6WyKxWaNdVlgvl7ianqNUTZVfE1HuPj0GYbLobW5r4oPPw/48fSA9XaD7f0dHg57FLtS+bvHexS7LYrvJR6f99i/PCEvb3F5Pcb7wQDJh48Ikj7eOi40wxP4Mhxinq8wnmUYpikmNwusbjcYz2fqY6SeVFG8yFfIy0LVUCPDE2jaLpoWQ8O0odHcNL/Xk3DCHpywC672l8DtRnC7Pfiy2m2Vj9XeuIzR5gF0y0GjbeNNjXZ0Gm06cH4fvAapIXTLgU7+sWHDdPCO0RMJFC2XQ7dJvvNPlDLySUidUw1pZNMP4EWReip22KmaWuxVhX/L1wo90N8+4z4Mj6uYFPzv+Kf8Aun5QxmQJgQqAAAAAElFTkSuQmCC",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#4c483c",
+          "foreground": "#fff",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#3a2e16",
+          "foreground": "#fff",
+          "population": 1.35,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#3a2e16",
+          "foreground": "#fff",
+          "population": 1.35,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#bcb4b4",
+          "foreground": "#000",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#d8c5a1",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8c8c7c",
+          "foreground": "#fff",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#ccb484",
+          "foreground": "#000",
+          "population": 0.76,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "yvcFBIBZaGZ9h4dwenFpf4n2lw=="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "kubernetes-on-the-nvidia-dgx-spark.png",
+    "path": "images/ppk2h9tb/production/9a726554281280ac5ab6fdb781266a32c9554d9a-1200x630.png",
+    "sha1hash": "9a726554281280ac5ab6fdb781266a32c9554d9a",
+    "size": 63730,
+    "title": "Sharing the ASUS GX10 GPU with MicroK8s",
+    "uploadId": "e3d05680146ecddf60529c808237304063a8b051",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/9a726554281280ac5ab6fdb781266a32c9554d9a-1200x630.png"
+  },
+  {
+    "_createdAt": "2026-03-05T01:26:19Z",
+    "_id": "image-a005c7a111c8b681ac58093d9102134ac731fcc3-512x512-webp",
+    "_rev": "2B2USEIIBli9llw6m96Vzp",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-03-05T01:26:19Z",
+    "assetId": "a005c7a111c8b681ac58093d9102134ac731fcc3",
+    "extension": "webp",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "eFQZAxwI00t,01xrfjagf7az00a02]S~YjsBfRR-fPWo0KcYY*VE_$",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1,
+        "height": 512,
+        "width": 512
+      },
+      "hasAlpha": true,
+      "isOpaque": false,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAElUlEQVR4nG2Vf0zUZRzHv/8ofA++d4eHQxqamSxN++Fgq7nIP7DRRi5BAYVD8c7jlB+CMgfTCZdxOqupqa1lNjGl1LxMki29lWAhIXFO7SSw1AVz7lhzcMrti3fPqz2HNc2e7b09ez7v9+v5fL9/fB5FeWSVpikTPDmJyR1LLJmdBRbX9RUW74jDPBAu1UJSIw7TwHWrxdtVYHFJj/SWpikTlP9bF/JS1A5rytw+6+SKv2xmT9Bh8o+uMQbGyrRQpEyLSMn9qNMYuOcw+aWnzzqpQmZk9glYr21G+m17kjtYau4ZW6MFI+WaoFLjMVVPgs2pRLamibG654LBsqSe2/Yp7iu2Gen/QmXL8hYJu+9M6A2v1XQqHgHUTYP656F+NrjTEUfXQfvH0FxOuC5Vl5lB+xS3ZEQ/35OVmHxt+aSKEbvZF1mj6aJcQ6wzI9ZPhi2zEZ8VQ6sbWhvh5CbEz0fgRhd4dyFcLyEzw3azTzIkSzn/tiVzaIXRM+aID1ImOzPD5lmwKwv2F8IP++BWNwxeBv9Z6DkBPR44UTvuK9OQ2aGVRo9kKZ05Ca5gSZw/UhonWKvBxqehaTV0HgbvbsTJLdD2CVw8Br5v4Eor4vK30LoNGl+B8gRkNlii+SVL6S8we0dtcQHWGqEyEbZnQGcz3OmD9v3w/kJomAeN82FfLpzZCTe7oa8dPndCzTRwxjFqMwQkSxm2agO6MyHElhdg9yL4ohr8XvijCw5XwIapUGpAOOPGL/wgCyEvvHERWrfD5jnRum43hIat8QPKA6saClc/ExHNVXCpBeE7BT0n4adDiB2ZCGc8wqE+lAFRMx0OrEJ498CXNYi6WdFaeJUakSzlQVFsKLx+ZkQcq4Pec3D1DHR7oO0AuBfAagPYH1FVCuxdijj1LjSVwcbU6Hm4RI08KFJDyvCy+AHdkRhi62twwAGeBrh6FnrbEJ+shPIksBnG5TDBO/Ph7F64dg5atkHtnGhNLzaEJEvpzzF5R4sMARwJUJkCO7Kg+2u40w/ffQgNr8L6mbBxNjQuAE893PwFbl2C5hqomg4lKqNFaqA/R/MqHdkmV3CZ6g8Xq0KsVBHVzyKO1IDvNHj3QVM5HNsEp99DnNsPvpborxHej2BrBsJuRGYloyNbcynn3zRlDuUZPHqhGhTFsYhVRkTty7C3EPHpajizB37vgj+vgv97uHAU2g/CwXJE1QxEsYrMSoZkKZ6MxORri4wVw/lxvnBhrI5VhRITOJ+CunlwqBramsZ1eid0HIXffoSWHVAzh3CRqg/nx/skQ7LGh0N20tzBfIv7XkFcbxRaFAPWWLAlQNVMqEuD2nnQ8Docb4DOr6C5lnBlqn5vmdYrsx3ZD4eDXMfzUtQrS6amDy61uEfy1B69ICYYWR4jKIwhCv9HJSbEhrmE6xcIvfrF4Ih1co/MyKxkPDYT5YHs9NdFxoqhHIMnuCTWfz8vNqDnx4TCBRMjUnJ/v8AQCOZr/qFczSO9MvME7LEnIMOQfH6hKbPjDc3V+1a89+7i2IGx3IkhPXdi6O5iw4A8kzXpkd7/PgF/A3CBoMvVywWMAAAAAElFTkSuQmCC",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#705044",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#961c04",
+          "foreground": "#fff",
+          "population": 0.26,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#fc5c07",
+          "foreground": "#fff",
+          "population": 16.94,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#924306",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#f68d3d",
+          "foreground": "#000",
+          "population": 0.12,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#745c3c",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#fc5c07",
+          "foreground": "#fff",
+          "population": 16.94,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "5fuGFQQsBiuId2B9OPmJn1/3B1d3h4BzVw=="
+    },
+    "mimeType": "image/webp",
+    "originalFilename": "ubuntu.webp",
+    "path": "images/ppk2h9tb/production/a005c7a111c8b681ac58093d9102134ac731fcc3-512x512.webp",
+    "sha1hash": "a005c7a111c8b681ac58093d9102134ac731fcc3",
+    "size": 14646,
+    "uploadId": "4NAB4c0FSxLD1fbL2WVi0mxiVEEbXkqw",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/a005c7a111c8b681ac58093d9102134ac731fcc3-512x512.webp"
+  },
+  {
+    "_createdAt": "2026-04-10T05:36:48Z",
+    "_id": "image-a5a321dbfca127ff884382a400c39cd812aa6f0d-2992x2992-jpg",
+    "_rev": "4ZgEhdWYznidXuxW86fSQk",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-04-10T05:36:48Z",
+    "assetId": "a5a321dbfca127ff884382a400c39cd812aa6f0d",
+    "extension": "jpg",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "eQHo2l~q?af5Rj9FozWA%Mt7?bIUIUWBogRkxuRjWVof%3j[Ioj[t7",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1,
+        "height": 2992,
+        "width": 2992
+      },
+      "hasAlpha": false,
+      "isOpaque": true,
+      "lqip": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAUABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAAcEBf/EACcQAAIBBAECBQUAAAAAAAAAAAECAwAEBREGEiETFCIxQQckMmGB/8QAFwEAAwEAAAAAAAAAAAAAAAAAAQIDBP/EABsRAAICAwEAAAAAAAAAAAAAAAABAhEDEhMx/9oADAMBAAIRAxEAPwDvc6uLzEYDzligaTfYMNg1MYfqDa5mNLTPW7wOCQHRvTv9irZza3a74a0nWPDth1lNflUKvcRjms2neNfMP6t79yaGtodypmyawx3XvfiK3dWU+4pWzAcGkmxcUsssqGT1BQ+tD4pWflEqski645VnsmhmUPE40ysOxFYJeGYN5hI1kpYew32H8pSrrwmd+PjeLMSfbAdvgmlKURD/2Q==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#564638",
+          "foreground": "#fff",
+          "population": 6.37,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#362113",
+          "foreground": "#fff",
+          "population": 0.09,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#564638",
+          "foreground": "#fff",
+          "population": 6.37,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c4b9b3",
+          "foreground": "#000",
+          "population": 1.35,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#9cddd7",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#000"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#548ca4",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#308c84",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "IAgODwDPZ3WDl4hddYhpmFiVOO/j9h8P"
+    },
+    "mimeType": "image/jpeg",
+    "originalFilename": "20260409_223537.jpg",
+    "path": "images/ppk2h9tb/production/a5a321dbfca127ff884382a400c39cd812aa6f0d-2992x2992.jpg",
+    "sha1hash": "a5a321dbfca127ff884382a400c39cd812aa6f0d",
+    "size": 2895751,
+    "uploadId": "qDc6NtIPSwhLcBZOjSjg5LdxKDhAh8pJ",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/a5a321dbfca127ff884382a400c39cd812aa6f0d-2992x2992.jpg"
+  },
+  {
+    "_createdAt": "2026-03-04T16:47:49Z",
+    "_id": "image-a87503a344b9f29d5f43ecfb3d2250d3802be215-352x352-png",
+    "_rev": "ZnSMYMLMVMkpVEZl5Xe4iE",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-03-04T16:47:49Z",
+    "assetId": "a87503a344b9f29d5f43ecfb3d2250d3802be215",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "eaN11JtS02t89ayZo$adozn$01o#RNj[-oiaozo~ocozAKkC-OoIsn",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1,
+        "height": 352,
+        "width": 352
+      },
+      "hasAlpha": true,
+      "isOpaque": false,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAARlAAAEZQAGA43XUAAAFO0lEQVR4nGVUa0wUVxQeU2P5ZfndH8Uflf6ykjat1tSqMWIBoRWh0lRra40aUelD/xATosUmbXhE0GV57PJUWsRCERB5yroLLCAg7oq7O7PDPpmd2YfMDCuzu/eeZmbFtulJvpx7Z8755p5z7nxErpYcyW50PMltdlpTqxct75eTlpRSm2VrGWlJKSct2ypIy04VaflERZl2VVEPUuso9eda6viJFlNKeQedODIC6wkC1hFrllZDm092cuzFvoBwoN4jJBVTwqZiUthRQQt5N93CT92McGWQE4qHA8uF/Rx3upOhDzY5x/bVUKqsOlvumRZ7UlEbbHhFuldN2U//xYmFAwF0sMGFPyij8JEWJ1YbODxKCdjMrGKbP6JggZWQnhaRZjIQOde1xByodw7sryXPH22kkovaTBsIglhHbK+02j9WO8RP65w4u2ERivq8oCN5YHkJpFgMEMaAMMQBgKVoDDO8hEftAro8yIqfNTrG02vJ82fa7UkjIyPria2lFvubl23ieyUkLrrnhRm3COFIDBDCgDECjPH/IH9ElGIw7RLxFZm0wdmfq6FyyjtmE4ktJRb7pp9t4tEWB9aRyxCWECBpFSI8C2GRgVVJhEgkAtFoFGKxmOIjL9crUgzrKAF937W0lFFLXz/bZNmqEO6opEW5Z6wgKaWthPzgMg8BZf0TPEsm8LE+8Pv9EAwGFS8jHA4rVTC8hLXGgHS4yan/qtlxjEgps9jzbrnFUVLAkVi8RC4Ugun5YXhiagbHohEcTge43W7weDzgdDoVLwiCQrgaRfihXUT5nUtUVr2jkth2zWr/sdsnmphVLJ8OAwAfiYIjxAAbtIHAM8Dzy8DzvEIiY2VlRSldjkUAyvQvDfh9+2rofmLndRslN9bml14RxjAGPhwGzs8By/rAxzDAMAxwHAehUEjpqWwKIQYgAxF8ddgf2qMmZ4jdKtJcPMTyZEAmjE9RbrjP54Op6WnQ6/VgnJiAqakpmJychMeP5yEYCsUnDvGJy7kKYRU5Q+xV0w8u9bPcAvsCIRTFGMUgFpOAZRmYmjKCTjcKM4+m4fHcLBiNEzA78wg4zgcoFgGM5esVxXLupX7Ol1qzeJ/I1DjV+Xco2rAwh6SAAeOQHnBQDy+YYeCou8BYOyFo74Eg3QMs2QV+qhvCzBCgoB7kWClgwPqncyj/jp3M0joqiC8bnCfyNMbxpu6SCDN+GIcn0kEYSwdxLE3xa+ANabBsSAPe8M+zsDEd5JzG7jIpTzv58EiT62uioMWdcqDqkeqitoTR3d6OPO0bsbs1AWR4fk8Api0Blv6I7523EsC1htYE8LZvxLrbH6GL2lJvVtVMxQ8tzBaifIROPKSxf5Gt6hu8qrkgjrV9iL13N0OgNxmCvcnwvDcZQj1vQ6BbRjIEeuLwdm3G423b0C+aC0J2Vd/9Q1oyu3og+AYh/9CnWpc2ZVSbC3KqeieKW2+Io7pS5H16DYepSizZyrFo/g0E86+wai3HYaoCy+8e6EpR8S0Vn1PVa8ioNZ2VZUwRB1nHzl2zvn68eeGdtOqFgkzt04GCDgujHacjepsLzS8uolnLMzxrWcDzNI0e2pxIM05L5zut3kyN+X5azbP8b26Sm/+jifKirQ02nGn3JmXUO3JTax03sptdhtMdPnthn48tuud5LqPwno891emjDja59PvqHJWZWlf2yUbqrbgW/ku11wwAXivqmE08UW9KydFYv91fQ6l2q21Du1Tk3C6VbW5PFTWYWkteP6S1HPuuYf5dOfZlma/I/gb5lqBC39gFdgAAAABJRU5ErkJggg==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#375880",
+          "foreground": "#fff",
+          "population": 0.06,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#0577d6",
+          "foreground": "#fff",
+          "population": 16.15,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#0577d6",
+          "foreground": "#fff",
+          "population": 16.15,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c4b28c",
+          "foreground": "#000",
+          "population": 0.92,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#eee951",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#000"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#697781",
+          "foreground": "#fff",
+          "population": 3.17,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#f9b907",
+          "foreground": "#000",
+          "population": 9.81,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "8deFLQYsNVdsdHAJtxZgUyAWC0mqiZCUSA=="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "mta.png",
+    "path": "images/ppk2h9tb/production/a87503a344b9f29d5f43ecfb3d2250d3802be215-352x352.png",
+    "sha1hash": "a87503a344b9f29d5f43ecfb3d2250d3802be215",
+    "size": 27206,
+    "uploadId": "Cr4VN3TUezY4CkiD7kdsxzG8klcjK9cA",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/a87503a344b9f29d5f43ecfb3d2250d3802be215-352x352.png"
+  },
+  {
+    "_createdAt": "2026-04-10T05:39:54Z",
+    "_id": "image-adc6edf20d6de769336598518359c1a1fb9719bd-2388x2984-jpg",
+    "_rev": "4ZgEhdWYznidXuxW86uB1u",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-04-10T05:39:54Z",
+    "assetId": "adc6edf20d6de769336598518359c1a1fb9719bd",
+    "extension": "jpg",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "dYGRYUM|~UazawxaxtoLxZWDM{ofxaayWBayj?fRa#a|",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 0.8002680965147453,
+        "height": 2984,
+        "width": 2388
+      },
+      "hasAlpha": false,
+      "isOpaque": true,
+      "lqip": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAZABQDASIAAhEBAxEB/8QAGgAAAwADAQAAAAAAAAAAAAAAAAUHAgQGCP/EACkQAAIBBAAEBQUBAAAAAAAAAAECAwAEBREGEhMhBzEzcZEyNUFhcsH/xAAWAQEBAQAAAAAAAAAAAAAAAAADBAX/xAAaEQEBAQADAQAAAAAAAAAAAAABAAIDESES/9oADAMBAAIRAxEAPwBf4u5G5xqY2C3uJYFmJ5+mdE1N14hvrNlltMjdIysD9Wwe/ka7Lxxm65xDqeyuQTU7yFsIo0USRyO+iBGd/moM56Aq9PrelreNri0tpiNmSJXJ/ZFFb2JTlw+PVuxFugPxRUrxnc5S7LqmXeGN5eVUbZOgaytOHcZPLEkN4OsuhoADmO6Vx+nJ7Gl3Bn3+L+v9rR+kPIEFrZLeLHyIPJVC/FFK7j1m96KznTNf/9k=",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#584829",
+          "foreground": "#fff",
+          "population": 2.77,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#322404",
+          "foreground": "#fff",
+          "population": 0.16,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8f796c",
+          "foreground": "#fff",
+          "population": 6.3,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#ccb59f",
+          "foreground": "#000",
+          "population": 3.76,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#dcc1a4",
+          "foreground": "#000",
+          "population": 2.58,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#8f796c",
+          "foreground": "#fff",
+          "population": 6.3,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#c4a880",
+          "foreground": "#000",
+          "population": 2.45,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "2SgODgL3p2eZiKdnaHl3d5d39J16f6g="
+    },
+    "mimeType": "image/jpeg",
+    "originalFilename": "20260409_223845.jpg",
+    "path": "images/ppk2h9tb/production/adc6edf20d6de769336598518359c1a1fb9719bd-2388x2984.jpg",
+    "sha1hash": "adc6edf20d6de769336598518359c1a1fb9719bd",
+    "size": 4333023,
+    "uploadId": "WMbxCBpK0vDdECDJJRb7bqG1pzHYQLfp",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/adc6edf20d6de769336598518359c1a1fb9719bd-2388x2984.jpg"
+  },
+  {
+    "_createdAt": "2026-04-10T05:37:35Z",
+    "_id": "image-b70060c0abca9a0239f186395795e2e8fb2538cb-3000x4000-jpg",
+    "_rev": "1R3NlbMiNmvZZPLvJ8zwsL",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-04-10T05:37:35Z",
+    "assetId": "b70060c0abca9a0239f186395795e2e8fb2538cb",
+    "extension": "jpg",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "ViKl5RrV}A-UwI-VR*n$t7R*=aj]J9R+W;j]oKR,n%j[",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 0.75,
+        "height": 4000,
+        "width": 3000
+      },
+      "hasAlpha": false,
+      "isOpaque": true,
+      "lqip": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAPABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUDBAYH/8QAHxAAAgEEAwEBAAAAAAAAAAAAAQMCAAQFEQYSITFR/8QAFgEBAQEAAAAAAAAAAAAAAAAABAUG/8QAHxEAAgIBBAMAAAAAAAAAAAAAAQMAAgQFERIhMmGh/9oADAMBAAIRAxEAPwBfzXN3WPXbLs2yWZkmc4/QKn4Ryq5k5KcoyLFthIdpy1o78pJy7CvzFwmUSOkB+6NUsdispjri1nZQSWKl4GEEe1A0h6DjityOU0OoqyzkGywePqdSfeyi2UYxM9ebFFZdthyB7ZNWy2AYexHYj2imha9vIRBa7fqh+T//2Q==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#4e4539",
+          "foreground": "#fff",
+          "population": 7.57,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#712b12",
+          "foreground": "#fff",
+          "population": 0.58,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#e16e04",
+          "foreground": "#fff",
+          "population": 16.97,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#cbb898",
+          "foreground": "#000",
+          "population": 0.21,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#fc907d",
+          "foreground": "#000",
+          "population": 0.47,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#5c7c9c",
+          "foreground": "#fff",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#e16e04",
+          "foreground": "#fff",
+          "population": 16.97,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "m2kKNYrxjFlvl3adZXd4fP9nrI/X"
+    },
+    "mimeType": "image/jpeg",
+    "originalFilename": "20260409_222612.jpg",
+    "path": "images/ppk2h9tb/production/b70060c0abca9a0239f186395795e2e8fb2538cb-3000x4000.jpg",
+    "sha1hash": "b70060c0abca9a0239f186395795e2e8fb2538cb",
+    "size": 3649033,
+    "uploadId": "zqCUrRm79WYRF5okry1xwCJ8PH4vuv81",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/b70060c0abca9a0239f186395795e2e8fb2538cb-3000x4000.jpg"
+  },
+  {
+    "_createdAt": "2026-10-26T01:41:21Z",
+    "_id": "image-c3487a6e0f78730cd24f3380685f45a39391012b-1425x1193-png",
+    "_rev": "Dhq0bRMSnQwR0o7XAC8PtJ",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-10-26T01:41:21Z",
+    "assetId": "c3487a6e0f78730cd24f3380685f45a39391012b",
+    "creditLine": "Adithya Rajendran; source images: KITTI",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "eDGu,m9F?bD%x]~qNKtRxuM_00t79Z-;NFIUM{oexvoyR*kB%MD*t7",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.1944677284157585,
+        "height": 1193,
+        "width": 1425
+      },
+      "hasAlpha": true,
+      "isOpaque": true,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAARCAYAAADdRIy+AAAACXBIWXMAAAPoAAAD6AG1e1JrAAAEnElEQVQ4jR3U2U/TBwDA8d8fsZdliU8IIiB3OQotBcplKVdbW6DQi6stR0GuChQop5ZKAaEgcoNQDnWyqct0C0Zi3NRlc+jmTDbd9ji3mfn6XeLD9/Xz+BUWb91lxOvF5eqkt99Fj3sEZ/cAba2d9HS5ONfjpsvlpsPZir3BjL3BQJ21kuqaCqw2M02OOhxna2nrtNPvdiI09AxSZjSiUhei0p1Bq7egLTVTUKBBqVSRX6hDrdWjUheQI09CkS2muECOyVBK+9kmnG1NGPVFFCkllGnzEE4Xl5KSJkcklpKYlo04XYFYkktUvJSwmFQiEzORny5CrVJQrJCi1+TTUF+H96KX/Zs3uLG7RW97PXq1HHO5AqGoWEOsSMLxsHiCI0SEhEYTFHSKj4+F8NEnQRwLjkKeV0C91URrvYnudgeeCyNsbKxw5/Y+u5ur+EZcuM/Vc36gFaGjvZ0STRnitBwSkqUkJYhJik8hOiaZ8CgRCeI0Kk3VeM4PMukdZNIzjH/Sy8r8DOtLl1mau8Si38fKlSkCVxcQ7t39kp2dPeYXVpj2z+OfmWNudgH/3CLTs1c+tLCyxubWOjuBFa7vbbC7s05gc5mdrVWu7Wxy+/ObHHz9FYeHDxCOXhzx8tUrnn7/A4ePvuHZ0XNev/mD17//yYuff+HewQFXlhdxD3Tj6nXgvdiN19fFyLADd5+DCd8od764xbMfj3j+00uEKf8lNrYDTMz66R0aZHl9jfuHDzh4cJ+tvQA9Ay4s1mo0pRpy8uWUaPOw1atpsiuprSrE4xng6XeP+evtW/7+518E1ZkSKiwGVHoNp4vyMJor6ehs5mxHPZVVOrIVMpTqInTmWnJKylDq9Fgb7TiaanA02VhdX+PNb7/y/t07/nv/HsFqr8FYpafcpEZnKKS8shijWUOlRY1Gr0SpzqWy2oi1xYnOVE+ppQGb4xz2xg4aHE7m5pd5dP+Axw8f8u2TJwiB7U1m/JOMXuijb6id7n4HPe4WeofbcQ056RvuxTMxzphviu7+YZy9Q/QOenANeOjuH2Xcd4mttVWurq0RCAQQdrYDbG6ssjg/w9zMRWamPUzPjDE3P8Hi0ixrGytsbW+zuLTCuG8Kz5iPMe/EB8jnm2J29jLX9nbZ3/+M6zc+RTDqy7BWGakzlmOt0NFgqsBqMmCrttBoq6OluZmu7j6aHW0Yyg3o1Dq0Gi0mvYEakwVHg4PREQ8TU3OMT/kRRNFRSERxpItikMXGkJWQRHaylPSkNCSJKaRJMlGr9OjU5WRLM0mKFREfGYtULCMnS0lhvhatxoLB2Ei7sw/h5PFgIk+EEB8WSkzISeLDIkmNSSYpOpnoiBhiouIpyFdRUWZBLsshIiyK4JBTnIqTIZIoSJEqyUgvQamswN7YiRAWGkb4iVBiwyKIC49GHJtIVko6GakZpIqlyKTpVOhNWG1t5OSWcDI8lqAT0YRGpXyYR2ycBJkkl+wcNWfKqhHk8mwyZZnky7NRKwowakqxG83Yqqqx1dbR4mhiyD2E230efWUtsvRckpLTSBbLSJFkkJWloKRIh1ZnxlTdxP9S6BU31YS33wAAAABJRU5ErkJggg==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#353d50",
+          "foreground": "#fff",
+          "population": 3.19,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#564812",
+          "foreground": "#fff",
+          "population": 0.04,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#7f7a78",
+          "foreground": "#fff",
+          "population": 7.13,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#b3bbbe",
+          "foreground": "#000",
+          "population": 1.88,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#dcecf2",
+          "foreground": "#000",
+          "population": 0.34,
+          "title": "#000"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#7f7a78",
+          "foreground": "#fff",
+          "population": 7.13,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#b65c61",
+          "foreground": "#fff",
+          "population": 0.28,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "HPgJDoCllnh7mIeAlneIeImqlgtUK9A="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "detection-f6_gallery.png",
+    "path": "images/ppk2h9tb/production/c3487a6e0f78730cd24f3380685f45a39391012b-1425x1193.png",
+    "sha1hash": "c3487a6e0f78730cd24f3380685f45a39391012b",
+    "size": 2051054,
+    "source": {
+      "id": "HW1-2D-Detection/6e6a020c8556d4ca0e3de06a1d6f5de9f1ed46d6/paper/figures/f6_gallery.png",
+      "name": "GitHub",
+      "url": "https://github.com/Adithya-Rajendran/HW1-2D-Detection/blob/6e6a020c8556d4ca0e3de06a1d6f5de9f1ed46d6/paper/figures/f6_gallery.png"
+    },
+    "title": "Driving detection failure analysis",
+    "uploadId": "46db9d3b9839db60bfe3a97e81aee5e90206b1b0",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/c3487a6e0f78730cd24f3380685f45a39391012b-1425x1193.png"
+  },
+  {
+    "_createdAt": "2026-03-04T16:48:51Z",
+    "_id": "image-ceb88ce338a7bfc4ab9d0c9562fbc2a34c2cc6ae-340x340-png",
+    "_rev": "ZnSMYMLMVMkpVEZl5Xellb",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-03-04T16:48:51Z",
+    "assetId": "ceb88ce338a7bfc4ab9d0c9562fbc2a34c2cc6ae",
+    "extension": "png",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "eI7.3Vol9WW7xRxgflRgjYofD|W8x8oMW0W6axoMfla*s{jqR6a%g7",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1,
+        "height": 340,
+        "width": 340
+      },
+      "hasAlpha": true,
+      "isOpaque": false,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAAsSAAALEgHS3X78AAAFX0lEQVR4nIWVe0yTVxiHq1n0DyGCKCDjZrG0trS0paXt168thba2KKCoUKByDSIwrlKEoWuCm2RbFmUSGTNzy+YUZc7pmskwTkEFh1y8cInYAgJjBRTkWkq/fu9SRkKWme3310nek+ecnJz3eQmEt0UHaw9cgXWhp2fdxMdBLtZay8VFlhOiMrNC8smYu72m08FaAgHWEP4zAGskOngHrXjjLDhmYSHZ2GFhorUWibZ2IdFLXQLN4mVeljnTXpOcAif7XoJOt/ZtpDX2EyVVYw7S8kUymmeJE6dbq0MTrJ2K6KUpmcqMyZSz1p2Ro1MK9VCnMGWympc7q0aOTZMlVeDwr9sqK/H1ohMLXmiRVYlmWCrQWMs96R6rKUazZEnPMONp6QuQljSKFyb/hmfE3bJIdhlMzD2mJk6yqYKT91rFObHgZWcsw6hXYB2qW6QKc7E8kQb7WRhhHUBCLWapzGyLT1jAc3LnIDt3BnKyhuBYVj1kq2/gQtFjG43fZ6bL+gYZ+/r17AxTXnDpK6qdRQg7CS6iI1gSGoc1oYqlGUS0iCHCeVwSMgsRUTMQEzcJB+LGQZ0wDJqEboiI6AA27zFQmB24P+sRRkY6p2lRLxqD3htL5J6cdiEgH4OHOBMrRiOtxmUYMoejohkQSSZBKhuHsJ2jECJ/CVKFEUIUz4EnfgZ0bhuQmc3gF3AX30ZvxEgh7QZ6Ur9W9OHc1mUgegg7iu62GgXovE2ITuPK8EmIip6AiL2jsGvPECgj+yE8qg8Uu7tBougEJLQVAvn3gBjQgHvRfrVtQ5sNNE1fMUs34bEMFB5aKkF2W4zByLQNEU3g8QcnoFA7DgVFf0J+0QjkHnkJ+dp+yC54DmlZXXAwvRNCd90HIl2Pe1Bu2HyFdw07NN2rQMGhxRK+at4YxJ+wBSPDeEz8H6AtHQVt6TAUlw3C+7oBKP3AAIWlvZBd+BTSc9pBHnUHfAN+xN3862yeggbDjvgnq0Be2lwJV/nGyAwetrF5Bjxqfz/ka19CfpERCopfQKnuBZQc74WCkmeQXdgBKVkPQayqh3cpF3GX7RdsHny9wT++s5ile2kHznvw0t6UsHeOG+lco43B6cZDlT2gTuyB2MSncOBgB6hT2iA2+XeISXoA+zSNoNrfAIHoVXAlfY07+31lcw++ZvBXP1oB6uY9uKmvjzLlI0ZaUI+NyurA2cJ2QMJaAQlrBr60CbiS28AW1wNbpAeW6CcIENSBD/1bcCZ+gW8knrVt5tQaiOrm1RsGpU4cZcj7jRTWE4zCbME5ohaQKFtAGn4fJKo7gMgbgBOiB470OnCkVyEQvQSeAefA0ec0vsH3NLaJc8FAjGvWLgPDTk67cLNeJQdGDjVR+I9nSMwHWKDgLi6Q2UG3gC+7CUGSG8BAfwAGWgsByAUgc8+DK/kMvsHnM8yRcnbaLeRaIymtLWn5Y9vbJfjIKyo72ZRHi+jVk0Stg8Sg2+ZtDL3Nh3YV96TWwlbKd+BGPg+bSTWwye8M7uz3uW2j/xmzM/PcoLu0Tk+Mu5dHKx7Ysdx69myvxNdzyl57MQ8Pq2gx3RV+spYmT069yZVSZ3EhfoM7+dbgjt5V4OBdiTsQK5c20r40uaK1Td5RNyv8U1pVnLIRLzvjHx60K0j+KWzgaEfItNTnatLeh9WeopudW+gXp5y211gdiVWYE7VmajP/+07P8F+qSZoWNT2vl0zVja3oi/AW2a4INvAUODFyBlj+mrZMb0X9ZVd+3bMtvEtdW+XXa4mxTZmMnG6W5NTU34KF/7P2ygiwvwdXN+ZOy+lRkFPby0mp7eX2Ne+jWbfVEfDv/AW3Ne+aqJnixwAAAABJRU5ErkJggg==",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#845444",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#0f1f91",
+          "foreground": "#fff",
+          "population": 10.79,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#0f1f91",
+          "foreground": "#fff",
+          "population": 10.79,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#d3cca9",
+          "foreground": "#000",
+          "population": 0.02,
+          "title": "#000"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#4cacfc",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#4f70a3",
+          "foreground": "#fff",
+          "population": 0.23,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#ee9a27",
+          "foreground": "#000",
+          "population": 0.3,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "m9OFDQI5XLR/g1Y7yBBxpcAXB1iIiIB3SA=="
+    },
+    "mimeType": "image/png",
+    "originalFilename": "aws-sol-arch.png",
+    "path": "images/ppk2h9tb/production/ceb88ce338a7bfc4ab9d0c9562fbc2a34c2cc6ae-340x340.png",
+    "sha1hash": "ceb88ce338a7bfc4ab9d0c9562fbc2a34c2cc6ae",
+    "size": 56356,
+    "uploadId": "zNTPloqsKzGLrQuDwzShM4yz895TrsJ3",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/ceb88ce338a7bfc4ab9d0c9562fbc2a34c2cc6ae-340x340.png"
+  },
+  {
+    "_createdAt": "2026-09-30T22:53:47Z",
+    "_id": "image-d7a7285e833b459e195bf5eb5cff66de0ca12aba-1536x1024-webp",
+    "_rev": "fpbT1AfvpNsoDuLzHs6hDL",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-09-30T22:53:47Z",
+    "assetId": "d7a7285e833b459e195bf5eb5cff66de0ca12aba",
+    "creditLine": "Illustration",
+    "extension": "webp",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "V02YhSO?H?R*RjD%RjR*oLj[0L$Nx]oLs:%Mo#%2S2jZ",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1.5,
+        "height": 1024,
+        "width": 1536
+      },
+      "hasAlpha": false,
+      "isOpaque": true,
+      "lqip": "data:image/jpeg;base64,/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAANABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAAMCCP/EACAQAAEEAgEFAAAAAAAAAAAAAAEAAhESAwQFEyFBUWH/xAAUAQEAAAAAAAAAAAAAAAAAAAAB/8QAFREBAQAAAAAAAAAAAAAAAAAAACH/2gAMAwEAAhEDEQA/AOYtbCMrjY1AEyru021nqePSkOQyUrRgHwI/eyOBlre5lIQdieCRUotnbcTNWogx/9k=",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#573629",
+          "foreground": "#fff",
+          "population": 0.04,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#7b1a09",
+          "foreground": "#fff",
+          "population": 0.08,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#7b1a09",
+          "foreground": "#fff",
+          "population": 0.08,
+          "title": "#fff"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#9fa2a2",
+          "foreground": "#000",
+          "population": 0.05,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#e7a592",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#b07458",
+          "foreground": "#fff",
+          "population": 0,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#b84928",
+          "foreground": "#fff",
+          "population": 0.06,
+          "title": "#fff"
+        }
+      },
+      "thumbHash": "w/cBBYA4Z4dzh4iAisiYY5GFAGsI"
+    },
+    "mimeType": "image/webp",
+    "originalFilename": "kubernetes-cluster-illustration.webp",
+    "path": "images/ppk2h9tb/production/d7a7285e833b459e195bf5eb5cff66de0ca12aba-1536x1024.webp",
+    "sha1hash": "d7a7285e833b459e195bf5eb5cff66de0ca12aba",
+    "size": 42416,
+    "title": "Kubernetes cluster, illustration",
+    "uploadId": "785b14a6bcc48d5be1a99e1f204fc01b8c7880b1",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/d7a7285e833b459e195bf5eb5cff66de0ca12aba-1536x1024.webp"
+  },
+  {
+    "_createdAt": "2026-03-05T01:28:33Z",
+    "_id": "image-e605c26acb5f3e4542e669e7f1e9f6a2729dab80-512x512-webp",
+    "_rev": "2B2USEIIBli9llw6m96eKh",
+    "_type": "sanity.imageAsset",
+    "_updatedAt": "2026-03-05T01:28:33Z",
+    "assetId": "e605c26acb5f3e4542e669e7f1e9f6a2729dab80",
+    "extension": "webp",
+    "metadata": {
+      "_type": "sanity.imageMetadata",
+      "blurHash": "e68gy$%J00Is9a?wIrIU$~%ED$xrxtM}R;01Rmobob-;9Fayocj[t8",
+      "dimensions": {
+        "_type": "sanity.imageDimensions",
+        "aspectRatio": 1,
+        "height": 512,
+        "width": 512
+      },
+      "hasAlpha": true,
+      "isOpaque": false,
+      "lqip": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAD40lEQVR4nJWUS2xbVRCGk1JaRAWoKombd5paBezYSXCu04Qml9ixjuvY8Sv3XMeP3OvndXzt+tXk2k6cJ4nURTZBQrCpFFiETUHdgMQCqWzImveyUhcICQJFiE0Jg8YKUYCkwEi/NJoz853ROWdOXd1jTK1Wn2VZ5qLNZnsJhT7G6v6vaTSaM2R4uMnj8YwEg8F8JBJ7E4U+xggZbsKcfwUZDIYnLRZLo9frHRIEIZeRM3eUUuXrhery9yhFqXwjZzJ3hLCQwxyTyaTCmuNYpxmGueCmbkYUxVQqndlRSuWvFpdWfl5d29hfXdsA1Mrqxj7GcC2dzuwIgiBzLpfRzDAXkHHY1fj4eFcg4BOSqdT2rFL+bKG6/FN1eW2/urQCSqkC+WIR8oUizJUqUF1cAVzDnNm50uczkvx2IBAQkFHr9lpvbwOlNJzNFj4uz1f3FqrLv5XnF6E4q0AmmwdZjsGNNFeTLMchk83V1jBnHnMr1T2sRUZvb29DHTsw0Mnz/FouV3gwVypDrnAT5EwWpJkURGNxkBI8VG6OwfysBVIzAYhLSUim5FoO5s4qZcjmCg+QMTAw0Fk3qNc3OhyOqCiK9+KS9DCWkPZjCQnC0ShMCwKEI37IpClkb/ghmYzWgEe0H09IDwVRvIcMvV7fWDtDlmXVdrtN4ij3QTAU2gtNTwNKEEWIRGMQSyT+AsINI7EYBEOhH7EGa5FxeOMsy57u6elpIcQkOZ32LyYnPRAIBGpdYvFRGB4DbjTl94Hb7fySEIuEtcj4+9M5Y2ZZq33cuutyOoDjvBAMBkEMRyASi9eEPsZ4ngJu6nTad81m1oq1x73FJ8xm86DDYbvrdjl/5bhJoJQDn48Hf8BfE/oY43n6O6XcL263630zMQ9i7XHAepZlW61Wc97lcuzyPP+Dz+d7RCkPHOVqojwPvinfI9/U1Lccx31osxPJZDK1YO2xo9fR0fEUw/T1m0wjysSE/R2O5z/lKL3vnfR+h+Iofx9jLpdrixAyYWSNrSeN3sHUND199erll0deedHz6jBDxsgYJcSyQAjZOlCVEEJHR0e1Q0NDz5zY2Z/G85fbZsRLqVyicykSautvb28/b9TpWq8xzBVUv1bbplarnz3pzP5hivyCbr3SeXtrvfXuernJctLt/Ver3yhdYt641f7e9uvNn2xWW7xdXV3PWa3qs0eFHyz+hQfv7tTjgKc2l1TG7a3GnXffavjotUrbdF9fXwcOPI4UCn2DwfC8Tqc7r9frzx1ATzzHejnUfKWYbF5Q0k2b0/6O61qttq27u1ul0WguotBHKAJVKtW5wz/wiP0BTMG+tl96n1MAAAAASUVORK5CYII=",
+      "palette": {
+        "_type": "sanity.imagePalette",
+        "darkMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#463457",
+          "foreground": "#fff",
+          "population": 0.01,
+          "title": "#fff"
+        },
+        "darkVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#554707",
+          "foreground": "#fff",
+          "population": 0.15,
+          "title": "#fff"
+        },
+        "dominant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#f8e50b",
+          "foreground": "#000",
+          "population": 0.99,
+          "title": "#000"
+        },
+        "lightMuted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#b19e6c",
+          "foreground": "#000",
+          "population": 0,
+          "title": "#fff"
+        },
+        "lightVibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#e5d656",
+          "foreground": "#000",
+          "population": 0.1,
+          "title": "#000"
+        },
+        "muted": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#a4944e",
+          "foreground": "#fff",
+          "population": 0.03,
+          "title": "#fff"
+        },
+        "vibrant": {
+          "_type": "sanity.imagePaletteSwatch",
+          "background": "#f8e50b",
+          "foreground": "#000",
+          "population": 0.99,
+          "title": "#000"
+        }
+      },
+      "thumbHash": "GQiCDQA2d4h+hI0VB5xAzgrkCFd7hoE6Zw=="
+    },
+    "mimeType": "image/webp",
+    "originalFilename": "graduationcap_100816.webp",
+    "path": "images/ppk2h9tb/production/e605c26acb5f3e4542e669e7f1e9f6a2729dab80-512x512.webp",
+    "sha1hash": "e605c26acb5f3e4542e669e7f1e9f6a2729dab80",
+    "size": 9118,
+    "uploadId": "Q2jHhDHdUTBAZdKpZCaVkzsch6FlvFXV",
+    "url": "https://cdn.sanity.io/images/ppk2h9tb/production/e605c26acb5f3e4542e669e7f1e9f6a2729dab80-512x512.webp"
+  }
+]

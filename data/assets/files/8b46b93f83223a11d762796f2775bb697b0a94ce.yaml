@@ -1,0 +1,83 @@
+config:
+  security.nesting: "true"
+  cloud-init.user-data: |
+    #cloud-config
+    package_update: true
+    packages:
+      # Desktop integration and session management
+      - dbus-user-session
+      - xdg-utils
+      - x11-utils
+      # Core graphics and hardware acceleration drivers
+      - libgl1
+      - libgl1-mesa-dri
+      - libegl1
+      - mesa-vulkan-drivers
+      # Wayland rendering base
+      - libwayland-egl1
+      # Base typography (prevents invisible text in headless containers)
+      - fontconfig
+      - fonts-liberation
+      - fonts-ubuntu
+    write_files:
+      - path: /usr/local/bin/setup-gui-sockets.sh
+        permissions: "0755"
+        content: |
+          #!/bin/bash
+          uid=1000
+          gid="$(getent passwd ${uid} | cut -d: -f4)"
+          run_dir="/run/user/${uid}"
+          tmp_dir="/tmp/.X11-unix"
+          mkdir -p "${run_dir}" && chmod 700 "${run_dir}" && chown ${uid}:${gid} "${run_dir}"
+          mkdir -p "${tmp_dir}" && chmod 1777 "${tmp_dir}"
+          if [ -S /mnt/wayland-0 ] && [ ! -e "${run_dir}/wayland-0" ]; then
+            ln -s /mnt/wayland-0 "${run_dir}/wayland-0"
+          fi
+          if [ -S /mnt/X1 ] && [ ! -e "${tmp_dir}/X1" ]; then
+            ln -s /mnt/X1 "${tmp_dir}/X1"
+          fi
+      - path: /etc/systemd/system/setup-gui-sockets.service
+        content: |
+          [Unit]
+          Description=Link GUI sockets from /mnt to runtime dirs
+          After=local-fs.target
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/setup-gui-sockets.sh
+          [Install]
+          WantedBy=multi-user.target
+      - path: /home/ubuntu/.profile
+        append: true
+        owner: "ubuntu:ubuntu"
+        defer: true
+        content: |
+          export WAYLAND_DISPLAY=wayland-0
+          export XDG_SESSION_TYPE=wayland
+          export QT_QPA_PLATFORM=wayland
+          export DISPLAY=:1
+          export XDG_RUNTIME_DIR=/run/user/1000
+    runcmd:
+      - systemctl daemon-reload
+      - systemctl enable --now setup-gui-sockets.service
+      - usermod -a -G video,render ubuntu
+description: GUI applications with host display integration
+devices:
+  gpu:
+    type: gpu
+    gid: 44
+  wayland_socket:
+    type: proxy
+    bind: container
+    connect: unix:/run/user/1000/wayland-0
+    listen: unix:/mnt/wayland-0
+    security.uid: "1000"
+    security.gid: "1000"
+    mode: "0777"
+  xwayland_socket:
+    type: proxy
+    bind: container
+    connect: unix:/tmp/.X11-unix/X1
+    listen: unix:/mnt/X1
+    security.uid: "1000"
+    security.gid: "1000"
+    mode: "0777"

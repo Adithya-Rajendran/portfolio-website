@@ -1,0 +1,99 @@
+{
+  "_createdAt": "2026-09-28T18:00:05Z",
+  "_id": "project-kubernetes-cluster",
+  "_rev": "0bY4OVpO5CKUGdHMlC95MB",
+  "_system": {
+    "base": {
+      "id": "project-kubernetes-cluster",
+      "rev": "Ty3q0uhQGDF5J9HVv5SpKt"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-10-26T01:50:57Z",
+  "body": [
+    {
+      "_key": "edit20261025-39",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-40",
+          "_type": "span",
+          "marks": [],
+          "text": "This lab brought together a three-node Kubernetes cluster, Okta OIDC authentication, and NFS-backed persistent storage. It gave me a place to work through cluster administration and access control."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-41",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-42",
+          "_type": "span",
+          "marks": [],
+          "text": "The published record does not include a versioned compliance scan or an instrumented upgrade test. I therefore describe the configuration without claiming complete CIS Level 1 compliance or a measured zero-downtime result."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "cover": {
+    "_type": "image",
+    "alt": "Three small black computers in a row on a dark shelf, linked by orange cables.",
+    "asset": {
+      "_ref": "image-d7a7285e833b459e195bf5eb5cff66de0ca12aba-1536x1024-webp",
+      "_type": "reference"
+    },
+    "caption": "Illustration"
+  },
+  "datePrecision": "year",
+  "datesApproximate": true,
+  "designation": 3,
+  "endDate": "2025-12-31",
+  "highlights": [
+    "Built a three-node Kubernetes cluster in my homelab.",
+    "Integrated Okta OIDC authentication and NFS-backed persistent storage; configured security controls for the lab."
+  ],
+  "myRole": "Built and configured the cluster in my homelab",
+  "name": "Kubernetes cluster",
+  "parameters": [
+    {
+      "_key": "edit20261025-36",
+      "_type": "parameter",
+      "label": "Nodes",
+      "value": "3"
+    },
+    {
+      "_key": "edit20261025-37",
+      "_type": "parameter",
+      "label": "Identity",
+      "value": "Okta OIDC"
+    },
+    {
+      "_key": "edit20261025-38",
+      "_type": "parameter",
+      "label": "Persistent storage",
+      "value": "NFS"
+    }
+  ],
+  "quiet": true,
+  "slug": {
+    "_type": "slug",
+    "current": "kubernetes-cluster"
+  },
+  "startDate": "2024-01-01",
+  "status": "completed",
+  "summary": "A three-node Kubernetes lab with Okta OIDC and NFS-backed persistent storage.",
+  "technologies": [
+    "Kubernetes",
+    "NFS",
+    "Okta OIDC"
+  ],
+  "title": "Kubernetes cluster with NFS and OIDC",
+  "types": [
+    "infrastructure"
+  ]
+}

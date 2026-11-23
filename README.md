@@ -12,6 +12,7 @@ Path-traced sci-fi rooms designed in Blender and shown in the browser with three
   - `blueprint.html` — the 3D station blueprint. `vendor/` — three.js 0.181.
 - `blender/` — scene scripts (`build_scene.py` for the Atrium and shared kit, `room_*.py` per room), `bake.py`, `reflection_probe.py`, `backdrop.py`.
   `.blend` files are generated and not committed. `remote/` holds the PowerShell runners used on the bake machine; `remote/arm64/` builds Blender for an ARM64 GPU machine (NVIDIA GB10) and runs the same phases there in Docker.
+- `data/` — the portfolio content (profile, posts, projects, images, PDFs) exported from Sanity by `tools/sanity-export.py`; see [`data/README.md`](data/README.md).
 - `tools/` — Playwright helpers run in Docker: screenshots (`dshot.sh`), frame times (`dperf.sh`), before/after snapshots
   (`dsnap.sh`) and the room-switching test (`docker/rooms.mjs`).
 - [`/lighting-review/`](public/lighting-review/index.html) — matched browser views of all five rooms, actual book/satellite inspection poses and two short films. [Lighting method and measured checks](docs/finish-lighting.md).

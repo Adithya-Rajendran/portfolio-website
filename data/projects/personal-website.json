@@ -1,0 +1,113 @@
+{
+  "_createdAt": "2026-09-28T18:00:05Z",
+  "_id": "project-personal-website",
+  "_rev": "zOXoLm44hAxnqP9BAY4e7x",
+  "_system": {
+    "base": {
+      "id": "project-personal-website",
+      "rev": "Dhq0bRMSnQwR0o7XACadmr"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-11-04T20:43:47Z",
+  "body": [
+    {
+      "_key": "research-edit-35",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-35-text",
+          "_type": "span",
+          "marks": [],
+          "text": "I use Sanity to keep project descriptions, experience, and writing in one place. Posts can link to the projects they discuss, and revision notes record substantive corrections."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-36",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-36-text",
+          "_type": "span",
+          "marks": [],
+          "text": "Published content is fetched from Sanity when pages are requested. The site also includes tag pages, RSS, a contact form, and a downloadable CV."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "brief": null,
+  "designation": 4,
+  "highlights": [
+    "Structured projects, experience, and technical writing share one Sanity content model.",
+    "Dated corrections and project-to-post relationships keep published claims connected to their evidence.",
+    "Published content is fetched from Sanity when pages are requested."
+  ],
+  "lessons": [],
+  "links": [
+    {
+      "_key": "repo",
+      "_type": "externalLink",
+      "kind": "repo",
+      "label": "GitHub repository",
+      "url": "https://github.com/Adithya-Rajendran/portfolio-website"
+    },
+    {
+      "_key": "site",
+      "_type": "externalLink",
+      "kind": "other",
+      "label": "adithya-rajendran.com",
+      "url": "https://adithya-rajendran.com"
+    }
+  ],
+  "name": "Personal website",
+  "next": [],
+  "parameters": [
+    {
+      "_key": "framework",
+      "_type": "parameter",
+      "label": "Framework",
+      "value": "Astro"
+    },
+    {
+      "_key": "content",
+      "_type": "parameter",
+      "label": "Content",
+      "value": "Sanity"
+    },
+    {
+      "_key": "hosting",
+      "_type": "parameter",
+      "label": "Hosting",
+      "value": "Cloudflare Workers"
+    },
+    {
+      "_key": "feed",
+      "_type": "parameter",
+      "label": "Feed",
+      "value": "RSS"
+    }
+  ],
+  "quiet": true,
+  "slug": {
+    "_type": "slug",
+    "current": "personal-website"
+  },
+  "status": "active",
+  "summary": "My Astro and Sanity portfolio, with structured project records, technical posts, a résumé, and an accessible reading layout.",
+  "technologies": [
+    "Astro",
+    "TypeScript",
+    "Three.js",
+    "Sanity",
+    "Cloudflare Workers"
+  ],
+  "title": "Personal website and technical notebook",
+  "types": [
+    "software"
+  ]
+}

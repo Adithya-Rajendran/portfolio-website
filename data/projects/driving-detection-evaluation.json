@@ -1,0 +1,258 @@
+{
+  "_createdAt": "2026-10-26T01:49:56Z",
+  "_id": "9d255b8d-a514-4ebb-9ae8-bc2edc90b46b",
+  "_rev": "0bY4OVpO5CKUGdHMlCbgLe",
+  "_system": {
+    "base": {
+      "id": "9d255b8d-a514-4ebb-9ae8-bc2edc90b46b",
+      "rev": "Dhq0bRMSnQwR0o7XACadmr"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-10-26T03:48:48Z",
+  "body": [
+    {
+      "_key": "research-edit-1",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-1-text",
+          "_type": "span",
+          "marks": [],
+          "text": "What I changed"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-2",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-2-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The single-label predictor keeps only one class for each box. Enabling multi-label NMS changed the KITTI result enough to reverse the AP comparison with the NMS-free head. I held the YOLO26m checkpoint and 640 px input fixed and used paired image-level resampling to estimate the difference."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-3",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-3-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The wider study examines resolution, fine-tuning, annotation gaps, and transfer from COCO to KITTI and nuImages. The contribution is the evaluation protocol and analysis; the detector and VLM architectures are existing models."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-4",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-4-text",
+          "_type": "span",
+          "marks": [],
+          "text": "Scope of the result"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-5",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-5-text",
+          "_type": "span",
+          "marks": [],
+          "text": "These AP differences apply to four mapped KITTI classes and this configuration. They do not establish a general architecture ranking. Fine-tuning comparisons include single runs; model size and pretraining differ between the VLM and detectors."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-6",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-6-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The PDF is the October 23 course report. Jetson results measure inference accuracy and latency. The GX10 was used for VLM training and accuracy evaluation. The repository credits the course’s ngdet tutorial and contains the separate evaluation harness."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-source-heading",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-source-label",
+          "_type": "span",
+          "marks": [],
+          "text": "Evidence sources"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "evidence-link-0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-0-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-0-mark"
+          ],
+          "text": "Report source and figures"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-0-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/HW1-2D-Detection/tree/6e6a020c8556d4ca0e3de06a1d6f5de9f1ed46d6/paper"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-link-1",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-1-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-1-mark"
+          ],
+          "text": "Paired statistical comparisons"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-1-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/HW1-2D-Detection/tree/6e6a020c8556d4ca0e3de06a1d6f5de9f1ed46d6/results/paired"
+        }
+      ],
+      "style": "normal"
+    }
+  ],
+  "brief": {
+    "approach": "I built a common evaluator with dataset mappings and ignored-region handling, then compared predictions on the same images and measured inference latency on a Jetson Orin Nano.",
+    "outcome": "On KITTI at 640 px, multi-label NMS raised AP by 1.60 points and reversed a head-to-head comparison.",
+    "problem": "How much of a detector’s apparent advantage comes from the evaluation protocol?"
+  },
+  "cover": {
+    "_type": "image",
+    "alt": "Multi-label NMS improves AP by 1.60 points over single-label NMS and 0.90 over the NMS-free head, with paired 95% bootstrap intervals.",
+    "asset": {
+      "_ref": "image-24224f397bb32cf609f4c2a7b4520d12ec46eb3c-2160x1440-png",
+      "_type": "reference"
+    },
+    "caption": "YOLO26m, KITTI validation, 640 px, four classes. Paired 95% bootstrap intervals, 300 image-level resamples."
+  },
+  "datePrecision": "year",
+  "datesApproximate": false,
+  "designation": 5,
+  "endDate": "2026-01-01",
+  "featured": 1,
+  "highlights": [
+    "Built an evaluation harness with dataset mappings, ignored-region handling, paired bootstrap comparisons, and recorded run configurations.",
+    "Found that multi-label NMS raises YOLO26m KITTI AP by 1.60 points at 640 px and reverses its AP comparison with the NMS-free head.",
+    "Compared transfer across driving datasets and accuracy/latency trade-offs on an 8 GB Jetson Orin Nano."
+  ],
+  "lessons": [],
+  "links": [
+    {
+      "_key": "report-pdf-20261023",
+      "_type": "externalLink",
+      "kind": "paper",
+      "label": "Read report (PDF)",
+      "url": "https://cdn.sanity.io/files/ppk2h9tb/production/fc41d42d9b66390887e20ff239a1361e55975238.pdf"
+    },
+    {
+      "_key": "edit20261025-182",
+      "_type": "externalLink",
+      "kind": "repo",
+      "label": "Evaluation code and artifacts",
+      "url": "https://github.com/Adithya-Rajendran/HW1-2D-Detection"
+    }
+  ],
+  "myRole": "Evaluation harness, experiments, and analysis",
+  "name": "Driving detection study",
+  "next": [],
+  "parameters": [
+    {
+      "_key": "edit20261025-177",
+      "_type": "parameter",
+      "label": "KITTI validation frames",
+      "value": "3,769"
+    },
+    {
+      "_key": "edit20261025-178",
+      "_type": "parameter",
+      "label": "nuImages sample",
+      "value": "3,000 frames"
+    },
+    {
+      "_key": "edit20261025-179",
+      "_type": "parameter",
+      "label": "Inference hardware",
+      "value": "Jetson Orin Nano 8 GB"
+    }
+  ],
+  "results": [
+    {
+      "_key": "edit20261025-180",
+      "_type": "result",
+      "metric": "Multi-label vs single-label NMS",
+      "note": "YOLO26m, KITTI val, 640 px, four mapped classes; paired bootstrap 95% CI +1.29 to +1.93, 300 resamples.",
+      "value": "+1.60 AP points"
+    },
+    {
+      "_key": "edit20261025-181",
+      "_type": "result",
+      "metric": "Multi-label NMS vs NMS-free",
+      "note": "Same KITTI protocol; paired bootstrap 95% CI +0.57 to +1.15, 300 resamples. Speed is evaluated separately.",
+      "value": "+0.90 AP points"
+    }
+  ],
+  "slug": {
+    "_type": "slug",
+    "current": "driving-detection-evaluation"
+  },
+  "startDate": "2026-01-01",
+  "status": "completed",
+  "statusNote": "Completed CMPE 249 course study, October 2026.",
+  "summary": "Changing one post-processing setting raised YOLO26m KITTI AP from 26.20 to 27.80 and reversed its comparison with the NMS-free head. A CMPE 249 study of evaluation settings, domain shift, and inference latency.",
+  "technologies": [
+    "Python",
+    "PyTorch",
+    "Ultralytics",
+    "pycocotools",
+    "TensorRT",
+    "Jetson Orin Nano"
+  ],
+  "title": "Evaluating detectors on driving scenes",
+  "types": [
+    "research",
+    "software"
+  ]
+}

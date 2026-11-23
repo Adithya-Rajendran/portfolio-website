@@ -1,0 +1,1019 @@
+{
+  "_createdAt": "2026-04-01T04:34:58Z",
+  "_id": "703a284c-83bb-455c-9789-ef12074e15e4",
+  "_rev": "pJuzvlAAkes31pzNsp7lKu",
+  "_system": {
+    "base": {
+      "id": "703a284c-83bb-455c-9789-ef12074e15e4",
+      "rev": "kMmNf3snj7GoQAhiUlidg0"
+    }
+  },
+  "_type": "post",
+  "_updatedAt": "2026-11-05T19:42:26Z",
+  "body": [
+    {
+      "_key": "edit20261025-106",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-107",
+          "_type": "span",
+          "marks": [],
+          "text": "I added an ASUS Ascent GX10, based on NVIDIA GB10, to my lab to explore GPU workloads as infrastructure. It shares the GB10 platform with NVIDIA’s DGX Spark but is a distinct ASUS system. My field engineering work involved OpenStack, Kubernetes, and Ceph, so I wanted a node where several experiments could share the GPU."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "f6a25efb6178",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "f6a25efb60",
+          "_type": "span",
+          "marks": [],
+          "text": "This post covers how I set up MicroK8s alongside Docker, installed the NVIDIA GPU Operator, and configured GPU time-slicing so several workloads can share the GB10 GPU. Along the way, I’ll explain the MicroK8s-specific containerd paths that make this setup work."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-127",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-128",
+          "_type": "span",
+          "marks": [],
+          "text": "Version and validation scope"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "edit20261025-129",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-130",
+          "_type": "span",
+          "marks": [],
+          "text": "The commands retain MicroK8s "
+        },
+        {
+          "_key": "edit20261025-131",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "1.32/stable"
+        },
+        {
+          "_key": "edit20261025-132",
+          "_type": "span",
+          "marks": [],
+          "text": " and GPU Operator "
+        },
+        {
+          "_key": "edit20261025-133",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "v25.10.1"
+        },
+        {
+          "_key": "edit20261025-134",
+          "_type": "span",
+          "marks": [],
+          "text": " from the original March 2026 notes. The host-driver version and original test date were not recorded. This October revision checks the documentation and image manifest; it does not retest the full stack or identify these pins as the latest supported combination."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "630f35e4b4e4",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "4a3679c18c52",
+          "_type": "span",
+          "marks": [],
+          "text": "Installing MicroK8s"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "da31a8c326b5",
+      "_type": "code",
+      "code": "sudo snap install microk8s --classic --channel=1.32/stable\nsudo microk8s status --wait-ready",
+      "language": "bash"
+    },
+    {
+      "_key": "fb8e2c6156b3",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "23398645c54b",
+          "_type": "span",
+          "marks": [],
+          "text": "Add your user to the microk8s group:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "c1a115575944",
+      "_type": "code",
+      "code": "sudo usermod -aG microk8s $USER\nnewgrp microk8s\nmicrok8s kubectl get nodes",
+      "language": "bash"
+    },
+    {
+      "_key": "eea8ce4d9071",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "eea8ce4d90",
+          "_type": "span",
+          "marks": [],
+          "text": "Enable the core add-ons:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "620cd5daa7c7",
+      "_type": "code",
+      "code": "microk8s enable dns\nmicrok8s enable hostpath-storage\nmicrok8s enable helm3",
+      "language": "bash"
+    },
+    {
+      "_key": "11d386822d7c",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "11d3868220",
+          "_type": "span",
+          "marks": [],
+          "text": "Create aliases for "
+        },
+        {
+          "_key": "11d3868221",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "kubectl"
+        },
+        {
+          "_key": "11d3868222",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "11d3868223",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "helm"
+        },
+        {
+          "_key": "11d3868224",
+          "_type": "span",
+          "marks": [],
+          "text": " so you do not have to prefix every command with "
+        },
+        {
+          "_key": "11d3868225",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "microk8s"
+        },
+        {
+          "_key": "11d3868226",
+          "_type": "span",
+          "marks": [],
+          "text": ":"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "347b629c3c63",
+      "_type": "code",
+      "code": "echo \"alias kubectl='microk8s kubectl'\" >> ~/.bashrc\necho \"alias helm='microk8s helm3'\" >> ~/.bashrc\nsource ~/.bashrc",
+      "language": "bash"
+    },
+    {
+      "_key": "3bf6efcf6c41",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "3bf6efcf60",
+          "_type": "span",
+          "marks": [],
+          "text": "Docker and MicroK8s Use Separate Image Stores"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "65e5fbe3c82c",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "65e5fbe3c0",
+          "_type": "span",
+          "marks": [],
+          "text": "Docker and MicroK8s use separate container runtimes, so an image pulled with "
+        },
+        {
+          "_key": "65e5fbe3c1",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "docker pull"
+        },
+        {
+          "_key": "65e5fbe3c2",
+          "_type": "span",
+          "marks": [],
+          "text": " is not automatically available to a Kubernetes pod, and vice versa. To use a locally built Docker image in MicroK8s, import it:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "253cf8a30d5b",
+      "_type": "code",
+      "code": "docker tag myimage:latest myimage:local\ndocker save myimage:local | microk8s ctr images import -",
+      "language": "bash"
+    },
+    {
+      "_key": "f28cac962a0a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "f28cac9620",
+          "_type": "span",
+          "marks": [],
+          "text": "In the pod specification, use "
+        },
+        {
+          "_key": "f28cac9621",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "image: myimage:local"
+        },
+        {
+          "_key": "f28cac9622",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "f28cac9623",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "imagePullPolicy: Never"
+        },
+        {
+          "_key": "f28cac9624",
+          "_type": "span",
+          "marks": [],
+          "text": " to run the imported image without contacting a registry. The image must support the GX10’s Arm architecture. On a multi-node cluster, import it on every node where the pod could run, or publish it to a registry instead. Docker and MicroK8s can each pull registry-hosted images independently."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "a0d3eb5580ce",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "089e390d882c",
+          "_type": "span",
+          "marks": [],
+          "text": "Installing the NVIDIA GPU Operator"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "edit20261025-108",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-109",
+          "_type": "span",
+          "marks": [],
+          "text": "The GPU Operator manages the components that expose NVIDIA GPUs to Kubernetes workloads. In this setup the host’s NVIDIA driver is already installed and managed outside Kubernetes, so I disable the operator’s driver component and let it configure the runtime and device plugin."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "5a74b7200983",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "9310044bfce7",
+          "_type": "span",
+          "marks": [],
+          "text": "Add the NVIDIA Helm Repository"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "c3a0e9fa2696",
+      "_type": "code",
+      "code": "helm repo add nvidia https://helm.ngc.nvidia.com/nvidia\nhelm repo update nvidia\nhelm repo list | grep nvidia",
+      "language": "bash"
+    },
+    {
+      "_key": "ee59e87c9c50",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "949a0035dc44",
+          "_type": "span",
+          "marks": [],
+          "text": "Install the GPU Operator"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "edit20261025-110",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-111",
+          "_type": "span",
+          "marks": [],
+          "text": "The key flag is "
+        },
+        {
+          "_key": "edit20261025-112",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "--set driver.enabled=false"
+        },
+        {
+          "_key": "edit20261025-113",
+          "_type": "span",
+          "marks": [],
+          "text": ". The host already has a driver, so I leave that component disabled. The operator still manages the container toolkit and the other enabled components. Verify this assumption on your own host before using the command."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "59f1085e21b0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "59f1085e20",
+          "_type": "span",
+          "marks": [],
+          "text": "Because MicroK8s is packaged as a snap, its containerd socket and configuration files live under "
+        },
+        {
+          "_key": "59f1085e21",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/var/snap/microk8s/"
+        },
+        {
+          "_key": "59f1085e22",
+          "_type": "span",
+          "marks": [],
+          "text": " rather than the usual system paths. The GPU Operator needs those exact locations, so I pass three environment variables explicitly:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "b7d730a3b466",
+      "_type": "code",
+      "code": "helm install gpu-operator -n gpu-operator --create-namespace \\\n  nvidia/gpu-operator \\\n  --version=v25.10.1 \\\n  --set driver.enabled=false \\\n  --set toolkit.enabled=true \\\n  --set toolkit.env[0].name=CONTAINERD_CONFIG \\\n  --set toolkit.env[0].value=/var/snap/microk8s/current/args/containerd-template.toml \\\n  --set toolkit.env[1].name=CONTAINERD_SOCKET \\\n  --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock \\\n  --set toolkit.env[2].name=RUNTIME_CONFIG_SOURCE \\\n  --set-string toolkit.env[2].value=file=/var/snap/microk8s/current/args/containerd.toml",
+      "language": "bash"
+    },
+    {
+      "_key": "211508f5d3cf",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "211508f5d0",
+          "_type": "span",
+          "marks": [],
+          "text": "These paths are a common failure point when deploying the GPU Operator on snap-based Kubernetes. If the operator cannot reach containerd, its pods may enter "
+        },
+        {
+          "_key": "211508f5d1",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "CrashLoopBackOff"
+        },
+        {
+          "_key": "211508f5d2",
+          "_type": "span",
+          "marks": [],
+          "text": " with a socket error. Canonical Kubernetes uses different containerd locations that depend on its configured base directory, so verify the actual socket and configuration paths before adapting this command."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "bfa9717966a0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "bfa9717960",
+          "_type": "span",
+          "marks": [],
+          "text": "Verify GPU Access"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "edit20261025-114",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-115",
+          "_type": "span",
+          "marks": [],
+          "text": "Create a test pod using NVIDIA’s CUDA vector-add sample. As of October 25, 2026, this tag’s registry manifest contains both "
+        },
+        {
+          "_key": "edit20261025-116",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "linux/arm64"
+        },
+        {
+          "_key": "edit20261025-117",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "edit20261025-118",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "linux/amd64"
+        },
+        {
+          "_key": "edit20261025-119",
+          "_type": "span",
+          "marks": [],
+          "text": " images. That confirms architecture availability, not a fresh execution test on GB10; check the pod events and logs on the actual host."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "d94e33ce01a0",
+      "_type": "code",
+      "code": "# cuda-test.yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: cuda-vectoradd\nspec:\n  restartPolicy: OnFailure\n  runtimeClassName: nvidia\n  containers:\n  - name: cuda-vectoradd\n    image: \"nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda12.5.0-ubuntu22.04\"\n    resources:\n      limits:\n        nvidia.com/gpu: 1",
+      "language": "yaml"
+    },
+    {
+      "_key": "5470281057f2",
+      "_type": "code",
+      "code": "kubectl apply -f cuda-test.yaml\nkubectl logs cuda-vectoradd",
+      "language": "bash"
+    },
+    {
+      "_key": "edit20261025-120",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-121",
+          "_type": "span",
+          "marks": [],
+          "text": "NVIDIA’s documented successful sample output looks like this; it is an example, not a new test log from this revision:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "b3ae47797c9f",
+      "_type": "code",
+      "code": "[Vector addition of 50000 elements]\nCopy input data from the host memory to the CUDA device\nCUDA kernel launch with 196 blocks of 256 threads\nCopy output data from the CUDA device to the host memory\nTest PASSED\nDone",
+      "language": "text"
+    },
+    {
+      "_key": "1f5925b193cb",
+      "_type": "code",
+      "code": "# Clean up\nkubectl delete -f cuda-test.yaml",
+      "language": "bash"
+    },
+    {
+      "_key": "f7aa84a297a0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "aa8220e4cddd",
+          "_type": "span",
+          "marks": [],
+          "text": "GPU Time-Slicing: Running Multiple Workloads on One GPU"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "bea659bd7c39",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "bea659bd70",
+          "_type": "span",
+          "marks": [],
+          "text": "By default, Kubernetes advertises each GPU as an indivisible resource, so a node with one GPU can satisfy only one request for "
+        },
+        {
+          "_key": "bea659bd71",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "nvidia.com/gpu: 1"
+        },
+        {
+          "_key": "bea659bd72",
+          "_type": "span",
+          "marks": [],
+          "text": " at a time. That default can be restrictive on the GX10, which has 128 GB of coherent unified system memory. Workloads such as Jupyter notebooks, inference services, and training jobs can often coexist."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "21b17138b423",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "21b17138b0",
+          "_type": "span",
+          "marks": [],
+          "text": "GPU time-slicing lets the NVIDIA device plugin advertise one physical GPU as several allocatable replicas and interleave workloads that share it. Unlike MIG, time-slicing provides no memory or fault isolation between replicas, so workloads share the same unified memory budget. Plan capacity accordingly."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "c0a85369cba3",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "6d7c4097aa32",
+          "_type": "span",
+          "marks": [],
+          "text": "Step 1: Create the Time-Slicing ConfigMap"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "c403692a28fc",
+      "_type": "code",
+      "code": "cat <<'EOF' | kubectl apply -n gpu-operator -f -\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: time-slicing-config\ndata:\n  any: |-\n    version: v1\n    flags:\n      migStrategy: none\n    sharing:\n      timeSlicing:\n        resources:\n        - name: nvidia.com/gpu\n          replicas: 4\nEOF",
+      "language": "bash"
+    },
+    {
+      "_key": "edit20261025-122",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-123",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "replicas: 4"
+        },
+        {
+          "_key": "edit20261025-124",
+          "_type": "span",
+          "marks": [],
+          "text": " advertises four scheduling slots backed by the same physical GPU. It does not create four GPUs, reserve four equal memory partitions, or guarantee four workloads will fit."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "038f0dfa712b",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "43dde39294f2",
+          "_type": "span",
+          "marks": [],
+          "text": "Step 2: Patch the ClusterPolicy"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "c699bd7f6143",
+      "_type": "code",
+      "code": "kubectl patch clusterpolicy/cluster-policy -n gpu-operator --type merge -p \\\n  '{\"spec\":{\"devicePlugin\":{\"config\":{\"name\":\"time-slicing-config\",\"default\":\"any\"}}}}'",
+      "language": "bash"
+    },
+    {
+      "_key": "e6e72e400c96",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "1c9f15b8d0b7",
+          "_type": "span",
+          "marks": [],
+          "text": "Step 3: Restart the Device Plugin"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "e7a8ef138df3",
+      "_type": "code",
+      "code": "kubectl delete pod -n gpu-operator -l app=nvidia-device-plugin-daemonset",
+      "language": "bash"
+    },
+    {
+      "_key": "db9e3c585e48",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "203e5dd1e2cf",
+          "_type": "span",
+          "marks": [],
+          "text": "Step 4: Verify"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "b6275fa75a6b",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "1f307e2131e6",
+          "_type": "span",
+          "marks": [],
+          "text": "Wait 30–60 seconds, then:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "e76008189eb8",
+      "_type": "code",
+      "code": "kubectl describe node | grep nvidia.com/gpu",
+      "language": "bash"
+    },
+    {
+      "_key": "a2c70b0717d7",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "b545b2f840c4",
+          "_type": "span",
+          "marks": [],
+          "text": "Expected output:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "85fe78ee1b5c",
+      "_type": "code",
+      "code": "nvidia.com/gpu.replicas=4\nnvidia.com/gpu.sharing-strategy=time-slicing\nnvidia.com/gpu.product=NVIDIA-GB10-SHARED\nnvidia.com/gpu:     4\nnvidia.com/gpu:     4",
+      "language": "text"
+    },
+    {
+      "_key": "6ae53fae4a3b",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "6ae53fae40",
+          "_type": "span",
+          "marks": [],
+          "text": "The "
+        },
+        {
+          "_key": "6ae53fae41",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "-SHARED"
+        },
+        {
+          "_key": "6ae53fae42",
+          "_type": "span",
+          "marks": [],
+          "text": " product suffix, "
+        },
+        {
+          "_key": "6ae53fae43",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "nvidia.com/gpu.replicas=4"
+        },
+        {
+          "_key": "6ae53fae44",
+          "_type": "span",
+          "marks": [],
+          "text": " label, and "
+        },
+        {
+          "_key": "6ae53fae45",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "sharing-strategy=time-slicing"
+        },
+        {
+          "_key": "6ae53fae46",
+          "_type": "span",
+          "marks": [],
+          "text": " label confirm that time-slicing is active. Each pod still requests "
+        },
+        {
+          "_key": "6ae53fae47",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "nvidia.com/gpu: 1"
+        },
+        {
+          "_key": "6ae53fae48",
+          "_type": "span",
+          "marks": [],
+          "text": "; the NVIDIA device plugin manages shared access to the physical GPU."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "d4f3f0854720",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "7f0e888d38f8",
+          "_type": "span",
+          "marks": [],
+          "text": "Adjusting or Disabling Time-Slicing"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "2a27b4ee7362",
+      "_type": "code",
+      "code": "# Change the replica count\nkubectl edit configmap time-slicing-config -n gpu-operator\nkubectl delete pod -n gpu-operator -l app=nvidia-device-plugin-daemonset\n\n# Revert to exclusive access\nkubectl patch clusterpolicy/cluster-policy -n gpu-operator --type merge -p \\\n  '{\"spec\":{\"devicePlugin\":{\"config\":{\"name\":\"\",\"default\":\"\"}}}}'\nkubectl delete configmap time-slicing-config -n gpu-operator\nkubectl delete pod -n gpu-operator -l app=nvidia-device-plugin-daemonset",
+      "language": "bash"
+    },
+    {
+      "_key": "edit20261025-125",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-126",
+          "_type": "span",
+          "marks": [],
+          "text": "With this setup, the GX10 can host several GPU experiments through MicroK8s. The GPU Operator handles integration, while time-slicing shares execution on one GPU without memory or fault isolation."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-135",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-136",
+          "_type": "span",
+          "marks": [],
+          "text": "Memory pressure still belongs to the host"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "edit20261025-137",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-138",
+          "_type": "span",
+          "marks": [],
+          "text": "Time-sliced workloads share the GB10 memory pool. My "
+        },
+        {
+          "_key": "edit20261025-140",
+          "_type": "span",
+          "marks": [
+            "edit20261025-139"
+          ],
+          "text": "memory-pressure investigation"
+        },
+        {
+          "_key": "edit20261025-141",
+          "_type": "span",
+          "marks": [],
+          "text": " explains why a model load can also affect SSH and other host services. Its guard scans Docker cgroups; it does not monitor or stop MicroK8s/containerd pods. Do not treat it as protection for this Kubernetes setup."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "edit20261025-139",
+          "_type": "contentLink",
+          "href": "https://adithya-rajendran.com/blog/dgx-spark-unified-memory-oom-hardening"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-142",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-143",
+          "_type": "span",
+          "marks": [],
+          "text": "References: "
+        },
+        {
+          "_key": "edit20261025-145",
+          "_type": "span",
+          "marks": [
+            "edit20261025-144"
+          ],
+          "text": "NVIDIA GPU Operator validation example"
+        },
+        {
+          "_key": "edit20261025-146",
+          "_type": "span",
+          "marks": [],
+          "text": " and the "
+        },
+        {
+          "_key": "edit20261025-148",
+          "_type": "span",
+          "marks": [
+            "edit20261025-147"
+          ],
+          "text": "CUDA sample image catalog"
+        },
+        {
+          "_key": "edit20261025-149",
+          "_type": "span",
+          "marks": [],
+          "text": ". The image tag checked here is "
+        },
+        {
+          "_key": "edit20261025-150",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "vectoradd-cuda12.5.0-ubuntu22.04"
+        },
+        {
+          "_key": "edit20261025-151",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "edit20261025-144",
+          "_type": "contentLink",
+          "href": "https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html"
+        },
+        {
+          "_key": "edit20261025-147",
+          "_type": "contentLink",
+          "href": "https://catalog.ngc.nvidia.com/orgs/nvidia/k8s/containers/cuda-sample"
+        }
+      ],
+      "style": "normal"
+    }
+  ],
+  "changelog": [
+    {
+      "_key": "edit20261025-152",
+      "_type": "postChange",
+      "date": "2026-10-25",
+      "kind": "correction",
+      "note": "Corrected the hardware name to ASUS Ascent GX10, documented version limits and Arm64 image availability, and clarified time-slicing and the Docker-only scope of the separate memory guard."
+    }
+  ],
+  "description": "Configure MicroK8s and the NVIDIA GPU Operator on an ASUS Ascent GX10, with GPU time-slicing and explicit limits on shared-memory isolation.",
+  "nextPost": {
+    "_ref": "04feee75-6c9d-410a-b204-1e244740415b",
+    "_type": "reference",
+    "_weak": true
+  },
+  "nextReadReason": "Explore what happened when model loads exhausted host headroom. The guard described there targets Docker workloads and does not protect these Kubernetes pods.",
+  "projects": [
+    {
+      "_key": "edit20261025-153",
+      "_ref": "project-homelab",
+      "_type": "reference",
+      "_weak": true
+    }
+  ],
+  "publishedAt": "2026-03-06",
+  "revisedAt": "2026-10-25",
+  "slug": {
+    "_type": "slug",
+    "current": "kubernetes-on-the-nvidia-dgx-spark"
+  },
+  "socialImage": {
+    "_type": "image",
+    "alt": "Sharing the ASUS GX10 GPU with MicroK8s. An engineering note by Adithya Rajendran.",
+    "asset": {
+      "_ref": "image-9a726554281280ac5ab6fdb781266a32c9554d9a-1200x630-png",
+      "_type": "reference"
+    }
+  },
+  "tags": [
+    "homelab",
+    "infrastructure",
+    "containers",
+    "gpu",
+    "kubernetes"
+  ],
+  "takeaways": [
+    "MicroK8s uses its own containerd image store. Import local images or use a registry, and ensure the image supports the GX10's Arm architecture.",
+    "GPU time-slicing advertises scheduling slots on one GPU. It does not give workloads separate GPU memory or fault isolation.",
+    "The commands retain the versions from the original notes. The October documentation review was not a fresh test of the complete stack."
+  ],
+  "title": "Sharing the ASUS GX10 GPU with MicroK8s"
+}

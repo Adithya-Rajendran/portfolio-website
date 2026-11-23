@@ -1,0 +1,331 @@
+{
+  "_createdAt": "2026-09-28T18:00:05Z",
+  "_id": "project-homelab",
+  "_rev": "jWvNKVkbAUo18la76a8Lwu",
+  "_system": {
+    "base": {
+      "id": "project-homelab",
+      "rev": "GXszk1xXgqR6O6ltAemfJW"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-10-26T01:49:53Z",
+  "body": [
+    {
+      "_key": "edit20261025-10",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-11",
+          "_type": "span",
+          "marks": [],
+          "text": "The OpenStack deployment uses three Raspberry Pi 5s to host the bootstrap services. MAAS provisions a Dell Inspiron and three Minisforum MS-01s over PXE; the Dell hosts the Juju controller used to build the cloud."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-12",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-13",
+          "_type": "span",
+          "marks": [],
+          "text": "The NAS has an independent lifecycle outside Ceph. That helps protect it from intentional cloud redeployments; it does not substitute for backups or establish recovery time after a failure."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-14",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-15",
+          "_type": "span",
+          "marks": [],
+          "text": "The GPU tier includes an ASUS Ascent GX10, based on NVIDIA GB10. My "
+        },
+        {
+          "_key": "edit20261025-17",
+          "_type": "span",
+          "marks": [
+            "edit20261025-16"
+          ],
+          "text": "MicroK8s write-up"
+        },
+        {
+          "_key": "edit20261025-18",
+          "_type": "span",
+          "marks": [],
+          "text": " describes its GPU time-slicing setup. The separate "
+        },
+        {
+          "_key": "edit20261025-20",
+          "_type": "span",
+          "marks": [
+            "edit20261025-19"
+          ],
+          "text": "memory-pressure guard"
+        },
+        {
+          "_key": "edit20261025-21",
+          "_type": "span",
+          "marks": [],
+          "text": " targets Docker workloads on the GX10."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "edit20261025-16",
+          "_type": "contentLink",
+          "href": "https://adithya-rajendran.com/blog/kubernetes-on-the-nvidia-dgx-spark"
+        },
+        {
+          "_key": "edit20261025-19",
+          "_type": "contentLink",
+          "href": "https://adithya-rajendran.com/portfolio/gb10-memory-guard"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-22",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-23",
+          "_type": "span",
+          "marks": [],
+          "text": "Related infrastructure experiments"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "edit20261025-24",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-25",
+          "_type": "span",
+          "marks": [],
+          "text": "A separate "
+        },
+        {
+          "_key": "edit20261025-27",
+          "_type": "span",
+          "marks": [
+            "edit20261025-26"
+          ],
+          "text": "Talos-on-Proxmox configuration repository"
+        },
+        {
+          "_key": "edit20261025-28",
+          "_type": "span",
+          "marks": [],
+          "text": " records a three-node Kubernetes deployment using OpenTofu, talhelper, Cilium, and Argo CD. It is a separate deployment from the OpenStack bootstrap chain described here. Cluster upgrades still require an operator; Argo CD reconciles the in-cluster platform."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "edit20261025-26",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/homelab-talos"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "edit20261025-29",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "edit20261025-30",
+          "_type": "span",
+          "marks": [],
+          "text": "The "
+        },
+        {
+          "_key": "edit20261025-32",
+          "_type": "span",
+          "marks": [
+            "edit20261025-31"
+          ],
+          "text": "full OpenStack write-up"
+        },
+        {
+          "_key": "edit20261025-33",
+          "_type": "span",
+          "marks": [],
+          "text": " documents the bootstrap chain, network failures, and limits of the current setup."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "edit20261025-31",
+          "_type": "contentLink",
+          "href": "https://adithya-rajendran.com/blog/my-homelab"
+        }
+      ],
+      "style": "normal"
+    }
+  ],
+  "brief": {
+    "approach": "A three-tier bootstrap chain. Three Raspberry Pi 5s, the only machines installed by hand, run MAAS and Landscape on Ubuntu Core with MicroCloud. MAAS provisions a Dell Inspiron, which hosts the Juju controller, and three Minisforum MS-01s over PXE.",
+    "outcome": "The x86 OpenStack tier can be reprovisioned over PXE. Keeping the NAS outside Ceph separates its lifecycle from cluster redeployments; this is not a measured disaster-recovery or availability result.",
+    "problem": "I wanted a homelab where I could experiment and break things without worrying about how long it would take to rebuild. Reinstalling an OS across three MS-01s every time got old, and MAAS and Landscape, which manage the machines, need a place to run too."
+  },
+  "datePrecision": "year",
+  "datesApproximate": false,
+  "designation": 2,
+  "highlights": [
+    "Built a three-tier provisioning chain: Raspberry Pi services bootstrap PXE provisioning of the x86 OpenStack nodes.",
+    "Separated management and Ceph replication traffic with VLANs; configured link aggregation and jumbo frames for the relevant network paths.",
+    "Kept the NAS outside the redeployable cluster so routine cloud rebuilds do not require rebuilding personal storage."
+  ],
+  "lessons": [
+    "Most of the failures in this lab have started at Layer 2.",
+    "The interesting work is not making the cluster bigger; it is making the existing pieces fit together better and contributing what I learn back to the projects that power it."
+  ],
+  "links": [
+    {
+      "_key": "write-up",
+      "_type": "externalLink",
+      "kind": "article",
+      "label": "A Homelab Built to Be Rebuilt",
+      "url": "https://adithya-rajendran.com/blog/my-homelab"
+    },
+    {
+      "_key": "edit20261025-34",
+      "_type": "externalLink",
+      "kind": "repo",
+      "label": "Talos deployment configuration",
+      "url": "https://github.com/Adithya-Rajendran/homelab-talos"
+    },
+    {
+      "_key": "edit20261025-35",
+      "_type": "externalLink",
+      "kind": "article",
+      "label": "GB10 memory-pressure notes",
+      "url": "https://adithya-rajendran.com/blog/dgx-spark-unified-memory-oom-hardening"
+    }
+  ],
+  "model": {
+    "alt": "Schematic homelab rack with Raspberry Pi 5s, networking, three Minisforum MS-01s, an ASUS Ascent GX10, and a rack PDU.",
+    "hotspots": [
+      {
+        "_key": "tier0",
+        "_type": "hotspot",
+        "anchor": {
+          "heading": "tier-0-the-raspberry-pis",
+          "post": {
+            "_ref": "d25c7eae-cbdf-4fd0-8736-8f87f09b32af",
+            "_type": "reference",
+            "_weak": true
+          }
+        },
+        "body": "Three Raspberry Pi 5s run Ubuntu Core with MicroCloud. On that cluster: MAAS, Landscape Server, and Docker inside a system container.",
+        "label": "1",
+        "part": "tier0",
+        "title": "The Raspberry Pis"
+      },
+      {
+        "_key": "network",
+        "_type": "hotspot",
+        "anchor": {
+          "heading": "networking-where-most-of-the-pain-actually-lives",
+          "post": {
+            "_ref": "d25c7eae-cbdf-4fd0-8736-8f87f09b32af",
+            "_type": "reference",
+            "_weak": true
+          }
+        },
+        "body": "OAM and management traffic, including PXE, uses the 2.5 GbE links; Ceph replication has its own VLAN over the 10 GbE SFP+ uplinks.",
+        "label": "2",
+        "part": "network",
+        "title": "Networking"
+      },
+      {
+        "_key": "ms01",
+        "_type": "hotspot",
+        "anchor": {
+          "heading": "tier-2-the-ms-01s",
+          "post": {
+            "_ref": "d25c7eae-cbdf-4fd0-8736-8f87f09b32af",
+            "_type": "reference",
+            "_weak": true
+          }
+        },
+        "body": "Three Minisforum MS-01s run Canonical OpenStack in a hyperconverged topology, with control, compute, and storage across all three nodes.",
+        "label": "3",
+        "part": "ms01",
+        "title": "The MS-01s"
+      },
+      {
+        "_key": "ascent",
+        "_type": "hotspot",
+        "anchor": {
+          "heading": "what-lives-outside-the-cluster-nas-and-the-gpu-tier",
+          "post": {
+            "_ref": "d25c7eae-cbdf-4fd0-8736-8f87f09b32af",
+            "_type": "reference",
+            "_weak": true
+          }
+        },
+        "body": "An ASUS Ascent GX10 based on NVIDIA GB10. The linked setup uses MicroK8s, the NVIDIA GPU Operator, GPU time-slicing, and an NFS mount from the NAS.",
+        "label": "4",
+        "part": "ascent",
+        "title": "ASUS Ascent GX10"
+      }
+    ],
+    "kind": "procedural",
+    "poster": {
+      "_type": "image",
+      "alt": "Server rack with three Minisforum MS-01 systems and an ASUS Ascent GX10.",
+      "asset": {
+        "_ref": "image-05754647a9226f0938def18645edaef5169c8aec-3000x4000-jpg",
+        "_type": "reference"
+      }
+    },
+    "procedural": "homelab-rack",
+    "realWorld": {
+      "dimension": "height",
+      "unit": "U",
+      "value": 12
+    },
+    "title": "The homelab rack"
+  },
+  "myRole": "Owner and operator",
+  "name": "Homelab",
+  "next": [
+    "Measure a clean PXE rebuild: record starting state, elapsed time, manual steps, and services that remain available.",
+    "Run a bounded node-failure and restore exercise, with explicit recovery checks and separate NAS backup verification."
+  ],
+  "slug": {
+    "_type": "slug",
+    "current": "homelab"
+  },
+  "startDate": "2022-01-01",
+  "status": "active",
+  "summary": "A personal cloud with PXE bare-metal provisioning, segmented networking, and a NAS whose lifecycle stays independent of the OpenStack cluster.",
+  "technologies": [
+    "MAAS",
+    "Ubuntu Core",
+    "MicroCloud (LXD)",
+    "Landscape",
+    "Juju",
+    "Canonical OpenStack",
+    "Ceph",
+    "VLANs",
+    "PXE"
+  ],
+  "title": "Rebuildable OpenStack homelab",
+  "types": [
+    "infrastructure"
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "_createdAt": "2026-10-26T01:49:56Z",
+  "_id": "00155e11-8ba3-493f-ac6a-5c42410fd770",
+  "_rev": "Dhq0bRMSnQwR0o7XACadmr",
+  "_system": {
+    "base": {
+      "id": "00155e11-8ba3-493f-ac6a-5c42410fd770",
+      "rev": "0bY4OVpO5CKUGdHMlCBsqg"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-10-26T03:22:00Z",
+  "body": [
+    {
+      "_key": "research-edit-30",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-30-text",
+          "_type": "span",
+          "marks": [],
+          "text": "How a task comes back"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-31",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-31-text",
+          "_type": "span",
+          "marks": [],
+          "text": "I built the runner, launcher boundaries, and result collection. The agent works in a container with no network interface, a read-only root filesystem, dropped capabilities, and access to a task-scoped model gateway."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-32",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-32-text",
+          "_type": "span",
+          "marks": [],
+          "text": "A trusted shadow Git directory collects the result without executing Git hooks from the agent-controlled checkout. A separate tool runs checks on the returned branch."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-33",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-33-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The trust boundary"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-34",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-34-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The Docker launcher and model bridge are trusted components. gVisor is optional and changes the kernel boundary only when installed and selected. Public smoke tests do not establish resistance to every escape or replace an independent security assessment. Returned patches still require review."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-source-heading",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-source-label",
+          "_type": "span",
+          "marks": [],
+          "text": "Evidence sources"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "evidence-link-0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-0-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-0-mark"
+          ],
+          "text": "Launcher implementation"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-0-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/agentbox/tree/951e3771780f2dbb7ccf8d56c2b16dddee257cc4/agentbox/launcher.py"
+        }
+      ],
+      "style": "normal"
+    }
+  ],
+  "brief": null,
+  "datePrecision": "year",
+  "datesApproximate": false,
+  "designation": 10,
+  "highlights": [
+    "Accepts one owned repository per request and returns agent work on a separate branch.",
+    "Launches agent containers with no network interface, a read-only root filesystem, dropped capabilities, and a task-scoped model gateway.",
+    "Collects results through a trusted shadow Git directory and provides a check-running tool for review."
+  ],
+  "lessons": [],
+  "links": [
+    {
+      "_key": "edit20261025-299",
+      "_type": "externalLink",
+      "kind": "repo",
+      "label": "Project repository",
+      "url": "https://github.com/Adithya-Rajendran/agentbox"
+    }
+  ],
+  "myRole": "Runner, launcher boundaries, and result-collection workflow",
+  "name": "Agentbox",
+  "next": [],
+  "parameters": [
+    {
+      "_key": "edit20261025-296",
+      "_type": "parameter",
+      "label": "Result",
+      "value": "Reviewable Git branch"
+    },
+    {
+      "_key": "edit20261025-297",
+      "_type": "parameter",
+      "label": "Agent network",
+      "value": "No network interface"
+    },
+    {
+      "_key": "edit20261025-298",
+      "_type": "parameter",
+      "label": "Optional isolation",
+      "value": "gVisor"
+    }
+  ],
+  "slug": {
+    "_type": "slug",
+    "current": "agentbox"
+  },
+  "startDate": "2026-01-01",
+  "status": "active",
+  "statusNote": "Implementation and automated test tooling are public. Adversarial containment validation remains open.",
+  "summary": "A local coding-agent runner that starts from a scratch checkout and returns a branch, diff, and report. The agent container has constrained access; the launcher and model gateway remain trusted.",
+  "technologies": [
+    "Python",
+    "Docker",
+    "MCP",
+    "gVisor",
+    "vLLM",
+    "Ollama",
+    "Git"
+  ],
+  "title": "Agentbox: local agent work as a reviewable branch",
+  "types": [
+    "software",
+    "infrastructure"
+  ]
+}

@@ -1,0 +1,256 @@
+{
+  "_createdAt": "2026-10-26T01:49:56Z",
+  "_id": "a61cac6c-f613-4140-a2f6-2df3c3ea94e9",
+  "_rev": "Dhq0bRMSnQwR0o7XACadmr",
+  "_system": {
+    "base": {
+      "id": "a61cac6c-f613-4140-a2f6-2df3c3ea94e9",
+      "rev": "0bY4OVpO5CKUGdHMlCBsqg"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-10-26T03:22:00Z",
+  "body": [
+    {
+      "_key": "research-edit-13",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-13-text",
+          "_type": "span",
+          "marks": [],
+          "text": "What the record supports"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-14",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-14-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The released tables let a reader trace aggregate results back to attempts, server manifests, and telemetry. Errors count as unresolved tasks. GPU-energy readings cover the GPU sensor rather than whole-system power; overlapping attempts need run-level accounting."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-15",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-15-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The comparison is between complete model/server configurations. Engines, quantization, and settings vary, so differences cannot be attributed to model weights alone."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-16",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-16-text",
+          "_type": "span",
+          "marks": [],
+          "text": "Limits and next run"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-17",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-17-text",
+          "_type": "span",
+          "marks": [],
+          "text": "Most primary tasks have one attempt per configuration, and both task sets are small. A difference of one or two completed tasks is too fragile for a broad ranking. Recently merged PRs also cannot prove absence of training contamination."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-18",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-18-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The data and report are public, but the missing execution-harness components prevent a complete independent rerun. Releasing those components and repeating selected comparisons are the next steps."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-source-heading",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-source-label",
+          "_type": "span",
+          "marks": [],
+          "text": "Evidence sources"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "evidence-link-0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-0-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-0-mark"
+          ],
+          "text": "Study report"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-0-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/dgx-spark-benchmarks/tree/f69a046e4b43c5f477f42e59debdbe3aca20edd7/report/REPORT.md"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-link-1",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-1-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-1-mark"
+          ],
+          "text": "Versioned data snapshot"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-1-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/dgx-spark-benchmarks/tree/f69a046e4b43c5f477f42e59debdbe3aca20edd7/data"
+        }
+      ],
+      "style": "normal"
+    }
+  ],
+  "brief": {
+    "approach": "I recorded test-graded patches, server settings, timings, and telemetry, including failed attempts and parallel-agent runs.",
+    "problem": "Do faster local models finish more useful coding work when they share a memory-constrained machine?"
+  },
+  "cover": {
+    "_type": "image",
+    "alt": "Scatter plot of resolved coding tasks out of eighteen against median task time.",
+    "asset": {
+      "_ref": "image-098eccdc6efeb653e079afec9c050554ce6eb959-1036x650-png",
+      "_type": "reference"
+    },
+    "caption": "October 25 snapshot: small task samples and mostly one primary attempt per configuration."
+  },
+  "datePrecision": "year",
+  "datesApproximate": false,
+  "designation": 7,
+  "featured": 3,
+  "highlights": [
+    "Published per-attempt results, server manifests, task definitions, and telemetry for coding-agent experiments on one GX10.",
+    "Compared seven model/server configurations on 18 fresh-PR tasks and an 11-task SWE-bench Pro subset.",
+    "Measured task completion alongside time, GPU energy, memory, and parallel-agent behavior."
+  ],
+  "lessons": [],
+  "links": [
+    {
+      "_key": "edit20261025-231",
+      "_type": "externalLink",
+      "kind": "repo",
+      "label": "Benchmark repository",
+      "url": "https://github.com/Adithya-Rajendran/dgx-spark-benchmarks"
+    },
+    {
+      "_key": "edit20261025-234",
+      "_type": "externalLink",
+      "kind": "dataset",
+      "label": "Released dataset v0.3.0",
+      "url": "https://doi.org/10.5281/zenodo.23539595"
+    }
+  ],
+  "myRole": "Benchmark design, runs, telemetry, and analysis",
+  "name": "Local coding-agent benchmarks",
+  "next": [],
+  "parameters": [
+    {
+      "_key": "edit20261025-226",
+      "_type": "parameter",
+      "label": "Hardware",
+      "value": "ASUS GX10 · GB10"
+    },
+    {
+      "_key": "edit20261025-227",
+      "_type": "parameter",
+      "label": "Unified memory",
+      "value": "128 GB"
+    },
+    {
+      "_key": "edit20261025-228",
+      "_type": "parameter",
+      "label": "Task sets",
+      "value": "18 fresh PR / 11 Pro"
+    }
+  ],
+  "results": [
+    {
+      "_key": "edit20261025-229",
+      "_type": "result",
+      "metric": "Fresh-PR tasks resolved",
+      "note": "Range across seven configurations in the Oct 25 snapshot. Small, mostly single-attempt samples; not a general leaderboard.",
+      "value": "8–13 / 18"
+    },
+    {
+      "_key": "edit20261025-230",
+      "_type": "result",
+      "metric": "SWE-bench Pro subset",
+      "note": "Same snapshot; errors count as unresolved. This is an 11-task subset, not the full benchmark.",
+      "value": "2–7 / 11"
+    }
+  ],
+  "slug": {
+    "_type": "slug",
+    "current": "local-coding-agent-benchmarks"
+  },
+  "startDate": "2026-01-01",
+  "status": "active",
+  "statusNote": "October 25, 2026 data release. Execution-harness release remains incomplete.",
+  "summary": "Seven model/server configurations on one GX10, measured by completed bug fixes, task time, GPU energy, and memory use. The October 25 snapshot includes 18 fresh-PR tasks and 11 SWE-bench Pro tasks.",
+  "technologies": [
+    "Python",
+    "Docker Sandboxes",
+    "vLLM",
+    "llama.cpp",
+    "Ollama",
+    "NVIDIA GB10"
+  ],
+  "title": "Local coding agents: task success and resource use",
+  "types": [
+    "research",
+    "software"
+  ]
+}

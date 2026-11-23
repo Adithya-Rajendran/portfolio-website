@@ -1,0 +1,2742 @@
+{
+  "_createdAt": "2026-10-21T02:03:18Z",
+  "_id": "04feee75-6c9d-410a-b204-1e244740415b",
+  "_rev": "pJuzvlAAkes31pzNsp7lKu",
+  "_system": {
+    "base": {
+      "id": "04feee75-6c9d-410a-b204-1e244740415b",
+      "rev": "kMmNf3snj7GoQAhiUlidg0"
+    }
+  },
+  "_type": "post",
+  "_updatedAt": "2026-11-05T19:42:26Z",
+  "body": [
+    {
+      "_key": "a8672de8",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "a8672de8s1",
+          "_type": "span",
+          "marks": [],
+          "text": "The GB10 in my ASUS Ascent GX10 shares one memory pool between the CPU and GPU, as the NVIDIA DGX Spark does. A large model load can therefore consume memory the host needs for services such as SSH. In my tests, running out of headroom did not always produce a clean allocation failure: the machine could stop responding."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "30274fb9",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "30274fb9s2",
+          "_type": "span",
+          "marks": [],
+          "text": "That happened three times in July 2026. Each incident lasted 35 to 65 minutes and ended with a power cycle. I built a guard to stop a workload before the host reaches that state. This post explains the failures, the measurements behind the guard, and the limits of the protection. The scripts are in "
+        },
+        {
+          "_key": "30274fb9s4",
+          "_type": "span",
+          "marks": [
+            "30274fb9l3"
+          ],
+          "text": "gb10-hardening on GitHub"
+        },
+        {
+          "_key": "30274fb9s5",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "30274fb9l3",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/gb10-hardening"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "rev26scope",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "rev26scopes203",
+          "_type": "span",
+          "marks": [],
+          "text": "Scope and tested versions"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "rev26env",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "rev26envs204",
+          "_type": "span",
+          "marks": [],
+          "text": "This account concerns one GX10 installation. The repository records Ubuntu, kernel "
+        },
+        {
+          "_key": "rev26envs205",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "7.0.0-1019-nvidia"
+        },
+        {
+          "_key": "rev26envs206",
+          "_type": "span",
+          "marks": [],
+          "text": ", driver "
+        },
+        {
+          "_key": "rev26envs207",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "595.99.02"
+        },
+        {
+          "_key": "rev26envs208",
+          "_type": "span",
+          "marks": [],
+          "text": ", systemd, cgroup v2, and Docker as the tested environment. The implementation described here is pinned to "
+        },
+        {
+          "_key": "rev26envs210",
+          "_type": "span",
+          "marks": [
+            "rev26envl209"
+          ],
+          "text": "commit af4cd3c"
+        },
+        {
+          "_key": "rev26envs211",
+          "_type": "span",
+          "marks": [],
+          "text": ". Behavior on another kernel, driver, or container runtime needs its own check."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "rev26envl209",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/gb10-hardening/tree/af4cd3caf53e48e32f82af1ef0d43d0e61b563ef"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "rev26boundary",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "rev26boundarys212",
+          "_type": "span",
+          "marks": [],
+          "text": "The successful over-commit tests used a 4 GiB hard floor and a 1 GiB "
+        },
+        {
+          "_key": "rev26boundarys213",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "min_free_kbytes"
+        },
+        {
+          "_key": "rev26boundarys214",
+          "_type": "span",
+          "marks": [],
+          "text": " setting. The current defaults are 3 GiB and 256 MiB. That distinction matters: the tests support the approach, but do not validate those newer defaults."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "39f10807",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "15c52387",
+          "_type": "span",
+          "marks": [],
+          "text": "What happened in July"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "7b18444f",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "5729d96c",
+          "_type": "span",
+          "marks": [],
+          "text": "On 2026-07-01 I started Qwen3.5-122B-A10B (NVFP4) in vLLM with "
+        },
+        {
+          "_key": "99cc8f59",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "--gpu-memory-utilization 0.85"
+        },
+        {
+          "_key": "b63e4482",
+          "_type": "span",
+          "marks": [],
+          "text": ". About ten minutes into loading, the kernel log filled with about 920 of these lines in one minute:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "92cf1cb7",
+      "_type": "code",
+      "code": "NVRM: GPU0 nvCheckOkFailedNoLog: Check failed: Out of memory [NV_ERR_NO_MEMORY] ... _memdescAllocInternal(pMemDesc) @ mem_desc.c:1336",
+      "language": "text"
+    },
+    {
+      "_key": "c3add22e",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "4f187374",
+          "_type": "span",
+          "marks": [],
+          "text": "After that the journal went silent for 39 minutes and SSH stopped responding. The same model failed the same way when I relaunched it that afternoon, and Nemotron-3-Super-120B did it again on 07-07 at "
+        },
+        {
+          "_key": "774dec2c",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "--gpu-memory-utilization 0.70"
+        },
+        {
+          "_key": "ce2b9dd0",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "7eddc476",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "7eddc476s6",
+          "_type": "span",
+          "marks": [],
+          "text": "The kernel was still producing hung-task reports while normal services stopped making progress. Those symptoms were consistent with a memory-reclaim livelock, although the logs alone do not establish every part of the failure mechanism. With "
+        },
+        {
+          "_key": "7eddc476s7",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "panic=0"
+        },
+        {
+          "_key": "7eddc476s8",
+          "_type": "span",
+          "marks": [],
+          "text": ", "
+        },
+        {
+          "_key": "7eddc476s9",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "hung_task_panic=0"
+        },
+        {
+          "_key": "7eddc476s10",
+          "_type": "span",
+          "marks": [],
+          "text": ", and no watchdog configured, this installation had no automatic recovery path for the observed hang."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "262c427a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "262c427as11",
+          "_type": "span",
+          "marks": [],
+          "text": "For these incidents, rsyslog's "
+        },
+        {
+          "_key": "262c427as12",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/var/log/kern.log"
+        },
+        {
+          "_key": "262c427as13",
+          "_type": "span",
+          "marks": [],
+          "text": " preserved lines missing from the journal. Compare both when debugging a similar failure; which record survives depends on the logging configuration and which processes stall."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "48303692",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "3e77e8c8",
+          "_type": "span",
+          "marks": [],
+          "text": "Why nothing stepped in"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "c2ff35e5",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "c2ff35e5s14",
+          "_type": "span",
+          "marks": [],
+          "text": "The kernel OOM killer and earlyoom both failed to stop the workload in time. SSH, which I needed to intervene, was also unusable."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "8bc5df06",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "8bc5df06s15",
+          "_type": "span",
+          "marks": [],
+          "text": "The kernel OOM killer ran, but its victims included "
+        },
+        {
+          "_key": "8bc5df06s16",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "wireplumber"
+        },
+        {
+          "_key": "8bc5df06s17",
+          "_type": "span",
+          "marks": [],
+          "text": ", "
+        },
+        {
+          "_key": "8bc5df06s18",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "pipewire"
+        },
+        {
+          "_key": "8bc5df06s19",
+          "_type": "span",
+          "marks": [],
+          "text": ", and "
+        },
+        {
+          "_key": "8bc5df06s20",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "dbus-daemon"
+        },
+        {
+          "_key": "8bc5df06s21",
+          "_type": "span",
+          "marks": [],
+          "text": ", rather than the model server. The task dump listed "
+        },
+        {
+          "_key": "8bc5df06s22",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "VLLM::EngineCor"
+        },
+        {
+          "_key": "8bc5df06s23",
+          "_type": "span",
+          "marks": [],
+          "text": " at about 32 MB of resident memory (RSS), far below the memory I attributed to the GPU workload. That discrepancy helps explain the poor victim selection; RSS was not a reliable measure of this workload's total impact on the host."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "ac654955",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e6e417ba",
+          "_type": "span",
+          "marks": [],
+          "text": "earlyoom was installed by 07-07 and logged this:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "0090cac1",
+      "_type": "code",
+      "code": "17:20:21 earlyoom: mem avail: 11054 of 124546 MiB ( 8.88%), swap free: 13294 of 16383 MiB (81.14%)\n17:21:21 earlyoom: mem avail:     0 of 124546 MiB ( 0.00%), swap free: 13233 of 16383 MiB (80.77%)",
+      "language": "text"
+    },
+    {
+      "_key": "4860ee49",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "4860ee49s24",
+          "_type": "span",
+          "marks": [],
+          "text": "earlyoom saw zero available memory but did not act because I had configured "
+        },
+        {
+          "_key": "4860ee49s25",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "-m 15 -s 5"
+        },
+        {
+          "_key": "4860ee49s26",
+          "_type": "span",
+          "marks": [],
+          "text": ": both memory and swap had to fall below their thresholds. Swap remained about 80% free in this incident, so the second condition never became true. I needed a trigger that did not depend on swap filling."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "88d54216",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "d0937f1a",
+          "_type": "span",
+          "marks": [],
+          "text": "sshd was not OOM-killed either (it already runs at "
+        },
+        {
+          "_key": "3f2589f2",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "oom_score_adj -1000"
+        },
+        {
+          "_key": "2dc9b077",
+          "_type": "span",
+          "marks": [],
+          "text": "). It was starved: new logins hung for more than two minutes in uninterruptible sleep, waiting for memory."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "027bb829",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "0f855932",
+          "_type": "span",
+          "marks": [],
+          "text": "Where the memory went"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "78ea7c00",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "40f14aeb",
+          "_type": "span",
+          "marks": [],
+          "text": "The kernel's OOM report from 07-01 shows the problem in one place:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "c578023d",
+      "_type": "code",
+      "code": "active_anon:28827 inactive_anon:1132 active_file:803 inactive_file:909 shmem:30076\nslab_unreclaimable:402640 free:149983      Free swap = 11559468kB / 16777212kB\nNode 0 Normal free:41640kB min:44924kB ... all_unreclaimable",
+      "language": "text"
+    },
+    {
+      "_key": "38d3d139",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "38d3d139s27",
+          "_type": "span",
+          "marks": [],
+          "text": "The first line reports page counts; the later fields explicitly marked "
+        },
+        {
+          "_key": "38d3d139s28",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "kB"
+        },
+        {
+          "_key": "38d3d139s29",
+          "_type": "span",
+          "marks": [],
+          "text": " use a different unit. At 4 KiB per page on this installation, the listed anonymous, file, shared-memory, and unreclaimable-slab counts total about 1.8 GiB. The excerpt shows very little free memory in the Normal zone and an "
+        },
+        {
+          "_key": "38d3d139s30",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "all_unreclaimable"
+        },
+        {
+          "_key": "38d3d139s31",
+          "_type": "span",
+          "marks": [],
+          "text": " report. It is not a complete accounting of RAM, so subtracting those few categories from total memory would not, by itself, prove how much the NVIDIA driver held."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "dc2ea225",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "dc2ea225s32",
+          "_type": "span",
+          "marks": [],
+          "text": "My working explanation was that the model load left too little headroom for the host. vLLM's "
+        },
+        {
+          "_key": "dc2ea225s33",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "--gpu-memory-utilization"
+        },
+        {
+          "_key": "dc2ea225s34",
+          "_type": "span",
+          "marks": [],
+          "text": " is a budget based on GPU-visible memory; on this machine the host shares the same physical pool. Loading weights, profiling, repacking, and allocating the KV cache can also create peaks that a steady-state fit estimate misses. The logs establish severe allocation pressure, but they do not isolate the contribution of every loading phase."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "ba1a42ea",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "2fad2655",
+          "_type": "span",
+          "marks": [],
+          "text": "How much memory a model actually gets"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "0a05d134",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "0a05d134s35",
+          "_type": "span",
+          "marks": [],
+          "text": "Linux reports about 121.6 GiB as "
+        },
+        {
+          "_key": "0a05d134s36",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemTotal"
+        },
+        {
+          "_key": "0a05d134s37",
+          "_type": "span",
+          "marks": [],
+          "text": " on my GX10. That is the useful starting point for a host-memory budget. My accounting from "
+        },
+        {
+          "_key": "0a05d134s38",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/proc/iomem"
+        },
+        {
+          "_key": "0a05d134s39",
+          "_type": "span",
+          "marks": [],
+          "text": " and the boot log puts roughly 6.5 GiB outside that total:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "34a1469d",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "4e884ad6",
+          "_type": "span",
+          "marks": [],
+          "text": "0.37 GiB is never handed to Linux by the firmware."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "fa5f3dec",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "aa0305fd",
+          "_type": "span",
+          "marks": [],
+          "text": "3.55 GiB is reserved by firmware before Linux starts. One block of 2.56 GiB is the largest; "
+        },
+        {
+          "_key": "24d26bd1",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/proc/iomem"
+        },
+        {
+          "_key": "b07a633c",
+          "_type": "span",
+          "marks": [],
+          "text": " only labels it "
+        },
+        {
+          "_key": "91fefff2",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "reserved"
+        },
+        {
+          "_key": "abde06c0",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "db51e29d",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "4cfebc3e",
+          "_type": "span",
+          "marks": [],
+          "text": "2.10 GiB is the "
+        },
+        {
+          "_key": "79342db0",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "struct page"
+        },
+        {
+          "_key": "10a1e0cb",
+          "_type": "span",
+          "marks": [],
+          "text": " array, 64 bytes of bookkeeping for every 4 KiB page."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "24e86124",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "24e86124s40",
+          "_type": "span",
+          "marks": [],
+          "text": "About 0.45 GiB for the kernel image and early boot allocations."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "1759716f",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "1759716fs41",
+          "_type": "span",
+          "marks": [],
+          "text": "These are rounded figures from this installation, not a universal GB10 memory map. A model must fit alongside the operating system, runtime, KV cache, and temporary allocations. Checkpoint size on disk is only a starting estimate: quantization, loading strategy, and offloading change the resident footprint."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "61e24402",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "61e24402s42",
+          "_type": "span",
+          "marks": [],
+          "text": "When MemAvailable overstates usable headroom"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "aacef69f",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "aacef69fs43",
+          "_type": "span",
+          "marks": [],
+          "text": "A guard needs a signal it can act on. During an October vLLM test, "
+        },
+        {
+          "_key": "aacef69fs44",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/proc/meminfo"
+        },
+        {
+          "_key": "aacef69fs45",
+          "_type": "span",
+          "marks": [],
+          "text": " reported 111.5 GiB of "
+        },
+        {
+          "_key": "aacef69fs46",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemAvailable"
+        },
+        {
+          "_key": "aacef69fs47",
+          "_type": "span",
+          "marks": [],
+          "text": " while "
+        },
+        {
+          "_key": "aacef69fs48",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemFree"
+        },
+        {
+          "_key": "aacef69fs49",
+          "_type": "span",
+          "marks": [],
+          "text": " was only 7.0 GiB and "
+        },
+        {
+          "_key": "aacef69fs50",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "KReclaimable"
+        },
+        {
+          "_key": "aacef69fs51",
+          "_type": "span",
+          "marks": [],
+          "text": " was around 100 GB. Low "
+        },
+        {
+          "_key": "aacef69fs52",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemFree"
+        },
+        {
+          "_key": "aacef69fs53",
+          "_type": "span",
+          "marks": [],
+          "text": " alone is normal on a cached Linux system; the concern here was the combination of those readings, an active GPU workload, and poor responsiveness."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "bd9b26a7",
+      "_type": "code",
+      "code": "MemAvailable: 111.5 GiB\nMemFree:        7.0 GiB",
+      "language": "text"
+    },
+    {
+      "_key": "91e698e7",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "91e698e7s54",
+          "_type": "span",
+          "marks": [],
+          "text": "In that run, the growth in "
+        },
+        {
+          "_key": "91e698e7s55",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "KReclaimable"
+        },
+        {
+          "_key": "91e698e7s56",
+          "_type": "span",
+          "marks": [],
+          "text": " tracked the GPU workload, yet that apparent reclaimable capacity did not translate into a responsive host. The kernel includes an estimate of reclaimable memory in "
+        },
+        {
+          "_key": "91e698e7s57",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemAvailable"
+        },
+        {
+          "_key": "91e698e7s58",
+          "_type": "span",
+          "marks": [],
+          "text": ". Treating the latter as immediately usable headroom was therefore too optimistic for my guard. It also dropped briefly during rapid allocation, which explains why earlyoom could act during a ramp while missing the settled state."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "5e6037eb",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "5e6037ebs59",
+          "_type": "span",
+          "marks": [],
+          "text": "The guard uses this alternative signal, with all inputs converted to bytes:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "542b0f06",
+      "_type": "code",
+      "code": "TrueAvailable = MemAvailable - KReclaimable + SReclaimable",
+      "language": "text"
+    },
+    {
+      "_key": "39671219",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "39671219s60",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "KReclaimable"
+        },
+        {
+          "_key": "39671219s61",
+          "_type": "span",
+          "marks": [],
+          "text": " includes "
+        },
+        {
+          "_key": "39671219s62",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "SReclaimable"
+        },
+        {
+          "_key": "39671219s63",
+          "_type": "span",
+          "marks": [],
+          "text": "; subtracting the former and adding back the latter excludes the non-slab component. Despite the name "
+        },
+        {
+          "_key": "39671219s64",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "TrueAvailable"
+        },
+        {
+          "_key": "39671219s65",
+          "_type": "span",
+          "marks": [],
+          "text": ", this is a conservative heuristic for the behavior I observed, not a kernel metric or an exact measure of allocatable GPU memory. It can exclude genuinely reclaimable memory and can go negative. The "
+        },
+        {
+          "_key": "39671219s67",
+          "_type": "span",
+          "marks": [
+            "39671219l66"
+          ],
+          "text": "kernel's own estimate"
+        },
+        {
+          "_key": "39671219s68",
+          "_type": "span",
+          "marks": [],
+          "text": " already discounts some reclaimable capacity, so this subtraction is not an exact reversal of its calculation."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "39671219l66",
+          "_type": "contentLink",
+          "href": "https://github.com/torvalds/linux/blob/master/mm/show_mem.c"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "rev26units",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "rev26units-s1",
+          "_type": "span",
+          "marks": [],
+          "text": "For a reproducible calculation, use all three fields from one /proc/meminfo snapshot and convert them to the same unit. Rounded values gathered at different times cannot establish an exact headroom figure."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "df8555c2",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "df8555c2s69",
+          "_type": "span",
+          "marks": [],
+          "text": "To inspect the inputs on another machine, capture them together while the workload is running:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "0beb356a",
+      "_type": "code",
+      "code": "grep -E 'MemFree|MemAvailable|KReclaimable|SReclaimable' /proc/meminfo",
+      "language": "bash"
+    },
+    {
+      "_key": "e93af1b6",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e93af1b6s70",
+          "_type": "span",
+          "marks": [],
+          "text": "A large "
+        },
+        {
+          "_key": "e93af1b6s71",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "KReclaimable"
+        },
+        {
+          "_key": "e93af1b6s72",
+          "_type": "span",
+          "marks": [],
+          "text": " value is a reason to investigate, not proof of a driver fault. Compare idle, loading, steady-state, and post-exit readings with memory-pressure measurements and responsiveness. The relationship may change with the driver or workload."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "e62439ad",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "d68e732b",
+          "_type": "span",
+          "marks": [],
+          "text": "Two more details matter for anything that measures memory on a GB10:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "72d9d91c",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "72d9d91cs73",
+          "_type": "span",
+          "marks": [],
+          "text": "After some vLLM exits, a large amount of memory remained in "
+        },
+        {
+          "_key": "72d9d91cs74",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "KReclaimable"
+        },
+        {
+          "_key": "72d9d91cs75",
+          "_type": "span",
+          "marks": [],
+          "text": ". In those observations, writing to "
+        },
+        {
+          "_key": "72d9d91cs76",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/proc/sys/vm/drop_caches"
+        },
+        {
+          "_key": "72d9d91cs77",
+          "_type": "span",
+          "marks": [],
+          "text": " reduced it sharply. That is a workaround for the behavior I measured; it does not establish that the kernel could never reclaim those pages on its own."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "e0d70a88",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e0d70a88s78",
+          "_type": "span",
+          "marks": [],
+          "text": "llama.cpp behaved differently in an October 19 run: "
+        },
+        {
+          "_key": "e0d70a88s79",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "KReclaimable"
+        },
+        {
+          "_key": "e0d70a88s80",
+          "_type": "span",
+          "marks": [],
+          "text": " stayed near 0.3 GiB while the server was active, and its memory appeared as ordinary used memory. The large "
+        },
+        {
+          "_key": "e0d70a88s81",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "KReclaimable"
+        },
+        {
+          "_key": "e0d70a88s82",
+          "_type": "span",
+          "marks": [],
+          "text": " increase came after exit. I have not isolated why the engines differed. The same guard formula remains usable in this case because subtracting the small non-slab component changes little, but it is not an independent validation of the estimate."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "c6b8fa2c",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "78bab1ee",
+          "_type": "span",
+          "marks": [],
+          "text": "The guard"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "e0625068",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e0625068s83",
+          "_type": "span",
+          "marks": [],
+          "text": "The main protection is "
+        },
+        {
+          "_key": "e0625068s84",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "gb10-memguard"
+        },
+        {
+          "_key": "e0625068s85",
+          "_type": "span",
+          "marks": [],
+          "text": ", a Python daemon using only the standard library. It aims to sample "
+        },
+        {
+          "_key": "e0625068s86",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/proc/meminfo"
+        },
+        {
+          "_key": "e0625068s87",
+          "_type": "span",
+          "marks": [],
+          "text": " every 100 ms, computes "
+        },
+        {
+          "_key": "e0625068s88",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "TrueAvailable"
+        },
+        {
+          "_key": "e0625068s89",
+          "_type": "span",
+          "marks": [],
+          "text": " and its recent fall rate, and applies three rules. These are the current defaults; the stress-test results later in this post used an older hard floor."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "6236f727",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "6236f727s90",
+          "_type": "span",
+          "marks": [],
+          "text": "If headroom is falling faster than 2 GiB/s and its recent rate projects a drop below 3 GiB within 0.5 s, send SIGKILL."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "3af2478d",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "3af2478ds91",
+          "_type": "span",
+          "marks": [],
+          "text": "If "
+        },
+        {
+          "_key": "3af2478ds92",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "TrueAvailable"
+        },
+        {
+          "_key": "3af2478ds93",
+          "_type": "span",
+          "marks": [],
+          "text": " is below 3 GiB, send SIGKILL without waiting for the soft threshold."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "883d8bbc",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "883d8bbcs94",
+          "_type": "span",
+          "marks": [],
+          "text": "After 2 s accumulated below 8 GiB in one low-memory episode, send SIGTERM. Escalate to SIGKILL after 10 s if the target is still present and the episode has not recovered."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "1fe91ce2",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "1fe91ce2s95",
+          "_type": "span",
+          "marks": [],
+          "text": "The scan looks for Docker scopes containing a command line with "
+        },
+        {
+          "_key": "1fe91ce2s96",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "vllm"
+        },
+        {
+          "_key": "1fe91ce2s97",
+          "_type": "span",
+          "marks": [],
+          "text": ", "
+        },
+        {
+          "_key": "1fe91ce2s98",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "llama-server"
+        },
+        {
+          "_key": "1fe91ce2s99",
+          "_type": "span",
+          "marks": [],
+          "text": ", or "
+        },
+        {
+          "_key": "1fe91ce2s100",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "ollama"
+        },
+        {
+          "_key": "1fe91ce2s101",
+          "_type": "span",
+          "marks": [],
+          "text": ". It orders matching scopes by their filesystem modification time, using that as a proxy for the newest workload. This is a selection policy, not a measurement of which workload caused the pressure."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "aa5137d1",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "82b6b87e",
+          "_type": "span",
+          "marks": [],
+          "text": "Why a rate rule"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "488c222a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "4d0599f7",
+          "_type": "span",
+          "marks": [],
+          "text": "During a vLLM load the KV cache allocation drains memory at 17 to 41 GiB/s in my tests, and a killed process takes seconds to give memory back. A rule based only on the level has to sit around 20 GiB to survive that, which is what an early version did, and it kept a sixth of the machine unusable. Projecting the current rate 0.5 s ahead catches the ramp early while still letting a steady workload run closer to the floor."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "8d55735a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "8d55735as102",
+          "_type": "span",
+          "marks": [],
+          "text": "The 0.5 s horizon is a tuning choice informed by two observed post-kill drops: 0.6 GiB and 14.6 GiB. Sending a signal does not immediately release every allocation, particularly when work remains blocked in the kernel or driver. A longer horizon would intervene earlier but also stop more loads that could have completed. These observations do not prove that 0.5 s covers every overshoot."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "ca16c4f5",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "fb992f22",
+          "_type": "span",
+          "marks": [],
+          "text": "This rule has a cost I should be clear about: it fires when "
+        },
+        {
+          "_key": "78f50334",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "TrueAvailable - rate * 0.5 s"
+        },
+        {
+          "_key": "08d00460",
+          "_type": "span",
+          "marks": [],
+          "text": " drops under 3 GiB. A vLLM load still allocating at 17 GiB/s is killed once headroom falls below about 11.5 GiB. A config whose KV allocation would finish with 6 GiB free does not survive the load."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "204baf03",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "8e011fbe",
+          "_type": "span",
+          "marks": [],
+          "text": "Why the slow rule has hysteresis"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "e33826e6",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e33826e6s103",
+          "_type": "span",
+          "marks": [],
+          "text": "Replaying 2.5 days of recordings showed 116 crossings of the 8 GiB line. A workload hovering around that threshold kept resetting the old timers. The current episode starts when a rule trips and ends when headroom reaches at least 9 GiB and the ramp rule is clear. Only time actually spent below the soft threshold counts toward its 2 s dwell. In the replay, 116 crossings became 9 episodes."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "52f92cf0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "52f92cf0s104",
+          "_type": "span",
+          "marks": [],
+          "text": "The 10 s escalation interval also came from logs: clean exits after SIGTERM took 0.5 to 7.6 s in the observed runs. I use 10 s as a practical cutoff for this workload, rather than a general bound on how long shutdown should take."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "e567f2eb",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "b077f37b",
+          "_type": "span",
+          "marks": [],
+          "text": "How it kills, and why not through Docker"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "56ec9465",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "56ec9465s105",
+          "_type": "span",
+          "marks": [],
+          "text": "An early version used the Docker API to kill containers. During a severe pressure test, that call timed out after 3 s and the exception crashed the guard. systemd restarted it twice while the headroom estimate went negative. The machine recovered, but the incident showed why the kill path should not depend on a responsive Docker daemon."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "12391056",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "12391056s106",
+          "_type": "span",
+          "marks": [],
+          "text": "Target discovery and signalling now use cgroups and "
+        },
+        {
+          "_key": "12391056s107",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/proc"
+        },
+        {
+          "_key": "12391056s108",
+          "_type": "span",
+          "marks": [],
+          "text": " directly. SIGKILL is sent through "
+        },
+        {
+          "_key": "12391056s109",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "cgroup.kill"
+        },
+        {
+          "_key": "12391056s110",
+          "_type": "span",
+          "marks": [],
+          "text": ", while SIGTERM is sent to the scope's processes. The implementation still makes a best-effort Docker API call after signalling to look up a readable container name; its 3 s timeout can delay the next iteration. The important improvement is that Docker is no longer needed to deliver the kill:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "7cedbdbd",
+      "_type": "code",
+      "code": "def kill_scope(scope, sig):\n    if sig == \"KILL\":\n        with open(os.path.join(scope, \"cgroup.kill\"), \"w\") as f:\n            f.write(\"1\")  # request SIGKILL for the cgroup and descendants",
+      "language": "python"
+    },
+    {
+      "_key": "bd6979b5",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "13781ef4",
+          "_type": "span",
+          "marks": [],
+          "text": "Two other rules came out of failures:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "017dbe8a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "017dbe8as111",
+          "_type": "span",
+          "marks": [],
+          "text": "On October 19, a llama.cpp server sat below 8 GiB while an older matcher looked only for vLLM. The matcher now includes "
+        },
+        {
+          "_key": "017dbe8as112",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "llama-server"
+        },
+        {
+          "_key": "017dbe8as113",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "017dbe8as114",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "ollama"
+        },
+        {
+          "_key": "017dbe8as115",
+          "_type": "span",
+          "marks": [],
+          "text": ". If a hard or ramp kill is required and no eligible inference container matches, the fallback chooses the Docker scope with the largest sum of process RSS, provided that sum is at least 8 GiB. That fallback can kill an unrelated container, and summed RSS can double-count shared pages."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "7b683b86",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "a1763821",
+          "_type": "span",
+          "marks": [],
+          "text": "If a killed container has not disappeared 20 s later and memory is still below 3 GiB, the guard moves on to the next target instead of waiting."
+        }
+      ],
+      "level": 1,
+      "listItem": "bullet",
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "9468b6e3",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e855ac9d",
+          "_type": "span",
+          "marks": [],
+          "text": "Cleaning up after a kill"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "7ec600a2",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "7ec600a2s116",
+          "_type": "span",
+          "marks": [],
+          "text": "An early version dropped caches 3 s after a kill, before a vLLM process that took about 10 s to exit had released its allocations. The current implementation normally waits for the scope's process list to empty, but it also proceeds after a 60 s timeout. A separate sweep runs every 5 s when non-slab "
+        },
+        {
+          "_key": "7ec600a2s117",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "KReclaimable"
+        },
+        {
+          "_key": "7ec600a2s118",
+          "_type": "span",
+          "marks": [],
+          "text": " exceeds 8 GiB and the matcher finds no inference container. That scan does not prove the GPU is idle: native processes and other cgroup layouts are outside its view."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "rev26cachecost",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "rev26cachecosts218",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "drop_caches"
+        },
+        {
+          "_key": "rev26cachecosts219",
+          "_type": "span",
+          "marks": [],
+          "text": " is system-wide and can cause extra I/O when useful cache must be rebuilt. I treat it as a targeted workaround to investigate, not routine memory housekeeping. The "
+        },
+        {
+          "_key": "rev26cachecosts221",
+          "_type": "span",
+          "marks": [
+            "rev26cachecostl220"
+          ],
+          "text": "kernel documentation"
+        },
+        {
+          "_key": "rev26cachecosts222",
+          "_type": "span",
+          "marks": [],
+          "text": " describes what it frees and the performance cost."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "rev26cachecostl220",
+          "_type": "contentLink",
+          "href": "https://docs.kernel.org/admin-guide/sysctl/vm.html#drop-caches"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "433aace1",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "0b099776",
+          "_type": "span",
+          "marks": [],
+          "text": "Keeping the guard itself alive"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "ff4dbf57",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "ff4dbf57s119",
+          "_type": "span",
+          "marks": [],
+          "text": "The guard attempts "
+        },
+        {
+          "_key": "ff4dbf57s120",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "mlockall()"
+        },
+        {
+          "_key": "ff4dbf57s121",
+          "_type": "span",
+          "marks": [],
+          "text": " and records whether it succeeded at startup. Its service uses "
+        },
+        {
+          "_key": "ff4dbf57s122",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "OOMScoreAdjust=-1000"
+        },
+        {
+          "_key": "ff4dbf57s123",
+          "_type": "span",
+          "marks": [],
+          "text": ", "
+        },
+        {
+          "_key": "ff4dbf57s124",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "Nice=-10"
+        },
+        {
+          "_key": "ff4dbf57s125",
+          "_type": "span",
+          "marks": [],
+          "text": ", and automatic restarts. Decisions go to an fsync'd file, the journal, and, when available, "
+        },
+        {
+          "_key": "ff4dbf57s126",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/dev/kmsg"
+        },
+        {
+          "_key": "ff4dbf57s127",
+          "_type": "span",
+          "marks": [],
+          "text": ". CSV sampling is normally 1 Hz and rises to about 5 Hz during falling memory, low-memory episodes, or stalls. These choices improve resilience and diagnosis; filesystem writes and post-kill lookups can still delay the loop."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "6b02bb24",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "6b02bb24s128",
+          "_type": "span",
+          "marks": [],
+          "text": "What the tests established"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "e8079ca8",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e8079ca8s129",
+          "_type": "span",
+          "marks": [],
+          "text": "The published test summary reports an 82 GB over-commit run killed at 19.4 GiB of estimated headroom, a minimum of 18.8 GiB, and recovery in 4 s. A fresh SSH login was described as instant in an earlier version of that test, compared with about 50 s without the guard. A more severe 95 GB case bottomed at 3.6 GiB and recovered on its own. A 75 GB model then served for 4.1 hours at 12 to 21 GiB of headroom with no guard actions."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "rev26evidence",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "rev26evidences223",
+          "_type": "span",
+          "marks": [],
+          "text": "Those are observations from a small set of runs, not a reliability rate. The repository contains the implementation and result summaries, but not the complete raw traces needed to independently reconstruct these comparisons. A useful next result would repeat the same workloads with the current settings and publish the configuration, CSV, action log, and recovery measurement together."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "ab19addb",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "ff04de21",
+          "_type": "span",
+          "marks": [],
+          "text": "The other layers"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "ae446dee",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "ae446dees130",
+          "_type": "span",
+          "marks": [],
+          "text": "The guard is the main intervention. The supporting settings aim to preserve access, improve logging, and provide recovery options if intervention is late. "
+        },
+        {
+          "_key": "ae446dees131",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "apply.sh"
+        },
+        {
+          "_key": "ae446dees132",
+          "_type": "span",
+          "marks": [],
+          "text": " groups them into numbered sections."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "7faaca2f",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "48d346bb",
+          "_type": "span",
+          "marks": [],
+          "text": "sshd"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "fdcde717",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "fdcde717s133",
+          "_type": "span",
+          "marks": [],
+          "text": "This Ubuntu installation used socket activation for SSH. "
+        },
+        {
+          "_key": "fdcde717s134",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "apply.sh"
+        },
+        {
+          "_key": "fdcde717s135",
+          "_type": "span",
+          "marks": [],
+          "text": " keeps "
+        },
+        {
+          "_key": "fdcde717s136",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "ssh.service"
+        },
+        {
+          "_key": "fdcde717s137",
+          "_type": "span",
+          "marks": [],
+          "text": " running so the first connection does not also need to start the listening daemon. Authentication and session creation still need resources. It adds this drop-in to SSH and journald:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "0dab0de3",
+      "_type": "code",
+      "code": "[Service]\nOOMScoreAdjust=-1000\nMemoryMin=256M\nCPUWeight=1000\nIOWeight=1000",
+      "language": "text"
+    },
+    {
+      "_key": "e8991c69",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "e8991c69s138",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemoryMin"
+        },
+        {
+          "_key": "e8991c69s139",
+          "_type": "span",
+          "marks": [],
+          "text": " requests protection from reclaim up to a unit's effective limit; it does not preallocate memory for future logins. Parent limits and competing protected units matter. "
+        },
+        {
+          "_key": "e8991c69s140",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "CPUWeight"
+        },
+        {
+          "_key": "e8991c69s141",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "e8991c69s142",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "IOWeight"
+        },
+        {
+          "_key": "e8991c69s143",
+          "_type": "span",
+          "marks": [],
+          "text": " affect relative service under contention where the controllers support them, but cannot unblock an allocation waiting on memory. "
+        },
+        {
+          "_key": "e8991c69s144",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "user.slice"
+        },
+        {
+          "_key": "e8991c69s145",
+          "_type": "span",
+          "marks": [],
+          "text": " gets best-effort "
+        },
+        {
+          "_key": "e8991c69s146",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemoryLow=1G"
+        },
+        {
+          "_key": "e8991c69s147",
+          "_type": "span",
+          "marks": [],
+          "text": " protection. See the "
+        },
+        {
+          "_key": "e8991c69s149",
+          "_type": "span",
+          "marks": [
+            "e8991c69l148"
+          ],
+          "text": "systemd resource-control reference"
+        },
+        {
+          "_key": "e8991c69s150",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "e8991c69l148",
+          "_type": "contentLink",
+          "href": "https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "327c9186",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "0ef8139d",
+          "_type": "span",
+          "marks": [],
+          "text": "Kernel settings"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "b9d98b0c",
+      "_type": "code",
+      "code": "vm.min_free_kbytes = 262144\nvm.watermark_boost_factor = 0\nkernel.sysrq = 1\nkernel.hung_task_timeout_secs = 120\nkernel.hung_task_warnings = -1",
+      "language": "text"
+    },
+    {
+      "_key": "78b6be62",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "78b6be62s151",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "min_free_kbytes"
+        },
+        {
+          "_key": "78b6be62s152",
+          "_type": "span",
+          "marks": [],
+          "text": " influences the per-zone free-memory watermarks. I increased it from roughly 45 MB on this installation to 1 GiB, then reduced it to 256 MiB after examining the capacity cost. The original measurements suggested that the smaller setting returned about 1 GiB of headroom. It is not a separate, fixed-size emergency RAM pool, and the current setting still needs the same severe over-commit test used for the earlier one."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "b706a14b",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "b706a14bs153",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "watermark_boost_factor=0"
+        },
+        {
+          "_key": "b706a14bs154",
+          "_type": "span",
+          "marks": [],
+          "text": " disables an additional reclaim boost triggered by fragmentation; ordinary reclaim still runs. This trades some proactive reclaim for retaining more cache during the observed loads. "
+        },
+        {
+          "_key": "b706a14bs155",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "kernel.sysrq=1"
+        },
+        {
+          "_key": "b706a14bs156",
+          "_type": "span",
+          "marks": [],
+          "text": " enables SysRq keyboard functions. An administrator's write to "
+        },
+        {
+          "_key": "b706a14bs157",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/proc/sysrq-trigger"
+        },
+        {
+          "_key": "b706a14bs158",
+          "_type": "span",
+          "marks": [],
+          "text": ", such as "
+        },
+        {
+          "_key": "b706a14bs159",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "echo f > /proc/sysrq-trigger"
+        },
+        {
+          "_key": "b706a14bs160",
+          "_type": "span",
+          "marks": [],
+          "text": ", is permitted independently of that keyboard setting. See the kernel documentation for "
+        },
+        {
+          "_key": "b706a14bs162",
+          "_type": "span",
+          "marks": [
+            "b706a14bl161"
+          ],
+          "text": "VM controls"
+        },
+        {
+          "_key": "b706a14bs163",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "b706a14bs165",
+          "_type": "span",
+          "marks": [
+            "b706a14bl164"
+          ],
+          "text": "SysRq"
+        },
+        {
+          "_key": "b706a14bs166",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "b706a14bl161",
+          "_type": "contentLink",
+          "href": "https://docs.kernel.org/admin-guide/sysctl/vm.html"
+        },
+        {
+          "_key": "b706a14bl164",
+          "_type": "contentLink",
+          "href": "https://docs.kernel.org/admin-guide/sysrq.html"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "1d7bb985",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "9e1ebae2",
+          "_type": "span",
+          "marks": [],
+          "text": "earlyoom as a backstop"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "aeac960c",
+      "_type": "code",
+      "code": "-r 60 -m 5,3 -s 100,100 -g --prefer '^(vllm|VLLM::.*|llama-server|ollama)$'",
+      "language": "text"
+    },
+    {
+      "_key": "2900c0b8",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "2900c0b8s167",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "-s 100,100"
+        },
+        {
+          "_key": "2900c0b8s168",
+          "_type": "span",
+          "marks": [],
+          "text": " removes the low-swap prerequisite that blocked intervention in July. The memory thresholds request SIGTERM below 5% and SIGKILL below 3%; the actual installer also includes an avoid list. These thresholds use "
+        },
+        {
+          "_key": "2900c0b8s169",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemAvailable"
+        },
+        {
+          "_key": "2900c0b8s170",
+          "_type": "span",
+          "marks": [],
+          "text": ", while the guard uses a different estimate, so the numbers cannot be directly ranked as if they measured the same thing. earlyoom remains a backstop for pressure its metric can see."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "36205e68",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "ae864060",
+          "_type": "span",
+          "marks": [],
+          "text": "Automatic recovery"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "30fcbab2",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "6c8f00d9",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "apply.sh --auto-recover"
+        },
+        {
+          "_key": "ed8764da",
+          "_type": "span",
+          "marks": [],
+          "text": " adds:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "2eff0a1b",
+      "_type": "code",
+      "code": "kernel.hung_task_panic = 1\nkernel.softlockup_panic = 1\nkernel.panic_on_oops = 1\nkernel.panic = 20",
+      "language": "text"
+    },
+    {
+      "_key": "49e8874b",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "49e8874bs171",
+          "_type": "span",
+          "marks": [],
+          "text": "The optional mode also configures "
+        },
+        {
+          "_key": "49e8874bs172",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "RuntimeWatchdogSec=60s"
+        },
+        {
+          "_key": "49e8874bs173",
+          "_type": "span",
+          "marks": [],
+          "text": ". The panic settings can turn a detected hung task or other configured kernel failure into a reboot; the hardware watchdog only works if a usable watchdog device exists and systemd stops servicing it. This is a recovery option, not a guarantee that every hang will reboot on a fixed schedule. I enable it for unattended benchmarks, accepting the loss of the interrupted run. See the "
+        },
+        {
+          "_key": "49e8874bs175",
+          "_type": "span",
+          "marks": [
+            "49e8874bl174"
+          ],
+          "text": "systemd watchdog documentation"
+        },
+        {
+          "_key": "49e8874bs176",
+          "_type": "span",
+          "marks": [],
+          "text": "."
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "49e8874bl174",
+          "_type": "contentLink",
+          "href": "https://www.freedesktop.org/software/systemd/man/latest/systemd-system.conf.html#RuntimeWatchdogSec="
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "aaf026ee",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "84d3ac97",
+          "_type": "span",
+          "marks": [],
+          "text": "The smaller pieces"
+        }
+      ],
+      "markDefs": [],
+      "style": "h3"
+    },
+    {
+      "_key": "3dfd7219",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "3dfd7219s177",
+          "_type": "span",
+          "marks": [],
+          "text": "The installer enables persistent journaling with a 5 s sync interval and caps journal storage at 2 GB. This reduces the window of unsynced logs while the storage path is working; it cannot guarantee a final record during a stall. "
+        },
+        {
+          "_key": "3dfd7219s178",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "apply.sh --trim"
+        },
+        {
+          "_key": "3dfd7219s179",
+          "_type": "span",
+          "marks": [],
+          "text": " disables the DGX Dashboard services, measured at about 380 MiB on this installation. It leaves "
+        },
+        {
+          "_key": "3dfd7219s180",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "fwupd"
+        },
+        {
+          "_key": "3dfd7219s181",
+          "_type": "span",
+          "marks": [],
+          "text": " and "
+        },
+        {
+          "_key": "3dfd7219s182",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "snapd"
+        },
+        {
+          "_key": "3dfd7219s183",
+          "_type": "span",
+          "marks": [],
+          "text": " enabled. The earlier overhead estimate was about 0.2 GiB of extra kernel headroom plus 36 MiB for the daemons, but the larger capacity tradeoff is the guard's default 8 GiB soft threshold."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "859ade3a",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "cfb8beeb",
+          "_type": "span",
+          "marks": [],
+          "text": "The SSH client side"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "685bab5f",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "9c6b6220",
+          "_type": "span",
+          "marks": [],
+          "text": "The server settings only help if the client does not give up first. With "
+        },
+        {
+          "_key": "ca234997",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "ServerAliveInterval 15"
+        },
+        {
+          "_key": "57ea72e3",
+          "_type": "span",
+          "marks": [],
+          "text": ", the default "
+        },
+        {
+          "_key": "6c8e124a",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "ServerAliveCountMax 3"
+        },
+        {
+          "_key": "881c650d",
+          "_type": "span",
+          "marks": [],
+          "text": " drops the connection after 45 s without a reply, and with SSH multiplexing that takes the shared connection with it. A stall can last longer than that. I added:"
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "dd52871c",
+      "_type": "code",
+      "code": "Host gx10\n  ServerAliveInterval 15\n  ServerAliveCountMax 12\n  ControlMaster auto\n  ControlPath ~/.ssh/cm-%r@%h:%p\n  ControlPersist 24h",
+      "language": "text"
+    },
+    {
+      "_key": "1c9db5f2",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "1c9db5f2s184",
+          "_type": "span",
+          "marks": [],
+          "text": "On this installation, interactive SSH sessions live under "
+        },
+        {
+          "_key": "1c9db5f2s185",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "user.slice"
+        },
+        {
+          "_key": "1c9db5f2s186",
+          "_type": "span",
+          "marks": [],
+          "text": ". A benchmark launched there can consume the working set that "
+        },
+        {
+          "_key": "1c9db5f2s187",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MemoryLow=1G"
+        },
+        {
+          "_key": "1c9db5f2s188",
+          "_type": "span",
+          "marks": [],
+          "text": " was intended to protect. Running a long job as a system service, for example with "
+        },
+        {
+          "_key": "1c9db5f2s189",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "sudo systemd-run --unit=<name> ..."
+        },
+        {
+          "_key": "1c9db5f2s190",
+          "_type": "span",
+          "marks": [],
+          "text": ", separates it from that slice. Choose its user and working directory explicitly. Running "
+        },
+        {
+          "_key": "1c9db5f2s191",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "systemd-run --user"
+        },
+        {
+          "_key": "1c9db5f2s192",
+          "_type": "span",
+          "marks": [],
+          "text": " would keep the job in the user hierarchy."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "b8b4a3a6",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "968dc891",
+          "_type": "span",
+          "marks": [],
+          "text": "Caveats"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "a8c86c90",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "a8c86c90s193",
+          "_type": "span",
+          "marks": [],
+          "text": "The current 3 GiB hard floor and 256 MiB watermark setting have not been validated by the same 95 GB over-commit test. Until that comparison exists, the successful older runs should not be read as proof that the current defaults prevent the same failure."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "6ec73bc1",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "6ec73bc1s194",
+          "_type": "span",
+          "marks": [],
+          "text": "The rate rule can stop a fast load that would have settled safely. At 17 GiB/s, the 0.5 s projection reaches a 3 GiB floor when current headroom is about 11.5 GiB; at 41 GiB/s it does so at about 23.5 GiB. A future guard could use expected allocation sizes, but knowing the planned KV-cache size alone would not account for every temporary allocation."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "d189d91d",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "d189d91ds195",
+          "_type": "span",
+          "marks": [],
+          "text": "The default soft rule also stops a workload that stays below 8 GiB even if it appears stable. "
+        },
+        {
+          "_key": "d189d91ds196",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MEMGUARD_SOFT_NEEDS_PSI=1"
+        },
+        {
+          "_key": "d189d91ds197",
+          "_type": "span",
+          "marks": [],
+          "text": " makes that rule require measured memory pressure, but it does not change the hard or ramp rules. I have left it off while collecting a baseline. If PSI cannot be read, the implementation falls back to the plain soft rule."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "rev26dry",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "rev26drys224",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "MEMGUARD_DRY_RUN=1"
+        },
+        {
+          "_key": "rev26drys225",
+          "_type": "span",
+          "marks": [],
+          "text": " suppresses signalling and the loop's cache drops, but the startup cleanup can still write to "
+        },
+        {
+          "_key": "rev26drys226",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "drop_caches"
+        },
+        {
+          "_key": "rev26drys227",
+          "_type": "span",
+          "marks": [],
+          "text": ". It is not a fully passive observation mode in this revision."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "93911077",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "93911077s198",
+          "_type": "span",
+          "marks": [],
+          "text": "The matcher scans "
+        },
+        {
+          "_key": "93911077s199",
+          "_type": "span",
+          "marks": [
+            "code"
+          ],
+          "text": "/sys/fs/cgroup/system.slice/docker-*.scope"
+        },
+        {
+          "_key": "93911077s200",
+          "_type": "span",
+          "marks": [],
+          "text": ". It does not cover native servers, workloads inside VMs, rootless Docker, or Kubernetes/containerd scopes. With several matching containers, selection follows scope modification time, not per-workload GPU usage. The RSS fallback stays within those Docker scopes."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "958d25ae",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "958d25aes201",
+          "_type": "span",
+          "marks": [],
+          "text": "Driver and workload versions matter. In July, the OOM dump showed very little vLLM RSS; in October, with driver 595.99.02 instead of 595.71.05 and a newer vLLM, earlyoom saw a much larger process footprint. I have not isolated the cause, and the llama.cpp accounting difference remains unexplained."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "3700fae5",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "3700fae5s202",
+          "_type": "span",
+          "marks": [],
+          "text": "The lesson from this box is to validate a memory signal against the workload and the host's ability to make progress. Record loading peaks, keep recovery access in mind, and separate measured results from tuning assumptions. If another GB10 system shows different accounting, a trace with the driver, kernel, and workload versions would make that comparison useful."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "changelog": [
+    {
+      "_key": "revision-2026-10-25",
+      "_type": "postChange",
+      "date": "2026-10-25",
+      "kind": "correction",
+      "note": "Corrected memory-estimate and Linux-setting explanations, Docker and dry-run behavior, and an inconsistent numerical example; distinguished current defaults from earlier stress tests."
+    }
+  ],
+  "description": "Why model loads made my GB10 host unresponsive, how a memory guard intervenes, and what the tests establish about its limits.",
+  "nextPost": {
+    "_ref": "703a284c-83bb-455c-9789-ef12074e15e4",
+    "_type": "reference",
+    "_weak": true
+  },
+  "nextReadReason": "Continue with GPU scheduling on the same hardware. Time-slicing adds scheduling slots; it does not provide memory isolation, and this Docker guard does not protect those pods.",
+  "projects": [
+    {
+      "_key": "related-homelab",
+      "_ref": "project-homelab",
+      "_type": "reference",
+      "_weak": true
+    },
+    {
+      "_key": "gb10-project",
+      "_ref": "9d57a2fe-5952-4472-befb-ce6be095b70b",
+      "_type": "reference",
+      "_weak": true
+    }
+  ],
+  "publishedAt": "2026-10-21",
+  "revisedAt": "2026-10-25",
+  "slug": {
+    "_type": "slug",
+    "current": "dgx-spark-unified-memory-oom-hardening"
+  },
+  "socialImage": {
+    "_type": "image",
+    "alt": "Keeping a DGX Spark reachable under memory pressure. An engineering note by Adithya Rajendran.",
+    "asset": {
+      "_ref": "image-0f0e342e068902b2b48d53bc69ae5e04b3bc7579-1200x630-png",
+      "_type": "reference"
+    }
+  },
+  "tags": [
+    "homelab",
+    "infrastructure",
+    "gpu",
+    "linux",
+    "memory",
+    "dgx-spark"
+  ],
+  "takeaways": [
+    "The GB10 shares memory between the CPU and GPU. In these incidents, model loading left the host unable to respond over SSH.",
+    "The guard intervenes against Docker workloads; it does not cover Kubernetes pods or every source of host memory pressure.",
+    "Successful tests used older thresholds. The current 3 GiB hard floor and 256 MiB min_free_kbytes defaults have not received the same validation."
+  ],
+  "title": "Keeping a DGX Spark reachable under memory pressure"
+}

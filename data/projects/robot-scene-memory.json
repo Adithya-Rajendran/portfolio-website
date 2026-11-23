@@ -1,0 +1,215 @@
+{
+  "_createdAt": "2026-10-26T01:49:56Z",
+  "_id": "9a1c5b00-0db9-42bd-8c0c-65c5f914db5b",
+  "_rev": "ZWHONg1tqh0C90CigeZy5k",
+  "_system": {
+    "base": {
+      "id": "9a1c5b00-0db9-42bd-8c0c-65c5f914db5b",
+      "rev": "Dhq0bRMSnQwR0o7XACadmr"
+    }
+  },
+  "_type": "project",
+  "_updatedAt": "2026-11-05T18:35:55Z",
+  "body": [
+    {
+      "_key": "research-edit-7",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-7-text",
+          "_type": "span",
+          "marks": [],
+          "text": "What the first pilot changed"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-8",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-8-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The verifier initially called two book occlusions removals. Adding a novelty cue and changing the sharpness check moved the development score from 45/48 to 48/48 target-query decisions on the same photos. Those decisions share images and objects; they are not 48 independent tests."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-9",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-9-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The public pilot notes show examples and explain the changes. Raw captures and the full analysis table are currently local."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-10",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-10-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The next experiment"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "research-edit-11",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-11-text",
+          "_type": "span",
+          "marks": [],
+          "text": "Freeze the evidence code, capture unseen arrangements, and compare fixed-order and geometric view selectors before adding a learned ranker. Report false removals, decision coverage, and views used under the same budget."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "research-edit-12",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "research-edit-12-text",
+          "_type": "span",
+          "marks": [],
+          "text": "The current pilot uses one viewpoint, so it cannot yet answer whether adaptive view selection helps. The planned replay study measures geometric travel cost; it will not establish robot energy use or closed-loop navigation performance."
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-source-heading",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-source-label",
+          "_type": "span",
+          "marks": [],
+          "text": "Evidence sources"
+        }
+      ],
+      "markDefs": [],
+      "style": "h2"
+    },
+    {
+      "_key": "evidence-link-0",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-0-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-0-mark"
+          ],
+          "text": "First real pilot notes"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-0-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/cmpe249-active-verification/tree/ab4d7131d334b0675a5443256af75a14feae5a4f/notes/2026-10-17-first-real-pilot.md"
+        }
+      ],
+      "style": "normal"
+    },
+    {
+      "_key": "evidence-link-1",
+      "_type": "block",
+      "children": [
+        {
+          "_key": "evidence-link-1-span",
+          "_type": "span",
+          "marks": [
+            "evidence-link-1-mark"
+          ],
+          "text": "Experiment protocol"
+        }
+      ],
+      "markDefs": [
+        {
+          "_key": "evidence-link-1-mark",
+          "_type": "contentLink",
+          "href": "https://github.com/Adithya-Rajendran/cmpe249-active-verification/tree/ab4d7131d334b0675a5443256af75a14feae5a4f/docs/EXPERIMENT_PLAN.md"
+        }
+      ],
+      "style": "normal"
+    }
+  ],
+  "brief": {
+    "approach": "I combine reference-image matching, image-quality checks, and obstruction cues. The planned study will vary the next camera view while keeping the verification rule and sensing budget fixed.",
+    "problem": "A missed detection is ambiguous: the object may have moved, become hidden, or simply been missed by the detector."
+  },
+  "cover": {
+    "_type": "image",
+    "alt": "Four shelf views showing a reference, two occlusions, and a removed chess clock.",
+    "asset": {
+      "_ref": "image-12840419b409b9b20e54683e668a4d2a76e26f67-1536x864-jpg",
+      "_type": "reference"
+    },
+    "caption": "First development pilot: one viewpoint and lighting condition. The evidence code was adjusted on these images."
+  },
+  "datePrecision": "month",
+  "datesApproximate": false,
+  "designation": 6,
+  "featured": 2,
+  "highlights": [
+    "Built Raspberry Pi capture tooling, registration checks, an offline verification core, and synthetic tests.",
+    "Analyzed four targets across twelve query images at one viewpoint; adjusted the evidence checks after observing failures.",
+    "Designed an arrangement-separated evaluation of view selection; held-out results are still pending."
+  ],
+  "lessons": [],
+  "links": [
+    {
+      "_key": "edit20261025-207",
+      "_type": "externalLink",
+      "kind": "repo",
+      "label": "Project repository",
+      "url": "https://github.com/Adithya-Rajendran/cmpe249-active-verification"
+    }
+  ],
+  "myRole": "Capture tooling, verification, and study design",
+  "name": "Robot scene-memory pilot",
+  "next": [],
+  "parameters": [],
+  "slug": {
+    "_type": "slug",
+    "current": "robot-scene-memory"
+  },
+  "startDate": "2026-09-08",
+  "status": "active",
+  "statusNote": "Development pilot: four objects, twelve query images, one camera position. Held-out evaluation is pending.",
+  "summary": "A first camera pilot for checking whether a remembered object has been removed or is hidden. Capture and verification code is built; comparison of view-selection policies is the next experiment.",
+  "technologies": [
+    "Python",
+    "NumPy",
+    "OpenCV",
+    "YOLO-World",
+    "DINOv2",
+    "Raspberry Pi"
+  ],
+  "title": "When should a robot look again?",
+  "types": [
+    "research",
+    "hardware",
+    "software"
+  ]
+}
