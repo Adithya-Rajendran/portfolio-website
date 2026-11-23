@@ -1,7 +1,7 @@
 """Tests for tools/site.py, on the fixture tools/testdata/posts/every-construct.md, written into temporary folders.
     python3 -m unittest tools/test_site.py          (from the repository root; -v lists each test)
 Needs cwebp under ~/.local/opt/webp like site.py itself; the image is encoded once and copied between runs."""
-import contextlib, importlib.util, io, json, os, re, shutil, tempfile, unittest
+import contextlib, importlib.util, io, json, os, random, re, shutil, tempfile, time, unittest
 from html.parser import HTMLParser
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
@@ -370,6 +370,171 @@ class Site(unittest.TestCase):
             self.assertIn('bad.md, line 9: headings are ## and ###', str(e.exception.code))
             self.assertIn('nothing was written', str(e.exception.code))
             self.assertEqual(snapshot(out), before)
+
+
+class InlineParser(unittest.TestCase):
+    """The inline parser takes linear time and renders what the earlier, recursive one did (OldInline, below)."""
+
+    def fast(self, text, want, limit=1.0):
+        t = time.perf_counter()
+        got = s.render_inline(text, s.Doc('t.md', 1), 1)
+        took = time.perf_counter() - t
+        self.assertLess(took, limit, f'{text[:30]!r}... took {took:.2f} s')
+        if got != want:                                            # (assertEqual's diff of such strings takes minutes)
+            at = next((i for i, (a, b) in enumerate(zip(got, want)) if a != b), min(len(got), len(want)))
+            self.fail(f'{text[:30]!r}...: differs at {at}: {got[at - 20:at + 40]!r} instead of {want[at - 20:at + 40]!r}')
+
+    def test_unclosed_stars_are_text(self):
+        globs = 'Copy ' + ', '.join(f'*.{e}{i}' for i, e in enumerate(['yaml', 'yml', 'json', 'toml', 'md'] * 100)) + ' files.'
+        for text in ('*a ' * 5000, globs, '*' + 'a *' * 5000, '*' * 5000, '* a' * 5000):
+            self.fast(text, s.escape(text))
+
+    def test_long_runs(self):
+        ticks = ''.join('`' * k + 'a' for k in range(1, 100))      # every run a different length: no code span
+        for text in ('`' * 5000, ticks, '[' * 5000, ']' * 5000, '[]' * 2500, '[' * 2500 + ']' * 2500, '[a](' * 2000,
+                     '[a](b ' * 2000, '((' * 2500 + '[a](' + '(' * 5000):
+            self.fast(text, s.escape(text))
+        self.fast('\\\\' * 2500 + '\\', '\\' * 2501)               # each pair is one escaped backslash
+        self.fast('\\[' * 2000 + '](x' * 2000, '[' * 2000 + '](x' * 2000)
+        self.fast('\\*' * 2500, '*' * 2500)
+        self.fast('` ' * 2500, '<code> </code> ' * 1250)                 # a space between each pair of backticks
+        self.fast('[a](/b)' * 2000, '<a href="/b">a</a>' * 2000)
+
+    def test_emphasis_at_scale(self):
+        self.fast('**a *b* c** ' * 2000, '<strong>a <em>b</em> c</strong> ' * 2000)
+        self.fast('a*' * 5000, 'a<em>a</em>' * 2500)
+        text, want = 'x', 'x'
+        for k in range(1000):                                      # *a **a *a ... x ... b* b** b*, 1000 deep
+            d, tag = ('**', 'strong') if k % 2 else ('*', 'em')
+            text, want = f'{d}a {text} b{d}', f'<{tag}>a {want} b</{tag}>'
+        self.fast(text, want)
+
+    def test_same_as_the_recursive_parser(self):
+        """Short random strings, where the old parser is fast: the same HTML, the same error, the same warnings."""
+        def render(make, text):
+            doc = s.Doc('t.md', 1)
+            try:
+                nodes = make(text, doc)
+            except s.ContentError as e:
+                return str(e)
+            return s.to_html(nodes), sorted(set(doc.warnings))
+        rnd = random.Random(20261122)
+        for alphabet in ('*_`[]()\\ab ', '*_`[]()\\ab !/"\n'):
+            for _ in range(2500):
+                text = ''.join(rnd.choice(alphabet) for _ in range(rnd.randint(0, 14)))
+                self.assertEqual(render(lambda t, d: s.Inline(t, d, 1).parse(), text),
+                                 render(lambda t, d: OldInline(t, d, 1).parse()[0], text), repr(text))
+
+
+ESCAPABLE = s.ESCAPABLE
+class OldInline:
+    """tools/site.py's inline parser before it was made linear (exponential in unclosed `*`), kept as the oracle.
+    The inline subset: `code`, **strong**, *emphasis*, [text](url), and \\ before * _ \\ ` [ ].
+    Parsed to nodes, written as HTML or as plain text (for ids, section titles and the feed).
+    Outside the subset, as plain text: a * or ` with no partner (as in CommonMark), _ (no underscore emphasis: it is
+    in file and variable names), raw HTML and entities (`<b>` and `&amp;` are shown as typed), autolinks, ~~, hard
+    line breaks, and a backslash before any other character. An error: an image that is not alone in its paragraph,
+    a link with a title."""
+    def __init__(self, text, doc, line=None, links=True):
+        self.s, self.doc, self.line, self.links = text, doc, line, links
+
+    def at(self, i):
+        return self.line + self.s.count('\n', 0, i) if self.line else None
+
+    def parse(self, i=0, closer=None, end=None):
+        """-> (nodes, index after, closed). Stops at `closer` ('*' or '**') when one can close here."""
+        s, end = self.s, len(self.s) if end is None else end
+        nodes, buf = [], []
+        def flush():
+            if buf:
+                nodes.append(('text', ''.join(buf)))
+                buf.clear()
+        while i < end:
+            c = s[i]
+            if c == '\\' and i + 1 < end and s[i + 1] in ESCAPABLE:
+                buf.append(s[i + 1]); i += 2
+            elif c == '`':
+                k = self._run(i, '`', end)
+                j = i + k
+                while True:                                # the closing run has exactly as many backticks
+                    j = s.find('`', j, end)
+                    if j < 0 or self._run(j, '`', end) == k:
+                        break
+                    j += self._run(j, '`', end)
+                if j < 0:
+                    buf.append('`' * k); i += k
+                    continue
+                code = s[i + k:j].replace('\n', ' ')
+                if len(code) > 2 and code[0] == ' ' == code[-1] and code.strip():
+                    code = code[1:-1]
+                flush(); nodes.append(('code', code)); i = j + k
+            elif c == '*':
+                k = self._run(i, '*', end)
+                prev, nxt = s[i - 1] if i else ' ', s[i + k] if i + k < end else ' '
+                can_close, can_open = not prev.isspace(), not nxt.isspace()
+                if closer and can_close and (closer == '*' and not (k >= 2 and can_open) or closer == '**' and k >= 2):
+                    flush()
+                    return nodes, i + len(closer), True
+                if can_open:
+                    d = '**' if k >= 2 else '*'
+                    inner, j, closed = self.parse(i + len(d), d, end)
+                    if not closed and closer == '*' and can_close:   # `*a**` : this run closes the outer emphasis
+                        flush()
+                        return nodes, i + 1, True
+                    if closed and inner:
+                        flush(); nodes.append(('strong' if d == '**' else 'em', inner)); i = j
+                        continue
+                buf.append(s[i:i + k]); i += k
+            elif c == '!' and s.startswith('![', i):
+                self.doc.error(self.at(i), 'an image must be alone in its paragraph: ![alt](../assets/images/<file> "caption")')
+            elif c == '[' and self.links and (link := self._link(i, end)):
+                flush(); nodes.append(link[0]); i = link[1]
+            else:
+                buf.append(c); i += 1
+        flush()
+        return nodes, i, closer is None
+
+    def _run(self, i, ch, end):
+        j = i
+        while j < end and self.s[j] == ch:
+            j += 1
+        return j - i
+
+    def _link(self, i, end):
+        """[text](url) starting at i -> (node, index after), or None when it is not a link (then '[' is text)."""
+        s, depth, j = self.s, 0, i
+        while j < end:                                     # the matching ']', skipping escapes and code spans
+            c = s[j]
+            if c == '\\':
+                j += 2; continue
+            if c == '`':
+                k = self._run(j, '`', end)
+                close = s.find('`' * k, j + k, end)
+                j = close + k if close >= 0 else j + k
+                continue
+            depth += (c == '[') - (c == ']')
+            if depth == 0:
+                break
+            j += 1
+        if j >= end or not s.startswith('](', j):
+            return None
+        k, depth = j + 2, 0                                # the destination: no spaces, parentheses balanced
+        while k < end and not s[k].isspace():
+            depth += (s[k] == '(') - (s[k] == ')')
+            if depth < 0:
+                break
+            k += 1
+        url = s[j + 2:k]
+        if k < end and s[k].isspace():
+            rest = s[k:end].lstrip()
+            if rest.startswith(('"', "'", '(')):
+                self.doc.error(self.at(i), 'links with a title are not supported: [text](url)')
+            return None
+        if k >= end or not url:
+            return None
+        label = OldInline(s[:j], self.doc, self.line, links=False).parse(i + 1, None, j)[0]
+        target = self.doc.link(url, self.at(i))
+        return ('link', target, label), k + 1
 
 
 EXPECTED_MAIN = '''<main id="page">

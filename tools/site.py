@@ -11,7 +11,7 @@ The functions are meant to be imported (render_markdown, render_inline, escape, 
 and llms.txt are built from the same pieces. `import site` gives Python's own startup module, so load this file by path:
     spec = importlib.util.spec_from_file_location('sitegen', 'tools/site.py')
     sitegen = importlib.util.module_from_spec(spec); spec.loader.exec_module(sitegen)"""
-import argparse, hashlib, html, json, os, re, shutil, subprocess, sys, tempfile
+import argparse, bisect, hashlib, html, json, os, re, shutil, subprocess, sys, tempfile
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -201,8 +201,11 @@ class Doc:
         self.media[name] = (src, size)
         return f'/blog/media/{name}', size
 
-    def link(self, url, line):
-        """The link policy: (href, external), or None when the link is refused and only its text is written."""
+    def link(self, url, line, check_only=False):
+        """The link policy: (href, external), or None when the link is refused and only its text is written.
+        check_only: raise as it would, but record no warning and no file (the parser asks before it knows the link
+        will be written)."""
+        warn = (lambda w: None) if check_only else self.warnings.append
         low = url.lower()
         if low.startswith(('http://', 'https://')):
             return url, True
@@ -212,11 +215,11 @@ class Doc:
             m = re.match(r'^/portfolio(?:/([a-z0-9-]+))?/?$', url)
             if m:
                 if m[1] and not os.path.isfile(os.path.join(DATA, 'projects', f'{m[1]}.json')):
-                    self.warnings.append(f'{self.where(line)}: no project {m[1]} in data/projects/')
+                    warn(f'{self.where(line)}: no project {m[1]} in data/projects/')
                 return ('/?room=projects&project=' + m[1] if m[1] else '/?room=projects'), False
             m = re.match(r'^/blog/([a-z0-9-]+)/', url)
             if m and self.slugs is not None and m[1] not in self.slugs and m[1] not in ('media', 'files'):
-                self.warnings.append(f'{self.where(line)}: no post {m[1]} for the link {url}')
+                warn(f'{self.where(line)}: no post {m[1]} for the link {url}')
             return url, False
         if url.startswith('../assets/files/'):
             file = url[len('../assets/files/'):]
@@ -227,9 +230,10 @@ class Doc:
             name = self._files[file]
             if '/' in name or '\\' in name or name.startswith('.'):
                 self.error(line, f'file {file} has an unusable original name: {name}')
-            self.files[name] = os.path.join(DATA, 'assets', 'files', file)
+            if not check_only:
+                self.files[name] = os.path.join(DATA, 'assets', 'files', file)
             return '/blog/files/' + quote(name), False
-        self.warnings.append(f'{self.where(line)}: link to {url} is not allowed; written as its text')
+        warn(f'{self.where(line)}: link to {url} is not allowed; written as its text')
         return None
 
 
@@ -239,138 +243,266 @@ class Inline:
     Outside the subset, as plain text: a * or ` with no partner (as in CommonMark), _ (no underscore emphasis: it is
     in file and variable names), raw HTML and entities (`<b>` and `&amp;` are shown as typed), autolinks, ~~, hard
     line breaks, and a backslash before any other character. An error: an image that is not alone in its paragraph,
-    a link with a title."""
-    def __init__(self, text, doc, line=None, links=True):
-        self.s, self.doc, self.line, self.links = text, doc, line, links
+    a link with a title.
+
+    The text is read left to right. A `*` that can open emphasis looks ahead for its closer and is text if there is
+    none; read literally, that look-ahead reads the rest of the paragraph again for every unclosed `*`, which doubles
+    the time with each one. But where a look-ahead from a position ends depends only on that position and on the
+    closer it looks for ('*' or '**'), so `_ends` first works out that answer for every position, from the end of the
+    text backwards, and the text is then read once. Linear, apart from a link's label, which is read again on its
+    own; no recursion. tools/test_site.py compares it with the earlier recursive parser on random text."""
+    def __init__(self, text, doc, line=None):
+        self.s, self.doc, self.line = text, doc, line
+        self.star, self.tick = _runs(text, '*'), _runs(text, '`')
+        self.exact = {}                                    # n -> where the runs of exactly n backticks start
+        for m in re.finditer('`+', text):
+            self.exact.setdefault(len(m[0]), []).append(m.start())
+        self._nl, self._close, self._links = None, None, {}
+
+    def parse(self):
+        """-> the nodes. Raises ContentError, naming the line, where the text leaves the subset."""
+        return self._read(0, len(self.s), True)
 
     def at(self, i):
-        return self.line + self.s.count('\n', 0, i) if self.line else None
+        if not self.line:
+            return None
+        if self._nl is None:
+            self._nl = [m.start() for m in re.finditer('\n', self.s)]
+        return self.line + bisect.bisect_left(self._nl, i)
 
-    def parse(self, i=0, closer=None, end=None):
-        """-> (nodes, index after, closed). Stops at `closer` ('*' or '**') when one can close here."""
-        s, end = self.s, len(self.s) if end is None else end
-        nodes, buf = [], []
-        def flush():
-            if buf:
-                nodes.append(('text', ''.join(buf)))
-                buf.clear()
+    def _error(self, i, msg):
+        try:
+            self.doc.error(self.at(i), msg)
+        except ContentError as e:
+            return e
+
+    def _read(self, start, end, links):
+        """The nodes of s[start:end]: the look-ahead answers first, then one pass that follows them."""
+        ends, at_once = self._ends(start, end, links)
+        step = lambda i, closer: self._step(i, closer, end, links, ends, at_once, start)
+        stack, i = [(None, [], [])], start                 # (closer, nodes, text not yet in nodes): one per open emphasis
         while i < end:
-            c = s[i]
-            if c == '\\' and i + 1 < end and s[i + 1] in ESCAPABLE:
-                buf.append(s[i + 1]); i += 2
-            elif c == '`':
-                k = self._run(i, '`', end)
-                j = i + k
-                while True:                                # the closing run has exactly as many backticks
-                    j = s.find('`', j, end)
-                    if j < 0 or self._run(j, '`', end) == k:
-                        break
-                    j += self._run(j, '`', end)
-                if j < 0:
-                    buf.append('`' * k); i += k
-                    continue
-                code = s[i + k:j].replace('\n', ' ')
+            closer, nodes, buf = stack[-1]
+            what, j, x = step(i, closer)
+            if what == 'text':
+                buf.append(x); i = j
+                continue
+            if buf:
+                nodes.append(('text', ''.join(buf))); buf.clear()
+            if what == 'code':
+                code = self.s[x[0]:x[1]].replace('\n', ' ')
                 if len(code) > 2 and code[0] == ' ' == code[-1] and code.strip():
                     code = code[1:-1]
-                flush(); nodes.append(('code', code)); i = j + k
-            elif c == '*':
-                k = self._run(i, '*', end)
-                prev, nxt = s[i - 1] if i else ' ', s[i + k] if i + k < end else ' '
-                can_close, can_open = not prev.isspace(), not nxt.isspace()
-                if closer and can_close and (closer == '*' and not (k >= 2 and can_open) or closer == '**' and k >= 2):
-                    flush()
-                    return nodes, i + len(closer), True
-                if can_open:
-                    d = '**' if k >= 2 else '*'
-                    inner, j, closed = self.parse(i + len(d), d, end)
-                    if not closed and closer == '*' and can_close:   # `*a**` : this run closes the outer emphasis
-                        flush()
-                        return nodes, i + 1, True
-                    if closed and inner:
-                        flush(); nodes.append(('strong' if d == '**' else 'em', inner)); i = j
-                        continue
-                buf.append(s[i:i + k]); i += k
-            elif c == '!' and s.startswith('![', i):
-                self.doc.error(self.at(i), 'an image must be alone in its paragraph: ![alt](../assets/images/<file> "caption")')
-            elif c == '[' and self.links and (link := self._link(i, end)):
-                flush(); nodes.append(link[0]); i = link[1]
+                nodes.append(('code', code))
+            elif what == 'link':
+                nodes.append(('link', self.doc.link(x[0], self.at(i)), x[1]))
+            elif what == 'open':
+                stack.append((x, [], []))
+            elif what == 'close':
+                stack.pop()
+                stack[-1][1].append(('strong' if closer == '**' else 'em', nodes))
             else:
-                buf.append(c); i += 1
-        flush()
-        return nodes, i, closer is None
+                raise x
+            i = j
+        assert len(stack) == 1, 'an emphasis the look-ahead said would close did not'
+        nodes, buf = stack[0][1:]
+        if buf:
+            nodes.append(('text', ''.join(buf)))
+        return nodes
 
-    def _run(self, i, ch, end):
-        j = i
-        while j < end and self.s[j] == ch:
-            j += 1
-        return j - i
-
-    def _link(self, i, end):
-        """[text](url) starting at i -> (node, index after), or None when it is not a link (then '[' is text)."""
-        s, depth, j = self.s, 0, i
-        while j < end:                                     # the matching ']', skipping escapes and code spans
-            c = s[j]
-            if c == '\\':
-                j += 2; continue
-            if c == '`':
-                k = self._run(j, '`', end)
-                close = s.find('`' * k, j + k, end)
-                j = close + k if close >= 0 else j + k
-                continue
-            depth += (c == '[') - (c == ']')
-            if depth == 0:
+    def _ends(self, start, end, links):
+        """For each closer and each position p in start..end, where a look-ahead for that closer started at p ends:
+        the index after its closer, None if it reaches the end unclosed, or the ContentError it meets first.
+        at_once: it closes at p itself, so the emphasis would be empty (and is text). Lists indexed p - start."""
+        size = end - start + 1
+        ends, at_once = {'*': [None] * size, '**': [None] * size}, {'*': [False] * size, '**': [False] * size}
+        later = end                                        # the next position that is not plain text
+        for i in reversed([start - 1] + [m.start() for m in SPECIAL.finditer(self.s, start, end)]):
+            for d in ends:                                 # plain text: the look-ahead goes on to the next special
+                ends[d][i + 1 - start:later - start] = [ends[d][later - start]] * (later - i - 1)
+            if i < start:
                 break
-            j += 1
-        if j >= end or not s.startswith('](', j):
+            later = i
+            same = None if self.s[i] == '*' else self._step(i, None, end, links, ends, at_once, start)
+            for d in ends:
+                what, j, x = same or self._step(i, d, end, links, ends, at_once, start)
+                if what == 'close':
+                    ends[d][i - start], at_once[d][i - start] = j, True
+                elif what == 'error':
+                    ends[d][i - start] = x
+                elif what == 'open':                       # an emphasis that closes, then on from after it
+                    ends[d][i - start] = ends[d][ends[x][j - start] - start]
+                else:
+                    ends[d][i - start] = ends[d][j - start]
+        return ends, at_once
+
+    def _step(self, i, closer, end, links, ends, at_once, base):
+        """What reading at i does while looking for `closer` (None, '*' or '**') -> (what, next index, detail):
+        'text' (the text), 'code' (where its content starts and ends), 'link' (url, label nodes), 'open' (an emphasis
+        that closes later: its closer), 'close', or 'error' (the ContentError). Only a '*' depends on the closer."""
+        s, c = self.s, self.s[i]
+        if c == '\\' and i + 1 < end and s[i + 1] in ESCAPABLE:
+            return 'text', i + 2, s[i + 1]
+        if c == '`':
+            k = min(self.tick[i], end - i)
+            runs = self.exact.get(k, ())                   # the closing run has exactly as many backticks
+            t = bisect.bisect_left(runs, i + k)
+            if t < len(runs) and runs[t] + k <= end:
+                return 'code', runs[t] + k, (i + k, runs[t])
+            return 'text', i + k, '`' * k
+        if c == '*':
+            k = min(self.star[i], end - i)
+            prev, nxt = s[i - 1] if i else ' ', s[i + k] if i + k < end else ' '
+            can_close, can_open = not prev.isspace(), not nxt.isspace()
+            if closer and can_close and (closer == '*' and not (k >= 2 and can_open) or closer == '**' and k >= 2):
+                return 'close', i + len(closer), None
+            if can_open:
+                d = '**' if k >= 2 else '*'
+                r = ends[d][i + len(d) - base]
+                if isinstance(r, ContentError):
+                    return 'error', i, r
+                if r is None and closer == '*' and can_close:   # `*a**` : this run closes the outer emphasis
+                    return 'close', i + 1, None
+                if r is not None and not at_once[d][i + len(d) - base]:
+                    return 'open', i + len(d), d
+            return 'text', i + k, '*' * k
+        if c == '!' and s.startswith('![', i):
+            return 'error', i, self._error(i, 'an image must be alone in its paragraph: ![alt](../assets/images/<file> "caption")')
+        if c == '[' and links:
+            if i not in self._links:
+                self._links[i] = self._link(i)
+            link = self._links[i]
+            if isinstance(link, ContentError):
+                return 'error', i, link
+            if link:
+                return 'link', link[0], link[1:]
+        return 'text', i + 1, c
+
+    def _link(self, i):
+        """[text](url) starting at i -> (index after, url, label nodes), None when it is not a link (then '[' is
+        text), or the ContentError that reading it raises. The link policy is only asked here (Doc.link with
+        check_only): whether the URL is refused or an error; the pass that builds the nodes asks again for real."""
+        s, n = self.s, len(self.s)
+        if self._close is None:
+            self._tables()
+        j = self._close[i]                                 # the matching ']', skipping escapes and code spans
+        if j is None or not s.startswith('](', j):
             return None
-        k, depth = j + 2, 0                                # the destination: no spaces, parentheses balanced
-        while k < end and not s[k].isspace():
-            depth += (s[k] == '(') - (s[k] == ')')
-            if depth < 0:
-                break
-            k += 1
+        ts = self._depth_at.get(self._depth[j + 2] - 1, ())   # the destination: no spaces, parentheses balanced
+        t = bisect.bisect_right(ts, j + 2)
+        k = min(ts[t] - 1 if t < len(ts) else n, self._space[j + 2])
         url = s[j + 2:k]
-        if k < end and s[k].isspace():
-            rest = s[k:end].lstrip()
-            if rest.startswith(('"', "'", '(')):
-                self.doc.error(self.at(i), 'links with a title are not supported: [text](url)')
+        if k < n and s[k].isspace():
+            if s[self._solid[k]:self._solid[k] + 1] in ('"', "'", '('):
+                return self._error(i, 'links with a title are not supported: [text](url)')
             return None
-        if k >= end or not url:
+        if k >= n or not url:
             return None
-        label = Inline(s[:j], self.doc, self.line, links=False).parse(i + 1, None, j)[0]
-        target = self.doc.link(url, self.at(i))
-        return ('link', target, label), k + 1
+        try:
+            label = self._read(i + 1, j, False)
+            self.doc.link(url, self.at(i), check_only=True)
+        except ContentError as e:
+            return e
+        return k + 1, url, label
+
+    def _tables(self):
+        """What _link needs, for the whole text at once: for each '[' its matching ']' (None if none), the
+        parenthesis depth before each position, where each depth is reached, and the next (non-)space."""
+        s, n = self.s, len(self.s)
+        longer = {}                                        # n -> where the runs of n or more backticks start
+        for m in re.finditer('`+', s):
+            for k in range(1, len(m[0]) + 1):
+                longer.setdefault(k, []).append(m.start())
+        bracket = [n] * (n + 2)                            # the first [ or ] the bracket scan meets from here on
+        for x in range(n - 1, -1, -1):
+            c = s[x]
+            if c in '[]':
+                bracket[x] = x
+                continue
+            if c == '\\':
+                y = x + 2
+            elif c == '`':                                 # a code span: skip to after the first run as long
+                k = self.tick[x]
+                runs = longer[k]
+                t = bisect.bisect_left(runs, x + k)
+                y = runs[t] + k if t < len(runs) else x + k
+            else:
+                y = x + 1
+            bracket[x] = bracket[min(y, n)]
+        self._close = close = {}
+        for x in range(n - 1, -1, -1):                     # from the end, so the brackets inside are matched already
+            if s[x] == '[':
+                z = bracket[x + 1]
+                while z < n and s[z] == '[':
+                    z = n if close[z] is None else bracket[close[z] + 1]
+                close[x] = z if z < n else None
+        self._depth, self._depth_at, d = [0] * (n + 1), {0: [0]}, 0
+        for t, c in enumerate(s, 1):
+            d += (c == '(') - (c == ')')
+            self._depth[t] = d
+            self._depth_at.setdefault(d, []).append(t)
+        self._space, self._solid = [n] * (n + 1), [n] * (n + 1)
+        for x in range(n - 1, -1, -1):
+            sp = s[x].isspace()
+            self._space[x] = x if sp else self._space[x + 1]
+            self._solid[x] = self._solid[x + 1] if sp else x
+
+
+SPECIAL = re.compile(r'[\\`*!\[]')                         # the characters Inline._step does more than copy
+
+
+def _runs(s, ch):
+    """For each position of s, how many `ch` follow from there on (0 where there is none)."""
+    run = [0] * (len(s) + 1)
+    for m in re.finditer(re.escape(ch) + '+', s):
+        a, b = m.span()
+        run[a:b] = range(b - a, 0, -1)
+    return run
 
 
 def to_html(nodes):
-    out = []
-    for n in nodes:
-        if n[0] == 'text':
+    out, stack = [], [(iter(nodes), '')]                  # a stack, not recursion: emphasis may nest deeply
+    while stack:
+        n = next(stack[-1][0], None)
+        if n is None:
+            out.append(stack.pop()[1])
+        elif n[0] == 'text':
             out.append(escape(n[1]))
         elif n[0] == 'code':
             out.append(f'<code>{escape(n[1])}</code>')
         elif n[0] in ('strong', 'em'):
-            out.append(f'<{n[0]}>{to_html(n[1])}</{n[0]}>')
+            out.append(f'<{n[0]}>')
+            stack.append((iter(n[1]), f'</{n[0]}>'))
         elif n[1] is None:                                 # a refused link: its text only
-            out.append(to_html(n[2]))
+            stack.append((iter(n[2]), ''))
         else:
-            (href, external), label = n[1], to_html(n[2])
-            out.append(f'<a href="{escape(href)}"' + (' target="_blank" rel="noopener"' if external else '') + f'>{label}</a>')
+            href, external = n[1]
+            out.append(f'<a href="{escape(href)}"' + (' target="_blank" rel="noopener"' if external else '') + '>')
+            stack.append((iter(n[2]), '</a>'))
     return ''.join(out)
 
 
 def to_text(nodes):
-    return ''.join(n[1] if n[0] in ('text', 'code') else to_text(n[-1]) for n in nodes)
+    out, stack = [], [iter(nodes)]
+    while stack:
+        n = next(stack[-1], None)
+        if n is None:
+            stack.pop()
+        elif n[0] in ('text', 'code'):
+            out.append(n[1])
+        else:
+            stack.append(iter(n[-1]))
+    return ''.join(out)
 
 
 def render_inline(text, doc=None, line=None):
     """Inline Markdown -> HTML (used for paragraphs, headings, list items, captions, takeaways and notes)."""
-    return to_html(Inline(text, doc or Doc(), line).parse()[0])
+    return to_html(Inline(text, doc or Doc(), line).parse())
 
 
 def inline_text(text, doc=None):
     """Inline Markdown -> the plain text a reader sees."""
-    return to_text(Inline(text, doc or Doc()).parse()[0])
+    return to_text(Inline(text, doc or Doc()).parse())
 
 
 FENCE = re.compile(r'^```([^`\s]*)[ \t]*$')
@@ -412,7 +544,7 @@ def render_markdown(md, name='post', first_line=1, doc=None):
                 doc.error(ln(i), 'headings are ## and ### (the title is the page\'s only h1)')
             if not m[2]:
                 doc.error(ln(i), 'empty heading')
-            nodes = Inline(m[2], doc, ln(i)).parse()[0]
+            nodes = Inline(m[2], doc, ln(i)).parse()
             text = to_text(nodes)
             hid = doc.unique_id(text)
             doc.sections.append({'id': hid, 'title': text, 'level': len(m[1])})
