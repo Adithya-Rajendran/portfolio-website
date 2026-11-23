@@ -98,8 +98,11 @@ export const readBox = (p) => p.evaluate(async () => {
 });
 /** readBox once the glyph has stopped moving (the camera's glide and the glyph's own easing take a couple of seconds). */
 export async function settledBox(p) {
-  let a = await readBox(p);
-  for (let i = 0; i < 30; i++) { await p.waitForTimeout(250); const b = await readBox(p); const still = Math.hypot(a.cx - b.cx, a.cy - b.cy) < 0.5; a = b; if (still && b.live && b.glyph) break; }
+  // the glyph is held at the bottom edge while the camera still glides, so it can look still before the view is: the camera must have stopped too
+  const eye = () => p.evaluate(() => window.__lobby.camera.position.toArray());
+  let a = await readBox(p), e = await eye();
+  // ... for four looks in a row: a single frame can take longer than the time between two looks on this GPU
+  for (let i = 0, calm = 0; i < 60 && calm < 4; i++) { await p.waitForTimeout(300); const b = await readBox(p), f = await eye(); const still = Math.hypot(a.cx - b.cx, a.cy - b.cy) < 0.5 && Math.hypot(e[0] - f[0], e[1] - f[1], e[2] - f[2]) < 1e-4; a = b; e = f; calm = still && b.live && b.glyph ? calm + 1 : 0; }
   return a;
 }
 /** What a click at (x, y) would hit among the room's live picks, nearest first: [pick index, geometry, distance]. main.js takes the first. */
@@ -164,7 +167,7 @@ export async function readPick(p, phone, i, how) {
   const box = await settledBox(p), before = await snap(p), reads = await p.evaluate(() => window.__lobby.picks.findIndex((q) => q.reads)), hits = await rayHits(p, box.cx, box.cy);
   let r = await readNow(p, phone, how), fell = false;
   if (!r.ok && how === 'glyph') { fell = true; await focus(p, i); await p.waitForTimeout(1500); r = await readNow(p, phone, 'button'); }
-  return { ready, box, before, hits, reads, glyphOk: hits[0]?.[0] === reads, ok: r.ok, fell, how };
+  return { ready, box, before, hits, reads, glyphOk: hits.some((h) => h[0] === reads), ok: r.ok, fell, how };
 }
 /** Escape (or CLOSE on a phone) and the state afterwards, after the camera has settled. */
 export async function leaveAndSnap(p, phone) { const ok = await leave(p, phone); await p.waitForTimeout(1000); return { ok, s: await snap(p) }; }

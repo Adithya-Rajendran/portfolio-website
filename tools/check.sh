@@ -1,5 +1,5 @@
 #!/bin/bash
-# Everything for the blog and the Library reader, in one command; exit 1 if any step failed (every step is run, then listed).
+# Everything for the content and its reading in the rooms, in one command; exit 1 if any step failed (every step is run, then listed).
 #   tools/check.sh          env: OUT (host folder for screenshots, default /tmp/dtest), ASSETS (baked rooms; see tools/dtest.sh)
 # The browser steps need Docker (tools/dtest.sh serves public/ inside a container). The posts' pages are regenerated first.
 cd "$(dirname "$0")/.." || exit 1
@@ -16,6 +16,9 @@ if [[ " ${FAILED[*]} " == *" site.py "* ]]; then
 else
   SLUGS=$(basename -a data/posts/*.md | sed 's/\.md$//'); FIRST=$(echo "$SLUGS" | head -1)
   for s in $SLUGS; do step "page.mjs /blog/$s/" dt page.mjs "/blog/$s/"; done
+  PROJECTS=$(basename -a data/projects/*.md | sed 's/\.md$//')
+  for u in /about/ /portfolio/ /experience/ /contact/; do step "page.mjs $u" dt page.mjs "$u"; done
+  for s in $PROJECTS; do step "page.mjs /portfolio/$s/" dt page.mjs "/portfolio/$s/"; done
   step "plaincheck-selftest.mjs" dt plaincheck-selftest.mjs
   step "plainpage.mjs (no JavaScript, no WebGL, 404)" dt plainpage.mjs
   step "library.mjs (desktop, phone, reduced motion)" dt library.mjs all
@@ -23,6 +26,11 @@ else
   step "deeplink.mjs $FIRST (phone)" dt deeplink.mjs "$FIRST" 390 844
   step "writing-alias.mjs" dt writing-alias.mjs
   step "history.mjs (the address, Back and the reader)" dt history.mjs
+  step "rooms.read.mjs (every room at its path; Fabrication's projects read)" dt rooms.read.mjs all
+  step "rooms.others.mjs (Navigation, the Lounge, Comms)" dt rooms.others.mjs
+  step "rooms.cross.mjs (links from one room's reading into another)" dt rooms.cross.mjs
+  step "rooms.deeplink.mjs (a project's and a timeline entry's own address)" dt rooms.deeplink.mjs
+  step "hostile.mjs (the rooms against hostile and thin data)" dt hostile.mjs
   step "endpoints.mjs" dt endpoints.mjs
   for u in "/" "/?room=about" "/?room=projects" "/?room=experience" "/?room=comms" "/blog/"; do step "errs.mjs $u" dt errs.mjs "http://127.0.0.1:8080$u"; done
 fi

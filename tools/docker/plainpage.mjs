@@ -1,20 +1,45 @@
-// plainpage.mjs: the posts and the list as plain pages.
+// plainpage.mjs: the posts, the projects, the room pages (/about/, /experience/, /contact/) and the lists as plain pages.
 //   11: JavaScript disabled, at 1280x720 and at 390x844: scrolls, uncovered, one h1, heading levels, alt text, link names,
 //       contrast, nothing wider than the window, code scrolls inside itself (checks in plaincheck.mjs)
 //   12: WebGL unavailable (Chromium started so that getContext('webgl2') and ('webgl') are null; verified on each page):
 //       the same checks, and no error overlay over the text
-//   13: /blog/no-such-post/ answers 404
+//       and every image (a cover, a logo, a badge) loads, keeps its proportions, and is not larger than its container
+//   13: /blog/no-such-post/ and /portfolio/no-such-project/ answer 404
 // Findings print as FAIL lines with their evidence; exit code 1 if any. A screenshot of each failing page goes to /out.
 import { chromium } from 'playwright';
 import { plainChecks } from './plaincheck.mjs';
 const ORIGIN = process.env.ORIGIN || 'http://127.0.0.1:8080';
 const index = await (await fetch(`${ORIGIN}/blog/index.json`)).json();
-const pages = [['/blog/', 'list'], ...index.posts.map((p) => [`/blog/${p.slug}/`, 'post'])];
+const projects = (await (await fetch(`${ORIGIN}/portfolio/index.json`)).json()).projects;
+// what a page is, for plaincheck: 'post' has its h1 in an article.post (the room pages and the projects are such articles too), 'list' in a .post-list
+const pages = [['/blog/', 'list'], ...index.posts.map((p) => [`/blog/${p.slug}/`, 'post']), ['/about/', 'post'], ['/portfolio/', 'list'], ...projects.map((p) => [p.url, 'post']), ['/experience/', 'post'], ['/contact/', 'post']];
 const SIZES = [['desktop', { width: 1280, height: 720 }], ['phone', { width: 390, height: 844 }]];
 let failed = 0;
 const say = (ok, item, where, what) => { if (!ok) failed++; if (!ok || item === 13) console.log(`${ok ? 'ok  ' : 'FAIL'} [${item}] ${where}: ${what}`); };
 const guard = new Set();
 
+/** Every image of the page: loaded (lazy ones are scrolled to), proportions as written (width and height), inside its container and the window. */
+async function imageChecks(p) {
+  // (with JavaScript off the page's own timers never fire, so the waiting is done from here, not inside the page)
+  const tall = await p.evaluate(() => [document.scrollingElement.scrollHeight, innerHeight]);
+  for (let y = 0; y <= tall[0]; y += tall[1] * 0.7) { await p.evaluate((y) => scrollTo(0, y), y); await p.waitForTimeout(60); }
+  for (let n = 0; n < 80 && !(await p.evaluate(() => [...document.querySelectorAll('main#page img')].every((i) => i.complete))); n++) await p.waitForTimeout(100);
+  return p.evaluate(() => {
+    const found = [], notes = [], imgs = [...document.querySelectorAll('main#page img')], W = innerWidth;
+    for (const i of imgs) {
+      const name = `${i.className || 'img'} ${(i.getAttribute('src') || '').split('/').pop().slice(0, 36)}`, r = i.getBoundingClientRect(), box = i.parentElement.closest('li, figure, section, article, p, div') ?? i.parentElement, c = box.getBoundingClientRect(), cs = getComputedStyle(box);
+      const inner = { left: c.left + parseFloat(cs.paddingLeft), right: c.right - parseFloat(cs.paddingRight) };
+      if (!i.naturalWidth) found.push(`${name}: did not load`);
+      if (r.width > W + 0.5 || r.right > W + 0.5 || r.left < -0.5) found.push(`${name}: ${Math.round(r.left)}..${Math.round(r.right)} in a ${W} px window`);
+      if (r.width > inner.right - inner.left + 1 || r.left < c.left - 1 || r.right > c.right + 1) found.push(`${name}: ${Math.round(r.width)} px wide in a container ${Math.round(c.width)} px wide (${box.tagName.toLowerCase()}.${box.className}, content ${Math.round(inner.right - inner.left)})`);
+      const aw = +i.getAttribute('width'), ah = +i.getAttribute('height');
+      if (aw && ah && r.width && r.height && Math.abs(r.width / r.height - aw / ah) / (aw / ah) > 0.03) found.push(`${name}: shown ${Math.round(r.width)}x${Math.round(r.height)}, written ${aw}x${ah} (distorted)`);
+      if (r.width && r.height && Math.max(r.width, r.height) > 0.6 * Math.max(innerWidth, 400) && /logo|badge/.test(i.className)) notes.push(`${name}: a ${/logo/.test(i.className) ? 'logo' : 'badge'} shown ${Math.round(r.width)}x${Math.round(r.height)} in a ${W} px window`);
+      if (/logo|badge/.test(i.className)) notes.push(`${i.className}: ${Math.round(r.width)}x${Math.round(r.height)} (written ${aw}x${ah}, file ${i.naturalWidth}x${i.naturalHeight})`);
+    }
+    scrollTo(0, 0); return { found, notes: [...new Set(notes)], n: imgs.length };
+  });
+}
 async function checkPage(ctx, item, path, kind, size) {
   const where = `${path} ${size}`, p = await ctx.newPage(), errs = [];
   p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`)); p.on('console', (m) => { if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 200)}`); });
@@ -32,6 +57,10 @@ async function checkPage(ctx, item, path, kind, size) {
   const { found, notes } = await plainChecks(p, kind);
   let bad = 0;
   for (const [name, list] of Object.entries(found)) { say(list.length === 0, item, where, name + (list.length ? ': ' + list.slice(0, 6).join(' | ') + (list.length > 6 ? ` | (+${list.length - 6})` : '') : '')); bad += list.length; }
+  const imgs = await imageChecks(p);
+  for (const f of imgs.found) say(false, item, where, f);
+  bad += imgs.found.length;
+  for (const n of imgs.notes) console.log(`     note ${where}: ${n}`);
   if (!bad) console.log(`ok   [${item}] ${where}: ${Object.keys(found).join(', ')}`);
   for (const n of [...new Set(notes.map((x) => x.replace(/\(\d+ in \d+\)/, '')))]) console.log(`     note ${where}: ${n}`);
   if (item === 12) for (const e of [...new Set(errs)]) console.log(`     note ${where}: expected from the failed start: ${e}`);
@@ -61,7 +90,7 @@ async function checkPage(ctx, item, path, kind, size) {
   await b.close();
 }
 // ---- 13: an unknown post
-for (const path of ['/blog/no-such-post/', '/blog/no-such-post']) {
+for (const path of ['/blog/no-such-post/', '/blog/no-such-post', '/portfolio/no-such-project/', '/portfolio/no-such-project']) {
   const r = await fetch(ORIGIN + path, { redirect: 'follow' }), body = await r.text();
   say(r.status === 404, 13, path, `status ${r.status}`);
   say(!/<article|class="post-list"/.test(body), 13, path, 'and the body is not an article or the list (no soft 404)');

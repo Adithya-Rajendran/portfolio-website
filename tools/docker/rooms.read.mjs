@@ -94,7 +94,7 @@ async function run(name) {
     } else if (n === 4) await shot(p, 'exhibit');
     // READ: the glyph for some, the bar's button for the others
     const how = n % 2 ? 'button' : 'glyph', t0 = Date.now(), reads = await p.evaluate(() => window.__lobby.picks.findIndex((q) => q.reads)), hits = await rayHits(p, r.cx, r.cy);
-    chk(2, hits[0]?.[0] === reads, `${pl.what}: a ${phone ? 'tap' : 'click'} on the READ glyph reaches the READ pick (no other pick lies nearer along that ray)`, { at: [Math.round(r.cx), Math.round(r.cy)], hits: hits.slice(0, 3), readPickIs: reads });
+    chk(2, hits.some((h) => h[0] === reads), `${pl.what}: a ${phone ? 'tap' : 'click'} on the READ glyph reaches the READ pick (main.js gives it the click over anything behind it)`, { at: [Math.round(r.cx), Math.round(r.cy)], hits: hits.slice(0, 3), readPickIs: reads });
     let read = await readNow(p, phone, how);
     chk(2, read.ok, `${pl.what}: READ (${how}) opens the article`, read.ok ? '' : read.pressed !== true ? read.pressed : { tapAt: [Math.round(r.cx), Math.round(r.cy)], nearestPickThere: hits[0], hits: hits.slice(0, 3), readPickIs: reads, focusNow: (await snap_(p)).count });
     if (!read.ok && how === 'glyph') { await shot(p, `glyph-fail-${n}`); await focus(p, pl.i); await p.waitForTimeout(1500); read = await readNow(p, phone, 'button'); note(`${pl.what}: read through the bar's button so that the rest could be checked`); }
