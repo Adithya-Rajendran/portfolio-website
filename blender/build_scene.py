@@ -808,7 +808,7 @@ for depth, lip in ((-2.2, 0.16), (-3.4, 0.34)):
 # ---- Door recesses either side of the stair
 # On to the next compartment, and down to the Ring Line that runs under every deck.
 for sx_, title, sub_, to, stops in ((1, 'LOUNGE', 'SPINWARD  ·  COMPARTMENT 6', 'about', None),
-                                    (-1, 'RING LINE', 'STAIR DOWN  ·  ALL COMPARTMENTS', '', [['NAVIGATION', 'experience'], ['FABRICATION', 'projects'], ['LOUNGE', 'about'], ['LIBRARY', 'writing'], ['COMMS', '']])):
+                                    (-1, 'RING LINE', 'STAIR DOWN  ·  ALL COMPARTMENTS', '', [['NAVIGATION', 'experience'], ['FABRICATION', 'projects'], ['LOUNGE', 'about'], ['LIBRARY', 'writing'], ['COMMS', 'comms']])):
     box(f'doorrecess{sx_}', sx_ * 8.2 - 1.5, sx_ * 8.2 + 1.5, Y1 - 0.2, Y1, PLAT_Z, 3.95, 'dark', 'center', bevel=0.02)
     pressure_door(f'door{sx_}', T((sx_ * 8.2, Y1 - 0.22, PLAT_Z), (0, 0, -pi / 2)), 'center', title, sub_, to, stops=stops)
 
