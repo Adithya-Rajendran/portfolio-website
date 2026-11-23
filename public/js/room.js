@@ -491,7 +491,8 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
     const pick = { mesh, onFocus: target.setExpanded, pose: () => {
       const c = mesh.getWorldPosition(V()); c.y += lift;
       const d = CAM.clone().sub(c); d.y *= 0.35;
-      return { pos: c.clone().addScaledVector(d.normalize(), dist / Math.min(1, camera.aspect / 1.5)), tgt: c };
+      const far = CAM.distanceTo(c) * 0.95;                // on an upright screen it stands further back, but never behind the room's own camera (that is outside the wall)
+      return { pos: c.clone().addScaledVector(d.normalize(), Math.min(far, dist / Math.min(1, camera.aspect / 1.5))), tgt: c };
     } };
     picks.push(src ? offers(pick, () => src) : pick);
   }
