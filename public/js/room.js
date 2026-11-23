@@ -440,10 +440,10 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   const upright = (n) => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(n, V(), V(0, 1, 0)));     // a plane's turn so that it faces along n
   const toCam = (p) => CAM.clone().sub(p).setY(0).normalize();
   /** Make a pick offer a source (a function, asked every frame: the source or null). */
-  function offers(pick, source, backLabel) {
+  function offers(pick, source, backLabel) {             // backLabel: what the way back from the reading to this pick is called
     if (!reader) return pick;
     const own = pick.onFocus;
-    return Object.assign(pick, { source, backLabel, enter: () => (reader.available() ? reading : null), enterLabel: words.read,
+    return Object.assign(pick, { source, returnLabel: backLabel, enter: () => (reader.available() ? reading : null), enterLabel: words.read,
       onFocus: (on, next) => { own?.(on, next); if (on) reader.offer(source, pick); else if (!next?.reads) reader.offer(null); } });
   }
   /** Something read with nothing of its own in the room: a frame in the air a few steps in front of the room's camera. */
@@ -515,7 +515,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   } });
   // reading: its pick is the READ glyph, there only while something is offered. Aside from the tour; BACK leads to what offered it.
   if (reader) picks.push(reading = { mesh: reader.hit, reads: true, aside: true, steady: true, live: reader.available, pose: reader.pose, typing: () => reader.state() !== 'closed', calm: reader.settled,
-    back: reader.offeredBy, get backLabel() { return reader.offeredBy()?.backLabel; }, url: reader.url, title: reader.title,
+    back: reader.offeredBy, get backLabel() { return reader.offeredBy()?.returnLabel; }, url: reader.url, title: reader.title,
     onFocus: (on, next) => { if (on) return reader.read(); const by = reader.offeredBy(); reader.close(); if (next !== by) { reader.offer(null); by?.left?.(); } } });
   // doors: walk up to it; main.js then goes through to door.to (another room's id; '' = sealed)
   for (const door of info.doors || []) {

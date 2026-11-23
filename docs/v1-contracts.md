@@ -160,8 +160,8 @@ Test hooks on `window.__lobby` (in addition to `ready`, `picks`, `setFocus`, `ca
 | Hook | Returns |
 |---|---|
 | `reader.state()` | `'closed'`, `'scanning'` or `'open'` |
-| `reader.slug()` | the post being read, or `null` |
-| `reader.read(slug)`, `reader.close()` | what the READ button and BACK do |
+| `reader.url()`, `reader.slug()` | the address of what is being read and its last path segment, or `null` |
+| `reader.read(slug or path)`, `reader.close()` | what the READ button and BACK do |
 | `volumes()` | the catalogue: `[{ slug, title }]` in shelf order |
 | `held()` | slug of the book the drone presents, or `null` |
 
