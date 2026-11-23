@@ -245,6 +245,13 @@ function onLink(href) {
   } else if (to.id === room?.id) back();                                                    // the room itself: close what is read
   else { if (to.read) history.pushState(null, '', to.read.split('#')[0] + query() + u.hash); enter(to.id, !to.read); }     // another room, and what is read there
 }
+/** How far up from the bottom of the window the bar's controls reach between x0 and x1 (0: none there). The READ glyph stays above them. */
+function clearance(x0, x1) {
+  if (bar.hidden) return 0;
+  let top = innerHeight;
+  for (const el of bar.querySelectorAll('button')) { const r = el.getBoundingClientRect(); if (r.width && r.right > x0 && r.left < x1) top = Math.min(top, r.top); }
+  return innerHeight - top;
+}
 function back() {
   const was = focus.pick; setFocus(was?.back?.() ?? null);
   if (was?.reads) (bar.querySelector('[aria-current], #enter:not([hidden]), [data-option]') ?? $('.hero .cta') ?? $('#back'))?.focus({ preventScroll: true });     // the keyboard returns to what it came from: the list, READ, or the room's button
@@ -257,7 +264,7 @@ async function enter(id, push = true) {
   $('#what').textContent = content.rooms[id].loading; progress(0); loader.classList.remove('done'); hud.classList.add('hidden');
   if (room) { await new Promise((r) => setTimeout(r, 500)); room.dispose(); room = null; }      // let the cover fade in before the old room goes
   if (push && location.pathname + location.search !== urlFor(id)) history.pushState(null, '', urlFor(id));
-  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, words: content.reader,
+  room = await loadRoom(id, content.rooms[id], { renderer, camera, mirror, maxAniso, onProgress: progress, onLink, clearance, words: content.reader,
     onShown: () => { if (room && !busy) syncUrl(); }, want: route().read?.split('/')[2] });
   floorBox.makeEmpty(); for (const f of room.floors) floorBox.expandByObject(f);
   fillHud(id); post.setExposure(room.exposure); resize(); gov.rest(2500);

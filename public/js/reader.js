@@ -42,8 +42,9 @@ const pathOf = (url) => url.split('#')[0];
  * @param text     the room's "reader" words (content.json)
  * @param onLink   (href) a link in the article that leads elsewhere on the site (null: the reader's own close button)
  * @param onShown  () the article has arrived: its title is known
+ * @param clearance (x0, x1) how many pixels up from the bottom of the window the page's own controls reach between those x (the glyph keeps clear of them)
  */
-export function createReader({ scene, camera, text, onLink, onShown }) {
+export function createReader({ scene, camera, text, onLink, onShown, clearance }) {
   const root = new THREE.Group(); root.name = 'Reader'; scene.add(root);
 
   // ---- READ: a glyph under the thing, always facing the visitor and drawn over everything, like the rest of their display
@@ -216,7 +217,9 @@ export function createReader({ scene, camera, text, onLink, onShown }) {
       const tan = Math.tan(rad(camera.fov / 2)), fwd = camera.getWorldDirection(_b), up = _a.copy(UP).applyQuaternion(camera.quaternion);
       sheet.localToWorld(_v.set(0, -0.5, 0)); _c.copy(_v).sub(camera.position);
       const depth = Math.max(0.3, _c.dot(fwd)), m = 2 * depth * tan / innerHeight, w = clamp(innerWidth * 0.2, 104, 168) * m, h = w / 3;       // m: metres per pixel there
-      const low = _c.dot(up) - 14 * m - h / 2, floor = -depth * tan + (innerWidth < 720 ? 150 : 10) * m + h / 2;      // a phone has a bar along the bottom
+      // ... and clear of the page's controls under it: a touch that lands near a button is given to the button
+      const x = (_v.clone().project(camera).x * 0.5 + 0.5) * innerWidth, half = w / m / 2 + 28, taken = clearance?.(x - half, x + half) ?? 0;
+      const low = _c.dot(up) - 14 * m - h / 2, floor = -depth * tan + (taken ? taken + 34 : 10) * m + h / 2;
       glyph.position.copy(_v).addScaledVector(up, Math.max(low, floor) - _c.dot(up)); glyph.quaternion.copy(camera.quaternion); glyph.scale.setScalar(w / 3);
     }
     // the scan

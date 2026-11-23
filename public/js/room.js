@@ -28,7 +28,7 @@ const CH_FIXED = Number.isNaN(num('chand', NaN)) ? null : num('chand', 0) * Math
  * @param text  this room's entry in content.json
  * @param env   { renderer, camera, mirror, maxAniso, onProgress }: the shared renderer and camera, the floor-mirror target and its uniforms
  */
-export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink, onShown, want, words }) {
+export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, onProgress, onLink, onShown, clearance, want, words }) {
   // ---------------------------------------------------------------- loading
   const base = `assets/${id}`; let info, arrived = 0;
   // The bakes are KTX2 files (tools/pack.py): they stay block-compressed on the GPU and bring their own mipmaps. The
@@ -435,7 +435,7 @@ export async function loadRoom(id, text, { renderer, camera, mirror, maxAniso, o
   };
   // Things that can be read (js/reader.js): a volume lying open, a placard, an exhibit, a stop on the route map. The pick
   // that shows one offers it while it has the visitor's attention; READ then scans it and stands its article over it.
-  const reader = words ? createReader({ scene, camera, text: { ...words, mark: text.nav }, onLink, onShown }) : null;
+  const reader = words ? createReader({ scene, camera, text: { ...words, mark: text.nav }, onLink, onShown, clearance }) : null;
   if (reader) hidden.push(reader.root);                              // light addressed to the visitor: not in the floor's mirror image
   const upright = (n) => new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(n, V(), V(0, 1, 0)));     // a plane's turn so that it faces along n
   const toCam = (p) => CAM.clone().sub(p).setY(0).normalize();
